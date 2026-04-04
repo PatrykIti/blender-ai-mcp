@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [206](./206-2026-04-04-visual-fit-truth-contract-and-adoption.md) | 2026-04-04 | **Visual-fit truth contract and adoption** | - |
 | [205](./205-2026-04-04-guided-session-bookkeeping-hardening.md) | 2026-04-04 | **Guided session bookkeeping hardening** | - |
 | [204](./204-2026-04-03-mcp-transport-mode-switching-and-session-diagnostics.md) | 2026-04-03 | **MCP transport mode switching and session diagnostics** | - |
 | [203](./203-2026-04-03-mesh-aware-contact-semantics.md) | 2026-04-03 | **Mesh-aware contact semantics** | - |

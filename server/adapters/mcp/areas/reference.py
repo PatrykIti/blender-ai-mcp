@@ -1129,6 +1129,29 @@ def _pair_label(from_object: str, to_object: str) -> str:
     return f"{from_object} -> {to_object}"
 
 
+def _contact_semantics_note(
+    *,
+    gap_payload: dict[str, Any] | None,
+    contact_assertion: SceneAssertionPayloadContract | None,
+) -> str | None:
+    if contact_assertion is None:
+        return None
+
+    details = contact_assertion.details or {}
+    actual = contact_assertion.actual or {}
+    measurement_basis = str(details.get("measurement_basis") or (gap_payload or {}).get("measurement_basis") or "")
+    bbox_relation = str(details.get("bbox_relation") or (gap_payload or {}).get("bbox_relation") or "")
+    measured_relation = str(actual.get("relation") or (gap_payload or {}).get("relation") or "")
+
+    if (
+        measurement_basis == "mesh_surface"
+        and bbox_relation in {"contact", "touching"}
+        and measured_relation == "separated"
+    ):
+        return "Bounding boxes touch, but the measured mesh surfaces still have a real gap."
+    return None
+
+
 def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTruthFollowupContract:
     if bundle.summary.pair_count == 0:
         return SceneTruthFollowupContract(
@@ -1159,11 +1182,16 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
                 )
             )
         else:
+            contact_note = _contact_semantics_note(gap_payload=check.gap, contact_assertion=check.contact_assertion)
             if check.contact_assertion is not None and not check.contact_assertion.passed:
                 items.append(
                     SceneTruthFollowupItemContract(
                         kind="contact_failure",
-                        summary=f"{pair_label} failed the contact assertion.",
+                        summary=(
+                            f"{pair_label} failed the contact assertion: {contact_note}"
+                            if contact_note
+                            else f"{pair_label} failed the contact assertion."
+                        ),
                         priority="high",
                         from_object=check.from_object,
                         to_object=check.to_object,
@@ -1174,7 +1202,11 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
                 items.append(
                     SceneTruthFollowupItemContract(
                         kind="gap",
-                        summary=f"{pair_label} still has measurable separation.",
+                        summary=(
+                            f"{pair_label} still has measurable surface separation. {contact_note}"
+                            if contact_note
+                            else f"{pair_label} still has measurable separation."
+                        ),
                         priority="normal",
                         from_object=check.from_object,
                         to_object=check.to_object,

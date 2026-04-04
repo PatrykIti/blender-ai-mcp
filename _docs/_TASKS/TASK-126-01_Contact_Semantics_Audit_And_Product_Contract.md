@@ -1,8 +1,15 @@
 # TASK-126-01: Contact Semantics Audit and Product Contract
 
 **Parent:** [TASK-126](./TASK-126_Mesh_Aware_Contact_Semantics_And_Visual_Fit_Reliability.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** The product contract is now explicit across the public
+surface: `scene_measure_gap(...)`, `scene_measure_overlap(...)`, and
+`scene_assert_contact(...)` describe mesh-surface truth as the preferred path
+for mesh pairs and bbox semantics as a fallback. Router tool metadata and
+top-level docs were aligned to stop overclaiming bbox contact as proof of
+visual fit.
 
 ## Objective
 

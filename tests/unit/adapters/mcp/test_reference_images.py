@@ -92,6 +92,56 @@ def test_truth_followup_emits_cleanup_macro_candidate_for_overlap_pairs():
     assert followup.macro_candidates[0].macro_name == "macro_cleanup_part_intersections"
 
 
+def test_truth_followup_explicitly_calls_out_bbox_touching_but_surface_gap():
+    bundle = SceneCorrectionTruthBundleContract(
+        scope=SceneAssembledTargetScopeContract(
+            scope_kind="object_set",
+            primary_target="Eye",
+            object_names=["Eye", "Head"],
+            object_count=2,
+        ),
+        summary=SceneCorrectionTruthSummaryContract(
+            pairing_strategy="primary_to_others",
+            pair_count=1,
+            evaluated_pairs=1,
+            contact_failures=1,
+            separated_pairs=1,
+        ),
+        checks=[
+            SceneCorrectionTruthPairContract(
+                from_object="Eye",
+                to_object="Head",
+                gap={
+                    "relation": "separated",
+                    "gap": 0.051,
+                    "measurement_basis": "mesh_surface",
+                    "bbox_relation": "contact",
+                },
+                alignment={"is_aligned": True, "axes": ["X", "Y", "Z"]},
+                overlap={"overlaps": False, "relation": "disjoint"},
+                contact_assertion=SceneAssertionPayloadContract(
+                    assertion="scene_assert_contact",
+                    passed=False,
+                    subject="Eye",
+                    target="Head",
+                    expected={"max_gap": 0.0001, "allow_overlap": False},
+                    actual={"gap": 0.051, "relation": "separated"},
+                    details={
+                        "measurement_basis": "mesh_surface",
+                        "bbox_relation": "contact",
+                    },
+                ),
+            )
+        ],
+    )
+
+    followup = _build_truth_followup(bundle)
+
+    assert followup.items
+    assert "Bounding boxes touch" in followup.items[0].summary
+    assert followup.items[1].summary.startswith("Eye -> Head still has measurable surface separation.")
+
+
 def test_assembled_target_scope_prefers_structural_anchor_over_accessory_first_item(monkeypatch):
     class SceneHandler:
         def get_bounding_box(self, object_name: str, world_space: bool = True):

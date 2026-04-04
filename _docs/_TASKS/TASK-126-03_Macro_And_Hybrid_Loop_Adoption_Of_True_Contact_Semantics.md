@@ -1,8 +1,14 @@
 # TASK-126-03: Macro and Hybrid Loop Adoption of True Contact Semantics
 
 **Parent:** [TASK-126](./TASK-126_Mesh_Aware_Contact_Semantics_And_Visual_Fit_Reliability.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** Macro truth snapshots and hybrid truth-followup
+summaries now carry the mesh-vs-bbox distinction forward to operator-facing
+guidance. When a pair is bbox-touching but still mesh-surface separated, the
+summary now says so explicitly instead of collapsing the case into a generic
+"contact failed" message.
 
 ## Objective
 

@@ -161,3 +161,44 @@ def test_macro_align_part_with_contact_blocks_when_nudge_exceeds_bound():
     assert result["macro_name"] == "macro_align_part_with_contact"
     assert modeling.calls == []
     assert "exceeds max_nudge" in (result["error"] or "")
+
+
+def test_pair_truth_summary_carries_bbox_touching_vs_surface_gap_note():
+    scene = FakeSceneTool()
+    modeling = FakeModelingTool(scene)
+    handler = MacroToolHandler(scene, modeling)
+
+    original_measure_gap = scene.measure_gap
+
+    def _measure_gap(from_object, to_object, tolerance=0.0001):
+        payload = original_measure_gap(from_object, to_object, tolerance)
+        payload["measurement_basis"] = "mesh_surface"
+        payload["bbox_relation"] = "contact"
+        payload["relation"] = "separated"
+        payload["gap"] = 0.051
+        return payload
+
+    def _assert_contact(from_object, to_object, max_gap=0.001, allow_overlap=False):
+        return {
+            "assertion": "scene_assert_contact",
+            "passed": False,
+            "subject": from_object,
+            "target": to_object,
+            "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+            "actual": {"gap": 0.051, "relation": "separated"},
+            "delta": {"gap_overage": 0.05},
+            "tolerance": max_gap,
+            "units": "blender_units",
+            "details": {
+                "measurement_basis": "mesh_surface",
+                "bbox_relation": "contact",
+            },
+        }
+
+    scene.measure_gap = _measure_gap
+    scene.assert_contact = _assert_contact
+
+    summary = handler._pair_truth_summary("Ear", "Head")
+
+    assert summary["contact_assertion"]["passed"] is False
+    assert summary["contact_semantics"] == "Bounding boxes touch, but the measured mesh surfaces still have a real gap."

@@ -2539,8 +2539,12 @@ def scene_measure_gap(
 
     Workflow: READ-ONLY | USE FOR → clearance, contact, and fit verification
 
-    Uses world-space axis-aligned bounds. `gap=0` means the objects either touch or overlap;
-    inspect `relation` to distinguish `contact` from `overlapping`.
+    Uses the current truth path for the pair. For mesh pairs the handler prefers
+    a bounded mesh-surface relation and also reports bbox fallback diagnostics
+    such as `bbox_relation`; otherwise it falls back to bbox-only semantics.
+    `gap=0` still means the measured relation resolved to either contact or
+    overlap, so inspect `relation` plus `measurement_basis` to understand what
+    was actually proven.
 
     Args:
         from_object: Source object name
@@ -2548,7 +2552,8 @@ def scene_measure_gap(
         tolerance: Contact threshold in Blender units
 
     Returns:
-        Structured gap payload with per-axis separation and relation classification.
+        Structured gap payload with relation classification, `measurement_basis`,
+        and bbox fallback diagnostics when available.
     """
 
     def execute():
@@ -2638,7 +2643,10 @@ def scene_measure_overlap(
 
     Workflow: READ-ONLY | USE FOR → collision, clipping, and fit verification
 
-    Uses world-space axis-aligned bounds to classify objects as `overlap`, `touching`, or `disjoint`.
+    Uses the current truth path for the pair. For mesh pairs the handler prefers
+    mesh-surface overlap/contact semantics and keeps bbox overlap/touching
+    diagnostics alongside them; otherwise it falls back to bbox-only
+    classification.
 
     Args:
         from_object: Source object name
@@ -2646,7 +2654,8 @@ def scene_measure_overlap(
         tolerance: Touch/intersection threshold in Blender units
 
     Returns:
-        Structured overlap payload with intersection dimensions and overlap volume.
+        Structured overlap payload with `measurement_basis`, current relation,
+        and bbox fallback diagnostics when available.
     """
 
     def execute():
@@ -2682,9 +2691,11 @@ def scene_assert_contact(
 
     Workflow: READ-ONLY | USE FOR → deterministic fit/contact postconditions
 
-    The first wave asserts contact through one explicit threshold: objects pass when
-    their measured gap is within `max_gap`, and overlap is rejected unless
-    `allow_overlap=True`.
+    Objects pass when the measured gap from the current truth path is within
+    `max_gap`, and overlap is rejected unless `allow_overlap=True`. For mesh
+    pairs this now prefers mesh-surface contact semantics instead of bbox
+    touching alone, while still exposing bbox fallback diagnostics in the
+    assertion details.
 
     Args:
         from_object: Source object name
@@ -2693,7 +2704,8 @@ def scene_assert_contact(
         allow_overlap: If True, overlap is accepted as a passing relation
 
     Returns:
-        Structured assertion payload with pass/fail result, expected values, and actual measured relation.
+        Structured assertion payload with pass/fail result, current measured
+        relation, and `measurement_basis` / bbox diagnostics in `details`.
     """
 
     def execute():

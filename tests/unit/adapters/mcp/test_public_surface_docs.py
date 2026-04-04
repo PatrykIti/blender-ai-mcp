@@ -32,6 +32,9 @@ def test_readme_documents_llm_guided_public_aliases():
         "search_query",
         "Guided Handoff Contract",
         "guided_handoff",
+        "Contact Truth Semantics",
+        "mesh-surface contact/gap semantics",
+        "bbox fallback semantics",
     ):
         assert expected in text
 
@@ -60,6 +63,7 @@ def test_mcp_docs_describe_aliases_and_hidden_arguments():
         "Vision Layer Docs",
         "Guided Handoff Contract",
         "guided_handoff",
+        "bbox-touching but still visibly gapped",
         "scene_hide_object",
         "scene_show_all_objects",
         "scene_isolate_object",
@@ -86,6 +90,7 @@ def test_vision_docs_exist_and_describe_runtime_scope():
         "Multi-View Capture Plan",
         "HYBRID_LOOP_REAL_CREATURE_EVAL.md",
         "CROSS_DOMAIN_REFINEMENT_ROUTING_EVAL.md",
+        "bbox-touching but mesh surfaces still separated",
         "`correction_candidates`",
         "`refinement_route`",
         "`refinement_handoff`",

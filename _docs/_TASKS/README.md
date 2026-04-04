@@ -4,8 +4,8 @@ Curated task board for promoted active work, promoted follow-on work, and select
 
 ## 📊 Statistics
 - **To Do:** 0 tasks
-- **In Progress:** 1 task
-- **Done:** 197
+- **In Progress:** 0 tasks
+- **Done:** 198
 - **Superseded:** 10
 
 ## 📐 Board Scope
@@ -48,7 +48,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Scene & Rig Introspection
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-126](./TASK-126_Mesh_Aware_Contact_Semantics_And_Visual_Fit_Reliability.md) | **Mesh-Aware Contact Semantics and Visual Fit Reliability** | 🔴 High | Fix bbox-only contact truth so macros and hybrid loops stop declaring visual contact when curved meshes still show real gaps |
 
 ### Reconstruction (Mesh, Material, Scene)
 | ID | Title | Priority | Notes |
@@ -64,7 +63,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-126](./TASK-126_Mesh_Aware_Contact_Semantics_And_Visual_Fit_Reliability.md) | **Mesh-Aware Contact Semantics and Visual Fit Reliability** | 🔴 High | In progress after the first mesh-aware contact/gap slice; finish the product contract, macro/hybrid adoption, and broader regression/docs work |
 
 ---
 
@@ -72,6 +70,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-126](./TASK-126_Mesh_Aware_Contact_Semantics_And_Visual_Fit_Reliability.md) | **Mesh-Aware Contact Semantics and Visual Fit Reliability** | 🔴 High | 2026-04-04 |
 | [TASK-125](./TASK-125_MCP_Transport_Mode_Switching_And_Session_Diagnostics.md) | **MCP Transport Mode Switching and Session Diagnostics** | 🔴 High | 2026-04-03 |
 | [TASK-124](./TASK-124_Guided_Session_Goal_And_Reference_Orchestration.md) | **Guided Session Goal and Reference Orchestration** | 🔴 High | 2026-04-03 |
 | [TASK-122-03-07](./TASK-122-03-07_Deterministic_Cross_Domain_Refinement_Routing_And_Sculpt_Exposure.md) | **Deterministic Cross-Domain Refinement Routing and Sculpt Exposure** | 🔴 High | 2026-04-03 |

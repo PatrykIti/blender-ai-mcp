@@ -1,8 +1,13 @@
 # TASK-126-04: Regression Pack and Docs for Visual Fit Truth
 
 **Parent:** [TASK-126](./TASK-126_Mesh_Aware_Contact_Semantics_And_Visual_Fit_Reliability.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done
 **Priority:** 🟡 Medium
+
+**Completion Summary:** Focused unit coverage now protects the bbox-touching
+vs mesh-surface-gap wording path in both hybrid truth-followup and macro truth
+snapshots. Root and subsystem docs now describe the updated contact semantics
+explicitly instead of summarizing them as bbox-only touching.
 
 ## Objective
 

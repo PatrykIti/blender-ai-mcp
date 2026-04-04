@@ -210,6 +210,21 @@ Current structured-contract baseline includes:
 
 That is important for automation, auditing, and future macro/workflow composition.
 
+## Contact Truth Semantics
+
+For contact-sensitive checks on curved or rounded forms, the truth layer now
+distinguishes:
+
+- mesh-surface contact/gap semantics when a bounded mesh-aware path is
+  available
+- bbox fallback semantics when a mesh-aware path is not available
+
+That means a pair can still show bbox contact while the main measured relation
+remains `separated` if the real mesh surfaces still have a visible gap. Guided
+hybrid truth follow-up now carries that distinction forward in operator-facing
+summaries instead of collapsing it into a generic "contact passed/failed"
+claim.
+
 ## Structured Clarification Flow
 
 The guided surface supports missing-input handling as part of the product contract, not as an afterthought.

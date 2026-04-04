@@ -79,6 +79,9 @@ The repo now has the first implementation scaffolding for the vision layer:
 - mesh-pair truth now distinguishes mesh-surface gap/contact from coarse bbox
   touching when the bounded scene truth path can do so, which reduces false
   "contact passed" claims on visibly gapped rounded primitives
+- truth-followup and ranked correction summaries now explicitly call out the
+  common "bbox-touching but mesh surfaces still separated" case, so operator
+  guidance and loop focus do not overclaim visual fit
 - assembled creature collection/object-set scopes now avoid obviously
   accessory-first anchors such as ears or eyes when a more structural primary
   target is available later in the set

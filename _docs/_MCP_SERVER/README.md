@@ -736,6 +736,11 @@ For contact-sensitive truth on curved or rounded objects, the product now distin
 This means a pair can still have `bbox_relation="contact"` while the main
 `relation` reports `separated` if the actual mesh surfaces remain visibly
 gapped.
+
+Macro verification and hybrid truth-followup payloads now also surface that
+split in their operator-facing summaries, so bbox-touching but still visibly gapped
+pairs are called out explicitly instead of being flattened into a generic
+contact success/failure phrase.
 | `scene_assert_dimensions` | `object_name` (str), `expected_dimensions` (array), `tolerance` (float), `world_space` (bool) | Asserts pass/fail dimensions against an expected vector within tolerance. |
 | `scene_assert_containment` | `inner_object` (str), `outer_object` (str), `min_clearance` (float), `tolerance` (float) | Asserts pass/fail containment plus measured clearance/protrusion details. |
 | `scene_assert_symmetry` | `left_object` (str), `right_object` (str), `axis` (str), `mirror_coordinate` (float), `tolerance` (float) | Asserts mirrored symmetry between two objects across a chosen axis. |

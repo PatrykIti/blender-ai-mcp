@@ -2290,22 +2290,57 @@ class MacroToolHandler(IMacroTool):
         return cast(ScaleTargetName, normalized)
 
     def _pair_truth_summary(self, part_object: str, reference_object: str) -> Dict[str, Any]:
-        return {
-            "gap": self._scene.measure_gap(part_object, reference_object),
+        gap = self._scene.measure_gap(part_object, reference_object)
+        contact_assertion = self._scene.assert_contact(
+            part_object, reference_object, max_gap=0.001, allow_overlap=False
+        )
+        summary: Dict[str, Any] = {
+            "gap": gap,
             "alignment": self._scene.measure_alignment(part_object, reference_object, ["X", "Y", "Z"], "CENTER"),
             "overlap": self._scene.measure_overlap(part_object, reference_object),
-            "contact_assertion": self._scene.assert_contact(
-                part_object, reference_object, max_gap=0.001, allow_overlap=False
-            ),
+            "contact_assertion": contact_assertion,
         }
+        contact_semantics = self._contact_semantics_note(gap=gap, contact_assertion=contact_assertion)
+        if contact_semantics is not None:
+            summary["contact_semantics"] = contact_semantics
+        return summary
 
     def _support_truth_summary(self, part_object: str, support_object: str) -> Dict[str, Any]:
-        return {
-            "gap": self._scene.measure_gap(part_object, support_object),
-            "contact_assertion": self._scene.assert_contact(
-                part_object, support_object, max_gap=0.001, allow_overlap=False
-            ),
+        gap = self._scene.measure_gap(part_object, support_object)
+        contact_assertion = self._scene.assert_contact(part_object, support_object, max_gap=0.001, allow_overlap=False)
+        summary: Dict[str, Any] = {
+            "gap": gap,
+            "contact_assertion": contact_assertion,
         }
+        contact_semantics = self._contact_semantics_note(gap=gap, contact_assertion=contact_assertion)
+        if contact_semantics is not None:
+            summary["contact_semantics"] = contact_semantics
+        return summary
+
+    def _contact_semantics_note(
+        self,
+        *,
+        gap: Dict[str, Any] | None,
+        contact_assertion: Dict[str, Any] | None,
+    ) -> str | None:
+        if not isinstance(contact_assertion, dict):
+            return None
+
+        details_value = contact_assertion.get("details")
+        details: Dict[str, Any] = details_value if isinstance(details_value, dict) else {}
+        actual_value = contact_assertion.get("actual")
+        actual: Dict[str, Any] = actual_value if isinstance(actual_value, dict) else {}
+        measurement_basis = str(details.get("measurement_basis") or (gap or {}).get("measurement_basis") or "")
+        bbox_relation = str(details.get("bbox_relation") or (gap or {}).get("bbox_relation") or "")
+        measured_relation = str(actual.get("relation") or (gap or {}).get("relation") or "")
+
+        if (
+            measurement_basis == "mesh_surface"
+            and bbox_relation in {"contact", "touching"}
+            and measured_relation == "separated"
+        ):
+            return "Bounding boxes touch, but the measured mesh surfaces still have a real gap."
+        return None
 
     def _infer_side_from_centers(
         self,

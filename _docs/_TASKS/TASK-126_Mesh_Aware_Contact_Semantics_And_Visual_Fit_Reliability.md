@@ -4,15 +4,22 @@
 **Category:** Truth Layer / Scene Verification  
 **Estimated Effort:** Large  
 **Dependencies:** TASK-116, TASK-117, TASK-122  
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 
-**Progress Summary:** The first implementation slice is now in place:
-mesh-object pairs no longer rely only on bbox-touching for
-`scene_measure_gap(...)`, `scene_measure_overlap(...)`, and
-`scene_assert_contact(...)`. The truth layer now prefers a bounded mesh-surface
-gap/contact path for `MESH` pairs and falls back to bbox semantics only when a
-mesh-aware path is unavailable. Unit and E2E regression coverage were added
-for the canonical "bbox-touching but visibly gapped" case.
+**Completion Summary:** `TASK-126` is now closed end-to-end. The truth layer
+already preferred a bounded mesh-surface path for `scene_measure_gap(...)`,
+`scene_measure_overlap(...)`, and `scene_assert_contact(...)`; this closing
+slice finished the product contract and adoption work by aligning MCP
+docstrings, router metadata, README/docs wording, macro truth snapshots, and
+hybrid truth-followup summaries around one explicit split:
+
+- mesh-surface truth when available
+- bbox fallback semantics when mesh-aware measurement is unavailable
+
+Operator-facing guidance now explicitly calls out the high-risk case where
+bounding boxes touch but real mesh surfaces still have a visible gap, and the
+unit regression pack now protects that wording path in hybrid and macro-facing
+outputs.
 
 ## Objective
 
