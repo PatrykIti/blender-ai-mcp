@@ -37,6 +37,8 @@ This subtask covers:
   - native provider exposure
   - prompt bridge tools
   - guided prompt visibility policy
+- keeping the public prompt wording aligned with the actual `llm-guided`
+  bootstrap/utility surface once the asset is real
 
 ## Acceptance Criteria
 
@@ -46,6 +48,8 @@ This subtask covers:
   prompt surface instead of returning `Unknown prompt`
 - the prompt description/tags position it as generic creature guidance, not a
   squirrel-only hardcoded path
+- the prompt content/docs no longer teach a bootstrap flow that conflicts with
+  the real guided utility path on `llm-guided`
 - prompt docs and public tool summary mention the new exposed asset
 - regression tests fail if the creature prompt silently falls back to
   docs-only visibility again

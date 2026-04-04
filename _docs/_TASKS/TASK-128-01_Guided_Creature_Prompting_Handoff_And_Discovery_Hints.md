@@ -57,6 +57,9 @@ Current audited drift is:
   session state already preserves the active goal, but prompt recommendation
   still only reads phase/profile and therefore cannot steer a creature session
   toward the creature prompt path after `router_set_goal(...)`
+- the public creature prompt wording is still squirrel-heavy and still teaches
+  at least one flow that does not match the real `llm-guided` bootstrap/utility
+  path
 - `guided_manual_build` still points to a broad macro-first recipe and build
   phase visibility expands into a large generic surface
 - the technical seam between `guided_handoff`, session state, session-applied
@@ -110,6 +113,9 @@ This slice does **not** cover:
 - the recommendation slice defines one explicit bounded mechanism for that
   steering: deterministic use of current session goal/context, not ad hoc
   prompt heuristics or free-form history scraping
+- the public creature prompt/docs describe a generic creature contract and
+  teach the sanctioned guided utility/bootstrap path instead of encouraging
+  direct calls to tools that are not directly visible on bootstrap
 - the guided creature handoff exposes a smaller, more relevant build recipe for
   low-poly creature blockout
 - creature handoff narrowing is defined as one explicit session-aware runtime
