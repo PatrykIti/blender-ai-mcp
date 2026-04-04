@@ -123,4 +123,4 @@ This umbrella does **not** cover:
 |------|---------|---------|
 | 1 | [TASK-128-01](./TASK-128-01_Guided_Creature_Prompting_Handoff_And_Discovery_Hints.md) | Expose the right generic creature prompt, narrow the guided tool recipe, and bias discovery toward creature blockout work |
 | 2 | [TASK-128-02](./TASK-128-02_Deterministic_Silhouette_Analysis_And_Typed_Action_Hints.md) | Add deterministic silhouette analysis and typed action hints before introducing heavier segmentation |
-| 3 | Slice C (planned follow-on) | Evaluate an optional part-segmentation sidecar that stays outside the default runtime path |
+| 3 | [TASK-128-03](./TASK-128-03_Optional_Part_Segmentation_Sidecar_And_Part_Aware_Perception.md) | Evaluate an optional part-segmentation sidecar that stays outside the default runtime path |
