@@ -16,6 +16,11 @@ This leaf should define the exact allowed context for prompt recommendation.
 Without that, the runtime will keep falling back to phase/profile-only logic or
 grow ad hoc heuristics that are hard to test.
 
+The key technical ambiguity to close is that the repo already stores the active
+goal in session state, but the task does not yet say explicitly which parts of
+that session state may drive `recommended_prompts` and which parts must stay
+out of scope.
+
 ## Repository Touchpoints
 
 - `server/adapters/mcp/prompts/prompt_catalog.py`
@@ -31,6 +36,10 @@ grow ad hoc heuristics that are hard to test.
 - the allowed inputs are limited to current session/runtime state such as
   active goal wording, phase/profile, and other explicit guided-session fields;
   vision output and free-form search history are not recommendation inputs
+- the task explicitly distinguishes:
+  - session fields that may influence recommendation ranking
+  - session fields that may be persisted for other purposes but must not become
+    recommendation inputs by default
 - docs explain which session signals matter for creature prompt selection
 
 ## Docs To Update

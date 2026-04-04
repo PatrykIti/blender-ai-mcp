@@ -49,10 +49,14 @@ Current audited drift is:
   failure shape:
   - `list_prompts()` still returns the old 7-prompt set without
     `reference_guided_creature_build`
-  - `render_prompt("reference_guided_creature_build")` and
-    `get_prompt(name="reference_guided_creature_build")` still fail as
-    unknown prompts
+- `render_prompt("reference_guided_creature_build")` and
+  `get_prompt(name="reference_guided_creature_build")` still fail as
+  unknown prompts
 - `recommended_prompts` still ignores active goal/domain context
+- the recommendation slice is still under-specified on the real runtime gap:
+  session state already preserves the active goal, but prompt recommendation
+  still only reads phase/profile and therefore cannot steer a creature session
+  toward the creature prompt path after `router_set_goal(...)`
 - `guided_manual_build` still points to a broad macro-first recipe and build
   phase visibility expands into a large generic surface
 - the technical seam between `guided_handoff`, session state, session-applied
@@ -103,6 +107,9 @@ This slice does **not** cover:
   docs-only markdown file outside the real MCP surface
 - recommended prompt selection can favor the creature-build prompt when the
   session goal is creature-oriented
+- the recommendation slice defines one explicit bounded mechanism for that
+  steering: deterministic use of current session goal/context, not ad hoc
+  prompt heuristics or free-form history scraping
 - the guided creature handoff exposes a smaller, more relevant build recipe for
   low-poly creature blockout
 - creature handoff narrowing is defined as one explicit session-aware runtime

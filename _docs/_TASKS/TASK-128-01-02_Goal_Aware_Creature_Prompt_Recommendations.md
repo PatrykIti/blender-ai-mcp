@@ -37,6 +37,14 @@ logic is still deterministic only by:
 This slice extends that deterministic path with bounded goal/session context
 instead of replacing it with fuzzy heuristics.
 
+Current concrete runtime gap:
+
+- session state already preserves the active guided goal
+- `recommended_prompts` still renders from phase/profile only
+- after `router_set_goal(...)`, a creature-oriented session therefore still has
+  no runtime recommendation path that can point the model toward the creature
+  prompt asset or creature-first guided flow
+
 ## Repository Touchpoints
 
 - `server/adapters/mcp/prompts/prompt_catalog.py`
@@ -44,6 +52,7 @@ instead of replacing it with fuzzy heuristics.
 - `server/adapters/mcp/prompts/provider.py`
 - `server/adapters/mcp/session_capabilities.py`
 - `server/adapters/mcp/session_state.py`
+- `tests/unit/adapters/mcp/test_session_phase.py`
 - `tests/unit/adapters/mcp/test_prompt_catalog.py`
 - `tests/unit/adapters/mcp/test_prompt_provider.py`
 - `tests/unit/adapters/mcp/test_prompts_bridge.py`
@@ -53,6 +62,9 @@ instead of replacing it with fuzzy heuristics.
 
 - recommendation rules can use bounded creature-oriented goal/session context
 - the recommendation path stays deterministic and catalog-driven
+- the task defines one explicit runtime completion bar:
+  a creature-oriented session with an active goal can produce a different
+  recommendation set than a non-creature session on the same phase/profile
 - docs explain why creature prompts can now be suggested during guided
   creature sessions
 - tests cover both creature and non-creature guided sessions so Slice A does
