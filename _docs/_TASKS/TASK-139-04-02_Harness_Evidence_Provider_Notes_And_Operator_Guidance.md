@@ -51,6 +51,18 @@ At the same time, the docs need to say clearly:
 
 - `tests/unit/scripts/test_script_tooling.py`
 
+## Docs To Update
+
+- `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/README.md`
+
 ## Changelog Impact
 
 - include in the parent follow-on changelog entry when shipped
+
+## Status / Board Update
+
+- keep board tracking on the parent regression/docs slice unless this leaf is
+  promoted independently
+- when this leaf closes, update the parent task summary so the harness-evidence
+  and operator-guidance alignment is recorded explicitly
