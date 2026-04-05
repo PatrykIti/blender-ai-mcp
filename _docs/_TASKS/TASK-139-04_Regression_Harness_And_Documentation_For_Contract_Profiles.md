@@ -6,9 +6,19 @@
 
 ## Objective
 
-Prove the new contract-profile routing with focused unit/integration coverage
-and document provider/model evidence in a way that distinguishes harness-ranked
+Prove the new contract-profile routing with focused automated coverage and
+document provider/model evidence in a way that distinguishes harness-ranked
 results from operator-reported instability.
+
+This slice intentionally splits into:
+
+- automated regression coverage:
+  - unit seams in `tests/unit/adapters/mcp/`
+  - targeted compare-loop integration/e2e coverage in `tests/e2e/vision/`
+- harness/doc/operator-guidance alignment:
+  - harness config and evidence framing
+  - provider/model notes
+  - client/runtime documentation
 
 ## Business Problem
 
@@ -39,7 +49,8 @@ not drift apart.
 
 ## Acceptance Criteria
 
-- focused unit/integration coverage proves the profile-selection behavior
+- focused automated coverage proves the profile-selection behavior at both unit
+  and targeted compare-loop integration/e2e seams
 - the harness config/build path exposes the same contract-profile assumptions as
   the runtime/docs path
 - provider notes and ranking guidance distinguish harness evidence from
@@ -71,5 +82,5 @@ not drift apart.
 
 | Order | Subtask | Purpose |
 |------|---------|---------|
-| 1 | [TASK-139-04-01](./TASK-139-04-01_Unit_And_Integration_Coverage_For_Profile_Routing.md) | Add focused automated coverage for runtime, prompting, backend, and parser profile routing |
+| 1 | [TASK-139-04-01](./TASK-139-04-01_Unit_And_Integration_Coverage_For_Profile_Routing.md) | Add focused automated coverage for runtime, prompting, backend, and parser profile routing across unit plus targeted compare-loop integration/e2e seams |
 | 2 | [TASK-139-04-02](./TASK-139-04-02_Harness_Evidence_Provider_Notes_And_Operator_Guidance.md) | Align harness evidence, provider notes, and operator guidance with the new contract-profile model |

@@ -10,6 +10,10 @@ Keep the provider/model notes table, operator guidance, and harness evidence in
 sync with the new contract-profile architecture and with the difference between
 scored evidence and operator-reported failures.
 
+This leaf does not own the automated runtime-routing regression seam. Focused
+unit plus targeted compare-loop integration/e2e coverage stays on
+`TASK-139-04-01`.
+
 ## Business Problem
 
 Operator reports are useful and should be captured, but they should not be
