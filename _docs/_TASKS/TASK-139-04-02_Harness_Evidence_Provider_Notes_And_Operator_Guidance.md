@@ -28,6 +28,7 @@ At the same time, the docs need to say clearly:
 - `tests/unit/scripts/test_script_tooling.py`
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - `tests/e2e/vision/`
 
 ## Acceptance Criteria
@@ -44,6 +45,8 @@ At the same time, the docs need to say clearly:
 - update harness config/build expectations so contract-profile-sensitive
   provider paths are represented explicitly
 - update provider/model notes to mention contract-profile-sensitive failures
+- update client-config examples so local and Docker snippets reflect the same
+  contract-profile-sensitive env/config guidance as the runtime docs
 - define harness scenarios for richer assembled reference loops
 - document how operator reports should be recorded before a model is promoted
 
@@ -55,6 +58,7 @@ At the same time, the docs need to say clearly:
 
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 
 ## Changelog Impact
 

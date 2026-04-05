@@ -26,6 +26,7 @@ profile selection:
 - `server/adapters/mcp/vision/runtime.py`
 - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
 - `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 
 ## Acceptance Criteria
 
@@ -55,6 +56,7 @@ profile selection:
 ## Docs To Update
 
 - `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 
 ## Changelog Impact
 

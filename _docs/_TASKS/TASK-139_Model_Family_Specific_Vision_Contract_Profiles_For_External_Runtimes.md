@@ -4,7 +4,7 @@
 **Priority:** 🔴 High
 **Category:** Vision Runtime / External Provider Reliability
 **Estimated Effort:** Large
-**Dependencies:** TASK-121-04-01-05, TASK-123-01, TASK-132
+**Dependencies:** TASK-121-04-01-03, TASK-121-04-01-04, TASK-121-04-01-05, TASK-123-01
 
 ## Objective
 
@@ -51,6 +51,14 @@ That leaves the product with an avoidable failure mode:
 ## Current Runtime Baseline
 
 The repo already has a useful bounded vision architecture:
+
+This umbrella builds on the already-delivered baseline from:
+
+- `TASK-121-04-01-03` for the OpenRouter provider path
+- `TASK-121-04-01-04` for the Google AI Studio / Gemini provider path
+- `TASK-121-04-01-05` for the Gemini narrow compare contract and parse-repair
+- `TASK-123-01` for explicit external-provider precedence and generic-fallback
+  resolution
 
 - typed runtime config for local, MLX, and external providers
 - provider-specific transport handling for OpenRouter and Google AI Studio
@@ -143,12 +151,14 @@ This umbrella does **not** cover:
 - `tests/e2e/vision/`
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - `_docs/_TASKS/README.md`
 
 ## Docs To Update
 
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - `_docs/_TASKS/README.md`
 
 ## Tests To Add/Update

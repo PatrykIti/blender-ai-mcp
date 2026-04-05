@@ -29,6 +29,7 @@ explicit override instead of relying only on downstream typed models.
 - `server/adapters/mcp/vision/config.py`
 - `server/adapters/mcp/vision/runtime.py`
 - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 
 ## Acceptance Criteria
 
@@ -53,6 +54,7 @@ explicit override instead of relying only on downstream typed models.
 ## Docs To Update
 
 - `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 
 ## Changelog Impact
 

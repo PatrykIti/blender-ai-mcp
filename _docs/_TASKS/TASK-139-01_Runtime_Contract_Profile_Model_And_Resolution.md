@@ -32,6 +32,7 @@ generic OpenAI-compatible contract path.
 - `server/adapters/mcp/vision/runtime.py`
 - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
 - `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 
 ## Acceptance Criteria
 
@@ -46,6 +47,7 @@ generic OpenAI-compatible contract path.
 ## Docs To Update
 
 - `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 
 ## Tests To Add/Update
 
