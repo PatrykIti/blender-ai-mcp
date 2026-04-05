@@ -33,6 +33,7 @@ def test_streamable_openrouter_shell_script_contains_required_runtime_env():
         "MCP_STREAMABLE_HTTP_PATH",
         "BLENDER_RPC_HOST",
         "VISION_EXTERNAL_PROVIDER=openrouter",
+        'VISION_EXTERNAL_CONTRACT_PROFILE="${VISION_EXTERNAL_CONTRACT_PROFILE}"',
         'VISION_OPENROUTER_MODEL="${VISION_OPENROUTER_MODEL}"',
     ):
         assert expected in script
@@ -373,6 +374,8 @@ def test_vision_harness_can_build_openrouter_backend_config():
             "/tmp/before.png",
             "--external-provider",
             "openrouter",
+            "--external-contract-profile",
+            "google_family_compare",
             "--openrouter-model",
             "google/gemma-3-27b-it:free",
             "--openrouter-api-key-env",
@@ -387,6 +390,7 @@ def test_vision_harness_can_build_openrouter_backend_config():
     config = module._config_for_backend(args, "openai_compatible_external")
 
     assert config.VISION_EXTERNAL_PROVIDER == "openrouter"
+    assert config.VISION_EXTERNAL_CONTRACT_PROFILE == "google_family_compare"
     assert config.VISION_OPENROUTER_MODEL == "google/gemma-3-27b-it:free"
     assert config.VISION_OPENROUTER_API_KEY_ENV == "OPENROUTER_API_KEY"
     assert config.VISION_OPENROUTER_SITE_URL == "https://example.com"
@@ -406,6 +410,8 @@ def test_vision_harness_can_build_gemini_backend_config():
             "/tmp/before.png",
             "--external-provider",
             "google_ai_studio",
+            "--external-contract-profile",
+            "generic_full",
             "--gemini-model",
             "gemini-2.5-flash",
             "--gemini-api-key-env",
@@ -416,5 +422,6 @@ def test_vision_harness_can_build_gemini_backend_config():
     config = module._config_for_backend(args, "openai_compatible_external")
 
     assert config.VISION_EXTERNAL_PROVIDER == "google_ai_studio"
+    assert config.VISION_EXTERNAL_CONTRACT_PROFILE == "generic_full"
     assert config.VISION_GEMINI_MODEL == "gemini-2.5-flash"
     assert config.VISION_GEMINI_API_KEY_ENV == "GEMINI_API_KEY"

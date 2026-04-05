@@ -2,8 +2,13 @@
 
 **Parent:** [TASK-139](./TASK-139_Model_Family_Specific_Vision_Contract_Profiles_For_External_Runtimes.md)
 **Depends On:** [TASK-139-01](./TASK-139-01_Runtime_Contract_Profile_Model_And_Resolution.md), [TASK-139-02](./TASK-139-02_Prompt_Schema_And_Request_Routing_By_Contract_Profile.md), [TASK-139-03](./TASK-139-03_Parser_Repair_And_Diagnostics_By_Contract_Profile.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟠 High
+
+**Completion Summary:** Added focused runtime/prompt/parser/backend regression
+coverage, one end-to-end external compare-path test in `tests/e2e/vision/`,
+and synchronized harness/script/docs guidance around explicit and auto-resolved
+external `vision_contract_profile` behavior.
 
 ## Objective
 

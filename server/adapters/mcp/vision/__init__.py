@@ -31,6 +31,8 @@ from .capture_runtime import (
 )
 from .config import (
     VisionBackendKind,
+    VisionContractProfile,
+    VisionExternalProviderName,
     VisionMLXLocalConfig,
     VisionOpenAICompatibleConfig,
     VisionRuntimeConfig,
@@ -70,6 +72,8 @@ __all__ = [
     "VisionBackend",
     "VisionBackendKind",
     "VisionBackendUnavailableError",
+    "VisionContractProfile",
+    "VisionExternalProviderName",
     "VisionImageInput",
     "LazyVisionBackendResolver",
     "MLXLocalVisionBackend",

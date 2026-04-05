@@ -1,8 +1,12 @@
 # TASK-139-02-01: Vision-Contract-Profile-Aware Prompting Abstraction
 
 **Parent:** [TASK-139-02](./TASK-139-02_Prompt_Schema_And_Request_Routing_By_Contract_Profile.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** `prompting.py` now owns one explicit
+vision-contract-profile-aware helper seam. Narrow compare prompt/schema
+selection no longer depends only on `provider_name == "google_ai_studio"`.
 
 ## Objective
 

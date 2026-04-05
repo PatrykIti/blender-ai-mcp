@@ -1,8 +1,13 @@
 # TASK-139-01-01: Vision Contract Profile Vocabulary and Typed Config Surface
 
 **Parent:** [TASK-139-01](./TASK-139-01_Runtime_Contract_Profile_Model_And_Resolution.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** Added the explicit
+`VISION_EXTERNAL_CONTRACT_PROFILE` env/config seam plus typed
+`vision_contract_profile` fields on the external vision runtime config so
+downstream code can consume the resolved contract directly.
 
 ## Objective
 

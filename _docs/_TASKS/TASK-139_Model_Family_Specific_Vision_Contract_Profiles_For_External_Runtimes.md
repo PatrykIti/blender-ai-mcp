@@ -1,10 +1,17 @@
 # TASK-139: Model-Family-Specific Vision Contract Profiles for External Runtimes
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** Vision Runtime / External Provider Reliability
 **Estimated Effort:** Large
 **Dependencies:** TASK-121-04-01-03, TASK-121-04-01-04, TASK-121-04-01-05, TASK-123-01
+
+**Completion Summary:** External vision runtimes now resolve one explicit
+`vision_contract_profile` independently from transport/provider identity.
+OpenRouter-hosted Google-family models can reuse the narrow staged-compare
+prompt/schema/parser path without pretending to be Google AI Studio, while
+operator docs, harness config, diagnostics, and MCP client examples now expose
+the same override/auto-match story.
 
 ## Terminology Guardrail
 

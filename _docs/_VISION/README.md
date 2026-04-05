@@ -18,6 +18,8 @@ The repo now has the first implementation scaffolding for the vision layer:
 
 - lazy, optional vision runtime config and backend resolution
 - local and external backend families
+- explicit external `vision_contract_profile` resolution separate from
+  provider transport identity
 - bounded `VisionAssistContract` / `VisionAssistantContract`
 - richer optional result semantics for later correction loops:
   - `shape_mismatches`
@@ -94,6 +96,9 @@ The repo now has the first implementation scaffolding for the vision layer:
   target is available later in the set
 - vision `recommended_checks` now keep only canonical MCP tool ids; invented
   labels are dropped and a small alias map is normalized onto canonical names
+- external compare-path diagnostics and `VisionAssistContract` payloads now
+  expose the selected `vision_contract_profile`, so operator-visible failures
+  can distinguish contract selection from transport/provider wiring
 - hybrid-loop stage compare now also applies model-aware budget control:
   - trims pairwise truth scope when needed
   - trims ranked correction candidates when needed
@@ -194,20 +199,69 @@ Preliminary runtime status:
 
 Current practical provider/model notes on this branch:
 
-| Provider Path | Model / Family | Current Status | Notes |
-|---|---|---|---|
-| `mlx_local` | `mlx-community/Qwen3-VL-4B-Instruct-4bit` | Recommended local baseline | Current repo-validated local baseline for bounded vision work. Strong on the real viewport squirrel scenarios and usable for staged reference-guided correction loops. |
-| `openai_compatible_external` via OpenRouter | `x-ai/grok-4.20-multi-agent` | Strong external candidate for iterative compare | Live branch validation shows this model returns full structured output on `reference_iterate_stage_checkpoint(...)` and produces actionable `correction_focus` / mismatch guidance. |
-| `openai_compatible_external` via OpenRouter | `qwen/qwen3-vl-32b-instruct` | Weak on current smoke usage | Provider path works, but this model performed poorly on the simple `macro_finish_form` smoke and is not a recommended default from current branch evidence. |
-| `openai_compatible_external` via OpenRouter | `qwen/qwen-vl-plus` | Not recommended for structured stage loops | One operator-reported squirrel reconstruction run on `blender-ai-mcp-guided-docker-openrouter` returned prose instead of the required JSON envelope on stages 1-3 of `reference_iterate_stage_checkpoint(...)`, then returned valid JSON only on stage 4. Treat this model as unstable for structured assembled/reference-guided iterate loops and not suitable as a default recommendation. |
-| `openai_compatible_external` via OpenRouter | `qwen-vl-max` | Operator-reported instability on richer assembled loops | One operator-reported `blender-ai-mcp-guided-docker-openrouter` squirrel run reported that later `reference_iterate_stage_checkpoint(...)` stages with a larger assembled multi-part target degraded into prose instead of the expected JSON payload, which surfaced as an orchestrator-side structured-output failure. Treat this model as unstable for richer assembled stage loops until the behavior is reproduced and ranked in the formal harness. |
-| `openai_compatible_external` via Google AI Studio / Gemini | `gemini-3-flash-preview` | Supported for staged compare | Gemini now uses a provider-specific narrow compare contract for `reference_compare_*` and `reference_iterate_stage_checkpoint(...)` flows, plus provider-specific parse repair for near-JSON / truncated compare responses. |
+| Provider Path | Model / Family | Evidence Type | Contract Profile | Current Status | Notes |
+|---|---|---|---|---|---|
+| `mlx_local` | `mlx-community/Qwen3-VL-4B-Instruct-4bit` | Harness-ranked + repo tests | n/a | Recommended local baseline | Current repo-validated local baseline for bounded vision work. Strong on the real viewport squirrel scenarios and usable for staged reference-guided correction loops. |
+| `openai_compatible_external` via OpenRouter | `x-ai/grok-4.20-multi-agent` | Harness-ranked / live branch validation | `generic_full` | Strong external candidate for iterative compare | Live branch validation shows this model returns full structured output on `reference_iterate_stage_checkpoint(...)` and produces actionable `correction_focus` / mismatch guidance. |
+| `openai_compatible_external` via OpenRouter | `qwen/qwen3-vl-32b-instruct` | Harness-ranked smoke | `generic_full` | Weak on current smoke usage | Provider path works, but this model performed poorly on the simple `macro_finish_form` smoke and is not a recommended default from current branch evidence. |
+| `openai_compatible_external` via OpenRouter | Google-family ids such as `gemma` / `gemini` / `learnlm` | Automated routing coverage | `google_family_compare` | Supported contract path; per-model ranking still pending | Transport stays on the OpenRouter branch, but staged compare/reference-guided checkpoint flows can now reuse the same narrow compare contract and near-JSON repair path as other Google-family runtimes. Do not promote one specific model from routing support alone; require harness evidence first. |
+| `openai_compatible_external` via OpenRouter | `qwen/qwen-vl-plus` | Operator-reported | `generic_full` | Not recommended for structured stage loops | One operator-reported squirrel reconstruction run on `blender-ai-mcp-guided-docker-openrouter` returned prose instead of the required JSON envelope on stages 1-3 of `reference_iterate_stage_checkpoint(...)`, then returned valid JSON only on stage 4. Treat this model as unstable for structured assembled/reference-guided iterate loops and not suitable as a default recommendation. |
+| `openai_compatible_external` via OpenRouter | `qwen-vl-max` | Operator-reported | `generic_full` | Operator-reported instability on richer assembled loops | One operator-reported `blender-ai-mcp-guided-docker-openrouter` squirrel run reported that later `reference_iterate_stage_checkpoint(...)` stages with a larger assembled multi-part target degraded into prose instead of the expected JSON payload, which surfaced as an orchestrator-side structured-output failure. Treat this model as unstable for richer assembled stage loops until the behavior is reproduced and ranked in the formal harness. |
+| `openai_compatible_external` via Google AI Studio / Gemini | `gemini-3-flash-preview` | Harness-ranked + automated coverage | `google_family_compare` | Supported for staged compare | Google AI Studio / Gemini remains on its provider-specific transport branch, but now shares the same explicit Google-family compare contract model as OpenRouter-hosted Google-family ids. |
 
 Interpretation:
 
 - `mlx_local` remains the safest current default for local reference-driven work
 - OpenRouter is worth keeping enabled; `x-ai/grok-4.20-multi-agent` is the current strongest external branch candidate for iterative compare loops
-- Gemini transport/provider wiring is in place and the staged compare path now runs on a provider-specific narrow contract instead of the older generic external contract
+- Google-family compare behavior is now chosen by `vision_contract_profile`, not only by transport provider identity
+- treat `Operator-reported` rows as instability notes, not as formal promotion evidence; promote a model/provider combination only after harness-ranked or explicitly reproduced automated evidence
+
+## External Vision Contract Profiles
+
+The external vision runtime now resolves one explicit `vision_contract_profile`
+separately from the transport/provider path.
+
+Current vocabulary:
+
+- `generic_full`
+  - full bounded JSON contract for general external vision use
+- `google_family_compare`
+  - narrow staged-compare contract plus near-JSON repair for compatible
+    Google-family compare flows
+
+Resolution precedence:
+
+1. explicit `VISION_EXTERNAL_CONTRACT_PROFILE` override
+2. deterministic model-family match on external model ids such as
+   `gemma` / `gemini` / `learnlm`
+3. provider default
+   - current `google_ai_studio` default resolves to
+     `google_family_compare`
+4. fallback to `generic_full`
+
+Important runtime note:
+
+- `VISION_EXTERNAL_PROVIDER` still selects transport/provider wiring such as
+  OpenRouter vs Google AI Studio
+- `vision_contract_profile` selects prompt/schema/parser behavior
+- `google_family_compare` only narrows reference-guided checkpoint / staged
+  compare flows; non-checkpoint external requests still keep the full JSON
+  contract even when the resolved profile is Google-family
+- harness outputs, parser diagnostics, and `VisionAssistContract` payloads now
+  expose the resolved `vision_contract_profile` so failures can be traced back
+  to contract routing versus transport/provider issues
+
+Operator reporting rule before model promotion:
+
+- if an operator reports instability, record:
+  - provider path
+  - exact model id
+  - resolved `vision_contract_profile`
+  - whether the failure happened on a simple checkpoint compare or a richer
+    assembled stage loop
+  - whether the issue has been reproduced in `scripts/vision_harness.py` or a
+    repo-tracked automated test
+- do not promote a model/provider combination from operator reports alone
 
 ## What Improved
 
@@ -285,6 +339,7 @@ The harness is intended for:
 - recording raw-output diagnostics such as:
   - `container_shape`: `json`, `fenced_json`, `embedded_json`, `prose`
   - `payload_shape`: `contract`, `summary_alias`, `input_echo`, `label_map`, `unsupported_json`, `no_json`
+  - `vision_contract_profile`: resolved external compare-contract selection
 - catching prompt/parse failures before they are hidden inside a larger MCP flow
 
 OpenRouter can now be used through the same `openai_compatible_external` path.
@@ -295,6 +350,7 @@ Minimal setup:
 export VISION_ENABLED=1
 export VISION_PROVIDER=openai_compatible_external
 export VISION_EXTERNAL_PROVIDER=openrouter
+export VISION_EXTERNAL_CONTRACT_PROFILE="google_family_compare"
 export VISION_OPENROUTER_MODEL="google/gemma-3-27b-it:free"
 export VISION_OPENROUTER_API_KEY_ENV=OPENROUTER_API_KEY
 export OPENROUTER_API_KEY="<your-openrouter-key>"
@@ -306,6 +362,10 @@ Config precedence note:
   provider profile and default base URL
 - model/auth values resolve from `VISION_OPENROUTER_*` first and then fall back
   to generic `VISION_EXTERNAL_*`
+- if `VISION_EXTERNAL_CONTRACT_PROFILE` is unset, common Google-family model
+  ids such as `gemma` or `gemini` auto-match to
+  `google_family_compare`; the explicit env above keeps the compare-contract
+  assumption visible in reproducible harness runs
 
 Optional OpenRouter ranking headers:
 
@@ -320,6 +380,7 @@ Harness example:
 poetry run python scripts/vision_harness.py \
   --backend openai_compatible_external \
   --external-provider openrouter \
+  --external-contract-profile google_family_compare \
   --openrouter-model "google/gemma-3-27b-it:free" \
   --openrouter-api-key-env OPENROUTER_API_KEY \
   --golden-json tests/fixtures/vision_eval/squirrel_head_to_face_camera_perspective/golden.json
@@ -334,6 +395,7 @@ Minimal setup:
 export VISION_ENABLED=1
 export VISION_PROVIDER=openai_compatible_external
 export VISION_EXTERNAL_PROVIDER=google_ai_studio
+export VISION_EXTERNAL_CONTRACT_PROFILE="google_family_compare"
 export VISION_GEMINI_MODEL="gemini-2.5-flash"
 export VISION_GEMINI_API_KEY_ENV=GEMINI_API_KEY
 export GEMINI_API_KEY="<your-google-ai-studio-key>"
@@ -345,6 +407,9 @@ Config precedence note:
   AI Studio provider profile and default base URL
 - model/auth values resolve from `VISION_GEMINI_*` first and then fall back to
   generic `VISION_EXTERNAL_*`
+- `VISION_EXTERNAL_CONTRACT_PROFILE` is optional here because the provider
+  default already resolves to `google_family_compare`, but keeping it explicit
+  can help when reproducing compare-path evidence across harness runs
 
 Harness example:
 
@@ -352,6 +417,7 @@ Harness example:
 poetry run python scripts/vision_harness.py \
   --backend openai_compatible_external \
   --external-provider google_ai_studio \
+  --external-contract-profile google_family_compare \
   --gemini-model "gemini-2.5-flash" \
   --gemini-api-key-env GEMINI_API_KEY \
   --golden-json tests/fixtures/vision_eval/squirrel_face_to_body_camera_perspective/golden.json
@@ -382,6 +448,11 @@ Hybrid-loop regression guidance:
   - `correction_candidates`
   - `truth_followup`
   - `correction_focus`
+- keep the eval pack split between:
+  - simpler checkpoint/compare-path reproduction
+  - richer assembled loops using `target_objects=[...]` or
+    `collection_name=...`, because model stability can diverge sharply between
+    those two shapes
 
 Current repo-tracked first-pass scenarios:
 

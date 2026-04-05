@@ -2,8 +2,13 @@
 
 **Parent:** [TASK-139-03](./TASK-139-03_Parser_Repair_And_Diagnostics_By_Contract_Profile.md)
 **Depends On:** [TASK-139-03-01](./TASK-139-03-01_Profile_Aware_Parse_And_Diagnose_Flow.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** OpenRouter-hosted Google-family compare flows can now
+reuse the narrow compare repair path, and invalid JSON failures now expose the
+resolved `vision_contract_profile` so operators can separate contract mismatch
+from transport/provider issues.
 
 ## Objective
 

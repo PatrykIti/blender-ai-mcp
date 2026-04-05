@@ -1,8 +1,13 @@
 # TASK-139-01: Runtime Vision Contract Profile Model and Resolution
 
 **Parent:** [TASK-139](./TASK-139_Model_Family_Specific_Vision_Contract_Profiles_For_External_Runtimes.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** Added one typed external `vision_contract_profile`
+surface through `Config`, `VisionOpenAICompatibleConfig`, and
+`VisionRuntimeConfig`, including deterministic precedence for explicit
+override, model-family auto-match, provider default, and generic fallback.
 
 ## Objective
 

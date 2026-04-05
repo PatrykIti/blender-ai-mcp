@@ -237,6 +237,9 @@ def _config_for_backend(args: Any, backend: str) -> Config:
         "VISION_EXTERNAL_API_KEY": args.external_api_key if backend == "openai_compatible_external" else None,
         "VISION_EXTERNAL_API_KEY_ENV": args.external_api_key_env if backend == "openai_compatible_external" else None,
         "VISION_EXTERNAL_PROVIDER": args.external_provider if backend == "openai_compatible_external" else "generic",
+        "VISION_EXTERNAL_CONTRACT_PROFILE": (
+            args.external_contract_profile if backend == "openai_compatible_external" else None
+        ),
         "VISION_OPENROUTER_BASE_URL": args.openrouter_base_url if backend == "openai_compatible_external" else None,
         "VISION_OPENROUTER_MODEL": args.openrouter_model if backend == "openai_compatible_external" else None,
         "VISION_OPENROUTER_API_KEY": args.openrouter_api_key if backend == "openai_compatible_external" else None,
@@ -271,6 +274,7 @@ async def _run_backend(
     entry = {
         "backend": backend_name,
         "model_name": runtime.active_model_name,
+        "vision_contract_profile": runtime.active_vision_contract_profile,
         "status": "success",
         "result": result,
     }
@@ -293,6 +297,7 @@ async def _run(args: Any) -> list[dict[str, Any]]:
             entry: dict[str, Any] = {
                 "backend": backend_name,
                 "model_name": None,
+                "vision_contract_profile": None,
                 "status": "error",
                 "error": str(exc),
             }
@@ -332,6 +337,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--external-provider",
         choices=["generic", "openrouter", "google_ai_studio"],
         default=os.getenv("VISION_EXTERNAL_PROVIDER", "generic"),
+    )
+    parser.add_argument(
+        "--external-contract-profile",
+        choices=["generic_full", "google_family_compare"],
+        default=os.getenv("VISION_EXTERNAL_CONTRACT_PROFILE"),
     )
     parser.add_argument("--openrouter-base-url", default=os.getenv("VISION_OPENROUTER_BASE_URL"))
     parser.add_argument("--openrouter-model", default=os.getenv("VISION_OPENROUTER_MODEL"))

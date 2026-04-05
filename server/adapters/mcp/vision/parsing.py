@@ -10,7 +10,8 @@ import re
 from typing import Any
 
 from .backend import VisionRequest
-from .prompting import expected_json_keys
+from .config import VisionContractProfile
+from .prompting import expected_json_keys, resolve_vision_contract_profile
 
 _SUMMARY_ALIASES = ("comparison", "summary", "analysis", "description", "result")
 _VISIBLE_CHANGES_ALIASES = ("changes", "visible_differences", "differences")
@@ -248,6 +249,21 @@ def _is_reference_guided_checkpoint(request: VisionRequest) -> bool:
     return has_reference and any(hint in prompt_hint for hint in _REFERENCE_GUIDED_CHECKPOINT_HINTS)
 
 
+def _uses_google_family_compare_contract(
+    *,
+    vision_contract_profile: VisionContractProfile | None = None,
+    provider_name: str | None = None,
+    request: VisionRequest | None = None,
+) -> bool:
+    resolved_profile = resolve_vision_contract_profile(
+        vision_contract_profile=vision_contract_profile,
+        provider_name=provider_name,
+    )
+    return (
+        resolved_profile == "google_family_compare" and request is not None and _is_reference_guided_checkpoint(request)
+    )
+
+
 def _coerce_issue_list(value: Any) -> list[dict[str, Any]]:
     if not isinstance(value, list):
         return []
@@ -437,10 +453,17 @@ def _has_contract_signal(parsed: dict[str, Any]) -> bool:
 def _has_contract_signal_for(
     parsed: dict[str, Any],
     *,
+    vision_contract_profile: VisionContractProfile | None = None,
     request: VisionRequest | None = None,
     provider_name: str | None = None,
 ) -> bool:
-    expected = set(expected_json_keys(provider_name=provider_name, request=request))
+    expected = set(
+        expected_json_keys(
+            vision_contract_profile=vision_contract_profile,
+            provider_name=provider_name,
+            request=request,
+        )
+    )
     aliases = set(
         _SUMMARY_ALIASES
         + _VISIBLE_CHANGES_ALIASES
@@ -457,6 +480,7 @@ def _has_contract_signal_for(
 def _payload_shape_for(
     parsed: dict[str, Any],
     *,
+    vision_contract_profile: VisionContractProfile | None = None,
     request: VisionRequest | None = None,
     provider_name: str | None = None,
 ) -> str:
@@ -464,11 +488,23 @@ def _payload_shape_for(
         return "input_echo"
     if _looks_like_label_map(parsed):
         return "label_map"
-    if any(key in parsed for key in expected_json_keys(provider_name=provider_name, request=request)):
+    if any(
+        key in parsed
+        for key in expected_json_keys(
+            vision_contract_profile=vision_contract_profile,
+            provider_name=provider_name,
+            request=request,
+        )
+    ):
         return "contract"
     if any(key in parsed for key in _SUMMARY_ALIASES):
         return "summary_alias"
-    if _has_contract_signal_for(parsed, request=request, provider_name=provider_name):
+    if _has_contract_signal_for(
+        parsed,
+        vision_contract_profile=vision_contract_profile,
+        request=request,
+        provider_name=provider_name,
+    ):
         return "alias_contract"
     return "unsupported_json"
 
@@ -534,11 +570,16 @@ def _payload_shape(parsed: dict[str, Any]) -> str:
 def diagnose_vision_output_text(
     text: str,
     *,
+    vision_contract_profile: VisionContractProfile | None = None,
     request: VisionRequest | None = None,
     provider_name: str | None = None,
 ) -> dict[str, Any]:
     """Classify one raw backend output before contract normalization."""
 
+    resolved_contract_profile = resolve_vision_contract_profile(
+        vision_contract_profile=vision_contract_profile,
+        provider_name=provider_name,
+    )
     stripped = text.strip()
     preview = stripped[:280]
     candidates = [unwrap_json_text(text)]
@@ -550,7 +591,11 @@ def diagnose_vision_output_text(
         try:
             payload = json.loads(candidate)
         except json.JSONDecodeError:
-            if provider_name == "google_ai_studio":
+            if _uses_google_family_compare_contract(
+                vision_contract_profile=resolved_contract_profile,
+                provider_name=provider_name,
+                request=request,
+            ):
                 try:
                     repaired_candidate = _repair_gemini_compare_json_candidate(candidate)
                 except json.JSONDecodeError:
@@ -561,8 +606,14 @@ def diagnose_vision_output_text(
                         keys = sorted(str(key) for key in payload.keys())
                         return {
                             "container_shape": _json_container_shape(text, repaired_candidate),
-                            "payload_shape": _payload_shape_for(payload, request=request, provider_name=provider_name),
+                            "payload_shape": _payload_shape_for(
+                                payload,
+                                vision_contract_profile=resolved_contract_profile,
+                                request=request,
+                                provider_name=provider_name,
+                            ),
                             "top_level_keys": keys,
+                            "vision_contract_profile": resolved_contract_profile,
                             "raw_preview": preview,
                         }
             continue
@@ -570,8 +621,14 @@ def diagnose_vision_output_text(
             keys = sorted(str(key) for key in payload.keys())
             return {
                 "container_shape": _json_container_shape(text, candidate),
-                "payload_shape": _payload_shape_for(payload, request=request, provider_name=provider_name),
+                "payload_shape": _payload_shape_for(
+                    payload,
+                    vision_contract_profile=resolved_contract_profile,
+                    request=request,
+                    provider_name=provider_name,
+                ),
                 "top_level_keys": keys,
+                "vision_contract_profile": resolved_contract_profile,
                 "raw_preview": preview,
             }
 
@@ -579,6 +636,7 @@ def diagnose_vision_output_text(
         "container_shape": "prose",
         "payload_shape": "no_json",
         "top_level_keys": [],
+        "vision_contract_profile": resolved_contract_profile,
         "raw_preview": preview,
     }
 
@@ -587,10 +645,15 @@ def parse_vision_output_text(
     text: str,
     request: VisionRequest,
     *,
+    vision_contract_profile: VisionContractProfile | None = None,
     provider_name: str | None = None,
 ) -> dict[str, Any]:
     """Parse and minimally repair backend output into bounded vision payload fields."""
 
+    resolved_contract_profile = resolve_vision_contract_profile(
+        vision_contract_profile=vision_contract_profile,
+        provider_name=provider_name,
+    )
     candidates = [unwrap_json_text(text)]
     extracted = extract_json_object_candidate(candidates[0])
     if extracted and extracted not in candidates:
@@ -601,7 +664,11 @@ def parse_vision_output_text(
         try:
             payload = json.loads(candidate)
         except json.JSONDecodeError:
-            if provider_name == "google_ai_studio":
+            if _uses_google_family_compare_contract(
+                vision_contract_profile=resolved_contract_profile,
+                provider_name=provider_name,
+                request=request,
+            ):
                 try:
                     repaired_candidate = _repair_gemini_compare_json_candidate(candidate)
                 except json.JSONDecodeError:
@@ -625,7 +692,12 @@ def parse_vision_output_text(
     if _looks_like_label_map(parsed):
         return _repair_label_map_payload(parsed, request)
 
-    if not _has_contract_signal_for(parsed, request=request, provider_name=provider_name):
+    if not _has_contract_signal_for(
+        parsed,
+        vision_contract_profile=resolved_contract_profile,
+        request=request,
+        provider_name=provider_name,
+    ):
         return _repair_unrecognized_payload(parsed, request)
 
     return _normalize_payload(parsed, request)

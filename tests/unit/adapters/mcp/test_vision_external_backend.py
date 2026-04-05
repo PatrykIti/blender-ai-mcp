@@ -49,6 +49,7 @@ def _config(**overrides) -> Config:
         "VISION_EXTERNAL_API_KEY": None,
         "VISION_EXTERNAL_API_KEY_ENV": None,
         "VISION_EXTERNAL_PROVIDER": "generic",
+        "VISION_EXTERNAL_CONTRACT_PROFILE": None,
         "VISION_OPENROUTER_BASE_URL": None,
         "VISION_OPENROUTER_MODEL": None,
         "VISION_OPENROUTER_API_KEY": None,
@@ -146,6 +147,7 @@ def test_external_backend_analyze_returns_structured_payload(monkeypatch, tmp_pa
 
     assert result["backend_kind"] == "openai_compatible_external"
     assert result["model_name"] == "gemma-3-27b-vision"
+    assert result["vision_contract_profile"] == "google_family_compare"
     assert result["goal_summary"] == "Closer to the intended rounded housing shape."
     assert result["input_summary"]["before_image_count"] == 1
     assert captured["url"] == "http://localhost:8000/v1/chat/completions"
@@ -225,6 +227,7 @@ def test_external_backend_supports_openrouter_headers_and_default_endpoint(monke
     assert captured["json"]["response_format"]["type"] == "json_schema"
     assert captured["json"]["response_format"]["json_schema"]["name"] == "vision_assist"
     assert captured["json"]["response_format"]["json_schema"]["strict"] is True
+    assert "visible_changes" in captured["json"]["response_format"]["json_schema"]["schema"]["properties"]
 
 
 def test_external_backend_supports_google_ai_studio_generate_content(monkeypatch, tmp_path):
@@ -270,11 +273,87 @@ def test_external_backend_supports_google_ai_studio_generate_content(monkeypatch
     result = asyncio.run(backend.analyze(request))
 
     assert result["backend_kind"] == "openai_compatible_external"
+    assert result["vision_contract_profile"] == "google_family_compare"
     assert captured["url"] == "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
     assert captured["headers"]["x-goog-api-key"] == "gemini-secret"
     assert captured["json"]["generationConfig"]["responseMimeType"] == "application/json"
     assert "responseJsonSchema" in captured["json"]["generationConfig"]
     assert "contents" in captured["json"]
+
+
+def test_openrouter_google_family_compare_flow_uses_narrow_schema_and_prompt(monkeypatch, tmp_path):
+    image_path = tmp_path / "reference.png"
+    image_path.write_bytes(b"fake-png")
+
+    runtime = build_vision_runtime_config(
+        _config(
+            VISION_EXTERNAL_PROVIDER="openrouter",
+            VISION_EXTERNAL_BASE_URL=None,
+            VISION_EXTERNAL_MODEL=None,
+            VISION_OPENROUTER_MODEL="google/gemma-3-27b-it:free",
+            VISION_OPENROUTER_API_KEY="openrouter-secret",
+        )
+    )
+    backend = OpenAICompatibleVisionBackend(runtime)
+    request = VisionRequest(
+        goal="low poly squirrel",
+        target_object="Squirrel",
+        images=(VisionImageInput(path=str(image_path), role="reference", label="ref_front"),),
+        prompt_hint="comparison_mode=stage_checkpoint_vs_reference",
+    )
+
+    captured: dict = {}
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda timeout=None: _FakeAsyncClient(
+            response=_FakeResponse(
+                {
+                    "choices": [
+                        {
+                            "message": {
+                                "content": json.dumps(
+                                    {
+                                        "goal_summary": "Closer overall.",
+                                        "reference_match_summary": "Head shape is closer.",
+                                        "shape_mismatches": ["Head silhouette is still too spherical."],
+                                        "proportion_mismatches": ["Tail still reads too small."],
+                                        "correction_focus": ["Head silhouette"],
+                                        "next_corrections": ["Flatten the head silhouette slightly."],
+                                    }
+                                )
+                            }
+                        }
+                    ]
+                }
+            ),
+            captured=captured,
+        ),
+    )
+
+    result = asyncio.run(backend.analyze(request))
+
+    schema = captured["json"]["response_format"]["json_schema"]["schema"]
+    system_text = captured["json"]["messages"][0]["content"]
+    payload_text = captured["json"]["messages"][1]["content"][0]["text"]
+
+    assert result["goal_summary"] == "Closer overall."
+    assert result["visible_changes"] == []
+    assert result["vision_contract_profile"] == "google_family_compare"
+    assert captured["url"] == "https://openrouter.ai/api/v1/chat/completions"
+    assert set(schema["properties"]) == {
+        "goal_summary",
+        "reference_match_summary",
+        "shape_mismatches",
+        "proportion_mismatches",
+        "correction_focus",
+        "next_corrections",
+    }
+    assert (
+        "Do not return visible_changes, likely_issues, recommended_checks, confidence, or captures_used." in system_text
+    )
+    assert "OUTPUT_TEMPLATE:" in payload_text
+    assert '"shape_mismatches"' in payload_text
 
 
 def test_google_ai_studio_compare_flow_uses_narrow_schema_and_prompt(monkeypatch, tmp_path):
@@ -339,6 +418,7 @@ def test_google_ai_studio_compare_flow_uses_narrow_schema_and_prompt(monkeypatch
 
     assert result["goal_summary"] == "Closer overall."
     assert result["visible_changes"] == []
+    assert result["vision_contract_profile"] == "google_family_compare"
     assert set(schema["properties"]) == {
         "goal_summary",
         "reference_match_summary",
@@ -372,6 +452,39 @@ def test_external_backend_invalid_json_error_includes_diagnostics(monkeypatch, t
     )
 
     with pytest.raises(VisionBackendUnavailableError, match="container_shape=prose"):
+        asyncio.run(backend.analyze(request))
+
+
+def test_external_backend_invalid_json_error_includes_contract_profile(monkeypatch, tmp_path):
+    image_path = tmp_path / "reference.png"
+    image_path.write_bytes(b"fake-png")
+
+    runtime = build_vision_runtime_config(
+        _config(
+            VISION_EXTERNAL_PROVIDER="openrouter",
+            VISION_EXTERNAL_BASE_URL=None,
+            VISION_EXTERNAL_MODEL=None,
+            VISION_OPENROUTER_MODEL="google/gemma-3-27b-it:free",
+            VISION_OPENROUTER_API_KEY="openrouter-secret",
+        )
+    )
+    backend = OpenAICompatibleVisionBackend(runtime)
+    request = VisionRequest(
+        goal="goal",
+        images=(VisionImageInput(path=str(image_path), role="reference"),),
+        prompt_hint="comparison_mode=stage_checkpoint_vs_reference",
+    )
+
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda timeout=None: _FakeAsyncClient(
+            response=_FakeResponse({"choices": [{"message": {"content": "not-json"}}]}),
+            captured={},
+        ),
+    )
+
+    with pytest.raises(VisionBackendUnavailableError, match="vision_contract_profile=google_family_compare"):
         asyncio.run(backend.analyze(request))
 
 

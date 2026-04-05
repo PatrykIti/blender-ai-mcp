@@ -2,8 +2,12 @@
 
 **Parent:** [TASK-139](./TASK-139_Model_Family_Specific_Vision_Contract_Profiles_For_External_Runtimes.md)
 **Depends On:** [TASK-139-01](./TASK-139-01_Runtime_Contract_Profile_Model_And_Resolution.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** Prompt/system/schema selection is now driven by the
+resolved `vision_contract_profile` plus request kind, and the external backend
+consumes that seam while preserving provider-correct transport branches.
 
 ## Objective
 

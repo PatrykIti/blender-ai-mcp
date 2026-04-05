@@ -116,6 +116,7 @@ class VisionAssistContract(MCPContract):
     backend_kind: Literal["transformers_local", "mlx_local", "openai_compatible_external", "unknown"] = "unknown"
     backend_name: str | None = None
     model_name: str | None = None
+    vision_contract_profile: Literal["generic_full", "google_family_compare"] | None = None
     goal_summary: str
     reference_match_summary: str | None = None
     visible_changes: list[str]

@@ -17,9 +17,9 @@ Documentation for the MCP Server (Client Side).
   - Canonical policy for layered tools, small public surfaces, hidden atomic tools, `set_goal`-first orchestration, and vision/assert boundaries.
 - **[Vision Layer Docs](../_VISION/README.md)**
   - Working notes for vision runtime choices, capture bundles, reference context, and macro/workflow integration.
-  - Includes a provider/model notes table covering the current MLX, OpenRouter, and Gemini status, including the provider-specific Gemini compare contract path.
+  - Includes provider/model notes plus the external `vision_contract_profile` model, so transport provider selection stays separate from prompt/schema/parser routing.
 - **[MCP Client Config Examples](./MCP_CLIENT_CONFIG_EXAMPLES.md)**
-  - Ready-to-paste local MCP client config examples for `llm-guided`, legacy surfaces, MLX vision, OpenRouter, and Gemini.
+  - Ready-to-paste local MCP client config examples for `llm-guided`, legacy surfaces, MLX vision, OpenRouter, and Gemini, including optional external contract-profile overrides.
 - **[Router / Runtime Responsibility Boundaries](../_ROUTER/RESPONSIBILITY_BOUNDARIES.md)**
   - Defines the role split between FastMCP platform features, LaBSE semantics, router safety policy, and inspection/assertion truth.
   - Use this before changing discovery, semantic matching, correction logic, or structured validation behavior.

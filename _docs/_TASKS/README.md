@@ -3,9 +3,9 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 8 tasks
+- **To Do:** 7 tasks
 - **In Progress:** 2 tasks
-- **Done:** 204
+- **Done:** 205
 - **Superseded:** 10
 
 ## 📐 Board Scope
@@ -61,7 +61,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Vision & Hybrid Loop
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-139](./TASK-139_Model_Family_Specific_Vision_Contract_Profiles_For_External_Runtimes.md) | **Model-Family-Specific Vision Contract Profiles for External Runtimes** | 🔴 High | Board-level vision-runtime follow-on for decoupling prompt/schema/parser behavior from provider-only routing, especially for OpenRouter-hosted Google-family models in staged compare loops. |
 | [TASK-128-02](./TASK-128-02_Deterministic_Silhouette_Analysis_And_Typed_Action_Hints.md) | **Deterministic Silhouette Analysis and Typed Action Hints** | 🔴 High | Second execution slice for mask-based shape metrics and tool-oriented corrective hints. |
 | [TASK-128-03](./TASK-128-03_Optional_Part_Segmentation_Sidecar_And_Part_Aware_Perception.md) | **Optional Part-Segmentation Sidecar and Part-Aware Perception** | 🟡 Medium | Third execution slice for an opt-in segmentation module that produces part masks, crops, and landmarks without becoming a default runtime dependency. |
 
@@ -80,6 +79,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-139](./TASK-139_Model_Family_Specific_Vision_Contract_Profiles_For_External_Runtimes.md) | **Model-Family-Specific Vision Contract Profiles for External Runtimes** | 🔴 High | 2026-04-05 |
 | [TASK-134](./TASK-134_Stage_Compare_Error_Response_Hardening.md) | **Stage Compare Error Response Hardening** | 🟠 High | 2026-04-05 |
 | [TASK-133](./TASK-133_Call_Tool_Proxy_Error_Semantics_Hardening.md) | **call_tool Proxy Error Semantics Hardening** | 🟠 High | 2026-04-05 |
 | [TASK-132](./TASK-132_Hybrid_Budget_Mesh_Overlap_And_Guided_Readiness_Review_Followups.md) | **Hybrid Budget, Mesh Overlap, and Guided Readiness Review Follow-Ups** | 🔴 High | 2026-04-05 |

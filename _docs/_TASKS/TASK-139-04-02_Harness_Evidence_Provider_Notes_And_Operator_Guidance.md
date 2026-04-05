@@ -2,8 +2,14 @@
 
 **Parent:** [TASK-139-04](./TASK-139-04_Regression_Harness_And_Documentation_For_Contract_Profiles.md)
 **Depends On:** [TASK-139-04-01](./TASK-139-04-01_Unit_And_Integration_Coverage_For_Profile_Routing.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟠 High
+
+**Completion Summary:** Harness config, launch helpers, provider notes, MCP
+client examples, and vision operator docs now describe the same external
+contract-profile model, including explicit override knobs, auto-match
+behavior, and the distinction between harness-ranked evidence and
+operator-reported instability.
 
 ## Objective
 

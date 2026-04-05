@@ -19,6 +19,7 @@ from .backend import VisionBackend, VisionBackendUnavailableError
 from .backends import create_vision_backend
 from .config import (
     VisionBackendKind,
+    VisionContractProfile,
     VisionMLXLocalConfig,
     VisionOpenAICompatibleConfig,
     VisionRuntimeConfig,
@@ -27,6 +28,31 @@ from .config import (
 
 _OPENROUTER_DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
 _GOOGLE_AI_STUDIO_DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
+_GOOGLE_FAMILY_MODEL_MARKERS = ("gemini", "gemma", "learnlm")
+
+
+def _looks_like_google_family_model(model_name: str | None) -> bool:
+    normalized = str(model_name or "").strip().lower()
+    if not normalized:
+        return False
+    return any(marker in normalized for marker in _GOOGLE_FAMILY_MODEL_MARKERS)
+
+
+def _resolve_vision_contract_profile(
+    *,
+    explicit_contract_profile: str | None,
+    provider_name: str,
+    model_name: str | None,
+) -> VisionContractProfile:
+    if explicit_contract_profile == "generic_full":
+        return "generic_full"
+    if explicit_contract_profile == "google_family_compare":
+        return "google_family_compare"
+    if _looks_like_google_family_model(model_name):
+        return "google_family_compare"
+    if provider_name == "google_ai_studio":
+        return "google_family_compare"
+    return "generic_full"
 
 
 def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
@@ -112,8 +138,14 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
             site_url = None
             site_name = None
 
+        vision_contract_profile = _resolve_vision_contract_profile(
+            explicit_contract_profile=config.VISION_EXTERNAL_CONTRACT_PROFILE,
+            provider_name=external_provider_name,
+            model_name=external_model,
+        )
         external_config = VisionOpenAICompatibleConfig(
             provider_name=external_provider_name,
+            vision_contract_profile=vision_contract_profile,
             base_url=external_base_url,
             model=external_model,
             api_key=external_api_key,

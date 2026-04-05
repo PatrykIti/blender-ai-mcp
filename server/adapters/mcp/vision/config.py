@@ -10,6 +10,8 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 VisionBackendKind = Literal["transformers_local", "mlx_local", "openai_compatible_external"]
+VisionExternalProviderName = Literal["generic", "openrouter", "google_ai_studio"]
+VisionContractProfile = Literal["generic_full", "google_family_compare"]
 
 
 class VisionTransformersLocalConfig(BaseModel):
@@ -36,7 +38,8 @@ class VisionOpenAICompatibleConfig(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    provider_name: Literal["generic", "openrouter", "google_ai_studio"] = "generic"
+    provider_name: VisionExternalProviderName = "generic"
+    vision_contract_profile: VisionContractProfile = "generic_full"
     base_url: str | None = None
     model: str | None = None
     api_key: str | None = None
@@ -132,3 +135,11 @@ class VisionRuntimeConfig(BaseModel):
         if isinstance(active, VisionMLXLocalConfig):
             return active.model_id or active.model_path
         return active.model
+
+    @property
+    def active_vision_contract_profile(self) -> VisionContractProfile | None:
+        """Return the resolved external vision contract profile for diagnostics."""
+
+        if self.provider != "openai_compatible_external" or self.openai_compatible_external is None:
+            return None
+        return self.openai_compatible_external.vision_contract_profile

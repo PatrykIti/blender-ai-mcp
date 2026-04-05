@@ -1,8 +1,13 @@
 # TASK-139-03-01: Vision-Contract-Profile-Aware Parse and Diagnose Flow
 
 **Parent:** [TASK-139-03](./TASK-139-03_Parser_Repair_And_Diagnostics_By_Contract_Profile.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** `parse_vision_output_text(...)` and
+`diagnose_vision_output_text(...)` now take `vision_contract_profile` as a
+first-class input while preserving the existing container/payload failure
+classification surfaces.
 
 ## Objective
 

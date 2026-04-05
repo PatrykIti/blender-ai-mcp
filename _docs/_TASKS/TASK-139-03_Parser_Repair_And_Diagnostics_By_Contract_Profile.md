@@ -2,8 +2,13 @@
 
 **Parent:** [TASK-139](./TASK-139_Model_Family_Specific_Vision_Contract_Profiles_For_External_Runtimes.md)
 **Depends On:** [TASK-139-01](./TASK-139-01_Runtime_Contract_Profile_Model_And_Resolution.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** Parser/diagnostic entry points now accept the resolved
+`vision_contract_profile`, compare-flow repair is reusable across providers for
+Google-family profiles, and diagnostics/error suffixes now surface the
+selected contract profile explicitly.
 
 ## Objective
 

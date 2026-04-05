@@ -2,8 +2,13 @@
 
 **Parent:** [TASK-139-01](./TASK-139-01_Runtime_Contract_Profile_Model_And_Resolution.md)
 **Depends On:** [TASK-139-01-01](./TASK-139-01-01_Contract_Profile_Vocabulary_And_Typed_Config_Surface.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** Runtime resolution now applies one explicit precedence
+order: `VISION_EXTERNAL_CONTRACT_PROFILE` override first, Google-family
+model-id auto-match second, provider default third, and `generic_full`
+fallback last.
 
 ## Objective
 

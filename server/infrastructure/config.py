@@ -64,6 +64,10 @@ class Config(BaseSettings):
         default="generic",
         description="Named external vision provider profile: generic|openrouter|google_ai_studio",
     )
+    VISION_EXTERNAL_CONTRACT_PROFILE: str | None = Field(
+        default=None,
+        description="Optional external vision contract profile override: generic_full|google_family_compare",
+    )
     VISION_OPENROUTER_BASE_URL: str | None = Field(
         default=None,
         description="Optional OpenRouter base URL override for vision; defaults to https://openrouter.ai/api/v1",
@@ -123,6 +127,8 @@ class Config(BaseSettings):
             )
         if self.VISION_EXTERNAL_PROVIDER not in {"generic", "openrouter", "google_ai_studio"}:
             raise ValueError("VISION_EXTERNAL_PROVIDER must be one of: generic, openrouter, google_ai_studio")
+        if self.VISION_EXTERNAL_CONTRACT_PROFILE not in {None, "generic_full", "google_family_compare"}:
+            raise ValueError("VISION_EXTERNAL_CONTRACT_PROFILE must be one of: generic_full, google_family_compare")
         return self
 
 
@@ -164,6 +170,7 @@ def get_config() -> Config:
         VISION_EXTERNAL_API_KEY=os.getenv("VISION_EXTERNAL_API_KEY") or None,
         VISION_EXTERNAL_API_KEY_ENV=os.getenv("VISION_EXTERNAL_API_KEY_ENV") or None,
         VISION_EXTERNAL_PROVIDER=os.getenv("VISION_EXTERNAL_PROVIDER", "generic"),
+        VISION_EXTERNAL_CONTRACT_PROFILE=os.getenv("VISION_EXTERNAL_CONTRACT_PROFILE") or None,
         VISION_OPENROUTER_BASE_URL=os.getenv("VISION_OPENROUTER_BASE_URL") or None,
         VISION_OPENROUTER_MODEL=os.getenv("VISION_OPENROUTER_MODEL") or None,
         VISION_OPENROUTER_API_KEY=os.getenv("VISION_OPENROUTER_API_KEY") or None,

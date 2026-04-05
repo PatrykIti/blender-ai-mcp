@@ -43,7 +43,7 @@ The business idea formalized in `TASK-113` is simple:
 - **Workflow tools** are bounded multi-step process tools with explicit reporting, not open-ended "do anything" endpoints.
 - **Goal-first orchestration** keeps sessions anchored to an active intent instead of making the model rediscover context on every turn.
 - **Vision assists interpretation**, while deterministic measurement and assertions provide the final truth layer.
-- **Pluggable vision runtimes** now cover local MLX plus external OpenRouter and Google AI Studio / Gemini provider paths behind the same bounded contract.
+- **Pluggable vision runtimes** now cover local MLX plus external OpenRouter and Google AI Studio / Gemini provider paths, with model-family-specific external contract profiles for prompt/schema/parser behavior.
 
 This is what turns the project from "Blender tools exposed over MCP" into a usable AI control product for modeling pipelines.
 
@@ -154,7 +154,13 @@ Current short version:
 
 - **Local default:** `mlx_local` with a Qwen VL 4B-class model path; current repo-validated baseline is `mlx-community/Qwen3-VL-4B-Instruct-4bit`
 - **External iterative compare candidate:** OpenRouter with `x-ai/grok-4.20-multi-agent`
-- **External Gemini compare path:** Google AI Studio / Gemini now uses a provider-specific narrow compare contract for staged iterative/reference-guided flows
+- **External Google-family compare path:** OpenRouter-hosted Google-family models plus Google AI Studio / Gemini now share the same narrow staged-compare contract through resolved `vision_contract_profile` routing
+
+External vision runtime note:
+
+- `VISION_EXTERNAL_PROVIDER` selects the transport/provider branch
+- `VISION_EXTERNAL_CONTRACT_PROFILE` optionally overrides the prompt/schema/parser contract for external compare flows
+- when the override is unset, the runtime auto-matches Google-family model ids such as `gemma` / `gemini` / `learnlm`, then falls back to provider defaults
 
 Detailed per-provider table:
 

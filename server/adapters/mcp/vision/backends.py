@@ -16,7 +16,7 @@ from typing import Any
 import httpx
 
 from .backend import VisionBackend, VisionBackendUnavailableError, VisionRequest
-from .config import VisionRuntimeConfig
+from .config import VisionContractProfile, VisionRuntimeConfig
 from .parsing import diagnose_vision_output_text, parse_vision_output_text
 from .prompting import (
     build_local_vision_payload_text,
@@ -103,11 +103,13 @@ def _normalize_assist_payload(
     model_name: str,
     request: VisionRequest,
     parsed: dict[str, Any],
+    vision_contract_profile: VisionContractProfile | None = None,
 ) -> dict[str, Any]:
     return {
         "backend_kind": backend_kind,
         "backend_name": backend_kind,
         "model_name": model_name,
+        "vision_contract_profile": vision_contract_profile,
         "goal_summary": str(parsed.get("goal_summary") or ""),
         "reference_match_summary": parsed.get("reference_match_summary"),
         "visible_changes": list(parsed.get("visible_changes") or []),
@@ -136,11 +138,13 @@ def _diagnostics_suffix(diagnostics: dict[str, Any] | None) -> str:
         return ""
     container_shape = diagnostics.get("container_shape")
     payload_shape = diagnostics.get("payload_shape")
+    vision_contract_profile = diagnostics.get("vision_contract_profile")
     preview = str(diagnostics.get("raw_preview") or "").strip().replace("\n", " ")
     preview = preview[:160]
     parts = [
         f"container_shape={container_shape}" if container_shape else None,
         f"payload_shape={payload_shape}" if payload_shape else None,
+        f"vision_contract_profile={vision_contract_profile}" if vision_contract_profile else None,
         f"preview={preview}" if preview else None,
     ]
     suffix = ", ".join(part for part in parts if part)
@@ -309,6 +313,7 @@ class TransformersLocalVisionBackend(VisionBackend):
             model_name=self.model_name,
             request=request,
             parsed=parsed_content,
+            vision_contract_profile=None,
         )
 
 
@@ -427,6 +432,7 @@ class MLXLocalVisionBackend(VisionBackend):
             model_name=self.model_name,
             request=request,
             parsed=parsed_content,
+            vision_contract_profile=None,
         )
 
 
@@ -482,11 +488,13 @@ class OpenAICompatibleVisionBackend(VisionBackend):
         return headers
 
     def _build_request_payload(self, request: VisionRequest) -> dict[str, Any]:
+        vision_contract_profile = self._external_config.vision_contract_profile
         if self._external_config.provider_name == "google_ai_studio":
             parts: list[dict[str, Any]] = [
                 {
                     "text": build_vision_payload_text(
                         request,
+                        vision_contract_profile=vision_contract_profile,
                         provider_name=self._external_config.provider_name,
                     )
                 }
@@ -509,6 +517,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
                         {
                             "text": build_vision_system_prompt(
                                 backend_kind=self.backend_kind,
+                                vision_contract_profile=vision_contract_profile,
                                 provider_name=self._external_config.provider_name,
                                 request=request,
                             ),
@@ -521,6 +530,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
                     "maxOutputTokens": self._runtime_config.max_tokens,
                     "responseMimeType": "application/json",
                     "responseJsonSchema": build_vision_response_json_schema(
+                        vision_contract_profile=vision_contract_profile,
                         provider_name=self._external_config.provider_name,
                         request=request,
                     ),
@@ -530,7 +540,11 @@ class OpenAICompatibleVisionBackend(VisionBackend):
         content: list[dict[str, Any]] = [
             {
                 "type": "text",
-                "text": build_vision_payload_text(request),
+                "text": build_vision_payload_text(
+                    request,
+                    vision_contract_profile=vision_contract_profile,
+                    provider_name=self._external_config.provider_name,
+                ),
             }
         ]
 
@@ -552,7 +566,11 @@ class OpenAICompatibleVisionBackend(VisionBackend):
                 "json_schema": {
                     "name": "vision_assist",
                     "strict": True,
-                    "schema": build_vision_response_json_schema(),
+                    "schema": build_vision_response_json_schema(
+                        vision_contract_profile=vision_contract_profile,
+                        provider_name=self._external_config.provider_name,
+                        request=request,
+                    ),
                 },
             }
         else:
@@ -568,6 +586,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
                     "role": "system",
                     "content": build_vision_system_prompt(
                         backend_kind=self.backend_kind,
+                        vision_contract_profile=vision_contract_profile,
                         provider_name=self._external_config.provider_name,
                         request=request,
                     ),
@@ -609,12 +628,14 @@ class OpenAICompatibleVisionBackend(VisionBackend):
         try:
             self._last_output_diagnostics = diagnose_vision_output_text(
                 content,
+                vision_contract_profile=self._external_config.vision_contract_profile,
                 request=request,
                 provider_name=self._external_config.provider_name,
             )
             parsed_content = parse_vision_output_text(
                 content,
                 request,
+                vision_contract_profile=self._external_config.vision_contract_profile,
                 provider_name=self._external_config.provider_name,
             )
         except (json.JSONDecodeError, ValueError) as exc:
@@ -628,6 +649,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
             model_name=self.model_name,
             request=request,
             parsed=parsed_content,
+            vision_contract_profile=self._external_config.vision_contract_profile,
         )
 
 

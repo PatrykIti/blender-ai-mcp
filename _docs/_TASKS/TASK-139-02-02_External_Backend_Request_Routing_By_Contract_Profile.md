@@ -2,8 +2,13 @@
 
 **Parent:** [TASK-139-02](./TASK-139-02_Prompt_Schema_And_Request_Routing_By_Contract_Profile.md)
 **Depends On:** [TASK-139-02-01](./TASK-139-02-01_Profile_Aware_Prompting_Abstraction.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** `OpenAICompatibleVisionBackend` now passes the
+resolved `vision_contract_profile` into prompt/schema helpers while keeping
+OpenRouter and Google AI Studio request transport, auth, and payload branches
+separate and correct.
 
 ## Objective
 

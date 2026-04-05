@@ -52,6 +52,7 @@ def _base_config(**overrides) -> Config:
         "VISION_EXTERNAL_API_KEY": None,
         "VISION_EXTERNAL_API_KEY_ENV": None,
         "VISION_EXTERNAL_PROVIDER": "generic",
+        "VISION_EXTERNAL_CONTRACT_PROFILE": None,
         "VISION_OPENROUTER_BASE_URL": None,
         "VISION_OPENROUTER_MODEL": None,
         "VISION_OPENROUTER_API_KEY": None,
@@ -99,6 +100,7 @@ def test_build_vision_runtime_config_supports_external_openai_compatible_backend
     assert runtime.enabled is True
     assert runtime.provider == "openai_compatible_external"
     assert runtime.active_model_name == "gemma-3-27b-vision"
+    assert runtime.active_vision_contract_profile == "google_family_compare"
     assert runtime.openai_compatible_external is not None
     assert runtime.openai_compatible_external.base_url == "http://localhost:8000/v1"
 
@@ -121,8 +123,10 @@ def test_build_vision_runtime_config_supports_openrouter_aliases():
     assert runtime.enabled is True
     assert runtime.provider == "openai_compatible_external"
     assert runtime.active_model_name == "google/gemma-3-27b-it:free"
+    assert runtime.active_vision_contract_profile == "google_family_compare"
     assert runtime.openai_compatible_external is not None
     assert runtime.openai_compatible_external.provider_name == "openrouter"
+    assert runtime.openai_compatible_external.vision_contract_profile == "google_family_compare"
     assert runtime.openai_compatible_external.base_url == "https://openrouter.ai/api/v1"
     assert runtime.openai_compatible_external.api_key_env == "OPENROUTER_API_KEY"
     assert runtime.openai_compatible_external.site_url == "https://example.com"
@@ -143,6 +147,7 @@ def test_explicit_openrouter_provider_supports_generic_model_fallback():
 
     assert runtime.openai_compatible_external is not None
     assert runtime.openai_compatible_external.provider_name == "openrouter"
+    assert runtime.openai_compatible_external.vision_contract_profile == "google_family_compare"
     assert runtime.openai_compatible_external.base_url == "https://openrouter.ai/api/v1"
     assert runtime.openai_compatible_external.model == "google/gemma-3-27b-it:free"
     assert runtime.openai_compatible_external.api_key_env == "OPENROUTER_API_KEY"
@@ -164,8 +169,10 @@ def test_build_vision_runtime_config_supports_google_ai_studio_aliases():
     assert runtime.enabled is True
     assert runtime.provider == "openai_compatible_external"
     assert runtime.active_model_name == "gemini-2.5-flash"
+    assert runtime.active_vision_contract_profile == "google_family_compare"
     assert runtime.openai_compatible_external is not None
     assert runtime.openai_compatible_external.provider_name == "google_ai_studio"
+    assert runtime.openai_compatible_external.vision_contract_profile == "google_family_compare"
     assert runtime.openai_compatible_external.base_url == "https://generativelanguage.googleapis.com/v1beta"
     assert runtime.openai_compatible_external.api_key_env == "GEMINI_API_KEY"
 
@@ -185,6 +192,7 @@ def test_explicit_google_ai_studio_provider_supports_generic_model_fallback():
 
     assert runtime.openai_compatible_external is not None
     assert runtime.openai_compatible_external.provider_name == "google_ai_studio"
+    assert runtime.openai_compatible_external.vision_contract_profile == "google_family_compare"
     assert runtime.openai_compatible_external.base_url == "https://generativelanguage.googleapis.com/v1beta"
     assert runtime.openai_compatible_external.model == "gemini-2.5-flash"
     assert runtime.openai_compatible_external.api_key_env == "GOOGLE_API_KEY"
@@ -204,6 +212,7 @@ def test_explicit_google_provider_wins_even_if_openrouter_model_env_is_present()
     assert runtime.openai_compatible_external is not None
     assert runtime.openai_compatible_external.provider_name == "google_ai_studio"
     assert runtime.active_model_name == "gemini-2.5-flash"
+    assert runtime.active_vision_contract_profile == "google_family_compare"
 
 
 def test_explicit_openrouter_provider_wins_even_if_gemini_env_is_present():
@@ -220,6 +229,75 @@ def test_explicit_openrouter_provider_wins_even_if_gemini_env_is_present():
     assert runtime.openai_compatible_external is not None
     assert runtime.openai_compatible_external.provider_name == "openrouter"
     assert runtime.active_model_name == "google/gemma-3-27b-it:free"
+    assert runtime.active_vision_contract_profile == "google_family_compare"
+
+
+def test_generic_external_provider_defaults_to_generic_full_contract_profile():
+    config = _base_config(
+        VISION_ENABLED=True,
+        VISION_PROVIDER="openai_compatible_external",
+        VISION_EXTERNAL_PROVIDER="generic",
+        VISION_EXTERNAL_BASE_URL="http://localhost:8000/v1",
+        VISION_EXTERNAL_MODEL="qwen-vl-max",
+    )
+
+    runtime = build_vision_runtime_config(config)
+
+    assert runtime.openai_compatible_external is not None
+    assert runtime.openai_compatible_external.provider_name == "generic"
+    assert runtime.openai_compatible_external.vision_contract_profile == "generic_full"
+    assert runtime.active_vision_contract_profile == "generic_full"
+
+
+def test_generic_external_provider_auto_matches_google_family_models_to_compare_profile():
+    config = _base_config(
+        VISION_ENABLED=True,
+        VISION_PROVIDER="openai_compatible_external",
+        VISION_EXTERNAL_PROVIDER="generic",
+        VISION_EXTERNAL_BASE_URL="http://localhost:8000/v1",
+        VISION_EXTERNAL_MODEL="models/gemini-2.5-flash",
+    )
+
+    runtime = build_vision_runtime_config(config)
+
+    assert runtime.openai_compatible_external is not None
+    assert runtime.openai_compatible_external.provider_name == "generic"
+    assert runtime.openai_compatible_external.vision_contract_profile == "google_family_compare"
+    assert runtime.active_vision_contract_profile == "google_family_compare"
+
+
+def test_explicit_contract_profile_override_wins_over_google_family_auto_match():
+    config = _base_config(
+        VISION_ENABLED=True,
+        VISION_PROVIDER="openai_compatible_external",
+        VISION_EXTERNAL_PROVIDER="openrouter",
+        VISION_OPENROUTER_MODEL="google/gemma-3-27b-it:free",
+        VISION_EXTERNAL_CONTRACT_PROFILE="generic_full",
+    )
+
+    runtime = build_vision_runtime_config(config)
+
+    assert runtime.openai_compatible_external is not None
+    assert runtime.openai_compatible_external.provider_name == "openrouter"
+    assert runtime.openai_compatible_external.vision_contract_profile == "generic_full"
+    assert runtime.active_vision_contract_profile == "generic_full"
+
+
+def test_google_ai_studio_provider_defaults_to_google_family_compare_when_model_is_not_google_named():
+    config = _base_config(
+        VISION_ENABLED=True,
+        VISION_PROVIDER="openai_compatible_external",
+        VISION_EXTERNAL_PROVIDER="google_ai_studio",
+        VISION_EXTERNAL_MODEL="custom-vision-endpoint",
+        VISION_EXTERNAL_API_KEY_ENV="GOOGLE_API_KEY",
+    )
+
+    runtime = build_vision_runtime_config(config)
+
+    assert runtime.openai_compatible_external is not None
+    assert runtime.openai_compatible_external.provider_name == "google_ai_studio"
+    assert runtime.openai_compatible_external.vision_contract_profile == "google_family_compare"
+    assert runtime.active_vision_contract_profile == "google_family_compare"
 
 
 def test_disabled_runtime_does_not_build_external_profile_from_provider_name_alone():
@@ -304,6 +382,11 @@ def test_enabled_external_runtime_requires_endpoint_target():
 def test_config_rejects_unknown_external_provider():
     with pytest.raises(ValueError, match="VISION_EXTERNAL_PROVIDER must be one of"):
         _base_config(VISION_EXTERNAL_PROVIDER="mystery")
+
+
+def test_config_rejects_unknown_external_contract_profile():
+    with pytest.raises(ValueError, match="VISION_EXTERNAL_CONTRACT_PROFILE must be one of"):
+        _base_config(VISION_EXTERNAL_CONTRACT_PROFILE="mystery")
 
 
 def test_enabled_mlx_runtime_requires_model_source():

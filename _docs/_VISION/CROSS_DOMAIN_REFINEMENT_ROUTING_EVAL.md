@@ -20,6 +20,7 @@ For refinement-routing review, inspect outputs in this order:
 4. `correction_candidates`
 5. `truth_followup`
 6. `correction_focus`
+7. `vision_contract_profile` when the compare path was external
 
 Why:
 
@@ -156,6 +157,8 @@ Treat these as routing regressions:
 - `refinement_route` disagreeing with obvious truth/macro evidence without a
   deterministic reason
 - `refinement_handoff` reintroducing brush-style or event-style sculpt paths
+- external compare runs silently shifting from `google_family_compare` back to
+  `generic_full` during the same reproduced scenario
 
 ## Prompting Guidance
 
@@ -166,5 +169,7 @@ For cross-domain operator prompts:
   `refinement_handoff.recommended_tools` before any sculpt step
 - if the selected family is `macro` or `modeling_mesh`, do not jump to sculpt
   just because a shape mismatch exists
+- when the compare path is external, check `vision_contract_profile` before
+  blaming routing results on transport/provider failures alone
 - keep viewport/camera review and truth checks as the authority over whether a
   refinement actually fixed the problem

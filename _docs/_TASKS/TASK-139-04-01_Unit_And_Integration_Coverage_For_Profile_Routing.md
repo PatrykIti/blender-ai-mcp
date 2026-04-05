@@ -1,8 +1,13 @@
 # TASK-139-04-01: Unit and Targeted Integration Coverage for Vision-Contract-Profile Routing
 
 **Parent:** [TASK-139-04](./TASK-139-04_Regression_Harness_And_Documentation_For_Contract_Profiles.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟠 High
+
+**Completion Summary:** Added unit coverage for runtime resolution, prompt
+selection, parser repair, and backend routing, plus a targeted
+`tests/e2e/vision/` path that exercises OpenRouter Google-family compare
+contract routing through the real resolver/runner/backend stack.
 
 ## Objective
 

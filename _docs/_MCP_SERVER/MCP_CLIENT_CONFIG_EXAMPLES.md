@@ -89,6 +89,7 @@ Uses the external-runtime path with OpenRouter-specific config aliases:
         "VISION_ENABLED": "true",
         "VISION_PROVIDER": "openai_compatible_external",
         "VISION_EXTERNAL_PROVIDER": "openrouter",
+        "VISION_EXTERNAL_CONTRACT_PROFILE": "google_family_compare",
         "VISION_OPENROUTER_MODEL": "google/gemma-3-27b-it:free",
         "VISION_OPENROUTER_API_KEY_ENV": "OPENROUTER_API_KEY",
         "OPENROUTER_API_KEY": "<YOUR_OPENROUTER_KEY>",
@@ -122,6 +123,7 @@ Uses the same external-runtime path with the Gemini provider profile:
         "VISION_ENABLED": "true",
         "VISION_PROVIDER": "openai_compatible_external",
         "VISION_EXTERNAL_PROVIDER": "google_ai_studio",
+        "VISION_EXTERNAL_CONTRACT_PROFILE": "google_family_compare",
         "VISION_GEMINI_MODEL": "gemini-2.5-flash",
         "VISION_GEMINI_API_KEY_ENV": "GEMINI_API_KEY",
         "GEMINI_API_KEY": "<YOUR_GEMINI_KEY>",
@@ -226,6 +228,7 @@ semantics and will not work reliably.
         "-e", "VISION_ENABLED=true",
         "-e", "VISION_PROVIDER=openai_compatible_external",
         "-e", "VISION_EXTERNAL_PROVIDER=openrouter",
+        "-e", "VISION_EXTERNAL_CONTRACT_PROFILE=google_family_compare",
         "-e", "VISION_OPENROUTER_MODEL=google/gemma-3-27b-it:free",
         "-e", "VISION_OPENROUTER_API_KEY_ENV=OPENROUTER_API_KEY",
         "-e", "OPENROUTER_API_KEY=<YOUR_OPENROUTER_KEY>",
@@ -262,6 +265,7 @@ semantics and will not work reliably.
         "-e", "VISION_ENABLED=true",
         "-e", "VISION_PROVIDER=openai_compatible_external",
         "-e", "VISION_EXTERNAL_PROVIDER=google_ai_studio",
+        "-e", "VISION_EXTERNAL_CONTRACT_PROFILE=google_family_compare",
         "-e", "VISION_GEMINI_MODEL=gemini-2.5-flash",
         "-e", "VISION_GEMINI_API_KEY_ENV=GEMINI_API_KEY",
         "-e", "GEMINI_API_KEY=<YOUR_GEMINI_KEY>",
@@ -328,6 +332,12 @@ Compatibility-oriented broad surface:
 - OpenRouter and Gemini both ride on the same bounded
   `openai_compatible_external` path; the difference is the provider profile and
   provider-specific env vars
+- `VISION_EXTERNAL_PROVIDER` chooses transport/provider wiring, while
+  `VISION_EXTERNAL_CONTRACT_PROFILE` optionally forces the external
+  prompt/schema/parser contract for compare flows
+- when `VISION_EXTERNAL_CONTRACT_PROFILE` is omitted, the runtime can
+  auto-match Google-family model ids such as `gemma` / `gemini`; the explicit
+  examples above keep the compare-path assumption visible in client config
 - the same env model works for both local venv launch and Docker launch; only
   `command` / `args` differ
 - for local image/file outputs, keep `/tmp` host-visible if your client expects
