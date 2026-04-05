@@ -64,6 +64,13 @@ SCENE_PUBLIC_TOOL_NAMES = (
     "scene_compare_snapshot",
     "scene_create",
     "macro_relative_layout",
+    "macro_attach_part_to_surface",
+    "macro_align_part_with_contact",
+    "macro_place_symmetry_pair",
+    "macro_place_supported_pair",
+    "macro_cleanup_part_intersections",
+    "macro_adjust_relative_proportion",
+    "macro_adjust_segment_chain_arc",
     "scene_set_mode",
     "scene_rename_object",
     "scene_hide_object",
@@ -87,6 +94,14 @@ SCENE_PUBLIC_TOOL_NAMES = (
     "scene_assert_symmetry",
     "scene_assert_proportion",
 )
+
+MacroErrorStatus = Literal["blocked", "failed"]
+
+
+def _coerce_macro_error_status(value: object) -> MacroErrorStatus:
+    """Narrow adapter-side fallback statuses to the contract's error states."""
+
+    return "blocked" if value == "blocked" else "failed"
 
 
 def _register_existing_tool(target: Any, tool_name: str) -> Any:
@@ -229,6 +244,624 @@ async def macro_relative_layout(
         status="failed",
         macro_name="macro_relative_layout",
         intent=f"layout '{moving_object}' relative to '{reference_object}'",
+        actions_taken=[],
+        requires_followup=False,
+        error=str(result),
+    )
+
+
+async def macro_attach_part_to_surface(
+    ctx: Context,
+    part_object: str,
+    surface_object: str,
+    surface_axis: Literal["X", "Y", "Z"],
+    surface_side: Literal["positive", "negative"] = "positive",
+    align_mode: Literal["center", "min", "max"] = "center",
+    gap: float = 0.0,
+    offset: Union[str, List[float], None] = None,
+) -> MacroExecutionReportContract:
+    """
+    [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Bounded macro for seating one part onto another object's surface/body.
+
+    Use this when the intent is "attach this part onto that surface" rather than
+    manually composing a more generic relative layout call. The first slice keeps
+    the attachment bounded:
+
+    - one required surface axis (`X`, `Y`, `Z`)
+    - one required surface side (`positive`, `negative`)
+    - one shared tangential alignment mode for the two remaining axes
+    - optional non-negative contact gap
+    - optional world offset after seating
+
+    Args:
+        part_object: Existing object that will be seated onto the target surface/body.
+        surface_object: Existing object that stays fixed and provides the target surface.
+        surface_axis: Axis normal of the target surface (`X`, `Y`, `Z`).
+        surface_side: Which side of the target surface bbox to attach against.
+        align_mode: Alignment rule applied to the two axes tangent to the surface.
+        gap: Optional non-negative spacing along the surface normal.
+        offset: Optional world-axis offset `[x, y, z]` applied after seating.
+    """
+
+    capture_profile = await _resolve_macro_capture_profile(ctx)
+
+    def execute() -> MacroExecutionReportContract:
+        try:
+            parsed_offset = parse_coordinate(offset) or [0.0, 0.0, 0.0]
+            payload = get_macro_handler().attach_part_to_surface(
+                part_object=part_object,
+                surface_object=surface_object,
+                surface_axis=surface_axis,
+                surface_side=surface_side,
+                align_mode=align_mode,
+                gap=gap,
+                offset=parsed_offset,
+                capture_profile=capture_profile,
+            )
+            return MacroExecutionReportContract.model_validate(payload)
+        except (RuntimeError, ValueError) as e:
+            return MacroExecutionReportContract(
+                status="failed",
+                macro_name="macro_attach_part_to_surface",
+                intent=f"attach '{part_object}' to '{surface_object}'",
+                actions_taken=[],
+                requires_followup=False,
+                error=str(e),
+            )
+
+    result = route_tool_call(
+        tool_name="macro_attach_part_to_surface",
+        params={
+            "part_object": part_object,
+            "surface_object": surface_object,
+            "surface_axis": surface_axis,
+            "surface_side": surface_side,
+            "align_mode": align_mode,
+            "gap": gap,
+            "offset": offset,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, MacroExecutionReportContract):
+        return result if result.status == "failed" else await maybe_attach_macro_vision(ctx, result)
+    if isinstance(result, dict):
+        if result.get("status") == "failed" or result.get("error"):
+            return MacroExecutionReportContract(
+                status="failed",
+                macro_name="macro_attach_part_to_surface",
+                intent=f"attach '{part_object}' to '{surface_object}'",
+                actions_taken=[],
+                requires_followup=False,
+                error=str(result.get("error") or result),
+            )
+        contract = MacroExecutionReportContract.model_validate(result)
+        return contract if contract.status == "failed" else await maybe_attach_macro_vision(ctx, contract)
+    return MacroExecutionReportContract(
+        status="failed",
+        macro_name="macro_attach_part_to_surface",
+        intent=f"attach '{part_object}' to '{surface_object}'",
+        actions_taken=[],
+        requires_followup=False,
+        error=str(result),
+    )
+
+
+async def macro_align_part_with_contact(
+    ctx: Context,
+    part_object: str,
+    reference_object: str,
+    target_relation: Literal["contact", "gap"] = "contact",
+    gap: float = 0.0,
+    align_mode: Literal["none", "center", "min", "max"] = "none",
+    normal_axis: Literal["X", "Y", "Z"] | None = None,
+    preserve_side: bool = True,
+    max_nudge: float = 0.5,
+    offset: Union[str, List[float], None] = None,
+) -> MacroExecutionReportContract:
+    """
+    [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Bounded repair macro for an already-related part pair.
+
+    Use this when a part is already roughly attached, but truth tools still show
+    a small gap, contact failure, or tangential drift that should be corrected
+    with a minimal nudge instead of a fresh placement.
+
+    Current first slice:
+    - one part/reference pair only
+    - truth-driven repair planning using gap/alignment/overlap/contact checks
+    - inferred normal axis when possible
+    - preserve current side by default when that side is clear
+    - bounded `max_nudge` safety gate to avoid turning repair into re-placement
+
+    Args:
+        part_object: Existing object to repair.
+        reference_object: Existing object that defines the desired relation.
+        target_relation: Desired repaired relation: `contact` or explicit `gap`.
+        gap: Target non-negative gap when `target_relation="gap"`. Must stay `0` for `contact`.
+        align_mode: Optional tangential alignment rule for the two non-normal axes.
+        normal_axis: Optional explicit normal axis. If omitted, the macro infers one when possible.
+        preserve_side: If True, preserve the current side relation when it is clear.
+        max_nudge: Maximum allowed total movement for the bounded repair.
+        offset: Optional world-axis offset `[x, y, z]` applied after the repair target is computed.
+    """
+
+    capture_profile = await _resolve_macro_capture_profile(ctx)
+
+    def execute() -> MacroExecutionReportContract:
+        try:
+            parsed_offset = parse_coordinate(offset) or [0.0, 0.0, 0.0]
+            payload = get_macro_handler().align_part_with_contact(
+                part_object=part_object,
+                reference_object=reference_object,
+                target_relation=target_relation,
+                gap=gap,
+                align_mode=align_mode,
+                normal_axis=normal_axis,
+                preserve_side=preserve_side,
+                max_nudge=max_nudge,
+                offset=parsed_offset,
+                capture_profile=capture_profile,
+            )
+            return MacroExecutionReportContract.model_validate(payload)
+        except (RuntimeError, ValueError) as e:
+            return MacroExecutionReportContract(
+                status="failed",
+                macro_name="macro_align_part_with_contact",
+                intent=f"repair '{part_object}' relative to '{reference_object}'",
+                actions_taken=[],
+                requires_followup=False,
+                error=str(e),
+            )
+
+    result = route_tool_call(
+        tool_name="macro_align_part_with_contact",
+        params={
+            "part_object": part_object,
+            "reference_object": reference_object,
+            "target_relation": target_relation,
+            "gap": gap,
+            "align_mode": align_mode,
+            "normal_axis": normal_axis,
+            "preserve_side": preserve_side,
+            "max_nudge": max_nudge,
+            "offset": offset,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, MacroExecutionReportContract):
+        return result if result.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, result)
+    if isinstance(result, dict):
+        if result.get("status") in {"failed", "blocked"} or result.get("error"):
+            return MacroExecutionReportContract(
+                status=_coerce_macro_error_status(result.get("status")),
+                macro_name="macro_align_part_with_contact",
+                intent=f"repair '{part_object}' relative to '{reference_object}'",
+                actions_taken=list(result.get("actions_taken") or []),
+                requires_followup=bool(result.get("requires_followup")),
+                error=str(result.get("error") or result),
+            )
+        contract = MacroExecutionReportContract.model_validate(result)
+        return contract if contract.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, contract)
+    return MacroExecutionReportContract(
+        status="failed",
+        macro_name="macro_align_part_with_contact",
+        intent=f"repair '{part_object}' relative to '{reference_object}'",
+        actions_taken=[],
+        requires_followup=False,
+        error=str(result),
+    )
+
+
+async def macro_place_symmetry_pair(
+    ctx: Context,
+    left_object: str,
+    right_object: str,
+    axis: Literal["X", "Y", "Z"] = "X",
+    mirror_coordinate: float = 0.0,
+    anchor_object: Literal["auto", "left", "right"] = "auto",
+    tolerance: float = 0.0001,
+) -> MacroExecutionReportContract:
+    """
+    [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Bounded macro for placing or correcting one mirrored pair.
+
+    Use this when two existing parts should form a mirrored pair around one
+    explicit mirror plane. The first slice:
+
+    - works on one existing pair only
+    - chooses an anchor (`left`, `right`, or `auto`)
+    - mirrors the follower object's center across `axis + mirror_coordinate`
+    - verifies the result with `scene_assert_symmetry`
+
+    It does not yet try to solve contact-to-body placement or dimension
+    rescaling; those remain separate concerns from this pair-symmetry tool.
+    """
+
+    capture_profile = await _resolve_macro_capture_profile(ctx)
+
+    def execute() -> MacroExecutionReportContract:
+        try:
+            payload = get_macro_handler().place_symmetry_pair(
+                left_object=left_object,
+                right_object=right_object,
+                axis=axis,
+                mirror_coordinate=mirror_coordinate,
+                anchor_object=anchor_object,
+                tolerance=tolerance,
+                capture_profile=capture_profile,
+            )
+            return MacroExecutionReportContract.model_validate(payload)
+        except (RuntimeError, ValueError) as e:
+            return MacroExecutionReportContract(
+                status="failed",
+                macro_name="macro_place_symmetry_pair",
+                intent=f"place symmetry pair '{left_object}' / '{right_object}'",
+                actions_taken=[],
+                requires_followup=False,
+                error=str(e),
+            )
+
+    result = route_tool_call(
+        tool_name="macro_place_symmetry_pair",
+        params={
+            "left_object": left_object,
+            "right_object": right_object,
+            "axis": axis,
+            "mirror_coordinate": mirror_coordinate,
+            "anchor_object": anchor_object,
+            "tolerance": tolerance,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, MacroExecutionReportContract):
+        return result if result.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, result)
+    if isinstance(result, dict):
+        if result.get("status") in {"failed", "blocked"} or result.get("error"):
+            return MacroExecutionReportContract(
+                status=_coerce_macro_error_status(result.get("status")),
+                macro_name="macro_place_symmetry_pair",
+                intent=f"place symmetry pair '{left_object}' / '{right_object}'",
+                actions_taken=list(result.get("actions_taken") or []),
+                requires_followup=bool(result.get("requires_followup")),
+                error=str(result.get("error") or result),
+            )
+        contract = MacroExecutionReportContract.model_validate(result)
+        return contract if contract.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, contract)
+    return MacroExecutionReportContract(
+        status="failed",
+        macro_name="macro_place_symmetry_pair",
+        intent=f"place symmetry pair '{left_object}' / '{right_object}'",
+        actions_taken=[],
+        requires_followup=False,
+        error=str(result),
+    )
+
+
+async def macro_place_supported_pair(
+    ctx: Context,
+    left_object: str,
+    right_object: str,
+    support_object: str,
+    axis: Literal["X", "Y", "Z"] = "X",
+    mirror_coordinate: float = 0.0,
+    support_axis: Literal["X", "Y", "Z"] = "Z",
+    support_side: Literal["positive", "negative"] = "positive",
+    anchor_object: Literal["auto", "left", "right"] = "auto",
+    gap: float = 0.0,
+    tolerance: float = 0.0001,
+) -> MacroExecutionReportContract:
+    """
+    [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Bounded macro for placing or correcting one mirrored pair against a shared support surface.
+
+    Use this when two existing objects should stay mirrored around one explicit
+    plane while both making bounded contact with the same support object. The
+    first slice:
+
+    - works on one existing pair plus one existing support object
+    - keeps mirror placement and support contact as separate explicit constraints
+    - blocks when those constraints would require materially different support coordinates
+    - does not enter rigging, pose mode, or multi-joint articulation
+    """
+
+    capture_profile = await _resolve_macro_capture_profile(ctx)
+
+    def execute() -> MacroExecutionReportContract:
+        try:
+            payload = get_macro_handler().place_supported_pair(
+                left_object=left_object,
+                right_object=right_object,
+                support_object=support_object,
+                axis=axis,
+                mirror_coordinate=mirror_coordinate,
+                support_axis=support_axis,
+                support_side=support_side,
+                anchor_object=anchor_object,
+                gap=gap,
+                tolerance=tolerance,
+                capture_profile=capture_profile,
+            )
+            return MacroExecutionReportContract.model_validate(payload)
+        except (RuntimeError, ValueError) as e:
+            return MacroExecutionReportContract(
+                status="failed",
+                macro_name="macro_place_supported_pair",
+                intent=f"place supported pair '{left_object}' / '{right_object}' on '{support_object}'",
+                actions_taken=[],
+                requires_followup=False,
+                error=str(e),
+            )
+
+    result = route_tool_call(
+        tool_name="macro_place_supported_pair",
+        params={
+            "left_object": left_object,
+            "right_object": right_object,
+            "support_object": support_object,
+            "axis": axis,
+            "mirror_coordinate": mirror_coordinate,
+            "support_axis": support_axis,
+            "support_side": support_side,
+            "anchor_object": anchor_object,
+            "gap": gap,
+            "tolerance": tolerance,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, MacroExecutionReportContract):
+        return result if result.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, result)
+    if isinstance(result, dict):
+        if result.get("status") in {"failed", "blocked"} or result.get("error"):
+            return MacroExecutionReportContract(
+                status=_coerce_macro_error_status(result.get("status")),
+                macro_name="macro_place_supported_pair",
+                intent=f"place supported pair '{left_object}' / '{right_object}' on '{support_object}'",
+                actions_taken=list(result.get("actions_taken") or []),
+                requires_followup=bool(result.get("requires_followup")),
+                error=str(result.get("error") or result),
+            )
+        contract = MacroExecutionReportContract.model_validate(result)
+        return contract if contract.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, contract)
+    return MacroExecutionReportContract(
+        status="failed",
+        macro_name="macro_place_supported_pair",
+        intent=f"place supported pair '{left_object}' / '{right_object}' on '{support_object}'",
+        actions_taken=[],
+        requires_followup=False,
+        error=str(result),
+    )
+
+
+async def macro_cleanup_part_intersections(
+    ctx: Context,
+    part_object: str,
+    reference_object: str,
+    gap: float = 0.0,
+    normal_axis: Literal["X", "Y", "Z"] | None = None,
+    preserve_side: bool = True,
+    max_push: float = 0.5,
+) -> MacroExecutionReportContract:
+    """
+    [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Bounded macro for resolving one obvious overlap between two existing objects.
+
+    Use this when one part is visibly intersecting another and the intended fix
+    is a bounded push out to contact or a small gap, not an unconstrained
+    rebuild or physics/collision solve.
+    """
+
+    capture_profile = await _resolve_macro_capture_profile(ctx)
+
+    def execute() -> MacroExecutionReportContract:
+        try:
+            payload = get_macro_handler().cleanup_part_intersections(
+                part_object=part_object,
+                reference_object=reference_object,
+                gap=gap,
+                normal_axis=normal_axis,
+                preserve_side=preserve_side,
+                max_push=max_push,
+                capture_profile=capture_profile,
+            )
+            return MacroExecutionReportContract.model_validate(payload)
+        except (RuntimeError, ValueError) as e:
+            return MacroExecutionReportContract(
+                status="failed",
+                macro_name="macro_cleanup_part_intersections",
+                intent=f"clean intersection between '{part_object}' and '{reference_object}'",
+                actions_taken=[],
+                requires_followup=False,
+                error=str(e),
+            )
+
+    result = route_tool_call(
+        tool_name="macro_cleanup_part_intersections",
+        params={
+            "part_object": part_object,
+            "reference_object": reference_object,
+            "gap": gap,
+            "normal_axis": normal_axis,
+            "preserve_side": preserve_side,
+            "max_push": max_push,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, MacroExecutionReportContract):
+        return result if result.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, result)
+    if isinstance(result, dict):
+        if result.get("status") in {"failed", "blocked"} or result.get("error"):
+            return MacroExecutionReportContract(
+                status=_coerce_macro_error_status(result.get("status")),
+                macro_name="macro_cleanup_part_intersections",
+                intent=f"clean intersection between '{part_object}' and '{reference_object}'",
+                actions_taken=list(result.get("actions_taken") or []),
+                requires_followup=bool(result.get("requires_followup")),
+                error=str(result.get("error") or result),
+            )
+        contract = MacroExecutionReportContract.model_validate(result)
+        return contract if contract.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, contract)
+    return MacroExecutionReportContract(
+        status="failed",
+        macro_name="macro_cleanup_part_intersections",
+        intent=f"clean intersection between '{part_object}' and '{reference_object}'",
+        actions_taken=[],
+        requires_followup=False,
+        error=str(result),
+    )
+
+
+async def macro_adjust_relative_proportion(
+    ctx: Context,
+    primary_object: str,
+    reference_object: str,
+    expected_ratio: float,
+    primary_axis: Literal["X", "Y", "Z"] = "X",
+    reference_axis: Literal["X", "Y", "Z"] = "X",
+    scale_target: Literal["primary", "reference"] = "primary",
+    tolerance: float = 0.01,
+    uniform_scale: bool = True,
+    max_scale_delta: float = 0.5,
+) -> MacroExecutionReportContract:
+    """
+    [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Bounded macro for repairing relative proportion drift between two objects.
+
+    Use this when the current cross-object ratio is visibly off but the pair is
+    already otherwise useful enough that a bounded scale repair is safer than a
+    rebuild or open-ended sculpt pass.
+    """
+
+    capture_profile = await _resolve_macro_capture_profile(ctx)
+
+    def execute() -> MacroExecutionReportContract:
+        try:
+            payload = get_macro_handler().adjust_relative_proportion(
+                primary_object=primary_object,
+                reference_object=reference_object,
+                expected_ratio=expected_ratio,
+                primary_axis=primary_axis,
+                reference_axis=reference_axis,
+                scale_target=scale_target,
+                tolerance=tolerance,
+                uniform_scale=uniform_scale,
+                max_scale_delta=max_scale_delta,
+                capture_profile=capture_profile,
+            )
+            return MacroExecutionReportContract.model_validate(payload)
+        except (RuntimeError, ValueError) as e:
+            return MacroExecutionReportContract(
+                status="failed",
+                macro_name="macro_adjust_relative_proportion",
+                intent=f"repair relative proportion for '{primary_object}' relative to '{reference_object}'",
+                actions_taken=[],
+                requires_followup=False,
+                error=str(e),
+            )
+
+    result = route_tool_call(
+        tool_name="macro_adjust_relative_proportion",
+        params={
+            "primary_object": primary_object,
+            "reference_object": reference_object,
+            "expected_ratio": expected_ratio,
+            "primary_axis": primary_axis,
+            "reference_axis": reference_axis,
+            "scale_target": scale_target,
+            "tolerance": tolerance,
+            "uniform_scale": uniform_scale,
+            "max_scale_delta": max_scale_delta,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, MacroExecutionReportContract):
+        return result if result.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, result)
+    if isinstance(result, dict):
+        if result.get("status") in {"failed", "blocked"} or result.get("error"):
+            return MacroExecutionReportContract(
+                status=_coerce_macro_error_status(result.get("status")),
+                macro_name="macro_adjust_relative_proportion",
+                intent=f"repair relative proportion for '{primary_object}' relative to '{reference_object}'",
+                actions_taken=list(result.get("actions_taken") or []),
+                requires_followup=bool(result.get("requires_followup")),
+                error=str(result.get("error") or result),
+            )
+        contract = MacroExecutionReportContract.model_validate(result)
+        return contract if contract.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, contract)
+    return MacroExecutionReportContract(
+        status="failed",
+        macro_name="macro_adjust_relative_proportion",
+        intent=f"repair relative proportion for '{primary_object}' relative to '{reference_object}'",
+        actions_taken=[],
+        requires_followup=False,
+        error=str(result),
+    )
+
+
+async def macro_adjust_segment_chain_arc(
+    ctx: Context,
+    segment_objects: List[str],
+    rotation_axis: Literal["X", "Y", "Z"] = "Y",
+    total_angle: float = 30.0,
+    direction: Literal["positive", "negative"] = "positive",
+    segment_spacing: float | None = None,
+    apply_rotation: bool = True,
+) -> MacroExecutionReportContract:
+    """
+    [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Bounded macro for adjusting an ordered segment chain into a cleaner planar arc.
+
+    Use this when an ordered chain of existing segment objects needs a cleaner
+    planar arc without resorting to free-form tool chaining or rigging.
+    """
+
+    capture_profile = await _resolve_macro_capture_profile(ctx)
+
+    def execute() -> MacroExecutionReportContract:
+        try:
+            payload = get_macro_handler().adjust_segment_chain_arc(
+                segment_objects=segment_objects,
+                rotation_axis=rotation_axis,
+                total_angle=total_angle,
+                direction=direction,
+                segment_spacing=segment_spacing,
+                apply_rotation=apply_rotation,
+                capture_profile=capture_profile,
+            )
+            return MacroExecutionReportContract.model_validate(payload)
+        except (RuntimeError, ValueError) as e:
+            return MacroExecutionReportContract(
+                status="failed",
+                macro_name="macro_adjust_segment_chain_arc",
+                intent=f"adjust segment chain arc for {len(segment_objects)} segment(s)",
+                actions_taken=[],
+                requires_followup=False,
+                error=str(e),
+            )
+
+    result = route_tool_call(
+        tool_name="macro_adjust_segment_chain_arc",
+        params={
+            "segment_objects": segment_objects,
+            "rotation_axis": rotation_axis,
+            "total_angle": total_angle,
+            "direction": direction,
+            "segment_spacing": segment_spacing,
+            "apply_rotation": apply_rotation,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, MacroExecutionReportContract):
+        return result if result.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, result)
+    if isinstance(result, dict):
+        if result.get("status") in {"failed", "blocked"} or result.get("error"):
+            return MacroExecutionReportContract(
+                status=_coerce_macro_error_status(result.get("status")),
+                macro_name="macro_adjust_segment_chain_arc",
+                intent=f"adjust segment chain arc for {len(segment_objects)} segment(s)",
+                actions_taken=list(result.get("actions_taken") or []),
+                requires_followup=bool(result.get("requires_followup")),
+                error=str(result.get("error") or result),
+            )
+        contract = MacroExecutionReportContract.model_validate(result)
+        return contract if contract.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, contract)
+    return MacroExecutionReportContract(
+        status="failed",
+        macro_name="macro_adjust_segment_chain_arc",
+        intent=f"adjust segment chain arc for {len(segment_objects)} segment(s)",
         actions_taken=[],
         requires_followup=False,
         error=str(result),
@@ -1906,8 +2539,12 @@ def scene_measure_gap(
 
     Workflow: READ-ONLY | USE FOR → clearance, contact, and fit verification
 
-    Uses world-space axis-aligned bounds. `gap=0` means the objects either touch or overlap;
-    inspect `relation` to distinguish `contact` from `overlapping`.
+    Uses the current truth path for the pair. For mesh pairs the handler prefers
+    a bounded mesh-surface relation and also reports bbox fallback diagnostics
+    such as `bbox_relation`; otherwise it falls back to bbox-only semantics.
+    `gap=0` still means the measured relation resolved to either contact or
+    overlap, so inspect `relation` plus `measurement_basis` to understand what
+    was actually proven.
 
     Args:
         from_object: Source object name
@@ -1915,7 +2552,8 @@ def scene_measure_gap(
         tolerance: Contact threshold in Blender units
 
     Returns:
-        Structured gap payload with per-axis separation and relation classification.
+        Structured gap payload with relation classification, `measurement_basis`,
+        and bbox fallback diagnostics when available.
     """
 
     def execute():
@@ -2005,7 +2643,10 @@ def scene_measure_overlap(
 
     Workflow: READ-ONLY | USE FOR → collision, clipping, and fit verification
 
-    Uses world-space axis-aligned bounds to classify objects as `overlap`, `touching`, or `disjoint`.
+    Uses the current truth path for the pair. For mesh pairs the handler prefers
+    mesh-surface overlap/contact semantics and keeps bbox overlap/touching
+    diagnostics alongside them; otherwise it falls back to bbox-only
+    classification.
 
     Args:
         from_object: Source object name
@@ -2013,7 +2654,8 @@ def scene_measure_overlap(
         tolerance: Touch/intersection threshold in Blender units
 
     Returns:
-        Structured overlap payload with intersection dimensions and overlap volume.
+        Structured overlap payload with `measurement_basis`, current relation,
+        and bbox fallback diagnostics when available.
     """
 
     def execute():
@@ -2049,9 +2691,11 @@ def scene_assert_contact(
 
     Workflow: READ-ONLY | USE FOR → deterministic fit/contact postconditions
 
-    The first wave asserts contact through one explicit threshold: objects pass when
-    their measured gap is within `max_gap`, and overlap is rejected unless
-    `allow_overlap=True`.
+    Objects pass when the measured gap from the current truth path is within
+    `max_gap`, and overlap is rejected unless `allow_overlap=True`. For mesh
+    pairs this now prefers mesh-surface contact semantics instead of bbox
+    touching alone, while still exposing bbox fallback diagnostics in the
+    assertion details.
 
     Args:
         from_object: Source object name
@@ -2060,7 +2704,8 @@ def scene_assert_contact(
         allow_overlap: If True, overlap is accepted as a passing relation
 
     Returns:
-        Structured assertion payload with pass/fail result, expected values, and actual measured relation.
+        Structured assertion payload with pass/fail result, current measured
+        relation, and `measurement_basis` / bbox diagnostics in `details`.
     """
 
     def execute():

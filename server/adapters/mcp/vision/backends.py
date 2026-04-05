@@ -483,7 +483,14 @@ class OpenAICompatibleVisionBackend(VisionBackend):
 
     def _build_request_payload(self, request: VisionRequest) -> dict[str, Any]:
         if self._external_config.provider_name == "google_ai_studio":
-            parts: list[dict[str, Any]] = [{"text": build_vision_payload_text(request)}]
+            parts: list[dict[str, Any]] = [
+                {
+                    "text": build_vision_payload_text(
+                        request,
+                        provider_name=self._external_config.provider_name,
+                    )
+                }
+            ]
             for image in request.images:
                 media_type = _media_type_for(image.path, image.media_type)
                 encoded = base64.b64encode(Path(image.path).read_bytes()).decode("ascii")
@@ -500,7 +507,11 @@ class OpenAICompatibleVisionBackend(VisionBackend):
                 "systemInstruction": {
                     "parts": [
                         {
-                            "text": build_vision_system_prompt(backend_kind=self.backend_kind),
+                            "text": build_vision_system_prompt(
+                                backend_kind=self.backend_kind,
+                                provider_name=self._external_config.provider_name,
+                                request=request,
+                            ),
                         }
                     ]
                 },
@@ -509,7 +520,10 @@ class OpenAICompatibleVisionBackend(VisionBackend):
                     "temperature": 0.0,
                     "maxOutputTokens": self._runtime_config.max_tokens,
                     "responseMimeType": "application/json",
-                    "responseJsonSchema": build_vision_response_json_schema(),
+                    "responseJsonSchema": build_vision_response_json_schema(
+                        provider_name=self._external_config.provider_name,
+                        request=request,
+                    ),
                 },
             }
 
@@ -550,7 +564,14 @@ class OpenAICompatibleVisionBackend(VisionBackend):
             "max_tokens": self._runtime_config.max_tokens,
             "response_format": response_format,
             "messages": [
-                {"role": "system", "content": build_vision_system_prompt(backend_kind=self.backend_kind)},
+                {
+                    "role": "system",
+                    "content": build_vision_system_prompt(
+                        backend_kind=self.backend_kind,
+                        provider_name=self._external_config.provider_name,
+                        request=request,
+                    ),
+                },
                 {"role": "user", "content": content},
             ],
         }
@@ -586,8 +607,16 @@ class OpenAICompatibleVisionBackend(VisionBackend):
         else:
             content = _extract_message_text(parsed_response)
         try:
-            self._last_output_diagnostics = diagnose_vision_output_text(content)
-            parsed_content = parse_vision_output_text(content, request)
+            self._last_output_diagnostics = diagnose_vision_output_text(
+                content,
+                request=request,
+                provider_name=self._external_config.provider_name,
+            )
+            parsed_content = parse_vision_output_text(
+                content,
+                request,
+                provider_name=self._external_config.provider_name,
+            )
         except (json.JSONDecodeError, ValueError) as exc:
             raise VisionBackendUnavailableError(
                 "Vision endpoint did not return valid JSON content."

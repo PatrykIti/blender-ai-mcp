@@ -5,8 +5,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from dataclasses import asdict, dataclass
+from typing import TYPE_CHECKING, Any, Literal
 
 from fastmcp import Context
 
@@ -38,6 +38,7 @@ SESSION_LAST_ROUTER_ERROR_KEY = "last_router_error"
 SESSION_REFERENCE_IMAGES_KEY = "reference_images"
 SESSION_GUIDED_HANDOFF_KEY = "guided_handoff"
 SESSION_PENDING_REFERENCE_IMAGES_KEY = "pending_reference_images"
+_GENERIC_PENDING_GOAL = "__pending_goal__"
 
 
 @dataclass(frozen=True)
@@ -61,6 +62,37 @@ class SessionCapabilityState:
     reference_images: list[dict[str, Any]] | None = None
     guided_handoff: dict[str, Any] | None = None
     pending_reference_images: list[dict[str, Any]] | None = None
+
+
+GuidedReferenceBlockingReason = Literal[
+    "active_goal_required",
+    "goal_input_pending",
+    "pending_references_detected",
+    "reference_images_required",
+    "reference_session_not_ready",
+]
+GuidedReferenceNextAction = Literal[
+    "call_router_set_goal",
+    "answer_pending_goal_questions",
+    "attach_reference_images",
+    "call_router_get_status",
+]
+
+
+@dataclass(frozen=True)
+class GuidedReferenceReadinessState:
+    """Serializable readiness state for guided reference compare/iterate flows."""
+
+    status: Literal["ready", "blocked"] = "blocked"
+    goal: str | None = None
+    has_active_goal: bool = False
+    goal_input_pending: bool = False
+    attached_reference_count: int = 0
+    pending_reference_count: int = 0
+    compare_ready: bool = False
+    iterate_ready: bool = False
+    blocking_reason: GuidedReferenceBlockingReason | None = None
+    next_action: GuidedReferenceNextAction | None = None
 
 
 def infer_phase_from_router_status(
@@ -175,22 +207,121 @@ async def set_session_capability_state_async(ctx: Context, state: SessionCapabil
     await set_session_value_async(ctx, SESSION_PENDING_REFERENCE_IMAGES_KEY, state.pending_reference_images)
 
 
-def _adopt_pending_reference_images(
+def _split_pending_reference_images_for_goal(
     pending_reference_images: list[dict[str, Any]] | None,
     *,
     goal: str,
-) -> list[dict[str, Any]] | None:
-    """Retarget pending reference attachments onto the newly active goal."""
+) -> tuple[list[dict[str, Any]] | None, list[dict[str, Any]] | None]:
+    """Split pending references into adopted items and goal-mismatched leftovers."""
 
     if not pending_reference_images:
-        return None
+        return None, None
 
     adopted: list[dict[str, Any]] = []
+    remaining: list[dict[str, Any]] = []
     for item in pending_reference_images:
+        recorded_goal = str(item.get("goal") or "").strip()
+        if recorded_goal not in {"", _GENERIC_PENDING_GOAL, goal}:
+            remaining.append(dict(item))
+            continue
         adopted_item = dict(item)
         adopted_item["goal"] = goal
         adopted.append(adopted_item)
-    return adopted or None
+    return adopted or None, remaining or None
+
+
+def _merge_reference_images(
+    current_reference_images: list[dict[str, Any]] | None,
+    adopted_reference_images: list[dict[str, Any]] | None,
+) -> list[dict[str, Any]] | None:
+    """Merge active and newly adopted reference images without losing order."""
+
+    merged: list[dict[str, Any]] = []
+    seen_reference_ids: set[str] = set()
+
+    for item in [*list(current_reference_images or []), *list(adopted_reference_images or [])]:
+        reference_id = item.get("reference_id")
+        if isinstance(reference_id, str) and reference_id:
+            if reference_id in seen_reference_ids:
+                continue
+            seen_reference_ids.add(reference_id)
+        merged.append(item)
+
+    return merged or None
+
+
+def router_result_has_ready_guided_reference_goal(router_result: dict[str, Any]) -> bool:
+    """Return True when a router_set_goal result establishes a usable guided goal state."""
+
+    status = str(router_result.get("status") or "")
+    return status in {"ready", "no_match"}
+
+
+def session_has_ready_guided_reference_goal(session: SessionCapabilityState) -> bool:
+    """Return True when the session is coherent enough for staged reference work."""
+
+    if not session.goal:
+        return False
+
+    if session.last_router_status in {"ready", "no_match"}:
+        return True
+    return False
+
+
+def build_guided_reference_readiness(session: SessionCapabilityState) -> GuidedReferenceReadinessState:
+    """Compute one explicit readiness contract for guided stage compare/iterate flows."""
+
+    attached_reference_count = len(session.reference_images or [])
+    has_active_goal = session.goal is not None
+    goal_input_pending = bool(session.pending_clarification) or session.last_router_status == "needs_input"
+    session_ready = session_has_ready_guided_reference_goal(session)
+    relevant_pending_reference_count = 0
+
+    if session.goal:
+        relevant_pending_references, _ = _split_pending_reference_images_for_goal(
+            session.pending_reference_images,
+            goal=session.goal,
+        )
+        relevant_pending_reference_count = len(relevant_pending_references or [])
+
+    if not has_active_goal:
+        blocking_reason: GuidedReferenceBlockingReason | None = "active_goal_required"
+        next_action: GuidedReferenceNextAction | None = "call_router_set_goal"
+    elif goal_input_pending:
+        blocking_reason = "goal_input_pending"
+        next_action = "answer_pending_goal_questions"
+    elif not session_ready:
+        blocking_reason = "reference_session_not_ready"
+        next_action = "call_router_get_status"
+    elif relevant_pending_reference_count > 0:
+        blocking_reason = "pending_references_detected"
+        next_action = "call_router_get_status"
+    elif attached_reference_count == 0:
+        blocking_reason = "reference_images_required"
+        next_action = "attach_reference_images"
+    else:
+        blocking_reason = None
+        next_action = None
+
+    compare_ready = blocking_reason is None
+    return GuidedReferenceReadinessState(
+        status="ready" if compare_ready else "blocked",
+        goal=session.goal,
+        has_active_goal=has_active_goal,
+        goal_input_pending=goal_input_pending,
+        attached_reference_count=attached_reference_count,
+        pending_reference_count=relevant_pending_reference_count,
+        compare_ready=compare_ready,
+        iterate_ready=compare_ready,
+        blocking_reason=blocking_reason,
+        next_action=next_action,
+    )
+
+
+def build_guided_reference_readiness_payload(session: SessionCapabilityState) -> dict[str, Any]:
+    """Return a serializable readiness payload for MCP contracts and tests."""
+
+    return asdict(build_guided_reference_readiness(session))
 
 
 def update_session_from_router_goal(
@@ -231,14 +362,17 @@ def update_session_from_router_goal(
         last_elicitation_action = None
         partial_answers = None
 
-    adopted_reference_images = (
-        current.reference_images
-        if same_goal
-        else _adopt_pending_reference_images(
-            current.pending_reference_images,
-            goal=goal,
-        )
+    goal_ready = router_result_has_ready_guided_reference_goal(router_result)
+    adopted_reference_images, remaining_pending_reference_images = _split_pending_reference_images_for_goal(
+        current.pending_reference_images,
+        goal=goal,
     )
+    reference_images = (
+        _merge_reference_images(current.reference_images if same_goal else None, adopted_reference_images)
+        if goal_ready
+        else (current.reference_images if same_goal else None)
+    )
+    pending_reference_images = remaining_pending_reference_images if goal_ready else current.pending_reference_images
 
     state = SessionCapabilityState(
         phase=phase,
@@ -255,9 +389,9 @@ def update_session_from_router_goal(
         last_elicitation_action=last_elicitation_action,
         last_router_disposition=current.last_router_disposition,
         last_router_error=current.last_router_error,
-        reference_images=adopted_reference_images,
+        reference_images=reference_images,
         guided_handoff=router_result.get("guided_handoff"),
-        pending_reference_images=current.pending_reference_images if same_goal else None,
+        pending_reference_images=pending_reference_images,
     )
     set_session_capability_state(ctx, state)
     return state
@@ -301,14 +435,17 @@ async def update_session_from_router_goal_async(
         last_elicitation_action = None
         partial_answers = None
 
-    adopted_reference_images = (
-        current.reference_images
-        if same_goal
-        else _adopt_pending_reference_images(
-            current.pending_reference_images,
-            goal=goal,
-        )
+    goal_ready = router_result_has_ready_guided_reference_goal(router_result)
+    adopted_reference_images, remaining_pending_reference_images = _split_pending_reference_images_for_goal(
+        current.pending_reference_images,
+        goal=goal,
     )
+    reference_images = (
+        _merge_reference_images(current.reference_images if same_goal else None, adopted_reference_images)
+        if goal_ready
+        else (current.reference_images if same_goal else None)
+    )
+    pending_reference_images = remaining_pending_reference_images if goal_ready else current.pending_reference_images
 
     state = SessionCapabilityState(
         phase=phase,
@@ -325,9 +462,9 @@ async def update_session_from_router_goal_async(
         last_elicitation_action=last_elicitation_action,
         last_router_disposition=current.last_router_disposition,
         last_router_error=current.last_router_error,
-        reference_images=adopted_reference_images,
+        reference_images=reference_images,
         guided_handoff=router_result.get("guided_handoff"),
-        pending_reference_images=current.pending_reference_images if same_goal else None,
+        pending_reference_images=pending_reference_images,
     )
     await set_session_capability_state_async(ctx, state)
     return state
@@ -503,10 +640,22 @@ def record_router_execution_outcome(
     router_disposition: str,
     error: str | None = None,
 ) -> SessionCapabilityState:
-    """Persist the last router execution outcome for diagnostics surfaces."""
+    """Persist the last router execution outcome for diagnostics surfaces.
+
+    Keep this write path narrowly scoped. Routed sync tools run through
+    threadpool-backed FastMCP execution, so rewriting the full session snapshot
+    here would risk clobbering unrelated goal/reference state if a sync-state
+    read falls back or races. Diagnostics only need these two keys.
+    """
+
+    set_session_value(ctx, SESSION_LAST_ROUTER_DISPOSITION_KEY, router_disposition)
+    set_session_value(ctx, SESSION_LAST_ROUTER_ERROR_KEY, error)
 
     current = get_session_capability_state(ctx)
-    state = SessionCapabilityState(
+    if current.last_router_disposition == router_disposition and current.last_router_error == error:
+        return current
+
+    return SessionCapabilityState(
         phase=current.phase,
         goal=current.goal,
         pending_clarification=current.pending_clarification,
@@ -525,8 +674,6 @@ def record_router_execution_outcome(
         guided_handoff=current.guided_handoff,
         pending_reference_images=current.pending_reference_images,
     )
-    set_session_capability_state(ctx, state)
-    return state
 
 
 def replace_session_pending_reference_images(

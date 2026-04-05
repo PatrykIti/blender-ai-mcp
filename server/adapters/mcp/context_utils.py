@@ -22,9 +22,13 @@ def _fire_and_forget(result) -> None:
     if not inspect.isawaitable(result):
         return
 
+    async def _await_value(awaitable):
+        return await awaitable
+
     try:
         asyncio.get_running_loop()
     except RuntimeError:
+        asyncio.run(_await_value(result))
         return
 
     asyncio.ensure_future(result)
@@ -96,6 +100,56 @@ def ctx_request_id(ctx: Context) -> str | None:
     return value or None
 
 
+def ctx_session_id(ctx: Context) -> str | None:
+    """Best-effort session-id lookup for session-aware MCP diagnostics."""
+
+    try:
+        session_id = getattr(ctx, "session_id", None)
+    except Exception:
+        return None
+
+    if callable(session_id):
+        try:
+            session_id = session_id()
+        except Exception:
+            return None
+
+    if session_id is None:
+        return None
+
+    try:
+        value = str(session_id)
+    except Exception:
+        return None
+
+    return value or None
+
+
+def ctx_transport_type(ctx: Context) -> str | None:
+    """Best-effort current MCP transport lookup for diagnostics surfaces."""
+
+    try:
+        transport = getattr(ctx, "transport", None)
+    except Exception:
+        return None
+
+    if callable(transport):
+        try:
+            transport = transport()
+        except Exception:
+            return None
+
+    if transport is None:
+        return None
+
+    try:
+        value = str(transport)
+    except Exception:
+        return None
+
+    return value or None
+
+
 def ctx_sampling_capability(
     ctx: Context,
     *,
@@ -154,7 +208,9 @@ __all__ = [
     "ctx_info",
     "ctx_progress",
     "ctx_request_id",
+    "ctx_session_id",
     "ctx_sampling_capability",
+    "ctx_transport_type",
     "ctx_warning",
     "get_session_phase",
     "get_session_value",

@@ -1,6 +1,7 @@
 """Tests for structured scene contracts."""
 
 from server.adapters.mcp.contracts.scene import (
+    SceneAssembledTargetScopeContract,
     SceneAssertContactContract,
     SceneAssertContainmentContract,
     SceneAssertDimensionsContract,
@@ -10,6 +11,9 @@ from server.adapters.mcp.contracts.scene import (
     SceneBoundingBoxContract,
     SceneConfigureResponseContract,
     SceneContextResponseContract,
+    SceneCorrectionTruthBundleContract,
+    SceneCorrectionTruthPairContract,
+    SceneCorrectionTruthSummaryContract,
     SceneCreateResponseContract,
     SceneCustomPropertiesContract,
     SceneHierarchyContract,
@@ -21,9 +25,13 @@ from server.adapters.mcp.contracts.scene import (
     SceneMeasureOverlapContract,
     SceneModeContract,
     SceneOriginInfoContract,
+    ScenePartGroupContract,
+    SceneRepairMacroCandidateContract,
     SceneSelectionContract,
     SceneSnapshotDiffContract,
     SceneSnapshotStateContract,
+    SceneTruthFollowupContract,
+    SceneTruthFollowupItemContract,
 )
 from server.adapters.mcp.sampling.result_types import (
     AssistantBudgetContract,
@@ -91,6 +99,124 @@ def test_scene_configure_contract_carries_structured_payload_or_error():
 
     assert payload.payload["render_engine"] == "CYCLES"
     assert "not found" in error.error
+
+
+def test_scene_assembled_target_scope_contract_supports_scene_collection_and_part_groups():
+    """Assembled target scope should support explicit scene/object grouping contracts."""
+
+    single = SceneAssembledTargetScopeContract(
+        scope_kind="single_object",
+        primary_target="Squirrel_Head",
+        object_names=["Squirrel_Head"],
+        object_count=1,
+    )
+    collection = SceneAssembledTargetScopeContract(
+        scope_kind="collection",
+        primary_target="Squirrel_Head",
+        object_names=["Squirrel_Head", "Squirrel_Body"],
+        object_count=2,
+        collection_name="Squirrel",
+    )
+    part_groups = SceneAssembledTargetScopeContract(
+        scope_kind="part_groups",
+        primary_target="Squirrel_Head",
+        object_names=["Squirrel_Head", "Squirrel_Body"],
+        object_count=2,
+        part_groups=[
+            ScenePartGroupContract(
+                group_name="head_group",
+                group_kind="role",
+                role="head",
+                object_names=["Squirrel_Head"],
+            )
+        ],
+    )
+
+    assert single.scope_kind == "single_object"
+    assert collection.collection_name == "Squirrel"
+    assert part_groups.part_groups[0].role == "head"
+
+
+def test_scene_correction_truth_bundle_contract_carries_pair_checks_and_summary():
+    """Correction truth bundle should keep pairwise measure/assert results machine-readable."""
+
+    bundle = SceneCorrectionTruthBundleContract(
+        scope=SceneAssembledTargetScopeContract(
+            scope_kind="collection",
+            primary_target="Squirrel_Head",
+            object_names=["Squirrel_Head", "Squirrel_Body"],
+            object_count=2,
+            collection_name="Squirrel",
+        ),
+        summary=SceneCorrectionTruthSummaryContract(
+            pairing_strategy="primary_to_others",
+            pair_count=1,
+            evaluated_pairs=1,
+            contact_failures=1,
+            separated_pairs=1,
+            misaligned_pairs=1,
+        ),
+        checks=[
+            SceneCorrectionTruthPairContract(
+                from_object="Squirrel_Head",
+                to_object="Squirrel_Body",
+                gap={"relation": "separated", "gap": 0.1},
+                alignment={"is_aligned": False, "axes": ["X", "Y", "Z"]},
+                overlap={"overlaps": False, "relation": "disjoint"},
+                contact_assertion=SceneAssertionPayloadContract(
+                    assertion="scene_assert_contact",
+                    passed=False,
+                    subject="Squirrel_Head",
+                    target="Squirrel_Body",
+                    expected={"max_gap": 0.0001},
+                    actual={"gap": 0.1, "relation": "separated"},
+                ),
+            )
+        ],
+    )
+
+    assert bundle.summary.pairing_strategy == "primary_to_others"
+    assert bundle.checks[0].from_object == "Squirrel_Head"
+    assert bundle.checks[0].contact_assertion.passed is False
+
+
+def test_scene_truth_followup_contract_carries_loop_ready_items():
+    """Truth follow-up should summarize actionable pair findings for later loop handoff."""
+
+    followup = SceneTruthFollowupContract(
+        scope=SceneAssembledTargetScopeContract(
+            scope_kind="object_set",
+            primary_target="Squirrel_Head",
+            object_names=["Squirrel_Head", "Squirrel_Tail"],
+            object_count=2,
+        ),
+        continue_recommended=True,
+        message="Truth follow-up identified 2 actionable finding(s) across 1 pair(s).",
+        focus_pairs=["Squirrel_Head -> Squirrel_Tail"],
+        items=[
+            SceneTruthFollowupItemContract(
+                kind="gap",
+                summary="Squirrel_Head -> Squirrel_Tail still has measurable separation.",
+                priority="normal",
+                from_object="Squirrel_Head",
+                to_object="Squirrel_Tail",
+                tool_name="scene_measure_gap",
+            )
+        ],
+        macro_candidates=[
+            SceneRepairMacroCandidateContract(
+                macro_name="macro_align_part_with_contact",
+                reason="Repair the pair with a bounded nudge.",
+                priority="high",
+                arguments_hint={"part_object": "Squirrel_Head", "reference_object": "Squirrel_Tail"},
+            )
+        ],
+    )
+
+    assert followup.continue_recommended is True
+    assert followup.focus_pairs == ["Squirrel_Head -> Squirrel_Tail"]
+    assert followup.items[0].tool_name == "scene_measure_gap"
+    assert followup.macro_candidates[0].macro_name == "macro_align_part_with_contact"
 
 
 def test_scene_create_contract_carries_structured_payload_or_error():

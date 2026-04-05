@@ -12,6 +12,19 @@ PYTHONPATH=. poetry run pytest tests/unit/ -v
 PYTHONPATH=. poetry run pytest tests/unit/tools/mesh/ -v
 ```
 
+Important:
+
+- do **not** mix `tests/unit` and `tests/e2e` in one `pytest` invocation
+- unit tests install global `bpy` / `bmesh` / `mathutils` mocks from
+  [tests/unit/conftest.py](../../tests/unit/conftest.py)
+- E2E tests expect real Blender RPC and should run in a separate process
+
+Recommended split runner:
+
+```bash
+./scripts/run_unit_then_e2e.sh
+```
+
 ### E2E Tests (Requires Blender)
 
 **Automated (Recommended):**
@@ -30,6 +43,9 @@ python3 scripts/run_e2e_tests.py --quiet           # Don't stream output to cons
 # 1. Start Blender with addon enabled
 # 2. Run E2E tests
 PYTHONPATH=. poetry run pytest tests/e2e/ -v
+
+# Or run unit and E2E in two separate pytest processes
+./scripts/run_unit_then_e2e.sh
 ```
 
 ---
@@ -227,6 +243,22 @@ Opt-in real reference-guided creature comparison coverage:
   - `VISION_REFERENCE_SIDE_PATH`
 - uses repo-tracked squirrel checkpoint images plus local front/side reference
   images to validate correction-oriented output on a real creature flow
+
+Hybrid-loop assembled-creature regression pack:
+
+- `_docs/_VISION/HYBRID_LOOP_REAL_CREATURE_EVAL.md`
+- `_docs/_VISION/REFERENCE_GUIDED_CREATURE_TEST_PROMPT.md`
+- `_docs/_VISION/CROSS_DOMAIN_REFINEMENT_ROUTING_EVAL.md`
+- combines:
+  - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
+  - `tests/e2e/vision/test_reference_guided_creature_comparison.py`
+- review staged hybrid-loop output in this order:
+  - `loop_disposition`
+  - `correction_candidates`
+  - `refinement_route`
+  - `refinement_handoff`
+  - `truth_followup`
+  - `correction_focus`
 
 First Blender-backed E2E coverage for the guided utility prep path now includes:
 

@@ -209,6 +209,7 @@ def test_build_capture_bundle_collects_preset_names(tmp_path, monkeypatch):
     assert bundle.bundle_id == "bundle2"
     assert bundle.goal_id == "goal1"
     assert bundle.target_object == "Housing"
+    assert bundle.assembled_target_scope is None
     assert bundle.preset_names == ["context_wide", "target_front", "target_side", "target_top"]
     assert bundle.truth_summary == {"dimensions": [1, 2, 3]}
 

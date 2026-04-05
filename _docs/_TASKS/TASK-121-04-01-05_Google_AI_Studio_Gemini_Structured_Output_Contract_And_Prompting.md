@@ -1,8 +1,19 @@
 # TASK-121-04-01-05: Google AI Studio Gemini Structured Output Contract and Prompting
 
-**Parent:** [TASK-121-04-01](./TASK-121-04-01_Small_Vision_Runtime_Selection_And_Execution_Policy.md)  
-**Status:** ⏳ To Do  
+**Follow-on After:** [TASK-121-04-01](./TASK-121-04-01_Small_Vision_Runtime_Selection_And_Execution_Policy.md)  
+**Board Tracking:** Standalone provider-hardening carveout kept open after the
+parent closed. `_docs/_TASKS/README.md` tracks it as its own open item while
+the older numbering is preserved for continuity.  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** Google AI Studio / Gemini now uses a provider-specific
+narrow compare contract for reference-guided checkpoint and staged iterative
+compare flows. The backend now emits a narrower Gemini-specific JSON schema and
+prompt path for those flows, parsing accepts the narrow compare contract and
+repairs near-JSON / truncated compare responses, and downstream normalization
+still returns the canonical bounded payload used by the rest of the vision
+stack.
 
 Google AI Studio / Gemini now has a working provider path for bounded vision,
 but the current generic external contract is still too heavy for reliable
@@ -69,6 +80,30 @@ Likely omit from the Gemini compare-specific path:
 - `tests/unit/adapters/mcp/test_vision_external_backend.py`
 - `tests/e2e/vision/`
 - `_docs/_VISION/README.md`
+
+## Docs To Update
+
+- `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/README.md`
+- `_docs/_TASKS/README.md` if the board state changes
+
+## Tests To Add/Update
+
+- `tests/unit/adapters/mcp/test_vision_external_backend.py`
+- `tests/unit/adapters/mcp/test_vision_prompting.py`
+- `tests/unit/adapters/mcp/test_vision_parsing.py`
+- `tests/e2e/vision/` for staged compare flows when provider behavior changes
+
+## Changelog Impact
+
+- add a `_docs/_CHANGELOG/*.md` entry if this task changes provider behavior,
+  prompt/parse guarantees, or provider-facing documentation
+
+## Status / Board Update
+
+- this leaf is closed; keep the historical follow-on note for lineage only
+- the closed parent follow-on note and `_docs/_TASKS/README.md` now point to
+  the completed state
 
 ## Acceptance Criteria
 

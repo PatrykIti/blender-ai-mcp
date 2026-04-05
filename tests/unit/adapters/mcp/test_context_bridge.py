@@ -46,6 +46,26 @@ class FakeContext:
         self.progress_events.append((progress, total, message))
 
 
+@dataclass
+class AsyncFakeContext:
+    """Async Context stand-in to exercise sync bridge helpers safely."""
+
+    messages: list[tuple[str, str]] = field(default_factory=list)
+    progress_events: list[tuple[float, float | None, str | None]] = field(default_factory=list)
+
+    async def info(self, message: str, logger_name=None, extra=None) -> None:
+        self.messages.append(("info", message))
+
+    async def warning(self, message: str, logger_name=None, extra=None) -> None:
+        self.messages.append(("warning", message))
+
+    async def error(self, message: str, logger_name=None, extra=None) -> None:
+        self.messages.append(("error", message))
+
+    async def report_progress(self, progress: float, total: float | None = None, message: str | None = None) -> None:
+        self.progress_events.append((progress, total, message))
+
+
 def test_session_helpers_round_trip_phase_and_values():
     """Session helpers should read and write sync Context state consistently."""
 
@@ -65,6 +85,20 @@ def test_context_logging_and_progress_helpers_are_best_effort():
     """Context helpers should write sync notifications and progress without throwing."""
 
     ctx = FakeContext()
+
+    ctx_info(ctx, "hello")
+    ctx_warning(ctx, "warn")
+    ctx_error(ctx, "oops")
+    ctx_progress(ctx, 1, 4, "step")
+
+    assert ctx.messages == [("info", "hello"), ("warning", "warn"), ("error", "oops")]
+    assert ctx.progress_events == [(1, 4, "step")]
+
+
+def test_context_logging_and_progress_helpers_await_async_methods_without_warning():
+    """Sync bridge helpers should execute async Context methods instead of leaking coroutines."""
+
+    ctx = AsyncFakeContext()
 
     ctx_info(ctx, "hello")
     ctx_warning(ctx, "warn")

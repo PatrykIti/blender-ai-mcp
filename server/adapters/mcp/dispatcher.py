@@ -162,6 +162,13 @@ class ToolDispatcher:
                 "macro_cutout_recess": "cutout_recess",
                 "macro_finish_form": "finish_form",
                 "macro_relative_layout": "relative_layout",
+                "macro_attach_part_to_surface": "attach_part_to_surface",
+                "macro_align_part_with_contact": "align_part_with_contact",
+                "macro_place_symmetry_pair": "place_symmetry_pair",
+                "macro_place_supported_pair": "place_supported_pair",
+                "macro_cleanup_part_intersections": "cleanup_part_intersections",
+                "macro_adjust_relative_proportion": "adjust_relative_proportion",
+                "macro_adjust_segment_chain_arc": "adjust_segment_chain_arc",
             },
         )
 

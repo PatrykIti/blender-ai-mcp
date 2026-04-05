@@ -10,6 +10,7 @@ This folder is the canonical place to describe:
 - goal-scoped reference image context
 - macro/workflow integration of `capture_bundle` and `vision_assistant`
 - evaluation constraints and model-comparison notes
+- real hybrid-loop creature regression guidance
 
 ## Current State
 
@@ -42,6 +43,9 @@ The repo now has the first implementation scaffolding for the vision layer:
 - focus-oriented presets now isolate the target object when the scene helper
   can do so, then restore prior visibility after capture
 - goal-scoped `reference_images` session surface
+- explicit `guided_reference_readiness` payload on `router_set_goal(...)`,
+  `router_get_status()`, `reference_compare_stage_checkpoint(...)`, and
+  `reference_iterate_stage_checkpoint(...)`
 - bounded `reference_compare_checkpoint(...)` surface for comparing one current
   stage/checkpoint image against the active goal plus attached references
 - bounded `reference_compare_current_view(...)` surface for capture-then-compare
@@ -50,6 +54,70 @@ The repo now has the first implementation scaffolding for the vision layer:
   multi-view stage capture + compare during staged manual/reference-guided work
 - bounded `reference_iterate_stage_checkpoint(...)` surface for session-aware
   staged correction loops with repeated-focus detection and continuation hints
+- pending references can now stay staged until the goal session is actually
+  ready, then adopt automatically on the active guided goal
+- blocked same-goal sessions now keep newly staged refs separate from the
+  already-active goal refs, while `reference_images(...)` still shows one
+  combined visible set for operator-facing list/remove/clear behavior
+- ready sessions that still carry explicit pending refs for another goal now
+  keep that same visible-set contract consistent: if those refs are visible,
+  `reference_images(action="remove"| "clear", ...)` also updates pending state
+  instead of leaving broken pending file paths behind
+- staged compare/iterate now fail fast with machine-readable readiness data:
+  - `blocking_reason`
+  - `next_action`
+  - `compare_ready`
+  - `iterate_ready`
+- stage compare/iterate responses now also carry:
+  - `guided_reference_readiness` for explicit goal/reference readiness
+  - `assembled_target_scope` for explicit assembled-model targeting semantics
+  - `truth_bundle` for correction-oriented contact/gap/alignment/overlap findings
+  - `truth_followup` for loop-ready truth handoff items and focus pairs
+  - `correction_candidates` for one ranked merged candidate list that preserves
+    vision evidence, truth evidence, and bounded macro options without
+    collapsing their source boundaries
+- `reference_iterate_stage_checkpoint(...)` now derives its loop-facing
+  `correction_focus` from ranked `correction_candidates` when they are present,
+  so deterministic truth-only findings can still reach the staged correction
+  loop even before the later disposition-policy leaf changes
+- `reference_iterate_stage_checkpoint(...)` now also lets high-priority
+  deterministic truth findings move `loop_disposition` to
+  `inspect_validate`, instead of waiting only for repeated vision focus
+- mesh-pair truth now distinguishes mesh-surface gap/contact from coarse bbox
+  touching when the bounded scene truth path can do so, which reduces false
+  "contact passed" claims on visibly gapped rounded primitives
+- truth-followup and ranked correction summaries now explicitly call out the
+  common "bbox-touching but mesh surfaces still separated" case, so operator
+  guidance and loop focus do not overclaim visual fit
+- assembled creature collection/object-set scopes now avoid obviously
+  accessory-first anchors such as ears or eyes when a more structural primary
+  target is available later in the set
+- vision `recommended_checks` now keep only canonical MCP tool ids; invented
+  labels are dropped and a small alias map is normalized onto canonical names
+- hybrid-loop stage compare now also applies model-aware budget control:
+  - trims pairwise truth scope when needed
+  - trims ranked correction candidates when needed
+  - records the decision in `budget_control`
+  - uses runtime token/image limits plus a bounded model-name bias instead of
+    one static expansion size
+  - small-tier downgrades now key off explicit model tokens such as `-mini` or
+    `2b` / `3b` / `4b`-class names, so Gemini model names are not downgraded
+    by the `gemini`/`mini` substring collision
+- hybrid-loop compare/iterate responses now also expose `refinement_route`,
+  which classifies:
+  - the current correction domain
+  - the selected bounded refinement family
+  - selector rationale and source signals
+- hybrid-loop compare/iterate responses now also expose `refinement_handoff`
+  as an explicit recommendation-only next-tool-family handoff
+- current first-pass refinement families are:
+  - `macro`
+  - `modeling_mesh`
+  - `sculpt_region`
+  - `inspect_only`
+- current product rule: `sculpt_region` can be recommended through
+  `refinement_handoff`, but deterministic sculpt tools are still not part of
+  the normal `llm-guided` build visibility by default
 - request-bound attachment of `vision_assistant` to macro MCP reports when a
   `capture_bundle` exists
 - macro report integration now also folds bounded vision-driven follow-ups back
@@ -131,13 +199,13 @@ Current practical provider/model notes on this branch:
 | `mlx_local` | `mlx-community/Qwen3-VL-4B-Instruct-4bit` | Recommended local baseline | Current repo-validated local baseline for bounded vision work. Strong on the real viewport squirrel scenarios and usable for staged reference-guided correction loops. |
 | `openai_compatible_external` via OpenRouter | `x-ai/grok-4.20-multi-agent` | Strong external candidate for iterative compare | Live branch validation shows this model returns full structured output on `reference_iterate_stage_checkpoint(...)` and produces actionable `correction_focus` / mismatch guidance. |
 | `openai_compatible_external` via OpenRouter | `qwen/qwen3-vl-32b-instruct` | Weak on current smoke usage | Provider path works, but this model performed poorly on the simple `macro_finish_form` smoke and is not a recommended default from current branch evidence. |
-| `openai_compatible_external` via Google AI Studio / Gemini | `gemini-3-flash-preview` | Experimental | Simple macro smoke can succeed, but staged iterative compare flows still drift or return malformed JSON under the current generic external contract. Follow-up task: [TASK-121-04-01-05](../_TASKS/TASK-121-04-01-05_Google_AI_Studio_Gemini_Structured_Output_Contract_And_Prompting.md). |
+| `openai_compatible_external` via Google AI Studio / Gemini | `gemini-3-flash-preview` | Supported for staged compare | Gemini now uses a provider-specific narrow compare contract for `reference_compare_*` and `reference_iterate_stage_checkpoint(...)` flows, plus provider-specific parse repair for near-JSON / truncated compare responses. |
 
 Interpretation:
 
 - `mlx_local` remains the safest current default for local reference-driven work
 - OpenRouter is worth keeping enabled; `x-ai/grok-4.20-multi-agent` is the current strongest external branch candidate for iterative compare loops
-- Gemini transport/provider wiring is in place, but the iterative compare contract/prompt still needs provider-specific tightening before it should be treated as stable
+- Gemini transport/provider wiring is in place and the staged compare path now runs on a provider-specific narrow contract instead of the older generic external contract
 
 ## What Improved
 
@@ -301,6 +369,17 @@ VISION_REFERENCE_FRONT_PATH=/abs/path/squirrel-front.png \
 VISION_REFERENCE_SIDE_PATH=/abs/path/squirrel-side.png \
 poetry run pytest tests/e2e/vision/test_reference_guided_creature_comparison.py -q -m slow
 ```
+
+Hybrid-loop regression guidance:
+
+- `_docs/_VISION/HYBRID_LOOP_REAL_CREATURE_EVAL.md`
+- `_docs/_VISION/REFERENCE_GUIDED_CREATURE_TEST_PROMPT.md`
+- `_docs/_VISION/CROSS_DOMAIN_REFINEMENT_ROUTING_EVAL.md`
+- use it to review the current staged creature loop in this order:
+  - `loop_disposition`
+  - `correction_candidates`
+  - `truth_followup`
+  - `correction_focus`
 
 Current repo-tracked first-pass scenarios:
 

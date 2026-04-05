@@ -1,10 +1,10 @@
 # TASK-121-04-01: Small Vision Runtime Selection and Execution Policy
 
 **Parent:** [TASK-121-04](./TASK-121-04_Lightweight_Vision_Runtime_And_Evaluation.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
 
-**Progress Update:** The repo now has all three runtime families wired behind the same bounded contract path: `transformers_local`, `mlx_local`, and `openai_compatible_external`. `mlx_local` has also passed a first real smoke test on a small Apple-Silicon-friendly model path (`mlx-community/Qwen3-VL-2B-Instruct-4bit`), the repo now has a backend-comparison harness script, and local prompt/parse-repair helpers can already turn fenced or input-echo-style outputs into a bounded structured payload. The current small-model result is now a valid contract-shaped response, but semantic usefulness is still weak, so output quality and stronger eval policy still need work.
+**Completion Summary:** The repo now has all three runtime families wired behind the same bounded contract path: `transformers_local`, `mlx_local`, and `openai_compatible_external`. `mlx_local` passed real smoke tests on an Apple-Silicon-friendly model path, the repo has a backend-comparison harness script, and local prompt/parse-repair helpers can turn fenced or input-echo-style outputs into a bounded structured payload. The main runtime-selection and execution-policy wave is complete, and the former provider-specific Gemini follow-on [TASK-121-04-01-05](./TASK-121-04-01-05_Google_AI_Studio_Gemini_Structured_Output_Contract_And_Prompting.md) is now complete as well.
 
 ---
 

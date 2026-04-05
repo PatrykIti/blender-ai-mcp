@@ -13,5 +13,5 @@
   },
   "related_tools": ["scene_measure_gap", "scene_measure_overlap", "scene_assert_dimensions"],
   "patterns": [],
-  "description": "Asserts that two objects satisfy the expected contact relation within a maximum gap."
+  "description": "Asserts that two objects satisfy the expected contact relation within a maximum gap, preferring mesh-surface contact semantics for mesh pairs and exposing bbox fallback diagnostics in the assertion details."
 }

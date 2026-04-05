@@ -6,6 +6,39 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [212](./212-2026-04-05-stage-compare-error-response-hardening.md) | 2026-04-05 | **Stage compare error response hardening** | - |
+| [211](./211-2026-04-05-call-tool-proxy-error-semantics.md) | 2026-04-05 | **call_tool proxy error semantics** | - |
+| [210](./210-2026-04-05-hybrid-budget-overlap-and-readiness-review-followups.md) | 2026-04-05 | **Hybrid budget, overlap, and readiness review follow-ups** | - |
+| [209](./209-2026-04-05-ready-session-pending-reference-visibility-consistency.md) | 2026-04-05 | **Ready-session pending reference visibility consistency** | - |
+| [208](./208-2026-04-04-guided-reference-pending-storage-isolation.md) | 2026-04-04 | **Guided reference pending storage isolation** | - |
+| [207](./207-2026-04-04-scene-clean-scene-guided-contract-hardening.md) | 2026-04-04 | **scene_clean_scene guided contract hardening** | - |
+| [206](./206-2026-04-04-visual-fit-truth-contract-and-adoption.md) | 2026-04-04 | **Visual-fit truth contract and adoption** | - |
+| [205](./205-2026-04-04-guided-session-bookkeeping-hardening.md) | 2026-04-04 | **Guided session bookkeeping hardening** | - |
+| [204](./204-2026-04-03-mcp-transport-mode-switching-and-session-diagnostics.md) | 2026-04-03 | **MCP transport mode switching and session diagnostics** | - |
+| [203](./203-2026-04-03-mesh-aware-contact-semantics.md) | 2026-04-03 | **Mesh-aware contact semantics** | - |
+| [202](./202-2026-04-03-guided-reference-session-readiness.md) | 2026-04-03 | **Guided reference session readiness** | - |
+| [201](./201-2026-04-03-cross-domain-refinement-routing-regression-pack.md) | 2026-04-03 | **Cross-domain refinement routing regression pack** | - |
+| [200](./200-2026-04-03-guided-surface-sculpt-handoff.md) | 2026-04-03 | **Guided surface sculpt handoff** | - |
+| [199](./199-2026-04-03-refinement-taxonomy-and-family-selector.md) | 2026-04-03 | **Refinement taxonomy and family selector** | - |
+| [198](./198-2026-04-03-hybrid-loop-model-aware-budget-and-scope-control.md) | 2026-04-03 | **Hybrid loop model-aware budget and scope control** | - |
+| [197](./197-2026-04-02-hybrid-loop-pairing-anchor-and-canonical-check-quality.md) | 2026-04-02 | **Hybrid loop pairing anchor and canonical check quality** | - |
+| [196](./196-2026-04-02-reference-guided-creature-test-prompt-doc.md) | 2026-04-02 | **Reference-guided creature test prompt doc** | - |
+| [195](./195-2026-04-02-real-assembled-creature-eval-and-prompting.md) | 2026-04-02 | **Real assembled creature eval and prompting** | - |
+| [194](./194-2026-04-02-loop-disposition-from-vision-and-truth-signal.md) | 2026-04-02 | **Loop disposition from vision and truth signal** | - |
+| [193](./193-2026-04-02-iterate-stage-truth-bundle-integration.md) | 2026-04-02 | **Iterate stage truth bundle integration** | - |
+| [192](./192-2026-04-02-correction-candidate-contract-and-priority-model.md) | 2026-04-02 | **Correction candidate contract and priority model** | - |
+| [191](./191-2026-04-02-macro-cleanup-part-intersections.md) | 2026-04-02 | **Macro cleanup part intersections** | - |
+| [190](./190-2026-04-02-macro-place-supported-pair.md) | 2026-04-02 | **Macro place supported pair** | - |
+| [189](./189-2026-04-02-macro-adjust-segment-chain-arc.md) | 2026-04-02 | **Macro adjust segment chain arc** | - |
+| [188](./188-2026-04-02-macro-adjust-relative-proportion.md) | 2026-04-02 | **Macro adjust relative proportion** | - |
+| [187](./187-2026-04-02-macro-place-symmetry-pair.md) | 2026-04-02 | **Macro place symmetry pair** | - |
+| [186](./186-2026-04-02-macro-align-part-with-contact.md) | 2026-04-02 | **Macro align part with contact** | - |
+| [185](./185-2026-04-01-macro-attach-part-to-surface.md) | 2026-04-01 | **Macro attach part to surface** | - |
+| [184](./184-2026-04-01-truth-followup-loop-handoff.md) | 2026-04-01 | **Truth follow-up loop handoff** | - |
+| [183](./183-2026-04-01-correction-truth-bundle-baseline.md) | 2026-04-01 | **Correction truth bundle baseline** | - |
+| [182](./182-2026-04-01-assembled-target-scope-contract.md) | 2026-04-01 | **Assembled target scope contract** | - |
+| [181](./181-2026-04-01-gemini-compare-contract-hardening.md) | 2026-04-01 | **Gemini compare contract hardening** | - |
+| [180](./180-2026-04-01-task-governance-and-board-normalization.md) | 2026-04-01 | **Task governance and board normalization** | - |
 | [179](./179-2026-04-01-rpc-poll-budget-and-disabled-vision-conflict-guard.md) | 2026-04-01 | **RPC poll budget and disabled vision conflict guard** | - |
 | [177](./177-2026-04-01-external-provider-precedence-loop-scope-and-task-timeout.md) | 2026-04-01 | **External provider precedence, loop scope, and task timeout** | - |
 | [176](./176-2026-04-01-provider-notes-and-gemini-contract-task.md) | 2026-04-01 | **Provider notes and Gemini contract follow-up** | - |

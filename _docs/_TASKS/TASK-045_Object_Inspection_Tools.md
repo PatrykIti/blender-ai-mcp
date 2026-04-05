@@ -4,7 +4,7 @@
 **Category:** Scene/Material Tools (Extensions)
 **Estimated Effort:** Medium
 **Dependencies:** TASK-043 (Scene Utility Tools), TASK-044 (Extraction Analysis Tools)
-**Status:** ✅ **Done** (2025-12-04)
+**Status:** ✅ Done
 
 ---
 

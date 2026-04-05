@@ -12,5 +12,5 @@
   },
   "related_tools": ["scene_measure_distance", "scene_measure_alignment", "scene_measure_overlap"],
   "patterns": [],
-  "description": "Measures the nearest bbox gap/contact state between two objects."
+  "description": "Measures nearest gap/contact state between two objects, preferring mesh-surface semantics for mesh pairs and reporting bbox fallback diagnostics separately."
 }

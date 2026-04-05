@@ -1,0 +1,47 @@
+{
+  "tool_name": "macro_align_part_with_contact",
+  "category": "scene",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": [
+    "repair contact",
+    "align with contact",
+    "fix gap",
+    "nudge",
+    "realign",
+    "floating part",
+    "repair fit",
+    "napraw kontakt",
+    "dosuń",
+    "wyrównaj kontakt",
+    "napraw szczelinę",
+    "pływający element"
+  ],
+  "sample_prompts": [
+    "repair this ear so it actually touches the head without re-placing it from scratch",
+    "nudge this horn back into contact with the skull and keep the current side",
+    "napraw kontakt tego ucha z głową bez pełnego przestawiania",
+    "dosuń ten element z powrotem do korpusu i zachowaj obecną stronę"
+  ],
+  "parameters": {
+    "part_object": {"type": "string", "required": true},
+    "reference_object": {"type": "string", "required": true},
+    "target_relation": {"type": "enum", "options": ["contact", "gap"], "default": "contact"},
+    "gap": {"type": "float", "default": 0.0},
+    "align_mode": {"type": "enum", "options": ["none", "center", "min", "max"], "default": "none"},
+    "normal_axis": {"type": "enum", "options": ["X", "Y", "Z"], "default": null},
+    "preserve_side": {"type": "bool", "default": true},
+    "max_nudge": {"type": "float", "default": 0.5},
+    "offset": {"type": "vector3", "default": [0.0, 0.0, 0.0]}
+  },
+  "related_tools": [
+    "macro_attach_part_to_surface",
+    "macro_relative_layout",
+    "scene_measure_gap",
+    "scene_measure_alignment",
+    "scene_measure_overlap",
+    "scene_assert_contact"
+  ],
+  "patterns": [],
+  "description": "Bounded repair macro that reads the current pair state, infers a repair axis/side when possible, and applies one minimal nudge toward contact or a requested small gap without re-placing the part from scratch."
+}

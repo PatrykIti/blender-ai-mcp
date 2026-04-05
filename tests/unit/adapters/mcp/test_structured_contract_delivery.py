@@ -335,6 +335,130 @@ class MacroHandler:
             "requires_followup": True,
         }
 
+    def attach_part_to_surface(self, **kwargs):
+        return {
+            "status": "success",
+            "macro_name": "macro_attach_part_to_surface",
+            "intent": "attach Ear to Head",
+            "actions_taken": [
+                {"status": "applied", "action": "attach_part_to_surface", "tool_name": "modeling_transform_object"}
+            ],
+            "objects_modified": [kwargs.get("part_object", "Ear")],
+            "verification_recommended": [
+                {"tool_name": "scene_measure_gap", "reason": "Confirm seating/contact after attach", "priority": "high"}
+            ],
+            "requires_followup": True,
+        }
+
+    def align_part_with_contact(self, **kwargs):
+        return {
+            "status": "success",
+            "macro_name": "macro_align_part_with_contact",
+            "intent": "repair Ear relative to Head",
+            "actions_taken": [
+                {"status": "applied", "action": "align_part_with_contact", "tool_name": "modeling_transform_object"}
+            ],
+            "objects_modified": [kwargs.get("part_object", "Ear")],
+            "verification_recommended": [
+                {"tool_name": "scene_measure_gap", "reason": "Confirm repaired contact after nudge", "priority": "high"}
+            ],
+            "requires_followup": True,
+        }
+
+    def place_symmetry_pair(self, **kwargs):
+        return {
+            "status": "success",
+            "macro_name": "macro_place_symmetry_pair",
+            "intent": "mirror Ear_L / Ear_R",
+            "actions_taken": [
+                {"status": "applied", "action": "place_symmetry_pair", "tool_name": "modeling_transform_object"}
+            ],
+            "objects_modified": [kwargs.get("right_object", "Ear_R")],
+            "verification_recommended": [
+                {
+                    "tool_name": "scene_assert_symmetry",
+                    "reason": "Confirm mirrored placement after the move",
+                    "priority": "high",
+                }
+            ],
+            "requires_followup": True,
+        }
+
+    def place_supported_pair(self, **kwargs):
+        return {
+            "status": "success",
+            "macro_name": "macro_place_supported_pair",
+            "intent": "place Foot_L / Foot_R on Floor",
+            "actions_taken": [
+                {"status": "applied", "action": "place_supported_pair_anchor", "tool_name": "modeling_transform_object"}
+            ],
+            "objects_modified": [
+                kwargs.get("left_object", "Foot_L"),
+                kwargs.get("right_object", "Foot_R"),
+            ],
+            "verification_recommended": [
+                {"tool_name": "scene_assert_contact", "reason": "Confirm shared support contact", "priority": "high"}
+            ],
+            "requires_followup": True,
+        }
+
+    def cleanup_part_intersections(self, **kwargs):
+        return {
+            "status": "success",
+            "macro_name": "macro_cleanup_part_intersections",
+            "intent": "clean Horn / Head overlap",
+            "actions_taken": [
+                {
+                    "status": "applied",
+                    "action": "cleanup_part_intersections",
+                    "tool_name": "modeling_transform_object",
+                }
+            ],
+            "objects_modified": [kwargs.get("part_object", "Horn")],
+            "verification_recommended": [
+                {"tool_name": "scene_measure_overlap", "reason": "Confirm overlap is gone", "priority": "high"}
+            ],
+            "requires_followup": True,
+        }
+
+    def adjust_relative_proportion(self, **kwargs):
+        return {
+            "status": "success",
+            "macro_name": "macro_adjust_relative_proportion",
+            "intent": "repair Head / Body proportion",
+            "actions_taken": [
+                {
+                    "status": "applied",
+                    "action": "adjust_relative_proportion",
+                    "tool_name": "modeling_transform_object",
+                }
+            ],
+            "objects_modified": [kwargs.get("primary_object", "Head")],
+            "verification_recommended": [
+                {"tool_name": "scene_assert_proportion", "reason": "Confirm repaired ratio", "priority": "high"}
+            ],
+            "requires_followup": True,
+        }
+
+    def adjust_segment_chain_arc(self, **kwargs):
+        return {
+            "status": "success",
+            "macro_name": "macro_adjust_segment_chain_arc",
+            "intent": "adjust Segment_01/Segment_02/Segment_03 chain arc",
+            "actions_taken": [
+                {
+                    "status": "applied",
+                    "action": "adjust_segment_chain_arc",
+                    "tool_name": "modeling_transform_object",
+                }
+            ],
+            "objects_modified": list(kwargs.get("segment_objects", [])[1:]),
+            "verification_recommended": [
+                {"tool_name": "inspect_scene", "reason": "Verify updated chain arc", "priority": "normal"}
+            ],
+            "requires_followup": True,
+        }
+
 
 def _unwrap_structured(result):
     structured = getattr(result, "structured_content", None)
@@ -357,6 +481,13 @@ def test_contract_enabled_tools_expose_output_schema_on_listed_surface():
             by_name["macro_cutout_recess"],
             by_name["macro_finish_form"],
             by_name["macro_relative_layout"],
+            by_name["macro_attach_part_to_surface"],
+            by_name["macro_align_part_with_contact"],
+            by_name["macro_place_symmetry_pair"],
+            by_name["macro_place_supported_pair"],
+            by_name["macro_cleanup_part_intersections"],
+            by_name["macro_adjust_relative_proportion"],
+            by_name["macro_adjust_segment_chain_arc"],
             by_name["scene_context"],
             by_name["scene_create"],
             by_name["scene_configure"],
@@ -370,6 +501,13 @@ def test_contract_enabled_tools_expose_output_schema_on_listed_surface():
         macro_tool,
         finish_macro_tool,
         layout_macro_tool,
+        attach_macro_tool,
+        repair_macro_tool,
+        symmetry_macro_tool,
+        supported_pair_macro_tool,
+        cleanup_macro_tool,
+        proportion_macro_tool,
+        tail_arc_macro_tool,
         scene_context_tool,
         scene_create_tool,
         scene_configure_tool,
@@ -382,6 +520,13 @@ def test_contract_enabled_tools_expose_output_schema_on_listed_surface():
     assert macro_tool.output_schema is not None
     assert finish_macro_tool.output_schema is not None
     assert layout_macro_tool.output_schema is not None
+    assert attach_macro_tool.output_schema is not None
+    assert repair_macro_tool.output_schema is not None
+    assert symmetry_macro_tool.output_schema is not None
+    assert supported_pair_macro_tool.output_schema is not None
+    assert cleanup_macro_tool.output_schema is not None
+    assert proportion_macro_tool.output_schema is not None
+    assert tail_arc_macro_tool.output_schema is not None
     assert scene_context_tool.output_schema is not None
     assert scene_create_tool.output_schema is not None
     assert scene_configure_tool.output_schema is not None
@@ -599,6 +744,183 @@ def test_macro_relative_layout_delivers_structured_content(monkeypatch):
     payload = _unwrap_structured(result)
     assert payload["macro_name"] == "macro_relative_layout"
     assert payload["actions_taken"][0]["action"] == "apply_relative_layout"
+    assert payload["requires_followup"] is True
+
+
+def test_macro_attach_part_to_surface_delivers_structured_content(monkeypatch):
+    """Surface-attach macro should expose machine-readable reports on the MCP surface."""
+
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.get_macro_handler", lambda: MacroHandler())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    server = build_server("legacy-flat")
+
+    async def run():
+        return await server.call_tool(
+            "macro_attach_part_to_surface",
+            {
+                "part_object": "Ear",
+                "surface_object": "Head",
+                "surface_axis": "X",
+            },
+        )
+
+    result = asyncio.run(run())
+
+    payload = _unwrap_structured(result)
+    assert payload["macro_name"] == "macro_attach_part_to_surface"
+    assert payload["actions_taken"][0]["action"] == "attach_part_to_surface"
+    assert payload["requires_followup"] is True
+
+
+def test_macro_align_part_with_contact_delivers_structured_content(monkeypatch):
+    """Repair macro should expose machine-readable reports on the MCP surface."""
+
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.get_macro_handler", lambda: MacroHandler())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    server = build_server("legacy-flat")
+
+    async def run():
+        return await server.call_tool(
+            "macro_align_part_with_contact",
+            {
+                "part_object": "Ear",
+                "reference_object": "Head",
+            },
+        )
+
+    result = asyncio.run(run())
+
+    payload = _unwrap_structured(result)
+    assert payload["macro_name"] == "macro_align_part_with_contact"
+    assert payload["actions_taken"][0]["action"] == "align_part_with_contact"
+    assert payload["requires_followup"] is True
+
+
+def test_macro_place_symmetry_pair_delivers_structured_content(monkeypatch):
+    """Symmetry-pair macro should expose machine-readable reports on the MCP surface."""
+
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.get_macro_handler", lambda: MacroHandler())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    server = build_server("legacy-flat")
+
+    async def run():
+        return await server.call_tool(
+            "macro_place_symmetry_pair",
+            {
+                "left_object": "Ear_L",
+                "right_object": "Ear_R",
+            },
+        )
+
+    result = asyncio.run(run())
+
+    payload = _unwrap_structured(result)
+    assert payload["macro_name"] == "macro_place_symmetry_pair"
+    assert payload["actions_taken"][0]["action"] == "place_symmetry_pair"
+    assert payload["requires_followup"] is True
+
+
+def test_macro_place_supported_pair_delivers_structured_content(monkeypatch):
+    """Supported-pair macro should expose machine-readable reports on the MCP surface."""
+
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.get_macro_handler", lambda: MacroHandler())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    server = build_server("legacy-flat")
+
+    async def run():
+        return await server.call_tool(
+            "macro_place_supported_pair",
+            {
+                "left_object": "Foot_L",
+                "right_object": "Foot_R",
+                "support_object": "Floor",
+            },
+        )
+
+    result = asyncio.run(run())
+
+    payload = _unwrap_structured(result)
+    assert payload["macro_name"] == "macro_place_supported_pair"
+    assert payload["actions_taken"][0]["action"] == "place_supported_pair_anchor"
+    assert payload["requires_followup"] is True
+
+
+def test_macro_cleanup_part_intersections_delivers_structured_content(monkeypatch):
+    """Intersection-cleanup macro should expose machine-readable reports on the MCP surface."""
+
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.get_macro_handler", lambda: MacroHandler())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    server = build_server("legacy-flat")
+
+    async def run():
+        return await server.call_tool(
+            "macro_cleanup_part_intersections",
+            {
+                "part_object": "Horn",
+                "reference_object": "Head",
+            },
+        )
+
+    result = asyncio.run(run())
+
+    payload = _unwrap_structured(result)
+    assert payload["macro_name"] == "macro_cleanup_part_intersections"
+    assert payload["actions_taken"][0]["action"] == "cleanup_part_intersections"
+    assert payload["requires_followup"] is True
+
+
+def test_macro_adjust_relative_proportion_delivers_structured_content(monkeypatch):
+    """Proportion-repair macro should expose machine-readable reports on the MCP surface."""
+
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.get_macro_handler", lambda: MacroHandler())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    server = build_server("legacy-flat")
+
+    async def run():
+        return await server.call_tool(
+            "macro_adjust_relative_proportion",
+            {
+                "primary_object": "Head",
+                "reference_object": "Body",
+                "expected_ratio": 0.4,
+            },
+        )
+
+    result = asyncio.run(run())
+
+    payload = _unwrap_structured(result)
+    assert payload["macro_name"] == "macro_adjust_relative_proportion"
+    assert payload["actions_taken"][0]["action"] == "adjust_relative_proportion"
+    assert payload["requires_followup"] is True
+
+
+def test_macro_adjust_segment_chain_arc_delivers_structured_content(monkeypatch):
+    """Segment-chain arc macro should expose machine-readable reports on the MCP surface."""
+
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.get_macro_handler", lambda: MacroHandler())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    server = build_server("legacy-flat")
+
+    async def run():
+        return await server.call_tool(
+            "macro_adjust_segment_chain_arc",
+            {
+                "segment_objects": ["Tail_01", "Tail_02", "Tail_03"],
+            },
+        )
+
+    result = asyncio.run(run())
+
+    payload = _unwrap_structured(result)
+    assert payload["macro_name"] == "macro_adjust_segment_chain_arc"
+    assert payload["actions_taken"][0]["action"] == "adjust_segment_chain_arc"
     assert payload["requires_followup"] is True
 
 

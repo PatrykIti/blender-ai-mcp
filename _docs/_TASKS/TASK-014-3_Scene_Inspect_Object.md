@@ -1,6 +1,6 @@
 # TASK-014-3: Scene Inspect Object Tool
 
-**Status:** ✅ Complete  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Phase:** Phase 7 - Introspection & Listing APIs  
 **Completion Date:** 2025-11-27

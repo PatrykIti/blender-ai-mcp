@@ -4,7 +4,13 @@
 **Category:** Product Reliability / Assembled-Model Correction  
 **Estimated Effort:** Large  
 **Dependencies:** TASK-117, TASK-120, TASK-121, TASK-121-08  
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+
+**Completion Summary:** The full `TASK-122` wave is now complete. The repo exposes assembled-target truth bundles, a full bounded creature-correction macro layer, ranked correction candidates for the hybrid loop, truth-integrated iterate focus, truth-aware loop disposition, and an explicit real assembled-creature regression pack plus prompt guidance for validating the end-to-end flow.
+
+**Follow-on Note:** [TASK-122-03-07](./TASK-122-03-07_Deterministic_Cross_Domain_Refinement_Routing_And_Sculpt_Exposure.md)
+tracks the remaining open hybrid-loop work on deterministic cross-domain
+refinement-family routing and bounded sculpt exposure policy.
 
 ## Objective
 
@@ -55,19 +61,40 @@ If this wave is done correctly, the repo gains:
 This umbrella covers:
 
 - truth/spatial correction bundles for assembled parts
-- macro tools for attachment, contact, symmetry pairing, proportion, tail/limb posing, and intersection cleanup
+- macro tools for attachment, contact repair, symmetry pairing, supported-pair placement, proportion repair, ordered segment-chain shaping, and intersection cleanup
 - a hybrid loop contract that merges vision and truth signals
 - real assembled-creature evaluation and prompting guidance
 
 This umbrella does **not** make vision the truth source.
 It also does **not** introduce free-form unconstrained "fix everything" mega tools.
 
-## Success Criteria
+## Acceptance Criteria
 
 - the repo can detect both visible mismatch and actual spatial failure
 - the loop can recommend or apply bounded corrective actions for assembled parts
 - multi-part creature-style models are materially easier to correct than with vision-only guidance
 - the resulting system remains bounded, deterministic where possible, and consistent with the existing truth-layer boundary
+
+## Repository Touchpoints
+
+- `server/adapters/mcp/areas/reference.py`
+- `server/adapters/mcp/contracts/`
+- `server/adapters/mcp/vision/`
+- `server/application/tool_handlers/`
+- `server/domain/tools/`
+- `blender_addon/application/handlers/`
+- `tests/unit/`
+- `tests/e2e/`
+- `_docs/_MCP_SERVER/README.md`
+- `_docs/_VISION/README.md`
+- `_docs/_ADDON/README.md`
+
+## Completion Update Requirements
+
+- every completed descendant under `TASK-122` must add a new `_docs/_CHANGELOG/*` entry and update `_docs/_CHANGELOG/README.md`
+- update the relevant `_docs/` area docs for the touched truth, macro, or loop behavior
+- add or update focused unit coverage, and add/update E2E coverage when Blender/runtime behavior changes
+- keep `_docs/_TASKS/README.md` and the relevant task statuses aligned when promoted board state changes
 
 ## Execution Structure
 

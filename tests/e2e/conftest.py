@@ -69,5 +69,7 @@ def pytest_collection_modifyitems(config, items):
             path = str(item.fspath)
             if "/e2e/vision/" in path:
                 continue
+            if "/e2e/integration/" in path:
+                continue
             if "/e2e/" in path:
                 item.add_marker(skip_marker)

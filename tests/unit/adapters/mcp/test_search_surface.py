@@ -369,6 +369,27 @@ def test_call_tool_proxy_matches_direct_public_alias_execution(monkeypatch):
     assert _decode_tool_result(direct) == _decode_tool_result(discovered)
 
 
+def test_call_tool_proxy_preserves_proxied_valueerror_as_tool_error(monkeypatch):
+    """call_tool should keep direct-tool failure semantics instead of turning validation errors into success text."""
+
+    class FailingFastMCP:
+        async def call_tool(self, name, arguments):
+            raise ValueError("synthetic validation failure")
+
+    class Ctx:
+        fastmcp = FailingFastMCP()
+
+    transform = build_discovery_transform(get_surface_profile("llm-guided"))
+    assert transform is not None
+    call_tool = transform._make_call_tool().fn  # type: ignore[attr-defined]
+
+    async def run():
+        await call_tool(name="scene_clean_scene", arguments={"keep_lights_and_cameras": True}, ctx=Ctx())
+
+    with pytest.raises(ValueError, match="synthetic validation failure"):
+        asyncio.run(run())
+
+
 def test_call_tool_can_invoke_scene_clean_scene_during_bootstrap(monkeypatch):
     """Visible guided utility tools should stay callable through call_tool during bootstrap."""
 
@@ -396,6 +417,57 @@ def test_call_tool_can_invoke_scene_clean_scene_during_bootstrap(monkeypatch):
     assert payload == "Scene cleaned."
 
 
+def test_call_tool_can_canonicalize_legacy_scene_clean_scene_split_flags(monkeypatch):
+    """Guided utility proxy should tolerate the older split cleanup flags when they agree."""
+
+    class Handler:
+        def clean_scene(self, keep_lights_and_cameras: bool):
+            assert keep_lights_and_cameras is True
+            return "Scene cleaned."
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.scene.get_scene_handler",
+        lambda: Handler(),
+    )
+
+    server = build_server("llm-guided")
+
+    async def run():
+        result = await server.call_tool(
+            "call_tool",
+            {"name": "scene_clean_scene", "arguments": {"keep_lights": True, "keep_cameras": True}},
+        )
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+
+    assert payload == "Scene cleaned."
+
+
+def test_call_tool_rejects_ambiguous_legacy_scene_clean_scene_split_flags(monkeypatch):
+    """Split cleanup flags should fail clearly when they imply different cleanup behavior."""
+
+    class Handler:
+        def clean_scene(self, keep_lights_and_cameras: bool):
+            raise AssertionError("Handler should not be reached for ambiguous legacy cleanup flags")
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.scene.get_scene_handler",
+        lambda: Handler(),
+    )
+
+    server = build_server("llm-guided")
+
+    async def run():
+        with pytest.raises(ToolError, match="keep_lights_and_cameras"):
+            await server.call_tool(
+                "call_tool",
+                {"name": "scene_clean_scene", "arguments": {"keep_lights": True, "keep_cameras": False}},
+            )
+
+    asyncio.run(run())
+
+
 def test_search_first_rollout_reduces_visible_tool_count_and_payload_size():
     """llm-guided search-first should materially reduce the initial tool payload."""
 
@@ -416,7 +488,7 @@ def test_search_first_rollout_reduces_visible_tool_count_and_payload_size():
 
     legacy_count, guided_count, legacy_bytes, guided_bytes = asyncio.run(run())
 
-    assert legacy_count == 176
+    assert legacy_count == 183
     assert guided_count == 8
     assert guided_bytes < legacy_bytes
 

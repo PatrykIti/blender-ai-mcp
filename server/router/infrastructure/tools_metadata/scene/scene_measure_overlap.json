@@ -12,5 +12,5 @@
   },
   "related_tools": ["scene_measure_gap", "scene_measure_alignment", "scene_measure_distance"],
   "patterns": [],
-  "description": "Measures bbox overlap/touching state plus intersection dimensions and volume."
+  "description": "Measures overlap/touching state between two objects, preferring mesh-surface semantics for mesh pairs and keeping bbox overlap/touching diagnostics available separately."
 }

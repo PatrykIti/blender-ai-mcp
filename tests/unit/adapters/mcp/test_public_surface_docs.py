@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -19,6 +20,9 @@ def test_readme_documents_llm_guided_public_aliases():
         "configure_scene",
         "browse_workflows",
         "reference_images",
+        "guided_reference_readiness",
+        "MCP_TRANSPORT_MODE",
+        "streamable",
         "macro_cutout_recess",
         "macro_relative_layout",
         "macro_finish_form",
@@ -26,8 +30,14 @@ def test_readme_documents_llm_guided_public_aliases():
         "target_object",
         "config",
         "search_query",
+        "keep_lights_and_cameras",
         "Guided Handoff Contract",
         "guided_handoff",
+        "Contact Truth Semantics",
+        "mesh-surface contact/gap semantics",
+        "bbox fallback semantics",
+        "staged refs stay separate from the already-active goal",
+        "ready session still carries explicit pending refs for another goal",
     ):
         assert expected in text
 
@@ -48,14 +58,26 @@ def test_mcp_docs_describe_aliases_and_hidden_arguments():
         "reference_compare_current_view",
         "reference_compare_stage_checkpoint",
         "reference_iterate_stage_checkpoint",
+        "guided_reference_readiness",
+        "session_id",
+        "transport",
+        "MCP_TRANSPORT_MODE",
+        "streamable",
         "Vision Layer Docs",
         "Guided Handoff Contract",
         "guided_handoff",
+        "bbox-touching but still visibly gapped",
+        "keep_lights_and_cameras",
+        "keep_lights` / `keep_cameras`",
         "scene_hide_object",
         "scene_show_all_objects",
         "scene_isolate_object",
         "USER_PERSPECTIVE",
         "named cameras follow render visibility",
+        "combined visible set",
+        "copying active records into pending storage",
+        "ready sessions that",
+        "update pending state as well",
         "Current hidden/expert-only arguments on `llm-guided` include:",
         "`inspect_scene`",
         "`mesh_inspect`",
@@ -72,8 +94,66 @@ def test_vision_docs_exist_and_describe_runtime_scope():
         "pluggable vision backend strategy",
         "deterministic capture-bundle inputs",
         "goal-scoped reference image context",
+        "guided_reference_readiness",
         "request-bound attachment of `vision_assistant`",
         "Multi-View Capture Plan",
+        "HYBRID_LOOP_REAL_CREATURE_EVAL.md",
+        "CROSS_DOMAIN_REFINEMENT_ROUTING_EVAL.md",
+        "bbox-touching but mesh surfaces still separated",
+        "`correction_candidates`",
+        "`refinement_route`",
+        "`refinement_handoff`",
+        "separate from the",
+        "already-active goal refs",
+        "leaving broken pending file paths behind",
+    ):
+        assert expected in text
+
+
+def test_hybrid_loop_eval_pack_doc_exists():
+    text = (REPO_ROOT / "_docs" / "_VISION" / "HYBRID_LOOP_REAL_CREATURE_EVAL.md").read_text(encoding="utf-8")
+
+    for expected in (
+        "Hybrid Loop Real Creature Eval",
+        "tests/e2e/vision/test_reference_stage_truth_handoff.py",
+        "tests/e2e/vision/test_reference_guided_creature_comparison.py",
+        "`loop_disposition`",
+        "`correction_candidates`",
+        "`truth_followup`",
+        "`correction_focus`",
+    ):
+        assert expected in text
+
+
+def test_cross_domain_refinement_eval_doc_exists():
+    text = (REPO_ROOT / "_docs" / "_VISION" / "CROSS_DOMAIN_REFINEMENT_ROUTING_EVAL.md").read_text(encoding="utf-8")
+
+    for expected in (
+        "Cross-Domain Refinement Routing Eval",
+        "`refinement_route`",
+        "`refinement_handoff`",
+        "Hard-Surface / Electronics",
+        "Building / Architecture",
+        "Garment / Soft Accessory",
+        "Organ / Anatomy",
+        "Low-Poly Creature / Assembled Model",
+    ):
+        assert expected in text
+
+
+def test_reference_guided_creature_test_prompt_doc_exists():
+    text = (REPO_ROOT / "_docs" / "_VISION" / "REFERENCE_GUIDED_CREATURE_TEST_PROMPT.md").read_text(encoding="utf-8")
+
+    for expected in (
+        "Reference-Guided Creature Test Prompt",
+        "outside `_docs/_PROMPTS/`",
+        "blender-ai-mcp-guided-docker-openrouter",
+        "`reference_iterate_stage_checkpoint(...)`",
+        "`scene_get_viewport(...)`",
+        "`guided_reference_readiness`",
+        "`correction_candidates`",
+        "`truth_followup`",
+        "`USER_PERSPECTIVE`",
     ):
         assert expected in text
 
@@ -115,6 +195,9 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     prompt_readme = (REPO_ROOT / "_docs" / "_PROMPTS" / "README.md").read_text(encoding="utf-8")
     workflow_prompt = (REPO_ROOT / "_docs" / "_PROMPTS" / "WORKFLOW_ROUTER_FIRST.md").read_text(encoding="utf-8")
     manual_prompt = (REPO_ROOT / "_docs" / "_PROMPTS" / "MANUAL_TOOLS_NO_ROUTER.md").read_text(encoding="utf-8")
+    creature_prompt = (REPO_ROOT / "_docs" / "_PROMPTS" / "REFERENCE_GUIDED_CREATURE_BUILD.md").read_text(
+        encoding="utf-8"
+    )
 
     assert "check_scene" in prompt_readme
     assert "inspect_scene" in prompt_readme
@@ -140,12 +223,19 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "manual_tools_no_router" in prompt_readme
     assert 'call_tool(name="scene_get_viewport", arguments={...})' in prompt_readme
     assert 'call_tool(name="scene_clean_scene", arguments={"keep_lights_and_cameras": true})' in prompt_readme
+    assert "split `keep_lights` / `keep_cameras` form is legacy compatibility only" in prompt_readme
     assert "do **not** force `router_set_goal(...)`" in prompt_readme
     assert "`call_tool(...)` is not a bypass for hidden or phase-locked tools" in prompt_readme
     assert "`Unknown tool`" in prompt_readme
     assert "current phase/surface is wrong" in prompt_readme
     assert "manual_tools_no_router` is a different operating mode" in prompt_readme
     assert "correction_focus" in prompt_readme
+    assert "correction_candidates" in prompt_readme
+    assert "truth_followup" in prompt_readme
+    assert "guided_reference_readiness" in prompt_readme
+    assert "ready session still lists explicit pending refs for another goal" in prompt_readme
+    assert "refinement_route" in prompt_readme
+    assert "refinement_handoff" in prompt_readme
 
     assert 'browse_workflows(action="search", search_query="<user prompt>")' in workflow_prompt
     assert 'browse_workflows(action="get", name="<workflow_name>")' in workflow_prompt
@@ -205,3 +295,23 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
         in manual_prompt
     )
     assert "scene_show_all_objects(include_render=true)" in manual_prompt
+
+    assert "`reference_iterate_stage_checkpoint(...)`" in creature_prompt
+    assert "`guided_reference_readiness`" in creature_prompt
+    assert "`loop_disposition`" in creature_prompt
+    assert "`correction_candidates`" in creature_prompt
+    assert "`truth_followup`" in creature_prompt
+    assert "`truth_followup.focus_pairs`" in creature_prompt
+    assert "`truth_followup.macro_candidates`" in creature_prompt
+
+
+def test_reference_guided_creature_prompt_stays_english():
+    """The public creature prompt guide should not drift back into Polish prose."""
+
+    creature_prompt = (REPO_ROOT / "_docs" / "_PROMPTS" / "REFERENCE_GUIDED_CREATURE_BUILD.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert re.search(r"[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]", creature_prompt) is None
+    for unexpected in ("Zasady:", "Na końcu", "wyczyść", "dołącz", "wiewiór"):
+        assert unexpected not in creature_prompt

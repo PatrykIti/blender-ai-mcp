@@ -22,6 +22,14 @@ _EXPECTED_KEYS = (
     "confidence",
     "captures_used",
 )
+_GEMINI_COMPARE_EXPECTED_KEYS = (
+    "goal_summary",
+    "reference_match_summary",
+    "shape_mismatches",
+    "proportion_mismatches",
+    "correction_focus",
+    "next_corrections",
+)
 
 _REFERENCE_GUIDED_CHECKPOINT_MODES = (
     "comparison_mode=checkpoint_vs_reference",
@@ -36,9 +44,13 @@ def _is_reference_guided_checkpoint(request: VisionRequest) -> bool:
     return has_reference and any(mode in prompt_hint for mode in _REFERENCE_GUIDED_CHECKPOINT_MODES)
 
 
+def _uses_gemini_compare_contract(*, provider_name: str | None, request: VisionRequest | None) -> bool:
+    return provider_name == "google_ai_studio" and request is not None and _is_reference_guided_checkpoint(request)
+
+
 def _local_output_template(request: VisionRequest) -> str:
     labels = [image.label or image.role for image in request.images]
-    template = {
+    template: dict[str, object] = {
         "goal_summary": "One short sentence about whether the after images move toward the goal/reference.",
         "reference_match_summary": None,
         "visible_changes": [],
@@ -54,8 +66,47 @@ def _local_output_template(request: VisionRequest) -> str:
     return json.dumps(template, ensure_ascii=True, indent=2)
 
 
-def build_vision_system_prompt(*, backend_kind: str) -> str:
+def _gemini_compare_output_template() -> str:
+    template: dict[str, object] = {
+        "goal_summary": "One short sentence about whether the current checkpoint moves toward the goal/reference.",
+        "reference_match_summary": None,
+        "shape_mismatches": [],
+        "proportion_mismatches": [],
+        "correction_focus": [],
+        "next_corrections": [],
+    }
+    return json.dumps(template, ensure_ascii=True, indent=2)
+
+
+def build_vision_system_prompt(
+    *,
+    backend_kind: str,
+    provider_name: str | None = None,
+    request: VisionRequest | None = None,
+) -> str:
     """Return the bounded system prompt, tuned slightly by backend family."""
+
+    if _uses_gemini_compare_contract(provider_name=provider_name, request=request):
+        return (
+            "You are a bounded vision assistant for Blender modeling.\n\n"
+            "This request is a reference-guided checkpoint comparison for Gemini.\n"
+            "You are not the truth source. Use images only to compare the current checkpoint against the goal and references.\n"
+            "Do not claim geometric correctness from images alone.\n\n"
+            "Return exactly one JSON object with only these keys:\n"
+            "- goal_summary: string\n"
+            "- reference_match_summary: string or null\n"
+            "- shape_mismatches: string[]\n"
+            "- proportion_mismatches: string[]\n"
+            "- correction_focus: string[]\n"
+            "- next_corrections: string[]\n\n"
+            "Do not return visible_changes, likely_issues, recommended_checks, confidence, or captures_used.\n"
+            "Do not echo the input payload. Do not wrap the result in markdown.\n"
+            "Use shape_mismatches only for visible form/silhouette problems.\n"
+            "Use proportion_mismatches only for visible size/ratio problems.\n"
+            "Use correction_focus for the 1-3 highest-priority mismatch targets to fix next.\n"
+            "Use next_corrections for 1-3 bounded next-step fixes that stay tightly aligned with those mismatches.\n"
+            "If the signal is weak, keep the arrays conservative but still return the required JSON shape.\n"
+        )
 
     shared = (
         "You are a bounded vision assistant for Blender modeling.\n\n"
@@ -89,14 +140,64 @@ def build_vision_system_prompt(*, backend_kind: str) -> str:
             + "Use next_corrections for 1-3 bounded next-step corrections only when they are visually justified. "
             + "Do not present next_corrections as proof that the fix is safe or correct; deterministic checks still decide correctness. "
             + "Leave likely_issues and recommended_checks empty unless there is a specific visible risk or a clearly valuable deterministic follow-up check. "
+            + "If you do return recommended_checks, use only canonical MCP tool ids such as scene_measure_gap, scene_measure_overlap, scene_measure_alignment, scene_assert_contact, or scene_get_viewport. "
             + "For easy smoke or obvious progression cases, avoid filler likely_issues and avoid generic follow-up checks. "
             + "If signal is weak, still return the required JSON shape with conservative values.\n"
         )
     return shared
 
 
-def build_vision_payload_text(request: VisionRequest) -> str:
+def _build_gemini_compare_payload_text(request: VisionRequest) -> str:
+    image_lines = [f"- {image.role}: {image.label or image.role}" for image in request.images]
+    truth_summary = request.truth_summary or {}
+    truth_lines = []
+    if isinstance(truth_summary, dict):
+        for key, value in truth_summary.items():
+            truth_lines.append(f"- {key}: {value}")
+
+    parts = [
+        "TASK:",
+        "Compare the current checkpoint images against the active goal and the attached references.",
+        "",
+        f"GOAL: {request.goal}",
+        f"TARGET_OBJECT: {request.target_object or 'none'}",
+        f"PROMPT_HINT: {request.prompt_hint or 'none'}",
+        "IMAGES:",
+        *image_lines,
+    ]
+    if truth_lines:
+        parts.extend(["TRUTH_SUMMARY:", *truth_lines])
+    parts.extend(
+        [
+            "",
+            "Return exactly one JSON object with only these keys:",
+            "- goal_summary",
+            "- reference_match_summary",
+            "- shape_mismatches",
+            "- proportion_mismatches",
+            "- correction_focus",
+            "- next_corrections",
+            "Do not return visible_changes, likely_issues, recommended_checks, confidence, or captures_used.",
+            "Do not repeat the input payload.",
+            "Prefer concrete silhouette/proportion mismatches over generic praise.",
+            "correction_focus should rank the most important fixes first.",
+            "next_corrections should stay tightly aligned with the mismatches you listed.",
+            "OUTPUT_TEMPLATE:",
+            _gemini_compare_output_template(),
+        ]
+    )
+    return "\n".join(parts)
+
+
+def build_vision_payload_text(
+    request: VisionRequest,
+    *,
+    provider_name: str | None = None,
+) -> str:
     """Serialize the bounded vision input payload."""
+
+    if _uses_gemini_compare_contract(provider_name=provider_name, request=request):
+        return _build_gemini_compare_payload_text(request)
 
     payload = {
         "goal": request.goal,
@@ -161,19 +262,51 @@ def build_local_vision_payload_text(request: VisionRequest) -> str:
                 "- prefer concrete silhouette/proportion mismatches over generic praise",
                 "- correction_focus should rank the most important fixes first",
                 "- next_corrections should stay tightly aligned with the mismatches you listed",
+                "- if you recommend deterministic checks, use only canonical MCP tool ids rather than invented labels",
             ]
         )
     return "\n".join(parts)
 
 
-def expected_json_keys() -> tuple[str, ...]:
+def expected_json_keys(
+    *,
+    provider_name: str | None = None,
+    request: VisionRequest | None = None,
+) -> tuple[str, ...]:
     """Expose the canonical required JSON keys for tests and parse repair."""
 
+    if _uses_gemini_compare_contract(provider_name=provider_name, request=request):
+        return _GEMINI_COMPARE_EXPECTED_KEYS
     return _EXPECTED_KEYS
 
 
-def build_vision_response_json_schema() -> dict[str, object]:
+def build_vision_response_json_schema(
+    *,
+    provider_name: str | None = None,
+    request: VisionRequest | None = None,
+) -> dict[str, object]:
     """Return a provider-agnostic JSON Schema for bounded vision responses."""
+
+    if _uses_gemini_compare_contract(provider_name=provider_name, request=request):
+        return {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "goal_summary": {"type": "string"},
+                "reference_match_summary": {"type": ["string", "null"]},
+                "shape_mismatches": {"type": "array", "items": {"type": "string"}},
+                "proportion_mismatches": {"type": "array", "items": {"type": "string"}},
+                "correction_focus": {"type": "array", "items": {"type": "string"}},
+                "next_corrections": {"type": "array", "items": {"type": "string"}},
+            },
+            "required": [
+                "goal_summary",
+                "shape_mismatches",
+                "proportion_mismatches",
+                "correction_focus",
+                "next_corrections",
+            ],
+        }
 
     return {
         "type": "object",

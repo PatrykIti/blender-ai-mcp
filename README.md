@@ -62,8 +62,16 @@ When a bounded modeling intent matches, the default public working layer should 
 
 - `macro_cutout_recess` for recesses, openings, and cutter-driven cutouts
 - `macro_relative_layout` for align/place/contact-gap part layout
+- `macro_attach_part_to_surface` for seating one part onto another object's surface/body
+- `macro_align_part_with_contact` for minimal repair nudges on pairs that almost fit
+- `macro_place_symmetry_pair` for mirrored pair placement/correction around an explicit mirror plane
+- `macro_place_supported_pair` for mirrored pair placement/correction against one shared support surface
+- `macro_cleanup_part_intersections` for bounded pairwise overlap cleanup without free-form collision solving
+- `macro_adjust_relative_proportion` for bounded ratio repair between related objects
+- `macro_adjust_segment_chain_arc` for bounded arc adjustment on ordered segment chains
 - `macro_finish_form` for preset-driven bevel/subdivision/solidify finishing
 - `reference_images` for goal-scoped reference intake before bounded visual comparison
+- `guided_reference_readiness` on `router_set_goal`, `router_get_status`, and staged reference compare/iterate payloads so clients can see whether reference-driven stage work is actually ready
 - `reference_compare_stage_checkpoint` for deterministic multi-view stage comparison against attached references during manual iterative work
 - `reference_iterate_stage_checkpoint` for a session-aware staged correction loop that remembers prior focus, can escalate into inspect/validate when the same correction repeats, and can now target one object, many objects, a collection, or the full assembled silhouette
 
@@ -84,6 +92,9 @@ Current guided utility prep path:
   - `scene_get_viewport`
   - `scene_clean_scene`
 - these utility actions stay bounded and do not reopen the full legacy surface
+- the canonical cleanup argument shape on `llm-guided` is
+  `keep_lights_and_cameras`; older split flags are compatibility-only and
+  should not be used as the documented public form
 - build goals should still start from `router_set_goal(...)`, but screenshot /
   viewport / scene-reset requests should use the guided utility path instead
 
@@ -143,7 +154,7 @@ Current short version:
 
 - **Local default:** `mlx_local` with a Qwen VL 4B-class model path; current repo-validated baseline is `mlx-community/Qwen3-VL-4B-Instruct-4bit`
 - **External iterative compare candidate:** OpenRouter with `x-ai/grok-4.20-multi-agent`
-- **External experimental path:** Google AI Studio / Gemini currently needs a provider-specific structured-output contract for harder staged compare flows
+- **External Gemini compare path:** Google AI Studio / Gemini now uses a provider-specific narrow compare contract for staged iterative/reference-guided flows
 
 Detailed per-provider table:
 
@@ -174,6 +185,10 @@ Current structured-contract baseline includes:
 
 - `macro_cutout_recess`
 - `macro_finish_form`
+- `macro_attach_part_to_surface`
+- `macro_align_part_with_contact`
+- `macro_place_supported_pair`
+- `macro_cleanup_part_intersections`
 - `macro_relative_layout`
 - `scene_create`
 - `scene_configure`
@@ -198,6 +213,25 @@ Current structured-contract baseline includes:
 
 That is important for automation, auditing, and future macro/workflow composition.
 
+## Contact Truth Semantics
+
+For contact-sensitive checks on curved or rounded forms, the truth layer now
+distinguishes:
+
+- mesh-surface contact/gap semantics when a bounded mesh-aware path is
+  available
+- bbox fallback semantics when a mesh-aware path is not available
+
+That means a pair can still show bbox contact while the main measured relation
+remains `separated` if the real mesh surfaces still have a visible gap. Guided
+hybrid truth follow-up now carries that distinction forward in operator-facing
+summaries instead of collapsing it into a generic "contact passed/failed"
+claim.
+
+When the mesh-aware path finds a real overlap, the main measured relation also
+stays `overlapping`, so overlap rejection in `scene_assert_contact(...)` still
+works as a separate truth condition instead of collapsing into plain contact.
+
 ## Structured Clarification Flow
 
 The guided surface supports missing-input handling as part of the product contract, not as an afterthought.
@@ -217,6 +251,51 @@ The guided surface now treats workflow fallback as an explicit typed contract in
 - `guided_handoff` names the `target_phase`, `direct_tools`, `supporting_tools`, and `discovery_tools` for the next step on `llm-guided`.
 - `workflow_import_recommended` stays `False` on these fallback paths unless the user explicitly asks for workflow import/create behavior.
 - `router_get_status(...)` preserves the active `guided_handoff` in session diagnostics so clients can recover the intended continuation path.
+
+## Guided Reference Readiness
+
+Reference-driven staged work now has one explicit readiness contract instead of
+hidden ordering assumptions.
+
+- `router_set_goal(...)` and `router_get_status(...)` expose `guided_reference_readiness`.
+- the payload reports `attached_reference_count`, `pending_reference_count`,
+  `compare_ready`, `iterate_ready`, plus machine-readable `blocking_reason` and
+  `next_action`
+- `reference_images(action="attach", ...)` can stay pending until the guided
+  goal session is actually ready, then adopt automatically
+- if the same goal already has active refs and new ones are staged during
+  `needs_input`, the staged refs stay separate from the already-active goal
+  references until readiness returns
+- if a ready session still carries explicit pending refs for another goal,
+  `reference_images(action="list"| "remove"| "clear", ...)` now treats that
+  merged visible set consistently instead of leaving broken pending records
+- `reference_compare_stage_checkpoint(...)` and
+  `reference_iterate_stage_checkpoint(...)` now fail fast when the session is
+  not ready, and echo the same `guided_reference_readiness` payload
+- for staged compare/iterate, `goal_override` is no longer a session
+  substitute; use an active guided goal session instead
+
+## Session Diagnostics
+
+Guided/runtime payloads now expose explicit MCP session metadata:
+
+- `router_set_goal(...)` includes `session_id` and `transport`
+- `router_get_status(...)` includes `session_id` and `transport`
+- `reference_compare_stage_checkpoint(...)` includes `session_id` and `transport`
+- `reference_iterate_stage_checkpoint(...)` includes `session_id` and `transport`
+
+Current runtime guidance:
+
+- stateful `streamable` HTTP is the recommended transport for longer guided
+  runs and for debugging session-aware reference / checkpoint flows
+- recent guided-session hardening removed the known router bookkeeping path
+  that could clobber active goal/reference session state during routed tool
+  execution
+- if you investigate a future state-loss incident, compare `session_id` and
+  `transport` first to distinguish:
+  - transport/session reconnects
+  - application-level goal resets
+  - normal guided readiness blockers such as missing goal or references
 
 ## Server-Side Sampling Assistants Baseline
 
@@ -302,6 +381,22 @@ docker run -i --rm \
   ghcr.io/patrykiti/blender-ai-mcp:latest
 ```
 
+```bash
+docker run --rm \
+  -p 8000:8000 \
+  -v /tmp:/tmp \
+  -e BLENDER_AI_TMP_INTERNAL_DIR=/tmp \
+  -e BLENDER_AI_TMP_EXTERNAL_DIR=/tmp \
+  -e ROUTER_ENABLED=true \
+  -e MCP_SURFACE_PROFILE=llm-guided \
+  -e MCP_TRANSPORT_MODE=streamable \
+  -e MCP_HTTP_HOST=0.0.0.0 \
+  -e MCP_HTTP_PORT=8000 \
+  -e MCP_STREAMABLE_HTTP_PATH=/mcp \
+  -e BLENDER_RPC_HOST=host.docker.internal \
+  ghcr.io/patrykiti/blender-ai-mcp:latest
+```
+
 Example generic MCP client config:
 
 ```json
@@ -330,11 +425,14 @@ Network notes:
 
 - **macOS / Windows:** use `host.docker.internal`
 - **Linux:** prefer `--network host` with `BLENDER_RPC_HOST=127.0.0.1`
+- `MCP_TRANSPORT_MODE=stdio` keeps the current subprocess/stdio MCP mode
+- `MCP_TRANSPORT_MODE=streamable` starts a stateful Streamable HTTP MCP server
 
 For broader profile/config examples, use:
 
 - [MCP Server Docs](./_docs/_MCP_SERVER/README.md)
 - [MCP Client Config Examples](./_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md)
+- [`.env.example`](./.env.example) for the full tracked runtime/config variable set
 
 ## Testing
 

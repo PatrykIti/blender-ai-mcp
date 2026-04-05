@@ -277,6 +277,83 @@ def test_external_backend_supports_google_ai_studio_generate_content(monkeypatch
     assert "contents" in captured["json"]
 
 
+def test_google_ai_studio_compare_flow_uses_narrow_schema_and_prompt(monkeypatch, tmp_path):
+    image_path = tmp_path / "reference.png"
+    image_path.write_bytes(b"fake-png")
+
+    runtime = build_vision_runtime_config(
+        _config(
+            VISION_EXTERNAL_PROVIDER="google_ai_studio",
+            VISION_EXTERNAL_BASE_URL=None,
+            VISION_EXTERNAL_MODEL=None,
+            VISION_GEMINI_MODEL="gemini-2.5-flash",
+            VISION_GEMINI_API_KEY="gemini-secret",
+        )
+    )
+    backend = OpenAICompatibleVisionBackend(runtime)
+    request = VisionRequest(
+        goal="low poly squirrel",
+        target_object="Squirrel",
+        images=(VisionImageInput(path=str(image_path), role="reference", label="ref_front"),),
+        prompt_hint="comparison_mode=stage_checkpoint_vs_reference",
+    )
+
+    captured: dict = {}
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda timeout=None: _FakeAsyncClient(
+            response=_FakeResponse(
+                {
+                    "candidates": [
+                        {
+                            "content": {
+                                "parts": [
+                                    {
+                                        "text": json.dumps(
+                                            {
+                                                "goal_summary": "Closer overall.",
+                                                "reference_match_summary": "Head shape is closer.",
+                                                "shape_mismatches": ["Head silhouette is still too spherical."],
+                                                "proportion_mismatches": ["Tail still reads too small."],
+                                                "correction_focus": ["Head silhouette"],
+                                                "next_corrections": ["Flatten the head silhouette slightly."],
+                                            }
+                                        )
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ),
+            captured=captured,
+        ),
+    )
+
+    result = asyncio.run(backend.analyze(request))
+
+    schema = captured["json"]["generationConfig"]["responseJsonSchema"]
+    system_text = captured["json"]["systemInstruction"]["parts"][0]["text"]
+    payload_text = captured["json"]["contents"][0]["parts"][0]["text"]
+
+    assert result["goal_summary"] == "Closer overall."
+    assert result["visible_changes"] == []
+    assert set(schema["properties"]) == {
+        "goal_summary",
+        "reference_match_summary",
+        "shape_mismatches",
+        "proportion_mismatches",
+        "correction_focus",
+        "next_corrections",
+    }
+    assert (
+        "Do not return visible_changes, likely_issues, recommended_checks, confidence, or captures_used." in system_text
+    )
+    assert "OUTPUT_TEMPLATE:" in payload_text
+    assert '"shape_mismatches"' in payload_text
+
+
 def test_external_backend_invalid_json_error_includes_diagnostics(monkeypatch, tmp_path):
     image_path = tmp_path / "reference.png"
     image_path.write_bytes(b"fake-png")

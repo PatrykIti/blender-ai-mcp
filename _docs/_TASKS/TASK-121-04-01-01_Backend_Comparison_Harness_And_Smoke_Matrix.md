@@ -1,10 +1,10 @@
 # TASK-121-04-01-01: Backend Comparison Harness and Smoke Matrix
 
 **Parent:** [TASK-121-04-01](./TASK-121-04-01_Small_Vision_Runtime_Selection_And_Execution_Policy.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
 
-**Progress Update:** `scripts/vision_harness.py` now exists and can run the same bundle/reference payload through at least `mlx_local` and other configured backends. It now also supports repo-tracked `golden.json` scenarios and emits scored evaluation summaries. Preliminary MLX comparison shows that both `Qwen3-VL-2B-Instruct-4bit` and `Qwen3-VL-4B-Instruct-4bit` can score well on the first synthetic scenarios, but harder scenario coverage is still needed before making a product-facing local-model verdict.
+**Completion Summary:** `scripts/vision_harness.py` now exists and can run the same bundle/reference payload through at least `mlx_local` and other configured backends. It supports repo-tracked `golden.json` scenarios, emits scored evaluation summaries, and established the baseline backend smoke matrix used by the later runtime-evaluation work.
 
 The harness now also records raw-output diagnostics per backend run, so the
 team can distinguish:

@@ -4,7 +4,7 @@
 **Status:** ✅ Done  
 **Priority:** 🔴 High
 
-**Progress Update:** The reusable result envelope from `TASK-121-01-01` is now
+**Completion Summary:** The reusable result envelope from `TASK-121-01-01` is now
 in place, including richer optional fields for shape/proportion/correction
 semantics, and `TASK-121-01-02` now adds explicit policy metadata so the
 vision layer is carried as interpretation-only rather than truth or router

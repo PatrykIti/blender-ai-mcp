@@ -47,6 +47,39 @@ def test_scene_assert_contact(scene_handler, modeling_handler):
                 pass
 
 
+def test_scene_assert_contact_rejects_bbox_touching_but_visibly_gapped_spheres(scene_handler, modeling_handler):
+    head_name = "E2E_Assert_Head"
+    eye_name = "E2E_Assert_Eye"
+
+    try:
+        for name in (head_name, eye_name):
+            try:
+                scene_handler.delete_object(name)
+            except RuntimeError:
+                pass
+
+        modeling_handler.create_primitive(primitive_type="Sphere", name=head_name, radius=1.0, location=[0, 0, 0])
+        modeling_handler.create_primitive(primitive_type="Sphere", name=eye_name, radius=0.2, location=[0.5, 1.2, 0.5])
+
+        gap = scene_handler.measure_gap(head_name, eye_name, tolerance=0.0001)
+        result = scene_handler.assert_contact(head_name, eye_name, max_gap=0.001)
+
+        assert gap["measurement_basis"] == "mesh_surface"
+        assert gap["relation"] == "separated"
+        assert gap["bbox_relation"] == "contact"
+        assert gap["gap"] > 0.01
+        assert result["passed"] is False
+        assert result["actual"]["relation"] == "separated"
+    except RuntimeError as e:
+        pytest.skip(f"Blender not available: {e}")
+    finally:
+        for name in (head_name, eye_name):
+            try:
+                scene_handler.delete_object(name)
+            except RuntimeError:
+                pass
+
+
 def test_scene_assert_dimensions(scene_handler, modeling_handler):
     cube_name = "E2E_Assert_Dimensions"
 

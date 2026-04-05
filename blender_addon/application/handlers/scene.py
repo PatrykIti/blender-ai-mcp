@@ -1734,8 +1734,10 @@ class SceneHandler:
         """Measures the nearest gap/contact state between two objects."""
         import math
 
-        source_bbox = self._get_bbox_data(self._get_object_or_raise(from_object), world_space=True)
-        target_bbox = self._get_bbox_data(self._get_object_or_raise(to_object), world_space=True)
+        source_obj = self._get_object_or_raise(from_object)
+        target_obj = self._get_object_or_raise(to_object)
+        source_bbox = self._get_bbox_data(source_obj, world_space=True)
+        target_bbox = self._get_bbox_data(target_obj, world_space=True)
 
         axis_gap = [
             self._axis_gap(
@@ -1758,20 +1760,47 @@ class SceneHandler:
         gap_distance = math.sqrt(sum(value * value for value in axis_gap))
 
         if gap_distance > tolerance:
-            relation = "separated"
+            bbox_relation = "separated"
         elif all(value > tolerance for value in overlap_dimensions):
-            relation = "overlapping"
+            bbox_relation = "overlapping"
         else:
-            relation = "contact"
+            bbox_relation = "contact"
+
+        bbox_overlap_volume = 0.0
+        if bbox_relation == "overlapping":
+            bbox_overlap_volume = overlap_dimensions[0] * overlap_dimensions[1] * overlap_dimensions[2]
+
+        mesh_contact = self._measure_mesh_surface_relation(
+            source_obj,
+            target_obj,
+            tolerance,
+            bbox_overlap_volume=bbox_overlap_volume,
+        )
+        if mesh_contact is not None:
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "gap": round(float(mesh_contact["gap"]), 6),
+                "axis_gap": self._round_axis_mapping(mesh_contact["axis_gap"]),
+                "relation": mesh_contact["relation"],
+                "tolerance": round(float(tolerance), 6),
+                "units": "blender_units",
+                "measurement_basis": "mesh_surface",
+                "bbox_gap": round(float(gap_distance), 6),
+                "bbox_axis_gap": self._round_axis_mapping(axis_gap),
+                "bbox_relation": bbox_relation,
+                "nearest_points": mesh_contact["nearest_points"],
+            }
 
         return {
             "from_object": from_object,
             "to_object": to_object,
             "gap": round(float(gap_distance), 6),
             "axis_gap": self._round_axis_mapping(axis_gap),
-            "relation": relation,
+            "relation": bbox_relation,
             "tolerance": round(float(tolerance), 6),
             "units": "blender_units",
+            "measurement_basis": "bounding_box",
         }
 
     def measure_alignment(self, from_object, to_object, axes=None, reference="CENTER", tolerance=0.0001):
@@ -1812,8 +1841,10 @@ class SceneHandler:
 
     def measure_overlap(self, from_object, to_object, tolerance=0.0001):
         """Measures overlap/intersection between two objects."""
-        source_bbox = self._get_bbox_data(self._get_object_or_raise(from_object), world_space=True)
-        target_bbox = self._get_bbox_data(self._get_object_or_raise(to_object), world_space=True)
+        source_obj = self._get_object_or_raise(from_object)
+        target_obj = self._get_object_or_raise(to_object)
+        source_bbox = self._get_bbox_data(source_obj, world_space=True)
+        target_bbox = self._get_bbox_data(target_obj, world_space=True)
 
         intersection_min = [
             max(source_bbox["min"][axis_index], target_bbox["min"][axis_index]) for axis_index in range(3)
@@ -1824,7 +1855,7 @@ class SceneHandler:
         overlap_dimensions = [
             max(0.0, intersection_max[axis_index] - intersection_min[axis_index]) for axis_index in range(3)
         ]
-        overlaps = all(value > tolerance for value in overlap_dimensions)
+        bbox_overlaps = all(value > tolerance for value in overlap_dimensions)
         gap_axes = [
             self._axis_gap(
                 source_bbox["min"][axis_index],
@@ -1834,30 +1865,67 @@ class SceneHandler:
             )
             for axis_index in range(3)
         ]
-        touching = not overlaps and all(value <= tolerance for value in gap_axes)
-        overlap_volume = 0.0
-        if overlaps:
-            overlap_volume = overlap_dimensions[0] * overlap_dimensions[1] * overlap_dimensions[2]
+        bbox_touching = not bbox_overlaps and all(value <= tolerance for value in gap_axes)
+        bbox_overlap_volume = 0.0
+        if bbox_overlaps:
+            bbox_overlap_volume = overlap_dimensions[0] * overlap_dimensions[1] * overlap_dimensions[2]
 
-        if overlaps:
-            relation = "overlap"
-        elif touching:
-            relation = "touching"
+        if bbox_overlaps:
+            bbox_relation = "overlap"
+        elif bbox_touching:
+            bbox_relation = "touching"
         else:
-            relation = "disjoint"
+            bbox_relation = "disjoint"
+
+        mesh_contact = self._measure_mesh_surface_relation(
+            source_obj,
+            target_obj,
+            tolerance,
+            bbox_overlap_volume=bbox_overlap_volume,
+        )
+        if mesh_contact is not None:
+            overlaps = bool(mesh_contact["overlaps"])
+            touching = mesh_contact["relation"] == "contact"
+            if overlaps:
+                relation = "overlap"
+            elif touching:
+                relation = "touching"
+            else:
+                relation = "disjoint"
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "overlaps": overlaps,
+                "touching": touching,
+                "relation": relation,
+                "overlap_dimensions": self._round_values(overlap_dimensions if overlaps else [0.0, 0.0, 0.0]),
+                "overlap_volume": round(float(bbox_overlap_volume if overlaps else 0.0), 6),
+                "intersection_min": self._round_values(intersection_min) if overlaps else None,
+                "intersection_max": self._round_values(intersection_max) if overlaps else None,
+                "tolerance": round(float(tolerance), 6),
+                "units": "blender_units",
+                "measurement_basis": "mesh_surface",
+                "surface_gap": round(float(mesh_contact["gap"]), 6),
+                "bbox_relation": bbox_relation,
+                "bbox_touching": bbox_touching,
+                "bbox_overlap_dimensions": self._round_values(overlap_dimensions),
+                "bbox_overlap_volume": round(float(bbox_overlap_volume), 6),
+                "nearest_points": mesh_contact["nearest_points"],
+            }
 
         return {
             "from_object": from_object,
             "to_object": to_object,
-            "overlaps": overlaps,
-            "touching": touching,
-            "relation": relation,
+            "overlaps": bbox_overlaps,
+            "touching": bbox_touching,
+            "relation": bbox_relation,
             "overlap_dimensions": self._round_values(overlap_dimensions),
-            "overlap_volume": round(float(overlap_volume), 6),
-            "intersection_min": self._round_values(intersection_min) if overlaps else None,
-            "intersection_max": self._round_values(intersection_max) if overlaps else None,
+            "overlap_volume": round(float(bbox_overlap_volume), 6),
+            "intersection_min": self._round_values(intersection_min) if bbox_overlaps else None,
+            "intersection_max": self._round_values(intersection_max) if bbox_overlaps else None,
             "tolerance": round(float(tolerance), 6),
             "units": "blender_units",
+            "measurement_basis": "bounding_box",
         }
 
     def assert_contact(self, from_object, to_object, max_gap=0.0001, allow_overlap=False):
@@ -1889,6 +1957,9 @@ class SceneHandler:
                 "axis_gap": gap_result["axis_gap"],
                 "measured_relation": relation,
                 "overlap_rejected": overlaps and not allow_overlap,
+                "measurement_basis": gap_result.get("measurement_basis", "bounding_box"),
+                "bbox_relation": gap_result.get("bbox_relation"),
+                "nearest_points": gap_result.get("nearest_points"),
             },
         )
 
@@ -2110,6 +2181,172 @@ class SceneHandler:
             "dimensions": dimensions,
             "corners": corners,
         }
+
+    def _get_evaluated_mesh_data(self, obj):
+        """Returns evaluated world-space mesh data for mesh-aware truth checks."""
+
+        if getattr(obj, "type", None) != "MESH":
+            return None
+
+        obj_eval = None
+        release_evaluated_mesh = False
+        try:
+            depsgraph = bpy.context.evaluated_depsgraph_get()
+            obj_eval = obj.evaluated_get(depsgraph)
+            mesh = obj_eval.to_mesh()
+            release_evaluated_mesh = True
+        except Exception:
+            return None
+
+        try:
+            world_vertices = [obj_eval.matrix_world @ vertex.co for vertex in getattr(mesh, "vertices", [])]
+            if not world_vertices:
+                return None
+            try:
+                mesh.calc_loop_triangles()
+            except Exception:
+                pass
+            triangles = [tuple(tri.vertices) for tri in getattr(mesh, "loop_triangles", []) if len(tri.vertices) == 3]
+            if not triangles:
+                return None
+            polygon_centers = [obj_eval.matrix_world @ poly.center for poly in getattr(mesh, "polygons", [])]
+            release_evaluated_mesh = False
+            return {
+                "object_name": obj.name,
+                "vertices": world_vertices,
+                "triangles": triangles,
+                "sample_points": [*world_vertices, *polygon_centers],
+                "cleanup_owner": obj_eval,
+            }
+        except Exception:
+            return None
+        finally:
+            if release_evaluated_mesh and hasattr(obj_eval, "to_mesh_clear"):
+                try:
+                    obj_eval.to_mesh_clear()
+                except Exception:
+                    pass
+
+    def _release_evaluated_mesh_data(self, mesh_data):
+        """Releases temporary evaluated mesh data created for mesh-aware checks."""
+
+        if not isinstance(mesh_data, dict):
+            return
+        cleanup_owner = mesh_data.get("cleanup_owner")
+        if hasattr(cleanup_owner, "to_mesh_clear"):
+            try:
+                cleanup_owner.to_mesh_clear()
+            except Exception:
+                pass
+
+    def _find_closest_surface_pair(self, sample_points, target_tree, tolerance):
+        """Find the closest sampled surface point against a target BVH tree."""
+
+        best_pair = None
+        best_distance = None
+        for point in sample_points:
+            try:
+                nearest = target_tree.find_nearest(point)
+            except Exception:
+                continue
+            if not nearest or nearest[0] is None or nearest[3] is None:
+                continue
+            nearest_point, _normal, _index, distance = nearest
+            if best_distance is None or float(distance) < best_distance:
+                best_distance = float(distance)
+                best_pair = (point, nearest_point)
+                if best_distance <= tolerance:
+                    break
+        return best_pair, best_distance
+
+    def _has_effectively_zero_bbox_dimension(self, obj, tolerance):
+        """Return True when the object's local bbox collapses on at least one axis."""
+
+        try:
+            bbox = list(getattr(obj, "bound_box", ()) or ())
+            if not bbox:
+                return False
+            minima = [min(float(corner[axis_index]) for corner in bbox) for axis_index in range(3)]
+            maxima = [max(float(corner[axis_index]) for corner in bbox) for axis_index in range(3)]
+            return any(abs(maxima[axis_index] - minima[axis_index]) <= float(tolerance) for axis_index in range(3))
+        except Exception:
+            return False
+
+    def _measure_mesh_surface_relation(self, source_obj, target_obj, tolerance, bbox_overlap_volume=0.0):
+        """Returns mesh-aware contact/gap semantics for mesh-object pairs when possible."""
+
+        try:
+            from mathutils.bvhtree import BVHTree
+        except Exception:
+            return None
+
+        source_mesh = self._get_evaluated_mesh_data(source_obj)
+        target_mesh = self._get_evaluated_mesh_data(target_obj)
+        if source_mesh is None or target_mesh is None:
+            self._release_evaluated_mesh_data(source_mesh)
+            self._release_evaluated_mesh_data(target_mesh)
+            return None
+
+        try:
+            source_tree = BVHTree.FromPolygons(source_mesh["vertices"], source_mesh["triangles"], all_triangles=True)
+            target_tree = BVHTree.FromPolygons(target_mesh["vertices"], target_mesh["triangles"], all_triangles=True)
+            if source_tree is None or target_tree is None:
+                return None
+
+            overlap_pairs = source_tree.overlap(target_tree)
+            overlap_volume_threshold = max(float(tolerance) ** 3, 1e-12)
+            zero_thickness_overlap = bool(overlap_pairs) and (
+                self._has_effectively_zero_bbox_dimension(source_obj, tolerance)
+                or self._has_effectively_zero_bbox_dimension(target_obj, tolerance)
+            )
+            overlaps = bool(overlap_pairs) and (
+                float(bbox_overlap_volume) > overlap_volume_threshold or zero_thickness_overlap
+            )
+            if overlaps:
+                return {
+                    "overlaps": True,
+                    "gap": 0.0,
+                    "axis_gap": [0.0, 0.0, 0.0],
+                    "relation": "overlapping",
+                    "nearest_points": None,
+                }
+
+            source_pair, source_distance = self._find_closest_surface_pair(
+                source_mesh["sample_points"], target_tree, tolerance
+            )
+            target_pair, target_distance = self._find_closest_surface_pair(
+                target_mesh["sample_points"], source_tree, tolerance
+            )
+            candidates = [
+                (source_pair, source_distance),
+                (
+                    (target_pair[1], target_pair[0]) if target_pair is not None else None,
+                    target_distance,
+                ),
+            ]
+            valid_candidates = [
+                (pair, distance) for pair, distance in candidates if pair is not None and distance is not None
+            ]
+            if not valid_candidates:
+                return None
+
+            best_pair, best_distance = min(valid_candidates, key=lambda item: float(item[1]))
+            point_a, point_b = best_pair
+            axis_gap = [abs(float(point_b[index]) - float(point_a[index])) for index in range(3)]
+            relation = "contact" if float(best_distance) <= tolerance else "separated"
+            return {
+                "overlaps": False,
+                "gap": round(float(best_distance), 6),
+                "axis_gap": axis_gap,
+                "relation": relation,
+                "nearest_points": {
+                    "from_object": self._round_values(point_a),
+                    "to_object": self._round_values(point_b),
+                },
+            }
+        finally:
+            self._release_evaluated_mesh_data(source_mesh)
+            self._release_evaluated_mesh_data(target_mesh)
 
     def _normalize_axes(self, axes):
         """Normalizes axis list input for alignment measurements."""

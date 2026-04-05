@@ -4,7 +4,7 @@
 **Category:** Infrastructure / Bug Fix
 **Estimated Effort:** Small (1-2 hours)
 **Dependencies:** None
-**Status:** ✅ Done (2025-12-07)
+**Status:** ✅ Done
 
 ---
 

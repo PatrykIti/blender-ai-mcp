@@ -26,9 +26,74 @@ def test_assert_contact_uses_gap_and_overlap_semantics():
 
     assert touching["passed"] is True
     assert touching["actual"]["relation"] == "contact"
+    assert touching["details"]["measurement_basis"] == "bounding_box"
     assert rejected_overlap["passed"] is False
     assert rejected_overlap["details"]["overlap_rejected"] is True
     assert allowed_overlap["passed"] is True
+
+
+def test_assert_contact_can_fail_when_mesh_surface_gap_exists_despite_bbox_touching(monkeypatch):
+    mock_bpy = sys.modules["bpy"]
+    head = _make_box("Head", (-1.0, -1.0, -1.0), (1.0, 1.0, 1.0), (0.0, 0.0, 0.0))
+    eye = _make_box("Eye", (-0.2, 1.0, -0.2), (0.2, 1.4, 0.2), (0.0, 1.2, 0.0))
+    head.type = "MESH"
+    eye.type = "MESH"
+    mock_bpy.data.objects = MagicMock()
+    mock_bpy.data.objects.get.side_effect = {"Head": head, "Eye": eye}.get
+
+    handler = SceneHandler()
+
+    def _fake_mesh_contact(source_obj, target_obj, tolerance, bbox_overlap_volume=0.0):
+        return {
+            "overlaps": False,
+            "gap": 0.051,
+            "axis_gap": [0.0, 0.051, 0.0],
+            "relation": "separated",
+            "nearest_points": {
+                "from_object": [0.0, 0.318, 0.0],
+                "to_object": [0.0, 0.369, 0.0],
+            },
+        }
+
+    monkeypatch.setattr(handler, "_measure_mesh_surface_relation", _fake_mesh_contact)
+
+    result = handler.assert_contact("Head", "Eye", max_gap=0.001, allow_overlap=False)
+
+    assert result["passed"] is False
+    assert result["actual"]["relation"] == "separated"
+    assert result["details"]["measurement_basis"] == "mesh_surface"
+    assert result["details"]["bbox_relation"] == "contact"
+
+
+def test_assert_contact_rejects_mesh_overlap_when_allow_overlap_is_false(monkeypatch):
+    mock_bpy = sys.modules["bpy"]
+    left = _make_box("Left", (0.0, 0.0, 0.0), (1.0, 1.0, 1.0), (0.5, 0.5, 0.5))
+    overlap = _make_box("Overlap", (0.5, 0.0, 0.0), (1.5, 1.0, 1.0), (1.0, 0.5, 0.5))
+    left.type = "MESH"
+    overlap.type = "MESH"
+    mock_bpy.data.objects = MagicMock()
+    mock_bpy.data.objects.get.side_effect = {"Left": left, "Overlap": overlap}.get
+
+    handler = SceneHandler()
+
+    def _fake_mesh_contact(source_obj, target_obj, tolerance, bbox_overlap_volume=0.0):
+        assert bbox_overlap_volume > 0.0
+        return {
+            "overlaps": True,
+            "gap": 0.0,
+            "axis_gap": [0.0, 0.0, 0.0],
+            "relation": "overlapping",
+            "nearest_points": None,
+        }
+
+    monkeypatch.setattr(handler, "_measure_mesh_surface_relation", _fake_mesh_contact)
+
+    result = handler.assert_contact("Left", "Overlap", max_gap=0.001, allow_overlap=False)
+
+    assert result["passed"] is False
+    assert result["actual"]["relation"] == "overlapping"
+    assert result["details"]["measurement_basis"] == "mesh_surface"
+    assert result["details"]["overlap_rejected"] is True
 
 
 def test_assert_dimensions_compares_expected_vector_with_tolerance():

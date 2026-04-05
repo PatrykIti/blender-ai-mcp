@@ -1,0 +1,47 @@
+{
+  "tool_name": "macro_attach_part_to_surface",
+  "category": "scene",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": [
+    "attach",
+    "seat",
+    "surface",
+    "body",
+    "mount",
+    "place on side",
+    "ear",
+    "horn",
+    "limb",
+    "przymocuj",
+    "osadz",
+    "dosun",
+    "powierzchnia",
+    "korpus",
+    "ciało"
+  ],
+  "sample_prompts": [
+    "attach the ear to the positive X side of the head",
+    "seat this horn onto the top surface of the skull with a tiny gap",
+    "przymocuj ucho do dodatniej strony X głowy",
+    "osadz ten element na górnej powierzchni korpusu"
+  ],
+  "parameters": {
+    "part_object": {"type": "string", "required": true},
+    "surface_object": {"type": "string", "required": true},
+    "surface_axis": {"type": "enum", "options": ["X", "Y", "Z"], "required": true},
+    "surface_side": {"type": "enum", "options": ["positive", "negative"], "default": "positive"},
+    "align_mode": {"type": "enum", "options": ["center", "min", "max"], "default": "center"},
+    "gap": {"type": "float", "default": 0.0},
+    "offset": {"type": "vector3", "default": [0.0, 0.0, 0.0]}
+  },
+  "related_tools": [
+    "macro_relative_layout",
+    "scene_get_bounding_box",
+    "scene_measure_gap",
+    "scene_assert_contact",
+    "scene_get_viewport"
+  ],
+  "patterns": [],
+  "description": "Bounded macro that seats one part onto another object's surface/body using one explicit surface axis, one side, shared tangential alignment, optional gap, and one deterministic transform. Prefer this macro over the more general macro_relative_layout when the intent is surface attachment."
+}

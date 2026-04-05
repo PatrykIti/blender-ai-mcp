@@ -362,7 +362,8 @@ class RouterToolHandler(IRouterTool):
                 continuation_mode="guided_manual_build",
                 message=(
                     f"'{goal}' looks like a reference-guided manual build request rather than a reusable workflow goal. "
-                    "Continue on the guided build surface, then attach/use reference_images(...) against that active manual build."
+                    "Continue on the guided build surface and use guided_reference_readiness to decide whether "
+                    "references are already ready for staged compare/iterate or still need a next action."
                 ),
             )
 

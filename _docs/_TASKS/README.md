@@ -1,12 +1,26 @@
 # Kanban Tasks - Blender AI MCP
 
-Task board for the project. Update statuses in markdown files.
+Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 2 tasks
-- **In Progress:** 0 tasks
-- **Done:** 188
+- **To Do:** 3 tasks
+- **In Progress:** 2 tasks
+- **Done:** 204
 - **Superseded:** 10
+
+## 📐 Board Scope
+
+- The counts above refer to the rows tracked on this board, not every nested task file under `_docs/_TASKS/`.
+- Use the board for currently promoted work and promoted follow-ons.
+- Keep nested task files in sync with the board when their promoted state changes.
+
+## 🧱 Hierarchy Rules
+
+- Preferred planning flow: umbrella -> subtask -> deeper technical subtask when needed -> leaf/micro-task.
+- Open direct children must not remain under a closed parent.
+- If follow-on work remains after a parent is closed, keep the historical lineage in the task ID if useful, but track it as a board-level follow-on task instead of an open child.
+- Use the canonical task status vocabulary from `AGENTS.md`.
+- Close historical planning slices administratively once the parent wave is complete.
 
 ## 🧭 Terminology Guardrails
 
@@ -23,8 +37,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-121-04-01-05](./TASK-121-04-01-05_Google_AI_Studio_Gemini_Structured_Output_Contract_And_Prompting.md) | **Google AI Studio Gemini Structured Output Contract and Prompting** | 🔴 High | Add a Gemini-specific structured-output contract/prompting path for iterative compare flows, where the current generic external contract is still unstable |
-| [TASK-122](./TASK-122_Hybrid_Vision_Truth_And_Correction_Macro_Wave.md) | **Hybrid Vision, Truth, and Correction Macro Wave** | 🔴 High | Add the next reliability wave for assembled models: truth bundles, correction macros, and a hybrid vision+truth correction loop |
+| [TASK-130](./TASK-130_Default_Guided_Surface_Bootstrap_Consistency.md) | **Default Guided Surface Bootstrap Consistency** | 🟠 High | Board-level follow-on from the TASK-128 audit. Align the repo's documented "default production" story with the actual bootstrap surface configured in runtime defaults and examples. |
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
@@ -41,12 +54,20 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 
+### Vision & Hybrid Loop
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| [TASK-128-02](./TASK-128-02_Deterministic_Silhouette_Analysis_And_Typed_Action_Hints.md) | **Deterministic Silhouette Analysis and Typed Action Hints** | 🔴 High | Second execution slice for mask-based shape metrics and tool-oriented corrective hints. |
+| [TASK-128-03](./TASK-128-03_Optional_Part_Segmentation_Sidecar_And_Part_Aware_Perception.md) | **Optional Part-Segmentation Sidecar and Part-Aware Perception** | 🟡 Medium | Third execution slice for an opt-in segmentation module that produces part masks, crops, and landmarks without becoming a default runtime dependency. |
+
 ---
 
 ## 🚧 In Progress
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-128](./TASK-128_Reference_Guided_Creature_Build_Surface_And_Perception_Reliability.md) | **Reference-Guided Creature Build Surface and Perception Reliability** | 🔴 High | Active umbrella for Slice A/B/C work on creature prompting, deterministic silhouette feedback, and optional part segmentation. |
+| [TASK-128-01](./TASK-128-01_Guided_Creature_Prompting_Handoff_And_Discovery_Hints.md) | **Guided Creature Prompting, Handoff, and Discovery Hints** | 🔴 High | Active Slice A. The platform baseline exists, but the creature prompt asset, goal-aware recommendation path, creature handoff narrowing, and discovery/search bias still need to be aligned with runtime behavior. The highest-risk open gaps are now prompt-asset exposure, goal-aware recommendation routing, prompt wording/runtime-surface alignment, the session-aware creature handoff path, and the metadata-driven search-bias path: catalog/provider/bridge prompt exposure, deterministic use of session goal in `recommended_prompts`, generic-creature and guided-utility-consistent prompt docs, iterate-stage docs that describe the *current* runtime response shape, `guided_handoff` payload, session visibility/search shaping, `search_documents` enrichment, and the matching regression harness still need to describe the same bounded low-poly creature story. The broader repo-wide default-bootstrap drift is tracked separately in [TASK-130](./TASK-130_Default_Guided_Surface_Bootstrap_Consistency.md). |
 
 ---
 
@@ -54,6 +75,22 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-134](./TASK-134_Stage_Compare_Error_Response_Hardening.md) | **Stage Compare Error Response Hardening** | 🟠 High | 2026-04-05 |
+| [TASK-133](./TASK-133_Call_Tool_Proxy_Error_Semantics_Hardening.md) | **call_tool Proxy Error Semantics Hardening** | 🟠 High | 2026-04-05 |
+| [TASK-132](./TASK-132_Hybrid_Budget_Mesh_Overlap_And_Guided_Readiness_Review_Followups.md) | **Hybrid Budget, Mesh Overlap, and Guided Readiness Review Follow-Ups** | 🔴 High | 2026-04-05 |
+| [TASK-131](./TASK-131_Ready_Session_Pending_Reference_Visibility_Consistency.md) | **Ready-Session Pending Reference Visibility Consistency** | 🔴 High | 2026-04-05 |
+| [TASK-129](./TASK-129_Guided_Reference_Pending_Storage_Isolation_Hardening.md) | **Guided Reference Pending Storage Isolation Hardening** | 🔴 High | 2026-04-04 |
+| [TASK-127](./TASK-127_Guided_Utility_Public_Contract_Hardening_For_Scene_Clean_Scene.md) | **Guided Utility Public Contract Hardening for `scene_clean_scene`** | 🔴 High | 2026-04-04 |
+| [TASK-126](./TASK-126_Mesh_Aware_Contact_Semantics_And_Visual_Fit_Reliability.md) | **Mesh-Aware Contact Semantics and Visual Fit Reliability** | 🔴 High | 2026-04-04 |
+| [TASK-125](./TASK-125_MCP_Transport_Mode_Switching_And_Session_Diagnostics.md) | **MCP Transport Mode Switching and Session Diagnostics** | 🔴 High | 2026-04-03 |
+| [TASK-124](./TASK-124_Guided_Session_Goal_And_Reference_Orchestration.md) | **Guided Session Goal and Reference Orchestration** | 🔴 High | 2026-04-03 |
+| [TASK-122-03-07](./TASK-122-03-07_Deterministic_Cross_Domain_Refinement_Routing_And_Sculpt_Exposure.md) | **Deterministic Cross-Domain Refinement Routing and Sculpt Exposure** | 🔴 High | 2026-04-03 |
+| [TASK-122-03-06](./TASK-122-03-06_Hybrid_Loop_Model_Aware_Budget_And_Scope_Control.md) | **Hybrid Loop Model-Aware Budget and Scope Control** | 🔴 High | 2026-04-03 |
+| [TASK-122-03-07-02](./TASK-122-03-07-02_Deterministic_Refinement_Family_Selector.md) | **Deterministic Refinement Family Selector** | 🔴 High | 2026-04-03 |
+| [TASK-122-03-07-01](./TASK-122-03-07-01_Refinement_Taxonomy_And_Domain_Boundaries.md) | **Refinement Taxonomy and Domain Boundaries** | 🔴 High | 2026-04-03 |
+| [TASK-122-03-05](./TASK-122-03-05_Hybrid_Loop_Pairing_Anchor_And_Canonical_Check_Quality.md) | **Hybrid Loop Pairing Anchor and Canonical Check Quality** | 🟡 Medium | 2026-04-02 |
+| [TASK-122](./TASK-122_Hybrid_Vision_Truth_And_Correction_Macro_Wave.md) | **Hybrid Vision, Truth, and Correction Macro Wave** | 🔴 High | 2026-04-02 |
+| [TASK-121-04-01-05](./TASK-121-04-01-05_Google_AI_Studio_Gemini_Structured_Output_Contract_And_Prompting.md) | **Google AI Studio Gemini Structured Output Contract and Prompting** | 🔴 High | 2026-04-01 |
 | [TASK-123](./TASK-123_Runtime_Reliability_Fixes_For_Vision_Provider_Startup_And_Task_Terminality.md) | **Runtime Reliability Fixes for Vision Provider Startup and Task Terminality** | 🔴 High | 2026-04-01 |
 | [TASK-120](./TASK-120_Macro_Tool_Layer_And_Guided_Surface_Collapse.md) | **Macro Tool Layer and Guided Surface Collapse** | 🔴 High | 2026-03-26 |
 | [TASK-119](./TASK-119_Existing_Public_Surface_Hardening_After_TASK-113.md) | **Existing Public Surface Hardening After TASK-113** | 🔴 High | 2026-03-25 |
@@ -537,8 +574,8 @@ The Kanban tables above track umbrella tasks and selected milestone entries. The
 | Cluster | Files | Contains |
 |---|---|---|
 | `TASK-122-01` | [overview](./TASK-122-01_Spatial_Correction_Truth_Bundles_For_Assembled_Models.md), [assembled target scope and part group contract](./TASK-122-01-01_Assembled_Target_Scope_And_Part_Group_Contract.md), [contact/gap/alignment/overlap correction bundle](./TASK-122-01-02_Contact_Gap_Alignment_And_Overlap_Correction_Bundle.md), [truth follow-up delivery and loop handoff](./TASK-122-01-03_Truth_Followup_Delivery_And_Loop_Handoff.md) | Correction-oriented truth bundles for assembled multi-part models |
-| `TASK-122-02` | [overview](./TASK-122-02_Creature_Correction_Macro_Tool_Wave.md), [`macro_attach_part_to_surface`](./TASK-122-02-01_macro_attach_part_to_surface.md), [`macro_align_part_with_contact`](./TASK-122-02-02_macro_align_part_with_contact.md), [`macro_place_symmetry_pair`](./TASK-122-02-03_macro_place_symmetry_pair.md), [`macro_adjust_head_body_proportion`](./TASK-122-02-04_macro_adjust_head_body_proportion.md), [`macro_adjust_tail_arc`](./TASK-122-02-05_macro_adjust_tail_arc.md), [`macro_pose_simple_limbs`](./TASK-122-02-06_macro_pose_simple_limbs.md), [`macro_cleanup_part_intersections`](./TASK-122-02-07_macro_cleanup_part_intersections.md) | The next bounded macro wave for assembled-creature correction |
-| `TASK-122-03` | [overview](./TASK-122-03_Hybrid_Vision_Truth_Correction_Loop.md), [correction candidate contract and priority model](./TASK-122-03-01_Correction_Candidate_Contract_And_Priority_Model.md), [`reference_iterate_stage_checkpoint` truth bundle integration](./TASK-122-03-02_Reference_Iterate_Stage_Checkpoint_Truth_Bundle_Integration.md), [loop disposition from vision and truth signal](./TASK-122-03-03_Loop_Disposition_From_Vision_And_Truth_Signal.md), [real assembled creature eval and prompting](./TASK-122-03-04_Real_Assembled_Creature_Eval_And_Prompting.md) | Hybrid loop that merges visual mismatch, geometric truth, and bounded correction actions |
+| `TASK-122-02` | [overview](./TASK-122-02_Creature_Correction_Macro_Tool_Wave.md), [`macro_attach_part_to_surface`](./TASK-122-02-01_macro_attach_part_to_surface.md), [`macro_align_part_with_contact`](./TASK-122-02-02_macro_align_part_with_contact.md), [`macro_place_symmetry_pair`](./TASK-122-02-03_macro_place_symmetry_pair.md), [`macro_adjust_relative_proportion`](./TASK-122-02-04_macro_adjust_relative_proportion.md), [`macro_adjust_segment_chain_arc`](./TASK-122-02-05_macro_adjust_segment_chain_arc.md), [`macro_place_supported_pair`](./TASK-122-02-06_macro_place_supported_pair.md), [`macro_cleanup_part_intersections`](./TASK-122-02-07_macro_cleanup_part_intersections.md) | The next bounded macro wave for assembled-creature correction |
+| `TASK-122-03` | [overview](./TASK-122-03_Hybrid_Vision_Truth_Correction_Loop.md), [correction candidate contract and priority model](./TASK-122-03-01_Correction_Candidate_Contract_And_Priority_Model.md), [`reference_iterate_stage_checkpoint` truth bundle integration](./TASK-122-03-02_Reference_Iterate_Stage_Checkpoint_Truth_Bundle_Integration.md), [loop disposition from vision and truth signal](./TASK-122-03-03_Loop_Disposition_From_Vision_And_Truth_Signal.md), [real assembled creature eval and prompting](./TASK-122-03-04_Real_Assembled_Creature_Eval_And_Prompting.md), [pairing anchor and canonical check quality follow-on](./TASK-122-03-05_Hybrid_Loop_Pairing_Anchor_And_Canonical_Check_Quality.md), [model-aware budget and scope control follow-on](./TASK-122-03-06_Hybrid_Loop_Model_Aware_Budget_And_Scope_Control.md), [cross-domain refinement routing and sculpt exposure follow-on](./TASK-122-03-07_Deterministic_Cross_Domain_Refinement_Routing_And_Sculpt_Exposure.md) | Hybrid loop that merges visual mismatch, geometric truth, and bounded correction actions |
 
 ### TASK-123 Detailed Docs
 
@@ -546,3 +583,33 @@ The Kanban tables above track umbrella tasks and selected milestone entries. The
 |---|---|---|
 | `TASK-123-01` | [overview](./TASK-123-01_Explicit_External_Vision_Provider_Fallback_And_Precedence.md) | Explicit selected-provider startup gating plus generic fallback precedence for OpenRouter and Google AI Studio / Gemini |
 | `TASK-123-02` | [overview](./TASK-123-02_Local_Background_Task_Terminality_After_Timeout.md) | Monotonic terminal state for server-local background tasks after timeout and late progress |
+
+### TASK-124 Detailed Docs
+
+| Cluster | Files | Contains |
+|---|---|---|
+| `TASK-124` | [overview](./TASK-124_Guided_Session_Goal_And_Reference_Orchestration.md), [guided reference session readiness contract](./TASK-124-01_Guided_Reference_Session_Readiness_Contract.md), [pending reference adoption and goal lifecycle](./TASK-124-02_Pending_Reference_Adoption_And_Goal_Lifecycle.md), [fail-fast compare and iterate preconditions](./TASK-124-03_Fail_Fast_Compare_And_Iterate_Preconditions.md), [guided handoff and status readiness UX](./TASK-124-04_Guided_Handoff_And_Status_Readiness_UX.md), [natural request regression pack and prompting](./TASK-124-05_Natural_Request_Regression_Pack_And_Prompting.md) | Session-safe goal/reference orchestration for natural guided requests |
+
+### TASK-125 Detailed Docs
+
+| Cluster | Files | Contains |
+|---|---|---|
+| `TASK-125` | [overview](./TASK-125_MCP_Transport_Mode_Switching_And_Session_Diagnostics.md), [configurable MCP transport mode and bootstrap](./TASK-125-01_Configurable_MCP_Transport_Mode_And_Bootstrap.md), [streamable HTTP runtime path and local client setup](./TASK-125-02_Streamable_HTTP_Runtime_Path_And_Local_Client_Setup.md), [session ID diagnostics and guided recovery visibility](./TASK-125-03_Session_ID_Diagnostics_And_Guided_Recovery_Visibility.md), [transport mode regression pack and docs](./TASK-125-04_Transport_Mode_Regression_Pack_And_Docs.md) | Selectable `stdio` / `streamable` runtime modes plus explicit session diagnostics for guided-state debugging |
+
+### TASK-126 Detailed Docs
+
+| Cluster | Files | Contains |
+|---|---|---|
+| `TASK-126` | [overview](./TASK-126_Mesh_Aware_Contact_Semantics_And_Visual_Fit_Reliability.md), [contact semantics audit and product contract](./TASK-126-01_Contact_Semantics_Audit_And_Product_Contract.md), [mesh-aware contact and gap measurement path](./TASK-126-02_Mesh_Aware_Contact_And_Gap_Measurement_Path.md), [macro and hybrid loop adoption of true contact semantics](./TASK-126-03_Macro_And_Hybrid_Loop_Adoption_Of_True_Contact_Semantics.md), [regression pack and docs for visual fit truth](./TASK-126-04_Regression_Pack_And_Docs_For_Visual_Fit_Truth.md) | Make truth-layer contact semantics match visible mesh/surface fit instead of relying on bbox-touching alone |
+
+### TASK-129 Detailed Docs
+
+| Cluster | Files | Contains |
+|---|---|---|
+| `TASK-129` | [overview](./TASK-129_Guided_Reference_Pending_Storage_Isolation_Hardening.md) | Follow-on hardening for active-vs-pending reference storage isolation during blocked guided sessions |
+
+### TASK-131 Detailed Docs
+
+| Cluster | Files | Contains |
+|---|---|---|
+| `TASK-131` | [overview](./TASK-131_Ready_Session_Pending_Reference_Visibility_Consistency.md) | Follow-on hardening for ready-session remove/clear consistency when merged visible refs still include explicit pending records |

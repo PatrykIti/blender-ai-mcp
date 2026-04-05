@@ -4,7 +4,7 @@
 **Status:** ✅ Done  
 **Priority:** 🔴 High
 
-**Progress Update:** Shared prompt/parsing helpers now exist and local backends use a shorter, more task-oriented payload. Fenced JSON and input-echo outputs can now be normalized into the bounded contract shape. The parser repairs summary-alias outputs like `{"comparison": "..."}`, explicitly flags unsupported label-map outputs, deduplicates repeated issue/check lists, and backfills `visible_changes` from explicit visual `goal_summary` phrasing when local models omit it. Prompt policy now also tells local models not to fill `visible_changes` with unchanged truth-summary facts or spam filler issue/check output. MLX reruns on the real squirrel view-family variants now show materially cleaner outputs from both `Qwen3-VL-4B-Instruct-4bit` and `Qwen3-VL-2B-Instruct-4bit`.
+**Completion Summary:** Shared prompt/parsing helpers now exist and local backends use a shorter, more task-oriented payload. Fenced JSON and input-echo outputs can now be normalized into the bounded contract shape. The parser repairs summary-alias outputs like `{"comparison": "..."}`, explicitly flags unsupported label-map outputs, deduplicates repeated issue/check lists, and backfills `visible_changes` from explicit visual `goal_summary` phrasing when local models omit it. Prompt policy now also tells local models not to fill `visible_changes` with unchanged truth-summary facts or spam filler issue/check output. MLX reruns on the real squirrel view-family variants now show materially cleaner outputs from both `Qwen3-VL-4B-Instruct-4bit` and `Qwen3-VL-2B-Instruct-4bit`.
 
 ---
 

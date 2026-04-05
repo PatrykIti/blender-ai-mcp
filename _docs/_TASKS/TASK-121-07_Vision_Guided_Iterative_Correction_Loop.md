@@ -4,7 +4,7 @@
 **Status:** ✅ Done  
 **Priority:** 🔴 High
 
-**Progress Update:** The first bounded checkpoint comparison surfaces now exist:
+**Completion Summary:** The first bounded checkpoint comparison surfaces now exist:
 `reference_compare_checkpoint(...)` compares an existing checkpoint image
 against the active goal plus attached references,
 `reference_compare_current_view(...)` adds a practical single-view

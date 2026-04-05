@@ -1,8 +1,11 @@
 # TASK-084-01-01-02: Inventory Builder and Enrichment
 
 **Parent:** [TASK-084-01-01](./TASK-084-01-01_Core_Inventory_Normalization_Discovery_Taxonomy.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
+
+**Administrative Note:** Closed with the completed parent implementation wave. The planning sections below are retained as historical slice notes.
+
 **Depends On:** [TASK-084-01](./TASK-084-01_Tool_Inventory_Normalization_and_Discovery_Taxonomy.md)  
 
 ---

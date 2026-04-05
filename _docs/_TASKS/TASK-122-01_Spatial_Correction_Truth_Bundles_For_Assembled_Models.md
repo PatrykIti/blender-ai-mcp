@@ -1,8 +1,10 @@
 # TASK-122-01: Spatial Correction Truth Bundles For Assembled Models
 
 **Parent:** [TASK-122](./TASK-122_Hybrid_Vision_Truth_And_Correction_Macro_Wave.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** The truth-bundle subtree is now complete. Stage compare and iterate responses expose a stable `assembled_target_scope` envelope, a correction-oriented `truth_bundle` carrying contact/gap/alignment/overlap findings, and a loop-ready `truth_followup` payload that later hybrid-loop work can consume directly.
 
 ## Objective
 
@@ -24,11 +26,30 @@ The repo already has the raw truth tools:
 But those tools still return mostly tool-local facts, not one correction-ready
 bundle for a multi-part assembled target.
 
-## Success Criteria
+## Acceptance Criteria
 
 - one assembled-model truth bundle can summarize contact/gap/overlap/alignment findings
 - the correction loop can consume that bundle without ad hoc LLM interpretation
 - truth findings stay deterministic and separate from vision interpretation
+
+## Repository Touchpoints
+
+- `server/adapters/mcp/areas/reference.py`
+- `server/adapters/mcp/contracts/scene.py`
+- `server/adapters/mcp/contracts/vision.py`
+- `server/adapters/mcp/session_capabilities.py`
+- `tests/unit/adapters/mcp/`
+- `tests/unit/tools/scene/`
+- `tests/e2e/vision/`
+- `_docs/_MCP_SERVER/README.md`
+- `_docs/_VISION/README.md`
+
+## Completion Update Requirements
+
+- update the truth-bundle contract docs and loop docs in `_docs/` when a leaf here ships
+- add or update unit coverage for contract shape and truth-bundle handoff behavior
+- add or update E2E coverage when the shipped behavior depends on real scene state
+- add the historical `_docs/_CHANGELOG/*` entry and sync the task board when this subtree changes promoted state
 
 ## Execution Structure
 

@@ -1,10 +1,10 @@
 # TASK-121-05-04: Guided Discovery Tool Persistence Across Session Visibility
 
 **Parent:** [TASK-121-05](./TASK-121-05_Guided_Utility_Capture_Prep_And_Goal_Boundary.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
 
-**Progress Update:** The guided visibility rules now carry an explicit discovery-tool set for `search_tools` and `call_tool`, and session visibility reapplication no longer drops the guided surface from `8` tools to `6` after the first goal/workflow transition. Remaining work is mostly higher-level runtime validation against real reconnect/client behavior.
+**Completion Summary:** The guided visibility rules now carry an explicit discovery-tool set for `search_tools` and `call_tool`, and session visibility reapplication no longer drops the guided surface from `8` tools to `6` after the first goal/workflow transition.
 
 ---
 

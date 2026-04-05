@@ -4,7 +4,7 @@
 **Status:** ✅ Done  
 **Priority:** 🔴 High
 
-**Progress Update:** The guided manual-build fallback path is now explicit at the
+**Completion Summary:** The guided manual-build fallback path is now explicit at the
 product surface. Obvious meta build/capture goals can bypass irrelevant workflow
 routing into `status="no_match"` with `continuation_mode="guided_manual_build"`,
 and `router_set_goal()` now adds a typed `guided_handoff` contract that names

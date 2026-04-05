@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
 
 from .backend import VisionRequest
@@ -19,6 +20,34 @@ _CORRECTION_FOCUS_ALIASES = ("correction_focus", "priority_mismatches", "priorit
 _LIKELY_ISSUES_ALIASES = ("issues", "problems", "risks")
 _NEXT_CORRECTIONS_ALIASES = ("next_corrections", "suggested_corrections", "corrections")
 _RECOMMENDED_CHECKS_ALIASES = ("checks", "follow_up_checks", "deterministic_checks", "recommended_tools")
+_CANONICAL_CHECK_TOOL_MAP: dict[str, str] = {
+    "inspect_scene": "scene_inspect",
+    "check_alignment": "scene_measure_alignment",
+    "measure_alignment": "scene_measure_alignment",
+    "measure_gap": "scene_measure_gap",
+    "measure_overlap": "scene_measure_overlap",
+    "assert_contact": "scene_assert_contact",
+    "assert_symmetry": "scene_assert_symmetry",
+    "assert_proportion": "scene_assert_proportion",
+    "assert_dimensions": "scene_assert_dimensions",
+    "compare_ortho_views": "scene_get_viewport",
+    "viewport_check": "scene_get_viewport",
+    "check_viewport": "scene_get_viewport",
+}
+_CANONICAL_CHECK_TOOLS: set[str] = {
+    "scene_inspect",
+    "scene_get_viewport",
+    "scene_get_bounding_box",
+    "scene_measure_dimensions",
+    "scene_measure_gap",
+    "scene_measure_alignment",
+    "scene_measure_overlap",
+    "scene_assert_contact",
+    "scene_assert_dimensions",
+    "scene_assert_containment",
+    "scene_assert_symmetry",
+    "scene_assert_proportion",
+}
 _LABEL_MAP_KEYS = {"before", "after", "reference"}
 _VISIBLE_CHANGE_GOAL_SUMMARY_HINTS = (
     "the after image shows",
@@ -274,31 +303,36 @@ def _coerce_check_list(value: Any) -> list[dict[str, Any]]:
     checks: list[dict[str, Any]] = []
     for item in value:
         if isinstance(item, str) and item.strip():
-            checks.append(
-                {
-                    "tool_name": "follow_up_check",
-                    "reason": item.strip(),
-                    "priority": "normal",
-                }
-            )
             continue
         if not isinstance(item, dict):
             continue
-        tool_name = str(item.get("tool_name") or "follow_up_check")
+        tool_name = str(item.get("tool_name") or "").strip()
         reason = item.get("reason")
         if not isinstance(reason, str) or not reason.strip():
             continue
         priority = str(item.get("priority") or "normal").lower()
         if priority not in {"high", "normal"}:
             priority = "normal"
+        canonical_tool_name = _canonicalize_check_tool_name(tool_name)
+        if canonical_tool_name is None:
+            continue
         checks.append(
             {
-                "tool_name": tool_name,
+                "tool_name": canonical_tool_name,
                 "reason": reason.strip(),
                 "priority": priority,
             }
         )
     return checks
+
+
+def _canonicalize_check_tool_name(tool_name: str) -> str | None:
+    normalized = tool_name.strip()
+    if not normalized:
+        return None
+    lowered = normalized.lower()
+    canonical = _CANONICAL_CHECK_TOOL_MAP.get(lowered, normalized)
+    return canonical if canonical in _CANONICAL_CHECK_TOOLS else None
 
 
 def _dedupe_check_list(checks: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -400,6 +434,89 @@ def _has_contract_signal(parsed: dict[str, Any]) -> bool:
     return bool(set(parsed.keys()) & (expected | aliases))
 
 
+def _has_contract_signal_for(
+    parsed: dict[str, Any],
+    *,
+    request: VisionRequest | None = None,
+    provider_name: str | None = None,
+) -> bool:
+    expected = set(expected_json_keys(provider_name=provider_name, request=request))
+    aliases = set(
+        _SUMMARY_ALIASES
+        + _VISIBLE_CHANGES_ALIASES
+        + _SHAPE_MISMATCHES_ALIASES
+        + _PROPORTION_MISMATCHES_ALIASES
+        + _CORRECTION_FOCUS_ALIASES
+        + _LIKELY_ISSUES_ALIASES
+        + _NEXT_CORRECTIONS_ALIASES
+        + _RECOMMENDED_CHECKS_ALIASES
+    )
+    return bool(set(parsed.keys()) & (expected | aliases))
+
+
+def _payload_shape_for(
+    parsed: dict[str, Any],
+    *,
+    request: VisionRequest | None = None,
+    provider_name: str | None = None,
+) -> str:
+    if _looks_like_input_echo(parsed):
+        return "input_echo"
+    if _looks_like_label_map(parsed):
+        return "label_map"
+    if any(key in parsed for key in expected_json_keys(provider_name=provider_name, request=request)):
+        return "contract"
+    if any(key in parsed for key in _SUMMARY_ALIASES):
+        return "summary_alias"
+    if _has_contract_signal_for(parsed, request=request, provider_name=provider_name):
+        return "alias_contract"
+    return "unsupported_json"
+
+
+def _balance_json_delimiters(text: str) -> str | None:
+    stack: list[str] = []
+    in_string = False
+    escaped = False
+    for char in text:
+        if escaped:
+            escaped = False
+            continue
+        if in_string and char == "\\":
+            escaped = True
+            continue
+        if char == '"':
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if char == "{":
+            stack.append("}")
+        elif char == "[":
+            stack.append("]")
+        elif char in {"}", "]"}:
+            if not stack or char != stack[-1]:
+                return None
+            stack.pop()
+    if in_string:
+        return None
+    return text + "".join(reversed(stack))
+
+
+def _repair_gemini_compare_json_candidate(text: str) -> str | None:
+    candidate = unwrap_json_text(text).strip()
+    start = candidate.find("{")
+    if start == -1:
+        return None
+    candidate = candidate[start:]
+    candidate = re.sub(r",(\s*[}\]])", r"\1", candidate)
+    candidate = re.sub(r",\s*$", "", candidate)
+    balanced_candidate = _balance_json_delimiters(candidate)
+    if balanced_candidate is None:
+        return None
+    json.loads(balanced_candidate)
+    return balanced_candidate
+
+
 def _payload_shape(parsed: dict[str, Any]) -> str:
     if _looks_like_input_echo(parsed):
         return "input_echo"
@@ -414,7 +531,12 @@ def _payload_shape(parsed: dict[str, Any]) -> str:
     return "unsupported_json"
 
 
-def diagnose_vision_output_text(text: str) -> dict[str, Any]:
+def diagnose_vision_output_text(
+    text: str,
+    *,
+    request: VisionRequest | None = None,
+    provider_name: str | None = None,
+) -> dict[str, Any]:
     """Classify one raw backend output before contract normalization."""
 
     stripped = text.strip()
@@ -428,12 +550,27 @@ def diagnose_vision_output_text(text: str) -> dict[str, Any]:
         try:
             payload = json.loads(candidate)
         except json.JSONDecodeError:
+            if provider_name == "google_ai_studio":
+                try:
+                    repaired_candidate = _repair_gemini_compare_json_candidate(candidate)
+                except json.JSONDecodeError:
+                    repaired_candidate = None
+                if repaired_candidate is not None:
+                    payload = json.loads(repaired_candidate)
+                    if isinstance(payload, dict):
+                        keys = sorted(str(key) for key in payload.keys())
+                        return {
+                            "container_shape": _json_container_shape(text, repaired_candidate),
+                            "payload_shape": _payload_shape_for(payload, request=request, provider_name=provider_name),
+                            "top_level_keys": keys,
+                            "raw_preview": preview,
+                        }
             continue
         if isinstance(payload, dict):
             keys = sorted(str(key) for key in payload.keys())
             return {
                 "container_shape": _json_container_shape(text, candidate),
-                "payload_shape": _payload_shape(payload),
+                "payload_shape": _payload_shape_for(payload, request=request, provider_name=provider_name),
                 "top_level_keys": keys,
                 "raw_preview": preview,
             }
@@ -446,7 +583,12 @@ def diagnose_vision_output_text(text: str) -> dict[str, Any]:
     }
 
 
-def parse_vision_output_text(text: str, request: VisionRequest) -> dict[str, Any]:
+def parse_vision_output_text(
+    text: str,
+    request: VisionRequest,
+    *,
+    provider_name: str | None = None,
+) -> dict[str, Any]:
     """Parse and minimally repair backend output into bounded vision payload fields."""
 
     candidates = [unwrap_json_text(text)]
@@ -459,6 +601,16 @@ def parse_vision_output_text(text: str, request: VisionRequest) -> dict[str, Any
         try:
             payload = json.loads(candidate)
         except json.JSONDecodeError:
+            if provider_name == "google_ai_studio":
+                try:
+                    repaired_candidate = _repair_gemini_compare_json_candidate(candidate)
+                except json.JSONDecodeError:
+                    repaired_candidate = None
+                if repaired_candidate is not None:
+                    payload = json.loads(repaired_candidate)
+                    if isinstance(payload, dict):
+                        parsed = payload
+                        break
             continue
         if isinstance(payload, dict):
             parsed = payload
@@ -473,7 +625,7 @@ def parse_vision_output_text(text: str, request: VisionRequest) -> dict[str, Any
     if _looks_like_label_map(parsed):
         return _repair_label_map_payload(parsed, request)
 
-    if not _has_contract_signal(parsed):
+    if not _has_contract_signal_for(parsed, request=request, provider_name=provider_name):
         return _repair_unrecognized_payload(parsed, request)
 
     return _normalize_payload(parsed, request)

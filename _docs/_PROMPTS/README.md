@@ -24,9 +24,21 @@ Copy/paste-ready prompt templates for LLMs controlling Blender via this MCP serv
 > call it directly instead of routing through `search_tools(...)` / `call_tool(...)`.
 > Use `reference_images(...)` to attach/list/remove/clear goal-scoped reference
 > images before asking the bounded vision layer to compare visible change.
-> If the goal is not active yet, `reference_images(action="attach", ...)` can
-> now stage pending references that will be adopted automatically by the next
-> `router_set_goal(...)`.
+> If the goal is not active yet, or if `router_set_goal(...)` is still blocked
+> on `needs_input`, `reference_images(action="attach", ...)` can now stage
+> pending references that will be adopted automatically when the guided goal
+> session becomes ready. If the same blocked goal already has active refs, the
+> new staged refs stay separate until readiness returns; do not reattach old
+> refs just to keep them visible.
+> If a ready session still lists explicit pending refs for another goal, you
+> may remove/clear them from the same `reference_images(...)` surface; that
+> cleanup now updates pending state as well instead of leaving broken records.
+> Use `guided_reference_readiness` from `router_set_goal(...)` or
+> `router_get_status(...)` before calling
+> `reference_compare_stage_checkpoint(...)` /
+> `reference_iterate_stage_checkpoint(...)`. If `compare_ready` /
+> `iterate_ready` is `false`, follow `next_action` instead of improvising
+> recovery steps.
 > Use `search_tools` / `call_tool` only when discovery is actually needed on the
 > shaped public surface, and use `manual_tools_no_router` when you explicitly
 > want a manual non-router operating mode.
@@ -91,7 +103,8 @@ Interpretation:
     `router_set_goal(...)` -> `reference_images(...)` -> macros / build tools -> `vision_assistant` on macro reports -> inspect/measure/assert confirmation
 - staged manual/reference-guided build:
     checkpoint capture -> `reference_compare_checkpoint(...)`, `reference_compare_current_view(...)`, `reference_compare_stage_checkpoint(...)`, or `reference_iterate_stage_checkpoint(...)` -> use bounded mismatch/correction hints for the next iteration
-    prioritize `correction_focus` first when it is present
+    only call staged compare/iterate when `guided_reference_readiness.compare_ready == true`
+    prioritize `loop_disposition`, then `refinement_route`, then `refinement_handoff`, then `correction_candidates`, then `truth_followup`, then `correction_focus`
     if `reference_iterate_stage_checkpoint(...)` returns `loop_disposition="inspect_validate"`, stop free-form building and verify before continuing
 - if a tool is already directly visible on the current phase/surface, call it directly
 - only use `search_tools(...)` / `call_tool(...)` when discovery is actually needed
@@ -106,10 +119,15 @@ Interpretation:
   `search_tools(query="viewport screenshot save file")` -> `call_tool(name="scene_get_viewport", arguments={...})`
 - a typical guided utility scene-prep flow is:
   `search_tools(query="clean reset fresh scene")` -> `call_tool(name="scene_clean_scene", arguments={"keep_lights_and_cameras": true})`
+- use `keep_lights_and_cameras` as the canonical public cleanup flag; the older
+  split `keep_lights` / `keep_cameras` form is legacy compatibility only
 - other first-choice bounded macro paths include:
   `search_tools(...)` -> `macro_cutout_recess` for recess/cutout/opening work
   `search_tools(...)` -> `macro_relative_layout` for align/place/contact-gap work
 - if `router_set_goal(...)` returns `guided_handoff`, treat it as the typed continuation contract for what to call next on the current guided surface
+- if hybrid loop responses expose `refinement_route` / `refinement_handoff`,
+  treat those as the bounded family-selection hints for whether to stay on
+  macro/modeling/mesh or move into a narrow sculpt-region path
 
 ## `llm-guided` Flow Summary
 
@@ -134,3 +152,7 @@ guided surface:
 6. If vision should support the build, attach `reference_images(...)`, prefer
    macro paths that emit `capture_bundle`, and treat inspection/measure/assert
    as the truth layer after visual interpretation.
+7. Before staged compare/iterate, check `guided_reference_readiness`:
+   - if `compare_ready` / `iterate_ready` is `true`, proceed
+   - otherwise follow `next_action` and do not use `goal_override` as a staged
+     session substitute

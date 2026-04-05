@@ -103,7 +103,7 @@ When adding a new tool or materially changing an existing one, update all releva
 8. Router metadata in `server/router/infrastructure/tools_metadata/**/<tool>.json` if the tool should be router-aware.
 9. Unit tests in `tests/unit/`.
 10. E2E tests in `tests/e2e/` when Blender behavior changes.
-11. Documentation in `README.md`, `CHANGELOG.md`, and the relevant `_docs/` files.
+11. Documentation in `README.md`, `_docs/_CHANGELOG/`, and the relevant `_docs/` files. Update root `CHANGELOG.md` only when release-note / semantic-release content itself changes.
 
 Use `_docs/_ROUTER/TOOLS/README.md` as the checklist for router-facing tools.
 
@@ -137,18 +137,96 @@ Use `_docs/_ROUTER/TOOLS/README.md` as the checklist for router-facing tools.
 - For Blender behavior, add or update E2E coverage if the change affects real geometry, mode handling, selection handling, viewport output, router correction, or workflow execution.
 - Router tests should avoid repeated heavy model initialization. Follow the shared/session-scoped patterns already used in tests.
 
+## Task Governance
+
+- Treat `_docs/_TASKS/README.md` as the curated administrative board for promoted active work, promoted follow-on work, and selected completed milestones. It does not need to enumerate every historical descendant task file.
+- Use one consistent planning hierarchy when the work merits it:
+  - business umbrella task
+  - technical subtask
+  - deeper technical subtask when one branch needs its own execution track
+  - leaf/micro-task when a branch still needs tighter implementation granularity
+- Use one canonical task status vocabulary in task files:
+  - `⏳ To Do`
+  - `🚧 In Progress`
+  - `✅ Done`
+  - `⏭️ Superseded`
+  - `❌ Cancelled`
+- Keep the `**Status:**` field canonical only. Put completion dates, superseded links, reasons, or follow-on notes in dedicated fields instead of embedding them in the status text.
+- Every new active task, subtask, or leaf must be actionable. At minimum include:
+  - `Status`
+  - `Priority`
+  - `Objective`
+  - `Repository Touchpoints`
+  - `Acceptance Criteria`
+- New or materially rewritten task files should also include, when applicable:
+  - `Docs To Update` or equivalent documentation scope
+  - `Tests To Add/Update` or equivalent testing scope
+  - `Changelog Impact`
+  - `Status / Board Update` or equivalent closeout note
+- Nested tasks should use `Parent` while the parent remains open.
+- Do not leave direct children open under a closed parent.
+- If follow-on work remains after the parent is closed, convert it into an explicit follow-on task and mark it with `Follow-on After` instead of `Parent`. The closed parent must call out the follow-on explicitly, and `_docs/_TASKS/README.md` must track that follow-on as a standalone open item.
+- If a parent is closed and older child files are kept only as historical planning slices, close them administratively as `✅ Done`, `⏭️ Superseded`, or `❌ Cancelled` and say so explicitly in the file.
+- Umbrella tasks should additionally describe the business/problem framing and execution structure.
+- Even very small leaves should still say which files/areas they touch and how completion will be validated. Do not leave active leaves as title-only placeholders.
+- When task hierarchy or status changes, update the affected task files and `_docs/_TASKS/README.md` in the same branch so board state and task-file state do not drift.
+
+## Task Completion Checklist
+
+- When a meaningful task/subtask/leaf is completed, do all applicable work in the same branch:
+  - update the task status and add or refresh the completion summary
+  - update `_docs/_TASKS/README.md` when the board or promoted milestone state changed
+  - add a new `_docs/_CHANGELOG/*` entry and update `_docs/_CHANGELOG/README.md`
+  - update the relevant `_docs/` area docs for the behavior that changed
+  - run the relevant validation for the changed scope
+- Validation is scope-dependent, not one-size-fits-all:
+  - docs/admin-only changes: run targeted audit/consistency validation
+  - server/application/router changes: run unit tests first
+  - Blender/runtime behavior changes: add or update E2E coverage when the behavior touches real scene state
+- When closing any task/subtask/leaf, verify and record:
+  - whether `_docs/_CHANGELOG/` needs a new historical entry
+  - which `_docs/` surfaces were updated
+  - which unit tests, E2E tests, and pre-commit checks were run or intentionally skipped
+  - whether `_docs/_TASKS/README.md` and related parent/child statuses were updated
+- If a task is closed but intentionally leaves follow-on work, record that explicitly in the completion summary and track the follow-on as its own open task.
+
 ## Documentation Expectations
 
 For meaningful product changes, update docs in the same branch:
 
 - `README.md` for user-facing capabilities or commands.
-- `CHANGELOG.md` for shipped behavior changes.
+- `_docs/_CHANGELOG/*.md` for historical work tracking in this repo, plus `_docs/_CHANGELOG/README.md` index maintenance when adding a new entry.
+- `CHANGELOG.md` only for semantic-release / release-note tracking. Do not use it as the default implementation changelog for task work.
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md` for tool inventory changes.
 - `_docs/_MCP_SERVER/README.md` for MCP surface changes.
 - `_docs/_ADDON/README.md` for addon-side API changes.
 - `_docs/_ROUTER/*` for router/workflow behavior changes.
 - `_docs/_TESTS/README.md` when test architecture or counts materially change.
 - `_docs/_TASKS/README.md` and the relevant task file if the work completes or advances a tracked task.
+
+## Changelog Policy
+
+- `_docs/_CHANGELOG/*.md` is the historical repository changelog for task-level and product-level work. Use it to record meaningful implementation, behavior, architecture, testing, or documentation changes.
+- When adding a new `_docs/_CHANGELOG/*.md` entry, also update `_docs/_CHANGELOG/README.md`.
+- Root `CHANGELOG.md` is reserved for semantic-release / release-note output. It is not the default work log for task execution or internal change tracking.
+
+## Multi-Agent Work
+
+- When tooling for parallel agents is available and the work splits cleanly, use it for independent audits, independent task subtrees, docs-vs-code verification, and validation passes.
+- When the user explicitly allows or asks for multi-agent work, split larger doc/task/admin changes into parallel audit, implementation, and verification slices when the write scopes do not overlap.
+- Keep one owning/coordinating agent responsible for shared assumptions, merge order, and the final consistency pass.
+- Do not have multiple agents edit the same file concurrently unless there is an explicit merge plan.
+- Prefer parallel agent usage for:
+  - auditing separate task families
+  - checking docs and code against each other
+  - preparing changelog/index updates while other work proceeds
+  - narrowing test scope in parallel with documentation cleanup
+- If a change affects both historical tracking and release notes, update both locations for their respective purposes instead of trying to collapse them into one file.
+- The coordinating agent owns the final integrated state of:
+  - `AGENTS.md`
+  - `_docs/_TASKS/README.md`
+  - parent/child task statuses
+  - `_docs/_CHANGELOG/` and documentation consistency
 
 ## Current Strategic Direction
 
