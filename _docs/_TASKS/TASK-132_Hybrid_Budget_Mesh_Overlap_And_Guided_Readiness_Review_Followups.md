@@ -14,7 +14,9 @@ across the hybrid-loop/runtime truth path:
   hit the small-tier budget downgrade through the `gemini`/`mini` substring
   collision
 - mesh-aware `scene_measure_gap(...)` now preserves real overlap detection
-  instead of flattening overlapped mesh pairs into plain contact
+  instead of flattening overlapped mesh pairs into plain contact, including
+  zero-thickness/planar mesh cases where BVH overlap exists but bbox overlap
+  volume is zero
 - `guided_reference_readiness` no longer blocks a ready staged session just
   because explicit pending refs for another goal still exist
 
@@ -90,7 +92,8 @@ This follow-on does **not** cover:
   collision; explicit small-tier names such as `-mini` still are
 - mesh-aware `scene_measure_gap(...)` returns `relation="overlapping"` when the
   mesh path finds a true overlap, and `scene_assert_contact(..., allow_overlap=false)`
-  still rejects that case
+  still rejects that case, including thin/planar mesh overlap cases where bbox
+  overlap volume alone is not a reliable gate
 - `guided_reference_readiness.pending_reference_count` reflects only
   goal-relevant pending refs for the active staged session
 - focused unit coverage proves all three regressions directly

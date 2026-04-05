@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
@@ -152,6 +153,42 @@ def test_measure_gap_preserves_mesh_overlap_semantics_when_bbox_overlap_exists(m
     assert gap["measurement_basis"] == "mesh_surface"
     assert gap["relation"] == "overlapping"
     assert gap["bbox_relation"] == "overlapping"
+
+
+def test_mesh_surface_relation_treats_bvh_overlap_as_overlap_for_zero_thickness_meshes(monkeypatch):
+    left = _make_box("Left", (0.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.5, 0.5, 0.0))
+    overlap = _make_box("Overlap", (0.25, 0.25, 0.0), (0.75, 0.75, 0.0), (0.5, 0.5, 0.0))
+    left.type = "MESH"
+    overlap.type = "MESH"
+
+    class _FakeTree:
+        def overlap(self, other):
+            return [(0, 0)]
+
+        def find_nearest(self, point):
+            raise AssertionError("find_nearest should not run when BVH overlap already proves overlap")
+
+    class _FakeBVHTree:
+        @staticmethod
+        def FromPolygons(vertices, triangles, all_triangles=True):
+            return _FakeTree()
+
+    monkeypatch.setitem(sys.modules, "mathutils.bvhtree", SimpleNamespace(BVHTree=_FakeBVHTree))
+
+    handler = SceneHandler()
+    mesh_data = {
+        "vertices": [(0.0, 0.0, 0.0)],
+        "triangles": [(0, 0, 0)],
+        "sample_points": [(0.0, 0.0, 0.0)],
+    }
+    monkeypatch.setattr(handler, "_get_evaluated_mesh_data", lambda obj: mesh_data)
+    monkeypatch.setattr(handler, "_release_evaluated_mesh_data", lambda payload: None)
+
+    result = handler._measure_mesh_surface_relation(left, overlap, tolerance=0.001, bbox_overlap_volume=0.0)
+
+    assert result is not None
+    assert result["overlaps"] is True
+    assert result["relation"] == "overlapping"
 
 
 @pytest.mark.parametrize(

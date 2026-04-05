@@ -756,6 +756,8 @@ gapped.
 When the mesh-aware path detects a true overlap, that main `relation` remains
 `overlapping`, so `scene_assert_contact(..., allow_overlap=false)` still rejects
 the pair even if the bbox-level view would otherwise look like simple contact.
+That also applies to thin/planar mesh cases where BVH overlap exists but bbox
+overlap volume alone would be an unreliable gate.
 
 Macro verification and hybrid truth-followup payloads now also surface that
 split in their operator-facing summaries, so bbox-touching but still visibly gapped

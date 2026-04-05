@@ -2259,6 +2259,19 @@ class SceneHandler:
                     break
         return best_pair, best_distance
 
+    def _has_effectively_zero_bbox_dimension(self, obj, tolerance):
+        """Return True when the object's local bbox collapses on at least one axis."""
+
+        try:
+            bbox = list(getattr(obj, "bound_box", ()) or ())
+            if not bbox:
+                return False
+            minima = [min(float(corner[axis_index]) for corner in bbox) for axis_index in range(3)]
+            maxima = [max(float(corner[axis_index]) for corner in bbox) for axis_index in range(3)]
+            return any(abs(maxima[axis_index] - minima[axis_index]) <= float(tolerance) for axis_index in range(3))
+        except Exception:
+            return False
+
     def _measure_mesh_surface_relation(self, source_obj, target_obj, tolerance, bbox_overlap_volume=0.0):
         """Returns mesh-aware contact/gap semantics for mesh-object pairs when possible."""
 
@@ -2281,7 +2294,14 @@ class SceneHandler:
                 return None
 
             overlap_pairs = source_tree.overlap(target_tree)
-            overlaps = bool(overlap_pairs) and float(bbox_overlap_volume) > max(float(tolerance) ** 3, 1e-12)
+            overlap_volume_threshold = max(float(tolerance) ** 3, 1e-12)
+            zero_thickness_overlap = bool(overlap_pairs) and (
+                self._has_effectively_zero_bbox_dimension(source_obj, tolerance)
+                or self._has_effectively_zero_bbox_dimension(target_obj, tolerance)
+            )
+            overlaps = bool(overlap_pairs) and (
+                float(bbox_overlap_volume) > overlap_volume_threshold or zero_thickness_overlap
+            )
             if overlaps:
                 return {
                     "overlaps": True,

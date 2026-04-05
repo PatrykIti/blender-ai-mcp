@@ -15,7 +15,9 @@ mesh-aware contact truth path, and guided staged-session readiness.
 - preserved true overlap propagation in mesh-aware `scene_measure_gap(...)`, so
   mesh overlaps still report `relation="overlapping"` and
   `scene_assert_contact(..., allow_overlap=false)` continues to reject them as
-  overlaps instead of flattening them into plain contact
+  overlaps instead of flattening them into plain contact, including thin /
+  zero-thickness mesh cases where BVH overlap exists but bbox overlap volume is
+  zero
 - narrowed `guided_reference_readiness.pending_reference_count` to
   goal-relevant pending refs for the active staged session, so stale pending
   refs for another goal do not block ready compare/iterate flows by themselves
