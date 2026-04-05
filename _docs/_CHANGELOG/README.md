@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [212](./212-2026-04-05-stage-compare-error-response-hardening.md) | 2026-04-05 | **Stage compare error response hardening** | - |
 | [211](./211-2026-04-05-call-tool-proxy-error-semantics.md) | 2026-04-05 | **call_tool proxy error semantics** | - |
 | [210](./210-2026-04-05-hybrid-budget-overlap-and-readiness-review-followups.md) | 2026-04-05 | **Hybrid budget, overlap, and readiness review follow-ups** | - |
 | [209](./209-2026-04-05-ready-session-pending-reference-visibility-consistency.md) | 2026-04-05 | **Ready-session pending reference visibility consistency** | - |

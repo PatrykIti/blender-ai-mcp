@@ -1525,6 +1525,36 @@ def test_reference_compare_stage_checkpoint_can_expand_collection_scope(tmp_path
     assert captured["request"].metadata["collection_name"] == "Squirrel"
 
 
+def test_reference_compare_stage_checkpoint_returns_structured_error_for_invalid_collection(tmp_path, monkeypatch):
+    image_front = tmp_path / "front.png"
+    image_front.write_bytes(b"front")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly squirrel", {"status": "no_match"})
+    asyncio.run(reference_images(ctx, action="attach", source_path=str(image_front), label="front_ref"))
+
+    class CollectionHandler:
+        def list_objects(self, collection_name: str, recursive: bool = True, include_hidden: bool = False):
+            raise RuntimeError(f"Collection '{collection_name}' does not exist.")
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_collection_handler", lambda: CollectionHandler())
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            collection_name="MissingCollection",
+            checkpoint_label="bad_collection",
+            preset_profile="compact",
+        )
+    )
+
+    assert result.error == "Collection 'MissingCollection' does not exist."
+    assert result.collection_name == "MissingCollection"
+    assert result.assembled_target_scope is None
+
+
 def test_reference_compare_stage_checkpoint_can_track_explicit_object_set_scope(tmp_path, monkeypatch):
     image_front = tmp_path / "front.png"
     image_front.write_bytes(b"front")
