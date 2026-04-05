@@ -85,6 +85,19 @@ The follow-on gap to close is:
   structure, such as upper/lower forelimb and upper/lower hindlimb segments
 - the current and planned metric bundles are still too coarse for segment-level
   proportion drift, limb placement, and joint-band placement
+- the guided/reference loop still lacks explicit relation semantics for common
+  creature attachments and body-part seating, such as:
+  - ear to head
+  - eye to head
+  - snout to head
+  - tail to torso/back
+  - forelimb to torso
+  - hindlimb to pelvis/torso
+- the current corrective path does not yet clearly distinguish:
+  - intentional organic attachment or seating
+  - expected embedded/transition zones
+  - bad floating gaps
+  - bad free intersections that really should be cleaned up
 - the write-side build story is still framed as bounded guided modeling, not as
   a reconstruction-oriented contract with a clear "all required body parts are
   present and proportionally plausible" completion bar
@@ -107,6 +120,67 @@ If this umbrella is done correctly, the repo gains:
 - a stronger bridge between perception evidence, guided handoff, and future
   write-side reconstruction surfaces aligned with the repo's broader
   reconstruction direction
+- a clearer relation-aware story for when parts should attach, seat, remain
+  separate, or be treated as erroneous overlaps during low-poly creature work
+
+## Product Design Requirements
+
+### Vision Mode
+
+- Define creature-oriented part-relation semantics in addition to part labels,
+  so the vision/perception layer can describe not only "what part this is" but
+  also the expected relation to neighboring structure:
+  - attached
+  - seated
+  - partially embedded / rooted
+  - articulated
+  - mirrored pair
+  - intentionally separate
+- Add relation-aware findings for common creature cases such as:
+  - ear seated too high / too detached from head
+  - eye floating off the skull instead of being seated
+  - snout disconnected from head mass
+  - tail detached from body root
+  - limb attached to the wrong band or floating away from the torso
+- Define which relation mismatches should count as:
+  - acceptable low-poly anatomical transitions
+  - true attachment errors
+  - true cleanup/intersection errors
+
+### Loop System
+
+- Extend the creature loop so it can report relation-aware failures rather than
+  only generic gap/overlap findings
+- Define relation-aware decision rules for when the loop should prefer:
+  - `macro_attach_part_to_surface`
+  - `macro_align_part_with_contact`
+  - `macro_cleanup_part_intersections`
+  - a modeling/mesh-first reshape instead of a macro move
+- Prevent overlap-only truth from dominating cases where slight embedding or
+  seating is the intended anatomical result
+- Add staged loop expectations for assembled creature checkpoints that verify:
+  - all required parts exist
+  - the part is on the correct body region
+  - the part has the intended relation to that region
+
+### `llm-guided` Profile
+
+- Update creature-oriented prompt assets and guided handoff stories so they
+  teach relation semantics explicitly instead of only "keep parts separate"
+- Make the guided creature story tell the model which parts should remain
+  separate objects while still being attached/seated in space
+- Shape prompt/handoff/recommendation language so the model does not interpret
+  every detected overlap on creature parts as something to clean up blindly
+
+### Tool Surface
+
+- Define a relation-aware macro selection policy for assembled creature parts
+- Evaluate whether the current macro layer is enough once relation semantics
+  are explicit, or whether the repo needs bounded creature-specific
+  attachment/seating helpers beyond today's generic pair macros
+- Ensure structured loop outputs can carry relation type, intended attachment
+  zone, and recommended correction family instead of only raw pair overlap/gap
+  facts
 
 ## Scope
 
@@ -121,6 +195,8 @@ This umbrella covers:
 - defining reconstruction-relevant metric/hint outputs for proportions,
   segment lengths, limb placement, and coarse joint placement while preserving
   the current perception/truth boundary
+- defining creature-specific part-relation semantics and relation-aware macro
+  selection for assembled low-poly anatomy
 - shaping guided handoff, visibility, search, prompts, and evaluation around a
   reconstruction-oriented creature path rather than only a generic blockout
   path
@@ -149,6 +225,12 @@ This umbrella does **not** cover:
 - the guided/reference loop can represent missing, merged, misplaced, or
   misproportioned major anatomical segments without collapsing everything into
   generic silhouette feedback
+- the guided/reference loop can represent expected part relations for major
+  creature attachments and can distinguish wrong floating gaps from acceptable
+  seated/attached transitions
+- the product defines when attachment/seating issues should prefer
+  `macro_attach_part_to_surface` or `macro_align_part_with_contact` instead of
+  defaulting to generic overlap cleanup
 - guided handoff/recommendation/search shaping can steer the model toward a
   reconstruction-oriented creature path rather than only a generic blockout
   path
@@ -202,6 +284,8 @@ This umbrella does **not** cover:
   session shaping or contract behavior crosses the router boundary
 - representative `tests/e2e/vision/` coverage for front/side
   anatomy-aware creature reconstruction scenarios
+- relation-aware regression coverage for part-attachment cases such as ear/head,
+  eye/head, snout/head, tail/body, and limb/body seating
 - representative `tests/e2e/router/` coverage for reconstruction-oriented
   guided handoff and session recovery flows
 

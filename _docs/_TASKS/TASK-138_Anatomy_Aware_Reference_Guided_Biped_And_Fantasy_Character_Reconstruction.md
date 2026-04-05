@@ -97,6 +97,19 @@ The follow-on gap to close is:
   - elbow/knee placement
   - limb segment ratios
   - bilateral symmetry drift
+- the guided/reference loop does not yet encode relation semantics for major
+  body-part and attachment cases such as:
+  - head seated on neck/torso block
+  - arm attached to shoulder band
+  - leg attached to pelvis/hip block
+  - hand/foot seated at limb ends
+  - fantasy appendage rooted to the intended body region
+  - armor/garment seated on the body instead of floating or intersecting
+- the current corrective path does not yet clearly distinguish:
+  - expected seated or articulated attachment
+  - acceptable low-poly transition/embedding zones
+  - bad floating gaps
+  - bad cleanup-worthy intersections
 - the loop contract does not yet express character-specific reconstruction
   failures or staging
 - `llm-guided` has no character-oriented prompt asset, handoff, or search-bias
@@ -118,6 +131,8 @@ If this umbrella is done correctly, the repo gains:
   garment, armor, props, or rigging follow-ons
 - a stronger path for stylized and fantasy humanoids that still need
   recognizable human-like structure
+- a relation-aware body/attachment story so the product can distinguish
+  intended body-part seating from true geometry failures
 
 ## Product Design Requirements
 
@@ -138,6 +153,14 @@ If this umbrella is done correctly, the repo gains:
   - foot
   - major fantasy appendages such as horn, tail, wing, ear variants, when
     explicitly in scope
+- Define character-specific relation semantics for:
+  - seated on
+  - attached to
+  - articulated from
+  - mirrored pair
+  - rooted appendage
+  - body-mounted garment/armor
+  - intentionally separate prop
 - Add deterministic character-oriented metrics and findings such as:
   - head-to-body height ratio
   - shoulder width and pelvis width
@@ -170,6 +193,11 @@ If this umbrella is done correctly, the repo gains:
   - collapsed hand/foot placeholders
   - appendage misplacement
   - body/gear overlap issues
+- Add relation-aware loop findings so character corrections can distinguish:
+  - intended limb seating vs detached floating limb
+  - acceptable neck or shoulder transition vs bad collision cleanup
+  - armor seated on body vs armor intersecting the body incorrectly
+  - appendage rooting vs appendage floating
 - Integrate truth-first follow-up for:
   - symmetry
   - dimensions/proportions
@@ -181,6 +209,9 @@ If this umbrella is done correctly, the repo gains:
 - Add character-specific prompt assets and recommendation paths
 - Define character-specific guided handoff recipes so the model does not treat
   humanoids as generic creatures or generic organic masses
+- Make the character guided story explicit about body-part relation semantics,
+  so the model knows which elements should attach, seat, articulate, remain
+  mirrored, or remain intentionally separate
 - Bias guided search toward the relevant tool families for natural requests
   such as:
   - rebuild this humanoid from front/side refs
@@ -203,6 +234,9 @@ If this umbrella is done correctly, the repo gains:
   - appendage placement and cleanup
   - garment/armor seating on a stable body surface
   - later armature-handoff readiness summaries
+- Define a relation-aware correction and macro-selection policy so character
+  loops can choose between attach/align/support/cleanup/reshape operations from
+  explicit body semantics instead of raw overlap alone
 - Keep any new tools bounded and domain-shaped instead of exposing a free-form
   character-sculpt workflow as the default public story
 
@@ -213,6 +247,8 @@ This umbrella covers:
 - character-specific prompt, handoff, and search shaping
 - biped/fantasy anatomy-aware reference interpretation and metric design
 - loop-system outputs for staged body reconstruction
+- body-part relation semantics and relation-aware correction policy for body,
+  appendages, garments, and armor
 - explicit product boundaries for body, appendages, garments, armor, and later
   rigging handoff
 - docs, evaluation criteria, and regression planning for the domain
@@ -233,6 +269,9 @@ This umbrella does **not** cover:
   regressionable
 - vision/reference outputs can express body-part and symmetry findings rather
   than only generic creature or silhouette mismatches
+- the loop can represent expected seated/attached/articulated relations for
+  major body parts and can distinguish them from true floating/collision
+  failures
 - the loop contract can steer staged reconstruction across torso/limb/head and
   attachment phases
 - `llm-guided` can recommend and expose a character-oriented guided handoff path
@@ -282,6 +321,8 @@ This umbrella does **not** cover:
   session shaping or correction contracts cross the router boundary
 - representative `tests/e2e/vision/` coverage for biped/fantasy-character
   reference scenarios
+- relation-aware regression coverage for head/neck, limb/torso, hand/foot,
+  appendage/root, and armor/body seating cases
 - representative `tests/e2e/router/` coverage for character-oriented guided
   handoff and staged recovery flows
 

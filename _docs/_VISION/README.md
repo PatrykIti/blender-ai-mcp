@@ -199,6 +199,7 @@ Current practical provider/model notes on this branch:
 | `mlx_local` | `mlx-community/Qwen3-VL-4B-Instruct-4bit` | Recommended local baseline | Current repo-validated local baseline for bounded vision work. Strong on the real viewport squirrel scenarios and usable for staged reference-guided correction loops. |
 | `openai_compatible_external` via OpenRouter | `x-ai/grok-4.20-multi-agent` | Strong external candidate for iterative compare | Live branch validation shows this model returns full structured output on `reference_iterate_stage_checkpoint(...)` and produces actionable `correction_focus` / mismatch guidance. |
 | `openai_compatible_external` via OpenRouter | `qwen/qwen3-vl-32b-instruct` | Weak on current smoke usage | Provider path works, but this model performed poorly on the simple `macro_finish_form` smoke and is not a recommended default from current branch evidence. |
+| `openai_compatible_external` via OpenRouter | `qwen-vl-max` | Operator-reported instability on richer assembled loops | One operator-reported `blender-ai-mcp-guided-docker-openrouter` squirrel run reported that later `reference_iterate_stage_checkpoint(...)` stages with a larger assembled multi-part target degraded into prose instead of the expected JSON payload, which surfaced as an orchestrator-side structured-output failure. Treat this model as unstable for richer assembled stage loops until the behavior is reproduced and ranked in the formal harness. |
 | `openai_compatible_external` via Google AI Studio / Gemini | `gemini-3-flash-preview` | Supported for staged compare | Gemini now uses a provider-specific narrow compare contract for `reference_compare_*` and `reference_iterate_stage_checkpoint(...)` flows, plus provider-specific parse repair for near-JSON / truncated compare responses. |
 
 Interpretation:
@@ -501,3 +502,8 @@ Practical reading of that baseline:
   - real macro captures
   - reference mismatch
   - richer/noisier multi-view cases
+- one operator-reported OpenRouter `qwen-vl-max` run on a richer assembled
+  squirrel flow already showed this failure class: stages 3/4 degraded into
+  prose instead of structured JSON once more parts were present, which is a
+  useful reminder that today's ranking still under-covers larger assembled
+  stage loops

@@ -86,6 +86,17 @@ The follow-on gap to close is:
   - cavities
   - inlet/outlet landmarks
   - paired-organ symmetry or asymmetry expectations
+- the guided/reference loop does not yet encode relation semantics for organ
+  structures such as:
+  - lobe fused into organ mass
+  - chamber/cavity embedded inside shell
+  - vessel/port attached at a landmark
+  - paired organs intentionally separate but proportionally related
+- the current corrective path does not yet clearly distinguish:
+  - expected organic continuity / fusion
+  - expected embedded cavity relations
+  - expected attachment of ports or vessels
+  - bad floating gaps or bad cleanup-worthy intersections
 - the loop contract does not yet express organ-specific reconstruction failures
 - `llm-guided` has no organ-specific prompt asset, handoff, or search-bias path
 - the repo has no explicit safe product boundary for reference-guided organ
@@ -102,6 +113,8 @@ If this umbrella is done correctly, the repo gains:
   contexts
 - a more useful path from biological/medical reference images to structured
   Blender reconstruction sessions
+- a relation-aware story for organ reconstruction so the product can distinguish
+  expected organic attachment/embedding from true geometric failure
 
 ## Product Design Requirements
 
@@ -125,6 +138,12 @@ If this umbrella is done correctly, the repo gains:
   - inlet/outlet/port
   - stalk/branch entry points
   - paired symmetry anchors where applicable
+- Define organ-specific relation semantics for:
+  - fused into mass
+  - embedded cavity/chamber
+  - attached inlet/outlet
+  - paired but separate
+  - intentionally asymmetric
 - Add deterministic organ-oriented metrics and findings such as:
   - gross dimensions and volume proxy ratios
   - lobe/chamber proportions
@@ -147,6 +166,10 @@ If this umbrella is done correctly, the repo gains:
   - wrong landmark placement
   - wrong paired-organ ratio
   - excess asymmetry or missing asymmetry where anatomy expects one
+- Add relation-aware loop findings so organ corrections can distinguish:
+  - expected fusion vs bad surface collision
+  - expected cavity embedding vs disconnected hollow shell
+  - expected vessel/port attachment vs floating branch geometry
 - Integrate truth-first follow-up for:
   - dimensions
   - symmetry/asymmetry checks
@@ -158,6 +181,8 @@ If this umbrella is done correctly, the repo gains:
 - Add organ-specific prompt assets and recommendation paths
 - Define organ-specific guided handoff recipes so the model does not treat
   organs as just generic blobs or creature parts
+- Make the organ guided story explicit about relation semantics, so the model
+  knows which regions should merge, embed, attach, or remain separate
 - Bias guided search toward the relevant organic tool families for natural
   requests such as:
   - rebuild this heart from diagrams
@@ -178,6 +203,9 @@ If this umbrella is done correctly, the repo gains:
   - controlled organic branching or inlet/outlet setup
   - paired-organ mirroring with anatomy-aware exceptions
   - bounded organ refinement and cleanup handoffs
+- Define a relation-aware correction policy so organ loops can choose between
+  attach/embed/reshape/cleanup-style corrections from explicit organ semantics
+  instead of raw overlap alone
 - Keep any new surfaces bounded and anatomy-oriented; do not reopen raw
   free-form sculpting as the default public story
 
@@ -188,6 +216,7 @@ This umbrella covers:
 - organ-specific prompt, handoff, and search shaping
 - organ-aware reference interpretation and metric design
 - loop-system outputs for staged organ reconstruction
+- organ-specific relation semantics and relation-aware correction policy
 - safe product-boundary design for medical-style reference use
 - docs, evaluation criteria, and regression planning for the domain
 
@@ -208,6 +237,9 @@ This umbrella does **not** cover:
   regressionable
 - vision/reference outputs can express organ-specific findings rather than only
   generic organic mismatches
+- the loop can represent expected organ relations such as fusion, embedding,
+  port attachment, and paired separation instead of flattening them into generic
+  overlap/gap cleanup
 - the loop contract can steer staged reconstruction across mass, chamber/lobe,
   landmark, and validation phases
 - `llm-guided` can recommend and expose an organ-oriented guided handoff path
@@ -256,6 +288,8 @@ This umbrella does **not** cover:
 - focused unit coverage under `tests/unit/router/` if organ-oriented session
   shaping or correction contracts cross the router boundary
 - representative `tests/e2e/vision/` coverage for organ-reference scenarios
+- relation-aware regression coverage for lobe fusion, chamber/cavity embedding,
+  and inlet/outlet attachment cases
 - representative `tests/e2e/router/` coverage for organ-oriented guided handoff
   and staged recovery flows
 

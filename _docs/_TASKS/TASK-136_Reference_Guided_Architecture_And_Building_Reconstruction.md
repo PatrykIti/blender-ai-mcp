@@ -92,6 +92,17 @@ The follow-on gap to close is:
   - floor-height drift
   - roof pitch or roofline mismatch
   - support misplacement
+- the guided/reference loop does not yet encode relation semantics for common
+  architectural attachments and interfaces, such as:
+  - opening cut into wall shell
+  - roof seated on wall mass
+  - beam supported by posts/columns
+  - stair/arch element meeting its support
+- the current corrective path does not yet clearly distinguish:
+  - intentional boolean penetration / cutout
+  - expected seated/support contact
+  - acceptable modular interface contact
+  - bad overlap or floating separation that really needs cleanup
 - `llm-guided` does not yet have architecture-specific recommendation, handoff,
   and search-bias behavior
 - there is no explicit tool-surface roadmap for reconstruction-heavy
@@ -112,6 +123,9 @@ If this umbrella is done correctly, the repo gains:
   hard-surface/building corrections
 - a clearer path from "reference image or plan" to "bounded reconstruction
   session" instead of ad hoc tool rediscovery
+- a relation-aware story for architectural interfaces so the product can tell
+  the difference between expected cut/support/seat behavior and true geometric
+  failure
 
 ## Product Design Requirements
 
@@ -138,6 +152,13 @@ If this umbrella is done correctly, the repo gains:
   - symmetry and centerline drift
   - roof pitch, ridge height, and overhang mismatch
   - support spacing and facade rhythm mismatch
+- Define architecture-specific relation semantics for major interfaces:
+  - cut into
+  - seated on
+  - supported by
+  - spans between
+  - aligned to grid/module
+  - intentionally separate
 - Add capture/reporting profiles suited to architecture:
   - plan/top view
   - front elevation
@@ -156,6 +177,11 @@ If this umbrella is done correctly, the repo gains:
   - final dimensional validation
 - Extend the loop contract so it can surface building-specific reconstruction
   findings instead of only generic mismatch prose
+- Add relation-aware loop findings so architectural corrections can distinguish:
+  - missing opening vs bad floating window object
+  - intended roof seating vs collision cleanup
+  - intended boolean recess vs accidental overlap
+  - intended support contact vs unsupported floating element
 - Integrate truth-first follow-up for:
   - dimensions
   - alignment
@@ -163,6 +189,7 @@ If this umbrella is done correctly, the repo gains:
   - repeated-module consistency
 - Define when the loop should steer toward:
   - layout/cutout corrections
+  - attach/support corrections
   - proportion/scale corrections
   - repeated-structure corrections
   - inspect/validate before further rebuild work
@@ -172,6 +199,9 @@ If this umbrella is done correctly, the repo gains:
 - Add architecture-oriented prompt assets and recommendation paths
 - Define architecture-specific guided handoff recipes so the model does not
   treat building reconstruction like generic prop modeling
+- Make the architecture guided story explicit about interface semantics, so the
+  model knows when a wall/opening/roof/support relation should be treated as a
+  cut, a seat, a support, or a true collision
 - Bias guided search toward the relevant building tools for natural requests
   such as:
   - floor plan to low-poly building
@@ -194,6 +224,9 @@ If this umbrella is done correctly, the repo gains:
   - support/beam/post arrays or repeated placements
   - wall shell generation from footprint-like inputs
   - deterministic duplication/spacing workflows for building modules
+- Define a relation-aware macro/tool selection policy so architectural
+  correction can choose between cutout/layout/attach/support/cleanup operations
+  from explicit interface intent rather than raw overlap alone
 - Keep new tools bounded and domain-shaped rather than reopening unrestricted
   modeling exposure
 
@@ -204,6 +237,7 @@ This umbrella covers:
 - architecture-specific prompt, handoff, and search shaping
 - architecture-aware reference interpretation and metric design
 - loop-system outputs for staged building reconstruction
+- architecture-specific interface semantics and relation-aware correction policy
 - architecture-oriented visibility/profile/tool-surface design
 - domain docs, evaluation criteria, and regression planning
 
@@ -223,6 +257,8 @@ This umbrella does **not** cover:
   and regressionable
 - vision/reference outputs can express building-specific findings rather than
   only generic shape feedback
+- the loop can represent expected architectural interfaces and distinguish them
+  from true overlap/floating failures
 - the loop contract can steer staged reconstruction across shell/openings/roof
   work with deterministic follow-up
 - `llm-guided` can recommend and expose an architecture-oriented handoff path
@@ -274,6 +310,8 @@ This umbrella does **not** cover:
   session shaping or correction contracts cross the router boundary
 - representative `tests/e2e/vision/` coverage for plan/elevation-driven
   architecture scenarios
+- relation-aware regression coverage for wall/opening, roof/wall, beam/support,
+  and facade-module interface cases
 - representative `tests/e2e/router/` coverage for architecture-oriented guided
   handoff and staged recovery flows
 
