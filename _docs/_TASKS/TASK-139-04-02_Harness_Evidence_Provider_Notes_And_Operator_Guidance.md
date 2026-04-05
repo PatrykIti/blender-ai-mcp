@@ -29,6 +29,7 @@ At the same time, the docs need to say clearly:
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
+- `README.md`
 - `tests/e2e/vision/`
 
 ## Acceptance Criteria
@@ -59,6 +60,7 @@ At the same time, the docs need to say clearly:
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
+- `README.md`
 
 ## Changelog Impact
 

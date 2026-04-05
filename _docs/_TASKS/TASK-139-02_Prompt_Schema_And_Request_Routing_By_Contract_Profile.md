@@ -20,6 +20,12 @@ path. That is too coarse, because:
 - the same model family may appear behind different transports/providers
 - provider-only gating prevents reuse of a known-good narrow contract path
 
+This slice therefore needs two distinct implementation seams:
+
+- one prompt/schema ownership seam in `prompting.py`
+- one backend request-assembly seam in `backends.py` that consumes the selected
+  profile without re-owning prompt helper design
+
 ## Repository Touchpoints
 
 - `server/adapters/mcp/vision/prompting.py`
@@ -53,5 +59,5 @@ path. That is too coarse, because:
 
 | Order | Subtask | Purpose |
 |------|---------|---------|
-| 1 | [TASK-139-02-01](./TASK-139-02-01_Profile_Aware_Prompting_Abstraction.md) | Replace provider-only prompt/schema gating with contract-profile-aware helpers |
-| 2 | [TASK-139-02-02](./TASK-139-02-02_External_Backend_Request_Routing_By_Contract_Profile.md) | Make backend request payload generation use the selected contract profile while preserving transport correctness |
+| 1 | [TASK-139-02-01](./TASK-139-02-01_Profile_Aware_Prompting_Abstraction.md) | Define and own the profile-aware prompt/schema helper seam in `prompting.py`, including prompt-specific regression coverage |
+| 2 | [TASK-139-02-02](./TASK-139-02-02_External_Backend_Request_Routing_By_Contract_Profile.md) | Consume that seam from `backends.py` so request payload generation stays transport-correct while using the selected contract profile |

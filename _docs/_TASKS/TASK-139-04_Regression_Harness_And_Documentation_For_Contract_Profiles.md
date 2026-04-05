@@ -35,6 +35,7 @@ not drift apart.
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
+- `README.md`
 
 ## Acceptance Criteria
 
@@ -51,6 +52,7 @@ not drift apart.
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
+- `README.md`
 
 ## Tests To Add/Update
 

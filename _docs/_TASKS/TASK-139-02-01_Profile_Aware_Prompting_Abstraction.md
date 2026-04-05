@@ -26,6 +26,17 @@ This task should separate:
 so downstream code can reuse the narrow compare contract for any compatible
 profile.
 
+This leaf owns the helper-selection seam in `prompting.py`.
+
+It should decide:
+
+- how request kind and contract profile combine into one prompt/schema choice
+- which helper(s) expose that choice to callers
+- how expected-key/schema behavior stays aligned with the selected profile
+
+Backend request assembly and transport-specific consumption of that seam stay on
+`TASK-139-02-02`.
+
 ## Repository Touchpoints
 
 - `server/adapters/mcp/vision/prompting.py`
@@ -36,13 +47,15 @@ profile.
 - prompt/schema selection is driven by contract profile and request kind
 - narrow compare prompt/schema generation is reusable outside the
   Google-AI-Studio-only gate
+- `prompting.py` is the single owner of the prompt/schema profile-selection seam
 - local-model prompt behavior is not regressed by the abstraction
 
 ## Leaf Work Items
 
 - replace provider-only compare-contract helper gates
-- add one explicit prompt/schema profile selection seam
+- add one explicit prompt/schema profile selection seam in `prompting.py`
 - keep canonical expected-key helpers aligned with the selected profile
+- add or update prompt-focused regression coverage only for the helper seam
 
 ## Tests To Add/Update
 
@@ -61,4 +74,5 @@ profile.
 - keep board tracking on the parent prompt/schema slice unless this leaf is
   promoted independently
 - when this leaf closes, update the parent task summary so the prompt/schema
-  contract seam is described at the slice level
+  contract seam is described at the slice level and clearly separated from
+  backend request assembly

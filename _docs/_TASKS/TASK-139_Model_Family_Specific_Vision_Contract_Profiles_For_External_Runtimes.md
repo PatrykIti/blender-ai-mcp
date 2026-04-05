@@ -152,6 +152,7 @@ This umbrella does **not** cover:
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
+- `README.md`
 - `_docs/_TASKS/README.md`
 
 ## Docs To Update
@@ -159,6 +160,7 @@ This umbrella does **not** cover:
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
+- `README.md`
 - `_docs/_TASKS/README.md`
 
 ## Tests To Add/Update
