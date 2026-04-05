@@ -4,7 +4,7 @@
 **Priority:** 🔴 High
 **Category:** Product Reliability / Guided Creature UX
 **Estimated Effort:** Large
-**Dependencies:** TASK-120, TASK-121, TASK-122, TASK-124
+**Dependencies:** TASK-120, TASK-121, TASK-122, TASK-124, TASK-139
 
 ## Objective
 
@@ -40,10 +40,17 @@ all". The repo already has:
 - staged reference compare / iterate tools with bounded loop semantics
 - truth-first hybrid loop outputs such as `truth_followup`,
   `correction_candidates`, `refinement_route`, and `refinement_handoff`
+- explicit external `vision_contract_profile` resolution plus compare-path
+  diagnostics on the current bounded vision runtime
 
 That baseline matters because Slice A/B/C should extend the current product
 surface, not redesign the platform work that already shipped under earlier
 tasks.
+
+Slice B/C planning should therefore target the contract-profile-aware external
+vision baseline shipped under
+[TASK-139](./TASK-139_Model_Family_Specific_Vision_Contract_Profiles_For_External_Runtimes.md),
+not the older provider-only external runtime story.
 
 ## Current Drift To Resolve
 
@@ -113,18 +120,28 @@ This umbrella does **not** cover:
 - `server/router/infrastructure/tools_metadata/`
 - `server/adapters/mcp/areas/reference.py`
 - `server/adapters/mcp/contracts/reference.py`
-- `server/adapters/mcp/vision/`
+- `server/infrastructure/config.py`
+- `server/adapters/mcp/vision/config.py`
+- `server/adapters/mcp/vision/runtime.py`
+- `server/adapters/mcp/vision/prompting.py`
+- `server/adapters/mcp/vision/parsing.py`
+- `server/adapters/mcp/vision/backends.py`
+- `server/adapters/mcp/vision/capture.py`
+- `server/adapters/mcp/vision/capture_runtime.py`
+- `server/adapters/mcp/vision/reporting.py`
 - `tests/unit/adapters/mcp/`
 - `tests/e2e/vision/`
 - `_docs/_PROMPTS/`
 - `_docs/_VISION/`
 - `_docs/_MCP_SERVER/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - `_docs/_TASKS/README.md`
 
 ## Docs To Update
 
 - `_docs/_PROMPTS/README.md`
 - `_docs/_MCP_SERVER/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - `_docs/_VISION/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
 - task board/task files under `_docs/_TASKS/`

@@ -35,9 +35,14 @@ The repo already has the platform pieces that this slice should build on:
 - search-first discovery on `llm-guided`
 - typed `guided_manual_build` handoff on no-match
 - staged reference compare / iterate with truth-first loop escalation
+- contract-profile-aware external compare diagnostics via
+  `vision_contract_profile`
 
 The problem is not missing platform scaffolding. The problem is that the
 creature-specific shaping on top of that scaffolding is still incomplete.
+
+That means prompt/docs alignment in this slice must match the current bounded
+vision runtime story, not a stale MLX-only or provider-only framing.
 
 ## Current Drift To Resolve
 
@@ -60,6 +65,10 @@ Current audited drift is:
 - the public creature prompt wording is still squirrel-heavy and still teaches
   at least one flow that does not match the real `llm-guided` bootstrap/utility
   path
+- the public creature prompt/docs still hardcode an MLX-first runtime framing
+  even though the current repo baseline also includes contract-profile-aware
+  external compare paths documented under `_docs/_VISION/README.md` and
+  `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - the public creature prompt/docs still blur the current staged-loop response
   shape:
   - they refer to `shape_mismatches`, `proportion_mismatches`, and
@@ -135,6 +144,12 @@ This slice does **not** cover:
     `next_corrections` are described where they actually live in the current
     runtime payload instead of being presented as stable top-level iterate
     fields before Slice B lands
+- the public creature prompt/docs stay aligned with the current bounded vision
+  runtime story:
+  - `mlx_local` remains a valid path
+  - but the docs must not imply MLX-only or provider-only staged compare
+    behavior now that external compare paths are routed through
+    `vision_contract_profile`
 - the guided creature handoff exposes a smaller, more relevant build recipe for
   low-poly creature blockout
 - creature handoff narrowing is defined as one explicit session-aware runtime
@@ -178,14 +193,18 @@ This slice does **not** cover:
 - `tests/unit/router/application/test_router_handler_parameters.py`
 - `tests/e2e/router/test_guided_manual_handoff.py`
 - `_docs/_PROMPTS/`
+- `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
 
 ## Docs To Update
 
 - `_docs/_PROMPTS/README.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
+- `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
 
 ## Tests To Add/Update

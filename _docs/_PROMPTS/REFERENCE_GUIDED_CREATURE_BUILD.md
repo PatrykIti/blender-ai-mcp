@@ -1,7 +1,9 @@
 # Reference-Guided Creature Build
 
 Use this on the `llm-guided` surface when you want staged manual building with
-reference images and bounded vision feedback after each checkpoint.
+reference images and bounded vision feedback after each checkpoint, regardless
+of whether the configured runtime is `mlx_local` or a supported external
+vision path.
 
 ## Best Fit
 
@@ -42,8 +44,8 @@ reference images and bounded vision feedback after each checkpoint.
 ## Prompt Template
 
 ```text
-Use the active Blender MCP profile with MLX vision and build a low-poly
-squirrel from two local reference images.
+Use the active Blender MCP profile with the repo's configured bounded vision
+runtime and build a low-poly squirrel from two local reference images.
 
 Reference files:
 - FRONT_REFERENCE_PATH=<ABSOLUTE_PATH>
@@ -51,6 +53,8 @@ Reference files:
 
 Rules:
 - work on the active `llm-guided` shaped surface
+- do not assume MLX-only or provider-specific compare behavior; follow the
+  runtime that is actually configured for this server
 - do not guess hidden/internal tool names
 - use `call_tool(...)` only for tools that are directly visible or were just
   discovered through `search_tools(...)`
@@ -110,6 +114,14 @@ At the end of each stage, return only:
 - `compact` is a good default for frequent checkpoints
 - `rich` makes sense only when one stage is already fairly stable and you want
   a wider multi-view comparison
+- this flow is runtime-agnostic:
+  - `mlx_local` is a valid local path
+  - supported external compare runtimes are also valid when they honor the
+    bounded staged-checkpoint contract
+- on external runtimes, `vision_contract_profile` explains whether the active
+  compare path is using the narrow Google-family compare contract or the full
+  generic contract; use that field for diagnosis instead of inferring behavior
+  from provider name alone
 - `correction_focus` should be treated as the first action list, but only
   after checking whether `correction_candidates` or `truth_followup` carry a
   stronger truth-driven signal

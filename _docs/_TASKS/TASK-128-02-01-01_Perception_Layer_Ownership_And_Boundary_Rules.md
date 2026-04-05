@@ -19,6 +19,9 @@ vision/reference perception layer and out of router policy and truth authority.
 
 - boundary docs clearly separate perception, truth, and policy
 - silhouette metrics are described as advisory but structured
+- boundary docs explicitly treat `vision_contract_profile` as external
+  prompt/schema/parser routing only, not as scene-truth or silhouette-ownership
+  authority
 - later slices can reuse the same ownership model
 
 ## Docs To Update

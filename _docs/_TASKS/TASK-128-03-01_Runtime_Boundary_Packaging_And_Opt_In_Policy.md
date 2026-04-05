@@ -12,21 +12,28 @@ never becomes a hidden default dependency of the core MCP server.
 ## Current Runtime Baseline
 
 `server/infrastructure/config.py` currently exposes bounded vision runtime
-configuration only. This leaf should keep segmentation as a separate,
-explicitly opt-in concern rather than overloading the existing default vision
-path.
+configuration only. That baseline now includes
+`VISION_EXTERNAL_CONTRACT_PROFILE` plus typed `vision_contract_profile`
+resolution in `server/adapters/mcp/vision/config.py` and
+`server/adapters/mcp/vision/runtime.py`. This leaf should keep segmentation as
+a separate, explicitly opt-in concern rather than overloading the existing
+default vision path.
 
 ## Repository Touchpoints
 
 - `server/infrastructure/config.py`
-- `server/adapters/mcp/vision/`
+- `server/adapters/mcp/vision/config.py`
+- `server/adapters/mcp/vision/runtime.py`
 - `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md`
 
 ## Acceptance Criteria
 
 - the sidecar is explicitly opt-in
-- runtime/dependency isolation is documented before provider-specific work
+- runtime/dependency isolation is documented before any sidecar-provider-
+  specific work and without overloading the existing external
+  contract-profile config surface
 - failure or absence of the sidecar does not break normal guided sessions
 - any future config/env surface defaults to "off" and preserves the current
   lightweight guided baseline
@@ -34,6 +41,7 @@ path.
 ## Docs To Update
 
 - `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md`
 
 ## Changelog Impact

@@ -7,7 +7,8 @@
 ## Objective
 
 Adopt the silhouette metrics and typed `action_hints` into the staged
-reference-guided loop and document the resulting prioritization order.
+reference-guided loop and document the resulting prioritization order against
+the current contract-profile-aware vision baseline.
 
 ## Repository Touchpoints
 
@@ -23,6 +24,8 @@ reference-guided loop and document the resulting prioritization order.
   `correction_candidates`, `truth_followup`, and `correction_focus`
 - regression coverage protects the new staged-loop output shape
 - the operator prompt/docs describe the new order cleanly
+- the reading order stays the same across the current MLX-local and external
+  contract-profile-aware compare paths
 
 ## Docs To Update
 

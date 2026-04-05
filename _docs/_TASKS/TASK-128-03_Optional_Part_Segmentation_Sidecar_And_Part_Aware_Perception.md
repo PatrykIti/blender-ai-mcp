@@ -3,6 +3,7 @@
 **Parent:** [TASK-128](./TASK-128_Reference_Guided_Creature_Build_Surface_And_Perception_Reliability.md)
 **Status:** ⏳ To Do
 **Priority:** 🟡 Medium
+**Depends On:** [TASK-139](./TASK-139_Model_Family_Specific_Vision_Contract_Profiles_For_External_Runtimes.md)
 
 ## Objective
 
@@ -44,10 +45,12 @@ If this slice is done correctly:
 
 ## Current Runtime Baseline
 
-The current runtime still stops at bounded vision providers and hybrid-loop
-contracts; there is no shipped segmentation sidecar surface yet. That is the
-correct baseline for this slice: optional follow-on planning, not hidden
-runtime adoption.
+The current runtime already has a bounded vision baseline with explicit
+external `vision_contract_profile` resolution, provider/model notes, and
+compare-path diagnostics. There is still no shipped segmentation sidecar
+surface yet, which is the correct baseline for this slice: optional follow-on
+planning, not hidden runtime adoption or a replacement for the current
+external-vision contract model.
 
 ## Scope
 
@@ -73,22 +76,31 @@ This slice does **not** cover:
   schema
 - docs and evaluation notes explain when this sidecar is worth enabling and
   when silhouette-only guidance is enough
+- any future sidecar config/interface stays separate from
+  `VISION_EXTERNAL_CONTRACT_PROFILE` and the existing external compare-runtime
+  surface
 
 ## Repository Touchpoints
 
 - `server/infrastructure/config.py`
-- `server/adapters/mcp/vision/`
+- `server/adapters/mcp/vision/config.py`
+- `server/adapters/mcp/vision/runtime.py`
+- `server/adapters/mcp/vision/backends.py`
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/areas/reference.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_vision_*`
 - `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md`
 - `_docs/_TESTS/README.md`
 
 ## Docs To Update
 
 - `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md`
 - `_docs/_TESTS/README.md`
 

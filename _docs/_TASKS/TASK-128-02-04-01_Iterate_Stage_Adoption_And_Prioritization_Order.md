@@ -17,6 +17,10 @@ Current docs/runtime already prioritize `loop_disposition`,
 about inserting silhouette outputs into that order without demoting existing
 truth-driven escalation.
 
+Current compare diagnostics also expose `vision_contract_profile` on external
+runtime paths. The reading order described here must therefore stay independent
+of provider path and contract-profile selection.
+
 The leaf also needs to make one present-day boundary explicit while Slice B is
 still open:
 
@@ -39,6 +43,8 @@ still open:
 - the prioritization order is explicit and stable
 - truth-driven findings still outrank purely perceptual hints when appropriate
 - docs show the intended operator/model reading order
+- the same reading order applies across current MLX-local and external
+  contract-profile-aware compare paths
 - the leaf explicitly distinguishes:
   - the current pre-Slice-B iterate-stage reading order used by runtime/docs now
   - the future post-Slice-B insertion point for silhouette outputs and typed

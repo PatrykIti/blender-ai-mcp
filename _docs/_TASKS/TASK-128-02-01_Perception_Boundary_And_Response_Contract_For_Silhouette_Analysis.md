@@ -8,13 +8,15 @@
 
 Define one explicit contract for silhouette/perception outputs and place it in
 the existing vision/reference layer without leaking image analysis into the
-router or truth layers.
+router or truth layers, and without confusing external
+`vision_contract_profile` selection with truth or policy ownership.
 
 ## Repository Touchpoints
 
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/areas/reference.py`
-- `server/adapters/mcp/vision/`
+- `server/adapters/mcp/vision/parsing.py`
+- `server/adapters/mcp/vision/backends.py`
 - `_docs/_VISION/README.md`
 - `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md`
 
@@ -24,6 +26,9 @@ router or truth layers.
   response model
 - boundary docs make it explicit that silhouette metrics are perception, not
   truth
+- boundary docs make it explicit that `vision_contract_profile` only routes
+  external prompt/schema/parser behavior and is not itself evidence, truth, or
+  policy
 - the contract is stable enough for later part-segmentation work to reuse
 
 ## Docs To Update

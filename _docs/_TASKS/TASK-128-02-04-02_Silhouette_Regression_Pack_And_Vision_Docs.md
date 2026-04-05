@@ -21,6 +21,9 @@ silhouette-analysis outputs stable.
 - the repo has a focused regression plan for silhouette metrics/action hints
 - vision docs explain the new deterministic perception layer
 - test docs call out what should be covered at unit vs E2E level
+- vision docs and the regression plan stay aligned with the current
+  contract-profile-aware provider/runtime notes instead of regressing to
+  provider-only expectations
 
 ## Docs To Update
 

@@ -11,13 +11,16 @@ alternatives can all fit behind one bounded interface.
 
 ## Repository Touchpoints
 
-- `server/adapters/mcp/vision/`
+- `server/adapters/mcp/vision/config.py`
+- `server/adapters/mcp/vision/runtime.py`
 - `_docs/_VISION/README.md`
 
 ## Acceptance Criteria
 
 - the provider interface is generic enough for multiple segmentation families
 - no one vendor/model becomes the public product contract
+- the boundary does not reuse or blur the external `vision_contract_profile`
+  vocabulary
 - the boundary remains compatible with the repo's optional-runtime strategy
 
 ## Docs To Update
