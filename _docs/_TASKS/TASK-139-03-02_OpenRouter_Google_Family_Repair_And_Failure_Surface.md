@@ -51,6 +51,18 @@ That slows down diagnosis and makes provider/model notes harder to trust.
 - `tests/unit/adapters/mcp/test_vision_parsing.py`
 - `tests/unit/adapters/mcp/test_vision_external_backend.py`
 
+## Docs To Update
+
+- `_docs/_VISION/README.md`
+
 ## Changelog Impact
 
 - include in the parent follow-on changelog entry when shipped
+
+## Status / Board Update
+
+- keep board tracking on the parent parser/diagnostics slice unless this leaf
+  is promoted independently
+- when this leaf closes, update the parent task summary so the OpenRouter
+  Google-family repair path and tightened failure-surface wording are recorded
+  explicitly
