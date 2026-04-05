@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v3.0.0 (2026-04-05)
+
+### Features
+
+- Finalize guided-reference reliability across hybrid loop, transport, and truth
+  ([#32](https://github.com/PatrykIti/blender-ai-mcp/pull/32),
+  [`ccf39d2`](https://github.com/PatrykIti/blender-ai-mcp/commit/ccf39d22c58a28af88b24955386ae4913133b682))
+
+
 ## v2.3.0 (2026-04-01)
 
 ### Features
