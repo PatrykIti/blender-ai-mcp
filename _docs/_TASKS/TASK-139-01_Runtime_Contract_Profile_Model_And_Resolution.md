@@ -7,8 +7,8 @@
 ## Objective
 
 Introduce one typed contract-profile concept for external vision runtimes and
-resolve that profile deterministically from explicit configuration plus
-model-family matching rules.
+resolve that profile deterministically from an explicit flat config/env
+override plus model-family matching rules.
 
 ## Business Problem
 
@@ -27,6 +27,7 @@ generic OpenAI-compatible contract path.
 
 ## Repository Touchpoints
 
+- `server/infrastructure/config.py`
 - `server/adapters/mcp/vision/config.py`
 - `server/adapters/mcp/vision/runtime.py`
 - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
@@ -34,6 +35,8 @@ generic OpenAI-compatible contract path.
 
 ## Acceptance Criteria
 
+- the flat application config/env surface has one explicit contract-profile
+  override seam for external vision
 - the runtime config has an explicit contract-profile concept for external
   vision
 - the selected contract profile is resolved deterministically

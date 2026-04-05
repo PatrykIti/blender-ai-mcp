@@ -24,6 +24,8 @@ At the same time, the docs need to say clearly:
 
 ## Repository Touchpoints
 
+- `scripts/vision_harness.py`
+- `tests/unit/scripts/test_script_tooling.py`
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
 - `tests/e2e/vision/`
@@ -32,14 +34,22 @@ At the same time, the docs need to say clearly:
 
 - docs distinguish harness-ranked evidence from operator-reported observations
 - provider/model notes call out contract-profile caveats where relevant
+- the harness config surface and script coverage stay aligned with the
+  documented provider/model guidance
 - the harness plan includes richer assembled stage loops, not only simpler
   compare cases
 
 ## Leaf Work Items
 
+- update harness config/build expectations so contract-profile-sensitive
+  provider paths are represented explicitly
 - update provider/model notes to mention contract-profile-sensitive failures
 - define harness scenarios for richer assembled reference loops
 - document how operator reports should be recorded before a model is promoted
+
+## Tests To Add/Update
+
+- `tests/unit/scripts/test_script_tooling.py`
 
 ## Changelog Impact
 

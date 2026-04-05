@@ -24,6 +24,8 @@ structured-output behavior is still routed too coarsely.
 
 Current code audit shows:
 
+- `Config` exposes the current external vision env/config surface, but has no
+  first-class contract-profile override field yet
 - `VisionOpenAICompatibleConfig` models the external runtime by provider name,
   base URL, model, and auth, but has no explicit contract-profile concept
 - `build_vision_runtime_config(...)` resolves runtime behavior by provider
@@ -93,6 +95,8 @@ If this umbrella is done correctly, the repo gains:
 
 This umbrella covers:
 
+- introducing one explicit flat config/env surface for contract-profile
+  override, then carrying that choice into typed runtime config
 - introducing a typed contract-profile concept for external vision runtimes
 - deterministic contract-profile selection and precedence rules
 - prompt/schema routing by contract profile instead of provider only
@@ -109,6 +113,8 @@ This umbrella does **not** cover:
 ## Acceptance Criteria
 
 - the external vision runtime has one explicit contract-profile concept
+- explicit contract-profile override has one first-class config/env surface that
+  feeds runtime resolution deterministically
 - contract-profile selection can be driven by explicit override and by
   deterministic model-family matching rules
 - OpenRouter Google-family models can use a narrow staged-compare profile
@@ -120,6 +126,7 @@ This umbrella does **not** cover:
 
 ## Repository Touchpoints
 
+- `server/infrastructure/config.py`
 - `server/adapters/mcp/vision/config.py`
 - `server/adapters/mcp/vision/runtime.py`
 - `server/adapters/mcp/vision/prompting.py`

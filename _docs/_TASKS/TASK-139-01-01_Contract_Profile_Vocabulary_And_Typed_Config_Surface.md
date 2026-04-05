@@ -19,26 +19,31 @@ First-pass profile vocabulary should separate at least:
   again
 
 The contract-profile field should be explicit in typed config/runtime models,
-not only inferred transiently in helper functions.
+not only inferred transiently in helper functions. The flat application config
+surface that feeds runtime resolution also needs a first-class place for an
+explicit override instead of relying only on downstream typed models.
 
 ## Repository Touchpoints
 
+- `server/infrastructure/config.py`
 - `server/adapters/mcp/vision/config.py`
 - `server/adapters/mcp/vision/runtime.py`
 - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
 
 ## Acceptance Criteria
 
-- one stable profile vocabulary exists in typed config
+- one stable profile vocabulary exists in the flat config/env surface and in
+  typed runtime config
 - runtime config carries the resolved active contract profile
 - the typed surface is explicit enough that downstream code can use the profile
   directly instead of re-deriving it ad hoc
 
 ## Leaf Work Items
 
-- add the contract-profile field(s) to external vision config/runtime models
-- decide whether the explicit override should live in config, resolved runtime
-  state, or both
+- add the contract-profile field(s) to the flat application config/env surface
+  and to external vision config/runtime models
+- decide what the explicit override looks like at the `Config` layer and how it
+  maps into resolved runtime state
 - expose the resolved profile in diagnostics-friendly runtime state
 
 ## Tests To Add/Update

@@ -25,10 +25,12 @@ not drift apart.
 
 ## Repository Touchpoints
 
+- `scripts/vision_harness.py`
 - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
 - `tests/unit/adapters/mcp/test_vision_prompting.py`
 - `tests/unit/adapters/mcp/test_vision_parsing.py`
 - `tests/unit/adapters/mcp/test_vision_external_backend.py`
+- `tests/unit/scripts/test_script_tooling.py`
 - `tests/e2e/vision/`
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
@@ -36,6 +38,8 @@ not drift apart.
 ## Acceptance Criteria
 
 - focused unit/integration coverage proves the profile-selection behavior
+- the harness config/build path exposes the same contract-profile assumptions as
+  the runtime/docs path
 - provider notes and ranking guidance distinguish harness evidence from
   operator-reported instability
 - docs explain the selected-profile behavior well enough that OpenRouter
@@ -52,6 +56,7 @@ not drift apart.
 - `tests/unit/adapters/mcp/test_vision_prompting.py`
 - `tests/unit/adapters/mcp/test_vision_parsing.py`
 - `tests/unit/adapters/mcp/test_vision_external_backend.py`
+- `tests/unit/scripts/test_script_tooling.py`
 - focused `tests/e2e/vision/` compare-loop coverage
 
 ## Changelog Impact

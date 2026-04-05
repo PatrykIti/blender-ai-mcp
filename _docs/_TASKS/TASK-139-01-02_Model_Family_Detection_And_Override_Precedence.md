@@ -7,8 +7,8 @@
 ## Objective
 
 Define deterministic precedence rules so contract-profile selection can be
-driven by explicit override first, then model-family matching, then provider
-default behavior.
+driven by an explicit flat config/env override first, then model-family
+matching, then provider default behavior.
 
 ## Business Problem
 
@@ -22,6 +22,7 @@ profile selection:
 
 ## Repository Touchpoints
 
+- `server/infrastructure/config.py`
 - `server/adapters/mcp/vision/runtime.py`
 - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
 - `_docs/_VISION/README.md`
@@ -29,9 +30,11 @@ profile selection:
 ## Acceptance Criteria
 
 - precedence is explicit and documented:
-  - explicit override
+  - explicit config/env override
   - model-family match
   - provider default
+- the explicit override path is defined at the `Config` layer and documented
+  clearly enough that tests/docs agree on why a profile was selected
 - Google-family models behind OpenRouter can be matched into the narrow compare
   contract when desired
 - conflicting provider/model combinations do not produce ambiguous profile
@@ -41,7 +44,8 @@ profile selection:
 
 - define first-pass Google-family model matching rules for OpenRouter-hosted
   model ids
-- document when explicit override must suppress automatic model-family routing
+- define the explicit override path on the flat config/env surface and document
+  when it must suppress automatic model-family routing
 - add regression cases for explicit override, auto-match, and fallback behavior
 
 ## Tests To Add/Update
