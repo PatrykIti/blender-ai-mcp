@@ -5,7 +5,7 @@ Curated task board for promoted active work, promoted follow-on work, and select
 ## 📊 Statistics
 - **To Do:** 3 tasks
 - **In Progress:** 2 tasks
-- **Done:** 201
+- **Done:** 202
 - **Superseded:** 10
 
 ## 📐 Board Scope
@@ -75,6 +75,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-132](./TASK-132_Hybrid_Budget_Mesh_Overlap_And_Guided_Readiness_Review_Followups.md) | **Hybrid Budget, Mesh Overlap, and Guided Readiness Review Follow-Ups** | 🔴 High | 2026-04-05 |
 | [TASK-131](./TASK-131_Ready_Session_Pending_Reference_Visibility_Consistency.md) | **Ready-Session Pending Reference Visibility Consistency** | 🔴 High | 2026-04-05 |
 | [TASK-129](./TASK-129_Guided_Reference_Pending_Storage_Isolation_Hardening.md) | **Guided Reference Pending Storage Isolation Hardening** | 🔴 High | 2026-04-04 |
 | [TASK-127](./TASK-127_Guided_Utility_Public_Contract_Hardening_For_Scene_Clean_Scene.md) | **Guided Utility Public Contract Hardening for `scene_clean_scene`** | 🔴 High | 2026-04-04 |

@@ -123,6 +123,37 @@ def test_measure_gap_and_overlap_prefer_mesh_surface_semantics_over_bbox_touchin
     assert overlap_result["surface_gap"] == 0.051
 
 
+def test_measure_gap_preserves_mesh_overlap_semantics_when_bbox_overlap_exists(monkeypatch):
+    mock_bpy = sys.modules["bpy"]
+    left = _make_box("Left", (0.0, 0.0, 0.0), (1.0, 1.0, 1.0), (0.5, 0.5, 0.5))
+    overlap = _make_box("Overlap", (0.5, 0.0, 0.0), (1.5, 1.0, 1.0), (1.0, 0.5, 0.5))
+    left.type = "MESH"
+    overlap.type = "MESH"
+
+    mock_bpy.data.objects = MagicMock()
+    mock_bpy.data.objects.get.side_effect = {"Left": left, "Overlap": overlap}.get
+
+    handler = SceneHandler()
+
+    def _fake_mesh_contact(source_obj, target_obj, tolerance, bbox_overlap_volume=0.0):
+        assert bbox_overlap_volume > 0.0
+        return {
+            "overlaps": True,
+            "gap": 0.0,
+            "axis_gap": [0.0, 0.0, 0.0],
+            "relation": "overlapping",
+            "nearest_points": None,
+        }
+
+    monkeypatch.setattr(handler, "_measure_mesh_surface_relation", _fake_mesh_contact)
+
+    gap = handler.measure_gap("Left", "Overlap", tolerance=0.001)
+
+    assert gap["measurement_basis"] == "mesh_surface"
+    assert gap["relation"] == "overlapping"
+    assert gap["bbox_relation"] == "overlapping"
+
+
 @pytest.mark.parametrize(
     ("vertices", "triangles"),
     [

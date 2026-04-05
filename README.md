@@ -228,6 +228,10 @@ hybrid truth follow-up now carries that distinction forward in operator-facing
 summaries instead of collapsing it into a generic "contact passed/failed"
 claim.
 
+When the mesh-aware path finds a real overlap, the main measured relation also
+stays `overlapping`, so overlap rejection in `scene_assert_contact(...)` still
+works as a separate truth condition instead of collapsing into plain contact.
+
 ## Structured Clarification Flow
 
 The guided surface supports missing-input handling as part of the product contract, not as an afterthought.

@@ -693,7 +693,7 @@ def _build_refinement_handoff(
 
 def _model_budget_bias(model_name: str | None) -> int:
     normalized = str(model_name or "").lower()
-    if any(token in normalized for token in ("2b", "3b", "4b", "flash", "mini")):
+    if re.search(r"(^|[-_./:])(2b|3b|4b|mini)($|[-_./:])", normalized):
         return -1
     if any(token in normalized for token in ("27b", "70b", "72b", "grok")):
         return 1

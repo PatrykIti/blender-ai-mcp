@@ -1766,11 +1766,15 @@ class SceneHandler:
         else:
             bbox_relation = "contact"
 
+        bbox_overlap_volume = 0.0
+        if bbox_relation == "overlapping":
+            bbox_overlap_volume = overlap_dimensions[0] * overlap_dimensions[1] * overlap_dimensions[2]
+
         mesh_contact = self._measure_mesh_surface_relation(
             source_obj,
             target_obj,
             tolerance,
-            bbox_overlap_volume=0.0,
+            bbox_overlap_volume=bbox_overlap_volume,
         )
         if mesh_contact is not None:
             return {

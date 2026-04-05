@@ -12,6 +12,9 @@ from server.adapters.mcp.areas.reference import (
     _assembled_target_scope,
     _build_correction_candidates,
     _build_truth_followup,
+    _effective_candidate_budget,
+    _effective_pair_budget,
+    _model_budget_bias,
     _select_refinement_route,
     reference_compare_checkpoint,
     reference_compare_current_view,
@@ -141,6 +144,20 @@ def test_truth_followup_explicitly_calls_out_bbox_touching_but_surface_gap():
     assert followup.items
     assert "Bounding boxes touch" in followup.items[0].summary
     assert followup.items[1].summary.startswith("Eye -> Head still has measurable surface separation.")
+
+
+def test_model_budget_bias_avoids_gemini_name_collision_and_keeps_explicit_mini_bias():
+    assert _model_budget_bias("gemini-2.5-pro") == 0
+    assert _model_budget_bias("gemini-2.5-flash") == 0
+    assert _model_budget_bias("gpt-4.1-mini") == -1
+    assert _model_budget_bias("mlx-community/Qwen3-VL-4B-Instruct-4bit") == -1
+
+
+def test_effective_budgets_do_not_downgrade_gemini_model_names():
+    assert _effective_pair_budget(max_tokens=600, model_name="gemini-2.5-flash") == 4
+    assert _effective_candidate_budget(pair_budget=4, max_tokens=600, model_name="gemini-2.5-flash") == 5
+    assert _effective_pair_budget(max_tokens=600, model_name="gpt-4.1-mini") == 3
+    assert _effective_candidate_budget(pair_budget=3, max_tokens=600, model_name="gpt-4.1-mini") == 4
 
 
 def test_assembled_target_scope_prefers_structural_anchor_over_accessory_first_item(monkeypatch):

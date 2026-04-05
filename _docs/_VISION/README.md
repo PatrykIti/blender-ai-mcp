@@ -100,6 +100,9 @@ The repo now has the first implementation scaffolding for the vision layer:
   - records the decision in `budget_control`
   - uses runtime token/image limits plus a bounded model-name bias instead of
     one static expansion size
+  - small-tier downgrades now key off explicit model tokens such as `-mini` or
+    `2b` / `3b` / `4b`-class names, so Gemini model names are not downgraded
+    by the `gemini`/`mini` substring collision
 - hybrid-loop compare/iterate responses now also expose `refinement_route`,
   which classifies:
   - the current correction domain

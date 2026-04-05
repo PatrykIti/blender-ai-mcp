@@ -272,10 +272,17 @@ def build_guided_reference_readiness(session: SessionCapabilityState) -> GuidedR
     """Compute one explicit readiness contract for guided stage compare/iterate flows."""
 
     attached_reference_count = len(session.reference_images or [])
-    pending_reference_count = len(session.pending_reference_images or [])
     has_active_goal = session.goal is not None
     goal_input_pending = bool(session.pending_clarification) or session.last_router_status == "needs_input"
     session_ready = session_has_ready_guided_reference_goal(session)
+    relevant_pending_reference_count = 0
+
+    if session.goal:
+        relevant_pending_references, _ = _split_pending_reference_images_for_goal(
+            session.pending_reference_images,
+            goal=session.goal,
+        )
+        relevant_pending_reference_count = len(relevant_pending_references or [])
 
     if not has_active_goal:
         blocking_reason: GuidedReferenceBlockingReason | None = "active_goal_required"
@@ -286,7 +293,7 @@ def build_guided_reference_readiness(session: SessionCapabilityState) -> GuidedR
     elif not session_ready:
         blocking_reason = "reference_session_not_ready"
         next_action = "call_router_get_status"
-    elif pending_reference_count > 0:
+    elif relevant_pending_reference_count > 0:
         blocking_reason = "pending_references_detected"
         next_action = "call_router_get_status"
     elif attached_reference_count == 0:
@@ -303,7 +310,7 @@ def build_guided_reference_readiness(session: SessionCapabilityState) -> GuidedR
         has_active_goal=has_active_goal,
         goal_input_pending=goal_input_pending,
         attached_reference_count=attached_reference_count,
-        pending_reference_count=pending_reference_count,
+        pending_reference_count=relevant_pending_reference_count,
         compare_ready=compare_ready,
         iterate_ready=compare_ready,
         blocking_reason=blocking_reason,

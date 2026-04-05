@@ -217,6 +217,40 @@ def test_build_guided_reference_readiness_reports_pending_goal_inputs():
     assert readiness.next_action == "answer_pending_goal_questions"
 
 
+def test_build_guided_reference_readiness_ignores_pending_references_from_other_goals():
+    """Unrelated staged refs should not block compare/iterate on an otherwise ready goal."""
+
+    readiness = build_guided_reference_readiness(
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="table",
+            last_router_status="ready",
+            reference_images=[
+                {
+                    "reference_id": "ref_table",
+                    "goal": "table",
+                    "label": "table_ref",
+                    "stored_path": "/tmp/table.png",
+                }
+            ],
+            pending_reference_images=[
+                {
+                    "reference_id": "ref_chair",
+                    "goal": "chair",
+                    "label": "chair_ref",
+                    "stored_path": "/tmp/chair.png",
+                }
+            ],
+        )
+    )
+
+    assert readiness.status == "ready"
+    assert readiness.compare_ready is True
+    assert readiness.iterate_ready is True
+    assert readiness.pending_reference_count == 0
+    assert readiness.blocking_reason is None
+
+
 def test_apply_visibility_for_session_state_uses_stored_surface_profile():
     """Session visibility should be derived from the persisted surface profile and phase."""
 

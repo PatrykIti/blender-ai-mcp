@@ -431,6 +431,9 @@ instead of hidden sequencing assumptions.
   - `iterate_ready`
   - machine-readable `blocking_reason`
   - machine-readable `next_action`
+- `pending_reference_count` reflects pending refs still relevant to the active
+  guided goal/session; stale pending refs for another goal do not block a ready
+  staged compare/iterate path by themselves
 - staged compare/iterate now fail fast when the readiness payload is blocked
 - `goal_override` is not a substitute for an active staged guided session on
   `reference_compare_stage_checkpoint()` / `reference_iterate_stage_checkpoint()`;
@@ -749,6 +752,10 @@ For contact-sensitive truth on curved or rounded objects, the product now distin
 This means a pair can still have `bbox_relation="contact"` while the main
 `relation` reports `separated` if the actual mesh surfaces remain visibly
 gapped.
+
+When the mesh-aware path detects a true overlap, that main `relation` remains
+`overlapping`, so `scene_assert_contact(..., allow_overlap=false)` still rejects
+the pair even if the bbox-level view would otherwise look like simple contact.
 
 Macro verification and hybrid truth-followup payloads now also surface that
 split in their operator-facing summaries, so bbox-touching but still visibly gapped
