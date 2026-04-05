@@ -121,6 +121,8 @@ This umbrella does **not** cover:
   without being forced into the Google AI Studio transport path
 - parse-repair for compare flows is reusable by contract profile rather than
   being hard-coded only to `google_ai_studio`
+- the harness config/build path and operator-facing provider notes reflect the
+  same contract-profile assumptions as the runtime/docs path
 - diagnostics, tests, and docs make the selected profile and its known
   limitations visible
 
@@ -136,6 +138,8 @@ This umbrella does **not** cover:
 - `tests/unit/adapters/mcp/test_vision_prompting.py`
 - `tests/unit/adapters/mcp/test_vision_parsing.py`
 - `tests/unit/adapters/mcp/test_vision_external_backend.py`
+- `scripts/vision_harness.py`
+- `tests/unit/scripts/test_script_tooling.py`
 - `tests/e2e/vision/`
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
@@ -153,6 +157,7 @@ This umbrella does **not** cover:
 - `tests/unit/adapters/mcp/test_vision_prompting.py`
 - `tests/unit/adapters/mcp/test_vision_parsing.py`
 - `tests/unit/adapters/mcp/test_vision_external_backend.py`
+- `tests/unit/scripts/test_script_tooling.py`
 - focused `tests/e2e/vision/` compare-loop coverage for affected profiles
 
 ## Changelog Impact
