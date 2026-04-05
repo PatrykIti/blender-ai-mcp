@@ -304,6 +304,9 @@ Current guided utility prep path:
 - guided `call_tool(...)` now also tolerates the older
   `keep_lights` / `keep_cameras` split form only when both values are provided
   and agree; mixed split values are rejected with a deterministic contract error
+- guided `call_tool(...)` preserves the same failure semantics as a direct tool
+  call; proxied validation/runtime errors still surface as tool failures
+  instead of being flattened into apparent success text
 
 Goal-scoped reference intake is now part of the guided entry layer:
 

@@ -369,6 +369,27 @@ def test_call_tool_proxy_matches_direct_public_alias_execution(monkeypatch):
     assert _decode_tool_result(direct) == _decode_tool_result(discovered)
 
 
+def test_call_tool_proxy_preserves_proxied_valueerror_as_tool_error(monkeypatch):
+    """call_tool should keep direct-tool failure semantics instead of turning validation errors into success text."""
+
+    class FailingFastMCP:
+        async def call_tool(self, name, arguments):
+            raise ValueError("synthetic validation failure")
+
+    class Ctx:
+        fastmcp = FailingFastMCP()
+
+    transform = build_discovery_transform(get_surface_profile("llm-guided"))
+    assert transform is not None
+    call_tool = transform._make_call_tool().fn  # type: ignore[attr-defined]
+
+    async def run():
+        await call_tool(name="scene_clean_scene", arguments={"keep_lights_and_cameras": True}, ctx=Ctx())
+
+    with pytest.raises(ValueError, match="synthetic validation failure"):
+        asyncio.run(run())
+
+
 def test_call_tool_can_invoke_scene_clean_scene_during_bootstrap(monkeypatch):
     """Visible guided utility tools should stay callable through call_tool during bootstrap."""
 

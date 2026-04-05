@@ -12,7 +12,6 @@ from typing import Annotated, Any
 from fastmcp.server.context import Context
 from fastmcp.server.transforms.search import BM25SearchTransform
 from fastmcp.tools.tool import Tool, ToolResult
-from mcp.types import TextContent
 
 from server.adapters.mcp.platform.name_resolution import resolve_canonical_tool_name
 from server.adapters.mcp.platform.naming_rules import AUDIENCE_LLM_GUIDED
@@ -131,10 +130,7 @@ class BlenderDiscoverySearchTransform(BM25SearchTransform):
                 raise RuntimeError("call_tool proxy requires an active FastMCP context")
 
             canonical_arguments = transform._canonicalize_call_arguments(name, arguments)
-            try:
-                return await ctx.fastmcp.call_tool(name, canonical_arguments)
-            except ValueError as exc:
-                return ToolResult(content=[TextContent(type="text", text=str(exc))])
+            return await ctx.fastmcp.call_tool(name, canonical_arguments)
 
         return Tool.from_function(fn=call_tool, name=self._call_tool_name)
 
