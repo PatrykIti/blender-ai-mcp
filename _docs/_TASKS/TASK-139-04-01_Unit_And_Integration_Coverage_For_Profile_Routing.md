@@ -1,4 +1,4 @@
-# TASK-139-04-01: Unit and Targeted Integration Coverage for Profile Routing
+# TASK-139-04-01: Unit and Targeted Integration Coverage for Vision-Contract-Profile Routing
 
 **Parent:** [TASK-139-04](./TASK-139-04_Regression_Harness_And_Documentation_For_Contract_Profiles.md)
 **Status:** ⏳ To Do
@@ -6,11 +6,12 @@
 
 ## Objective
 
-Add focused automated coverage for contract-profile selection and routing across
-runtime config, prompting, parser, and external backend layers, including one
-targeted compare-loop integration/e2e seam in `tests/e2e/vision/`.
+Add focused automated coverage for vision-contract-profile selection and
+routing across runtime config, prompting, parser, and external backend layers,
+including one targeted compare-loop integration/e2e seam in `tests/e2e/vision/`.
 
-This leaf intentionally owns the automated regression seam for profile routing:
+This leaf intentionally owns the automated regression seam for
+vision-contract-profile routing:
 
 - fast unit coverage in `tests/unit/adapters/mcp/`
 - targeted compare-loop integration/e2e coverage in `tests/e2e/vision/`
@@ -30,23 +31,24 @@ parent `TASK-139-04` slice and on
 ## Acceptance Criteria
 
 - unit tests prove explicit override, auto-match, and fallback profile
-  selection
+- unit tests prove explicit override, auto-match, and fallback
+  vision-contract-profile selection
 - unit tests prove OpenRouter Google-family compare flows use the intended
-  prompt/schema/parser profile
+  prompt/schema/parser vision contract profile
 - unit tests prove prose/no-JSON outputs still fail loudly under the new
   routing
 - targeted automated compare-loop coverage in `tests/e2e/vision/` proves the
-  selected contract profile is exercised end-to-end on the affected external
-  path without relying only on harness/manual evidence
+  selected `vision_contract_profile` is exercised end-to-end on the affected
+  external path without relying only on harness/manual evidence
 
 ## Leaf Work Items
 
-- add runtime-config tests for resolved contract-profile selection
-- add prompting tests for profile-aware narrow compare routing
+- add runtime-config tests for resolved `vision_contract_profile` selection
+- add prompting tests for vision-contract-profile-aware narrow compare routing
 - add parsing/backend tests for OpenRouter Google-family compare failures and
   repairs
 - add or update one focused `tests/e2e/vision/` scenario that validates the
-  contract-profile-sensitive compare path at the workflow boundary
+  vision-contract-profile-sensitive compare path at the workflow boundary
 
 ## Tests To Add/Update
 

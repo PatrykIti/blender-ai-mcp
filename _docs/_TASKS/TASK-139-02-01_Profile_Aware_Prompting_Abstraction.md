@@ -1,4 +1,4 @@
-# TASK-139-02-01: Profile-Aware Prompting Abstraction
+# TASK-139-02-01: Vision-Contract-Profile-Aware Prompting Abstraction
 
 **Parent:** [TASK-139-02](./TASK-139-02_Prompt_Schema_And_Request_Routing_By_Contract_Profile.md)
 **Status:** ⏳ To Do
@@ -7,7 +7,7 @@
 ## Objective
 
 Replace provider-only prompt/schema gating in the vision prompting helpers with
-contract-profile-aware selection.
+vision-contract-profile-aware selection.
 
 ## Technical Direction
 
@@ -20,7 +20,7 @@ The current code path:
 This task should separate:
 
 - request kind detection
-- selected contract profile
+- selected `vision_contract_profile`
 - prompt/schema template choice
 
 so downstream code can reuse the narrow compare contract for any compatible
@@ -30,9 +30,11 @@ This leaf owns the helper-selection seam in `prompting.py`.
 
 It should decide:
 
-- how request kind and contract profile combine into one prompt/schema choice
+- how request kind and selected `vision_contract_profile` combine into one
+  prompt/schema choice
 - which helper(s) expose that choice to callers
-- how expected-key/schema behavior stays aligned with the selected profile
+- how expected-key/schema behavior stays aligned with the selected
+  `vision_contract_profile`
 
 Backend request assembly and transport-specific consumption of that seam stay on
 `TASK-139-02-02`.
@@ -44,17 +46,21 @@ Backend request assembly and transport-specific consumption of that seam stay on
 
 ## Acceptance Criteria
 
-- prompt/schema selection is driven by contract profile and request kind
+- prompt/schema selection is driven by `vision_contract_profile` and request
+  kind
 - narrow compare prompt/schema generation is reusable outside the
   Google-AI-Studio-only gate
-- `prompting.py` is the single owner of the prompt/schema profile-selection seam
+- `prompting.py` is the single owner of the prompt/schema
+  vision-contract-profile-selection seam
 - local-model prompt behavior is not regressed by the abstraction
 
 ## Leaf Work Items
 
 - replace provider-only compare-contract helper gates
-- add one explicit prompt/schema profile selection seam in `prompting.py`
-- keep canonical expected-key helpers aligned with the selected profile
+- add one explicit `vision_contract_profile` prompt/schema selection seam in
+  `prompting.py`
+- keep canonical expected-key helpers aligned with the selected
+  `vision_contract_profile`
 - add or update prompt-focused regression coverage only for the helper seam
 
 ## Tests To Add/Update

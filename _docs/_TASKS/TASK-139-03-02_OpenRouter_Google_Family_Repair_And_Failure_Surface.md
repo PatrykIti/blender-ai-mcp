@@ -1,6 +1,7 @@
 # TASK-139-03-02: OpenRouter Google-Family Repair and Failure Surface
 
 **Parent:** [TASK-139-03](./TASK-139-03_Parser_Repair_And_Diagnostics_By_Contract_Profile.md)
+**Depends On:** [TASK-139-03-01](./TASK-139-03-01_Profile_Aware_Parse_And_Diagnose_Flow.md)
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
 
@@ -17,7 +18,7 @@ Current operator experience is too binary:
 
 - prose is correctly rejected
 - but the failure surface does not yet clearly explain that the model may have
-  been run under a mismatched contract profile
+  been run under a mismatched vision contract profile
 
 That slows down diagnosis and makes provider/model notes harder to trust.
 
@@ -32,10 +33,10 @@ That slows down diagnosis and makes provider/model notes harder to trust.
 ## Acceptance Criteria
 
 - OpenRouter Google-family compare flows can reuse near-JSON/truncated-JSON
-  repair where the selected profile allows it
+  repair where the selected `vision_contract_profile` allows it
 - the failure surface keeps hard rejection of prose/no-JSON responses
-- diagnostics and error text make the selected contract profile visible enough
-  for operators and tests
+- diagnostics and error text make the selected `vision_contract_profile`
+  visible enough for operators and tests
 
 ## Leaf Work Items
 
@@ -44,7 +45,7 @@ That slows down diagnosis and makes provider/model notes harder to trust.
 - add regression coverage for OpenRouter + Google-family malformed/near-JSON
   outputs
 - tighten operator-facing error text and provider-note wording around
-  contract-profile mismatch versus model instability
+  vision-contract-profile mismatch versus model instability
 
 ## Tests To Add/Update
 

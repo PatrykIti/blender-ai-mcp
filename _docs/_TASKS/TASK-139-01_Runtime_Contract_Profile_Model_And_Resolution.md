@@ -1,4 +1,4 @@
-# TASK-139-01: Runtime Contract Profile Model and Resolution
+# TASK-139-01: Runtime Vision Contract Profile Model and Resolution
 
 **Parent:** [TASK-139](./TASK-139_Model_Family_Specific_Vision_Contract_Profiles_For_External_Runtimes.md)
 **Status:** ⏳ To Do
@@ -6,9 +6,9 @@
 
 ## Objective
 
-Introduce one typed contract-profile concept for external vision runtimes and
-resolve that profile deterministically from an explicit flat config/env
-override plus model-family matching rules.
+Introduce one typed `vision_contract_profile` concept for external vision
+runtimes and resolve that profile deterministically from an explicit flat
+config/env override plus model-family matching rules.
 
 ## Business Problem
 
@@ -36,13 +36,14 @@ generic OpenAI-compatible contract path.
 
 ## Acceptance Criteria
 
-- the flat application config/env surface has one explicit contract-profile
-  override seam for external vision
-- the runtime config has an explicit contract-profile concept for external
-  vision
-- the selected contract profile is resolved deterministically
-- the selected contract profile is available to downstream prompting/backend/
-  parsing layers without ad hoc model-name re-parsing at every call site
+- the flat application config/env surface has one explicit
+  `VISION_EXTERNAL_CONTRACT_PROFILE` override seam for external vision
+- the runtime config has an explicit `vision_contract_profile` concept for
+  external vision
+- the selected `vision_contract_profile` is resolved deterministically
+- the selected `vision_contract_profile` is available to downstream
+  prompting/backend/parsing layers without ad hoc model-name re-parsing at
+  every call site
 
 ## Docs To Update
 
@@ -61,5 +62,5 @@ generic OpenAI-compatible contract path.
 
 | Order | Subtask | Purpose |
 |------|---------|---------|
-| 1 | [TASK-139-01-01](./TASK-139-01-01_Contract_Profile_Vocabulary_And_Typed_Config_Surface.md) | Define the explicit profile vocabulary and typed config surface |
-| 2 | [TASK-139-01-02](./TASK-139-01-02_Model_Family_Detection_And_Override_Precedence.md) | Define deterministic profile selection rules from overrides and model-family matching |
+| 1 | [TASK-139-01-01](./TASK-139-01-01_Contract_Profile_Vocabulary_And_Typed_Config_Surface.md) | Define the explicit vision-contract-profile vocabulary and typed config surface |
+| 2 | [TASK-139-01-02](./TASK-139-01-02_Model_Family_Detection_And_Override_Precedence.md) | Define deterministic vision-contract-profile selection rules from overrides and model-family matching |

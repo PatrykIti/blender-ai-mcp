@@ -6,11 +6,23 @@
 **Estimated Effort:** Large
 **Dependencies:** TASK-121-04-01-03, TASK-121-04-01-04, TASK-121-04-01-05, TASK-123-01
 
+## Terminology Guardrail
+
+In this task family, "vision contract profile" means the prompt/schema/parser
+behavior selected for the external vision runtime. It is intentionally separate
+from MCP surface contract profiles / contract lines used elsewhere in the repo.
+
+When this wave lands, prefer names such as:
+
+- `VisionContractProfile`
+- `vision_contract_profile`
+- `VISION_EXTERNAL_CONTRACT_PROFILE`
+
 ## Objective
 
 Decouple external vision contract behavior from transport-provider selection so
 the MCP server can choose prompt/schema/parse-repair behavior by model family
-or explicit contract profile, not only by provider name.
+or explicit vision contract profile, not only by provider name.
 
 The immediate goal is to stop treating all OpenRouter models as one behavioral
 class and to support narrower staged-compare contracts for Google-family models
@@ -25,11 +37,13 @@ structured-output behavior is still routed too coarsely.
 Current code audit shows:
 
 - `Config` exposes the current external vision env/config surface, but has no
-  first-class contract-profile override field yet
+  first-class `VISION_EXTERNAL_CONTRACT_PROFILE` override field yet
 - `VisionOpenAICompatibleConfig` models the external runtime by provider name,
-  base URL, model, and auth, but has no explicit contract-profile concept
+  base URL, model, and auth, but has no explicit `vision_contract_profile`
+  concept
 - `build_vision_runtime_config(...)` resolves runtime behavior by provider
-  identity and model presence, not by model family/capability profile
+  identity and model presence, not by model family/capability-based vision
+  contract profile
 - `build_vision_system_prompt(...)` and `build_vision_payload_text(...)` only
   enable the narrow staged compare contract when
   `provider_name == "google_ai_studio"`
@@ -79,12 +93,14 @@ The remaining drift is now architectural rather than transport-level:
 - Google-family models behind OpenRouter cannot opt into the narrower compare
   contract without pretending to be a different provider
 - parse-repair for near-JSON / truncated compare output is not reusable across
-  providers when the model family would benefit from the same behavior
+  providers when the model family would benefit from the same vision contract
+  profile behavior
 - diagnostics expose the failure clearly, but they do not yet say which
-  contract profile was selected and whether that profile was likely mismatched
+  `vision_contract_profile` was selected and whether that profile was likely
+  mismatched
 - operator guidance and provider notes can record instability, but the runtime
   still lacks a first-class mechanism for turning those observations into
-  profile selection
+  vision-contract-profile selection
 
 ## Business Outcome
 
@@ -103,12 +119,15 @@ If this umbrella is done correctly, the repo gains:
 
 This umbrella covers:
 
-- introducing one explicit flat config/env surface for contract-profile
-  override, then carrying that choice into typed runtime config
-- introducing a typed contract-profile concept for external vision runtimes
-- deterministic contract-profile selection and precedence rules
-- prompt/schema routing by contract profile instead of provider only
-- parse/repair/diagnostics routing by contract profile instead of provider only
+- introducing one explicit flat config/env surface for a vision-contract-profile
+  override via `VISION_EXTERNAL_CONTRACT_PROFILE`, then carrying that choice
+  into typed runtime config
+- introducing a typed `vision_contract_profile` concept for external vision
+  runtimes
+- deterministic vision-contract-profile selection and precedence rules
+- prompt/schema routing by vision contract profile instead of provider only
+- parse/repair/diagnostics routing by vision contract profile instead of
+  provider only
 - regression harness/docs updates for operator-visible provider/model notes
 
 This umbrella does **not** cover:
@@ -120,19 +139,24 @@ This umbrella does **not** cover:
 
 ## Acceptance Criteria
 
-- the external vision runtime has one explicit contract-profile concept
-- explicit contract-profile override has one first-class config/env surface that
-  feeds runtime resolution deterministically
-- contract-profile selection can be driven by explicit override and by
+- the external vision runtime has one explicit `vision_contract_profile`
+  concept
+- explicit `VISION_EXTERNAL_CONTRACT_PROFILE` override has one first-class
+  config/env surface that feeds runtime resolution deterministically
+- vision-contract-profile selection can be driven by explicit override and by
   deterministic model-family matching rules
 - OpenRouter Google-family models can use a narrow staged-compare profile
   without being forced into the Google AI Studio transport path
-- parse-repair for compare flows is reusable by contract profile rather than
-  being hard-coded only to `google_ai_studio`
+- parse-repair for compare flows is reusable by `vision_contract_profile`
+  rather than being hard-coded only to `google_ai_studio`
 - the harness config/build path and operator-facing provider notes reflect the
-  same contract-profile assumptions as the runtime/docs path
-- diagnostics, tests, and docs make the selected profile and its known
-  limitations visible
+  same vision-contract-profile assumptions as the runtime/docs path
+- operator-facing launch helpers such as
+  `scripts/run_streamable_openrouter.sh` reflect the same
+  vision-contract-profile-sensitive env/config guidance as the runtime docs and
+  client examples
+- diagnostics, tests, and docs make the selected `vision_contract_profile` and
+  its known limitations visible
 
 ## Repository Touchpoints
 
@@ -147,6 +171,7 @@ This umbrella does **not** cover:
 - `tests/unit/adapters/mcp/test_vision_parsing.py`
 - `tests/unit/adapters/mcp/test_vision_external_backend.py`
 - `scripts/vision_harness.py`
+- `scripts/run_streamable_openrouter.sh`
 - `tests/unit/scripts/test_script_tooling.py`
 - `tests/e2e/vision/`
 - `_docs/_VISION/README.md`
@@ -187,7 +212,7 @@ This umbrella does **not** cover:
 
 | Order | Subtask | Purpose |
 |------|---------|---------|
-| 1 | [TASK-139-01](./TASK-139-01_Runtime_Contract_Profile_Model_And_Resolution.md) | Add a typed contract-profile concept and deterministic runtime/profile selection rules |
-| 2 | [TASK-139-02](./TASK-139-02_Prompt_Schema_And_Request_Routing_By_Contract_Profile.md) | Route prompt/schema/request behavior by selected contract profile instead of provider-only gates |
-| 3 | [TASK-139-03](./TASK-139-03_Parser_Repair_And_Diagnostics_By_Contract_Profile.md) | Reuse parse/repair/diagnostic behavior by contract profile, including OpenRouter Google-family compare flows |
+| 1 | [TASK-139-01](./TASK-139-01_Runtime_Contract_Profile_Model_And_Resolution.md) | Add a typed `vision_contract_profile` concept and deterministic runtime/profile selection rules |
+| 2 | [TASK-139-02](./TASK-139-02_Prompt_Schema_And_Request_Routing_By_Contract_Profile.md) | Route prompt/schema/request behavior by the selected vision contract profile instead of provider-only gates |
+| 3 | [TASK-139-03](./TASK-139-03_Parser_Repair_And_Diagnostics_By_Contract_Profile.md) | Reuse parse/repair/diagnostic behavior by vision contract profile, including OpenRouter Google-family compare flows |
 | 4 | [TASK-139-04](./TASK-139-04_Regression_Harness_And_Documentation_For_Contract_Profiles.md) | Add focused runtime regressions, harness evidence, and provider-note/doc updates |

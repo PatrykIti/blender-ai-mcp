@@ -1,4 +1,4 @@
-# TASK-139-02-02: External Backend Request Routing by Contract Profile
+# TASK-139-02-02: External Backend Request Routing by Vision Contract Profile
 
 **Parent:** [TASK-139-02](./TASK-139-02_Prompt_Schema_And_Request_Routing_By_Contract_Profile.md)
 **Depends On:** [TASK-139-02-01](./TASK-139-02-01_Profile_Aware_Prompting_Abstraction.md)
@@ -8,8 +8,8 @@
 ## Objective
 
 Make `OpenAICompatibleVisionBackend` preserve provider-correct request
-transport while consuming the already-defined profile-aware prompting seam from
-`TASK-139-02-01`.
+transport while consuming the already-defined vision-contract-profile-aware
+prompting seam from `TASK-139-02-01`.
 
 ## Business Problem
 
@@ -19,9 +19,9 @@ There are two different concerns in the external backend:
   - OpenRouter chat/completions
   - Google AI Studio generateContent
 - contract shape:
-  - generic full compare contract
-  - narrow compare contract
-  - future profile variants
+  - generic full vision contract profile
+  - narrow compare vision contract profile
+  - future vision-contract-profile variants
 
 Today those two concerns are partially conflated, which blocks reuse of the
 better compare contract on other transports.
@@ -31,8 +31,8 @@ The ownership split for this leaf is deliberate:
 - `server/adapters/mcp/vision/prompting.py` is owned by `TASK-139-02-01`
   and defines the prompt/schema selection seam
 - `server/adapters/mcp/vision/backends.py` is owned here and must pass the
-  resolved profile into that existing seam without redefining helper-selection
-  policy
+  resolved `vision_contract_profile` into that existing seam without
+  redefining helper-selection policy
 
 If this leaf re-opens prompt helper design, the two children become ambiguous
 again and either one could be marked done incorrectly.
@@ -45,8 +45,8 @@ again and either one could be marked done incorrectly.
 ## Acceptance Criteria
 
 - request transport remains correct for OpenRouter and Google AI Studio
-- selected contract profile can alter prompt/schema content without forcing a
-  different transport branch
+- selected `vision_contract_profile` can alter prompt/schema content without
+  forcing a different transport branch
 - backend request assembly consumes the prompt/schema seam defined by
   `TASK-139-02-01` instead of re-owning prompt helper selection
 - OpenRouter Google-family compare flows can use the narrower compare contract
@@ -55,8 +55,8 @@ again and either one could be marked done incorrectly.
 ## Leaf Work Items
 
 - route `build_vision_payload_text(...)`, `build_vision_system_prompt(...)`,
-  and `build_vision_response_json_schema(...)` through the resolved profile at
-  the backend request-assembly call sites
+  and `build_vision_response_json_schema(...)` through the resolved
+  `vision_contract_profile` at the backend request-assembly call sites
 - keep provider-specific auth/header behavior unchanged
 - add external-backend regression tests for OpenRouter + Google-family compare
   flows

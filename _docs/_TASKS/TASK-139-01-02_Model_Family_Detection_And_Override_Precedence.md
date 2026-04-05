@@ -1,19 +1,20 @@
-# TASK-139-01-02: Model Family Detection and Override Precedence
+# TASK-139-01-02: Vision Contract Profile Model-Family Detection and Override Precedence
 
 **Parent:** [TASK-139-01](./TASK-139-01_Runtime_Contract_Profile_Model_And_Resolution.md)
+**Depends On:** [TASK-139-01-01](./TASK-139-01-01_Contract_Profile_Vocabulary_And_Typed_Config_Surface.md)
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
 
 ## Objective
 
-Define deterministic precedence rules so contract-profile selection can be
-driven by an explicit flat config/env override first, then model-family
+Define deterministic precedence rules so vision-contract-profile selection can
+be driven by an explicit flat config/env override first, then model-family
 matching, then provider default behavior.
 
 ## Business Problem
 
 Without explicit precedence rules, the repo will drift into unpredictable
-profile selection:
+vision-contract-profile selection:
 
 - provider identity may override model behavior when it should not
 - model-name heuristics may override explicit operator intent when they should
@@ -31,22 +32,23 @@ profile selection:
 ## Acceptance Criteria
 
 - precedence is explicit and documented:
-  - explicit config/env override
+  - explicit `VISION_EXTERNAL_CONTRACT_PROFILE` override
   - model-family match
-  - provider default
+  - provider-default vision contract profile
 - the explicit override path is defined at the `Config` layer and documented
   clearly enough that tests/docs agree on why a profile was selected
 - Google-family models behind OpenRouter can be matched into the narrow compare
   contract when desired
-- conflicting provider/model combinations do not produce ambiguous profile
-  selection
+- conflicting provider/model combinations do not produce ambiguous
+  `vision_contract_profile` selection
 
 ## Leaf Work Items
 
 - define first-pass Google-family model matching rules for OpenRouter-hosted
   model ids
-- define the explicit override path on the flat config/env surface and document
-  when it must suppress automatic model-family routing
+- define the explicit override path on the flat config/env surface using
+  `VISION_EXTERNAL_CONTRACT_PROFILE` and document when it must suppress
+  automatic model-family routing
 - add regression cases for explicit override, auto-match, and fallback behavior
 
 ## Tests To Add/Update
