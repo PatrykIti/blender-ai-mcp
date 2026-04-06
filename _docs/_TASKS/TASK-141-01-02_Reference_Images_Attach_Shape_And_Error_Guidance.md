@@ -9,26 +9,32 @@
 
 Make `reference_images(action="attach", source_path=..., ...)` one explicit
 guided contract and give repeated batch-attach drift a deterministic recovery
-path.
+path on the real shaped surface used by live creature sessions.
 
 ## Business Problem
 
 The public guided surface exposes `reference_images(...)` as a small lifecycle
-tool, but creature sessions still guess a batch-upload shape such as
-`images=[...]`. That produces avoidable rediscovery cost right at the point
-where the model is trying to start a staged reference-driven build.
+tool, but a live creature run still treats the first reference step as
+high-friction:
 
-This leaf owns the product decision for attach-shape ergonomics:
+- models guess batch-upload shapes such as `images=[...]`
+- the attach contract still has to coexist with staged pending-reference
+  behavior before/after `router_set_goal(...)`
+- the surface must stay understandable even when compare/iterate later run in a
+  degraded mode and the operator has to inspect the current reference state
+
+This leaf owns the real active-surface reference-intake story:
 
 - one canonical attach story
 - one explicit compatibility or rejection policy for batch-like drift
-- one aligned docs/test story for staged pending-reference behavior
+- one aligned docs, unit, and E2E story for staged reference behavior
 
 ## Repository Touchpoints
 
 - `server/adapters/mcp/areas/reference.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
+- `tests/e2e/integration/test_guided_surface_contract_parity.py`
 - `_docs/_PROMPTS/README.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 - `_docs/_MCP_SERVER/README.md`
@@ -41,6 +47,8 @@ This leaf owns the product decision for attach-shape ergonomics:
 - docs/examples show that each reference is attached in its own call
 - pending/staged-reference wording stays aligned with the canonical
   one-reference-per-attach story
+- E2E surface regressions prove that attach/list/remove/clear and staged-goal
+  behavior remain consistent on the active guided surface
 
 ## Leaf Work Items
 
@@ -48,8 +56,8 @@ This leaf owns the product decision for attach-shape ergonomics:
 - implement actionable attach-shape guidance in the reference image surface
   where the runtime can detect the drift
 - align prompt/docs examples to repeat one `attach` call per reference image
-- add focused regression coverage for canonical attach and repeated wrong-shape
-  attempts
+- add focused unit plus E2E regression coverage for canonical attach, staged
+  pending-reference flow, and repeated wrong-shape attempts
 
 ## Docs To Update
 
@@ -61,6 +69,7 @@ This leaf owns the product decision for attach-shape ergonomics:
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
+- `tests/e2e/integration/test_guided_surface_contract_parity.py`
 
 ## Changelog Impact
 
@@ -70,4 +79,5 @@ This leaf owns the product decision for attach-shape ergonomics:
 
 - keep board tracking on `TASK-141`
 - update the parent task summary so it explicitly calls out the final
-  `reference_images(...)` attach policy when this leaf closes
+  `reference_images(...)` attach policy and active-surface parity result when
+  this leaf closes

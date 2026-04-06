@@ -7,29 +7,28 @@
 ## Objective
 
 Define one deterministic compatibility policy for guided `call_tool(...)`
-wrapper drift and keep `scene_clean_scene(...)` cleanup-flag handling aligned
-to that policy.
+wrapper drift and `scene_clean_scene(...)` cleanup flags, then prove that the
+same policy survives the actual active shaped surface and transport path.
 
 ## Business Problem
 
-Real creature sessions still lose time before useful modeling begins because
-models drift on the small proxy contract itself:
+The repo already contains compatibility logic for wrapper aliases and cleanup
+flags, but the real guided squirrel run still found a mismatch between the
+documented contract and what surfaced through the live `call_tool(...)` path.
 
-- wrapper guesses such as `tool` / `params` compete with the canonical
-  `name` / `arguments` form
-- stale split cleanup flags compete with
-  `keep_lights_and_cameras`
-- proxy calls can become harder to reason about if compatibility is added
-  ad hoc instead of as one explicit policy
+This leaf therefore owns two things at once:
 
-This leaf must define the compatibility envelope instead of letting every
-future prompt/runtime tweak reinvent it.
+- one explicit compatibility envelope for wrapper aliases and cleanup flags
+- proof that the envelope holds on the real active guided surface instead of
+  stopping at helper-level unit coverage
 
 ## Repository Touchpoints
 
 - `server/adapters/mcp/discovery/search_surface.py`
+- `server/adapters/mcp/factory.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
+- `tests/e2e/integration/test_guided_surface_contract_parity.py`
 - `_docs/_PROMPTS/README.md`
 - `_docs/_MCP_SERVER/README.md`
 
@@ -42,17 +41,20 @@ future prompt/runtime tweak reinvent it.
 - split cleanup flags remain compatibility-only and cannot silently override or
   blur `keep_lights_and_cameras`
 - proxied validation/runtime failures still preserve the same failure
-  semantics as direct tool execution
+  semantics as direct tool execution on the active guided surface
+- E2E surface regressions cover canonical, compatibility, and rejected shapes
+  through real `call_tool(...)` execution instead of only direct helper calls
 
 ## Leaf Work Items
 
 - decide whether wrapper alias compatibility is supported or rejected with
   guided contract messaging
-- implement the chosen policy in the discovery `call_tool(...)` proxy
 - keep `scene_clean_scene(...)` split-flag handling compatible with the same
   contract policy
-- add focused regression coverage for canonical, compatibility, and ambiguous
-  failure shapes
+- close any parity gap between helper-level canonicalization and the real
+  active guided surface path
+- add focused unit plus E2E regression coverage for canonical, compatibility,
+  and ambiguous failure shapes
 
 ## Docs To Update
 
@@ -63,6 +65,7 @@ future prompt/runtime tweak reinvent it.
 
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
+- `tests/e2e/integration/test_guided_surface_contract_parity.py`
 
 ## Changelog Impact
 
@@ -71,5 +74,5 @@ future prompt/runtime tweak reinvent it.
 ## Status / Board Update
 
 - keep board tracking on `TASK-141`
-- reflect the final wrapper-policy decision in the parent task summary when
-  this leaf closes
+- reflect the final wrapper-policy decision and active-surface parity result in
+  the parent task summary when this leaf closes

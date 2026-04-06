@@ -7,20 +7,22 @@
 ## Objective
 
 Add focused unit coverage for the targeted attachment taxonomy, truth-surface
-evidence, macro selection, and bounded repair verdict semantics.
+evidence, required seam planning, macro selection, and bounded repair verdict
+semantics.
 
 ## Business Problem
 
 The targeted creature-part semantics sit across several layers:
 
 - pair classification
+- required seam expansion from collection/object-set scope
 - truth-followup items
 - correction-candidate evidence
 - macro-family selection
 - macro-report outcome semantics
 
 If those layers are not covered together, the repo can regress into generic
-gap/overlap logic without any immediate signal.
+gap/overlap logic or anchor-only pair logic without any immediate signal.
 
 ## Repository Touchpoints
 
@@ -37,6 +39,8 @@ gap/overlap logic without any immediate signal.
 ## Acceptance Criteria
 
 - unit tests protect the targeted taxonomy and truth-surface semantics
+- unit tests protect the required seam planner / pair-expansion behavior for
+  assembled creature scope
 - unit tests protect the chosen macro-family selection policy
 - unit tests protect the repaired vs still-wrong attachment verdict semantics
 
@@ -44,6 +48,8 @@ gap/overlap logic without any immediate signal.
 
 - add truth-followup/correction-candidate regressions for the targeted
   creature-part relations
+- add pair-planning regressions for collection/object-set assembled creature
+  scope
 - add macro-selection regressions for overlap vs attachment cases
 - add macro-report regressions for seated vs floating vs intersecting outcomes
 
@@ -71,4 +77,4 @@ gap/overlap logic without any immediate signal.
 
 - keep board tracking on `TASK-142`
 - update the parent summary so it explicitly names the shipped unit-regression
-  seams when this leaf closes
+  seams and required pair-planning coverage when this leaf closes

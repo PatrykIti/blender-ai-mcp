@@ -7,51 +7,61 @@
 
 ## Objective
 
-Reduce schema-guessing and prompt/runtime drift during real
-reference-guided creature sessions on `llm-guided`, so an operator can launch a
-low-poly squirrel run without the model repeatedly discovering basic
-tool-signature mismatches the hard way.
+Make the real active `llm-guided` creature build surface behave like the repo
+claims it behaves, so a reference-guided low-poly squirrel run can reach the
+actual geometry/attachment problems without first bleeding turns on avoidable
+surface-contract drift.
 
 ## Business Problem
 
-The `TASK-128` surface is now materially better, but a real squirrel run still
-showed several avoidable failures before the useful build loop took over:
+The repo now has many local fixes for guided contract drift, but the latest
+real squirrel runs show that those fixes still do not line up cleanly on the
+actual active surface used by a live MCP client.
 
-- `call_tool(...)` was invoked with the wrong wrapper shape before the model
-  settled on `name` + `arguments`
-- the model tried legacy cleanup flags (`keep_lights` / `keep_cameras`) before
-  the canonical `keep_lights_and_cameras`
-- `reference_images(...)` was attempted as one batch `images=[...]` call even
-  though the current public surface is one-reference-per-attach
-- `collection_manage(...)` and `modeling_create_primitive(...)` were called
-  with guessed argument names (`name`, `scale`, `subdivisions`,
-  `collection_name`) that do not exist on the current public contract
-- after `loop_disposition="inspect_validate"`, the session still relied on
-  operator interpretation instead of the prompt/runtime strongly steering the
-  next step
+Observed failure shapes now look like this:
 
-These are not "the model was bad" issues in isolation. They are product-surface
-issues: prompt guidance, examples, search/discovery cues, and public contract
-ergonomics still leave too much room for first-try schema drift in exactly the
-creature flow the repo is trying to promote.
+- unit/docs-level contract fixes exist, but the real `call_tool(...)` path can
+  still surface raw validation failure for creature-blockout calls such as
+  `collection_manage(..., name=...)`
+- the first real guided run still spends early turns rediscovering:
+  - `call_tool(name=..., arguments=...)`
+  - `scene_clean_scene(keep_lights_and_cameras=...)`
+  - one-reference-per-call `reference_images(action="attach", source_path=...)`
+  - `collection_manage(action=..., collection_name=...)`
+  - the true public `modeling_create_primitive(...)` shape
+- search responses for obvious creature bootstrap queries can still be large,
+  noisy, or operationally weak enough that the model falls back to guesswork
+- when staged compare is unavailable or returns `loop_disposition="inspect_validate"`,
+  the next-step story is still not strong enough to force a clean
+  inspect/measure/assert takeover in a real run
+
+This task is therefore no longer just "write better docs and aliases." It is
+about proving that the documented guided contract survives the full
+surface/visibility/search/proxy/transport path that a real creature session
+actually uses.
 
 ## Scope
 
 This follow-on covers:
 
-- tightening prompt/docs examples around the exact public signatures used in
-  guided creature sessions
-- deciding where ergonomics should be improved in runtime instead of only in
-  docs, especially when the same wrong call shape is likely to recur
-- reducing rediscovery cost for:
+- closing parity gaps between:
+  - unit-tested discovery/proxy helpers
+  - prompt/docs wording
+  - shaped visibility/search behavior
+  - the real active `llm-guided` server profile and transport path
+- reducing early-run rediscovery cost for the creature bootstrap/build seam:
   - `call_tool(name=..., arguments=...)`
   - `scene_clean_scene(keep_lights_and_cameras=...)`
   - `reference_images(action="attach", source_path=..., ...)`
   - `collection_manage(...)`
   - `modeling_create_primitive(...)`
-- making `inspect_validate` handling more explicit in creature prompt/runtime
-  guidance
-- locking the final operator story with focused regression coverage
+- making build-surface search materially more useful under real creature-session
+  pressure, not only technically available
+- making `inspect_validate` and degraded-compare outcomes operationally explicit
+  enough that the run cleanly pivots into inspect/measure/assert instead of
+  drifting back into free-form modeling
+- adding E2E/integration regressions that replay the early squirrel-session
+  contract path through the real shaped surface
 
 This follow-on does **not** cover:
 
@@ -62,20 +72,20 @@ This follow-on does **not** cover:
 
 ## Acceptance Criteria
 
-- the repo has one explicit product story for the first-run guided creature
-  path that no longer relies on guessed wrapper shapes or stale examples
-- prompt/docs/examples use the canonical public argument names for the current
-  guided surface
-- the task explicitly decides which observed drifts are:
-  - documentation/prompt fixes only
-  - public-surface ergonomics fixes in code
-- creature runs do not need to rediscover the basic `call_tool(...)`,
-  `reference_images(...)`, and `scene_clean_scene(...)` contract shapes from
-  validation errors alone
-- `inspect_validate` is described and regression-tested as a true stop-and-check
-  branch, not a soft suggestion buried in prose
-- regression coverage protects the chosen operator story using the squirrel run
-  failure shapes as concrete negative examples
+- the repo has one explicit first-run guided creature story that is proven on
+  the same shaped surface and transport path used by a real client
+- the canonical public signatures for cleanup, reference attach, collection
+  creation, and primitive creation are easy to reach without repeated search +
+  validation churn
+- any accepted compatibility alias is verified end to end on the active guided
+  surface; unsupported shapes fail with deterministic actionable guidance
+  instead of raw schema noise
+- early creature runs do not need to rediscover the basic setup/build contract
+  from first-failure experience alone before they can even reach geometry work
+- `inspect_validate` and vision-unavailable/degraded compare outcomes are
+  documented and regression-tested as true inspect/measure/assert handoffs
+- E2E/integration coverage protects the concrete squirrel-run failure shapes
+  that still appear on the real guided surface
 
 ## Repository Touchpoints
 
@@ -87,15 +97,20 @@ This follow-on does **not** cover:
 - `server/adapters/mcp/transforms/visibility_policy.py`
 - `server/adapters/mcp/discovery/search_documents.py`
 - `server/adapters/mcp/discovery/search_surface.py`
+- `server/adapters/mcp/factory.py`
+- `server/adapters/mcp/surfaces.py`
 - `server/adapters/mcp/areas/reference.py`
 - `server/adapters/mcp/areas/router.py`
 - `server/adapters/mcp/areas/collection.py`
 - `server/adapters/mcp/areas/modeling.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
+- `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_router_elicitation.py`
 - `tests/e2e/router/test_guided_manual_handoff.py`
 - `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
+- `tests/e2e/integration/test_guided_surface_contract_parity.py`
+- `tests/e2e/integration/test_guided_inspect_validate_handoff.py`
 
 ## Docs To Update
 
@@ -109,10 +124,13 @@ This follow-on does **not** cover:
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
+- `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_router_elicitation.py`
 - `tests/e2e/router/test_guided_manual_handoff.py`
 - `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
+- `tests/e2e/integration/test_guided_surface_contract_parity.py`
+- `tests/e2e/integration/test_guided_inspect_validate_handoff.py`
 
 ## Changelog Impact
 
@@ -122,9 +140,9 @@ This follow-on does **not** cover:
 
 | Order | Subtask | Purpose |
 |------|---------|---------|
-| 1 | [TASK-141-01](./TASK-141-01_Guided_Call_Path_Compatibility_And_Public_Contract_Ergonomics.md) | Harden the early guided call path around `call_tool(...)`, cleanup flags, and `reference_images(...)` attach-shape drift so creature sessions stop wasting turns on utility/bootstrap contract rediscovery |
-| 2 | [TASK-141-02](./TASK-141-02_Creature_Build_Signature_Cues_And_Discovery_Surface_Alignment.md) | Align runtime/search/docs cues for `collection_manage(...)` and `modeling_create_primitive(...)` so the creature blockout path exposes one deterministic public signature story |
-| 3 | [TASK-141-03](./TASK-141-03_Inspect_Validate_Handoff_And_Regression_Pack.md) | Turn `inspect_validate` into an explicit stop-and-check branch and lock the resulting operator story with focused regression coverage |
+| 1 | [TASK-141-01](./TASK-141-01_Guided_Call_Path_Compatibility_And_Public_Contract_Ergonomics.md) | Prove that the early guided utility/intake contract really works on the active shaped surface instead of only in local helper tests and docs |
+| 2 | [TASK-141-02](./TASK-141-02_Creature_Build_Signature_Cues_And_Discovery_Surface_Alignment.md) | Make the creature blockout tool signatures discoverable and operational under real session pressure, including search payload quality and actual `call_tool(...)` parity |
+| 3 | [TASK-141-03](./TASK-141-03_Inspect_Validate_Handoff_And_Regression_Pack.md) | Turn `inspect_validate` and degraded compare outcomes into an explicit truth-first handoff and lock that behavior with real-session regression coverage |
 
 ## Status / Board Update
 

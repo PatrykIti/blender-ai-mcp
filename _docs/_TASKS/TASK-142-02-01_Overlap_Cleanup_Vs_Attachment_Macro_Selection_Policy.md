@@ -8,7 +8,8 @@
 ## Objective
 
 Define one deterministic policy for choosing cleanup, contact-repair, or
-attach-to-surface macros on the targeted creature-part relations.
+attach-to-surface macros on the targeted creature-part relations in a full
+assembled-creature run.
 
 ## Business Problem
 
@@ -18,11 +19,14 @@ easy for the loop to choose a technically-valid but semantically-wrong move:
 - cleanup when the part should really be re-seated
 - contact nudge when the relation really needs surface seating
 - attachment framing missing entirely from the macro-candidate story
+- one chosen macro family overshadowing other failing required seams in the same
+  assembled creature
 
 ## Repository Touchpoints
 
 - `server/adapters/mcp/areas/reference.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py`
 - `_docs/_VISION/README.md`
 
 ## Acceptance Criteria
@@ -33,6 +37,8 @@ easy for the loop to choose a technically-valid but semantically-wrong move:
   `macro_cleanup_part_intersections` on attachment/seating cases
 - macro candidates and ranked correction candidates expose the selected repair
   family clearly enough for the operator to act without rediscovering policy
+- multi-pair handoff can surface more than one required seam without collapsing
+  everything into the first overlap-driven macro suggestion
 
 ## Leaf Work Items
 
@@ -40,7 +46,8 @@ easy for the loop to choose a technically-valid but semantically-wrong move:
   attach/seat macros
 - implement the chosen selection policy in truth-followup/correction-candidate
   generation
-- add focused regression coverage for the targeted squirrel failure shapes
+- add focused regression coverage for the targeted squirrel failure shapes,
+  including assembled-creature multi-pair cases
 
 ## Docs To Update
 
@@ -49,6 +56,7 @@ easy for the loop to choose a technically-valid but semantically-wrong move:
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py`
 
 ## Changelog Impact
 
@@ -57,5 +65,5 @@ easy for the loop to choose a technically-valid but semantically-wrong move:
 ## Status / Board Update
 
 - keep board tracking on `TASK-142`
-- record the shipped macro-selection policy in the parent summary when this
-  leaf closes
+- record the shipped macro-selection policy and its multi-pair seam behavior in
+  the parent summary when this leaf closes

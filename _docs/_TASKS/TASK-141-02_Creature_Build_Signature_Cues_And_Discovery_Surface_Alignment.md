@@ -8,26 +8,28 @@
 ## Objective
 
 Align runtime/search/docs cues for the creature blockout tools that the model
-currently guesses wrong, especially `collection_manage(...)` and
-`modeling_create_primitive(...)`.
+currently guesses wrong, and prove that those cues are strong enough under real
+session pressure on the active guided surface.
 
 ## Business Problem
 
-Once a guided creature session reaches the actual build surface, the model can
-still lose iterations on basic signature drift:
+Real guided creature runs still show that "the signature exists somewhere in
+docs/search" is not enough:
 
-- `collection_manage(...)` invites guessed names such as `name`
-- `modeling_create_primitive(...)` invites guessed knobs such as `scale`,
-  `subdivisions`, or collection-placement shortcuts
-- public docs and search/discovery clues are not yet explicit enough about the
-  intended call order and canonical argument names
+- `collection_manage(...)` still gets called with guessed names such as `name`
+- `modeling_create_primitive(...)` still invites guessed knobs such as `scale`,
+  `segments`, `rings`, `subdivisions`, or collection-placement shortcuts
+- search output can become large/noisy enough that the model still burns turns
+  rediscovering the correct blockout path instead of using it
 
-This subtask owns the public-signature story for those blockout tools across
-runtime policy, discovery/search cues, and operator-facing examples.
+This subtask owns the creature blockout signature story across runtime policy,
+search quality, and operator-facing examples for the real active guided
+surface.
 
 ## Repository Touchpoints
 
 - `server/adapters/mcp/discovery/search_documents.py`
+- `server/adapters/mcp/discovery/search_surface.py`
 - `server/adapters/mcp/areas/collection.py`
 - `server/adapters/mcp/areas/modeling.py`
 - `server/router/infrastructure/tools_metadata/collection/collection_manage.json`
@@ -35,6 +37,8 @@ runtime policy, discovery/search cues, and operator-facing examples.
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/e2e/router/test_guided_manual_handoff.py`
+- `tests/e2e/integration/test_guided_surface_contract_parity.py`
+- `tests/e2e/integration/test_guided_inspect_validate_handoff.py`
 - `_docs/_PROMPTS/README.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 - `_docs/_MCP_SERVER/README.md`
@@ -48,10 +52,12 @@ runtime policy, discovery/search cues, and operator-facing examples.
   - narrow compatibility aliases are supported only where they are
     high-confidence and low-risk
   - unsupported guesses fail with actionable guidance instead of generic noise
-- search/discovery cues support the intended creature blockout use order rather
-  than letting the model improvise signature lore
+- search/discovery cues support the intended creature blockout use order under
+  real session pressure rather than letting the model improvise signature lore
 - the guided creature prompt/docs no longer imply hidden collection-placement
   or primitive-subdivision shortcuts that are not part of the public contract
+- focused E2E/integration coverage proves that the discovered/canonicalized
+  signatures work through the active shaped surface in the early squirrel path
 
 ## Docs To Update
 
@@ -65,6 +71,8 @@ runtime policy, discovery/search cues, and operator-facing examples.
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/e2e/router/test_guided_manual_handoff.py`
+- `tests/e2e/integration/test_guided_surface_contract_parity.py`
+- `tests/e2e/integration/test_guided_inspect_validate_handoff.py`
 
 ## Changelog Impact
 
@@ -74,8 +82,8 @@ runtime policy, discovery/search cues, and operator-facing examples.
 
 | Order | Leaf | Purpose |
 |------|------|---------|
-| 1 | [TASK-141-02-01](./TASK-141-02-01_Collection_Manage_And_Modeling_Create_Primitive_Contract_Cues.md) | Define the runtime/metadata policy for guessed `collection_manage(...)` and `modeling_create_primitive(...)` argument names |
-| 2 | [TASK-141-02-02](./TASK-141-02-02_Search_Metadata_Prompt_Examples_And_Public_Docs_For_Creature_Signatures.md) | Align search cues, prompt examples, and public docs to the chosen creature blockout signature story |
+| 1 | [TASK-141-02-01](./TASK-141-02-01_Collection_Manage_And_Modeling_Create_Primitive_Contract_Cues.md) | Define the runtime/metadata policy for guessed `collection_manage(...)` and `modeling_create_primitive(...)` argument names and prove it on the real guided surface |
+| 2 | [TASK-141-02-02](./TASK-141-02-02_Search_Metadata_Prompt_Examples_And_Public_Docs_For_Creature_Signatures.md) | Align search cues, prompt examples, and public docs so the early squirrel blockout path stays small, actionable, and hard to misread |
 
 ## Status / Board Update
 

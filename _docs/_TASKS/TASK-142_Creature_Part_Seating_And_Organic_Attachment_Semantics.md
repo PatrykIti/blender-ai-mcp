@@ -7,45 +7,51 @@
 
 ## Objective
 
-Improve the guided creature correction path so attached organic parts and major
-body masses are repaired toward believable seating/contact instead of only
-removing overlap and leaving visible gaps.
+Make the guided creature correction path evaluate and repair the full assembled
+creature seam set, so head, face, torso, tail, and limb masses stop passing as
+"good enough" while still floating apart from the body.
 
 ## Business Problem
 
-The first real squirrel run after `TASK-128` showed that the current bounded
-macro/correction path is still too overlap-centric for creature parts that are
-supposed to emerge from or sit on another organic form.
+The repo now has attachment-aware wording, macro candidates, and
+`attachment_verdict` semantics, but the latest real squirrel runs still finish
+with most major parts visibly detached from the body.
+
+The core gap is no longer "there is no attachment vocabulary at all." The core
+gap is that the assembled-creature truth/correction path still does not cover
+or prioritize enough of the required seam set in one run.
 
 Observed failure shapes:
 
-- ears touch the head and visually grow out of it, but the system still treats
-  that as generic overlap cleanup instead of an attachment/base-seating problem
-- eyes end up floating with a measurable gap after `macro_cleanup_part_intersections`
-- snout and nose are pushed off the head/body with a measurable gap even though
-  they should remain seated/attached
-- the head/body seam can still end up visually disconnected even though that
-  mass transition should read as one attached creature form
-- tail/body attachment can still drift into a floating or visibly detached
-  relation after bounded repair
-- upper/lower limb masses can still hang away from the torso or from their
-  intended limb anchor instead of reading as seated creature attachments
-- the current operator/reporting story can call these outcomes “success” after
-  overlap goes to zero, even when the resulting attachment semantics are
-  visibly wrong for creature work
+- ears can be repaired locally while the rest of the creature still remains
+  disconnected
+- eyes, snout, and nose can still float away from the head after the run moves
+  on to later stages
+- head/body, tail/body, and upper/lower limb seams can remain visibly detached
+  even though the session no longer reports an urgent geometry problem
+- collection/object-set stage checks still bias too much toward one primary
+  anchor path, so important creature seams are not all surfaced together
+- bounded macro outcomes can still look locally acceptable while the assembled
+  creature is globally wrong because multiple required attachment pairs were
+  never elevated into the correction loop
 
-This is not the same as the `TASK-141` prompt/schema problem. Even with a
-perfect caller, the current bounded correction semantics still optimize the
-wrong geometric outcome for several creature-part relationships.
+This is not the same as the `TASK-141` contract problem. `TASK-141` is about
+reaching the right surface. `TASK-142` is about making the full assembled
+creature truth/repair path prove and fix the right relations once the session
+is already on that surface.
 
 ## Scope
 
 This follow-on covers:
 
-- clarifying which creature-part relations are:
+- defining the required assembled-creature seam set and making it visible to the
+  truth/correction loop in one run
+- clarifying which targeted creature-part relations are:
   - overlap cleanup only
   - attachment/seating/contact repair
-- improving bounded repair guidance for:
+  - embedded or segment-style attachment that must stay seated into the anchor
+    mass
+- improving bounded repair guidance and prioritization for:
   - `Ear_* -> Head`
   - `Eye_* -> Head`
   - `Snout -> Head`
@@ -56,18 +62,23 @@ This follow-on covers:
   - `Hindlimb_* -> Body`
   - segmented limb relations such as lower-limb to upper-limb when the
     creature build keeps those masses separate
-- tightening success criteria so “overlap removed” is not enough when the
-  intended result is seated contact
-- aligning `truth_followup`, `correction_candidates`, and macro selection with
-  those semantics
-- adding regression coverage around organic attachment instead of only generic
-  disjoint/overlap resolution
+- expanding truth-bundle pairing and ranking behavior beyond a narrow
+  primary-anchor view so the loop can carry multiple failing creature seams at
+  once
+- tightening success criteria so "one local pair improved" or "overlap removed"
+  is not enough when the assembled creature still has detached masses
+- aligning `truth_followup`, `correction_candidates`, macro selection, and
+  macro outcome semantics with those assembled-creature attachment requirements
+- adding regression coverage around full-creature attachment integrity instead
+  of only single-pair disjoint/overlap resolution
 - requiring the meaningful E2E layer checks for those cases:
   - bbox relation
   - mesh-surface gap/contact semantics
   - overlap dimensions / overlap removal
   - contact assertion outcome
   - the final attachment verdict for the creature part relationship
+- requiring Blender-backed assembled-creature E2E scenarios that prove multiple
+  required seams are checked in the same run instead of only one pair at a time
 
 This follow-on does **not** cover:
 
@@ -78,17 +89,20 @@ This follow-on does **not** cover:
 
 ## Acceptance Criteria
 
-- the repo distinguishes “remove overlap” from “seat/attach this organic part”
+- the repo distinguishes "remove overlap" from "seat/attach this organic part"
   on the creature-guided path
-- eyes, snout, head/body, tail/body, and limb attachment relations no longer
-  default to correction paths that leave a visible measurable gap and still
-  report success
+- the assembled-creature truth path can surface and prioritize multiple failing
+  required seams from one collection/object-set checkpoint instead of only
+  whichever pair the current anchor logic happens to visit
+- eyes, snout, nose, head/body, tail/body, and limb attachment relations no
+  longer disappear from the loop while still visibly detached
 - `truth_followup` / `correction_candidates` can communicate that attachment
-  semantics are still wrong even when raw overlap is zero
+  semantics are still wrong even when raw overlap is zero and even when another
+  local pair already looks acceptable
 - bounded next-step guidance favors the right repair family for organic seating
   cases instead of reusing generic overlap cleanup by default
 - focused regressions protect the concrete squirrel-style failure shapes seen in
-  the first real post-`TASK-128` run
+  the real assembled-creature run, not only isolated single-pair toy cases
 - E2E coverage proves the correct truth layers are being exercised, not just
   visual or prose outcomes:
   - `scene_measure_gap` / contact semantics distinguish bbox-touching from real
@@ -97,6 +111,8 @@ This follow-on does **not** cover:
     still intersecting
   - `scene_assert_contact` or equivalent truth assertions participate in the
     success/failure verdict
+  - collection/object-set stage checks report the expected failing creature seam
+    set for the assembled target
   - the final result can differentiate:
     - seated/attached correctly
     - floating with a gap
@@ -111,12 +127,18 @@ This follow-on does **not** cover:
 - `server/router/infrastructure/tools_metadata/scene/`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_structured_contract_delivery.py`
+- `tests/unit/tools/scene/test_scene_contracts.py`
+- `tests/unit/tools/macro/test_macro_align_part_with_contact.py`
+- `tests/unit/tools/macro/test_macro_attach_part_to_surface.py`
 - `tests/unit/tools/macro/test_macro_cleanup_part_intersections.py`
 - `tests/unit/tools/scene/test_macro_attach_part_to_surface_mcp.py`
 - `tests/unit/tools/scene/test_macro_align_part_with_contact_mcp.py`
 - `tests/unit/tools/scene/test_macro_cleanup_part_intersections_mcp.py`
 - `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
+- `tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py`
+- `tests/e2e/tools/macro/test_macro_attach_part_to_surface.py`
+- `tests/e2e/tools/macro/test_macro_align_part_with_contact.py`
 - `tests/e2e/tools/macro/test_macro_cleanup_part_intersections.py`
 - `tests/e2e/tools/scene/test_scene_assert_tools.py`
 - `_docs/_VISION/README.md`
@@ -135,16 +157,23 @@ This follow-on does **not** cover:
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_structured_contract_delivery.py`
+- `tests/unit/tools/scene/test_scene_contracts.py`
+- `tests/unit/tools/macro/test_macro_align_part_with_contact.py`
+- `tests/unit/tools/macro/test_macro_attach_part_to_surface.py`
 - `tests/unit/tools/macro/test_macro_cleanup_part_intersections.py`
 - `tests/unit/tools/scene/test_macro_attach_part_to_surface_mcp.py`
 - `tests/unit/tools/scene/test_macro_align_part_with_contact_mcp.py`
 - `tests/unit/tools/scene/test_macro_cleanup_part_intersections_mcp.py`
 - `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
+- `tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py`
+- `tests/e2e/tools/macro/test_macro_attach_part_to_surface.py`
+- `tests/e2e/tools/macro/test_macro_align_part_with_contact.py`
 - `tests/e2e/tools/macro/test_macro_cleanup_part_intersections.py`
 - `tests/e2e/tools/scene/test_scene_assert_tools.py`
 - focused E2E coverage that asserts bbox, mesh-surface gap/contact, overlap,
-  and attachment verdicts for creature part pairs
+  attachment verdicts, and multi-pair seam coverage for assembled creature
+  targets
 
 ## Changelog Impact
 
@@ -154,9 +183,9 @@ This follow-on does **not** cover:
 
 | Order | Subtask | Purpose |
 |------|---------|---------|
-| 1 | [TASK-142-01](./TASK-142-01_Creature_Part_Attachment_Taxonomy_And_Truth_Surface.md) | Define the deterministic creature-part attachment taxonomy and truth-surface semantics needed to distinguish generic overlap from organic seating/attachment problems |
-| 2 | [TASK-142-02](./TASK-142-02_Bounded_Macro_Selection_And_Repair_Behavior_For_Organic_Seating.md) | Align macro selection and bounded repair behavior with those attachment semantics so head, face, torso, tail, and limb relations stop defaulting to the wrong repair family |
-| 3 | [TASK-142-03](./TASK-142-03_Regression_And_Documentation_Pack_For_Organic_Attachment_Semantics.md) | Lock the new attachment semantics with focused unit/E2E truth-layer coverage and the corresponding operator-facing docs |
+| 1 | [TASK-142-01](./TASK-142-01_Creature_Part_Attachment_Taxonomy_And_Truth_Surface.md) | Define the required assembled-creature seam set and carry it into multi-pair truth/followup/candidate planning instead of relying on a narrow anchor-only view |
+| 2 | [TASK-142-02](./TASK-142-02_Bounded_Macro_Selection_And_Repair_Behavior_For_Organic_Seating.md) | Align macro selection and bounded repair behavior with those assembled attachment semantics so local pair fixes stop masking a still-detached creature |
+| 3 | [TASK-142-03](./TASK-142-03_Regression_And_Documentation_Pack_For_Organic_Attachment_Semantics.md) | Lock the new assembled-creature attachment semantics with focused unit/E2E truth-layer coverage and the corresponding operator-facing docs |
 
 ## Status / Board Update
 

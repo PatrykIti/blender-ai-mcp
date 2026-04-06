@@ -8,18 +8,22 @@
 ## Objective
 
 Turn `loop_disposition="inspect_validate"` into one explicit stop-and-check
-operator branch and lock that story with focused regression coverage.
+operator branch and make the same truth-first takeover happen when staged
+compare degrades or fails during a real guided creature run.
 
 ## Business Problem
 
-The runtime already exposes `inspect_validate`, but the first real creature run
-still relied too much on operator interpretation after that handoff. The
-product gap is not just the field value itself; it is the missing end-to-end
-story for what happens next:
+The runtime already exposes `inspect_validate`, but the first real creature
+runs still relied too much on operator improvisation after the loop hit a
+truth-heavy or degraded-compare state.
 
-- runtime messaging
-- prompt/docs guidance
-- regression proof that the loop really pauses for truth-layer validation
+The product gap is not just the field value itself. It is the missing
+end-to-end story for what happens next when:
+
+- `loop_disposition == "inspect_validate"`
+- deterministic truth findings stay high-priority
+- or the vision compare path is unavailable and the operator must keep moving on
+  truth tools alone
 
 ## Repository Touchpoints
 
@@ -28,6 +32,7 @@ story for what happens next:
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
 - `tests/e2e/router/test_guided_manual_handoff.py`
+- `tests/e2e/integration/test_guided_inspect_validate_handoff.py`
 - `_docs/_PROMPTS/README.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 - `_docs/_MCP_SERVER/README.md`
@@ -39,6 +44,8 @@ story for what happens next:
 - loop-facing runtime messaging tells the operator to switch from free-form
   modeling to inspect/measure/assert when that disposition is returned
 - docs and examples prioritize the same inspect/measure/assert next-step story
+- degraded compare / truth-only handoff follows the same truth-first story
+  instead of dumping the session back into ad hoc modeling
 - focused regression coverage protects the squirrel-run handoff shapes that
   motivated this follow-on
 
@@ -54,6 +61,7 @@ story for what happens next:
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
 - `tests/e2e/router/test_guided_manual_handoff.py`
+- `tests/e2e/integration/test_guided_inspect_validate_handoff.py`
 
 ## Changelog Impact
 
@@ -63,8 +71,8 @@ story for what happens next:
 
 | Order | Leaf | Purpose |
 |------|------|---------|
-| 1 | [TASK-141-03-01](./TASK-141-03-01_Inspect_Validate_Stop_And_Check_Operator_Story.md) | Align runtime messaging and prompt/docs guidance to one explicit inspect/measure/assert handoff story |
-| 2 | [TASK-141-03-02](./TASK-141-03-02_Squirrel_Run_Regression_Pack_For_Guided_Contract_Drift.md) | Add focused regression coverage for the squirrel-run handoff and contract-drift failure shapes |
+| 1 | [TASK-141-03-01](./TASK-141-03-01_Inspect_Validate_Stop_And_Check_Operator_Story.md) | Align runtime messaging and prompt/docs guidance to one explicit inspect/measure/assert handoff story for both `inspect_validate` and degraded compare |
+| 2 | [TASK-141-03-02](./TASK-141-03-02_Squirrel_Run_Regression_Pack_For_Guided_Contract_Drift.md) | Add focused regression coverage for the squirrel-run contract-drift, compare-degradation, and truth-first handoff shapes |
 
 ## Status / Board Update
 

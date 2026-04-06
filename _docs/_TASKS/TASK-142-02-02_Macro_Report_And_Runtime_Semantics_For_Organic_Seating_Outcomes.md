@@ -8,7 +8,8 @@
 
 Make bounded macro reports and runtime follow-up semantics reflect whether a
 targeted creature part is actually seated/attached correctly, not just whether
-raw overlap dropped to zero.
+raw overlap dropped to zero, and not just whether one local seam improved while
+the assembled creature remains detached elsewhere.
 
 ## Business Problem
 
@@ -17,10 +18,13 @@ organic parts:
 
 - overlap is gone
 - the part is still floating or visibly wrong
+- or one pair is fixed while the broader assembled creature still has detached
+  seams
 - the report still looks close to done
 
 This leaf owns the runtime/reporting semantics that decide whether a bounded
-repair really resolved the intended creature-part relation.
+repair really resolved the intended creature-part relation and how much of the
+remaining creature still needs follow-up.
 
 ## Repository Touchpoints
 
@@ -33,6 +37,8 @@ repair really resolved the intended creature-part relation.
 - `tests/unit/tools/scene/test_macro_align_part_with_contact_mcp.py`
 - `tests/unit/tools/scene/test_macro_attach_part_to_surface_mcp.py`
 - `tests/e2e/tools/macro/test_macro_cleanup_part_intersections.py`
+- `tests/e2e/tools/macro/test_macro_attach_part_to_surface.py`
+- `tests/e2e/tools/macro/test_macro_align_part_with_contact.py`
 - `tests/e2e/tools/scene/test_scene_assert_tools.py`
 - `_docs/_MCP_SERVER/README.md`
 
@@ -46,14 +52,16 @@ repair really resolved the intended creature-part relation.
   attachment verdict, not only overlap removal
 - cleanup-oriented macro reports stop implying semantic success when the
   targeted pair still fails the intended attachment outcome
+- collection/run-level follow-up semantics can still highlight unresolved
+  attachment seams after a local macro success
 
 ## Leaf Work Items
 
 - align macro reports and verification guidance with the targeted attachment
   outcomes
 - add focused unit coverage for the repaired vs still-wrong verdicts
-- add or update one Blender-backed seam where the targeted truth assertions are
-  exercised after macro repair
+- add or update Blender-backed seams where the targeted truth assertions are
+  exercised after macro repair, including more than one creature seam family
 
 ## Docs To Update
 
@@ -69,6 +77,8 @@ repair really resolved the intended creature-part relation.
 - `tests/unit/tools/scene/test_macro_align_part_with_contact_mcp.py`
 - `tests/unit/tools/scene/test_macro_attach_part_to_surface_mcp.py`
 - `tests/e2e/tools/macro/test_macro_cleanup_part_intersections.py`
+- `tests/e2e/tools/macro/test_macro_attach_part_to_surface.py`
+- `tests/e2e/tools/macro/test_macro_align_part_with_contact.py`
 - `tests/e2e/tools/scene/test_scene_assert_tools.py`
 
 ## Changelog Impact
@@ -79,4 +89,5 @@ repair really resolved the intended creature-part relation.
 
 - keep board tracking on `TASK-142`
 - update the parent summary so it explicitly calls out the shipped macro/report
-  outcome semantics when this leaf closes
+  outcome semantics and their assembled-creature follow-up behavior when this
+  leaf closes

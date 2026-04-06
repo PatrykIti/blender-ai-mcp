@@ -8,25 +8,32 @@
 ## Objective
 
 Make the chosen creature blockout signatures easy to discover and hard to
-misread across search cues, prompt examples, and public docs.
+misread across search cues, prompt examples, and public docs, even when a real
+session is operating under token pressure and noisy search responses.
 
 ## Business Problem
 
-Even a good runtime policy is not enough if search/docs still teach stale or
-underspecified signatures. The guided creature flow needs one coherent
-operator-facing story for:
+Even a good runtime policy is not enough if a real guided session still has to
+search through large or misleading discovery payloads before it finds the right
+blockout tools.
+
+The guided creature flow needs one coherent operator-facing story for:
 
 - how to create a primitive on the blockout path
 - how to create/link/move collections
 - when to use those tools directly versus when to keep working from macros or
   guided handoff cues
+- how to reach those signatures quickly enough that the model does not fall
+  back to guesswork
 
 ## Repository Touchpoints
 
 - `server/adapters/mcp/discovery/search_documents.py`
+- `server/adapters/mcp/discovery/search_surface.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/e2e/router/test_guided_manual_handoff.py`
+- `tests/e2e/integration/test_guided_inspect_validate_handoff.py`
 - `_docs/_PROMPTS/README.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 - `_docs/_MCP_SERVER/README.md`
@@ -42,12 +49,17 @@ operator-facing story for:
   collection shortcuts
 - focused regressions protect the chosen signature story across docs and
   discovery surfaces
+- the early squirrel blockout search path stays small and actionable enough
+  that the session does not need repeated rediscovery loops for basic tool
+  signatures
 
 ## Leaf Work Items
 
 - update discovery/search clues for the chosen signature story
 - add explicit prompt/doc examples for canonical primitive and collection calls
 - align guided creature handoff docs/tests with the same blockout-tool story
+- add regressions that treat giant/noisy early creature-search responses as a
+  product problem, not just a documentation gap
 
 ## Docs To Update
 
@@ -61,6 +73,7 @@ operator-facing story for:
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/e2e/router/test_guided_manual_handoff.py`
+- `tests/e2e/integration/test_guided_inspect_validate_handoff.py`
 
 ## Changelog Impact
 
@@ -70,4 +83,4 @@ operator-facing story for:
 
 - keep board tracking on `TASK-141`
 - update the parent summary when this leaf closes so the final search/docs
-  signature story is explicit
+  signature story and its real-session regression seam are explicit

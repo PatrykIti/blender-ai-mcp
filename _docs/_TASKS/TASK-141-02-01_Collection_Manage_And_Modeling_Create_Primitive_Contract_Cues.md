@@ -7,26 +7,32 @@
 ## Objective
 
 Define one explicit runtime/metadata policy for the repeated guessed argument
-shapes around `collection_manage(...)` and `modeling_create_primitive(...)`.
+shapes around `collection_manage(...)` and `modeling_create_primitive(...)`,
+then prove that the same policy reaches the live guided `call_tool(...)` path.
 
 ## Business Problem
 
-The real squirrel run surfaced the same pattern more than once:
+The real squirrel run surfaced the same pattern more than once, even though the
+repo already contains local guidance:
 
 - `collection_manage(...)` guessed `name` instead of `collection_name`
 - `modeling_create_primitive(...)` guessed extra knobs such as `scale`,
-  `subdivisions`, or collection-placement semantics
+  `segments`, `rings`, `subdivisions`, or collection-placement semantics
+- the live guided surface still allowed the caller to fall into raw validation
+  churn before recovering
 
-This leaf owns the concrete public-contract decision for those shapes instead
-of leaving each call to rediscover the answer from validation errors.
+This leaf owns the concrete public-contract decision for those shapes and the
+parity work required so the decision actually holds on the active surface.
 
 ## Repository Touchpoints
 
 - `server/adapters/mcp/areas/collection.py`
 - `server/adapters/mcp/areas/modeling.py`
+- `server/adapters/mcp/discovery/search_surface.py`
 - `server/router/infrastructure/tools_metadata/collection/collection_manage.json`
 - `server/router/infrastructure/tools_metadata/modeling/modeling_create_primitive.json`
 - `tests/unit/adapters/mcp/test_search_surface.py`
+- `tests/e2e/integration/test_guided_surface_contract_parity.py`
 
 ## Acceptance Criteria
 
@@ -38,13 +44,18 @@ of leaving each call to rediscover the answer from validation errors.
   shortcuts fail with actionable guidance
 - search/runtime cues no longer leave the caller to infer whether those guessed
   arguments are supported
+- the active guided `call_tool(...)` path either honors the accepted
+  compatibility story or fails with the same actionable guidance proven in unit
+  coverage
 
 ## Leaf Work Items
 
 - decide which guessed arguments should be compatibility-only, which should be
   rejected, and which already belong to the canonical contract
-- implement the chosen policy in runtime handling and/or metadata-level cues
-- add focused regression cases for canonical success and wrong-shape guidance
+- close any gap between runtime handling, metadata cues, and the real active
+  `call_tool(...)` surface
+- add focused unit plus E2E regression cases for canonical success and
+  wrong-shape guidance
 
 ## Docs To Update
 
@@ -53,6 +64,7 @@ of leaving each call to rediscover the answer from validation errors.
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_search_surface.py`
+- `tests/e2e/integration/test_guided_surface_contract_parity.py`
 
 ## Changelog Impact
 
@@ -61,5 +73,5 @@ of leaving each call to rediscover the answer from validation errors.
 ## Status / Board Update
 
 - keep board tracking on `TASK-141`
-- reflect the final signature-policy decisions in the parent summary when this
-  leaf closes
+- reflect the final signature-policy decisions and active-surface parity result
+  in the parent summary when this leaf closes
