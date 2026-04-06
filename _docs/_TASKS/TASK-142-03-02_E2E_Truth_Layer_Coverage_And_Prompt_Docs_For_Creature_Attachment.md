@@ -44,6 +44,11 @@ the runtime and operator story do not drift apart.
   verdict for creature-part attachment cases
 - E2E coverage includes at least one Blender-backed assembled-creature scenario
   where several required seams are detached at once
+- the assembled-creature E2E matrix includes at least:
+  - one face/head seam such as `Eye_* -> Head` or `Snout/Nose -> Head`
+  - one torso/body seam such as `Head -> Body` or `Tail -> Body`
+  - one limb seam such as `Forelimb/Hindlimb -> Body` or distal-to-proximal
+    limb seating
 - prompt/docs wording matches the shipped attachment taxonomy and verdict model
 - the repo documents the difference between:
   - seated/attached correctly
@@ -55,6 +60,8 @@ the runtime and operator story do not drift apart.
 - add or update E2E truth-layer scenarios for the targeted creature-part pairs
 - add one assembled-creature E2E pack that exercises multiple failing seams in
   one run, not only isolated single-pair checks
+- make that assembled-creature pack prove at least one face/head seam, one
+  torso/body seam, and one limb seam in the same coverage wave
 - align prompt/docs wording to the same attachment verdict semantics
 - ensure board/task summaries stay consistent with the shipped E2E/docs scope
 

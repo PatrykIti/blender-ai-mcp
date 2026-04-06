@@ -59,6 +59,10 @@ problem:
 - regression scope includes at least one Blender-backed assembled-creature
   scenario where multiple required seams fail together and the truth/candidate
   path reports them together
+- the assembled-creature E2E matrix includes at least:
+  - one face/head seam
+  - one torso/body seam
+  - one limb seam
 - prompt/docs guidance uses the same attachment vocabulary and verdict model as
   the runtime/tests path
 

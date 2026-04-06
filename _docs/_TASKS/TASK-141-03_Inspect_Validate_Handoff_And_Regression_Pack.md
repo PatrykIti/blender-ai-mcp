@@ -30,8 +30,6 @@ end-to-end story for what happens next when:
 - `server/adapters/mcp/areas/reference.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
-- `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
-- `tests/e2e/router/test_guided_manual_handoff.py`
 - `tests/e2e/integration/test_guided_inspect_validate_handoff.py`
 - `_docs/_PROMPTS/README.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
@@ -59,8 +57,6 @@ end-to-end story for what happens next when:
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
-- `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
-- `tests/e2e/router/test_guided_manual_handoff.py`
 - `tests/e2e/integration/test_guided_inspect_validate_handoff.py`
 
 ## Changelog Impact

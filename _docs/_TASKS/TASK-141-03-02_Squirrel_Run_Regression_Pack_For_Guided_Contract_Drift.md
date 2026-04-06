@@ -26,8 +26,6 @@ inspect/measure/assert.
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
-- `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
-- `tests/e2e/router/test_guided_manual_handoff.py`
 - `tests/e2e/integration/test_guided_surface_contract_parity.py`
 - `tests/e2e/integration/test_guided_inspect_validate_handoff.py`
 
@@ -40,6 +38,9 @@ inspect/measure/assert.
   branch
 - E2E/integration regressions verify the active surface keeps the same contract
   and handoff behavior seen in unit/docs expectations
+- the core E2E seam for this leaf is the active-surface parity plus
+  `inspect_validate` / degraded-compare handoff path, not unrelated silhouette
+  or no-match smoke coverage
 
 ## Leaf Work Items
 
@@ -54,8 +55,6 @@ inspect/measure/assert.
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
-- `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
-- `tests/e2e/router/test_guided_manual_handoff.py`
 - `tests/e2e/integration/test_guided_surface_contract_parity.py`
 - `tests/e2e/integration/test_guided_inspect_validate_handoff.py`
 

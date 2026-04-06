@@ -113,6 +113,10 @@ This follow-on does **not** cover:
     success/failure verdict
   - collection/object-set stage checks report the expected failing creature seam
     set for the assembled target
+  - the Blender-backed assembled-creature E2E matrix includes at least:
+    - one face/head seam
+    - one torso/body seam
+    - one limb seam
   - the final result can differentiate:
     - seated/attached correctly
     - floating with a gap
@@ -134,7 +138,6 @@ This follow-on does **not** cover:
 - `tests/unit/tools/scene/test_macro_attach_part_to_surface_mcp.py`
 - `tests/unit/tools/scene/test_macro_align_part_with_contact_mcp.py`
 - `tests/unit/tools/scene/test_macro_cleanup_part_intersections_mcp.py`
-- `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 - `tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py`
 - `tests/e2e/tools/macro/test_macro_attach_part_to_surface.py`
@@ -164,7 +167,6 @@ This follow-on does **not** cover:
 - `tests/unit/tools/scene/test_macro_attach_part_to_surface_mcp.py`
 - `tests/unit/tools/scene/test_macro_align_part_with_contact_mcp.py`
 - `tests/unit/tools/scene/test_macro_cleanup_part_intersections_mcp.py`
-- `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 - `tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py`
 - `tests/e2e/tools/macro/test_macro_attach_part_to_surface.py`
