@@ -8,6 +8,7 @@ from __future__ import annotations
 import base64
 import importlib
 import json
+import logging
 import mimetypes
 import os
 from pathlib import Path
@@ -24,6 +25,8 @@ from .prompting import (
     build_vision_response_json_schema,
     build_vision_system_prompt,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def _media_type_for(path: str, fallback: str) -> str:
@@ -149,6 +152,109 @@ def _diagnostics_suffix(diagnostics: dict[str, Any] | None) -> str:
     ]
     suffix = ", ".join(part for part in parts if part)
     return f" ({suffix})" if suffix else ""
+
+
+def _truncate_text(value: str | None, *, limit: int = 600) -> str | None:
+    text = str(value or "").strip().replace("\n", " ")
+    if not text:
+        return None
+    if len(text) <= limit:
+        return text
+    return f"{text[:limit]}... [truncated {len(text) - limit} chars]"
+
+
+def _request_payload_summary(
+    *,
+    endpoint_url: str,
+    payload: dict[str, Any],
+    request: VisionRequest,
+    runtime_config: VisionRuntimeConfig,
+    provider_name: str,
+    model_name: str,
+    vision_contract_profile: VisionContractProfile | None,
+) -> dict[str, Any]:
+    response_format = payload.get("response_format")
+    generation_config = payload.get("generationConfig")
+    user_content = []
+    messages = payload.get("messages")
+    if isinstance(messages, list) and len(messages) >= 2:
+        user_content = list(messages[1].get("content") or []) if isinstance(messages[1], dict) else []
+
+    image_roles = [image.role for image in request.images]
+    image_labels = [image.label or image.role for image in request.images]
+    image_bytes: list[int | None] = []
+    for image in request.images:
+        try:
+            image_bytes.append(Path(image.path).stat().st_size)
+        except OSError:
+            image_bytes.append(None)
+
+    summary: dict[str, Any] = {
+        "provider_name": provider_name,
+        "model_name": model_name,
+        "vision_contract_profile": vision_contract_profile,
+        "endpoint_url": endpoint_url,
+        "target_object": request.target_object,
+        "image_count": len(request.images),
+        "image_roles": image_roles,
+        "image_labels": image_labels,
+        "image_file_bytes": image_bytes,
+        "max_tokens": runtime_config.max_tokens,
+        "prompt_hint": _truncate_text(request.prompt_hint, limit=240),
+    }
+
+    if isinstance(response_format, dict):
+        json_schema = response_format.get("json_schema")
+        summary["response_format_type"] = response_format.get("type")
+        summary["response_format_strict"] = json_schema.get("strict") if isinstance(json_schema, dict) else None
+        summary["response_schema_name"] = json_schema.get("name") if isinstance(json_schema, dict) else None
+    elif isinstance(generation_config, dict):
+        response_schema = generation_config.get("responseJsonSchema")
+        summary["response_format_type"] = generation_config.get("responseMimeType")
+        summary["response_format_strict"] = None
+        if isinstance(response_schema, dict):
+            summary["response_schema_keys"] = sorted(response_schema.get("properties", {}).keys())
+
+    if isinstance(messages, list):
+        summary["message_count"] = len(messages)
+        if messages and isinstance(messages[0], dict):
+            summary["system_prompt_chars"] = len(str(messages[0].get("content") or ""))
+        if user_content:
+            text_parts = [
+                str(item.get("text") or "")
+                for item in user_content
+                if isinstance(item, dict) and item.get("type") == "text"
+            ]
+            summary["user_text_chars"] = sum(len(part) for part in text_parts)
+            summary["user_image_count"] = sum(
+                1 for item in user_content if isinstance(item, dict) and item.get("type") == "image_url"
+            )
+    elif isinstance(generation_config, dict):
+        summary["generation_config_keys"] = sorted(generation_config.keys())
+
+    return summary
+
+
+def _response_preview(response: httpx.Response | None) -> str | None:
+    if response is None:
+        return None
+    try:
+        return _truncate_text(response.text, limit=800)
+    except Exception:
+        return None
+
+
+def _response_headers_summary(response: httpx.Response | None) -> dict[str, str]:
+    if response is None:
+        return {}
+    interesting_headers = (
+        "x-request-id",
+        "openai-processing-ms",
+        "cf-ray",
+        "server",
+        "content-type",
+    )
+    return {header: value for header in interesting_headers if (value := response.headers.get(header)) is not None}
 
 
 class TransformersLocalVisionBackend(VisionBackend):
@@ -606,19 +712,52 @@ class OpenAICompatibleVisionBackend(VisionBackend):
 
         timeout = httpx.Timeout(self._runtime_config.timeout_seconds)
         payload = self._build_request_payload(request)
+        endpoint_url = self._endpoint_url()
+        payload_summary = _request_payload_summary(
+            endpoint_url=endpoint_url,
+            payload=payload,
+            request=request,
+            runtime_config=self._runtime_config,
+            provider_name=self._external_config.provider_name,
+            model_name=self.model_name,
+            vision_contract_profile=self._external_config.vision_contract_profile,
+        )
 
         try:
             async with httpx.AsyncClient(timeout=timeout) as client:
                 response = await client.post(
-                    self._endpoint_url(),
+                    endpoint_url,
                     json=payload,
                     headers=headers,
                 )
                 response.raise_for_status()
                 parsed_response = response.json()
+        except httpx.HTTPStatusError as exc:
+            response = exc.response
+            logger.error(
+                "External vision request failed with HTTP status. payload_summary=%s response_status=%s response_headers=%s response_preview=%s",
+                payload_summary,
+                response.status_code if response is not None else None,
+                _response_headers_summary(response),
+                _response_preview(response),
+            )
+            status_code = response.status_code if response is not None else "unknown"
+            reason_phrase = response.reason_phrase if response is not None else "HTTP error"
+            raise VisionBackendUnavailableError(
+                f"Vision endpoint request failed: HTTP {status_code} {reason_phrase} for url '{endpoint_url}'"
+            ) from exc
         except httpx.HTTPError as exc:
+            logger.error(
+                "External vision request failed before a valid HTTP response was processed. payload_summary=%s error=%s",
+                payload_summary,
+                exc,
+            )
             raise VisionBackendUnavailableError(f"Vision endpoint request failed: {exc}") from exc
         except Exception as exc:  # pragma: no cover - defensive normalization
+            logger.exception(
+                "External vision request execution failed unexpectedly. payload_summary=%s",
+                payload_summary,
+            )
             raise VisionBackendUnavailableError(f"Vision endpoint execution failed: {exc}") from exc
 
         if self._external_config.provider_name == "google_ai_studio":

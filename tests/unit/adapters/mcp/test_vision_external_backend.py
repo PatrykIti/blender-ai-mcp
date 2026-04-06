@@ -66,16 +66,22 @@ def _config(**overrides) -> Config:
 
 
 class _FakeResponse:
-    def __init__(self, payload: dict, status_code: int = 200) -> None:
+    def __init__(self, payload: dict, status_code: int = 200, headers: dict[str, str] | None = None) -> None:
         self._payload = payload
         self.status_code = status_code
+        self._headers = headers or {}
 
     def raise_for_status(self) -> None:
         if self.status_code >= 400:
             raise httpx.HTTPStatusError(
                 "boom",
                 request=httpx.Request("POST", "http://localhost"),
-                response=httpx.Response(self.status_code),
+                response=httpx.Response(
+                    self.status_code,
+                    headers=self._headers,
+                    json=self._payload,
+                    request=httpx.Request("POST", "http://localhost"),
+                ),
             )
 
     def json(self) -> dict:
@@ -507,3 +513,50 @@ def test_external_backend_rejects_invalid_json_content(monkeypatch, tmp_path):
 
     with pytest.raises(VisionBackendUnavailableError, match="valid JSON"):
         asyncio.run(backend.analyze(request))
+
+
+def test_openrouter_http_error_logs_payload_summary_and_response_preview(monkeypatch, tmp_path, caplog):
+    image_path = tmp_path / "reference.png"
+    image_path.write_bytes(b"fake-png")
+
+    runtime = build_vision_runtime_config(
+        _config(
+            VISION_EXTERNAL_PROVIDER="openrouter",
+            VISION_EXTERNAL_BASE_URL=None,
+            VISION_EXTERNAL_MODEL=None,
+            VISION_OPENROUTER_MODEL="google/gemma-4-31b-it",
+            VISION_OPENROUTER_API_KEY="openrouter-secret",
+        )
+    )
+    backend = OpenAICompatibleVisionBackend(runtime)
+    request = VisionRequest(
+        goal="low poly squirrel",
+        target_object="Head",
+        images=(VisionImageInput(path=str(image_path), role="reference", label="front_ref"),),
+        prompt_hint="comparison_mode=stage_checkpoint_vs_reference",
+    )
+
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda timeout=None: _FakeAsyncClient(
+            response=_FakeResponse(
+                {"error": {"message": "Provider rejected json_schema for this model."}},
+                status_code=400,
+                headers={"x-request-id": "req_123", "content-type": "application/json"},
+            ),
+            captured={},
+        ),
+    )
+
+    with caplog.at_level("ERROR"):
+        with pytest.raises(VisionBackendUnavailableError, match="400 Bad Request"):
+            asyncio.run(backend.analyze(request))
+
+    log_text = "\n".join(caplog.messages)
+    assert "External vision request failed with HTTP status." in log_text
+    assert "google/gemma-4-31b-it" in log_text
+    assert "google_family_compare" in log_text
+    assert "https://openrouter.ai/api/v1/chat/completions" in log_text
+    assert "json_schema" in log_text
+    assert "Provider rejected json_schema for this model." in log_text
