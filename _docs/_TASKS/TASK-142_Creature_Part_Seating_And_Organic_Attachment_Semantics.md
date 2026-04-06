@@ -7,9 +7,9 @@
 
 ## Objective
 
-Improve the guided creature correction path so attached organic parts are
-repaired toward believable seating/contact instead of only removing overlap and
-leaving visible gaps.
+Improve the guided creature correction path so attached organic parts and major
+body masses are repaired toward believable seating/contact instead of only
+removing overlap and leaving visible gaps.
 
 ## Business Problem
 
@@ -24,6 +24,12 @@ Observed failure shapes:
 - eyes end up floating with a measurable gap after `macro_cleanup_part_intersections`
 - snout and nose are pushed off the head/body with a measurable gap even though
   they should remain seated/attached
+- the head/body seam can still end up visually disconnected even though that
+  mass transition should read as one attached creature form
+- tail/body attachment can still drift into a floating or visibly detached
+  relation after bounded repair
+- upper/lower limb masses can still hang away from the torso or from their
+  intended limb anchor instead of reading as seated creature attachments
 - the current operator/reporting story can call these outcomes “success” after
   overlap goes to zero, even when the resulting attachment semantics are
   visibly wrong for creature work
@@ -44,6 +50,12 @@ This follow-on covers:
   - `Eye_* -> Head`
   - `Snout -> Head`
   - `Nose -> Snout` or `Nose -> Head` depending on intended low-poly topology
+  - `Head -> Body`
+  - `Tail -> Body`
+  - `Forelimb_* -> Body`
+  - `Hindlimb_* -> Body`
+  - segmented limb relations such as lower-limb to upper-limb when the
+    creature build keeps those masses separate
 - tightening success criteria so “overlap removed” is not enough when the
   intended result is seated contact
 - aligning `truth_followup`, `correction_candidates`, and macro selection with
@@ -68,9 +80,9 @@ This follow-on does **not** cover:
 
 - the repo distinguishes “remove overlap” from “seat/attach this organic part”
   on the creature-guided path
-- eyes, snout, and similar attached creature parts no longer default to a
-  correction path that leaves a visible measurable gap and still reports
-  success
+- eyes, snout, head/body, tail/body, and limb attachment relations no longer
+  default to correction paths that leave a visible measurable gap and still
+  report success
 - `truth_followup` / `correction_candidates` can communicate that attachment
   semantics are still wrong even when raw overlap is zero
 - bounded next-step guidance favors the right repair family for organic seating
@@ -143,7 +155,7 @@ This follow-on does **not** cover:
 | Order | Subtask | Purpose |
 |------|---------|---------|
 | 1 | [TASK-142-01](./TASK-142-01_Creature_Part_Attachment_Taxonomy_And_Truth_Surface.md) | Define the deterministic creature-part attachment taxonomy and truth-surface semantics needed to distinguish generic overlap from organic seating/attachment problems |
-| 2 | [TASK-142-02](./TASK-142-02_Bounded_Macro_Selection_And_Repair_Behavior_For_Organic_Seating.md) | Align macro selection and bounded repair behavior with those attachment semantics so ears, eyes, snout, and nose stop defaulting to the wrong repair family |
+| 2 | [TASK-142-02](./TASK-142-02_Bounded_Macro_Selection_And_Repair_Behavior_For_Organic_Seating.md) | Align macro selection and bounded repair behavior with those attachment semantics so head, face, torso, tail, and limb relations stop defaulting to the wrong repair family |
 | 3 | [TASK-142-03](./TASK-142-03_Regression_And_Documentation_Pack_For_Organic_Attachment_Semantics.md) | Lock the new attachment semantics with focused unit/E2E truth-layer coverage and the corresponding operator-facing docs |
 
 ## Status / Board Update
