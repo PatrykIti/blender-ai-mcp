@@ -86,6 +86,7 @@ This follow-on does **not** cover:
 - `README.md`
 - `server/adapters/mcp/transforms/visibility_policy.py`
 - `server/adapters/mcp/discovery/search_documents.py`
+- `server/adapters/mcp/discovery/search_surface.py`
 - `server/adapters/mcp/areas/reference.py`
 - `server/adapters/mcp/areas/router.py`
 - `server/adapters/mcp/areas/collection.py`

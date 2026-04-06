@@ -96,12 +96,14 @@ This follow-on does **not** cover:
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/contracts/scene.py`
 - `server/adapters/mcp/vision/reporting.py`
+- `server/application/tool_handlers/macro_handler.py`
 - `server/router/infrastructure/tools_metadata/scene/`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/tools/macro/test_macro_cleanup_part_intersections.py`
 - `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
-- `tests/e2e/vision/`
-- `tests/e2e/tools/scene/`
+- `tests/e2e/vision/test_reference_stage_truth_handoff.py`
+- `tests/e2e/tools/macro/test_macro_cleanup_part_intersections.py`
+- `tests/e2e/tools/scene/test_scene_assert_tools.py`
 - `_docs/_VISION/README.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 - `_docs/_TASKS/README.md`
@@ -117,6 +119,9 @@ This follow-on does **not** cover:
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/tools/macro/test_macro_cleanup_part_intersections.py`
 - `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
+- `tests/e2e/vision/test_reference_stage_truth_handoff.py`
+- `tests/e2e/tools/macro/test_macro_cleanup_part_intersections.py`
+- `tests/e2e/tools/scene/test_scene_assert_tools.py`
 - focused E2E coverage that asserts bbox, mesh-surface gap/contact, overlap,
   and attachment verdicts for creature part pairs
 
