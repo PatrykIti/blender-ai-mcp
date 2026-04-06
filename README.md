@@ -133,6 +133,12 @@ Use these docs depending on what you need:
   - Ready-to-paste local MCP client config examples for guided/manual surfaces plus MLX, OpenRouter, and Gemini vision variants.
 - [Vision Layer Docs](./_docs/_VISION/README.md)
   - Runtime/backends, capture bundles, reference images, macro/workflow vision integration notes, and repo-tracked real viewport eval bundles for both direct user-view and fixed camera-perspective captures.
+- [LLM Guide v2](./_docs/LLM_GUIDE_V2.md)
+  - Strategy doc for a typed spatial-intelligence layer, compact relation state, and bounded next-step handoffs for guided operation.
+- [Spatial Intelligence Research Brief](./_docs/FEATURES_LLM_GUIDE_V1.md)
+  - External research handoff for LLM/VLM spatial reasoning, multi-view reasoning, and geometry-aware planning.
+- [Spatial Intelligence Upgrade Proposal](./_docs/Spacial-intelligence-upgrades-for-blender-ai-mcp.md)
+  - Research-driven upgrade proposal for scene graphs, symbolic relation notation, and supporting geometry-library choices.
 - [Available Tools Summary](./_docs/AVAILABLE_TOOLS_SUMMARY.md)
   - Full inventory and grouped/public tool overview.
 - [Tool Architecture Index](./_docs/TOOLS/README.md)
@@ -485,9 +491,13 @@ More detail:
 
 - [Architecture](./ARCHITECTURE.md)
 - [MCP Server Docs](./_docs/_MCP_SERVER/README.md)
+- [Vision Layer Docs](./_docs/_VISION/README.md)
 - [Router Docs](./_docs/_ROUTER/README.md)
 - [Router Responsibility Boundaries](./_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md)
 - [Addon Docs](./_docs/_ADDON/README.md)
+- [LLM Guide v2](./_docs/LLM_GUIDE_V2.md)
+- [Spatial Intelligence Research Brief](./_docs/FEATURES_LLM_GUIDE_V1.md)
+- [Spatial Intelligence Upgrade Proposal](./_docs/Spacial-intelligence-upgrades-for-blender-ai-mcp.md)
 - [Available Tools Summary](./_docs/AVAILABLE_TOOLS_SUMMARY.md)
 - [Tool Architecture Index](./_docs/TOOLS/README.md)
 - [Prompts](./_docs/_PROMPTS/README.md)

@@ -20,6 +20,14 @@ like a constrained operator that can:
 - pick the right correction family instead of improvising random transforms
 - hand off into mesh or sculpt refinement with much better spatial context
 
+This must happen without regressing the key product constraint of
+`llm-guided`:
+
+- the surface must stay small
+- the default loop payloads must stay bounded
+- richer spatial detail must be available on demand, not pushed everywhere by
+  default
+
 ---
 
 ## Problem Statement
@@ -44,6 +52,15 @@ Typical failures:
   - visibility/occlusion
 
 The system therefore must build spatial understanding for the model explicitly.
+
+But it must do that in a way that avoids the old failure mode:
+
+- too many tools
+- too much payload
+- too much undifferentiated context
+
+Spatial intelligence must therefore be **adaptive and layered**, not just
+"more stuff".
 
 ---
 
@@ -253,6 +270,37 @@ The system should supply a bounded next-step family:
 
 That already exists partially via `refinement_route` and `refinement_handoff`.
 
+### 6. Keep `llm-guided` Lightweight
+
+The guided surface exists because large tool catalogs made the model worse, not
+better.
+
+So spatial intelligence should follow these rules:
+
+- do not expose a large new graph/tool family by default on bootstrap
+- do not dump a heavyweight graph into the default compare/iterate contracts
+- prefer small read-only guided-facing tools or modules
+- expose richer spatial detail only when the active goal/phase/handoff needs it
+
+This does **not** mean "never add new tools".
+
+It means:
+
+- new atomics are valid when they expose one stable spatial fact from Blender
+- new grouped tools or bounded macros are valid when they package those facts
+  or actions into a better guided-facing product surface
+- but repo growth and `llm-guided` growth are different things:
+  - the repository may gain new low-level building blocks
+  - `llm-guided` should expose only the smallest useful subset by default
+
+That means:
+
+- separate spatial tools/modules are preferable to stuffing more into
+  `reference_compare_*` / `reference_iterate_*`
+- the loop can call those spatial tools when needed
+- but the current checkpoint contracts should stay focused on compare/iterate
+  semantics
+
 ---
 
 ## Recommended v2 Spatial Artifacts
@@ -324,6 +372,20 @@ Suggested future tool:
 
 This would likely be built on top of existing scene measure/assert tools plus
 the same attachment taxonomy now used in `truth_followup`.
+
+### Delivery Note
+
+The scope graph and relation graph should be delivered as **separate read-only
+artifacts**, not as a mandatory full payload inside every stage checkpoint
+response.
+
+The guided loop may:
+
+- reference them
+- call them on demand
+- or later expose a compact summary derived from them
+
+But the full graph should remain outside the default stage-checkpoint envelope.
 
 ### 3. View Graph
 
@@ -435,6 +497,12 @@ This would let the model know:
 These are the most valuable additions if the goal is "help the LLM orient in
 3D better".
 
+The intended model is:
+
+- a **small number of guided-facing read-only tools**
+- plus **goal-aware disclosure**
+- not a broad new default family on the bootstrap surface
+
 ### Tier A: Highest ROI
 
 1. `scene_scope_graph(...)`
@@ -448,6 +516,12 @@ These are the most valuable additions if the goal is "help the LLM orient in
    Returns which requested objects are visible, partially visible, occluded, or off-frame from a selected view.
 
 These three would materially improve LLM spatial reasoning immediately.
+
+They should be exposed in a controlled way:
+
+- not all at once on bootstrap by default
+- only when the current goal/phase/handoff justifies them
+- with one-step expansion from the current guided surface when needed
 
 ### Tier B: Strong Follow-On
 
@@ -469,6 +543,122 @@ These three would materially improve LLM spatial reasoning immediately.
 8. `sculpt_region_handoff(...)`
    Machine-readable handoff payload that says:
    "sculpt is now appropriate here, on this object, for this local reason."
+
+---
+
+## Library and Dependency Posture
+
+The spatial-intelligence roadmap does **not** require a large dependency wave on
+day one.
+
+The rule should be:
+
+- if a library gives the first version of one of these modules a clear,
+  immediate acceleration or simplification, use it
+- if a library is only useful for a later, richer wave, keep it as an explicit
+  future extension instead of making it part of the baseline too early
+
+This keeps the architecture practical and avoids turning the v1 rollout into a
+dependency project.
+
+### Already Good Baseline Building Blocks
+
+The repo already has strong lower-level ingredients for v1 work:
+
+- Blender-side `bmesh`
+- Blender-side `BVHTree`
+- Blender-side `KDTree`
+- existing measure/assert tools
+- existing stage-capture and viewport tools
+
+These are enough to start building:
+
+- `TASK-143` scope/relation graph foundations
+- `TASK-144` view/visibility diagnostics foundations
+- `TASK-145` planner/sculpt-handoff contracts
+
+without requiring a heavy external geometry stack immediately.
+
+### Reasonable v1 Accelerators
+
+These are the only external additions that currently look like clear
+accelerators rather than architectural requirements:
+
+- `scipy.spatial`
+  - useful for pair filtering, distance helpers, and compact spatial math on
+    the server side
+  - good fit for `TASK-143` when relation derivation grows beyond trivial bbox
+    comparisons
+- `networkx`
+  - useful if the internal implementation of scope/relation graphs becomes
+    cleaner with a real graph structure
+  - good fit for `TASK-143` as an implementation detail, not a product
+    requirement
+
+These should still be adopted only if they clearly simplify implementation or
+runtime behavior. The product contract must not depend on them conceptually.
+
+### Useful Follow-On Extensions, Not v1 Requirements
+
+These are promising, but should be treated as later extensions:
+
+- `trimesh`
+  - valuable for richer mesh-level spatial queries, OBBs, clearance, convexity,
+    watertight checks, and deeper relation inference
+  - likely useful as a follow-on to `TASK-143`, not as a blocker for v1
+- `shapely`
+  - useful for 2D footprint reasoning in layout-heavy or architecture-heavy
+    workflows
+  - not a core dependency for the first scope/relation/view modules
+- `Open3D`
+  - potentially valuable for more advanced multi-mesh proximity or raycasting
+    workflows
+  - too heavy to treat as an initial requirement for these modules
+- `libigl`
+  - niche but potentially useful for later non-watertight containment or shape
+    analysis work
+  - not appropriate as a baseline dependency
+
+### Not the Priority for These Modules
+
+These are not where the first value is:
+
+- deep-learning 3D semantic stacks such as OpenShape / Uni3D
+- PointNet++ part segmentation
+- large perception-first libraries aimed at RGB-D / scan understanding
+
+Those may be useful in later semantic enrichment waves, but `TASK-143`,
+`TASK-144`, and `TASK-145` are primarily about:
+
+- typed spatial facts
+- typed view-space facts
+- typed planner/handoff contracts
+
+not about making a learned model guess 3D structure that Blender already knows.
+
+### Per-Module Guidance
+
+- `TASK-143`
+  - strongest fit: current Blender truth tools and typed contracts
+  - optional accelerator: `scipy.spatial`
+  - possible internal graph helper: `networkx`
+  - later extension: `trimesh`
+- `TASK-144`
+  - strongest fit: existing camera/viewport/isolation/control stack plus
+    Blender-side view math
+  - external heavy geometry libraries are not the main story here
+- `TASK-145`
+  - strongest fit: contracts, planner policy, router/guided adoption
+  - almost all value is in typed planner outputs and precondition logic, not in
+    adding new heavy geometry libraries
+
+So the intended posture is:
+
+- start with the current repo foundations
+- use small accelerators where they give real value immediately
+- keep heavy libraries as explicit later extensions
+- do not make dependency growth the bottleneck for shipping the first useful
+  versions of these modules
 
 ---
 
@@ -534,6 +724,9 @@ repeat
 This is additive.
 It does not require throwing away the existing guided loop.
 
+It also does not require turning the existing stage-checkpoint contracts into
+another massive catch-all payload.
+
 ---
 
 ## What Not To Build
@@ -593,6 +786,12 @@ Work:
 - `scene_relation_graph(...)`
 - `scene_visibility_report(...)`
 
+Important delivery rule:
+
+- keep them as explicit read-only tools/modules
+- use goal-aware disclosure on `llm-guided`
+- do not make them unconditional bootstrap-visible tools for every task domain
+
 ### Phase 3: Strengthen Repair Planner Semantics
 
 Goal:
@@ -651,6 +850,8 @@ The right v2 design is:
 - not "add one big Scene Graph Engine"
 - but "expose typed spatial artifacts that make the current guided loop easier
   for LLMs to reason about"
+- while keeping `llm-guided` small and using on-demand expansion for richer
+  spatial context
 
 The most valuable next additions are:
 

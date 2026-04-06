@@ -18,6 +18,12 @@ Documentation for the MCP Server (Client Side).
 - **[Vision Layer Docs](../_VISION/README.md)**
   - Working notes for vision runtime choices, capture bundles, reference context, and macro/workflow integration.
   - Includes provider/model notes plus the external `vision_contract_profile` model, so transport provider selection stays separate from prompt/schema/parser routing.
+- **[LLM Guide v2](../LLM_GUIDE_V2.md)**
+  - Strategy doc for typed spatial state, relation/view graphs, and bounded guided handoffs for stronger LLM spatial reasoning.
+- **[Spatial Intelligence Research Brief](../FEATURES_LLM_GUIDE_V1.md)**
+  - External research handoff describing the current MCP surface plus open questions for LLM/VLM spatial reasoning and geometry-aware planning.
+- **[Spatial Intelligence Upgrade Proposal](../Spacial-intelligence-upgrades-for-blender-ai-mcp.md)**
+  - Research-derived proposal for scene graphs, Chain-of-Symbol notation, and supporting geometry-library options.
 - **[MCP Client Config Examples](./MCP_CLIENT_CONFIG_EXAMPLES.md)**
   - Ready-to-paste local MCP client config examples for `llm-guided`, legacy surfaces, MLX vision, OpenRouter, and Gemini, including optional external contract-profile overrides.
 - **[Router / Runtime Responsibility Boundaries](../_ROUTER/RESPONSIBILITY_BOUNDARIES.md)**

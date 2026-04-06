@@ -12,6 +12,15 @@ This folder is the canonical place to describe:
 - evaluation constraints and model-comparison notes
 - real hybrid-loop creature regression guidance
 
+## Related Spatial Docs
+
+Use these companion docs when the work crosses from bounded vision/runtime
+details into broader LLM spatial reasoning or product-surface strategy:
+
+- [LLM Guide v2](../LLM_GUIDE_V2.md)
+- [Spatial Intelligence Research Brief](../FEATURES_LLM_GUIDE_V1.md)
+- [Spatial Intelligence Upgrade Proposal](../Spacial-intelligence-upgrades-for-blender-ai-mcp.md)
+
 ## Current State
 
 The repo now has the first implementation scaffolding for the vision layer:

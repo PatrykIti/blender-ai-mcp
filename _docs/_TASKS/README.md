@@ -3,7 +3,7 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 8 tasks
+- **To Do:** 11 tasks
 - **In Progress:** 0 tasks
 - **Done:** 209
 - **Superseded:** 10
@@ -51,6 +51,8 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Scene & Rig Introspection
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-143](./TASK-143_Guided_Spatial_Scope_And_Relation_Graphs.md) | **Guided Spatial Scope and Relation Graphs** | 🔴 High | Board-level umbrella for adding typed scope and relation graph artifacts on top of the current truth layer, so guided sessions stop reconstructing structural anchors and pair relations from scattered measurements and prose. |
+| [TASK-144](./TASK-144_Camera_Aware_View_Graph_And_Visibility_Diagnostics.md) | **Camera-Aware View Graph and Visibility Diagnostics** | 🔴 High | Board-level umbrella for machine-readable view-space facts such as visibility, framing, occlusion, and coarse screen-space projection, so guided capture/review is easier for LLMs to reason about than raw images alone. |
 
 ### Reconstruction (Mesh, Material, Scene)
 | ID | Title | Priority | Notes |
@@ -64,6 +66,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) | **Expand External Vision Contract Profiles Across Qwen, Anthropic, OpenAI, and NVIDIA** | 🔴 High | Board-level follow-on after TASK-139 for extending the external `vision_contract_profile` architecture across additional multimodal families on the existing provider surface, with OpenRouter-first family routing/profile work and no new provider branches under this umbrella. |
+| [TASK-145](./TASK-145_Spatial_Repair_Planner_And_Sculpt_Handoff_Context.md) | **Spatial Repair Planner and Sculpt Handoff Context** | 🔴 High | Board-level umbrella for turning current scope/relation/view facts into stronger bounded repair-family selection and safer sculpt handoff context on the guided loop. |
 ---
 
 ## 🚧 In Progress

@@ -356,6 +356,8 @@ Interpretation:
 - [README](./README.md)
 - [ROUTER_ARCHITECTURE.md](./ROUTER_ARCHITECTURE.md)
 - [WORKFLOWS/workflow-execution-pipeline.md](./WORKFLOWS/workflow-execution-pipeline.md)
+- [LLM Guide v2](../LLM_GUIDE_V2.md)
+- [Spatial Intelligence Upgrade Proposal](../Spacial-intelligence-upgrades-for-blender-ai-mcp.md)
 - [TASK-083](../_TASKS/TASK-083_FastMCP_3x_Platform_Migration.md)
 - [TASK-084](../_TASKS/TASK-084_Dynamic_Tool_Discovery.md)
 - [TASK-089](../_TASKS/TASK-089_Typed_Contracts_and_Structured_Responses.md)
