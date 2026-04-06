@@ -42,6 +42,10 @@ easy for the loop to choose a technically-valid but semantically-wrong move:
   generation
 - add focused regression coverage for the targeted squirrel failure shapes
 
+## Docs To Update
+
+- `_docs/_MCP_SERVER/README.md`
+
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_reference_images.py`

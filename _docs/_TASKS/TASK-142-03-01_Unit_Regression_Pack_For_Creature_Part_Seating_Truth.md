@@ -25,10 +25,14 @@ gap/overlap logic without any immediate signal.
 ## Repository Touchpoints
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_structured_contract_delivery.py`
 - `tests/unit/tools/scene/test_scene_contracts.py`
 - `tests/unit/tools/macro/test_macro_cleanup_part_intersections.py`
 - `tests/unit/tools/macro/test_macro_align_part_with_contact.py`
 - `tests/unit/tools/macro/test_macro_attach_part_to_surface.py`
+- `tests/unit/tools/scene/test_macro_cleanup_part_intersections_mcp.py`
+- `tests/unit/tools/scene/test_macro_align_part_with_contact_mcp.py`
+- `tests/unit/tools/scene/test_macro_attach_part_to_surface_mcp.py`
 
 ## Acceptance Criteria
 
@@ -43,13 +47,21 @@ gap/overlap logic without any immediate signal.
 - add macro-selection regressions for overlap vs attachment cases
 - add macro-report regressions for seated vs floating vs intersecting outcomes
 
+## Docs To Update
+
+- `_docs/_MCP_SERVER/README.md`
+
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_structured_contract_delivery.py`
 - `tests/unit/tools/scene/test_scene_contracts.py`
 - `tests/unit/tools/macro/test_macro_cleanup_part_intersections.py`
 - `tests/unit/tools/macro/test_macro_align_part_with_contact.py`
 - `tests/unit/tools/macro/test_macro_attach_part_to_surface.py`
+- `tests/unit/tools/scene/test_macro_cleanup_part_intersections_mcp.py`
+- `tests/unit/tools/scene/test_macro_align_part_with_contact_mcp.py`
+- `tests/unit/tools/scene/test_macro_attach_part_to_surface_mcp.py`
 
 ## Changelog Impact
 

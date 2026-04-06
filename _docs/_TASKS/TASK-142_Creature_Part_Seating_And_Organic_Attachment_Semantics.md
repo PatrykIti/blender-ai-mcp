@@ -95,29 +95,38 @@ This follow-on does **not** cover:
 - `server/adapters/mcp/areas/reference.py`
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/contracts/scene.py`
-- `server/adapters/mcp/vision/reporting.py`
 - `server/application/tool_handlers/macro_handler.py`
 - `server/router/infrastructure/tools_metadata/scene/`
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_structured_contract_delivery.py`
 - `tests/unit/tools/macro/test_macro_cleanup_part_intersections.py`
+- `tests/unit/tools/scene/test_macro_attach_part_to_surface_mcp.py`
+- `tests/unit/tools/scene/test_macro_align_part_with_contact_mcp.py`
+- `tests/unit/tools/scene/test_macro_cleanup_part_intersections_mcp.py`
 - `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 - `tests/e2e/tools/macro/test_macro_cleanup_part_intersections.py`
 - `tests/e2e/tools/scene/test_scene_assert_tools.py`
 - `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/README.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 - `_docs/_TASKS/README.md`
 
 ## Docs To Update
 
 - `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/README.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 - `_docs/_TASKS/README.md`
 
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_structured_contract_delivery.py`
 - `tests/unit/tools/macro/test_macro_cleanup_part_intersections.py`
+- `tests/unit/tools/scene/test_macro_attach_part_to_surface_mcp.py`
+- `tests/unit/tools/scene/test_macro_align_part_with_contact_mcp.py`
+- `tests/unit/tools/scene/test_macro_cleanup_part_intersections_mcp.py`
 - `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 - `tests/e2e/tools/macro/test_macro_cleanup_part_intersections.py`

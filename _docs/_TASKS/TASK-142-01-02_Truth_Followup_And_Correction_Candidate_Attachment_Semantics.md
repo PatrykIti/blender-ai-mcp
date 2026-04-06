@@ -34,6 +34,7 @@ because the operator still needs to know whether a pair is:
 - `server/adapters/mcp/contracts/reference.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/tools/scene/test_scene_contracts.py`
+- `_docs/_MCP_SERVER/README.md`
 
 ## Acceptance Criteria
 
@@ -51,6 +52,10 @@ because the operator still needs to know whether a pair is:
 - align candidate summaries, priorities, and evidence kinds with the new
   relation taxonomy
 - add focused contract-level regression coverage
+
+## Docs To Update
+
+- `_docs/_MCP_SERVER/README.md`
 
 ## Tests To Add/Update
 
