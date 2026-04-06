@@ -79,6 +79,30 @@ It should also preserve the core `llm-guided` constraint:
 - richer view-space diagnostics should be available on demand when the current
   task and goal actually need them
 
+Actual runtime/code seams already in place:
+
+- `server/domain/tools/scene.py`,
+  `server/application/tool_handlers/scene_handler.py`, and
+  `blender_addon/application/handlers/scene.py` already carry the
+  named-camera vs `USER_PERSPECTIVE` split for `scene_get_viewport(...)`
+- `blender_addon/application/handlers/scene.py` already exposes
+  `get_view_state(...)`, `restore_view_state(...)`, and
+  `set_standard_view(...)`, which the capture path reuses for bounded
+  viewport mutations
+- `server/adapters/mcp/vision/capture_runtime.py` already composes
+  `scene_isolate_object(...)`, `scene_camera_focus(...)`,
+  `scene_camera_orbit(...)`, `snapshot_state(...)`, and view-state restore for
+  deterministic stage captures
+- `server/adapters/mcp/areas/reference.py` already keeps
+  `reference_compare_current_view(...)` as a thin capture-then-compare wrapper,
+  while `reference_compare_stage_checkpoint(...)` /
+  `reference_iterate_stage_checkpoint(...)` already carry dense truth/vision
+  payloads that should not become the default home for a full view graph
+- `server/adapters/mcp/transforms/visibility_policy.py` and
+  `server/adapters/mcp/guided_mode.py` already own `llm-guided` surface
+  shaping, so goal-aware disclosure belongs there rather than in the router or
+  in prompt-only heuristics
+
 ## Business Outcome
 
 If this umbrella is done correctly, the repo gains:
@@ -239,20 +263,38 @@ This umbrella does **not** cover:
 - `server/application/tool_handlers/scene_handler.py`
 - `server/adapters/mcp/areas/scene.py`
 - `server/adapters/mcp/contracts/scene.py`
+- `server/adapters/mcp/vision/capture_runtime.py`
 - `server/adapters/mcp/areas/reference.py`
+- `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/transforms/visibility_policy.py`
+- `server/adapters/mcp/guided_mode.py`
 - `server/router/infrastructure/tools_metadata/scene/`
+- `server/router/infrastructure/tools_metadata/reference/`
 - `blender_addon/application/handlers/scene.py`
+- `blender_addon/__init__.py`
+- `blender_addon/infrastructure/rpc_server.py`
+- `tests/unit/tools/scene/test_scene_contracts.py`
+- `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
+- `tests/unit/tools/scene/test_view_state.py`
+- `tests/unit/tools/scene/test_viewport_control.py`
 - `tests/unit/tools/scene/test_mcp_viewport_output.py`
 - `tests/unit/tools/scene/test_camera_focus.py`
 - `tests/unit/tools/scene/test_camera_orbit.py`
 - `tests/unit/tools/scene/test_isolate_object.py`
+- `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_guided_mode.py`
+- `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
+- `tests/unit/adapters/mcp/test_provider_inventory.py`
+- `tests/unit/adapters/mcp/test_tool_inventory.py`
+- `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/e2e/tools/scene/test_scene_get_viewport.py`
 - `tests/e2e/tools/scene/test_scene_get_viewport_camera.py`
 - `tests/e2e/tools/scene/test_camera_focus.py`
 - `tests/e2e/tools/scene/test_camera_orbit.py`
 - `tests/e2e/tools/scene/test_isolate_object.py`
+- `tests/e2e/vision/`
 - `_docs/LLM_GUIDE_V2.md`
+- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/_PROMPTS/README.md`
 - `_docs/_VISION/README.md`
@@ -261,24 +303,37 @@ This umbrella does **not** cover:
 ## Docs To Update
 
 - `_docs/LLM_GUIDE_V2.md`
+- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/_PROMPTS/README.md`
 - `_docs/_VISION/README.md`
 - `_docs/_TESTS/README.md`
-- `_docs/_TASKS/README.md`
+- `_docs/_TASKS/README.md` when the execution branch is allowed to sync the
+  board state
 
 ## Tests To Add/Update
 
 - `tests/unit/tools/scene/test_mcp_viewport_output.py`
+- `tests/unit/tools/scene/test_scene_contracts.py`
+- `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
+- `tests/unit/tools/scene/test_view_state.py`
+- `tests/unit/tools/scene/test_viewport_control.py`
 - `tests/unit/tools/scene/test_camera_focus.py`
 - `tests/unit/tools/scene/test_camera_orbit.py`
 - `tests/unit/tools/scene/test_isolate_object.py`
+- `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
+- `tests/unit/adapters/mcp/test_guided_mode.py`
+- `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
+- `tests/unit/adapters/mcp/test_provider_inventory.py`
+- `tests/unit/adapters/mcp/test_tool_inventory.py`
+- `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/e2e/tools/scene/test_scene_get_viewport.py`
 - `tests/e2e/tools/scene/test_scene_get_viewport_camera.py`
 - `tests/e2e/tools/scene/test_camera_focus.py`
 - `tests/e2e/tools/scene/test_camera_orbit.py`
 - `tests/e2e/tools/scene/test_isolate_object.py`
+- `tests/e2e/vision/`
 
 ## Changelog Impact
 
@@ -286,15 +341,26 @@ This umbrella does **not** cover:
 
 ## Execution Structure
 
-Planned execution slices:
+| Order | Subtask | Depends On | Purpose |
+|------|---------|------------|---------|
+| 1 | [TASK-144-01](./TASK-144-01_Projection_View_Space_Contract_And_Runtime_Foundation.md) | TASK-121-03-03, TASK-121-03-04, TASK-121-03-05 | Reuse the existing named-camera / `USER_PERSPECTIVE` capture stack to define one typed view-space seam and Blender-side projection foundation |
+| 2 | [TASK-144-02](./TASK-144-02_Visibility_Report_Contract_And_Read_Surface.md) | TASK-144-01 | Build the actual visibility-report contract and narrow read-only MCP surface without turning compare/iterate into the default carrier |
+| 3 | [TASK-144-03](./TASK-144-03_Goal_Aware_Disclosure_Guided_Adoption_And_Regression_Pack.md) | TASK-144-01, TASK-144-02 | Keep `llm-guided` small, wire view diagnostics into guided/reference flows only on demand, and lock the behavior with docs/regressions |
 
-- Slice A: visibility-report and projection contracts plus lightweight delivery model
-- Slice B: goal-aware disclosure and runtime implementation
-- Slice C: guided capture adoption, regression pack, and docs
+Deliberate split:
+
+- projection/view-space foundation lands before visibility verdicts so the
+  report is derived from one explicit runtime seam instead of ad hoc adapter
+  logic
+- visibility reporting remains separate from guided adoption so the repo can
+  enforce the `reference_compare_*` / `reference_iterate_*` payload boundary
+- guided adoption remains a FastMCP visibility/discovery concern plus bounded
+  reference-loop integration, not a new router authority layer
 
 ## Status / Board Update
 
-- promote this as a board-level umbrella for view-space diagnostics that make
-  capture-aware guided work more legible to LLMs
-- keep board tracking on `_docs/_TASKS/README.md` until visibility, projection,
-  docs, and regression scope are aligned
+- this planning pass decomposes TASK-144 into execution-ready children aligned
+  to the current code seams in `scene`, `reference`, and `visibility_policy`
+- `_docs/_TASKS/README.md` is intentionally unchanged in this branch per
+  operator constraint; board sync is deferred to the first implementation
+  branch that is allowed to touch the task board

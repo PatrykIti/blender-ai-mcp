@@ -75,6 +75,29 @@ It should also preserve the current product model:
 - richer planner detail available on demand when the current goal/phase
   justifies it
 
+## Current Code Alignment
+
+The real implementation baseline for this umbrella already lives in the staged
+reference loop:
+
+- `reference_compare_stage_checkpoint(...)` and
+  `reference_iterate_stage_checkpoint(...)` assemble the current compare /
+  iterate payload
+- `_build_correction_candidates(...)` merges truth, macro, and vision evidence
+- `_select_refinement_route(...)` emits the current bounded family selector
+- `_build_refinement_handoff(...)` emits the current recommendation-only
+  sculpt handoff
+- `ReferenceHybridBudgetControlContract` already guards payload size for
+  compare / iterate responses
+- `build_visibility_rules(...)` and `build_visibility_diagnostics(...)`
+  currently keep sculpt hidden on the default `llm-guided` surface
+- prompt docs already mention `refinement_route` / `refinement_handoff`, but
+  current planner-first operating guidance is still partial and inconsistent
+
+That means TASK-145 should evolve existing compare / iterate contracts and
+guided-surface policy into a stronger planner layer. It should not introduce a
+second autonomous workflow engine beside the current reference loop.
+
 ## Business Outcome
 
 If this umbrella is done correctly, the repo gains:
@@ -248,21 +271,38 @@ This umbrella does **not** cover:
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/contracts/scene.py`
 - `server/adapters/mcp/areas/scene.py`
+- `server/adapters/mcp/areas/sculpt.py`
 - `server/adapters/mcp/transforms/visibility_policy.py`
+- `server/adapters/mcp/guided_mode.py`
+- `server/adapters/mcp/platform/capability_manifest.py`
+- `server/adapters/mcp/prompts/prompt_catalog.py`
 - `server/router/infrastructure/tools_metadata/scene/`
 - `server/router/infrastructure/tools_metadata/sculpt/`
 - `server/router/infrastructure/tools_metadata/reference/`
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
+- `tests/unit/adapters/mcp/test_prompt_catalog.py`
+- `tests/unit/adapters/mcp/test_guided_mode.py`
+- `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
+- `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
+- `tests/e2e/vision/test_reference_guided_creature_comparison.py`
 - `tests/e2e/tools/sculpt/test_sculpt_tools.py`
 - `_docs/LLM_GUIDE_V2.md`
-- `_docs/_VISION/README.md`
 - `_docs/_PROMPTS/README.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
-- `_docs/_MCP_SERVER/README.md`
-- `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md`
+- `_docs/_VISION/CROSS_DOMAIN_REFINEMENT_ROUTING_EVAL.md`
+- `_docs/_VISION/README.md`
+
+## Execution Structure
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-145-01](./TASK-145-01_Repair_Planner_Payload_And_Family_Selection_Policy.md) | Turn the current `refinement_route` baseline into a real bounded repair-planner contract with explicit payload shape, provenance, and family-selection policy |
+| 2 | [TASK-145-02](./TASK-145-02_Sculpt_Handoff_Context_And_Precondition_Model.md) | Upgrade the current recommendation-only sculpt handoff into a typed local-context / precondition model without widening sculpt into a default family |
+| 3 | [TASK-145-03](./TASK-145-03_Guided_Adoption_Visibility_Docs_And_Regression_Pack.md) | Deliver planner-first adoption on `llm-guided` through visibility, prompts, docs, and regression coverage while keeping the surface small |
 
 ## Docs To Update
 
@@ -272,31 +312,27 @@ This umbrella does **not** cover:
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md`
-- `_docs/_TASKS/README.md`
 
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
+- `tests/unit/adapters/mcp/test_prompt_catalog.py`
+- `tests/unit/adapters/mcp/test_guided_mode.py`
+- `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
+- `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
+- `tests/e2e/vision/test_reference_guided_creature_comparison.py`
 - focused sculpt-handoff regression coverage in `tests/e2e/tools/sculpt/`
 
 ## Changelog Impact
 
 - add a dedicated `_docs/_CHANGELOG/*` entry when this umbrella ships
 
-## Execution Structure
-
-Planned execution slices:
-
-- Slice A: repair-planner payload, family-selection policy, and lightweight delivery model
-- Slice B: goal-aware disclosure plus sculpt-handoff context and precondition model
-- Slice C: guided-loop adoption, regression pack, and docs
-
 ## Status / Board Update
 
-- promote this as a board-level umbrella for planner-quality guided correction
-  and safer sculpt handoff
-- keep board tracking on `_docs/_TASKS/README.md` until planner, sculpt
-  preconditions, docs, and regressions are aligned
+- do not touch `_docs/_TASKS/README.md` in this execution-tree planning branch
+- if this umbrella later changes promoted board state or closes, update the
+  board in the same allowed branch as the implementation/status change

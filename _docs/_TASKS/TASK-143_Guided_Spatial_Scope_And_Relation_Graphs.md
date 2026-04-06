@@ -93,6 +93,30 @@ That should be delivered as:
 It should **not** be delivered by turning stage compare / iterate responses
 into the default carrier for yet another heavyweight graph payload.
 
+Actual runtime/code seams already in place:
+
+- `server/adapters/mcp/areas/reference.py` already owns the current
+  `_assembled_target_scope(...)`, `_select_scope_primary_target(...)`,
+  `_truth_bundle_pairs(...)`, `_build_correction_truth_bundle(...)`,
+  `_build_truth_followup(...)`, and `_build_correction_candidates(...)`
+  helpers, so the current spatial reasoning core is real code, not just doc
+  intent
+- `server/adapters/mcp/contracts/scene.py` and
+  `server/adapters/mcp/contracts/reference.py` already define the typed
+  envelopes that this follow-on must extend without turning
+  `reference_compare_stage_checkpoint(...)` /
+  `reference_iterate_stage_checkpoint(...)` into default graph carriers
+- `blender_addon/application/handlers/scene.py` already exposes
+  `get_bounding_box(...)`, `measure_gap(...)`, `measure_alignment(...)`,
+  `measure_overlap(...)`, and `assert_contact(...)`, including mesh-surface
+  semantics backed by Blender-side `BVHTree` where possible
+- `server/adapters/mcp/transforms/visibility_policy.py` already owns
+  `llm-guided` phase/handoff shaping, so goal-aware disclosure belongs there
+  rather than in prompt-only heuristics
+- `server/router/infrastructure/tools_metadata/scene/` already covers
+  inspect/measure/assert/macro tools, but it does not yet expose explicit
+  scope-graph or relation-graph artifacts
+
 ## Business Outcome
 
 If this umbrella is done correctly, the repo gains:
@@ -140,6 +164,15 @@ For the first wave, the implementation should therefore be framed as:
 
 This umbrella should not assume that heavy geometry dependencies must land
 before the first scope/relation graph contracts ship.
+
+One implementation constraint from the current code baseline should stay
+explicit:
+
+- the current scope/relation derivation logic is still mostly private helper
+  logic inside `server/adapters/mcp/areas/reference.py`
+- the intended follow-on direction is to turn that into a reusable shared
+  derivation layer or service instead of letting the MCP wrapper become the
+  long-term home for graph-building logic
 
 ## Dependency Policy
 
@@ -221,6 +254,9 @@ before the first scope/relation graph contracts ship.
   - support
   - symmetry-oriented pair interpretation
 - keep the relation graph compact enough for frequent guided-loop use
+- keep pair expansion bounded and goal-aware / phase-aware; the current
+  anchor-first `primary_to_others` baseline should not silently turn into an
+  unbounded all-to-all graph
 
 ### Guided Loop Adoption
 
@@ -287,12 +323,17 @@ This umbrella does **not** cover:
 - `server/adapters/mcp/areas/reference.py`
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/transforms/visibility_policy.py`
+- `server/adapters/mcp/dispatcher.py`
+- `server/infrastructure/di.py`
+- `server/application/services/`
 - `server/router/infrastructure/tools_metadata/scene/`
 - `blender_addon/application/handlers/scene.py`
 - `tests/unit/tools/scene/test_scene_contracts.py`
 - `tests/unit/tools/scene/test_scene_measure_tools.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_structured_contract_delivery.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
+- `tests/unit/tools/test_handler_rpc_alignment.py`
 - `tests/e2e/tools/scene/test_scene_measure_tools.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 - `_docs/LLM_GUIDE_V2.md`
@@ -308,14 +349,17 @@ This umbrella does **not** cover:
 - `_docs/_PROMPTS/README.md`
 - `_docs/_VISION/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
-- `_docs/_TASKS/README.md`
+- `_docs/_TASKS/README.md` when the execution branch is allowed to sync the
+  board state
 
 ## Tests To Add/Update
 
 - `tests/unit/tools/scene/test_scene_contracts.py`
 - `tests/unit/tools/scene/test_scene_measure_tools.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_structured_contract_delivery.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
+- `tests/unit/tools/test_handler_rpc_alignment.py`
 - `tests/e2e/tools/scene/test_scene_measure_tools.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 
@@ -325,15 +369,17 @@ This umbrella does **not** cover:
 
 ## Execution Structure
 
-Planned execution slices:
-
-- Slice A: scope-graph and relation-graph contracts plus lightweight delivery model
-- Slice B: goal-aware disclosure and truth-layer derivation
-- Slice C: guided-loop adoption, regression pack, and docs
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-143-01](./TASK-143-01_Scope_Graph_Contract_And_Read_Only_Surface.md) | Extract and formalize the current scope/anchor logic into one reusable scope-graph contract plus a separate read-only scene surface |
+| 2 | [TASK-143-02](./TASK-143-02_Relation_Graph_Derivation_And_Truth_Layer_Convergence.md) | Derive a compact relation graph from the existing truth primitives and align truth-followup / candidate semantics with that graph model |
+| 3 | [TASK-143-03](./TASK-143-03_Goal_Aware_Disclosure_Guided_Adoption_And_Regression_Pack.md) | Gate the new graph layer behind goal/phase-aware disclosure, keep it on-demand, and lock the story with regression/docs coverage |
 
 ## Status / Board Update
 
 - promote this as a board-level umbrella for spatial-state artifacts that make
   the current guided product surface easier for LLMs to reason about
-- keep board tracking on `_docs/_TASKS/README.md` until scope graph, relation
-  graph, docs, and regression coverage are aligned
+- keep board tracking on this parent task until scope graph, relation graph,
+  docs, and regression coverage are aligned
+- this planning pass intentionally does **not** modify `_docs/_TASKS/README.md`
+  per explicit user constraint
