@@ -63,6 +63,28 @@ If a model family cannot be exercised correctly through the current provider
 inventory, record that as a bounded follow-on or explicit unsupported boundary
 instead of broadening provider scope inside `TASK-140`.
 
+## Current Code Baseline
+
+Current code intentionally starts from a small, closed vocabulary:
+
+- `VISION_EXTERNAL_PROVIDER` / `VisionExternalProviderName`:
+  - `generic`
+  - `openrouter`
+  - `google_ai_studio`
+- `VISION_EXTERNAL_CONTRACT_PROFILE` / `VisionContractProfile`:
+  - `generic_full`
+  - `google_family_compare`
+
+That baseline is the starting point for `TASK-140`.
+
+Within this umbrella:
+
+- provider vocabulary stays closed
+- provider validators stay aligned with the existing three provider values
+- typed-surface expansion happens through `VisionContractProfile` and
+  `VisionAssistContract.vision_contract_profile`, not through new provider
+  enums
+
 ## Business Problem
 
 After `TASK-139`, the repo has a correct architectural seam, but the profile
@@ -203,9 +225,14 @@ This umbrella does **not** cover:
   Google-family compare profile
 - any newly introduced external `vision_contract_profile` values are carried
   through the full typed surface:
-  - runtime/config vocabulary and validators
-  - public `VisionAssistContract` result contracts
+  - `VisionContractProfile` runtime/config vocabulary and validators
+  - public `VisionAssistContract.vision_contract_profile` result contracts
   - automated regression coverage for those public result surfaces
+- if `server/infrastructure/config.py` or `server/adapters/mcp/vision/config.py`
+  change under this umbrella, those changes are limited to
+  `VISION_EXTERNAL_CONTRACT_PROFILE` / `VisionContractProfile` handling; the
+  `VISION_EXTERNAL_PROVIDER` vocabulary remains `generic`, `openrouter`, and
+  `google_ai_studio`
 - the `TASK-139` precedence model remains intact:
   - explicit override still wins
   - recognized family/model-id routing can select a stricter profile

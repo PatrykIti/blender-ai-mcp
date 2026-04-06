@@ -11,6 +11,22 @@ resolve Claude-specific `vision_contract_profile` values on the existing
 provider surface, without introducing a dedicated Anthropic provider by
 default.
 
+## Code Constraint
+
+This leaf may extend contract-profile typing, but it does not extend provider
+typing.
+
+- `VISION_EXTERNAL_PROVIDER` / `VisionExternalProviderName` stay:
+  - `generic`
+  - `openrouter`
+  - `google_ai_studio`
+- changes in `server/infrastructure/config.py` and
+  `server/adapters/mcp/vision/config.py` are limited to
+  `VISION_EXTERNAL_CONTRACT_PROFILE` / `VisionContractProfile`
+- changes in `server/adapters/mcp/sampling/result_types.py` are limited to
+  keeping `VisionAssistContract.vision_contract_profile` aligned with
+  `VisionContractProfile`
+
 ## Repository Touchpoints
 
 - `server/infrastructure/config.py`
@@ -28,8 +44,10 @@ default.
   expose any Claude-specific `vision_contract_profile` cleanly
 - config precedence remains deterministic and compatible with `TASK-139`
 - unknown or non-matching Claude-family ids still fall back to `generic_full`
-- this slice does not require a first-class Anthropic provider alias unless
-  the current provider surface is proven insufficient
+- `VISION_EXTERNAL_PROVIDER` vocabulary remains unchanged
+- this slice does not require a first-class Anthropic provider alias or
+  provider enum expansion; if the current provider surface is insufficient,
+  record that as follow-on work instead
 
 ## Docs To Update
 

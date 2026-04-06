@@ -16,6 +16,21 @@ families.
 Without a dedicated routing leaf, Qwen support will drift back into ad hoc
 substring checks scattered across runtime, prompting, or parser code.
 
+## Code Constraint
+
+This leaf extends the contract-profile layer, not the provider layer.
+
+- `VISION_EXTERNAL_PROVIDER` / `VisionExternalProviderName` stay:
+  - `generic`
+  - `openrouter`
+  - `google_ai_studio`
+- work in `server/infrastructure/config.py` and
+  `server/adapters/mcp/vision/config.py` is limited to
+  `VISION_EXTERNAL_CONTRACT_PROFILE` / `VisionContractProfile`
+- work in `server/adapters/mcp/sampling/result_types.py` is limited to keeping
+  `VisionAssistContract.vision_contract_profile` aligned with
+  `VisionContractProfile`
+
 ## Repository Touchpoints
 
 - `server/infrastructure/config.py`
@@ -29,13 +44,14 @@ substring checks scattered across runtime, prompting, or parser code.
 ## Acceptance Criteria
 
 - Qwen-specific `vision_contract_profile` values are explicit and typed across:
-  - runtime/config vocabulary and validators
-  - public `VisionAssistContract` result contracts
+  - `VisionContractProfile` runtime/config vocabulary and validators
+  - public `VisionAssistContract.vision_contract_profile` result contracts
 - model-id routing covers the docs-reviewed Qwen families intentionally
 - explicit override precedence from `TASK-139` still wins over Qwen auto-match
 - unknown or non-matching Qwen-family ids still fall back to `generic_full`
 - Qwen family selection logic is centralized in runtime resolution, not
   duplicated across prompting/backend/parsing call sites
+- `VISION_EXTERNAL_PROVIDER` vocabulary remains unchanged
 
 ## Docs To Update
 

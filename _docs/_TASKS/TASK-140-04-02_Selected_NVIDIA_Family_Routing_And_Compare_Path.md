@@ -11,6 +11,24 @@ Implement the runtime/config/backend routing for the NVIDIA compare-capable
 subset on the existing provider surface only, without broadening support
 to unrelated NVIDIA visual model classes.
 
+## Code Constraint
+
+This leaf operates on family/profile routing within the current provider and
+result-contract inventory.
+
+- `VISION_EXTERNAL_PROVIDER` / `VisionExternalProviderName` stay:
+  - `generic`
+  - `openrouter`
+  - `google_ai_studio`
+- changes in `server/infrastructure/config.py` and
+  `server/adapters/mcp/vision/config.py` are limited to
+  `VISION_EXTERNAL_CONTRACT_PROFILE` / `VisionContractProfile`
+- changes in `server/adapters/mcp/sampling/result_types.py` are limited to
+  keeping `VisionAssistContract.vision_contract_profile` aligned with
+  `VisionContractProfile`
+- backend changes stay inside the current `openai_compatible_external` path;
+  this leaf does not add a provider-specific transport branch
+
 ## Repository Touchpoints
 
 - `server/infrastructure/config.py`
@@ -30,10 +48,12 @@ to unrelated NVIDIA visual model classes.
 - request assumptions are validated for that path
 - runtime selection does not imply support for excluded NVIDIA visual families
 - unknown or non-matching NVIDIA-family ids still fall back to `generic_full`
-- this slice does not assume a new NVIDIA-specific provider branch unless the
-  current provider surface is proven insufficient
+- `VISION_EXTERNAL_PROVIDER` vocabulary remains unchanged
+- this slice does not assume a new NVIDIA-specific provider branch or provider
+  enum expansion; if the current provider surface is insufficient, record that
+  as follow-on work instead
 - any newly introduced NVIDIA-specific `vision_contract_profile` values remain
-  typed in public `VisionAssistContract` result surfaces
+  typed in public `VisionAssistContract.vision_contract_profile` result surfaces
 
 ## Docs To Update
 

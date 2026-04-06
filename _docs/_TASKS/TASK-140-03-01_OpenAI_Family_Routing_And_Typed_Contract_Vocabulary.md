@@ -10,6 +10,22 @@ Make the OpenAI family routing story explicit in config/runtime instead of
 relying on a vague "generic external" assumption for all OpenAI-family model
 ids on the existing provider surface.
 
+## Code Constraint
+
+This leaf works inside the current provider inventory and expands only the
+contract-profile layer.
+
+- `VISION_EXTERNAL_PROVIDER` / `VisionExternalProviderName` stay:
+  - `generic`
+  - `openrouter`
+  - `google_ai_studio`
+- `server/infrastructure/config.py` and `server/adapters/mcp/vision/config.py`
+  may change only for `VISION_EXTERNAL_CONTRACT_PROFILE` /
+  `VisionContractProfile` typing and validation
+- `server/adapters/mcp/sampling/result_types.py` may change only to keep
+  `VisionAssistContract.vision_contract_profile` synchronized with
+  `VisionContractProfile`
+
 ## Repository Touchpoints
 
 - `server/infrastructure/config.py`
@@ -28,7 +44,8 @@ ids on the existing provider surface.
 - family-level routing remains compatible with the `TASK-139` override model
 - unknown or non-matching OpenAI-family ids still fall back to `generic_full`
 - any newly introduced OpenAI-specific `vision_contract_profile` values remain
-  typed in public `VisionAssistContract` result surfaces
+  typed in public `VisionAssistContract.vision_contract_profile` result surfaces
+- `VISION_EXTERNAL_PROVIDER` vocabulary remains unchanged
 
 ## Docs To Update
 
