@@ -2,8 +2,14 @@
 
 **Parent:** [TASK-141-01](./TASK-141-01_Guided_Call_Path_Compatibility_And_Public_Contract_Ergonomics.md)
 **Depends On:** [TASK-141-01-01](./TASK-141-01-01_Call_Tool_Wrapper_Aliases_And_Cleanup_Flag_Compatibility.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** `reference_images(action="attach", source_path=...)`
+now holds as one explicit guided contract on both direct and proxied paths.
+Batch-like attach drift returns structured recovery guidance, and pending
+reference adoption stays aligned with the canonical one-reference-per-call
+story.
 
 ## Objective
 
@@ -81,3 +87,8 @@ This leaf owns the real active-surface reference-intake story:
 - update the parent task summary so it explicitly calls out the final
   `reference_images(...)` attach policy and active-surface parity result when
   this leaf closes
+
+## Validation
+
+- `poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- `poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py -q`

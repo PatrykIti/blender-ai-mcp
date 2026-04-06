@@ -50,6 +50,11 @@ Copy/paste-ready prompt templates for LLMs controlling Blender via this MCP serv
 > not be the documented default form.
 > `manual_tools_no_router` is a different operating mode, not an escape hatch
 > for the active `llm-guided` shaped surface mid-session.
+> The same guided contract hardening now applies on directly visible tools as
+> well as through `call_tool(...)`: batch-like `reference_images(...)` attach
+> drift, legacy `collection_manage(..., name=...)`, legacy cleanup split flags,
+> and unsupported primitive shortcuts now return actionable guidance instead of
+> raw schema noise on the guided surface.
 > Prefer workflow/macro tools over raw low-level atomics, and treat
 > before/after capture plus deterministic verification as the normal way to
 > judge whether a change is actually correct.
@@ -121,7 +126,8 @@ Interpretation:
     checkpoint capture -> `reference_compare_checkpoint(...)`, `reference_compare_current_view(...)`, `reference_compare_stage_checkpoint(...)`, or `reference_iterate_stage_checkpoint(...)` -> use bounded mismatch/correction hints for the next iteration
     only call staged compare/iterate when `guided_reference_readiness.compare_ready == true`
     prioritize `loop_disposition`, then `refinement_route`, then `refinement_handoff`, then `correction_candidates`, then `truth_followup`, then `action_hints`, then `correction_focus`, then `silhouette_analysis`
-    if `reference_iterate_stage_checkpoint(...)` returns `loop_disposition="inspect_validate"`, stop free-form building and verify before continuing
+    if `reference_iterate_stage_checkpoint(...)` returns `loop_disposition="inspect_validate"`, stop free-form modeling and switch to inspect/measure/assert before continuing
+    if staged compare degrades but strong deterministic truth findings still remain, use the same inspect/measure/assert handoff instead of improvising another large free-form correction
 - if a tool is already directly visible on the current phase/surface, call it directly
 - only use `search_tools(...)` / `call_tool(...)` when discovery is actually needed
 - `call_tool(...)` cannot summon hidden internal tools by guessed name; `Unknown tool`

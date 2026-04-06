@@ -1,8 +1,13 @@
 # TASK-141-01: Guided Call Path Compatibility and Public Contract Ergonomics
 
 **Parent:** [TASK-141](./TASK-141_Guided_Creature_Run_Contract_And_Schema_Drift_Hardening.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** Guided utility/intake parity now holds on the active
+surface: `call_tool(...)`, direct `reference_images(...)`, and direct/proxied
+cleanup all use the same narrow compatibility envelope with actionable
+contract guidance instead of raw schema noise.
 
 ## Objective
 
@@ -87,3 +92,8 @@ surface intact.
 - keep board tracking on the parent `TASK-141`
 - do not promote this subtask independently unless the call-path policy needs a
   separate review/ship checkpoint
+
+## Validation
+
+- `poetry run pytest tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- `poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py -q`

@@ -593,6 +593,30 @@ def test_call_tool_can_canonicalize_legacy_scene_clean_scene_split_flags(monkeyp
     assert payload == "Scene cleaned."
 
 
+def test_direct_scene_clean_scene_can_canonicalize_legacy_split_flags(monkeypatch):
+    """Direct guided utility execution should keep the same cleanup compatibility policy as call_tool."""
+
+    class Handler:
+        def clean_scene(self, keep_lights_and_cameras: bool):
+            assert keep_lights_and_cameras is True
+            return "Scene cleaned."
+
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.get_scene_handler", lambda: Handler())
+
+    server = build_server("llm-guided")
+
+    async def run():
+        result = await server.call_tool(
+            "scene_clean_scene",
+            {"keep_lights": True, "keep_cameras": True},
+        )
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+
+    assert payload == "Scene cleaned."
+
+
 def test_call_tool_can_canonicalize_collection_manage_name_alias(monkeypatch):
     """Guided call_tool should tolerate legacy `name` for collection creation while keeping `collection_name` canonical."""
 
@@ -611,6 +635,32 @@ def test_call_tool_can_canonicalize_collection_manage_name_alias(monkeypatch):
         result = await server.call_tool(
             "call_tool",
             {"name": "collection_manage", "arguments": {"action": "create", "name": "Squirrel"}},
+        )
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+
+    assert "Created collection 'Squirrel'" in payload
+
+
+def test_direct_collection_manage_can_canonicalize_name_alias(monkeypatch):
+    """Direct guided build execution should tolerate the narrow `name` compatibility alias."""
+
+    class Handler:
+        def manage_collection(self, action, collection_name, new_name=None, parent_name=None, object_name=None):
+            assert action == "create"
+            assert collection_name == "Squirrel"
+            return "Created collection 'Squirrel' under Scene Collection"
+
+    monkeypatch.setattr("server.adapters.mcp.areas.collection.get_collection_handler", lambda: Handler())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    server = _build_phase_search_server(SessionPhase.BUILD)
+
+    async def run():
+        result = await server.call_tool(
+            "collection_manage",
+            {"action": "create", "name": "Squirrel"},
         )
         return _decode_tool_result(result)
 
@@ -638,6 +688,36 @@ def test_call_tool_rejects_ambiguous_legacy_scene_clean_scene_split_flags(monkey
             await server.call_tool(
                 "call_tool",
                 {"name": "scene_clean_scene", "arguments": {"keep_lights": True, "keep_cameras": False}},
+            )
+
+    asyncio.run(run())
+
+
+def test_direct_modeling_create_primitive_rejects_non_public_shape_with_actionable_guidance(monkeypatch):
+    """Direct guided build execution should fail loudly for primitive drift instead of raw schema noise."""
+
+    class Handler:
+        def create_primitive(self, primitive_type, radius=1.0, size=2.0, location=None, rotation=None, name=None):
+            raise AssertionError("Handler should not be reached for unsupported public primitive args")
+
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.get_modeling_handler", lambda: Handler())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    server = _build_phase_search_server(SessionPhase.BUILD)
+
+    async def run():
+        with pytest.raises(ToolError, match="modeling_transform_object\\(scale=\\.\\.\\.\\)"):
+            await server.call_tool(
+                "modeling_create_primitive",
+                {
+                    "primitive_type": "uv_sphere",
+                    "name": "Head",
+                    "location": [0.0, 0.0, 1.1],
+                    "scale": [0.42, 0.38, 0.38],
+                    "segments": 8,
+                    "rings": 6,
+                    "collection_name": "Squirrel",
+                },
             )
 
     asyncio.run(run())

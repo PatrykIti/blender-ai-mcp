@@ -1,8 +1,13 @@
 # TASK-141-03-01: `inspect_validate` Stop-and-Check Operator Story
 
 **Parent:** [TASK-141-03](./TASK-141-03_Inspect_Validate_Handoff_And_Regression_Pack.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** Runtime messaging and prompt/docs wording now agree
+that `loop_disposition="inspect_validate"` means stop free-form modeling and
+switch to inspect/measure/assert now. Degraded compare with strong truth
+signals follows the same operator story.
 
 ## Objective
 
@@ -70,3 +75,8 @@ across runtime and docs.
 - keep board tracking on `TASK-141`
 - record the final inspect/validate/degraded-compare operator story in the
   parent summary when this leaf closes
+
+## Validation
+
+- `poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- `poetry run pytest tests/e2e/integration/test_guided_inspect_validate_handoff.py -q`

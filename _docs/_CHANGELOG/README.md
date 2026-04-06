@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [215](./215-2026-04-06-guided-creature-contract-parity.md) | 2026-04-06 | **Guided creature contract parity on the active client surface** | - |
 | [214](./214-2026-04-06-reference-guided-creature-surface-and-perception.md) | 2026-04-06 | **Reference-guided creature surface and perception reliability** | - |
 | [213](./213-2026-04-05-external-vision-contract-profiles.md) | 2026-04-05 | **External vision contract profiles** | - |
 | [212](./212-2026-04-05-stage-compare-error-response-hardening.md) | 2026-04-05 | **Stage compare error response hardening** | - |

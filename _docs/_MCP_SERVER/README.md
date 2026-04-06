@@ -316,6 +316,17 @@ Current guided utility prep path:
 - the canonical guided `call_tool(...)` wrapper is `name=...` plus
   `arguments=...`; legacy `tool=...` / `params=...` aliases are compatibility-
   only
+- the same contract hardening now also applies on directly visible guided tools
+  instead of only through the proxy path:
+  - direct `scene_clean_scene(...)` accepts legacy split cleanup flags only in
+    the same narrow compatible form
+  - direct `reference_images(...)` attach catches batch-like `images=[...]` /
+    `source_paths=[...]` drift with actionable guidance
+  - direct `collection_manage(...)` keeps `collection_name` canonical while
+    tolerating the narrow legacy `name` alias
+  - direct `modeling_create_primitive(...)` rejects `scale`, `segments`,
+    `rings`, `subdivisions`, and primitive-time `collection_name` shortcuts
+    with actionable guidance instead of raw FastMCP schema noise
 
 Goal-scoped reference intake is now part of the guided entry layer:
 
@@ -453,6 +464,11 @@ instead of hidden sequencing assumptions.
   guided goal/session; stale pending refs for another goal do not block a ready
   staged compare/iterate path by themselves
 - staged compare/iterate now fail fast when the readiness payload is blocked
+- `loop_disposition="inspect_validate"` is a stop-and-check branch:
+  pause free-form modeling and switch to inspect/measure/assert immediately
+- if staged compare degrades but deterministic truth findings remain strong,
+  the same inspect/measure/assert handoff stays authoritative instead of
+  dropping the run back into ad hoc free-form modeling
 - `goal_override` is not a substitute for an active staged guided session on
   `reference_compare_stage_checkpoint()` / `reference_iterate_stage_checkpoint()`;
   use lower-level checkpoint/current-view compare only when you intentionally

@@ -46,6 +46,7 @@ from server.adapters.mcp.contracts.scene import (
     SceneTruthFollowupItemContract,
 )
 from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
+from server.adapters.mcp.guided_contract import canonicalize_reference_images_arguments
 from server.adapters.mcp.sampling.result_types import to_vision_assistant_contract
 from server.adapters.mcp.session_capabilities import (
     GuidedReferenceReadinessState,
@@ -2169,6 +2170,8 @@ async def reference_images(
     ctx: Context,
     action: str,
     source_path: str | None = None,
+    images: list[dict[str, Any]] | None = None,
+    source_paths: list[str] | None = None,
     reference_id: str | None = None,
     label: str | None = None,
     notes: str | None = None,
@@ -2263,6 +2266,28 @@ async def reference_images(
             removed_reference_id=reference_id,
             message=f"Removed reference image '{reference_id}'.",
         )
+
+    try:
+        canonical_arguments = canonicalize_reference_images_arguments(
+            {
+                key: value
+                for key, value in {
+                    "action": normalized_action,
+                    "source_path": source_path,
+                    "images": images,
+                    "source_paths": source_paths,
+                }.items()
+                if value is not None
+            }
+        )
+    except ValueError as exc:
+        return _as_response(
+            action="attach",
+            goal=session.goal,
+            references=_sorted_references(visible_references),
+            error=str(exc),
+        )
+    source_path = cast(str | None, canonical_arguments.get("source_path"))
 
     if not source_path:
         return _as_response(
@@ -2555,7 +2580,7 @@ async def reference_iterate_stage_checkpoint(
             stop_reason=compare_result.error or stop_reason,
             message=(
                 "Vision compare did not complete successfully, but deterministic truth findings are available. "
-                "Prefer inspect/measure/assert confirmation before another free-form build step."
+                "Stop free-form modeling and switch to inspect/measure/assert before another large change."
                 if truth_only_handoff
                 else "Stage iteration did not complete successfully."
             ),
@@ -2609,12 +2634,12 @@ async def reference_iterate_stage_checkpoint(
         if inspect_from_truth_signal:
             message = (
                 "Deterministic truth findings remain high-priority. "
-                "Prefer inspect/measure/assert confirmation before another free-form build step."
+                "Stop free-form modeling and switch to inspect/measure/assert now."
             )
         else:
             message = (
                 "Repeated correction focus persists across stage iterations. "
-                "Prefer inspect/measure/assert confirmation before another free-form build step."
+                "Stop free-form modeling and switch to inspect/measure/assert now."
             )
     elif continue_recommended:
         if correction_focus:

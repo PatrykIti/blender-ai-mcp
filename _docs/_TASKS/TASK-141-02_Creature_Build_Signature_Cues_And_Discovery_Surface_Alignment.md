@@ -2,8 +2,14 @@
 
 **Parent:** [TASK-141](./TASK-141_Guided_Creature_Run_Contract_And_Schema_Drift_Hardening.md)
 **Depends On:** [TASK-141-01](./TASK-141-01_Guided_Call_Path_Compatibility_And_Public_Contract_Ergonomics.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** Creature blockout signature cues now match the active
+guided surface instead of only local docs/helpers. Direct and proxied build
+calls share the same contract hardening, and focused search/docs updates now
+surface the canonical collection and primitive shapes under real client
+pressure.
 
 ## Objective
 
@@ -90,3 +96,8 @@ surface.
 - keep board tracking on the parent `TASK-141`
 - do not promote this subtask independently unless discovery/runtime
   signature-policy work needs its own ship gate
+
+## Validation
+
+- `poetry run pytest tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- `poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py -q`

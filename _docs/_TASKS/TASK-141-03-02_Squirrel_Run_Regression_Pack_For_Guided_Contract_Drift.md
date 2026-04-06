@@ -2,8 +2,13 @@
 
 **Parent:** [TASK-141-03](./TASK-141-03_Inspect_Validate_Handoff_And_Regression_Pack.md)
 **Depends On:** [TASK-141-03-01](./TASK-141-03-01_Inspect_Validate_Stop_And_Check_Operator_Story.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** The squirrel-run regression pack now protects the real
+guided client seams that motivated TASK-141: proxy/direct contract drift on the
+active surface plus `inspect_validate` and degraded-compare truth-first
+handoffs.
 
 ## Objective
 
@@ -67,3 +72,8 @@ inspect/measure/assert.
 - keep board tracking on `TASK-141`
 - update the parent summary so the shipped regression pack explicitly names the
   squirrel-run drift, compare-degradation, and handoff shapes it protects
+
+## Validation
+
+- `poetry run pytest tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- `poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/integration/test_guided_inspect_validate_handoff.py -q`

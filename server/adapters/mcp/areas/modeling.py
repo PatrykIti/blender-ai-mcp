@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional, Union
 from fastmcp import Context
 
 from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
+from server.adapters.mcp.guided_contract import canonicalize_modeling_create_primitive_arguments
 from server.adapters.mcp.router_helper import route_tool_call
 from server.adapters.mcp.session_capabilities import get_session_capability_state_async
 from server.adapters.mcp.utils import parse_coordinate, parse_dict
@@ -286,6 +287,11 @@ def _modeling_create_primitive_impl(
     location: Union[str, List[float]] = [0.0, 0.0, 0.0],
     rotation: Union[str, List[float]] = [0.0, 0.0, 0.0],
     name: str = None,
+    scale: Union[str, List[float], None] = None,
+    segments: int | None = None,
+    rings: int | None = None,
+    subdivisions: int | None = None,
+    collection_name: str | None = None,
 ) -> str:
     """
     [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Creates a 3D primitive object.
@@ -299,26 +305,65 @@ def _modeling_create_primitive_impl(
         location: [x, y, z] coordinates. Can be a list [0.0, 0.0, 0.0] or string '[0.0, 0.0, 0.0]'.
         rotation: [rx, ry, rz] rotation in radians. Can be a list or string.
         name: Optional name for the new object.
+        scale: Compatibility-only drift catcher. The guided public surface
+            requires a follow-up `modeling_transform_object(scale=...)` call.
+        segments: Compatibility-only drift catcher for rejected primitive-only topology knobs.
+        rings: Compatibility-only drift catcher for rejected primitive-only topology knobs.
+        subdivisions: Compatibility-only drift catcher for rejected primitive-only topology knobs.
+        collection_name: Compatibility-only drift catcher. Move/link after
+            creation with `collection_manage(...)`.
     """
+    canonical_arguments = canonicalize_modeling_create_primitive_arguments(
+        {
+            key: value
+            for key, value in {
+                "primitive_type": primitive_type,
+                "radius": radius,
+                "size": size,
+                "location": location,
+                "rotation": rotation,
+                "name": name,
+                "scale": scale,
+                "segments": segments,
+                "rings": rings,
+                "subdivisions": subdivisions,
+                "collection_name": collection_name,
+            }.items()
+            if value is not None
+        }
+    )
+    primitive_type_value = str(canonical_arguments["primitive_type"])
+    radius_value = float(canonical_arguments.get("radius", radius))
+    size_value = float(canonical_arguments.get("size", size))
+    location_value = canonical_arguments.get("location", location)
+    rotation_value = canonical_arguments.get("rotation", rotation)
+    name_value = canonical_arguments.get("name")
 
     def execute():
         handler = get_modeling_handler()
         try:
-            parsed_location = parse_coordinate(location) or [0.0, 0.0, 0.0]
-            parsed_rotation = parse_coordinate(rotation) or [0.0, 0.0, 0.0]
-            return handler.create_primitive(primitive_type, radius, size, parsed_location, parsed_rotation, name)
+            parsed_location = parse_coordinate(location_value) or [0.0, 0.0, 0.0]
+            parsed_rotation = parse_coordinate(rotation_value) or [0.0, 0.0, 0.0]
+            return handler.create_primitive(
+                primitive_type_value,
+                radius_value,
+                size_value,
+                parsed_location,
+                parsed_rotation,
+                name_value,
+            )
         except (RuntimeError, ValueError) as e:
             return str(e)
 
     return route_tool_call(
         tool_name="modeling_create_primitive",
         params={
-            "primitive_type": primitive_type,
-            "radius": radius,
-            "size": size,
-            "location": location,
-            "rotation": rotation,
-            "name": name,
+            "primitive_type": primitive_type_value,
+            "radius": radius_value,
+            "size": size_value,
+            "location": location_value,
+            "rotation": rotation_value,
+            "name": name_value,
         },
         direct_executor=execute,
     )
@@ -332,6 +377,11 @@ def modeling_create_primitive(
     location: Union[str, List[float]] = [0.0, 0.0, 0.0],
     rotation: Union[str, List[float]] = [0.0, 0.0, 0.0],
     name: str = None,
+    scale: Union[str, List[float], None] = None,
+    segments: int | None = None,
+    rings: int | None = None,
+    subdivisions: int | None = None,
+    collection_name: str | None = None,
 ) -> str:
     """
     [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Creates a 3D primitive object.
@@ -354,6 +404,11 @@ def modeling_create_primitive(
         location,
         rotation,
         name,
+        scale,
+        segments,
+        rings,
+        subdivisions,
+        collection_name,
     )
 
 

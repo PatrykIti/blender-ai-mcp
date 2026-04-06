@@ -1,9 +1,18 @@
 # TASK-141: Guided Creature Run Contract and Schema Drift Hardening
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** Product Reliability / Guided Runtime UX
 **Follow-on After:** [TASK-128](./TASK-128_Reference_Guided_Creature_Build_Surface_And_Perception_Reliability.md)
+
+**Completion Summary:** The active `llm-guided` creature surface now keeps one
+real end-to-end contract for the squirrel-run bootstrap/build seam. Direct
+visible guided tools and the discovery `call_tool(...)` proxy now share the
+same guided hardening for cleanup, one-reference attach, collection creation,
+and primitive creation, while `inspect_validate` and degraded compare now land
+on the same explicit inspect/measure/assert handoff. Focused stdio-backed
+integration coverage now protects the active client path instead of only
+helper-level policy tests.
 
 ## Objective
 
@@ -152,3 +161,9 @@ This follow-on does **not** cover:
   promoted independently
 - treat `TASK-141-01` through `TASK-141-03` as the canonical technical
   execution tree for this follow-on
+
+## Validation
+
+- `poetry run pytest tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/adapters/mcp/test_router_elicitation.py -q`
+- `poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/integration/test_guided_inspect_validate_handoff.py -q`
+- `poetry run pytest tests/e2e/router/test_guided_manual_handoff.py -q` (`3 skipped`)

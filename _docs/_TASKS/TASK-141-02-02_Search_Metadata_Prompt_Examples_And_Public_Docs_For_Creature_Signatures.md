@@ -2,8 +2,13 @@
 
 **Parent:** [TASK-141-02](./TASK-141-02_Creature_Build_Signature_Cues_And_Discovery_Surface_Alignment.md)
 **Depends On:** [TASK-141-02-01](./TASK-141-02-01_Collection_Manage_And_Modeling_Create_Primitive_Contract_Cues.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** Search metadata, prompts, MCP docs, and client-config
+examples now point to the same creature bootstrap contract. The early squirrel
+path stays small and actionable enough to surface the intended primitive and
+collection signatures without relying on first-failure rediscovery loops.
 
 ## Objective
 
@@ -84,3 +89,8 @@ The guided creature flow needs one coherent operator-facing story for:
 - keep board tracking on `TASK-141`
 - update the parent summary when this leaf closes so the final search/docs
   signature story and its real-session regression seam are explicit
+
+## Validation
+
+- `poetry run pytest tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- `poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py -q`

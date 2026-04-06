@@ -1069,6 +1069,22 @@ def test_reference_images_attach_list_remove_and_clear(tmp_path, monkeypatch):
     assert cleared.reference_count == 0
 
 
+def test_reference_images_attach_batch_shape_returns_actionable_error():
+    ctx = FakeContext()
+
+    result = asyncio.run(
+        reference_images(
+            ctx,
+            action="attach",
+            images=[{"source_path": "/tmp/front.png"}, {"source_path": "/tmp/side.png"}],
+        )
+    )
+
+    assert result.error is not None
+    assert "one reference per call" in result.error
+    assert result.reference_count == 0
+
+
 def test_reference_compare_checkpoint_uses_goal_and_matching_references(tmp_path, monkeypatch):
     image = tmp_path / "ref.png"
     image.write_bytes(b"fake")

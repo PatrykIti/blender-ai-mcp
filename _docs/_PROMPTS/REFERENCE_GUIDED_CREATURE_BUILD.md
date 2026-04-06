@@ -70,6 +70,11 @@ Rules:
   discovered through `search_tools(...)`
 - use the canonical `call_tool(name=..., arguments=...)` wrapper; legacy
   `tool=...` / `params=...` aliases are compatibility-only
+- the same guided contract hardening now applies on directly visible tools too:
+  batch-like `reference_images(...)` attach drift, legacy
+  `collection_manage(..., name=...)`, legacy cleanup split flags, and
+  unsupported primitive shortcuts return actionable guidance instead of raw
+  schema noise
 - keep parts as separate objects
 - focus on low-poly shape match, not materials or fur detail
 - attach references one at a time with

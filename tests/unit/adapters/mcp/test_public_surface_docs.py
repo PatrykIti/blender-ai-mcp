@@ -31,6 +31,12 @@ def test_readme_documents_llm_guided_public_aliases():
         "config",
         "search_query",
         "keep_lights_and_cameras",
+        "raw schema noise",
+        "collection_manage(action=..., collection_name=...)",
+        "modeling_create_primitive(...)",
+        "stop free-form modeling and switch to",
+        "strong deterministic truth findings still",
+        "use the same inspect/measure/assert handoff",
         "Guided Handoff Contract",
         "guided_handoff",
         "Contact Truth Semantics",
@@ -69,6 +75,14 @@ def test_mcp_docs_describe_aliases_and_hidden_arguments():
         "bbox-touching but still visibly gapped",
         "keep_lights_and_cameras",
         "keep_lights` / `keep_cameras`",
+        "directly visible guided tools",
+        "direct `reference_images(...)` attach catches batch-like",
+        "direct `collection_manage(...)` keeps `collection_name` canonical",
+        "direct `modeling_create_primitive(...)` rejects `scale`, `segments`",
+        "raw FastMCP schema noise",
+        "stop-and-check branch",
+        "pause free-form modeling and switch to inspect/measure/assert immediately",
+        "staged compare degrades but deterministic truth findings remain strong",
         "scene_hide_object",
         "scene_show_all_objects",
         "scene_isolate_object",
@@ -82,6 +96,21 @@ def test_mcp_docs_describe_aliases_and_hidden_arguments():
         "`inspect_scene`",
         "`mesh_inspect`",
         "`browse_workflows`",
+    ):
+        assert expected in text
+
+
+def test_mcp_client_config_examples_document_guided_creature_contract():
+    text = (REPO_ROOT / "_docs" / "_MCP_SERVER" / "MCP_CLIENT_CONFIG_EXAMPLES.md").read_text(encoding="utf-8")
+
+    for expected in (
+        "Guided creature contract reminders for this profile:",
+        "call_tool(name=..., arguments=...)",
+        "scene_clean_scene(keep_lights_and_cameras=...)",
+        'reference_images(action="attach", source_path=...)',
+        "collection_manage(action=..., collection_name=...)",
+        'loop_disposition="inspect_validate"',
+        "stop free-form modeling and switch to inspect/measure/assert",
     ):
         assert expected in text
 
@@ -225,6 +254,9 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert 'call_tool(name="scene_clean_scene", arguments={"keep_lights_and_cameras": true})' in prompt_readme
     assert "split `keep_lights` / `keep_cameras` form is legacy compatibility only" in prompt_readme
     assert "canonical `call_tool(...)` wrapper is `name=...` plus `arguments=...`" in prompt_readme
+    assert "The same guided contract hardening now applies on directly visible tools as" in prompt_readme
+    assert "actionable guidance instead of" in prompt_readme
+    assert "raw schema noise on the guided surface" in prompt_readme
     assert "one `source_path` per attach call" in prompt_readme
     assert "collection_manage(action=..., collection_name=...)" in prompt_readme
     assert "modeling_transform_object(scale=...)" in prompt_readme
@@ -237,6 +269,8 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "correction_candidates" in prompt_readme
     assert "truth_followup" in prompt_readme
     assert "guided_reference_readiness" in prompt_readme
+    assert "stop free-form modeling and switch to inspect/measure/assert" in prompt_readme
+    assert "staged compare degrades but strong deterministic truth findings still remain" in prompt_readme
     assert "ready session still lists explicit pending refs for another goal" in prompt_readme
     assert "refinement_route" in prompt_readme
     assert "refinement_handoff" in prompt_readme
@@ -307,6 +341,8 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "`truth_followup`" in creature_prompt
     assert "`truth_followup.focus_pairs`" in creature_prompt
     assert "`truth_followup.macro_candidates`" in creature_prompt
+    assert "the same guided contract hardening now applies on directly visible tools too" in creature_prompt
+    assert "actionable guidance instead of raw" in creature_prompt
     assert 'reference_images(action="attach", source_path=..., ...)' in creature_prompt
     assert 'collection_manage(action="create", collection_name=...)' in creature_prompt
     assert "modeling_transform_object(scale=...)" in creature_prompt

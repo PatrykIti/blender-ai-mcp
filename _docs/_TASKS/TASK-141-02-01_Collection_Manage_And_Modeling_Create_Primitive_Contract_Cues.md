@@ -1,8 +1,14 @@
 # TASK-141-02-01: `collection_manage(...)` and `modeling_create_primitive(...)` Contract Cues
 
 **Parent:** [TASK-141-02](./TASK-141-02_Creature_Build_Signature_Cues_And_Discovery_Surface_Alignment.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** `collection_manage(...)` and
+`modeling_create_primitive(...)` now keep one deliberate guided contract on the
+active surface. The narrow `name` alias is accepted end to end for collection
+management, while unsupported primitive shortcuts fail with actionable guidance
+on both direct and proxied guided paths.
 
 ## Objective
 
@@ -75,3 +81,8 @@ parity work required so the decision actually holds on the active surface.
 - keep board tracking on `TASK-141`
 - reflect the final signature-policy decisions and active-surface parity result
   in the parent summary when this leaf closes
+
+## Validation
+
+- `poetry run pytest tests/unit/adapters/mcp/test_search_surface.py -q`
+- `poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py -q`

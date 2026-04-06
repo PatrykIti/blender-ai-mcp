@@ -4,6 +4,7 @@ from fastmcp import Context
 
 from server.adapters.mcp.areas._registration import register_existing_tools
 from server.adapters.mcp.context_utils import ctx_info
+from server.adapters.mcp.guided_contract import canonicalize_collection_manage_arguments
 from server.adapters.mcp.router_helper import route_tool_call
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.infrastructure.di import get_collection_handler
@@ -144,10 +145,11 @@ def collection_list_objects(
 def collection_manage(
     ctx: Context,
     action: Literal["create", "delete", "rename", "move_object", "link_object", "unlink_object"],
-    collection_name: str,
+    collection_name: Optional[str] = None,
     new_name: Optional[str] = None,
     parent_name: Optional[str] = None,
     object_name: Optional[str] = None,
+    name: Optional[str] = None,
 ) -> str:
     """
     [OBJECT MODE][SCENE][NON-DESTRUCTIVE] Manages collections in the scene.
@@ -164,21 +166,45 @@ def collection_manage(
 
     Args:
         action: Operation to perform
-        collection_name: Target collection name (or name for new collection when creating)
+        collection_name: Canonical public target collection name.
         new_name: New name for 'rename' action
         parent_name: Parent collection for 'create' action (defaults to Scene Collection)
         object_name: Object name for move/link/unlink actions
+        name: Legacy compatibility-only alias for `collection_name`.
     """
+    canonical_arguments = canonicalize_collection_manage_arguments(
+        {
+            key: value
+            for key, value in {
+                "action": action,
+                "collection_name": collection_name,
+                "new_name": new_name,
+                "parent_name": parent_name,
+                "object_name": object_name,
+                "name": name,
+            }.items()
+            if value is not None
+        }
+    )
+    collection_name_value = canonical_arguments.get("collection_name")
+    if not isinstance(collection_name_value, str) or not collection_name_value.strip():
+        raise ValueError(
+            "collection_manage(...) requires the canonical public argument `collection_name`. "
+            "Compatibility alias `name` is accepted only as a narrow guided-surface fallback."
+        )
+    new_name_value = canonical_arguments.get("new_name")
+    parent_name_value = canonical_arguments.get("parent_name")
+    object_name_value = canonical_arguments.get("object_name")
 
     def execute():
         handler = get_collection_handler()
         try:
             result = handler.manage_collection(
                 action=action,
-                collection_name=collection_name,
-                new_name=new_name,
-                parent_name=parent_name,
-                object_name=object_name,
+                collection_name=collection_name_value,
+                new_name=new_name_value,
+                parent_name=parent_name_value,
+                object_name=object_name_value,
             )
             ctx_info(ctx, f"collection_manage({action}): {result}")
             return result
@@ -192,10 +218,10 @@ def collection_manage(
         tool_name="collection_manage",
         params={
             "action": action,
-            "collection_name": collection_name,
-            "new_name": new_name,
-            "parent_name": parent_name,
-            "object_name": object_name,
+            "collection_name": collection_name_value,
+            "new_name": new_name_value,
+            "parent_name": parent_name_value,
+            "object_name": object_name_value,
         },
         direct_executor=execute,
     )

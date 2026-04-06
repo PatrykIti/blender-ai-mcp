@@ -1,8 +1,14 @@
 # TASK-141-01-01: `call_tool(...)` Wrapper Aliases and Cleanup-Flag Compatibility
 
 **Parent:** [TASK-141-01](./TASK-141-01_Guided_Call_Path_Compatibility_And_Public_Contract_Ergonomics.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** The canonical `call_tool(name=..., arguments=...)`
+wrapper and guided `scene_clean_scene(...)` cleanup flag story now match on the
+active surface. Legacy wrapper aliases and split cleanup flags remain narrow
+compatibility paths, and both direct/proxied failures now return deterministic
+guided guidance.
 
 ## Objective
 
@@ -76,3 +82,8 @@ This leaf therefore owns two things at once:
 - keep board tracking on `TASK-141`
 - reflect the final wrapper-policy decision and active-surface parity result in
   the parent task summary when this leaf closes
+
+## Validation
+
+- `poetry run pytest tests/unit/adapters/mcp/test_search_surface.py -q`
+- `poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py -q`

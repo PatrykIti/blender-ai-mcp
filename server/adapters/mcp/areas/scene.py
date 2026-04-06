@@ -32,6 +32,7 @@ from server.adapters.mcp.contracts.scene import (
     SceneSnapshotDiffContract,
     SceneSnapshotStateContract,
 )
+from server.adapters.mcp.guided_contract import canonicalize_scene_clean_scene_arguments
 from server.adapters.mcp.router_helper import route_tool_call
 from server.adapters.mcp.sampling.assistant_runner import run_inspection_summary_assistant
 from server.adapters.mcp.sampling.result_types import to_inspection_assistant_contract
@@ -946,7 +947,12 @@ def scene_delete_object(name: str, ctx: Context) -> str:
     )
 
 
-def scene_clean_scene(ctx: Context, keep_lights_and_cameras: bool = True) -> str:
+def scene_clean_scene(
+    ctx: Context,
+    keep_lights_and_cameras: bool | None = None,
+    keep_lights: bool | None = None,
+    keep_cameras: bool | None = None,
+) -> str:
     """
     [SCENE][DESTRUCTIVE] Deletes objects from the scene.
     WARNING: If keep_lights_and_cameras=False, deletes EVERYTHING (hard reset).
@@ -954,13 +960,29 @@ def scene_clean_scene(ctx: Context, keep_lights_and_cameras: bool = True) -> str
     Workflow: START → fresh scene | AFTER → modeling_create_primitive
 
     Args:
-        keep_lights_and_cameras: If True (default), keeps Lights and Cameras.
-                                 If False, deletes EVERYTHING (hard reset).
+        keep_lights_and_cameras: Canonical public cleanup flag. If True (default),
+            keeps Lights and Cameras. If False, deletes EVERYTHING (hard reset).
+        keep_lights: Legacy compatibility-only split flag. Use only when it
+            matches `keep_cameras`.
+        keep_cameras: Legacy compatibility-only split flag. Use only when it
+            matches `keep_lights`.
     """
+    canonical_arguments = canonicalize_scene_clean_scene_arguments(
+        {
+            key: value
+            for key, value in {
+                "keep_lights_and_cameras": keep_lights_and_cameras,
+                "keep_lights": keep_lights,
+                "keep_cameras": keep_cameras,
+            }.items()
+            if value is not None
+        }
+    )
+    keep_lights_and_cameras_value = bool(canonical_arguments.get("keep_lights_and_cameras", True))
     return route_tool_call(
         tool_name="scene_clean_scene",
-        params={"keep_lights_and_cameras": keep_lights_and_cameras},
-        direct_executor=lambda: get_scene_handler().clean_scene(keep_lights_and_cameras),
+        params={"keep_lights_and_cameras": keep_lights_and_cameras_value},
+        direct_executor=lambda: get_scene_handler().clean_scene(keep_lights_and_cameras_value),
     )
 
 

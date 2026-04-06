@@ -43,6 +43,17 @@ surface:
 }
 ```
 
+Guided creature contract reminders for this profile:
+
+- use `call_tool(name=..., arguments=...)` as the canonical discovery wrapper
+- use `scene_clean_scene(keep_lights_and_cameras=...)` as the canonical cleanup shape
+- attach one reference per call with `reference_images(action="attach", source_path=...)`
+- use `collection_manage(action=..., collection_name=...)` as the canonical collection target shape
+- use `modeling_create_primitive(...)` only with `primitive_type`,
+  `radius`/`size`, `location`, `rotation`, and optional `name`
+- if `loop_disposition="inspect_validate"` or degraded compare still returns
+  strong truth findings, stop free-form modeling and switch to inspect/measure/assert
+
 ## Local Guided + MLX Vision
 
 Recommended for Apple Silicon local vision testing:

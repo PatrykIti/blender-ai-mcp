@@ -2,8 +2,14 @@
 
 **Parent:** [TASK-141](./TASK-141_Guided_Creature_Run_Contract_And_Schema_Drift_Hardening.md)
 **Depends On:** [TASK-141-01](./TASK-141-01_Guided_Call_Path_Compatibility_And_Public_Contract_Ergonomics.md), [TASK-141-02](./TASK-141-02_Creature_Build_Signature_Cues_And_Discovery_Surface_Alignment.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** `inspect_validate` is now enforced as one truth-first
+stop-and-check branch on the active guided client path. The same
+inspect/measure/assert takeover now applies when staged compare degrades but
+deterministic truth findings remain strong, and stdio-backed regressions lock
+that behavior in place.
 
 ## Objective
 
@@ -75,3 +81,8 @@ end-to-end story for what happens next when:
 - keep board tracking on the parent `TASK-141`
 - do not promote this subtask independently unless the handoff/regression pack
   becomes the only remaining open slice
+
+## Validation
+
+- `poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- `poetry run pytest tests/e2e/integration/test_guided_inspect_validate_handoff.py -q`

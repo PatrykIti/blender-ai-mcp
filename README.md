@@ -95,9 +95,19 @@ Current guided utility prep path:
   - `scene_get_viewport`
   - `scene_clean_scene`
 - these utility actions stay bounded and do not reopen the full legacy surface
+- the canonical guided discovery wrapper is `call_tool(name=..., arguments=...)`
 - the canonical cleanup argument shape on `llm-guided` is
   `keep_lights_and_cameras`; older split flags are compatibility-only and
   should not be used as the documented public form
+- `reference_images(action="attach", source_path=...)` is one-reference-per-call;
+  batch-like shapes now fail with guided recovery guidance instead of raw schema noise
+- `collection_manage(action=..., collection_name=...)` stays the canonical
+  public form; legacy `name` is only a narrow compatibility alias
+- `modeling_create_primitive(...)` stays limited to `primitive_type`,
+  `radius`/`size`, `location`, `rotation`, and optional `name`; unsupported
+  shortcuts such as `scale`, `segments`, `rings`, `subdivisions`, or
+  primitive-time `collection_name` now fail with actionable guidance on both
+  direct and proxy guided paths
 - build goals should still start from `router_set_goal(...)`, but screenshot /
   viewport / scene-reset requests should use the guided utility path instead
 
@@ -287,6 +297,12 @@ hidden ordering assumptions.
 - `reference_compare_stage_checkpoint(...)` and
   `reference_iterate_stage_checkpoint(...)` now fail fast when the session is
   not ready, and echo the same `guided_reference_readiness` payload
+- if `reference_iterate_stage_checkpoint(...)` returns
+  `loop_disposition="inspect_validate"`, stop free-form modeling and switch to
+  inspect/measure/assert immediately
+- if staged compare degrades but strong deterministic truth findings still
+  exist, use the same inspect/measure/assert handoff instead of improvising
+  another large free-form correction
 - for staged compare/iterate, `goal_override` is no longer a session
   substitute; use an active guided goal session instead
 
