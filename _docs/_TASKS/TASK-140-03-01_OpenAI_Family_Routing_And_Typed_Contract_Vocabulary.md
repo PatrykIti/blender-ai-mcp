@@ -8,7 +8,7 @@
 
 Make the OpenAI family routing story explicit in config/runtime instead of
 relying on a vague "generic external" assumption for all OpenAI-family model
-ids on the existing external runtime path.
+ids on the existing provider surface.
 
 ## Repository Touchpoints
 
@@ -23,8 +23,8 @@ ids on the existing external runtime path.
 ## Acceptance Criteria
 
 - OpenAI family routing is documented and deterministic
-- the repo records whether OpenAI families can stay on the current external
-  transport path while still gaining distinct contract profiles
+- the repo records whether OpenAI families can stay on the current provider
+  surface while still gaining distinct contract profiles
 - family-level routing remains compatible with the `TASK-139` override model
 - unknown or non-matching OpenAI-family ids still fall back to `generic_full`
 - any newly introduced OpenAI-specific `vision_contract_profile` values remain

@@ -2,7 +2,7 @@
 
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
-**Category:** Vision Runtime / External Provider Reliability
+**Category:** Vision Runtime / External Model-Family Reliability
 **Estimated Effort:** Large
 **Dependencies:** TASK-139
 
@@ -12,10 +12,11 @@ Extend the external `vision_contract_profile` architecture introduced in
 `TASK-139` beyond the current `generic_full` and
 `google_family_compare` split so the runtime can choose prompt/schema/parser
 behavior more precisely for additional multimodal model families routed through
-the existing external vision path, especially OpenRouter-hosted model ids.
+the existing provider surface only, especially OpenRouter-hosted model ids on
+the current `openai_compatible_external` path.
 
 This umbrella should cover the next docs-reviewed external model-family
-targets on the current external transport surface:
+targets on the current provider surface:
 
 - Qwen-VL families:
   - legacy `qwen-vl-plus` / `qwen-vl-max`
@@ -39,10 +40,34 @@ In this task family:
 
 Do not collapse those two concepts again.
 
+## Execution Guardrail
+
+`TASK-140` is about model-family contract selection only.
+
+This umbrella may:
+
+- add new `vision_contract_profile` values
+- add deterministic model-family matching rules
+- refine prompt/schema/parser/diagnostic behavior for those profiles
+- document that some families remain on `generic_full` or are not compare-suitable
+  on the current provider surface
+
+This umbrella must **not**:
+
+- add new `VISION_EXTERNAL_PROVIDER` values
+- add new provider aliases or new provider-specific env/config families
+- add new backend kinds or new first-class transport/provider branches
+- turn unsupported family/provider combinations into provider-integration work
+
+If a model family cannot be exercised correctly through the current provider
+inventory, record that as a bounded follow-on or explicit unsupported boundary
+instead of broadening provider scope inside `TASK-140`.
+
 ## Business Problem
 
 After `TASK-139`, the repo has a correct architectural seam, but the profile
-space is still too coarse.
+space is still too coarse for the families we want to test on the current
+provider inventory.
 
 The current model is:
 
@@ -51,7 +76,7 @@ The current model is:
 
 That is enough to stop treating OpenRouter-hosted Google-family models as
 generic OpenAI-compatible models, but it is not enough for the next wave of
-external vision work because the upcoming families differ materially in:
+family-contract work because the upcoming families differ materially in:
 
 - structured-output reliability
 - OCR/document bias versus general image reasoning
@@ -132,7 +157,8 @@ following docs-reviewed families:
 If this umbrella is done correctly, the repo gains:
 
 - a broader but still deliberate external `vision_contract_profile` vocabulary
-- deterministic model-family routing for additional external multimodal models
+- deterministic model-family routing for additional multimodal models on the
+  current provider surface
 - a documented distinction between:
   - compare-suitable families
   - document-specialized families
@@ -149,7 +175,7 @@ This umbrella covers:
 - expanding the `vision_contract_profile` vocabulary beyond the initial
   two-profile split from `TASK-139`
 - adding deterministic family/profile resolution for the next target families
-  on the existing external runtime path, especially OpenRouter-hosted model ids
+  on the existing provider surface, especially OpenRouter-hosted model ids
 - carrying new profile vocabulary through the typed runtime and public result
   surfaces that expose `vision_contract_profile`
 - prompt/schema/request routing for those profiles on the current external
@@ -161,8 +187,10 @@ This umbrella covers:
 This umbrella does **not** cover:
 
 - unbounded provider-catalog expansion for every multimodal API on the market
-- first-class provider branches for every model family already served through
-  OpenRouter or the existing external runtime path
+- first-class provider branches for additional vendors or model families
+- new `VISION_EXTERNAL_PROVIDER` values, provider aliases, or provider-specific
+  env/config families
+- new backend kinds beyond the current runtime inventory
 - ranking/recommending models before there is explicit harness evidence
 - turning document/OCR/retrieval visual models into fake staged-compare
   candidates just because they accept images
@@ -182,6 +210,10 @@ This umbrella does **not** cover:
   - explicit override still wins
   - recognized family/model-id routing can select a stricter profile
   - unknown or not-yet-classified families still fall back to `generic_full`
+- `TASK-140` can be completed without adding any new provider branch:
+  - current provider inventory remains the boundary
+  - unsupported combinations are documented explicitly instead of expanding
+    provider scope
 - Qwen-VL families are classified explicitly enough that:
   - legacy `qwen-vl-plus` / `qwen-vl-max`
   - Qwen2.5-VL
@@ -257,15 +289,16 @@ This umbrella does **not** cover:
 ## Status / Board Update
 
 - track this as the next board-level follow-on after `TASK-139`
-- keep it separate from generic provider-catalog work; this umbrella is about
-  bounded compare-contract architecture and evidence discipline
+- keep it separate from generic provider-catalog or new-provider integration
+  work; this umbrella is about bounded compare-contract architecture and
+  evidence discipline for model families on the existing provider surface
 
 ## Execution Structure
 
 | Order | Planned Slice | Purpose |
 |------|---------------|---------|
-| 1 | [TASK-140-01](./TASK-140-01_Qwen_Family_Contract_Profile_Matrix_And_Routing.md) | Classify Qwen multimodal families and route them through explicit compare/document/exclusion profiles instead of one generic bucket |
-| 2 | [TASK-140-02](./TASK-140-02_Anthropic_Claude_Vision_Profiles_And_Transport_Integration.md) | Define Claude-family contract routing and diagnostics on the current external runtime path instead of defaulting to one generic contract |
-| 3 | [TASK-140-03](./TASK-140-03_OpenAI_Image_Input_Profiles_And_Structured_Compare_Policy.md) | Decide whether OpenAI families can reuse generic behavior or need stricter family-specific compare profiles on the existing external path |
-| 4 | [TASK-140-04](./TASK-140-04_NVIDIA_VLM_Support_And_Exclusion_Policy.md) | Classify NVIDIA VLMs into compare-capable versus document/retrieval-only paths and integrate only the bounded compare-suitable subset on the existing external path |
+| 1 | [TASK-140-01](./TASK-140-01_Qwen_Family_Contract_Profile_Matrix_And_Routing.md) | Classify Qwen multimodal families and route them through explicit compare/document/exclusion profiles on the existing provider surface instead of one generic bucket |
+| 2 | [TASK-140-02](./TASK-140-02_Anthropic_Claude_Family_Contracts_On_The_Existing_Provider_Surface.md) | Define Claude-family contract routing and diagnostics on the current provider surface instead of defaulting to one generic contract or expanding provider scope |
+| 3 | [TASK-140-03](./TASK-140-03_OpenAI_Image_Input_Profiles_And_Structured_Compare_Policy.md) | Decide whether OpenAI families can reuse generic behavior or need stricter family-specific compare profiles on the existing provider surface |
+| 4 | [TASK-140-04](./TASK-140-04_NVIDIA_VLM_Support_And_Exclusion_Policy.md) | Classify NVIDIA VLMs into compare-capable versus document/retrieval-only paths and integrate only the bounded compare-suitable subset on the existing provider surface |
 | 5 | [TASK-140-05](./TASK-140-05_Regression_Harness_Provider_Notes_And_Operator_Guidance_For_Expanded_Profiles.md) | Keep automated coverage, harness evidence, docs, launch helpers, `.env.example`, and client examples aligned with the broader profile matrix |

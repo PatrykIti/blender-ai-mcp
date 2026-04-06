@@ -1,4 +1,4 @@
-# TASK-140-02: Anthropic Claude Family Contracts on the Existing External Path
+# TASK-140-02: Anthropic Claude Family Contracts on the Existing Provider Surface
 
 **Parent:** [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md)
 **Status:** ⏳ To Do
@@ -7,15 +7,15 @@
 ## Objective
 
 Define one intentional Anthropic / Claude model-family contract story for the
-external vision runtime, centered on the existing external transport path,
+external vision runtime, centered on the existing provider surface,
 instead of forcing Claude-family ids through one generic profile.
 
 ## Business Problem
 
 Claude image-input support matters for this umbrella, but `TASK-140` is not
 primarily about adding a first-class Anthropic provider branch. The real
-question is whether Claude-family ids routed through the current external path
-need family-specific contracts beyond `generic_full`.
+question is whether Claude-family ids routed through the current provider
+surface need family-specific contracts beyond `generic_full`.
 
 Treating Claude as "just another generic external model" would blur family
 routing, prompting, and parse-repair responsibilities again.
@@ -45,7 +45,7 @@ routing, prompting, and parse-repair responsibilities again.
   accident from `generic_full`
 - the repo records whether Claude families share one compare profile or need
   stricter separation
-- if the current external transport path is insufficient for Claude-family
+- if the current provider surface is insufficient for Claude-family
   behavior, the gap is recorded explicitly as a bounded follow-on instead of
   silently broadening provider scope
 - if Claude-specific `vision_contract_profile` values are introduced, they
@@ -76,6 +76,6 @@ routing, prompting, and parse-repair responsibilities again.
 
 | Order | Leaf | Purpose |
 |------|------|---------|
-| 1 | [TASK-140-02-01](./TASK-140-02-01_Anthropic_Typed_Config_And_Provider_Surface.md) | Add Claude-family routing and typed contract vocabulary on the existing external runtime path |
+| 1 | [TASK-140-02-01](./TASK-140-02-01_Anthropic_Family_Routing_And_Typed_Contract_Vocabulary.md) | Add Claude-family routing and typed contract vocabulary on the existing provider surface |
 | 2 | [TASK-140-02-02](./TASK-140-02-02_Anthropic_Request_Assembly_And_Image_Payload_Contract.md) | Decide whether existing external request assembly is sufficient for Claude-family ids or needs bounded contract-aware adjustments |
 | 3 | [TASK-140-02-03](./TASK-140-02-03_Anthropic_Parse_Diagnostics_And_Compare_Profile_Policy.md) | Define Claude compare-profile behavior plus contract-aware diagnostics and repair policy |

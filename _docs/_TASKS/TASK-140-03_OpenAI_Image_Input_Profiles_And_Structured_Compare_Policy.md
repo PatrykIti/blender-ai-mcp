@@ -66,6 +66,6 @@ APIs, but `TASK-140` should not assume that "transport works" is the same as
 
 | Order | Leaf | Purpose |
 |------|------|---------|
-| 1 | [TASK-140-03-01](./TASK-140-03-01_OpenAI_Typed_Provider_Surface_And_Family_Routing.md) | Add explicit OpenAI family routing and typed contract vocabulary without defaulting to a new provider alias |
+| 1 | [TASK-140-03-01](./TASK-140-03-01_OpenAI_Family_Routing_And_Typed_Contract_Vocabulary.md) | Add explicit OpenAI family routing and typed contract vocabulary without defaulting to a new provider alias |
 | 2 | [TASK-140-03-02](./TASK-140-03-02_OpenAI_Structured_Compare_Contract_And_Strict_Output_Policy.md) | Decide whether OpenAI compare flows need a stricter profile than the current generic full contract |
 | 3 | [TASK-140-03-03](./TASK-140-03-03_OpenAI_Family_Regression_Cases_And_Failure_Surface.md) | Lock the OpenAI family decisions with targeted regression and diagnostics expectations |

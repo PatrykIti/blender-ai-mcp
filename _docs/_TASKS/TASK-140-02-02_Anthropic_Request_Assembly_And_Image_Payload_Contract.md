@@ -1,7 +1,7 @@
 # TASK-140-02-02: Anthropic Request Policy on the Existing External Path
 
-**Parent:** [TASK-140-02](./TASK-140-02_Anthropic_Claude_Vision_Profiles_And_Transport_Integration.md)
-**Depends On:** [TASK-140-02-01](./TASK-140-02-01_Anthropic_Typed_Config_And_Provider_Surface.md)
+**Parent:** [TASK-140-02](./TASK-140-02_Anthropic_Claude_Family_Contracts_On_The_Existing_Provider_Surface.md)
+**Depends On:** [TASK-140-02-01](./TASK-140-02-01_Anthropic_Family_Routing_And_Typed_Contract_Vocabulary.md)
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
 

@@ -1,6 +1,6 @@
 # TASK-140-02-01: Anthropic Family Routing and Typed Contract Vocabulary
 
-**Parent:** [TASK-140-02](./TASK-140-02_Anthropic_Claude_Vision_Profiles_And_Transport_Integration.md)
+**Parent:** [TASK-140-02](./TASK-140-02_Anthropic_Claude_Family_Contracts_On_The_Existing_Provider_Surface.md)
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
 
@@ -8,7 +8,7 @@
 
 Add the model-id/family-routing and typed contract vocabulary needed to
 resolve Claude-specific `vision_contract_profile` values on the existing
-external runtime path, without introducing a dedicated Anthropic provider by
+provider surface, without introducing a dedicated Anthropic provider by
 default.
 
 ## Repository Touchpoints
@@ -29,7 +29,7 @@ default.
 - config precedence remains deterministic and compatible with `TASK-139`
 - unknown or non-matching Claude-family ids still fall back to `generic_full`
 - this slice does not require a first-class Anthropic provider alias unless
-  the current external transport path is proven insufficient
+  the current provider surface is proven insufficient
 
 ## Docs To Update
 

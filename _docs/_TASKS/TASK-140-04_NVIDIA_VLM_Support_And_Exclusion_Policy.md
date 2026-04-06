@@ -69,5 +69,5 @@ images.
 | Order | Leaf | Purpose |
 |------|------|---------|
 | 1 | [TASK-140-04-01](./TASK-140-04-01_NVIDIA_VLM_Family_Triage_Compare_Vs_Document_And_Retrieval.md) | Build the docs-reviewed NVIDIA VLM triage matrix |
-| 2 | [TASK-140-04-02](./TASK-140-04-02_Selected_NVIDIA_Provider_Surface_And_Compare_Path.md) | Add family/profile routing only for the selected compare-capable NVIDIA subset on the existing external path |
+| 2 | [TASK-140-04-02](./TASK-140-04-02_Selected_NVIDIA_Family_Routing_And_Compare_Path.md) | Add family/profile routing only for the selected compare-capable NVIDIA subset on the existing provider surface |
 | 3 | [TASK-140-04-03](./TASK-140-04-03_NVIDIA_Non_Compare_Exclusion_Contracts_And_Diagnostics.md) | Make exclusions and diagnostics explicit so non-compare NVIDIA models are not mistaken for supported compare paths |

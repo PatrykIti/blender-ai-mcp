@@ -8,7 +8,7 @@
 ## Objective
 
 Implement the runtime/config/backend routing for the NVIDIA compare-capable
-subset on the existing external runtime path only, without broadening support
+subset on the existing provider surface only, without broadening support
 to unrelated NVIDIA visual model classes.
 
 ## Repository Touchpoints
@@ -26,12 +26,12 @@ to unrelated NVIDIA visual model classes.
 ## Acceptance Criteria
 
 - the selected NVIDIA compare subset has one explicit family/profile routing
-  story on the current external runtime path
+  story on the current provider surface
 - request assumptions are validated for that path
 - runtime selection does not imply support for excluded NVIDIA visual families
 - unknown or non-matching NVIDIA-family ids still fall back to `generic_full`
 - this slice does not assume a new NVIDIA-specific provider branch unless the
-  current external transport path is proven insufficient
+  current provider surface is proven insufficient
 - any newly introduced NVIDIA-specific `vision_contract_profile` values remain
   typed in public `VisionAssistContract` result surfaces
 

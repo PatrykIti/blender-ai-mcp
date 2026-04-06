@@ -1,7 +1,7 @@
 # TASK-140-04-03: NVIDIA Non-Compare Exclusion Contracts and Diagnostics
 
 **Parent:** [TASK-140-04](./TASK-140-04_NVIDIA_VLM_Support_And_Exclusion_Policy.md)
-**Depends On:** [TASK-140-04-02](./TASK-140-04-02_Selected_NVIDIA_Provider_Surface_And_Compare_Path.md)
+**Depends On:** [TASK-140-04-02](./TASK-140-04-02_Selected_NVIDIA_Family_Routing_And_Compare_Path.md)
 **Status:** ⏳ To Do
 **Priority:** 🟠 High
 

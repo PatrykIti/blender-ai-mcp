@@ -1,7 +1,7 @@
 # TASK-140-03-02: OpenAI Structured Compare Contract and Strict Output Policy
 
 **Parent:** [TASK-140-03](./TASK-140-03_OpenAI_Image_Input_Profiles_And_Structured_Compare_Policy.md)
-**Depends On:** [TASK-140-03-01](./TASK-140-03-01_OpenAI_Typed_Provider_Surface_And_Family_Routing.md)
+**Depends On:** [TASK-140-03-01](./TASK-140-03-01_OpenAI_Family_Routing_And_Typed_Contract_Vocabulary.md)
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
 

@@ -1,6 +1,6 @@
 # TASK-140-02-03: Anthropic Parse, Diagnostics, and Compare-Profile Policy
 
-**Parent:** [TASK-140-02](./TASK-140-02_Anthropic_Claude_Vision_Profiles_And_Transport_Integration.md)
+**Parent:** [TASK-140-02](./TASK-140-02_Anthropic_Claude_Family_Contracts_On_The_Existing_Provider_Surface.md)
 **Depends On:** [TASK-140-02-02](./TASK-140-02-02_Anthropic_Request_Assembly_And_Image_Payload_Contract.md)
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
