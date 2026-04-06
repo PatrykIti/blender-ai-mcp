@@ -10,6 +10,11 @@ Turn the current broad "Qwen accepts images" assumption into one explicit
 family matrix for Qwen multimodal models, then route those families through
 deterministic compare/document/exclusion profiles.
 
+This is the first `TASK-140` implementation slice and the most direct
+continuation of `TASK-139`, because it applies the same model-family contract
+architecture to the next OpenRouter-hosted multimodal family cluster we
+actually want to evaluate.
+
 ## Business Problem
 
 The Qwen surface now spans several materially different multimodal lines:
@@ -24,6 +29,14 @@ The Qwen surface now spans several materially different multimodal lines:
 Those families should not all inherit one silent generic profile. Some are
 credible staged-compare candidates, some may want a stricter compare contract,
 and some should be explicitly excluded from compare routing.
+
+That makes Qwen the clearest next wave after `TASK-139`:
+
+- the current operator goal is to test better OpenRouter-hosted model behavior
+  by fixing profile/contract selection, not by adding providers
+- Qwen already appears in current provider notes and operator-reported evidence
+- the family spread is large enough that one undifferentiated `generic_full`
+  bucket would repeat the same class of mismatch that `TASK-139` just fixed
 
 ## Repository Touchpoints
 
@@ -43,6 +56,8 @@ and some should be explicitly excluded from compare routing.
 ## Acceptance Criteria
 
 - the repo has one explicit Qwen multimodal family matrix
+- `TASK-140-01` is framed and executed as an OpenRouter-first family-contract
+  slice, not as provider expansion work
 - legacy `qwen-vl-plus` / `qwen-vl-max`, Qwen2.5-VL, and Qwen3-VL are not
   treated as one undifferentiated family
 - any Qwen-specific `vision_contract_profile` values introduced by this slice
@@ -53,6 +68,11 @@ and some should be explicitly excluded from compare routing.
   ids ad hoc at every call site
 - unknown or not-yet-classified Qwen-family ids still fall back to
   `generic_full` under the `TASK-139` precedence model
+- the resulting Qwen profile matrix reads as a natural extension of the
+  `TASK-139` architecture:
+  - deterministic family routing
+  - explicit compare/document/exclusion decisions
+  - `generic_full` fallback for unknown or not-yet-classified families
 
 ## Docs To Update
 

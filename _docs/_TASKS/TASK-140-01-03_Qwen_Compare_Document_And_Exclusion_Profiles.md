@@ -11,6 +11,11 @@ Define the concrete prompt/schema/request/parser behavior for the Qwen
 profiles chosen by the runtime and keep document/OCR-oriented variants from
 silently inheriting compare contracts they should not use.
 
+This leaf is where the Qwen slice turns the `TASK-139` seam into actual
+product behavior: deterministic family routing must end in explicit
+compare/document/exclusion profile decisions instead of falling back by
+accident to whatever generic prompt path happens to work.
+
 ## Backend Boundary
 
 Qwen profile work stays inside the current shared external backend seam.
@@ -40,6 +45,12 @@ Qwen profile work stays inside the current shared external backend seam.
 - diagnostics and failure text remain explicit about the selected Qwen profile
 - backend changes, if needed, stay bounded to shared-path request/schema
   behavior and do not add a Qwen-specific transport/provider branch
+- the final Qwen behavior matrix is explicit across:
+  - compare-capable families
+  - document/OCR-oriented families
+  - excluded or still-generic families
+- families that are not yet explicitly classified still fall back to
+  `generic_full` under the `TASK-139` precedence model
 
 ## Docs To Update
 

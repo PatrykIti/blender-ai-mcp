@@ -9,12 +9,17 @@
 
 Add the Qwen-specific runtime vocabulary and deterministic model-id routing
 rules needed to resolve the correct `vision_contract_profile` for Qwen
-families.
+families, especially for OpenRouter-hosted Qwen model ids that should no
+longer collapse into one generic external bucket.
 
 ## Business Problem
 
 Without a dedicated routing leaf, Qwen support will drift back into ad hoc
 substring checks scattered across runtime, prompting, or parser code.
+
+This leaf is the core mechanical continuation of `TASK-139`: the same
+contract-selection seam now needs explicit Qwen family matching instead of one
+coarse generic fallback for all Qwen multimodal variants.
 
 ## Code Constraint
 
@@ -46,12 +51,16 @@ This leaf extends the contract-profile layer, not the provider layer.
 - Qwen-specific `vision_contract_profile` values are explicit and typed across:
   - `VisionContractProfile` runtime/config vocabulary and validators
   - public `VisionAssistContract.vision_contract_profile` result contracts
-- model-id routing covers the docs-reviewed Qwen families intentionally
+- model-id routing covers the docs-reviewed Qwen families intentionally,
+  especially on the OpenRouter-hosted ids we want to evaluate first
 - explicit override precedence from `TASK-139` still wins over Qwen auto-match
 - unknown or non-matching Qwen-family ids still fall back to `generic_full`
 - Qwen family selection logic is centralized in runtime resolution, not
   duplicated across prompting/backend/parsing call sites
 - `VISION_EXTERNAL_PROVIDER` vocabulary remains unchanged
+- this leaf preserves the same architectural shape introduced in `TASK-139`:
+  explicit override, deterministic family match, then fallback to
+  `generic_full`
 
 ## Docs To Update
 
