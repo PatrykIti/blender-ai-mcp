@@ -5,13 +5,19 @@
 **Category:** Product Reliability / Guided Creature UX
 **Estimated Effort:** Large
 **Dependencies:** TASK-120, TASK-121, TASK-122, TASK-124, TASK-139
+**Follow-on After:** [TASK-141](./TASK-141_Guided_Creature_Run_Contract_And_Schema_Drift_Hardening.md), [TASK-142](./TASK-142_Creature_Part_Seating_And_Organic_Attachment_Semantics.md)
 
 **Completion Summary:** Completed on 2026-04-06. The repo now ships a real
 generic creature prompt asset, goal-aware prompt recommendations, a
 creature-specific guided handoff/visibility path, stronger creature blockout
 discovery metadata, deterministic `silhouette_analysis` plus typed
 `action_hints` on staged compare/iterate responses, and a separate default-off
-`VISION_SEGMENTATION_*` sidecar contract/config surface.
+`VISION_SEGMENTATION_*` sidecar contract/config surface. Real squirrel-run
+follow-up work on operator-path/schema drift is tracked separately in
+[TASK-141](./TASK-141_Guided_Creature_Run_Contract_And_Schema_Drift_Hardening.md).
+Organic part seating/contact failures from that same run are tracked
+separately in
+[TASK-142](./TASK-142_Creature_Part_Seating_And_Organic_Attachment_Semantics.md).
 
 ## Objective
 

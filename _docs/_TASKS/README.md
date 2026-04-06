@@ -3,7 +3,7 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 6 tasks
+- **To Do:** 8 tasks
 - **In Progress:** 0 tasks
 - **Done:** 209
 - **Superseded:** 10
@@ -38,6 +38,8 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-130](./TASK-130_Default_Guided_Surface_Bootstrap_Consistency.md) | **Default Guided Surface Bootstrap Consistency** | 🟠 High | Board-level follow-on from the TASK-128 audit. Align the repo's documented "default production" story with the actual bootstrap surface configured in runtime defaults and examples. |
+| [TASK-141](./TASK-141_Guided_Creature_Run_Contract_And_Schema_Drift_Hardening.md) | **Guided Creature Run Contract and Schema Drift Hardening** | 🔴 High | Board-level follow-on from the first real TASK-128 squirrel run. Reduce schema-guessing and prompt/runtime drift around `call_tool(...)`, `reference_images(...)`, cleanup flags, primitive/collection signatures, and `inspect_validate` handling on the guided creature path. |
+| [TASK-142](./TASK-142_Creature_Part_Seating_And_Organic_Attachment_Semantics.md) | **Creature Part Seating and Organic Attachment Semantics** | 🔴 High | Board-level follow-on from the same real squirrel run. Separate “remove overlap” from “seat this organic part correctly” for ears, eyes, snout, and nose on the guided creature path. |
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
