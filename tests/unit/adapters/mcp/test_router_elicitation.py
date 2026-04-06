@@ -322,9 +322,12 @@ def test_router_set_goal_no_match_with_guided_manual_continuation_moves_session_
     assert result.continuation_mode == "guided_manual_build"
     assert result.guided_handoff is not None
     assert result.guided_handoff.kind == "guided_manual_build"
+    assert result.guided_handoff.recipe_id == "low_poly_creature_blockout"
     assert result.guided_handoff.target_phase == "build"
     assert result.guided_handoff.workflow_import_recommended is False
-    assert "macro_finish_form" in result.guided_handoff.direct_tools
+    assert "modeling_create_primitive" in result.guided_handoff.direct_tools
+    assert "mesh_extrude_region" in result.guided_handoff.direct_tools
+    assert "macro_finish_form" not in result.guided_handoff.direct_tools
     assert result.guided_handoff.discovery_tools == ["search_tools", "call_tool"]
     assert result.guided_reference_readiness is not None
     assert result.guided_reference_readiness.blocking_reason == "reference_images_required"
@@ -350,7 +353,7 @@ def test_router_get_status_exposes_session_id_and_transport(monkeypatch):
     monkeypatch.setattr(
         router_area,
         "build_visibility_diagnostics",
-        lambda surface_profile, phase: SimpleNamespace(
+        lambda surface_profile, phase, guided_handoff=None: SimpleNamespace(
             rules=(),
             visible_capability_ids=("router",),
             visible_entry_capability_ids=("router",),
