@@ -50,6 +50,12 @@ This follow-on covers:
   those semantics
 - adding regression coverage around organic attachment instead of only generic
   disjoint/overlap resolution
+- requiring the meaningful E2E layer checks for those cases:
+  - bbox relation
+  - mesh-surface gap/contact semantics
+  - overlap dimensions / overlap removal
+  - contact assertion outcome
+  - the final attachment verdict for the creature part relationship
 
 This follow-on does **not** cover:
 
@@ -71,6 +77,18 @@ This follow-on does **not** cover:
   cases instead of reusing generic overlap cleanup by default
 - focused regressions protect the concrete squirrel-style failure shapes seen in
   the first real post-`TASK-128` run
+- E2E coverage proves the correct truth layers are being exercised, not just
+  visual or prose outcomes:
+  - `scene_measure_gap` / contact semantics distinguish bbox-touching from real
+    mesh-surface separation
+  - `scene_measure_overlap` / overlap dimensions confirm whether geometry is
+    still intersecting
+  - `scene_assert_contact` or equivalent truth assertions participate in the
+    success/failure verdict
+  - the final result can differentiate:
+    - seated/attached correctly
+    - floating with a gap
+    - intersecting / growing out of the surface
 
 ## Repository Touchpoints
 
@@ -82,6 +100,8 @@ This follow-on does **not** cover:
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/tools/macro/test_macro_cleanup_part_intersections.py`
 - `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
+- `tests/e2e/vision/`
+- `tests/e2e/tools/scene/`
 - `_docs/_VISION/README.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 - `_docs/_TASKS/README.md`
@@ -97,6 +117,8 @@ This follow-on does **not** cover:
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/tools/macro/test_macro_cleanup_part_intersections.py`
 - `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
+- focused E2E coverage that asserts bbox, mesh-surface gap/contact, overlap,
+  and attachment verdicts for creature part pairs
 
 ## Changelog Impact
 
