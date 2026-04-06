@@ -1,9 +1,14 @@
 # TASK-128-02: Deterministic Silhouette Analysis and Typed Action Hints
 
 **Parent:** [TASK-128](./TASK-128_Reference_Guided_Creature_Build_Surface_And_Perception_Reliability.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Depends On:** [TASK-139](./TASK-139_Model_Family_Specific_Vision_Contract_Profiles_For_External_Runtimes.md)
+
+**Completion Summary:** Completed on 2026-04-06. Stage compare/iterate
+responses now carry deterministic `silhouette_analysis` metrics, typed
+`action_hints`, updated docs for prioritization order, and regression coverage
+for the new perception payload.
 
 ## Objective
 

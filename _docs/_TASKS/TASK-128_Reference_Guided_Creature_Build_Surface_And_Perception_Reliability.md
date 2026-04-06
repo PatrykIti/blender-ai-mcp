@@ -1,10 +1,17 @@
 # TASK-128: Reference-Guided Creature Build Surface and Perception Reliability
 
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** Product Reliability / Guided Creature UX
 **Estimated Effort:** Large
 **Dependencies:** TASK-120, TASK-121, TASK-122, TASK-124, TASK-139
+
+**Completion Summary:** Completed on 2026-04-06. The repo now ships a real
+generic creature prompt asset, goal-aware prompt recommendations, a
+creature-specific guided handoff/visibility path, stronger creature blockout
+discovery metadata, deterministic `silhouette_analysis` plus typed
+`action_hints` on staged compare/iterate responses, and a separate default-off
+`VISION_SEGMENTATION_*` sidecar contract/config surface.
 
 ## Objective
 

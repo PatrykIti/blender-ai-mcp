@@ -1,7 +1,7 @@
 # TASK-128-01-01-02: Generic Creature Prompt Wording and Public Docs
 
 **Parent:** [TASK-128-01-01](./TASK-128-01-01_Generic_Creature_Prompt_Catalog_Exposure.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟠 High
 
 ## Objective

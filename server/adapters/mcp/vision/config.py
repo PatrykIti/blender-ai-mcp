@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 VisionBackendKind = Literal["transformers_local", "mlx_local", "openai_compatible_external"]
 VisionExternalProviderName = Literal["generic", "openrouter", "google_ai_studio"]
 VisionContractProfile = Literal["generic_full", "google_family_compare"]
+VisionSegmentationProviderName = Literal["generic_sidecar"]
 
 
 class VisionTransformersLocalConfig(BaseModel):
@@ -89,6 +90,7 @@ class VisionRuntimeConfig(BaseModel):
     transformers_local: VisionTransformersLocalConfig | None = None
     mlx_local: VisionMLXLocalConfig | None = None
     openai_compatible_external: VisionOpenAICompatibleConfig | None = None
+    segmentation_sidecar: "VisionSegmentationSidecarConfig | None" = None
 
     @model_validator(mode="after")
     def validate_provider_config(self) -> "VisionRuntimeConfig":
@@ -143,3 +145,32 @@ class VisionRuntimeConfig(BaseModel):
         if self.provider != "openai_compatible_external" or self.openai_compatible_external is None:
             return None
         return self.openai_compatible_external.vision_contract_profile
+
+    @property
+    def active_segmentation_sidecar(self) -> "VisionSegmentationSidecarConfig | None":
+        """Return the optional segmentation sidecar config when enabled."""
+
+        return self.segmentation_sidecar
+
+
+class VisionSegmentationSidecarConfig(BaseModel):
+    """Configuration for the optional part-segmentation sidecar."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = False
+    provider_name: VisionSegmentationProviderName = "generic_sidecar"
+    endpoint: str | None = None
+    model: str | None = None
+    api_key: str | None = None
+    api_key_env: str | None = None
+    timeout_seconds: float = Field(default=15.0, gt=0)
+    max_parts: int = Field(default=16, ge=1, le=64)
+
+    @model_validator(mode="after")
+    def validate_endpoint(self) -> "VisionSegmentationSidecarConfig":
+        """Require an explicit endpoint only when the sidecar is enabled."""
+
+        if self.enabled and not self.endpoint:
+            raise ValueError("enabled segmentation_sidecar requires endpoint")
+        return self

@@ -9,14 +9,26 @@
     "extend",
     "push",
     "outward",
-    "geometry"
+    "geometry",
+    "ears",
+    "snout",
+    "muzzle",
+    "tail",
+    "paw",
+    "animal head",
+    "creature blockout",
+    "silhouette",
+    "side reference"
   ],
   "sample_prompts": [
     "extrude the selected faces",
     "pull out the top face",
     "extend the geometry upward",
     "extrude by 2 units",
-    "push the face out"
+    "push the face out",
+    "extrude a simple snout from the creature head blockout",
+    "pull out the ear mass from the top of the head",
+    "extend a tail base from the rear body silhouette"
   ],
   "parameters": {
     "move": {
@@ -34,5 +46,5 @@
     "phone_like:screen_cutout",
     "tower_like:height_extension"
   ],
-  "description": "Extrudes selected geometry with optional movement vector."
+  "description": "Extrudes selected geometry with optional movement vector and is a core blockout move for ears, snouts, tails, and paw masses."
 }

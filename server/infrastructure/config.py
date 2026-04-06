@@ -96,6 +96,40 @@ class Config(BaseSettings):
         default=None,
         description="Environment variable containing the Google AI Studio API key for vision",
     )
+    VISION_SEGMENTATION_ENABLED: bool = Field(
+        default=False,
+        description="Enable optional part-segmentation sidecar for creature perception",
+    )
+    VISION_SEGMENTATION_PROVIDER: str = Field(
+        default="generic_sidecar",
+        description="Optional segmentation sidecar provider: generic_sidecar",
+    )
+    VISION_SEGMENTATION_ENDPOINT: str | None = Field(
+        default=None,
+        description="Endpoint/base URL for the optional segmentation sidecar",
+    )
+    VISION_SEGMENTATION_MODEL: str | None = Field(
+        default=None,
+        description="Optional model identifier for the segmentation sidecar",
+    )
+    VISION_SEGMENTATION_API_KEY: str | None = Field(
+        default=None,
+        description="Inline API key for the segmentation sidecar",
+    )
+    VISION_SEGMENTATION_API_KEY_ENV: str | None = Field(
+        default=None,
+        description="Environment variable containing the segmentation sidecar API key",
+    )
+    VISION_SEGMENTATION_TIMEOUT_SECONDS: float = Field(
+        default=15.0,
+        gt=0,
+        description="Timeout for one optional segmentation sidecar request",
+    )
+    VISION_SEGMENTATION_MAX_PARTS: int = Field(
+        default=16,
+        gt=0,
+        description="Maximum part outputs accepted from the optional segmentation sidecar",
+    )
 
     @model_validator(mode="after")
     def validate_timeout_hierarchy(self):
@@ -129,6 +163,8 @@ class Config(BaseSettings):
             raise ValueError("VISION_EXTERNAL_PROVIDER must be one of: generic, openrouter, google_ai_studio")
         if self.VISION_EXTERNAL_CONTRACT_PROFILE not in {None, "generic_full", "google_family_compare"}:
             raise ValueError("VISION_EXTERNAL_CONTRACT_PROFILE must be one of: generic_full, google_family_compare")
+        if self.VISION_SEGMENTATION_PROVIDER not in {"generic_sidecar"}:
+            raise ValueError("VISION_SEGMENTATION_PROVIDER must be one of: generic_sidecar")
         return self
 
 
@@ -181,4 +217,12 @@ def get_config() -> Config:
         VISION_GEMINI_MODEL=os.getenv("VISION_GEMINI_MODEL") or None,
         VISION_GEMINI_API_KEY=os.getenv("VISION_GEMINI_API_KEY") or None,
         VISION_GEMINI_API_KEY_ENV=os.getenv("VISION_GEMINI_API_KEY_ENV") or None,
+        VISION_SEGMENTATION_ENABLED=os.getenv("VISION_SEGMENTATION_ENABLED", "false").lower() in ("true", "1", "yes"),
+        VISION_SEGMENTATION_PROVIDER=os.getenv("VISION_SEGMENTATION_PROVIDER", "generic_sidecar"),
+        VISION_SEGMENTATION_ENDPOINT=os.getenv("VISION_SEGMENTATION_ENDPOINT") or None,
+        VISION_SEGMENTATION_MODEL=os.getenv("VISION_SEGMENTATION_MODEL") or None,
+        VISION_SEGMENTATION_API_KEY=os.getenv("VISION_SEGMENTATION_API_KEY") or None,
+        VISION_SEGMENTATION_API_KEY_ENV=os.getenv("VISION_SEGMENTATION_API_KEY_ENV") or None,
+        VISION_SEGMENTATION_TIMEOUT_SECONDS=float(os.getenv("VISION_SEGMENTATION_TIMEOUT_SECONDS", 15.0)),
+        VISION_SEGMENTATION_MAX_PARTS=int(os.getenv("VISION_SEGMENTATION_MAX_PARTS", 16)),
     )

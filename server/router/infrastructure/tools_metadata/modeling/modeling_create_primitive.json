@@ -3,14 +3,38 @@
   "category": "modeling",
   "mode_required": "OBJECT",
   "selection_required": false,
-  "keywords": ["create", "add", "primitive", "cube", "sphere", "cylinder", "plane", "cone", "torus"],
+  "keywords": [
+    "create",
+    "add",
+    "primitive",
+    "cube",
+    "sphere",
+    "cylinder",
+    "plane",
+    "cone",
+    "torus",
+    "low poly creature",
+    "animal blockout",
+    "creature blockout",
+    "body mass",
+    "head mass",
+    "ear blocker",
+    "snout base",
+    "paw blocker",
+    "silhouette blockout",
+    "front reference",
+    "side reference"
+  ],
   "sample_prompts": [
     "create a cube",
     "add a sphere",
     "make a cylinder",
     "add a plane",
     "create a cone at the origin",
-    "add a torus"
+    "add a torus",
+    "start a low poly creature blockout with simple body primitives",
+    "create primitive masses for an animal head and body from front and side reference",
+    "add simple blockers for ears, snout, and paws"
   ],
   "parameters": {
     "primitive_type": {
@@ -49,5 +73,5 @@
   },
   "related_tools": ["modeling_transform_object", "modeling_add_modifier"],
   "patterns": [],
-  "description": "Creates a primitive mesh object (cube, sphere, cylinder, etc.)."
+  "description": "Creates a primitive mesh object (cube, sphere, cylinder, etc.) and is a strong starter for low-poly creature body/head blocker masses."
 }

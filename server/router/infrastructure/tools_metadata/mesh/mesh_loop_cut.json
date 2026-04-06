@@ -3,13 +3,29 @@
   "category": "mesh",
   "mode_required": "EDIT",
   "selection_required": true,
-  "keywords": ["loop cut", "subdivide", "cut", "add edges", "edge loops", "topology"],
+  "keywords": [
+    "loop cut",
+    "subdivide",
+    "cut",
+    "add edges",
+    "edge loops",
+    "topology",
+    "creature blockout",
+    "ear base",
+    "snout support",
+    "muzzle support",
+    "silhouette control",
+    "paw joints"
+  ],
   "sample_prompts": [
     "add a loop cut",
     "subdivide the edge",
     "add more edge loops",
     "cut the mesh",
-    "add 3 loop cuts"
+    "add 3 loop cuts",
+    "add a loop cut to support the ear base",
+    "add supporting loops for a low poly snout silhouette",
+    "cut the body blockout to control creature proportions"
   ],
   "parameters": {
     "number_cuts": {
@@ -25,5 +41,5 @@
   },
   "related_tools": ["mesh_select_targeted", "mesh_subdivide", "mesh_bevel"],
   "patterns": ["phone_like:button_placement"],
-  "description": "Adds cuts to mesh geometry using subdivide on selected edges."
+  "description": "Adds cuts to mesh geometry using subdivide on selected edges for creature blockout silhouette and support-loop control."
 }

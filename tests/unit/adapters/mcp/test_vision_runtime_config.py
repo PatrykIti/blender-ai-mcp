@@ -63,6 +63,14 @@ def _base_config(**overrides) -> Config:
         "VISION_GEMINI_MODEL": None,
         "VISION_GEMINI_API_KEY": None,
         "VISION_GEMINI_API_KEY_ENV": None,
+        "VISION_SEGMENTATION_ENABLED": False,
+        "VISION_SEGMENTATION_PROVIDER": "generic_sidecar",
+        "VISION_SEGMENTATION_ENDPOINT": None,
+        "VISION_SEGMENTATION_MODEL": None,
+        "VISION_SEGMENTATION_API_KEY": None,
+        "VISION_SEGMENTATION_API_KEY_ENV": None,
+        "VISION_SEGMENTATION_TIMEOUT_SECONDS": 15.0,
+        "VISION_SEGMENTATION_MAX_PARTS": 16,
     }
     data.update(overrides)
     return Config(**data)
@@ -397,6 +405,33 @@ def test_enabled_mlx_runtime_requires_model_source():
 
     with pytest.raises(ValueError, match="requires mlx_local config"):
         build_vision_runtime_config(config)
+
+
+def test_optional_segmentation_sidecar_stays_disabled_by_default():
+    runtime = build_vision_runtime_config(_base_config())
+
+    assert runtime.segmentation_sidecar is None
+    assert runtime.active_segmentation_sidecar is None
+
+
+def test_optional_segmentation_sidecar_uses_separate_opt_in_config_surface():
+    runtime = build_vision_runtime_config(
+        _base_config(
+            VISION_SEGMENTATION_ENABLED=True,
+            VISION_SEGMENTATION_ENDPOINT="http://localhost:9100/segment",
+            VISION_SEGMENTATION_MODEL="sam-sidecar-v1",
+            VISION_SEGMENTATION_API_KEY_ENV="SEGMENTATION_API_KEY",
+            VISION_SEGMENTATION_MAX_PARTS=12,
+        )
+    )
+
+    assert runtime.segmentation_sidecar is not None
+    assert runtime.segmentation_sidecar.enabled is True
+    assert runtime.segmentation_sidecar.provider_name == "generic_sidecar"
+    assert runtime.segmentation_sidecar.endpoint == "http://localhost:9100/segment"
+    assert runtime.segmentation_sidecar.model == "sam-sidecar-v1"
+    assert runtime.segmentation_sidecar.api_key_env == "SEGMENTATION_API_KEY"
+    assert runtime.segmentation_sidecar.max_parts == 12
 
 
 def test_vision_request_carries_before_after_and_reference_images():

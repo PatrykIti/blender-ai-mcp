@@ -137,6 +137,25 @@ Uses the same external-runtime path with the Gemini provider profile:
 }
 ```
 
+## Optional Segmentation Sidecar Add-On
+
+This sidecar stays disabled by default and is separate from the normal
+`VISION_EXTERNAL_CONTRACT_PROFILE` routing surface.
+
+Add these env vars only when you explicitly want the advisory part-segmentation path:
+
+```json
+{
+  "VISION_SEGMENTATION_ENABLED": "true",
+  "VISION_SEGMENTATION_PROVIDER": "generic_sidecar",
+  "VISION_SEGMENTATION_ENDPOINT": "http://127.0.0.1:9100/segment",
+  "VISION_SEGMENTATION_MODEL": "sam-sidecar-v1",
+  "VISION_SEGMENTATION_API_KEY_ENV": "SEGMENTATION_API_KEY",
+  "VISION_SEGMENTATION_TIMEOUT_SECONDS": "15",
+  "VISION_SEGMENTATION_MAX_PARTS": "16"
+}
+```
+
 ## Docker Guided Profile
 
 Smallest practical docker-backed guided profile:

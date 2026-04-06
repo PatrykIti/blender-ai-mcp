@@ -1,9 +1,14 @@
 # TASK-128-03: Optional Part-Segmentation Sidecar and Part-Aware Perception
 
 **Parent:** [TASK-128](./TASK-128_Reference_Guided_Creature_Build_Surface_And_Perception_Reliability.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟡 Medium
 **Depends On:** [TASK-139](./TASK-139_Model_Family_Specific_Vision_Contract_Profiles_For_External_Runtimes.md)
+
+**Completion Summary:** Completed on 2026-04-06. The repo now defines one
+vendor-neutral advisory `part_segmentation` payload plus a separate,
+default-off `VISION_SEGMENTATION_*` config surface for an optional
+part-segmentation sidecar without overloading the default vision runtime.
 
 ## Objective
 

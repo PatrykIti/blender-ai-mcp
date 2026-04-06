@@ -5,9 +5,12 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from fastmcp.prompts.prompt import Message, PromptResult
 
 from server.adapters.mcp.prompts.prompt_catalog import (
+    derive_prompt_goal_tags,
     get_prompt_catalog_entry,
     get_recommended_prompt_entries,
 )
@@ -37,17 +40,28 @@ def render_recommended_prompts(
     *,
     surface_profile: str,
     phase: str,
+    goal: str | None = None,
+    guided_handoff: dict[str, Any] | None = None,
 ) -> PromptResult:
     """Render a dynamic recommendation prompt for the current session context."""
 
     recommendations = get_recommended_prompt_entries(
         surface_profile=surface_profile,
         phase=phase,
+        goal=goal,
+        guided_handoff=guided_handoff,
     )
+    goal_tags = derive_prompt_goal_tags(goal=goal, guided_handoff=guided_handoff)
     lines = [
         f"# Recommended prompts for surface `{surface_profile}` / phase `{phase}`",
         "",
     ]
+    if goal:
+        lines.append(f"- Active goal: `{goal}`")
+        lines.append(
+            "- Goal context tags: " + (", ".join(f"`{tag}`" for tag in goal_tags) if goal_tags else "`goal:generic`")
+        )
+        lines.append("")
     if not recommendations:
         lines.append("No curated prompt recommendations are available for this phase/profile yet.")
     else:
@@ -60,6 +74,8 @@ def render_recommended_prompts(
         meta={
             "surface_profile": surface_profile,
             "phase": phase,
+            "goal": goal,
+            "goal_tags": list(goal_tags),
             "recommended_prompt_names": [entry.name for entry in recommendations],
         },
     )

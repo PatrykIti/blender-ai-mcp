@@ -272,6 +272,42 @@ def test_apply_visibility_for_session_state_uses_stored_surface_profile():
     )
 
 
+def test_apply_visibility_for_session_state_can_use_creature_handoff_recipe():
+    """Session visibility should narrow to the creature handoff recipe when one is active."""
+
+    ctx = FakeContext()
+    state = SessionCapabilityState(
+        phase=SessionPhase.BUILD,
+        surface_profile="llm-guided",
+        guided_handoff={
+            "kind": "guided_manual_build",
+            "recipe_id": "low_poly_creature_blockout",
+            "direct_tools": ["modeling_create_primitive", "mesh_extrude_region", "inspect_scene"],
+            "supporting_tools": ["reference_images", "reference_iterate_stage_checkpoint", "router_get_status"],
+            "discovery_tools": ["search_tools", "call_tool"],
+            "workflow_import_recommended": False,
+            "message": "Continue on the guided creature blockout surface.",
+        },
+    )
+
+    asyncio.run(apply_visibility_for_session_state(ctx, state))
+
+    calls = ctx.state["_visibility_calls"]
+    assert any(
+        name == "enable_components"
+        and call["names"]
+        == {
+            "modeling_create_primitive",
+            "mesh_extrude_region",
+            "inspect_scene",
+            "reference_images",
+            "reference_iterate_stage_checkpoint",
+            "router_get_status",
+        }
+        for name, call in calls[1:]
+    )
+
+
 def test_update_session_from_router_goal_persists_pending_elicitation_fields():
     """needs_input router responses should persist stable elicitation identifiers."""
 

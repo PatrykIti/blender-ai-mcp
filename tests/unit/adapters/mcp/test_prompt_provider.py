@@ -23,16 +23,22 @@ def test_prompt_provider_lists_curated_prompt_assets():
     assert "getting_started" in names
     assert "guided_session_start" in names
     assert "workflow_router_first" in names
+    assert "reference_guided_creature_build" in names
     assert "recommended_prompts" in names
 
 
 def test_recommended_prompts_renderer_reflects_phase_and_profile():
     """Dynamic recommendation prompt should render session-aware prompt suggestions."""
 
-    result = render_recommended_prompts(surface_profile="llm-guided", phase="planning")
+    result = render_recommended_prompts(
+        surface_profile="llm-guided",
+        phase="planning",
+        goal="create a low-poly creature matching front and side reference images",
+    )
 
     assert isinstance(result, PromptResult)
     message = result.messages[0].content.text
+    assert "reference_guided_creature_build" in message
     assert "guided_session_start" in message
     assert "workflow_router_first" in message
     assert "llm-guided" in message

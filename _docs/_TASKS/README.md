@@ -3,9 +3,9 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 8 tasks
-- **In Progress:** 2 tasks
-- **Done:** 205
+- **To Do:** 6 tasks
+- **In Progress:** 0 tasks
+- **Done:** 209
 - **Superseded:** 10
 
 ## 📐 Board Scope
@@ -61,18 +61,13 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Vision & Hybrid Loop
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) | **Expand External Vision Contract Profiles Across Qwen, Anthropic, OpenAI, and NVIDIA** | 🔴 High | Board-level follow-on after TASK-139 for extending the external `vision_contract_profile` architecture across additional multimodal families on the existing external runtime path, especially for OpenRouter-hosted model ids where structured-output behavior diverges across Qwen-VL, Claude, OpenAI, and NVIDIA VLM lines. |
-| [TASK-128-02](./TASK-128-02_Deterministic_Silhouette_Analysis_And_Typed_Action_Hints.md) | **Deterministic Silhouette Analysis and Typed Action Hints** | 🔴 High | Second execution slice for mask-based shape metrics and tool-oriented corrective hints. |
-| [TASK-128-03](./TASK-128-03_Optional_Part_Segmentation_Sidecar_And_Part_Aware_Perception.md) | **Optional Part-Segmentation Sidecar and Part-Aware Perception** | 🟡 Medium | Third execution slice for an opt-in segmentation module that produces part masks, crops, and landmarks without becoming a default runtime dependency. |
-
+| [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) | **Expand External Vision Contract Profiles Across Qwen, Anthropic, OpenAI, and NVIDIA** | 🔴 High | Board-level follow-on after TASK-139 for extending the external `vision_contract_profile` architecture across additional multimodal families on the existing provider surface, with OpenRouter-first family routing/profile work and no new provider branches under this umbrella. |
 ---
 
 ## 🚧 In Progress
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-128](./TASK-128_Reference_Guided_Creature_Build_Surface_And_Perception_Reliability.md) | **Reference-Guided Creature Build Surface and Perception Reliability** | 🔴 High | Active umbrella for Slice A/B/C work on creature prompting, deterministic silhouette feedback, and optional part segmentation. |
-| [TASK-128-01](./TASK-128-01_Guided_Creature_Prompting_Handoff_And_Discovery_Hints.md) | **Guided Creature Prompting, Handoff, and Discovery Hints** | 🔴 High | Active Slice A. The platform baseline exists, but the creature prompt asset, goal-aware recommendation path, creature handoff narrowing, and discovery/search bias still need to be aligned with runtime behavior. The highest-risk open gaps are now prompt-asset exposure, goal-aware recommendation routing, prompt wording/runtime-surface alignment, the session-aware creature handoff path, and the metadata-driven search-bias path: catalog/provider/bridge prompt exposure, deterministic use of session goal in `recommended_prompts`, generic-creature and guided-utility-consistent prompt docs, iterate-stage docs that describe the *current* runtime response shape, `guided_handoff` payload, session visibility/search shaping, `search_documents` enrichment, and the matching regression harness still need to describe the same bounded low-poly creature story. The broader repo-wide default-bootstrap drift is tracked separately in [TASK-130](./TASK-130_Default_Guided_Surface_Bootstrap_Consistency.md). |
 
 ---
 
@@ -80,6 +75,10 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-128](./TASK-128_Reference_Guided_Creature_Build_Surface_And_Perception_Reliability.md) | **Reference-Guided Creature Build Surface and Perception Reliability** | 🔴 High | 2026-04-06 |
+| [TASK-128-01](./TASK-128-01_Guided_Creature_Prompting_Handoff_And_Discovery_Hints.md) | **Guided Creature Prompting, Handoff, and Discovery Hints** | 🔴 High | 2026-04-06 |
+| [TASK-128-02](./TASK-128-02_Deterministic_Silhouette_Analysis_And_Typed_Action_Hints.md) | **Deterministic Silhouette Analysis and Typed Action Hints** | 🔴 High | 2026-04-06 |
+| [TASK-128-03](./TASK-128-03_Optional_Part_Segmentation_Sidecar_And_Part_Aware_Perception.md) | **Optional Part-Segmentation Sidecar and Part-Aware Perception** | 🟡 Medium | 2026-04-06 |
 | [TASK-139](./TASK-139_Model_Family_Specific_Vision_Contract_Profiles_For_External_Runtimes.md) | **Model-Family-Specific Vision Contract Profiles for External Runtimes** | 🔴 High | 2026-04-05 |
 | [TASK-134](./TASK-134_Stage_Compare_Error_Response_Hardening.md) | **Stage Compare Error Response Hardening** | 🟠 High | 2026-04-05 |
 | [TASK-133](./TASK-133_Call_Tool_Proxy_Error_Semantics_Hardening.md) | **call_tool Proxy Error Semantics Hardening** | 🟠 High | 2026-04-05 |

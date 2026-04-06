@@ -71,9 +71,12 @@ When a bounded modeling intent matches, the default public working layer should 
 - `macro_adjust_segment_chain_arc` for bounded arc adjustment on ordered segment chains
 - `macro_finish_form` for preset-driven bevel/subdivision/solidify finishing
 - `reference_images` for goal-scoped reference intake before bounded visual comparison
+- `reference_guided_creature_build` as a native prompt asset for staged generic creature work on `llm-guided`
+- `recommended_prompts` can now steer creature-oriented guided sessions toward that prompt path by using active goal/session context
 - `guided_reference_readiness` on `router_set_goal`, `router_get_status`, and staged reference compare/iterate payloads so clients can see whether reference-driven stage work is actually ready
 - `reference_compare_stage_checkpoint` for deterministic multi-view stage comparison against attached references during manual iterative work
 - `reference_iterate_stage_checkpoint` for a session-aware staged correction loop that remembers prior focus, can escalate into inspect/validate when the same correction repeats, and can now target one object, many objects, a collection, or the full assembled silhouette
+- stage compare/iterate now also expose deterministic `silhouette_analysis` metrics, typed `action_hints`, and an advisory-only `part_segmentation` placeholder that stays disabled unless a separate sidecar is explicitly enabled
 
 Current guided bootstrap surface:
 

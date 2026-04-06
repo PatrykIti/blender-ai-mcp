@@ -36,6 +36,8 @@ from .config import (
     VisionMLXLocalConfig,
     VisionOpenAICompatibleConfig,
     VisionRuntimeConfig,
+    VisionSegmentationProviderName,
+    VisionSegmentationSidecarConfig,
     VisionTransformersLocalConfig,
 )
 from .evaluation import (
@@ -86,6 +88,8 @@ __all__ = [
     "VisionGoldenExpectations",
     "VisionGoldenScenario",
     "VisionOpenAICompatibleConfig",
+    "VisionSegmentationProviderName",
+    "VisionSegmentationSidecarConfig",
     "VisionRequest",
     "VisionRuntimeConfig",
     "VisionTransformersLocalConfig",

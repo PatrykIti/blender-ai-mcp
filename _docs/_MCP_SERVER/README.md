@@ -416,6 +416,10 @@ On `llm-guided`, `router_set_goal()` now exposes explicit typed continuation met
 
 - `guided_handoff` is returned for bounded guided continuations such as `guided_manual_build` and `guided_utility`
 - it names `target_phase`, `direct_tools`, `supporting_tools`, and `discovery_tools`
+- creature-oriented manual-build handoffs can also expose a stable
+  `recipe_id`, currently `low_poly_creature_blockout`, so session visibility
+  and search shaping can narrow to the smaller creature recipe instead of the
+  broad generic build surface
 - `workflow_import_recommended` remains `false` on these paths unless the user explicitly asks for workflow import/create behavior
 - `router_get_status()` re-exposes the active `guided_handoff` from session state for recovery/debugging
 
@@ -555,7 +559,30 @@ The prompt layer is now part of the MCP product surface:
 - tool-only clients can use:
   - `list_prompts`
   - `get_prompt`
-- `recommended_prompts` provides phase/profile-aware recommendations
+- native prompt asset names now include `reference_guided_creature_build`
+- `recommended_prompts` now uses phase/profile plus explicit session goal and
+  guided-handoff context to steer creature sessions toward the creature prompt path
+
+## Deterministic Silhouette Guidance
+
+Stage compare/iterate responses now expose one deterministic perception layer
+alongside the existing vision/truth outputs:
+
+- `silhouette_analysis`
+  - typed silhouette metrics such as IoU, contour drift, aspect-ratio delta,
+    band-width deltas, and side-profile projection deltas
+- `action_hints`
+  - typed corrective tool suggestions derived from those metrics
+- `part_segmentation`
+  - a vendor-neutral, advisory-only sidecar payload that defaults to
+    `status="disabled"` on the normal guided runtime
+
+Consumption order:
+
+- `correction_candidates` and `truth_followup` stay ahead of perception hints
+- `action_hints` complement `correction_focus`; they do not replace truth or router policy
+- `vision_contract_profile` remains prompt/schema/parser routing only and is
+  not itself evidence, truth, or policy
 
 ## Code Mode Pilot Baseline
 
@@ -731,7 +758,7 @@ Managing objects at the scene level.
 Invalid target-scope inputs such as an unavailable `collection_name` now return
 structured error payloads on the stage-compare path instead of failing again
 while building the error response.
-Stage compare/iterate responses now also expose `guided_reference_readiness`, `assembled_target_scope`, `truth_bundle`, `truth_followup`, `correction_candidates`, `budget_control`, `refinement_route`, and `refinement_handoff`, so assembled-model correction flows can consume explicit session readiness, a structured target scope, correction-oriented truth findings, loop-ready follow-up items, an explicitly ranked merged correction list, explicit trimming metadata, a deterministic refinement-family decision, and a bounded next-tool-family handoff instead of inferring everything from loose `target_object` / `target_objects` / `collection_name` fields. On `reference_iterate_stage_checkpoint(...)`, the loop-facing `correction_focus` now prefers ranked `correction_candidates` summaries when they are present, and high-priority deterministic truth findings can also move `loop_disposition` to `inspect_validate` instead of waiting only for repeated vision focus. Collection/object-set targeting now also avoids obviously accessory-first primary anchors when a more structural target is present, vision-side `recommended_checks` are normalized to canonical MCP tool ids or dropped, model-aware budget control trims pair/candidate detail when the active runtime profile is too small for the full payload, and `refinement_route` now distinguishes bounded family choices such as `macro`, `modeling_mesh`, `sculpt_region`, or `inspect_only`. At this stage sculpt stays hidden on the normal guided surface; `refinement_handoff` is recommendation-only.
+Stage compare/iterate responses now also expose `guided_reference_readiness`, `assembled_target_scope`, `truth_bundle`, `truth_followup`, `correction_candidates`, `budget_control`, `refinement_route`, `refinement_handoff`, `silhouette_analysis`, `action_hints`, and `part_segmentation`, so assembled-model correction flows can consume explicit session readiness, a structured target scope, correction-oriented truth findings, loop-ready follow-up items, an explicitly ranked merged correction list, explicit trimming metadata, a deterministic refinement-family decision, typed perception metrics/tool hints, and an optional advisory-only sidecar placeholder instead of inferring everything from loose `target_object` / `target_objects` / `collection_name` fields. On `reference_iterate_stage_checkpoint(...)`, the loop-facing `correction_focus` now prefers ranked `correction_candidates` summaries when they are present, and high-priority deterministic truth findings can also move `loop_disposition` to `inspect_validate` instead of waiting only for repeated vision focus. `action_hints` complement that loop by exposing deterministic silhouette-driven tool suggestions, while `part_segmentation` stays disabled unless an operator explicitly enables the separate sidecar path. Collection/object-set targeting now also avoids obviously accessory-first primary anchors when a more structural target is present, vision-side `recommended_checks` are normalized to canonical MCP tool ids or dropped, model-aware budget control trims pair/candidate detail when the active runtime profile is too small for the full payload, and `refinement_route` now distinguishes bounded family choices such as `macro`, `modeling_mesh`, `sculpt_region`, or `inspect_only`. At this stage sculpt stays hidden on the normal guided surface; `refinement_handoff` is recommendation-only.
 | `scene_camera_orbit` | `angle_horizontal` (float), `angle_vertical` (float), `target_object` (str, optional), `target_point` ([x,y,z], optional) | Orbits the viewport around a target object or point. |
 | `scene_camera_focus` | `object_name` (str), `zoom_factor` (float) | Focuses the viewport on one object. Use `object_name` here, not `target`, `target_object`, or `focus_target`. |
 | `scene_get_viewport` | `width` (int), `height` (int), `shading` (str), `camera_name` (str), `focus_target` (str), `view_name` (str, optional), `orbit_horizontal` (float, optional), `orbit_vertical` (float, optional), `zoom_factor` (float, optional), `persist_view` (bool, optional), `output_mode` (str) | Returns a rendered image. `shading`: WIREFRAME/SOLID/MATERIAL. `camera_name`: specific cam or "USER_PERSPECTIVE". `USER_PERSPECTIVE` follows the live active 3D viewport; named cameras follow render visibility. `view_name`/`orbit_*`/`zoom_factor`/`persist_view` apply only to bounded `USER_PERSPECTIVE` capture adjustments. `focus_target`: object to frame. `output_mode`: IMAGE (default Image resource), BASE64 (raw string), FILE (host-visible path), MARKDOWN (inline preview + path). |

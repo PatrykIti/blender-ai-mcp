@@ -121,6 +121,8 @@ LaBSE must not be the source of truth.
 - general MCP tool discovery is owned by FastMCP search and visibility controls
 - semantic parameter memory is allowed only when the prompt is relevant to the target parameter
 - semantic workflow results are workflow-retrieval input, not proof of truth or policy approval
+- prompt recommendation may use explicit session state such as active goal,
+  phase/profile, and typed guided-handoff metadata; it must not scrape free-form history
 
 ---
 
@@ -206,6 +208,13 @@ If the question is:
 - “are these objects aligned / intersecting / inside / symmetric?”
 
 the answer belongs to inspection/assertion tools, not to LaBSE and not to speculative router logic.
+
+Silhouette metrics and future part-segmentation outputs are perception inputs:
+
+- they may inform operator-facing `action_hints`
+- they do not replace truth assertions
+- they do not become router safety policy on their own
+- `vision_contract_profile` remains routing metadata for external prompting/parsing, not evidence
 
 ---
 

@@ -1,7 +1,7 @@
 # TASK-128-03-02: Part-Segmentation Contract and Provider Interface
 
 **Parent:** [TASK-128-03](./TASK-128-03_Optional_Part_Segmentation_Sidecar_And_Part_Aware_Perception.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective

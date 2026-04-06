@@ -258,7 +258,15 @@ Hybrid-loop assembled-creature regression pack:
   - `refinement_route`
   - `refinement_handoff`
   - `truth_followup`
+  - `action_hints`
   - `correction_focus`
+
+Focused unit coverage now also protects:
+
+- deterministic silhouette metric/action-hint contracts on
+  `tests/unit/adapters/mcp/test_reference_images.py`
+- optional segmentation-sidecar config defaults and opt-in validation on
+  `tests/unit/adapters/mcp/test_vision_runtime_config.py`
 
 First Blender-backed E2E coverage for the guided utility prep path now includes:
 

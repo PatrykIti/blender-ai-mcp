@@ -447,7 +447,9 @@ Hybrid-loop regression guidance:
   - `loop_disposition`
   - `correction_candidates`
   - `truth_followup`
+  - `action_hints`
   - `correction_focus`
+  - `silhouette_analysis`
 - keep the eval pack split between:
   - simpler checkpoint/compare-path reproduction
   - richer assembled loops using `target_objects=[...]` or
@@ -471,6 +473,62 @@ Current repo-tracked first-pass scenarios:
 - `tests/fixtures/vision_eval/squirrel_head_to_body_camera_perspective/`
 
 ## First Scored Baseline
+
+## Deterministic Silhouette Layer
+
+The staged creature loop now has one deterministic silhouette-analysis layer on
+top of the existing bounded vision/runtime baseline.
+
+Current public payload additions on `reference_compare_stage_checkpoint(...)`
+and `reference_iterate_stage_checkpoint(...)`:
+
+- `silhouette_analysis`
+  - typed metrics such as `mask_iou`, `contour_drift`, `aspect_ratio_delta`,
+    `upper_band_width_delta`, `mid_band_width_delta`, `lower_band_width_delta`,
+    `left_projection_delta`, and `right_projection_delta`
+- `action_hints`
+  - typed, bounded tool suggestions derived from those silhouette metrics
+- `part_segmentation`
+  - optional sidecar placeholder; defaults to `status="disabled"` on the
+    normal runtime
+
+Interpretation rules:
+
+- silhouette metrics are perception evidence, not truth
+- `action_hints` complement `correction_candidates` and `truth_followup`
+- `vision_contract_profile` still only routes external prompt/schema/parser
+  behavior; it is not itself evidence or proof that the result is correct
+
+Current staged-loop reading order for creature work:
+
+- `loop_disposition`
+- `correction_candidates`
+- `truth_followup`
+- `action_hints`
+- `correction_focus`
+- `silhouette_analysis.metrics`
+- `vision_assistant.result.shape_mismatches` / `proportion_mismatches`
+
+## Optional Part-Segmentation Sidecar
+
+Part-aware segmentation remains explicitly opt-in and separate from the
+default vision runtime path.
+
+Current config surface:
+
+- `VISION_SEGMENTATION_ENABLED=false` by default
+- `VISION_SEGMENTATION_PROVIDER=generic_sidecar`
+- `VISION_SEGMENTATION_ENDPOINT`
+- `VISION_SEGMENTATION_MODEL`
+- `VISION_SEGMENTATION_API_KEY` / `VISION_SEGMENTATION_API_KEY_ENV`
+- `VISION_SEGMENTATION_TIMEOUT_SECONDS`
+- `VISION_SEGMENTATION_MAX_PARTS`
+
+Boundary rules:
+
+- the sidecar stays advisory-only
+- failure or absence of the sidecar must not break normal guided sessions
+- this config surface is separate from `VISION_EXTERNAL_CONTRACT_PROFILE`
 
 Current first-pass scored baseline on the synthetic repo scenarios:
 

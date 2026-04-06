@@ -22,14 +22,21 @@ def test_native_prompt_components_are_available_on_built_server():
     async def run():
         prompts = await server.list_prompts()
         rendered = await server.render_prompt(
-            "recommended_prompts", {"surface_profile": "llm-guided", "session_phase": "planning"}
+            "recommended_prompts",
+            {
+                "surface_profile": "llm-guided",
+                "session_phase": "planning",
+                "session_goal": "create a low-poly creature matching front and side reference images",
+            },
         )
         return {prompt.name for prompt in prompts}, rendered
 
     names, rendered = asyncio.run(run())
 
+    assert "reference_guided_creature_build" in names
     assert "workflow_router_first" in names
     assert "recommended_prompts" in names
+    assert "reference_guided_creature_build" in rendered.messages[0].content.text
     assert "workflow_router_first" in rendered.messages[0].content.text
 
 
@@ -51,6 +58,7 @@ def test_prompt_bridge_tools_are_visible_on_guided_surface():
 
     prompts_payload = _decode_text_tool_result(prompts)
     assert any(prompt["name"] == "workflow_router_first" for prompt in prompts_payload)
+    assert any(prompt["name"] == "reference_guided_creature_build" for prompt in prompts_payload)
 
     rendered_payload = _decode_text_tool_result(rendered)
     assert rendered_payload["messages"]

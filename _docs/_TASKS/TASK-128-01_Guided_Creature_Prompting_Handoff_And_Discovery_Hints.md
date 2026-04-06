@@ -1,8 +1,14 @@
 # TASK-128-01: Guided Creature Prompting, Handoff, and Discovery Hints
 
 **Parent:** [TASK-128](./TASK-128_Reference_Guided_Creature_Build_Surface_And_Perception_Reliability.md)
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** Completed on 2026-04-06. Slice A now exposes
+`reference_guided_creature_build` through the prompt catalog/provider/bridge,
+uses active goal context in `recommended_prompts`, emits a stable
+`low_poly_creature_blockout` guided-handoff recipe, and biases creature
+blockout search toward the intended modeling/mesh tool path.
 
 ## Objective
 

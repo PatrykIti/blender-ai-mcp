@@ -3,13 +3,27 @@
   "category": "mesh",
   "mode_required": "EDIT",
   "selection_required": false,
-  "keywords": ["symmetry", "symmetric", "mirror", "symmetrize", "left right", "copy side"],
+  "keywords": [
+    "symmetry",
+    "symmetric",
+    "mirror",
+    "symmetrize",
+    "left right",
+    "copy side",
+    "creature face symmetry",
+    "animal ears",
+    "paw pair",
+    "left right ear"
+  ],
   "sample_prompts": [
     "make the mesh symmetric",
     "mirror the left side to the right",
     "symmetrize the character",
     "make it symmetrical",
-    "copy one side to the other"
+    "copy one side to the other",
+    "mirror one creature ear to the other side",
+    "keep the low poly animal face symmetric",
+    "copy the paw shape from left to right"
   ],
   "parameters": {
     "direction": {
@@ -27,5 +41,5 @@
   },
   "related_tools": ["mesh_mirror", "modeling_add_modifier"],
   "patterns": [],
-  "description": "Makes mesh symmetric by mirroring one side to the other."
+  "description": "Makes mesh symmetric by mirroring one side to the other, useful for creature ears, paws, and face blockout symmetry."
 }

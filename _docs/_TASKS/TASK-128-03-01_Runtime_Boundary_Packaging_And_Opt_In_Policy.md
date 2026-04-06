@@ -1,7 +1,7 @@
 # TASK-128-03-01: Runtime Boundary, Packaging, and Opt-In Policy
 
 **Parent:** [TASK-128-03](./TASK-128-03_Optional_Part_Segmentation_Sidecar_And_Part_Aware_Perception.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective

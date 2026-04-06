@@ -1,7 +1,7 @@
 # TASK-128-01-03-01: Low-Poly Creature Blockout Recipe
 
 **Parent:** [TASK-128-01-03](./TASK-128-01-03_Creature_Aware_Guided_Handoff_And_Tool_Recipes.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective

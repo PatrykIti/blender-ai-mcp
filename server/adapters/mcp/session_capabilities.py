@@ -571,6 +571,7 @@ async def apply_visibility_for_session_state(
         ctx,
         surface_profile=surface_profile,
         phase=state.phase,
+        guided_handoff=state.guided_handoff,
     )
 
 

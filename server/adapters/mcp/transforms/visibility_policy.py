@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from server.adapters.mcp.session_phase import SessionPhase, coerce_session_phase
@@ -53,12 +54,61 @@ GUIDED_MANUAL_BUILD_SUPPORTING_TOOLS: tuple[str, ...] = (
     "router_get_status",
 )
 
+CREATURE_LOW_POLY_BLOCKOUT_DIRECT_TOOLS: tuple[str, ...] = (
+    "check_scene",
+    "inspect_scene",
+    "collection_manage",
+    "scene_set_active_object",
+    "scene_set_mode",
+    "scene_get_viewport",
+    "scene_measure_dimensions",
+    "scene_assert_proportion",
+    "modeling_create_primitive",
+    "modeling_transform_object",
+    "mesh_select",
+    "mesh_select_targeted",
+    "mesh_extrude_region",
+    "mesh_loop_cut",
+    "mesh_bevel",
+    "mesh_symmetrize",
+    "mesh_merge_by_distance",
+    "mesh_dissolve",
+    "macro_adjust_relative_proportion",
+    "macro_adjust_segment_chain_arc",
+    "macro_align_part_with_contact",
+    "macro_cleanup_part_intersections",
+)
+
+CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS: tuple[str, ...] = (
+    "reference_images",
+    "reference_compare_checkpoint",
+    "reference_compare_current_view",
+    "reference_compare_stage_checkpoint",
+    "reference_iterate_stage_checkpoint",
+    "router_get_status",
+)
+
 GUIDED_UTILITY_HANDOFF_TOOLS: tuple[str, ...] = (
     "scene_clean_scene",
     "scene_get_viewport",
 )
 
 GUIDED_UTILITY_SUPPORTING_TOOLS: tuple[str, ...] = ("router_get_status",)
+
+_CREATURE_GOAL_HINTS: tuple[str, ...] = (
+    "animal",
+    "bird",
+    "creature",
+    "ears",
+    "fox",
+    "owl",
+    "paw",
+    "rabbit",
+    "snout",
+    "squirrel",
+    "tail",
+)
+_LOW_POLY_GOAL_HINTS: tuple[str, ...] = ("blockout", "low poly", "low-poly")
 
 GUIDED_BUILD_ESCAPE_HATCH_TOOLS: tuple[str, ...] = (
     "scene_context",
@@ -231,6 +281,7 @@ def build_guided_handoff_payload(
     *,
     surface_profile: SurfaceProfileSettings | str,
     phase: SessionPhase | str,
+    goal: str | None = None,
 ) -> dict[str, Any] | None:
     """Build the explicit guided continuation contract for bounded no-match paths."""
 
@@ -242,9 +293,35 @@ def build_guided_handoff_payload(
         return None
 
     if continuation_mode == "guided_manual_build":
+        normalized_goal = str(goal or "").strip().lower()
+        is_creature_goal = any(
+            re.search(rf"(?<![a-z0-9]){re.escape(token)}(?![a-z0-9])", normalized_goal)
+            for token in _CREATURE_GOAL_HINTS
+        )
+        is_low_poly_goal = any(
+            re.search(rf"(?<![a-z0-9]){re.escape(token)}(?![a-z0-9])", normalized_goal)
+            for token in _LOW_POLY_GOAL_HINTS
+        )
         target_phase: SessionPhase = resolved_phase if resolved_phase == SessionPhase.BUILD else SessionPhase.BUILD
+        if is_creature_goal and is_low_poly_goal:
+            return {
+                "kind": "guided_manual_build",
+                "recipe_id": "low_poly_creature_blockout",
+                "target_phase": target_phase.value,
+                "surface_profile": resolved_surface,
+                "direct_tools": list(CREATURE_LOW_POLY_BLOCKOUT_DIRECT_TOOLS),
+                "supporting_tools": list(CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS),
+                "discovery_tools": list(GUIDED_DISCOVERY_TOOLS),
+                "workflow_import_recommended": False,
+                "message": (
+                    "Continue on the guided creature blockout surface. "
+                    "Start with modeling/mesh blockout tools, use reference iterate/measure tools between stages, "
+                    "and keep sculpt or finish-heavy tools for later refinement only."
+                ),
+            }
         return {
             "kind": "guided_manual_build",
+            "recipe_id": None,
             "target_phase": target_phase.value,
             "surface_profile": resolved_surface,
             "direct_tools": list(GUIDED_MANUAL_BUILD_HANDOFF_TOOLS),
@@ -263,6 +340,7 @@ def build_guided_handoff_payload(
         )
         return {
             "kind": "guided_utility",
+            "recipe_id": None,
             "target_phase": utility_target_phase.value,
             "surface_profile": resolved_surface,
             "direct_tools": list(GUIDED_UTILITY_HANDOFF_TOOLS),
@@ -278,9 +356,27 @@ def build_guided_handoff_payload(
     return None
 
 
+def _is_creature_blockout_handoff(guided_handoff: dict[str, Any] | None) -> bool:
+    return (
+        isinstance(guided_handoff, dict)
+        and guided_handoff.get("kind") == "guided_manual_build"
+        and guided_handoff.get("recipe_id") == "low_poly_creature_blockout"
+    )
+
+
+def _guided_handoff_visible_tools(guided_handoff: dict[str, Any] | None) -> set[str]:
+    if not isinstance(guided_handoff, dict):
+        return set()
+    return {
+        *[str(name) for name in guided_handoff.get("direct_tools") or [] if str(name).strip()],
+        *[str(name) for name in guided_handoff.get("supporting_tools") or [] if str(name).strip()],
+    }
+
+
 def build_visibility_rules(
     surface_profile: SurfaceProfileSettings | str,
     phase: SessionPhase | str = SessionPhase.BOOTSTRAP,
+    guided_handoff: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     """Build deterministic visibility rules for a profile/phase combination."""
 
@@ -310,6 +406,7 @@ def build_visibility_rules(
                     "guided_session_start",
                     "workflow_router_first",
                     "manual_tools_no_router",
+                    "reference_guided_creature_build",
                     "recommended_prompts",
                 },
             },
@@ -344,6 +441,7 @@ def build_visibility_rules(
                     "manual_tools_no_router",
                     "demo_low_poly_medieval_well",
                     "demo_generic_modeling",
+                    "reference_guided_creature_build",
                     "recommended_prompts",
                 },
             },
@@ -351,7 +449,12 @@ def build_visibility_rules(
     )
 
     if resolved_phase == SessionPhase.BUILD:
-        rules.append({"enabled": True, "components": {"tool"}, "names": set(GUIDED_BUILD_ESCAPE_HATCH_TOOLS)})
+        build_tools = (
+            _guided_handoff_visible_tools(guided_handoff)
+            if _is_creature_blockout_handoff(guided_handoff)
+            else set(GUIDED_BUILD_ESCAPE_HATCH_TOOLS)
+        )
+        rules.append({"enabled": True, "components": {"tool"}, "names": build_tools})
     elif resolved_phase == SessionPhase.INSPECT_VALIDATE:
         rules.append({"enabled": True, "components": {"tool"}, "names": set(GUIDED_INSPECT_ESCAPE_HATCH_TOOLS)})
 

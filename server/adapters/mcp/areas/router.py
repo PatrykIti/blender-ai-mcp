@@ -195,6 +195,7 @@ def _maybe_attach_guided_handoff(
     payload: Dict[str, Any],
     *,
     surface_profile: str,
+    goal: str,
 ) -> Dict[str, Any]:
     """Attach the explicit guided continuation contract when the router requests one."""
 
@@ -208,6 +209,7 @@ def _maybe_attach_guided_handoff(
         str(continuation_mode),
         surface_profile=surface_profile,
         phase=str(phase_hint),
+        goal=goal,
     )
     if guided_handoff is None:
         payload.pop("guided_handoff", None)
@@ -358,7 +360,7 @@ async def router_set_goal(
                 question_set_id=session.pending_question_set_id,
             ).model_dump()
 
-    result = _maybe_attach_guided_handoff(result, surface_profile=surface_profile)
+    result = _maybe_attach_guided_handoff(result, surface_profile=surface_profile, goal=goal)
     state = await update_session_from_router_goal_async(
         ctx,
         goal,
@@ -407,7 +409,11 @@ async def router_get_status(ctx: Context) -> RouterStatusContract:
     session = await get_session_capability_state_async(ctx)
     surface_profile = session.surface_profile or get_config().MCP_SURFACE_PROFILE
     contract_line = session.contract_version or _get_runtime_contract_line(ctx)
-    diagnostics = build_visibility_diagnostics(surface_profile, session.phase)
+    diagnostics = build_visibility_diagnostics(
+        surface_profile,
+        session.phase,
+        guided_handoff=session.guided_handoff,
+    )
     status_payload = get_router_status()
     background_job_count, background_job_counts_by_status, background_jobs = _build_background_job_diagnostics()
     status_payload.update(

@@ -43,6 +43,37 @@ def _build_phase_visible_server(phase: SessionPhase) -> FastMCP:
     )
 
 
+def _build_handoff_visible_server(phase: SessionPhase, guided_handoff: dict[str, object]) -> FastMCP:
+    surface = get_surface_profile("llm-guided")
+    base_pipeline = build_surface_transform_pipeline(surface)
+    transforms = []
+
+    for stage in base_pipeline:
+        if stage.name == "visibility":
+            transforms.extend(
+                create_visibility_transforms(build_visibility_rules(surface.name, phase, guided_handoff=guided_handoff))
+            )
+            continue
+        if stage.name == "discovery":
+            continue
+        transform = stage.transform
+        if transform is None:
+            continue
+        if isinstance(transform, (list, tuple)):
+            transforms.extend(transform)
+        else:
+            transforms.append(transform)
+
+    return FastMCP(
+        surface.server_name,
+        providers=build_surface_providers(surface),
+        transforms=transforms,
+        list_page_size=surface.list_page_size,
+        tasks=surface.tasks_enabled,
+        instructions=surface.instructions,
+    )
+
+
 def _tool_names_and_payload_size(phase: SessionPhase) -> tuple[set[str], int]:
     server = _build_phase_visible_server(phase)
 
@@ -168,3 +199,50 @@ def test_macro_wave_benchmark_reduces_finishing_decision_points_vs_legacy_flat()
     assert "macro_finish_form" in guided_finishing_choices
     assert {"modeling_add_modifier", "modeling_apply_modifier", "modeling_list_modifiers"}.isdisjoint(build_names)
     assert len(guided_finishing_choices) < len(legacy_finishing_choices)
+
+
+def test_creature_handoff_surface_is_smaller_than_generic_build_surface():
+    """Creature handoff should expose a materially smaller blockout-focused build surface."""
+
+    generic_build_names, _ = _tool_names_and_payload_size(SessionPhase.BUILD)
+    creature_server = _build_handoff_visible_server(
+        SessionPhase.BUILD,
+        {
+            "kind": "guided_manual_build",
+            "recipe_id": "low_poly_creature_blockout",
+            "direct_tools": [
+                "modeling_create_primitive",
+                "modeling_transform_object",
+                "mesh_select",
+                "mesh_select_targeted",
+                "mesh_extrude_region",
+                "mesh_loop_cut",
+                "mesh_bevel",
+                "mesh_symmetrize",
+                "mesh_merge_by_distance",
+                "mesh_dissolve",
+                "macro_adjust_relative_proportion",
+                "macro_adjust_segment_chain_arc",
+                "inspect_scene",
+            ],
+            "supporting_tools": [
+                "reference_images",
+                "reference_compare_stage_checkpoint",
+                "reference_iterate_stage_checkpoint",
+                "router_get_status",
+            ],
+        },
+    )
+
+    async def run():
+        tools = await creature_server.list_tools()
+        return {tool.name for tool in tools}
+
+    creature_names = asyncio.run(run())
+
+    assert len(creature_names) < len(generic_build_names)
+    assert "mesh_randomize" not in creature_names
+    assert "mesh_create_vertex_group" not in creature_names
+    assert "macro_finish_form" not in creature_names
+    assert "modeling_create_primitive" in creature_names
+    assert "mesh_extrude_region" in creature_names

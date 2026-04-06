@@ -141,13 +141,19 @@ def test_router_set_goal_contract_accepts_guided_manual_build_no_match(monkeypat
     monkeypatch.setattr("server.adapters.mcp.areas.router.get_router_handler", lambda: Handler())
 
     callable_router_set_goal = getattr(router_set_goal, "fn", router_set_goal)
-    result = asyncio.run(callable_router_set_goal(DummyContext(), goal="low poly squirrel 3D model"))
+    result = asyncio.run(
+        callable_router_set_goal(
+            DummyContext(),
+            goal="create a low-poly squirrel matching front and side reference images",
+        )
+    )
 
     assert isinstance(result, RouterGoalResponseContract)
     assert result.status == "no_match"
     assert result.continuation_mode == "guided_manual_build"
     assert result.guided_handoff is not None
     assert result.guided_handoff.kind == "guided_manual_build"
+    assert result.guided_handoff.recipe_id == "low_poly_creature_blockout"
     assert result.guided_handoff.target_phase == "build"
     assert result.guided_handoff.workflow_import_recommended is False
 

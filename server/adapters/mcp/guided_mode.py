@@ -60,12 +60,14 @@ def _is_capability_visible(entry: CapabilityManifestEntry, rules: list[dict[str,
 def build_visibility_diagnostics(
     surface_profile: str,
     phase: SessionPhase | str,
+    *,
+    guided_handoff: dict[str, Any] | None = None,
 ) -> VisibilityDiagnostics:
     """Build a deterministic visibility snapshot from the current policy model."""
 
     resolved_phase = coerce_session_phase(phase)
     preset = get_client_profile_preset(surface_profile)
-    rules = build_visibility_rules(surface_profile, resolved_phase)
+    rules = build_visibility_rules(surface_profile, resolved_phase, guided_handoff=guided_handoff)
 
     visible_capability_ids: list[str] = []
     hidden_capability_ids: list[str] = []
@@ -102,10 +104,11 @@ async def apply_session_visibility(
     *,
     surface_profile: str,
     phase: SessionPhase | str,
+    guided_handoff: dict[str, Any] | None = None,
 ) -> VisibilityDiagnostics:
     """Apply the current visibility policy to one session using native FastMCP APIs."""
 
-    diagnostics = build_visibility_diagnostics(surface_profile, phase)
+    diagnostics = build_visibility_diagnostics(surface_profile, phase, guided_handoff=guided_handoff)
     await ctx.reset_visibility()
 
     for rule in diagnostics.rules:

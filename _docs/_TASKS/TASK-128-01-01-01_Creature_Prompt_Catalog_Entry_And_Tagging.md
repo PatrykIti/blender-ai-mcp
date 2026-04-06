@@ -1,7 +1,7 @@
 # TASK-128-01-01-01: Creature Prompt Catalog Entry and Tagging
 
 **Parent:** [TASK-128-01-01](./TASK-128-01-01_Generic_Creature_Prompt_Catalog_Exposure.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective

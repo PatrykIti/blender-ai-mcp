@@ -54,6 +54,46 @@ def test_guided_mode_build_phase_exposes_build_capabilities_plus_entry_tools():
     assert "text" not in diagnostics.visible_capability_ids
 
 
+def test_guided_mode_can_narrow_build_visibility_for_creature_handoff():
+    """Creature handoff should keep build categories visible while hiding broad/noisy tools."""
+
+    diagnostics = build_visibility_diagnostics(
+        "llm-guided",
+        SessionPhase.BUILD,
+        guided_handoff={
+            "kind": "guided_manual_build",
+            "recipe_id": "low_poly_creature_blockout",
+            "direct_tools": [
+                "modeling_create_primitive",
+                "modeling_transform_object",
+                "mesh_extrude_region",
+                "mesh_loop_cut",
+                "mesh_bevel",
+                "inspect_scene",
+            ],
+            "supporting_tools": [
+                "reference_images",
+                "reference_iterate_stage_checkpoint",
+                "router_get_status",
+            ],
+        },
+    )
+
+    assert "modeling" in diagnostics.visible_capability_ids
+    assert "mesh" in diagnostics.visible_capability_ids
+    assert diagnostics.rules[-1]["names"] == {
+        "modeling_create_primitive",
+        "modeling_transform_object",
+        "mesh_extrude_region",
+        "mesh_loop_cut",
+        "mesh_bevel",
+        "inspect_scene",
+        "reference_images",
+        "reference_iterate_stage_checkpoint",
+        "router_get_status",
+    }
+
+
 def test_guided_mode_inspect_phase_prefers_verification_capabilities_over_build_families():
     """Inspect/validate phase should expose verification/capture families, not broad build families."""
 

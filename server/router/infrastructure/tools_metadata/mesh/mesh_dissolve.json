@@ -3,13 +3,28 @@
   "category": "mesh",
   "mode_required": "EDIT",
   "selection_required": true,
-  "keywords": ["dissolve", "cleanup", "remove edges", "simplify", "reduce", "limited dissolve"],
+  "keywords": [
+    "dissolve",
+    "cleanup",
+    "remove edges",
+    "simplify",
+    "reduce",
+    "limited dissolve",
+    "low poly creature",
+    "blockout cleanup",
+    "head silhouette cleanup",
+    "snout cleanup",
+    "paw cleanup"
+  ],
   "sample_prompts": [
     "dissolve selected edges",
     "cleanup flat geometry",
     "limited dissolve",
     "simplify mesh",
-    "remove unnecessary edges"
+    "remove unnecessary edges",
+    "simplify the low poly creature head without changing the silhouette too much",
+    "dissolve extra support edges after shaping the snout",
+    "clean up paw topology after the first blockout pass"
   ],
   "parameters": {
     "dissolve_type": {
@@ -36,5 +51,5 @@
   },
   "related_tools": ["mesh_select", "mesh_decimate", "mesh_tris_to_quads"],
   "patterns": [],
-  "description": "Dissolves geometry while preserving shape for cleanup."
+  "description": "Dissolves geometry while preserving shape for low-poly creature cleanup after the initial blockout."
 }

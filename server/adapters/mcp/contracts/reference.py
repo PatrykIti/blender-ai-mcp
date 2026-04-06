@@ -187,6 +187,85 @@ class ReferenceRefinementHandoffContract(MCPContract):
     recommended_tools: list[ReferenceRefinementToolCandidateContract] = []
 
 
+class ReferenceSilhouetteMetricContract(MCPContract):
+    """One deterministic silhouette metric comparing a capture against a reference."""
+
+    metric_id: Literal[
+        "mask_iou",
+        "contour_drift",
+        "aspect_ratio_delta",
+        "upper_band_width_delta",
+        "mid_band_width_delta",
+        "lower_band_width_delta",
+        "left_projection_delta",
+        "right_projection_delta",
+    ]
+    reference_value: float
+    observed_value: float
+    delta: float
+    severity: Literal["high", "medium", "low"] = "medium"
+
+
+class ReferenceActionHintContract(MCPContract):
+    """One typed corrective hint derived from deterministic perception metrics."""
+
+    hint_id: str
+    hint_type: Literal[
+        "widen_upper_profile",
+        "reduce_upper_profile",
+        "extend_left_profile",
+        "extend_right_profile",
+        "rebalance_proportion",
+        "inspect_before_edit",
+    ]
+    summary: str
+    priority: Literal["high", "normal"] = "normal"
+    target_object: str | None = None
+    metric_ids: list[str] = []
+    recommended_tools: list[ReferenceRefinementToolCandidateContract] = []
+
+
+class ReferenceSilhouetteAnalysisContract(MCPContract):
+    """Deterministic silhouette-analysis payload attached to staged compare responses."""
+
+    status: Literal["available", "unavailable"] = "unavailable"
+    reference_label: str | None = None
+    capture_label: str | None = None
+    target_view: str | None = None
+    mask_extraction_mode: Literal["alpha_or_otsu_largest_component", "unavailable"] = "unavailable"
+    alignment_mode: Literal["bbox_normalized", "unavailable"] = "unavailable"
+    metrics: list[ReferenceSilhouetteMetricContract] = []
+    notes: list[str] = []
+
+
+class ReferencePartSegmentationLandmarkContract(MCPContract):
+    """One optional 2D landmark emitted by a future segmentation sidecar."""
+
+    landmark_id: str
+    x: float
+    y: float
+
+
+class ReferencePartSegmentationPartContract(MCPContract):
+    """One optional part-aware segmentation artifact for a creature region."""
+
+    part_label: str
+    mask_path: str | None = None
+    crop_path: str | None = None
+    confidence: float | None = None
+    landmarks: list[ReferencePartSegmentationLandmarkContract] = []
+
+
+class ReferencePartSegmentationContract(MCPContract):
+    """Optional vendor-neutral sidecar payload for part-aware creature perception."""
+
+    status: Literal["disabled", "available", "unavailable"] = "disabled"
+    provider_name: str | None = None
+    advisory_only: bool = True
+    parts: list[ReferencePartSegmentationPartContract] = []
+    notes: list[str] = []
+
+
 class ReferenceCompareStageCheckpointResponseContract(MCPContract):
     """Structured response for deterministic stage checkpoint capture + compare."""
 
@@ -205,6 +284,9 @@ class ReferenceCompareStageCheckpointResponseContract(MCPContract):
     budget_control: ReferenceHybridBudgetControlContract | None = None
     refinement_route: ReferenceRefinementRouteContract | None = None
     refinement_handoff: ReferenceRefinementHandoffContract | None = None
+    silhouette_analysis: ReferenceSilhouetteAnalysisContract | None = None
+    action_hints: list[ReferenceActionHintContract] = []
+    part_segmentation: ReferencePartSegmentationContract | None = None
     target_view: str | None = None
     checkpoint_id: str
     checkpoint_label: str | None = None
@@ -238,6 +320,9 @@ class ReferenceIterateStageCheckpointResponseContract(MCPContract):
     budget_control: ReferenceHybridBudgetControlContract | None = None
     refinement_route: ReferenceRefinementRouteContract | None = None
     refinement_handoff: ReferenceRefinementHandoffContract | None = None
+    silhouette_analysis: ReferenceSilhouetteAnalysisContract | None = None
+    action_hints: list[ReferenceActionHintContract] = []
+    part_segmentation: ReferencePartSegmentationContract | None = None
     target_view: str | None = None
     checkpoint_id: str
     checkpoint_label: str | None = None

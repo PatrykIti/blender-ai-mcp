@@ -1,7 +1,7 @@
 # TASK-128-01-04-01: Creature Metadata Taxonomy and Tool Target List
 
 **Parent:** [TASK-128-01-04](./TASK-128-01-04_Creature_Blockout_Metadata_Search_Hints_And_Regression_Pack.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟠 High
 
 ## Objective

@@ -1,7 +1,7 @@
 # TASK-128-02-02-01: Reference Mask Extraction and Normalization
 
 **Parent:** [TASK-128-02-02](./TASK-128-02-02_Reference_And_Viewport_Mask_Extraction_Pipeline.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective

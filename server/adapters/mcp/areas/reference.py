@@ -19,6 +19,7 @@ from fastmcp import Context
 from server.adapters.mcp.context_utils import ctx_info, ctx_session_id, ctx_transport_type
 from server.adapters.mcp.contracts.reference import (
     GuidedReferenceReadinessContract,
+    ReferenceActionHintContract,
     ReferenceCompareCheckpointResponseContract,
     ReferenceCompareStageCheckpointResponseContract,
     ReferenceCorrectionCandidateContract,
@@ -28,9 +29,11 @@ from server.adapters.mcp.contracts.reference import (
     ReferenceImageRecordContract,
     ReferenceImagesResponseContract,
     ReferenceIterateStageCheckpointResponseContract,
+    ReferencePartSegmentationContract,
     ReferenceRefinementHandoffContract,
     ReferenceRefinementRouteContract,
     ReferenceRefinementToolCandidateContract,
+    ReferenceSilhouetteAnalysisContract,
 )
 from server.adapters.mcp.contracts.scene import (
     SceneAssembledTargetScopeContract,
@@ -42,6 +45,7 @@ from server.adapters.mcp.contracts.scene import (
     SceneTruthFollowupContract,
     SceneTruthFollowupItemContract,
 )
+from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
 from server.adapters.mcp.sampling.result_types import to_vision_assistant_contract
 from server.adapters.mcp.session_capabilities import (
     GuidedReferenceReadinessState,
@@ -65,6 +69,7 @@ from server.adapters.mcp.vision import (
     select_reference_records_for_target,
 )
 from server.adapters.mcp.vision.runner import VISION_ASSIST_POLICY
+from server.adapters.mcp.vision.silhouette import build_silhouette_analysis
 from server.infrastructure.di import get_collection_handler, get_scene_handler, get_vision_backend_resolver
 from server.infrastructure.tmp_paths import get_reference_image_storage_path, get_viewport_output_paths
 
@@ -316,6 +321,9 @@ def _stage_compare_response(
     budget_control: ReferenceHybridBudgetControlContract | None = None,
     refinement_route: ReferenceRefinementRouteContract | None = None,
     refinement_handoff: ReferenceRefinementHandoffContract | None = None,
+    silhouette_analysis: ReferenceSilhouetteAnalysisContract | None = None,
+    action_hints: list[ReferenceActionHintContract] | None = None,
+    part_segmentation: ReferencePartSegmentationContract | None = None,
     message: str | None = None,
     error: str | None = None,
 ) -> ReferenceCompareStageCheckpointResponseContract:
@@ -335,6 +343,9 @@ def _stage_compare_response(
         budget_control=budget_control,
         refinement_route=refinement_route,
         refinement_handoff=refinement_handoff,
+        silhouette_analysis=silhouette_analysis,
+        action_hints=list(action_hints or []),
+        part_segmentation=part_segmentation or _disabled_part_segmentation(),
         target_view=target_view,
         checkpoint_id=checkpoint_id,
         checkpoint_label=checkpoint_label,
@@ -376,6 +387,9 @@ def _iterate_stage_response(
     budget_control: ReferenceHybridBudgetControlContract | None = None,
     refinement_route: ReferenceRefinementRouteContract | None = None,
     refinement_handoff: ReferenceRefinementHandoffContract | None = None,
+    silhouette_analysis: ReferenceSilhouetteAnalysisContract | None = None,
+    action_hints: list[ReferenceActionHintContract] | None = None,
+    part_segmentation: ReferencePartSegmentationContract | None = None,
     stop_reason: str | None = None,
     message: str | None = None,
     error: str | None = None,
@@ -396,6 +410,9 @@ def _iterate_stage_response(
         budget_control=budget_control or compare_result.budget_control,
         refinement_route=refinement_route or compare_result.refinement_route,
         refinement_handoff=refinement_handoff or compare_result.refinement_handoff,
+        silhouette_analysis=silhouette_analysis or compare_result.silhouette_analysis,
+        action_hints=list(action_hints or compare_result.action_hints or []),
+        part_segmentation=part_segmentation or compare_result.part_segmentation or _disabled_part_segmentation(),
         target_view=target_view,
         checkpoint_id=checkpoint_id,
         checkpoint_label=checkpoint_label,
@@ -956,6 +973,217 @@ def _build_correction_candidates(
         rank += 1
 
     return candidates
+
+
+def _disabled_part_segmentation() -> ReferencePartSegmentationContract:
+    return ReferencePartSegmentationContract(
+        status="disabled",
+        provider_name=None,
+        advisory_only=True,
+        parts=[],
+        notes=[
+            "Optional part segmentation remains disabled by default.",
+            "The sidecar path is advisory-only and separate from vision_contract_profile routing.",
+        ],
+    )
+
+
+def _build_silhouette_analysis_payload(
+    *,
+    selected_reference_records: list[ReferenceImageRecordContract] | tuple[ReferenceImageRecordContract, ...],
+    captures: list[VisionCaptureImageContract] | tuple[VisionCaptureImageContract, ...],
+    target_view: str | None,
+) -> ReferenceSilhouetteAnalysisContract | None:
+    if not selected_reference_records or not captures:
+        return None
+
+    reference_record = selected_reference_records[0]
+    capture = captures[0]
+    payload = build_silhouette_analysis(
+        reference_path=reference_record.stored_path,
+        capture_path=capture.image_path,
+        reference_label=reference_record.label or reference_record.reference_id,
+        capture_label=capture.label,
+        target_view=target_view,
+    )
+    return ReferenceSilhouetteAnalysisContract.model_validate(payload)
+
+
+def _build_action_hints_from_silhouette(
+    silhouette_analysis: ReferenceSilhouetteAnalysisContract | None,
+    *,
+    target_object: str | None,
+) -> list[ReferenceActionHintContract]:
+    if silhouette_analysis is None or silhouette_analysis.status != "available":
+        return []
+
+    metrics = {metric.metric_id: metric for metric in silhouette_analysis.metrics}
+    hints: list[ReferenceActionHintContract] = []
+
+    def add_hint(
+        *,
+        hint_id: str,
+        hint_type: str,
+        summary: str,
+        metric_ids: list[str],
+        recommended_tools: list[ReferenceRefinementToolCandidateContract],
+        priority: Literal["high", "normal"] = "normal",
+    ) -> None:
+        hints.append(
+            ReferenceActionHintContract(
+                hint_id=hint_id,
+                hint_type=hint_type,  # type: ignore[arg-type]
+                summary=summary,
+                priority=priority,
+                target_object=target_object,
+                metric_ids=metric_ids,
+                recommended_tools=recommended_tools,
+            )
+        )
+
+    upper_band = metrics.get("upper_band_width_delta")
+    if upper_band is not None and upper_band.delta <= -0.03:
+        add_hint(
+            hint_id="silhouette_upper_expand",
+            hint_type="widen_upper_profile",
+            summary="Upper silhouette band is narrower than the reference; build the upper profile mass before another broad pass.",
+            metric_ids=["upper_band_width_delta"],
+            recommended_tools=[
+                ReferenceRefinementToolCandidateContract(
+                    tool_name="mesh_extrude_region",
+                    reason="Extrude the upper silhouette mass to widen the creature profile in a bounded way.",
+                    priority="high",
+                ),
+                ReferenceRefinementToolCandidateContract(
+                    tool_name="mesh_loop_cut",
+                    reason="Add support loops so the widened upper silhouette stays controllable.",
+                    priority="normal",
+                ),
+            ],
+            priority="high",
+        )
+    if upper_band is not None and upper_band.delta >= 0.03:
+        add_hint(
+            hint_id="silhouette_upper_reduce",
+            hint_type="reduce_upper_profile",
+            summary="Upper silhouette band is broader than the reference; simplify or tighten the upper profile before adding detail.",
+            metric_ids=["upper_band_width_delta"],
+            recommended_tools=[
+                ReferenceRefinementToolCandidateContract(
+                    tool_name="mesh_dissolve",
+                    reason="Dissolve or simplify support edges while preserving the overall low-poly form.",
+                    priority="normal",
+                ),
+                ReferenceRefinementToolCandidateContract(
+                    tool_name="mesh_merge_by_distance",
+                    reason="Clean up doubled or noisy vertices after reducing the upper profile.",
+                    priority="normal",
+                ),
+            ],
+        )
+
+    left_projection_metric = metrics.get("left_projection_delta")
+    if left_projection_metric is not None and left_projection_metric.delta < -0.05:
+        add_hint(
+            hint_id="silhouette_left_extend",
+            hint_type="extend_left_profile",
+            summary="Left-side silhouette projection is shorter than the reference; extend that profile mass before smoothing.",
+            metric_ids=["left_projection_delta"],
+            recommended_tools=[
+                ReferenceRefinementToolCandidateContract(
+                    tool_name="mesh_extrude_region",
+                    reason="Extend the silhouette profile with a bounded extrusion in the underbuilt direction.",
+                    priority="high",
+                ),
+                ReferenceRefinementToolCandidateContract(
+                    tool_name="modeling_transform_object",
+                    reason="If the profile is object-level, nudge the blocker object instead of overediting mesh topology.",
+                    priority="normal",
+                ),
+            ],
+            priority="high",
+        )
+
+    right_projection_metric = metrics.get("right_projection_delta")
+    if right_projection_metric is not None and right_projection_metric.delta < -0.05:
+        add_hint(
+            hint_id="silhouette_right_extend",
+            hint_type="extend_right_profile",
+            summary="Right-side silhouette projection is shorter than the reference; extend that profile mass before smoothing.",
+            metric_ids=["right_projection_delta"],
+            recommended_tools=[
+                ReferenceRefinementToolCandidateContract(
+                    tool_name="mesh_extrude_region",
+                    reason="Extend the silhouette profile with a bounded extrusion in the underbuilt direction.",
+                    priority="high",
+                ),
+                ReferenceRefinementToolCandidateContract(
+                    tool_name="modeling_transform_object",
+                    reason="If the profile is object-level, nudge the blocker object instead of overediting mesh topology.",
+                    priority="normal",
+                ),
+            ],
+            priority="high",
+        )
+
+    aspect_ratio = metrics.get("aspect_ratio_delta")
+    if aspect_ratio is not None and abs(aspect_ratio.delta) >= 0.18:
+        add_hint(
+            hint_id="silhouette_rebalance_proportion",
+            hint_type="rebalance_proportion",
+            summary="Overall silhouette aspect ratio drift is still significant; re-check proportions before continuing free-form edits.",
+            metric_ids=["aspect_ratio_delta"],
+            recommended_tools=[
+                ReferenceRefinementToolCandidateContract(
+                    tool_name="scene_measure_dimensions",
+                    reason="Measure the current object dimensions before scaling a major mass.",
+                    priority="high",
+                ),
+                ReferenceRefinementToolCandidateContract(
+                    tool_name="scene_assert_proportion",
+                    reason="Verify the repaired ratio against an explicit expected proportion.",
+                    priority="high",
+                ),
+                ReferenceRefinementToolCandidateContract(
+                    tool_name="macro_adjust_relative_proportion",
+                    reason="Use a bounded ratio repair instead of ad hoc free-form scaling when major proportions drift.",
+                    priority="high",
+                ),
+            ],
+            priority="high",
+        )
+
+    mask_iou = metrics.get("mask_iou")
+    contour_drift = metrics.get("contour_drift")
+    if (mask_iou is not None and mask_iou.observed_value <= 0.55) or (
+        contour_drift is not None and contour_drift.observed_value >= 0.14
+    ):
+        metric_ids: list[str] = []
+        if mask_iou is not None and mask_iou.observed_value <= 0.55:
+            metric_ids.append("mask_iou")
+        if contour_drift is not None and contour_drift.observed_value >= 0.14:
+            metric_ids.append("contour_drift")
+        add_hint(
+            hint_id="silhouette_inspect_before_edit",
+            hint_type="inspect_before_edit",
+            summary="Global silhouette mismatch is still high; inspect the current object state before applying another free-form correction.",
+            metric_ids=metric_ids,
+            recommended_tools=[
+                ReferenceRefinementToolCandidateContract(
+                    tool_name="inspect_scene",
+                    reason="Inspect the object state before another silhouette correction when deterministic drift remains high.",
+                    priority="high",
+                ),
+                ReferenceRefinementToolCandidateContract(
+                    tool_name="reference_iterate_stage_checkpoint",
+                    reason="Re-run a bounded iterate checkpoint after a targeted correction instead of making a large uncontrolled edit.",
+                    priority="normal",
+                ),
+            ],
+            priority="high",
+        )
+
+    return hints
 
 
 def _dedupe_names(values: list[str]) -> list[str]:
@@ -1648,6 +1876,16 @@ async def _run_stage_checkpoint_compare(
         resolver=resolver,
     )
     vision_assistant = to_vision_assistant_contract(outcome)
+    silhouette_analysis = _build_silhouette_analysis_payload(
+        selected_reference_records=selected_reference_records,
+        captures=captures,
+        target_view=target_view,
+    )
+    action_hints = _build_action_hints_from_silhouette(
+        silhouette_analysis,
+        target_object=resolved_target_object or assembled_target_scope.primary_target,
+    )
+    part_segmentation = _disabled_part_segmentation()
     full_correction_candidates = _build_correction_candidates(
         ReferenceCompareStageCheckpointResponseContract(
             action="compare_stage_checkpoint",
@@ -1670,6 +1908,9 @@ async def _run_stage_checkpoint_compare(
             reference_ids=[item.reference_id for item in selected_reference_records],
             reference_labels=[item.label or item.reference_id for item in selected_reference_records],
             vision_assistant=vision_assistant,
+            silhouette_analysis=silhouette_analysis,
+            action_hints=action_hints,
+            part_segmentation=part_segmentation,
         )
     )
     candidate_budget = _effective_candidate_budget(
@@ -1703,6 +1944,9 @@ async def _run_stage_checkpoint_compare(
         reference_ids=[item.reference_id for item in selected_reference_records],
         reference_labels=[item.label or item.reference_id for item in selected_reference_records],
         vision_assistant=vision_assistant,
+        silhouette_analysis=silhouette_analysis,
+        action_hints=action_hints,
+        part_segmentation=part_segmentation,
     )
     refinement_route = _select_refinement_route(staged_compare_contract)
     refinement_handoff = _build_refinement_handoff(staged_compare_contract, refinement_route)
@@ -1745,6 +1989,9 @@ async def _run_stage_checkpoint_compare(
         budget_control=budget_control,
         refinement_route=refinement_route,
         refinement_handoff=refinement_handoff,
+        silhouette_analysis=silhouette_analysis,
+        action_hints=action_hints,
+        part_segmentation=part_segmentation,
         message=(
             f"Captured and compared stage checkpoint '{checkpoint_label or checkpoint_id}' using {len(captures)} deterministic view(s)."
             if outcome.status == "success"
@@ -2105,7 +2352,8 @@ async def reference_iterate_stage_checkpoint(
     readiness = compare_result.guided_reference_readiness
     goal = compare_result.goal
     correction_focus = _resolve_actionable_focus(compare_result)
-    continue_recommended = bool(correction_focus)
+    action_hints = list(compare_result.action_hints or [])
+    continue_recommended = bool(correction_focus or action_hints)
     inspect_from_truth_signal = _should_inspect_from_truth_signal(compare_result.correction_candidates)
     loop_disposition: Literal["continue_build", "inspect_validate", "stop"] = (
         "inspect_validate" if inspect_from_truth_signal else ("continue_build" if continue_recommended else "stop")
@@ -2199,7 +2447,10 @@ async def reference_iterate_stage_checkpoint(
                 "Prefer inspect/measure/assert confirmation before another free-form build step."
             )
     elif continue_recommended:
-        message = "Continue the guided build loop using correction_focus first."
+        if correction_focus:
+            message = "Continue the guided build loop using correction_focus first."
+        else:
+            message = "Continue the guided build loop using typed action_hints from silhouette analysis."
     else:
         message = "No further correction loop action is recommended for this checkpoint."
 

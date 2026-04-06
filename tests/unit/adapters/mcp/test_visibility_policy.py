@@ -11,12 +11,12 @@ from server.adapters.mcp.session_phase import SessionPhase
 from server.adapters.mcp.surfaces import get_surface_profile
 from server.adapters.mcp.transforms import materialize_transforms
 from server.adapters.mcp.transforms.visibility_policy import (
+    CREATURE_LOW_POLY_BLOCKOUT_DIRECT_TOOLS,
+    CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS,
     GUIDED_BUILD_ESCAPE_HATCH_TOOLS,
     GUIDED_DISCOVERY_TOOLS,
     GUIDED_ENTRY_TOOLS,
     GUIDED_INSPECT_ESCAPE_HATCH_TOOLS,
-    GUIDED_MANUAL_BUILD_HANDOFF_TOOLS,
-    GUIDED_MANUAL_BUILD_SUPPORTING_TOOLS,
     GUIDED_UTILITY_HANDOFF_TOOLS,
     GUIDED_UTILITY_SUPPORTING_TOOLS,
     GUIDED_UTILITY_TOOLS,
@@ -119,6 +119,7 @@ def test_guided_handoff_payloads_stay_explicit_and_bounded():
         "guided_manual_build",
         surface_profile="llm-guided",
         phase=SessionPhase.BUILD,
+        goal="create a low-poly squirrel matching front and side reference images",
     )
     utility = build_guided_handoff_payload(
         "guided_utility",
@@ -127,18 +128,44 @@ def test_guided_handoff_payloads_stay_explicit_and_bounded():
     )
 
     assert manual is not None
+    assert manual["recipe_id"] == "low_poly_creature_blockout"
     assert manual["target_phase"] == "build"
-    assert manual["direct_tools"] == list(GUIDED_MANUAL_BUILD_HANDOFF_TOOLS)
-    assert manual["supporting_tools"] == list(GUIDED_MANUAL_BUILD_SUPPORTING_TOOLS)
+    assert manual["direct_tools"] == list(CREATURE_LOW_POLY_BLOCKOUT_DIRECT_TOOLS)
+    assert manual["supporting_tools"] == list(CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS)
     assert manual["discovery_tools"] == list(GUIDED_DISCOVERY_TOOLS)
     assert manual["workflow_import_recommended"] is False
 
     assert utility is not None
+    assert utility["recipe_id"] is None
     assert utility["target_phase"] == "planning"
     assert utility["direct_tools"] == list(GUIDED_UTILITY_HANDOFF_TOOLS)
     assert utility["supporting_tools"] == list(GUIDED_UTILITY_SUPPORTING_TOOLS)
     assert utility["discovery_tools"] == list(GUIDED_DISCOVERY_TOOLS)
     assert utility["workflow_import_recommended"] is False
+
+
+def test_visibility_rules_can_shape_build_phase_for_creature_handoff():
+    """Creature handoff should narrow build visibility without changing the generic build baseline."""
+
+    rules = build_visibility_rules(
+        "llm-guided",
+        SessionPhase.BUILD,
+        guided_handoff={
+            "kind": "guided_manual_build",
+            "recipe_id": "low_poly_creature_blockout",
+            "direct_tools": list(CREATURE_LOW_POLY_BLOCKOUT_DIRECT_TOOLS),
+            "supporting_tools": list(CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS),
+        },
+    )
+
+    build_rule = rules[-1]
+    assert build_rule["names"] == {
+        *CREATURE_LOW_POLY_BLOCKOUT_DIRECT_TOOLS,
+        *CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS,
+    }
+    assert "mesh_randomize" not in build_rule["names"]
+    assert "mesh_create_vertex_group" not in build_rule["names"]
+    assert "macro_finish_form" not in build_rule["names"]
 
 
 def test_llm_guided_surface_materializes_visibility_transforms():

@@ -9,6 +9,11 @@
     "chain bend",
     "ordered chain",
     "arc shape",
+    "tail arc",
+    "creature tail",
+    "tail curve",
+    "spine arc",
+    "neck arc",
     "łańcuch segmentów",
     "łuk segmentów",
     "wygnij łańcuch",
@@ -17,6 +22,9 @@
   "sample_prompts": [
     "give this segment chain a cleaner upward arc",
     "bend this ordered chain into a smoother curve",
+    "raise the creature tail into a cleaner arc",
+    "reshape the tail curve to better match the side reference silhouette",
+    "bend the neck or spine chain into a softer creature profile",
     "ułóż ten łańcuch segmentów w łuk",
     "wygnij ten łańcuch w bardziej płynną krzywiznę"
   ],

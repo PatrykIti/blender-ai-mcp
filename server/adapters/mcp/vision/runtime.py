@@ -23,6 +23,7 @@ from .config import (
     VisionMLXLocalConfig,
     VisionOpenAICompatibleConfig,
     VisionRuntimeConfig,
+    VisionSegmentationSidecarConfig,
     VisionTransformersLocalConfig,
 )
 
@@ -75,6 +76,8 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
         )
 
     external_config = None
+    segmentation_enabled = bool(getattr(config, "VISION_SEGMENTATION_ENABLED", False))
+    segmentation_sidecar_config = None
     explicit_external_provider = config.VISION_EXTERNAL_PROVIDER
     if explicit_external_provider == "openrouter":
         use_openrouter_profile = True
@@ -154,6 +157,18 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
             site_name=site_name,
         )
 
+    if segmentation_enabled:
+        segmentation_sidecar_config = VisionSegmentationSidecarConfig(
+            enabled=True,
+            provider_name=getattr(config, "VISION_SEGMENTATION_PROVIDER", "generic_sidecar"),
+            endpoint=getattr(config, "VISION_SEGMENTATION_ENDPOINT", None),
+            model=getattr(config, "VISION_SEGMENTATION_MODEL", None),
+            api_key=getattr(config, "VISION_SEGMENTATION_API_KEY", None),
+            api_key_env=getattr(config, "VISION_SEGMENTATION_API_KEY_ENV", None),
+            timeout_seconds=float(getattr(config, "VISION_SEGMENTATION_TIMEOUT_SECONDS", 15.0)),
+            max_parts=int(getattr(config, "VISION_SEGMENTATION_MAX_PARTS", 16)),
+        )
+
     return VisionRuntimeConfig(
         enabled=config.VISION_ENABLED,
         provider=cast(VisionBackendKind, config.VISION_PROVIDER),
@@ -164,6 +179,7 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
         transformers_local=local_config,
         mlx_local=mlx_local_config,
         openai_compatible_external=external_config,
+        segmentation_sidecar=segmentation_sidecar_config,
     )
 
 

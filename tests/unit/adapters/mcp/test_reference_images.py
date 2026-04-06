@@ -10,10 +10,12 @@ from types import SimpleNamespace
 
 from server.adapters.mcp.areas.reference import (
     _assembled_target_scope,
+    _build_action_hints_from_silhouette,
     _build_correction_candidates,
     _build_truth_followup,
     _effective_candidate_budget,
     _effective_pair_budget,
+    _iterate_stage_response,
     _model_budget_bias,
     _select_refinement_route,
     reference_compare_checkpoint,
@@ -37,6 +39,7 @@ from server.adapters.mcp.sampling.result_types import (
     VisionAssistContract,
 )
 from server.adapters.mcp.session_capabilities import update_session_from_router_goal
+from server.adapters.mcp.vision.silhouette import build_silhouette_analysis
 
 
 @dataclass
@@ -53,6 +56,134 @@ class FakeContext:
 
     def info(self, message, logger_name=None, extra=None):
         return None
+
+
+def _write_test_silhouette(path: Path, *, with_ears: bool) -> None:
+    from PIL import Image, ImageDraw
+
+    image = Image.new("RGBA", (200, 200), (255, 255, 255, 255))
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((60, 60, 140, 175), fill=(0, 0, 0, 255))
+    if with_ears:
+        draw.polygon([(70, 60), (85, 20), (100, 60)], fill=(0, 0, 0, 255))
+        draw.polygon([(100, 60), (115, 20), (130, 60)], fill=(0, 0, 0, 255))
+    image.save(path)
+
+
+def test_silhouette_analysis_produces_metrics_and_upper_profile_action_hint(tmp_path: Path):
+    reference_path = tmp_path / "reference.png"
+    capture_path = tmp_path / "capture.png"
+    _write_test_silhouette(reference_path, with_ears=True)
+    _write_test_silhouette(capture_path, with_ears=False)
+
+    payload = build_silhouette_analysis(
+        reference_path=str(reference_path),
+        capture_path=str(capture_path),
+        reference_label="front_ref",
+        capture_label="front_after",
+        target_view="front",
+    )
+    analysis = ReferenceCompareStageCheckpointResponseContract.model_validate(
+        {
+            "action": "compare_stage_checkpoint",
+            "goal": "low poly creature",
+            "checkpoint_id": "checkpoint_silhouette",
+            "checkpoint_label": "stage_ears",
+            "preset_profile": "compact",
+            "preset_names": ["focus"],
+            "capture_count": 0,
+            "captures": [],
+            "reference_count": 1,
+            "reference_ids": ["ref_1"],
+            "reference_labels": ["front_ref"],
+            "silhouette_analysis": payload,
+        }
+    ).silhouette_analysis
+
+    assert analysis is not None
+    assert analysis.status == "available"
+    assert any(metric.metric_id == "upper_band_width_delta" for metric in analysis.metrics)
+
+    action_hints = _build_action_hints_from_silhouette(analysis, target_object="Creature")
+    hint_types = {hint.hint_type for hint in action_hints}
+
+    assert "widen_upper_profile" in hint_types
+
+
+def test_iterate_stage_response_carries_silhouette_analysis_and_action_hints():
+    compare_result = ReferenceCompareStageCheckpointResponseContract.model_validate(
+        {
+            "action": "compare_stage_checkpoint",
+            "goal": "low poly creature",
+            "checkpoint_id": "checkpoint_iterate",
+            "checkpoint_label": "stage_iterate",
+            "preset_profile": "compact",
+            "preset_names": ["focus"],
+            "capture_count": 0,
+            "captures": [],
+            "reference_count": 1,
+            "reference_ids": ["ref_1"],
+            "reference_labels": ["front_ref"],
+            "silhouette_analysis": {
+                "status": "available",
+                "reference_label": "front_ref",
+                "capture_label": "front_after",
+                "target_view": "front",
+                "mask_extraction_mode": "alpha_or_otsu_largest_component",
+                "alignment_mode": "bbox_normalized",
+                "metrics": [
+                    {
+                        "metric_id": "mask_iou",
+                        "reference_value": 1.0,
+                        "observed_value": 0.6,
+                        "delta": -0.4,
+                        "severity": "high",
+                    }
+                ],
+            },
+            "action_hints": [
+                {
+                    "hint_id": "hint_1",
+                    "hint_type": "inspect_before_edit",
+                    "summary": "Inspect before another free-form edit.",
+                    "priority": "high",
+                    "target_object": "Creature",
+                    "metric_ids": ["mask_iou"],
+                    "recommended_tools": [
+                        {
+                            "tool_name": "inspect_scene",
+                            "reason": "Inspect the object before the next correction.",
+                            "priority": "high",
+                        }
+                    ],
+                }
+            ],
+        }
+    )
+
+    result = _iterate_stage_response(
+        goal="low poly creature",
+        target_object="Creature",
+        target_objects=["Creature"],
+        collection_name=None,
+        target_view="front",
+        checkpoint_id="checkpoint_iterate",
+        checkpoint_label="stage_iterate",
+        iteration_index=2,
+        loop_disposition="continue_build",
+        continue_recommended=True,
+        prior_checkpoint_id="checkpoint_prev",
+        prior_correction_focus=[],
+        correction_focus=[],
+        repeated_correction_focus=[],
+        stagnation_count=0,
+        compare_result=compare_result,
+    )
+
+    assert result.silhouette_analysis is not None
+    assert result.silhouette_analysis.status == "available"
+    assert result.action_hints
+    assert result.action_hints[0].hint_type == "inspect_before_edit"
 
 
 def test_truth_followup_emits_cleanup_macro_candidate_for_overlap_pairs():

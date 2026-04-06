@@ -89,9 +89,17 @@ Native prompt products:
 - `getting_started`
 - `workflow_router_first`
 - `manual_tools_no_router`
+- `reference_guided_creature_build`
 - `demo_low_poly_medieval_well`
 - `demo_generic_modeling`
 - `recommended_prompts`
+
+Prompt recommendation notes:
+
+- `recommended_prompts` now reacts to active goal/session context, not only
+  phase/profile
+- creature-oriented guided goals can surface the native
+  `reference_guided_creature_build` asset directly
 
 Measured current baseline:
 

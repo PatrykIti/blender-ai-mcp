@@ -94,6 +94,9 @@ Interpretation:
 - when the client tends to drift on `llm-guided`, prepend `guided_session_start`
   before the main workflow prompt
 - manual/no-router mode is an explicit exception, not the default product model
+- `recommended_prompts` now uses the active phase/profile plus explicit
+  session goal context, so creature-oriented guided goals can surface the
+  native `reference_guided_creature_build` prompt asset without separate docs-only lookup
 - practical `llm-guided` operating model:
   - build/workflow goal:
     `router_get_status(...)` -> `router_set_goal(...)` -> handle typed `needs_input` if present -> use visible build tools / macros
@@ -104,7 +107,7 @@ Interpretation:
 - staged manual/reference-guided build:
     checkpoint capture -> `reference_compare_checkpoint(...)`, `reference_compare_current_view(...)`, `reference_compare_stage_checkpoint(...)`, or `reference_iterate_stage_checkpoint(...)` -> use bounded mismatch/correction hints for the next iteration
     only call staged compare/iterate when `guided_reference_readiness.compare_ready == true`
-    prioritize `loop_disposition`, then `refinement_route`, then `refinement_handoff`, then `correction_candidates`, then `truth_followup`, then `correction_focus`
+    prioritize `loop_disposition`, then `refinement_route`, then `refinement_handoff`, then `correction_candidates`, then `truth_followup`, then `action_hints`, then `correction_focus`, then `silhouette_analysis`
     if `reference_iterate_stage_checkpoint(...)` returns `loop_disposition="inspect_validate"`, stop free-form building and verify before continuing
 - if a tool is already directly visible on the current phase/surface, call it directly
 - only use `search_tools(...)` / `call_tool(...)` when discovery is actually needed
@@ -149,6 +152,8 @@ guided surface:
 5. If the router returns `no_match` with `continuation_mode="guided_manual_build"`,
    continue on the guided build surface instead of inventing or importing a workflow.
    Use `guided_handoff.direct_tools` first and only fall back to `guided_handoff.discovery_tools` when direct tools are insufficient.
+   If `guided_handoff.recipe_id == "low_poly_creature_blockout"`, treat that as
+   a smaller modeling/mesh-first creature blockout surface rather than the broad generic build phase.
 6. If vision should support the build, attach `reference_images(...)`, prefer
    macro paths that emit `capture_bundle`, and treat inspection/measure/assert
    as the truth layer after visual interpretation.

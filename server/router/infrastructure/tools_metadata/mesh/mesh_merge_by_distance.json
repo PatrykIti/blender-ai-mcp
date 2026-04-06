@@ -3,13 +3,26 @@
   "category": "mesh",
   "mode_required": "EDIT",
   "selection_required": true,
-  "keywords": ["merge", "weld", "remove doubles", "cleanup", "vertices", "distance"],
+  "keywords": [
+    "merge",
+    "weld",
+    "remove doubles",
+    "cleanup",
+    "vertices",
+    "distance",
+    "blockout cleanup",
+    "creature seam",
+    "ear seam",
+    "paw seam"
+  ],
   "sample_prompts": [
     "merge vertices by distance",
     "remove doubles",
     "weld close vertices",
     "cleanup overlapping vertices",
-    "merge nearby vertices"
+    "merge nearby vertices",
+    "weld the ear seam after creature blockout edits",
+    "clean up duplicate vertices after mirroring a paw mass"
   ],
   "parameters": {
     "distance": {
@@ -20,5 +33,5 @@
   },
   "related_tools": ["mesh_boolean", "mesh_extrude_region", "mesh_smooth"],
   "patterns": [],
-  "description": "Merges vertices within threshold distance for geometry cleanup."
+  "description": "Merges vertices within threshold distance for geometry cleanup after creature blockout symmetry or silhouette edits."
 }

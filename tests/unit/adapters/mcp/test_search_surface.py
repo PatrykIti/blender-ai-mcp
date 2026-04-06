@@ -70,6 +70,39 @@ def _build_phase_search_server(phase: SessionPhase) -> FastMCP:
     return cast(FastMCP, server)
 
 
+def _build_handoff_search_server(phase: SessionPhase, guided_handoff: dict[str, object]) -> FastMCP:
+    surface = replace(get_surface_profile("llm-guided"), search_enabled=True)
+    base_pipeline = build_surface_transform_pipeline(surface)
+    transforms = []
+    for stage in base_pipeline:
+        if stage.name == "visibility":
+            transforms.extend(
+                create_visibility_transforms(build_visibility_rules(surface.name, phase, guided_handoff=guided_handoff))
+            )
+            continue
+        transform = stage.transform
+        if transform is None:
+            continue
+        if isinstance(transform, (list, tuple)):
+            transforms.extend(transform)
+        else:
+            transforms.append(transform)
+
+    server: Any = FastMCP(
+        surface.server_name,
+        providers=build_surface_providers(surface),
+        transforms=transforms,
+        list_page_size=surface.list_page_size,
+        tasks=surface.tasks_enabled,
+        instructions=surface.instructions,
+    )
+    prompts_bridge = build_prompts_bridge_transform(surface, provider=server)
+    if prompts_bridge is not None:
+        server.add_transform(prompts_bridge)
+    server._bam_surface_profile = surface.name
+    return cast(FastMCP, server)
+
+
 def _build_phase_visible_server(phase: SessionPhase) -> FastMCP:
     surface = replace(get_surface_profile("llm-guided"), search_enabled=False)
     base_pipeline = build_surface_transform_pipeline(surface)
@@ -313,6 +346,91 @@ def test_build_phase_search_can_discover_reference_iterate_stage_checkpoint():
 
     assert "reference_iterate_stage_checkpoint" in names
     assert "modeling_list_modifiers" not in names
+
+
+def test_build_phase_search_prefers_creature_blockout_tools_for_creature_queries():
+    """Generic build search should bias creature blockout queries toward real blockout tools."""
+
+    server = _build_phase_search_server(SessionPhase.BUILD)
+
+    async def run():
+        result = await server.call_tool(
+            "search_tools",
+            {"query": "low poly creature ears snout tail arc paw placement organic blockout"},
+        )
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+    names = [tool["name"] for tool in payload]
+
+    assert any(
+        name in names[:3]
+        for name in {
+            "modeling_create_primitive",
+            "mesh_extrude_region",
+            "mesh_loop_cut",
+            "macro_adjust_relative_proportion",
+            "macro_adjust_segment_chain_arc",
+        }
+    )
+    assert "mesh_randomize" not in names[:3]
+    assert "mesh_create_vertex_group" not in names[:3]
+    assert "mesh_assign_to_group" not in names[:3]
+    assert "mesh_remove_from_group" not in names[:3]
+
+
+def test_creature_handoff_search_hides_noise_tools_and_keeps_blockout_surface_small():
+    """Creature handoff search should stay within the bounded blockout recipe instead of broad build noise."""
+
+    server = _build_handoff_search_server(
+        SessionPhase.BUILD,
+        guided_handoff={
+            "kind": "guided_manual_build",
+            "recipe_id": "low_poly_creature_blockout",
+            "direct_tools": [
+                "modeling_create_primitive",
+                "modeling_transform_object",
+                "mesh_select",
+                "mesh_select_targeted",
+                "mesh_extrude_region",
+                "mesh_loop_cut",
+                "mesh_bevel",
+                "mesh_symmetrize",
+                "mesh_merge_by_distance",
+                "mesh_dissolve",
+                "macro_adjust_relative_proportion",
+                "macro_adjust_segment_chain_arc",
+                "macro_align_part_with_contact",
+                "macro_cleanup_part_intersections",
+                "inspect_scene",
+                "scene_measure_dimensions",
+                "scene_assert_proportion",
+            ],
+            "supporting_tools": [
+                "reference_images",
+                "reference_compare_stage_checkpoint",
+                "reference_iterate_stage_checkpoint",
+                "router_get_status",
+            ],
+        },
+    )
+
+    async def run():
+        result = await server.call_tool(
+            "search_tools",
+            {"query": "low poly creature ears snout tail arc paw placement organic blockout"},
+        )
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+    names = {tool["name"] for tool in payload}
+
+    assert "modeling_create_primitive" in names or "mesh_extrude_region" in names
+    assert "macro_adjust_segment_chain_arc" in names
+    assert "mesh_randomize" not in names
+    assert "mesh_create_vertex_group" not in names
+    assert "mesh_assign_to_group" not in names
+    assert "mesh_remove_from_group" not in names
 
 
 @pytest.mark.parametrize(
