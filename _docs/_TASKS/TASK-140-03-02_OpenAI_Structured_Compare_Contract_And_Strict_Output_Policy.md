@@ -11,6 +11,15 @@ Determine whether OpenAI families should keep using `generic_full` or whether
 the repo needs one stricter OpenAI-specific compare contract for structured
 checkpoint/reference flows.
 
+## Backend Constraint
+
+This leaf does not introduce a new backend/provider path.
+
+- backend changes stay on the current shared `openai_compatible_external` path
+- `google_ai_studio` remains the only dedicated transport/request branch
+- any OpenAI-family request/schema adjustments remain profile-aware behavior on
+  the shared backend seam
+
 ## Repository Touchpoints
 
 - `server/adapters/mcp/vision/prompting.py`
@@ -32,6 +41,8 @@ checkpoint/reference flows.
   typed in public `VisionAssistContract` surfaces and covered by regression
   tests
 - prompt/schema/parser policy for OpenAI families is evidence-driven
+- backend changes, if needed, stay bounded to shared-path request/schema logic
+  and do not add an OpenAI-specific transport branch
 
 ## Docs To Update
 

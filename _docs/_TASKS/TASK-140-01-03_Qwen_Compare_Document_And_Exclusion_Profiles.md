@@ -11,6 +11,16 @@ Define the concrete prompt/schema/request/parser behavior for the Qwen
 profiles chosen by the runtime and keep document/OCR-oriented variants from
 silently inheriting compare contracts they should not use.
 
+## Backend Boundary
+
+Qwen profile work stays inside the current shared external backend seam.
+
+- backend changes stay on the current `openai_compatible_external` path
+- `google_ai_studio` remains the only dedicated transport branch
+- OpenRouter-hosted Qwen families stay on the shared backend path with
+  profile-aware prompt/schema/request behavior, not a new Qwen-specific
+  provider branch
+
 ## Repository Touchpoints
 
 - `server/adapters/mcp/vision/prompting.py`
@@ -28,6 +38,8 @@ silently inheriting compare contracts they should not use.
 - document/OCR-oriented Qwen families do not silently reuse staged compare
   behavior unless that is an intentional product decision
 - diagnostics and failure text remain explicit about the selected Qwen profile
+- backend changes, if needed, stay bounded to shared-path request/schema
+  behavior and do not add a Qwen-specific transport/provider branch
 
 ## Docs To Update
 

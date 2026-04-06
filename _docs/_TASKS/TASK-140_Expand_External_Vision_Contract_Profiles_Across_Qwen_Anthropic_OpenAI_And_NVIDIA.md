@@ -85,6 +85,32 @@ Within this umbrella:
   `VisionAssistContract.vision_contract_profile`, not through new provider
   enums
 
+## Backend Boundary
+
+Current external backend wiring is also intentionally narrow:
+
+- external family work stays on the shared
+  `openai_compatible_external` backend path
+- `google_ai_studio` is the only current dedicated transport/request branch in
+  `server/adapters/mcp/vision/backends.py`
+- `openrouter` stays on the same shared backend path and only adds
+  provider-scoped headers plus strict JSON-schema response formatting
+- the current tests in `tests/unit/adapters/mcp/test_vision_external_backend.py`
+  already lock that boundary in place
+
+Therefore `TASK-140` backend work is limited to:
+
+- profile-aware prompt/schema/request behavior inside the current backend seam
+- parser/diagnostic behavior keyed by `vision_contract_profile`
+- family-specific evidence that a model/profile combination works or fails on
+  the current shared backend path
+
+`TASK-140` backend work does **not** include:
+
+- first-class provider integration
+- new transport branches for each model family
+- moving profile-selection policy into backend/provider branching
+
 ## Business Problem
 
 After `TASK-139`, the repo has a correct architectural seam, but the profile
@@ -233,6 +259,14 @@ This umbrella does **not** cover:
   `VISION_EXTERNAL_CONTRACT_PROFILE` / `VisionContractProfile` handling; the
   `VISION_EXTERNAL_PROVIDER` vocabulary remains `generic`, `openrouter`, and
   `google_ai_studio`
+- if `server/adapters/mcp/vision/backends.py` changes under this umbrella,
+  those changes stay inside the current shared
+  `openai_compatible_external` backend seam:
+  - `google_ai_studio` remains the only dedicated transport branch
+  - `openrouter` remains a shared-path backend with provider headers and strict
+    schema, not a new provider integration path
+  - family behavior stays driven by `vision_contract_profile` plus
+    prompting/parsing policy
 - the `TASK-139` precedence model remains intact:
   - explicit override still wins
   - recognized family/model-id routing can select a stricter profile

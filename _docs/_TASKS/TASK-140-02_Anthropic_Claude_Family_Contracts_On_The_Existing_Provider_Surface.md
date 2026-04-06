@@ -20,6 +20,16 @@ surface need family-specific contracts beyond `generic_full`.
 Treating Claude as "just another generic external model" would blur family
 routing, prompting, and parse-repair responsibilities again.
 
+## Backend Boundary
+
+Claude-family work under `TASK-140` is evaluated on the current shared
+`openai_compatible_external` backend seam.
+
+- `google_ai_studio` remains the only dedicated transport/request branch
+- non-Google families continue to use the shared backend path
+- any Anthropic-family backend adjustments must stay contract-aware and inside
+  that shared path, not become a new provider integration
+
 ## Repository Touchpoints
 
 - `server/infrastructure/config.py`
@@ -39,8 +49,8 @@ routing, prompting, and parse-repair responsibilities again.
 
 ## Acceptance Criteria
 
-- Claude-family model-id routing is explicit on the current external runtime
-  path
+- Claude-family model-id routing is explicit on the current shared external
+  backend path
 - Claude request/prompt/parser behavior is deliberate instead of inherited by
   accident from `generic_full`
 - the repo records whether Claude families share one compare profile or need
@@ -48,6 +58,9 @@ routing, prompting, and parse-repair responsibilities again.
 - if the current provider surface is insufficient for Claude-family
   behavior, the gap is recorded explicitly as a bounded follow-on instead of
   silently broadening provider scope
+- any backend changes for Claude families stay inside the shared
+  `openai_compatible_external` path and do not add a first-class Anthropic
+  transport branch
 - if Claude-specific `vision_contract_profile` values are introduced, they
   remain typed in public `VisionAssistContract` result surfaces
 - unknown or non-matching Claude-family ids still fall back to `generic_full`
@@ -77,5 +90,5 @@ routing, prompting, and parse-repair responsibilities again.
 | Order | Leaf | Purpose |
 |------|------|---------|
 | 1 | [TASK-140-02-01](./TASK-140-02-01_Anthropic_Family_Routing_And_Typed_Contract_Vocabulary.md) | Add Claude-family routing and typed contract vocabulary on the existing provider surface |
-| 2 | [TASK-140-02-02](./TASK-140-02-02_Anthropic_Request_Assembly_And_Image_Payload_Contract.md) | Decide whether existing external request assembly is sufficient for Claude-family ids or needs bounded contract-aware adjustments |
+| 2 | [TASK-140-02-02](./TASK-140-02-02_Anthropic_Request_Assembly_And_Image_Payload_Contract.md) | Decide whether the existing shared backend request assembly is sufficient for Claude-family ids or needs bounded contract-aware adjustments |
 | 3 | [TASK-140-02-03](./TASK-140-02-03_Anthropic_Parse_Diagnostics_And_Compare_Profile_Policy.md) | Define Claude compare-profile behavior plus contract-aware diagnostics and repair policy |

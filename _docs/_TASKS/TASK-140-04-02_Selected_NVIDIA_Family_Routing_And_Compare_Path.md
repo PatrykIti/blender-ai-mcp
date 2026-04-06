@@ -26,8 +26,12 @@ result-contract inventory.
 - changes in `server/adapters/mcp/sampling/result_types.py` are limited to
   keeping `VisionAssistContract.vision_contract_profile` aligned with
   `VisionContractProfile`
-- backend changes stay inside the current `openai_compatible_external` path;
-  this leaf does not add a provider-specific transport branch
+- backend changes stay inside the current shared
+  `openai_compatible_external` path
+- `google_ai_studio` remains the only dedicated transport/request branch
+- OpenRouter-like families stay on the shared path with provider headers /
+  strict-schema behavior where already supported
+- this leaf does not add a provider-specific transport branch
 
 ## Repository Touchpoints
 
@@ -54,6 +58,8 @@ result-contract inventory.
   as follow-on work instead
 - any newly introduced NVIDIA-specific `vision_contract_profile` values remain
   typed in public `VisionAssistContract.vision_contract_profile` result surfaces
+- backend changes, if needed, stay bounded to shared-path request/schema logic
+  and do not add a NVIDIA-specific transport branch
 
 ## Docs To Update
 

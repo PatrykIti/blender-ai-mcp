@@ -9,13 +9,23 @@
 Decide whether current OpenAI image-input families can keep reusing the
 existing generic external profile or whether the repo needs one or more
 OpenAI-specific compare profiles for stricter structured output behavior on
-the existing external runtime path.
+the existing shared external backend path.
 
 ## Business Problem
 
 The runtime already has a generic external path that can talk to OpenAI-style
 APIs, but `TASK-140` should not assume that "transport works" is the same as
 "family-specific compare contract is correct".
+
+## Backend Boundary
+
+OpenAI-family work under this slice stays inside the current shared
+`openai_compatible_external` backend seam.
+
+- `google_ai_studio` remains the only dedicated transport/request branch
+- OpenAI-family work does not add a new transport/provider branch
+- backend changes, if needed, are limited to profile-aware request/schema
+  behavior on the existing shared path
 
 ## Repository Touchpoints
 
@@ -44,6 +54,8 @@ APIs, but `TASK-140` should not assume that "transport works" is the same as
   under the `TASK-139` precedence model
 - structured compare behavior for OpenAI families is evidence-driven rather
   than inherited accidentally from generic transport support
+- backend changes, if needed, stay inside the shared
+  `openai_compatible_external` path and do not become provider integration
 
 ## Docs To Update
 
