@@ -23,6 +23,8 @@ and docs so non-compare models do not appear "partially supported" by accident.
 - excluded NVIDIA visual families have explicit runtime or docs-visible
   exclusion semantics
 - diagnostics make it clear when a model is outside the compare-support matrix
+- diagnostics preserve the `TASK-139` fallback story by making it clear when a
+  non-matching NVIDIA-family id stayed on `generic_full`
 - the repo does not conflate document/retrieval capability with compare
   capability
 

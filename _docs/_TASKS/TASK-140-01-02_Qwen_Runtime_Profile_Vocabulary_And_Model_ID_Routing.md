@@ -21,14 +21,19 @@ substring checks scattered across runtime, prompting, or parser code.
 - `server/infrastructure/config.py`
 - `server/adapters/mcp/vision/config.py`
 - `server/adapters/mcp/vision/runtime.py`
+- `server/adapters/mcp/sampling/result_types.py`
 - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
+- `tests/unit/adapters/mcp/test_vision_result_types.py`
 - `_docs/_VISION/README.md`
 
 ## Acceptance Criteria
 
-- Qwen-specific `vision_contract_profile` values are explicit and typed
+- Qwen-specific `vision_contract_profile` values are explicit and typed across:
+  - runtime/config vocabulary and validators
+  - public `VisionAssistContract` result contracts
 - model-id routing covers the docs-reviewed Qwen families intentionally
 - explicit override precedence from `TASK-139` still wins over Qwen auto-match
+- unknown or non-matching Qwen-family ids still fall back to `generic_full`
 - Qwen family selection logic is centralized in runtime resolution, not
   duplicated across prompting/backend/parsing call sites
 
@@ -39,6 +44,7 @@ substring checks scattered across runtime, prompting, or parser code.
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
+- `tests/unit/adapters/mcp/test_vision_result_types.py`
 
 ## Changelog Impact
 

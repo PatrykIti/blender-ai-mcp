@@ -1,4 +1,4 @@
-# TASK-140-02-02: Anthropic Request Assembly and Image Payload Contract
+# TASK-140-02-02: Anthropic Request Policy on the Existing External Path
 
 **Parent:** [TASK-140-02](./TASK-140-02_Anthropic_Claude_Vision_Profiles_And_Transport_Integration.md)
 **Depends On:** [TASK-140-02-01](./TASK-140-02-01_Anthropic_Typed_Config_And_Provider_Surface.md)
@@ -7,9 +7,10 @@
 
 ## Objective
 
-Implement Anthropic request assembly for bounded compare flows using
-Anthropic-correct message and image payload semantics rather than forcing the
-OpenAI-compatible transport path to impersonate Claude.
+Determine whether Claude-family compare flows on the existing external runtime
+path can reuse the current request assembly, or whether they need bounded
+contract-aware request adjustments without turning this wave into a new
+provider integration.
 
 ## Repository Touchpoints
 
@@ -19,11 +20,15 @@ OpenAI-compatible transport path to impersonate Claude.
 
 ## Acceptance Criteria
 
-- Anthropic requests are transport-correct for image input
+- Claude-family requests are validated against the assumptions of the current
+  external runtime path
 - bounded system/prompt/schema behavior still flows through
   `vision_contract_profile`
-- Anthropic integration does not redefine profile-selection policy that should
-  remain owned by runtime/prompting layers
+- any request-shape differences stay bounded to family/contract needs and do
+  not redefine profile-selection policy owned by runtime/prompting layers
+- if the current external transport path cannot support the required behavior,
+  the task records that gap explicitly instead of silently adding a new
+  provider branch
 
 ## Docs To Update
 

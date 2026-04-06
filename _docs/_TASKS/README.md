@@ -61,7 +61,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Vision & Hybrid Loop
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) | **Expand External Vision Contract Profiles Across Qwen, Anthropic, OpenAI, and NVIDIA** | 🔴 High | Board-level follow-on after TASK-139 for extending the external `vision_contract_profile` architecture across additional multimodal families, especially where structured-output behavior diverges inside Qwen-VL, Claude, OpenAI, and NVIDIA VLM lines. |
+| [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) | **Expand External Vision Contract Profiles Across Qwen, Anthropic, OpenAI, and NVIDIA** | 🔴 High | Board-level follow-on after TASK-139 for extending the external `vision_contract_profile` architecture across additional multimodal families on the existing external runtime path, especially for OpenRouter-hosted model ids where structured-output behavior diverges across Qwen-VL, Claude, OpenAI, and NVIDIA VLM lines. |
 | [TASK-128-02](./TASK-128-02_Deterministic_Silhouette_Analysis_And_Typed_Action_Hints.md) | **Deterministic Silhouette Analysis and Typed Action Hints** | 🔴 High | Second execution slice for mask-based shape metrics and tool-oriented corrective hints. |
 | [TASK-128-03](./TASK-128-03_Optional_Part_Segmentation_Sidecar_And_Part_Aware_Perception.md) | **Optional Part-Segmentation Sidecar and Part-Aware Perception** | 🟡 Medium | Third execution slice for an opt-in segmentation module that produces part masks, crops, and landmarks without becoming a default runtime dependency. |
 

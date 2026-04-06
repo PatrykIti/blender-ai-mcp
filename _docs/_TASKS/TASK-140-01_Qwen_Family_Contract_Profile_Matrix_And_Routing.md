@@ -31,10 +31,12 @@ and some should be explicitly excluded from compare routing.
 - `server/adapters/mcp/vision/prompting.py`
 - `server/adapters/mcp/vision/backends.py`
 - `server/adapters/mcp/vision/parsing.py`
+- `server/adapters/mcp/sampling/result_types.py`
 - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
 - `tests/unit/adapters/mcp/test_vision_prompting.py`
 - `tests/unit/adapters/mcp/test_vision_parsing.py`
 - `tests/unit/adapters/mcp/test_vision_external_backend.py`
+- `tests/unit/adapters/mcp/test_vision_result_types.py`
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 
@@ -43,10 +45,14 @@ and some should be explicitly excluded from compare routing.
 - the repo has one explicit Qwen multimodal family matrix
 - legacy `qwen-vl-plus` / `qwen-vl-max`, Qwen2.5-VL, and Qwen3-VL are not
   treated as one undifferentiated family
+- any Qwen-specific `vision_contract_profile` values introduced by this slice
+  stay typed in both runtime/config and public `VisionAssistContract` results
 - document/OCR-oriented Qwen variants are either given a separate profile or
   explicitly excluded from compare routing
 - runtime/profile selection can route Qwen families without re-parsing model
   ids ad hoc at every call site
+- unknown or not-yet-classified Qwen-family ids still fall back to
+  `generic_full` under the `TASK-139` precedence model
 
 ## Docs To Update
 
@@ -59,6 +65,7 @@ and some should be explicitly excluded from compare routing.
 - `tests/unit/adapters/mcp/test_vision_prompting.py`
 - `tests/unit/adapters/mcp/test_vision_parsing.py`
 - `tests/unit/adapters/mcp/test_vision_external_backend.py`
+- `tests/unit/adapters/mcp/test_vision_result_types.py`
 
 ## Changelog Impact
 

@@ -14,16 +14,23 @@ needed to keep Claude failures explainable and bounded.
 
 - `server/adapters/mcp/vision/prompting.py`
 - `server/adapters/mcp/vision/parsing.py`
+- `server/adapters/mcp/sampling/result_types.py`
 - `tests/unit/adapters/mcp/test_vision_prompting.py`
 - `tests/unit/adapters/mcp/test_vision_parsing.py`
 - `tests/unit/adapters/mcp/test_vision_external_backend.py`
+- `tests/unit/adapters/mcp/test_vision_result_types.py`
 - `_docs/_VISION/README.md`
 
 ## Acceptance Criteria
 
 - Claude compare behavior has an explicit profile decision
+- any newly introduced Claude-specific `vision_contract_profile` values are
+  reflected in public `VisionAssistContract` typing and regression coverage
 - Anthropic diagnostics surface contract/profile mismatches clearly enough for
   operator review and harness evidence
+- diagnostics preserve the `TASK-139` fallback story by making it clear when a
+  Claude-family id stayed on `generic_full` because no narrower family match
+  was selected
 - parser/repair policy does not silently accept prose just because Claude can
   reason well over images
 
@@ -36,6 +43,7 @@ needed to keep Claude failures explainable and bounded.
 - `tests/unit/adapters/mcp/test_vision_prompting.py`
 - `tests/unit/adapters/mcp/test_vision_parsing.py`
 - `tests/unit/adapters/mcp/test_vision_external_backend.py`
+- `tests/unit/adapters/mcp/test_vision_result_types.py`
 
 ## Changelog Impact
 

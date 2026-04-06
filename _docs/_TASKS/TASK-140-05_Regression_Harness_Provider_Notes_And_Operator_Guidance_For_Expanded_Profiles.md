@@ -24,6 +24,7 @@ which contract/profile assumptions actually hold.
 - `tests/unit/adapters/mcp/test_vision_prompting.py`
 - `tests/unit/adapters/mcp/test_vision_parsing.py`
 - `tests/unit/adapters/mcp/test_vision_external_backend.py`
+- `tests/unit/adapters/mcp/test_vision_result_types.py`
 - `tests/unit/scripts/test_script_tooling.py`
 - `tests/e2e/vision/`
 - `scripts/vision_harness.py`
@@ -41,6 +42,8 @@ which contract/profile assumptions actually hold.
 
 - every promoted family/profile decision has matching automated coverage
 - harness output and docs expose the selected `vision_contract_profile`
+- regression coverage includes the public typed result surfaces that expose the
+  selected `vision_contract_profile`, not only internal runtime helpers
 - provider notes distinguish docs-reviewed support, harness evidence, and
   operator-reported behavior
 - `.env.example`, launcher scripts, and MCP client examples reflect the same
@@ -63,6 +66,7 @@ which contract/profile assumptions actually hold.
 - `tests/unit/adapters/mcp/test_vision_prompting.py`
 - `tests/unit/adapters/mcp/test_vision_parsing.py`
 - `tests/unit/adapters/mcp/test_vision_external_backend.py`
+- `tests/unit/adapters/mcp/test_vision_result_types.py`
 - `tests/unit/scripts/test_script_tooling.py`
 - targeted `tests/e2e/vision/`
 

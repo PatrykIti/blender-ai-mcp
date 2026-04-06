@@ -11,9 +11,11 @@
 Extend the external `vision_contract_profile` architecture introduced in
 `TASK-139` beyond the current `generic_full` and
 `google_family_compare` split so the runtime can choose prompt/schema/parser
-behavior more precisely for additional multimodal model families.
+behavior more precisely for additional multimodal model families routed through
+the existing external vision path, especially OpenRouter-hosted model ids.
 
-This umbrella should cover the next docs-reviewed external targets:
+This umbrella should cover the next docs-reviewed external model-family
+targets on the current external transport surface:
 
 - Qwen-VL families:
   - legacy `qwen-vl-plus` / `qwen-vl-max`
@@ -95,7 +97,8 @@ following docs-reviewed families:
 - determine whether Claude families can share one profile or need:
   - a broader compare profile
   - a stricter JSON-repair profile
-  - or a transport/provider-specific parser boundary
+  - or an explicitly documented "not reliable on the current external
+    transport path" boundary
 
 ### OpenAI
 
@@ -146,9 +149,11 @@ This umbrella covers:
 - expanding the `vision_contract_profile` vocabulary beyond the initial
   two-profile split from `TASK-139`
 - adding deterministic family/profile resolution for the next target families
-- adding transport support only where it is necessary to exercise the profile
-  system for documented provider APIs
-- prompt/schema/request routing for those profiles
+  on the existing external runtime path, especially OpenRouter-hosted model ids
+- carrying new profile vocabulary through the typed runtime and public result
+  surfaces that expose `vision_contract_profile`
+- prompt/schema/request routing for those profiles on the current external
+  runtime path
 - parse/repair/diagnostic routing for those profiles
 - harness evidence, provider notes, `.env.example`, launch helpers, and client
   config docs for the new profile matrix
@@ -156,6 +161,8 @@ This umbrella covers:
 This umbrella does **not** cover:
 
 - unbounded provider-catalog expansion for every multimodal API on the market
+- first-class provider branches for every model family already served through
+  OpenRouter or the existing external runtime path
 - ranking/recommending models before there is explicit harness evidence
 - turning document/OCR/retrieval visual models into fake staged-compare
   candidates just because they accept images
@@ -166,6 +173,15 @@ This umbrella does **not** cover:
 - the repo has a documented next-generation external
   `vision_contract_profile` matrix, not just `generic_full` plus one
   Google-family compare profile
+- any newly introduced external `vision_contract_profile` values are carried
+  through the full typed surface:
+  - runtime/config vocabulary and validators
+  - public `VisionAssistContract` result contracts
+  - automated regression coverage for those public result surfaces
+- the `TASK-139` precedence model remains intact:
+  - explicit override still wins
+  - recognized family/model-id routing can select a stricter profile
+  - unknown or not-yet-classified families still fall back to `generic_full`
 - Qwen-VL families are classified explicitly enough that:
   - legacy `qwen-vl-plus` / `qwen-vl-max`
   - Qwen2.5-VL
@@ -173,9 +189,9 @@ This umbrella does **not** cover:
   do not all silently collapse into one unexamined generic profile
 - Anthropic, OpenAI, and NVIDIA vision-capable families each have an explicit
   product decision:
-  - supported with one profile
-  - supported with several profiles
-  - or documented as out of scope / not compare-suitable
+  - supported on the current external runtime path with one profile
+  - supported on the current external runtime path with several profiles
+  - or documented as out of scope / not compare-suitable on that path
 - diagnostics and harness results expose the selected
   `vision_contract_profile`
 - provider/model notes distinguish:
@@ -196,6 +212,7 @@ This umbrella does **not** cover:
 - `tests/unit/adapters/mcp/test_vision_prompting.py`
 - `tests/unit/adapters/mcp/test_vision_parsing.py`
 - `tests/unit/adapters/mcp/test_vision_external_backend.py`
+- `tests/unit/adapters/mcp/test_vision_result_types.py`
 - `tests/e2e/vision/`
 - `scripts/vision_harness.py`
 - `scripts/run_streamable_openrouter.sh`
@@ -228,6 +245,7 @@ This umbrella does **not** cover:
 - `tests/unit/adapters/mcp/test_vision_prompting.py`
 - `tests/unit/adapters/mcp/test_vision_parsing.py`
 - `tests/unit/adapters/mcp/test_vision_external_backend.py`
+- `tests/unit/adapters/mcp/test_vision_result_types.py`
 - `tests/unit/scripts/test_script_tooling.py`
 - targeted `tests/e2e/vision/` coverage for each promoted external family
 
@@ -247,7 +265,7 @@ This umbrella does **not** cover:
 | Order | Planned Slice | Purpose |
 |------|---------------|---------|
 | 1 | [TASK-140-01](./TASK-140-01_Qwen_Family_Contract_Profile_Matrix_And_Routing.md) | Classify Qwen multimodal families and route them through explicit compare/document/exclusion profiles instead of one generic bucket |
-| 2 | [TASK-140-02](./TASK-140-02_Anthropic_Claude_Vision_Profiles_And_Transport_Integration.md) | Add Anthropic-specific provider/config/request/parser integration with explicit Claude profile policy |
-| 3 | [TASK-140-03](./TASK-140-03_OpenAI_Image_Input_Profiles_And_Structured_Compare_Policy.md) | Decide whether OpenAI families can reuse generic behavior or need stricter family-specific compare profiles |
-| 4 | [TASK-140-04](./TASK-140-04_NVIDIA_VLM_Support_And_Exclusion_Policy.md) | Classify NVIDIA VLMs into compare-capable versus document/retrieval-only paths and integrate only the bounded compare-suitable subset |
+| 2 | [TASK-140-02](./TASK-140-02_Anthropic_Claude_Vision_Profiles_And_Transport_Integration.md) | Define Claude-family contract routing and diagnostics on the current external runtime path instead of defaulting to one generic contract |
+| 3 | [TASK-140-03](./TASK-140-03_OpenAI_Image_Input_Profiles_And_Structured_Compare_Policy.md) | Decide whether OpenAI families can reuse generic behavior or need stricter family-specific compare profiles on the existing external path |
+| 4 | [TASK-140-04](./TASK-140-04_NVIDIA_VLM_Support_And_Exclusion_Policy.md) | Classify NVIDIA VLMs into compare-capable versus document/retrieval-only paths and integrate only the bounded compare-suitable subset on the existing external path |
 | 5 | [TASK-140-05](./TASK-140-05_Regression_Harness_Provider_Notes_And_Operator_Guidance_For_Expanded_Profiles.md) | Keep automated coverage, harness evidence, docs, launch helpers, `.env.example`, and client examples aligned with the broader profile matrix |

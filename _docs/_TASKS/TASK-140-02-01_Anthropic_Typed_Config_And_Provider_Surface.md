@@ -1,4 +1,4 @@
-# TASK-140-02-01: Anthropic Typed Config and Provider Surface
+# TASK-140-02-01: Anthropic Family Routing and Typed Contract Vocabulary
 
 **Parent:** [TASK-140-02](./TASK-140-02_Anthropic_Claude_Vision_Profiles_And_Transport_Integration.md)
 **Status:** ⏳ To Do
@@ -6,24 +6,30 @@
 
 ## Objective
 
-Add the flat config/env surface and typed runtime models needed for Anthropic
-vision support without overloading the existing OpenAI-compatible provider
-surface.
+Add the model-id/family-routing and typed contract vocabulary needed to
+resolve Claude-specific `vision_contract_profile` values on the existing
+external runtime path, without introducing a dedicated Anthropic provider by
+default.
 
 ## Repository Touchpoints
 
 - `server/infrastructure/config.py`
 - `server/adapters/mcp/vision/config.py`
 - `server/adapters/mcp/vision/runtime.py`
+- `server/adapters/mcp/sampling/result_types.py`
 - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
+- `tests/unit/adapters/mcp/test_vision_result_types.py`
 - `.env.example`
 
 ## Acceptance Criteria
 
-- Anthropic provider/config vocabulary is explicit
-- typed runtime config can expose Anthropic selection and any Anthropic-specific
-  auth/base-url fields cleanly
+- Anthropic / Claude family-routing vocabulary is explicit
+- typed runtime config and public `VisionAssistContract` result contracts can
+  expose any Claude-specific `vision_contract_profile` cleanly
 - config precedence remains deterministic and compatible with `TASK-139`
+- unknown or non-matching Claude-family ids still fall back to `generic_full`
+- this slice does not require a first-class Anthropic provider alias unless
+  the current external transport path is proven insufficient
 
 ## Docs To Update
 
@@ -33,6 +39,7 @@ surface.
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
+- `tests/unit/adapters/mcp/test_vision_result_types.py`
 
 ## Changelog Impact
 

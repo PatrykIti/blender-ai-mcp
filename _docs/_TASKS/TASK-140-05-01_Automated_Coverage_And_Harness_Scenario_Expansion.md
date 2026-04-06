@@ -15,6 +15,7 @@ decision under `TASK-140` is backed by repeatable automated evidence.
 - `tests/unit/adapters/mcp/test_vision_prompting.py`
 - `tests/unit/adapters/mcp/test_vision_parsing.py`
 - `tests/unit/adapters/mcp/test_vision_external_backend.py`
+- `tests/unit/adapters/mcp/test_vision_result_types.py`
 - `tests/e2e/vision/`
 - `scripts/vision_harness.py`
 
@@ -22,6 +23,8 @@ decision under `TASK-140` is backed by repeatable automated evidence.
 
 - each supported family/profile combination has targeted runtime/prompt/parser/
   backend regression coverage
+- profile-vocabulary expansion is covered through public result-contract tests,
+  not only runtime-selection tests
 - harness scenarios distinguish simple checkpoint compare from richer assembled
   loops when that difference matters
 - unsupported/excluded families also have negative-path coverage where useful
@@ -36,6 +39,7 @@ decision under `TASK-140` is backed by repeatable automated evidence.
 - `tests/unit/adapters/mcp/test_vision_prompting.py`
 - `tests/unit/adapters/mcp/test_vision_parsing.py`
 - `tests/unit/adapters/mcp/test_vision_external_backend.py`
+- `tests/unit/adapters/mcp/test_vision_result_types.py`
 - targeted `tests/e2e/vision/`
 
 ## Changelog Impact

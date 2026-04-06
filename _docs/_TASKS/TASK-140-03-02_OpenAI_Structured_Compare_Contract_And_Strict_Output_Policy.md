@@ -16,9 +16,11 @@ checkpoint/reference flows.
 - `server/adapters/mcp/vision/prompting.py`
 - `server/adapters/mcp/vision/backends.py`
 - `server/adapters/mcp/vision/parsing.py`
+- `server/adapters/mcp/sampling/result_types.py`
 - `tests/unit/adapters/mcp/test_vision_prompting.py`
 - `tests/unit/adapters/mcp/test_vision_parsing.py`
 - `tests/unit/adapters/mcp/test_vision_external_backend.py`
+- `tests/unit/adapters/mcp/test_vision_result_types.py`
 
 ## Acceptance Criteria
 
@@ -26,6 +28,9 @@ checkpoint/reference flows.
   families
 - the repo knows whether smaller tiers such as mini/nano can safely reuse the
   same compare contract as larger tiers
+- any newly introduced OpenAI-specific `vision_contract_profile` values remain
+  typed in public `VisionAssistContract` surfaces and covered by regression
+  tests
 - prompt/schema/parser policy for OpenAI families is evidence-driven
 
 ## Docs To Update
@@ -37,6 +42,7 @@ checkpoint/reference flows.
 - `tests/unit/adapters/mcp/test_vision_prompting.py`
 - `tests/unit/adapters/mcp/test_vision_parsing.py`
 - `tests/unit/adapters/mcp/test_vision_external_backend.py`
+- `tests/unit/adapters/mcp/test_vision_result_types.py`
 
 ## Changelog Impact
 
