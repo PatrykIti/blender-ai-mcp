@@ -487,6 +487,37 @@ def test_call_tool_proxy_matches_direct_public_alias_execution(monkeypatch):
     assert _decode_tool_result(direct) == _decode_tool_result(discovered)
 
 
+def test_call_tool_accepts_legacy_tool_and_params_aliases(monkeypatch):
+    """Legacy wrapper aliases should still resolve to the canonical call_tool path."""
+
+    class Handler:
+        def list_workflows(self, offset: int = 0, limit: int = 100):
+            return {"workflows_dir": "/tmp", "count": 1, "workflows": [{"name": "chair"}]}
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.workflow_catalog.get_workflow_catalog_handler",
+        lambda: Handler(),
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.workflow_catalog.ctx_info",
+        lambda ctx, message: None,
+    )
+
+    server = build_server("llm-guided")
+
+    async def run():
+        result = await server.call_tool(
+            "call_tool",
+            {"tool": "browse_workflows", "params": {"action": "list"}},
+        )
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+
+    assert payload["count"] == 1
+    assert payload["workflows"][0]["name"] == "chair"
+
+
 def test_call_tool_proxy_preserves_proxied_valueerror_as_tool_error(monkeypatch):
     """call_tool should keep direct-tool failure semantics instead of turning validation errors into success text."""
 
@@ -562,6 +593,32 @@ def test_call_tool_can_canonicalize_legacy_scene_clean_scene_split_flags(monkeyp
     assert payload == "Scene cleaned."
 
 
+def test_call_tool_can_canonicalize_collection_manage_name_alias(monkeypatch):
+    """Guided call_tool should tolerate legacy `name` for collection creation while keeping `collection_name` canonical."""
+
+    class Handler:
+        def manage_collection(self, action, collection_name, new_name=None, parent_name=None, object_name=None):
+            assert action == "create"
+            assert collection_name == "Squirrel"
+            return "Created collection 'Squirrel' under Scene Collection"
+
+    monkeypatch.setattr("server.adapters.mcp.areas.collection.get_collection_handler", lambda: Handler())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    server = _build_phase_search_server(SessionPhase.BUILD)
+
+    async def run():
+        result = await server.call_tool(
+            "call_tool",
+            {"name": "collection_manage", "arguments": {"action": "create", "name": "Squirrel"}},
+        )
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+
+    assert "Created collection 'Squirrel'" in payload
+
+
 def test_call_tool_rejects_ambiguous_legacy_scene_clean_scene_split_flags(monkeypatch):
     """Split cleanup flags should fail clearly when they imply different cleanup behavior."""
 
@@ -581,6 +638,60 @@ def test_call_tool_rejects_ambiguous_legacy_scene_clean_scene_split_flags(monkey
             await server.call_tool(
                 "call_tool",
                 {"name": "scene_clean_scene", "arguments": {"keep_lights": True, "keep_cameras": False}},
+            )
+
+    asyncio.run(run())
+
+
+def test_call_tool_rejects_reference_images_batch_attach_shape():
+    """Guided call_tool should explain that reference_images attach is one-reference-per-call."""
+
+    server = build_server("llm-guided")
+
+    async def run():
+        with pytest.raises(ToolError, match="one reference per call"):
+            await server.call_tool(
+                "call_tool",
+                {
+                    "name": "reference_images",
+                    "arguments": {
+                        "action": "attach",
+                        "images": [{"source_path": "/tmp/front.png"}, {"source_path": "/tmp/side.png"}],
+                    },
+                },
+            )
+
+    asyncio.run(run())
+
+
+def test_call_tool_rejects_non_public_modeling_create_primitive_shape_with_actionable_guidance(monkeypatch):
+    """Guided call_tool should fail with actionable guidance for primitive drift instead of opaque validation noise."""
+
+    class Handler:
+        def create_primitive(self, primitive_type, radius=1.0, size=2.0, location=None, rotation=None, name=None):
+            raise AssertionError("Handler should not be reached for unsupported public primitive args")
+
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.get_modeling_handler", lambda: Handler())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    server = _build_phase_search_server(SessionPhase.BUILD)
+
+    async def run():
+        with pytest.raises(ToolError, match="modeling_transform_object\\(scale=\\.\\.\\.\\)"):
+            await server.call_tool(
+                "call_tool",
+                {
+                    "name": "modeling_create_primitive",
+                    "arguments": {
+                        "primitive_type": "uv_sphere",
+                        "name": "Head",
+                        "location": [0.0, 0.0, 1.1],
+                        "scale": [0.42, 0.38, 0.38],
+                        "segments": 8,
+                        "rings": 6,
+                        "collection_name": "Squirrel",
+                    },
+                },
             )
 
     asyncio.run(run())

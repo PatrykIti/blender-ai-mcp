@@ -195,13 +195,21 @@ def test_scene_truth_followup_contract_carries_loop_ready_items():
         focus_pairs=["Squirrel_Head -> Squirrel_Tail"],
         items=[
             SceneTruthFollowupItemContract(
+                kind="attachment",
+                summary="Squirrel_Body -> Squirrel_Tail is still wrong for this organic attachment relation.",
+                priority="high",
+                from_object="Squirrel_Body",
+                to_object="Squirrel_Tail",
+                tool_name="scene_assert_contact",
+            ),
+            SceneTruthFollowupItemContract(
                 kind="gap",
                 summary="Squirrel_Head -> Squirrel_Tail still has measurable separation.",
                 priority="normal",
                 from_object="Squirrel_Head",
                 to_object="Squirrel_Tail",
                 tool_name="scene_measure_gap",
-            )
+            ),
         ],
         macro_candidates=[
             SceneRepairMacroCandidateContract(
@@ -215,7 +223,8 @@ def test_scene_truth_followup_contract_carries_loop_ready_items():
 
     assert followup.continue_recommended is True
     assert followup.focus_pairs == ["Squirrel_Head -> Squirrel_Tail"]
-    assert followup.items[0].tool_name == "scene_measure_gap"
+    assert followup.items[0].kind == "attachment"
+    assert followup.items[1].tool_name == "scene_measure_gap"
     assert followup.macro_candidates[0].macro_name == "macro_align_part_with_contact"
 
 

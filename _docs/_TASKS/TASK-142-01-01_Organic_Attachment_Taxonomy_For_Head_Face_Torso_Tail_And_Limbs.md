@@ -1,4 +1,4 @@
-# TASK-142-01-01: Organic Attachment Taxonomy for Ears, Eyes, Snout, and Nose
+# TASK-142-01-01: Organic Attachment Taxonomy for Head, Face, Torso, Tail, and Limbs
 
 **Parent:** [TASK-142-01](./TASK-142-01_Creature_Part_Attachment_Taxonomy_And_Truth_Surface.md)
 **Status:** ⏳ To Do
@@ -6,9 +6,9 @@
 
 ## Objective
 
-Define one deterministic relation taxonomy for the targeted creature-part pairs
-so the repo can tell "generic overlap" apart from "organic part is seated or
-attached incorrectly."
+Define one deterministic relation taxonomy for the targeted creature-part and
+body-mass pairs so the repo can tell "generic overlap" apart from "organic
+part is seated or attached incorrectly."
 
 ## Business Problem
 
@@ -19,6 +19,12 @@ relation-semantics glitches:
 - eyes should sit against the head, not float after cleanup
 - snout and nose should remain seated/attached, not be pushed away just
   because overlap went to zero
+- the head should stay seated into the torso/body mass instead of reading as a
+  detached floating piece
+- the tail should stay attached to the body instead of drifting into a visibly
+  disconnected relation
+- limb masses should read as properly seated against the torso or their parent
+  limb segment, not as generic detached appendages
 
 This leaf owns the explicit relation vocabulary and targeted pair list that the
 rest of `TASK-142` will build on.
@@ -37,6 +43,8 @@ rest of `TASK-142` will build on.
   - overlap cleanup only
   - seated contact / attachment repair
   - embedded base-seating / emerge-from-surface repair
+- the targeted relation list explicitly covers head/face attachments plus
+  head-to-body, tail-to-body, and limb attachment seams
 - the taxonomy is deterministic and bounded to named creature-part relations,
   not a vague prompt-only heuristic
 - the taxonomy is documented clearly enough that later truth/macro logic can
@@ -53,6 +61,7 @@ rest of `TASK-142` will build on.
 ## Docs To Update
 
 - `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/README.md`
 
 ## Tests To Add/Update
 

@@ -68,8 +68,21 @@ Rules:
 - do not guess hidden/internal tool names
 - use `call_tool(...)` only for tools that are directly visible or were just
   discovered through `search_tools(...)`
+- use the canonical `call_tool(name=..., arguments=...)` wrapper; legacy
+  `tool=...` / `params=...` aliases are compatibility-only
 - keep parts as separate objects
 - focus on low-poly shape match, not materials or fur detail
+- attach references one at a time with
+  `reference_images(action="attach", source_path=..., ...)`; do not pass
+  batch shapes such as `images=[...]`
+- use `collection_manage(action="create", collection_name=...)`, not
+  `name=...`
+- use `modeling_create_primitive(...)` only with its public shape:
+  `primitive_type`, `radius`/`size`, `location`, `rotation`, optional `name`
+- if you need non-uniform scale, create the primitive first and then call
+  `modeling_transform_object(scale=...)`
+- if you need to place a new object into a collection, create it first and then
+  call `collection_manage(action="move_object", collection_name=..., object_name=...)`
 - after each stage use `reference_iterate_stage_checkpoint(...)`
 - for stages with one clear primary mass you may use `target_object=...`
 - for a full assembled silhouette use:
@@ -82,6 +95,7 @@ Workflow:
 1. `router_get_status()`
 2. clean the scene but keep lights and cameras
 3. attach both references through `reference_images(...)`
+   - use one `source_path` per attach call, not `images=[...]`
 4. set the goal:
    `create a low-poly creature matching front and side reference images`
 5. if the router returns `guided_manual_build`, continue manually on the
@@ -114,7 +128,11 @@ Workflow:
     session with `goal_override`
 11. if `loop_disposition == "inspect_validate"`, stop free-form modeling and
     switch to inspect/measure/assert before making another large change
-12. if `part_segmentation.status == "disabled"`, stay on the silhouette-first
+12. if staged compare/iterate returns a vision error but still includes strong
+    deterministic `truth_followup` / `correction_candidates`, use that as an
+    inspect/measure/assert handoff instead of guessing another large free-form
+    correction
+13. if `part_segmentation.status == "disabled"`, stay on the silhouette-first
     path; the segmentation sidecar is optional and not part of the default
     guided baseline
 

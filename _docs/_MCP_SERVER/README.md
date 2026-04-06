@@ -307,6 +307,9 @@ Current guided utility prep path:
 - guided `call_tool(...)` preserves the same failure semantics as a direct tool
   call; proxied validation/runtime errors still surface as tool failures
   instead of being flattened into apparent success text
+- the canonical guided `call_tool(...)` wrapper is `name=...` plus
+  `arguments=...`; legacy `tool=...` / `params=...` aliases are compatibility-
+  only
 
 Goal-scoped reference intake is now part of the guided entry layer:
 
@@ -314,6 +317,8 @@ Goal-scoped reference intake is now part of the guided entry layer:
 - `reference_images(action="list")`
 - `reference_images(action="remove", reference_id=...)`
 - `reference_images(action="clear")`
+- attach is one-reference-per-call on the guided public surface; do not send
+  `images=[...]` or `source_paths=[...]` batch shapes
 
 For staged/manual reference-guided work, the guided build/inspect surface now
 also exposes a bounded checkpoint comparison tool:
@@ -814,7 +819,7 @@ Organizational tools for managing Blender collections.
 |-----------|-----------|-------------|
 | `collection_list` | `include_objects` (bool) | Lists all collections with hierarchy, object counts, and visibility flags. |
 | `collection_list_objects` | `collection_name` (str), `recursive` (bool), `include_hidden` (bool) | Lists objects within a collection, optionally recursive through child collections. |
-| `collection_manage` | `action` (create/delete/rename/move_object/link_object/unlink_object), `collection_name`, `new_name`, `parent_name`, `object_name` | Manages collections: create, delete, rename, and move/link/unlink objects between collections. |
+| `collection_manage` | `action` (create/delete/rename/move_object/link_object/unlink_object), `collection_name`, `new_name`, `parent_name`, `object_name` | Manages collections: create, delete, rename, and move/link/unlink objects between collections. Canonical public target name is `collection_name`; legacy `name` is compatibility-only on the guided proxy path. |
 
 ### Material Tools
 Material and shader management.
@@ -889,7 +894,7 @@ Geometry creation and editing.
 
 | Tool Name | Arguments | Description |
 |-----------|-----------|-------------|
-| `modeling_create_primitive` | `primitive_type` (str), `size` (float), `location` ([x,y,z]), `rotation` ([x,y,z]) | Creates a simple 3D object (Cube, Sphere, Cylinder, Plane, Cone, Torus, Monkey). |
+| `modeling_create_primitive` | `primitive_type` (str), `radius` (float), `size` (float), `location` ([x,y,z]), `rotation` ([x,y,z]), `name` (str, optional) | Creates a simple 3D object (Cube, Sphere, Cylinder, Plane, Cone, Torus, Monkey). Use `radius` for sphere/cylinder/cone, `size` for coarse primitive size, then `modeling_transform_object(scale=...)` for non-uniform scale. Collection placement happens after creation via `collection_manage(...)`, not via a `collection_name` primitive argument. |
 | `modeling_transform_object` | `name` (str), `location` (opt), `rotation` (opt), `scale` (opt) | Changes position, rotation, or scale of an existing object. |
 | `modeling_add_modifier` | `name` (str), `modifier_type` (str), `properties` (dict) | Adds a non-destructive object modifier (e.g., `SUBSURF`, `BEVEL`). Successful addon responses use structured modifier metadata under the hood. |
 | `modeling_apply_modifier` | `name` (str), `modifier_name` (str) | Applies a modifier, permanently changing the mesh geometry. |

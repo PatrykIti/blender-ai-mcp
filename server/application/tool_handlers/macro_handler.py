@@ -330,7 +330,7 @@ class MacroToolHandler(IMacroTool):
             for axis_name in self._AXIS_INDEX
         }
         tangential_axes = [axis_name for axis_name in self._AXIS_INDEX if axis_name != resolved_surface_axis]
-        return self._execute_relative_layout_macro(
+        base_report = self._execute_relative_layout_macro(
             macro_name="macro_attach_part_to_surface",
             moving_object=part_object,
             reference_object=surface_object,
@@ -347,6 +347,34 @@ class MacroToolHandler(IMacroTool):
             placement_action="attach_part_to_surface",
             placement_summary=f"Seated '{part_object}' onto '{surface_object}'",
         )
+        after_truth = self._pair_truth_summary(part_object, surface_object)
+        attachment_verdict = self._pair_attachment_verdict(after_truth)
+        actions_taken = list(base_report.get("actions_taken") or [])
+        actions_taken.append(
+            {
+                "status": "applied",
+                "action": "inspect_pair_truth_after",
+                "tool_name": "scene_measure_gap",
+                "summary": f"Read pair truth after seating '{part_object}' onto '{surface_object}'",
+                "details": after_truth,
+            }
+        )
+        actions_taken.append(
+            {
+                "status": "applied",
+                "action": "evaluate_attachment_outcome",
+                "tool_name": "scene_assert_contact",
+                "summary": f"Attachment verdict after bounded seating: {attachment_verdict}",
+                "details": {"attachment_verdict": attachment_verdict},
+            }
+        )
+        base_report["actions_taken"] = actions_taken
+        if gap_value == 0.0 and attachment_verdict != "seated_contact":
+            base_report["status"] = "partial"
+            base_report["error"] = (
+                "The bounded seating move completed, but the pair is still not seated/attached correctly."
+            )
+        return base_report
 
     def align_part_with_contact(
         self,
@@ -503,6 +531,16 @@ class MacroToolHandler(IMacroTool):
                 "details": after_truth,
             }
         )
+        attachment_verdict = self._pair_attachment_verdict(after_truth)
+        actions_taken.append(
+            {
+                "status": "applied",
+                "action": "evaluate_attachment_outcome",
+                "tool_name": "scene_assert_contact",
+                "summary": f"Attachment verdict after bounded repair: {attachment_verdict}",
+                "details": {"attachment_verdict": attachment_verdict},
+            }
+        )
         verification_recommended = list(base_report.get("verification_recommended") or [])
         verification_recommended.append(
             {
@@ -514,6 +552,9 @@ class MacroToolHandler(IMacroTool):
         )
         base_report["actions_taken"] = actions_taken
         base_report["verification_recommended"] = verification_recommended
+        if relation_name == "contact" and attachment_verdict != "seated_contact":
+            base_report["status"] = "partial"
+            base_report["error"] = "The bounded repair completed, but the pair is still not seated/attached correctly."
         return base_report
 
     def place_symmetry_pair(
@@ -1285,6 +1326,16 @@ class MacroToolHandler(IMacroTool):
                 "details": after_truth,
             }
         )
+        attachment_verdict = self._pair_attachment_verdict(after_truth)
+        actions_taken.append(
+            {
+                "status": "applied",
+                "action": "evaluate_attachment_outcome",
+                "tool_name": "scene_assert_contact",
+                "summary": f"Attachment verdict after bounded cleanup: {attachment_verdict}",
+                "details": {"attachment_verdict": attachment_verdict},
+            }
+        )
 
         cleanup_report: Dict[str, Any] = {
             "status": "success",
@@ -1329,6 +1380,11 @@ class MacroToolHandler(IMacroTool):
             ],
             "requires_followup": True,
         }
+        if gap_value == 0.0 and attachment_verdict != "seated_contact":
+            cleanup_report["status"] = "partial"
+            cleanup_report["error"] = (
+                "The bounded cleanup removed or reduced overlap, but the pair is still not seated/attached correctly."
+            )
         captures_after = self._maybe_capture_stage(
             bundle_id=bundle_id,
             stage="after",
@@ -2304,6 +2360,29 @@ class MacroToolHandler(IMacroTool):
         if contact_semantics is not None:
             summary["contact_semantics"] = contact_semantics
         return summary
+
+    def _pair_attachment_verdict(self, truth_summary: Dict[str, Any]) -> str:
+        overlap = truth_summary.get("overlap") if isinstance(truth_summary, dict) else None
+        if isinstance(overlap, dict) and bool(overlap.get("overlaps")):
+            return "intersecting"
+
+        contact_assertion = truth_summary.get("contact_assertion") if isinstance(truth_summary, dict) else None
+        if isinstance(contact_assertion, dict) and contact_assertion.get("passed") is True:
+            return "seated_contact"
+        if isinstance(contact_assertion, dict):
+            actual_value = contact_assertion.get("actual")
+            actual = actual_value if isinstance(actual_value, dict) else {}
+            actual_relation = str(actual.get("relation") or "").lower()
+            if actual_relation == "separated":
+                return "floating_gap"
+            if actual_relation == "overlapping":
+                return "intersecting"
+
+        gap = truth_summary.get("gap") if isinstance(truth_summary, dict) else None
+        if isinstance(gap, dict) and str(gap.get("relation") or "").lower() == "separated":
+            return "floating_gap"
+
+        return "needs_followup"
 
     def _support_truth_summary(self, part_object: str, support_object: str) -> Dict[str, Any]:
         gap = self._scene.measure_gap(part_object, support_object)

@@ -141,7 +141,8 @@ def test_macro_align_part_with_contact_inferrs_side_and_repairs_gap():
     assert modeling.calls[0][1]["location"] == pytest.approx([1.1, 0.0, 1.0], abs=1e-9)
     assert result["actions_taken"][1]["details"]["normal_axis"] == "X"
     assert result["actions_taken"][1]["details"]["preserved_side"] == "positive"
-    assert result["actions_taken"][-1]["details"]["contact_assertion"]["passed"] is True
+    assert result["actions_taken"][-2]["details"]["contact_assertion"]["passed"] is True
+    assert result["actions_taken"][-1]["details"]["attachment_verdict"] == "seated_contact"
 
 
 def test_macro_align_part_with_contact_blocks_when_nudge_exceeds_bound():
@@ -161,6 +162,44 @@ def test_macro_align_part_with_contact_blocks_when_nudge_exceeds_bound():
     assert result["macro_name"] == "macro_align_part_with_contact"
     assert modeling.calls == []
     assert "exceeds max_nudge" in (result["error"] or "")
+
+
+def test_macro_align_part_with_contact_reports_partial_when_pair_is_still_detached():
+    scene = FakeSceneTool()
+    modeling = FakeModelingTool(scene)
+    handler = MacroToolHandler(scene, modeling)
+
+    def _assert_contact(from_object, to_object, max_gap=0.001, allow_overlap=False):
+        return {
+            "assertion": "scene_assert_contact",
+            "passed": False,
+            "subject": from_object,
+            "target": to_object,
+            "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+            "actual": {"gap": 0.02, "relation": "separated"},
+            "delta": {"gap_overage": 0.019},
+            "tolerance": max_gap,
+            "units": "blender_units",
+            "details": {
+                "axis_gap": {"x": 0.02, "y": 0.0, "z": 0.0},
+                "measured_relation": "separated",
+                "overlap_rejected": False,
+            },
+        }
+
+    scene.assert_contact = _assert_contact
+
+    result = handler.align_part_with_contact(
+        part_object="Ear",
+        reference_object="Head",
+        target_relation="contact",
+        align_mode="none",
+        max_nudge=0.2,
+    )
+
+    assert result["status"] == "partial"
+    assert "still not seated/attached correctly" in (result["error"] or "")
+    assert result["actions_taken"][-1]["details"]["attachment_verdict"] == "floating_gap"
 
 
 def test_pair_truth_summary_carries_bbox_touching_vs_surface_gap_note():

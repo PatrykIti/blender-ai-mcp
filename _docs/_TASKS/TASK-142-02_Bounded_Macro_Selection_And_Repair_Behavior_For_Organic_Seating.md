@@ -9,7 +9,7 @@
 
 Align bounded macro selection and repair behavior with the creature-part
 attachment taxonomy so the guided loop stops defaulting to the wrong repair
-family.
+family across head, face, torso, tail, and limb attachment relations.
 
 ## Business Problem
 
@@ -23,6 +23,10 @@ repair path keeps choosing the wrong macro:
 
 This subtask owns the deterministic policy for picking among those families and
 for reporting what a bounded repair actually achieved.
+
+The targeted scope here is broader than face-only attachments. It also covers
+major attached creature seams such as head-to-body, tail-to-body, and limb
+attachment when those masses are represented as separate objects.
 
 ## Repository Touchpoints
 

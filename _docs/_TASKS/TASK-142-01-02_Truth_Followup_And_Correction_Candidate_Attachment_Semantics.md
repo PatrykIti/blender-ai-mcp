@@ -1,7 +1,7 @@
 # TASK-142-01-02: Truth-Followup and Correction-Candidate Attachment Semantics
 
 **Parent:** [TASK-142-01](./TASK-142-01_Creature_Part_Attachment_Taxonomy_And_Truth_Surface.md)
-**Depends On:** [TASK-142-01-01](./TASK-142-01-01_Organic_Attachment_Taxonomy_For_Ears_Eyes_Snout_And_Nose.md)
+**Depends On:** [TASK-142-01-01](./TASK-142-01-01_Organic_Attachment_Taxonomy_For_Head_Face_Torso_Tail_And_Limbs.md)
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
 

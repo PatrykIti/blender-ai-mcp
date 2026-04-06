@@ -62,11 +62,99 @@ class BlenderDiscoverySearchTransform(BM25SearchTransform):
         indices = self._index.query(query, self._max_results)
         return [self._indexed_tools[i] for i in indices]
 
+    def _canonicalize_collection_manage_arguments(self, arguments: dict[str, Any]) -> dict[str, Any]:
+        canonical_arguments = dict(arguments)
+        legacy_name = canonical_arguments.pop("name", None)
+        if "name" not in arguments:
+            return canonical_arguments
+
+        if "collection_name" in canonical_arguments:
+            collection_name = canonical_arguments["collection_name"]
+            if isinstance(legacy_name, str) and isinstance(collection_name, str) and legacy_name == collection_name:
+                return canonical_arguments
+            raise ValueError(
+                "collection_manage(...) uses the canonical public argument `collection_name`. "
+                "Compatibility alias `name` is allowed only when it matches `collection_name`."
+            )
+
+        if not isinstance(legacy_name, str) or not legacy_name.strip():
+            raise ValueError(
+                "collection_manage(...) compatibility alias `name` must be a non-empty string. "
+                "Canonical public form: `collection_name`."
+            )
+
+        canonical_arguments["collection_name"] = legacy_name
+        return canonical_arguments
+
+    def _canonicalize_reference_images_arguments(self, arguments: dict[str, Any]) -> dict[str, Any]:
+        canonical_arguments = dict(arguments)
+        action = str(canonical_arguments.get("action") or "").lower()
+        if action != "attach":
+            return canonical_arguments
+
+        if "images" in canonical_arguments:
+            raise ValueError(
+                "reference_images(action='attach', ...) accepts exactly one reference per call using "
+                "`source_path`. Do not pass `images=[...]`; attach each reference in its own call."
+            )
+        if "source_paths" in canonical_arguments:
+            raise ValueError(
+                "reference_images(action='attach', ...) uses one `source_path` per call. "
+                "Do not pass `source_paths=[...]`; call `reference_images(...)` once for each reference."
+            )
+        return canonical_arguments
+
+    def _canonicalize_modeling_create_primitive_arguments(self, arguments: dict[str, Any]) -> dict[str, Any]:
+        canonical_arguments = dict(arguments)
+
+        primitive_aliases = {
+            "cube": "Cube",
+            "sphere": "Sphere",
+            "uv_sphere": "Sphere",
+            "uv sphere": "Sphere",
+            "icosphere": "Sphere",
+            "ico_sphere": "Sphere",
+            "ico sphere": "Sphere",
+            "cylinder": "Cylinder",
+            "plane": "Plane",
+            "cone": "Cone",
+            "torus": "Torus",
+            "monkey": "Monkey",
+            "suzanne": "Monkey",
+        }
+        primitive_value = canonical_arguments.get("primitive_type")
+        if isinstance(primitive_value, str):
+            normalized = primitive_value.strip().lower()
+            canonical_arguments["primitive_type"] = primitive_aliases.get(normalized, primitive_value)
+
+        unsupported_arguments = [
+            name
+            for name in ("scale", "segments", "rings", "subdivisions", "collection_name")
+            if name in canonical_arguments
+        ]
+        if unsupported_arguments:
+            unsupported_list = ", ".join(f"`{name}`" for name in unsupported_arguments)
+            raise ValueError(
+                "modeling_create_primitive(...) uses the public arguments "
+                "`primitive_type`, `radius`, `size`, `location`, `rotation`, and optional `name`. "
+                f"Unsupported on this public surface: {unsupported_list}. "
+                "Create the primitive first, then use `modeling_transform_object(scale=...)` for non-uniform scale, "
+                "`collection_manage(action='move_object', collection_name=..., object_name=...)` for collection placement, "
+                "and mesh-edit tools after creation instead of primitive-only topology knobs such as `segments`, `rings`, or `subdivisions`."
+            )
+        return canonical_arguments
+
     def _canonicalize_call_arguments(self, name: str, arguments: dict[str, Any] | None) -> dict[str, Any] | None:
         if arguments is None:
             return None
 
         canonical_name = resolve_canonical_tool_name(name, contract_line=self._contract_line)
+        if canonical_name == "collection_manage":
+            return self._canonicalize_collection_manage_arguments(arguments)
+        if canonical_name == "reference_images":
+            return self._canonicalize_reference_images_arguments(arguments)
+        if canonical_name == "modeling_create_primitive":
+            return self._canonicalize_modeling_create_primitive_arguments(arguments)
         if canonical_name != "scene_clean_scene":
             return arguments
 
@@ -120,17 +208,35 @@ class BlenderDiscoverySearchTransform(BM25SearchTransform):
         transform = self
 
         async def call_tool(
-            name: Annotated[str, "The name of the tool to call"],
+            name: Annotated[str | None, "The canonical public name of the tool to call"] = None,
             arguments: Annotated[dict[str, Any] | None, "Arguments to pass to the tool"] = None,
+            tool: Annotated[str | None, "Legacy compatibility alias for `name`"] = None,
+            params: Annotated[dict[str, Any] | None, "Legacy compatibility alias for `arguments`"] = None,
             ctx: Context = None,  # type: ignore[assignment]
         ) -> ToolResult:
-            if name in {transform._call_tool_name, transform._search_tool_name}:
-                raise ValueError(f"'{name}' is a synthetic search tool and cannot be called via the call_tool proxy")
+            resolved_name = name or tool
+            if name is not None and tool is not None and name != tool:
+                raise ValueError("call_tool(...) received both `name` and legacy alias `tool` with different values.")
+            if arguments is not None and params is not None and arguments != params:
+                raise ValueError(
+                    "call_tool(...) received both `arguments` and legacy alias `params` with different values."
+                )
+            if resolved_name is None:
+                raise ValueError(
+                    "call_tool(...) requires the canonical public field `name`. "
+                    "Legacy compatibility alias `tool` is still accepted when needed."
+                )
+
+            if resolved_name in {transform._call_tool_name, transform._search_tool_name}:
+                raise ValueError(
+                    f"'{resolved_name}' is a synthetic search tool and cannot be called via the call_tool proxy"
+                )
             if ctx is None:
                 raise RuntimeError("call_tool proxy requires an active FastMCP context")
 
-            canonical_arguments = transform._canonicalize_call_arguments(name, arguments)
-            return await ctx.fastmcp.call_tool(name, canonical_arguments)
+            resolved_arguments = arguments if arguments is not None else params
+            canonical_arguments = transform._canonicalize_call_arguments(resolved_name, resolved_arguments)
+            return await ctx.fastmcp.call_tool(resolved_name, canonical_arguments)
 
         return Tool.from_function(fn=call_tool, name=self._call_tool_name)
 

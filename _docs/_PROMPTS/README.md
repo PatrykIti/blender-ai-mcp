@@ -45,6 +45,9 @@ Copy/paste-ready prompt templates for LLMs controlling Blender via this MCP serv
 > `call_tool(...)` is not a bypass for hidden or phase-locked tools: if a tool
 > is not currently exposed/discoverable on the shaped surface, guessing its name
 > will still fail.
+> The canonical `call_tool(...)` wrapper is `name=...` plus `arguments=...`.
+> Legacy `tool=...` / `params=...` aliases are compatibility-only and should
+> not be the documented default form.
 > `manual_tools_no_router` is a different operating mode, not an escape hatch
 > for the active `llm-guided` shaped surface mid-session.
 > Prefer workflow/macro tools over raw low-level atomics, and treat
@@ -56,6 +59,16 @@ Copy/paste-ready prompt templates for LLMs controlling Blender via this MCP serv
 > over transform-by-transform placement.
 > For bounded finishing stacks, prefer `macro_finish_form` over manually
 > chaining `modeling_add_modifier(...)` calls.
+> `reference_images(action="attach", ...)` is one-reference-per-call on the
+> public guided surface. Use one `source_path` per attach call; do not pass
+> batch shapes such as `images=[...]` or `source_paths=[...]`.
+> `collection_manage(...)` uses `collection_name` as the canonical public
+> target name, not `name`.
+> `modeling_create_primitive(...)` uses the public arguments
+> `primitive_type`, `radius`/`size`, `location`, `rotation`, and optional
+> `name`. For non-uniform scale, create the primitive first and then use
+> `modeling_transform_object(scale=...)`. For collection placement, move/link
+> the created object with `collection_manage(...)` after creation.
 >
 > On elicitation-capable clients, missing workflow parameters may be presented as
 > structured clarification UI instead of free-form chat questions. Tool-only clients
@@ -124,6 +137,13 @@ Interpretation:
   `search_tools(query="clean reset fresh scene")` -> `call_tool(name="scene_clean_scene", arguments={"keep_lights_and_cameras": true})`
 - use `keep_lights_and_cameras` as the canonical public cleanup flag; the older
   split `keep_lights` / `keep_cameras` form is legacy compatibility only
+- use one `reference_images(action="attach", source_path=...)` call per
+  reference image; do not send `images=[...]` batches on the guided surface
+- use `collection_manage(action=..., collection_name=...)`, not
+  `collection_manage(..., name=...)`, as the canonical public form
+- use `modeling_create_primitive(primitive_type=..., radius|size=..., location=..., rotation=..., name=...)`
+  as the public primitive shape; if you need non-uniform scale, apply it in a
+  second step with `modeling_transform_object(scale=...)`
 - other first-choice bounded macro paths include:
   `search_tools(...)` -> `macro_cutout_recess` for recess/cutout/opening work
   `search_tools(...)` -> `macro_relative_layout` for align/place/contact-gap work

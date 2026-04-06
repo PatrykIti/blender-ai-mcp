@@ -178,7 +178,9 @@ class SceneCorrectionTruthBundleContract(MCPContract):
 
 
 class SceneTruthFollowupItemContract(MCPContract):
-    kind: Literal["contact_failure", "gap", "overlap", "alignment", "measurement_error", "insufficient_scope"]
+    kind: Literal[
+        "contact_failure", "gap", "overlap", "alignment", "attachment", "measurement_error", "insufficient_scope"
+    ]
     summary: str
     priority: Literal["high", "normal"] = "normal"
     from_object: str | None = None

@@ -73,5 +73,6 @@ def test_macro_cleanup_part_intersections_separates_overlap_to_contact(
         assert horn_bbox["center"] == pytest.approx([expected_horn_x, 0.0, 1.0], abs=1e-4)
         assert overlap["overlaps"] is False
         assert contact["passed"] is True
+        assert result["actions_taken"][-1]["details"]["attachment_verdict"] == "seated_contact"
     except RuntimeError as e:
         _skip_if_blender_unavailable(e)

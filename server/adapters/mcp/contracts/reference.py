@@ -112,7 +112,9 @@ class ReferenceCorrectionTruthEvidenceContract(MCPContract):
 
     focus_pairs: list[str] = []
     item_kinds: list[
-        Literal["contact_failure", "gap", "overlap", "alignment", "measurement_error", "insufficient_scope"]
+        Literal[
+            "contact_failure", "gap", "overlap", "alignment", "attachment", "measurement_error", "insufficient_scope"
+        ]
     ] = []
     items: list[SceneTruthFollowupItemContract] = []
     macro_candidates: list[SceneRepairMacroCandidateContract] = []

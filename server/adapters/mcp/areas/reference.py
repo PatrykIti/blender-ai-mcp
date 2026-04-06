@@ -105,6 +105,32 @@ _ACCESSORY_ROLE_HINTS: tuple[str, ...] = (
     "antler",
     "whisker",
 )
+_HEAD_ROLE_HINTS: tuple[str, ...] = ("head", "skull", "face")
+_BODY_ROLE_HINTS: tuple[str, ...] = ("body", "torso", "trunk", "chest", "abdomen", "pelvis", "hip")
+_FACE_ATTACHMENT_HINTS: tuple[str, ...] = ("ear", "eye", "nose", "snout", "whisker")
+_TAIL_ROLE_HINTS: tuple[str, ...] = ("tail",)
+_LIMB_ROLE_HINTS: tuple[str, ...] = (
+    "limb",
+    "leg",
+    "arm",
+    "paw",
+    "foot",
+    "hand",
+    "hoof",
+    "thigh",
+    "shin",
+    "calf",
+    "foreleg",
+    "hindleg",
+    "forelimb",
+    "hindlimb",
+    "forearm",
+    "lowerarm",
+    "upperarm",
+    "lowerleg",
+    "upperleg",
+)
+_DISTAL_LIMB_HINTS: tuple[str, ...] = ("paw", "foot", "hand", "hoof", "shin", "calf", "forearm", "lowerarm", "lowerleg")
 _LOW_POLY_HINTS: tuple[str, ...] = ("low poly", "low-poly", "blockout")
 _HARD_SURFACE_HINTS: tuple[str, ...] = (
     "housing",
@@ -565,7 +591,10 @@ def _should_inspect_from_truth_signal(
         truth_evidence = candidate.truth_evidence
         if truth_evidence is None:
             continue
-        if any(kind in {"contact_failure", "overlap", "measurement_error"} for kind in truth_evidence.item_kinds):
+        if any(
+            kind in {"contact_failure", "overlap", "attachment", "measurement_error"}
+            for kind in truth_evidence.item_kinds
+        ):
             return True
     return False
 
@@ -856,7 +885,9 @@ def _macro_candidate_matches_pair(
     arguments = candidate.arguments_hint or {}
     candidate_from = arguments.get("part_object") or arguments.get("left_object") or arguments.get("primary_object")
     candidate_to = arguments.get("reference_object") or arguments.get("right_object") or arguments.get("support_object")
-    return candidate_from == from_object and candidate_to == to_object
+    return (candidate_from == from_object and candidate_to == to_object) or (
+        candidate_from == to_object and candidate_to == from_object
+    )
 
 
 def _build_vision_candidate_evidence(
@@ -1199,6 +1230,89 @@ def _dedupe_names(values: list[str]) -> list[str]:
     return result
 
 
+def _has_name_hint(object_name: str, hints: tuple[str, ...]) -> bool:
+    normalized = object_name.strip().lower()
+    return any(hint in normalized for hint in hints)
+
+
+def _is_head_like(object_name: str) -> bool:
+    return _has_name_hint(object_name, _HEAD_ROLE_HINTS)
+
+
+def _is_body_like(object_name: str) -> bool:
+    return _has_name_hint(object_name, _BODY_ROLE_HINTS)
+
+
+def _is_face_attachment(object_name: str) -> bool:
+    return _has_name_hint(object_name, _FACE_ATTACHMENT_HINTS)
+
+
+def _is_tail_like(object_name: str) -> bool:
+    return _has_name_hint(object_name, _TAIL_ROLE_HINTS)
+
+
+def _is_limb_like(object_name: str) -> bool:
+    return _has_name_hint(object_name, _LIMB_ROLE_HINTS)
+
+
+def _is_distal_limb_like(object_name: str) -> bool:
+    return _has_name_hint(object_name, _DISTAL_LIMB_HINTS)
+
+
+def _attachment_relation(
+    from_object: str,
+    to_object: str,
+) -> tuple[Literal["embedded_attachment", "seated_attachment", "segment_attachment"], str, str] | None:
+    if _is_face_attachment(from_object) and _is_head_like(to_object):
+        relation_kind: Literal["embedded_attachment", "seated_attachment", "segment_attachment"]
+        relation_kind = "seated_attachment" if _has_name_hint(from_object, ("eye",)) else "embedded_attachment"
+        return relation_kind, from_object, to_object
+    if _is_face_attachment(to_object) and _is_head_like(from_object):
+        relation_kind = "seated_attachment" if _has_name_hint(to_object, ("eye",)) else "embedded_attachment"
+        return relation_kind, to_object, from_object
+    if _is_head_like(from_object) and _is_body_like(to_object):
+        return "segment_attachment", from_object, to_object
+    if _is_head_like(to_object) and _is_body_like(from_object):
+        return "segment_attachment", to_object, from_object
+    if _is_tail_like(from_object) and _is_body_like(to_object):
+        return "segment_attachment", from_object, to_object
+    if _is_tail_like(to_object) and _is_body_like(from_object):
+        return "segment_attachment", to_object, from_object
+    if _is_limb_like(from_object) and (_is_body_like(to_object) or _is_limb_like(to_object)):
+        return "segment_attachment", from_object, to_object
+    if _is_limb_like(to_object) and (_is_body_like(from_object) or _is_limb_like(from_object)):
+        if _is_distal_limb_like(from_object) and not _is_distal_limb_like(to_object):
+            return "segment_attachment", from_object, to_object
+        return "segment_attachment", to_object, from_object
+    return None
+
+
+def _attachment_item_summary(
+    *,
+    pair_label: str,
+    relation_kind: Literal["embedded_attachment", "seated_attachment", "segment_attachment"],
+    has_overlap: bool,
+    has_gap: bool,
+    has_contact_failure: bool,
+    has_alignment_issue: bool,
+) -> str:
+    if has_overlap:
+        if relation_kind == "embedded_attachment":
+            return (
+                f"{pair_label} is an organic attachment relation; generic overlap cleanup alone is not enough "
+                "to seat the part correctly into the anchor mass."
+            )
+        return (
+            f"{pair_label} is an organic attachment relation; the pair should stay seated/attached, not just be "
+            "pushed apart until overlap reaches zero."
+        )
+    if has_gap or has_contact_failure:
+        return f"{pair_label} is still floating or detached for this organic attachment relation."
+    if has_alignment_issue:
+        return f"{pair_label} is still seated on the wrong attachment line for this organic relation."
+    return f"{pair_label} still has wrong organic attachment semantics."
+
+
 def _resolve_capture_scope(
     *,
     target_object: str | None,
@@ -1262,17 +1376,14 @@ def _looks_like_accessory_anchor(object_name: str) -> bool:
 def _select_scope_primary_target(object_names: list[str]) -> str | None:
     if not object_names:
         return None
-    first_name = object_names[0]
-    if not _looks_like_accessory_anchor(first_name):
-        return first_name
-
-    candidates = [name for name in object_names if not _looks_like_accessory_anchor(name)]
-    if not candidates:
-        return first_name
-
     return max(
-        candidates,
-        key=lambda name: (_name_anchor_weight(name), _bbox_volume_or_zero(name), -object_names.index(name)),
+        object_names,
+        key=lambda name: (
+            0 if _looks_like_accessory_anchor(name) else 1,
+            _name_anchor_weight(name),
+            _bbox_volume_or_zero(name),
+            -object_names.index(name),
+        ),
     )
 
 
@@ -1425,11 +1536,16 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
     focus_pairs: list[str] = []
     seen_pairs: set[str] = set()
     pair_issue_kinds: dict[str, set[str]] = {}
+    pair_attachment_relations: dict[
+        str,
+        tuple[Literal["embedded_attachment", "seated_attachment", "segment_attachment"], str, str],
+    ] = {}
 
     for check in bundle.checks:
         pair_label = _pair_label(check.from_object, check.to_object)
+        pair_items: list[SceneTruthFollowupItemContract] = []
         if check.error:
-            items.append(
+            pair_items.append(
                 SceneTruthFollowupItemContract(
                     kind="measurement_error",
                     summary=f"Truth checks failed for {pair_label}: {check.error}",
@@ -1440,8 +1556,34 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
             )
         else:
             contact_note = _contact_semantics_note(gap_payload=check.gap, contact_assertion=check.contact_assertion)
+            attachment_relation = _attachment_relation(check.from_object, check.to_object)
+            has_contact_failure = check.contact_assertion is not None and not check.contact_assertion.passed
+            has_gap = check.gap is not None and str(check.gap.get("relation") or "").lower() == "separated"
+            has_overlap = check.overlap is not None and bool(check.overlap.get("overlaps"))
+            has_alignment_issue = check.alignment is not None and not bool(check.alignment.get("is_aligned"))
+            if attachment_relation is not None and (
+                has_contact_failure or has_gap or has_overlap or has_alignment_issue
+            ):
+                pair_attachment_relations[pair_label] = attachment_relation
+                pair_items.append(
+                    SceneTruthFollowupItemContract(
+                        kind="attachment",
+                        summary=_attachment_item_summary(
+                            pair_label=pair_label,
+                            relation_kind=attachment_relation[0],
+                            has_overlap=has_overlap,
+                            has_gap=has_gap,
+                            has_contact_failure=has_contact_failure,
+                            has_alignment_issue=has_alignment_issue,
+                        ),
+                        priority="high",
+                        from_object=check.from_object,
+                        to_object=check.to_object,
+                        tool_name="scene_assert_contact",
+                    )
+                )
             if check.contact_assertion is not None and not check.contact_assertion.passed:
-                items.append(
+                pair_items.append(
                     SceneTruthFollowupItemContract(
                         kind="contact_failure",
                         summary=(
@@ -1456,7 +1598,7 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
                     )
                 )
             if check.gap is not None and str(check.gap.get("relation") or "").lower() == "separated":
-                items.append(
+                pair_items.append(
                     SceneTruthFollowupItemContract(
                         kind="gap",
                         summary=(
@@ -1471,7 +1613,7 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
                     )
                 )
             if check.overlap is not None and bool(check.overlap.get("overlaps")):
-                items.append(
+                pair_items.append(
                     SceneTruthFollowupItemContract(
                         kind="overlap",
                         summary=f"{pair_label} still overlaps.",
@@ -1482,7 +1624,7 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
                     )
                 )
             if check.alignment is not None and not bool(check.alignment.get("is_aligned")):
-                items.append(
+                pair_items.append(
                     SceneTruthFollowupItemContract(
                         kind="alignment",
                         summary=f"{pair_label} is still misaligned.",
@@ -1492,6 +1634,7 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
                         tool_name="scene_measure_alignment",
                     )
                 )
+        items.extend(pair_items)
 
         if any(item.from_object == check.from_object and item.to_object == check.to_object for item in items):
             if pair_label not in seen_pairs:
@@ -1510,6 +1653,27 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
         if "measurement_error" in issue_kinds:
             continue
         from_object, to_object = pair_label.split(" -> ", 1)
+        attachment_relation = pair_attachment_relations.get(pair_label)
+        if attachment_relation is not None:
+            _relation_kind, part_object, reference_object = attachment_relation
+            macro_candidates.append(
+                SceneRepairMacroCandidateContract(
+                    macro_name="macro_align_part_with_contact",
+                    reason=(
+                        "Use a bounded attachment/contact repair for this organic pair instead of relying on generic "
+                        "overlap cleanup alone."
+                    ),
+                    priority="high",
+                    arguments_hint={
+                        "part_object": part_object,
+                        "reference_object": reference_object,
+                        "target_relation": "contact",
+                        "align_mode": "none",
+                        "preserve_side": True,
+                    },
+                )
+            )
+            continue
         if "overlap" in issue_kinds:
             macro_candidates.append(
                 SceneRepairMacroCandidateContract(
@@ -2363,6 +2527,7 @@ async def reference_iterate_stage_checkpoint(
     )
 
     if compare_result.error or goal is None:
+        truth_only_handoff = bool(goal is not None and correction_focus and inspect_from_truth_signal)
         return _iterate_stage_response(
             session_id=compare_result.session_id,
             transport=compare_result.transport,
@@ -2374,8 +2539,8 @@ async def reference_iterate_stage_checkpoint(
             checkpoint_id=compare_result.checkpoint_id,
             checkpoint_label=checkpoint_label,
             iteration_index=1,
-            loop_disposition="stop",
-            continue_recommended=False,
+            loop_disposition="inspect_validate" if truth_only_handoff else "stop",
+            continue_recommended=truth_only_handoff,
             prior_checkpoint_id=None,
             prior_correction_focus=[],
             correction_focus=correction_focus,
@@ -2388,7 +2553,12 @@ async def reference_iterate_stage_checkpoint(
             refinement_route=compare_result.refinement_route,
             refinement_handoff=compare_result.refinement_handoff,
             stop_reason=compare_result.error or stop_reason,
-            message="Stage iteration did not complete successfully.",
+            message=(
+                "Vision compare did not complete successfully, but deterministic truth findings are available. "
+                "Prefer inspect/measure/assert confirmation before another free-form build step."
+                if truth_only_handoff
+                else "Stage iteration did not complete successfully."
+            ),
             error=compare_result.error,
         )
 

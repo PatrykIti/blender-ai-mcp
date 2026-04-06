@@ -224,6 +224,10 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert 'call_tool(name="scene_get_viewport", arguments={...})' in prompt_readme
     assert 'call_tool(name="scene_clean_scene", arguments={"keep_lights_and_cameras": true})' in prompt_readme
     assert "split `keep_lights` / `keep_cameras` form is legacy compatibility only" in prompt_readme
+    assert "canonical `call_tool(...)` wrapper is `name=...` plus `arguments=...`" in prompt_readme
+    assert "one `source_path` per attach call" in prompt_readme
+    assert "collection_manage(action=..., collection_name=...)" in prompt_readme
+    assert "modeling_transform_object(scale=...)" in prompt_readme
     assert "do **not** force `router_set_goal(...)`" in prompt_readme
     assert "`call_tool(...)` is not a bypass for hidden or phase-locked tools" in prompt_readme
     assert "`Unknown tool`" in prompt_readme
@@ -303,6 +307,9 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "`truth_followup`" in creature_prompt
     assert "`truth_followup.focus_pairs`" in creature_prompt
     assert "`truth_followup.macro_candidates`" in creature_prompt
+    assert 'reference_images(action="attach", source_path=..., ...)' in creature_prompt
+    assert 'collection_manage(action="create", collection_name=...)' in creature_prompt
+    assert "modeling_transform_object(scale=...)" in creature_prompt
 
 
 def test_reference_guided_creature_prompt_stays_english():

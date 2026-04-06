@@ -43,6 +43,8 @@ unit test:
   - overlap dimensions / overlap removal
   - contact assertion outcome
   - final attachment verdict
+- regression scope explicitly includes not only face/head attachments but also
+  head/body, tail/body, and limb attachment seams on the creature path
 - prompt/docs guidance uses the same attachment vocabulary and verdict model as
   the runtime/tests path
 

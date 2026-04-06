@@ -75,6 +75,7 @@ def test_macro_attach_part_to_surface_seats_ear_on_head_surface(
         assert gap["gap"] == pytest.approx(0.0, abs=1e-4)
         assert gap["relation"] == "contact"
         assert contact["passed"] is True
+        assert result["actions_taken"][-1]["details"]["attachment_verdict"] == "seated_contact"
     except RuntimeError as e:
         _skip_if_blender_unavailable(e)
 

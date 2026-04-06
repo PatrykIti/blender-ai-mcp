@@ -28,10 +28,10 @@ attachment semantics are still wrong.
 - `server/adapters/mcp/areas/reference.py`
 - `server/adapters/mcp/contracts/scene.py`
 - `server/adapters/mcp/contracts/reference.py`
-- `server/adapters/mcp/vision/reporting.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/tools/scene/test_scene_contracts.py`
 - `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/README.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 
 ## Acceptance Criteria
@@ -42,6 +42,11 @@ attachment semantics are still wrong.
   - `Eye_* -> Head`
   - `Snout -> Head`
   - `Nose -> Snout` or `Nose -> Head`
+  - `Head -> Body`
+  - `Tail -> Body`
+  - `Forelimb_* -> Body`
+  - `Hindlimb_* -> Body`
+  - segmented limb relations when upper/lower limb masses stay separate
 - truth/correction payloads can express when attachment semantics are still
   wrong even if raw overlap is zero
 - the attachment taxonomy is clearly separated from generic hard-surface
@@ -51,6 +56,7 @@ attachment semantics are still wrong.
 ## Docs To Update
 
 - `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/README.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 
 ## Tests To Add/Update
@@ -66,7 +72,7 @@ attachment semantics are still wrong.
 
 | Order | Leaf | Purpose |
 |------|------|---------|
-| 1 | [TASK-142-01-01](./TASK-142-01-01_Organic_Attachment_Taxonomy_For_Ears_Eyes_Snout_And_Nose.md) | Define the targeted creature-part relation taxonomy and deterministic boundaries |
+| 1 | [TASK-142-01-01](./TASK-142-01-01_Organic_Attachment_Taxonomy_For_Head_Face_Torso_Tail_And_Limbs.md) | Define the targeted creature-part relation taxonomy and deterministic boundaries |
 | 2 | [TASK-142-01-02](./TASK-142-01-02_Truth_Followup_And_Correction_Candidate_Attachment_Semantics.md) | Carry that taxonomy into truth-followup and ranked correction-candidate semantics |
 
 ## Status / Board Update

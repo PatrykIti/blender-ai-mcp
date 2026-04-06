@@ -227,6 +227,57 @@ def test_truth_followup_emits_cleanup_macro_candidate_for_overlap_pairs():
     assert followup.macro_candidates[0].macro_name == "macro_cleanup_part_intersections"
 
 
+def test_truth_followup_prefers_attachment_repair_for_head_feature_overlap():
+    bundle = SceneCorrectionTruthBundleContract(
+        scope=SceneAssembledTargetScopeContract(
+            scope_kind="object_set",
+            primary_target="Head",
+            object_names=["Head", "EarLeft"],
+            object_count=2,
+        ),
+        summary=SceneCorrectionTruthSummaryContract(
+            pairing_strategy="primary_to_others",
+            pair_count=1,
+            evaluated_pairs=1,
+            contact_failures=1,
+            overlap_pairs=1,
+            misaligned_pairs=1,
+        ),
+        checks=[
+            SceneCorrectionTruthPairContract(
+                from_object="Head",
+                to_object="EarLeft",
+                gap={"relation": "overlapping", "gap": 0.0},
+                alignment={"is_aligned": False, "axes": ["X", "Y", "Z"]},
+                overlap={"overlaps": True, "relation": "overlap", "overlap_dimensions": [0.2, 0.1, 0.4]},
+                contact_assertion=SceneAssertionPayloadContract(
+                    assertion="scene_assert_contact",
+                    passed=False,
+                    subject="Head",
+                    target="EarLeft",
+                    expected={"max_gap": 0.0001, "allow_overlap": False},
+                    actual={"gap": 0.0, "relation": "overlapping"},
+                ),
+            )
+        ],
+    )
+
+    followup = _build_truth_followup(bundle)
+
+    assert followup.items
+    assert followup.items[0].kind == "attachment"
+    assert "organic attachment relation" in followup.items[0].summary
+    assert followup.macro_candidates
+    assert followup.macro_candidates[0].macro_name == "macro_align_part_with_contact"
+    assert followup.macro_candidates[0].arguments_hint == {
+        "part_object": "EarLeft",
+        "reference_object": "Head",
+        "target_relation": "contact",
+        "align_mode": "none",
+        "preserve_side": True,
+    }
+
+
 def test_truth_followup_explicitly_calls_out_bbox_touching_but_surface_gap():
     bundle = SceneCorrectionTruthBundleContract(
         scope=SceneAssembledTargetScopeContract(
@@ -273,8 +324,13 @@ def test_truth_followup_explicitly_calls_out_bbox_touching_but_surface_gap():
     followup = _build_truth_followup(bundle)
 
     assert followup.items
-    assert "Bounding boxes touch" in followup.items[0].summary
-    assert followup.items[1].summary.startswith("Eye -> Head still has measurable surface separation.")
+    assert followup.items[0].kind == "attachment"
+    assert "floating or detached" in followup.items[0].summary
+    assert any("Bounding boxes touch" in item.summary for item in followup.items)
+    assert any(
+        item.summary.startswith("Eye -> Head still has measurable surface separation.") for item in followup.items
+    )
+    assert followup.macro_candidates[0].macro_name == "macro_align_part_with_contact"
 
 
 def test_model_budget_bias_avoids_gemini_name_collision_and_keeps_explicit_mini_bias():
@@ -311,6 +367,28 @@ def test_assembled_target_scope_prefers_structural_anchor_over_accessory_first_i
 
     assert scope.scope_kind == "object_set"
     assert scope.primary_target == "Head"
+
+
+def test_assembled_target_scope_prefers_body_anchor_over_head_when_core_mass_is_present(monkeypatch):
+    class SceneHandler:
+        def get_bounding_box(self, object_name: str, world_space: bool = True):
+            dimensions = {
+                "Squirrel_Head": [1.0, 0.9, 1.1],
+                "Squirrel_Body": [2.4, 1.4, 1.6],
+                "Squirrel_Tail": [1.3, 0.4, 0.4],
+            }[object_name]
+            return {"object_name": object_name, "dimensions": dimensions}
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+
+    scope = _assembled_target_scope(
+        target_object=None,
+        target_objects=["Squirrel_Head", "Squirrel_Body", "Squirrel_Tail"],
+        collection_name=None,
+    )
+
+    assert scope.scope_kind == "object_set"
+    assert scope.primary_target == "Squirrel_Body"
 
 
 def test_build_correction_candidates_merges_truth_macro_and_matching_vision_focus():
@@ -1643,11 +1721,13 @@ def test_reference_compare_stage_checkpoint_can_expand_collection_scope(tmp_path
     assert result.truth_followup is not None
     assert result.truth_followup.continue_recommended is True
     assert result.truth_followup.focus_pairs == [
-        "Squirrel_Head -> Squirrel_Body",
-        "Squirrel_Head -> Squirrel_Tail",
+        "Squirrel_Body -> Squirrel_Head",
+        "Squirrel_Body -> Squirrel_Tail",
     ]
     assert result.truth_followup.macro_candidates
     assert result.truth_followup.macro_candidates[0].macro_name == "macro_align_part_with_contact"
+    assert result.truth_followup.macro_candidates[0].arguments_hint is not None
+    assert result.truth_followup.macro_candidates[0].arguments_hint["reference_object"] == "Squirrel_Body"
     assert result.correction_candidates
     assert result.correction_candidates[0].priority_rank == 1
     assert result.correction_candidates[0].candidate_kind == "truth_only"
@@ -2409,6 +2489,91 @@ def test_reference_iterate_stage_checkpoint_escalates_when_truth_signal_is_high_
     assert result.loop_disposition == "inspect_validate"
     assert result.correction_focus == ["TruthHead -> TruthBody failed the contact assertion."]
     assert "Deterministic truth findings remain high-priority" in (result.message or "")
+
+
+def test_reference_iterate_stage_checkpoint_falls_back_to_truth_handoff_when_vision_compare_errors(monkeypatch):
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly creature", {"status": "no_match"})
+
+    compare = ReferenceCompareStageCheckpointResponseContract.model_validate(
+        {
+            "action": "compare_stage_checkpoint",
+            "goal": "low poly creature",
+            "target_object": "TruthHead",
+            "target_objects": ["TruthHead", "TruthBody"],
+            "checkpoint_id": "checkpoint_truth_error",
+            "checkpoint_label": "stage_truth_error",
+            "preset_profile": "compact",
+            "preset_names": ["context_wide"],
+            "capture_count": 1,
+            "captures": [],
+            "reference_count": 0,
+            "reference_ids": [],
+            "reference_labels": [],
+            "error": "Vision endpoint request failed: HTTP 400 Bad Request for url 'https://openrouter.ai/api/v1/chat/completions'",
+            "correction_candidates": [
+                {
+                    "candidate_id": "pair:truthhead_truthbody",
+                    "summary": "TruthHead -> TruthBody still has wrong organic attachment semantics.",
+                    "priority_rank": 1,
+                    "priority": "high",
+                    "candidate_kind": "truth_only",
+                    "target_object": "TruthHead",
+                    "target_objects": ["TruthHead", "TruthBody"],
+                    "focus_pairs": ["TruthHead -> TruthBody"],
+                    "source_signals": ["truth", "macro"],
+                    "truth_evidence": {
+                        "focus_pairs": ["TruthHead -> TruthBody"],
+                        "item_kinds": ["attachment", "contact_failure"],
+                        "items": [
+                            {
+                                "kind": "attachment",
+                                "summary": "TruthHead -> TruthBody still has wrong organic attachment semantics.",
+                                "priority": "high",
+                                "from_object": "TruthHead",
+                                "to_object": "TruthBody",
+                                "tool_name": "scene_assert_contact",
+                            }
+                        ],
+                        "macro_candidates": [
+                            {
+                                "macro_name": "macro_align_part_with_contact",
+                                "reason": "Use a bounded attachment/contact repair.",
+                                "priority": "high",
+                                "arguments_hint": {
+                                    "part_object": "TruthHead",
+                                    "reference_object": "TruthBody",
+                                },
+                            }
+                        ],
+                    },
+                }
+            ],
+        }
+    )
+
+    async def _fake_reference_compare_stage_checkpoint(*args, **kwargs):
+        return compare
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.reference_compare_stage_checkpoint",
+        _fake_reference_compare_stage_checkpoint,
+    )
+
+    result = asyncio.run(
+        reference_iterate_stage_checkpoint(
+            ctx,
+            target_object="TruthHead",
+            target_objects=["TruthBody"],
+            checkpoint_label="stage_truth_error",
+        )
+    )
+
+    assert result.loop_disposition == "inspect_validate"
+    assert result.continue_recommended is True
+    assert "Vision compare did not complete successfully" in (result.message or "")
+    assert result.stop_reason is not None
+    assert "HTTP 400 Bad Request" in result.stop_reason
 
 
 def test_reference_iterate_stage_checkpoint_does_not_reuse_state_across_target_view_or_profile(monkeypatch):

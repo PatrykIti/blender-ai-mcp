@@ -270,7 +270,7 @@ hidden ordering assumptions.
 - the payload reports `attached_reference_count`, `pending_reference_count`,
   `compare_ready`, `iterate_ready`, plus machine-readable `blocking_reason` and
   `next_action`
-- `reference_images(action="attach", ...)` can stay pending until the guided
+- `reference_images(action="attach", source_path=...)` can stay pending until the guided
   goal session is actually ready, then adopt automatically
 - if the same goal already has active refs and new ones are staged during
   `needs_input`, the staged refs stay separate from the already-active goal
