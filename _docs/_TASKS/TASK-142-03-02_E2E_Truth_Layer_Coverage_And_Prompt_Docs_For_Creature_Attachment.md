@@ -1,0 +1,69 @@
+# TASK-142-03-02: E2E Truth-Layer Coverage and Prompt/Docs for Creature Attachment
+
+**Parent:** [TASK-142-03](./TASK-142-03_Regression_And_Documentation_Pack_For_Organic_Attachment_Semantics.md)
+**Depends On:** [TASK-142-03-01](./TASK-142-03-01_Unit_Regression_Pack_For_Creature_Part_Seating_Truth.md)
+**Status:** ⏳ To Do
+**Priority:** 🔴 High
+
+## Objective
+
+Prove the targeted creature-part attachment semantics end to end and align the
+operator-facing docs to the same truth-layer verdict model.
+
+## Business Problem
+
+The specific `TASK-142` failure shapes are easy to misjudge visually:
+
+- bbox touching can still hide a mesh-surface gap
+- overlap removal can still leave the part floating
+- a creature part can still look like it grows out of the surface incorrectly
+
+This leaf owns the E2E proof and the matching docs language so the runtime and
+operator story do not drift apart.
+
+## Repository Touchpoints
+
+- `tests/e2e/vision/test_reference_stage_truth_handoff.py`
+- `tests/e2e/tools/macro/test_macro_cleanup_part_intersections.py`
+- `tests/e2e/tools/scene/test_scene_assert_tools.py`
+- `_docs/_VISION/README.md`
+- `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
+- `_docs/_TASKS/README.md`
+
+## Acceptance Criteria
+
+- E2E coverage proves the targeted truth layers participate in the final
+  verdict for creature-part attachment cases
+- prompt/docs wording matches the shipped attachment taxonomy and verdict model
+- the repo documents the difference between:
+  - seated/attached correctly
+  - floating with a measurable gap
+  - intersecting / growing through the surface
+
+## Leaf Work Items
+
+- add or update E2E truth-layer scenarios for the targeted creature-part pairs
+- align prompt/docs wording to the same attachment verdict semantics
+- ensure board/task summaries stay consistent with the shipped E2E/docs scope
+
+## Docs To Update
+
+- `_docs/_VISION/README.md`
+- `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
+- `_docs/_TASKS/README.md`
+
+## Tests To Add/Update
+
+- `tests/e2e/vision/test_reference_stage_truth_handoff.py`
+- `tests/e2e/tools/macro/test_macro_cleanup_part_intersections.py`
+- `tests/e2e/tools/scene/test_scene_assert_tools.py`
+
+## Changelog Impact
+
+- include in the parent follow-on changelog entry when shipped
+
+## Status / Board Update
+
+- keep board tracking on `TASK-142`
+- update the parent summary so it explicitly names the shipped E2E truth-layer
+  coverage and docs scope when this leaf closes

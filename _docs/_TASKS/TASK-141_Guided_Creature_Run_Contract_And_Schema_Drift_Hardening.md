@@ -118,9 +118,21 @@ This follow-on does **not** cover:
 
 - add a dedicated `_docs/_CHANGELOG/*` entry when this follow-on ships
 
+## Execution Structure
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-141-01](./TASK-141-01_Guided_Call_Path_Compatibility_And_Public_Contract_Ergonomics.md) | Harden the early guided call path around `call_tool(...)`, cleanup flags, and `reference_images(...)` attach-shape drift so creature sessions stop wasting turns on utility/bootstrap contract rediscovery |
+| 2 | [TASK-141-02](./TASK-141-02_Creature_Build_Signature_Cues_And_Discovery_Surface_Alignment.md) | Align runtime/search/docs cues for `collection_manage(...)` and `modeling_create_primitive(...)` so the creature blockout path exposes one deterministic public signature story |
+| 3 | [TASK-141-03](./TASK-141-03_Inspect_Validate_Handoff_And_Regression_Pack.md) | Turn `inspect_validate` into an explicit stop-and-check branch and lock the resulting operator story with focused regression coverage |
+
 ## Status / Board Update
 
 - promote this as a board-level follow-on after the first real `TASK-128`
   squirrel run
 - keep it separate from `TASK-130` because this is guided creature
   operator-path/schema drift, not the broader default-bootstrap story
+- keep board tracking on this parent unless one execution slice needs to be
+  promoted independently
+- treat `TASK-141-01` through `TASK-141-03` as the canonical technical
+  execution tree for this follow-on

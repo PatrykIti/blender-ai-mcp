@@ -129,9 +129,21 @@ This follow-on does **not** cover:
 
 - add a dedicated `_docs/_CHANGELOG/*` entry when this follow-on ships
 
+## Execution Structure
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-142-01](./TASK-142-01_Creature_Part_Attachment_Taxonomy_And_Truth_Surface.md) | Define the deterministic creature-part attachment taxonomy and truth-surface semantics needed to distinguish generic overlap from organic seating/attachment problems |
+| 2 | [TASK-142-02](./TASK-142-02_Bounded_Macro_Selection_And_Repair_Behavior_For_Organic_Seating.md) | Align macro selection and bounded repair behavior with those attachment semantics so ears, eyes, snout, and nose stop defaulting to the wrong repair family |
+| 3 | [TASK-142-03](./TASK-142-03_Regression_And_Documentation_Pack_For_Organic_Attachment_Semantics.md) | Lock the new attachment semantics with focused unit/E2E truth-layer coverage and the corresponding operator-facing docs |
+
 ## Status / Board Update
 
 - promote this as a board-level follow-on from the first real `TASK-128`
   squirrel run
 - keep it separate from `TASK-141` because this is geometric/semantic repair
   behavior, not prompt/schema drift
+- keep board tracking on this parent unless one execution slice needs to be
+  promoted independently
+- treat `TASK-142-01` through `TASK-142-03` as the canonical technical
+  execution tree for this follow-on
