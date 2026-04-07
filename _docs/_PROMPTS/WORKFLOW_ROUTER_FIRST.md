@@ -57,6 +57,9 @@ REQUEST TRIAGE (FIRST STEP)
      * call_tool(name="scene_get_viewport", arguments={...})
      * search_tools(query="clean reset fresh scene")
      * call_tool(name="scene_clean_scene", arguments={"keep_lights_and_cameras": true})
+   - If you discover stale scene state only after entering the build surface,
+     `scene_clean_scene(...)` is still an allowed recovery hatch there; cleanup
+     before the goal remains preferred.
 
 4) For C) guided manual build:
    - If workflow matching is not useful, continue on the guided build surface.

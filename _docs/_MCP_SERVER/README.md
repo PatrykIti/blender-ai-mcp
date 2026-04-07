@@ -317,6 +317,9 @@ Current guided utility prep path:
   and should be used instead of forcing those requests through
   `router_set_goal(...)`
 - the canonical public cleanup flag is `keep_lights_and_cameras`
+- cleanup before `router_set_goal(...)` is still the preferred path, but
+  `scene_clean_scene(...)` is now also exposed on the guided build surface as a
+  bounded recovery hatch when stale scene state is discovered later
 - guided `call_tool(...)` now also tolerates the older
   `keep_lights` / `keep_cameras` split form only when both values are provided
   and agree; mixed split values are rejected with a deterministic contract error

@@ -120,6 +120,10 @@ Current guided utility prep path:
   direct and proxy guided paths
 - build goals should still start from `router_set_goal(...)`, but screenshot /
   viewport / scene-reset requests should use the guided utility path instead
+- if stale scene state is discovered only after entering the guided build
+  surface, `scene_clean_scene(...)` is also available there as a bounded
+  recovery hatch; cleanup before the goal is still the preferred path
+- build-phase cleanup is still allowed when recovery is needed
 
 Current public aliases on `llm-guided`:
 

@@ -49,6 +49,7 @@ def test_readme_documents_llm_guided_public_aliases():
         "generic search-first stabilizer",
         "staged refs stay separate from the already-active goal",
         "ready session still carries explicit pending refs for another goal",
+        "build-phase cleanup is still allowed when recovery is needed",
     ):
         assert expected in text
 
@@ -93,6 +94,7 @@ def test_mcp_docs_describe_aliases_and_hidden_arguments():
         "staged compare degrades but deterministic truth findings remain strong",
         "Canonical operator guidance for this surface now lives in `_docs/_PROMPTS/`",
         "generic search-first stabilizer",
+        "bounded recovery hatch",
         "scene_hide_object",
         "scene_show_all_objects",
         "scene_isolate_object",
@@ -286,6 +288,7 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "`call_tool(...)` is not a bypass for hidden or phase-locked tools" in prompt_readme
     assert "`Unknown tool`" in prompt_readme
     assert "current phase/surface is wrong" in prompt_readme
+    assert "build-phase cleanup is still allowed when recovery is needed" in prompt_readme
     assert "manual_tools_no_router` is a different operating mode" in prompt_readme
     assert "correction_focus" in prompt_readme
     assert "correction_candidates" in prompt_readme
@@ -310,6 +313,7 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "`workflow_import_recommended=false`" in workflow_prompt
     assert "Do not guess hidden internal tool names and feed them into `call_tool(...)`." in workflow_prompt
     assert "If a needed tool is not already directly visible, run `search_tools(...)`" in workflow_prompt
+    assert "allowed recovery hatch there" in workflow_prompt
     assert "If `call_tool(...)` reports `Unknown tool`, do not keep guessing names" in workflow_prompt
     assert (
         "If a needed tool is already directly visible on the current surface/phase, call it directly."
@@ -360,6 +364,7 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "`reference_iterate_stage_checkpoint(...)`" in creature_prompt
     assert "generic search-first operating baseline" in creature_prompt
     assert "if a tool is not already directly visible, use `search_tools(...)` before" in creature_prompt
+    assert "allowed build-phase recovery hatch" in creature_prompt
     assert "`guided_reference_readiness`" in creature_prompt
     assert "`loop_disposition`" in creature_prompt
     assert "`correction_candidates`" in creature_prompt

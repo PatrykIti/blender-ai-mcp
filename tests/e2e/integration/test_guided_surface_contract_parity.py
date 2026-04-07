@@ -133,6 +133,23 @@ def test_guided_surface_contract_parity_over_stdio(tmp_path: Path):
                 if rule.get("components") == ["tool"] or rule.get("components") == {"tool"}
             )
 
+            build_cleanup_search = result_payload(
+                await client.call_tool(
+                    "search_tools",
+                    {"query": "clean reset stale scene during build recovery"},
+                )
+            )
+            build_cleanup_names = {item["name"] for item in build_cleanup_search}
+            assert "scene_clean_scene" in build_cleanup_names
+
+            build_cleanup = result_payload(
+                await client.call_tool(
+                    "call_tool",
+                    {"name": "scene_clean_scene", "arguments": {"keep_lights_and_cameras": True}},
+                )
+            )
+            assert build_cleanup == "Scene cleaned."
+
             primitive_search = result_payload(
                 await client.call_tool(
                     "search_tools",

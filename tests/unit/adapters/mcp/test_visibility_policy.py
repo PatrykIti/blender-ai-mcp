@@ -104,6 +104,7 @@ def test_visibility_rules_are_profile_and_phase_deterministic():
     assert set(GUIDED_VIEW_DIAGNOSTIC_TOOLS).isdisjoint(bootstrap_rules[1]["names"])
     assert build_rules[-1]["names"] == set(GUIDED_BUILD_ESCAPE_HATCH_TOOLS)
     assert set(GUIDED_VIEW_DIAGNOSTIC_TOOLS).issubset(build_rules[-1]["names"])
+    assert "scene_clean_scene" in build_rules[-1]["names"]
     assert "macro_finish_form" in build_rules[-1]["names"]
     assert "modeling_add_modifier" not in build_rules[-1]["names"]
     assert "modeling_apply_modifier" not in build_rules[-1]["names"]
@@ -172,6 +173,7 @@ def test_visibility_rules_can_shape_build_phase_for_creature_handoff():
         *CREATURE_LOW_POLY_BLOCKOUT_DIRECT_TOOLS,
         *CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS,
     }
+    assert "scene_clean_scene" in build_rule["names"]
     assert "mesh_randomize" not in build_rule["names"]
     assert "mesh_create_vertex_group" not in build_rule["names"]
     assert "macro_finish_form" not in build_rule["names"]

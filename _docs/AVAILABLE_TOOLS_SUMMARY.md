@@ -241,7 +241,7 @@ None.
 | `scene_configure` | `action` (render/color_management/world), `settings` | Grouped write-side tool for render, color-management, and bounded world/background configuration. Full node-graph rebuild stays outside this surface. | ✅ Done |
 | `scene_list_objects` | *none* | Returns a list of all objects in the scene with their type and position. | ✅ Done |
 | `scene_delete_object` | `name` (str) | Deletes the specified object. | ✅ Done |
-| `scene_clean_scene` | `keep_lights_and_cameras` (bool) | Clears the scene. Canonical public cleanup flag is `keep_lights_and_cameras`; guided `call_tool(...)` also tolerates legacy `keep_lights` / `keep_cameras` only when both values agree. Can perform a "hard reset" if set to False. | ✅ Done |
+| `scene_clean_scene` | `keep_lights_and_cameras` (bool) | Clears the scene. Canonical public cleanup flag is `keep_lights_and_cameras`; guided `call_tool(...)` also tolerates legacy `keep_lights` / `keep_cameras` only when both values agree. Can perform a "hard reset" if set to False. Preferred as a utility step before `router_set_goal(...)`, but also exposed on the guided build surface as a bounded recovery hatch when stale scene state is discovered later. | ✅ Done |
 | `scene_duplicate_object` | `name` (str), `translation` ([x,y,z]) | Duplicates an object and optionally moves it. | ✅ Done |
 | `scene_set_active_object` | `name` (str) | Sets the active object (crucial for modifiers). | ✅ Done |
 | `scene_camera_orbit` | `angle_horizontal`, `angle_vertical`, `target_object` (optional), `target_point` (optional) | Orbits the viewport around a target object or point. | ✅ Done |

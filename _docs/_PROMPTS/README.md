@@ -29,6 +29,10 @@ of improvising a new instruction stack from scratch.
 > For utility/capture requests such as viewport screenshots or scene cleanup,
 > do **not** force `router_set_goal(...)`; use the guided utility path instead:
 > `search_tools(...)` -> `call_tool(name="scene_get_viewport"| "scene_clean_scene", ...)`.
+> If you discover stale scene state only after entering build phase,
+> `scene_clean_scene(...)` is also an allowed guided recovery hatch; cleanup
+> before the goal is still preferred, but build-phase cleanup is no longer
+> treated as "tool does not exist".
 > When a needed tool is already directly visible on the current surface/phase,
 > call it directly instead of routing through `search_tools(...)` / `call_tool(...)`.
 > Use `reference_images(...)` to attach/list/remove/clear goal-scoped reference
@@ -157,6 +161,10 @@ Interpretation:
   `search_tools(query="viewport screenshot save file")` -> `call_tool(name="scene_get_viewport", arguments={...})`
 - a typical guided utility scene-prep flow is:
   `search_tools(query="clean reset fresh scene")` -> `call_tool(name="scene_clean_scene", arguments={"keep_lights_and_cameras": true})`
+- if stale scene state is discovered only after entering build/manual phase,
+  `scene_clean_scene(...)` remains a valid recovery hatch on the shaped build
+  surface; prefer using it directly when it is already visible
+- build-phase cleanup is still allowed when recovery is needed
 - use `keep_lights_and_cameras` as the canonical public cleanup flag; the older
   split `keep_lights` / `keep_cameras` form is legacy compatibility only
 - use one `reference_images(action="attach", source_path=...)` call per

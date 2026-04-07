@@ -220,6 +220,18 @@ def test_build_phase_search_uses_public_alias_names_for_discovered_tools():
     assert all(tool["name"] != "scene_inspect" for tool in payload)
 
 
+def test_build_phase_search_can_surface_scene_cleanup_as_recovery_hatch():
+    server = _build_phase_search_server(SessionPhase.BUILD)
+
+    async def run():
+        return await server.call_tool("search_tools", {"query": "clean reset stale default cube scene"})
+
+    payload = _decode_tool_result(asyncio.run(run()))
+    names = {tool["name"] for tool in payload}
+
+    assert "scene_clean_scene" in names
+
+
 def test_phase_search_results_follow_visibility_profile_changes():
     """Search results should swap build-only and inspect-only capabilities by session phase."""
 
@@ -587,6 +599,33 @@ def test_call_tool_can_invoke_scene_clean_scene_during_bootstrap(monkeypatch):
     )
 
     server = build_server("llm-guided")
+
+    async def run():
+        result = await server.call_tool(
+            "call_tool",
+            {"name": "scene_clean_scene", "arguments": {"keep_lights_and_cameras": True}},
+        )
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+
+    assert payload == "Scene cleaned."
+
+
+def test_call_tool_can_invoke_scene_clean_scene_during_build_phase(monkeypatch):
+    """scene_clean_scene should stay callable as a bounded recovery hatch during build phase."""
+
+    class Handler:
+        def clean_scene(self, keep_lights_and_cameras: bool):
+            assert keep_lights_and_cameras is True
+            return "Scene cleaned."
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.scene.get_scene_handler",
+        lambda: Handler(),
+    )
+
+    server = _build_phase_search_server(SessionPhase.BUILD)
 
     async def run():
         result = await server.call_tool(

@@ -32,6 +32,9 @@ asset as the generic search-first operating baseline.
      full generic build surface
 6. if the router returns `needs_input`, answer that first and wait until
    `guided_reference_readiness.compare_ready == true`
+   - if you only discover stale scene state after this point, `scene_clean_scene(...)`
+     remains an allowed build-phase recovery hatch even though cleanup-before-goal
+     is still the preferred path
 7. build in short stages:
    - head + ears
    - snout + face mass

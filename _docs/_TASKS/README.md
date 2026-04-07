@@ -5,7 +5,7 @@ Curated task board for promoted active work, promoted follow-on work, and select
 ## 📊 Statistics
 - **To Do:** 7 tasks
 - **In Progress:** 0 tasks
-- **Done:** 214
+- **Done:** 215
 - **Superseded:** 10
 
 ## 📐 Board Scope
@@ -76,6 +76,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-147](./TASK-147_Guided_Build_Cleanup_Recovery_Hatch_And_Prompt_Alignment.md) | **Guided Build Cleanup Recovery Hatch And Prompt Alignment** | 🔴 High | 2026-04-07 |
 | [TASK-146](./TASK-146_Guided_Runtime_Guardrails_Vision_Profile_And_Prompting_Hardening.md) | **Guided Runtime Guardrails, Vision Profile, and Prompting Hardening** | 🔴 High | 2026-04-07 |
 | [TASK-144](./TASK-144_Camera_Aware_View_Graph_And_Visibility_Diagnostics.md) | **Camera-Aware View Graph and Visibility Diagnostics** | 🔴 High | 2026-04-07 |
 | [TASK-143](./TASK-143_Guided_Spatial_Scope_And_Relation_Graphs.md) | **Guided Spatial Scope and Relation Graphs** | 🔴 High | 2026-04-07 |

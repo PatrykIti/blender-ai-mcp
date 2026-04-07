@@ -276,6 +276,12 @@ PYTHONPATH=. poetry run pytest tests/unit/router/application/test_workflow_trigg
 poetry run mypy
 ```
 
+Primary local validation commands for TASK-147 guided build cleanup recovery hatch:
+
+```bash
+PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/e2e/integration/test_guided_surface_contract_parity.py -q
+```
+
 Additional coverage added after the first TASK-146 hardening slice:
 
 - transport-backed guided search/call boundary:

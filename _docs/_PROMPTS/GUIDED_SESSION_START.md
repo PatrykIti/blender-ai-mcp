@@ -20,6 +20,7 @@ Fail-safe rules:
 - If `call_tool(...)` returns `Unknown tool`, stop guessing names and re-check the current phase/surface.
 - For real build goals, start from `router_get_status()` and then `router_set_goal(...)`.
 - For utility/capture requests, do not force `router_set_goal(...)`; use the guided utility path.
+- Cleanup rule: prefer `scene_clean_scene(...)` before `router_set_goal(...)`, but if scene drift is discovered after entering build phase, the same tool is an allowed recovery hatch on the guided build surface.
 - If the router returns `needs_input`, answer it with a follow-up `router_set_goal(..., resolved_params={...})`.
 - If the router pushes an obviously irrelevant workflow for the current task, stop and report that blocker instead of improvising with hidden tools.
 - Use directly visible tools first.
