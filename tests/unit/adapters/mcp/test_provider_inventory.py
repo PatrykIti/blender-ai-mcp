@@ -77,6 +77,8 @@ EXPECTED_SCENE_TOOLS = {
     "scene_get_hierarchy",
     "scene_get_bounding_box",
     "scene_get_origin_info",
+    "scene_scope_graph",
+    "scene_relation_graph",
     "scene_measure_distance",
     "scene_measure_dimensions",
     "scene_measure_gap",

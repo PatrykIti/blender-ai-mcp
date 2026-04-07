@@ -572,18 +572,18 @@ def _role_for_object(
     if _has_name_hint(object_name, _SUPPORT_ROLE_HINTS):
         signals.append("support_name_hint")
         return ("support_base" if object_name != primary_target else "anchor_core"), signals
-    if _is_body_like(object_name):
-        signals.append("body_name_hint")
-        return ("anchor_core" if object_name == primary_target else "structural_peer"), signals
-    if _is_head_like(object_name):
-        signals.append("head_name_hint")
-        return ("anchor_core" if object_name == primary_target else "attached_mass"), signals
     if _is_tail_like(object_name) or _is_limb_like(object_name):
         signals.append("appendage_name_hint")
         return ("attached_appendage" if object_name != primary_target else "anchor_core"), signals
     if _is_face_attachment(object_name):
         signals.append("accessory_name_hint")
         return ("accessory_feature" if object_name != primary_target else "anchor_core"), signals
+    if _is_head_like(object_name):
+        signals.append("head_name_hint")
+        return ("anchor_core" if object_name == primary_target else "attached_mass"), signals
+    if _is_body_like(object_name):
+        signals.append("body_name_hint")
+        return ("anchor_core" if object_name == primary_target else "structural_peer"), signals
     if object_name == primary_target:
         return "anchor_core", signals or ["fallback_primary"]
     return "structural_peer", signals or ["fallback_peer"]

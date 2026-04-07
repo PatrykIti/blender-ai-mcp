@@ -419,6 +419,12 @@ def test_assembled_target_scope_prefers_trailing_body_role_over_embedded_body_su
     assert scope.scope_kind == "object_set"
     assert scope.primary_target == "TruthBodyAnchorBody"
     assert any(item.object_name == "TruthBodyAnchorBody" and item.role == "anchor_core" for item in scope.object_roles)
+    assert any(
+        item.object_name == "TruthBodyAnchorHead" and item.role == "attached_mass" for item in scope.object_roles
+    )
+    assert any(
+        item.object_name == "TruthBodyAnchorTail" and item.role == "attached_appendage" for item in scope.object_roles
+    )
 
 
 def test_assembled_target_scope_does_not_force_explicit_target_object_as_anchor_in_multi_object_scope(monkeypatch):
