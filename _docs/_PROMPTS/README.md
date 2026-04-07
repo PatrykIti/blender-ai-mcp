@@ -2,6 +2,10 @@
 
 Copy/paste-ready prompt templates for LLMs controlling Blender via this MCP server.
 
+`_docs/_PROMPTS/` is the canonical prompt library for this repo's MCP-facing
+operating model. When a client tends to drift, start from these assets instead
+of improvising a new instruction stack from scratch.
+
 > Note: depending on your client, tool names may appear namespaced
 > (e.g. `mcp__bleder-ai-mcp__inspect_scene`).
 > On the `llm-guided` surface, prefer the public aliases used below:
@@ -47,6 +51,8 @@ Copy/paste-ready prompt templates for LLMs controlling Blender via this MCP serv
 > Use `search_tools` / `call_tool` only when discovery is actually needed on the
 > shaped public surface, and use `manual_tools_no_router` when you explicitly
 > want a manual non-router operating mode.
+> If a tool is not already directly visible and you did not just discover it
+> through `search_tools(...)`, do not send its guessed name to `call_tool(...)`.
 > `call_tool(...)` is not a bypass for hidden or phase-locked tools: if a tool
 > is not currently exposed/discoverable on the shaped surface, guessing its name
 > will still fail.
@@ -115,7 +121,8 @@ Interpretation:
 
 - normal production LLM usage should prefer the workflow-first path
 - when the client tends to drift on `llm-guided`, prepend `guided_session_start`
-  before the main workflow prompt
+  before the main workflow prompt; this is the generic search-first stabilizer
+  asset for the shaped surface
 - manual/no-router mode is an explicit exception, not the default product model
 - `recommended_prompts` now uses the active phase/profile plus explicit
   session goal context, so creature-oriented guided goals can surface the
@@ -136,6 +143,8 @@ Interpretation:
     if `reference_iterate_stage_checkpoint(...)` returns `loop_disposition="inspect_validate"`, stop free-form modeling and switch to inspect/measure/assert before continuing
     if staged compare degrades but strong deterministic truth findings still remain, use the same inspect/measure/assert handoff instead of improvising another large free-form correction
 - if a tool is already directly visible on the current phase/surface, call it directly
+- if a tool is not already directly visible, run `search_tools(...)` before
+  `call_tool(...)`
 - only use `search_tools(...)` / `call_tool(...)` when discovery is actually needed
 - `call_tool(...)` cannot summon hidden internal tools by guessed name; `Unknown tool`
   on `llm-guided` usually means the current phase/surface is wrong

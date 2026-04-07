@@ -45,6 +45,8 @@ def test_readme_documents_llm_guided_public_aliases():
         "Contact Truth Semantics",
         "mesh-surface contact/gap semantics",
         "bbox fallback semantics",
+        "prompt-library assets",
+        "generic search-first stabilizer",
         "staged refs stay separate from the already-active goal",
         "ready session still carries explicit pending refs for another goal",
     ):
@@ -89,6 +91,8 @@ def test_mcp_docs_describe_aliases_and_hidden_arguments():
         "stop-and-check branch",
         "pause free-form modeling and switch to inspect/measure/assert immediately",
         "staged compare degrades but deterministic truth findings remain strong",
+        "Canonical operator guidance for this surface now lives in `_docs/_PROMPTS/`",
+        "generic search-first stabilizer",
         "scene_hide_object",
         "scene_show_all_objects",
         "scene_isolate_object",
@@ -261,6 +265,9 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "GUIDED_SESSION_START.md" in prompt_readme
     assert "REFERENCE_GUIDED_CREATURE_BUILD.md" in prompt_readme
     assert "guided_session_start" in prompt_readme
+    assert "canonical prompt library" in prompt_readme
+    assert "generic search-first stabilizer" in prompt_readme
+    assert "If a tool is not already directly visible" in prompt_readme
     assert '`continuation_mode="guided_manual_build"`' in prompt_readme
     assert "`guided_handoff`" in prompt_readme
     assert "`guided_handoff.direct_tools`" in prompt_readme
@@ -302,6 +309,7 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "`guided_handoff.direct_tools`" in workflow_prompt
     assert "`workflow_import_recommended=false`" in workflow_prompt
     assert "Do not guess hidden internal tool names and feed them into `call_tool(...)`." in workflow_prompt
+    assert "If a needed tool is not already directly visible, run `search_tools(...)`" in workflow_prompt
     assert "If `call_tool(...)` reports `Unknown tool`, do not keep guessing names" in workflow_prompt
     assert (
         "If a needed tool is already directly visible on the current surface/phase, call it directly."
@@ -350,6 +358,8 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "scene_show_all_objects(include_render=true)" in manual_prompt
 
     assert "`reference_iterate_stage_checkpoint(...)`" in creature_prompt
+    assert "generic search-first operating baseline" in creature_prompt
+    assert "if a tool is not already directly visible, use `search_tools(...)` before" in creature_prompt
     assert "`guided_reference_readiness`" in creature_prompt
     assert "`loop_disposition`" in creature_prompt
     assert "`correction_candidates`" in creature_prompt

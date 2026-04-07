@@ -241,6 +241,14 @@ PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_contracts.py te
 PYTHONPATH=. poetry run pytest tests/e2e/tools/scene/test_scene_view_diagnostics.py tests/e2e/tools/scene/test_scene_get_viewport.py tests/e2e/tools/scene/test_scene_get_viewport_camera.py -q
 ```
 
+Primary local validation commands for TASK-146 guided runtime hardening:
+
+```bash
+PYTHONPATH=. poetry run pytest tests/unit/router/application/test_workflow_triggerer.py tests/unit/adapters/mcp/test_vision_external_backend.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/adapters/mcp/test_server_factory.py tests/unit/scripts/test_script_tooling.py tests/e2e/router/test_guided_manual_handoff.py -q
+
+poetry run mypy
+```
+
 Repo-tracked synthetic vision evaluation scenarios now live under:
 
 - `tests/fixtures/vision_eval/synthetic_round_cutout/`

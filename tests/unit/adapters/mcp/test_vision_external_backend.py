@@ -230,10 +230,45 @@ def test_external_backend_supports_openrouter_headers_and_default_endpoint(monke
     assert captured["headers"]["Authorization"] == "Bearer openrouter-secret"
     assert captured["headers"]["HTTP-Referer"] == "https://example.com"
     assert captured["headers"]["X-Title"] == "blender-ai-mcp-dev"
+    assert captured["json"]["provider"] == {"require_parameters": True}
+    assert captured["json"]["plugins"] == [{"id": "response-healing"}]
     assert captured["json"]["response_format"]["type"] == "json_schema"
     assert captured["json"]["response_format"]["json_schema"]["name"] == "vision_assist"
     assert captured["json"]["response_format"]["json_schema"]["strict"] is True
     assert "visible_changes" in captured["json"]["response_format"]["json_schema"]["schema"]["properties"]
+
+
+def test_external_backend_uses_json_object_for_qwen_family_on_openrouter(monkeypatch, tmp_path):
+    image_path = tmp_path / "after.png"
+    image_path.write_bytes(b"fake-png")
+
+    runtime = build_vision_runtime_config(
+        _config(
+            VISION_EXTERNAL_PROVIDER="openrouter",
+            VISION_OPENROUTER_MODEL="qwen/qwen3-vl-32b-instruct",
+            VISION_OPENROUTER_API_KEY="openrouter-secret",
+        )
+    )
+    backend = OpenAICompatibleVisionBackend(runtime)
+    request = VisionRequest(goal="goal", images=(VisionImageInput(path=str(image_path), role="after"),))
+
+    captured: dict = {}
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda timeout=None: _FakeAsyncClient(
+            response=_FakeResponse(
+                {"choices": [{"message": {"content": '{"goal_summary":"ok","visible_changes":[]}'}}]}
+            ),
+            captured=captured,
+        ),
+    )
+
+    asyncio.run(backend.analyze(request))
+
+    assert captured["json"]["provider"] == {"require_parameters": True}
+    assert captured["json"]["plugins"] == [{"id": "response-healing"}]
+    assert captured["json"]["response_format"] == {"type": "json_object"}
 
 
 def test_external_backend_supports_google_ai_studio_generate_content(monkeypatch, tmp_path):

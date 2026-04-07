@@ -47,6 +47,9 @@ class VisionOpenAICompatibleConfig(BaseModel):
     api_key_env: str | None = None
     site_url: str | None = None
     site_name: str | None = None
+    require_parameters: bool = True
+    enable_response_healing: bool = True
+    prefer_json_object_for_qwen: bool = True
 
     @model_validator(mode="after")
     def validate_endpoint(self) -> "VisionOpenAICompatibleConfig":

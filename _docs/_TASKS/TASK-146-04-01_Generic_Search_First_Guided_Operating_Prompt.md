@@ -1,9 +1,13 @@
 # TASK-146-04-01: Generic Search-First Guided Operating Prompt
 
 **Parent:** [TASK-146-04](./TASK-146-04_Search_First_Prompt_Library_And_Instruction_Surface_Hardening.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Depends On:** [TASK-146-04](./TASK-146-04_Search_First_Prompt_Library_And_Instruction_Surface_Hardening.md)
+
+**Completion Summary:** Completed on 2026-04-07. Hardened
+`GUIDED_SESSION_START.md` into the generic search-first guided operating
+stabilizer for the shaped surface.
 
 ## Objective
 
@@ -41,4 +45,4 @@ calls.
 
 ## Status / Board Update
 
-- leaf for the generic `_PROMPTS/` operating asset
+- closed on 2026-04-07 with TASK-146

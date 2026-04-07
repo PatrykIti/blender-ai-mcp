@@ -1,9 +1,15 @@
 # TASK-146-04: Search-First Prompt Library And Instruction Surface Hardening
 
 **Parent:** [TASK-146](./TASK-146_Guided_Runtime_Guardrails_Vision_Profile_And_Prompting_Hardening.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Depends On:** [TASK-130](./TASK-130_Default_Guided_Surface_Bootstrap_Consistency.md), [TASK-141](./TASK-141_Guided_Creature_Run_Contract_And_Schema_Drift_Hardening.md)
+
+**Completion Summary:** Completed on 2026-04-07. Strengthened the guided
+prompt/instruction surfaces around one clearer operating model: `_docs/_PROMPTS/`
+is now called out as the canonical library, `GUIDED_SESSION_START.md` is the
+generic search-first stabilizer, and operator-facing text more strongly pushes
+`search_tools(...)` before speculative `call_tool(...)`.
 
 ## Objective
 
@@ -59,4 +65,4 @@ surfaces around one clearer guided operating model:
 
 ## Status / Board Update
 
-- nested under TASK-146 as the prompt/instruction hardening subtree
+- closed on 2026-04-07 with TASK-146

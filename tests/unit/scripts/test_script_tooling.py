@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import sys
+import tomllib
 import types
 import urllib.error
 import zipfile
@@ -35,8 +36,21 @@ def test_streamable_openrouter_shell_script_contains_required_runtime_env():
         "VISION_EXTERNAL_PROVIDER=openrouter",
         'VISION_EXTERNAL_CONTRACT_PROFILE="${VISION_EXTERNAL_CONTRACT_PROFILE}"',
         'VISION_OPENROUTER_MODEL="${VISION_OPENROUTER_MODEL}"',
+        'VISION_OPENROUTER_REQUIRE_PARAMETERS="${VISION_OPENROUTER_REQUIRE_PARAMETERS}"',
+        'VISION_OPENROUTER_ENABLE_RESPONSE_HEALING="${VISION_OPENROUTER_ENABLE_RESPONSE_HEALING}"',
+        'VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN="${VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN}"',
     ):
         assert expected in script
+
+
+def test_docker_runtime_install_path_keeps_pillow_in_main_dependencies():
+    dockerfile = (REPO_ROOT / "Dockerfile").read_text(encoding="utf-8")
+    pyproject = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+
+    main_dependencies = pyproject["project"]["dependencies"]
+
+    assert "RUN poetry install --no-interaction --no-ansi --no-root --only main" in dockerfile
+    assert any(dependency.startswith("pillow ") for dependency in main_dependencies)
 
 
 def test_build_addon_creates_zip_and_skips_ignored_files(tmp_path, monkeypatch, capsys):

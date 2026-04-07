@@ -48,6 +48,29 @@ def test_router_set_goal_reference_guided_squirrel_returns_guided_manual_no_matc
     assert router.get_pending_workflow() is None
 
 
+def test_guided_manual_goal_suppresses_heuristic_workflow_trigger_for_direct_transform(router, clean_scene):
+    """A no-match guided manual goal should not let ordinary direct transforms trigger unrelated workflows."""
+
+    handler = RouterToolHandler(router=router, enabled=True)
+    result = handler.set_goal("create a low-poly squirrel matching front and side reference images")
+
+    assert result["status"] == "no_match"
+    assert result["continuation_mode"] == "guided_manual_build"
+    assert router.get_pending_workflow() is None
+
+    corrected = router.process_llm_tool_call(
+        "modeling_transform_object",
+        {"name": "AcornCap", "scale": [1.0, 1.0, 0.06]},
+    )
+
+    assert corrected == [
+        {
+            "tool": "modeling_transform_object",
+            "params": {"name": "AcornCap", "scale": [1.0, 1.0, 0.06]},
+        }
+    ]
+
+
 @dataclass
 class FakeAsyncContext:
     state: dict[str, object] = field(default_factory=dict)

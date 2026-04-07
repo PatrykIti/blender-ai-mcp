@@ -847,7 +847,7 @@ def test_call_tool_cannot_invoke_hidden_tool_during_bootstrap():
             {"name": "inspect_scene", "arguments": {"action": "object", "target_object": "Cube"}},
         )
 
-    with pytest.raises((NotFoundError, ToolError)):
+    with pytest.raises((NotFoundError, ToolError), match="search_tools"):
         asyncio.run(run())
 
 

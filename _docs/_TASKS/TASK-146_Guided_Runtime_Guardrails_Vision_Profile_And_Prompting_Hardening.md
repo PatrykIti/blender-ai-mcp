@@ -1,10 +1,19 @@
 # TASK-146: Guided Runtime Guardrails, Vision Profile, And Prompting Hardening
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** Guided Runtime Reliability / Product Surface
 **Estimated Effort:** Large
 **Dependencies:** TASK-130, TASK-141, TASK-142, TASK-143, TASK-144
+
+**Completion Summary:** Completed on 2026-04-07. Hardened the guided runtime
+after the TASK-141/142/143/144 wave: heuristic workflow triggering now stays
+off explicit no-match/manual-goal sessions, Qwen/OpenRouter compare requests
+use a more doc-aligned structured-output posture, Docker/runtime packaging now
+keeps Pillow on the main runtime path, `call_tool(...)` gives stronger
+search-first guidance on unknown tools, and the prompt-library/main-instruction
+surfaces now push models/operators more explicitly toward `_docs/_PROMPTS/`
+and `GUIDED_SESSION_START.md`.
 
 ## Objective
 
@@ -136,7 +145,6 @@ This umbrella does **not** cover:
 
 ## Status / Board Update
 
-- promote this as a board-level repair follow-on after TASK-141 through
-  TASK-144
-- keep it separate from TASK-145 so planner/sculpt evolution does not get
+- closed on 2026-04-07 in the same branch as the implementation
+- kept separate from TASK-145 so planner/sculpt evolution does not get
   conflated with current runtime hardening

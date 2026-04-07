@@ -155,6 +155,13 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
             api_key_env=external_api_key_env,
             site_url=site_url,
             site_name=site_name,
+            require_parameters=config.VISION_OPENROUTER_REQUIRE_PARAMETERS if use_openrouter_profile else True,
+            enable_response_healing=config.VISION_OPENROUTER_ENABLE_RESPONSE_HEALING
+            if use_openrouter_profile
+            else False,
+            prefer_json_object_for_qwen=(
+                config.VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN if use_openrouter_profile else False
+            ),
         )
 
     if segmentation_enabled:

@@ -65,6 +65,9 @@ The composition document linked above is the canonical reference for the current
 
 The first `llm-guided` public contract line is now available on top of the canonical internal tool surface.
 
+Canonical operator guidance for this surface now lives in `_docs/_PROMPTS/`.
+When a client drifts on `llm-guided`, treat `GUIDED_SESSION_START.md` as the generic search-first stabilizer and prefer `_PROMPTS/` assets over ad hoc instruction text.
+
 Current public tool aliases:
 
 | Internal tool | `llm-guided` public name |
@@ -296,6 +299,8 @@ Search-first behavior now respects guided visibility:
 - hidden tools do not appear in bootstrap-phase search results
 - hidden tools cannot be invoked through `call_tool`
 - direct public calls and discovered `call_tool` calls share the same guided-surface router failure behavior
+- if a tool is not already directly visible, the intended operator path is
+  `search_tools(...)` before `call_tool(...)`, not speculative name guessing
 - read-only spatial graph tools such as `scene_scope_graph` and
   `scene_relation_graph`, plus the view-space artifact
   `scene_view_diagnostics`, follow the same rule: they stay off bootstrap by

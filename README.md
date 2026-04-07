@@ -58,6 +58,12 @@ Normal guided flow:
 3. use grouped/public tools such as `check_scene`, `inspect_scene`, or `configure_scene`
 4. verify with inspection plus `scene_measure_*` and `scene_assert_*`
 
+Prompting rule:
+
+- use the prompt-library assets in [_docs/_PROMPTS/README.md](/Users/pciechanski/Documents/_moje_projekty/blender-ai-mcp/_docs/_PROMPTS/README.md) as the canonical guided operating instructions
+- when a client drifts, prepend `guided_session_start` as the generic search-first stabilizer
+- if a tool is not already directly visible on the current surface/phase, use `search_tools(...)` before `call_tool(...)`
+
 When a bounded modeling intent matches, the default public working layer should be the macro layer:
 
 - `macro_cutout_recess` for recesses, openings, and cutter-driven cutouts

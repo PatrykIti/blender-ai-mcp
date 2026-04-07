@@ -3,9 +3,9 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 8 tasks
+- **To Do:** 7 tasks
 - **In Progress:** 0 tasks
-- **Done:** 213
+- **Done:** 214
 - **Superseded:** 10
 
 ## 📐 Board Scope
@@ -38,7 +38,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-130](./TASK-130_Default_Guided_Surface_Bootstrap_Consistency.md) | **Default Guided Surface Bootstrap Consistency** | 🟠 High | Board-level follow-on from the TASK-128 audit. Align the repo's documented "default production" story with the actual bootstrap surface configured in runtime defaults and examples. |
-| [TASK-146](./TASK-146_Guided_Runtime_Guardrails_Vision_Profile_And_Prompting_Hardening.md) | **Guided Runtime Guardrails, Vision Profile, and Prompting Hardening** | 🔴 High | Board-level repair umbrella for spurious workflow triggering, missing Docker/runtime dependencies, Qwen/OpenRouter structured-output verification, and stronger search-first / prompt-library discipline on the guided surface. |
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
@@ -77,6 +76,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-146](./TASK-146_Guided_Runtime_Guardrails_Vision_Profile_And_Prompting_Hardening.md) | **Guided Runtime Guardrails, Vision Profile, and Prompting Hardening** | 🔴 High | 2026-04-07 |
 | [TASK-144](./TASK-144_Camera_Aware_View_Graph_And_Visibility_Diagnostics.md) | **Camera-Aware View Graph and Visibility Diagnostics** | 🔴 High | 2026-04-07 |
 | [TASK-143](./TASK-143_Guided_Spatial_Scope_And_Relation_Graphs.md) | **Guided Spatial Scope and Relation Graphs** | 🔴 High | 2026-04-07 |
 | [TASK-141](./TASK-141_Guided_Creature_Run_Contract_And_Schema_Drift_Hardening.md) | **Guided Creature Run Contract and Schema Drift Hardening** | 🔴 High | 2026-04-06 |

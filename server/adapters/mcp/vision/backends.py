@@ -28,6 +28,8 @@ from .prompting import (
 
 logger = logging.getLogger(__name__)
 
+_QWEN_MODEL_MARKERS = ("qwen", "qvq")
+
 
 def _media_type_for(path: str, fallback: str) -> str:
     guessed, _encoding = mimetypes.guess_type(path)
@@ -38,6 +40,13 @@ def _image_to_data_url(path: str, media_type: str) -> str:
     raw = Path(path).read_bytes()
     encoded = base64.b64encode(raw).decode("ascii")
     return f"data:{media_type};base64,{encoded}"
+
+
+def _looks_like_qwen_family_model(model_name: str | None) -> bool:
+    normalized = str(model_name or "").strip().lower()
+    if not normalized:
+        return False
+    return any(marker in normalized for marker in _QWEN_MODEL_MARKERS)
 
 
 def _extract_message_text(payload: dict[str, Any]) -> str:
@@ -202,6 +211,12 @@ def _request_payload_summary(
         "max_tokens": runtime_config.max_tokens,
         "prompt_hint": _truncate_text(request.prompt_hint, limit=240),
     }
+    if isinstance(payload.get("provider"), dict):
+        summary["provider_preferences"] = dict(payload["provider"])
+    if isinstance(payload.get("plugins"), list):
+        summary["plugins"] = [
+            item.get("id") for item in payload["plugins"] if isinstance(item, dict) and isinstance(item.get("id"), str)
+        ]
 
     if isinstance(response_format, dict):
         json_schema = response_format.get("json_schema")
@@ -666,7 +681,13 @@ class OpenAICompatibleVisionBackend(VisionBackend):
             )
 
         response_format: dict[str, Any]
-        if self._external_config.provider_name == "openrouter":
+        if (
+            self._external_config.provider_name == "openrouter"
+            and self._external_config.prefer_json_object_for_qwen
+            and _looks_like_qwen_family_model(self.model_name)
+        ):
+            response_format = {"type": "json_object"}
+        elif self._external_config.provider_name == "openrouter":
             response_format = {
                 "type": "json_schema",
                 "json_schema": {
@@ -681,8 +702,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
             }
         else:
             response_format = {"type": "json_object"}
-
-        return {
+        payload = {
             "model": self.model_name,
             "temperature": 0.0,
             "max_tokens": self._runtime_config.max_tokens,
@@ -700,6 +720,11 @@ class OpenAICompatibleVisionBackend(VisionBackend):
                 {"role": "user", "content": content},
             ],
         }
+        if self._external_config.provider_name == "openrouter":
+            payload["provider"] = {"require_parameters": self._external_config.require_parameters}
+            if self._external_config.enable_response_healing:
+                payload["plugins"] = [{"id": "response-healing"}]
+        return payload
 
     async def analyze(self, request: VisionRequest) -> dict[str, object]:
         headers = {"Content-Type": "application/json"}

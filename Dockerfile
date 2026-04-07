@@ -25,7 +25,9 @@ COPY pyproject.toml poetry.lock* README.md LICENSE.md /app/
 # Config poetry to not use virtualenvs (we are in docker)
 RUN poetry config virtualenvs.create false
 
-# Install dependencies and clean up cache
+# Install main runtime dependencies only.
+# Pillow is intentionally part of main dependencies because deterministic
+# silhouette analysis is part of the external guided compare path too.
 RUN poetry install --no-interaction --no-ansi --no-root --only main
 
 # Pre-download LaBSE model for fast router startup (~1.2GB)

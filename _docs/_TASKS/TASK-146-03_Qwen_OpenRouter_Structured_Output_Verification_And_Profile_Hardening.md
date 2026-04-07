@@ -1,9 +1,15 @@
 # TASK-146-03: Qwen OpenRouter Structured Output Verification And Profile Hardening
 
 **Parent:** [TASK-146](./TASK-146_Guided_Runtime_Guardrails_Vision_Profile_And_Prompting_Hardening.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Depends On:** [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md)
+
+**Completion Summary:** Completed on 2026-04-07. Verified the relevant
+OpenRouter and Qwen official structured-output guidance, then hardened the
+runtime so OpenRouter requests now require parameter-aware provider routing,
+enable response-healing by default, and prefer `json_object` mode for
+Qwen-family models.
 
 ## Objective
 
@@ -48,4 +54,4 @@ guessing from current model behavior.
 
 ## Status / Board Update
 
-- nested under TASK-146 as the external structured-output verification slice
+- closed on 2026-04-07 with TASK-146

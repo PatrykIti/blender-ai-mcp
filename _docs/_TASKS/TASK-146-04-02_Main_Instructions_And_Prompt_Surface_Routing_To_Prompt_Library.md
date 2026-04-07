@@ -1,9 +1,13 @@
 # TASK-146-04-02: Main Instructions And Prompt Surface Routing To Prompt Library
 
 **Parent:** [TASK-146-04](./TASK-146-04_Search_First_Prompt_Library_And_Instruction_Surface_Hardening.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟠 High
 **Depends On:** [TASK-146-04-01](./TASK-146-04-01_Generic_Search_First_Guided_Operating_Prompt.md)
+
+**Completion Summary:** Completed on 2026-04-07. Updated the main public
+instruction surfaces so they point more explicitly to `_docs/_PROMPTS/` and
+reinforce search-first behavior instead of relying on diffuse ad hoc guidance.
 
 ## Objective
 
@@ -41,4 +45,4 @@ embed all guided operating logic diffusely across many docs.
 
 ## Status / Board Update
 
-- leaf for main-surface routing toward the prompt library
+- closed on 2026-04-07 with TASK-146

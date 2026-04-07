@@ -254,6 +254,9 @@ Interpretation:
 - OpenRouter is worth keeping enabled; `x-ai/grok-4.20-multi-agent` is the current strongest external branch candidate for iterative compare loops
 - Google-family compare behavior is now chosen by `vision_contract_profile`, not only by transport provider identity
 - treat `Operator-reported` rows as instability notes, not as formal promotion evidence; promote a model/provider combination only after harness-ranked or explicitly reproduced automated evidence
+- deterministic silhouette analysis now depends on `Pillow`, which is part of
+  the main runtime dependency set so Docker images that install only `main`
+  still keep this path available
 
 ## External Vision Contract Profiles
 
@@ -289,6 +292,23 @@ Important runtime note:
 - harness outputs, parser diagnostics, and `VisionAssistContract` payloads now
   expose the resolved `vision_contract_profile` so failures can be traced back
   to contract routing versus transport/provider issues
+
+OpenRouter/Qwen hardening note:
+
+- OpenRouter's official request docs distinguish:
+  - `response_format={"type":"json_object"}` for JSON mode
+  - `response_format={"type":"json_schema", ...}` for strict structured output
+  - `provider.require_parameters=true` to force routing only through providers
+    that support the requested parameters
+  - optional `response-healing` plugin for automatic JSON repair
+- Qwen's official OpenAI-compatible structured-output docs emphasize
+  `response_format={"type":"json_object"}` plus an explicit `JSON` keyword in
+  the prompt
+- the runtime now uses that documented posture for Qwen-family OpenRouter
+  models:
+  - prefer `json_object`
+  - require parameter-aware provider routing
+  - enable OpenRouter response-healing by default
 
 Operator reporting rule before model promotion:
 
@@ -393,6 +413,9 @@ export VISION_EXTERNAL_CONTRACT_PROFILE="google_family_compare"
 export VISION_OPENROUTER_MODEL="google/gemma-3-27b-it:free"
 export VISION_OPENROUTER_API_KEY_ENV=OPENROUTER_API_KEY
 export OPENROUTER_API_KEY="<your-openrouter-key>"
+export VISION_OPENROUTER_REQUIRE_PARAMETERS=true
+export VISION_OPENROUTER_ENABLE_RESPONSE_HEALING=true
+export VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN=true
 ```
 
 Config precedence note:
@@ -412,6 +435,14 @@ Optional OpenRouter ranking headers:
 export VISION_OPENROUTER_SITE_URL="https://example.com"
 export VISION_OPENROUTER_SITE_NAME="blender-ai-mcp-dev"
 ```
+
+Qwen-family OpenRouter note:
+
+- when the selected OpenRouter model id looks like a Qwen family model, the
+  runtime now prefers `response_format={"type":"json_object"}` instead of
+  `json_schema`
+- this follows the official Qwen structured-output guidance more closely while
+  still keeping the repo's bounded JSON contract on the parsing side
 
 Harness example:
 

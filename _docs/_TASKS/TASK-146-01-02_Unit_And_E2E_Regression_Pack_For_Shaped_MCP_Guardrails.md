@@ -1,9 +1,14 @@
 # TASK-146-01-02: Unit And E2E Regression Pack For Shaped MCP Guardrails
 
 **Parent:** [TASK-146-01](./TASK-146-01_Workflow_Trigger_Boundaries_And_MCP_Guardrail_Coverage.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Depends On:** [TASK-146-01-01](./TASK-146-01-01_Direct_Call_Workflow_Trigger_Suppression_Rules.md)
+
+**Completion Summary:** Completed on 2026-04-07. Added focused regression
+coverage for the repaired guided guardrails, including unit tests for the
+triggerer boundary and E2E coverage for a real no-match/manual guided session
+that should not reopen an unrelated workflow.
 
 ## Objective
 
@@ -47,4 +52,4 @@ areas such as:
 
 ## Status / Board Update
 
-- leaf for the regression pack attached to TASK-146-01
+- closed on 2026-04-07 with TASK-146

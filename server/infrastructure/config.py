@@ -86,6 +86,18 @@ class Config(BaseSettings):
         default=None,
         description="Optional X-Title / site name sent to OpenRouter for ranking/analytics",
     )
+    VISION_OPENROUTER_REQUIRE_PARAMETERS: bool = Field(
+        default=True,
+        description="Require OpenRouter to route only through providers that support the requested parameters",
+    )
+    VISION_OPENROUTER_ENABLE_RESPONSE_HEALING: bool = Field(
+        default=True,
+        description="Enable OpenRouter response-healing plugin for bounded JSON compare paths",
+    )
+    VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN: bool = Field(
+        default=True,
+        description="Use response_format=json_object for Qwen-family OpenRouter models instead of json_schema",
+    )
     VISION_GEMINI_BASE_URL: str | None = Field(
         default=None,
         description="Optional Google AI Studio base URL override for vision; defaults to https://generativelanguage.googleapis.com/v1beta",
@@ -213,6 +225,15 @@ def get_config() -> Config:
         VISION_OPENROUTER_API_KEY_ENV=os.getenv("VISION_OPENROUTER_API_KEY_ENV") or None,
         VISION_OPENROUTER_SITE_URL=os.getenv("VISION_OPENROUTER_SITE_URL") or None,
         VISION_OPENROUTER_SITE_NAME=os.getenv("VISION_OPENROUTER_SITE_NAME") or None,
+        VISION_OPENROUTER_REQUIRE_PARAMETERS=(
+            os.getenv("VISION_OPENROUTER_REQUIRE_PARAMETERS", "true").lower() not in {"0", "false", "no"}
+        ),
+        VISION_OPENROUTER_ENABLE_RESPONSE_HEALING=(
+            os.getenv("VISION_OPENROUTER_ENABLE_RESPONSE_HEALING", "true").lower() not in {"0", "false", "no"}
+        ),
+        VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN=(
+            os.getenv("VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN", "true").lower() not in {"0", "false", "no"}
+        ),
         VISION_GEMINI_BASE_URL=os.getenv("VISION_GEMINI_BASE_URL") or None,
         VISION_GEMINI_MODEL=os.getenv("VISION_GEMINI_MODEL") or None,
         VISION_GEMINI_API_KEY=os.getenv("VISION_GEMINI_API_KEY") or None,

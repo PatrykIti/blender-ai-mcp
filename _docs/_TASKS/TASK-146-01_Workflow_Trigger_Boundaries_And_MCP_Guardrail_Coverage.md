@@ -1,9 +1,14 @@
 # TASK-146-01: Workflow Trigger Boundaries And MCP Guardrail Coverage
 
 **Parent:** [TASK-146](./TASK-146_Guided_Runtime_Guardrails_Vision_Profile_And_Prompting_Hardening.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Depends On:** [TASK-141](./TASK-141_Guided_Creature_Run_Contract_And_Schema_Drift_Hardening.md), [TASK-144](./TASK-144_Camera_Aware_View_Graph_And_Visibility_Diagnostics.md)
+
+**Completion Summary:** Completed on 2026-04-07. Tightened the trigger
+boundary so explicit no-match/manual goals suppress heuristic workflow
+activation during ordinary direct tool usage, and expanded unit/E2E regression
+coverage around the repaired guided MCP guardrails.
 
 ## Objective
 
@@ -57,4 +62,4 @@ failure.
 
 ## Status / Board Update
 
-- nested under TASK-146 as the trigger/guardrail repair subtree
+- closed on 2026-04-07 with TASK-146

@@ -5,7 +5,8 @@ guided surface.
 
 If the client tends to get lost between router flow, discovery, and hidden
 tools, prepend [`GUIDED_SESSION_START.md`](./GUIDED_SESSION_START.md) before
-this prompt.
+this prompt. Treat `GUIDED_SESSION_START.md` as the generic search-first
+stabilizer for the guided surface.
 
 ---
 
@@ -64,6 +65,8 @@ REQUEST TRIAGE (FIRST STEP)
    - If `guided_handoff` is present, use `guided_handoff.direct_tools` first.
    - Treat `guided_handoff.discovery_tools` as fallback only, not the default first move.
    - Use directly visible tools first.
+   - If a needed tool is not already directly visible, run `search_tools(...)`
+     before `call_tool(...)`.
    - Use search_tools / call_tool only when discovery is actually needed.
    - Do not guess hidden internal tool names and feed them into `call_tool(...)`.
      `call_tool(...)` cannot bypass current surface/phase visibility.
@@ -87,6 +90,8 @@ WORKFLOW MATCHING (ONLY WHEN REQUEST TYPE = BUILD/WORKFLOW)
        * Proceed with modeling. Prefer workflow/macro paths and only drop lower when necessary.
        * Do not treat the whole internal catalog as the default action space.
        * If a needed tool is already directly visible on the current surface/phase, call it directly.
+       * If a needed tool is not already directly visible, use `search_tools(...)`
+         before `call_tool(...)`.
        * Use search_tools / call_tool only when you need discovery or need to reach a non-entry tool that is not already visible.
        * If `call_tool(...)` reports `Unknown tool`, do not keep guessing names; re-check the current phase/surface and whether build tools have actually been unlocked.
        * If the task is a bounded recess/cutout/opening, prefer `macro_cutout_recess` over manually creating cutters, placing them, and chaining boolean cleanup.

@@ -1,9 +1,14 @@
 # TASK-146-02: Docker Dependency Group And Runtime Packaging Alignment
 
 **Parent:** [TASK-146](./TASK-146_Guided_Runtime_Guardrails_Vision_Profile_And_Prompting_Hardening.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Depends On:** [TASK-121](./TASK-121_Goal_Aware_Vision_Assist_And_Reference_Context.md), [TASK-128](./TASK-128_Reference_Guided_Creature_Build_Surface_And_Perception_Reliability.md)
+
+**Completion Summary:** Completed on 2026-04-07. Moved Pillow onto the main
+runtime dependency path so Docker images installing only `main` still retain
+deterministic silhouette-analysis capability, and documented/tested that
+runtime packaging assumption.
 
 ## Objective
 
@@ -44,4 +49,4 @@ packages that the active product flow expects.
 
 ## Status / Board Update
 
-- nested under TASK-146 as the runtime packaging repair slice
+- closed on 2026-04-07 with TASK-146

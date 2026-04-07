@@ -9,6 +9,7 @@ import hashlib
 from collections.abc import Sequence
 from typing import Annotated, Any
 
+from fastmcp.exceptions import NotFoundError, ToolError
 from fastmcp.server.context import Context
 from fastmcp.server.transforms.search import BM25SearchTransform
 from fastmcp.tools.tool import Tool, ToolResult
@@ -97,7 +98,13 @@ class BlenderDiscoverySearchTransform(BM25SearchTransform):
 
             resolved_arguments = arguments if arguments is not None else params
             canonical_arguments = transform._canonicalize_call_arguments(resolved_name, resolved_arguments)
-            return await ctx.fastmcp.call_tool(resolved_name, canonical_arguments)
+            try:
+                return await ctx.fastmcp.call_tool(resolved_name, canonical_arguments)
+            except NotFoundError as exc:
+                raise ToolError(
+                    f"Unknown tool: '{resolved_name}'. On the shaped guided surface, do not guess tool names into "
+                    "call_tool(...). Use search_tools(...) first unless the tool is already directly visible."
+                ) from exc
 
         return Tool.from_function(fn=call_tool, name=self._call_tool_name)
 

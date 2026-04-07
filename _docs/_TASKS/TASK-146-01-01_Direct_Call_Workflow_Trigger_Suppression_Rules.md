@@ -1,9 +1,14 @@
 # TASK-146-01-01: Direct-Call Workflow Trigger Suppression Rules
 
 **Parent:** [TASK-146-01](./TASK-146-01_Workflow_Trigger_Boundaries_And_MCP_Guardrail_Coverage.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Depends On:** [TASK-146-01](./TASK-146-01_Workflow_Trigger_Boundaries_And_MCP_Guardrail_Coverage.md)
+
+**Completion Summary:** Completed on 2026-04-07. Heuristic workflow triggering
+is now suppressed when an explicit goal exists but the router intentionally
+chose a no-match/manual path, which prevents false positives such as
+`phone_workflow` appearing during ordinary guided creature blockout edits.
 
 ## Objective
 
@@ -39,4 +44,4 @@ does not unexpectedly pivot into unrelated workflow logic.
 
 ## Status / Board Update
 
-- leaf for the direct-call trigger boundary repair
+- closed on 2026-04-07 with TASK-146

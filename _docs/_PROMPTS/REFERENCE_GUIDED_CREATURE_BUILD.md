@@ -7,6 +7,10 @@ reference images and bounded vision feedback after each checkpoint, regardless
 of whether the configured runtime is `mlx_local` or a supported external
 vision path.
 
+When the client tends to drift, prepend
+[`GUIDED_SESSION_START.md`](./GUIDED_SESSION_START.md) first and treat that
+asset as the generic search-first operating baseline.
+
 ## Best Fit
 
 - low-poly animal / creature blockouts
@@ -66,6 +70,8 @@ Rules:
 - do not assume MLX-only or provider-specific compare behavior; follow the
   runtime that is actually configured for this server
 - do not guess hidden/internal tool names
+- if a tool is not already directly visible, use `search_tools(...)` before
+  `call_tool(...)`
 - use `call_tool(...)` only for tools that are directly visible or were just
   discovered through `search_tools(...)`
 - use the canonical `call_tool(name=..., arguments=...)` wrapper; legacy
