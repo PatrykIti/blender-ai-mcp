@@ -27,6 +27,28 @@ It is not the place for:
 
 Those belong to the FastMCP platform layer and router stack on the server side.
 
+## Runtime Diagnostics
+
+The addon now also keeps one always-on RPC crash-trace for debugging unstable
+Blender/runtime sessions:
+
+- default location:
+  `$(python -c "import tempfile; print(tempfile.gettempdir())")/blender-ai-mcp/`
+- filename pattern:
+  `rpc_trace_YYYYMMDD_HHMMSS_<pid>.jsonl`
+- override directory:
+  `BLENDER_AI_MCP_TRACE_DIR`
+
+The file is newline-delimited JSON and records:
+
+- received RPC commands
+- handler start/completion/error
+- timeout events
+- background job lifecycle events
+
+This trace is meant to answer one practical question after a sudden Blender
+exit: which RPC command was the last one that actually started running?
+
 ## 🛠 Structure (Clean Architecture)
 
 The Addon is layered to separate Blender logic from networking mechanisms.

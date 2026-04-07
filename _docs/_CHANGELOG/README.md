@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [219](./219-2026-04-07-e2e-blender-crash-trace.md) | 2026-04-07 | **E2E Blender crash trace and runtime logs** | - |
 | [218](./218-2026-04-07-camera-aware-view-diagnostics.md) | 2026-04-07 | **Camera-aware view diagnostics** | - |
 | [217](./217-2026-04-07-guided-spatial-scope-and-relation-graphs.md) | 2026-04-07 | **Guided spatial scope and relation graphs** | - |
 | [216](./216-2026-04-07-creature-attachment-seam-coverage.md) | 2026-04-07 | **Creature attachment seam coverage for guided assembled models** | - |

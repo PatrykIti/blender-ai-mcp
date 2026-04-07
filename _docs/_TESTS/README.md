@@ -38,6 +38,27 @@ python3 scripts/run_e2e_tests.py --keep-blender    # Don't kill Blender after te
 python3 scripts/run_e2e_tests.py --quiet           # Don't stream output to console
 ```
 
+Current runner diagnostics written automatically on every automated run:
+
+- Blender stdout/stderr runtime log:
+  `tests/e2e/blender_runtime_YYYYMMDD_HHMMSS.log`
+- pytest session log:
+  `tests/e2e/e2e_test_{PASSED|FAILED}_YYYYMMDD_HHMMSS.log`
+- addon-side RPC crash trace:
+  `/tmp/blender-ai-mcp/rpc_trace_YYYYMMDD_HHMMSS_<pid>.jsonl`
+  unless `BLENDER_AI_MCP_TRACE_DIR` overrides the directory
+
+When Blender disappears mid-run, start from those two artifacts:
+
+- the runner-side `blender_runtime_*.log`
+- the addon-side `rpc_trace_*.jsonl`
+
+Together they usually reveal whether the last visible event was:
+
+- Blender startup/runtime output
+- one specific RPC command entering the addon
+- one specific background job starting/failing
+
 **Manual:**
 ```bash
 # 1. Start Blender with addon enabled

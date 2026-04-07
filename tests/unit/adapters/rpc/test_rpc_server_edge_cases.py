@@ -91,6 +91,21 @@ def test_process_request_unknown_command_and_background_errors(monkeypatch):
     assert unknown_verb["error_code"] == "unknown_background_verb"
 
 
+def test_rpc_server_writes_trace_file(tmp_path, monkeypatch):
+    server = BlenderRpcServer()
+    monkeypatch.setattr(server, "trace_file_path", tmp_path / "rpc_trace.jsonl")
+    monkeypatch.setattr(rpc_module, "bpy", None)
+
+    response = server._process_request({"request_id": "req-1", "cmd": "unknown.cmd", "args": {"foo": "bar"}})
+
+    assert response["status"] == "error"
+    content = server.trace_file_path.read_text(encoding="utf-8")
+    assert '"event": "rpc_received"' in content
+    assert '"event": "rpc_handler_failed"' in content
+    assert '"request_id": "req-1"' in content
+    assert '"cmd": "unknown.cmd"' in content
+
+
 def test_handle_client_invalid_json(monkeypatch):
     server = BlenderRpcServer()
     server.running = True

@@ -162,9 +162,11 @@ def test_run_blender_with_rpc_and_kill_process(monkeypatch):
     kill_calls = []
     monkeypatch.setattr(module.os, "killpg", lambda pgid, sig: kill_calls.append((pgid, sig)))
 
-    started_process, ready = module.run_blender_with_rpc("/Applications/Blender")
+    started_process, ready, runtime_log_path = module.run_blender_with_rpc("/Applications/Blender")
     assert started_process is process
     assert ready is True
+    assert runtime_log_path.name.startswith("blender_runtime_")
+    assert runtime_log_path.exists()
 
     module.kill_blender_process(process)
     assert kill_calls
@@ -184,7 +186,9 @@ def test_save_test_log_and_main_happy_path(tmp_path, monkeypatch):
     monkeypatch.setattr(module, "find_blender_path", lambda _path=None: "/Applications/Blender")
     monkeypatch.setattr(module, "check_addon_installed", lambda _path: False)
     monkeypatch.setattr(module, "install_addon", lambda _path: True)
-    monkeypatch.setattr(module, "run_blender_with_rpc", lambda _path: (MagicMock(), True))
+    runtime_log = e2e_dir / "blender_runtime_test.log"
+    runtime_log.write_text("runtime ok\n", encoding="utf-8")
+    monkeypatch.setattr(module, "run_blender_with_rpc", lambda _path: (MagicMock(), True, runtime_log))
     monkeypatch.setattr(module, "run_e2e_tests", lambda verbose=True: (True, "OK"))
     monkeypatch.setattr(module, "kill_blender_process", lambda process: None)
     monkeypatch.setattr(module.sys, "argv", ["run_e2e_tests.py", "--skip-build", "--quiet"])
@@ -195,6 +199,7 @@ def test_save_test_log_and_main_happy_path(tmp_path, monkeypatch):
     logs = sorted(e2e_dir.glob("e2e_test_PASSED_*.log"))
     assert logs
     assert "Status: PASSED" in logs[0].read_text()
+    assert str(runtime_log) in logs[0].read_text()
 
 
 def test_run_e2e_tests_verbose_streams_output(monkeypatch):
@@ -215,6 +220,21 @@ def test_run_e2e_tests_verbose_streams_output(monkeypatch):
     assert success is True
     assert "line 1" in output
     assert "line 2" in output
+
+
+def test_save_test_log_includes_blender_runtime_tail(tmp_path, monkeypatch):
+    module = _load_script("run_e2e_tests")
+    monkeypatch.setattr(module, "E2E_TESTS_DIR", tmp_path)
+
+    runtime_log = tmp_path / "blender_runtime_123.log"
+    runtime_log.write_text("line a\nline b\nline c\n", encoding="utf-8")
+
+    saved = module.save_test_log("pytest output", False, blender_log_path=runtime_log)
+
+    content = saved.read_text(encoding="utf-8")
+    assert str(runtime_log) in content
+    assert "line a" in content
+    assert "pytest output" in content
 
 
 def test_translate_docs_helpers_cover_local_parsing_paths(tmp_path):
