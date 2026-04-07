@@ -69,6 +69,33 @@ PYTHONPATH=. poetry run pytest tests/e2e/ -v
 ./scripts/run_unit_then_e2e.sh
 ```
 
+## E2E Env Matrix
+
+Use this table as the single quick-reference for environment variables that
+gate or shape the current E2E suites.
+
+| Test family | Required env vars | Optional env vars | Typical command |
+|---|---|---|---|
+| Standard Blender-backed E2E | none if Blender RPC is already reachable on the default host/port | `BLENDER_RPC_HOST`, `BLENDER_RPC_PORT` | `PYTHONPATH=. poetry run pytest tests/e2e/ -v` |
+| Automated addon reinstall + Blender launch flow | none | `--blender-path`, `--skip-build`, `--keep-blender`, `--quiet` CLI flags | `python3 scripts/run_e2e_tests.py` |
+| Real view-variant MLX comparison | `RUN_REAL_VISION_MODEL_COMPARISON=1` | use the repo/runtime MLX model defaults unless you intentionally change local config | `RUN_REAL_VISION_MODEL_COMPARISON=1 poetry run pytest tests/e2e/vision/test_real_view_variant_model_comparison.py -q -m slow` |
+| Real reference-guided creature comparison | `RUN_REAL_REFERENCE_GUIDED_CREATURE_EVAL=1`, `VISION_REFERENCE_FRONT_PATH`, `VISION_REFERENCE_SIDE_PATH` | `VISION_REFERENCE_CREATURE_MODEL` | `RUN_REAL_REFERENCE_GUIDED_CREATURE_EVAL=1 VISION_REFERENCE_FRONT_PATH=/abs/front.png VISION_REFERENCE_SIDE_PATH=/abs/side.png PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_guided_creature_comparison.py -q` |
+| Live OpenRouter/Qwen structured-output smoke | `RUN_REAL_OPENROUTER_QWEN_JSON_MODE=1`, `OPENROUTER_API_KEY` | `VISION_OPENROUTER_MODEL` | `RUN_REAL_OPENROUTER_QWEN_JSON_MODE=1 OPENROUTER_API_KEY=... PYTHONPATH=. poetry run pytest tests/e2e/vision/test_openrouter_qwen_json_mode.py -q -s` |
+| Docker runtime dependency smoke | `RUN_DOCKER_RUNTIME_VISION_SMOKE=1` | `BLENDER_AI_MCP_DOCKER_IMAGE` (defaults to `blender-ai-mcp:local`) | `RUN_DOCKER_RUNTIME_VISION_SMOKE=1 PYTHONPATH=. poetry run pytest tests/e2e/integration/test_docker_runtime_vision_dependencies.py -q` |
+
+OpenRouter/Qwen runtime defaults used by the current repo unless you override
+them:
+
+- `VISION_OPENROUTER_REQUIRE_PARAMETERS=true`
+- `VISION_OPENROUTER_ENABLE_RESPONSE_HEALING=true`
+- `VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN=true`
+
+Source-of-truth pointers:
+
+- env names and defaults: [`.env.example`](../../.env.example)
+- OpenRouter/Gemini runtime examples: [`_docs/_VISION/README.md`](../_VISION/README.md)
+- MCP client/container examples: [`_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`](../_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md)
+
 ---
 
 ## Test Statistics
