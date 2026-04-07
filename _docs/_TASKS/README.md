@@ -3,9 +3,9 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 10 tasks
+- **To Do:** 9 tasks
 - **In Progress:** 0 tasks
-- **Done:** 210
+- **Done:** 211
 - **Superseded:** 10
 
 ## 📐 Board Scope
@@ -38,7 +38,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-130](./TASK-130_Default_Guided_Surface_Bootstrap_Consistency.md) | **Default Guided Surface Bootstrap Consistency** | 🟠 High | Board-level follow-on from the TASK-128 audit. Align the repo's documented "default production" story with the actual bootstrap surface configured in runtime defaults and examples. |
-| [TASK-142](./TASK-142_Creature_Part_Seating_And_Organic_Attachment_Semantics.md) | **Creature Part Seating and Organic Attachment Semantics** | 🔴 High | Board-level follow-on from the same real squirrel run. Move from single-pair attachment semantics to full assembled-creature seam coverage so head, face, torso, tail, and limb masses stop passing as acceptable while still floating apart on the guided creature path. Execution split now lives under `TASK-142-01` through `TASK-142-03`. |
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
@@ -80,6 +79,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
 | [TASK-141](./TASK-141_Guided_Creature_Run_Contract_And_Schema_Drift_Hardening.md) | **Guided Creature Run Contract and Schema Drift Hardening** | 🔴 High | 2026-04-06 |
+| [TASK-142](./TASK-142_Creature_Part_Seating_And_Organic_Attachment_Semantics.md) | **Creature Part Seating and Organic Attachment Semantics** | 🔴 High | 2026-04-07 |
 | [TASK-128](./TASK-128_Reference_Guided_Creature_Build_Surface_And_Perception_Reliability.md) | **Reference-Guided Creature Build Surface and Perception Reliability** | 🔴 High | 2026-04-06 |
 | [TASK-128-01](./TASK-128-01_Guided_Creature_Prompting_Handoff_And_Discovery_Hints.md) | **Guided Creature Prompting, Handoff, and Discovery Hints** | 🔴 High | 2026-04-06 |
 | [TASK-128-02](./TASK-128-02_Deterministic_Silhouette_Analysis_And_Typed_Action_Hints.md) | **Deterministic Silhouette Analysis and Typed Action Hints** | 🔴 High | 2026-04-06 |

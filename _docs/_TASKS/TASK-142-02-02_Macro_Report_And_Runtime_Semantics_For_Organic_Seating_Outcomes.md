@@ -1,8 +1,13 @@
 # TASK-142-02-02: Macro Report and Runtime Semantics for Organic Seating Outcomes
 
 **Parent:** [TASK-142-02](./TASK-142-02_Bounded_Macro_Selection_And_Repair_Behavior_For_Organic_Seating.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** Completed on 2026-04-07. Bounded macro reports and MCP
+structured delivery now keep explicit `attachment_verdict` semantics for
+seated, floating, and intersecting outcomes so overlap removal does not imply
+semantic success for creature-part seams.
 
 ## Objective
 

@@ -2,8 +2,13 @@
 
 **Parent:** [TASK-142-02](./TASK-142-02_Bounded_Macro_Selection_And_Repair_Behavior_For_Organic_Seating.md)
 **Depends On:** [TASK-142-01-02](./TASK-142-01-02_Truth_Followup_And_Correction_Candidate_Attachment_Semantics.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** Completed on 2026-04-07. Implemented deterministic
+macro-family selection for the guided creature seam taxonomy so overlap
+presence alone no longer forces `macro_cleanup_part_intersections` on organic
+attachment cases that need re-seating.
 
 ## Objective
 

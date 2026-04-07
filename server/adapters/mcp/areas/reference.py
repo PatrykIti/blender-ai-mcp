@@ -9,6 +9,7 @@ import base64
 import mimetypes
 import re
 import shutil
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal, cast
@@ -38,6 +39,7 @@ from server.adapters.mcp.contracts.reference import (
 from server.adapters.mcp.contracts.scene import (
     SceneAssembledTargetScopeContract,
     SceneAssertionPayloadContract,
+    SceneAttachmentSemanticsContract,
     SceneCorrectionTruthBundleContract,
     SceneCorrectionTruthPairContract,
     SceneCorrectionTruthSummaryContract,
@@ -108,6 +110,9 @@ _ACCESSORY_ROLE_HINTS: tuple[str, ...] = (
 )
 _HEAD_ROLE_HINTS: tuple[str, ...] = ("head", "skull", "face")
 _BODY_ROLE_HINTS: tuple[str, ...] = ("body", "torso", "trunk", "chest", "abdomen", "pelvis", "hip")
+_SNOUT_ROLE_HINTS: tuple[str, ...] = ("snout", "muzzle")
+_NOSE_ROLE_HINTS: tuple[str, ...] = ("nose", "nostril")
+_EYE_ROLE_HINTS: tuple[str, ...] = ("eye",)
 _FACE_ATTACHMENT_HINTS: tuple[str, ...] = ("ear", "eye", "nose", "snout", "whisker")
 _TAIL_ROLE_HINTS: tuple[str, ...] = ("tail",)
 _LIMB_ROLE_HINTS: tuple[str, ...] = (
@@ -132,6 +137,7 @@ _LIMB_ROLE_HINTS: tuple[str, ...] = (
     "upperleg",
 )
 _DISTAL_LIMB_HINTS: tuple[str, ...] = ("paw", "foot", "hand", "hoof", "shin", "calf", "forearm", "lowerarm", "lowerleg")
+_PROXIMAL_LIMB_HINTS: tuple[str, ...] = ("upperarm", "upperleg", "thigh", "arm", "leg", "forelimb", "hindlimb")
 _LOW_POLY_HINTS: tuple[str, ...] = ("low poly", "low-poly", "blockout")
 _HARD_SURFACE_HINTS: tuple[str, ...] = (
     "housing",
@@ -200,6 +206,24 @@ _SCULPT_RECOMMENDED_TOOLS: tuple[str, ...] = (
     "sculpt_inflate_region",
     "sculpt_pinch_region",
 )
+
+_CreatureRelationKind = Literal["embedded_attachment", "seated_attachment", "segment_attachment"]
+_CreatureSeamKind = Literal["face_head", "nose_snout", "head_body", "tail_body", "limb_body", "limb_segment"]
+
+
+@dataclass(frozen=True)
+class _PlannedCreatureSeam:
+    part_object: str
+    anchor_object: str
+    relation_kind: _CreatureRelationKind
+    seam_kind: _CreatureSeamKind
+
+
+@dataclass(frozen=True)
+class _PlannedTruthPair:
+    from_object: str
+    to_object: str
+    seam: _PlannedCreatureSeam | None = None
 
 
 def _register_existing_tool(target, tool_name: str):
@@ -783,15 +807,35 @@ def _truth_summary_chars(bundle: SceneCorrectionTruthBundleContract) -> int:
     return len(bundle.model_dump_json())
 
 
-def _check_priority_score(check: SceneCorrectionTruthPairContract) -> tuple[int, int, int, int, str]:
+def _check_priority_score(check: SceneCorrectionTruthPairContract) -> tuple[int, int, int, int, int, str]:
     overlap_score = 3 if check.overlap is not None and bool(check.overlap.get("overlaps")) else 0
     contact_score = 3 if check.contact_assertion is not None and not check.contact_assertion.passed else 0
     gap_score = 2 if check.gap is not None and str(check.gap.get("relation") or "").lower() == "separated" else 0
     alignment_score = 1 if check.alignment is not None and not bool(check.alignment.get("is_aligned")) else 0
     error_score = 4 if check.error else 0
+    semantics = check.attachment_semantics
+    required_score = 4 if semantics is not None and semantics.required_seam else 0
+    verdict_score = 0
+    seam_score = 0
+    if semantics is not None:
+        if semantics.attachment_verdict == "intersecting":
+            verdict_score = 3
+        elif semantics.attachment_verdict == "floating_gap":
+            verdict_score = 2
+        elif semantics.attachment_verdict == "misaligned_attachment":
+            verdict_score = 1
+        seam_score = {
+            "head_body": 6,
+            "tail_body": 5,
+            "limb_segment": 4,
+            "limb_body": 3,
+            "face_head": 2,
+            "nose_snout": 1,
+        }.get(semantics.seam_kind, 0)
     pair_label = _pair_label(check.from_object, check.to_object)
     return (
-        error_score + overlap_score + contact_score + gap_score + alignment_score,
+        required_score + verdict_score + error_score + overlap_score + contact_score + gap_score + alignment_score,
+        seam_score,
         overlap_score,
         contact_score,
         gap_score + alignment_score,
@@ -801,7 +845,7 @@ def _check_priority_score(check: SceneCorrectionTruthPairContract) -> tuple[int,
 
 def _rebuild_truth_summary(
     *,
-    pairing_strategy: Literal["none", "primary_to_others"],
+    pairing_strategy: Literal["none", "primary_to_others", "required_creature_seams"],
     checks: list[SceneCorrectionTruthPairContract],
 ) -> SceneCorrectionTruthSummaryContract:
     return SceneCorrectionTruthSummaryContract(
@@ -885,7 +929,12 @@ def _macro_candidate_matches_pair(
 ) -> bool:
     arguments = candidate.arguments_hint or {}
     candidate_from = arguments.get("part_object") or arguments.get("left_object") or arguments.get("primary_object")
-    candidate_to = arguments.get("reference_object") or arguments.get("right_object") or arguments.get("support_object")
+    candidate_to = (
+        arguments.get("reference_object")
+        or arguments.get("surface_object")
+        or arguments.get("right_object")
+        or arguments.get("support_object")
+    )
     return (candidate_from == from_object and candidate_to == to_object) or (
         candidate_from == to_object and candidate_to == from_object
     )
@@ -1231,6 +1280,11 @@ def _dedupe_names(values: list[str]) -> list[str]:
     return result
 
 
+def _name_role_tokens(object_name: str) -> list[str]:
+    normalized = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", object_name.strip())
+    return [token for token in re.split(r"[^a-zA-Z0-9]+", normalized.lower()) if token]
+
+
 def _has_name_hint(object_name: str, hints: tuple[str, ...]) -> bool:
     normalized = object_name.strip().lower()
     return any(hint in normalized for hint in hints)
@@ -1242,6 +1296,18 @@ def _is_head_like(object_name: str) -> bool:
 
 def _is_body_like(object_name: str) -> bool:
     return _has_name_hint(object_name, _BODY_ROLE_HINTS)
+
+
+def _is_snout_like(object_name: str) -> bool:
+    return _has_name_hint(object_name, _SNOUT_ROLE_HINTS)
+
+
+def _is_nose_like(object_name: str) -> bool:
+    return _has_name_hint(object_name, _NOSE_ROLE_HINTS)
+
+
+def _is_eye_like(object_name: str) -> bool:
+    return _has_name_hint(object_name, _EYE_ROLE_HINTS)
 
 
 def _is_face_attachment(object_name: str) -> bool:
@@ -1260,16 +1326,255 @@ def _is_distal_limb_like(object_name: str) -> bool:
     return _has_name_hint(object_name, _DISTAL_LIMB_HINTS)
 
 
+def _is_proximal_limb_like(object_name: str) -> bool:
+    return _has_name_hint(object_name, _PROXIMAL_LIMB_HINTS) and not _is_distal_limb_like(object_name)
+
+
+def _select_role_anchor(object_names: list[str]) -> str | None:
+    if not object_names:
+        return None
+    return _select_scope_primary_target(object_names)
+
+
+def _name_side_hint(object_name: str) -> Literal["left", "right"] | None:
+    normalized = object_name.strip().lower()
+    if (
+        normalized.endswith("left")
+        or normalized.endswith("_l")
+        or normalized.endswith(".l")
+        or re.search(r"(?:^|[_\-.])left(?:$|[_\-.])", normalized)
+        or re.search(r"(?:^|[_\-.])l(?:$|[_\-.])", normalized)
+    ):
+        return "left"
+    if (
+        normalized.endswith("right")
+        or normalized.endswith("_r")
+        or normalized.endswith(".r")
+        or re.search(r"(?:^|[_\-.])right(?:$|[_\-.])", normalized)
+        or re.search(r"(?:^|[_\-.])r(?:$|[_\-.])", normalized)
+    ):
+        return "right"
+    return None
+
+
+def _limb_chain_hint(object_name: str) -> Literal["fore", "hind"] | None:
+    normalized = object_name.strip().lower()
+    if any(token in normalized for token in ("fore", "front")):
+        return "fore"
+    if any(token in normalized for token in ("hind", "rear", "back")):
+        return "hind"
+    return None
+
+
+def _limb_match_score(part_object: str, anchor_object: str) -> tuple[int, int, int, str]:
+    same_side = (
+        1 if _name_side_hint(part_object) == _name_side_hint(anchor_object) and _name_side_hint(part_object) else 0
+    )
+    same_chain = (
+        1 if _limb_chain_hint(part_object) == _limb_chain_hint(anchor_object) and _limb_chain_hint(part_object) else 0
+    )
+    proximal_bonus = 1 if _is_proximal_limb_like(anchor_object) else 0
+    return (same_side, same_chain, proximal_bonus, anchor_object.lower())
+
+
+def _select_limb_anchor_for_distal(part_object: str, candidate_objects: list[str]) -> str | None:
+    if not candidate_objects:
+        return None
+    return max(candidate_objects, key=lambda name: _limb_match_score(part_object, name))
+
+
+def _preferred_attachment_macro(
+    relation_kind: _CreatureRelationKind,
+) -> Literal["macro_attach_part_to_surface", "macro_align_part_with_contact"]:
+    if relation_kind == "embedded_attachment":
+        return "macro_attach_part_to_surface"
+    return "macro_align_part_with_contact"
+
+
+def _append_creature_seam(
+    seams: list[_PlannedCreatureSeam],
+    seen_pairs: set[tuple[str, str]],
+    *,
+    part_object: str,
+    anchor_object: str,
+    relation_kind: _CreatureRelationKind,
+    seam_kind: _CreatureSeamKind,
+) -> None:
+    pair_key = (part_object, anchor_object)
+    if part_object == anchor_object or pair_key in seen_pairs:
+        return
+    seen_pairs.add(pair_key)
+    seams.append(
+        _PlannedCreatureSeam(
+            part_object=part_object,
+            anchor_object=anchor_object,
+            relation_kind=relation_kind,
+            seam_kind=seam_kind,
+        )
+    )
+
+
+def _required_creature_seams(scope: SceneAssembledTargetScopeContract) -> list[_PlannedCreatureSeam]:
+    object_names = list(scope.object_names or [])
+    if len(object_names) < 2:
+        return []
+
+    heads = [name for name in object_names if _is_head_like(name)]
+    bodies = [name for name in object_names if _is_body_like(name)]
+    snouts = [name for name in object_names if _is_snout_like(name)]
+    noses = [name for name in object_names if _is_nose_like(name)]
+    tails = [name for name in object_names if _is_tail_like(name)]
+    eyes = [name for name in object_names if _is_eye_like(name)]
+    face_attachments = [
+        name
+        for name in object_names
+        if _is_face_attachment(name) and not _is_eye_like(name) and not _is_nose_like(name) and not _is_snout_like(name)
+    ]
+    limbs = [name for name in object_names if _is_limb_like(name)]
+
+    head_anchor = _select_role_anchor(heads)
+    body_anchor = _select_role_anchor(bodies)
+    snout_anchor = _select_role_anchor(snouts)
+
+    seams: list[_PlannedCreatureSeam] = []
+    seen_pairs: set[tuple[str, str]] = set()
+
+    if head_anchor is not None and body_anchor is not None:
+        _append_creature_seam(
+            seams,
+            seen_pairs,
+            part_object=head_anchor,
+            anchor_object=body_anchor,
+            relation_kind="segment_attachment",
+            seam_kind="head_body",
+        )
+
+    if head_anchor is not None:
+        for eye_name in eyes:
+            _append_creature_seam(
+                seams,
+                seen_pairs,
+                part_object=eye_name,
+                anchor_object=head_anchor,
+                relation_kind="seated_attachment",
+                seam_kind="face_head",
+            )
+        for face_name in face_attachments:
+            _append_creature_seam(
+                seams,
+                seen_pairs,
+                part_object=face_name,
+                anchor_object=head_anchor,
+                relation_kind="embedded_attachment",
+                seam_kind="face_head",
+            )
+        for snout_name in snouts:
+            _append_creature_seam(
+                seams,
+                seen_pairs,
+                part_object=snout_name,
+                anchor_object=head_anchor,
+                relation_kind="embedded_attachment",
+                seam_kind="face_head",
+            )
+        if snout_anchor is None:
+            for nose_name in noses:
+                _append_creature_seam(
+                    seams,
+                    seen_pairs,
+                    part_object=nose_name,
+                    anchor_object=head_anchor,
+                    relation_kind="embedded_attachment",
+                    seam_kind="face_head",
+                )
+
+    if snout_anchor is not None:
+        for nose_name in noses:
+            _append_creature_seam(
+                seams,
+                seen_pairs,
+                part_object=nose_name,
+                anchor_object=snout_anchor,
+                relation_kind="embedded_attachment",
+                seam_kind="nose_snout",
+            )
+
+    if body_anchor is not None:
+        for tail_name in tails:
+            _append_creature_seam(
+                seams,
+                seen_pairs,
+                part_object=tail_name,
+                anchor_object=body_anchor,
+                relation_kind="segment_attachment",
+                seam_kind="tail_body",
+            )
+
+    distal_limbs = [name for name in limbs if _is_distal_limb_like(name)]
+    proximal_limbs = [name for name in limbs if _is_proximal_limb_like(name)]
+    remaining_limb_bodies: list[str] = []
+
+    for limb_name in limbs:
+        if limb_name in distal_limbs:
+            anchor_name = _select_limb_anchor_for_distal(
+                limb_name,
+                [candidate for candidate in proximal_limbs if candidate != limb_name],
+            )
+            if anchor_name is not None:
+                _append_creature_seam(
+                    seams,
+                    seen_pairs,
+                    part_object=limb_name,
+                    anchor_object=anchor_name,
+                    relation_kind="segment_attachment",
+                    seam_kind="limb_segment",
+                )
+                continue
+        remaining_limb_bodies.append(limb_name)
+
+    if body_anchor is not None:
+        for limb_name in remaining_limb_bodies:
+            _append_creature_seam(
+                seams,
+                seen_pairs,
+                part_object=limb_name,
+                anchor_object=body_anchor,
+                relation_kind="segment_attachment",
+                seam_kind="limb_body",
+            )
+
+    seam_priority = {
+        "head_body": 60,
+        "tail_body": 50,
+        "limb_segment": 45,
+        "limb_body": 40,
+        "face_head": 30,
+        "nose_snout": 25,
+    }
+    return sorted(
+        seams,
+        key=lambda seam: (
+            -seam_priority.get(seam.seam_kind, 0),
+            seam.part_object.lower(),
+            seam.anchor_object.lower(),
+        ),
+    )
+
+
 def _attachment_relation(
     from_object: str,
     to_object: str,
-) -> tuple[Literal["embedded_attachment", "seated_attachment", "segment_attachment"], str, str] | None:
+) -> tuple[_CreatureRelationKind, str, str] | None:
+    if _is_nose_like(from_object) and _is_snout_like(to_object):
+        return "embedded_attachment", from_object, to_object
+    if _is_nose_like(to_object) and _is_snout_like(from_object):
+        return "embedded_attachment", to_object, from_object
     if _is_face_attachment(from_object) and _is_head_like(to_object):
-        relation_kind: Literal["embedded_attachment", "seated_attachment", "segment_attachment"]
-        relation_kind = "seated_attachment" if _has_name_hint(from_object, ("eye",)) else "embedded_attachment"
+        relation_kind: _CreatureRelationKind
+        relation_kind = "seated_attachment" if _is_eye_like(from_object) else "embedded_attachment"
         return relation_kind, from_object, to_object
     if _is_face_attachment(to_object) and _is_head_like(from_object):
-        relation_kind = "seated_attachment" if _has_name_hint(to_object, ("eye",)) else "embedded_attachment"
+        relation_kind = "seated_attachment" if _is_eye_like(to_object) else "embedded_attachment"
         return relation_kind, to_object, from_object
     if _is_head_like(from_object) and _is_body_like(to_object):
         return "segment_attachment", from_object, to_object
@@ -1286,6 +1591,20 @@ def _attachment_relation(
             return "segment_attachment", from_object, to_object
         return "segment_attachment", to_object, from_object
     return None
+
+
+def _attachment_seam_kind(part_object: str, anchor_object: str) -> _CreatureSeamKind:
+    if _is_nose_like(part_object) and _is_snout_like(anchor_object):
+        return "nose_snout"
+    if _is_head_like(part_object) and _is_body_like(anchor_object):
+        return "head_body"
+    if _is_tail_like(part_object) and _is_body_like(anchor_object):
+        return "tail_body"
+    if _is_limb_like(part_object) and _is_limb_like(anchor_object):
+        return "limb_segment"
+    if _is_limb_like(part_object) and _is_body_like(anchor_object):
+        return "limb_body"
+    return "face_head"
 
 
 def _attachment_item_summary(
@@ -1345,13 +1664,23 @@ def _resolve_capture_scope(
 
 def _name_anchor_weight(object_name: str) -> int:
     normalized = object_name.strip().lower()
+    tokens = _name_role_tokens(object_name)
+    trailing_token = tokens[-1] if tokens else ""
     score = 0
     for token, weight in _ANCHOR_ROLE_HINTS:
-        if token in normalized:
-            score += weight
+        if trailing_token == token:
+            score += weight * 3
+        elif token in tokens:
+            score += max(1, weight // 3)
+        elif token in normalized:
+            score += max(1, weight // 4)
     for token in _ACCESSORY_ROLE_HINTS:
-        if token in normalized:
-            score -= 30
+        if trailing_token == token:
+            score -= 40
+        elif token in tokens:
+            score -= 10
+        elif token in normalized:
+            score -= 15
     return score
 
 
@@ -1421,13 +1750,29 @@ def _assembled_target_scope(
 
 def _truth_bundle_pairs(
     scope: SceneAssembledTargetScopeContract,
-) -> tuple[Literal["none", "primary_to_others"], list[tuple[str, str]]]:
+) -> tuple[Literal["none", "primary_to_others", "required_creature_seams"], list[_PlannedTruthPair]]:
     object_names = list(scope.object_names or [])
-    if len(object_names) < 2 or scope.primary_target is None:
+    if len(object_names) < 2:
         return "none", []
 
+    required_seams = _required_creature_seams(scope)
+    if required_seams:
+        return (
+            "required_creature_seams",
+            [
+                _PlannedTruthPair(
+                    from_object=seam.part_object,
+                    to_object=seam.anchor_object,
+                    seam=seam,
+                )
+                for seam in required_seams
+            ],
+        )
+
+    if scope.primary_target is None:
+        return "none", []
     anchor = scope.primary_target
-    pairs = [(anchor, name) for name in object_names if name != anchor]
+    pairs = [_PlannedTruthPair(from_object=anchor, to_object=name) for name in object_names if name != anchor]
     return ("primary_to_others", pairs) if pairs else ("none", [])
 
 
@@ -1442,7 +1787,9 @@ def _build_correction_truth_bundle(
     separated_pairs = 0
     misaligned_pairs = 0
 
-    for from_object, to_object in pairs:
+    for pair in pairs:
+        from_object = pair.from_object
+        to_object = pair.to_object
         error: str | None = None
         gap = None
         alignment = None
@@ -1467,6 +1814,41 @@ def _build_correction_truth_bundle(
         if contact_assertion is not None and not contact_assertion.passed:
             contact_failures += 1
 
+        seam = pair.seam
+        attachment_relation = _attachment_relation(from_object, to_object) if seam is None else None
+        semantics_contract: SceneAttachmentSemanticsContract | None = None
+        if seam is not None or attachment_relation is not None:
+            relation_kind: _CreatureRelationKind
+            part_object: str
+            anchor_object: str
+            seam_kind: _CreatureSeamKind
+            if seam is not None:
+                relation_kind = seam.relation_kind
+                part_object = seam.part_object
+                anchor_object = seam.anchor_object
+                seam_kind = seam.seam_kind
+                required_seam = True
+            else:
+                relation_kind, part_object, anchor_object = cast(
+                    tuple[_CreatureRelationKind, str, str], attachment_relation
+                )
+                seam_kind = _attachment_seam_kind(part_object, anchor_object)
+                required_seam = False
+            semantics_contract = SceneAttachmentSemanticsContract(
+                relation_kind=relation_kind,
+                seam_kind=seam_kind,
+                part_object=part_object,
+                anchor_object=anchor_object,
+                required_seam=required_seam,
+                preferred_macro=_preferred_attachment_macro(relation_kind),
+                attachment_verdict=_attachment_verdict(
+                    gap_payload=gap,
+                    alignment_payload=alignment,
+                    overlap_payload=overlap,
+                    contact_assertion=contact_assertion,
+                ),
+            )
+
         checks.append(
             SceneCorrectionTruthPairContract(
                 from_object=from_object,
@@ -1475,6 +1857,7 @@ def _build_correction_truth_bundle(
                 alignment=alignment,
                 overlap=overlap,
                 contact_assertion=contact_assertion,
+                attachment_semantics=semantics_contract,
                 error=error,
             )
         )
@@ -1521,6 +1904,74 @@ def _contact_semantics_note(
     return None
 
 
+def _attachment_verdict(
+    *,
+    gap_payload: dict[str, Any] | None,
+    alignment_payload: dict[str, Any] | None,
+    overlap_payload: dict[str, Any] | None,
+    contact_assertion: SceneAssertionPayloadContract | None,
+) -> Literal["seated_contact", "floating_gap", "intersecting", "misaligned_attachment", "needs_followup"]:
+    if overlap_payload is not None and bool(overlap_payload.get("overlaps")):
+        return "intersecting"
+    if contact_assertion is not None:
+        if contact_assertion.passed:
+            if alignment_payload is not None and not bool(alignment_payload.get("is_aligned")):
+                return "misaligned_attachment"
+            return "seated_contact"
+        actual_relation = str((contact_assertion.actual or {}).get("relation") or "").lower()
+        if actual_relation == "separated":
+            return "floating_gap"
+        if actual_relation == "overlapping":
+            return "intersecting"
+    if gap_payload is not None and str(gap_payload.get("relation") or "").lower() == "separated":
+        return "floating_gap"
+    if alignment_payload is not None and not bool(alignment_payload.get("is_aligned")):
+        return "misaligned_attachment"
+    return "needs_followup"
+
+
+def _preferred_attach_surface_axis(
+    *,
+    gap_payload: dict[str, Any] | None,
+    alignment_payload: dict[str, Any] | None,
+) -> Literal["X", "Y", "Z"]:
+    axis_gap = (gap_payload or {}).get("axis_gap")
+    if isinstance(axis_gap, dict) and axis_gap:
+        axis_by_gap = sorted(
+            ((str(axis_name).upper(), float(axis_value)) for axis_name, axis_value in axis_gap.items()),
+            key=lambda item: (item[1], item[0]),
+            reverse=True,
+        )
+        if axis_by_gap and axis_by_gap[0][0] in {"X", "Y", "Z"}:
+            return cast(Literal["X", "Y", "Z"], axis_by_gap[0][0])
+
+    deltas = (alignment_payload or {}).get("deltas")
+    if isinstance(deltas, dict) and deltas:
+        axis_by_delta = sorted(
+            ((str(axis_name).upper(), abs(float(axis_value))) for axis_name, axis_value in deltas.items()),
+            key=lambda item: (item[1], item[0]),
+            reverse=True,
+        )
+        if axis_by_delta and axis_by_delta[0][0] in {"X", "Y", "Z"}:
+            return cast(Literal["X", "Y", "Z"], axis_by_delta[0][0])
+
+    return "X"
+
+
+def _preferred_attach_surface_side(
+    *,
+    axis_name: Literal["X", "Y", "Z"],
+    alignment_payload: dict[str, Any] | None,
+) -> Literal["positive", "negative"]:
+    deltas = (alignment_payload or {}).get("deltas")
+    if not isinstance(deltas, dict):
+        return "positive"
+    axis_delta = deltas.get(axis_name.lower())
+    if axis_delta is None:
+        return "positive"
+    return "positive" if float(axis_delta) >= 0.0 else "negative"
+
+
 def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTruthFollowupContract:
     if bundle.summary.pair_count == 0:
         return SceneTruthFollowupContract(
@@ -1537,13 +1988,12 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
     focus_pairs: list[str] = []
     seen_pairs: set[str] = set()
     pair_issue_kinds: dict[str, set[str]] = {}
-    pair_attachment_relations: dict[
-        str,
-        tuple[Literal["embedded_attachment", "seated_attachment", "segment_attachment"], str, str],
-    ] = {}
+    pair_attachment_semantics: dict[str, SceneAttachmentSemanticsContract] = {}
+    pair_checks_by_label: dict[str, SceneCorrectionTruthPairContract] = {}
 
     for check in bundle.checks:
         pair_label = _pair_label(check.from_object, check.to_object)
+        pair_checks_by_label[pair_label] = check
         pair_items: list[SceneTruthFollowupItemContract] = []
         if check.error:
             pair_items.append(
@@ -1557,21 +2007,38 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
             )
         else:
             contact_note = _contact_semantics_note(gap_payload=check.gap, contact_assertion=check.contact_assertion)
+            attachment_semantics = check.attachment_semantics
             attachment_relation = _attachment_relation(check.from_object, check.to_object)
+            if attachment_semantics is None and attachment_relation is not None:
+                relation_kind, part_object, anchor_object = attachment_relation
+                attachment_semantics = SceneAttachmentSemanticsContract(
+                    relation_kind=relation_kind,
+                    seam_kind=_attachment_seam_kind(part_object, anchor_object),
+                    part_object=part_object,
+                    anchor_object=anchor_object,
+                    required_seam=False,
+                    preferred_macro=_preferred_attachment_macro(relation_kind),
+                    attachment_verdict=_attachment_verdict(
+                        gap_payload=check.gap,
+                        alignment_payload=check.alignment,
+                        overlap_payload=check.overlap,
+                        contact_assertion=check.contact_assertion,
+                    ),
+                )
             has_contact_failure = check.contact_assertion is not None and not check.contact_assertion.passed
             has_gap = check.gap is not None and str(check.gap.get("relation") or "").lower() == "separated"
             has_overlap = check.overlap is not None and bool(check.overlap.get("overlaps"))
             has_alignment_issue = check.alignment is not None and not bool(check.alignment.get("is_aligned"))
-            if attachment_relation is not None and (
+            if attachment_semantics is not None and (
                 has_contact_failure or has_gap or has_overlap or has_alignment_issue
             ):
-                pair_attachment_relations[pair_label] = attachment_relation
+                pair_attachment_semantics[pair_label] = attachment_semantics
                 pair_items.append(
                     SceneTruthFollowupItemContract(
                         kind="attachment",
                         summary=_attachment_item_summary(
                             pair_label=pair_label,
-                            relation_kind=attachment_relation[0],
+                            relation_kind=attachment_semantics.relation_kind,
                             has_overlap=has_overlap,
                             has_gap=has_gap,
                             has_contact_failure=has_contact_failure,
@@ -1641,11 +2108,7 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
             if pair_label not in seen_pairs:
                 seen_pairs.add(pair_label)
                 focus_pairs.append(pair_label)
-            pair_issue_kinds[pair_label] = {
-                item.kind
-                for item in items
-                if item.from_object == check.from_object and item.to_object == check.to_object
-            }
+            pair_issue_kinds[pair_label] = {item.kind for item in pair_items}
 
     for pair_label in focus_pairs:
         issue_kinds = pair_issue_kinds.get(pair_label, set())
@@ -1654,20 +2117,51 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
         if "measurement_error" in issue_kinds:
             continue
         from_object, to_object = pair_label.split(" -> ", 1)
-        attachment_relation = pair_attachment_relations.get(pair_label)
-        if attachment_relation is not None:
-            _relation_kind, part_object, reference_object = attachment_relation
+        pair_check = pair_checks_by_label.get(pair_label)
+        attachment_semantics = pair_attachment_semantics.get(pair_label)
+        if attachment_semantics is not None:
+            preferred_macro = attachment_semantics.preferred_macro or _preferred_attachment_macro(
+                attachment_semantics.relation_kind
+            )
+            if preferred_macro == "macro_attach_part_to_surface":
+                surface_axis = _preferred_attach_surface_axis(
+                    gap_payload=pair_check.gap if pair_check is not None else None,
+                    alignment_payload=pair_check.alignment if pair_check is not None else None,
+                )
+                surface_side = _preferred_attach_surface_side(
+                    axis_name=surface_axis,
+                    alignment_payload=pair_check.alignment if pair_check is not None else None,
+                )
+                macro_candidates.append(
+                    SceneRepairMacroCandidateContract(
+                        macro_name="macro_attach_part_to_surface",
+                        reason=(
+                            "Use a bounded surface-seating move for this embedded creature seam instead of treating "
+                            "it as generic overlap cleanup."
+                        ),
+                        priority="high",
+                        arguments_hint={
+                            "part_object": attachment_semantics.part_object,
+                            "surface_object": attachment_semantics.anchor_object,
+                            "surface_axis": surface_axis,
+                            "surface_side": surface_side,
+                            "align_mode": "center",
+                            "gap": 0.0,
+                        },
+                    )
+                )
+                continue
             macro_candidates.append(
                 SceneRepairMacroCandidateContract(
                     macro_name="macro_align_part_with_contact",
                     reason=(
-                        "Use a bounded attachment/contact repair for this organic pair instead of relying on generic "
+                        "Use a bounded attachment/contact repair for this creature seam instead of relying on generic "
                         "overlap cleanup alone."
                     ),
                     priority="high",
                     arguments_hint={
-                        "part_object": part_object,
-                        "reference_object": reference_object,
+                        "part_object": attachment_semantics.part_object,
+                        "reference_object": attachment_semantics.anchor_object,
                         "target_relation": "contact",
                         "align_mode": "none",
                         "preserve_side": True,
@@ -1988,9 +2482,16 @@ async def _run_stage_checkpoint_compare(
         max_tokens=runtime_max_tokens,
         model_name=runtime_model_name,
     )
+    if truth_bundle.summary.pairing_strategy == "required_creature_seams":
+        pair_budget = max(pair_budget, min(truth_bundle.summary.pair_count, 6))
+        truth_char_share = 1.0
+        truth_char_floor = 6000
+    else:
+        truth_char_share = 0.5
+        truth_char_floor = 1800
     max_truth_chars = min(
-        int(VISION_ASSIST_POLICY.max_input_chars * 0.5),
-        max(1800, runtime_max_tokens * 12),
+        int(VISION_ASSIST_POLICY.max_input_chars * truth_char_share),
+        max(truth_char_floor, runtime_max_tokens * 12),
     )
     budgeted_truth_bundle, scope_trimmed = _trim_truth_bundle_to_budget(
         truth_bundle=truth_bundle,

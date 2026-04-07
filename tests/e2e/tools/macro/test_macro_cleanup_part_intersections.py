@@ -76,3 +76,39 @@ def test_macro_cleanup_part_intersections_separates_overlap_to_contact(
         assert result["actions_taken"][-1]["details"]["attachment_verdict"] == "seated_contact"
     except RuntimeError as e:
         _skip_if_blender_unavailable(e)
+
+
+def test_macro_cleanup_part_intersections_separates_forelimb_body_overlap_to_contact(
+    clean_scene,
+    scene_handler,
+    modeling_handler,
+    macro_handler,
+):
+    body_name = "OverlapForelimbBody"
+    forelimb_name = "OverlapForelimb"
+
+    try:
+        modeling_handler.create_primitive(primitive_type="CUBE", name=body_name, size=2.0, location=[0.0, 0.0, 0.0])
+        modeling_handler.create_primitive(
+            primitive_type="CUBE",
+            name=forelimb_name,
+            size=1.0,
+            location=[1.0, 0.0, -1.0],
+        )
+        modeling_handler.transform_object(name=forelimb_name, scale=[0.6, 0.3, 0.4])
+
+        result = macro_handler.cleanup_part_intersections(
+            part_object=forelimb_name,
+            reference_object=body_name,
+            max_push=0.3,
+        )
+
+        overlap = scene_handler.measure_overlap(forelimb_name, body_name)
+        contact = scene_handler.assert_contact(forelimb_name, body_name, max_gap=0.001, allow_overlap=False)
+
+        assert result["status"] == "success"
+        assert overlap["overlaps"] is False
+        assert contact["passed"] is True
+        assert result["actions_taken"][-1]["details"]["attachment_verdict"] == "seated_contact"
+    except RuntimeError as e:
+        _skip_if_blender_unavailable(e)

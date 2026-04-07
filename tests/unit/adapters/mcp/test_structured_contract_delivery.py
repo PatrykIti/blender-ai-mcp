@@ -341,7 +341,13 @@ class MacroHandler:
             "macro_name": "macro_attach_part_to_surface",
             "intent": "attach Ear to Head",
             "actions_taken": [
-                {"status": "applied", "action": "attach_part_to_surface", "tool_name": "modeling_transform_object"}
+                {"status": "applied", "action": "attach_part_to_surface", "tool_name": "modeling_transform_object"},
+                {
+                    "status": "applied",
+                    "action": "evaluate_attachment_outcome",
+                    "tool_name": "scene_assert_contact",
+                    "details": {"attachment_verdict": "seated_contact"},
+                },
             ],
             "objects_modified": [kwargs.get("part_object", "Ear")],
             "verification_recommended": [
@@ -356,7 +362,13 @@ class MacroHandler:
             "macro_name": "macro_align_part_with_contact",
             "intent": "repair Ear relative to Head",
             "actions_taken": [
-                {"status": "applied", "action": "align_part_with_contact", "tool_name": "modeling_transform_object"}
+                {"status": "applied", "action": "align_part_with_contact", "tool_name": "modeling_transform_object"},
+                {
+                    "status": "applied",
+                    "action": "evaluate_attachment_outcome",
+                    "tool_name": "scene_assert_contact",
+                    "details": {"attachment_verdict": "seated_contact"},
+                },
             ],
             "objects_modified": [kwargs.get("part_object", "Ear")],
             "verification_recommended": [
@@ -412,7 +424,13 @@ class MacroHandler:
                     "status": "applied",
                     "action": "cleanup_part_intersections",
                     "tool_name": "modeling_transform_object",
-                }
+                },
+                {
+                    "status": "applied",
+                    "action": "evaluate_attachment_outcome",
+                    "tool_name": "scene_assert_contact",
+                    "details": {"attachment_verdict": "seated_contact"},
+                },
             ],
             "objects_modified": [kwargs.get("part_object", "Horn")],
             "verification_recommended": [
@@ -770,6 +788,7 @@ def test_macro_attach_part_to_surface_delivers_structured_content(monkeypatch):
     payload = _unwrap_structured(result)
     assert payload["macro_name"] == "macro_attach_part_to_surface"
     assert payload["actions_taken"][0]["action"] == "attach_part_to_surface"
+    assert payload["actions_taken"][-1]["details"]["attachment_verdict"] == "seated_contact"
     assert payload["requires_followup"] is True
 
 
@@ -795,6 +814,7 @@ def test_macro_align_part_with_contact_delivers_structured_content(monkeypatch):
     payload = _unwrap_structured(result)
     assert payload["macro_name"] == "macro_align_part_with_contact"
     assert payload["actions_taken"][0]["action"] == "align_part_with_contact"
+    assert payload["actions_taken"][-1]["details"]["attachment_verdict"] == "seated_contact"
     assert payload["requires_followup"] is True
 
 
@@ -871,6 +891,7 @@ def test_macro_cleanup_part_intersections_delivers_structured_content(monkeypatc
     payload = _unwrap_structured(result)
     assert payload["macro_name"] == "macro_cleanup_part_intersections"
     assert payload["actions_taken"][0]["action"] == "cleanup_part_intersections"
+    assert payload["actions_taken"][-1]["details"]["attachment_verdict"] == "seated_contact"
     assert payload["requires_followup"] is True
 
 

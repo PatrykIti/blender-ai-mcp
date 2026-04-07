@@ -21,6 +21,20 @@ class FakeSceneTool:
                 "center": [1.25, 0.0, 1.0],
                 "dimensions": [0.2, 0.4, 0.6],
             },
+            "Body": {
+                "object_name": "Body",
+                "min": [-1.0, -1.0, -1.0],
+                "max": [1.0, 1.0, 1.0],
+                "center": [0.0, 0.0, 0.0],
+                "dimensions": [2.0, 2.0, 2.0],
+            },
+            "Forelimb": {
+                "object_name": "Forelimb",
+                "min": [0.7, -0.15, -1.35],
+                "max": [1.3, 0.15, -1.05],
+                "center": [1.0, 0.0, -1.2],
+                "dimensions": [0.6, 0.3, 0.3],
+            },
         }
 
     def get_bounding_box(self, object_name, world_space=True):
@@ -162,6 +176,24 @@ def test_macro_align_part_with_contact_blocks_when_nudge_exceeds_bound():
     assert result["macro_name"] == "macro_align_part_with_contact"
     assert modeling.calls == []
     assert "exceeds max_nudge" in (result["error"] or "")
+
+
+def test_macro_align_part_with_contact_repairs_forelimb_body_gap_as_attachment():
+    scene = FakeSceneTool()
+    modeling = FakeModelingTool(scene)
+    handler = MacroToolHandler(scene, modeling)
+
+    result = handler.align_part_with_contact(
+        part_object="Forelimb",
+        reference_object="Body",
+        target_relation="contact",
+        align_mode="none",
+        max_nudge=0.2,
+    )
+
+    assert result["status"] == "success"
+    assert modeling.calls[0][1]["location"] == pytest.approx([1.0, 0.0, -1.15], abs=1e-9)
+    assert result["actions_taken"][-1]["details"]["attachment_verdict"] == "seated_contact"
 
 
 def test_macro_align_part_with_contact_reports_partial_when_pair_is_still_detached():

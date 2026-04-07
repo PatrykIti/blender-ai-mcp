@@ -1,9 +1,19 @@
 # TASK-142: Creature Part Seating and Organic Attachment Semantics
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** Product Reliability / Organic Part Placement
 **Follow-on After:** [TASK-128](./TASK-128_Reference_Guided_Creature_Build_Surface_And_Perception_Reliability.md)
+
+**Completion Summary:** Completed on 2026-04-07. The guided assembled-creature
+truth path now expands supported collection/object-set scopes into one
+deterministic required seam set for face/head, nose/snout, head/body,
+tail/body, and limb attachments; carries structured attachment semantics and
+attachment verdicts through `truth_bundle`, `truth_followup`, and
+`correction_candidates`; selects bounded macro families by seam type instead of
+reusing overlap cleanup by default; and ships focused unit/docs plus
+Blender-backed assembled-creature E2E coverage for the squirrel-style failure
+mode that motivated this follow-on.
 
 ## Objective
 
@@ -199,3 +209,10 @@ This follow-on does **not** cover:
   promoted independently
 - treat `TASK-142-01` through `TASK-142-03` as the canonical technical
   execution tree for this follow-on
+
+## Validation
+
+- `poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_structured_contract_delivery.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/macro/test_macro_attach_part_to_surface.py tests/unit/tools/macro/test_macro_align_part_with_contact.py tests/unit/tools/macro/test_macro_cleanup_part_intersections.py tests/unit/tools/scene/test_macro_attach_part_to_surface_mcp.py tests/unit/tools/scene/test_macro_align_part_with_contact_mcp.py tests/unit/tools/scene/test_macro_cleanup_part_intersections_mcp.py -q`
+- `poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- `poetry run mypy server/adapters/mcp/areas/reference.py server/adapters/mcp/contracts/scene.py`
+- `poetry run pytest tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py tests/e2e/vision/test_reference_stage_truth_handoff.py`

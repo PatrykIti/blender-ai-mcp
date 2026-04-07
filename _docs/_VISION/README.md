@@ -103,6 +103,24 @@ The repo now has the first implementation scaffolding for the vision layer:
 - assembled creature collection/object-set scopes now avoid obviously
   accessory-first anchors such as ears or eyes when a more structural primary
   target is available later in the set
+- assembled creature truth now also expands the guided-creature scope into one
+  deterministic required seam set instead of only a narrow
+  `primary_to_others` anchor walk when supported head/face/body/tail/limb
+  names are present
+- required creature seam checks now carry structured attachment semantics:
+  - seam kind such as `head_body`, `tail_body`, `limb_body`, `face_head`, or
+    `nose_snout`
+  - attachment verdict such as `seated_contact`, `floating_gap`,
+    `intersecting`, or `misaligned_attachment`
+  - the preferred bounded repair family for that seam
+- `truth_followup` and ranked `correction_candidates` now keep multiple failing
+  required creature seams visible together, so one repaired local pair no
+  longer implies that the assembled creature stage is globally acceptable
+- embedded organic seams such as snout/head or nose/snout now favor
+  `macro_attach_part_to_surface`, while segment/contact seams such as
+  head/body, tail/body, and limb/body continue to favor
+  `macro_align_part_with_contact`; generic overlap cleanup remains the fallback
+  for non-attachment pairs
 - vision `recommended_checks` now keep only canonical MCP tool ids; invented
   labels are dropped and a small alias map is normalized onto canonical names
 - external compare-path diagnostics and `VisionAssistContract` payloads now

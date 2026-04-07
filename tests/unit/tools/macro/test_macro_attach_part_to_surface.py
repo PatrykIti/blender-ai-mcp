@@ -21,6 +21,20 @@ class FakeSceneTool:
                 "center": [0.0, 0.0, 0.3],
                 "dimensions": [0.2, 0.4, 0.6],
             },
+            "Snout": {
+                "object_name": "Snout",
+                "min": [-0.4, -0.25, -0.2],
+                "max": [0.4, 0.25, 0.2],
+                "center": [0.0, 0.0, 0.0],
+                "dimensions": [0.8, 0.5, 0.4],
+            },
+            "Nose": {
+                "object_name": "Nose",
+                "min": [-0.08, -0.08, -0.08],
+                "max": [0.08, 0.08, 0.08],
+                "center": [0.0, 0.0, 0.0],
+                "dimensions": [0.16, 0.16, 0.16],
+            },
         }
 
     def get_bounding_box(self, object_name, world_space=True):
@@ -183,6 +197,27 @@ def test_macro_attach_part_to_surface_seats_part_on_requested_surface():
     assert modeling.calls[0][1]["location"] == pytest.approx([1.1, 0.1, 0.95], abs=1e-9)
     assert any(item["tool_name"] == "scene_measure_gap" for item in result["verification_recommended"])
     assert any(item["tool_name"] == "scene_assert_contact" for item in result["verification_recommended"])
+    assert result["actions_taken"][-1]["details"]["attachment_verdict"] == "seated_contact"
+
+
+def test_macro_attach_part_to_surface_seats_nose_on_snout_surface():
+    scene = FakeSceneTool()
+    modeling = FakeModelingTool(scene)
+    handler = MacroToolHandler(scene, modeling)
+    scene.set_center("Snout", [0.0, 0.0, 1.0])
+    scene.set_center("Nose", [2.0, 2.0, 2.0])
+
+    result = handler.attach_part_to_surface(
+        part_object="Nose",
+        surface_object="Snout",
+        surface_axis="X",
+        surface_side="positive",
+        align_mode="center",
+        gap=0.0,
+    )
+
+    assert result["status"] == "success"
+    assert modeling.calls[0][1]["location"] == pytest.approx([0.48, 0.0, 1.0], abs=1e-9)
     assert result["actions_taken"][-1]["details"]["attachment_verdict"] == "seated_contact"
 
 

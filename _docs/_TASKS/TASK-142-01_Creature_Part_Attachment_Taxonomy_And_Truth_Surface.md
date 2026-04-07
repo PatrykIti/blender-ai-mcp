@@ -1,8 +1,13 @@
 # TASK-142-01: Creature-Part Attachment Taxonomy and Truth Surface
 
 **Parent:** [TASK-142](./TASK-142_Creature_Part_Seating_And_Organic_Attachment_Semantics.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** Completed on 2026-04-07. The repo now has one explicit
+required creature seam taxonomy for guided assembled-creature scope and carries
+that taxonomy into pair planning, truth payloads, and regression coverage
+instead of relying only on primary-anchor pair expansion.
 
 ## Objective
 

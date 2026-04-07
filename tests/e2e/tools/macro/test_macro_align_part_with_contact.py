@@ -143,3 +143,38 @@ def test_macro_align_part_with_contact_repairs_tail_body_gap_as_attachment(
         assert contact["passed"] is True
     except RuntimeError as e:
         _skip_if_blender_unavailable(e)
+
+
+def test_macro_align_part_with_contact_repairs_forelimb_body_gap_as_attachment(
+    clean_scene,
+    scene_handler,
+    modeling_handler,
+    macro_handler,
+):
+    body_name = "RepairForelimbBody"
+    forelimb_name = "RepairForelimb"
+
+    try:
+        modeling_handler.create_primitive(primitive_type="CUBE", name=body_name, size=2.0, location=[0, 0, 0])
+        modeling_handler.create_primitive(
+            primitive_type="CUBE", name=forelimb_name, size=1.0, location=[1.0, 0.0, -1.2]
+        )
+        modeling_handler.transform_object(name=forelimb_name, scale=[0.6, 0.3, 0.3])
+
+        result = macro_handler.align_part_with_contact(
+            part_object=forelimb_name,
+            reference_object=body_name,
+            target_relation="contact",
+            align_mode="none",
+            max_nudge=0.2,
+        )
+
+        gap = scene_handler.measure_gap(forelimb_name, body_name)
+        contact = scene_handler.assert_contact(forelimb_name, body_name, max_gap=0.001)
+
+        assert result["status"] == "success"
+        assert gap["relation"] == "contact"
+        assert contact["passed"] is True
+        assert result["actions_taken"][-1]["details"]["attachment_verdict"] == "seated_contact"
+    except RuntimeError as e:
+        _skip_if_blender_unavailable(e)

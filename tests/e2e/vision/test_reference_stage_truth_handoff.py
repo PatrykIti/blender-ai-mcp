@@ -130,6 +130,7 @@ def test_reference_compare_stage_checkpoint_exposes_truth_bundle_and_followup(
         assert result.assembled_target_scope.scope_kind == "object_set"
         assert result.assembled_target_scope.object_names == [head_name, body_name]
         assert result.truth_bundle is not None
+        assert result.truth_bundle.summary.pairing_strategy == "required_creature_seams"
         assert result.truth_bundle.summary.pair_count == 1
         assert result.truth_bundle.summary.contact_failures == 1
         assert result.truth_bundle.summary.separated_pairs == 1
@@ -213,13 +214,14 @@ def test_reference_compare_stage_checkpoint_prefers_body_anchor_for_multi_part_c
         assert result.assembled_target_scope is not None
         assert result.assembled_target_scope.primary_target == body_name
         assert result.truth_bundle is not None
+        assert result.truth_bundle.summary.pairing_strategy == "required_creature_seams"
         assert result.truth_bundle.summary.pair_count == 2
         assert result.truth_followup is not None
         assert result.truth_followup.focus_pairs == [
-            f"{body_name} -> {head_name}",
-            f"{body_name} -> {tail_name}",
+            f"{head_name} -> {body_name}",
+            f"{tail_name} -> {body_name}",
         ]
         assert result.correction_candidates
-        assert result.correction_candidates[0].focus_pairs[0].startswith(f"{body_name} -> ")
+        assert result.correction_candidates[0].focus_pairs[0].endswith(f"-> {body_name}")
     except RuntimeError as e:
         _skip_if_blender_unavailable(e)

@@ -2,8 +2,14 @@
 
 **Parent:** [TASK-142](./TASK-142_Creature_Part_Seating_And_Organic_Attachment_Semantics.md)
 **Depends On:** [TASK-142-01](./TASK-142-01_Creature_Part_Attachment_Taxonomy_And_Truth_Surface.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** Completed on 2026-04-07. The guided creature path now
+chooses bounded repair families from required seam semantics: embedded seams
+prefer `macro_attach_part_to_surface`, segment/contact seams prefer
+`macro_align_part_with_contact`, and generic overlap cleanup remains the
+fallback for non-attachment pairs.
 
 ## Objective
 

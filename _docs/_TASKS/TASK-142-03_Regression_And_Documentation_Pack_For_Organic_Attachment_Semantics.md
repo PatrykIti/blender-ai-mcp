@@ -2,8 +2,13 @@
 
 **Parent:** [TASK-142](./TASK-142_Creature_Part_Seating_And_Organic_Attachment_Semantics.md)
 **Depends On:** [TASK-142-01](./TASK-142-01_Creature_Part_Attachment_Taxonomy_And_Truth_Surface.md), [TASK-142-02](./TASK-142-02_Bounded_Macro_Selection_And_Repair_Behavior_For_Organic_Seating.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** Completed on 2026-04-07. Added focused unit coverage
+for required seam planning and attachment semantics, added a Blender-backed
+assembled-creature truth-layer pack for multi-pair seam coverage, and aligned
+the operator-facing docs to the shipped attachment verdict model.
 
 ## Objective
 

@@ -2,8 +2,13 @@
 
 **Parent:** [TASK-142-03](./TASK-142-03_Regression_And_Documentation_Pack_For_Organic_Attachment_Semantics.md)
 **Depends On:** [TASK-142-03-01](./TASK-142-03-01_Unit_Regression_Pack_For_Creature_Part_Seating_Truth.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** Completed on 2026-04-07. Blender-backed assembled
+creature E2E coverage now proves multi-pair seam reporting for face/head,
+torso/body, and limb/body relations, and the prompt/docs layer now uses the
+same required-seam and attachment-verdict vocabulary as the runtime.
 
 ## Objective
 

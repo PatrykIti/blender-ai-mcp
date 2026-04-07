@@ -16,7 +16,13 @@ def test_macro_attach_part_to_surface_mcp_tool_returns_structured_contract(monke
                 "macro_name": "macro_attach_part_to_surface",
                 "intent": "Attach 'Ear' to the positive X surface of 'Head'",
                 "actions_taken": [
-                    {"status": "applied", "action": "attach_part_to_surface", "tool_name": "modeling_transform_object"}
+                    {"status": "applied", "action": "attach_part_to_surface", "tool_name": "modeling_transform_object"},
+                    {
+                        "status": "applied",
+                        "action": "evaluate_attachment_outcome",
+                        "tool_name": "scene_assert_contact",
+                        "details": {"attachment_verdict": "seated_contact"},
+                    },
                 ],
                 "objects_modified": [kwargs.get("part_object", "Ear")],
                 "verification_recommended": [
@@ -39,3 +45,4 @@ def test_macro_attach_part_to_surface_mcp_tool_returns_structured_contract(monke
     assert isinstance(result, MacroExecutionReportContract)
     assert result.macro_name == "macro_attach_part_to_surface"
     assert result.actions_taken[0].action == "attach_part_to_surface"
+    assert result.actions_taken[-1].details["attachment_verdict"] == "seated_contact"

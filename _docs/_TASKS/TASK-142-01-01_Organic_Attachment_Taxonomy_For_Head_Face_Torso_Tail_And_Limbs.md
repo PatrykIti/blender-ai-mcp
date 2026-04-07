@@ -1,8 +1,13 @@
 # TASK-142-01-01: Organic Attachment Taxonomy for Head, Face, Torso, Tail, and Limbs
 
 **Parent:** [TASK-142-01](./TASK-142-01_Creature_Part_Attachment_Taxonomy_And_Truth_Surface.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** Completed on 2026-04-07. Defined the first bounded
+guided-creature seam taxonomy covering face/head, nose/snout, head/body,
+tail/body, limb/body, and limb-segment relations with deterministic name-based
+matching and explicit embedded vs seated vs segment attachment categories.
 
 ## Objective
 

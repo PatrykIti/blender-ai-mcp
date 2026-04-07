@@ -95,6 +95,14 @@ Rules:
   - or `collection_name="Squirrel"`
   - or no explicit scope if you want to compare the whole assembled
     scene/silhouette
+- on full assembled-creature checkpoints, treat `truth_followup.focus_pairs`
+  as the required creature seam set for the current scope; one improved local
+  pair does not mean the whole creature stage is done
+- read seam outcomes using the explicit attachment verdict model:
+  - `seated_contact`
+  - `floating_gap`
+  - `intersecting`
+  - `misaligned_attachment`
 
 Workflow:
 1. `router_get_status()`
@@ -140,6 +148,12 @@ Workflow:
 13. if `part_segmentation.status == "disabled"`, stay on the silhouette-first
     path; the segmentation sidecar is optional and not part of the default
     guided baseline
+14. when the current issue is an embedded organic seam such as snout/head or
+    nose/snout, prefer `macro_attach_part_to_surface`
+15. when the current issue is head/body, tail/body, or limb/body seating,
+    prefer `macro_align_part_with_contact`
+16. do not treat generic overlap cleanup as success for a creature seam unless
+    the final attachment verdict has also moved to `seated_contact`
 
 At the end of each stage, return only:
 - what was done
@@ -178,6 +192,9 @@ At the end of each stage, return only:
 - `truth_followup.focus_pairs` and `truth_followup.macro_candidates` still
   carry the detailed context when you need to understand which object pair and
   which bounded macro should be the next move
+- for assembled creatures, the seam set should cover at least face/head,
+  torso/body, and limb attachments when those masses are present in the
+  current target scope
 - the optional part-segmentation sidecar is separate from
   `vision_contract_profile` and is disabled by default
 - for the full multi-part creature, do not narrow the final iterations to only

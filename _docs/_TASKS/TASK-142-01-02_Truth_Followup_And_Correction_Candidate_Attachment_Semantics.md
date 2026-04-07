@@ -2,8 +2,13 @@
 
 **Parent:** [TASK-142-01](./TASK-142-01_Creature_Part_Attachment_Taxonomy_And_Truth_Surface.md)
 **Depends On:** [TASK-142-01-01](./TASK-142-01-01_Organic_Attachment_Taxonomy_For_Head_Face_Torso_Tail_And_Limbs.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** Completed on 2026-04-07. `truth_followup` and ranked
+`correction_candidates` now preserve attachment semantics, attachment verdicts,
+and multiple failing required seams in one assembled-creature handoff instead
+of flattening everything to one local anchor pair.
 
 ## Objective
 

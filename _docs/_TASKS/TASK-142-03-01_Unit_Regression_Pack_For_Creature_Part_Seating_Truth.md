@@ -1,8 +1,12 @@
 # TASK-142-03-01: Unit Regression Pack for Creature-Part Seating Truth
 
 **Parent:** [TASK-142-03](./TASK-142-03_Regression_And_Documentation_Pack_For_Organic_Attachment_Semantics.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** Completed on 2026-04-07. Unit regressions now protect
+required seam expansion, attachment-semantics truth handoff, macro selection,
+and macro/MCP attachment-verdict reporting for guided creature scope.
 
 ## Objective
 

@@ -101,3 +101,38 @@ def test_macro_attach_part_to_surface_negative_gap_raises(
             )
     except RuntimeError as e:
         _skip_if_blender_unavailable(e)
+
+
+def test_macro_attach_part_to_surface_seats_nose_on_snout_surface(
+    clean_scene,
+    scene_handler,
+    modeling_handler,
+    macro_handler,
+):
+    snout_name = "AttachSnout"
+    nose_name = "AttachNose"
+
+    try:
+        modeling_handler.create_primitive(primitive_type="CUBE", name=snout_name, size=1.0, location=[0, 0, 0])
+        modeling_handler.create_primitive(primitive_type="CUBE", name=nose_name, size=1.0, location=[4, 4, 4])
+        modeling_handler.transform_object(name=snout_name, scale=[0.8, 0.5, 0.4])
+        modeling_handler.transform_object(name=nose_name, scale=[0.16, 0.16, 0.16])
+
+        result = macro_handler.attach_part_to_surface(
+            part_object=nose_name,
+            surface_object=snout_name,
+            surface_axis="X",
+            surface_side="positive",
+            align_mode="center",
+            gap=0.0,
+        )
+
+        gap = scene_handler.measure_gap(nose_name, snout_name)
+        contact = scene_handler.assert_contact(nose_name, snout_name, max_gap=0.001)
+
+        assert result["status"] == "success"
+        assert gap["relation"] == "contact"
+        assert contact["passed"] is True
+        assert result["actions_taken"][-1]["details"]["attachment_verdict"] == "seated_contact"
+    except RuntimeError as e:
+        _skip_if_blender_unavailable(e)

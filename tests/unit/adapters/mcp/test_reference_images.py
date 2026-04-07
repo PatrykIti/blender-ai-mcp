@@ -12,6 +12,7 @@ from server.adapters.mcp.areas.reference import (
     _assembled_target_scope,
     _build_action_hints_from_silhouette,
     _build_correction_candidates,
+    _build_correction_truth_bundle,
     _build_truth_followup,
     _effective_candidate_budget,
     _effective_pair_budget,
@@ -28,6 +29,7 @@ from server.adapters.mcp.contracts.reference import ReferenceCompareStageCheckpo
 from server.adapters.mcp.contracts.scene import (
     SceneAssembledTargetScopeContract,
     SceneAssertionPayloadContract,
+    SceneAttachmentSemanticsContract,
     SceneCorrectionTruthBundleContract,
     SceneCorrectionTruthPairContract,
     SceneCorrectionTruthSummaryContract,
@@ -227,7 +229,7 @@ def test_truth_followup_emits_cleanup_macro_candidate_for_overlap_pairs():
     assert followup.macro_candidates[0].macro_name == "macro_cleanup_part_intersections"
 
 
-def test_truth_followup_prefers_attachment_repair_for_head_feature_overlap():
+def test_truth_followup_prefers_surface_attach_macro_for_embedded_head_feature_overlap():
     bundle = SceneCorrectionTruthBundleContract(
         scope=SceneAssembledTargetScopeContract(
             scope_kind="object_set",
@@ -268,13 +270,14 @@ def test_truth_followup_prefers_attachment_repair_for_head_feature_overlap():
     assert followup.items[0].kind == "attachment"
     assert "organic attachment relation" in followup.items[0].summary
     assert followup.macro_candidates
-    assert followup.macro_candidates[0].macro_name == "macro_align_part_with_contact"
+    assert followup.macro_candidates[0].macro_name == "macro_attach_part_to_surface"
     assert followup.macro_candidates[0].arguments_hint == {
         "part_object": "EarLeft",
-        "reference_object": "Head",
-        "target_relation": "contact",
-        "align_mode": "none",
-        "preserve_side": True,
+        "surface_object": "Head",
+        "surface_axis": "X",
+        "surface_side": "positive",
+        "align_mode": "center",
+        "gap": 0.0,
     }
 
 
@@ -391,6 +394,243 @@ def test_assembled_target_scope_prefers_body_anchor_over_head_when_core_mass_is_
     assert scope.primary_target == "Squirrel_Body"
 
 
+def test_assembled_target_scope_prefers_trailing_body_role_over_embedded_body_substring(monkeypatch):
+    class SceneHandler:
+        def get_bounding_box(self, object_name: str, world_space: bool = True):
+            dimensions = {
+                "TruthBodyAnchorHead": [1.5, 1.5, 1.5],
+                "TruthBodyAnchorBody": [2.5, 2.5, 2.5],
+                "TruthBodyAnchorTail": [1.0, 0.4, 0.4],
+            }[object_name]
+            return {"object_name": object_name, "dimensions": dimensions}
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+
+    scope = _assembled_target_scope(
+        target_object=None,
+        target_objects=["TruthBodyAnchorHead", "TruthBodyAnchorBody", "TruthBodyAnchorTail"],
+        collection_name=None,
+    )
+
+    assert scope.scope_kind == "object_set"
+    assert scope.primary_target == "TruthBodyAnchorBody"
+
+
+def test_build_correction_truth_bundle_expands_required_creature_seams(monkeypatch):
+    class SceneHandler:
+        def get_bounding_box(self, object_name: str, world_space: bool = True):
+            dimensions = {
+                "Squirrel_Head": [1.2, 1.0, 1.0],
+                "Squirrel_Body": [2.6, 1.8, 1.6],
+                "Squirrel_Tail": [1.4, 0.4, 0.4],
+                "Squirrel_Eye_L": [0.2, 0.2, 0.2],
+                "Squirrel_Snout": [0.8, 0.5, 0.5],
+                "Squirrel_Nose": [0.2, 0.2, 0.2],
+                "Squirrel_Forelimb_L": [0.6, 0.35, 0.35],
+            }[object_name]
+            return {"object_name": object_name, "dimensions": dimensions}
+
+        def measure_gap(self, from_object, to_object, tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "gap": 0.1,
+                "axis_gap": {"x": 0.1, "y": 0.0, "z": 0.0},
+                "relation": "separated",
+                "tolerance": tolerance,
+                "units": "blender_units",
+            }
+
+        def measure_alignment(self, from_object, to_object, axes=None, reference="CENTER", tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "reference": reference,
+                "axes": axes or ["X", "Y", "Z"],
+                "deltas": {"x": 0.1, "y": 0.0, "z": 0.0},
+                "is_aligned": False,
+                "tolerance": tolerance,
+                "units": "blender_units",
+            }
+
+        def measure_overlap(self, from_object, to_object, tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "overlaps": False,
+                "relation": "disjoint",
+                "tolerance": tolerance,
+                "units": "blender_units",
+            }
+
+        def assert_contact(self, from_object, to_object, max_gap=0.0001, allow_overlap=False):
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": False,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.1, "relation": "separated"},
+                "delta": {"gap_overage": 0.0999},
+                "tolerance": max_gap,
+                "units": "blender_units",
+            }
+
+    scene_handler = SceneHandler()
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: scene_handler)
+
+    scope = _assembled_target_scope(
+        target_object=None,
+        target_objects=[
+            "Squirrel_Head",
+            "Squirrel_Body",
+            "Squirrel_Tail",
+            "Squirrel_Eye_L",
+            "Squirrel_Snout",
+            "Squirrel_Nose",
+            "Squirrel_Forelimb_L",
+        ],
+        collection_name=None,
+    )
+
+    bundle = _build_correction_truth_bundle(scene_handler, scope)
+
+    assert bundle.summary.pairing_strategy == "required_creature_seams"
+    assert bundle.summary.pair_count == 6
+    assert [f"{item.from_object} -> {item.to_object}" for item in bundle.checks] == [
+        "Squirrel_Head -> Squirrel_Body",
+        "Squirrel_Tail -> Squirrel_Body",
+        "Squirrel_Forelimb_L -> Squirrel_Body",
+        "Squirrel_Eye_L -> Squirrel_Head",
+        "Squirrel_Snout -> Squirrel_Head",
+        "Squirrel_Nose -> Squirrel_Snout",
+    ]
+    assert bundle.checks[0].attachment_semantics is not None
+    assert bundle.checks[0].attachment_semantics.seam_kind == "head_body"
+    assert bundle.checks[0].attachment_semantics.required_seam is True
+    assert bundle.checks[3].attachment_semantics is not None
+    assert bundle.checks[3].attachment_semantics.relation_kind == "seated_attachment"
+    assert bundle.checks[4].attachment_semantics is not None
+    assert bundle.checks[4].attachment_semantics.preferred_macro == "macro_attach_part_to_surface"
+    assert bundle.checks[5].attachment_semantics is not None
+    assert bundle.checks[5].attachment_semantics.seam_kind == "nose_snout"
+
+
+def test_truth_followup_keeps_multiple_required_creature_seams_and_macro_families_visible():
+    bundle = SceneCorrectionTruthBundleContract(
+        scope=SceneAssembledTargetScopeContract(
+            scope_kind="object_set",
+            primary_target="Squirrel_Body",
+            object_names=["Squirrel_Head", "Squirrel_Body", "Squirrel_Snout", "Squirrel_Forelimb_L"],
+            object_count=4,
+        ),
+        summary=SceneCorrectionTruthSummaryContract(
+            pairing_strategy="required_creature_seams",
+            pair_count=3,
+            evaluated_pairs=3,
+            contact_failures=3,
+            separated_pairs=3,
+            misaligned_pairs=1,
+        ),
+        checks=[
+            SceneCorrectionTruthPairContract(
+                from_object="Squirrel_Head",
+                to_object="Squirrel_Body",
+                gap={"relation": "separated", "gap": 0.2, "axis_gap": {"x": 0.2, "y": 0.0, "z": 0.0}},
+                alignment={"is_aligned": False, "deltas": {"x": 0.2, "y": 0.0, "z": 0.0}},
+                overlap={"overlaps": False, "relation": "disjoint"},
+                contact_assertion=SceneAssertionPayloadContract(
+                    assertion="scene_assert_contact",
+                    passed=False,
+                    subject="Squirrel_Head",
+                    target="Squirrel_Body",
+                    expected={"max_gap": 0.0001},
+                    actual={"gap": 0.2, "relation": "separated"},
+                ),
+                attachment_semantics=SceneAttachmentSemanticsContract(
+                    relation_kind="segment_attachment",
+                    seam_kind="head_body",
+                    part_object="Squirrel_Head",
+                    anchor_object="Squirrel_Body",
+                    required_seam=True,
+                    preferred_macro="macro_align_part_with_contact",
+                    attachment_verdict="floating_gap",
+                ),
+            ),
+            SceneCorrectionTruthPairContract(
+                from_object="Squirrel_Snout",
+                to_object="Squirrel_Head",
+                gap={"relation": "separated", "gap": 0.1, "axis_gap": {"x": 0.1, "y": 0.0, "z": 0.0}},
+                alignment={"is_aligned": False, "deltas": {"x": 0.1, "y": 0.0, "z": 0.0}},
+                overlap={"overlaps": False, "relation": "disjoint"},
+                contact_assertion=SceneAssertionPayloadContract(
+                    assertion="scene_assert_contact",
+                    passed=False,
+                    subject="Squirrel_Snout",
+                    target="Squirrel_Head",
+                    expected={"max_gap": 0.0001},
+                    actual={"gap": 0.1, "relation": "separated"},
+                ),
+                attachment_semantics=SceneAttachmentSemanticsContract(
+                    relation_kind="embedded_attachment",
+                    seam_kind="face_head",
+                    part_object="Squirrel_Snout",
+                    anchor_object="Squirrel_Head",
+                    required_seam=True,
+                    preferred_macro="macro_attach_part_to_surface",
+                    attachment_verdict="floating_gap",
+                ),
+            ),
+            SceneCorrectionTruthPairContract(
+                from_object="Squirrel_Forelimb_L",
+                to_object="Squirrel_Body",
+                gap={"relation": "separated", "gap": 0.15, "axis_gap": {"x": 0.0, "y": 0.0, "z": 0.15}},
+                alignment={"is_aligned": True, "deltas": {"x": 0.0, "y": 0.0, "z": 0.15}},
+                overlap={"overlaps": False, "relation": "disjoint"},
+                contact_assertion=SceneAssertionPayloadContract(
+                    assertion="scene_assert_contact",
+                    passed=False,
+                    subject="Squirrel_Forelimb_L",
+                    target="Squirrel_Body",
+                    expected={"max_gap": 0.0001},
+                    actual={"gap": 0.15, "relation": "separated"},
+                ),
+                attachment_semantics=SceneAttachmentSemanticsContract(
+                    relation_kind="segment_attachment",
+                    seam_kind="limb_body",
+                    part_object="Squirrel_Forelimb_L",
+                    anchor_object="Squirrel_Body",
+                    required_seam=True,
+                    preferred_macro="macro_align_part_with_contact",
+                    attachment_verdict="floating_gap",
+                ),
+            ),
+        ],
+    )
+
+    followup = _build_truth_followup(bundle)
+
+    assert followup.continue_recommended is True
+    assert followup.focus_pairs == [
+        "Squirrel_Head -> Squirrel_Body",
+        "Squirrel_Snout -> Squirrel_Head",
+        "Squirrel_Forelimb_L -> Squirrel_Body",
+    ]
+    assert [candidate.macro_name for candidate in followup.macro_candidates] == [
+        "macro_align_part_with_contact",
+        "macro_attach_part_to_surface",
+        "macro_align_part_with_contact",
+    ]
+    assert followup.macro_candidates[1].arguments_hint == {
+        "part_object": "Squirrel_Snout",
+        "surface_object": "Squirrel_Head",
+        "surface_axis": "X",
+        "surface_side": "positive",
+        "align_mode": "center",
+        "gap": 0.0,
+    }
+
+
 def test_build_correction_candidates_merges_truth_macro_and_matching_vision_focus():
     compare = ReferenceCompareStageCheckpointResponseContract.model_validate(
         {
@@ -474,6 +714,107 @@ def test_build_correction_candidates_merges_truth_macro_and_matching_vision_focu
     assert candidates[0].vision_evidence.correction_focus == ["TruthHead -> TruthBody contact"]
     assert candidates[1].candidate_kind == "vision_only"
     assert candidates[1].summary == "Head silhouette"
+
+
+def test_build_correction_candidates_keeps_multiple_required_creature_seams_separate():
+    compare = ReferenceCompareStageCheckpointResponseContract.model_validate(
+        {
+            "action": "compare_stage_checkpoint",
+            "goal": "assemble a low poly squirrel",
+            "target_objects": ["Squirrel_Head", "Squirrel_Body", "Squirrel_Snout", "Squirrel_Forelimb_L"],
+            "checkpoint_id": "checkpoint_required_seams",
+            "checkpoint_label": "stage_required_seams",
+            "preset_profile": "compact",
+            "preset_names": ["context_wide"],
+            "capture_count": 0,
+            "captures": [],
+            "reference_count": 0,
+            "reference_ids": [],
+            "reference_labels": [],
+            "truth_followup": {
+                "scope": {
+                    "scope_kind": "object_set",
+                    "primary_target": "Squirrel_Body",
+                    "object_names": ["Squirrel_Head", "Squirrel_Body", "Squirrel_Snout", "Squirrel_Forelimb_L"],
+                    "object_count": 4,
+                },
+                "continue_recommended": True,
+                "message": "required seams",
+                "focus_pairs": [
+                    "Squirrel_Head -> Squirrel_Body",
+                    "Squirrel_Snout -> Squirrel_Head",
+                    "Squirrel_Forelimb_L -> Squirrel_Body",
+                ],
+                "items": [
+                    {
+                        "kind": "attachment",
+                        "summary": "Squirrel_Head -> Squirrel_Body still has wrong organic attachment semantics.",
+                        "priority": "high",
+                        "from_object": "Squirrel_Head",
+                        "to_object": "Squirrel_Body",
+                        "tool_name": "scene_assert_contact",
+                    },
+                    {
+                        "kind": "attachment",
+                        "summary": "Squirrel_Snout -> Squirrel_Head still has wrong organic attachment semantics.",
+                        "priority": "high",
+                        "from_object": "Squirrel_Snout",
+                        "to_object": "Squirrel_Head",
+                        "tool_name": "scene_assert_contact",
+                    },
+                    {
+                        "kind": "attachment",
+                        "summary": "Squirrel_Forelimb_L -> Squirrel_Body still has wrong organic attachment semantics.",
+                        "priority": "high",
+                        "from_object": "Squirrel_Forelimb_L",
+                        "to_object": "Squirrel_Body",
+                        "tool_name": "scene_assert_contact",
+                    },
+                ],
+                "macro_candidates": [
+                    {
+                        "macro_name": "macro_align_part_with_contact",
+                        "reason": "Repair the head/body seam.",
+                        "priority": "high",
+                        "arguments_hint": {
+                            "part_object": "Squirrel_Head",
+                            "reference_object": "Squirrel_Body",
+                        },
+                    },
+                    {
+                        "macro_name": "macro_attach_part_to_surface",
+                        "reason": "Re-seat the snout into the head mass.",
+                        "priority": "high",
+                        "arguments_hint": {
+                            "part_object": "Squirrel_Snout",
+                            "surface_object": "Squirrel_Head",
+                            "surface_axis": "X",
+                        },
+                    },
+                    {
+                        "macro_name": "macro_align_part_with_contact",
+                        "reason": "Repair the forelimb/body seam.",
+                        "priority": "high",
+                        "arguments_hint": {
+                            "part_object": "Squirrel_Forelimb_L",
+                            "reference_object": "Squirrel_Body",
+                        },
+                    },
+                ],
+            },
+        }
+    )
+
+    candidates = _build_correction_candidates(compare)
+
+    assert [candidate.focus_pairs for candidate in candidates] == [
+        ["Squirrel_Head -> Squirrel_Body"],
+        ["Squirrel_Snout -> Squirrel_Head"],
+        ["Squirrel_Forelimb_L -> Squirrel_Body"],
+    ]
+    assert candidates[1].truth_evidence is not None
+    assert candidates[1].truth_evidence.macro_candidates[0].macro_name == "macro_attach_part_to_surface"
+    assert all(candidate.candidate_kind == "truth_only" for candidate in candidates)
 
 
 def test_select_refinement_route_prefers_macro_for_assembly_signals():
@@ -1732,13 +2073,13 @@ def test_reference_compare_stage_checkpoint_can_expand_collection_scope(tmp_path
     assert result.assembled_target_scope.collection_name == "Squirrel"
     assert result.assembled_target_scope.object_count == 3
     assert result.truth_bundle is not None
-    assert result.truth_bundle.summary.pairing_strategy == "primary_to_others"
+    assert result.truth_bundle.summary.pairing_strategy == "required_creature_seams"
     assert result.truth_bundle.summary.pair_count == 2
     assert result.truth_followup is not None
     assert result.truth_followup.continue_recommended is True
     assert result.truth_followup.focus_pairs == [
-        "Squirrel_Body -> Squirrel_Head",
-        "Squirrel_Body -> Squirrel_Tail",
+        "Squirrel_Head -> Squirrel_Body",
+        "Squirrel_Tail -> Squirrel_Body",
     ]
     assert result.truth_followup.macro_candidates
     assert result.truth_followup.macro_candidates[0].macro_name == "macro_align_part_with_contact"
@@ -1880,7 +2221,7 @@ def test_reference_compare_stage_checkpoint_can_track_explicit_object_set_scope(
     assert result.correction_candidates == []
 
 
-def test_reference_compare_stage_checkpoint_trims_truth_bundle_for_low_budget(tmp_path, monkeypatch):
+def test_reference_compare_stage_checkpoint_preserves_required_creature_seams_under_low_budget(tmp_path, monkeypatch):
     image_front = tmp_path / "front.png"
     image_front.write_bytes(b"front")
     monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
@@ -1916,10 +2257,10 @@ def test_reference_compare_stage_checkpoint_trims_truth_bundle_for_low_budget(tm
 
         def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
             relation_map = {
-                ("Body", "Head"): ("contact", 0.0),
-                ("Body", "Tail"): ("overlapping", 0.0),
-                ("Body", "BackPawLeft"): ("separated", 0.18),
-                ("Body", "BackPawRight"): ("separated", 0.19),
+                ("Head", "Body"): ("contact", 0.0),
+                ("Tail", "Body"): ("overlapping", 0.0),
+                ("BackPawLeft", "Body"): ("separated", 0.18),
+                ("BackPawRight", "Body"): ("separated", 0.19),
             }
             relation, gap = relation_map[(from_object, to_object)]
             return {
@@ -1932,8 +2273,8 @@ def test_reference_compare_stage_checkpoint_trims_truth_bundle_for_low_budget(tm
 
         def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
             misaligned = (from_object, to_object) in {
-                ("Body", "BackPawLeft"),
-                ("Body", "BackPawRight"),
+                ("BackPawLeft", "Body"),
+                ("BackPawRight", "Body"),
             }
             return {
                 "from_object": from_object,
@@ -1943,7 +2284,7 @@ def test_reference_compare_stage_checkpoint_trims_truth_bundle_for_low_budget(tm
             }
 
         def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
-            overlaps = (from_object, to_object) == ("Body", "Tail")
+            overlaps = (from_object, to_object) == ("Tail", "Body")
             return {
                 "from_object": from_object,
                 "to_object": to_object,
@@ -1954,14 +2295,20 @@ def test_reference_compare_stage_checkpoint_trims_truth_bundle_for_low_budget(tm
         def assert_contact(
             self, from_object: str, to_object: str, max_gap: float = 0.0001, allow_overlap: bool = False
         ):
-            passed = (from_object, to_object) == ("Body", "Head")
+            passed = (from_object, to_object) == ("Head", "Body")
+            actual_relation = (
+                "contact"
+                if passed
+                else ("overlapping" if (from_object, to_object) == ("Tail", "Body") else "separated")
+            )
+            actual_gap = 0.0 if actual_relation in {"contact", "overlapping"} else 0.18
             return {
                 "assertion": "scene_assert_contact",
                 "passed": passed,
                 "subject": from_object,
                 "target": to_object,
                 "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
-                "actual": {"gap": 0.0 if passed else 0.18, "relation": "contact" if passed else "separated"},
+                "actual": {"gap": actual_gap, "relation": actual_relation},
             }
 
     captured = {}
@@ -2021,13 +2368,14 @@ def test_reference_compare_stage_checkpoint_trims_truth_bundle_for_low_budget(tm
 
     assert result.budget_control is not None
     assert result.budget_control.trimming_applied is True
-    assert result.budget_control.scope_trimmed is True
+    assert result.budget_control.scope_trimmed is False
+    assert result.budget_control.detail_trimmed is True
     assert result.budget_control.model_name == "mlx-community/Qwen3-VL-4B-Instruct-4bit"
     assert result.budget_control.original_pair_count == 4
-    assert result.budget_control.emitted_pair_count == 2
+    assert result.budget_control.emitted_pair_count == 4
     assert result.truth_bundle is not None
-    assert result.truth_bundle.summary.pair_count == 2
-    assert captured["request"].truth_summary["summary"]["pair_count"] == 2
+    assert result.truth_bundle.summary.pair_count == 4
+    assert captured["request"].truth_summary["summary"]["pair_count"] == 4
 
 
 def test_reference_compare_stage_checkpoint_sanitizes_checkpoint_id_target_token(tmp_path, monkeypatch):

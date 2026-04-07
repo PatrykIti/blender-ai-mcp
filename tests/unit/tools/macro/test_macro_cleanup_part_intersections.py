@@ -21,6 +21,13 @@ class FakeSceneTool:
                 "center": [0.95, 0.0, 1.0],
                 "dimensions": [0.2, 0.4, 0.6],
             },
+            "Forelimb": {
+                "object_name": "Forelimb",
+                "min": [0.7, -0.15, -1.2],
+                "max": [1.3, 0.15, -0.8],
+                "center": [1.0, 0.0, -1.0],
+                "dimensions": [0.6, 0.3, 0.4],
+            },
         }
 
     def get_bounding_box(self, object_name, world_space=True):
@@ -195,6 +202,23 @@ def test_macro_cleanup_part_intersections_blocks_when_push_exceeds_bound():
     assert result["status"] == "blocked"
     assert modeling.calls == []
     assert "exceeds max_push" in (result["error"] or "")
+
+
+def test_macro_cleanup_part_intersections_pushes_forelimb_body_overlap_to_contact():
+    scene = FakeSceneTool()
+    modeling = FakeModelingTool(scene)
+    handler = MacroToolHandler(scene, modeling)
+
+    result = handler.cleanup_part_intersections(
+        part_object="Forelimb",
+        reference_object="Body",
+        gap=0.0,
+        max_push=0.3,
+    )
+
+    assert result["status"] == "success"
+    assert modeling.calls[0][1]["location"] == pytest.approx([1.0, 0.0, -1.2], abs=1e-9)
+    assert result["actions_taken"][-1]["details"]["attachment_verdict"] == "seated_contact"
 
 
 def test_macro_cleanup_part_intersections_noops_when_pair_is_already_disjoint():

@@ -150,6 +150,36 @@ class SceneAssembledTargetScopeContract(MCPContract):
     part_groups: list[ScenePartGroupContract] = []
 
 
+class SceneAttachmentSemanticsContract(MCPContract):
+    relation_kind: Literal["embedded_attachment", "seated_attachment", "segment_attachment"]
+    seam_kind: Literal[
+        "face_head",
+        "nose_snout",
+        "head_body",
+        "tail_body",
+        "limb_body",
+        "limb_segment",
+    ]
+    part_object: str
+    anchor_object: str
+    required_seam: bool = True
+    preferred_macro: (
+        Literal[
+            "macro_attach_part_to_surface",
+            "macro_align_part_with_contact",
+            "macro_cleanup_part_intersections",
+        ]
+        | None
+    ) = None
+    attachment_verdict: Literal[
+        "seated_contact",
+        "floating_gap",
+        "intersecting",
+        "misaligned_attachment",
+        "needs_followup",
+    ] = "needs_followup"
+
+
 class SceneCorrectionTruthPairContract(MCPContract):
     from_object: str
     to_object: str
@@ -157,11 +187,12 @@ class SceneCorrectionTruthPairContract(MCPContract):
     alignment: dict[str, Any] | None = None
     overlap: dict[str, Any] | None = None
     contact_assertion: SceneAssertionPayloadContract | None = None
+    attachment_semantics: SceneAttachmentSemanticsContract | None = None
     error: str | None = None
 
 
 class SceneCorrectionTruthSummaryContract(MCPContract):
-    pairing_strategy: Literal["none", "primary_to_others"] = "none"
+    pairing_strategy: Literal["none", "primary_to_others", "required_creature_seams"] = "none"
     pair_count: int = 0
     evaluated_pairs: int = 0
     contact_failures: int = 0

@@ -16,7 +16,17 @@ def test_macro_align_part_with_contact_mcp_tool_returns_structured_contract(monk
                 "macro_name": "macro_align_part_with_contact",
                 "intent": "Repair 'Ear' relative to 'Head'",
                 "actions_taken": [
-                    {"status": "applied", "action": "align_part_with_contact", "tool_name": "modeling_transform_object"}
+                    {
+                        "status": "applied",
+                        "action": "align_part_with_contact",
+                        "tool_name": "modeling_transform_object",
+                    },
+                    {
+                        "status": "applied",
+                        "action": "evaluate_attachment_outcome",
+                        "tool_name": "scene_assert_contact",
+                        "details": {"attachment_verdict": "seated_contact"},
+                    },
                 ],
                 "objects_modified": [kwargs.get("part_object", "Ear")],
                 "verification_recommended": [
@@ -38,3 +48,4 @@ def test_macro_align_part_with_contact_mcp_tool_returns_structured_contract(monk
     assert isinstance(result, MacroExecutionReportContract)
     assert result.macro_name == "macro_align_part_with_contact"
     assert result.actions_taken[0].action == "align_part_with_contact"
+    assert result.actions_taken[-1].details["attachment_verdict"] == "seated_contact"

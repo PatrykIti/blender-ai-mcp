@@ -8,6 +8,7 @@ from server.adapters.mcp.contracts.scene import (
     SceneAssertionPayloadContract,
     SceneAssertProportionContract,
     SceneAssertSymmetryContract,
+    SceneAttachmentSemanticsContract,
     SceneBoundingBoxContract,
     SceneConfigureResponseContract,
     SceneContextResponseContract,
@@ -149,7 +150,7 @@ def test_scene_correction_truth_bundle_contract_carries_pair_checks_and_summary(
             collection_name="Squirrel",
         ),
         summary=SceneCorrectionTruthSummaryContract(
-            pairing_strategy="primary_to_others",
+            pairing_strategy="required_creature_seams",
             pair_count=1,
             evaluated_pairs=1,
             contact_failures=1,
@@ -171,13 +172,24 @@ def test_scene_correction_truth_bundle_contract_carries_pair_checks_and_summary(
                     expected={"max_gap": 0.0001},
                     actual={"gap": 0.1, "relation": "separated"},
                 ),
+                attachment_semantics=SceneAttachmentSemanticsContract(
+                    relation_kind="segment_attachment",
+                    seam_kind="head_body",
+                    part_object="Squirrel_Head",
+                    anchor_object="Squirrel_Body",
+                    required_seam=True,
+                    preferred_macro="macro_align_part_with_contact",
+                    attachment_verdict="floating_gap",
+                ),
             )
         ],
     )
 
-    assert bundle.summary.pairing_strategy == "primary_to_others"
+    assert bundle.summary.pairing_strategy == "required_creature_seams"
     assert bundle.checks[0].from_object == "Squirrel_Head"
     assert bundle.checks[0].contact_assertion.passed is False
+    assert bundle.checks[0].attachment_semantics is not None
+    assert bundle.checks[0].attachment_semantics.seam_kind == "head_body"
 
 
 def test_scene_truth_followup_contract_carries_loop_ready_items():
