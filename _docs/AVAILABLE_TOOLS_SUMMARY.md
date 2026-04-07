@@ -103,8 +103,8 @@ Prompt recommendation notes:
 
 Measured current baseline:
 
-- `legacy-manual`: `163` visible tools, without router/workflow namespace exposure
-- `legacy-flat`: `185` visible tools
+- `legacy-manual`: `179` visible tools, without router/workflow namespace exposure
+- `legacy-flat`: `186` visible tools
 - `llm-guided`: `8` visible tools
 
 Why this matters:
@@ -152,6 +152,7 @@ The current structured-contract baseline covers:
 - `scene_get_hierarchy`
 - `scene_get_bounding_box`
 - `scene_get_origin_info`
+- `scene_view_diagnostics`
 - `scene_measure_distance`
 - `scene_measure_dimensions`
 - `scene_measure_gap`
@@ -261,6 +262,7 @@ None.
 | `scene_get_origin_info` | `object_name` | Gets origin (pivot point) information relative to geometry. | ✅ Done |
 | `scene_scope_graph` | `target_object` (optional), `target_objects` (optional), `collection_name` (optional) | Returns one compact read-only scope graph for a target object/object-set/collection, including the inferred structural anchor and deterministic object-role hints. Kept off guided bootstrap by default and intended for on-demand spatial reasoning. | ✅ Done |
 | `scene_relation_graph` | `target_object` (optional), `target_objects` (optional), `collection_name` (optional), `goal_hint` (optional) | Returns one compact read-only relation graph derived from the current measure/assert truth layer, including bounded attachment/support/symmetry interpretations when justified. Kept off guided bootstrap by default and intended for on-demand spatial reasoning. | ✅ Done |
+| `scene_view_diagnostics` | `target_object` (optional), `target_objects` (optional), `collection_name` (optional), `camera_name` (optional), `focus_target` (optional), `view_name` (optional), `orbit_horizontal` (optional), `orbit_vertical` (optional), `zoom_factor` (optional), `persist_view` (optional) | Returns one compact read-only view-space diagnostics report with projected extent, frame coverage, centering, and visible/partial/occluded/off-frame verdicts for a named camera or the live `USER_PERSPECTIVE` path. Kept off guided bootstrap by default and intentionally separate from truth-space measure/assert semantics. | ✅ Done |
 | `scene_measure_distance` | `from_object`, `to_object`, `reference` | Measures origin or bbox-center distance between two objects. | ✅ Done |
 | `scene_measure_dimensions` | `object_name`, `world_space` | Measures object dimensions and volume from its bounding box. | ✅ Done |
 | `scene_measure_gap` | `from_object`, `to_object`, `tolerance` | Measures bbox gap/contact state between two objects. | ✅ Done |

@@ -194,6 +194,9 @@ The first TASK-143 slice is now present in the product surface:
 
 - `scene_scope_graph(...)` ships as a separate read-only scope artifact
 - `scene_relation_graph(...)` ships as a separate read-only relation artifact
+- `scene_view_diagnostics(...)` now ships as a separate read-only view-space
+  artifact for projected extent, frame coverage, centering, and
+  visible/partial/occluded/off-frame verdicts
 - `assembled_target_scope` now carries deterministic object-role hints
 - `truth_bundle`, `truth_followup`, and `correction_candidates` reuse the same
   scope/relation derivation layer instead of keeping all of that logic private
@@ -201,7 +204,7 @@ The first TASK-143 slice is now present in the product surface:
 
 Those graph artifacts stay intentionally separate from the default
 `reference_compare_*` / `reference_iterate_*` payloads. The guided loop can
-call them on demand when a step needs richer spatial state.
+call them on demand when a step needs richer spatial or view-space state.
 
 ---
 

@@ -1,9 +1,15 @@
 # TASK-144-01: Projection / View-Space Contract And Runtime Foundation
 
 **Parent:** [TASK-144](./TASK-144_Camera_Aware_View_Graph_And_Visibility_Diagnostics.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-121-03-03](./TASK-121-03-03_Camera_Faithful_Viewport_Capture_Semantics.md), [TASK-121-03-04](./TASK-121-03-04_User_View_Manipulation_For_Viewport_Capture.md), [TASK-121-03-05](./TASK-121-03-05_Render_Visibility_Consistency_For_Viewport_Capture.md)
+
+**Completion Summary:** Completed on 2026-04-07. Landed the typed
+view-space foundation for TASK-144: the repo now has one explicit view query
+contract and one Blender-backed runtime seam for projected extent, frame
+coverage, and view-source provenance across named cameras and bounded
+`USER_PERSPECTIVE` flows.
 
 ## Objective
 
@@ -96,6 +102,5 @@ themselves.
 
 ## Status / Board Update
 
-- this subtask is introduced as part of the TASK-144 execution tree expansion
-- `_docs/_TASKS/README.md` is intentionally not updated in this planning pass
-  per operator constraint
+- closed on 2026-04-07 as part of the TASK-144 implementation wave
+- the board is updated through the completed parent task

@@ -287,8 +287,8 @@ Current visible entry set on `llm-guided`:
 
 Measured baseline from the current unit suite:
 
-- `legacy-manual`: `163` visible tools, router/workflow capabilities omitted from the namespace
-- `legacy-flat`: `185` visible tools, now fitting in one `tools/list` page by default for compatibility clients
+- `legacy-manual`: `179` visible tools, router/workflow capabilities omitted from the namespace
+- `legacy-flat`: `186` visible tools, now fitting in one `tools/list` page by default for compatibility clients
 - `llm-guided`: `8` visible tools
 
 Search-first behavior now respects guided visibility:
@@ -297,7 +297,8 @@ Search-first behavior now respects guided visibility:
 - hidden tools cannot be invoked through `call_tool`
 - direct public calls and discovered `call_tool` calls share the same guided-surface router failure behavior
 - read-only spatial graph tools such as `scene_scope_graph` and
-  `scene_relation_graph` follow the same rule: they stay off bootstrap by
+  `scene_relation_graph`, plus the view-space artifact
+  `scene_view_diagnostics`, follow the same rule: they stay off bootstrap by
   default and are meant for on-demand inspect/handoff/discovery use when the
   current step genuinely needs richer spatial state
 
@@ -797,6 +798,13 @@ checkpoint handoff, call the explicit read-only artifacts:
 
 - `scene_scope_graph(...)`
 - `scene_relation_graph(...)`
+- `scene_view_diagnostics(...)`
+
+`reference_compare_current_view(...)` may also emit compact
+`view_diagnostics_hints` when the current framing or occlusion state makes the
+captured checkpoint a weak basis for the next correction step. That hint is
+recommendation-only and does not embed a heavyweight view graph into the
+default compare payload.
 
 For the guided creature path specifically, pair truth now carries one explicit
 attachment verdict for each required seam:
@@ -818,6 +826,7 @@ attachment verdict for each required seam:
 | `scene_get_origin_info` | `object_name` (str) | Gets origin (pivot point) information relative to geometry and bounding box. |
 | `scene_scope_graph` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional) | Returns one compact read-only structural scope artifact for a target object/object set/collection, including the inferred anchor plus bounded object-role hints. Intended for on-demand guided spatial reasoning rather than bootstrap exposure. |
 | `scene_relation_graph` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional), `goal_hint` (str, optional) | Returns one compact read-only pair-relation graph derived from current gap/alignment/overlap/contact truth, including bounded attachment/support/symmetry interpretations where justified. Intended for on-demand guided spatial reasoning rather than bootstrap exposure. |
+| `scene_view_diagnostics` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional), `camera_name` (str, optional), `focus_target` (str, optional), `view_name` (str, optional), `orbit_horizontal` (float, optional), `orbit_vertical` (float, optional), `zoom_factor` (float, optional), `persist_view` (bool, optional) | Returns one compact read-only view-space diagnostics artifact with projected extent, frame coverage, centering, and visible/partial/occluded/off-frame verdicts for a named camera or the live `USER_PERSPECTIVE` path. This is view-space only and does not replace truth-space measure/assert semantics. |
 | `scene_measure_distance` | `from_object` (str), `to_object` (str), `reference` (str) | Measures origin-to-origin or bbox-center distance between two objects. |
 | `scene_measure_dimensions` | `object_name` (str), `world_space` (bool) | Measures object dimensions and volume from its bounding box. |
 | `scene_measure_gap` | `from_object` (str), `to_object` (str), `tolerance` (float) | Measures nearest gap/contact state between two objects. For mesh pairs it now prefers a mesh-surface path and exposes `measurement_basis` plus bbox fallback diagnostics. |

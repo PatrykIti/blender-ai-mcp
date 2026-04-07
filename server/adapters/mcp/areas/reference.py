@@ -35,6 +35,7 @@ from server.adapters.mcp.contracts.reference import (
     ReferenceRefinementRouteContract,
     ReferenceRefinementToolCandidateContract,
     ReferenceSilhouetteAnalysisContract,
+    ReferenceViewDiagnosticsHintContract,
 )
 from server.adapters.mcp.contracts.scene import (
     SceneAssembledTargetScopeContract,
@@ -332,6 +333,7 @@ def _compare_response(
     target_view: str | None,
     reference_ids: list[str],
     reference_labels: list[str],
+    view_diagnostics_hints: list[ReferenceViewDiagnosticsHintContract] | None = None,
     vision_assistant=None,
     message: str | None = None,
     error: str | None = None,
@@ -346,6 +348,7 @@ def _compare_response(
         reference_count=len(reference_ids),
         reference_ids=reference_ids,
         reference_labels=reference_labels,
+        view_diagnostics_hints=view_diagnostics_hints,
         vision_assistant=vision_assistant,
         message=message,
         error=error,
@@ -380,6 +383,7 @@ def _stage_compare_response(
     silhouette_analysis: ReferenceSilhouetteAnalysisContract | None = None,
     action_hints: list[ReferenceActionHintContract] | None = None,
     part_segmentation: ReferencePartSegmentationContract | None = None,
+    view_diagnostics_hints: list[ReferenceViewDiagnosticsHintContract] | None = None,
     message: str | None = None,
     error: str | None = None,
 ) -> ReferenceCompareStageCheckpointResponseContract:
@@ -402,6 +406,7 @@ def _stage_compare_response(
         silhouette_analysis=silhouette_analysis,
         action_hints=list(action_hints or []),
         part_segmentation=part_segmentation or _disabled_part_segmentation(),
+        view_diagnostics_hints=view_diagnostics_hints,
         target_view=target_view,
         checkpoint_id=checkpoint_id,
         checkpoint_label=checkpoint_label,
@@ -446,6 +451,7 @@ def _iterate_stage_response(
     silhouette_analysis: ReferenceSilhouetteAnalysisContract | None = None,
     action_hints: list[ReferenceActionHintContract] | None = None,
     part_segmentation: ReferencePartSegmentationContract | None = None,
+    view_diagnostics_hints: list[ReferenceViewDiagnosticsHintContract] | None = None,
     stop_reason: str | None = None,
     message: str | None = None,
     error: str | None = None,
@@ -469,6 +475,7 @@ def _iterate_stage_response(
         silhouette_analysis=silhouette_analysis or compare_result.silhouette_analysis,
         action_hints=list(action_hints or compare_result.action_hints or []),
         part_segmentation=part_segmentation or compare_result.part_segmentation or _disabled_part_segmentation(),
+        view_diagnostics_hints=view_diagnostics_hints or compare_result.view_diagnostics_hints,
         target_view=target_view,
         checkpoint_id=checkpoint_id,
         checkpoint_label=checkpoint_label,
@@ -1359,6 +1366,100 @@ def _build_action_hints_from_silhouette(
                 ),
             ],
             priority="high",
+        )
+
+    return hints
+
+
+def _build_view_diagnostics_hints(
+    *,
+    diagnostics_payload: dict[str, Any] | None,
+    target_object: str | None,
+    camera_name: str | None,
+    focus_target: str | None,
+    view_name: str | None,
+    orbit_horizontal: float,
+    orbit_vertical: float,
+    zoom_factor: float | None,
+) -> list[ReferenceViewDiagnosticsHintContract]:
+    if not isinstance(diagnostics_payload, dict):
+        return []
+
+    hints: list[ReferenceViewDiagnosticsHintContract] = []
+    for item in list(diagnostics_payload.get("targets") or []):
+        if not isinstance(item, dict):
+            continue
+        object_name = str(item.get("object_name") or "").strip()
+        verdict = str(item.get("visibility_verdict") or "").strip()
+        projection = item.get("projection") if isinstance(item.get("projection"), dict) else {}
+        centered = bool(projection.get("centered")) if isinstance(projection, dict) else False
+        raw_frame_coverage_ratio = projection.get("frame_coverage_ratio") if isinstance(projection, dict) else None
+        frame_coverage_ratio: float | None
+        if isinstance(raw_frame_coverage_ratio, (int, float)):
+            frame_coverage_ratio = float(raw_frame_coverage_ratio)
+        else:
+            frame_coverage_ratio = None
+
+        trigger: Literal["framing_ambiguity", "visibility_ambiguity", "occlusion_detected", "target_off_frame"] | None
+        priority: Literal["high", "normal"] = "normal"
+        reason: str | None = None
+
+        if verdict == "fully_occluded":
+            trigger = "occlusion_detected"
+            priority = "high"
+            reason = (
+                f"'{object_name or target_object or focus_target or 'target'}' is currently fully occluded from this view. "
+                "Call scene_view_diagnostics(...) before another compare/correction step so framing and occlusion are explicit."
+            )
+        elif verdict == "outside_frame":
+            trigger = "target_off_frame"
+            priority = "high"
+            reason = (
+                f"'{object_name or target_object or focus_target or 'target'}' is currently outside the frame. "
+                "Call scene_view_diagnostics(...) before another compare/correction step so reframing is driven by typed view facts."
+            )
+        elif verdict == "partially_visible":
+            trigger = "visibility_ambiguity"
+            reason = (
+                f"'{object_name or target_object or focus_target or 'target'}' is only partially visible from this view. "
+                "Call scene_view_diagnostics(...) to inspect frame coverage and occlusion before another correction pass."
+            )
+        elif frame_coverage_ratio is not None and (frame_coverage_ratio < 0.999 or not centered):
+            trigger = "framing_ambiguity"
+            reason = (
+                f"'{object_name or target_object or focus_target or 'target'}' is not cleanly centered/framed in the current view. "
+                "Call scene_view_diagnostics(...) if the next decision depends on precise framing facts."
+            )
+        else:
+            trigger = None
+
+        if trigger is None or reason is None:
+            continue
+
+        arguments_hint: dict[str, object] = {
+            "target_object": object_name or target_object or focus_target,
+        }
+        if camera_name:
+            arguments_hint["camera_name"] = camera_name
+        if focus_target:
+            arguments_hint["focus_target"] = focus_target
+        if view_name:
+            arguments_hint["view_name"] = view_name
+        if orbit_horizontal:
+            arguments_hint["orbit_horizontal"] = orbit_horizontal
+        if orbit_vertical:
+            arguments_hint["orbit_vertical"] = orbit_vertical
+        if zoom_factor is not None:
+            arguments_hint["zoom_factor"] = zoom_factor
+
+        hints.append(
+            ReferenceViewDiagnosticsHintContract(
+                hint_id=f"view_diag_{trigger}_{(object_name or 'target').lower()}",
+                trigger=trigger,
+                reason=reason,
+                priority=priority,
+                arguments_hint=arguments_hint,
+            )
         )
 
     return hints
@@ -3080,7 +3181,36 @@ async def reference_compare_current_view(
     internal_file.write_bytes(image_bytes)
     internal_latest.write_bytes(image_bytes)
 
-    return await _run_checkpoint_compare(
+    view_diagnostics_hints: list[ReferenceViewDiagnosticsHintContract] | None = None
+    diagnostic_target = target_object or focus_target
+    if diagnostic_target:
+        try:
+            diagnostics_payload = get_scene_handler().get_view_diagnostics(
+                target_object=diagnostic_target,
+                camera_name=camera_name,
+                focus_target=focus_target,
+                view_name=view_name,
+                orbit_horizontal=orbit_horizontal,
+                orbit_vertical=orbit_vertical,
+                zoom_factor=zoom_factor,
+                persist_view=persist_view,
+            )
+            candidate_hints = _build_view_diagnostics_hints(
+                diagnostics_payload=diagnostics_payload,
+                target_object=diagnostic_target,
+                camera_name=camera_name,
+                focus_target=focus_target,
+                view_name=view_name,
+                orbit_horizontal=orbit_horizontal,
+                orbit_vertical=orbit_vertical,
+                zoom_factor=zoom_factor,
+            )
+            if candidate_hints:
+                view_diagnostics_hints = candidate_hints
+        except Exception:
+            view_diagnostics_hints = None
+
+    compare_result = await _run_checkpoint_compare(
         ctx,
         checkpoint=internal_file,
         checkpoint_label=checkpoint_label,
@@ -3101,6 +3231,9 @@ async def reference_compare_current_view(
         or None,
         response_action="compare_current_view",
     )
+    if view_diagnostics_hints:
+        compare_result.view_diagnostics_hints = view_diagnostics_hints
+    return compare_result
 
 
 async def reference_compare_stage_checkpoint(

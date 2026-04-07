@@ -95,6 +95,7 @@ class ReferenceCompareCheckpointResponseContract(MCPContract):
     reference_count: int = 0
     reference_ids: list[str] = []
     reference_labels: list[str] = []
+    view_diagnostics_hints: list["ReferenceViewDiagnosticsHintContract"] | None = None
     vision_assistant: VisionAssistantContract | None = None
     message: str | None = None
     error: str | None = None
@@ -231,6 +232,17 @@ class ReferenceActionHintContract(MCPContract):
     recommended_tools: list[ReferenceRefinementToolCandidateContract] = []
 
 
+class ReferenceViewDiagnosticsHintContract(MCPContract):
+    """Compact recommendation to call the separate view diagnostics surface."""
+
+    hint_id: str
+    trigger: Literal["framing_ambiguity", "visibility_ambiguity", "occlusion_detected", "target_off_frame"]
+    reason: str
+    recommended_tool: Literal["scene_view_diagnostics"] = "scene_view_diagnostics"
+    priority: Literal["high", "normal"] = "normal"
+    arguments_hint: dict[str, object] | None = None
+
+
 class ReferenceSilhouetteAnalysisContract(MCPContract):
     """Deterministic silhouette-analysis payload attached to staged compare responses."""
 
@@ -293,6 +305,7 @@ class ReferenceCompareStageCheckpointResponseContract(MCPContract):
     silhouette_analysis: ReferenceSilhouetteAnalysisContract | None = None
     action_hints: list[ReferenceActionHintContract] = []
     part_segmentation: ReferencePartSegmentationContract | None = None
+    view_diagnostics_hints: list[ReferenceViewDiagnosticsHintContract] | None = None
     target_view: str | None = None
     checkpoint_id: str
     checkpoint_label: str | None = None
@@ -329,6 +342,7 @@ class ReferenceIterateStageCheckpointResponseContract(MCPContract):
     silhouette_analysis: ReferenceSilhouetteAnalysisContract | None = None
     action_hints: list[ReferenceActionHintContract] = []
     part_segmentation: ReferencePartSegmentationContract | None = None
+    view_diagnostics_hints: list[ReferenceViewDiagnosticsHintContract] | None = None
     target_view: str | None = None
     checkpoint_id: str
     checkpoint_label: str | None = None

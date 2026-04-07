@@ -251,6 +251,69 @@ def test_scene_spatial_graph_handlers_reuse_existing_scene_truth_rpc_commands():
     ]
 
 
+def test_scene_view_diagnostics_handler_resolves_collection_scope_and_forwards_view_args():
+    rpc = DummyRpc(
+        {
+            "collection.list_objects": _ok({"objects": [{"name": "Head"}, {"name": "Body"}]}),
+            "scene.get_view_diagnostics": _ok(
+                {
+                    "view_query": {
+                        "requested_view_source": "user_perspective",
+                        "resolved_view_source": "user_perspective",
+                        "analysis_backend": "mirrored_user_perspective",
+                        "available": True,
+                        "state_restored": True,
+                    },
+                    "targets": [
+                        {
+                            "object_name": "Head",
+                            "visibility_verdict": "visible",
+                            "projection_status": "projected",
+                        }
+                    ],
+                    "summary": {
+                        "target_count": 2,
+                        "visible_count": 1,
+                        "partially_visible_count": 1,
+                    },
+                }
+            ),
+        }
+    )
+    handler = SceneToolHandler(rpc)
+
+    diagnostics = handler.get_view_diagnostics(
+        target_object="Head",
+        collection_name="CreatureParts",
+        view_name="TOP",
+        orbit_horizontal=20.0,
+        zoom_factor=1.2,
+    )
+
+    assert diagnostics["summary"]["target_count"] == 2
+    assert diagnostics["view_query"]["analysis_backend"] == "mirrored_user_perspective"
+    assert rpc.calls == [
+        (
+            "collection.list_objects",
+            {"collection_name": "CreatureParts", "recursive": True, "include_hidden": False},
+        ),
+        (
+            "scene.get_view_diagnostics",
+            {
+                "target_object": "Head",
+                "target_objects": ["Head", "Body"],
+                "camera_name": None,
+                "focus_target": None,
+                "view_name": "TOP",
+                "orbit_horizontal": 20.0,
+                "orbit_vertical": 0.0,
+                "zoom_factor": 1.2,
+                "persist_view": False,
+            },
+        ),
+    ]
+
+
 def test_scene_inspect_scene_state_handlers_align_with_rpc_commands():
     rpc = DummyRpc(
         {

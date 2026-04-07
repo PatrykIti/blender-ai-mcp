@@ -36,6 +36,12 @@ from server.adapters.mcp.contracts.scene import (
     SceneSelectionContract,
     SceneSnapshotDiffContract,
     SceneSnapshotStateContract,
+    SceneViewDiagnosticsPayloadContract,
+    SceneViewDiagnosticsResponseContract,
+    SceneViewDiagnosticsSummaryContract,
+    SceneViewDiagnosticsTargetContract,
+    SceneViewProjectionEvidenceContract,
+    SceneViewQueryContract,
 )
 from server.adapters.mcp.guided_contract import canonicalize_scene_clean_scene_arguments
 from server.adapters.mcp.router_helper import route_tool_call
@@ -91,6 +97,7 @@ SCENE_PUBLIC_TOOL_NAMES = (
     "scene_get_origin_info",
     "scene_scope_graph",
     "scene_relation_graph",
+    "scene_view_diagnostics",
     "scene_measure_distance",
     "scene_measure_dimensions",
     "scene_measure_gap",
@@ -2584,6 +2591,122 @@ def scene_relation_graph(
     if isinstance(result, dict):
         return SceneRelationGraphResponseContract.model_validate(result)
     return SceneRelationGraphResponseContract(error=str(result))
+
+
+def scene_view_diagnostics(
+    ctx: Context,
+    target_object: str | None = None,
+    target_objects: list[str] | None = None,
+    collection_name: str | None = None,
+    camera_name: str | None = None,
+    focus_target: str | None = None,
+    view_name: Literal["FRONT", "RIGHT", "TOP"] | None = None,
+    orbit_horizontal: float = 0.0,
+    orbit_vertical: float = 0.0,
+    zoom_factor: float | None = None,
+    persist_view: bool = False,
+) -> SceneViewDiagnosticsResponseContract:
+    """
+    [OBJECT MODE][SAFE][READ-ONLY] Returns compact view-space diagnostics for one explicit target scope.
+
+    Use this when you need typed answers to questions like:
+    - is the target actually on screen from this camera or viewport?
+    - is it fully visible, partially visible, or fully occluded?
+    - how centered is it in the current frame?
+
+    This is a view-space artifact only. It reports projection/framing/occlusion facts
+    for the current camera or live USER_PERSPECTIVE path; it does not claim contact,
+    attachment, overlap, or other truth-space geometry semantics.
+
+    Args:
+        target_object: Optional primary object to force into the diagnostics scope.
+        target_objects: Optional additional object names for an explicit object set.
+        collection_name: Optional collection to expand into the diagnostics scope.
+        camera_name: Optional explicit named camera. Use None or "USER_PERSPECTIVE" for the live 3D view.
+        focus_target: Optional target to focus before USER_PERSPECTIVE diagnostics.
+        view_name: Optional standard USER_PERSPECTIVE preset ('FRONT', 'RIGHT', 'TOP').
+        orbit_horizontal: Optional horizontal orbit in degrees for USER_PERSPECTIVE diagnostics.
+        orbit_vertical: Optional vertical orbit in degrees for USER_PERSPECTIVE diagnostics.
+        zoom_factor: Optional USER_PERSPECTIVE zoom factor.
+        persist_view: If True, keeps any USER_PERSPECTIVE adjustment after diagnostics. Defaults to False.
+    """
+
+    def execute() -> SceneViewDiagnosticsResponseContract:
+        if not any([target_object, target_objects, collection_name]):
+            return SceneViewDiagnosticsResponseContract(
+                error="Provide target_object, target_objects, or collection_name for scene_view_diagnostics.",
+            )
+
+        handler = get_scene_handler()
+        try:
+            scope = SceneAssembledTargetScopeContract.model_validate(
+                handler.get_scope_graph(
+                    target_object=target_object,
+                    target_objects=target_objects,
+                    collection_name=collection_name,
+                )
+            )
+            raw_payload = handler.get_view_diagnostics(
+                target_object=scope.primary_target or target_object,
+                target_objects=list(scope.object_names or []),
+                camera_name=camera_name,
+                focus_target=focus_target,
+                view_name=view_name,
+                orbit_horizontal=orbit_horizontal,
+                orbit_vertical=orbit_vertical,
+                zoom_factor=zoom_factor,
+                persist_view=persist_view,
+            )
+            target_contracts = [
+                SceneViewDiagnosticsTargetContract.model_validate(
+                    {
+                        **item,
+                        "projection": (
+                            SceneViewProjectionEvidenceContract.model_validate(item["projection"])
+                            if isinstance(item, dict) and isinstance(item.get("projection"), dict)
+                            else item.get("projection")
+                            if isinstance(item, dict)
+                            else None
+                        ),
+                    }
+                )
+                for item in list(raw_payload.get("targets") or [])
+                if isinstance(item, dict)
+            ]
+            payload = SceneViewDiagnosticsPayloadContract(
+                view_query=SceneViewQueryContract.model_validate(raw_payload.get("view_query") or {}),
+                scope=scope,
+                summary=SceneViewDiagnosticsSummaryContract.model_validate(raw_payload.get("summary") or {}),
+                targets=target_contracts,
+                message=(
+                    "View diagnostics report projection/framing/occlusion state for the requested scope only; use measure/assert tools for truth-space verification."
+                ),
+            )
+            return SceneViewDiagnosticsResponseContract(payload=payload)
+        except (RuntimeError, ValueError) as e:
+            return SceneViewDiagnosticsResponseContract(error=str(e))
+
+    result = route_tool_call(
+        tool_name="scene_view_diagnostics",
+        params={
+            "target_object": target_object,
+            "target_objects": target_objects,
+            "collection_name": collection_name,
+            "camera_name": camera_name,
+            "focus_target": focus_target,
+            "view_name": view_name,
+            "orbit_horizontal": orbit_horizontal,
+            "orbit_vertical": orbit_vertical,
+            "zoom_factor": zoom_factor,
+            "persist_view": persist_view,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, SceneViewDiagnosticsResponseContract):
+        return result
+    if isinstance(result, dict):
+        return SceneViewDiagnosticsResponseContract.model_validate(result)
+    return SceneViewDiagnosticsResponseContract(error=str(result))
 
 
 def scene_measure_distance(

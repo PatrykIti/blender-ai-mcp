@@ -260,6 +260,25 @@ def test_inspect_phase_search_can_surface_on_demand_spatial_graph_tools():
     assert "scene_relation_graph" in names
 
 
+def test_build_phase_search_can_surface_view_diagnostics_without_bootstrap_exposure():
+    build_phase_server = _build_phase_search_server(SessionPhase.BUILD)
+    bootstrap_server = build_server("llm-guided")
+
+    async def run():
+        build_result = await build_phase_server.call_tool(
+            "search_tools",
+            {"query": "occluded off screen framing visibility diagnostics"},
+        )
+        bootstrap_tools = await bootstrap_server.list_tools()
+        return _decode_tool_result(build_result), {tool.name for tool in bootstrap_tools}
+
+    build_payload, bootstrap_names = asyncio.run(run())
+    build_names = {tool["name"] for tool in build_payload}
+
+    assert "scene_view_diagnostics" in build_names
+    assert "scene_view_diagnostics" not in bootstrap_names
+
+
 def test_phase_shaped_list_tools_follow_visibility_without_discovery():
     """Visibility policy should affect the actual listed tools even without discovery collapse."""
 
@@ -812,7 +831,7 @@ def test_search_first_rollout_reduces_visible_tool_count_and_payload_size():
 
     legacy_count, guided_count, legacy_bytes, guided_bytes = asyncio.run(run())
 
-    assert legacy_count == 185
+    assert legacy_count == 186
     assert guided_count == 8
     assert guided_bytes < legacy_bytes
 

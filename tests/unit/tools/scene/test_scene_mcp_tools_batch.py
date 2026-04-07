@@ -148,6 +148,60 @@ def test_scene_state_and_utility_wrappers(monkeypatch):
     handler.get_hierarchy.return_value = {"roots": [{"name": "Cube"}]}
     handler.get_bounding_box.return_value = {"min": [0, 0, 0], "max": [1, 1, 1]}
     handler.get_origin_info.return_value = {"origin_world": [0, 0, 0]}
+    handler.get_scope_graph.return_value = {
+        "scope_kind": "object_set",
+        "primary_target": "Cube",
+        "object_names": ["Cube", "Sphere"],
+        "object_count": 2,
+        "object_roles": [],
+    }
+    handler.get_view_diagnostics.return_value = {
+        "view_query": {
+            "requested_view_source": "user_perspective",
+            "resolved_view_source": "user_perspective",
+            "analysis_backend": "mirrored_user_perspective",
+            "available": True,
+            "state_restored": True,
+        },
+        "summary": {
+            "target_count": 2,
+            "visible_count": 1,
+            "partially_visible_count": 1,
+            "fully_occluded_count": 0,
+            "outside_frame_count": 0,
+            "unavailable_count": 0,
+            "centered_target_count": 1,
+            "framing_issue_count": 1,
+        },
+        "targets": [
+            {
+                "object_name": "Cube",
+                "visibility_verdict": "visible",
+                "projection_status": "projected",
+                "projection": {
+                    "projected_center": {"x": 0.5, "y": 0.5},
+                    "projected_extent": {
+                        "min_x": 0.4,
+                        "min_y": 0.4,
+                        "max_x": 0.6,
+                        "max_y": 0.6,
+                        "width": 0.2,
+                        "height": 0.2,
+                    },
+                    "center_offset": {"x": 0.0, "y": 0.0},
+                    "frame_coverage_ratio": 1.0,
+                    "frame_occupancy_ratio": 0.04,
+                    "centered": True,
+                    "sample_count": 7,
+                    "in_front_sample_count": 7,
+                    "in_frame_sample_count": 7,
+                    "visible_sample_count": 7,
+                    "occluded_sample_count": 0,
+                    "occlusion_test_available": True,
+                },
+            }
+        ],
+    }
     handler.measure_distance.return_value = {"distance": 2.0, "reference": "ORIGIN"}
     handler.measure_dimensions.return_value = {"dimensions": [1.0, 2.0, 3.0], "volume": 6.0}
     handler.measure_gap.return_value = {"gap": 0.5, "relation": "separated"}
@@ -212,6 +266,26 @@ def test_scene_state_and_utility_wrappers(monkeypatch):
         0,
         0,
     ]
+    diagnostics = scene_area.scene_view_diagnostics(
+        MagicMock(),
+        target_object="Cube",
+        target_objects=["Sphere"],
+        view_name="TOP",
+        orbit_horizontal=15.0,
+    )
+    assert diagnostics.payload.scope.primary_target == "Cube"
+    assert diagnostics.payload.summary.partially_visible_count == 1
+    handler.get_view_diagnostics.assert_called_once_with(
+        target_object="Cube",
+        target_objects=["Cube", "Sphere"],
+        camera_name=None,
+        focus_target=None,
+        view_name="TOP",
+        orbit_horizontal=15.0,
+        orbit_vertical=0.0,
+        zoom_factor=None,
+        persist_view=False,
+    )
     assert (
         scene_area.scene_measure_distance(MagicMock(), from_object="Cube", to_object="Sphere").payload["distance"]
         == 2.0

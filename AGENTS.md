@@ -64,7 +64,7 @@ Do not let these roles blur together:
 - Run server locally: `poetry run python server/main.py`
 - Build addon zip: `python scripts/build_addon.py`
 - Pre-commit install: `poetry run pre-commit install --hook-type pre-commit --hook-type pre-push`
-- Full repo checks: `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files`
+- Full repo checks: `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files` or `poetry run pre-commit run --all-files --show-diff-on-failure`
 - Type checks: `poetry run mypy`
 - Unit tests: `PYTHONPATH=. poetry run pytest tests/unit/ -v`
 - Unit test collection count: `poetry run pytest tests/unit --collect-only`

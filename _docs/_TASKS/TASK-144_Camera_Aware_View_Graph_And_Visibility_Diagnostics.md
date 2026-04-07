@@ -1,10 +1,22 @@
 # TASK-144: Camera-Aware View Graph and Visibility Diagnostics
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** Spatial Intelligence / View-Space Reasoning
 **Estimated Effort:** Large
 **Dependencies:** TASK-121-03-03, TASK-121-03-04, TASK-121-03-05, TASK-143
+
+**Completion Summary:** Completed on 2026-04-07. Shipped one explicit
+read-only view-space layer for guided sessions: public
+`scene_view_diagnostics(...)` now exposes typed view-source provenance,
+projected extent, frame coverage, centering, and
+visible/partial/occluded/off-frame verdicts; the Blender addon/runtime now
+derives those facts from named cameras or bounded `USER_PERSPECTIVE`
+semantics; `llm-guided` keeps the tool off bootstrap while exposing it on
+inspect/build/handoff paths; and `reference_compare_current_view(...)` now
+emits compact `view_diagnostics_hints` when framing or occlusion ambiguity
+makes the current checkpoint a weak basis for the next correction step. Docs,
+tests, changelog history, and board state were updated in the same branch.
 
 ## Objective
 
@@ -359,8 +371,5 @@ Deliberate split:
 
 ## Status / Board Update
 
-- this planning pass decomposes TASK-144 into execution-ready children aligned
-  to the current code seams in `scene`, `reference`, and `visibility_policy`
-- `_docs/_TASKS/README.md` is intentionally unchanged in this branch per
-  operator constraint; board sync is deferred to the first implementation
-  branch that is allowed to touch the task board
+- closed on 2026-04-07 in the same branch as the implementation
+- `_docs/_TASKS/README.md` now tracks TASK-144 as completed

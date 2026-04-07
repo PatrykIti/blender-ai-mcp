@@ -22,6 +22,7 @@ def test_readme_documents_llm_guided_public_aliases():
         "reference_images",
         "scene_scope_graph",
         "scene_relation_graph",
+        "scene_view_diagnostics",
         "guided_reference_readiness",
         "MCP_TRANSPORT_MODE",
         "streamable",
@@ -68,6 +69,7 @@ def test_mcp_docs_describe_aliases_and_hidden_arguments():
         "reference_iterate_stage_checkpoint",
         "scene_scope_graph",
         "scene_relation_graph",
+        "scene_view_diagnostics",
         "guided_reference_readiness",
         "session_id",
         "transport",
@@ -138,6 +140,7 @@ def test_vision_docs_exist_and_describe_runtime_scope():
         "`refinement_handoff`",
         "`scene_scope_graph(...)`",
         "`scene_relation_graph(...)`",
+        "`scene_view_diagnostics(...)`",
         "separate from the",
         "already-active goal refs",
         "leaving broken pending file paths behind",
@@ -222,6 +225,7 @@ def test_tools_summary_describes_llm_guided_alias_layer():
         "browse_workflows",
         "scene_scope_graph",
         "scene_relation_graph",
+        "scene_view_diagnostics",
     ):
         assert expected in text
 
@@ -247,6 +251,7 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "reference_iterate_stage_checkpoint" in prompt_readme
     assert "scene_scope_graph(...)" in prompt_readme
     assert "scene_relation_graph(...)" in prompt_readme
+    assert "scene_view_diagnostics(...)" in prompt_readme
     assert "search_tools" in prompt_readme
     assert "call_tool" in prompt_readme
     assert "call it directly instead of routing through `search_tools(...)` / `call_tool(...)`" in prompt_readme

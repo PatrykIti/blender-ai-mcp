@@ -1685,6 +1685,102 @@ def test_reference_compare_current_view_captures_then_compares(tmp_path, monkeyp
     assert "comparison_mode=current_view_checkpoint" in (captured["request"].prompt_hint or "")
 
 
+def test_reference_compare_current_view_emits_compact_view_diagnostics_hint_when_target_is_off_frame(
+    tmp_path, monkeypatch
+):
+    image = tmp_path / "ref.png"
+    image.write_bytes(b"fake")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly squirrel", {"status": "no_match"})
+    asyncio.run(
+        reference_images(
+            ctx,
+            action="attach",
+            source_path=str(image),
+            label="front_ref",
+            target_object="Squirrel",
+            target_view="front",
+        )
+    )
+
+    class SceneHandler:
+        def get_viewport(self, **kwargs):
+            return "ZmFrZQ=="
+
+        def get_view_diagnostics(self, **kwargs):
+            return {
+                "view_query": {
+                    "requested_view_source": "user_perspective",
+                    "resolved_view_source": "user_perspective",
+                    "analysis_backend": "mirrored_user_perspective",
+                    "available": True,
+                    "state_restored": True,
+                },
+                "targets": [
+                    {
+                        "object_name": "Squirrel",
+                        "visibility_verdict": "outside_frame",
+                        "projection_status": "outside_frame",
+                        "projection": {
+                            "projected_center": {"x": 1.2, "y": 0.5},
+                            "center_offset": {"x": 0.7, "y": 0.0},
+                            "frame_coverage_ratio": 0.0,
+                            "frame_occupancy_ratio": 0.0,
+                            "centered": False,
+                        },
+                    }
+                ],
+                "summary": {
+                    "target_count": 1,
+                    "visible_count": 0,
+                    "partially_visible_count": 0,
+                    "fully_occluded_count": 0,
+                    "outside_frame_count": 1,
+                    "unavailable_count": 0,
+                    "centered_target_count": 0,
+                    "framing_issue_count": 1,
+                },
+            }
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="Current front checkpoint is not usable yet.",
+                visible_changes=[],
+            ),
+        )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: object())
+
+    result = asyncio.run(
+        reference_compare_current_view(
+            ctx,
+            checkpoint_label="stage_front",
+            target_object="Squirrel",
+            target_view="front",
+            view_name="FRONT",
+        )
+    )
+
+    assert result.error is None
+    assert result.view_diagnostics_hints is not None
+    assert result.view_diagnostics_hints[0].recommended_tool == "scene_view_diagnostics"
+    assert result.view_diagnostics_hints[0].trigger == "target_off_frame"
+    assert result.view_diagnostics_hints[0].arguments_hint["target_object"] == "Squirrel"
+
+
 def test_reference_compare_current_view_uses_unique_checkpoint_filename(tmp_path, monkeypatch):
     image = tmp_path / "ref.png"
     image.write_bytes(b"fake")

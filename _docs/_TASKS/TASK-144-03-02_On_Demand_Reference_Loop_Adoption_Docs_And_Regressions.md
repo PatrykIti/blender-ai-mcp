@@ -1,9 +1,15 @@
 # TASK-144-03-02: On-Demand Reference Loop Adoption, Docs, And Regressions
 
 **Parent:** [TASK-144-03](./TASK-144-03_Goal_Aware_Disclosure_Guided_Adoption_And_Regression_Pack.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟠 High  
 **Depends On:** [TASK-144-03-01](./TASK-144-03-01_LLM_Guided_Disclosure_And_Discovery_Shaping_For_View_Diagnostics.md), [TASK-144-02-02](./TASK-144-02-02_Scene_View_Diagnostics_Surface_RPC_Wiring_And_Metadata.md)
+
+**Completion Summary:** Completed on 2026-04-07. Added bounded on-demand
+guided-loop adoption for TASK-144: `reference_compare_current_view(...)` now
+emits compact `view_diagnostics_hints` when the active framing/occlusion state
+is ambiguous, while the default compare/iterate payloads stay free of a full
+embedded view graph. Docs and regression coverage were updated accordingly.
 
 ## Objective
 
@@ -74,7 +80,5 @@ stable.
 
 ## Status / Board Update
 
-- this leaf owns the bounded guided-loop adoption and documentation lock-in
-  for TASK-144
-- `_docs/_TASKS/README.md` remains unchanged in this planning pass per operator
-  constraint
+- closed on 2026-04-07 with the TASK-144 guided adoption wave
+- tracked as completed through the closed parent/subtask state

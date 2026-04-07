@@ -10,6 +10,7 @@ from server.adapters.mcp.transforms.visibility_policy import (
     GUIDED_DISCOVERY_TOOLS,
     GUIDED_ENTRY_TOOLS,
     GUIDED_INSPECT_ESCAPE_HATCH_TOOLS,
+    GUIDED_VIEW_DIAGNOSTIC_TOOLS,
 )
 
 
@@ -106,6 +107,7 @@ def test_guided_mode_inspect_phase_prefers_verification_capabilities_over_build_
     assert "armature" not in diagnostics.visible_capability_ids
     assert "sculpt" not in diagnostics.visible_capability_ids
     assert "system" not in diagnostics.visible_capability_ids
+    assert set(GUIDED_VIEW_DIAGNOSTIC_TOOLS).issubset(diagnostics.rules[-1]["names"])
 
 
 def test_legacy_flat_visibility_keeps_full_surface_visible():

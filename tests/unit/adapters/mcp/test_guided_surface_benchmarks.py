@@ -114,8 +114,8 @@ def test_guided_surface_phase_baselines_stay_intentional():
     inspect_names, _ = _tool_names_and_payload_size(SessionPhase.INSPECT_VALIDATE)
 
     assert len(bootstrap_names) == 6
-    assert len(build_names) == 119
-    assert len(inspect_names) == 44
+    assert len(build_names) == 120
+    assert len(inspect_names) == 45
 
     assert bootstrap_names == {
         "browse_workflows",
@@ -142,12 +142,14 @@ def test_guided_surface_phase_baselines_stay_intentional():
     assert "modeling_apply_modifier" not in build_names
     assert "modeling_list_modifiers" not in build_names
     assert "mesh_extrude_region" in build_names
+    assert "scene_view_diagnostics" in build_names
     assert "armature_create" not in build_names
     assert "sculpt_auto" not in build_names
 
     assert "extraction_render_angles" in inspect_names
     assert "scene_scope_graph" in inspect_names
     assert "scene_relation_graph" in inspect_names
+    assert "scene_view_diagnostics" in inspect_names
     assert "macro_relative_layout" not in inspect_names
     assert "macro_attach_part_to_surface" not in inspect_names
     assert "macro_align_part_with_contact" not in inspect_names

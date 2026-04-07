@@ -1,9 +1,15 @@
 # TASK-144-02-01: Visibility Verdict Taxonomy And Report Schema
 
 **Parent:** [TASK-144-02](./TASK-144-02_Visibility_Report_Contract_And_Read_Surface.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-144-01-01](./TASK-144-01-01_View_Query_Selector_And_Projection_Contract.md)
+
+**Completion Summary:** Completed on 2026-04-07. Finalized the bounded schema
+and verdict vocabulary for view-space diagnostics: the shipped contract now
+distinguishes `visible`, `partially_visible`, `fully_occluded`,
+`outside_frame`, and `unavailable` without blurring those view-space states
+with truth-space contact or attachment semantics.
 
 ## Objective
 
@@ -57,7 +63,5 @@ The schema must make it explicit:
 
 ## Status / Board Update
 
-- this leaf formalizes the report vocabulary for the TASK-144 visibility
-  subtree
-- `_docs/_TASKS/README.md` remains unchanged in this planning pass per operator
-  constraint
+- closed on 2026-04-07 with the TASK-144 visibility wave
+- tracked as completed through the closed parent/subtask state

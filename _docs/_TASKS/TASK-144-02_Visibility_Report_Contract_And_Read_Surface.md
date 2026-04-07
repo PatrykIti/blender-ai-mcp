@@ -1,9 +1,15 @@
 # TASK-144-02: Visibility Report Contract And Read Surface
 
 **Parent:** [TASK-144](./TASK-144_Camera_Aware_View_Graph_And_Visibility_Diagnostics.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-144-01](./TASK-144-01_Projection_View_Space_Contract_And_Runtime_Foundation.md)
+
+**Completion Summary:** Completed on 2026-04-07. Shipped the compact
+view-space visibility report layer on top of the new projection foundation:
+`scene_view_diagnostics(...)` now exposes one explicit read-only report
+surface instead of pushing a heavyweight view graph into the default
+reference compare/iterate payloads.
 
 ## Objective
 
@@ -108,6 +114,5 @@ Today:
 
 ## Status / Board Update
 
-- this subtask is introduced as part of the TASK-144 execution tree expansion
-- `_docs/_TASKS/README.md` is intentionally not updated in this planning pass
-  per operator constraint
+- closed on 2026-04-07 as part of the TASK-144 implementation wave
+- the board is updated through the completed parent task

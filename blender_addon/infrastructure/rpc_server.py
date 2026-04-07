@@ -55,6 +55,7 @@ _NO_UNDO_PUSH_CMDS = {
     "scene.get_view_state",
     "scene.restore_view_state",
     "scene.set_standard_view",
+    "scene.get_view_diagnostics",
     "scene.isolate_object",
     "scene.hide_object",
     "scene.show_all_objects",

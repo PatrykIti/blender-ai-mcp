@@ -241,6 +241,86 @@ class TestViewportControl(unittest.TestCase):
                 view_name="TOP",
             )
 
+    def test_view_diagnostics_user_view_adjustments_restore_state(self):
+        self.handler.set_standard_view = MagicMock(return_value="view ok")
+        self.handler.camera_focus = MagicMock(return_value="focus ok")
+        self.handler.camera_orbit = MagicMock(return_value="orbit ok")
+        self.handler.get_view_state = MagicMock(
+            return_value={
+                "available": True,
+                "view_location": [1.0, 2.0, 3.0],
+                "view_distance": 10.0,
+                "view_rotation": [1.0, 0.0, 0.0, 0.0],
+                "view_perspective": "PERSP",
+            }
+        )
+        self.handler.restore_view_state = MagicMock(return_value="restored")
+        self.handler._mirror_user_view_to_temp_camera = MagicMock(return_value=MagicMock(name="TempCamera"))
+        self.handler._build_view_target_diagnostic = MagicMock(
+            return_value={
+                "object_name": "Cube",
+                "visibility_verdict": "visible",
+                "projection_status": "projected",
+                "projection": {
+                    "projected_center": {"x": 0.5, "y": 0.5},
+                    "center_offset": {"x": 0.0, "y": 0.0},
+                    "frame_coverage_ratio": 1.0,
+                    "frame_occupancy_ratio": 0.04,
+                    "centered": True,
+                    "sample_count": 7,
+                    "in_front_sample_count": 7,
+                    "in_frame_sample_count": 7,
+                    "visible_sample_count": 7,
+                    "occluded_sample_count": 0,
+                    "occlusion_test_available": True,
+                },
+            }
+        )
+        self.handler._summarize_view_diagnostics = MagicMock(
+            return_value={
+                "target_count": 1,
+                "visible_count": 1,
+                "partially_visible_count": 0,
+                "fully_occluded_count": 0,
+                "outside_frame_count": 0,
+                "unavailable_count": 0,
+                "centered_target_count": 1,
+                "framing_issue_count": 0,
+            }
+        )
+
+        diagnostics = self.handler.get_view_diagnostics(
+            target_object="Cube",
+            camera_name="USER_PERSPECTIVE",
+            focus_target="Cube",
+            view_name="TOP",
+            orbit_horizontal=25.0,
+            orbit_vertical=-10.0,
+            zoom_factor=1.5,
+            persist_view=False,
+        )
+
+        self.handler.set_standard_view.assert_called_once_with("TOP")
+        self.handler.camera_focus.assert_called_once_with("Cube", zoom_factor=1.5)
+        self.handler.camera_orbit.assert_called_once_with(
+            angle_horizontal=25.0,
+            angle_vertical=-10.0,
+            target_object="Cube",
+        )
+        self.handler.restore_view_state.assert_called_once()
+        assert diagnostics["view_query"]["requested_view_source"] == "user_perspective"
+        assert diagnostics["view_query"]["state_restored"] is True
+
+    def test_view_diagnostics_explicit_camera_rejects_user_view_adjustments(self):
+        self.add_object("MyCamera")
+
+        with self.assertRaisesRegex(ValueError, "only supported with USER_PERSPECTIVE diagnostics"):
+            self.handler.get_view_diagnostics(
+                target_object="Cube",
+                camera_name="MyCamera",
+                view_name="TOP",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

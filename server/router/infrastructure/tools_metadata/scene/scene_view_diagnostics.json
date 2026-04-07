@@ -1,0 +1,42 @@
+{
+  "tool_name": "scene_view_diagnostics",
+  "category": "scene",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": [
+    "view diagnostics",
+    "visibility report",
+    "occlusion diagnostics",
+    "off screen",
+    "framing",
+    "camera visibility",
+    "viewport visibility",
+    "screen space projection"
+  ],
+  "sample_prompts": [
+    "is this object actually visible from the current camera",
+    "show framing and occlusion diagnostics for these parts",
+    "tell me if the target is off screen or partially hidden"
+  ],
+  "parameters": {
+    "target_object": {"type": "string", "required": false},
+    "target_objects": {"type": "array", "required": false},
+    "collection_name": {"type": "string", "required": false},
+    "camera_name": {"type": "string", "required": false},
+    "focus_target": {"type": "string", "required": false},
+    "view_name": {"type": "enum", "options": ["FRONT", "RIGHT", "TOP"], "required": false},
+    "orbit_horizontal": {"type": "float", "default": 0.0},
+    "orbit_vertical": {"type": "float", "default": 0.0},
+    "zoom_factor": {"type": "float", "required": false},
+    "persist_view": {"type": "bool", "default": false}
+  },
+  "related_tools": [
+    "scene_get_viewport",
+    "scene_scope_graph",
+    "scene_relation_graph",
+    "reference_compare_current_view",
+    "reference_compare_stage_checkpoint"
+  ],
+  "patterns": [],
+  "description": "Returns one compact read-only view-space diagnostics report for a target scope, including projected extent, frame coverage, centering, and visible/partial/occluded/off-frame verdicts for a named camera or the live USER_PERSPECTIVE path. This is view-space only and does not replace truth-space measure/assert semantics."
+}

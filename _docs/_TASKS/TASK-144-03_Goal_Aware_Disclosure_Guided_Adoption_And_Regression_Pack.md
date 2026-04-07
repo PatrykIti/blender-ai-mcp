@@ -1,9 +1,15 @@
 # TASK-144-03: Goal-Aware Disclosure, Guided Adoption, And Regression Pack
 
 **Parent:** [TASK-144](./TASK-144_Camera_Aware_View_Graph_And_Visibility_Diagnostics.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟠 High  
 **Depends On:** [TASK-144-01](./TASK-144-01_Projection_View_Space_Contract_And_Runtime_Foundation.md), [TASK-144-02](./TASK-144-02_Visibility_Report_Contract_And_Read_Surface.md)
+
+**Completion Summary:** Completed on 2026-04-07. Landed the guided adoption
+pack for TASK-144: `scene_view_diagnostics(...)` stays off the tiny bootstrap
+surface, becomes available on build/inspect/handoff paths, and the reference
+loop now uses only a compact recommendation surface (`view_diagnostics_hints`)
+instead of embedding a heavyweight default view graph.
 
 ## Objective
 
@@ -109,6 +115,5 @@ concern.
 
 ## Status / Board Update
 
-- this subtask is introduced as part of the TASK-144 execution tree expansion
-- `_docs/_TASKS/README.md` is intentionally not updated in this planning pass
-  per operator constraint
+- closed on 2026-04-07 as part of the TASK-144 implementation wave
+- the board is updated through the completed parent task

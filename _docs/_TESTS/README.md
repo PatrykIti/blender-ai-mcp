@@ -212,6 +212,14 @@ Primary local validation commands for TASK-121 vision runtime/capture/evaluation
 poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/tools/macro/test_macro_capture_bundle.py tests/unit/adapters/mcp/test_macro_contracts.py tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_result_types.py tests/unit/adapters/mcp/test_vision_external_backend.py tests/unit/adapters/mcp/test_vision_local_backend.py tests/unit/adapters/mcp/test_vision_capture_bundle.py tests/unit/adapters/mcp/test_vision_capture_runtime.py tests/unit/adapters/mcp/test_vision_runner.py tests/unit/adapters/mcp/test_vision_macro_reporting.py tests/unit/adapters/mcp/test_vision_macro_mcp_integration.py tests/unit/adapters/mcp/test_vision_macro_reference_integration.py tests/unit/adapters/mcp/test_vision_evaluation.py tests/unit/infrastructure/test_vision_di.py tests/unit/adapters/mcp/test_assistant_runner.py tests/unit/adapters/mcp/test_sampling_assistant_docs.py -q
 ```
 
+Primary local validation commands for TASK-144 camera-aware view diagnostics:
+
+```bash
+PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_viewport_control.py tests/unit/tools/test_handler_rpc_alignment.py tests/unit/adapters/mcp/test_structured_contract_delivery.py tests/unit/adapters/mcp/test_provider_inventory.py tests/unit/adapters/mcp/test_tool_inventory.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py tests/unit/adapters/mcp/test_reference_images.py -q
+
+PYTHONPATH=. poetry run pytest tests/e2e/tools/scene/test_scene_view_diagnostics.py tests/e2e/tools/scene/test_scene_get_viewport.py tests/e2e/tools/scene/test_scene_get_viewport_camera.py -q
+```
+
 Repo-tracked synthetic vision evaluation scenarios now live under:
 
 - `tests/fixtures/vision_eval/synthetic_round_cutout/`
@@ -267,11 +275,20 @@ Focused unit coverage now also protects:
   `tests/unit/adapters/mcp/test_reference_images.py`
 - optional segmentation-sidecar config defaults and opt-in validation on
   `tests/unit/adapters/mcp/test_vision_runtime_config.py`
+- compact view-space contracts, search/discovery shaping, and reference-loop
+  adoption hints on:
+  - `tests/unit/tools/scene/test_scene_contracts.py`
+  - `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
+  - `tests/unit/tools/scene/test_viewport_control.py`
+  - `tests/unit/adapters/mcp/test_search_surface.py`
+  - `tests/unit/adapters/mcp/test_visibility_policy.py`
+  - `tests/unit/adapters/mcp/test_reference_images.py`
 
 First Blender-backed E2E coverage for the guided utility prep path now includes:
 
 - `tests/e2e/tools/scene/test_scene_clean_scene.py`
 - `tests/e2e/tools/scene/test_scene_get_viewport.py`
+- `tests/e2e/tools/scene/test_scene_view_diagnostics.py`
 - `tests/e2e/router/test_utility_goal_boundary.py`
 
 Camera-faithful viewport capture regression coverage now also includes:

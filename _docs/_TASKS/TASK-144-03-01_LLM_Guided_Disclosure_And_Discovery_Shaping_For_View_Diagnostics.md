@@ -1,9 +1,14 @@
 # TASK-144-03-01: LLM-Guided Disclosure And Discovery Shaping For View Diagnostics
 
 **Parent:** [TASK-144-03](./TASK-144-03_Goal_Aware_Disclosure_Guided_Adoption_And_Regression_Pack.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟠 High  
 **Depends On:** [TASK-144-02-02](./TASK-144-02-02_Scene_View_Diagnostics_Surface_RPC_Wiring_And_Metadata.md)
+
+**Completion Summary:** Completed on 2026-04-07. Updated the guided
+visibility/search policy so `scene_view_diagnostics(...)` stays hidden on the
+bootstrap surface while remaining discoverable on build/inspect and shaped
+handoff paths where framing or occlusion reasoning matters.
 
 ## Objective
 
@@ -68,6 +73,5 @@ not in the router and not in free-form prompt heuristics.
 
 ## Status / Board Update
 
-- this leaf owns the FastMCP disclosure/discovery side of TASK-144 adoption
-- `_docs/_TASKS/README.md` remains unchanged in this planning pass per operator
-  constraint
+- closed on 2026-04-07 with the TASK-144 guided adoption wave
+- tracked as completed through the closed parent/subtask state

@@ -1,9 +1,15 @@
 # TASK-144-02-02: Scene View Diagnostics Surface, RPC Wiring, And Metadata
 
 **Parent:** [TASK-144-02](./TASK-144-02_Visibility_Report_Contract_And_Read_Surface.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-144-01-02](./TASK-144-01-02_Blender_View_Projection_Runtime_And_Frame_Coverage.md), [TASK-144-02-01](./TASK-144-02-01_Visibility_Verdict_Taxonomy_And_Report_Schema.md)
+
+**Completion Summary:** Completed on 2026-04-07. Wired the new view
+diagnostics surface through the normal scene stack: domain/application APIs,
+scene RPC registration, public MCP exposure, router metadata, dispatcher
+mapping, provider inventory, and structured delivery regressions now all
+cover `scene_view_diagnostics(...)`.
 
 ## Objective
 
@@ -74,7 +80,5 @@ It does not own guided adoption policy; that belongs to TASK-144-03.
 
 ## Status / Board Update
 
-- this leaf owns the public surface and metadata side of the TASK-144
-  visibility subtree
-- `_docs/_TASKS/README.md` remains unchanged in this planning pass per operator
-  constraint
+- closed on 2026-04-07 with the TASK-144 visibility wave
+- tracked as completed through the closed parent/subtask state

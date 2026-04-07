@@ -447,3 +447,62 @@ class SceneToolHandler(ISceneTool):
             goal_hint=goal_hint,
             include_truth_payloads=include_truth_payloads,
         )
+
+    def get_view_diagnostics(
+        self,
+        target_object: Optional[str] = None,
+        target_objects: Optional[List[str]] = None,
+        collection_name: Optional[str] = None,
+        camera_name: Optional[str] = None,
+        focus_target: Optional[str] = None,
+        view_name: Optional[str] = None,
+        orbit_horizontal: float = 0.0,
+        orbit_vertical: float = 0.0,
+        zoom_factor: Optional[float] = None,
+        persist_view: bool = False,
+    ) -> Dict[str, Any]:
+        collection_handler = CollectionToolHandler(self.rpc)
+
+        resolved_target_objects: List[str] = [
+            str(name).strip() for name in list(target_objects or []) if str(name or "").strip()
+        ]
+        if target_object and target_object not in resolved_target_objects:
+            resolved_target_objects = [target_object, *resolved_target_objects]
+
+        if collection_name:
+            payload = collection_handler.list_objects(
+                collection_name=collection_name,
+                recursive=True,
+                include_hidden=False,
+            )
+            collection_objects = payload.get("objects", []) if isinstance(payload, dict) else []
+            resolved_target_objects.extend(
+                str(item.get("name")).strip()
+                for item in collection_objects
+                if isinstance(item, dict) and str(item.get("name") or "").strip()
+            )
+
+        deduped_target_objects: List[str] = []
+        seen_names: set[str] = set()
+        for name in resolved_target_objects:
+            if name in seen_names:
+                continue
+            seen_names.add(name)
+            deduped_target_objects.append(name)
+
+        return require_dict_result(
+            self.rpc.send_request(
+                "scene.get_view_diagnostics",
+                {
+                    "target_object": target_object,
+                    "target_objects": deduped_target_objects,
+                    "camera_name": camera_name,
+                    "focus_target": focus_target,
+                    "view_name": view_name,
+                    "orbit_horizontal": orbit_horizontal,
+                    "orbit_vertical": orbit_vertical,
+                    "zoom_factor": zoom_factor,
+                    "persist_view": persist_view,
+                },
+            )
+        )

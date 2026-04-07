@@ -1,9 +1,15 @@
 # TASK-144-01-02: Blender View Projection Runtime And Frame Coverage
 
 **Parent:** [TASK-144-01](./TASK-144-01_Projection_View_Space_Contract_And_Runtime_Foundation.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-144-01-01](./TASK-144-01-01_View_Query_Selector_And_Projection_Contract.md)
+
+**Completion Summary:** Completed on 2026-04-07. Implemented the Blender-side
+projection/frame-coverage runtime used by `scene_view_diagnostics(...)`,
+including named-camera support, mirrored `USER_PERSPECTIVE` support, bounded
+focus/orbit/view semantics, best-effort occlusion sampling, and reversible
+view-state restoration.
 
 ## Objective
 
@@ -77,7 +83,5 @@ and returns deterministic projection plus frame-coverage facts.
 
 ## Status / Board Update
 
-- this leaf owns the Blender/runtime implementation side of the TASK-144
-  projection seam
-- `_docs/_TASKS/README.md` remains unchanged in this planning pass per operator
-  constraint
+- closed on 2026-04-07 with the TASK-144 foundation wave
+- tracked as completed through the closed parent/subtask state

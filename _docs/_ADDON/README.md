@@ -86,6 +86,7 @@ Technical details.
 | `scene.configure_world` | `configure_world` | Applies grouped world/background settings without taking ownership of arbitrary node-graph authoring, and rejects payloads that cross into full graph rebuild scope. |
 | `scene.get_constraints` | `get_constraints` | Returns object (and optional bone) constraints. |
 | `get_viewport` | `get_viewport` | Returns a base64 encoded viewport/image capture. `USER_PERSPECTIVE` follows the live 3D view and supports bounded `view_name` / orbit / zoom adjustments; named cameras use the scene-camera render path instead. |
+| `scene.get_view_diagnostics` | `get_view_diagnostics` | Returns compact machine-readable view-space diagnostics for one target scope, including projected extent, frame coverage, centering, and visible/partial/occluded/off-frame verdicts for a named camera or the live `USER_PERSPECTIVE` path. |
 | `scene.get_custom_properties` | `get_custom_properties` | Gets custom properties (metadata) from an object. |
 | `scene.set_custom_property` | `set_custom_property` | Sets or deletes a custom property on an object. |
 | `scene.get_hierarchy` | `get_hierarchy` | Gets parent-child hierarchy for object or full scene. |
@@ -108,6 +109,7 @@ Technical details.
   - named `camera_name` values render from the explicit scene camera and follow render visibility
   - `camera_name="USER_PERSPECTIVE"` captures the live 3D viewport, can apply bounded view/orbit/zoom adjustments, and requires an active 3D view
 - if OpenGL capture is unavailable for `USER_PERSPECTIVE`, the addon mirrors the live view into a temporary camera and falls back through Workbench/Cycles so the result still tracks what the operator saw
+- `scene.get_view_diagnostics` reuses the same named-camera vs `USER_PERSPECTIVE` split and the same bounded user-view adjustment semantics, but returns typed projection/framing/occlusion facts instead of pixels
 - `scene.measure_gap`, `scene.measure_overlap`, and `scene.assert_contact` now distinguish:
   - `measurement_basis="mesh_surface"` when a bounded evaluated-mesh/BVH path is available for mesh pairs
   - `measurement_basis="bounding_box"` when the addon must fall back to coarse bbox-only truth

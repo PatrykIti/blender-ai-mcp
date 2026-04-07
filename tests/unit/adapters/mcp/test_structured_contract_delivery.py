@@ -156,6 +156,79 @@ class SceneHandler:
             "pairs": [pair],
         }
 
+    def get_view_diagnostics(
+        self,
+        target_object=None,
+        target_objects=None,
+        collection_name=None,
+        camera_name=None,
+        focus_target=None,
+        view_name=None,
+        orbit_horizontal=0.0,
+        orbit_vertical=0.0,
+        zoom_factor=None,
+        persist_view=False,
+    ):
+        object_names = list(target_objects or ([] if target_object is None else [target_object]))
+        if target_object and target_object not in object_names:
+            object_names = [target_object, *object_names]
+        return {
+            "view_query": {
+                "requested_view_source": "named_camera"
+                if camera_name and camera_name != "USER_PERSPECTIVE"
+                else "user_perspective",
+                "resolved_view_source": "named_camera"
+                if camera_name and camera_name != "USER_PERSPECTIVE"
+                else "user_perspective",
+                "requested_camera_name": camera_name if camera_name and camera_name != "USER_PERSPECTIVE" else None,
+                "resolved_camera_name": camera_name if camera_name and camera_name != "USER_PERSPECTIVE" else None,
+                "analysis_backend": "scene_camera"
+                if camera_name and camera_name != "USER_PERSPECTIVE"
+                else "mirrored_user_perspective",
+                "available": True,
+                "state_restored": not persist_view,
+            },
+            "summary": {
+                "target_count": len(object_names),
+                "visible_count": 1 if object_names else 0,
+                "partially_visible_count": 1 if len(object_names) > 1 else 0,
+                "fully_occluded_count": 0,
+                "outside_frame_count": 0,
+                "unavailable_count": 0,
+                "centered_target_count": 1 if object_names else 0,
+                "framing_issue_count": 1 if len(object_names) > 1 else 0,
+            },
+            "targets": [
+                {
+                    "object_name": name,
+                    "visibility_verdict": "visible" if index == 0 else "partially_visible",
+                    "projection_status": "projected",
+                    "projection": {
+                        "projected_center": {"x": 0.5 + (0.35 * index), "y": 0.5},
+                        "projected_extent": {
+                            "min_x": 0.4 + (0.3 * index),
+                            "min_y": 0.3,
+                            "max_x": 0.6 + (0.35 * index),
+                            "max_y": 0.7,
+                            "width": 0.2,
+                            "height": 0.4,
+                        },
+                        "center_offset": {"x": 0.35 * index, "y": 0.0},
+                        "frame_coverage_ratio": 1.0 if index == 0 else 0.55,
+                        "frame_occupancy_ratio": 0.08,
+                        "centered": index == 0,
+                        "sample_count": 7,
+                        "in_front_sample_count": 7,
+                        "in_frame_sample_count": 7 if index == 0 else 4,
+                        "visible_sample_count": 7 if index == 0 else 3,
+                        "occluded_sample_count": 0 if index == 0 else 1,
+                        "occlusion_test_available": True,
+                    },
+                }
+                for index, name in enumerate(object_names)
+            ],
+        }
+
     def measure_distance(self, from_object, to_object, reference="ORIGIN"):
         return {
             "from_object": from_object,
@@ -1087,6 +1160,31 @@ def test_scene_spatial_graph_contract_tools_deliver_structured_content(monkeypat
     assert scope_payload["payload"]["scope"]["object_roles"][0]["object_name"] == "Squirrel_Body"
     assert relation_payload["payload"]["summary"]["pair_count"] == 1
     assert relation_payload["payload"]["pairs"][0]["attachment_semantics"]["attachment_verdict"] == "floating_gap"
+
+
+def test_scene_view_diagnostics_contract_tool_delivers_structured_content(monkeypatch):
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.ctx_info", lambda ctx, message: None)
+
+    server = build_server("legacy-flat")
+
+    async def run():
+        return await server.call_tool(
+            "scene_view_diagnostics",
+            {
+                "target_object": "Squirrel_Head",
+                "target_objects": ["Squirrel_Body"],
+                "view_name": "TOP",
+            },
+        )
+
+    result = asyncio.run(run())
+    payload = _unwrap_structured(result)
+
+    assert payload["payload"]["scope"]["primary_target"] == "Squirrel_Head"
+    assert payload["payload"]["view_query"]["requested_view_source"] == "user_perspective"
+    assert payload["payload"]["summary"]["target_count"] == 2
+    assert payload["payload"]["targets"][0]["projection"]["projected_center"]["x"] == 0.5
 
 
 def test_scene_assert_contract_tools_deliver_structured_content(monkeypatch):

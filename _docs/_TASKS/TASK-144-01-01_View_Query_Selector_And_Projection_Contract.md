@@ -1,9 +1,14 @@
 # TASK-144-01-01: View Query Selector And Projection Contract
 
 **Parent:** [TASK-144-01](./TASK-144-01_Projection_View_Space_Contract_And_Runtime_Foundation.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-121-03-03](./TASK-121-03-03_Camera_Faithful_Viewport_Capture_Semantics.md), [TASK-121-03-04](./TASK-121-03-04_User_View_Manipulation_For_Viewport_Capture.md), [TASK-121-03-05](./TASK-121-03-05_Render_Visibility_Consistency_For_Viewport_Capture.md)
+
+**Completion Summary:** Completed on 2026-04-07. Added the typed request and
+response vocabulary for view-space diagnostics, including requested/resolved
+view provenance, compact projected extent/center evidence, frame-coverage
+facts, and explicit unavailable/off-frame/behind-view cases.
 
 ## Objective
 
@@ -61,6 +66,5 @@ The contract must make it explicit:
 
 ## Status / Board Update
 
-- this leaf formalizes the contract seam for the TASK-144 foundation subtree
-- `_docs/_TASKS/README.md` remains unchanged in this planning pass per operator
-  constraint
+- closed on 2026-04-07 with the TASK-144 foundation wave
+- tracked as completed through the closed parent/subtask state

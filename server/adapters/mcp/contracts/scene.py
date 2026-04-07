@@ -284,6 +284,78 @@ class SceneRelationGraphResponseContract(MCPContract):
     error: str | None = None
 
 
+class SceneViewQueryContract(MCPContract):
+    requested_view_source: Literal["named_camera", "user_perspective"]
+    resolved_view_source: Literal["named_camera", "user_perspective"] | None = None
+    requested_camera_name: str | None = None
+    resolved_camera_name: str | None = None
+    analysis_backend: Literal["scene_camera", "mirrored_user_perspective"] | None = None
+    available: bool = True
+    unavailable_reason: str | None = None
+    state_restored: bool = True
+
+
+class SceneViewPointContract(MCPContract):
+    x: float
+    y: float
+
+
+class SceneViewExtentContract(MCPContract):
+    min_x: float
+    min_y: float
+    max_x: float
+    max_y: float
+    width: float
+    height: float
+
+
+class SceneViewProjectionEvidenceContract(MCPContract):
+    projected_center: SceneViewPointContract | None = None
+    projected_extent: SceneViewExtentContract | None = None
+    center_offset: SceneViewPointContract | None = None
+    frame_coverage_ratio: float | None = None
+    frame_occupancy_ratio: float | None = None
+    centered: bool | None = None
+    sample_count: int = 0
+    in_front_sample_count: int = 0
+    in_frame_sample_count: int = 0
+    visible_sample_count: int = 0
+    occluded_sample_count: int = 0
+    occlusion_test_available: bool = False
+
+
+class SceneViewDiagnosticsTargetContract(MCPContract):
+    object_name: str
+    visibility_verdict: Literal["visible", "partially_visible", "fully_occluded", "outside_frame", "unavailable"]
+    projection_status: Literal["projected", "outside_frame", "behind_view", "unavailable"] = "unavailable"
+    projection: SceneViewProjectionEvidenceContract | None = None
+    unavailable_reason: str | None = None
+
+
+class SceneViewDiagnosticsSummaryContract(MCPContract):
+    target_count: int = 0
+    visible_count: int = 0
+    partially_visible_count: int = 0
+    fully_occluded_count: int = 0
+    outside_frame_count: int = 0
+    unavailable_count: int = 0
+    centered_target_count: int = 0
+    framing_issue_count: int = 0
+
+
+class SceneViewDiagnosticsPayloadContract(MCPContract):
+    view_query: SceneViewQueryContract
+    scope: SceneAssembledTargetScopeContract
+    summary: SceneViewDiagnosticsSummaryContract
+    targets: list[SceneViewDiagnosticsTargetContract] = []
+    message: str | None = None
+
+
+class SceneViewDiagnosticsResponseContract(MCPContract):
+    payload: SceneViewDiagnosticsPayloadContract | None = None
+    error: str | None = None
+
+
 class SceneCorrectionTruthPairContract(MCPContract):
     from_object: str
     to_object: str

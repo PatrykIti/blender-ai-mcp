@@ -91,8 +91,14 @@ The repo now has the first implementation scaffolding for the vision layer:
   default stage payload:
   - `scene_scope_graph(...)`
   - `scene_relation_graph(...)`
-  - use those on demand when one correction step needs a fuller structural or
-    pair-relation picture than the bounded stage handoff should carry by default
+  - `scene_view_diagnostics(...)`
+  - use those on demand when one correction step needs a fuller structural,
+    pair-relation, or framing/occlusion picture than the bounded stage handoff
+    should carry by default
+- `reference_compare_current_view(...)` can now also emit compact
+  `view_diagnostics_hints` when the active framing/occlusion state makes the
+  current checkpoint a weak basis for the next correction step; the full
+  view-space report still stays separate from the default compare payload
 - `reference_iterate_stage_checkpoint(...)` now derives its loop-facing
   `correction_focus` from ranked `correction_candidates` when they are present,
   so deterministic truth-only findings can still reach the staged correction

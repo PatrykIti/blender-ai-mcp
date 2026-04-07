@@ -79,7 +79,8 @@ When a bounded modeling intent matches, the default public working layer should 
 - stage compare/iterate now also expose deterministic `silhouette_analysis` metrics, typed `action_hints`, and an advisory-only `part_segmentation` placeholder that stays disabled unless a separate sidecar is explicitly enabled
 - `scene_scope_graph` for one explicit read-only structural scope artifact with anchor/core/accessory role hints
 - `scene_relation_graph` for one explicit read-only pair-relation artifact derived from the current truth layer
-- those spatial graph tools stay off the bootstrap-visible guided surface by default; use them on demand from guided inspect flows or goal-aware handoff/discovery when the current correction step needs richer spatial state
+- `scene_view_diagnostics` for one explicit read-only view-space artifact with projected extent, frame coverage, centering, and visible/partial/occluded/off-frame verdicts for named cameras or `USER_PERSPECTIVE`
+- those spatial graph/view diagnostics tools stay off the bootstrap-visible guided surface by default; use them on demand from guided inspect flows or goal-aware handoff/discovery when the current correction step needs richer spatial state
 
 Current guided bootstrap surface:
 

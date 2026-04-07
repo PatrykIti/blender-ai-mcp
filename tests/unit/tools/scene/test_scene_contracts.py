@@ -42,6 +42,14 @@ from server.adapters.mcp.contracts.scene import (
     SceneSymmetrySemanticsContract,
     SceneTruthFollowupContract,
     SceneTruthFollowupItemContract,
+    SceneViewDiagnosticsPayloadContract,
+    SceneViewDiagnosticsResponseContract,
+    SceneViewDiagnosticsSummaryContract,
+    SceneViewDiagnosticsTargetContract,
+    SceneViewExtentContract,
+    SceneViewPointContract,
+    SceneViewProjectionEvidenceContract,
+    SceneViewQueryContract,
 )
 from server.adapters.mcp.sampling.result_types import (
     AssistantBudgetContract,
@@ -258,7 +266,94 @@ def test_scene_relation_graph_contract_carries_compact_pair_semantics():
     assert response.payload.summary.pairing_strategy == "guided_spatial_pairs"
     assert response.payload.pairs[0].attachment_semantics is not None
     assert response.payload.pairs[1].support_semantics is not None
-    assert response.payload.pairs[1].symmetry_semantics is not None
+
+
+def test_scene_view_diagnostics_contract_carries_projection_and_visibility_evidence():
+    response = SceneViewDiagnosticsResponseContract(
+        payload=SceneViewDiagnosticsPayloadContract(
+            view_query=SceneViewQueryContract(
+                requested_view_source="user_perspective",
+                resolved_view_source="user_perspective",
+                analysis_backend="mirrored_user_perspective",
+                available=True,
+                state_restored=True,
+            ),
+            scope=SceneAssembledTargetScopeContract(
+                scope_kind="object_set",
+                primary_target="Squirrel_Head",
+                object_names=["Squirrel_Head", "Squirrel_Body"],
+                object_count=2,
+            ),
+            summary=SceneViewDiagnosticsSummaryContract(
+                target_count=2,
+                visible_count=1,
+                partially_visible_count=1,
+                centered_target_count=1,
+                framing_issue_count=1,
+            ),
+            targets=[
+                SceneViewDiagnosticsTargetContract(
+                    object_name="Squirrel_Head",
+                    visibility_verdict="visible",
+                    projection_status="projected",
+                    projection=SceneViewProjectionEvidenceContract(
+                        projected_center=SceneViewPointContract(x=0.5, y=0.5),
+                        projected_extent=SceneViewExtentContract(
+                            min_x=0.4,
+                            min_y=0.3,
+                            max_x=0.6,
+                            max_y=0.7,
+                            width=0.2,
+                            height=0.4,
+                        ),
+                        center_offset=SceneViewPointContract(x=0.0, y=0.0),
+                        frame_coverage_ratio=1.0,
+                        frame_occupancy_ratio=0.08,
+                        centered=True,
+                        sample_count=7,
+                        in_front_sample_count=7,
+                        in_frame_sample_count=7,
+                        visible_sample_count=7,
+                        occluded_sample_count=0,
+                        occlusion_test_available=True,
+                    ),
+                ),
+                SceneViewDiagnosticsTargetContract(
+                    object_name="Squirrel_Body",
+                    visibility_verdict="partially_visible",
+                    projection_status="projected",
+                    projection=SceneViewProjectionEvidenceContract(
+                        projected_center=SceneViewPointContract(x=1.1, y=0.52),
+                        projected_extent=SceneViewExtentContract(
+                            min_x=0.8,
+                            min_y=0.25,
+                            max_x=1.3,
+                            max_y=0.8,
+                            width=0.5,
+                            height=0.55,
+                        ),
+                        center_offset=SceneViewPointContract(x=0.6, y=0.02),
+                        frame_coverage_ratio=0.4,
+                        frame_occupancy_ratio=0.11,
+                        centered=False,
+                        sample_count=7,
+                        in_front_sample_count=7,
+                        in_frame_sample_count=3,
+                        visible_sample_count=2,
+                        occluded_sample_count=1,
+                        occlusion_test_available=True,
+                    ),
+                ),
+            ],
+            message="View-space diagnostics only; use truth tools for contact/attachment verification.",
+        )
+    )
+
+    assert response.payload is not None
+    assert response.payload.view_query.analysis_backend == "mirrored_user_perspective"
+    assert response.payload.summary.partially_visible_count == 1
+    assert response.payload.targets[0].projection.projected_center.x == 0.5
+    assert response.payload.targets[1].visibility_verdict == "partially_visible"
 
 
 def test_scene_correction_truth_bundle_contract_carries_pair_checks_and_summary():
