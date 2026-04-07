@@ -249,6 +249,31 @@ PYTHONPATH=. poetry run pytest tests/unit/router/application/test_workflow_trigg
 poetry run mypy
 ```
 
+Additional coverage added after the first TASK-146 hardening slice:
+
+- transport-backed guided search/call boundary:
+  - `tests/e2e/integration/test_guided_search_first_call_tool_boundary.py`
+- broader guided direct-call trigger regressions:
+  - `tests/e2e/router/test_guided_direct_calls_do_not_trigger_workflows.py`
+- OpenRouter/Qwen live structured-output smoke (opt-in):
+  - `tests/e2e/vision/test_openrouter_qwen_json_mode.py`
+- Docker runtime dependency smoke (opt-in):
+  - `tests/e2e/integration/test_docker_runtime_vision_dependencies.py`
+
+Targeted validation command for those additions:
+
+```bash
+PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/e2e/integration/test_guided_search_first_call_tool_boundary.py tests/e2e/router/test_guided_direct_calls_do_not_trigger_workflows.py tests/e2e/vision/test_openrouter_qwen_json_mode.py tests/e2e/integration/test_docker_runtime_vision_dependencies.py -q
+```
+
+Opt-in environment gates for the new real-runtime smokes:
+
+- `RUN_REAL_OPENROUTER_QWEN_JSON_MODE=1`
+  - requires `OPENROUTER_API_KEY`
+- `RUN_DOCKER_RUNTIME_VISION_SMOKE=1`
+  - optional `BLENDER_AI_MCP_DOCKER_IMAGE=<image>` override, defaults to
+    `blender-ai-mcp:local`
+
 Repo-tracked synthetic vision evaluation scenarios now live under:
 
 - `tests/fixtures/vision_eval/synthetic_round_cutout/`

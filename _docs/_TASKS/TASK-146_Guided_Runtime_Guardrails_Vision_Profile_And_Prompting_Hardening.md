@@ -13,7 +13,8 @@ use a more doc-aligned structured-output posture, Docker/runtime packaging now
 keeps Pillow on the main runtime path, `call_tool(...)` gives stronger
 search-first guidance on unknown tools, and the prompt-library/main-instruction
 surfaces now push models/operators more explicitly toward `_docs/_PROMPTS/`
-and `GUIDED_SESSION_START.md`.
+and `GUIDED_SESSION_START.md`. The follow-on realism coverage slice under
+TASK-146-05 added transport-backed and opt-in runtime smokes for those repairs.
 
 ## Objective
 
@@ -142,6 +143,7 @@ This umbrella does **not** cover:
 | 2 | [TASK-146-02](./TASK-146-02_Docker_Dependency_Group_And_Runtime_Packaging_Alignment.md) | TASK-121, TASK-128 | Ensure deployed Docker runtimes include the packages the guided vision/perception path actually expects |
 | 3 | [TASK-146-03](./TASK-146-03_Qwen_OpenRouter_Structured_Output_Verification_And_Profile_Hardening.md) | TASK-140 | Verify official structured-output requirements and harden the active Qwen/OpenRouter profile path |
 | 4 | [TASK-146-04](./TASK-146-04_Search_First_Prompt_Library_And_Instruction_Surface_Hardening.md) | TASK-130, TASK-141 | Push the guided operator surface harder toward `_PROMPTS/`, `search_tools(...)`, and lower speculative `call_tool(...)` usage |
+| 5 | [TASK-146-05](./TASK-146-05_Extended_Realism_Coverage_For_Guided_Runtime_Hardening.md) | TASK-146-01, TASK-146-02, TASK-146-03, TASK-146-04 | Extend the hardening wave with transport-backed and opt-in runtime coverage for the repaired behavior |
 
 ## Status / Board Update
 

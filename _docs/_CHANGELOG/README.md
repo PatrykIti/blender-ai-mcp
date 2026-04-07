@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [221](./221-2026-04-07-guided-runtime-realism-coverage.md) | 2026-04-07 | **Guided runtime realism coverage** | - |
 | [220](./220-2026-04-07-guided-runtime-guardrails-and-qwen-hardening.md) | 2026-04-07 | **Guided runtime guardrails and Qwen hardening** | - |
 | [219](./219-2026-04-07-e2e-blender-crash-trace.md) | 2026-04-07 | **E2E Blender crash trace and runtime logs** | - |
 | [218](./218-2026-04-07-camera-aware-view-diagnostics.md) | 2026-04-07 | **Camera-aware view diagnostics** | - |
