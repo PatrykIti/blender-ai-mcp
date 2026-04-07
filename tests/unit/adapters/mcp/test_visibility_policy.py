@@ -17,6 +17,7 @@ from server.adapters.mcp.transforms.visibility_policy import (
     GUIDED_DISCOVERY_TOOLS,
     GUIDED_ENTRY_TOOLS,
     GUIDED_INSPECT_ESCAPE_HATCH_TOOLS,
+    GUIDED_SPATIAL_GRAPH_TOOLS,
     GUIDED_UTILITY_HANDOFF_TOOLS,
     GUIDED_UTILITY_SUPPORTING_TOOLS,
     GUIDED_UTILITY_TOOLS,
@@ -98,12 +99,14 @@ def test_visibility_rules_are_profile_and_phase_deterministic():
     assert bootstrap_rules[3]["names"] == set(GUIDED_UTILITY_TOOLS)
     assert bootstrap_rules[4]["names"] == {"list_prompts", "get_prompt"}
     assert bootstrap_rules[5]["components"] == {"prompt"}
+    assert set(GUIDED_SPATIAL_GRAPH_TOOLS).isdisjoint(bootstrap_rules[1]["names"])
     assert build_rules[-1]["names"] == set(GUIDED_BUILD_ESCAPE_HATCH_TOOLS)
     assert "macro_finish_form" in build_rules[-1]["names"]
     assert "modeling_add_modifier" not in build_rules[-1]["names"]
     assert "modeling_apply_modifier" not in build_rules[-1]["names"]
     assert "modeling_list_modifiers" not in build_rules[-1]["names"]
     assert inspect_rules[-1]["names"] == set(GUIDED_INSPECT_ESCAPE_HATCH_TOOLS)
+    assert set(GUIDED_SPATIAL_GRAPH_TOOLS).issubset(inspect_rules[-1]["names"])
 
     code_mode_rules = build_visibility_rules(get_surface_profile("code-mode-pilot"), SessionPhase.BOOTSTRAP)
     assert code_mode_rules[0]["enabled"] is False
@@ -132,6 +135,7 @@ def test_guided_handoff_payloads_stay_explicit_and_bounded():
     assert manual["target_phase"] == "build"
     assert manual["direct_tools"] == list(CREATURE_LOW_POLY_BLOCKOUT_DIRECT_TOOLS)
     assert manual["supporting_tools"] == list(CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS)
+    assert set(GUIDED_SPATIAL_GRAPH_TOOLS).issubset(manual["supporting_tools"])
     assert manual["discovery_tools"] == list(GUIDED_DISCOVERY_TOOLS)
     assert manual["workflow_import_recommended"] is False
 

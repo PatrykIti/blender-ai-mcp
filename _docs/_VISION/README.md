@@ -87,6 +87,12 @@ The repo now has the first implementation scaffolding for the vision layer:
   - `correction_candidates` for one ranked merged candidate list that preserves
     vision evidence, truth evidence, and bounded macro options without
     collapsing their source boundaries
+- richer spatial state now also has separate read-only artifacts outside the
+  default stage payload:
+  - `scene_scope_graph(...)`
+  - `scene_relation_graph(...)`
+  - use those on demand when one correction step needs a fuller structural or
+    pair-relation picture than the bounded stage handoff should carry by default
 - `reference_iterate_stage_checkpoint(...)` now derives its loop-facing
   `correction_focus` from ranked `correction_candidates` when they are present,
   so deterministic truth-only findings can still reach the staged correction

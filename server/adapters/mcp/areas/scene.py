@@ -8,6 +8,7 @@ from fastmcp.utilities.types import Image
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
 from server.adapters.mcp.contracts.scene import (
+    SceneAssembledTargetScopeContract,
     SceneAssertContactContract,
     SceneAssertContainmentContract,
     SceneAssertDimensionsContract,
@@ -28,6 +29,10 @@ from server.adapters.mcp.contracts.scene import (
     SceneMeasureOverlapContract,
     SceneModeContract,
     SceneOriginInfoContract,
+    SceneRelationGraphPayloadContract,
+    SceneRelationGraphResponseContract,
+    SceneScopeGraphPayloadContract,
+    SceneScopeGraphResponseContract,
     SceneSelectionContract,
     SceneSnapshotDiffContract,
     SceneSnapshotStateContract,
@@ -84,6 +89,8 @@ SCENE_PUBLIC_TOOL_NAMES = (
     "scene_get_hierarchy",
     "scene_get_bounding_box",
     "scene_get_origin_info",
+    "scene_scope_graph",
+    "scene_relation_graph",
     "scene_measure_distance",
     "scene_measure_dimensions",
     "scene_measure_gap",
@@ -2466,6 +2473,117 @@ async def scene_get_origin_info(
         subject="scene_get_origin_info",
         object_name=object_name,
     )
+
+
+def scene_scope_graph(
+    ctx: Context,
+    target_object: str | None = None,
+    target_objects: list[str] | None = None,
+    collection_name: str | None = None,
+) -> SceneScopeGraphResponseContract:
+    """
+    [OBJECT MODE][SAFE][READ-ONLY] Returns the compact structural scope graph for the active guided target set.
+
+    Use this when you need one explicit answer to:
+    - what the current scope kind is
+    - which object is the structural anchor
+    - which objects behave like core masses, appendages, or accessories
+
+    This is a read-only spatial-state artifact. It stays separate from the staged
+    reference checkpoint payloads so the guided loop can request it only when the
+    current reasoning step genuinely needs richer structural scope detail.
+
+    Args:
+        target_object: Optional primary object to force into scope.
+        target_objects: Optional additional object names for an explicit object set.
+        collection_name: Optional collection to expand into the scope artifact.
+    """
+
+    def execute() -> SceneScopeGraphResponseContract:
+        handler = get_scene_handler()
+        try:
+            payload = SceneScopeGraphPayloadContract(
+                scope=SceneAssembledTargetScopeContract.model_validate(
+                    handler.get_scope_graph(
+                        target_object=target_object,
+                        target_objects=target_objects,
+                        collection_name=collection_name,
+                    )
+                ),
+                message="Scope graph derived from explicit targets plus deterministic role/anchor heuristics.",
+            )
+            return SceneScopeGraphResponseContract(payload=payload)
+        except RuntimeError as e:
+            return SceneScopeGraphResponseContract(error=str(e))
+
+    result = route_tool_call(
+        tool_name="scene_scope_graph",
+        params={
+            "target_object": target_object,
+            "target_objects": target_objects,
+            "collection_name": collection_name,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, SceneScopeGraphResponseContract):
+        return result
+    if isinstance(result, dict):
+        return SceneScopeGraphResponseContract.model_validate(result)
+    return SceneScopeGraphResponseContract(error=str(result))
+
+
+def scene_relation_graph(
+    ctx: Context,
+    target_object: str | None = None,
+    target_objects: list[str] | None = None,
+    collection_name: str | None = None,
+    goal_hint: str | None = None,
+) -> SceneRelationGraphResponseContract:
+    """
+    [OBJECT MODE][SAFE][READ-ONLY] Returns the compact spatial relation graph for the active guided target set.
+
+    The graph is derived from current truth primitives such as gap/alignment/overlap/contact checks.
+    It exposes typed pair relations and verdicts without forcing the caller to reconstruct them from
+    scattered measure/assert calls.
+
+    Args:
+        target_object: Optional primary object to force into scope.
+        target_objects: Optional additional object names for an explicit object set.
+        collection_name: Optional collection to expand into the relation graph scope.
+        goal_hint: Optional goal text used only for bounded pair expansion such as symmetry/support candidates.
+    """
+
+    def execute() -> SceneRelationGraphResponseContract:
+        handler = get_scene_handler()
+        try:
+            payload = SceneRelationGraphPayloadContract.model_validate(
+                handler.get_relation_graph(
+                    target_object=target_object,
+                    target_objects=target_objects,
+                    collection_name=collection_name,
+                    goal_hint=goal_hint,
+                    include_truth_payloads=False,
+                )
+            )
+            return SceneRelationGraphResponseContract(payload=payload)
+        except RuntimeError as e:
+            return SceneRelationGraphResponseContract(error=str(e))
+
+    result = route_tool_call(
+        tool_name="scene_relation_graph",
+        params={
+            "target_object": target_object,
+            "target_objects": target_objects,
+            "collection_name": collection_name,
+            "goal_hint": goal_hint,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, SceneRelationGraphResponseContract):
+        return result
+    if isinstance(result, dict):
+        return SceneRelationGraphResponseContract.model_validate(result)
+    return SceneRelationGraphResponseContract(error=str(result))
 
 
 def scene_measure_distance(

@@ -1,8 +1,13 @@
 # TASK-143-02-01: Relation Vocabulary, Bounded Pair Expansion, and Graph Builder
 
 **Parent:** [TASK-143-02](./TASK-143-02_Relation_Graph_Derivation_And_Truth_Layer_Convergence.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** Completed on 2026-04-07. Added a shared bounded
+relation builder that derives pair state from `scene_measure_gap`,
+`scene_measure_alignment`, `scene_measure_overlap`, and `scene_assert_contact`,
+with explicit attachment/support/symmetry interpretations where justified.
 
 ## Objective
 

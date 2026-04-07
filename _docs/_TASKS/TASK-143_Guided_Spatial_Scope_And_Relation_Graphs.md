@@ -1,11 +1,23 @@
 # TASK-143: Guided Spatial Scope and Relation Graphs
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** Spatial Intelligence / Scene Truth
 **Estimated Effort:** Large
 **Dependencies:** TASK-116, TASK-117, TASK-122, TASK-142
 **Follow-on After:** [TASK-142](./TASK-142_Creature_Part_Seating_And_Organic_Attachment_Semantics.md)
+
+**Completion Summary:** Completed on 2026-04-07. Shipped one explicit
+read-only spatial-state layer on top of the current truth surface: reusable
+scope/relation graph builders now live in `server/application/services/`,
+public `scene_scope_graph(...)` / `scene_relation_graph(...)` artifacts are
+available through the normal MCP/router metadata path, `assembled_target_scope`
+now carries deterministic object-role hints, and the staged reference loop
+reuses the same shared derivation layer without embedding a heavyweight graph
+payload by default. Guided visibility/search stays bootstrap-small while still
+allowing on-demand spatial graph access in inspect and goal-aware creature
+handoff flows. Regression coverage, docs, and changelog history were updated in
+the same branch.
 
 ## Objective
 

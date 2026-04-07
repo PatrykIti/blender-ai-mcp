@@ -2,8 +2,13 @@
 
 **Parent:** [TASK-143-01](./TASK-143-01_Scope_Graph_Contract_And_Read_Only_Surface.md)
 **Depends On:** [TASK-143-01-01](./TASK-143-01-01_Scope_Artifact_Role_Vocabulary_And_Shared_Builder.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** Completed on 2026-04-07. The repo now exposes
+`scene_scope_graph(...)` as a dedicated read-only scene surface, adds router
+metadata for that artifact, and keeps it searchable/on-demand without making it
+bootstrap-visible on `llm-guided`.
 
 ## Objective
 

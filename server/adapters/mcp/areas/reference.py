@@ -43,7 +43,11 @@ from server.adapters.mcp.contracts.scene import (
     SceneCorrectionTruthBundleContract,
     SceneCorrectionTruthPairContract,
     SceneCorrectionTruthSummaryContract,
+    SceneRelationKindLiteral,
+    SceneRelationVerdictLiteral,
     SceneRepairMacroCandidateContract,
+    SceneSupportSemanticsContract,
+    SceneSymmetrySemanticsContract,
     SceneTruthFollowupContract,
     SceneTruthFollowupItemContract,
 )
@@ -73,6 +77,7 @@ from server.adapters.mcp.vision import (
 )
 from server.adapters.mcp.vision.runner import VISION_ASSIST_POLICY
 from server.adapters.mcp.vision.silhouette import build_silhouette_analysis
+from server.application.services.spatial_graph import get_spatial_graph_service
 from server.infrastructure.di import get_collection_handler, get_scene_handler, get_vision_backend_resolver
 from server.infrastructure.tmp_paths import get_reference_image_storage_path, get_viewport_output_paths
 
@@ -871,9 +876,95 @@ def _trim_truth_bundle_to_budget(
     pair_budget: int,
     max_truth_chars: int,
 ) -> tuple[SceneCorrectionTruthBundleContract, bool]:
+    def _compact_gap_payload(payload: dict[str, Any] | None) -> dict[str, Any] | None:
+        if payload is None:
+            return None
+        return {
+            key: payload.get(key)
+            for key in ("relation", "gap", "axis_gap", "measurement_basis", "bbox_relation")
+            if payload.get(key) is not None
+        }
+
+    def _compact_alignment_payload(payload: dict[str, Any] | None) -> dict[str, Any] | None:
+        if payload is None:
+            return None
+        return {
+            key: payload.get(key) for key in ("is_aligned", "aligned_axes", "deltas") if payload.get(key) is not None
+        }
+
+    def _compact_overlap_payload(payload: dict[str, Any] | None) -> dict[str, Any] | None:
+        if payload is None:
+            return None
+        return {
+            key: payload.get(key)
+            for key in (
+                "overlaps",
+                "relation",
+                "measurement_basis",
+                "bbox_touching",
+                "surface_gap",
+                "overlap_dimensions",
+            )
+            if payload.get(key) is not None
+        }
+
+    def _compact_contact_assertion(
+        payload: SceneAssertionPayloadContract | None,
+    ) -> SceneAssertionPayloadContract | None:
+        if payload is None:
+            return None
+        details = payload.details or {}
+        compact_details = {
+            key: details.get(key)
+            for key in ("measurement_basis", "bbox_relation", "overlap_rejected")
+            if details.get(key) is not None
+        }
+        return SceneAssertionPayloadContract(
+            assertion=payload.assertion,
+            passed=payload.passed,
+            subject=payload.subject,
+            target=payload.target,
+            expected=payload.expected,
+            actual=payload.actual,
+            details=compact_details or None,
+        )
+
+    def _compact_truth_bundle_details(bundle: SceneCorrectionTruthBundleContract) -> SceneCorrectionTruthBundleContract:
+        compact_checks = [
+            SceneCorrectionTruthPairContract(
+                from_object=item.from_object,
+                to_object=item.to_object,
+                relation_pair_id=item.relation_pair_id,
+                relation_kinds=list(item.relation_kinds or []),
+                relation_verdicts=list(item.relation_verdicts or []),
+                gap=_compact_gap_payload(item.gap),
+                alignment=_compact_alignment_payload(item.alignment),
+                overlap=_compact_overlap_payload(item.overlap),
+                contact_assertion=_compact_contact_assertion(item.contact_assertion),
+                attachment_semantics=item.attachment_semantics,
+                support_semantics=item.support_semantics,
+                symmetry_semantics=item.symmetry_semantics,
+                error=item.error,
+            )
+            for item in list(bundle.checks or [])
+        ]
+        return SceneCorrectionTruthBundleContract(
+            scope=bundle.scope,
+            summary=_rebuild_truth_summary(
+                pairing_strategy=bundle.summary.pairing_strategy,
+                checks=compact_checks,
+            ),
+            checks=compact_checks,
+            error=bundle.error,
+        )
+
     checks = list(truth_bundle.checks or [])
     if len(checks) <= pair_budget and _truth_summary_chars(truth_bundle) <= max_truth_chars:
         return truth_bundle, False
+
+    if truth_bundle.summary.pairing_strategy == "required_creature_seams" and len(checks) <= pair_budget:
+        compact_bundle = _compact_truth_bundle_details(truth_bundle)
+        return compact_bundle, True
 
     ordered_checks = sorted(checks, key=_check_priority_score, reverse=True)
     trimmed = False
@@ -1018,6 +1109,12 @@ def _build_correction_candidates(
                 ),
                 truth_evidence=ReferenceCorrectionTruthEvidenceContract(
                     focus_pairs=[pair_label],
+                    relation_kinds=list(
+                        dict.fromkeys(kind for item in pair_items for kind in list(item.relation_kinds or []))
+                    ),
+                    relation_verdicts=list(
+                        dict.fromkeys(verdict for item in pair_items for verdict in list(item.relation_verdicts or []))
+                    ),
                     item_kinds=[item.kind for item in pair_items],
                     items=pair_items,
                     macro_candidates=pair_macros,
@@ -1723,29 +1820,26 @@ def _assembled_target_scope(
     target_objects: list[str] | None,
     collection_name: str | None,
 ) -> SceneAssembledTargetScopeContract:
-    normalized_primary, resolved_target_objects, normalized_collection = _resolve_capture_scope(
+    def _list_collection_objects(name: str) -> list[str]:
+        payload = get_collection_handler().list_objects(
+            collection_name=name,
+            recursive=True,
+            include_hidden=False,
+        )
+        return [
+            str(item.get("name")).strip()
+            for item in payload.get("objects", [])
+            if isinstance(item, dict) and str(item.get("name") or "").strip()
+        ]
+
+    scope_payload = get_spatial_graph_service().build_scope_graph(
+        reader=get_scene_handler(),
         target_object=target_object,
         target_objects=target_objects,
         collection_name=collection_name,
+        list_collection_objects=_list_collection_objects,
     )
-
-    if normalized_collection:
-        scope_kind: Literal["single_object", "object_set", "collection", "scene"] = "collection"
-    elif len(resolved_target_objects) > 1:
-        scope_kind = "object_set"
-    elif normalized_primary:
-        scope_kind = "single_object"
-    else:
-        scope_kind = "scene"
-
-    return SceneAssembledTargetScopeContract(
-        scope_kind=scope_kind,
-        primary_target=normalized_primary or _select_scope_primary_target(resolved_target_objects),
-        object_names=resolved_target_objects,
-        object_count=len(resolved_target_objects),
-        collection_name=normalized_collection,
-        part_groups=[],
-    )
+    return SceneAssembledTargetScopeContract.model_validate(scope_payload)
 
 
 def _truth_bundle_pairs(
@@ -1780,30 +1874,45 @@ def _build_correction_truth_bundle(
     scene_handler,
     scope: SceneAssembledTargetScopeContract,
 ) -> SceneCorrectionTruthBundleContract:
-    pairing_strategy, pairs = _truth_bundle_pairs(scope)
+    relation_graph = get_spatial_graph_service().build_relation_graph(
+        reader=scene_handler,
+        scope_graph=scope.model_dump(mode="json"),
+        goal_hint=None,
+        include_truth_payloads=True,
+        include_guided_pairs=False,
+    )
+    relation_pairs = list(relation_graph.get("pairs") or [])
+    truth_pairs = [
+        pair
+        for pair in relation_pairs
+        if str(pair.get("pair_source") or "") in {"required_creature_seam", "primary_to_other"}
+    ]
+    if not truth_pairs:
+        pairing_strategy: Literal["none", "primary_to_others", "required_creature_seams"] = "none"
+    elif all(str(pair.get("pair_source") or "") == "required_creature_seam" for pair in truth_pairs):
+        pairing_strategy = "required_creature_seams"
+    else:
+        pairing_strategy = "primary_to_others"
     checks: list[SceneCorrectionTruthPairContract] = []
     contact_failures = 0
     overlap_pairs = 0
     separated_pairs = 0
     misaligned_pairs = 0
 
-    for pair in pairs:
-        from_object = pair.from_object
-        to_object = pair.to_object
-        error: str | None = None
-        gap = None
-        alignment = None
-        overlap = None
-        contact_assertion = None
-        try:
-            gap = scene_handler.measure_gap(from_object, to_object)
-            alignment = scene_handler.measure_alignment(from_object, to_object, ["X", "Y", "Z"], "CENTER")
-            overlap = scene_handler.measure_overlap(from_object, to_object)
-            contact_assertion = SceneAssertionPayloadContract.model_validate(
-                scene_handler.assert_contact(from_object, to_object)
-            )
-        except RuntimeError as exc:
-            error = str(exc)
+    for pair in truth_pairs:
+        from_object = str(pair.get("from_object") or "")
+        to_object = str(pair.get("to_object") or "")
+        truth_payloads = pair.get("truth_payloads") or {}
+        error = cast(str | None, pair.get("error"))
+        gap = cast(dict[str, Any] | None, truth_payloads.get("gap"))
+        alignment = cast(dict[str, Any] | None, truth_payloads.get("alignment"))
+        overlap = cast(dict[str, Any] | None, truth_payloads.get("overlap"))
+        contact_assertion_payload = truth_payloads.get("contact_assertion")
+        contact_assertion = (
+            SceneAssertionPayloadContract.model_validate(contact_assertion_payload)
+            if isinstance(contact_assertion_payload, dict)
+            else None
+        )
 
         if gap is not None and str(gap.get("relation") or "").lower() == "separated":
             separated_pairs += 1
@@ -1814,50 +1923,40 @@ def _build_correction_truth_bundle(
         if contact_assertion is not None and not contact_assertion.passed:
             contact_failures += 1
 
-        seam = pair.seam
-        attachment_relation = _attachment_relation(from_object, to_object) if seam is None else None
-        semantics_contract: SceneAttachmentSemanticsContract | None = None
-        if seam is not None or attachment_relation is not None:
-            relation_kind: _CreatureRelationKind
-            part_object: str
-            anchor_object: str
-            seam_kind: _CreatureSeamKind
-            if seam is not None:
-                relation_kind = seam.relation_kind
-                part_object = seam.part_object
-                anchor_object = seam.anchor_object
-                seam_kind = seam.seam_kind
-                required_seam = True
-            else:
-                relation_kind, part_object, anchor_object = cast(
-                    tuple[_CreatureRelationKind, str, str], attachment_relation
-                )
-                seam_kind = _attachment_seam_kind(part_object, anchor_object)
-                required_seam = False
-            semantics_contract = SceneAttachmentSemanticsContract(
-                relation_kind=relation_kind,
-                seam_kind=seam_kind,
-                part_object=part_object,
-                anchor_object=anchor_object,
-                required_seam=required_seam,
-                preferred_macro=_preferred_attachment_macro(relation_kind),
-                attachment_verdict=_attachment_verdict(
-                    gap_payload=gap,
-                    alignment_payload=alignment,
-                    overlap_payload=overlap,
-                    contact_assertion=contact_assertion,
-                ),
-            )
+        attachment_payload = pair.get("attachment_semantics")
+        support_payload = pair.get("support_semantics")
+        symmetry_payload = pair.get("symmetry_semantics")
+        semantics_contract = (
+            SceneAttachmentSemanticsContract.model_validate(attachment_payload)
+            if isinstance(attachment_payload, dict)
+            else None
+        )
+        support_contract = (
+            SceneSupportSemanticsContract.model_validate(support_payload) if isinstance(support_payload, dict) else None
+        )
+        symmetry_contract = (
+            SceneSymmetrySemanticsContract.model_validate(symmetry_payload)
+            if isinstance(symmetry_payload, dict)
+            else None
+        )
 
         checks.append(
             SceneCorrectionTruthPairContract(
                 from_object=from_object,
                 to_object=to_object,
+                relation_pair_id=cast(str | None, pair.get("pair_id")),
+                relation_kinds=cast(list[SceneRelationKindLiteral], list(pair.get("relation_kinds") or [])),
+                relation_verdicts=cast(
+                    list[SceneRelationVerdictLiteral],
+                    list(pair.get("relation_verdicts") or []),
+                ),
                 gap=gap,
                 alignment=alignment,
                 overlap=overlap,
                 contact_assertion=contact_assertion,
                 attachment_semantics=semantics_contract,
+                support_semantics=support_contract,
+                symmetry_semantics=symmetry_contract,
                 error=error,
             )
         )
@@ -1866,7 +1965,7 @@ def _build_correction_truth_bundle(
         scope=scope,
         summary=SceneCorrectionTruthSummaryContract(
             pairing_strategy=pairing_strategy,
-            pair_count=len(pairs),
+            pair_count=len(truth_pairs),
             evaluated_pairs=sum(1 for item in checks if item.error is None),
             contact_failures=contact_failures,
             overlap_pairs=overlap_pairs,
@@ -2003,6 +2102,9 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
                     priority="high",
                     from_object=check.from_object,
                     to_object=check.to_object,
+                    relation_pair_id=check.relation_pair_id,
+                    relation_kinds=list(check.relation_kinds or []),
+                    relation_verdicts=list(check.relation_verdicts or []),
                 )
             )
         else:
@@ -2048,6 +2150,9 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
                         from_object=check.from_object,
                         to_object=check.to_object,
                         tool_name="scene_assert_contact",
+                        relation_pair_id=check.relation_pair_id,
+                        relation_kinds=list(check.relation_kinds or []),
+                        relation_verdicts=list(check.relation_verdicts or []),
                     )
                 )
             if check.contact_assertion is not None and not check.contact_assertion.passed:
@@ -2063,6 +2168,9 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
                         from_object=check.from_object,
                         to_object=check.to_object,
                         tool_name="scene_assert_contact",
+                        relation_pair_id=check.relation_pair_id,
+                        relation_kinds=list(check.relation_kinds or []),
+                        relation_verdicts=list(check.relation_verdicts or []),
                     )
                 )
             if check.gap is not None and str(check.gap.get("relation") or "").lower() == "separated":
@@ -2078,6 +2186,9 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
                         from_object=check.from_object,
                         to_object=check.to_object,
                         tool_name="scene_measure_gap",
+                        relation_pair_id=check.relation_pair_id,
+                        relation_kinds=list(check.relation_kinds or []),
+                        relation_verdicts=list(check.relation_verdicts or []),
                     )
                 )
             if check.overlap is not None and bool(check.overlap.get("overlaps")):
@@ -2089,6 +2200,9 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
                         from_object=check.from_object,
                         to_object=check.to_object,
                         tool_name="scene_measure_overlap",
+                        relation_pair_id=check.relation_pair_id,
+                        relation_kinds=list(check.relation_kinds or []),
+                        relation_verdicts=list(check.relation_verdicts or []),
                     )
                 )
             if check.alignment is not None and not bool(check.alignment.get("is_aligned")):
@@ -2100,6 +2214,9 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
                         from_object=check.from_object,
                         to_object=check.to_object,
                         tool_name="scene_measure_alignment",
+                        relation_pair_id=check.relation_pair_id,
+                        relation_kinds=list(check.relation_kinds or []),
+                        relation_verdicts=list(check.relation_verdicts or []),
                     )
                 )
         items.extend(pair_items)

@@ -2,8 +2,14 @@
 
 **Parent:** [TASK-143](./TASK-143_Guided_Spatial_Scope_And_Relation_Graphs.md)
 **Depends On:** [TASK-143-01](./TASK-143-01_Scope_Graph_Contract_And_Read_Only_Surface.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** Completed on 2026-04-07. The repo now has one compact
+relation graph builder derived from the existing truth primitives, public
+`scene_relation_graph(...)` output, and shared relation semantics reused by
+`truth_bundle`, `truth_followup`, and `correction_candidates` without turning
+stage payloads into default graph carriers.
 
 ## Objective
 

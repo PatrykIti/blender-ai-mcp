@@ -1,8 +1,13 @@
 # TASK-143-01: Scope Graph Contract and Read-Only Surface
 
 **Parent:** [TASK-143](./TASK-143_Guided_Spatial_Scope_And_Relation_Graphs.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** Completed on 2026-04-07. Scope derivation moved into
+the shared spatial graph service, `assembled_target_scope` gained explicit
+object-role semantics, and `scene_scope_graph(...)` now exposes the same
+compact structural scope artifact through a dedicated read-only scene surface.
 
 ## Objective
 

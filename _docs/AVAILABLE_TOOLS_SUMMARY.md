@@ -104,7 +104,7 @@ Prompt recommendation notes:
 Measured current baseline:
 
 - `legacy-manual`: `163` visible tools, without router/workflow namespace exposure
-- `legacy-flat`: `170` visible tools
+- `legacy-flat`: `185` visible tools
 - `llm-guided`: `8` visible tools
 
 Why this matters:
@@ -112,6 +112,9 @@ Why this matters:
 - discovery respects guided visibility and does not leak hidden tools during bootstrap
 - the initial tool payload stays intentionally small
 - specialist families do not quietly become the default public path
+- read-only spatial graph tools such as `scene_scope_graph` and `scene_relation_graph`
+  now follow the same rule: searchable/on-demand where justified, but not
+  bootstrap-visible by default
 
 Specialist families such as armature, sculpt, text, baking, and similar
 maintainer-oriented areas are also intentionally excluded from the normal
@@ -256,6 +259,8 @@ None.
 | `scene_get_hierarchy` | `object_name` (optional), `include_transforms` | Gets parent-child hierarchy for object or full scene tree. | ✅ Done |
 | `scene_get_bounding_box` | `object_name`, `world_space` | Gets bounding box corners, min/max, center, dimensions, volume. | ✅ Done |
 | `scene_get_origin_info` | `object_name` | Gets origin (pivot point) information relative to geometry. | ✅ Done |
+| `scene_scope_graph` | `target_object` (optional), `target_objects` (optional), `collection_name` (optional) | Returns one compact read-only scope graph for a target object/object-set/collection, including the inferred structural anchor and deterministic object-role hints. Kept off guided bootstrap by default and intended for on-demand spatial reasoning. | ✅ Done |
+| `scene_relation_graph` | `target_object` (optional), `target_objects` (optional), `collection_name` (optional), `goal_hint` (optional) | Returns one compact read-only relation graph derived from the current measure/assert truth layer, including bounded attachment/support/symmetry interpretations when justified. Kept off guided bootstrap by default and intended for on-demand spatial reasoning. | ✅ Done |
 | `scene_measure_distance` | `from_object`, `to_object`, `reference` | Measures origin or bbox-center distance between two objects. | ✅ Done |
 | `scene_measure_dimensions` | `object_name`, `world_space` | Measures object dimensions and volume from its bounding box. | ✅ Done |
 | `scene_measure_gap` | `from_object`, `to_object`, `tolerance` | Measures bbox gap/contact state between two objects. | ✅ Done |

@@ -2,8 +2,13 @@
 
 **Parent:** [TASK-143-03](./TASK-143-03_Goal_Aware_Disclosure_Guided_Adoption_And_Regression_Pack.md)
 **Depends On:** [TASK-143-03-01](./TASK-143-03-01_Goal_Phase_Aware_Visibility_And_On_Demand_Expansion_Policy.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** Completed on 2026-04-07. Public docs, prompt guidance,
+task/changelog history, and regression coverage now all describe the shipped
+scope/relation graph layer as explicit read-only artifacts rather than more
+default stage-payload growth.
 
 ## Objective
 

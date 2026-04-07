@@ -216,6 +216,16 @@ Silhouette metrics and future part-segmentation outputs are perception inputs:
 - they do not become router safety policy on their own
 - `vision_contract_profile` remains routing metadata for external prompting/parsing, not evidence
 
+The same boundary applies to the shipped read-only spatial graph artifacts:
+
+- `scene_scope_graph(...)` and `scene_relation_graph(...)` are inspection/truth
+  products derived from measured/asserted state
+- FastMCP visibility/search decides when those artifacts are exposed on
+  `llm-guided`
+- the router may consume their typed findings for bounded policy decisions, but
+  it must not become the authority that invents scope or relation truth on its
+  own
+
 ---
 
 ## Target System Contract

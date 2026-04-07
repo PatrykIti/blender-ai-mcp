@@ -288,7 +288,7 @@ Current visible entry set on `llm-guided`:
 Measured baseline from the current unit suite:
 
 - `legacy-manual`: `163` visible tools, router/workflow capabilities omitted from the namespace
-- `legacy-flat`: `170` visible tools, now fitting in one `tools/list` page by default for compatibility clients
+- `legacy-flat`: `185` visible tools, now fitting in one `tools/list` page by default for compatibility clients
 - `llm-guided`: `8` visible tools
 
 Search-first behavior now respects guided visibility:
@@ -296,6 +296,10 @@ Search-first behavior now respects guided visibility:
 - hidden tools do not appear in bootstrap-phase search results
 - hidden tools cannot be invoked through `call_tool`
 - direct public calls and discovered `call_tool` calls share the same guided-surface router failure behavior
+- read-only spatial graph tools such as `scene_scope_graph` and
+  `scene_relation_graph` follow the same rule: they stay off bootstrap by
+  default and are meant for on-demand inspect/handoff/discovery use when the
+  current step genuinely needs richer spatial state
 
 Current guided utility prep path:
 
@@ -787,6 +791,13 @@ structured error payloads on the stage-compare path instead of failing again
 while building the error response.
 Stage compare/iterate responses now also expose `guided_reference_readiness`, `assembled_target_scope`, `truth_bundle`, `truth_followup`, `correction_candidates`, `budget_control`, `refinement_route`, `refinement_handoff`, `silhouette_analysis`, `action_hints`, and `part_segmentation`, so assembled-model correction flows can consume explicit session readiness, a structured target scope, correction-oriented truth findings, loop-ready follow-up items, an explicitly ranked merged correction list, explicit trimming metadata, a deterministic refinement-family decision, typed perception metrics/tool hints, and an optional advisory-only sidecar placeholder instead of inferring everything from loose `target_object` / `target_objects` / `collection_name` fields. On `reference_iterate_stage_checkpoint(...)`, the loop-facing `correction_focus` now prefers ranked `correction_candidates` summaries when they are present, and high-priority deterministic truth findings can also move `loop_disposition` to `inspect_validate` instead of waiting only for repeated vision focus. `action_hints` complement that loop by exposing deterministic silhouette-driven tool suggestions, while `part_segmentation` stays disabled unless an operator explicitly enables the separate sidecar path. Collection/object-set targeting now also avoids obviously accessory-first primary anchors when a more structural target is present, expands supported creature scopes into deterministic `required_creature_seams`, keeps multiple failing required seams live together in `truth_followup` / `correction_candidates`, normalizes vision-side `recommended_checks` to canonical MCP tool ids or drops them, applies model-aware budget control when the active runtime profile is too small for the full payload, and exposes `refinement_route` for bounded family choices such as `macro`, `modeling_mesh`, `sculpt_region`, or `inspect_only`. At this stage sculpt stays hidden on the normal guided surface; `refinement_handoff` is recommendation-only.
 
+The full scope/relation graphs stay separate from those default stage payloads.
+When a guided step needs richer spatial state instead of just the current
+checkpoint handoff, call the explicit read-only artifacts:
+
+- `scene_scope_graph(...)`
+- `scene_relation_graph(...)`
+
 For the guided creature path specifically, pair truth now carries one explicit
 attachment verdict for each required seam:
 
@@ -805,6 +816,8 @@ attachment verdict for each required seam:
 | `scene_get_hierarchy` | `object_name` (str, optional), `include_transforms` (bool) | Gets parent-child hierarchy for specific object or full scene tree. |
 | `scene_get_bounding_box` | `object_name` (str), `world_space` (bool) | Gets bounding box corners, min/max, center, dimensions, and volume. |
 | `scene_get_origin_info` | `object_name` (str) | Gets origin (pivot point) information relative to geometry and bounding box. |
+| `scene_scope_graph` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional) | Returns one compact read-only structural scope artifact for a target object/object set/collection, including the inferred anchor plus bounded object-role hints. Intended for on-demand guided spatial reasoning rather than bootstrap exposure. |
+| `scene_relation_graph` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional), `goal_hint` (str, optional) | Returns one compact read-only pair-relation graph derived from current gap/alignment/overlap/contact truth, including bounded attachment/support/symmetry interpretations where justified. Intended for on-demand guided spatial reasoning rather than bootstrap exposure. |
 | `scene_measure_distance` | `from_object` (str), `to_object` (str), `reference` (str) | Measures origin-to-origin or bbox-center distance between two objects. |
 | `scene_measure_dimensions` | `object_name` (str), `world_space` (bool) | Measures object dimensions and volume from its bounding box. |
 | `scene_measure_gap` | `from_object` (str), `to_object` (str), `tolerance` (float) | Measures nearest gap/contact state between two objects. For mesh pairs it now prefers a mesh-surface path and exposes `measurement_basis` plus bbox fallback diagnostics. |

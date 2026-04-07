@@ -2,8 +2,13 @@
 
 **Parent:** [TASK-143](./TASK-143_Guided_Spatial_Scope_And_Relation_Graphs.md)
 **Depends On:** [TASK-143-01](./TASK-143-01_Scope_Graph_Contract_And_Read_Only_Surface.md), [TASK-143-02](./TASK-143-02_Relation_Graph_Derivation_And_Truth_Layer_Convergence.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** Completed on 2026-04-07. Guided disclosure now keeps
+the new graph artifacts off bootstrap while exposing them through inspect and
+goal-aware creature handoff paths, with updated docs plus regression coverage
+for discovery, visibility, structured delivery, and staged truth alignment.
 
 ## Objective
 

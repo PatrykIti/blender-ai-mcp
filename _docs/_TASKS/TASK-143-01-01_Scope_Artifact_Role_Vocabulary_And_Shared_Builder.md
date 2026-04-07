@@ -1,8 +1,13 @@
 # TASK-143-01-01: Scope Artifact, Role Vocabulary, and Shared Builder
 
 **Parent:** [TASK-143-01](./TASK-143-01_Scope_Graph_Contract_And_Read_Only_Surface.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** Completed on 2026-04-07. The old private
+`_assembled_target_scope(...)` posture was replaced with the shared
+`spatial_graph` service, including deterministic anchor selection and bounded
+object-role vocabulary for scope artifacts.
 
 ## Objective
 

@@ -245,6 +245,21 @@ def test_phase_search_results_follow_visibility_profile_changes():
     assert "modeling_create_primitive" not in inspect_names
 
 
+def test_inspect_phase_search_can_surface_on_demand_spatial_graph_tools():
+    server = _build_phase_search_server(SessionPhase.INSPECT_VALIDATE)
+
+    async def run():
+        return await server.call_tool(
+            "search_tools", {"query": "scope graph relation graph attachment support symmetry"}
+        )
+
+    payload = _decode_tool_result(asyncio.run(run()))
+    names = {tool["name"] for tool in payload}
+
+    assert "scene_scope_graph" in names
+    assert "scene_relation_graph" in names
+
+
 def test_phase_shaped_list_tools_follow_visibility_without_discovery():
     """Visibility policy should affect the actual listed tools even without discovery collapse."""
 
@@ -797,7 +812,7 @@ def test_search_first_rollout_reduces_visible_tool_count_and_payload_size():
 
     legacy_count, guided_count, legacy_bytes, guided_bytes = asyncio.run(run())
 
-    assert legacy_count == 183
+    assert legacy_count == 185
     assert guided_count == 8
     assert guided_bytes < legacy_bytes
 

@@ -1,8 +1,13 @@
 # TASK-143-03-01: Goal/Phase-Aware Visibility and On-Demand Expansion Policy
 
 **Parent:** [TASK-143-03](./TASK-143-03_Goal_Aware_Disclosure_Guided_Adoption_And_Regression_Pack.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** Completed on 2026-04-07. Visibility/search policy now
+keeps `scene_scope_graph(...)` and `scene_relation_graph(...)` off the
+bootstrap-visible guided set while allowing deterministic on-demand expansion
+through inspect visibility and creature handoff supporting tools.
 
 ## Objective
 

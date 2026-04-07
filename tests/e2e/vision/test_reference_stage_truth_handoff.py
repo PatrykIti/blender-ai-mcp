@@ -129,11 +129,17 @@ def test_reference_compare_stage_checkpoint_exposes_truth_bundle_and_followup(
         assert result.assembled_target_scope is not None
         assert result.assembled_target_scope.scope_kind == "object_set"
         assert result.assembled_target_scope.object_names == [head_name, body_name]
+        assert any(
+            item.object_name == body_name and item.role == "anchor_core"
+            for item in result.assembled_target_scope.object_roles
+        )
         assert result.truth_bundle is not None
         assert result.truth_bundle.summary.pairing_strategy == "required_creature_seams"
         assert result.truth_bundle.summary.pair_count == 1
         assert result.truth_bundle.summary.contact_failures == 1
         assert result.truth_bundle.summary.separated_pairs == 1
+        assert result.truth_bundle.checks[0].relation_pair_id is not None
+        assert "attachment" in result.truth_bundle.checks[0].relation_kinds
         assert result.truth_followup is not None
         assert result.truth_followup.continue_recommended is True
         assert result.truth_followup.focus_pairs == [f"{head_name} -> {body_name}"]
@@ -213,6 +219,10 @@ def test_reference_compare_stage_checkpoint_prefers_body_anchor_for_multi_part_c
         assert result.error is None
         assert result.assembled_target_scope is not None
         assert result.assembled_target_scope.primary_target == body_name
+        assert any(
+            item.object_name == tail_name and item.role == "attached_appendage"
+            for item in result.assembled_target_scope.object_roles
+        )
         assert result.truth_bundle is not None
         assert result.truth_bundle.summary.pairing_strategy == "required_creature_seams"
         assert result.truth_bundle.summary.pair_count == 2

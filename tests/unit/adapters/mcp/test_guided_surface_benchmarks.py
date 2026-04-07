@@ -115,7 +115,7 @@ def test_guided_surface_phase_baselines_stay_intentional():
 
     assert len(bootstrap_names) == 6
     assert len(build_names) == 119
-    assert len(inspect_names) == 42
+    assert len(inspect_names) == 44
 
     assert bootstrap_names == {
         "browse_workflows",
@@ -146,6 +146,8 @@ def test_guided_surface_phase_baselines_stay_intentional():
     assert "sculpt_auto" not in build_names
 
     assert "extraction_render_angles" in inspect_names
+    assert "scene_scope_graph" in inspect_names
+    assert "scene_relation_graph" in inspect_names
     assert "macro_relative_layout" not in inspect_names
     assert "macro_attach_part_to_surface" not in inspect_names
     assert "macro_align_part_with_contact" not in inspect_names

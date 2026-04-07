@@ -29,6 +29,11 @@ GUIDED_DISCOVERY_TOOLS: tuple[str, ...] = (
     "call_tool",
 )
 
+GUIDED_SPATIAL_GRAPH_TOOLS: tuple[str, ...] = (
+    "scene_scope_graph",
+    "scene_relation_graph",
+)
+
 GUIDED_MANUAL_BUILD_HANDOFF_TOOLS: tuple[str, ...] = (
     "scene_create",
     "check_scene",
@@ -86,6 +91,8 @@ CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS: tuple[str, ...] = (
     "reference_compare_stage_checkpoint",
     "reference_iterate_stage_checkpoint",
     "router_get_status",
+    "scene_scope_graph",
+    "scene_relation_graph",
 )
 
 GUIDED_UTILITY_HANDOFF_TOOLS: tuple[str, ...] = (
@@ -245,6 +252,8 @@ GUIDED_INSPECT_ESCAPE_HATCH_TOOLS: tuple[str, ...] = (
     "scene_get_hierarchy",
     "scene_get_bounding_box",
     "scene_get_origin_info",
+    "scene_scope_graph",
+    "scene_relation_graph",
     "scene_get_viewport",
     "scene_hide_object",
     "scene_show_all_objects",

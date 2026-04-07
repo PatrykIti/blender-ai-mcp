@@ -77,6 +77,9 @@ When a bounded modeling intent matches, the default public working layer should 
 - `reference_compare_stage_checkpoint` for deterministic multi-view stage comparison against attached references during manual iterative work
 - `reference_iterate_stage_checkpoint` for a session-aware staged correction loop that remembers prior focus, can escalate into inspect/validate when the same correction repeats, and can now target one object, many objects, a collection, or the full assembled silhouette
 - stage compare/iterate now also expose deterministic `silhouette_analysis` metrics, typed `action_hints`, and an advisory-only `part_segmentation` placeholder that stays disabled unless a separate sidecar is explicitly enabled
+- `scene_scope_graph` for one explicit read-only structural scope artifact with anchor/core/accessory role hints
+- `scene_relation_graph` for one explicit read-only pair-relation artifact derived from the current truth layer
+- those spatial graph tools stay off the bootstrap-visible guided surface by default; use them on demand from guided inspect flows or goal-aware handoff/discovery when the current correction step needs richer spatial state
 
 Current guided bootstrap surface:
 

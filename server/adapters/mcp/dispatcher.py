@@ -94,6 +94,8 @@ class ToolDispatcher:
                 "scene_get_hierarchy": "get_hierarchy",
                 "scene_get_bounding_box": "get_bounding_box",
                 "scene_get_origin_info": "get_origin_info",
+                "scene_scope_graph": "get_scope_graph",
+                "scene_relation_graph": "get_relation_graph",
                 "scene_measure_distance": "measure_distance",
                 "scene_measure_dimensions": "measure_dimensions",
                 "scene_measure_gap": "measure_gap",

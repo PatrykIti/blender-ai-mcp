@@ -3,9 +3,9 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 9 tasks
+- **To Do:** 8 tasks
 - **In Progress:** 0 tasks
-- **Done:** 211
+- **Done:** 212
 - **Superseded:** 10
 
 ## 📐 Board Scope
@@ -49,7 +49,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Scene & Rig Introspection
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-143](./TASK-143_Guided_Spatial_Scope_And_Relation_Graphs.md) | **Guided Spatial Scope and Relation Graphs** | 🔴 High | Board-level umbrella for adding typed scope and relation graph artifacts on top of the current truth layer, so guided sessions stop reconstructing structural anchors and pair relations from scattered measurements and prose. |
 | [TASK-144](./TASK-144_Camera_Aware_View_Graph_And_Visibility_Diagnostics.md) | **Camera-Aware View Graph and Visibility Diagnostics** | 🔴 High | Board-level umbrella for machine-readable view-space facts such as visibility, framing, occlusion, and coarse screen-space projection, so guided capture/review is easier for LLMs to reason about than raw images alone. |
 
 ### Reconstruction (Mesh, Material, Scene)
@@ -78,6 +77,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-143](./TASK-143_Guided_Spatial_Scope_And_Relation_Graphs.md) | **Guided Spatial Scope and Relation Graphs** | 🔴 High | 2026-04-07 |
 | [TASK-141](./TASK-141_Guided_Creature_Run_Contract_And_Schema_Drift_Hardening.md) | **Guided Creature Run Contract and Schema Drift Hardening** | 🔴 High | 2026-04-06 |
 | [TASK-142](./TASK-142_Creature_Part_Seating_And_Organic_Attachment_Semantics.md) | **Creature Part Seating and Organic Attachment Semantics** | 🔴 High | 2026-04-07 |
 | [TASK-128](./TASK-128_Reference_Guided_Creature_Build_Surface_And_Perception_Reliability.md) | **Reference-Guided Creature Build Surface and Perception Reliability** | 🔴 High | 2026-04-06 |

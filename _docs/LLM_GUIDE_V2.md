@@ -188,6 +188,21 @@ The highest-value gaps are:
 4. A compact **repair planner surface** that turns truth into minimal next-step families
 5. A better **sculpt handoff context** so sculpt is used on the right scope for the right reason
 
+### Current Shipped Baseline
+
+The first TASK-143 slice is now present in the product surface:
+
+- `scene_scope_graph(...)` ships as a separate read-only scope artifact
+- `scene_relation_graph(...)` ships as a separate read-only relation artifact
+- `assembled_target_scope` now carries deterministic object-role hints
+- `truth_bundle`, `truth_followup`, and `correction_candidates` reuse the same
+  scope/relation derivation layer instead of keeping all of that logic private
+  to the checkpoint wrapper
+
+Those graph artifacts stay intentionally separate from the default
+`reference_compare_*` / `reference_iterate_*` payloads. The guided loop can
+call them on demand when a step needs richer spatial state.
+
 ---
 
 ## Design Principles

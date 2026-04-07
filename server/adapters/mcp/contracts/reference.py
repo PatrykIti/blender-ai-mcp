@@ -10,6 +10,8 @@ from typing import Literal
 from server.adapters.mcp.contracts.scene import (
     SceneAssembledTargetScopeContract,
     SceneCorrectionTruthBundleContract,
+    SceneRelationKindLiteral,
+    SceneRelationVerdictLiteral,
     SceneRepairMacroCandidateContract,
     SceneTruthFollowupContract,
     SceneTruthFollowupItemContract,
@@ -111,6 +113,8 @@ class ReferenceCorrectionTruthEvidenceContract(MCPContract):
     """Truth-side evidence attached to one merged correction candidate."""
 
     focus_pairs: list[str] = []
+    relation_kinds: list[SceneRelationKindLiteral] = []
+    relation_verdicts: list[SceneRelationVerdictLiteral] = []
     item_kinds: list[
         Literal[
             "contact_failure", "gap", "overlap", "alignment", "attachment", "measurement_error", "insufficient_scope"

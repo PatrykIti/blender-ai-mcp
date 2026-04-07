@@ -20,6 +20,8 @@ def test_readme_documents_llm_guided_public_aliases():
         "configure_scene",
         "browse_workflows",
         "reference_images",
+        "scene_scope_graph",
+        "scene_relation_graph",
         "guided_reference_readiness",
         "MCP_TRANSPORT_MODE",
         "streamable",
@@ -64,6 +66,8 @@ def test_mcp_docs_describe_aliases_and_hidden_arguments():
         "reference_compare_current_view",
         "reference_compare_stage_checkpoint",
         "reference_iterate_stage_checkpoint",
+        "scene_scope_graph",
+        "scene_relation_graph",
         "guided_reference_readiness",
         "session_id",
         "transport",
@@ -132,6 +136,8 @@ def test_vision_docs_exist_and_describe_runtime_scope():
         "`correction_candidates`",
         "`refinement_route`",
         "`refinement_handoff`",
+        "`scene_scope_graph(...)`",
+        "`scene_relation_graph(...)`",
         "separate from the",
         "already-active goal refs",
         "leaving broken pending file paths behind",
@@ -214,6 +220,8 @@ def test_tools_summary_describes_llm_guided_alias_layer():
         "inspect_scene",
         "configure_scene",
         "browse_workflows",
+        "scene_scope_graph",
+        "scene_relation_graph",
     ):
         assert expected in text
 
@@ -237,6 +245,8 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "reference_compare_current_view" in prompt_readme
     assert "reference_compare_stage_checkpoint" in prompt_readme
     assert "reference_iterate_stage_checkpoint" in prompt_readme
+    assert "scene_scope_graph(...)" in prompt_readme
+    assert "scene_relation_graph(...)" in prompt_readme
     assert "search_tools" in prompt_readme
     assert "call_tool" in prompt_readme
     assert "call it directly instead of routing through `search_tools(...)` / `call_tool(...)`" in prompt_readme

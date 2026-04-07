@@ -318,3 +318,25 @@ class ISceneTool(ABC):
     ) -> Dict[str, Any]:
         """Asserts that one proportion/ratio matches the expected value."""
         pass
+
+    @abstractmethod
+    def get_scope_graph(
+        self,
+        target_object: Optional[str] = None,
+        target_objects: Optional[List[str]] = None,
+        collection_name: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Builds the current compact structural scope graph for a target set."""
+        pass
+
+    @abstractmethod
+    def get_relation_graph(
+        self,
+        target_object: Optional[str] = None,
+        target_objects: Optional[List[str]] = None,
+        collection_name: Optional[str] = None,
+        goal_hint: Optional[str] = None,
+        include_truth_payloads: bool = False,
+    ) -> Dict[str, Any]:
+        """Builds the current compact spatial relation graph for a target set."""
+        pass

@@ -1,0 +1,37 @@
+{
+  "tool_name": "scene_relation_graph",
+  "category": "scene",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": [
+    "relation graph",
+    "spatial relations",
+    "pair relations",
+    "contact graph",
+    "attachment graph",
+    "support graph",
+    "symmetry pairs"
+  ],
+  "sample_prompts": [
+    "show the relation graph for these assembly parts",
+    "what spatial relations currently matter between these objects",
+    "give me the pairwise contact and attachment state"
+  ],
+  "parameters": {
+    "target_object": {"type": "string", "required": false},
+    "target_objects": {"type": "array", "required": false},
+    "collection_name": {"type": "string", "required": false},
+    "goal_hint": {"type": "string", "required": false}
+  },
+  "related_tools": [
+    "scene_scope_graph",
+    "scene_measure_gap",
+    "scene_measure_alignment",
+    "scene_measure_overlap",
+    "scene_assert_contact",
+    "scene_assert_symmetry",
+    "reference_compare_stage_checkpoint"
+  ],
+  "patterns": [],
+  "description": "Returns one compact read-only spatial relation graph derived from current measure/assert truth, including bounded attachment/support/symmetry interpretations when justified by the scope and goal hint."
+}

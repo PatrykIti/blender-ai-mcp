@@ -81,3 +81,37 @@ def test_scene_measure_dimensions_alignment_and_overlap(scene_handler, modeling_
                 scene_handler.delete_object(name)
             except RuntimeError:
                 pass
+
+
+def test_scene_spatial_graph_handlers_expose_scope_and_relation_state(scene_handler, modeling_handler):
+    head_name = "E2E_Scope_Head"
+    body_name = "E2E_Scope_Body"
+
+    try:
+        for name in (head_name, body_name):
+            try:
+                scene_handler.delete_object(name)
+            except RuntimeError:
+                pass
+
+        modeling_handler.create_primitive(primitive_type="CUBE", name=head_name, size=2.0, location=[0, 0, 0])
+        modeling_handler.create_primitive(primitive_type="CUBE", name=body_name, size=2.5, location=[4, 0, 0])
+
+        scope = scene_handler.get_scope_graph(target_objects=[head_name, body_name])
+        relations = scene_handler.get_relation_graph(
+            target_objects=[head_name, body_name], goal_hint="assembled creature"
+        )
+
+        assert scope["primary_target"] == body_name
+        assert any(item["object_name"] == body_name and item["role"] == "anchor_core" for item in scope["object_roles"])
+        assert relations["summary"]["pair_count"] == 1
+        assert relations["pairs"][0]["from_object"] == head_name
+        assert "attachment" in relations["pairs"][0]["relation_kinds"]
+    except RuntimeError as e:
+        pytest.skip(f"Blender not available: {e}")
+    finally:
+        for name in (head_name, body_name):
+            try:
+                scene_handler.delete_object(name)
+            except RuntimeError:
+                pass

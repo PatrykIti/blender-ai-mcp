@@ -2,8 +2,13 @@
 
 **Parent:** [TASK-143-02](./TASK-143-02_Relation_Graph_Derivation_And_Truth_Layer_Convergence.md)
 **Depends On:** [TASK-143-02-01](./TASK-143-02-01_Relation_Vocabulary_Bounded_Pair_Expansion_And_Graph_Builder.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** Completed on 2026-04-07. Stage compare/iterate now use
+the shared spatial derivation layer internally, `truth_followup` and
+`correction_candidates` carry the same relation vocabulary, and the graph
+remains an explicit on-demand artifact instead of a mandatory stage payload.
 
 ## Objective
 

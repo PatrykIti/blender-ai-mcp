@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [217](./217-2026-04-07-guided-spatial-scope-and-relation-graphs.md) | 2026-04-07 | **Guided spatial scope and relation graphs** | - |
 | [216](./216-2026-04-07-creature-attachment-seam-coverage.md) | 2026-04-07 | **Creature attachment seam coverage for guided assembled models** | - |
 | [215](./215-2026-04-06-guided-creature-contract-parity.md) | 2026-04-06 | **Guided creature contract parity on the active client surface** | - |
 | [214](./214-2026-04-06-reference-guided-creature-surface-and-perception.md) | 2026-04-06 | **Reference-guided creature surface and perception reliability** | - |

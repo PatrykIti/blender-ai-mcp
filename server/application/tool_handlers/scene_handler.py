@@ -1,10 +1,12 @@
 from typing import Any, Dict, List, Optional
 
+from server.application.services.spatial_graph import get_spatial_graph_service
 from server.application.tool_handlers._rpc_utils import (
     require_dict_result,
     require_list_of_dicts_result,
     require_str_result,
 )
+from server.application.tool_handlers.collection_handler import CollectionToolHandler
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.tools.scene import ISceneTool
 
@@ -399,4 +401,49 @@ class SceneToolHandler(ISceneTool):
                     "world_space": world_space,
                 },
             )
+        )
+
+    def get_scope_graph(
+        self,
+        target_object: Optional[str] = None,
+        target_objects: Optional[List[str]] = None,
+        collection_name: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        collection_handler = CollectionToolHandler(self.rpc)
+
+        def _list_collection_objects(name: str) -> List[str]:
+            payload = collection_handler.list_objects(collection_name=name, recursive=True, include_hidden=False)
+            objects = payload.get("objects", []) if isinstance(payload, dict) else []
+            return [
+                str(item.get("name")).strip()
+                for item in objects
+                if isinstance(item, dict) and str(item.get("name") or "").strip()
+            ]
+
+        return get_spatial_graph_service().build_scope_graph(
+            reader=self,
+            target_object=target_object,
+            target_objects=target_objects,
+            collection_name=collection_name,
+            list_collection_objects=_list_collection_objects,
+        )
+
+    def get_relation_graph(
+        self,
+        target_object: Optional[str] = None,
+        target_objects: Optional[List[str]] = None,
+        collection_name: Optional[str] = None,
+        goal_hint: Optional[str] = None,
+        include_truth_payloads: bool = False,
+    ) -> Dict[str, Any]:
+        scope_graph = self.get_scope_graph(
+            target_object=target_object,
+            target_objects=target_objects,
+            collection_name=collection_name,
+        )
+        return get_spatial_graph_service().build_relation_graph(
+            reader=self,
+            scope_graph=scope_graph,
+            goal_hint=goal_hint,
+            include_truth_payloads=include_truth_payloads,
         )

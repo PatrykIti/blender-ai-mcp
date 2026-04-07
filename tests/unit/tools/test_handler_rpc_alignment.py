@@ -194,6 +194,63 @@ def test_scene_assert_tools_align_with_rpc_commands_and_args():
     ]
 
 
+def test_scene_spatial_graph_handlers_reuse_existing_scene_truth_rpc_commands():
+    rpc = DummyRpc(
+        {
+            "scene.get_bounding_box": _ok({"dimensions": [2.0, 2.0, 2.0], "center": [0.0, 0.0, 0.0]}),
+            "scene.measure_gap": _ok({"gap": 0.1, "relation": "separated", "measurement_basis": "bounding_box"}),
+            "scene.measure_alignment": _ok({"is_aligned": False, "aligned_axes": ["Y", "Z"]}),
+            "scene.measure_overlap": _ok(
+                {"overlaps": False, "relation": "disjoint", "measurement_basis": "bounding_box"}
+            ),
+            "scene.assert_contact": _ok(
+                {
+                    "assertion": "scene_assert_contact",
+                    "passed": False,
+                    "actual": {"gap": 0.1, "relation": "separated"},
+                    "details": {"measurement_basis": "bounding_box"},
+                }
+            ),
+        }
+    )
+    handler = SceneToolHandler(rpc)
+
+    scope = handler.get_scope_graph(target_objects=["Head", "Body"])
+    relations = handler.get_relation_graph(target_objects=["Head", "Body"], goal_hint="assembled creature")
+
+    assert scope["primary_target"] == "Body"
+    assert scope["object_roles"][0]["object_name"] == "Head"
+    assert relations["summary"]["pair_count"] == 1
+    assert relations["pairs"][0]["from_object"] == "Head"
+    assert "contact" in relations["pairs"][0]["relation_kinds"]
+    assert rpc.calls[:6] == [
+        ("scene.get_bounding_box", {"object_name": "Head", "world_space": True}),
+        ("scene.get_bounding_box", {"object_name": "Body", "world_space": True}),
+        ("scene.get_bounding_box", {"object_name": "Head", "world_space": True}),
+        ("scene.get_bounding_box", {"object_name": "Body", "world_space": True}),
+        ("scene.get_bounding_box", {"object_name": "Head", "world_space": True}),
+        ("scene.get_bounding_box", {"object_name": "Body", "world_space": True}),
+    ]
+    assert rpc.calls[6:] == [
+        ("scene.measure_gap", {"from_object": "Head", "to_object": "Body", "tolerance": 0.0001}),
+        (
+            "scene.measure_alignment",
+            {
+                "from_object": "Head",
+                "to_object": "Body",
+                "axes": ["X", "Y", "Z"],
+                "reference": "CENTER",
+                "tolerance": 0.0001,
+            },
+        ),
+        ("scene.measure_overlap", {"from_object": "Head", "to_object": "Body", "tolerance": 0.0001}),
+        (
+            "scene.assert_contact",
+            {"from_object": "Head", "to_object": "Body", "max_gap": 0.0001, "allow_overlap": False},
+        ),
+    ]
+
+
 def test_scene_inspect_scene_state_handlers_align_with_rpc_commands():
     rpc = DummyRpc(
         {
