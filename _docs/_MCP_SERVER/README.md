@@ -487,6 +487,7 @@ Current machine-readable `guided_flow_state` fields:
 Current guided-flow behavior:
 
 - `router_set_goal()`, `router_get_status()`,
+  `guided_register_part()`,
   `reference_compare_stage_checkpoint()`, and
   `reference_iterate_stage_checkpoint()` can expose `guided_flow_state`
 - domain overlays are deterministic and currently include:
@@ -503,6 +504,9 @@ Current guided-flow behavior:
   policy
 - role/family summaries are intentionally compact public fields; the full
   internal part registry remains session-scoped implementation state
+- `guided_register_part(object_name=..., role=...)` is the canonical guided
+  surface for telling the server that an existing object now counts as one
+  semantic role such as `body_core`, `head_mass`, or `roof_mass`
 
 ## Guided Flow Troubleshooting
 

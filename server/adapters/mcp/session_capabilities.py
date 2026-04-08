@@ -150,6 +150,32 @@ _GUIDED_ROLE_SUMMARY_PLAN: dict[str, dict[GuidedFlowStepLiteral, dict[str, list[
         "finish_or_stop": {"allowed_roles": [], "required_role_groups": ["finish"]},
     },
 }
+_GUIDED_ROLE_GROUP_BY_ROLE: dict[str, dict[str, str]] = {
+    "generic": {
+        "anchor_core": "primary_masses",
+        "primary_mass": "primary_masses",
+        "secondary_mass": "secondary_parts",
+        "support_part": "secondary_parts",
+        "detail_part": "finish",
+    },
+    "creature": {
+        "body_core": "primary_masses",
+        "head_mass": "primary_masses",
+        "tail_mass": "primary_masses",
+        "snout_mass": "secondary_parts",
+        "ear_pair": "secondary_parts",
+        "foreleg_pair": "secondary_parts",
+        "hindleg_pair": "secondary_parts",
+    },
+    "building": {
+        "footprint_mass": "primary_masses",
+        "main_volume": "primary_masses",
+        "roof_mass": "primary_masses",
+        "facade_opening": "secondary_parts",
+        "support_element": "secondary_parts",
+        "detail_element": "secondary_parts",
+    },
+}
 
 
 @dataclass(frozen=True)
@@ -383,6 +409,47 @@ def _build_role_summary(
         "missing_roles": missing_roles,
         "required_role_groups": list(plan["required_role_groups"]),
     }
+
+
+def _update_guided_flow_role_summary_dict(
+    flow_state: dict[str, Any],
+    *,
+    part_registry: list[dict[str, Any]] | None,
+) -> dict[str, Any]:
+    contract = GuidedFlowStateContract.model_validate(flow_state)
+    role_summary = _build_role_summary(
+        domain_profile=contract.domain_profile,
+        current_step=contract.current_step,
+        part_registry=part_registry,
+    )
+    contract.allowed_roles = role_summary["allowed_roles"]
+    contract.completed_roles = role_summary["completed_roles"]
+    contract.missing_roles = role_summary["missing_roles"]
+    contract.required_role_groups = role_summary["required_role_groups"]
+    return contract.model_dump(mode="json")
+
+
+def _get_valid_guided_roles(domain_profile: Literal["generic", "creature", "building"]) -> list[str]:
+    return sorted(_GUIDED_ROLE_GROUP_BY_ROLE[domain_profile].keys())
+
+
+def _resolve_guided_role_group(
+    *,
+    domain_profile: Literal["generic", "creature", "building"],
+    role: str,
+    role_group: str | None = None,
+) -> str:
+    if role_group is not None and role_group.strip():
+        return role_group.strip()
+
+    mapping = _GUIDED_ROLE_GROUP_BY_ROLE[domain_profile]
+    resolved = mapping.get(role)
+    if resolved is None:
+        known = ", ".join(_get_valid_guided_roles(domain_profile))
+        raise ValueError(
+            f"Unknown guided part role '{role}' for domain profile '{domain_profile}'. Expected one of: {known}"
+        )
+    return resolved
 
 
 def _build_initial_guided_flow_state(
@@ -1147,6 +1214,75 @@ async def replace_session_pending_reference_images_async(
         guided_flow_state=current.guided_flow_state,
         guided_part_registry=current.guided_part_registry,
         pending_reference_images=pending_reference_images or None,
+    )
+    await set_session_capability_state_async(ctx, state)
+    return state
+
+
+async def register_guided_part_role_async(
+    ctx: Context,
+    *,
+    object_name: str,
+    role: str,
+    role_group: str | None = None,
+) -> SessionCapabilityState:
+    """Register or update one guided part role for the active guided session."""
+
+    current = await get_session_capability_state_async(ctx)
+    if current.guided_flow_state is None:
+        raise ValueError("guided_register_part(...) requires an active guided flow session.")
+
+    flow_state = GuidedFlowStateContract.model_validate(current.guided_flow_state)
+    domain_profile = flow_state.domain_profile
+    resolved_role = role.strip()
+    if not resolved_role:
+        raise ValueError("guided_register_part(...) requires a non-empty `role`.")
+
+    resolved_role_group = _resolve_guided_role_group(
+        domain_profile=domain_profile,
+        role=resolved_role,
+        role_group=role_group,
+    )
+    updated_registry = [
+        item
+        for item in list(current.guided_part_registry or [])
+        if isinstance(item, dict) and item.get("object_name") != object_name
+    ]
+    updated_registry.append(
+        asdict(
+            GuidedPartRegistryItem(
+                object_name=object_name,
+                role=resolved_role,
+                role_group=resolved_role_group,
+                status="registered",
+                created_in_step=flow_state.current_step,
+            )
+        )
+    )
+    updated_flow_state = _update_guided_flow_role_summary_dict(
+        current.guided_flow_state,
+        part_registry=updated_registry,
+    )
+    state = SessionCapabilityState(
+        phase=current.phase,
+        goal=current.goal,
+        pending_clarification=current.pending_clarification,
+        last_router_status=current.last_router_status,
+        policy_context=current.policy_context,
+        surface_profile=current.surface_profile,
+        contract_version=current.contract_version,
+        pending_elicitation_id=current.pending_elicitation_id,
+        pending_workflow_name=current.pending_workflow_name,
+        partial_answers=current.partial_answers,
+        pending_question_set_id=current.pending_question_set_id,
+        last_elicitation_action=current.last_elicitation_action,
+        last_router_disposition=current.last_router_disposition,
+        last_router_error=current.last_router_error,
+        reference_images=current.reference_images,
+        guided_handoff=current.guided_handoff,
+        guided_flow_state=updated_flow_state,
+        guided_part_registry=updated_registry,
+        pending_reference_images=current.pending_reference_images,
     )
     await set_session_capability_state_async(ctx, state)
     return state

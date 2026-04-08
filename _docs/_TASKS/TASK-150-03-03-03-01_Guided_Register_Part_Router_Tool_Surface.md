@@ -1,7 +1,7 @@
 # TASK-150-03-03-03-01: Guided Register Part Router Tool Surface
 
 **Parent:** [TASK-150-03-03-03](./TASK-150-03-03-03_Guided_Register_Part_And_Role_Hint_Input_Path.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -36,6 +36,16 @@ async def guided_register_part(
 
 - one canonical role-registration surface exists
 - tool returns updated guided-flow state or status payload
+
+## Completion Summary
+
+- added `guided_register_part(...)` on the router MCP surface
+- wired it to update the internal guided part registry for the active guided
+  session
+- returned refreshed guided status so callers can immediately see updated role
+  summaries
+- documented the tool as the canonical semantic part-registration path on the
+  guided surface
 
 ## Planned Unit Test Scenarios
 

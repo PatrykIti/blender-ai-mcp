@@ -191,6 +191,9 @@ Interpretation:
   - `guided_flow_state.next_actions`
 - use the `required prompt bundle` and `preferred prompt bundle` named in
   `guided_flow_state` as prompt asset selection guidance
+- if the server needs explicit semantic part roles for the current flow,
+  prefer `guided_register_part(object_name=..., role=...)` instead of
+  inventing new domain-specific tool names
 - current server-driven guided flow domain overlays are:
   - `generic`
   - `creature`

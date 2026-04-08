@@ -36,6 +36,7 @@ from server.adapters.mcp.session_capabilities import (
     clear_session_goal_state_async,
     get_session_capability_state_async,
     merge_resolved_params_with_session_answers_async,
+    register_guided_part_role_async,
     update_session_from_router_goal_async,
 )
 from server.adapters.mcp.tasks.job_registry import get_background_job_registry
@@ -48,6 +49,7 @@ from server.infrastructure.telemetry import get_telemetry_state
 ROUTER_PUBLIC_TOOL_NAMES = (
     "router_set_goal",
     "router_get_status",
+    "guided_register_part",
     "router_clear_goal",
     "router_find_similar_workflows",
     "router_get_inherited_proportions",
@@ -462,6 +464,32 @@ async def router_get_status(ctx: Context) -> RouterStatusContract:
         )
         status_payload["repair_suggestion"] = to_repair_assistant_contract(repair_outcome).model_dump()
     return RouterStatusContract.model_validate(status_payload)
+
+
+async def guided_register_part(
+    ctx: Context,
+    object_name: str,
+    role: str,
+    role_group: str | None = None,
+) -> RouterStatusContract:
+    """
+    [SYSTEM][SAFE] Register one object role for the active guided flow session.
+
+    Use this to tell the guided runtime that an existing object should count as
+    a specific semantic part role such as `body_core`, `head_mass`, or
+    `roof_mass`, without introducing a separate build tool per domain part.
+    """
+
+    await register_guided_part_role_async(
+        ctx,
+        object_name=object_name,
+        role=role,
+        role_group=role_group,
+    )
+    status = await router_get_status(ctx)
+    payload = status.model_dump(mode="json", exclude_none=True)
+    payload["message"] = f"Registered guided role '{role}' for '{object_name}'."
+    return RouterStatusContract.model_validate(payload)
 
 
 async def router_clear_goal(ctx: Context) -> str:

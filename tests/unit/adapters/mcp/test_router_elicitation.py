@@ -6,8 +6,14 @@ import asyncio
 from dataclasses import dataclass, field
 from types import SimpleNamespace
 
+import pytest
 from server.adapters.mcp.areas import router as router_area
-from server.adapters.mcp.session_capabilities import get_session_capability_state
+from server.adapters.mcp.session_capabilities import (
+    SessionCapabilityState,
+    get_session_capability_state,
+    set_session_capability_state,
+)
+from server.adapters.mcp.session_phase import SessionPhase
 
 
 @dataclass
@@ -419,3 +425,102 @@ def test_router_get_status_returns_guided_flow_state(monkeypatch):
     assert result.guided_flow_state is not None
     assert result.guided_flow_state.domain_profile == "building"
     assert result.guided_flow_state.current_step == "establish_spatial_context"
+
+
+def test_guided_register_part_updates_session_role_summary(monkeypatch):
+    """guided_register_part should update the internal role registry and return refreshed guided status."""
+
+    monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
+    monkeypatch.setattr(router_area, "get_router_status", lambda: {"enabled": True})
+    monkeypatch.setattr(router_area, "_build_background_job_diagnostics", lambda: (0, {}, []))
+    monkeypatch.setattr(router_area, "_build_timeout_policy_diagnostics", lambda _ctx: None)
+    monkeypatch.setattr(router_area, "_build_task_runtime_diagnostics", lambda _ctx: None)
+    monkeypatch.setattr(router_area, "_build_telemetry_diagnostics", lambda: None)
+    monkeypatch.setattr(router_area, "_get_list_page_size", lambda _ctx: 50)
+    monkeypatch.setattr(router_area, "run_repair_suggestion_assistant", lambda *args, **kwargs: None)
+    monkeypatch.setattr(router_area, "to_repair_assistant_contract", lambda *args, **kwargs: None)
+    monkeypatch.setattr(router_area, "_should_attach_repair_suggestion", lambda _payload: False)
+    monkeypatch.setattr(
+        router_area,
+        "build_visibility_diagnostics",
+        lambda surface_profile, phase, guided_handoff=None, guided_flow_state=None: SimpleNamespace(
+            rules=(),
+            visible_capability_ids=("router",),
+            visible_entry_capability_ids=("router",),
+            hidden_capability_ids=(),
+            hidden_category_counts={},
+        ),
+    )
+
+    ctx = FakeContext(response=object())
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            surface_profile="llm-guided",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": [],
+                "missing_roles": ["body_core", "head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    result = asyncio.run(router_area.guided_register_part(ctx, object_name="Squirrel_Body", role="body_core"))
+    session = get_session_capability_state(ctx)
+
+    assert result.guided_flow_state is not None
+    assert result.guided_flow_state.completed_roles == ["body_core"]
+    assert result.guided_flow_state.missing_roles == ["head_mass", "tail_mass"]
+    assert result.message == "Registered guided role 'body_core' for 'Squirrel_Body'."
+    assert session.guided_part_registry is not None
+    assert session.guided_part_registry[0]["object_name"] == "Squirrel_Body"
+
+
+def test_guided_register_part_rejects_invalid_role_for_domain(monkeypatch):
+    """guided_register_part should fail clearly when the requested role does not belong to the current overlay."""
+
+    monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
+
+    ctx = FakeContext(response=object())
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            surface_profile="llm-guided",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": [],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": [],
+                "missing_roles": ["body_core", "head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    with pytest.raises(ValueError, match="Unknown guided part role 'roof_mass'"):
+        asyncio.run(router_area.guided_register_part(ctx, object_name="Squirrel_Roof", role="roof_mass"))
