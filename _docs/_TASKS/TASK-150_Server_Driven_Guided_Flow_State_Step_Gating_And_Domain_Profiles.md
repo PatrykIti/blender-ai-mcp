@@ -47,8 +47,9 @@ Current implementation status on this branch:
   alignment
 
 Remaining follow-on work under this umbrella can continue with broader
-transport/E2E coverage and any deeper execution-block policy tightening that
-proves necessary in real guided sessions.
+transport/E2E coverage plus a deeper execution-enforcement layer so the
+server can constrain in-family build sequencing instead of only gating the
+bootstrap/spatial-context edge.
 
 ## Business Problem
 
@@ -306,6 +307,28 @@ This umbrella does **not** cover:
 | 3 | [TASK-150-03](./TASK-150-03_Step_Gated_Visibility_And_Execution_Policy.md) | Make visibility and execution behavior depend on flow step instead of only coarse phase |
 | 4 | [TASK-150-04](./TASK-150-04_Prompt_Bundle_Delivery_And_Flow_Aligned_Recommendations.md) | Turn prompts into an explicit server-owned flow contract instead of optional side knowledge |
 | 5 | [TASK-150-05](./TASK-150-05_Regression_Pack_And_Docs_For_Server_Driven_Guided_Flows.md) | Lock the server-driven flow model in with tests, docs, and troubleshooting guidance |
+
+## Execution-Enforcement Continuation
+
+The current TASK-150 delivery already owns:
+
+- the machine-readable `guided_flow_state`
+- domain overlays
+- prompt bundles
+- spatial-context gating
+- search/call/list visibility shaping
+
+What still remains open is the deeper execution-enforcement slice:
+
+- shared generic build families after spatial-context unlock
+- session-scoped part-role tracking so the server can tell whether one new
+  primitive is a body/core mass, appendage pair, facade opening, etc.
+- router/firewall-time blocking when a tool call belongs to the wrong family
+  for the current step
+
+That continuation is now explicitly tracked under:
+
+- [TASK-150-03-03](./TASK-150-03-03_Generic_Families_Part_Roles_And_Execution_Enforcement.md)
 
 ## Status / Board Update
 

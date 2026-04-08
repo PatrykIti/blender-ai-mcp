@@ -70,7 +70,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-150](./TASK-150_Server_Driven_Guided_Flow_State_Step_Gating_And_Domain_Profiles.md) | **Server-Driven Guided Flow State, Step Gating, and Domain Profiles** | 🔴 High | Initial guided-flow contract, domain overlays, prompt bundles, and step-gated visibility are landed; transport/E2E broadening remains follow-on work under the same umbrella. |
+| [TASK-150](./TASK-150_Server_Driven_Guided_Flow_State_Step_Gating_And_Domain_Profiles.md) | **Server-Driven Guided Flow State, Step Gating, and Domain Profiles** | 🔴 High | Initial guided-flow contract, domain overlays, prompt bundles, and step-gated visibility are landed; the remaining continuation is now explicitly tracked under `TASK-150-03-03` for shared families, part-role semantics, and real execution-time enforcement. |
 
 ---
 
