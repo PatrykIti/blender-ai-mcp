@@ -42,6 +42,7 @@ def render_recommended_prompts(
     phase: str,
     goal: str | None = None,
     guided_handoff: dict[str, Any] | None = None,
+    guided_flow_state: dict[str, Any] | None = None,
 ) -> PromptResult:
     """Render a dynamic recommendation prompt for the current session context."""
 
@@ -56,15 +57,45 @@ def render_recommended_prompts(
         f"# Recommended prompts for surface `{surface_profile}` / phase `{phase}`",
         "",
     ]
+    flow_required_prompts = [str(name) for name in (guided_flow_state or {}).get("required_prompts") or [] if str(name)]
+    flow_preferred_prompts = [
+        str(name) for name in (guided_flow_state or {}).get("preferred_prompts") or [] if str(name)
+    ]
+    current_step = str((guided_flow_state or {}).get("current_step") or "").strip()
+    domain_profile = str((guided_flow_state or {}).get("domain_profile") or "").strip()
     if goal:
         lines.append(f"- Active goal: `{goal}`")
         lines.append(
             "- Goal context tags: " + (", ".join(f"`{tag}`" for tag in goal_tags) if goal_tags else "`goal:generic`")
         )
         lines.append("")
+    if current_step or domain_profile:
+        lines.append(
+            "- Guided flow state: "
+            + ", ".join(
+                part
+                for part in (
+                    f"domain `{domain_profile}`" if domain_profile else None,
+                    f"step `{current_step}`" if current_step else None,
+                )
+                if part
+            )
+        )
+        lines.append("")
+    if flow_required_prompts:
+        lines.append("## Required prompt bundle")
+        for prompt_name in flow_required_prompts:
+            lines.append(f"- `{prompt_name}`")
+        lines.append("")
+    if flow_preferred_prompts:
+        lines.append("## Preferred prompt bundle")
+        for prompt_name in flow_preferred_prompts:
+            lines.append(f"- `{prompt_name}`")
+        lines.append("")
     if not recommendations:
         lines.append("No curated prompt recommendations are available for this phase/profile yet.")
     else:
+        lines.append("## Additional curated recommendations")
         for entry in recommendations:
             lines.append(f"- `{entry.name}`: {entry.description}")
 
@@ -76,6 +107,10 @@ def render_recommended_prompts(
             "phase": phase,
             "goal": goal,
             "goal_tags": list(goal_tags),
+            "domain_profile": domain_profile or None,
+            "current_step": current_step or None,
+            "required_prompt_names": flow_required_prompts,
+            "preferred_prompt_names": flow_preferred_prompts,
             "recommended_prompt_names": [entry.name for entry in recommendations],
         },
     )

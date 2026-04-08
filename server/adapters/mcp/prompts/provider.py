@@ -61,6 +61,7 @@ def register_prompt_assets(target: Any) -> Dict[str, Any]:
             phase=str(resolved_phase),
             goal=str(resolved_goal) if resolved_goal is not None else None,
             guided_handoff=session_state.guided_handoff,
+            guided_flow_state=session_state.guided_flow_state,
         )
 
     registered["recommended_prompts"] = target.prompt(

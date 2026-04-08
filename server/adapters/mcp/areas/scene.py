@@ -47,7 +47,11 @@ from server.adapters.mcp.guided_contract import canonicalize_scene_clean_scene_a
 from server.adapters.mcp.router_helper import route_tool_call
 from server.adapters.mcp.sampling.assistant_runner import run_inspection_summary_assistant
 from server.adapters.mcp.sampling.result_types import to_inspection_assistant_contract
-from server.adapters.mcp.session_capabilities import get_session_capability_state_async
+from server.adapters.mcp.session_capabilities import (
+    get_session_capability_state_async,
+    record_guided_flow_spatial_check_completion,
+    refresh_visibility_for_session_state,
+)
 from server.adapters.mcp.tasks.candidacy import get_tool_task_config
 from server.adapters.mcp.tasks.task_bridge import (
     is_background_task_context,
@@ -2519,6 +2523,8 @@ def scene_scope_graph(
                 ),
                 message="Scope graph derived from explicit targets plus deterministic role/anchor heuristics.",
             )
+            updated_state = record_guided_flow_spatial_check_completion(ctx, tool_name="scene_scope_graph")
+            refresh_visibility_for_session_state(ctx, updated_state)
             return SceneScopeGraphResponseContract(payload=payload)
         except RuntimeError as e:
             return SceneScopeGraphResponseContract(error=str(e))
@@ -2572,6 +2578,8 @@ def scene_relation_graph(
                     include_truth_payloads=False,
                 )
             )
+            updated_state = record_guided_flow_spatial_check_completion(ctx, tool_name="scene_relation_graph")
+            refresh_visibility_for_session_state(ctx, updated_state)
             return SceneRelationGraphResponseContract(payload=payload)
         except RuntimeError as e:
             return SceneRelationGraphResponseContract(error=str(e))
@@ -2682,6 +2690,8 @@ def scene_view_diagnostics(
                     "View diagnostics report projection/framing/occlusion state for the requested scope only; use measure/assert tools for truth-space verification."
                 ),
             )
+            updated_state = record_guided_flow_spatial_check_completion(ctx, tool_name="scene_view_diagnostics")
+            refresh_visibility_for_session_state(ctx, updated_state)
             return SceneViewDiagnosticsResponseContract(payload=payload)
         except (RuntimeError, ValueError) as e:
             return SceneViewDiagnosticsResponseContract(error=str(e))

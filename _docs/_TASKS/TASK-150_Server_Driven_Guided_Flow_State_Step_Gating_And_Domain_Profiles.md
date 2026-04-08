@@ -1,6 +1,6 @@
 # TASK-150: Server-Driven Guided Flow State, Step Gating, And Domain Profiles
 
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
 **Priority:** 🔴 High
 **Category:** Guided Runtime / Server-Driven Orchestration
 **Estimated Effort:** Large
@@ -28,6 +28,27 @@ profiles such as:
 
 with room for later follow-on profiles without redesigning the whole guided
 runtime again.
+
+## Progress Update
+
+Current implementation status on this branch:
+
+- added a typed session-backed `guided_flow_state` contract on the MCP surface
+- exposed `guided_flow_state` on `router_set_goal(...)`, `router_get_status()`,
+  and staged compare/iterate payloads
+- added deterministic `generic` / `creature` / `building` domain-profile
+  selection
+- added step-gated visibility for `llm-guided`, including a bounded
+  `establish_spatial_context` gate before broad build families unlock
+- wired required/preferred prompt bundles into the guided flow contract and the
+  dynamic prompt recommendation surface
+- added unit and router-style regression coverage for flow state persistence,
+  domain overlays, prompt bundles, visibility gating, and search-surface
+  alignment
+
+Remaining follow-on work under this umbrella can continue with broader
+transport/E2E coverage and any deeper execution-block policy tightening that
+proves necessary in real guided sessions.
 
 ## Business Problem
 

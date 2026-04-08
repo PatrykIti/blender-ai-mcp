@@ -17,6 +17,7 @@ from server.adapters.mcp.transforms.visibility_policy import (
     GUIDED_DISCOVERY_TOOLS,
     GUIDED_ENTRY_TOOLS,
     GUIDED_INSPECT_ESCAPE_HATCH_TOOLS,
+    GUIDED_SPATIAL_CONTEXT_DIRECT_TOOLS,
     GUIDED_SPATIAL_GRAPH_TOOLS,
     GUIDED_SPATIAL_SUPPORT_TOOLS,
     GUIDED_UTILITY_HANDOFF_TOOLS,
@@ -179,6 +180,31 @@ def test_visibility_rules_can_shape_build_phase_for_creature_handoff():
     assert "mesh_randomize" not in build_rule["names"]
     assert "mesh_create_vertex_group" not in build_rule["names"]
     assert "macro_finish_form" not in build_rule["names"]
+
+
+def test_visibility_rules_can_gate_build_phase_by_guided_flow_step():
+    """The active guided step should be able to narrow build visibility before free build actions unlock."""
+
+    rules = build_visibility_rules(
+        "llm-guided",
+        SessionPhase.BUILD,
+        guided_handoff={
+            "kind": "guided_manual_build",
+            "recipe_id": "low_poly_creature_blockout",
+            "direct_tools": list(CREATURE_LOW_POLY_BLOCKOUT_DIRECT_TOOLS),
+            "supporting_tools": list(CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS),
+        },
+        guided_flow_state={
+            "flow_id": "guided_creature_flow",
+            "domain_profile": "creature",
+            "current_step": "establish_spatial_context",
+        },
+    )
+
+    assert rules[-1]["names"] == set(GUIDED_SPATIAL_CONTEXT_DIRECT_TOOLS)
+    assert "macro_finish_form" not in rules[-1]["names"]
+    assert "modeling_create_primitive" not in rules[-1]["names"]
+    assert "scene_scope_graph" in rules[-1]["names"]
 
 
 def test_llm_guided_surface_materializes_visibility_transforms():

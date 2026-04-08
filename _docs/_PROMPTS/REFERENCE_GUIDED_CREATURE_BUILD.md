@@ -35,6 +35,9 @@ asset as the generic search-first operating baseline.
    - if you only discover stale scene state after this point, `scene_clean_scene(...)`
      remains an allowed build-phase recovery hatch even though cleanup-before-goal
      is still the preferred path
+   - once the goal is active, inspect `guided_flow_state` and treat
+     `establish_spatial_context` plus its `required_checks` as a real gate
+     before broad free-form modeling
 7. build in short stages:
    - head + ears
    - snout + face mass
@@ -70,6 +73,8 @@ Rules:
 - prefer the exposed `reference_guided_creature_build` prompt path when
   `recommended_prompts` or prompt discovery surfaces suggest it for the active
   creature goal
+- if the server exposes `guided_flow_state.required_prompts` or
+  `guided_flow_state.preferred_prompts`, treat those as the current required prompt bundle and preferred prompt bundle for the creature flow
 - do not assume MLX-only or provider-specific compare behavior; follow the
   runtime that is actually configured for this server
 - do not guess hidden/internal tool names

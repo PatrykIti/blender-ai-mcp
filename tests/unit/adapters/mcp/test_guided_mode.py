@@ -10,6 +10,7 @@ from server.adapters.mcp.transforms.visibility_policy import (
     GUIDED_DISCOVERY_TOOLS,
     GUIDED_ENTRY_TOOLS,
     GUIDED_INSPECT_ESCAPE_HATCH_TOOLS,
+    GUIDED_SPATIAL_CONTEXT_DIRECT_TOOLS,
     GUIDED_SPATIAL_SUPPORT_TOOLS,
     GUIDED_VIEW_DIAGNOSTIC_TOOLS,
 )
@@ -99,6 +100,30 @@ def test_guided_mode_can_narrow_build_visibility_for_creature_handoff():
         "reference_iterate_stage_checkpoint",
         "router_get_status",
     }
+
+
+def test_guided_mode_can_gate_build_visibility_by_guided_flow_step():
+    """Flow-step gating should win over the broader creature handoff build surface."""
+
+    diagnostics = build_visibility_diagnostics(
+        "llm-guided",
+        SessionPhase.BUILD,
+        guided_handoff={
+            "kind": "guided_manual_build",
+            "recipe_id": "low_poly_creature_blockout",
+            "direct_tools": ["modeling_create_primitive", "mesh_extrude_region", "macro_finish_form"],
+            "supporting_tools": ["reference_images", "reference_iterate_stage_checkpoint", "router_get_status"],
+        },
+        guided_flow_state={
+            "flow_id": "guided_creature_flow",
+            "domain_profile": "creature",
+            "current_step": "establish_spatial_context",
+        },
+    )
+
+    assert diagnostics.rules[-1]["names"] == set(GUIDED_SPATIAL_CONTEXT_DIRECT_TOOLS)
+    assert "macro_finish_form" not in diagnostics.rules[-1]["names"]
+    assert "scene_scope_graph" in diagnostics.rules[-1]["names"]
 
 
 def test_guided_mode_inspect_phase_prefers_verification_capabilities_over_build_families():

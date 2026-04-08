@@ -371,6 +371,7 @@ async def router_set_goal(
     )
     result["session_id"] = ctx_session_id(ctx)
     result["transport"] = ctx_transport_type(ctx)
+    result["guided_flow_state"] = state.guided_flow_state
     result["guided_reference_readiness"] = build_guided_reference_readiness_payload(state)
     await apply_visibility_for_session_state(ctx, state)
 
@@ -413,6 +414,7 @@ async def router_get_status(ctx: Context) -> RouterStatusContract:
         surface_profile,
         session.phase,
         guided_handoff=session.guided_handoff,
+        guided_flow_state=session.guided_flow_state,
     )
     status_payload = get_router_status()
     background_job_count, background_job_counts_by_status, background_jobs = _build_background_job_diagnostics()
@@ -433,6 +435,7 @@ async def router_get_status(ctx: Context) -> RouterStatusContract:
             "last_router_error": session.last_router_error,
             "policy_context": session.policy_context,
             "guided_handoff": session.guided_handoff,
+            "guided_flow_state": session.guided_flow_state,
             "visibility_rules": [dict(rule) for rule in diagnostics.rules],
             "visible_capabilities": list(diagnostics.visible_capability_ids),
             "visible_entry_capabilities": list(diagnostics.visible_entry_capability_ids),

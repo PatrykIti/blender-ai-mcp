@@ -39,6 +39,19 @@ GUIDED_SPATIAL_SUPPORT_TOOLS: tuple[str, ...] = (
     *GUIDED_SPATIAL_GRAPH_TOOLS,
     *GUIDED_VIEW_DIAGNOSTIC_TOOLS,
 )
+GUIDED_SPATIAL_CONTEXT_DIRECT_TOOLS: tuple[str, ...] = (
+    *GUIDED_SPATIAL_SUPPORT_TOOLS,
+    "check_scene",
+    "inspect_scene",
+    "scene_clean_scene",
+    "scene_get_viewport",
+    "reference_images",
+    "reference_compare_checkpoint",
+    "reference_compare_current_view",
+    "reference_compare_stage_checkpoint",
+    "reference_iterate_stage_checkpoint",
+    "router_get_status",
+)
 
 GUIDED_MANUAL_BUILD_HANDOFF_TOOLS: tuple[str, ...] = (
     "scene_create",
@@ -397,6 +410,7 @@ def build_visibility_rules(
     surface_profile: SurfaceProfileSettings | str,
     phase: SessionPhase | str = SessionPhase.BOOTSTRAP,
     guided_handoff: dict[str, Any] | None = None,
+    guided_flow_state: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     """Build deterministic visibility rules for a profile/phase combination."""
 
@@ -469,12 +483,17 @@ def build_visibility_rules(
         ]
     )
 
+    current_flow_step = str((guided_flow_state or {}).get("current_step") or "").strip().lower()
+
     if resolved_phase == SessionPhase.BUILD:
-        build_tools = (
-            _guided_handoff_visible_tools(guided_handoff)
-            if _is_creature_blockout_handoff(guided_handoff)
-            else set(GUIDED_BUILD_ESCAPE_HATCH_TOOLS)
-        )
+        if current_flow_step == "establish_spatial_context":
+            build_tools = set(GUIDED_SPATIAL_CONTEXT_DIRECT_TOOLS)
+        else:
+            build_tools = (
+                _guided_handoff_visible_tools(guided_handoff)
+                if _is_creature_blockout_handoff(guided_handoff)
+                else set(GUIDED_BUILD_ESCAPE_HATCH_TOOLS)
+            )
         rules.append({"enabled": True, "components": {"tool"}, "names": build_tools})
     elif resolved_phase == SessionPhase.INSPECT_VALIDATE:
         rules.append({"enabled": True, "components": {"tool"}, "names": set(GUIDED_INSPECT_ESCAPE_HATCH_TOOLS)})

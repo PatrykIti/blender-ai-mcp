@@ -103,6 +103,51 @@ def _build_handoff_search_server(phase: SessionPhase, guided_handoff: dict[str, 
     return cast(FastMCP, server)
 
 
+def _build_flow_search_server(
+    phase: SessionPhase,
+    guided_flow_state: dict[str, object],
+    *,
+    guided_handoff: dict[str, object] | None = None,
+) -> FastMCP:
+    surface = replace(get_surface_profile("llm-guided"), search_enabled=True)
+    base_pipeline = build_surface_transform_pipeline(surface)
+    transforms = []
+    for stage in base_pipeline:
+        if stage.name == "visibility":
+            transforms.extend(
+                create_visibility_transforms(
+                    build_visibility_rules(
+                        surface.name,
+                        phase,
+                        guided_handoff=guided_handoff,
+                        guided_flow_state=guided_flow_state,
+                    )
+                )
+            )
+            continue
+        transform = stage.transform
+        if transform is None:
+            continue
+        if isinstance(transform, (list, tuple)):
+            transforms.extend(transform)
+        else:
+            transforms.append(transform)
+
+    server: Any = FastMCP(
+        surface.server_name,
+        providers=build_surface_providers(surface),
+        transforms=transforms,
+        list_page_size=surface.list_page_size,
+        tasks=surface.tasks_enabled,
+        instructions=surface.instructions,
+    )
+    prompts_bridge = build_prompts_bridge_transform(surface, provider=server)
+    if prompts_bridge is not None:
+        server.add_transform(prompts_bridge)
+    server._bam_surface_profile = surface.name
+    return cast(FastMCP, server)
+
+
 def _build_phase_visible_server(phase: SessionPhase) -> FastMCP:
     surface = replace(get_surface_profile("llm-guided"), search_enabled=False)
     base_pipeline = build_surface_transform_pipeline(surface)
@@ -110,6 +155,50 @@ def _build_phase_visible_server(phase: SessionPhase) -> FastMCP:
     for stage in base_pipeline:
         if stage.name == "visibility":
             transforms.extend(create_visibility_transforms(build_visibility_rules(surface.name, phase)))
+            continue
+        if stage.name == "discovery":
+            continue
+        transform = stage.transform
+        if transform is None:
+            continue
+        if isinstance(transform, (list, tuple)):
+            transforms.extend(transform)
+        else:
+            transforms.append(transform)
+
+    server: Any = FastMCP(
+        surface.server_name,
+        providers=build_surface_providers(surface),
+        transforms=transforms,
+        list_page_size=surface.list_page_size,
+        tasks=surface.tasks_enabled,
+        instructions=surface.instructions,
+    )
+    server._bam_surface_profile = surface.name
+    return cast(FastMCP, server)
+
+
+def _build_flow_visible_server(
+    phase: SessionPhase,
+    guided_flow_state: dict[str, object],
+    *,
+    guided_handoff: dict[str, object] | None = None,
+) -> FastMCP:
+    surface = replace(get_surface_profile("llm-guided"), search_enabled=False)
+    base_pipeline = build_surface_transform_pipeline(surface)
+    transforms = []
+    for stage in base_pipeline:
+        if stage.name == "visibility":
+            transforms.extend(
+                create_visibility_transforms(
+                    build_visibility_rules(
+                        surface.name,
+                        phase,
+                        guided_handoff=guided_handoff,
+                        guided_flow_state=guided_flow_state,
+                    )
+                )
+            )
             continue
         if stage.name == "discovery":
             continue
@@ -348,6 +437,28 @@ def test_build_phase_search_prefers_macro_finish_tool_over_hidden_modifier_atomi
     assert "modeling_apply_modifier" not in names
 
 
+def test_spatial_context_flow_search_hides_finish_family_until_checks_complete():
+    """Flow-step gating should keep later build families out of search until required checks finish."""
+
+    server = _build_flow_search_server(
+        SessionPhase.BUILD,
+        {
+            "flow_id": "guided_building_flow",
+            "domain_profile": "building",
+            "current_step": "establish_spatial_context",
+        },
+    )
+
+    async def run():
+        finish = await server.call_tool("search_tools", {"query": "finish housing bevel subdivision shell"})
+        return _decode_tool_result(finish)
+
+    finish_payload = asyncio.run(run())
+    finish_names = {tool["name"] for tool in finish_payload}
+
+    assert "macro_finish_form" not in finish_names
+
+
 def test_build_phase_search_can_discover_reference_compare_checkpoint():
     """Build-phase discovery should surface the bounded checkpoint-vs-reference compare path."""
 
@@ -483,6 +594,36 @@ def test_creature_handoff_search_hides_noise_tools_and_keeps_blockout_surface_sm
     assert "mesh_create_vertex_group" not in names
     assert "mesh_assign_to_group" not in names
     assert "mesh_remove_from_group" not in names
+
+
+def test_spatial_context_flow_list_tools_stays_bounded_to_required_checks():
+    """The directly visible tool list should match the same step-gated flow surface as discovery."""
+
+    server = _build_flow_visible_server(
+        SessionPhase.BUILD,
+        {
+            "flow_id": "guided_creature_flow",
+            "domain_profile": "creature",
+            "current_step": "establish_spatial_context",
+        },
+        guided_handoff={
+            "kind": "guided_manual_build",
+            "recipe_id": "low_poly_creature_blockout",
+            "direct_tools": ["modeling_create_primitive", "mesh_extrude_region", "macro_finish_form"],
+            "supporting_tools": ["reference_images", "reference_iterate_stage_checkpoint", "router_get_status"],
+        },
+    )
+
+    async def run():
+        return {tool.name for tool in await server.list_tools()}
+
+    names = asyncio.run(run())
+
+    assert "scene_scope_graph" in names
+    assert "scene_relation_graph" in names
+    assert "scene_view_diagnostics" in names
+    assert "modeling_create_primitive" not in names
+    assert "macro_finish_form" not in names
 
 
 @pytest.mark.parametrize(

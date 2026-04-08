@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [225](./225-2026-04-08-server-driven-guided-flow-state.md) | 2026-04-08 | **Server-driven guided flow state and step gating** | - |
 | [224](./224-2026-04-08-guided-default-spatial-support.md) | 2026-04-08 | **Guided default spatial support** | - |
 | [223](./223-2026-04-07-qwen32b-operator-compare-note.md) | 2026-04-07 | **Qwen 32B operator compare note** | - |
 | [222](./222-2026-04-07-guided-build-cleanup-recovery-hatch.md) | 2026-04-07 | **Guided build cleanup recovery hatch** | - |

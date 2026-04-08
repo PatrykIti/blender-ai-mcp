@@ -42,6 +42,13 @@ def test_readme_documents_llm_guided_public_aliases():
         "use the same inspect/measure/assert handoff",
         "Guided Handoff Contract",
         "guided_handoff",
+        "Server-Driven Guided Flow State",
+        "guided_flow_state",
+        "domain_profile",
+        "current_step",
+        "required_checks",
+        "required prompt bundle",
+        "preferred prompt bundle",
         "Contact Truth Semantics",
         "mesh-surface contact/gap semantics",
         "bbox fallback semantics",
@@ -95,6 +102,10 @@ def test_mcp_docs_describe_aliases_and_hidden_arguments():
         "Canonical operator guidance for this surface now lives in `_docs/_PROMPTS/`",
         "generic search-first stabilizer",
         "bounded recovery hatch",
+        "Server-Driven Guided Flow State",
+        "required_prompts",
+        "preferred_prompts",
+        "hidden/blocked-by-flow",
         "scene_hide_object",
         "scene_show_all_objects",
         "scene_isolate_object",
@@ -269,6 +280,10 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "guided_session_start" in prompt_readme
     assert "canonical prompt library" in prompt_readme
     assert "generic search-first stabilizer" in prompt_readme
+    assert "server-driven guided flow" in prompt_readme
+    assert "guided_flow_state" in prompt_readme
+    assert "required prompt bundle" in prompt_readme
+    assert "preferred prompt bundle" in prompt_readme
     assert "If a tool is not already directly visible" in prompt_readme
     assert '`continuation_mode="guided_manual_build"`' in prompt_readme
     assert "`guided_handoff`" in prompt_readme
@@ -310,6 +325,7 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "For B) utility/capture/scene-prep:" in workflow_prompt
     assert '`continuation_mode == "guided_manual_build"`' in workflow_prompt
     assert "`guided_handoff.direct_tools`" in workflow_prompt
+    assert "`guided_flow_state`" in workflow_prompt
     assert "`workflow_import_recommended=false`" in workflow_prompt
     assert "Do not guess hidden internal tool names and feed them into `call_tool(...)`." in workflow_prompt
     assert "If a needed tool is not already directly visible, run `search_tools(...)`" in workflow_prompt
@@ -363,6 +379,8 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
 
     assert "`reference_iterate_stage_checkpoint(...)`" in creature_prompt
     assert "generic search-first operating baseline" in creature_prompt
+    assert "`guided_flow_state`" in creature_prompt
+    assert "required prompt bundle" in creature_prompt
     assert "if a tool is not already directly visible, use `search_tools(...)` before" in creature_prompt
     assert "allowed build-phase recovery hatch" in creature_prompt
     assert "`guided_reference_readiness`" in creature_prompt

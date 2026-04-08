@@ -182,6 +182,19 @@ Interpretation:
 - if hybrid loop responses expose `refinement_route` / `refinement_handoff`,
   treat those as the bounded family-selection hints for whether to stay on
   macro/modeling/mesh or move into a narrow sculpt-region path
+- `guided_flow_state` is the server-driven guided flow contract for the active
+  session; prompts support it, but do not replace it
+- before broad build actions, inspect:
+  - `guided_flow_state.domain_profile`
+  - `guided_flow_state.current_step`
+  - `guided_flow_state.required_checks`
+  - `guided_flow_state.next_actions`
+- use the `required prompt bundle` and `preferred prompt bundle` named in
+  `guided_flow_state` as prompt asset selection guidance
+- current server-driven guided flow domain overlays are:
+  - `generic`
+  - `creature`
+  - `building`
 
 ## `llm-guided` Flow Summary
 
@@ -212,3 +225,21 @@ guided surface:
    - if `compare_ready` / `iterate_ready` is `true`, proceed
    - otherwise follow `next_action` and do not use `goal_override` as a staged
      session substitute
+
+## Guided Flow State And Prompt Bundles
+
+On `llm-guided`, prompt templates are no longer the only place where guided
+sequencing lives. The server now owns a machine-readable `guided_flow_state`
+contract.
+
+- if a needed build tool is missing, call `router_get_status()` and inspect
+  `guided_flow_state` before guessing names into `call_tool(...)`
+- if `guided_flow_state.step_status == "blocked"`, complete
+  `guided_flow_state.required_checks` first and follow
+  `guided_flow_state.next_actions`
+- the server may keep build visibility step-gated during
+  `establish_spatial_context`, so prompt text must not override that gating
+- `required_prompts` = required prompt bundle names for the current
+  flow/domain/step
+- `preferred_prompts` = strong recommendations for the current flow/domain/step
+- prompt bundles support the server-driven guided flow instead of replacing it

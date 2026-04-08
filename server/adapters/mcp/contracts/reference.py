@@ -20,6 +20,7 @@ from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
 from server.adapters.mcp.sampling.result_types import VisionAssistantContract
 
 from .base import MCPContract
+from .guided_flow import GuidedFlowStateContract
 
 
 class ReferenceImageRecordContract(MCPContract):
@@ -291,6 +292,7 @@ class ReferenceCompareStageCheckpointResponseContract(MCPContract):
     session_id: str | None = None
     transport: str | None = None
     goal: str | None = None
+    guided_flow_state: GuidedFlowStateContract | None = None
     guided_reference_readiness: GuidedReferenceReadinessContract | None = None
     target_object: str | None = None
     target_objects: list[str] = []
@@ -328,6 +330,7 @@ class ReferenceIterateStageCheckpointResponseContract(MCPContract):
     session_id: str | None = None
     transport: str | None = None
     goal: str | None = None
+    guided_flow_state: GuidedFlowStateContract | None = None
     guided_reference_readiness: GuidedReferenceReadinessContract | None = None
     target_object: str | None = None
     target_objects: list[str] = []

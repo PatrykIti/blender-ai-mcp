@@ -294,6 +294,40 @@ The guided surface now treats workflow fallback as an explicit typed contract in
 - `workflow_import_recommended` stays `False` on these fallback paths unless the user explicitly asks for workflow import/create behavior.
 - `router_get_status(...)` preserves the active `guided_handoff` in session diagnostics so clients can recover the intended continuation path.
 
+## Server-Driven Guided Flow State
+
+The guided surface now carries one explicit machine-readable `guided_flow_state`
+contract in addition to `guided_handoff`.
+
+- `router_set_goal(...)`, `router_get_status(...)`,
+  `reference_compare_stage_checkpoint(...)`, and
+  `reference_iterate_stage_checkpoint(...)` can expose `guided_flow_state`
+  for the active `llm-guided` session
+- `guided_flow_state` reports:
+  - `flow_id`
+  - `domain_profile`
+  - `current_step`
+  - `completed_steps`
+  - `required_checks`
+  - `next_actions`
+  - `blocked_families`
+  - `required_prompts`
+  - `preferred_prompts`
+  - `step_status`
+- current domain overlays are:
+  - `generic`
+  - `creature`
+  - `building`
+- early guided build sessions now start from a step-gated spatial-context
+  phase instead of exposing the whole build surface immediately
+- if a needed tool family is hidden/blocked-by-flow, inspect
+  `router_get_status().guided_flow_state`, complete the listed
+  `required_checks`, and follow `next_actions` instead of guessing hidden tool
+  names into `call_tool(...)`
+- the `required prompt bundle` and `preferred prompt bundle` named in
+  `guided_flow_state` are prompt asset names, not a replacement for the
+  server-driven flow; prompts support the flow, they do not become the flow
+
 ## Guided Reference Readiness
 
 Reference-driven staged work now has one explicit readiness contract instead of

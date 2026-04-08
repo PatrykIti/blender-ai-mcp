@@ -332,9 +332,14 @@ def test_router_set_goal_no_match_with_guided_manual_continuation_moves_session_
     assert result.guided_reference_readiness is not None
     assert result.guided_reference_readiness.blocking_reason == "reference_images_required"
     assert result.guided_reference_readiness.next_action == "attach_reference_images"
+    assert result.guided_flow_state is not None
+    assert result.guided_flow_state.domain_profile == "creature"
+    assert result.guided_flow_state.current_step == "establish_spatial_context"
     assert session.phase.value == "build"
     assert session.guided_handoff is not None
     assert session.guided_handoff["kind"] == "guided_manual_build"
+    assert session.guided_flow_state is not None
+    assert session.guided_flow_state["domain_profile"] == "creature"
 
 
 def test_router_get_status_exposes_session_id_and_transport(monkeypatch):
@@ -353,7 +358,7 @@ def test_router_get_status_exposes_session_id_and_transport(monkeypatch):
     monkeypatch.setattr(
         router_area,
         "build_visibility_diagnostics",
-        lambda surface_profile, phase, guided_handoff=None: SimpleNamespace(
+        lambda surface_profile, phase, guided_handoff=None, guided_flow_state=None: SimpleNamespace(
             rules=(),
             visible_capability_ids=("router",),
             visible_entry_capability_ids=("router",),
@@ -368,3 +373,49 @@ def test_router_get_status_exposes_session_id_and_transport(monkeypatch):
 
     assert result.session_id == "sess_test"
     assert result.transport == "stdio"
+
+
+def test_router_get_status_returns_guided_flow_state(monkeypatch):
+    """router_get_status should mirror the active guided flow envelope from session state."""
+
+    monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
+    monkeypatch.setattr(router_area, "get_router_status", lambda: {"enabled": True})
+    monkeypatch.setattr(router_area, "_build_background_job_diagnostics", lambda: (0, {}, []))
+    monkeypatch.setattr(router_area, "_build_timeout_policy_diagnostics", lambda _ctx: None)
+    monkeypatch.setattr(router_area, "_build_task_runtime_diagnostics", lambda _ctx: None)
+    monkeypatch.setattr(router_area, "_build_telemetry_diagnostics", lambda: None)
+    monkeypatch.setattr(router_area, "_get_list_page_size", lambda _ctx: 50)
+    monkeypatch.setattr(router_area, "run_repair_suggestion_assistant", lambda *args, **kwargs: None)
+    monkeypatch.setattr(router_area, "to_repair_assistant_contract", lambda *args, **kwargs: None)
+    monkeypatch.setattr(router_area, "_should_attach_repair_suggestion", lambda _payload: False)
+    monkeypatch.setattr(
+        router_area,
+        "build_visibility_diagnostics",
+        lambda surface_profile, phase, guided_handoff=None, guided_flow_state=None: SimpleNamespace(
+            rules=(),
+            visible_capability_ids=("router",),
+            visible_entry_capability_ids=("router",),
+            hidden_capability_ids=(),
+            hidden_category_counts={},
+        ),
+    )
+
+    ctx = FakeContext(response=object())
+    ctx.state["guided_flow_state"] = {
+        "flow_id": "guided_building_flow",
+        "domain_profile": "building",
+        "current_step": "establish_spatial_context",
+        "completed_steps": [],
+        "required_checks": [],
+        "required_prompts": ["guided_session_start"],
+        "preferred_prompts": ["workflow_router_first"],
+        "next_actions": ["run_required_checks"],
+        "blocked_families": ["build"],
+        "step_status": "blocked",
+    }
+
+    result = asyncio.run(router_area.router_get_status(ctx))
+
+    assert result.guided_flow_state is not None
+    assert result.guided_flow_state.domain_profile == "building"
+    assert result.guided_flow_state.current_step == "establish_spatial_context"

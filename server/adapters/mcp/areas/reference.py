@@ -18,6 +18,7 @@ from uuid import uuid4
 from fastmcp import Context
 
 from server.adapters.mcp.context_utils import ctx_info, ctx_session_id, ctx_transport_type
+from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract
 from server.adapters.mcp.contracts.reference import (
     GuidedReferenceReadinessContract,
     ReferenceActionHintContract,
@@ -57,6 +58,7 @@ from server.adapters.mcp.guided_contract import canonicalize_reference_images_ar
 from server.adapters.mcp.sampling.result_types import to_vision_assistant_contract
 from server.adapters.mcp.session_capabilities import (
     GuidedReferenceReadinessState,
+    advance_guided_flow_from_iteration_async,
     build_guided_reference_readiness,
     build_guided_reference_readiness_payload,
     get_session_capability_state_async,
@@ -359,6 +361,7 @@ def _stage_compare_response(
     *,
     session_id: str | None = None,
     transport: str | None = None,
+    guided_flow_state: dict[str, Any] | None = None,
     checkpoint_id: str,
     checkpoint_label: str | None,
     goal: str | None,
@@ -392,6 +395,9 @@ def _stage_compare_response(
         session_id=session_id,
         transport=transport,
         goal=goal,
+        guided_flow_state=(
+            GuidedFlowStateContract.model_validate(guided_flow_state) if guided_flow_state is not None else None
+        ),
         guided_reference_readiness=guided_reference_readiness,
         target_object=target_object,
         target_objects=target_objects,
@@ -428,6 +434,7 @@ def _iterate_stage_response(
     session_id: str | None = None,
     transport: str | None = None,
     goal: str | None,
+    guided_flow_state: dict[str, Any] | None = None,
     target_object: str | None,
     target_objects: list[str],
     collection_name: str | None,
@@ -461,6 +468,9 @@ def _iterate_stage_response(
         session_id=session_id,
         transport=transport,
         goal=goal,
+        guided_flow_state=(
+            GuidedFlowStateContract.model_validate(guided_flow_state) if guided_flow_state is not None else None
+        ),
         guided_reference_readiness=guided_reference_readiness or compare_result.guided_reference_readiness,
         target_object=target_object,
         target_objects=target_objects,
@@ -2585,6 +2595,7 @@ async def _run_stage_checkpoint_compare(
         return _stage_compare_response(
             session_id=session_id,
             transport=transport,
+            guided_flow_state=session.guided_flow_state,
             checkpoint_id=checkpoint_id,
             checkpoint_label=checkpoint_label,
             goal=goal,
@@ -2616,6 +2627,7 @@ async def _run_stage_checkpoint_compare(
         return _stage_compare_response(
             session_id=session_id,
             transport=transport,
+            guided_flow_state=session.guided_flow_state,
             checkpoint_id=checkpoint_id,
             checkpoint_label=checkpoint_label,
             goal=goal,
@@ -2647,6 +2659,7 @@ async def _run_stage_checkpoint_compare(
         return _stage_compare_response(
             session_id=session_id,
             transport=transport,
+            guided_flow_state=session.guided_flow_state,
             checkpoint_id=checkpoint_id,
             checkpoint_label=checkpoint_label,
             goal=goal,
@@ -2676,6 +2689,7 @@ async def _run_stage_checkpoint_compare(
         return _stage_compare_response(
             session_id=session_id,
             transport=transport,
+            guided_flow_state=session.guided_flow_state,
             checkpoint_id=checkpoint_id,
             checkpoint_label=checkpoint_label,
             goal=goal,
@@ -2852,6 +2866,7 @@ async def _run_stage_checkpoint_compare(
     return _stage_compare_response(
         session_id=session_id,
         transport=transport,
+        guided_flow_state=session.guided_flow_state,
         checkpoint_id=checkpoint_id,
         checkpoint_label=checkpoint_label,
         goal=goal,
@@ -3304,10 +3319,19 @@ async def reference_iterate_stage_checkpoint(
 
     if compare_result.error or goal is None:
         truth_only_handoff = bool(goal is not None and correction_focus and inspect_from_truth_signal)
+        advanced_state = (
+            await advance_guided_flow_from_iteration_async(
+                ctx,
+                loop_disposition="inspect_validate" if truth_only_handoff else "stop",
+            )
+            if goal is not None
+            else await get_session_capability_state_async(ctx)
+        )
         return _iterate_stage_response(
             session_id=compare_result.session_id,
             transport=compare_result.transport,
             goal=goal,
+            guided_flow_state=advanced_state.guided_flow_state,
             target_object=target_object,
             target_objects=list(target_objects or []),
             collection_name=collection_name,
@@ -3400,10 +3424,16 @@ async def reference_iterate_stage_checkpoint(
     else:
         message = "No further correction loop action is recommended for this checkpoint."
 
+    advanced_state = await advance_guided_flow_from_iteration_async(
+        ctx,
+        loop_disposition=loop_disposition,
+    )
+
     return _iterate_stage_response(
         session_id=compare_result.session_id,
         transport=compare_result.transport,
         goal=goal,
+        guided_flow_state=advanced_state.guided_flow_state,
         target_object=target_object,
         target_objects=list(compare_result.target_objects or []),
         collection_name=collection_name,

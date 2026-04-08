@@ -5,11 +5,17 @@
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import asdict, dataclass
 from typing import TYPE_CHECKING, Any, Literal
 
 from fastmcp import Context
 
+from server.adapters.mcp.contracts.guided_flow import (
+    GuidedFlowCheckContract,
+    GuidedFlowStateContract,
+    GuidedFlowStepLiteral,
+)
 from server.adapters.mcp.session_phase import SessionPhase, coerce_session_phase
 from server.adapters.mcp.session_state import (
     get_session_value,
@@ -37,8 +43,60 @@ SESSION_LAST_ROUTER_DISPOSITION_KEY = "last_router_disposition"
 SESSION_LAST_ROUTER_ERROR_KEY = "last_router_error"
 SESSION_REFERENCE_IMAGES_KEY = "reference_images"
 SESSION_GUIDED_HANDOFF_KEY = "guided_handoff"
+SESSION_GUIDED_FLOW_STATE_KEY = "guided_flow_state"
 SESSION_PENDING_REFERENCE_IMAGES_KEY = "pending_reference_images"
 _GENERIC_PENDING_GOAL = "__pending_goal__"
+
+_CREATURE_GOAL_HINTS: tuple[str, ...] = (
+    "animal",
+    "bird",
+    "creature",
+    "ears",
+    "fox",
+    "owl",
+    "paw",
+    "rabbit",
+    "snout",
+    "squirrel",
+    "tail",
+)
+_BUILDING_GOAL_HINTS: tuple[str, ...] = (
+    "architecture",
+    "archway",
+    "balcony",
+    "building",
+    "castle",
+    "facade",
+    "house",
+    "roof",
+    "temple",
+    "tower",
+    "wall",
+    "window",
+)
+_SPATIAL_CONTEXT_CHECKS: tuple[tuple[str, str, str], ...] = (
+    (
+        "scope_graph",
+        "scene_scope_graph",
+        "Establish the structural anchor and active object scope before broad edits.",
+    ),
+    (
+        "relation_graph",
+        "scene_relation_graph",
+        "Establish the current pair relations before attachment/support decisions.",
+    ),
+    (
+        "view_diagnostics",
+        "scene_view_diagnostics",
+        "Confirm framing, coverage, and occlusion before trusting the current working view.",
+    ),
+)
+_SPATIAL_CONTEXT_TOOL_NAMES = {tool_name for _check_id, tool_name, _reason in _SPATIAL_CONTEXT_CHECKS}
+_GUIDED_FLOW_ITERATION_TOOLS = {
+    "reference_compare_stage_checkpoint",
+    "reference_iterate_stage_checkpoint",
+}
+_GUIDED_FLOW_STOPPED_STEPS = {"inspect_validate", "finish_or_stop"}
 
 
 @dataclass(frozen=True)
@@ -61,6 +119,7 @@ class SessionCapabilityState:
     last_router_error: str | None = None
     reference_images: list[dict[str, Any]] | None = None
     guided_handoff: dict[str, Any] | None = None
+    guided_flow_state: dict[str, Any] | None = None
     pending_reference_images: list[dict[str, Any]] | None = None
 
 
@@ -115,6 +174,146 @@ def infer_phase_from_router_status(
     return mapping.get(status or "", current_phase or SessionPhase.BOOTSTRAP)
 
 
+def _goal_contains_hint(goal: str | None, hint: str) -> bool:
+    words = str(goal or "").strip().lower()
+    if not words:
+        return False
+    import re
+
+    normalized_hint = re.escape(hint)
+    return re.search(rf"(?<![a-z0-9]){normalized_hint}(?![a-z0-9])", words) is not None
+
+
+def _normalize_guided_flow_state(value: Any) -> dict[str, Any] | None:
+    if value is None:
+        return None
+    try:
+        return GuidedFlowStateContract.model_validate(value).model_dump(mode="json", exclude_none=True)
+    except Exception:
+        return None
+
+
+def _select_guided_flow_domain_profile(
+    *,
+    goal: str,
+    guided_handoff: dict[str, Any] | None,
+) -> Literal["generic", "creature", "building"]:
+    recipe_id = str((guided_handoff or {}).get("recipe_id") or "").strip().lower()
+    normalized_goal = str(goal or "").strip().lower()
+
+    if recipe_id == "low_poly_creature_blockout" or any(
+        _goal_contains_hint(normalized_goal, hint) for hint in _CREATURE_GOAL_HINTS
+    ):
+        return "creature"
+    if any(_goal_contains_hint(normalized_goal, hint) for hint in _BUILDING_GOAL_HINTS):
+        return "building"
+    return "generic"
+
+
+def _build_required_prompt_bundle(
+    *,
+    domain_profile: Literal["generic", "creature", "building"],
+    current_step: str,
+) -> tuple[list[str], list[str]]:
+    required_prompts = ["guided_session_start"]
+    preferred_prompts = ["workflow_router_first"]
+
+    if domain_profile == "creature":
+        required_prompts.append("reference_guided_creature_build")
+    elif current_step == "understand_goal":
+        preferred_prompts.append("recommended_prompts")
+
+    return required_prompts, preferred_prompts
+
+
+def _build_required_checks(
+    *,
+    domain_profile: Literal["generic", "creature", "building"],
+    current_step: str,
+) -> list[dict[str, Any]]:
+    if current_step != "establish_spatial_context":
+        return []
+
+    allowed_check_ids = {"scope_graph", "view_diagnostics"} if domain_profile == "building" else None
+
+    return [
+        GuidedFlowCheckContract(
+            check_id=check_id,
+            tool_name=tool_name,
+            reason=reason,
+            status="pending",
+            priority="high",
+        ).model_dump(mode="json")
+        for check_id, tool_name, reason in _SPATIAL_CONTEXT_CHECKS
+        if allowed_check_ids is None or check_id in allowed_check_ids
+    ]
+
+
+def _build_initial_guided_flow_state(
+    *,
+    goal: str,
+    router_result: dict[str, Any],
+    previous_flow_state: dict[str, Any] | None = None,
+    preserve_existing: bool = False,
+) -> dict[str, Any] | None:
+    status = str(router_result.get("status") or "")
+    if status == "disabled":
+        return None
+
+    guided_handoff = router_result.get("guided_handoff")
+    domain_profile = _select_guided_flow_domain_profile(goal=goal, guided_handoff=guided_handoff)
+
+    if preserve_existing and previous_flow_state is not None:
+        previous_contract = GuidedFlowStateContract.model_validate(previous_flow_state)
+        if (
+            previous_contract.domain_profile == domain_profile
+            and previous_contract.current_step not in _GUIDED_FLOW_STOPPED_STEPS
+            and status != "needs_input"
+            and previous_contract.current_step != "understand_goal"
+        ):
+            return previous_contract.model_dump(mode="json")
+
+    if status == "needs_input":
+        current_step = "understand_goal"
+        next_actions = ["answer_router_questions"]
+        blocked_families = ["build", "late_refinement", "finish"]
+        step_status = "blocked"
+        required_checks: list[dict[str, Any]] = []
+    else:
+        current_step = "establish_spatial_context"
+        next_actions = ["run_required_checks"]
+        blocked_families = ["build", "late_refinement", "finish"]
+        required_checks = _build_required_checks(domain_profile=domain_profile, current_step=current_step)
+        step_status = "blocked" if required_checks else "ready"
+
+    completed_steps: list[GuidedFlowStepLiteral] = []
+    if (
+        previous_flow_state is not None
+        and status != "needs_input"
+        and previous_flow_state.get("current_step") == "understand_goal"
+    ):
+        completed_steps.append("understand_goal")
+
+    required_prompts, preferred_prompts = _build_required_prompt_bundle(
+        domain_profile=domain_profile,
+        current_step=current_step,
+    )
+    flow_id = f"guided_{domain_profile}_flow"
+
+    return GuidedFlowStateContract(
+        flow_id=flow_id,
+        domain_profile=domain_profile,
+        current_step=current_step,  # type: ignore[arg-type]
+        completed_steps=completed_steps,
+        required_checks=[GuidedFlowCheckContract.model_validate(item) for item in required_checks],
+        required_prompts=required_prompts,
+        preferred_prompts=preferred_prompts,
+        next_actions=next_actions,
+        blocked_families=blocked_families,
+        step_status=step_status,  # type: ignore[arg-type]
+    ).model_dump(mode="json")
+
+
 def get_session_capability_state(ctx: Context) -> SessionCapabilityState:
     """Read the canonical session capability state from Context storage."""
 
@@ -135,6 +334,7 @@ def get_session_capability_state(ctx: Context) -> SessionCapabilityState:
         last_router_error=get_session_value(ctx, SESSION_LAST_ROUTER_ERROR_KEY),
         reference_images=get_session_value(ctx, SESSION_REFERENCE_IMAGES_KEY),
         guided_handoff=get_session_value(ctx, SESSION_GUIDED_HANDOFF_KEY),
+        guided_flow_state=_normalize_guided_flow_state(get_session_value(ctx, SESSION_GUIDED_FLOW_STATE_KEY)),
         pending_reference_images=get_session_value(ctx, SESSION_PENDING_REFERENCE_IMAGES_KEY),
     )
 
@@ -159,6 +359,9 @@ async def get_session_capability_state_async(ctx: Context) -> SessionCapabilityS
         last_router_error=await get_session_value_async(ctx, SESSION_LAST_ROUTER_ERROR_KEY),
         reference_images=await get_session_value_async(ctx, SESSION_REFERENCE_IMAGES_KEY),
         guided_handoff=await get_session_value_async(ctx, SESSION_GUIDED_HANDOFF_KEY),
+        guided_flow_state=_normalize_guided_flow_state(
+            await get_session_value_async(ctx, SESSION_GUIDED_FLOW_STATE_KEY)
+        ),
         pending_reference_images=await get_session_value_async(ctx, SESSION_PENDING_REFERENCE_IMAGES_KEY),
     )
 
@@ -182,6 +385,7 @@ def set_session_capability_state(ctx: Context, state: SessionCapabilityState) ->
     set_session_value(ctx, SESSION_LAST_ROUTER_ERROR_KEY, state.last_router_error)
     set_session_value(ctx, SESSION_REFERENCE_IMAGES_KEY, state.reference_images)
     set_session_value(ctx, SESSION_GUIDED_HANDOFF_KEY, state.guided_handoff)
+    set_session_value(ctx, SESSION_GUIDED_FLOW_STATE_KEY, state.guided_flow_state)
     set_session_value(ctx, SESSION_PENDING_REFERENCE_IMAGES_KEY, state.pending_reference_images)
 
 
@@ -204,6 +408,7 @@ async def set_session_capability_state_async(ctx: Context, state: SessionCapabil
     await set_session_value_async(ctx, SESSION_LAST_ROUTER_ERROR_KEY, state.last_router_error)
     await set_session_value_async(ctx, SESSION_REFERENCE_IMAGES_KEY, state.reference_images)
     await set_session_value_async(ctx, SESSION_GUIDED_HANDOFF_KEY, state.guided_handoff)
+    await set_session_value_async(ctx, SESSION_GUIDED_FLOW_STATE_KEY, state.guided_flow_state)
     await set_session_value_async(ctx, SESSION_PENDING_REFERENCE_IMAGES_KEY, state.pending_reference_images)
 
 
@@ -344,6 +549,17 @@ def update_session_from_router_goal(
     current_partial_answers = dict(current.partial_answers or {})
     current_partial_answers.update(provided_answers or {})
     same_goal = current.goal == goal
+    previous_flow_state = _normalize_guided_flow_state(current.guided_flow_state)
+    guided_flow_state = (
+        _build_initial_guided_flow_state(
+            goal=goal,
+            router_result=router_result,
+            previous_flow_state=previous_flow_state,
+            preserve_existing=same_goal,
+        )
+        if (surface_profile or current.surface_profile or "legacy-flat") == "llm-guided"
+        else None
+    )
 
     if status == "needs_input":
         pending_elicitation_id = (
@@ -391,6 +607,7 @@ def update_session_from_router_goal(
         last_router_error=current.last_router_error,
         reference_images=reference_images,
         guided_handoff=router_result.get("guided_handoff"),
+        guided_flow_state=guided_flow_state,
         pending_reference_images=pending_reference_images,
     )
     set_session_capability_state(ctx, state)
@@ -417,6 +634,17 @@ async def update_session_from_router_goal_async(
     current_partial_answers = dict(current.partial_answers or {})
     current_partial_answers.update(provided_answers or {})
     same_goal = current.goal == goal
+    previous_flow_state = _normalize_guided_flow_state(current.guided_flow_state)
+    guided_flow_state = (
+        _build_initial_guided_flow_state(
+            goal=goal,
+            router_result=router_result,
+            previous_flow_state=previous_flow_state,
+            preserve_existing=same_goal,
+        )
+        if (surface_profile or current.surface_profile or "legacy-flat") == "llm-guided"
+        else None
+    )
 
     if status == "needs_input":
         pending_elicitation_id = (
@@ -464,6 +692,7 @@ async def update_session_from_router_goal_async(
         last_router_error=current.last_router_error,
         reference_images=reference_images,
         guided_handoff=router_result.get("guided_handoff"),
+        guided_flow_state=guided_flow_state,
         pending_reference_images=pending_reference_images,
     )
     await set_session_capability_state_async(ctx, state)
@@ -496,6 +725,7 @@ def clear_session_goal_state(
         last_router_error=current.last_router_error,
         reference_images=None,
         guided_handoff=None,
+        guided_flow_state=None,
         pending_reference_images=None,
     )
     set_session_capability_state(ctx, state)
@@ -528,6 +758,7 @@ async def clear_session_goal_state_async(
         last_router_error=current.last_router_error,
         reference_images=None,
         guided_handoff=None,
+        guided_flow_state=None,
         pending_reference_images=None,
     )
     await set_session_capability_state_async(ctx, state)
@@ -572,7 +803,26 @@ async def apply_visibility_for_session_state(
         surface_profile=surface_profile,
         phase=state.phase,
         guided_handoff=state.guided_handoff,
+        guided_flow_state=state.guided_flow_state,
     )
+
+
+def refresh_visibility_for_session_state(
+    ctx: Context,
+    state: SessionCapabilityState,
+) -> None:
+    """Best-effort sync wrapper for applying session visibility after sync tool calls."""
+
+    if state.guided_flow_state is None:
+        return
+
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        asyncio.run(apply_visibility_for_session_state(ctx, state))
+        return
+
+    asyncio.create_task(apply_visibility_for_session_state(ctx, state))
 
 
 def replace_session_reference_images(
@@ -673,6 +923,7 @@ def record_router_execution_outcome(
         last_router_error=error,
         reference_images=current.reference_images,
         guided_handoff=current.guided_handoff,
+        guided_flow_state=current.guided_flow_state,
         pending_reference_images=current.pending_reference_images,
     )
 
@@ -701,6 +952,7 @@ def replace_session_pending_reference_images(
         last_router_error=current.last_router_error,
         reference_images=current.reference_images,
         guided_handoff=current.guided_handoff,
+        guided_flow_state=current.guided_flow_state,
         pending_reference_images=pending_reference_images or None,
     )
     set_session_capability_state(ctx, state)
@@ -731,7 +983,206 @@ async def replace_session_pending_reference_images_async(
         last_router_error=current.last_router_error,
         reference_images=current.reference_images,
         guided_handoff=current.guided_handoff,
+        guided_flow_state=current.guided_flow_state,
         pending_reference_images=pending_reference_images or None,
+    )
+    await set_session_capability_state_async(ctx, state)
+    return state
+
+
+def _mark_guided_flow_check_completed_dict(
+    flow_state: dict[str, Any],
+    *,
+    tool_name: str,
+) -> dict[str, Any]:
+    contract = GuidedFlowStateContract.model_validate(flow_state)
+    changed = False
+
+    for check in contract.required_checks:
+        if check.tool_name == tool_name and check.status != "completed":
+            check.status = "completed"
+            changed = True
+
+    if (
+        changed
+        and contract.current_step == "establish_spatial_context"
+        and contract.required_checks
+        and all(check.status == "completed" for check in contract.required_checks)
+    ):
+        if "establish_spatial_context" not in contract.completed_steps:
+            contract.completed_steps.append("establish_spatial_context")
+        contract.current_step = "create_primary_masses"
+        contract.required_checks = []
+        contract.next_actions = ["begin_primary_masses"]
+        contract.blocked_families = []
+        contract.step_status = "ready"
+        required_prompts, preferred_prompts = _build_required_prompt_bundle(
+            domain_profile=contract.domain_profile,
+            current_step=contract.current_step,
+        )
+        contract.required_prompts = required_prompts
+        contract.preferred_prompts = preferred_prompts
+
+    return contract.model_dump(mode="json")
+
+
+def record_guided_flow_spatial_check_completion(
+    ctx: Context,
+    *,
+    tool_name: str,
+) -> SessionCapabilityState:
+    """Mark one spatial-context check as completed and advance the flow when ready."""
+
+    if tool_name not in _SPATIAL_CONTEXT_TOOL_NAMES:
+        return get_session_capability_state(ctx)
+
+    current = get_session_capability_state(ctx)
+    if current.guided_flow_state is None:
+        return current
+
+    updated_flow_state = _mark_guided_flow_check_completed_dict(current.guided_flow_state, tool_name=tool_name)
+    state = SessionCapabilityState(
+        phase=current.phase,
+        goal=current.goal,
+        pending_clarification=current.pending_clarification,
+        last_router_status=current.last_router_status,
+        policy_context=current.policy_context,
+        surface_profile=current.surface_profile,
+        contract_version=current.contract_version,
+        pending_elicitation_id=current.pending_elicitation_id,
+        pending_workflow_name=current.pending_workflow_name,
+        partial_answers=current.partial_answers,
+        pending_question_set_id=current.pending_question_set_id,
+        last_elicitation_action=current.last_elicitation_action,
+        last_router_disposition=current.last_router_disposition,
+        last_router_error=current.last_router_error,
+        reference_images=current.reference_images,
+        guided_handoff=current.guided_handoff,
+        guided_flow_state=updated_flow_state,
+        pending_reference_images=current.pending_reference_images,
+    )
+    set_session_capability_state(ctx, state)
+    return state
+
+
+async def record_guided_flow_spatial_check_completion_async(
+    ctx: Context,
+    *,
+    tool_name: str,
+) -> SessionCapabilityState:
+    """Async variant of spatial-check completion recording."""
+
+    if tool_name not in _SPATIAL_CONTEXT_TOOL_NAMES:
+        return await get_session_capability_state_async(ctx)
+
+    current = await get_session_capability_state_async(ctx)
+    if current.guided_flow_state is None:
+        return current
+
+    updated_flow_state = _mark_guided_flow_check_completed_dict(current.guided_flow_state, tool_name=tool_name)
+    state = SessionCapabilityState(
+        phase=current.phase,
+        goal=current.goal,
+        pending_clarification=current.pending_clarification,
+        last_router_status=current.last_router_status,
+        policy_context=current.policy_context,
+        surface_profile=current.surface_profile,
+        contract_version=current.contract_version,
+        pending_elicitation_id=current.pending_elicitation_id,
+        pending_workflow_name=current.pending_workflow_name,
+        partial_answers=current.partial_answers,
+        pending_question_set_id=current.pending_question_set_id,
+        last_elicitation_action=current.last_elicitation_action,
+        last_router_disposition=current.last_router_disposition,
+        last_router_error=current.last_router_error,
+        reference_images=current.reference_images,
+        guided_handoff=current.guided_handoff,
+        guided_flow_state=updated_flow_state,
+        pending_reference_images=current.pending_reference_images,
+    )
+    await set_session_capability_state_async(ctx, state)
+    return state
+
+
+def _advance_guided_flow_for_iteration_dict(
+    flow_state: dict[str, Any],
+    *,
+    loop_disposition: str,
+) -> dict[str, Any]:
+    contract = GuidedFlowStateContract.model_validate(flow_state)
+    current_step = contract.current_step
+    if current_step not in contract.completed_steps and current_step not in _GUIDED_FLOW_STOPPED_STEPS:
+        contract.completed_steps.append(current_step)
+
+    if loop_disposition == "inspect_validate":
+        contract.current_step = "inspect_validate"
+        contract.next_actions = ["switch_to_inspect_validate"]
+        contract.blocked_families = ["late_refinement", "finish"]
+        contract.step_status = "needs_validation"
+    elif loop_disposition == "stop":
+        contract.current_step = "finish_or_stop"
+        contract.next_actions = ["stop_or_finalize"]
+        contract.blocked_families = []
+        contract.step_status = "ready"
+    else:
+        if current_step == "create_primary_masses":
+            contract.current_step = "place_secondary_parts"
+        else:
+            contract.current_step = "checkpoint_iterate"
+        contract.next_actions = ["continue_build"]
+        contract.blocked_families = []
+        contract.step_status = "ready"
+
+    required_prompts, preferred_prompts = _build_required_prompt_bundle(
+        domain_profile=contract.domain_profile,
+        current_step=contract.current_step,
+    )
+    contract.required_prompts = required_prompts
+    contract.preferred_prompts = preferred_prompts
+    contract.required_checks = [
+        GuidedFlowCheckContract.model_validate(item)
+        for item in _build_required_checks(
+            domain_profile=contract.domain_profile,
+            current_step=contract.current_step,
+        )
+    ]
+    return contract.model_dump(mode="json")
+
+
+async def advance_guided_flow_from_iteration_async(
+    ctx: Context,
+    *,
+    loop_disposition: str,
+) -> SessionCapabilityState:
+    """Advance the guided flow state from a compare/iterate loop result."""
+
+    current = await get_session_capability_state_async(ctx)
+    if current.guided_flow_state is None:
+        return current
+
+    updated_flow_state = _advance_guided_flow_for_iteration_dict(
+        current.guided_flow_state,
+        loop_disposition=loop_disposition,
+    )
+    state = SessionCapabilityState(
+        phase=current.phase,
+        goal=current.goal,
+        pending_clarification=current.pending_clarification,
+        last_router_status=current.last_router_status,
+        policy_context=current.policy_context,
+        surface_profile=current.surface_profile,
+        contract_version=current.contract_version,
+        pending_elicitation_id=current.pending_elicitation_id,
+        pending_workflow_name=current.pending_workflow_name,
+        partial_answers=current.partial_answers,
+        pending_question_set_id=current.pending_question_set_id,
+        last_elicitation_action=current.last_elicitation_action,
+        last_router_disposition=current.last_router_disposition,
+        last_router_error=current.last_router_error,
+        reference_images=current.reference_images,
+        guided_handoff=current.guided_handoff,
+        guided_flow_state=updated_flow_state,
+        pending_reference_images=current.pending_reference_images,
     )
     await set_session_capability_state_async(ctx, state)
     return state

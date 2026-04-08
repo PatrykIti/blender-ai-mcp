@@ -459,6 +459,63 @@ On `llm-guided`, `router_set_goal()` now exposes explicit typed continuation met
 - `workflow_import_recommended` remains `false` on these paths unless the user explicitly asks for workflow import/create behavior
 - `router_get_status()` re-exposes the active `guided_handoff` from session state for recovery/debugging
 
+## Server-Driven Guided Flow State
+
+On `llm-guided`, guided sequencing is no longer represented only by prose
+prompting and phase-level visibility. The server now owns one explicit
+`guided_flow_state` envelope.
+
+Current machine-readable `guided_flow_state` fields:
+
+| Field | Meaning |
+|---|---|
+| `flow_id` | Stable flow identifier for the current guided runtime contract |
+| `domain_profile` | Current guided overlay: `generic`, `creature`, or `building` |
+| `current_step` | Active guided step such as `understand_goal`, `establish_spatial_context`, `create_primary_masses`, `checkpoint_iterate`, or `inspect_validate` |
+| `completed_steps` | Steps already completed in the current guided run |
+| `required_checks` | Structured checks that must complete before the next family unlocks |
+| `next_actions` | Next machine-readable move(s) the client/model should take |
+| `blocked_families` | Bounded tool-family restrictions still active for the current step |
+| `required_prompts` | Required prompt bundle names for the current flow/domain/step |
+| `preferred_prompts` | Strongly preferred prompt bundle names for the current flow/domain/step |
+| `step_status` | Coarse status such as `ready`, `blocked`, or `needs_validation` |
+
+Current guided-flow behavior:
+
+- `router_set_goal()`, `router_get_status()`,
+  `reference_compare_stage_checkpoint()`, and
+  `reference_iterate_stage_checkpoint()` can expose `guided_flow_state`
+- domain overlays are deterministic and currently include:
+  - `generic`
+  - `creature`
+  - `building`
+- step-gated visibility now consults `guided_flow_state.current_step`, not
+  only coarse `SessionPhase`
+- during `establish_spatial_context`, the visible guided build surface stays
+  bounded to spatial-context / inspection / reference-support tools until the
+  required checks complete
+- `required_prompts` and `preferred_prompts` are stable prompt asset names;
+  they support the server-driven flow instead of replacing it with prompt-only
+  policy
+
+## Guided Flow Troubleshooting
+
+If a needed tool is not visible or a build tool seems to have disappeared on
+`llm-guided`, diagnose the session in this order:
+
+1. Call `router_get_status()` and inspect `guided_flow_state`.
+2. If `guided_flow_state` is `null`, the session is not on an active guided
+   flow yet. Set or re-set the goal first.
+3. Check `domain_profile`:
+   - `generic` = fallback build/object flow
+   - `creature` = creature/manual blockout overlay
+   - `building` = building/facade/structural overlay
+4. Check `current_step`, `required_checks`, and `next_actions`.
+5. If `step_status == "blocked"`, complete the required step instead of
+   guessing hidden tool names.
+6. If a family is hidden/blocked-by-flow, do not treat `call_tool(...)` as a
+   bypass. Follow the flow gate, then re-check visibility/search.
+
 ## Guided Reference Readiness Contract
 
 On `llm-guided`, staged reference work now has one explicit readiness payload
@@ -1156,8 +1213,8 @@ Tools for managing the Router Supervisor and executing matched workflows.
 
 | Tool Name | Arguments | Description |
 |-----------|-----------|-------------|
-| `router_set_goal` | `goal` (str), `resolved_params` (dict, optional) | Sets the active build goal for the router session. Returns status (ready/needs_input/no_match/disabled/error), matched workflow info, resolved params with sources, any unresolved inputs for follow-up calls, explicit `guided_handoff` metadata when the intended path is guided manual build/utility continuation instead of workflow execution, and `guided_reference_readiness` for staged reference work. |
-| `router_get_status` | *none* | Returns current router session state, visibility diagnostics, pending clarification info, active `guided_handoff` when present, `guided_reference_readiness`, and router/component stats. |
+| `router_set_goal` | `goal` (str), `resolved_params` (dict, optional) | Sets the active build goal for the router session. Returns status (ready/needs_input/no_match/disabled/error), matched workflow info, resolved params with sources, any unresolved inputs for follow-up calls, explicit `guided_handoff` metadata when the intended path is guided manual build/utility continuation instead of workflow execution, machine-readable `guided_flow_state` for the current guided step/domain/required checks, and `guided_reference_readiness` for staged reference work. |
+| `router_get_status` | *none* | Returns current router session state, visibility diagnostics, pending clarification info, active `guided_handoff` when present, `guided_flow_state`, `guided_reference_readiness`, and router/component stats. |
 | `router_clear_goal` | *none* | Clears the current modeling goal. |
 
 ## 🛠 Key Components

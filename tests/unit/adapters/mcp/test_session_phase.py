@@ -112,6 +112,14 @@ def test_update_session_from_router_goal_persists_goal_and_clarification_state()
     assert get_session_capability_state(ctx).policy_context is None
 
 
+def test_default_session_state_has_no_guided_flow_state():
+    """Fresh session state should not invent flow gating before a guided goal exists."""
+
+    ctx = FakeContext()
+
+    assert get_session_capability_state(ctx).guided_flow_state is None
+
+
 def test_update_session_from_router_goal_persists_guided_handoff():
     """Explicit guided handoff payloads should remain available in session diagnostics."""
 
@@ -172,6 +180,7 @@ def test_clear_session_goal_state_resets_goal_but_keeps_coarse_planning_phase():
     assert state.pending_clarification is None
     assert state.policy_context is None
     assert state.guided_handoff is None
+    assert state.guided_flow_state is None
 
 
 def test_update_session_from_router_goal_persists_policy_context():

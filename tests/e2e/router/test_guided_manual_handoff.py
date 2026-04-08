@@ -135,6 +135,9 @@ def test_router_area_reference_guided_creature_goal_persists_creature_recipe_han
     assert result.status == "no_match"
     assert result.guided_handoff is not None
     assert result.guided_handoff.recipe_id == "low_poly_creature_blockout"
+    assert result.guided_flow_state is not None
+    assert result.guided_flow_state.domain_profile == "creature"
+    assert result.guided_flow_state.current_step == "establish_spatial_context"
     assert "modeling_create_primitive" in result.guided_handoff.direct_tools
     assert "mesh_extrude_region" in result.guided_handoff.direct_tools
     assert "macro_finish_form" not in result.guided_handoff.direct_tools
@@ -145,6 +148,9 @@ def test_router_area_reference_guided_creature_goal_persists_creature_recipe_han
     assert status.current_phase == "build"
     assert status.guided_handoff is not None
     assert status.guided_handoff.recipe_id == "low_poly_creature_blockout"
+    assert status.guided_flow_state is not None
+    assert status.guided_flow_state.domain_profile == "creature"
+    assert status.guided_flow_state.current_step == "establish_spatial_context"
     assert any(
         rule.get("names")
         == {
