@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-150-03-03-02](./TASK-150-03-03-02_Guided_Part_Role_Registry_And_Session_Contracts.md)
 **Depends On:** [TASK-150-03-03-02-01](./TASK-150-03-03-02-01_Internal_Part_Registry_Session_Key_And_Model.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -38,6 +38,19 @@ GuidedFlowStateContract(
 
 - public `guided_flow_state` stays compact and machine-readable
 - role-group summaries are visible on goal/status payloads
+
+## Completion Summary
+
+- extended public `guided_flow_state` with:
+  - `allowed_roles`
+  - `completed_roles`
+  - `missing_roles`
+  - `required_role_groups`
+- added overlay-driven role summary planning for `generic`, `creature`, and
+  `building`
+- wired role summary calculation into guided-flow initialization and later
+  step transitions
+- updated MCP server docs with the new public field summary
 
 ## Planned Unit Test Scenarios
 

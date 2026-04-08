@@ -48,6 +48,7 @@ def test_generic_goal_uses_generic_flow_profile():
         "scene_relation_graph",
         "scene_view_diagnostics",
     ]
+    assert state.guided_flow_state["required_role_groups"] == ["spatial_context"]
 
 
 def test_creature_recipe_forces_creature_profile_even_without_goal_keywords():
@@ -80,6 +81,7 @@ def test_creature_recipe_forces_creature_profile_even_without_goal_keywords():
         "guided_session_start",
         "reference_guided_creature_build",
     ]
+    assert state.guided_flow_state["required_role_groups"] == ["spatial_context"]
 
 
 def test_building_goal_uses_building_overlay_specific_checks():
@@ -111,3 +113,4 @@ def test_building_goal_uses_building_overlay_specific_checks():
         "scene_scope_graph",
         "scene_view_diagnostics",
     ]
+    assert state.guided_flow_state["required_role_groups"] == ["spatial_context"]

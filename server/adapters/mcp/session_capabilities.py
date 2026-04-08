@@ -100,6 +100,56 @@ _GUIDED_FLOW_ITERATION_TOOLS = {
 }
 _GUIDED_FLOW_STOPPED_STEPS = {"inspect_validate", "finish_or_stop"}
 SESSION_GUIDED_PART_REGISTRY_KEY = "guided_part_registry"
+_GUIDED_ROLE_SUMMARY_PLAN: dict[str, dict[GuidedFlowStepLiteral, dict[str, list[str]]]] = {
+    "generic": {
+        "understand_goal": {"allowed_roles": [], "required_role_groups": []},
+        "establish_spatial_context": {"allowed_roles": [], "required_role_groups": ["spatial_context"]},
+        "establish_reference_context": {"allowed_roles": [], "required_role_groups": ["reference_context"]},
+        "create_primary_masses": {
+            "allowed_roles": ["anchor_core", "primary_mass"],
+            "required_role_groups": ["primary_masses"],
+        },
+        "place_secondary_parts": {
+            "allowed_roles": ["secondary_mass", "support_part"],
+            "required_role_groups": ["secondary_parts"],
+        },
+        "checkpoint_iterate": {"allowed_roles": [], "required_role_groups": ["checkpoint_iterate"]},
+        "inspect_validate": {"allowed_roles": [], "required_role_groups": ["inspect_validate"]},
+        "finish_or_stop": {"allowed_roles": ["detail_part"], "required_role_groups": ["finish"]},
+    },
+    "creature": {
+        "understand_goal": {"allowed_roles": [], "required_role_groups": []},
+        "establish_spatial_context": {"allowed_roles": [], "required_role_groups": ["spatial_context"]},
+        "establish_reference_context": {"allowed_roles": [], "required_role_groups": ["reference_context"]},
+        "create_primary_masses": {
+            "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+            "required_role_groups": ["primary_masses"],
+        },
+        "place_secondary_parts": {
+            "allowed_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+            "required_role_groups": ["secondary_parts"],
+        },
+        "checkpoint_iterate": {"allowed_roles": [], "required_role_groups": ["checkpoint_iterate"]},
+        "inspect_validate": {"allowed_roles": [], "required_role_groups": ["inspect_validate"]},
+        "finish_or_stop": {"allowed_roles": [], "required_role_groups": ["finish"]},
+    },
+    "building": {
+        "understand_goal": {"allowed_roles": [], "required_role_groups": []},
+        "establish_spatial_context": {"allowed_roles": [], "required_role_groups": ["spatial_context"]},
+        "establish_reference_context": {"allowed_roles": [], "required_role_groups": ["reference_context"]},
+        "create_primary_masses": {
+            "allowed_roles": ["footprint_mass", "main_volume", "roof_mass"],
+            "required_role_groups": ["primary_masses"],
+        },
+        "place_secondary_parts": {
+            "allowed_roles": ["facade_opening", "support_element", "detail_element"],
+            "required_role_groups": ["secondary_parts"],
+        },
+        "checkpoint_iterate": {"allowed_roles": [], "required_role_groups": ["checkpoint_iterate"]},
+        "inspect_validate": {"allowed_roles": [], "required_role_groups": ["inspect_validate"]},
+        "finish_or_stop": {"allowed_roles": [], "required_role_groups": ["finish"]},
+    },
+}
 
 
 @dataclass(frozen=True)
@@ -311,11 +361,36 @@ def _build_allowed_families(
     return [family for family in allowed if family in known]
 
 
+def _build_role_summary(
+    *,
+    domain_profile: Literal["generic", "creature", "building"],
+    current_step: GuidedFlowStepLiteral,
+    part_registry: list[dict[str, Any]] | None = None,
+) -> dict[str, list[str]]:
+    plan = _GUIDED_ROLE_SUMMARY_PLAN[domain_profile][current_step]
+    allowed_roles = list(plan["allowed_roles"])
+    completed_roles = sorted(
+        {
+            str(item.get("role"))
+            for item in part_registry or []
+            if isinstance(item, dict) and str(item.get("role") or "").strip()
+        }
+    )
+    missing_roles = [role for role in allowed_roles if role not in completed_roles]
+    return {
+        "allowed_roles": allowed_roles,
+        "completed_roles": completed_roles,
+        "missing_roles": missing_roles,
+        "required_role_groups": list(plan["required_role_groups"]),
+    }
+
+
 def _build_initial_guided_flow_state(
     *,
     goal: str,
     router_result: dict[str, Any],
     previous_flow_state: dict[str, Any] | None = None,
+    part_registry: list[dict[str, Any]] | None = None,
     preserve_existing: bool = False,
 ) -> dict[str, Any] | None:
     status = str(router_result.get("status") or "")
@@ -373,6 +448,11 @@ def _build_initial_guided_flow_state(
         next_actions=next_actions,
         blocked_families=blocked_families,
         allowed_families=_build_allowed_families(domain_profile=domain_profile, current_step=current_step),
+        **_build_role_summary(
+            domain_profile=domain_profile,
+            current_step=current_step,
+            part_registry=part_registry,
+        ),
         step_status=step_status,  # type: ignore[arg-type]
     ).model_dump(mode="json")
 
@@ -624,6 +704,7 @@ def update_session_from_router_goal(
             goal=goal,
             router_result=router_result,
             previous_flow_state=previous_flow_state,
+            part_registry=current.guided_part_registry,
             preserve_existing=same_goal,
         )
         if (surface_profile or current.surface_profile or "legacy-flat") == "llm-guided"
@@ -710,6 +791,7 @@ async def update_session_from_router_goal_async(
             goal=goal,
             router_result=router_result,
             previous_flow_state=previous_flow_state,
+            part_registry=current.guided_part_registry,
             preserve_existing=same_goal,
         )
         if (surface_profile or current.surface_profile or "legacy-flat") == "llm-guided"
@@ -1074,6 +1156,7 @@ def _mark_guided_flow_check_completed_dict(
     flow_state: dict[str, Any],
     *,
     tool_name: str,
+    part_registry: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     contract = GuidedFlowStateContract.model_validate(flow_state)
     changed = False
@@ -1106,6 +1189,15 @@ def _mark_guided_flow_check_completed_dict(
             domain_profile=contract.domain_profile,
             current_step=contract.current_step,
         )
+        role_summary = _build_role_summary(
+            domain_profile=contract.domain_profile,
+            current_step=contract.current_step,
+            part_registry=part_registry,
+        )
+        contract.allowed_roles = role_summary["allowed_roles"]
+        contract.completed_roles = role_summary["completed_roles"]
+        contract.missing_roles = role_summary["missing_roles"]
+        contract.required_role_groups = role_summary["required_role_groups"]
 
     return contract.model_dump(mode="json")
 
@@ -1124,7 +1216,11 @@ def record_guided_flow_spatial_check_completion(
     if current.guided_flow_state is None:
         return current
 
-    updated_flow_state = _mark_guided_flow_check_completed_dict(current.guided_flow_state, tool_name=tool_name)
+    updated_flow_state = _mark_guided_flow_check_completed_dict(
+        current.guided_flow_state,
+        tool_name=tool_name,
+        part_registry=current.guided_part_registry,
+    )
     state = SessionCapabilityState(
         phase=current.phase,
         goal=current.goal,
@@ -1164,7 +1260,11 @@ async def record_guided_flow_spatial_check_completion_async(
     if current.guided_flow_state is None:
         return current
 
-    updated_flow_state = _mark_guided_flow_check_completed_dict(current.guided_flow_state, tool_name=tool_name)
+    updated_flow_state = _mark_guided_flow_check_completed_dict(
+        current.guided_flow_state,
+        tool_name=tool_name,
+        part_registry=current.guided_part_registry,
+    )
     state = SessionCapabilityState(
         phase=current.phase,
         goal=current.goal,
@@ -1194,6 +1294,7 @@ def _advance_guided_flow_for_iteration_dict(
     flow_state: dict[str, Any],
     *,
     loop_disposition: str,
+    part_registry: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     contract = GuidedFlowStateContract.model_validate(flow_state)
     current_step = contract.current_step
@@ -1236,6 +1337,15 @@ def _advance_guided_flow_for_iteration_dict(
         domain_profile=contract.domain_profile,
         current_step=contract.current_step,
     )
+    role_summary = _build_role_summary(
+        domain_profile=contract.domain_profile,
+        current_step=contract.current_step,
+        part_registry=part_registry,
+    )
+    contract.allowed_roles = role_summary["allowed_roles"]
+    contract.completed_roles = role_summary["completed_roles"]
+    contract.missing_roles = role_summary["missing_roles"]
+    contract.required_role_groups = role_summary["required_role_groups"]
     return contract.model_dump(mode="json")
 
 
@@ -1253,6 +1363,7 @@ async def advance_guided_flow_from_iteration_async(
     updated_flow_state = _advance_guided_flow_for_iteration_dict(
         current.guided_flow_state,
         loop_disposition=loop_disposition,
+        part_registry=current.guided_part_registry,
     )
     state = SessionCapabilityState(
         phase=current.phase,

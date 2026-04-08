@@ -478,6 +478,10 @@ Current machine-readable `guided_flow_state` fields:
 | `blocked_families` | Bounded tool-family restrictions still active for the current step |
 | `required_prompts` | Required prompt bundle names for the current flow/domain/step |
 | `preferred_prompts` | Strongly preferred prompt bundle names for the current flow/domain/step |
+| `allowed_roles` | Role names currently expected or permitted for the active step |
+| `completed_roles` | Roles already registered/completed in the current guided session summary |
+| `missing_roles` | Roles still missing for the active step summary |
+| `required_role_groups` | Coarse role-group milestones the current step is trying to complete |
 | `step_status` | Coarse status such as `ready`, `blocked`, or `needs_validation` |
 
 Current guided-flow behavior:
@@ -497,6 +501,8 @@ Current guided-flow behavior:
 - `required_prompts` and `preferred_prompts` are stable prompt asset names;
   they support the server-driven flow instead of replacing it with prompt-only
   policy
+- role/family summaries are intentionally compact public fields; the full
+  internal part registry remains session-scoped implementation state
 
 ## Guided Flow Troubleshooting
 

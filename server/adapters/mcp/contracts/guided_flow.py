@@ -57,4 +57,8 @@ class GuidedFlowStateContract(MCPContract):
     next_actions: list[str] = []
     blocked_families: list[str] = []
     allowed_families: list[GuidedFlowFamilyLiteral] = []
+    allowed_roles: list[str] = []
+    completed_roles: list[str] = []
+    missing_roles: list[str] = []
+    required_role_groups: list[str] = []
     step_status: GuidedFlowStepStatusLiteral = "ready"

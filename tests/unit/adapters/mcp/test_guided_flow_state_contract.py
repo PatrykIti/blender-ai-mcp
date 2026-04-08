@@ -157,6 +157,8 @@ def test_router_goal_creature_initializes_guided_flow_state():
         "reference_guided_creature_build",
     ]
     assert state.guided_flow_state["allowed_families"] == ["spatial_context", "reference_context"]
+    assert state.guided_flow_state["allowed_roles"] == []
+    assert state.guided_flow_state["required_role_groups"] == ["spatial_context"]
 
 
 def test_router_goal_building_initializes_guided_flow_state():
@@ -190,6 +192,8 @@ def test_router_goal_building_initializes_guided_flow_state():
         "scene_view_diagnostics",
     ]
     assert state.guided_flow_state["allowed_families"] == ["spatial_context"]
+    assert state.guided_flow_state["allowed_roles"] == []
+    assert state.guided_flow_state["required_role_groups"] == ["spatial_context"]
 
 
 def test_router_goal_ready_followup_advances_from_understand_goal_to_spatial_context():
@@ -276,6 +280,46 @@ def test_spatial_check_completion_advances_flow_to_primary_masses():
     assert state.guided_flow_state["required_checks"] == []
     assert state.guided_flow_state["blocked_families"] == []
     assert state.guided_flow_state["allowed_families"] == ["primary_masses", "reference_context"]
+    assert state.guided_flow_state["allowed_roles"] == ["body_core", "head_mass", "tail_mass"]
+    assert state.guided_flow_state["missing_roles"] == ["body_core", "head_mass", "tail_mass"]
+    assert state.guided_flow_state["required_role_groups"] == ["primary_masses"]
+
+
+def test_router_goal_flow_summary_uses_part_registry_for_completed_and_missing_roles():
+    ctx = FakeContext()
+    ctx.state["guided_part_registry"] = [
+        {
+            "object_name": "Squirrel_Body",
+            "role": "body_core",
+            "role_group": "primary_masses",
+            "status": "registered",
+        }
+    ]
+
+    state = update_session_from_router_goal(
+        ctx,
+        "create a low-poly squirrel matching front and side reference images",
+        {
+            "status": "ready",
+            "phase_hint": "build",
+            "guided_handoff": {
+                "kind": "guided_manual_build",
+                "recipe_id": "low_poly_creature_blockout",
+                "target_phase": "build",
+                "surface_profile": "llm-guided",
+                "direct_tools": ["modeling_create_primitive"],
+                "supporting_tools": ["scene_scope_graph", "scene_relation_graph", "scene_view_diagnostics"],
+                "discovery_tools": ["search_tools", "call_tool"],
+                "workflow_import_recommended": False,
+                "message": "Continue on the guided creature blockout surface.",
+            },
+        },
+        surface_profile="llm-guided",
+    )
+
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["completed_roles"] == ["body_core"]
+    assert state.guided_flow_state["missing_roles"] == []
 
 
 def test_building_flow_advances_after_scope_and_view_checks_only():

@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-150-03-03](./TASK-150-03-03_Generic_Families_Part_Roles_And_Execution_Enforcement.md)
 **Depends On:** [TASK-150-03-03-01](./TASK-150-03-03-01_Shared_Tool_Family_Vocabulary_And_Overlay_Mapping.md)
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -113,3 +113,10 @@ class GuidedFlowStateContract(MCPContract):
 ## Changelog Impact
 
 - include in the parent TASK-150 execution-enforcement changelog entry
+
+## Completion Summary
+
+- completed the internal part-registry session foundation
+- completed the first public compact role summary on `guided_flow_state`
+- left actual role registration and execution enforcement to the next leaf
+  branch (`TASK-150-03-03-03` and `...-04`)
