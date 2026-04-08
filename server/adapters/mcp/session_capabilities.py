@@ -176,6 +176,11 @@ _GUIDED_ROLE_GROUP_BY_ROLE: dict[str, dict[str, str]] = {
         "detail_element": "secondary_parts",
     },
 }
+_GUIDED_PRIMARY_REQUIRED_ROLES: dict[str, tuple[str, ...]] = {
+    "generic": ("anchor_core", "primary_mass"),
+    "creature": ("body_core", "head_mass"),
+    "building": ("footprint_mass", "main_volume"),
+}
 
 
 @dataclass(frozen=True)
@@ -417,6 +422,50 @@ def _update_guided_flow_role_summary_dict(
     part_registry: list[dict[str, Any]] | None,
 ) -> dict[str, Any]:
     contract = GuidedFlowStateContract.model_validate(flow_state)
+    role_summary = _build_role_summary(
+        domain_profile=contract.domain_profile,
+        current_step=contract.current_step,
+        part_registry=part_registry,
+    )
+    contract.allowed_roles = role_summary["allowed_roles"]
+    contract.completed_roles = role_summary["completed_roles"]
+    contract.missing_roles = role_summary["missing_roles"]
+    contract.required_role_groups = role_summary["required_role_groups"]
+    return contract.model_dump(mode="json")
+
+
+def _maybe_advance_guided_flow_from_part_registry_dict(
+    flow_state: dict[str, Any],
+    *,
+    part_registry: list[dict[str, Any]] | None,
+) -> dict[str, Any]:
+    contract = GuidedFlowStateContract.model_validate(flow_state)
+    completed_roles = {
+        str(item.get("role"))
+        for item in part_registry or []
+        if isinstance(item, dict) and str(item.get("role") or "").strip()
+    }
+
+    if contract.current_step == "create_primary_masses":
+        required_roles = _GUIDED_PRIMARY_REQUIRED_ROLES[contract.domain_profile]
+        if all(role in completed_roles for role in required_roles):
+            if "create_primary_masses" not in contract.completed_steps:
+                contract.completed_steps.append("create_primary_masses")
+            contract.current_step = "place_secondary_parts"
+            contract.next_actions = ["begin_secondary_parts"]
+            contract.blocked_families = []
+            contract.step_status = "ready"
+            contract.allowed_families = _build_allowed_families(
+                domain_profile=contract.domain_profile,
+                current_step=contract.current_step,
+            )
+            required_prompts, preferred_prompts = _build_required_prompt_bundle(
+                domain_profile=contract.domain_profile,
+                current_step=contract.current_step,
+            )
+            contract.required_prompts = required_prompts
+            contract.preferred_prompts = preferred_prompts
+
     role_summary = _build_role_summary(
         domain_profile=contract.domain_profile,
         current_step=contract.current_step,
@@ -1263,6 +1312,10 @@ async def register_guided_part_role_async(
         current.guided_flow_state,
         part_registry=updated_registry,
     )
+    updated_flow_state = _maybe_advance_guided_flow_from_part_registry_dict(
+        updated_flow_state,
+        part_registry=updated_registry,
+    )
     state = SessionCapabilityState(
         phase=current.phase,
         goal=current.goal,
@@ -1330,6 +1383,10 @@ def register_guided_part_role(
     )
     updated_flow_state = _update_guided_flow_role_summary_dict(
         current.guided_flow_state,
+        part_registry=updated_registry,
+    )
+    updated_flow_state = _maybe_advance_guided_flow_from_part_registry_dict(
+        updated_flow_state,
         part_registry=updated_registry,
     )
     state = SessionCapabilityState(

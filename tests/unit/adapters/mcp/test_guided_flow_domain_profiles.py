@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from server.adapters.mcp.session_capabilities import update_session_from_router_goal
+from server.adapters.mcp.session_capabilities import (
+    SessionCapabilityState,
+    register_guided_part_role,
+    set_session_capability_state,
+    update_session_from_router_goal,
+)
+from server.adapters.mcp.session_phase import SessionPhase
 
 
 @dataclass
@@ -114,3 +120,46 @@ def test_building_goal_uses_building_overlay_specific_checks():
         "scene_view_diagnostics",
     ]
     assert state.guided_flow_state["required_role_groups"] == ["spatial_context"]
+
+
+def test_building_flow_primary_roles_require_footprint_and_main_volume_before_advancing():
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="rebuild a watchtower facade with roof and windows from front and side references",
+            guided_flow_state={
+                "flow_id": "guided_building_flow",
+                "domain_profile": "building",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses"],
+                "allowed_roles": ["footprint_mass", "main_volume", "roof_mass"],
+                "completed_roles": [],
+                "missing_roles": ["footprint_mass", "main_volume", "roof_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    first = register_guided_part_role(ctx, object_name="Tower_Footprint", role="footprint_mass")
+    second = register_guided_part_role(ctx, object_name="Tower_MainVolume", role="main_volume")
+
+    assert first.guided_flow_state is not None
+    assert first.guided_flow_state["current_step"] == "create_primary_masses"
+    assert first.guided_flow_state["missing_roles"] == ["main_volume", "roof_mass"]
+
+    assert second.guided_flow_state is not None
+    assert second.guided_flow_state["current_step"] == "place_secondary_parts"
+    assert second.guided_flow_state["allowed_roles"] == [
+        "facade_opening",
+        "support_element",
+        "detail_element",
+    ]

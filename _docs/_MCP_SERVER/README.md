@@ -513,6 +513,9 @@ Current guided-flow behavior:
 - `modeling_create_primitive(...)` and `modeling_transform_object(...)` may
   also carry an optional `guided_role` convenience hint on guided surfaces, but
   `guided_register_part(...)` remains the canonical explicit registration path
+- for overlays that use primary-mass role groups, registering the required
+  primary roles can now move the flow from `create_primary_masses` into
+  `place_secondary_parts`
 
 ## Guided Flow Troubleshooting
 

@@ -12,6 +12,7 @@ from server.adapters.mcp.session_capabilities import (
     advance_guided_flow_from_iteration_async,
     get_session_capability_state,
     record_guided_flow_spatial_check_completion,
+    register_guided_part_role,
     set_session_capability_state,
     update_session_from_router_goal,
 )
@@ -409,3 +410,48 @@ def test_clear_session_goal_state_clears_guided_part_registry():
     state = clear_session_goal_state(ctx)
 
     assert state.guided_part_registry is None
+
+
+def test_primary_mass_role_registration_advances_creature_flow_after_required_roles_complete():
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": [],
+                "missing_roles": ["body_core", "head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    first = register_guided_part_role(ctx, object_name="Squirrel_Body", role="body_core")
+    second = register_guided_part_role(ctx, object_name="Squirrel_Head", role="head_mass")
+
+    assert first.guided_flow_state is not None
+    assert first.guided_flow_state["current_step"] == "create_primary_masses"
+    assert first.guided_flow_state["missing_roles"] == ["head_mass", "tail_mass"]
+
+    assert second.guided_flow_state is not None
+    assert second.guided_flow_state["current_step"] == "place_secondary_parts"
+    assert second.guided_flow_state["required_role_groups"] == ["secondary_parts"]
+    assert second.guided_flow_state["allowed_roles"] == [
+        "snout_mass",
+        "ear_pair",
+        "foreleg_pair",
+        "hindleg_pair",
+    ]

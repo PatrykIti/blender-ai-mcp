@@ -1,7 +1,7 @@
 # TASK-150-03-03-05-01: Primary Mass Role Group Completion Rules
 
 **Parent:** [TASK-150-03-03-05](./TASK-150-03-03-05_Flow_Transitions_From_Role_Groups_And_Checkpoints.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -30,6 +30,17 @@ if current_step == "create_primary_masses" and required_primary_roles_present(re
 ## Acceptance Criteria
 
 - role groups, not just spatial checks, can drive the next step transition
+
+## Completion Summary
+
+- added overlay-specific required primary roles for:
+  - `generic`
+  - `creature`
+  - `building`
+- registering the required primary roles now advances:
+  - `create_primary_masses` -> `place_secondary_parts`
+- updated role/family summaries after the transition so the next step is
+  immediately visible in the public guided-flow contract
 
 ## Planned Unit Test Scenarios
 
