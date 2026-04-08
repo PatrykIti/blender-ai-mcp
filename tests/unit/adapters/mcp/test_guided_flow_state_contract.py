@@ -5,6 +5,8 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass, field
 
+import pytest
+from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract
 from server.adapters.mcp.session_capabilities import (
     SessionCapabilityState,
     advance_guided_flow_from_iteration_async,
@@ -58,6 +60,7 @@ def test_session_state_round_trips_guided_flow_state():
             "preferred_prompts": ["workflow_router_first"],
             "next_actions": ["run_required_checks"],
             "blocked_families": ["build", "late_refinement", "finish"],
+            "allowed_families": ["spatial_context", "reference_context"],
             "step_status": "blocked",
         },
     )
@@ -67,6 +70,28 @@ def test_session_state_round_trips_guided_flow_state():
     assert restored.guided_flow_state is not None
     assert restored.guided_flow_state["current_step"] == "establish_spatial_context"
     assert restored.guided_flow_state["required_checks"][0]["tool_name"] == "scene_scope_graph"
+    assert restored.guided_flow_state["allowed_families"] == ["spatial_context", "reference_context"]
+
+
+def test_guided_flow_contract_accepts_allowed_families():
+    contract = GuidedFlowStateContract(
+        flow_id="guided_generic_flow",
+        domain_profile="generic",
+        current_step="create_primary_masses",
+        allowed_families=["primary_masses", "reference_context"],
+    )
+
+    assert contract.allowed_families == ["primary_masses", "reference_context"]
+
+
+def test_guided_flow_contract_rejects_unknown_allowed_family():
+    with pytest.raises(Exception, match="allowed_families"):
+        GuidedFlowStateContract(
+            flow_id="guided_generic_flow",
+            domain_profile="generic",
+            current_step="create_primary_masses",
+            allowed_families=["definitely_not_a_family"],
+        )
 
 
 def test_router_goal_creature_initializes_guided_flow_state():

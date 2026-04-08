@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-150-03](./TASK-150-03_Step_Gated_Visibility_And_Execution_Policy.md)
 **Depends On:** [TASK-150-02](./TASK-150-02_Domain_Profile_Selection_And_Overlay_Policy.md), [TASK-150-03-02](./TASK-150-03-02_Step_Completion_Checks_And_Execution_Blocks.md)
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
 **Priority:** 🔴 High
 
 ## Objective

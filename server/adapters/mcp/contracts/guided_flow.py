@@ -10,6 +10,17 @@ from typing import Literal
 from .base import MCPContract
 
 GuidedFlowDomainProfileLiteral = Literal["generic", "creature", "building"]
+GuidedFlowFamilyLiteral = Literal[
+    "spatial_context",
+    "reference_context",
+    "primary_masses",
+    "secondary_parts",
+    "attachment_alignment",
+    "checkpoint_iterate",
+    "inspect_validate",
+    "finish",
+    "utility",
+]
 GuidedFlowStepLiteral = Literal[
     "understand_goal",
     "establish_spatial_context",
@@ -45,4 +56,5 @@ class GuidedFlowStateContract(MCPContract):
     preferred_prompts: list[str] = []
     next_actions: list[str] = []
     blocked_families: list[str] = []
+    allowed_families: list[GuidedFlowFamilyLiteral] = []
     step_status: GuidedFlowStepStatusLiteral = "ready"

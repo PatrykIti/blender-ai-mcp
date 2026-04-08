@@ -1,7 +1,7 @@
 # TASK-150-03-03-01-01: Guided Family Literals And Flow Contract Extension
 
 **Parent:** [TASK-150-03-03-01](./TASK-150-03-03-01_Shared_Tool_Family_Vocabulary_And_Overlay_Mapping.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -42,6 +42,15 @@ class GuidedFlowStateContract(MCPContract):
 
 - shared family literals exist in one canonical contract file
 - `guided_flow_state` can expose `allowed_families`
+
+## Completion Summary
+
+- added `GuidedFlowFamilyLiteral` to the shared guided-flow contract
+- extended `GuidedFlowStateContract` with `allowed_families`
+- added unit coverage for:
+  - valid `allowed_families`
+  - invalid family rejection
+  - guided-flow session round-trip with family serialization
 
 ## Planned Unit Test Scenarios
 
