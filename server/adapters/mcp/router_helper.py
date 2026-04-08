@@ -218,6 +218,82 @@ def _resolve_guided_role_context(tool_name: str, params: Dict[str, Any]) -> tupl
     return None, None
 
 
+def _evaluate_guided_execution_policy(
+    *,
+    surface_profile: str,
+    tool_name: str,
+    params: Dict[str, Any],
+) -> dict[str, Any] | None:
+    """Return a typed guided execution-policy decision when one active flow exists."""
+
+    if surface_profile != "llm-guided":
+        return None
+
+    session = _get_active_session_state()
+    if session is None or not session.guided_flow_state:
+        return None
+
+    flow_state = session.guided_flow_state
+    current_step = str(flow_state.get("current_step") or "").strip()
+    allowed_families = {
+        str(family)
+        for family in (flow_state.get("allowed_families") or [])
+        if isinstance(family, str) and family.strip()
+    }
+    allowed_roles = {
+        str(role) for role in (flow_state.get("allowed_roles") or []) if isinstance(role, str) and role.strip()
+    }
+    family = resolve_guided_tool_family(tool_name)
+    role, role_group = _resolve_guided_role_context(tool_name, params)
+
+    if family == "utility":
+        return {
+            "status": "allowed",
+            "current_step": current_step,
+            "family": family,
+            "role": role,
+            "role_group": role_group,
+        }
+
+    if family is not None and allowed_families and family not in allowed_families:
+        return {
+            "status": "blocked",
+            "current_step": current_step,
+            "family": family,
+            "role": role,
+            "role_group": role_group,
+            "allowed_families": sorted(allowed_families),
+            "allowed_roles": sorted(allowed_roles),
+            "message": (
+                f"Guided execution blocked tool family '{family}' during step '{current_step}'. "
+                f"Allowed families now: {', '.join(sorted(allowed_families)) or 'none'}."
+            ),
+        }
+
+    if role is not None and allowed_roles and role not in allowed_roles:
+        return {
+            "status": "blocked",
+            "current_step": current_step,
+            "family": family,
+            "role": role,
+            "role_group": role_group,
+            "allowed_families": sorted(allowed_families),
+            "allowed_roles": sorted(allowed_roles),
+            "message": (
+                f"Guided execution blocked role '{role}' during step '{current_step}'. "
+                f"Allowed roles now: {', '.join(sorted(allowed_roles)) or 'none'}."
+            ),
+        }
+
+    return {
+        "status": "allowed",
+        "current_step": current_step,
+        "family": family,
+        "role": role,
+        "role_group": role_group,
+    }
+
+
 def _apply_postcondition_verification(
     audit_events: tuple[CorrectionAuditEventContract, ...],
 ) -> tuple[tuple[CorrectionAuditEventContract, ...], str]:
@@ -310,6 +386,28 @@ def route_tool_call_report(
         context.session_phase = session_state.phase.value
     context.guided_tool_family = resolve_guided_tool_family(tool_name)
     context.guided_role, context.guided_role_group = _resolve_guided_role_context(tool_name, params)
+    guided_policy = _evaluate_guided_execution_policy(
+        surface_profile=surface_profile,
+        tool_name=tool_name,
+        params=params,
+    )
+    if guided_policy is not None:
+        context.guided_tool_family = guided_policy.get("family")
+        context.guided_role = guided_policy.get("role")
+        context.guided_role_group = guided_policy.get("role_group")
+        if guided_policy.get("status") == "blocked":
+            report = MCPExecutionReport(
+                context=context,
+                router_enabled=is_router_enabled(),
+                router_applied=False,
+                router_disposition="failed_closed_error",
+                error=str(guided_policy.get("message") or "Guided execution blocked."),
+                policy_context=guided_policy,
+                audit_ids=(),
+            )
+            _record_router_execution_report(report)
+            _log_audit_exposure(report)
+            return report
 
     if not is_router_enabled():
         result = direct_executor()
@@ -378,6 +476,28 @@ def route_tool_call_report(
                 final_tool_name,
                 final_tool_params,
             )
+            guided_policy = _evaluate_guided_execution_policy(
+                surface_profile=surface_profile,
+                tool_name=final_tool_name,
+                params=final_tool_params,
+            )
+            if guided_policy is not None:
+                context.guided_tool_family = guided_policy.get("family")
+                context.guided_role = guided_policy.get("role")
+                context.guided_role_group = guided_policy.get("role_group")
+                if guided_policy.get("status") == "blocked":
+                    report = MCPExecutionReport(
+                        context=context,
+                        router_enabled=True,
+                        router_applied=False,
+                        router_disposition="failed_closed_error",
+                        error=str(guided_policy.get("message") or "Guided execution blocked."),
+                        policy_context=guided_policy,
+                        audit_ids=(),
+                    )
+                    _record_router_execution_report(report)
+                    _log_audit_exposure(report)
+                    return report
 
         if len(corrected_tools) == 1 and corrected_tools[0]["tool"] == tool_name:
             if corrected_tools[0]["params"] == params:

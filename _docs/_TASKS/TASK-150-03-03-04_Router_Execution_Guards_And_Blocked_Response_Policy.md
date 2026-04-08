@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-150-03-03](./TASK-150-03-03_Generic_Families_Part_Roles_And_Execution_Enforcement.md)
 **Depends On:** [TASK-150-03-03-01](./TASK-150-03-03-01_Shared_Tool_Family_Vocabulary_And_Overlay_Mapping.md), [TASK-150-03-03-02](./TASK-150-03-03-02_Guided_Part_Role_Registry_And_Session_Contracts.md), [TASK-150-03-03-03](./TASK-150-03-03-03_Guided_Register_Part_And_Role_Hint_Input_Path.md)
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -107,3 +107,11 @@ if policy.status == "blocked":
 ## Changelog Impact
 
 - include in the parent TASK-150 execution-enforcement changelog entry
+
+## Completion Summary
+
+- route-time family/role lookup now exists in the shared execution path
+- guided surfaces can fail closed on wrong family or explicit role before the
+  tool executor runs
+- this still leaves later follow-on work for deeper role-group completion
+  transitions and broader regression/E2E coverage

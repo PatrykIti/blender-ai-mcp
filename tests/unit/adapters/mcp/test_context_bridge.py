@@ -17,6 +17,8 @@ from server.adapters.mcp.context_utils import (
 from server.adapters.mcp.execution_context import MCPExecutionContext
 from server.adapters.mcp.execution_report import ExecutionStep, MCPExecutionReport
 from server.adapters.mcp.router_helper import route_tool_call_report
+from server.adapters.mcp.session_capabilities import SessionCapabilityState
+from server.adapters.mcp.session_phase import SessionPhase
 
 
 @dataclass
@@ -213,3 +215,84 @@ def test_route_tool_call_report_uses_final_corrected_tool_for_guided_family_meta
     assert report.router_applied is True
     assert report.context.guided_tool_family == "finish"
     assert report.steps[-1].tool_name == "macro_finish_form"
+
+
+def test_route_tool_call_report_fail_closes_when_guided_family_is_not_allowed(monkeypatch):
+    """Guided execution policy should block a disallowed family even before direct execution runs."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": ["body_core"],
+                "missing_roles": ["head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="macro_finish_form",
+        params={"target_object": "Squirrel_Body"},
+        direct_executor=lambda: "should not run",
+    )
+
+    assert report.router_disposition == "failed_closed_error"
+    assert "tool family 'finish'" in str(report.error)
+    assert report.context.guided_tool_family == "finish"
+
+
+def test_route_tool_call_report_fail_closes_when_guided_role_is_not_allowed(monkeypatch):
+    """Guided execution policy should block explicit roles that do not belong to the current step."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": ["body_core"],
+                "missing_roles": ["head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="modeling_create_primitive",
+        params={"primitive_type": "Cone", "name": "Squirrel_Ear_L", "guided_role": "ear_pair"},
+        direct_executor=lambda: "should not run",
+    )
+
+    assert report.router_disposition == "failed_closed_error"
+    assert "role 'ear_pair'" in str(report.error)
+    assert report.context.guided_tool_family == "primary_masses"
+    assert report.context.guided_role == "ear_pair"

@@ -499,6 +499,9 @@ Current guided-flow behavior:
 - during `establish_spatial_context`, the visible guided build surface stays
   bounded to spatial-context / inspection / reference-support tools until the
   required checks complete
+- guided execution policy can now fail closed when a call resolves to the
+  wrong shared family or an explicit guided role that is not allowed for the
+  current step
 - `required_prompts` and `preferred_prompts` are stable prompt asset names;
   they support the server-driven flow instead of replacing it with prompt-only
   policy
@@ -528,6 +531,9 @@ If a needed tool is not visible or a build tool seems to have disappeared on
    guessing hidden tool names.
 6. If a family is hidden/blocked-by-flow, do not treat `call_tool(...)` as a
    bypass. Follow the flow gate, then re-check visibility/search.
+7. If the server rejects a call with a guided family/role error, do not retry
+   the same action under a different hidden/internal tool name; inspect the
+   current `allowed_families` and `allowed_roles` first.
 
 ## Guided Reference Readiness Contract
 

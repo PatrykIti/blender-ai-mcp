@@ -249,3 +249,6 @@ contract.
   flow/domain/step
 - `preferred_prompts` = strong recommendations for the current flow/domain/step
 - prompt bundles support the server-driven guided flow instead of replacing it
+- if the server rejects a call because the family or explicit role is wrong
+  for the current step, treat that as authoritative guided execution policy,
+  not as a hint to guess another tool name

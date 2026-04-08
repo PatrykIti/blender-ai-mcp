@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-150-03-03-04](./TASK-150-03-03-04_Router_Execution_Guards_And_Blocked_Response_Policy.md)
 **Depends On:** [TASK-150-03-03-04-01](./TASK-150-03-03-04-01_Family_Resolution_And_Role_Lookup_In_Route_Tool_Call.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -34,6 +34,14 @@ if policy.blocked:
 
 - guided surfaces fail closed on family/role violations
 - the response explains current step, allowed families/roles, and next actions
+
+## Completion Summary
+
+- added fail-closed guided execution checks for:
+  - disallowed shared families
+  - disallowed explicit guided roles
+- integrated those checks into the shared `route_tool_call_report(...)` path
+- documented the new blocked-response semantics in MCP/prompt docs
 
 ## Planned Unit Test Scenarios
 
