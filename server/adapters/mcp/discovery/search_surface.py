@@ -16,6 +16,10 @@ from fastmcp.tools.tool import Tool, ToolResult
 
 from server.adapters.mcp.guided_contract import canonicalize_guided_tool_arguments
 from server.adapters.mcp.platform.naming_rules import AUDIENCE_LLM_GUIDED
+from server.adapters.mcp.session_capabilities import (
+    apply_visibility_for_session_state,
+    get_session_capability_state_async,
+)
 from server.adapters.mcp.settings import SurfaceProfileSettings
 from server.adapters.mcp.version_policy import CONTRACT_LINE_LLM_GUIDED_V2
 
@@ -66,6 +70,36 @@ class BlenderDiscoverySearchTransform(BM25SearchTransform):
     def _canonicalize_call_arguments(self, name: str, arguments: dict[str, Any] | None) -> dict[str, Any] | None:
         return canonicalize_guided_tool_arguments(name, arguments, contract_line=self._contract_line)
 
+    async def _sync_visibility_if_needed(self, ctx: Context | None) -> None:
+        """Best-effort visibility refresh before discovery/proxy operations."""
+
+        if ctx is None:
+            return
+
+        try:
+            session_state = await get_session_capability_state_async(ctx)
+            await apply_visibility_for_session_state(ctx, session_state)
+        except Exception:
+            return
+
+    def _make_search_tool(self) -> Tool:
+        transform = self
+
+        async def search_tools(
+            query: Annotated[str, "Natural language query to search for tools"],
+            ctx: Context = None,  # type: ignore[assignment]
+        ) -> str | list[dict[str, Any]]:
+            """Search for tools using natural language."""
+
+            if ctx is None:
+                raise RuntimeError("search_tools requires an active FastMCP context")
+            await transform._sync_visibility_if_needed(ctx)
+            hidden = await transform._get_visible_tools(ctx)
+            results = await transform._search(hidden, query)
+            return await transform._render_results(results)
+
+        return Tool.from_function(fn=search_tools, name=self._search_tool_name)
+
     def _make_call_tool(self) -> Tool:
         transform = self
 
@@ -96,6 +130,7 @@ class BlenderDiscoverySearchTransform(BM25SearchTransform):
             if ctx is None:
                 raise RuntimeError("call_tool proxy requires an active FastMCP context")
 
+            await transform._sync_visibility_if_needed(ctx)
             resolved_arguments = arguments if arguments is not None else params
             canonical_arguments = transform._canonicalize_call_arguments(resolved_name, resolved_arguments)
             try:

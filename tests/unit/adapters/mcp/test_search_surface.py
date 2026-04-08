@@ -732,6 +732,89 @@ def test_call_tool_proxy_preserves_proxied_valueerror_as_tool_error(monkeypatch)
         asyncio.run(run())
 
 
+def test_search_tool_refreshes_visibility_from_session_state_before_query(monkeypatch):
+    """search_tools should auto-sync visibility after guided-flow state mutations."""
+
+    transform = build_discovery_transform(get_surface_profile("llm-guided"))
+    assert transform is not None
+    events: list[str] = []
+
+    async def fake_get_session_capability_state_async(_ctx):
+        events.append("get_session")
+        return object()
+
+    async def fake_apply_visibility_for_session_state(_ctx, _state):
+        events.append("apply_visibility")
+
+    async def fake_get_visible_tools(_ctx):
+        events.append("get_visible_tools")
+        return []
+
+    async def fake_search(_tools, _query):
+        events.append("search")
+        return []
+
+    async def fake_render_results(_results):
+        events.append("render")
+        return []
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.discovery.search_surface.get_session_capability_state_async",
+        fake_get_session_capability_state_async,
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.discovery.search_surface.apply_visibility_for_session_state",
+        fake_apply_visibility_for_session_state,
+    )
+    monkeypatch.setattr(transform, "_get_visible_tools", fake_get_visible_tools)
+    monkeypatch.setattr(transform, "_search", fake_search)
+    monkeypatch.setattr(transform, "_render_results", fake_render_results)
+
+    search_tool = transform._make_search_tool().fn  # type: ignore[attr-defined]
+
+    asyncio.run(search_tool(query="squirrel blockout", ctx=object()))
+
+    assert events == ["get_session", "apply_visibility", "get_visible_tools", "search", "render"]
+
+
+def test_call_tool_refreshes_visibility_from_session_state_before_proxying(monkeypatch):
+    """call_tool should auto-sync visibility before proxying newly unlocked guided tools."""
+
+    class FakeFastMCP:
+        async def call_tool(self, name, arguments):
+            events.append(f"proxy:{name}")
+            return {"result": "ok"}
+
+    class Ctx:
+        fastmcp = FakeFastMCP()
+
+    transform = build_discovery_transform(get_surface_profile("llm-guided"))
+    assert transform is not None
+    events: list[str] = []
+
+    async def fake_get_session_capability_state_async(_ctx):
+        events.append("get_session")
+        return object()
+
+    async def fake_apply_visibility_for_session_state(_ctx, _state):
+        events.append("apply_visibility")
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.discovery.search_surface.get_session_capability_state_async",
+        fake_get_session_capability_state_async,
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.discovery.search_surface.apply_visibility_for_session_state",
+        fake_apply_visibility_for_session_state,
+    )
+
+    call_tool = transform._make_call_tool().fn  # type: ignore[attr-defined]
+
+    asyncio.run(call_tool(name="modeling_create_primitive", arguments={"primitive_type": "CUBE"}, ctx=Ctx()))
+
+    assert events == ["get_session", "apply_visibility", "proxy:modeling_create_primitive"]
+
+
 def test_call_tool_can_invoke_scene_clean_scene_during_bootstrap(monkeypatch):
     """Visible guided utility tools should stay callable through call_tool during bootstrap."""
 
