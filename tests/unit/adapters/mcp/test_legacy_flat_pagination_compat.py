@@ -18,7 +18,7 @@ def test_legacy_flat_first_page_contains_full_catalog_without_next_cursor():
 
     tool_count, next_cursor = asyncio.run(run())
 
-    assert tool_count == 186
+    assert tool_count == 187
     assert next_cursor is None
 
 

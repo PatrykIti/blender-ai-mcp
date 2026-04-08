@@ -5,7 +5,10 @@ from fastmcp import Context
 from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
 from server.adapters.mcp.guided_contract import canonicalize_modeling_create_primitive_arguments
 from server.adapters.mcp.router_helper import route_tool_call
-from server.adapters.mcp.session_capabilities import get_session_capability_state_async
+from server.adapters.mcp.session_capabilities import (
+    get_session_capability_state_async,
+    register_guided_part_role,
+)
 from server.adapters.mcp.utils import parse_coordinate, parse_dict
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.vision.integration import maybe_attach_macro_vision
@@ -292,6 +295,8 @@ def _modeling_create_primitive_impl(
     rings: int | None = None,
     subdivisions: int | None = None,
     collection_name: str | None = None,
+    guided_role: str | None = None,
+    role_group: str | None = None,
 ) -> str:
     """
     [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Creates a 3D primitive object.
@@ -328,6 +333,8 @@ def _modeling_create_primitive_impl(
                 "rings": rings,
                 "subdivisions": subdivisions,
                 "collection_name": collection_name,
+                "guided_role": guided_role,
+                "role_group": role_group,
             }.items()
             if value is not None
         }
@@ -355,7 +362,7 @@ def _modeling_create_primitive_impl(
         except (RuntimeError, ValueError) as e:
             return str(e)
 
-    return route_tool_call(
+    result = route_tool_call(
         tool_name="modeling_create_primitive",
         params={
             "primitive_type": primitive_type_value,
@@ -367,6 +374,14 @@ def _modeling_create_primitive_impl(
         },
         direct_executor=execute,
     )
+    if guided_role and isinstance(result, str) and result.startswith("Created "):
+        register_guided_part_role(
+            ctx,
+            object_name=str(name_value or primitive_type_value),
+            role=guided_role,
+            role_group=role_group,
+        )
+    return result
 
 
 def modeling_create_primitive(
@@ -382,6 +397,8 @@ def modeling_create_primitive(
     rings: int | None = None,
     subdivisions: int | None = None,
     collection_name: str | None = None,
+    guided_role: str | None = None,
+    role_group: str | None = None,
 ) -> str:
     """
     [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Creates a 3D primitive object.
@@ -409,6 +426,8 @@ def modeling_create_primitive(
         rings,
         subdivisions,
         collection_name,
+        guided_role,
+        role_group,
     )
 
 
@@ -418,6 +437,8 @@ def _modeling_transform_object_impl(
     location: Union[str, List[float], None] = None,
     rotation: Union[str, List[float], None] = None,
     scale: Union[str, List[float], None] = None,
+    guided_role: str | None = None,
+    role_group: str | None = None,
 ) -> str:
     """
     [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Transforms (move, rotate, scale) an existing object.
@@ -441,11 +462,19 @@ def _modeling_transform_object_impl(
         except (RuntimeError, ValueError) as e:
             return str(e)
 
-    return route_tool_call(
+    result = route_tool_call(
         tool_name="modeling_transform_object",
         params={"name": name, "location": location, "rotation": rotation, "scale": scale},
         direct_executor=execute,
     )
+    if guided_role and isinstance(result, str) and result.startswith("Transformed object "):
+        register_guided_part_role(
+            ctx,
+            object_name=name,
+            role=guided_role,
+            role_group=role_group,
+        )
+    return result
 
 
 def modeling_transform_object(
@@ -454,6 +483,8 @@ def modeling_transform_object(
     location: Union[str, List[float], None] = None,
     rotation: Union[str, List[float], None] = None,
     scale: Union[str, List[float], None] = None,
+    guided_role: str | None = None,
+    role_group: str | None = None,
 ) -> str:
     """
     [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Transforms (move, rotate, scale) an existing object.
@@ -466,7 +497,7 @@ def modeling_transform_object(
         rotation: New [rx, ry, rz] rotation in radians (optional). Can be a list or string.
         scale: New [sx, sy, sz] scale factors (optional). Can be a list or string.
     """
-    return _modeling_transform_object_impl(ctx, name, location, rotation, scale)
+    return _modeling_transform_object_impl(ctx, name, location, rotation, scale, guided_role, role_group)
 
 
 def _modeling_add_modifier_impl(

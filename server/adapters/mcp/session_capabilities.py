@@ -1288,6 +1288,75 @@ async def register_guided_part_role_async(
     return state
 
 
+def register_guided_part_role(
+    ctx: Context,
+    *,
+    object_name: str,
+    role: str,
+    role_group: str | None = None,
+) -> SessionCapabilityState:
+    """Sync variant of guided part-role registration for synchronous tool wrappers."""
+
+    current = get_session_capability_state(ctx)
+    if current.guided_flow_state is None:
+        raise ValueError("guided_register_part(...) requires an active guided flow session.")
+
+    flow_state = GuidedFlowStateContract.model_validate(current.guided_flow_state)
+    domain_profile = flow_state.domain_profile
+    resolved_role = role.strip()
+    if not resolved_role:
+        raise ValueError("guided_register_part(...) requires a non-empty `role`.")
+
+    resolved_role_group = _resolve_guided_role_group(
+        domain_profile=domain_profile,
+        role=resolved_role,
+        role_group=role_group,
+    )
+    updated_registry = [
+        item
+        for item in list(current.guided_part_registry or [])
+        if isinstance(item, dict) and item.get("object_name") != object_name
+    ]
+    updated_registry.append(
+        asdict(
+            GuidedPartRegistryItem(
+                object_name=object_name,
+                role=resolved_role,
+                role_group=resolved_role_group,
+                status="registered",
+                created_in_step=flow_state.current_step,
+            )
+        )
+    )
+    updated_flow_state = _update_guided_flow_role_summary_dict(
+        current.guided_flow_state,
+        part_registry=updated_registry,
+    )
+    state = SessionCapabilityState(
+        phase=current.phase,
+        goal=current.goal,
+        pending_clarification=current.pending_clarification,
+        last_router_status=current.last_router_status,
+        policy_context=current.policy_context,
+        surface_profile=current.surface_profile,
+        contract_version=current.contract_version,
+        pending_elicitation_id=current.pending_elicitation_id,
+        pending_workflow_name=current.pending_workflow_name,
+        partial_answers=current.partial_answers,
+        pending_question_set_id=current.pending_question_set_id,
+        last_elicitation_action=current.last_elicitation_action,
+        last_router_disposition=current.last_router_disposition,
+        last_router_error=current.last_router_error,
+        reference_images=current.reference_images,
+        guided_handoff=current.guided_handoff,
+        guided_flow_state=updated_flow_state,
+        guided_part_registry=updated_registry,
+        pending_reference_images=current.pending_reference_images,
+    )
+    set_session_capability_state(ctx, state)
+    return state
+
+
 def _mark_guided_flow_check_completed_dict(
     flow_state: dict[str, Any],
     *,

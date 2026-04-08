@@ -194,6 +194,9 @@ Interpretation:
 - if the server needs explicit semantic part roles for the current flow,
   prefer `guided_register_part(object_name=..., role=...)` instead of
   inventing new domain-specific tool names
+- optional `guided_role=...` hints on `modeling_create_primitive(...)` or
+  `modeling_transform_object(...)` are only a convenience path; keep
+  `guided_register_part(...)` as the canonical explicit registration surface
 - current server-driven guided flow domain overlays are:
   - `generic`
   - `creature`

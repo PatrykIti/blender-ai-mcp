@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-150-03-03-03](./TASK-150-03-03-03_Guided_Register_Part_And_Role_Hint_Input_Path.md)
 **Depends On:** [TASK-150-03-03-03-01](./TASK-150-03-03-03-01_Guided_Register_Part_Router_Tool_Surface.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟠 High
 
 ## Objective
@@ -37,6 +37,16 @@ modeling_transform_object(..., guided_role: str | None = None)
 - optional role hints are either explicitly supported or explicitly rejected in
   a documented way
 - canonical path remains clear even if the convenience path exists
+
+## Completion Summary
+
+- added optional `guided_role` / `role_group` hints on:
+  - `modeling_create_primitive(...)`
+  - `modeling_transform_object(...)`
+- preserved `guided_register_part(...)` as the canonical explicit
+  registration path
+- added direct/proxy unit coverage so the hint path behaves the same on
+  direct guided calls and `call_tool(...)`
 
 ## Planned Unit Test Scenarios
 

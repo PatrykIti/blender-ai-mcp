@@ -507,6 +507,9 @@ Current guided-flow behavior:
 - `guided_register_part(object_name=..., role=...)` is the canonical guided
   surface for telling the server that an existing object now counts as one
   semantic role such as `body_core`, `head_mass`, or `roof_mass`
+- `modeling_create_primitive(...)` and `modeling_transform_object(...)` may
+  also carry an optional `guided_role` convenience hint on guided surfaces, but
+  `guided_register_part(...)` remains the canonical explicit registration path
 
 ## Guided Flow Troubleshooting
 

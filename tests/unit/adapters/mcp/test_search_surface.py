@@ -1080,6 +1080,81 @@ def test_call_tool_rejects_non_public_modeling_create_primitive_shape_with_actio
     asyncio.run(run())
 
 
+def test_direct_modeling_create_primitive_can_register_guided_role_hint(monkeypatch):
+    """Direct guided build execution may use guided_role as a convenience path on top of the canonical register tool."""
+
+    recorded: list[tuple[str, str, str | None]] = []
+
+    class Handler:
+        def create_primitive(self, primitive_type, radius=1.0, size=2.0, location=None, rotation=None, name=None):
+            return f"Created {primitive_type} named '{name or primitive_type}'"
+
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.get_modeling_handler", lambda: Handler())
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.register_guided_part_role",
+        lambda ctx, **kwargs: recorded.append((kwargs["object_name"], kwargs["role"], kwargs.get("role_group"))),
+    )
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    server = _build_phase_search_server(SessionPhase.BUILD)
+
+    async def run():
+        result = await server.call_tool(
+            "modeling_create_primitive",
+            {
+                "primitive_type": "Sphere",
+                "name": "Squirrel_Body",
+                "radius": 0.5,
+                "guided_role": "body_core",
+            },
+        )
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+
+    assert "Created Sphere named 'Squirrel_Body'" == payload
+    assert recorded == [("Squirrel_Body", "body_core", None)]
+
+
+def test_call_tool_can_forward_guided_role_hint_for_modeling_create_primitive(monkeypatch):
+    """Proxied guided build calls should preserve guided_role just like direct guided tool calls."""
+
+    recorded: list[tuple[str, str, str | None]] = []
+
+    class Handler:
+        def create_primitive(self, primitive_type, radius=1.0, size=2.0, location=None, rotation=None, name=None):
+            return f"Created {primitive_type} named '{name or primitive_type}'"
+
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.get_modeling_handler", lambda: Handler())
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.register_guided_part_role",
+        lambda ctx, **kwargs: recorded.append((kwargs["object_name"], kwargs["role"], kwargs.get("role_group"))),
+    )
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    server = _build_phase_search_server(SessionPhase.BUILD)
+
+    async def run():
+        result = await server.call_tool(
+            "call_tool",
+            {
+                "name": "modeling_create_primitive",
+                "arguments": {
+                    "primitive_type": "Sphere",
+                    "name": "Squirrel_Head",
+                    "radius": 0.35,
+                    "guided_role": "head_mass",
+                },
+            },
+        )
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+
+    assert "Created Sphere named 'Squirrel_Head'" == payload
+    assert recorded == [("Squirrel_Head", "head_mass", None)]
+
+
 def test_search_first_rollout_reduces_visible_tool_count_and_payload_size():
     """llm-guided search-first should materially reduce the initial tool payload."""
 
@@ -1100,7 +1175,7 @@ def test_search_first_rollout_reduces_visible_tool_count_and_payload_size():
 
     legacy_count, guided_count, legacy_bytes, guided_bytes = asyncio.run(run())
 
-    assert legacy_count == 186
+    assert legacy_count == 187
     assert guided_count == 11
     assert guided_bytes < legacy_bytes
 

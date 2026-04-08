@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-150-03-03](./TASK-150-03-03_Generic_Families_Part_Roles_And_Execution_Enforcement.md)
 **Depends On:** [TASK-150-03-03-02](./TASK-150-03-03-02_Guided_Part_Role_Registry_And_Session_Contracts.md)
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -103,3 +103,11 @@ def canonicalize_guided_tool_arguments(name, arguments):
 ## Changelog Impact
 
 - include in the parent TASK-150 execution-enforcement changelog entry
+
+## Completion Summary
+
+- delivered the canonical `guided_register_part(...)` tool surface
+- delivered the optional `guided_role` convenience path on existing build
+  tools
+- documented both paths with the rule that `guided_register_part(...)`
+  remains canonical
