@@ -1,7 +1,7 @@
 # TASK-150-03-03-02-01: Internal Part Registry Session Key And Model
 
 **Parent:** [TASK-150-03-03-02](./TASK-150-03-03-02_Guided_Part_Role_Registry_And_Session_Contracts.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -37,6 +37,17 @@ class GuidedPartRegistryItem:
 
 - internal part registry survives session round-trips
 - it can be read/written together with the existing guided flow state
+
+## Completion Summary
+
+- added `SESSION_GUIDED_PART_REGISTRY_KEY`
+- added the internal `GuidedPartRegistryItem` model
+- extended `SessionCapabilityState` with `guided_part_registry`
+- preserved the registry through session get/set and state-copy paths
+- added unit coverage for:
+  - default empty registry
+  - session round-trip
+  - clearing guided goal state
 
 ## Planned Unit Test Scenarios
 

@@ -99,6 +99,18 @@ _GUIDED_FLOW_ITERATION_TOOLS = {
     "reference_iterate_stage_checkpoint",
 }
 _GUIDED_FLOW_STOPPED_STEPS = {"inspect_validate", "finish_or_stop"}
+SESSION_GUIDED_PART_REGISTRY_KEY = "guided_part_registry"
+
+
+@dataclass(frozen=True)
+class GuidedPartRegistryItem:
+    """Internal session-scoped record describing one guided part role."""
+
+    object_name: str
+    role: str
+    role_group: str
+    status: str = "registered"
+    created_in_step: GuidedFlowStepLiteral | None = None
 
 
 @dataclass(frozen=True)
@@ -122,6 +134,7 @@ class SessionCapabilityState:
     reference_images: list[dict[str, Any]] | None = None
     guided_handoff: dict[str, Any] | None = None
     guided_flow_state: dict[str, Any] | None = None
+    guided_part_registry: list[dict[str, Any]] | None = None
     pending_reference_images: list[dict[str, Any]] | None = None
 
 
@@ -193,6 +206,26 @@ def _normalize_guided_flow_state(value: Any) -> dict[str, Any] | None:
         return GuidedFlowStateContract.model_validate(value).model_dump(mode="json", exclude_none=True)
     except Exception:
         return None
+
+
+def _normalize_guided_part_registry(value: Any) -> list[dict[str, Any]] | None:
+    if value is None:
+        return None
+    if not isinstance(value, list):
+        return None
+
+    items: list[dict[str, Any]] = []
+    for raw_item in value:
+        try:
+            if isinstance(raw_item, GuidedPartRegistryItem):
+                items.append(asdict(raw_item))
+                continue
+            if not isinstance(raw_item, dict):
+                return None
+            items.append(asdict(GuidedPartRegistryItem(**raw_item)))
+        except Exception:
+            return None
+    return items or None
 
 
 def _select_guided_flow_domain_profile(
@@ -365,6 +398,7 @@ def get_session_capability_state(ctx: Context) -> SessionCapabilityState:
         reference_images=get_session_value(ctx, SESSION_REFERENCE_IMAGES_KEY),
         guided_handoff=get_session_value(ctx, SESSION_GUIDED_HANDOFF_KEY),
         guided_flow_state=_normalize_guided_flow_state(get_session_value(ctx, SESSION_GUIDED_FLOW_STATE_KEY)),
+        guided_part_registry=_normalize_guided_part_registry(get_session_value(ctx, SESSION_GUIDED_PART_REGISTRY_KEY)),
         pending_reference_images=get_session_value(ctx, SESSION_PENDING_REFERENCE_IMAGES_KEY),
     )
 
@@ -392,6 +426,9 @@ async def get_session_capability_state_async(ctx: Context) -> SessionCapabilityS
         guided_flow_state=_normalize_guided_flow_state(
             await get_session_value_async(ctx, SESSION_GUIDED_FLOW_STATE_KEY)
         ),
+        guided_part_registry=_normalize_guided_part_registry(
+            await get_session_value_async(ctx, SESSION_GUIDED_PART_REGISTRY_KEY)
+        ),
         pending_reference_images=await get_session_value_async(ctx, SESSION_PENDING_REFERENCE_IMAGES_KEY),
     )
 
@@ -416,6 +453,7 @@ def set_session_capability_state(ctx: Context, state: SessionCapabilityState) ->
     set_session_value(ctx, SESSION_REFERENCE_IMAGES_KEY, state.reference_images)
     set_session_value(ctx, SESSION_GUIDED_HANDOFF_KEY, state.guided_handoff)
     set_session_value(ctx, SESSION_GUIDED_FLOW_STATE_KEY, state.guided_flow_state)
+    set_session_value(ctx, SESSION_GUIDED_PART_REGISTRY_KEY, state.guided_part_registry)
     set_session_value(ctx, SESSION_PENDING_REFERENCE_IMAGES_KEY, state.pending_reference_images)
 
 
@@ -439,6 +477,7 @@ async def set_session_capability_state_async(ctx: Context, state: SessionCapabil
     await set_session_value_async(ctx, SESSION_REFERENCE_IMAGES_KEY, state.reference_images)
     await set_session_value_async(ctx, SESSION_GUIDED_HANDOFF_KEY, state.guided_handoff)
     await set_session_value_async(ctx, SESSION_GUIDED_FLOW_STATE_KEY, state.guided_flow_state)
+    await set_session_value_async(ctx, SESSION_GUIDED_PART_REGISTRY_KEY, state.guided_part_registry)
     await set_session_value_async(ctx, SESSION_PENDING_REFERENCE_IMAGES_KEY, state.pending_reference_images)
 
 
@@ -638,6 +677,7 @@ def update_session_from_router_goal(
         reference_images=reference_images,
         guided_handoff=router_result.get("guided_handoff"),
         guided_flow_state=guided_flow_state,
+        guided_part_registry=current.guided_part_registry,
         pending_reference_images=pending_reference_images,
     )
     set_session_capability_state(ctx, state)
@@ -723,6 +763,7 @@ async def update_session_from_router_goal_async(
         reference_images=reference_images,
         guided_handoff=router_result.get("guided_handoff"),
         guided_flow_state=guided_flow_state,
+        guided_part_registry=current.guided_part_registry,
         pending_reference_images=pending_reference_images,
     )
     await set_session_capability_state_async(ctx, state)
@@ -756,6 +797,7 @@ def clear_session_goal_state(
         reference_images=None,
         guided_handoff=None,
         guided_flow_state=None,
+        guided_part_registry=None,
         pending_reference_images=None,
     )
     set_session_capability_state(ctx, state)
@@ -789,6 +831,7 @@ async def clear_session_goal_state_async(
         reference_images=None,
         guided_handoff=None,
         guided_flow_state=None,
+        guided_part_registry=None,
         pending_reference_images=None,
     )
     await set_session_capability_state_async(ctx, state)
@@ -879,6 +922,8 @@ def replace_session_reference_images(
         last_router_error=current.last_router_error,
         reference_images=reference_images or None,
         guided_handoff=current.guided_handoff,
+        guided_flow_state=current.guided_flow_state,
+        guided_part_registry=current.guided_part_registry,
         pending_reference_images=current.pending_reference_images,
     )
     set_session_capability_state(ctx, state)
@@ -909,6 +954,8 @@ async def replace_session_reference_images_async(
         last_router_error=current.last_router_error,
         reference_images=reference_images or None,
         guided_handoff=current.guided_handoff,
+        guided_flow_state=current.guided_flow_state,
+        guided_part_registry=current.guided_part_registry,
         pending_reference_images=current.pending_reference_images,
     )
     await set_session_capability_state_async(ctx, state)
@@ -954,6 +1001,7 @@ def record_router_execution_outcome(
         reference_images=current.reference_images,
         guided_handoff=current.guided_handoff,
         guided_flow_state=current.guided_flow_state,
+        guided_part_registry=current.guided_part_registry,
         pending_reference_images=current.pending_reference_images,
     )
 
@@ -983,6 +1031,7 @@ def replace_session_pending_reference_images(
         reference_images=current.reference_images,
         guided_handoff=current.guided_handoff,
         guided_flow_state=current.guided_flow_state,
+        guided_part_registry=current.guided_part_registry,
         pending_reference_images=pending_reference_images or None,
     )
     set_session_capability_state(ctx, state)
@@ -1014,6 +1063,7 @@ async def replace_session_pending_reference_images_async(
         reference_images=current.reference_images,
         guided_handoff=current.guided_handoff,
         guided_flow_state=current.guided_flow_state,
+        guided_part_registry=current.guided_part_registry,
         pending_reference_images=pending_reference_images or None,
     )
     await set_session_capability_state_async(ctx, state)
@@ -1093,6 +1143,7 @@ def record_guided_flow_spatial_check_completion(
         reference_images=current.reference_images,
         guided_handoff=current.guided_handoff,
         guided_flow_state=updated_flow_state,
+        guided_part_registry=current.guided_part_registry,
         pending_reference_images=current.pending_reference_images,
     )
     set_session_capability_state(ctx, state)
@@ -1132,6 +1183,7 @@ async def record_guided_flow_spatial_check_completion_async(
         reference_images=current.reference_images,
         guided_handoff=current.guided_handoff,
         guided_flow_state=updated_flow_state,
+        guided_part_registry=current.guided_part_registry,
         pending_reference_images=current.pending_reference_images,
     )
     await set_session_capability_state_async(ctx, state)
@@ -1220,6 +1272,7 @@ async def advance_guided_flow_from_iteration_async(
         reference_images=current.reference_images,
         guided_handoff=current.guided_handoff,
         guided_flow_state=updated_flow_state,
+        guided_part_registry=current.guided_part_registry,
         pending_reference_images=current.pending_reference_images,
     )
     await set_session_capability_state_async(ctx, state)

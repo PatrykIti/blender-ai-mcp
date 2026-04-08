@@ -73,6 +73,37 @@ def test_session_state_round_trips_guided_flow_state():
     assert restored.guided_flow_state["allowed_families"] == ["spatial_context", "reference_context"]
 
 
+def test_default_session_state_has_no_guided_part_registry():
+    ctx = FakeContext()
+
+    restored = get_session_capability_state(ctx)
+
+    assert restored.guided_part_registry is None
+
+
+def test_session_state_round_trips_guided_part_registry():
+    ctx = FakeContext()
+    state = SessionCapabilityState(
+        phase=SessionPhase.BUILD,
+        guided_part_registry=[
+            {
+                "object_name": "Squirrel_Body",
+                "role": "body_core",
+                "role_group": "primary_masses",
+                "status": "registered",
+                "created_in_step": "create_primary_masses",
+            }
+        ],
+    )
+
+    set_session_capability_state(ctx, state)
+    restored = get_session_capability_state(ctx)
+
+    assert restored.guided_part_registry is not None
+    assert restored.guided_part_registry[0]["object_name"] == "Squirrel_Body"
+    assert restored.guided_part_registry[0]["role"] == "body_core"
+
+
 def test_guided_flow_contract_accepts_allowed_families():
     contract = GuidedFlowStateContract(
         flow_id="guided_generic_flow",
@@ -309,3 +340,28 @@ def test_iteration_can_move_flow_into_inspect_validate():
     assert state.guided_flow_state is not None
     assert state.guided_flow_state["current_step"] == "inspect_validate"
     assert state.guided_flow_state["step_status"] == "needs_validation"
+
+
+def test_clear_session_goal_state_clears_guided_part_registry():
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            guided_part_registry=[
+                {
+                    "object_name": "Squirrel_Body",
+                    "role": "body_core",
+                    "role_group": "primary_masses",
+                    "status": "registered",
+                }
+            ],
+        ),
+    )
+
+    from server.adapters.mcp.session_capabilities import clear_session_goal_state
+
+    state = clear_session_goal_state(ctx)
+
+    assert state.guided_part_registry is None
