@@ -163,3 +163,38 @@ def test_building_flow_primary_roles_require_footprint_and_main_volume_before_ad
         "support_element",
         "detail_element",
     ]
+
+
+def test_building_flow_secondary_roles_advance_to_checkpoint_iterate():
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="rebuild a watchtower facade with roof and windows from front and side references",
+            guided_flow_state={
+                "flow_id": "guided_building_flow",
+                "domain_profile": "building",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["secondary_parts"],
+                "allowed_roles": ["facade_opening", "support_element", "detail_element"],
+                "completed_roles": ["footprint_mass", "main_volume"],
+                "missing_roles": ["facade_opening", "support_element", "detail_element"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    register_guided_part_role(ctx, object_name="Tower_WindowCuts", role="facade_opening")
+    state = register_guided_part_role(ctx, object_name="Tower_Buttresses", role="support_element")
+
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["current_step"] == "checkpoint_iterate"
+    assert state.guided_flow_state["required_role_groups"] == ["checkpoint_iterate"]

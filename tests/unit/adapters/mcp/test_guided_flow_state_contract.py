@@ -455,3 +455,41 @@ def test_primary_mass_role_registration_advances_creature_flow_after_required_ro
         "foreleg_pair",
         "hindleg_pair",
     ]
+
+
+def test_secondary_role_registration_advances_creature_flow_to_checkpoint_iterate():
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["secondary_parts", "attachment_alignment"],
+                "allowed_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass"],
+                "missing_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    register_guided_part_role(ctx, object_name="Squirrel_Ears", role="ear_pair")
+    register_guided_part_role(ctx, object_name="Squirrel_FrontLegs", role="foreleg_pair")
+    state = register_guided_part_role(ctx, object_name="Squirrel_HindLegs", role="hindleg_pair")
+
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["current_step"] == "checkpoint_iterate"
+    assert state.guided_flow_state["step_status"] == "needs_checkpoint"
+    assert state.guided_flow_state["required_role_groups"] == ["checkpoint_iterate"]
+    assert state.guided_flow_state["allowed_families"] == ["checkpoint_iterate", "reference_context"]

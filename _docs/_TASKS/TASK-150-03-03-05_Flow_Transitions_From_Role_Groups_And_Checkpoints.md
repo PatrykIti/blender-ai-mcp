@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-150-03-03](./TASK-150-03-03_Generic_Families_Part_Roles_And_Execution_Enforcement.md)
 **Depends On:** [TASK-150-03-03-02](./TASK-150-03-03-02_Guided_Part_Role_Registry_And_Session_Contracts.md), [TASK-150-03-03-04](./TASK-150-03-03-04_Router_Execution_Guards_And_Blocked_Response_Policy.md)
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -107,3 +107,11 @@ if current_step == "place_secondary_parts" and role_groups_complete(...):
 ## Changelog Impact
 
 - include in the parent TASK-150 execution-enforcement changelog entry
+
+## Completion Summary
+
+- spatial-context completion still unlocks `create_primary_masses`
+- required primary roles now unlock `place_secondary_parts`
+- required secondary roles now unlock `checkpoint_iterate`
+- existing iterate-loop outcomes continue to own the later
+  `inspect_validate` / `finish_or_stop` transitions

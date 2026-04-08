@@ -516,6 +516,9 @@ Current guided-flow behavior:
 - for overlays that use primary-mass role groups, registering the required
   primary roles can now move the flow from `create_primary_masses` into
   `place_secondary_parts`
+- overlays that use secondary-part role groups can likewise move from
+  `place_secondary_parts` into `checkpoint_iterate` when the required
+  secondary roles are complete
 
 ## Guided Flow Troubleshooting
 

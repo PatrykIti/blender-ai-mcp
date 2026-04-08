@@ -181,6 +181,11 @@ _GUIDED_PRIMARY_REQUIRED_ROLES: dict[str, tuple[str, ...]] = {
     "creature": ("body_core", "head_mass"),
     "building": ("footprint_mass", "main_volume"),
 }
+_GUIDED_SECONDARY_REQUIRED_ROLES: dict[str, tuple[str, ...]] = {
+    "generic": ("secondary_mass", "support_part"),
+    "creature": ("ear_pair", "foreleg_pair", "hindleg_pair"),
+    "building": ("facade_opening", "support_element"),
+}
 
 
 @dataclass(frozen=True)
@@ -455,6 +460,25 @@ def _maybe_advance_guided_flow_from_part_registry_dict(
             contract.next_actions = ["begin_secondary_parts"]
             contract.blocked_families = []
             contract.step_status = "ready"
+            contract.allowed_families = _build_allowed_families(
+                domain_profile=contract.domain_profile,
+                current_step=contract.current_step,
+            )
+            required_prompts, preferred_prompts = _build_required_prompt_bundle(
+                domain_profile=contract.domain_profile,
+                current_step=contract.current_step,
+            )
+            contract.required_prompts = required_prompts
+            contract.preferred_prompts = preferred_prompts
+    elif contract.current_step == "place_secondary_parts":
+        required_roles = _GUIDED_SECONDARY_REQUIRED_ROLES[contract.domain_profile]
+        if all(role in completed_roles for role in required_roles):
+            if "place_secondary_parts" not in contract.completed_steps:
+                contract.completed_steps.append("place_secondary_parts")
+            contract.current_step = "checkpoint_iterate"
+            contract.next_actions = ["run_checkpoint_iterate"]
+            contract.blocked_families = []
+            contract.step_status = "needs_checkpoint"
             contract.allowed_families = _build_allowed_families(
                 domain_profile=contract.domain_profile,
                 current_step=contract.current_step,

@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-150-03-03-05](./TASK-150-03-03-05_Flow_Transitions_From_Role_Groups_And_Checkpoints.md)
 **Depends On:** [TASK-150-03-03-05-01](./TASK-150-03-03-05-01_Primary_Mass_Role_Group_Completion_Rules.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -36,6 +36,16 @@ elif loop_disposition == "stop":
 
 - secondary-part completion can unlock checkpoint iteration
 - checkpoint outcomes still drive inspect/finish transitions
+
+## Completion Summary
+
+- registering the required secondary roles now advances:
+  - `place_secondary_parts` -> `checkpoint_iterate`
+- preserved the existing iterate-loop semantics for:
+  - `inspect_validate`
+  - `finish_or_stop`
+- added creature/building regression coverage for overlay-specific secondary
+  role completion
 
 ## Planned Unit Test Scenarios
 
