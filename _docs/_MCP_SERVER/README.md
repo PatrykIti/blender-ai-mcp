@@ -303,13 +303,14 @@ Search-first behavior now respects guided visibility:
   `search_tools(...)` before `call_tool(...)`, not speculative name guessing
 - read-only spatial graph tools such as `scene_scope_graph` and
   `scene_relation_graph`, plus the view-space artifact
-  `scene_view_diagnostics`, follow the same rule: they stay off bootstrap by
-  default and are meant for on-demand inspect/handoff/discovery use when the
-  current step genuinely needs richer spatial state
+  `scene_view_diagnostics`, are now directly visible on `llm-guided` as the
+  default spatial-orientation support layer instead of remaining hidden
+  bootstrap-only discovery targets
 
 Current guided utility prep path:
 
-- the direct bootstrap surface still stays at `8` visible tools
+- the direct bootstrap surface now includes the default spatial-orientation
+  support tools in addition to the core guided goal/discovery entry tools
 - bootstrap/planning search can now surface a small guided-safe utility set:
   - `scene_get_viewport`
   - `scene_clean_scene`

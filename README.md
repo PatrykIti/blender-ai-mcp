@@ -86,7 +86,7 @@ When a bounded modeling intent matches, the default public working layer should 
 - `scene_scope_graph` for one explicit read-only structural scope artifact with anchor/core/accessory role hints
 - `scene_relation_graph` for one explicit read-only pair-relation artifact derived from the current truth layer
 - `scene_view_diagnostics` for one explicit read-only view-space artifact with projected extent, frame coverage, centering, and visible/partial/occluded/off-frame verdicts for named cameras or `USER_PERSPECTIVE`
-- those spatial graph/view diagnostics tools stay off the bootstrap-visible guided surface by default; use them on demand from guided inspect flows or goal-aware handoff/discovery when the current correction step needs richer spatial state
+- those spatial graph/view diagnostics tools are now part of the default visible `llm-guided` support set so the model can keep one explicit 3D orientation layer available instead of inferring spatial state only from names, screenshots, or partial loop payloads
 
 Current guided bootstrap surface:
 
@@ -94,6 +94,9 @@ Current guided bootstrap surface:
 - `router_get_status`
 - `browse_workflows`
 - `reference_images`
+- `scene_scope_graph`
+- `scene_relation_graph`
+- `scene_view_diagnostics`
 - `search_tools`
 - `call_tool`
 - `list_prompts`

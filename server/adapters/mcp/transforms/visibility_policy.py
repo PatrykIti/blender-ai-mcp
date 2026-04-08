@@ -35,6 +35,10 @@ GUIDED_SPATIAL_GRAPH_TOOLS: tuple[str, ...] = (
 )
 
 GUIDED_VIEW_DIAGNOSTIC_TOOLS: tuple[str, ...] = ("scene_view_diagnostics",)
+GUIDED_SPATIAL_SUPPORT_TOOLS: tuple[str, ...] = (
+    *GUIDED_SPATIAL_GRAPH_TOOLS,
+    *GUIDED_VIEW_DIAGNOSTIC_TOOLS,
+)
 
 GUIDED_MANUAL_BUILD_HANDOFF_TOOLS: tuple[str, ...] = (
     "scene_create",
@@ -60,7 +64,7 @@ GUIDED_MANUAL_BUILD_SUPPORTING_TOOLS: tuple[str, ...] = (
     "reference_compare_stage_checkpoint",
     "reference_iterate_stage_checkpoint",
     "router_get_status",
-    "scene_view_diagnostics",
+    *GUIDED_SPATIAL_SUPPORT_TOOLS,
 )
 
 CREATURE_LOW_POLY_BLOCKOUT_DIRECT_TOOLS: tuple[str, ...] = (
@@ -96,9 +100,7 @@ CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS: tuple[str, ...] = (
     "reference_compare_stage_checkpoint",
     "reference_iterate_stage_checkpoint",
     "router_get_status",
-    "scene_scope_graph",
-    "scene_relation_graph",
-    "scene_view_diagnostics",
+    *GUIDED_SPATIAL_SUPPORT_TOOLS,
 )
 
 GUIDED_UTILITY_HANDOFF_TOOLS: tuple[str, ...] = (
@@ -437,6 +439,7 @@ def build_visibility_rules(
         {"enabled": False, "components": {"tool"}, "match_all": True},
         {"enabled": True, "components": {"tool"}, "names": set(GUIDED_ENTRY_TOOLS)},
         {"enabled": True, "components": {"tool"}, "names": set(GUIDED_DISCOVERY_TOOLS)},
+        {"enabled": True, "components": {"tool"}, "names": set(GUIDED_SPATIAL_SUPPORT_TOOLS)},
     ]
     if resolved_phase in {SessionPhase.BOOTSTRAP, SessionPhase.PLANNING}:
         rules.append(

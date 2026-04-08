@@ -10,6 +10,7 @@ from server.adapters.mcp.transforms.visibility_policy import (
     GUIDED_DISCOVERY_TOOLS,
     GUIDED_ENTRY_TOOLS,
     GUIDED_INSPECT_ESCAPE_HATCH_TOOLS,
+    GUIDED_SPATIAL_SUPPORT_TOOLS,
     GUIDED_VIEW_DIAGNOSTIC_TOOLS,
 )
 
@@ -28,14 +29,19 @@ class FakeAsyncContext:
         self.calls.append(("disable_components", kwargs))
 
 
-def test_guided_mode_bootstrap_visibility_is_tiny_and_entry_only():
-    """llm-guided bootstrap should expose only the guided entry capabilities."""
+def test_guided_mode_bootstrap_visibility_includes_default_spatial_support():
+    """llm-guided bootstrap should keep the small entry layer while exposing direct spatial helpers."""
 
     diagnostics = build_visibility_diagnostics("llm-guided", SessionPhase.BOOTSTRAP)
 
     assert diagnostics.visible_capability_ids == ("scene", "reference", "router", "workflow_catalog")
     assert diagnostics.visible_entry_capability_ids == ("reference", "router", "workflow_catalog")
     assert "scene" not in diagnostics.hidden_capability_ids
+    assert any(
+        rule.get("names") == set(GUIDED_SPATIAL_SUPPORT_TOOLS)
+        for rule in diagnostics.rules
+        if rule.get("components") == {"tool"}
+    )
 
 
 def test_guided_mode_build_phase_exposes_build_capabilities_plus_entry_tools():

@@ -53,6 +53,7 @@ CAPABILITY_MANIFEST = (
         get_capability_tags("scene"),
         build_capability_public_contracts("scene", SCENE_PUBLIC_TOOL_NAMES),
         "scene",
+        pinned_tools=("scene_scope_graph", "scene_relation_graph", "scene_view_diagnostics"),
     ),
     CapabilityManifestEntry(
         "mesh",

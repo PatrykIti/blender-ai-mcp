@@ -3,9 +3,9 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 9 tasks
+- **To Do:** 8 tasks
 - **In Progress:** 0 tasks
-- **Done:** 215
+- **Done:** 216
 - **Superseded:** 10
 
 ## 📐 Board Scope
@@ -64,7 +64,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 |----|-------|----------|-------|
 | [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) | **Expand External Vision Contract Profiles Across Qwen, Anthropic, OpenAI, and NVIDIA** | 🔴 High | Board-level follow-on after TASK-139 for extending the external `vision_contract_profile` architecture across additional multimodal families on the existing provider surface, with OpenRouter-first family routing/profile work and no new provider branches under this umbrella. |
 | [TASK-145](./TASK-145_Spatial_Repair_Planner_And_Sculpt_Handoff_Context.md) | **Spatial Repair Planner and Sculpt Handoff Context** | 🔴 High | Board-level umbrella for turning current scope/relation/view facts into stronger bounded repair-family selection and safer sculpt handoff context on the guided loop. |
-| [TASK-149](./TASK-149_Guided_Default_Spatial_Graph_And_View_Diagnostics_For_All_Goal_Oriented_Sessions.md) | **Guided Default Spatial Graph And View Diagnostics For All Goal-Oriented Sessions** | 🔴 High | Board-level follow-on after TASK-143 and TASK-144 to make spatial graph/view diagnostics standard guided support tools for every active goal-oriented session instead of optional on-demand helpers. |
 ---
 
 ## 🚧 In Progress
@@ -78,6 +77,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-149](./TASK-149_Guided_Default_Spatial_Graph_And_View_Diagnostics_For_All_Goal_Oriented_Sessions.md) | **Guided Default Spatial Graph And View Diagnostics For All Goal-Oriented Sessions** | 🔴 High | 2026-04-08 |
 | [TASK-147](./TASK-147_Guided_Build_Cleanup_Recovery_Hatch_And_Prompt_Alignment.md) | **Guided Build Cleanup Recovery Hatch And Prompt Alignment** | 🔴 High | 2026-04-07 |
 | [TASK-146](./TASK-146_Guided_Runtime_Guardrails_Vision_Profile_And_Prompting_Hardening.md) | **Guided Runtime Guardrails, Vision Profile, and Prompting Hardening** | 🔴 High | 2026-04-07 |
 | [TASK-144](./TASK-144_Camera_Aware_View_Graph_And_Visibility_Diagnostics.md) | **Camera-Aware View Graph and Visibility Diagnostics** | 🔴 High | 2026-04-07 |

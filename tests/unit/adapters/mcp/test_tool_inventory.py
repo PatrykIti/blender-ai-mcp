@@ -66,4 +66,12 @@ def test_pinned_public_tools_are_resolved_on_public_surface_names():
 
     pinned = get_pinned_public_tools()
 
-    assert pinned == ("reference_images", "router_set_goal", "router_get_status", "browse_workflows")
+    assert pinned == (
+        "scene_scope_graph",
+        "scene_relation_graph",
+        "scene_view_diagnostics",
+        "reference_images",
+        "router_set_goal",
+        "router_get_status",
+        "browse_workflows",
+    )

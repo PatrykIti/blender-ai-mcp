@@ -21,11 +21,11 @@ of improvising a new instruction stack from scratch.
 > On production-oriented surfaces, start from `router_set_goal(...)` first for
 > real build/workflow goals and treat the rest of the public surface in the
 > context of that active goal.
-> When the current correction step needs richer spatial state than the bounded
-> staged handoff exposes by default, use the separate read-only artifacts
+> Treat the separate read-only spatial artifacts
 > `scene_scope_graph(...)`, `scene_relation_graph(...)`, and
-> `scene_view_diagnostics(...)` instead of trying to infer anchor/pair
-> structure or framing/occlusion state from prose alone.
+> `scene_view_diagnostics(...)` as standard guided 3D orientation support tools.
+> Use them instead of trying to infer anchor/pair structure or
+> framing/occlusion state from prose alone.
 > For utility/capture requests such as viewport screenshots or scene cleanup,
 > do **not** force `router_set_goal(...)`; use the guided utility path instead:
 > `search_tools(...)` -> `call_tool(name="scene_get_viewport"| "scene_clean_scene", ...)`.
@@ -142,6 +142,7 @@ Interpretation:
     checkpoint capture -> `reference_compare_checkpoint(...)`, `reference_compare_current_view(...)`, `reference_compare_stage_checkpoint(...)`, or `reference_iterate_stage_checkpoint(...)` -> use bounded mismatch/correction hints for the next iteration
     only call staged compare/iterate when `guided_reference_readiness.compare_ready == true`
     prioritize `loop_disposition`, then `refinement_route`, then `refinement_handoff`, then `correction_candidates`, then `truth_followup`, then `action_hints`, then `correction_focus`, then `silhouette_analysis`
+    keep `scene_scope_graph(...)`, `scene_relation_graph(...)`, and `scene_view_diagnostics(...)` in the normal working set for 3D orientation during active guided goals
     if the next correction still depends on knowing the structural anchor or explicit pair relations, call `scene_scope_graph(...)` and/or `scene_relation_graph(...)` instead of overloading the checkpoint payload
     if the next correction still depends on whether the target is off-frame, poorly centered, or occluded from the active camera/viewport, call `scene_view_diagnostics(...)` instead of guessing from the screenshot alone
     if `reference_iterate_stage_checkpoint(...)` returns `loop_disposition="inspect_validate"`, stop free-form modeling and switch to inspect/measure/assert before continuing

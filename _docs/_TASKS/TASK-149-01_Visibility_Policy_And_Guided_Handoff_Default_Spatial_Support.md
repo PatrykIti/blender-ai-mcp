@@ -1,14 +1,20 @@
 # TASK-149-01: Visibility Policy And Guided Handoff Default Spatial Support
 
 **Parent:** [TASK-149](./TASK-149_Guided_Default_Spatial_Graph_And_View_Diagnostics_For_All_Goal_Oriented_Sessions.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
 
 Make `scene_scope_graph(...)`, `scene_relation_graph(...)`, and
-`scene_view_diagnostics(...)` directly visible on all active goal-oriented
-`llm-guided` phases and typed handoff contracts.
+`scene_view_diagnostics(...)` directly visible on `llm-guided`, including
+bootstrap and all active guided phases plus typed handoff contracts.
+
+**Completion Summary:** Completed on 2026-04-08. The `llm-guided` visibility
+policy now keeps the spatial graph/view helpers enabled as default guided
+support tools, and the scene capability pins them into the shaped direct tool
+surface so `tools/list` clients can actually see them instead of depending on
+phase-local hidden visibility only.
 
 ## Repository Touchpoints
 
@@ -20,11 +26,9 @@ Make `scene_scope_graph(...)`, `scene_relation_graph(...)`, and
 ## Acceptance Criteria
 
 - spatial graph/view helpers are part of the default visible guided support
-  set after `router_set_goal(...)`
+  set on `llm-guided`
 - creature blockout recipes no longer hide those helpers behind supporting-only
   metadata while leaving them unavailable in practice
-- the same tools remain off no-goal bootstrap unless a separate policy change
-  explicitly widens bootstrap
 - `router_get_status(...)` visibility diagnostics reflect the new behavior
 
 ## Docs To Update

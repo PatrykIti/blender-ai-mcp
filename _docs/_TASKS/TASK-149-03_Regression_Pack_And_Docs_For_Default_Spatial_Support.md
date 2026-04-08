@@ -2,13 +2,18 @@
 
 **Parent:** [TASK-149](./TASK-149_Guided_Default_Spatial_Graph_And_View_Diagnostics_For_All_Goal_Oriented_Sessions.md)
 **Depends On:** [TASK-149-01](./TASK-149-01_Visibility_Policy_And_Guided_Handoff_Default_Spatial_Support.md), [TASK-149-02](./TASK-149-02_Prompt_And_Loop_Adoption_Of_Default_Spatial_Support.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
 
 Protect the new default spatial-support behavior with regression tests and
 operator-facing docs.
+
+**Completion Summary:** Completed on 2026-04-08. Unit and transport-backed
+guided-surface regressions now prove that the default `llm-guided` surface
+lists the spatial graph/view helpers directly, while docs and board state were
+updated in the same branch.
 
 ## Repository Touchpoints
 

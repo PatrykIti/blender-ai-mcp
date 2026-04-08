@@ -113,8 +113,8 @@ def test_guided_surface_phase_baselines_stay_intentional():
     build_names, _ = _tool_names_and_payload_size(SessionPhase.BUILD)
     inspect_names, _ = _tool_names_and_payload_size(SessionPhase.INSPECT_VALIDATE)
 
-    assert len(bootstrap_names) == 6
-    assert len(build_names) == 121
+    assert len(bootstrap_names) == 9
+    assert len(build_names) == 123
     assert len(inspect_names) == 45
 
     assert bootstrap_names == {
@@ -122,7 +122,10 @@ def test_guided_surface_phase_baselines_stay_intentional():
         "reference_images",
         "router_get_status",
         "router_set_goal",
+        "scene_relation_graph",
+        "scene_scope_graph",
         "scene_clean_scene",
+        "scene_view_diagnostics",
         "scene_get_viewport",
     }
 
@@ -142,6 +145,8 @@ def test_guided_surface_phase_baselines_stay_intentional():
     assert "modeling_list_modifiers" not in build_names
     assert "mesh_extrude_region" in build_names
     assert "scene_clean_scene" in build_names
+    assert "scene_scope_graph" in build_names
+    assert "scene_relation_graph" in build_names
     assert "scene_view_diagnostics" in build_names
     assert "armature_create" not in build_names
     assert "sculpt_auto" not in build_names

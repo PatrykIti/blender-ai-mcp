@@ -151,8 +151,8 @@ def test_discovery_transform_enabled_by_default_for_llm_guided():
     assert build_discovery_transform(get_surface_profile("llm-guided")) is not None
 
 
-def test_default_llm_guided_surface_lists_only_pinned_and_synthetic_tools():
-    """Default llm-guided surface should expose only pinned entry tools plus search proxies."""
+def test_default_llm_guided_surface_lists_pinned_search_and_spatial_support_tools():
+    """Default llm-guided surface should expose pinned direct tools plus search proxies."""
 
     server = build_server("llm-guided")
 
@@ -167,6 +167,9 @@ def test_default_llm_guided_surface_lists_only_pinned_and_synthetic_tools():
         "router_set_goal",
         "router_get_status",
         "browse_workflows",
+        "scene_scope_graph",
+        "scene_relation_graph",
+        "scene_view_diagnostics",
         "list_prompts",
         "get_prompt",
         "search_tools",
@@ -257,22 +260,20 @@ def test_phase_search_results_follow_visibility_profile_changes():
     assert "modeling_create_primitive" not in inspect_names
 
 
-def test_inspect_phase_search_can_surface_on_demand_spatial_graph_tools():
-    server = _build_phase_search_server(SessionPhase.INSPECT_VALIDATE)
+def test_inspect_phase_list_tools_keeps_default_spatial_graph_support_visible():
+    server = _build_phase_visible_server(SessionPhase.INSPECT_VALIDATE)
 
     async def run():
-        return await server.call_tool(
-            "search_tools", {"query": "scope graph relation graph attachment support symmetry"}
-        )
+        tools = await server.list_tools()
+        return {tool.name for tool in tools}
 
-    payload = _decode_tool_result(asyncio.run(run()))
-    names = {tool["name"] for tool in payload}
+    names = asyncio.run(run())
 
     assert "scene_scope_graph" in names
     assert "scene_relation_graph" in names
 
 
-def test_build_phase_search_can_surface_view_diagnostics_without_bootstrap_exposure():
+def test_bootstrap_and_build_phase_both_surface_default_spatial_support_tools():
     build_phase_server = _build_phase_search_server(SessionPhase.BUILD)
     bootstrap_server = build_server("llm-guided")
 
@@ -284,11 +285,10 @@ def test_build_phase_search_can_surface_view_diagnostics_without_bootstrap_expos
         bootstrap_tools = await bootstrap_server.list_tools()
         return _decode_tool_result(build_result), {tool.name for tool in bootstrap_tools}
 
-    build_payload, bootstrap_names = asyncio.run(run())
-    build_names = {tool["name"] for tool in build_payload}
-
-    assert "scene_view_diagnostics" in build_names
-    assert "scene_view_diagnostics" not in bootstrap_names
+    _build_payload, bootstrap_names = asyncio.run(run())
+    assert "scene_scope_graph" in bootstrap_names
+    assert "scene_relation_graph" in bootstrap_names
+    assert "scene_view_diagnostics" in bootstrap_names
 
 
 def test_phase_shaped_list_tools_follow_visibility_without_discovery():
@@ -308,6 +308,9 @@ def test_phase_shaped_list_tools_follow_visibility_without_discovery():
     assert "macro_finish_form" in build_names
     assert "macro_relative_layout" in build_names
     assert "modeling_create_primitive" in build_names
+    assert "scene_scope_graph" in build_names
+    assert "scene_relation_graph" in build_names
+    assert "scene_view_diagnostics" in build_names
     assert "modeling_add_modifier" not in build_names
     assert "modeling_apply_modifier" not in build_names
     assert "modeling_list_modifiers" not in build_names
@@ -315,6 +318,9 @@ def test_phase_shaped_list_tools_follow_visibility_without_discovery():
     assert "sculpt_auto" not in build_names
     assert "extraction_render_angles" not in build_names
     assert "extraction_render_angles" in inspect_names
+    assert "scene_scope_graph" in inspect_names
+    assert "scene_relation_graph" in inspect_names
+    assert "scene_view_diagnostics" in inspect_names
     assert "modeling_create_primitive" not in inspect_names
     assert "armature_create" not in inspect_names
     assert "router_clear_goal" not in build_names
@@ -871,7 +877,7 @@ def test_search_first_rollout_reduces_visible_tool_count_and_payload_size():
     legacy_count, guided_count, legacy_bytes, guided_bytes = asyncio.run(run())
 
     assert legacy_count == 186
-    assert guided_count == 8
+    assert guided_count == 11
     assert guided_bytes < legacy_bytes
 
 

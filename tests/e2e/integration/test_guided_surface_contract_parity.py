@@ -81,6 +81,9 @@ def test_guided_surface_contract_parity_over_stdio(tmp_path: Path):
                 "reference_images",
                 "router_get_status",
                 "router_set_goal",
+                "scene_relation_graph",
+                "scene_scope_graph",
+                "scene_view_diagnostics",
                 "search_tools",
             ]
 
@@ -124,6 +127,9 @@ def test_guided_surface_contract_parity_over_stdio(tmp_path: Path):
             assert goal_result["guided_handoff"]["recipe_id"] == "low_poly_creature_blockout"
             assert goal_result["guided_reference_readiness"]["attached_reference_count"] == 1
             assert goal_result["guided_reference_readiness"]["pending_reference_count"] == 0
+
+            post_goal_tools = {tool.name for tool in await client.list_tools()}
+            assert {"scene_scope_graph", "scene_relation_graph", "scene_view_diagnostics"}.issubset(post_goal_tools)
 
             status_result = result_payload(await client.call_tool("router_get_status", {}))
             assert status_result["current_phase"] == "build"

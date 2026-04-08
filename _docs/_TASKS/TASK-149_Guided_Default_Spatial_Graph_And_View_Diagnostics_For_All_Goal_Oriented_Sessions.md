@@ -1,6 +1,6 @@
 # TASK-149: Guided Default Spatial Graph And View Diagnostics For All Goal-Oriented Sessions
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** Guided Runtime / Spatial Reasoning Reliability
 **Estimated Effort:** Large
@@ -11,18 +11,25 @@
 
 Promote `scene_scope_graph(...)`, `scene_relation_graph(...)`, and
 `scene_view_diagnostics(...)` from "optional on-demand helpers" to default
-guided support tools for every active goal-oriented `llm-guided` session after
-`router_set_goal(...)`.
+guided support tools on `llm-guided`, so the model always has direct access to
+an explicit spatial-orientation layer while steering Blender.
 
 The target outcome is simple:
 
-- once a real modeling goal is active, the LLM should always be able to reach
-  explicit spatial-state helpers directly instead of reasoning blindly from
-  names, screenshots, or partial truth payloads
+- the LLM should not have to guess whether the session exposes structural
+  scope, pair relations, or view-space diagnostics
+- the model should always be able to reach explicit spatial-state helpers
+  directly instead of reasoning blindly from names, screenshots, or partial
+  truth payloads
 
-This umbrella is **not** about widening bootstrap before a goal exists.
-It is about making spatial orientation a standard part of every goal-aware
-guided session.
+**Completion Summary:** Completed on 2026-04-08. `llm-guided` now treats
+`scene_scope_graph(...)`, `scene_relation_graph(...)`, and
+`scene_view_diagnostics(...)` as standard directly visible spatial-support
+tools instead of keeping them behind optional on-demand discovery. The scene
+capability now pins those tools into the shaped search-first surface, the
+visibility policy keeps them enabled across guided phases and creature
+handoffs, and docs/tests were updated so the public contract matches the real
+runtime behavior.
 
 ## Business Problem
 
@@ -61,7 +68,7 @@ The current squirrel regression is the concrete symptom:
   correction quality
 
 For a goal-oriented 3D guided system, this is the wrong default.
-Spatial orientation is not an optional luxury once the goal is active.
+Spatial orientation is not an optional luxury.
 
 ## Current Runtime Baseline
 
@@ -89,7 +96,7 @@ This umbrella should close that mismatch.
 
 If this umbrella is done correctly, the repo gains:
 
-- one consistent rule: active guided goals always have direct access to
+- one consistent rule: `llm-guided` always keeps direct access to
   spatial-state helpers
 - stronger 3D orientation for LLM-driven modeling without reopening the full
   legacy tool catalog
@@ -105,7 +112,7 @@ If this umbrella is done correctly, the repo gains:
 This umbrella covers:
 
 - visibility-policy changes so the spatial graph/view helpers are directly
-  visible on all active goal-oriented `llm-guided` phases
+  visible on `llm-guided`, including bootstrap and all active guided phases
 - guided handoff changes so these tools are part of the default continuation
   contract, not optional side knowledge
 - prompt and operator guidance changes so the model uses them as normal
@@ -115,25 +122,23 @@ This umbrella covers:
 
 This umbrella does **not** cover:
 
-- widening no-goal bootstrap beyond the current small entry surface
 - making these tools mandatory payload fields inside every compare/iterate
   result
 - replacing truth-layer measure/assert semantics with graph/view summaries
 
 ## Success Criteria
 
-- after `router_set_goal(...)`, the active `llm-guided` session directly
-  exposes:
+- the default visible `llm-guided` session directly exposes:
   - `scene_scope_graph`
   - `scene_relation_graph`
   - `scene_view_diagnostics`
-- this holds for all goal-oriented guided flows, including:
+- this remains true for all goal-oriented guided flows, including:
   - workflow-ready
   - `no_match` / `guided_manual_build`
   - creature blockout recipes
   - inspect/validate follow-up phases
 - prompt assets and MCP docs present these tools as standard spatial
-  orientation helpers once a goal is active
+  orientation helpers, not hidden fallback aids
 - direct visibility and search/call behavior stay aligned; the tools are not
   "mentioned in guidance" but hidden in the real session
 - regression coverage proves the behavior end to end on the guided surface
@@ -182,6 +187,6 @@ This umbrella does **not** cover:
 
 ## Status / Board Update
 
-- promoted as a new board-level follow-on because the issue is product-facing:
-  existing spatial tools are shipped, but current guided defaults still
-  underuse them in active goal sessions
+- completed directly in the same branch as the runtime/docs/test changes
+- closed as a board-level follow-on after TASK-143/TASK-144 because the
+  original spatial artifacts now have a default guided delivery path

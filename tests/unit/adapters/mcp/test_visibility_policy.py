@@ -18,6 +18,7 @@ from server.adapters.mcp.transforms.visibility_policy import (
     GUIDED_ENTRY_TOOLS,
     GUIDED_INSPECT_ESCAPE_HATCH_TOOLS,
     GUIDED_SPATIAL_GRAPH_TOOLS,
+    GUIDED_SPATIAL_SUPPORT_TOOLS,
     GUIDED_UTILITY_HANDOFF_TOOLS,
     GUIDED_UTILITY_SUPPORTING_TOOLS,
     GUIDED_UTILITY_TOOLS,
@@ -97,11 +98,12 @@ def test_visibility_rules_are_profile_and_phase_deterministic():
     assert bootstrap_rules[0]["match_all"] is True
     assert bootstrap_rules[1]["names"] == set(GUIDED_ENTRY_TOOLS)
     assert bootstrap_rules[2]["names"] == set(GUIDED_DISCOVERY_TOOLS)
-    assert bootstrap_rules[3]["names"] == set(GUIDED_UTILITY_TOOLS)
-    assert bootstrap_rules[4]["names"] == {"list_prompts", "get_prompt"}
-    assert bootstrap_rules[5]["components"] == {"prompt"}
-    assert set(GUIDED_SPATIAL_GRAPH_TOOLS).isdisjoint(bootstrap_rules[1]["names"])
-    assert set(GUIDED_VIEW_DIAGNOSTIC_TOOLS).isdisjoint(bootstrap_rules[1]["names"])
+    assert bootstrap_rules[3]["names"] == set(GUIDED_SPATIAL_SUPPORT_TOOLS)
+    assert bootstrap_rules[4]["names"] == set(GUIDED_UTILITY_TOOLS)
+    assert bootstrap_rules[5]["names"] == {"list_prompts", "get_prompt"}
+    assert bootstrap_rules[6]["components"] == {"prompt"}
+    assert set(GUIDED_SPATIAL_GRAPH_TOOLS).issubset(bootstrap_rules[3]["names"])
+    assert set(GUIDED_VIEW_DIAGNOSTIC_TOOLS).issubset(bootstrap_rules[3]["names"])
     assert build_rules[-1]["names"] == set(GUIDED_BUILD_ESCAPE_HATCH_TOOLS)
     assert set(GUIDED_VIEW_DIAGNOSTIC_TOOLS).issubset(build_rules[-1]["names"])
     assert "scene_clean_scene" in build_rules[-1]["names"]
@@ -186,6 +188,6 @@ def test_llm_guided_surface_materializes_visibility_transforms():
     manual_transforms = materialize_transforms(get_surface_profile("legacy-manual"))
     legacy_transforms = materialize_transforms(get_surface_profile("legacy-flat"))
 
-    assert len(guided_transforms) == 9
+    assert len(guided_transforms) == 10
     assert len(manual_transforms) == 1
     assert len(legacy_transforms) == 1

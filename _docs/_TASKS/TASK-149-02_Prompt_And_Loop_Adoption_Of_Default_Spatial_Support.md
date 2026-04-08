@@ -1,13 +1,18 @@
 # TASK-149-02: Prompt And Loop Adoption Of Default Spatial Support
 
 **Parent:** [TASK-149](./TASK-149_Guided_Default_Spatial_Graph_And_View_Diagnostics_For_All_Goal_Oriented_Sessions.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
 
 Align guided prompts and loop guidance with the new rule that active
 goal-oriented sessions always have direct spatial support tools available.
+
+**Completion Summary:** Completed on 2026-04-08. Guided docs now present
+`scene_scope_graph(...)`, `scene_relation_graph(...)`, and
+`scene_view_diagnostics(...)` as normal spatial-orientation helpers on
+`llm-guided` instead of framing them as hidden fallback aids.
 
 ## Repository Touchpoints
 
