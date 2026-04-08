@@ -165,3 +165,51 @@ def test_route_tool_call_report_bypasses_router_for_scene_utility_tools(monkeypa
     assert report.router_applied is False
     assert report.router_disposition == "bypassed"
     assert report.steps[0].result == "Scene cleaned"
+
+
+def test_route_tool_call_report_exposes_guided_family_and_role_for_direct_call(monkeypatch):
+    """Direct guided calls should still resolve family and role metadata in the execution context."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    report = route_tool_call_report(
+        tool_name="modeling_create_primitive",
+        params={"primitive_type": "Sphere", "name": "Squirrel_Body", "guided_role": "body_core"},
+        direct_executor=lambda: "Created Sphere named 'Squirrel_Body'",
+    )
+
+    assert report.context.guided_tool_family == "primary_masses"
+    assert report.context.guided_role == "body_core"
+    assert report.context.guided_role_group is None
+
+
+def test_route_tool_call_report_uses_final_corrected_tool_for_guided_family_metadata(monkeypatch):
+    """Corrected guided calls should resolve family metadata from the final effective tool call."""
+
+    class Router:
+        def process_llm_tool_call(self, tool_name, params, prompt):
+            return [
+                {
+                    "tool": "macro_finish_form",
+                    "params": {"target_object": "Housing"},
+                }
+            ]
+
+    class Dispatcher:
+        def execute(self, tool_name, params):
+            assert tool_name == "macro_finish_form"
+            return "Finished Housing"
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: True)
+    monkeypatch.setattr("server.adapters.mcp.router_helper.get_router", lambda: Router())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.get_dispatcher", lambda: Dispatcher())
+
+    report = route_tool_call_report(
+        tool_name="modeling_create_primitive",
+        params={"primitive_type": "Cube", "name": "Housing"},
+        direct_executor=lambda: "should not run",
+    )
+
+    assert report.router_applied is True
+    assert report.context.guided_tool_family == "finish"
+    assert report.steps[-1].tool_name == "macro_finish_form"

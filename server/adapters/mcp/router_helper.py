@@ -16,8 +16,9 @@ from server.adapters.mcp.contracts.correction_audit import (
 from server.adapters.mcp.dispatcher import get_dispatcher
 from server.adapters.mcp.execution_context import MCPExecutionContext
 from server.adapters.mcp.execution_report import ExecutionStep, MCPExecutionReport
-from server.adapters.mcp.session_capabilities import record_router_execution_outcome
+from server.adapters.mcp.session_capabilities import get_session_capability_state, record_router_execution_outcome
 from server.adapters.mcp.session_state import set_session_value
+from server.adapters.mcp.transforms.visibility_policy import resolve_guided_tool_family
 from server.infrastructure.config import get_config
 from server.infrastructure.di import get_postcondition_registry, get_router, get_scene_handler, is_router_enabled
 from server.router.domain.entities.correction_policy import CorrectionCategory
@@ -168,6 +169,55 @@ def _record_router_execution_report(report: MCPExecutionReport) -> None:
             return
 
 
+def _get_active_session_state():
+    """Best-effort current MCP session state lookup for execution-policy metadata."""
+
+    try:
+        from fastmcp.server.context import _current_context  # type: ignore
+
+        current_ctx = _current_context.get(None)
+    except Exception:
+        current_ctx = None
+
+    if current_ctx is None:
+        return None
+
+    try:
+        return get_session_capability_state(current_ctx)
+    except Exception:
+        return None
+
+
+def _resolve_guided_role_context(tool_name: str, params: Dict[str, Any]) -> tuple[str | None, str | None]:
+    """Resolve guided role metadata from explicit params first, then session registry."""
+
+    explicit_role = params.get("guided_role")
+    explicit_role_group = params.get("role_group")
+    if isinstance(explicit_role, str) and explicit_role.strip():
+        return explicit_role.strip(), explicit_role_group.strip() if isinstance(explicit_role_group, str) else None
+
+    session = _get_active_session_state()
+    if session is None or not session.guided_part_registry:
+        return None, None
+
+    object_name = params.get("name") or params.get("object_name")
+    if not isinstance(object_name, str) or not object_name.strip():
+        return None, None
+
+    for item in session.guided_part_registry:
+        if not isinstance(item, dict):
+            continue
+        if item.get("object_name") != object_name:
+            continue
+        role = item.get("role")
+        role_group = item.get("role_group")
+        return (
+            role.strip() if isinstance(role, str) and role.strip() else None,
+            role_group.strip() if isinstance(role_group, str) and role_group.strip() else None,
+        )
+    return None, None
+
+
 def _apply_postcondition_verification(
     audit_events: tuple[CorrectionAuditEventContract, ...],
 ) -> tuple[tuple[CorrectionAuditEventContract, ...], str]:
@@ -255,6 +305,11 @@ def route_tool_call_report(
     context = MCPExecutionContext(tool_name=tool_name, params=params, prompt=prompt)
     surface_profile = _get_active_surface_profile()
     context.surface_profile = surface_profile
+    session_state = _get_active_session_state()
+    if session_state is not None:
+        context.session_phase = session_state.phase.value
+    context.guided_tool_family = resolve_guided_tool_family(tool_name)
+    context.guided_role, context.guided_role_group = _resolve_guided_role_context(tool_name, params)
 
     if not is_router_enabled():
         result = direct_executor()
@@ -314,6 +369,15 @@ def route_tool_call_report(
 
     try:
         corrected_tools = router.process_llm_tool_call(tool_name, params, prompt)
+        if corrected_tools:
+            final_tool = corrected_tools[-1]
+            final_tool_name = final_tool["tool"]
+            final_tool_params = final_tool["params"]
+            context.guided_tool_family = resolve_guided_tool_family(final_tool_name)
+            context.guided_role, context.guided_role_group = _resolve_guided_role_context(
+                final_tool_name,
+                final_tool_params,
+            )
 
         if len(corrected_tools) == 1 and corrected_tools[0]["tool"] == tool_name:
             if corrected_tools[0]["params"] == params:

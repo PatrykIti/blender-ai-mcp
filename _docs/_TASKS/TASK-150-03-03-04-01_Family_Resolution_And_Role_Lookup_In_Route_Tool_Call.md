@@ -1,7 +1,7 @@
 # TASK-150-03-03-04-01: Family Resolution And Role Lookup In Route Tool Call
 
 **Parent:** [TASK-150-03-03-04](./TASK-150-03-03-04_Router_Execution_Guards_And_Blocked_Response_Policy.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -30,6 +30,15 @@ policy = evaluate_guided_execution_policy(family, role_context, flow_state)
 
 - the router path can resolve family + role before executing the final tool
 - both direct and corrected calls use the same policy evaluation point
+
+## Completion Summary
+
+- extended `MCPExecutionContext` with guided family/role metadata
+- taught `route_tool_call_report(...)` to resolve:
+  - guided family from the active effective tool
+  - guided role / role_group from explicit params or session registry
+- ensured corrected router sequences use the final effective tool when filling
+  guided family metadata
 
 ## Planned Unit Test Scenarios
 

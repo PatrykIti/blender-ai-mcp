@@ -371,6 +371,8 @@ def _modeling_create_primitive_impl(
             "location": location_value,
             "rotation": rotation_value,
             "name": name_value,
+            "guided_role": guided_role,
+            "role_group": role_group,
         },
         direct_executor=execute,
     )
@@ -464,7 +466,14 @@ def _modeling_transform_object_impl(
 
     result = route_tool_call(
         tool_name="modeling_transform_object",
-        params={"name": name, "location": location, "rotation": rotation, "scale": scale},
+        params={
+            "name": name,
+            "location": location,
+            "rotation": rotation,
+            "scale": scale,
+            "guided_role": guided_role,
+            "role_group": role_group,
+        },
         direct_executor=execute,
     )
     if guided_role and isinstance(result, str) and result.startswith("Transformed object "):
