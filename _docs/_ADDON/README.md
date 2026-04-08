@@ -49,6 +49,28 @@ The file is newline-delimited JSON and records:
 This trace is meant to answer one practical question after a sudden Blender
 exit: which RPC command was the last one that actually started running?
 
+## RPC Listener Self-Healing
+
+The addon-side RPC listener now has a lightweight watchdog.
+
+- the listener still starts during addon `register()`
+- a Blender timer now periodically checks whether the RPC listener thread and
+  socket are still healthy
+- if the listener is no longer healthy, the addon performs a best-effort
+  `stop()` + `start()` cycle for the RPC server
+- the watchdog is stopped during addon `unregister()`
+
+Current tuning:
+
+- environment variable:
+  `BLENDER_AI_MCP_RPC_WATCHDOG_INTERVAL_SECONDS`
+- default:
+  `5.0`
+
+This watchdog is intentionally scoped to the addon's RPC listener only.
+The addon does not maintain its own outbound connection to the MCP server, so
+there is no separate "reconnect to MCP" loop on the Blender side.
+
 ## 🛠 Structure (Clean Architecture)
 
 The Addon is layered to separate Blender logic from networking mechanisms.

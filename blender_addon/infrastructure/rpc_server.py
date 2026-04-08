@@ -24,6 +24,7 @@ except ImportError:
 HOST = "0.0.0.0"  # Listen on all interfaces within container
 PORT = 8765
 DEFAULT_EXECUTION_TIMEOUT_SECONDS = float(os.environ.get("ADDON_EXECUTION_TIMEOUT_SECONDS", "30.0"))
+DEFAULT_WATCHDOG_INTERVAL_SECONDS = float(os.environ.get("BLENDER_AI_MCP_RPC_WATCHDOG_INTERVAL_SECONDS", "5.0"))
 RPC_TRACE_DIR = Path(os.environ.get("BLENDER_AI_MCP_TRACE_DIR", Path(tempfile.gettempdir()) / "blender-ai-mcp"))
 
 # If enabled, the addon will push an explicit undo step after each mutating RPC command.
@@ -217,6 +218,9 @@ class BlenderRpcServer:
         self.running = False
         self.command_registry = {}
         self.background_command_registry = {}
+        self.watchdog_interval_seconds = DEFAULT_WATCHDOG_INTERVAL_SECONDS
+        self._watchdog_callback: Callable[[], float | None] | None = None
+        self._watchdog_enabled = False
 
         # Queue for results from main thread
         self.result_queues = {}  # request_id -> Queue
@@ -289,6 +293,13 @@ class BlenderRpcServer:
             self.server_thread.start()
         except Exception as e:
             print(f"[BlenderRpc] Failed to start server: {e}")
+            if self.server_socket:
+                try:
+                    self.server_socket.close()
+                except Exception:
+                    pass
+            self.server_socket = None
+            self.server_thread = None
             self.running = False
 
     def stop(self):
@@ -298,9 +309,111 @@ class BlenderRpcServer:
                 self.server_socket.close()
             except Exception:
                 pass
+            self.server_socket = None
+        if (
+            self.server_thread
+            and self.server_thread.is_alive()
+            and threading.current_thread() is not self.server_thread
+        ):
+            try:
+                self.server_thread.join(timeout=0.2)
+            except Exception:
+                pass
+        self.server_thread = None
         with self._jobs_lock:
             self.background_jobs.clear()
         print("[BlenderRpc] Server stopped")
+
+    def is_listener_healthy(self) -> bool:
+        """Return True when the RPC listener thread and socket are still usable."""
+
+        if not self.running:
+            return False
+        if self.server_socket is None:
+            return False
+        try:
+            if self.server_socket.fileno() < 0:
+                return False
+        except Exception:
+            return False
+        return bool(self.server_thread is not None and self.server_thread.is_alive())
+
+    def ensure_running(self) -> bool:
+        """Best-effort self-heal for the addon-side RPC listener."""
+
+        if self.is_listener_healthy():
+            return True
+
+        self._record_trace_event(
+            "server_watchdog_restart",
+            cmd=None,
+            request_id=None,
+            detail={
+                "running": self.running,
+                "has_socket": self.server_socket is not None,
+                "thread_alive": self.server_thread.is_alive() if self.server_thread is not None else False,
+            },
+        )
+        self.stop()
+        self.start()
+        return self.is_listener_healthy()
+
+    def start_watchdog(self, interval_seconds: float | None = None) -> bool:
+        """Register a Blender timer that keeps the addon RPC listener alive."""
+
+        if not bpy:
+            return False
+        timers = getattr(getattr(bpy, "app", None), "timers", None)
+        if timers is None or not hasattr(timers, "register"):
+            return False
+
+        self.watchdog_interval_seconds = (
+            float(interval_seconds) if isinstance(interval_seconds, (int, float)) else self.watchdog_interval_seconds
+        )
+        if self.watchdog_interval_seconds <= 0:
+            return False
+        if self._watchdog_enabled:
+            return True
+
+        def _watchdog_tick() -> float | None:
+            if not self._watchdog_enabled:
+                return None
+            try:
+                self.ensure_running()
+            except Exception as exc:
+                self._record_trace_event(
+                    "server_watchdog_error",
+                    cmd=None,
+                    request_id=None,
+                    detail={"error": str(exc)},
+                )
+            return self.watchdog_interval_seconds if self._watchdog_enabled else None
+
+        self._watchdog_callback = _watchdog_tick
+        self._watchdog_enabled = True
+        timers.register(_watchdog_tick, first_interval=self.watchdog_interval_seconds)
+        return True
+
+    def stop_watchdog(self) -> None:
+        """Unregister the Blender timer used for addon RPC self-healing."""
+
+        self._watchdog_enabled = False
+        if not bpy or self._watchdog_callback is None:
+            return
+        timers = getattr(getattr(bpy, "app", None), "timers", None)
+        if timers is None:
+            return
+        unregister = getattr(timers, "unregister", None)
+        is_registered = getattr(timers, "is_registered", None)
+        if callable(unregister):
+            try:
+                if callable(is_registered):
+                    if is_registered(self._watchdog_callback):
+                        unregister(self._watchdog_callback)
+                else:
+                    unregister(self._watchdog_callback)
+            except Exception:
+                pass
 
     def _accept_loop(self):
         while self.running:

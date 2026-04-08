@@ -63,6 +63,42 @@ def test_run_background_job_error_paths_and_ping(monkeypatch):
     assert response["status"] == "ok"
 
 
+def test_rpc_server_watchdog_restarts_unhealthy_listener(monkeypatch):
+    server = BlenderRpcServer()
+    server.running = True
+    server.server_socket = MagicMock()
+    server.server_socket.fileno.return_value = -1
+    server.server_thread = None
+
+    restarted = []
+
+    monkeypatch.setattr(server, "stop", lambda: restarted.append("stop"))
+    monkeypatch.setattr(server, "start", lambda: restarted.append("start"))
+
+    assert server.ensure_running() is False
+    assert restarted == ["stop", "start"]
+
+
+def test_rpc_server_watchdog_register_and_stop(monkeypatch):
+    registered = []
+    unregistered = []
+    fake_timers = SimpleNamespace(
+        register=lambda fn, first_interval=0.0: registered.append((fn, first_interval)),
+        unregister=lambda fn: unregistered.append(fn),
+        is_registered=lambda fn: True,
+    )
+    monkeypatch.setattr(rpc_module, "bpy", SimpleNamespace(app=SimpleNamespace(timers=fake_timers)))
+
+    server = BlenderRpcServer()
+
+    assert server.start_watchdog(interval_seconds=1.5) is True
+    assert registered
+    assert registered[0][1] == 1.5
+
+    server.stop_watchdog()
+    assert unregistered == [registered[0][0]]
+
+
 def test_process_request_unknown_command_and_background_errors(monkeypatch):
     server = BlenderRpcServer()
     monkeypatch.setattr(rpc_module, "bpy", None)

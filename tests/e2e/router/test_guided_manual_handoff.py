@@ -13,6 +13,7 @@ from server.adapters.mcp.sampling.result_types import (
     AssistantRunResult,
     RepairSuggestionContract,
 )
+from server.adapters.mcp.transforms.visibility_policy import GUIDED_SPATIAL_CONTEXT_DIRECT_TOOLS
 from server.application.tool_handlers.router_handler import RouterToolHandler
 
 
@@ -152,11 +153,7 @@ def test_router_area_reference_guided_creature_goal_persists_creature_recipe_han
     assert status.guided_flow_state.domain_profile == "creature"
     assert status.guided_flow_state.current_step == "establish_spatial_context"
     assert any(
-        rule.get("names")
-        == {
-            *result.guided_handoff.direct_tools,
-            *result.guided_handoff.supporting_tools,
-        }
+        rule.get("names") == set(GUIDED_SPATIAL_CONTEXT_DIRECT_TOOLS)
         for rule in status.visibility_rules or []
         if rule.get("components") == {"tool"}
     )

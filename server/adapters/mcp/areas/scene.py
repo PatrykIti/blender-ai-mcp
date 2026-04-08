@@ -50,7 +50,6 @@ from server.adapters.mcp.sampling.result_types import to_inspection_assistant_co
 from server.adapters.mcp.session_capabilities import (
     get_session_capability_state_async,
     record_guided_flow_spatial_check_completion,
-    refresh_visibility_for_session_state,
 )
 from server.adapters.mcp.tasks.candidacy import get_tool_task_config
 from server.adapters.mcp.tasks.task_bridge import (
@@ -2523,8 +2522,7 @@ def scene_scope_graph(
                 ),
                 message="Scope graph derived from explicit targets plus deterministic role/anchor heuristics.",
             )
-            updated_state = record_guided_flow_spatial_check_completion(ctx, tool_name="scene_scope_graph")
-            refresh_visibility_for_session_state(ctx, updated_state)
+            record_guided_flow_spatial_check_completion(ctx, tool_name="scene_scope_graph")
             return SceneScopeGraphResponseContract(payload=payload)
         except RuntimeError as e:
             return SceneScopeGraphResponseContract(error=str(e))
@@ -2578,8 +2576,7 @@ def scene_relation_graph(
                     include_truth_payloads=False,
                 )
             )
-            updated_state = record_guided_flow_spatial_check_completion(ctx, tool_name="scene_relation_graph")
-            refresh_visibility_for_session_state(ctx, updated_state)
+            record_guided_flow_spatial_check_completion(ctx, tool_name="scene_relation_graph")
             return SceneRelationGraphResponseContract(payload=payload)
         except RuntimeError as e:
             return SceneRelationGraphResponseContract(error=str(e))
@@ -2690,8 +2687,7 @@ def scene_view_diagnostics(
                     "View diagnostics report projection/framing/occlusion state for the requested scope only; use measure/assert tools for truth-space verification."
                 ),
             )
-            updated_state = record_guided_flow_spatial_check_completion(ctx, tool_name="scene_view_diagnostics")
-            refresh_visibility_for_session_state(ctx, updated_state)
+            record_guided_flow_spatial_check_completion(ctx, tool_name="scene_view_diagnostics")
             return SceneViewDiagnosticsResponseContract(payload=payload)
         except (RuntimeError, ValueError) as e:
             return SceneViewDiagnosticsResponseContract(error=str(e))

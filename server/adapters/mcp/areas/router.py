@@ -410,6 +410,7 @@ async def router_get_status(ctx: Context) -> RouterStatusContract:
     session = await get_session_capability_state_async(ctx)
     surface_profile = session.surface_profile or get_config().MCP_SURFACE_PROFILE
     contract_line = session.contract_version or _get_runtime_contract_line(ctx)
+    await apply_visibility_for_session_state(ctx, session)
     diagnostics = build_visibility_diagnostics(
         surface_profile,
         session.phase,

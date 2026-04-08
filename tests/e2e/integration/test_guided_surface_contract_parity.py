@@ -41,6 +41,73 @@ _PATCHED_GUIDED_CONTRACT_SERVER = textwrap.dedent(
         def clean_scene(self, keep_lights_and_cameras):
             return "Scene cleaned."
 
+        def get_scope_graph(self, target_object=None, target_objects=None, collection_name=None):
+            names = [name for name in [target_object, *(target_objects or [])] if name]
+            primary = target_object or (names[0] if names else None)
+            return {
+                "scope_kind": "object_set",
+                "primary_target": primary,
+                "object_names": names,
+                "object_count": len(names),
+                "object_roles": [],
+            }
+
+        def get_relation_graph(
+            self,
+            target_object=None,
+            target_objects=None,
+            collection_name=None,
+            goal_hint=None,
+            include_truth_payloads=False,
+        ):
+            names = [name for name in [target_object, *(target_objects or [])] if name]
+            primary = target_object or (names[0] if names else None)
+            return {
+                "scope": {
+                    "scope_kind": "object_set",
+                    "primary_target": primary,
+                    "object_names": names,
+                    "object_count": len(names),
+                    "object_roles": [],
+                },
+                "pairs": [],
+                "summary": {"pair_count": 0},
+            }
+
+        def get_view_diagnostics(
+            self,
+            target_object=None,
+            target_objects=None,
+            camera_name=None,
+            focus_target=None,
+            view_name=None,
+            orbit_horizontal=0.0,
+            orbit_vertical=0.0,
+            zoom_factor=None,
+            persist_view=False,
+        ):
+            names = [name for name in [target_object, *(target_objects or [])] if name]
+            return {
+                "view_query": {
+                    "requested_view_source": "user_perspective",
+                    "resolved_view_source": "user_perspective",
+                    "analysis_backend": "mirrored_user_perspective",
+                    "available": True,
+                    "state_restored": True,
+                },
+                "summary": {
+                    "target_count": len(names),
+                    "visible_count": len(names),
+                    "partially_visible_count": 0,
+                    "fully_occluded_count": 0,
+                    "outside_frame_count": 0,
+                    "unavailable_count": 0,
+                    "centered_target_count": len(names),
+                    "framing_issue_count": 0,
+                },
+                "targets": [],
+            }
+
 
     class CollectionHandler:
         def manage_collection(self, action, collection_name, new_name=None, parent_name=None, object_name=None):
@@ -127,14 +194,16 @@ def test_guided_surface_contract_parity_over_stdio(tmp_path: Path):
             assert goal_result["guided_handoff"]["recipe_id"] == "low_poly_creature_blockout"
             assert goal_result["guided_reference_readiness"]["attached_reference_count"] == 1
             assert goal_result["guided_reference_readiness"]["pending_reference_count"] == 0
+            assert goal_result["guided_flow_state"]["current_step"] == "establish_spatial_context"
 
             post_goal_tools = {tool.name for tool in await client.list_tools()}
             assert {"scene_scope_graph", "scene_relation_graph", "scene_view_diagnostics"}.issubset(post_goal_tools)
 
             status_result = result_payload(await client.call_tool("router_get_status", {}))
             assert status_result["current_phase"] == "build"
+            assert status_result["guided_flow_state"]["current_step"] == "establish_spatial_context"
             assert any(
-                set(rule.get("names") or ()) >= {"collection_manage", "modeling_create_primitive"}
+                "scene_scope_graph" in set(rule.get("names") or ())
                 for rule in status_result["visibility_rules"]
                 if rule.get("components") == ["tool"] or rule.get("components") == {"tool"}
             )
@@ -155,6 +224,27 @@ def test_guided_surface_contract_parity_over_stdio(tmp_path: Path):
                 )
             )
             assert build_cleanup == "Scene cleaned."
+
+            await client.call_tool(
+                "scene_scope_graph",
+                {"target_object": "Squirrel_Body", "target_objects": ["Squirrel_Head", "Squirrel_Tail"]},
+            )
+            await client.call_tool(
+                "scene_relation_graph",
+                {"target_objects": ["Squirrel_Head", "Squirrel_Body"], "goal_hint": "assembled creature"},
+            )
+            await client.call_tool(
+                "scene_view_diagnostics",
+                {"target_object": "Squirrel_Head", "target_objects": ["Squirrel_Body"], "view_name": "TOP"},
+            )
+
+            unlocked_status_result = result_payload(await client.call_tool("router_get_status", {}))
+            assert unlocked_status_result["guided_flow_state"]["current_step"] == "create_primary_masses"
+            assert any(
+                set(rule.get("names") or ()) >= {"collection_manage", "modeling_create_primitive"}
+                for rule in unlocked_status_result["visibility_rules"]
+                if rule.get("components") == ["tool"] or rule.get("components") == {"tool"}
+            )
 
             primitive_search = result_payload(
                 await client.call_tool(

@@ -69,6 +69,31 @@ PYTHONPATH=. poetry run pytest tests/e2e/ -v
 ./scripts/run_unit_then_e2e.sh
 ```
 
+### E2E RPC Availability Behavior
+
+`tests/e2e/conftest.py` now does a short retry window before deciding that
+Blender RPC is unavailable for the current pytest session.
+
+- the initial E2E availability check now performs a real `ping` RPC instead of
+  relying on one fast connect attempt only
+- this reduces false `skipped` runs when Blender/addon startup is slightly
+  slower than pytest collection
+- router/tool E2E suites are still marked `skip` for the current pytest
+  session if RPC never becomes reachable during that startup window
+
+Current tuning:
+
+- `E2E_RPC_STARTUP_WAIT_SECONDS`
+  default: `8.0`
+- `E2E_RPC_RETRY_INTERVAL_SECONDS`
+  default: `0.5`
+
+Practical note:
+
+- if Blender RPC was down during collection and then comes back later, rerun
+  `pytest tests/e2e ...` in a new process so the session-level availability
+  cache is rebuilt
+
 ## E2E Env Matrix
 
 Use this table as the single quick-reference for environment variables that

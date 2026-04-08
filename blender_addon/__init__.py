@@ -346,6 +346,7 @@ def register():
         rpc_server.register_handler("armature.get_data", armature_handler.get_data)
 
         rpc_server.start()
+        rpc_server.start_watchdog()
     else:
         print("[Blender AI MCP] Mock registration (bpy not found)")
 
@@ -353,6 +354,7 @@ def register():
 def unregister():
     if bpy:
         print("[Blender AI MCP] Unregistering addon...")
+        rpc_server.stop_watchdog()
         rpc_server.stop()
 
 
