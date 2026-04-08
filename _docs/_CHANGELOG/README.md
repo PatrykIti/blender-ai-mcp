@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [223](./223-2026-04-07-qwen32b-operator-compare-note.md) | 2026-04-07 | **Qwen 32B operator compare note** | - |
 | [222](./222-2026-04-07-guided-build-cleanup-recovery-hatch.md) | 2026-04-07 | **Guided build cleanup recovery hatch** | - |
 | [221](./221-2026-04-07-guided-runtime-realism-coverage.md) | 2026-04-07 | **Guided runtime realism coverage** | - |
 | [220](./220-2026-04-07-guided-runtime-guardrails-and-qwen-hardening.md) | 2026-04-07 | **Guided runtime guardrails and Qwen hardening** | - |
