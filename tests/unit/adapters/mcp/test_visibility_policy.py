@@ -26,6 +26,8 @@ from server.adapters.mcp.transforms.visibility_policy import (
     GUIDED_VIEW_DIAGNOSTIC_TOOLS,
     build_guided_handoff_payload,
     build_visibility_rules,
+    get_guided_overlay_family_order,
+    resolve_guided_tool_family,
 )
 from server.adapters.mcp.visibility.tags import ENTRY_GUIDED, get_capability_tags, phase_tag
 
@@ -217,3 +219,24 @@ def test_llm_guided_surface_materializes_visibility_transforms():
     assert len(guided_transforms) == 10
     assert len(manual_transforms) == 1
     assert len(legacy_transforms) == 1
+
+
+def test_guided_tool_family_mapping_resolves_shared_family_vocabulary():
+    """Shared tool-family mapping should stay deterministic for later execution policy work."""
+
+    assert resolve_guided_tool_family("macro_finish_form") == "finish"
+    assert resolve_guided_tool_family("reference_iterate_stage_checkpoint") == "checkpoint_iterate"
+    assert resolve_guided_tool_family("modeling_create_primitive") == "primary_masses"
+    assert resolve_guided_tool_family("scene_clean_scene") == "utility"
+
+
+def test_guided_overlay_family_order_can_differ_by_domain_profile():
+    """Overlay family order should remain shared-but-configurable across guided domains."""
+
+    creature = get_guided_overlay_family_order("creature")
+    building = get_guided_overlay_family_order("building")
+
+    assert "attachment_alignment" in creature
+    assert "attachment_alignment" not in building
+    assert creature.index("primary_masses") < creature.index("secondary_parts")
+    assert building.index("primary_masses") < building.index("secondary_parts")

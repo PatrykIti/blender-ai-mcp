@@ -1,7 +1,7 @@
 # TASK-150-03-03-01: Shared Tool Family Vocabulary And Overlay Mapping
 
 **Parent:** [TASK-150-03-03](./TASK-150-03-03_Generic_Families_Part_Roles_And_Execution_Enforcement.md)
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -132,3 +132,11 @@ OVERLAY_FAMILY_ORDER = {
 ## Changelog Impact
 
 - include in the parent TASK-150 execution-enforcement changelog entry
+
+## Completion Summary
+
+- completed the shared family vocabulary foundation for later execution policy
+- added public contract support for `allowed_families`
+- added deterministic `tool -> family` mapping and overlay family-order
+  helpers
+- wired initial `allowed_families` into current guided-flow step transitions

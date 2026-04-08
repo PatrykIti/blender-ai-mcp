@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-150-03-03-01](./TASK-150-03-03-01_Shared_Tool_Family_Vocabulary_And_Overlay_Mapping.md)
 **Depends On:** [TASK-150-03-03-01-01](./TASK-150-03-03-01-01_Guided_Family_Literals_And_Flow_Contract_Extension.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -32,6 +32,18 @@ STEP_ALLOWED_FAMILIES = {("creature", "create_primary_masses"): ("primary_masses
 
 - the repo has one deterministic tool-to-family map
 - each overlay can define family order and allowed family windows
+
+## Completion Summary
+
+- added one deterministic shared `tool -> family` mapping
+- added per-overlay family order helpers for `generic`, `creature`, and
+  `building`
+- extended guided flow initialization/transitions so `allowed_families` now
+  reflect the active step and overlay
+- added unit coverage for:
+  - stable tool-family mapping
+  - overlay family-order differences
+  - step-specific `allowed_families` on creature/building flows
 
 ## Planned Unit Test Scenarios
 

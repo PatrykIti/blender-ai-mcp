@@ -13,6 +13,7 @@ from fastmcp import Context
 
 from server.adapters.mcp.contracts.guided_flow import (
     GuidedFlowCheckContract,
+    GuidedFlowFamilyLiteral,
     GuidedFlowStateContract,
     GuidedFlowStepLiteral,
 )
@@ -23,6 +24,7 @@ from server.adapters.mcp.session_state import (
     set_session_value,
     set_session_value_async,
 )
+from server.adapters.mcp.transforms.visibility_policy import get_guided_overlay_family_order
 from server.router.application.session_phase_hints import derive_phase_hint_from_router_result
 
 if TYPE_CHECKING:
@@ -249,6 +251,33 @@ def _build_required_checks(
     ]
 
 
+def _build_allowed_families(
+    *,
+    domain_profile: Literal["generic", "creature", "building"],
+    current_step: GuidedFlowStepLiteral,
+) -> list[GuidedFlowFamilyLiteral]:
+    order = list(get_guided_overlay_family_order(domain_profile))
+    known = set(order)
+    by_step: dict[GuidedFlowStepLiteral, list[GuidedFlowFamilyLiteral]] = {
+        "understand_goal": ["reference_context", "utility"],
+        "establish_spatial_context": (
+            ["spatial_context", "reference_context"] if domain_profile == "creature" else ["spatial_context"]
+        ),
+        "establish_reference_context": ["reference_context"],
+        "create_primary_masses": (
+            ["primary_masses", "reference_context"] if domain_profile == "creature" else ["primary_masses"]
+        ),
+        "place_secondary_parts": (
+            ["secondary_parts", "attachment_alignment"] if domain_profile == "creature" else ["secondary_parts"]
+        ),
+        "checkpoint_iterate": ["checkpoint_iterate", "reference_context"],
+        "inspect_validate": ["inspect_validate"],
+        "finish_or_stop": ["finish"],
+    }
+    allowed = by_step[current_step]
+    return [family for family in allowed if family in known]
+
+
 def _build_initial_guided_flow_state(
     *,
     goal: str,
@@ -274,7 +303,7 @@ def _build_initial_guided_flow_state(
             return previous_contract.model_dump(mode="json")
 
     if status == "needs_input":
-        current_step = "understand_goal"
+        current_step: GuidedFlowStepLiteral = "understand_goal"
         next_actions = ["answer_router_questions"]
         blocked_families = ["build", "late_refinement", "finish"]
         step_status = "blocked"
@@ -310,6 +339,7 @@ def _build_initial_guided_flow_state(
         preferred_prompts=preferred_prompts,
         next_actions=next_actions,
         blocked_families=blocked_families,
+        allowed_families=_build_allowed_families(domain_profile=domain_profile, current_step=current_step),
         step_status=step_status,  # type: ignore[arg-type]
     ).model_dump(mode="json")
 
@@ -1022,6 +1052,10 @@ def _mark_guided_flow_check_completed_dict(
         )
         contract.required_prompts = required_prompts
         contract.preferred_prompts = preferred_prompts
+        contract.allowed_families = _build_allowed_families(
+            domain_profile=contract.domain_profile,
+            current_step=contract.current_step,
+        )
 
     return contract.model_dump(mode="json")
 
@@ -1146,6 +1180,10 @@ def _advance_guided_flow_for_iteration_dict(
             current_step=contract.current_step,
         )
     ]
+    contract.allowed_families = _build_allowed_families(
+        domain_profile=contract.domain_profile,
+        current_step=contract.current_step,
+    )
     return contract.model_dump(mode="json")
 
 

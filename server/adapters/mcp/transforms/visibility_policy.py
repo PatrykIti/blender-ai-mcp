@@ -8,6 +8,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from server.adapters.mcp.contracts.guided_flow import GuidedFlowFamilyLiteral
 from server.adapters.mcp.session_phase import SessionPhase, coerce_session_phase
 from server.adapters.mcp.settings import SurfaceProfileSettings
 
@@ -122,6 +123,74 @@ GUIDED_UTILITY_HANDOFF_TOOLS: tuple[str, ...] = (
 )
 
 GUIDED_UTILITY_SUPPORTING_TOOLS: tuple[str, ...] = ("router_get_status",)
+
+GUIDED_TOOL_FAMILY_MAP: dict[str, GuidedFlowFamilyLiteral] = {
+    "scene_scope_graph": "spatial_context",
+    "scene_relation_graph": "spatial_context",
+    "scene_view_diagnostics": "spatial_context",
+    "reference_images": "reference_context",
+    "reference_compare_checkpoint": "checkpoint_iterate",
+    "reference_compare_current_view": "checkpoint_iterate",
+    "reference_compare_stage_checkpoint": "checkpoint_iterate",
+    "reference_iterate_stage_checkpoint": "checkpoint_iterate",
+    "modeling_create_primitive": "primary_masses",
+    "modeling_transform_object": "primary_masses",
+    "collection_manage": "primary_masses",
+    "scene_create": "primary_masses",
+    "macro_relative_layout": "secondary_parts",
+    "macro_place_symmetry_pair": "secondary_parts",
+    "macro_place_supported_pair": "secondary_parts",
+    "macro_adjust_relative_proportion": "secondary_parts",
+    "macro_adjust_segment_chain_arc": "secondary_parts",
+    "macro_attach_part_to_surface": "attachment_alignment",
+    "macro_align_part_with_contact": "attachment_alignment",
+    "macro_cleanup_part_intersections": "attachment_alignment",
+    "inspect_scene": "inspect_validate",
+    "check_scene": "inspect_validate",
+    "scene_measure_dimensions": "inspect_validate",
+    "scene_measure_distance": "inspect_validate",
+    "scene_measure_gap": "inspect_validate",
+    "scene_measure_alignment": "inspect_validate",
+    "scene_measure_overlap": "inspect_validate",
+    "scene_assert_contact": "inspect_validate",
+    "scene_assert_dimensions": "inspect_validate",
+    "scene_assert_containment": "inspect_validate",
+    "scene_assert_symmetry": "inspect_validate",
+    "scene_assert_proportion": "inspect_validate",
+    "macro_finish_form": "finish",
+    "scene_clean_scene": "utility",
+    "scene_get_viewport": "utility",
+}
+
+GUIDED_OVERLAY_FAMILY_ORDER: dict[str, tuple[GuidedFlowFamilyLiteral, ...]] = {
+    "generic": (
+        "spatial_context",
+        "reference_context",
+        "primary_masses",
+        "secondary_parts",
+        "checkpoint_iterate",
+        "inspect_validate",
+        "finish",
+    ),
+    "creature": (
+        "spatial_context",
+        "reference_context",
+        "primary_masses",
+        "secondary_parts",
+        "attachment_alignment",
+        "checkpoint_iterate",
+        "inspect_validate",
+        "finish",
+    ),
+    "building": (
+        "spatial_context",
+        "primary_masses",
+        "secondary_parts",
+        "checkpoint_iterate",
+        "inspect_validate",
+        "finish",
+    ),
+}
 
 _CREATURE_GOAL_HINTS: tuple[str, ...] = (
     "animal",
@@ -404,6 +473,18 @@ def _guided_handoff_visible_tools(guided_handoff: dict[str, Any] | None) -> set[
         *[str(name) for name in guided_handoff.get("direct_tools") or [] if str(name).strip()],
         *[str(name) for name in guided_handoff.get("supporting_tools") or [] if str(name).strip()],
     }
+
+
+def resolve_guided_tool_family(tool_name: str) -> GuidedFlowFamilyLiteral | None:
+    """Return the shared guided family for one tool name when defined."""
+
+    return GUIDED_TOOL_FAMILY_MAP.get(tool_name)
+
+
+def get_guided_overlay_family_order(domain_profile: str) -> tuple[GuidedFlowFamilyLiteral, ...]:
+    """Return the canonical family order for one guided overlay."""
+
+    return GUIDED_OVERLAY_FAMILY_ORDER.get(domain_profile, GUIDED_OVERLAY_FAMILY_ORDER["generic"])
 
 
 def build_visibility_rules(
