@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [227](./227-2026-04-09-guided-execution-enforcement.md) | 2026-04-09 | **Guided execution enforcement and role sequencing** | - |
 | [226](./226-2026-04-08-addon-rpc-watchdog-and-e2e-retry.md) | 2026-04-08 | **Addon RPC watchdog and E2E RPC startup retry** | - |
 | [225](./225-2026-04-08-server-driven-guided-flow-state.md) | 2026-04-08 | **Server-driven guided flow state and step gating** | - |
 | [224](./224-2026-04-08-guided-default-spatial-support.md) | 2026-04-08 | **Guided default spatial support** | - |

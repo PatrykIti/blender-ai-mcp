@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-150-05](./TASK-150-05_Regression_Pack_And_Docs_For_Server_Driven_Guided_Flows.md)
 **Depends On:** [TASK-150-05-01](./TASK-150-05-01_Unit_And_Transport_Regression_Matrix_For_Flow_State_And_Gating.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -91,3 +91,8 @@ Troubleshooting:
 ## Changelog Impact
 
 - create the parent TASK-150 changelog entry here
+
+## Completion Summary
+
+- README, MCP docs, prompt docs, task tree, and changelog are now aligned with
+  the shipped execution-enforcement model

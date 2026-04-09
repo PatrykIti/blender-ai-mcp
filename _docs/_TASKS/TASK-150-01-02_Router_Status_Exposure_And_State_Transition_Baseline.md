@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-150-01](./TASK-150-01_Guided_Flow_State_Contract_And_Session_Model.md)
 **Depends On:** [TASK-150-01-01](./TASK-150-01-01_Flow_State_Types_Contracts_And_Session_Keys.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -97,3 +97,9 @@ result["guided_flow_state"] = guided_flow_state
 ## Changelog Impact
 
 - include in the parent TASK-150 changelog entry when shipped
+
+## Completion Summary
+
+- `router_set_goal(...)` and `router_get_status()` now expose `guided_flow_state`
+- same-session goal/status paths return the active flow state deterministically
+- no-match/manual handoff now carries typed flow-step state

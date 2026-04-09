@@ -4,8 +4,8 @@ Curated task board for promoted active work, promoted follow-on work, and select
 
 ## 📊 Statistics
 - **To Do:** 8 tasks
-- **In Progress:** 1 tasks
-- **Done:** 216
+- **In Progress:** 0 tasks
+- **Done:** 217
 - **Superseded:** 10
 
 ## 📐 Board Scope
@@ -70,7 +70,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-150](./TASK-150_Server_Driven_Guided_Flow_State_Step_Gating_And_Domain_Profiles.md) | **Server-Driven Guided Flow State, Step Gating, and Domain Profiles** | 🔴 High | Initial guided-flow contract, domain overlays, prompt bundles, and step-gated visibility are landed; the remaining continuation is now explicitly tracked under `TASK-150-03-03` for shared families, part-role semantics, and real execution-time enforcement. |
 
 ---
 
@@ -78,6 +77,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-150](./TASK-150_Server_Driven_Guided_Flow_State_Step_Gating_And_Domain_Profiles.md) | **Server-Driven Guided Flow State, Step Gating, and Domain Profiles** | 🔴 High | 2026-04-09 |
 | [TASK-149](./TASK-149_Guided_Default_Spatial_Graph_And_View_Diagnostics_For_All_Goal_Oriented_Sessions.md) | **Guided Default Spatial Graph And View Diagnostics For All Goal-Oriented Sessions** | 🔴 High | 2026-04-08 |
 | [TASK-147](./TASK-147_Guided_Build_Cleanup_Recovery_Hatch_And_Prompt_Alignment.md) | **Guided Build Cleanup Recovery Hatch And Prompt Alignment** | 🔴 High | 2026-04-07 |
 | [TASK-146](./TASK-146_Guided_Runtime_Guardrails_Vision_Profile_And_Prompting_Hardening.md) | **Guided Runtime Guardrails, Vision Profile, and Prompting Hardening** | 🔴 High | 2026-04-07 |

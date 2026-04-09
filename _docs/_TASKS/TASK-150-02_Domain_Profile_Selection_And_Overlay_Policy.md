@@ -1,7 +1,7 @@
 # TASK-150-02: Domain Profile Selection And Overlay Policy
 
 **Parent:** [TASK-150](./TASK-150_Server_Driven_Guided_Flow_State_Step_Gating_And_Domain_Profiles.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -48,3 +48,9 @@ Add deterministic domain-profile selection for guided sessions and define how
 |------|------|---------|
 | 1 | [TASK-150-02-01](./TASK-150-02-01_Generic_Flow_Skeleton_And_Step_Vocabulary.md) | Define the generic server-driven flow skeleton and shared step vocabulary |
 | 2 | [TASK-150-02-02](./TASK-150-02-02_Creature_And_Building_Domain_Overlay_Policies.md) | Define the first domain overlays for creature and building guided flows |
+
+## Completion Summary
+
+- overlay policy is now deterministic and server-owned
+- current overlays change checks, families, roles, and prompt bundles without
+  forking the runtime into bespoke state machines

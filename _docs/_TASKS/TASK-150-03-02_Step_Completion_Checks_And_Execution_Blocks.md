@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-150-03](./TASK-150-03_Step_Gated_Visibility_And_Execution_Policy.md)
 **Depends On:** [TASK-150-03-01](./TASK-150-03-01_Flow_Aware_Visibility_Rules_And_Search_Surface_Gating.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -96,3 +96,9 @@ async def test_guided_flow_blocks_finish_family_before_checkpoint(...):
 ## Changelog Impact
 
 - include in the parent TASK-150 changelog entry when shipped
+
+## Completion Summary
+
+- required spatial checks now block early guided build progression
+- later guided execution can fail closed on wrong family, wrong explicit role,
+  or missing semantic role metadata for role-sensitive build tools

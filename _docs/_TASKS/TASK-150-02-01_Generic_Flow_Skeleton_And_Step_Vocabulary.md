@@ -1,7 +1,7 @@
 # TASK-150-02-01: Generic Flow Skeleton And Step Vocabulary
 
 **Parent:** [TASK-150-02](./TASK-150-02_Domain_Profile_Selection_And_Overlay_Policy.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -92,3 +92,9 @@ def initialize_guided_flow_state(...):
 ## Changelog Impact
 
 - include in the parent TASK-150 changelog entry when shipped
+
+## Completion Summary
+
+- the shared step vocabulary is now present in the guided-flow contract
+- the generic skeleton remains reusable across `generic`, `creature`, and
+  `building`

@@ -1,7 +1,7 @@
 # TASK-150-01: Guided Flow State Contract And Session Model
 
 **Parent:** [TASK-150](./TASK-150_Server_Driven_Guided_Flow_State_Step_Gating_And_Domain_Profiles.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -48,3 +48,9 @@ Define one generic machine-readable `guided_flow_state` contract and persist it
 |------|------|---------|
 | 1 | [TASK-150-01-01](./TASK-150-01-01_Flow_State_Types_Contracts_And_Session_Keys.md) | Define the typed flow-state envelope, contract models, and session-storage keys |
 | 2 | [TASK-150-01-02](./TASK-150-01-02_Router_Status_Exposure_And_State_Transition_Baseline.md) | Expose flow state through router/status payloads and define baseline transition semantics |
+
+## Completion Summary
+
+- the generic machine-readable `guided_flow_state` contract is now present in
+  session state and public router surfaces
+- baseline goal-setting/status semantics are deterministic and regression-covered

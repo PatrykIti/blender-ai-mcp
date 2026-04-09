@@ -1,7 +1,7 @@
 # TASK-150-05-01: Unit And Transport Regression Matrix For Flow State And Gating
 
 **Parent:** [TASK-150-05](./TASK-150-05_Regression_Pack_And_Docs_For_Server_Driven_Guided_Flows.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -118,3 +118,10 @@ assert "run_required_checks" in blocked_payload["guided_flow_state"]["next_actio
 ## Changelog Impact
 
 - include in the parent TASK-150 changelog entry when shipped
+
+## Completion Summary
+
+- unit coverage now proves flow-state transitions, role summaries, and
+  visibility/search parity
+- transport-backed coverage now proves same-session role registration and
+  family/role enforcement on stdio/streamable harnesses

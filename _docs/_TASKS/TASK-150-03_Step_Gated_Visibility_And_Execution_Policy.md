@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-150](./TASK-150_Server_Driven_Guided_Flow_State_Step_Gating_And_Domain_Profiles.md)
 **Depends On:** [TASK-150-01](./TASK-150-01_Guided_Flow_State_Contract_And_Session_Model.md), [TASK-150-02](./TASK-150-02_Domain_Profile_Selection_And_Overlay_Policy.md)
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -51,3 +51,11 @@ Make `llm-guided` visibility and execution behavior depend on guided flow step,
 | 1 | [TASK-150-03-01](./TASK-150-03-01_Flow_Aware_Visibility_Rules_And_Search_Surface_Gating.md) | Make visibility and search/call behavior consult flow step and domain profile |
 | 2 | [TASK-150-03-02](./TASK-150-03-02_Step_Completion_Checks_And_Execution_Blocks.md) | Define how required checks and blocked families prevent premature step progression |
 | 3 | [TASK-150-03-03](./TASK-150-03-03_Generic_Families_Part_Roles_And_Execution_Enforcement.md) | Extend step gating into real execution enforcement using shared tool families, session-scoped part roles, and router/firewall policy |
+
+## Completion Summary
+
+- `llm-guided` step gating now covers:
+  - visibility/list/search/call shaping
+  - required checks
+  - execution-time family/role enforcement
+  - role-group-driven step transitions

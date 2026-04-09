@@ -1,6 +1,6 @@
 # TASK-150: Server-Driven Guided Flow State, Step Gating, And Domain Profiles
 
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** Guided Runtime / Server-Driven Orchestration
 **Estimated Effort:** Large
@@ -335,3 +335,12 @@ That continuation is now explicitly tracked under:
 - promoted as a new board-level follow-on because guided runtime quality now
   depends less on adding more tools and more on making the server own the
   sequencing contract the model follows
+
+## Completion Summary
+
+- the server now owns a machine-readable guided-flow contract
+- domain overlays now drive checks, prompt bundles, families, and semantic role
+  expectations
+- guided execution no longer depends only on prompt discipline; the runtime can
+  shape visibility, require role registration, fail closed on wrong families,
+  and advance steps from completed role groups

@@ -1,7 +1,7 @@
 # TASK-150-01-01: Flow State Types, Contracts, And Session Keys
 
 **Parent:** [TASK-150-01](./TASK-150-01_Guided_Flow_State_Contract_And_Session_Model.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -133,3 +133,9 @@ def set_session_capability_state(...):
 ## Changelog Impact
 
 - include in the parent TASK-150 changelog entry when shipped
+
+## Completion Summary
+
+- added the typed guided-flow contract and session storage key
+- persisted `guided_flow_state` in `SessionCapabilityState`
+- exposed contract parity coverage for public router/reference payloads

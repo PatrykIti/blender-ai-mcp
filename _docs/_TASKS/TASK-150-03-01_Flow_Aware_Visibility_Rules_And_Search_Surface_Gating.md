@@ -1,7 +1,7 @@
 # TASK-150-03-01: Flow-Aware Visibility Rules And Search-Surface Gating
 
 **Parent:** [TASK-150-03](./TASK-150-03_Step_Gated_Visibility_And_Execution_Policy.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -93,3 +93,9 @@ def build_visibility_rules(surface_profile, phase, guided_handoff=None, guided_f
 ## Changelog Impact
 
 - include in the parent TASK-150 changelog entry when shipped
+
+## Completion Summary
+
+- visibility, search, and `call_tool(...)` now consult the guided flow step
+- step-aware disclosure is aligned across `tools/list`, `search_tools(...)`,
+  and proxied calls

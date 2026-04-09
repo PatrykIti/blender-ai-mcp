@@ -1,7 +1,7 @@
 # TASK-150-04-01: Required Prompt Bundle Contract And Provider Surface
 
 **Parent:** [TASK-150-04](./TASK-150-04_Prompt_Bundle_Delivery_And_Flow_Aligned_Recommendations.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -84,3 +84,9 @@ def recommended_prompts(ctx, ...):
 ## Changelog Impact
 
 - include in the parent TASK-150 changelog entry when shipped
+
+## Completion Summary
+
+- required/preferred prompt bundles are now part of the server-owned guided
+  flow contract
+- the prompt provider reads them from session flow state

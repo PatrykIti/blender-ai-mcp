@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-150-04](./TASK-150-04_Prompt_Bundle_Delivery_And_Flow_Aligned_Recommendations.md)
 **Depends On:** [TASK-150-04-01](./TASK-150-04-01_Required_Prompt_Bundle_Contract_And_Provider_Surface.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -73,3 +73,9 @@ PROMPT_BUNDLES = {
 ## Changelog Impact
 
 - include in the parent TASK-150 changelog entry when shipped
+
+## Completion Summary
+
+- prompt mapping now varies by flow/domain/step
+- docs explain that prompt bundles support the server-owned flow instead of
+  replacing it

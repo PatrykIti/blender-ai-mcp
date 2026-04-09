@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-150-02](./TASK-150-02_Domain_Profile_Selection_And_Overlay_Policy.md)
 **Depends On:** [TASK-150-02-01](./TASK-150-02-01_Generic_Flow_Skeleton_And_Step_Vocabulary.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -105,3 +105,10 @@ DOMAIN_OVERLAYS = {
 ## Changelog Impact
 
 - include in the parent TASK-150 changelog entry when shipped
+
+## Completion Summary
+
+- deterministic domain-profile selection now supports `generic`, `creature`,
+  and `building`
+- creature/building overlays already differ in required checks, prompt bundles,
+  family order, and role expectations
