@@ -252,3 +252,8 @@ contract.
 - if the server rejects a call because the family or explicit role is wrong
   for the current step, treat that as authoritative guided execution policy,
   not as a hint to guess another tool name
+- for role-sensitive build calls, do not issue raw
+  `modeling_create_primitive(...)` / `modeling_transform_object(...)` without
+  either:
+  - `guided_role=...`
+  - or a prior `guided_register_part(...)` call for that object

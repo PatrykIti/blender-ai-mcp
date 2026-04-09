@@ -40,6 +40,8 @@ if policy.blocked:
 - added fail-closed guided execution checks for:
   - disallowed shared families
   - disallowed explicit guided roles
+- added fail-closed guided execution checks for missing role metadata on
+  role-sensitive build tools
 - integrated those checks into the shared `route_tool_call_report(...)` path
 - documented the new blocked-response semantics in MCP/prompt docs
 

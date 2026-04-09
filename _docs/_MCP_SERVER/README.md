@@ -502,6 +502,10 @@ Current guided-flow behavior:
 - guided execution policy can now fail closed when a call resolves to the
   wrong shared family or an explicit guided role that is not allowed for the
   current step
+- for role-sensitive build families, `modeling_create_primitive(...)` and
+  `modeling_transform_object(...)` now require either:
+  - an explicit `guided_role=...`
+  - or a previously registered role in the session part registry
 - `required_prompts` and `preferred_prompts` are stable prompt asset names;
   they support the server-driven flow instead of replacing it with prompt-only
   policy

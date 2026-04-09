@@ -296,3 +296,92 @@ def test_route_tool_call_report_fail_closes_when_guided_role_is_not_allowed(monk
     assert "role 'ear_pair'" in str(report.error)
     assert report.context.guided_tool_family == "primary_masses"
     assert report.context.guided_role == "ear_pair"
+
+
+def test_route_tool_call_report_fail_closes_when_guided_role_is_missing_for_build_family(monkeypatch):
+    """Primary/secondary build tools should require semantic part roles on guided surfaces."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": [],
+                "missing_roles": ["body_core", "head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="modeling_create_primitive",
+        params={"primitive_type": "Sphere", "name": "Squirrel_Body"},
+        direct_executor=lambda: "should not run",
+    )
+
+    assert report.router_disposition == "failed_closed_error"
+    assert "requires an explicit semantic role" in str(report.error)
+    assert report.context.guided_tool_family == "primary_masses"
+    assert report.context.guided_role is None
+
+
+def test_route_tool_call_report_allows_registered_object_transform_without_explicit_role(monkeypatch):
+    """A previously registered object should not need guided_role repeated on every transform call."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": ["body_core"],
+                "missing_roles": ["head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+            guided_part_registry=[
+                {
+                    "object_name": "Squirrel_Body",
+                    "role": "body_core",
+                    "role_group": "primary_masses",
+                    "status": "registered",
+                }
+            ],
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="modeling_transform_object",
+        params={"name": "Squirrel_Body", "scale": [0.9, 0.8, 1.2]},
+        direct_executor=lambda: "Transformed object 'Squirrel_Body'",
+    )
+
+    assert report.router_disposition == "bypassed"
+    assert report.context.guided_role == "body_core"
+    assert report.steps[0].result == "Transformed object 'Squirrel_Body'"

@@ -29,6 +29,10 @@ logger = logging.getLogger(__name__)
 SESSION_LAST_ROUTER_DISPOSITION_KEY = "last_router_disposition"
 SESSION_LAST_ROUTER_ERROR_KEY = "last_router_error"
 ROUTER_BYPASS_PREFIXES: tuple[str, ...] = ("scene_",)
+_GUIDED_ROLE_REQUIRED_TOOLS: tuple[str, ...] = (
+    "modeling_create_primitive",
+    "modeling_transform_object",
+)
 
 
 def _get_active_surface_profile() -> str:
@@ -253,6 +257,23 @@ def _evaluate_guided_execution_policy(
             "family": family,
             "role": role,
             "role_group": role_group,
+        }
+
+    if tool_name in _GUIDED_ROLE_REQUIRED_TOOLS and role is None:
+        return {
+            "status": "blocked",
+            "current_step": current_step,
+            "family": family,
+            "role": role,
+            "role_group": role_group,
+            "allowed_families": sorted(allowed_families),
+            "allowed_roles": sorted(allowed_roles),
+            "required_role_groups": list(flow_state.get("required_role_groups") or []),
+            "message": (
+                f"Guided execution requires an explicit semantic role for '{tool_name}' during step '{current_step}'. "
+                "Provide `guided_role=...` on the build tool call or register the object first with "
+                "`guided_register_part(object_name=..., role=...)`."
+            ),
         }
 
     if family is not None and allowed_families and family not in allowed_families:
