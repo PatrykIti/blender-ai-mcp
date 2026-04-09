@@ -525,6 +525,20 @@ def _resolve_guided_role_group(
     return resolved
 
 
+def resolve_guided_role_group_for_domain(
+    domain_profile: Literal["generic", "creature", "building"],
+    role: str,
+    role_group: str | None = None,
+) -> str:
+    """Public helper for deriving one guided role group from overlay + role."""
+
+    return _resolve_guided_role_group(
+        domain_profile=domain_profile,
+        role=role,
+        role_group=role_group,
+    )
+
+
 def _build_initial_guided_flow_state(
     *,
     goal: str,

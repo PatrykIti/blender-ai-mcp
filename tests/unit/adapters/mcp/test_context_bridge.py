@@ -293,8 +293,8 @@ def test_route_tool_call_report_fail_closes_when_guided_role_is_not_allowed(monk
     )
 
     assert report.router_disposition == "failed_closed_error"
-    assert "role 'ear_pair'" in str(report.error)
-    assert report.context.guided_tool_family == "primary_masses"
+    assert "tool family 'secondary_parts'" in str(report.error)
+    assert report.context.guided_tool_family == "secondary_parts"
     assert report.context.guided_role == "ear_pair"
 
 

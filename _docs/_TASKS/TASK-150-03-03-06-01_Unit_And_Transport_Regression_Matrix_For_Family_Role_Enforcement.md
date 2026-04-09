@@ -1,7 +1,7 @@
 # TASK-150-03-03-06-01: Unit And Transport Regression Matrix For Family/Role Enforcement
 
 **Parent:** [TASK-150-03-03-06](./TASK-150-03-03-06_Regression_And_Docs_For_Execution_Enforcement.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -31,6 +31,16 @@ works across unit and transport-backed guided sessions.
 ## Acceptance Criteria
 
 - the server proves real execution blocking, not just visibility shaping
+
+## Completion Summary
+
+- added transport-backed guided-surface regressions for:
+  - blocked build calls without explicit or registered roles
+  - canonical `guided_register_part(...)` role registration
+  - same-session unlock from primary roles into secondary-part execution
+  - immediate secondary-part success after the step transition
+- updated stdio parity expectations to include the new router surface tool
+  `guided_register_part`
 
 ## Pseudocode Sketch
 

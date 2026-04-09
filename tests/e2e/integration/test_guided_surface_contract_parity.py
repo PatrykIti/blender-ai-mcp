@@ -241,10 +241,80 @@ def test_guided_surface_contract_parity_over_stdio(tmp_path: Path):
             unlocked_status_result = result_payload(await client.call_tool("router_get_status", {}))
             assert unlocked_status_result["guided_flow_state"]["current_step"] == "create_primary_masses"
             assert any(
-                set(rule.get("names") or ()) >= {"collection_manage", "modeling_create_primitive"}
+                set(rule.get("names") or ())
+                >= {"collection_manage", "modeling_create_primitive", "guided_register_part"}
                 for rule in unlocked_status_result["visibility_rules"]
                 if rule.get("components") == ["tool"] or rule.get("components") == {"tool"}
             )
+
+            blocked_body = result_payload(
+                await client.call_tool(
+                    "modeling_create_primitive",
+                    {"primitive_type": "Sphere", "name": "Squirrel_Body", "radius": 0.5},
+                )
+            )
+            assert "requires an explicit semantic role" in blocked_body
+
+            register_body = result_payload(
+                await client.call_tool(
+                    "guided_register_part",
+                    {"object_name": "Squirrel_Body", "role": "body_core"},
+                )
+            )
+            assert register_body["guided_flow_state"]["completed_roles"] == ["body_core"]
+
+            body_result = result_payload(
+                await client.call_tool(
+                    "modeling_create_primitive",
+                    {"primitive_type": "Sphere", "name": "Squirrel_Body", "location": [0.0, 0.0, 0.6], "radius": 0.5},
+                )
+            )
+            assert body_result == "Created Sphere named 'Squirrel_Body'"
+
+            head_result = result_payload(
+                await client.call_tool(
+                    "modeling_create_primitive",
+                    {
+                        "primitive_type": "Sphere",
+                        "name": "Squirrel_Head",
+                        "location": [0.0, -0.4, 1.45],
+                        "radius": 0.35,
+                        "guided_role": "head_mass",
+                    },
+                )
+            )
+            assert head_result == "Created Sphere named 'Squirrel_Head'"
+
+            role_unlocked_status = result_payload(await client.call_tool("router_get_status", {}))
+            assert role_unlocked_status["guided_flow_state"]["current_step"] == "place_secondary_parts"
+            assert role_unlocked_status["guided_flow_state"]["allowed_roles"] == [
+                "snout_mass",
+                "ear_pair",
+                "foreleg_pair",
+                "hindleg_pair",
+            ]
+
+            blocked_ear = result_payload(
+                await client.call_tool(
+                    "modeling_create_primitive",
+                    {"primitive_type": "Cone", "name": "Squirrel_Ear_L", "radius": 0.1},
+                )
+            )
+            assert "requires an explicit semantic role" in blocked_ear
+
+            ear_result = result_payload(
+                await client.call_tool(
+                    "modeling_create_primitive",
+                    {
+                        "primitive_type": "Cone",
+                        "name": "Squirrel_Ear_L",
+                        "location": [0.22, -0.3, 1.82],
+                        "radius": 0.1,
+                        "guided_role": "ear_pair",
+                    },
+                )
+            )
+            assert ear_result == "Created Cone named 'Squirrel_Ear_L'"
 
             primitive_search = result_payload(
                 await client.call_tool(
@@ -267,15 +337,7 @@ def test_guided_surface_contract_parity_over_stdio(tmp_path: Path):
             collection_result = result_payload(
                 await client.call_tool("collection_manage", {"action": "create", "name": "Squirrel"})
             )
-            assert collection_result == "Created collection 'Squirrel' under Scene Collection"
-
-            primitive_result = result_payload(
-                await client.call_tool(
-                    "modeling_create_primitive",
-                    {"primitive_type": "Sphere", "name": "Head", "location": [0.0, 0.0, 1.1]},
-                )
-            )
-            assert primitive_result == "Created Sphere named 'Head'"
+            assert "tool family 'primary_masses'" in collection_result
 
             with pytest.raises(ToolError, match="modeling_transform_object\\(scale=\\.\\.\\.\\)"):
                 await client.call_tool(

@@ -172,6 +172,42 @@ def test_streamable_guided_session_expands_visible_tools_after_goal_handoff(tmp_
 
             status_result = result_payload(await client.call_tool("router_get_status", {}))
             assert status_result["guided_flow_state"]["current_step"] == "create_primary_masses"
+            assert any(
+                set(rule.get("names") or ()) >= {"guided_register_part", "modeling_create_primitive"}
+                for rule in status_result["visibility_rules"]
+                if rule.get("components") == ["tool"] or rule.get("components") == {"tool"}
+            )
+
+            blocked = result_payload(
+                await client.call_tool(
+                    "modeling_create_primitive",
+                    {"primitive_type": "Cone", "name": "Squirrel_Ear_L", "radius": 0.1, "guided_role": "ear_pair"},
+                )
+            )
+            assert "role 'ear_pair'" in blocked
+
+            await client.call_tool(
+                "guided_register_part",
+                {"object_name": "Squirrel_Body", "role": "body_core"},
+            )
+            await client.call_tool(
+                "guided_register_part",
+                {"object_name": "Squirrel_Head", "role": "head_mass"},
+            )
+
+            ear_result = result_payload(
+                await client.call_tool(
+                    "modeling_create_primitive",
+                    {
+                        "primitive_type": "Cone",
+                        "name": "Squirrel_Ear_L",
+                        "location": [0.22, -0.3, 1.82],
+                        "radius": 0.1,
+                        "guided_role": "ear_pair",
+                    },
+                )
+            )
+            assert ear_result == "Created Cone named 'Squirrel_Ear_L'"
 
             primitive_search = result_payload(
                 await client.call_tool(

@@ -5,7 +5,7 @@ Provides utilities for routing tool calls through SupervisorRouter.
 """
 
 import logging
-from typing import Any, Callable, Dict, List, Optional, cast
+from typing import Any, Callable, Dict, List, Literal, Optional, cast
 
 from server.adapters.mcp.contracts.correction_audit import (
     CorrectionAuditEventContract,
@@ -16,7 +16,11 @@ from server.adapters.mcp.contracts.correction_audit import (
 from server.adapters.mcp.dispatcher import get_dispatcher
 from server.adapters.mcp.execution_context import MCPExecutionContext
 from server.adapters.mcp.execution_report import ExecutionStep, MCPExecutionReport
-from server.adapters.mcp.session_capabilities import get_session_capability_state, record_router_execution_outcome
+from server.adapters.mcp.session_capabilities import (
+    get_session_capability_state,
+    record_router_execution_outcome,
+    resolve_guided_role_group_for_domain,
+)
 from server.adapters.mcp.session_state import set_session_value
 from server.adapters.mcp.transforms.visibility_policy import resolve_guided_tool_family
 from server.infrastructure.config import get_config
@@ -198,7 +202,19 @@ def _resolve_guided_role_context(tool_name: str, params: Dict[str, Any]) -> tupl
     explicit_role = params.get("guided_role")
     explicit_role_group = params.get("role_group")
     if isinstance(explicit_role, str) and explicit_role.strip():
-        return explicit_role.strip(), explicit_role_group.strip() if isinstance(explicit_role_group, str) else None
+        session = _get_active_session_state()
+        derived_role_group = explicit_role_group.strip() if isinstance(explicit_role_group, str) else None
+        if session is not None and session.guided_flow_state is not None:
+            try:
+                domain_profile = str(session.guided_flow_state.get("domain_profile") or "").strip()
+                if domain_profile in {"generic", "creature", "building"}:
+                    typed_domain_profile = cast(Literal["generic", "creature", "building"], domain_profile)
+                    derived_role_group = resolve_guided_role_group_for_domain(
+                        typed_domain_profile, explicit_role.strip(), derived_role_group
+                    )
+            except Exception:
+                pass
+        return explicit_role.strip(), derived_role_group
 
     session = _get_active_session_state()
     if session is None or not session.guided_part_registry:
@@ -220,6 +236,26 @@ def _resolve_guided_role_context(tool_name: str, params: Dict[str, Any]) -> tupl
             role_group.strip() if isinstance(role_group, str) and role_group.strip() else None,
         )
     return None, None
+
+
+def _resolve_guided_effective_family(tool_name: str, params: Dict[str, Any]) -> str | None:
+    """Resolve the effective family, allowing explicit role-group overrides for role-sensitive tools."""
+
+    base_family = resolve_guided_tool_family(tool_name)
+    _role, role_group = _resolve_guided_role_context(tool_name, params)
+    if role_group in {
+        "spatial_context",
+        "reference_context",
+        "primary_masses",
+        "secondary_parts",
+        "attachment_alignment",
+        "checkpoint_iterate",
+        "inspect_validate",
+        "finish",
+        "utility",
+    }:
+        return role_group
+    return base_family
 
 
 def _evaluate_guided_execution_policy(
@@ -247,7 +283,7 @@ def _evaluate_guided_execution_policy(
     allowed_roles = {
         str(role) for role in (flow_state.get("allowed_roles") or []) if isinstance(role, str) and role.strip()
     }
-    family = resolve_guided_tool_family(tool_name)
+    family = _resolve_guided_effective_family(tool_name, params)
     role, role_group = _resolve_guided_role_context(tool_name, params)
 
     if family == "utility":
@@ -405,7 +441,7 @@ def route_tool_call_report(
     session_state = _get_active_session_state()
     if session_state is not None:
         context.session_phase = session_state.phase.value
-    context.guided_tool_family = resolve_guided_tool_family(tool_name)
+    context.guided_tool_family = _resolve_guided_effective_family(tool_name, params)
     context.guided_role, context.guided_role_group = _resolve_guided_role_context(tool_name, params)
     guided_policy = _evaluate_guided_execution_policy(
         surface_profile=surface_profile,
@@ -492,7 +528,7 @@ def route_tool_call_report(
             final_tool = corrected_tools[-1]
             final_tool_name = final_tool["tool"]
             final_tool_params = final_tool["params"]
-            context.guided_tool_family = resolve_guided_tool_family(final_tool_name)
+            context.guided_tool_family = _resolve_guided_effective_family(final_tool_name, final_tool_params)
             context.guided_role, context.guided_role_group = _resolve_guided_role_context(
                 final_tool_name,
                 final_tool_params,

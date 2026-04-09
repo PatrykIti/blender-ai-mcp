@@ -72,6 +72,7 @@ GUIDED_MANUAL_BUILD_HANDOFF_TOOLS: tuple[str, ...] = (
 
 GUIDED_MANUAL_BUILD_SUPPORTING_TOOLS: tuple[str, ...] = (
     "reference_images",
+    "guided_register_part",
     "scene_clean_scene",
     "reference_compare_checkpoint",
     "reference_compare_current_view",
@@ -108,6 +109,7 @@ CREATURE_LOW_POLY_BLOCKOUT_DIRECT_TOOLS: tuple[str, ...] = (
 
 CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS: tuple[str, ...] = (
     "reference_images",
+    "guided_register_part",
     "scene_clean_scene",
     "reference_compare_checkpoint",
     "reference_compare_current_view",
@@ -208,6 +210,7 @@ _CREATURE_GOAL_HINTS: tuple[str, ...] = (
 _LOW_POLY_GOAL_HINTS: tuple[str, ...] = ("blockout", "low poly", "low-poly")
 
 GUIDED_BUILD_ESCAPE_HATCH_TOOLS: tuple[str, ...] = (
+    "guided_register_part",
     "scene_clean_scene",
     "scene_context",
     "check_scene",
