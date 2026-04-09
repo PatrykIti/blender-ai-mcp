@@ -18,6 +18,7 @@ from server.adapters.mcp.execution_context import MCPExecutionContext
 from server.adapters.mcp.execution_report import ExecutionStep, MCPExecutionReport
 from server.adapters.mcp.session_capabilities import (
     get_session_capability_state,
+    mark_guided_spatial_state_stale,
     record_router_execution_outcome,
     resolve_guided_role_group_for_domain,
 )
@@ -37,6 +38,68 @@ _GUIDED_ROLE_REQUIRED_TOOLS: tuple[str, ...] = (
     "modeling_create_primitive",
     "modeling_transform_object",
 )
+
+
+def _result_represents_success(tool_name: str, result: Any) -> bool:
+    if result is None:
+        return False
+
+    if isinstance(result, str):
+        if tool_name == "scene_clean_scene":
+            return result.strip().lower().startswith("scene cleaned")
+        if tool_name == "modeling_create_primitive":
+            return result.startswith("Created ")
+        if tool_name == "modeling_transform_object":
+            return result.startswith("Transformed object ")
+        return not result.strip().lower().startswith(("error", "failed"))
+
+    if isinstance(result, dict):
+        status = str(result.get("status") or "").strip().lower()
+        if status in {"failed", "blocked", "error"}:
+            return False
+        if result.get("error") is not None:
+            return False
+        return True
+
+    status = str(getattr(result, "status", "") or "").strip().lower()
+    if status in {"failed", "blocked", "error"}:
+        return False
+    if getattr(result, "error", None) is not None:
+        return False
+    return True
+
+
+def _maybe_mark_guided_spatial_state_stale_from_report(report: MCPExecutionReport) -> None:
+    """Mark guided spatial state stale after one successful scene mutation."""
+
+    if report.error is not None or not report.steps:
+        return
+
+    final_step = report.steps[-1]
+    if final_step.error is not None:
+        return
+    if not _result_represents_success(final_step.tool_name, final_step.result):
+        return
+
+    try:
+        from fastmcp.server.context import _current_context  # type: ignore
+
+        current_ctx = _current_context.get(None)
+    except Exception:
+        current_ctx = None
+
+    if current_ctx is None:
+        return
+
+    try:
+        mark_guided_spatial_state_stale(
+            current_ctx,
+            tool_name=final_step.tool_name,
+            family=report.context.guided_tool_family,
+            reason=final_step.tool_name,
+        )
+    except Exception:
+        return
 
 
 def _get_active_surface_profile() -> str:
@@ -679,6 +742,7 @@ def route_tool_call(
         direct_executor=direct_executor,
         prompt=prompt,
     )
+    _maybe_mark_guided_spatial_state_stale_from_report(report)
     if report.error is None and len(report.steps) == 1:
         result = report.steps[0].result
         if not isinstance(result, str):

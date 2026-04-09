@@ -6,6 +6,8 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import json
 from dataclasses import asdict, dataclass
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -16,6 +18,7 @@ from server.adapters.mcp.contracts.guided_flow import (
     GuidedFlowFamilyLiteral,
     GuidedFlowStateContract,
     GuidedFlowStepLiteral,
+    GuidedTargetScopeContract,
 )
 from server.adapters.mcp.session_phase import SessionPhase, coerce_session_phase
 from server.adapters.mcp.session_state import (
@@ -94,6 +97,31 @@ _SPATIAL_CONTEXT_CHECKS: tuple[tuple[str, str, str], ...] = (
     ),
 )
 _SPATIAL_CONTEXT_TOOL_NAMES = {tool_name for _check_id, tool_name, _reason in _SPATIAL_CONTEXT_CHECKS}
+_GUIDED_SCOPE_BINDING_TOOL_NAME = "scene_scope_graph"
+_GUIDED_HELPER_OBJECT_HINTS: tuple[str, ...] = ("camera", "light", "lamp", "sun")
+_SPATIAL_REARM_ALLOWED_STEPS: set[GuidedFlowStepLiteral] = {
+    "create_primary_masses",
+    "place_secondary_parts",
+    "checkpoint_iterate",
+    "inspect_validate",
+    "finish_or_stop",
+}
+_SPATIAL_REARM_ALWAYS_BLOCK_REASONS: set[str] = {"scene_clean_scene"}
+_SPATIAL_STATE_DIRTY_TOOL_NAMES: set[str] = {
+    "scene_clean_scene",
+    "modeling_create_primitive",
+    "modeling_transform_object",
+    "macro_attach_part_to_surface",
+    "macro_align_part_with_contact",
+    "macro_place_symmetry_pair",
+    "macro_place_supported_pair",
+    "macro_cleanup_part_intersections",
+}
+_SPATIAL_STATE_DIRTY_FAMILIES: set[GuidedFlowFamilyLiteral] = {
+    "primary_masses",
+    "secondary_parts",
+    "attachment_alignment",
+}
 _GUIDED_FLOW_ITERATION_TOOLS = {
     "reference_compare_stage_checkpoint",
     "reference_iterate_stage_checkpoint",
@@ -314,6 +342,234 @@ def _normalize_guided_part_registry(value: Any) -> list[dict[str, Any]] | None:
     return items or None
 
 
+def _normalize_scope_names(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        return []
+
+    names: list[str] = []
+    seen: set[str] = set()
+    for raw_name in value:
+        name = str(raw_name).strip()
+        key = name.lower()
+        if not name or key in seen:
+            continue
+        seen.add(key)
+        names.append(name)
+    return sorted(names, key=str.lower)
+
+
+def _normalize_guided_target_scope(value: Any) -> dict[str, Any] | None:
+    if value is None:
+        return None
+
+    try:
+        contract = GuidedTargetScopeContract.model_validate(value)
+    except Exception:
+        return None
+
+    object_names = _normalize_scope_names(contract.object_names)
+    primary_target = str(contract.primary_target or "").strip() or None
+    collection_name = str(contract.collection_name or "").strip() or None
+
+    if primary_target and primary_target.lower() not in {name.lower() for name in object_names} and not collection_name:
+        object_names = sorted([primary_target, *object_names], key=str.lower)
+
+    scope_kind = contract.scope_kind
+    if collection_name and scope_kind == "scene":
+        scope_kind = "collection"
+    elif object_names and scope_kind == "scene":
+        scope_kind = "object_set" if len(object_names) > 1 else "single_object"
+
+    normalized = GuidedTargetScopeContract(
+        scope_kind=scope_kind,
+        primary_target=primary_target,
+        object_names=object_names,
+        object_count=len(object_names),
+        collection_name=collection_name,
+    )
+    return normalized.model_dump(mode="json", exclude_none=True)
+
+
+def _build_guided_target_scope_fingerprint(value: Any) -> str | None:
+    normalized = _normalize_guided_target_scope(value)
+    if normalized is None:
+        return None
+
+    fingerprint_payload = {
+        "scope_kind": normalized.get("scope_kind"),
+        "primary_target": normalized.get("primary_target"),
+        "object_names": list(normalized.get("object_names") or []),
+        "collection_name": normalized.get("collection_name"),
+    }
+    encoded = json.dumps(fingerprint_payload, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()[:16]
+
+
+def _looks_like_guided_helper_object(name: str) -> bool:
+    normalized = name.strip().lower()
+    return any(hint in normalized for hint in _GUIDED_HELPER_OBJECT_HINTS)
+
+
+def _is_bindable_guided_target_scope(scope: dict[str, Any] | None) -> bool:
+    if scope is None:
+        return False
+
+    scope_kind = str(scope.get("scope_kind") or "").strip().lower()
+    primary_target = str(scope.get("primary_target") or "").strip()
+    collection_name = str(scope.get("collection_name") or "").strip()
+    object_names = [str(name).strip() for name in scope.get("object_names") or [] if str(name).strip()]
+
+    if scope_kind == "scene":
+        return False
+    if not primary_target and not object_names and not collection_name:
+        return False
+    if collection_name:
+        return True
+    if not object_names and primary_target:
+        object_names = [primary_target]
+    return any(not _looks_like_guided_helper_object(name) for name in object_names)
+
+
+def _build_spatial_refresh_allowed_families(
+    *,
+    domain_profile: Literal["generic", "creature", "building"],
+    current_step: GuidedFlowStepLiteral,
+) -> list[GuidedFlowFamilyLiteral]:
+    allowed = _build_allowed_families(
+        domain_profile=domain_profile,
+        current_step="establish_spatial_context",
+    )
+    if current_step == "inspect_validate" and "inspect_validate" not in allowed:
+        allowed.append("inspect_validate")
+    return allowed
+
+
+def _default_next_actions_for_step(current_step: GuidedFlowStepLiteral) -> list[str]:
+    return {
+        "understand_goal": ["answer_router_questions"],
+        "establish_spatial_context": ["run_required_checks"],
+        "establish_reference_context": ["attach_reference_images"],
+        "create_primary_masses": ["begin_primary_masses"],
+        "place_secondary_parts": ["begin_secondary_parts"],
+        "checkpoint_iterate": ["run_checkpoint_iterate"],
+        "inspect_validate": ["switch_to_inspect_validate"],
+        "finish_or_stop": ["stop_or_finalize"],
+    }.get(current_step, ["continue_build"])
+
+
+def _default_step_status_for_step(
+    current_step: GuidedFlowStepLiteral,
+    *,
+    required_checks: list[GuidedFlowCheckContract] | None = None,
+) -> Literal["ready", "blocked", "needs_checkpoint", "needs_validation"]:
+    if current_step == "establish_spatial_context":
+        return "blocked" if required_checks else "ready"
+    if current_step == "checkpoint_iterate":
+        return "needs_checkpoint"
+    if current_step == "inspect_validate":
+        return "needs_validation"
+    return "ready"
+
+
+def _flow_state_for_current_step(
+    contract: GuidedFlowStateContract,
+    *,
+    part_registry: list[dict[str, Any]] | None,
+) -> None:
+    required_prompts, preferred_prompts = _build_required_prompt_bundle(
+        domain_profile=contract.domain_profile,
+        current_step=contract.current_step,
+    )
+    contract.required_prompts = required_prompts
+    contract.preferred_prompts = preferred_prompts
+    contract.allowed_families = _build_allowed_families(
+        domain_profile=contract.domain_profile,
+        current_step=contract.current_step,
+    )
+    role_summary = _build_role_summary(
+        domain_profile=contract.domain_profile,
+        current_step=contract.current_step,
+        part_registry=part_registry,
+    )
+    contract.allowed_roles = role_summary["allowed_roles"]
+    contract.completed_roles = role_summary["completed_roles"]
+    contract.missing_roles = role_summary["missing_roles"]
+    contract.required_role_groups = role_summary["required_role_groups"]
+    contract.next_actions = _default_next_actions_for_step(contract.current_step)
+    contract.step_status = _default_step_status_for_step(contract.current_step)
+    contract.required_checks = []
+
+
+def _should_rearm_spatial_gate(contract: GuidedFlowStateContract, *, force: bool = False) -> bool:
+    if not contract.spatial_state_stale:
+        return False
+    if force:
+        return True
+    if contract.current_step not in _SPATIAL_REARM_ALLOWED_STEPS:
+        return False
+    if contract.last_spatial_mutation_reason in _SPATIAL_REARM_ALWAYS_BLOCK_REASONS:
+        return True
+    if (
+        contract.current_step == "place_secondary_parts"
+        and contract.last_spatial_mutation_reason == "modeling_create_primitive"
+    ):
+        return False
+    return contract.current_step in {
+        "place_secondary_parts",
+        "checkpoint_iterate",
+        "inspect_validate",
+        "finish_or_stop",
+    }
+
+
+def _apply_spatial_refresh_gate(
+    contract: GuidedFlowStateContract,
+    *,
+    part_registry: list[dict[str, Any]] | None,
+    force: bool = False,
+) -> None:
+    if not _should_rearm_spatial_gate(contract, force=force):
+        return
+
+    contract.spatial_refresh_required = True
+    contract.required_checks = [
+        GuidedFlowCheckContract.model_validate(item)
+        for item in _build_required_checks(
+            domain_profile=contract.domain_profile,
+            current_step=contract.current_step,
+            force_spatial_context=True,
+        )
+    ]
+    contract.allowed_families = _build_spatial_refresh_allowed_families(
+        domain_profile=contract.domain_profile,
+        current_step=contract.current_step,
+    )
+    contract.next_actions = ["refresh_spatial_context"]
+    contract.step_status = "blocked"
+    role_summary = _build_role_summary(
+        domain_profile=contract.domain_profile,
+        current_step=contract.current_step,
+        part_registry=part_registry,
+    )
+    contract.allowed_roles = role_summary["allowed_roles"]
+    contract.completed_roles = role_summary["completed_roles"]
+    contract.missing_roles = role_summary["missing_roles"]
+    contract.required_role_groups = role_summary["required_role_groups"]
+
+
+def _clear_spatial_refresh_gate(
+    contract: GuidedFlowStateContract,
+    *,
+    part_registry: list[dict[str, Any]] | None,
+) -> None:
+    contract.spatial_refresh_required = False
+    contract.spatial_state_stale = False
+    contract.last_spatial_check_version = contract.spatial_state_version
+    _flow_state_for_current_step(contract, part_registry=part_registry)
+
+
 def _select_guided_flow_domain_profile(
     *,
     goal: str,
@@ -351,8 +607,9 @@ def _build_required_checks(
     *,
     domain_profile: Literal["generic", "creature", "building"],
     current_step: str,
+    force_spatial_context: bool = False,
 ) -> list[dict[str, Any]]:
-    if current_step != "establish_spatial_context":
+    if current_step != "establish_spatial_context" and not force_spatial_context:
         return []
 
     allowed_check_ids = {"scope_graph", "view_diagnostics"} if domain_profile == "building" else None
@@ -467,38 +724,18 @@ def _maybe_advance_guided_flow_from_part_registry_dict(
             if "create_primary_masses" not in contract.completed_steps:
                 contract.completed_steps.append("create_primary_masses")
             contract.current_step = "place_secondary_parts"
-            contract.next_actions = ["begin_secondary_parts"]
             contract.blocked_families = []
-            contract.step_status = "ready"
-            contract.allowed_families = _build_allowed_families(
-                domain_profile=contract.domain_profile,
-                current_step=contract.current_step,
-            )
-            required_prompts, preferred_prompts = _build_required_prompt_bundle(
-                domain_profile=contract.domain_profile,
-                current_step=contract.current_step,
-            )
-            contract.required_prompts = required_prompts
-            contract.preferred_prompts = preferred_prompts
+            _flow_state_for_current_step(contract, part_registry=part_registry)
+            _apply_spatial_refresh_gate(contract, part_registry=part_registry, force=True)
     elif contract.current_step == "place_secondary_parts":
         required_roles = _GUIDED_SECONDARY_REQUIRED_ROLES[contract.domain_profile]
         if all(role in completed_roles for role in required_roles):
             if "place_secondary_parts" not in contract.completed_steps:
                 contract.completed_steps.append("place_secondary_parts")
             contract.current_step = "checkpoint_iterate"
-            contract.next_actions = ["run_checkpoint_iterate"]
             contract.blocked_families = []
-            contract.step_status = "needs_checkpoint"
-            contract.allowed_families = _build_allowed_families(
-                domain_profile=contract.domain_profile,
-                current_step=contract.current_step,
-            )
-            required_prompts, preferred_prompts = _build_required_prompt_bundle(
-                domain_profile=contract.domain_profile,
-                current_step=contract.current_step,
-            )
-            contract.required_prompts = required_prompts
-            contract.preferred_prompts = preferred_prompts
+            _flow_state_for_current_step(contract, part_registry=part_registry)
+            _apply_spatial_refresh_gate(contract, part_registry=part_registry, force=True)
 
     role_summary = _build_role_summary(
         domain_profile=contract.domain_profile,
@@ -600,6 +837,11 @@ def _build_initial_guided_flow_state(
         current_step=current_step,
     )
     flow_id = f"guided_{domain_profile}_flow"
+    role_summary = _build_role_summary(
+        domain_profile=domain_profile,
+        current_step=current_step,
+        part_registry=part_registry,
+    )
 
     return GuidedFlowStateContract(
         flow_id=flow_id,
@@ -612,11 +854,10 @@ def _build_initial_guided_flow_state(
         next_actions=next_actions,
         blocked_families=blocked_families,
         allowed_families=_build_allowed_families(domain_profile=domain_profile, current_step=current_step),
-        **_build_role_summary(
-            domain_profile=domain_profile,
-            current_step=current_step,
-            part_registry=part_registry,
-        ),
+        allowed_roles=role_summary["allowed_roles"],
+        completed_roles=role_summary["completed_roles"],
+        missing_roles=role_summary["missing_roles"],
+        required_role_groups=role_summary["required_role_groups"],
         step_status=step_status,  # type: ignore[arg-type]
     ).model_dump(mode="json")
 
@@ -1316,6 +1557,79 @@ async def replace_session_pending_reference_images_async(
     return state
 
 
+def _mark_guided_spatial_state_stale_dict(
+    flow_state: dict[str, Any],
+    *,
+    tool_name: str,
+    reason: str,
+    part_registry: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    contract = GuidedFlowStateContract.model_validate(flow_state)
+
+    if contract.active_target_scope is None and contract.last_spatial_check_version is None:
+        return contract.model_dump(mode="json")
+
+    contract.spatial_state_version += 1
+    contract.spatial_state_stale = True
+    contract.last_spatial_mutation_reason = reason
+
+    if tool_name == "scene_clean_scene":
+        contract.active_target_scope = None
+        contract.spatial_scope_fingerprint = None
+        contract.last_spatial_check_version = None
+
+    _apply_spatial_refresh_gate(contract, part_registry=part_registry)
+    return contract.model_dump(mode="json")
+
+
+def mark_guided_spatial_state_stale(
+    ctx: Context,
+    *,
+    tool_name: str,
+    family: str | None = None,
+    reason: str | None = None,
+) -> SessionCapabilityState:
+    """Mark the active guided flow's spatial facts stale after one scene mutation."""
+
+    dirty_family = family in _SPATIAL_STATE_DIRTY_FAMILIES if isinstance(family, str) else False
+    if tool_name not in _SPATIAL_STATE_DIRTY_TOOL_NAMES and not dirty_family:
+        return get_session_capability_state(ctx)
+
+    current = get_session_capability_state(ctx)
+    if current.guided_flow_state is None:
+        return current
+
+    updated_flow_state = _mark_guided_spatial_state_stale_dict(
+        current.guided_flow_state,
+        tool_name=tool_name,
+        reason=reason or tool_name,
+        part_registry=current.guided_part_registry,
+    )
+    state = SessionCapabilityState(
+        phase=current.phase,
+        goal=current.goal,
+        pending_clarification=current.pending_clarification,
+        last_router_status=current.last_router_status,
+        policy_context=current.policy_context,
+        surface_profile=current.surface_profile,
+        contract_version=current.contract_version,
+        pending_elicitation_id=current.pending_elicitation_id,
+        pending_workflow_name=current.pending_workflow_name,
+        partial_answers=current.partial_answers,
+        pending_question_set_id=current.pending_question_set_id,
+        last_elicitation_action=current.last_elicitation_action,
+        last_router_disposition=current.last_router_disposition,
+        last_router_error=current.last_router_error,
+        reference_images=current.reference_images,
+        guided_handoff=current.guided_handoff,
+        guided_flow_state=updated_flow_state,
+        guided_part_registry=current.guided_part_registry,
+        pending_reference_images=current.pending_reference_images,
+    )
+    set_session_capability_state(ctx, state)
+    return state
+
+
 async def register_guided_part_role_async(
     ctx: Context,
     *,
@@ -1466,48 +1780,79 @@ def _mark_guided_flow_check_completed_dict(
     flow_state: dict[str, Any],
     *,
     tool_name: str,
+    resolved_scope: dict[str, Any] | None = None,
     part_registry: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     contract = GuidedFlowStateContract.model_validate(flow_state)
+    normalized_scope = _normalize_guided_target_scope(resolved_scope)
+    resolved_scope_fingerprint = _build_guided_target_scope_fingerprint(normalized_scope)
     changed = False
+
+    if normalized_scope is None:
+        for check in contract.required_checks:
+            if check.tool_name == tool_name and check.status != "completed":
+                check.status = "completed"
+                changed = True
+
+        if (
+            changed
+            and contract.required_checks
+            and all(check.status == "completed" for check in contract.required_checks)
+        ):
+            if contract.spatial_refresh_required:
+                _clear_spatial_refresh_gate(contract, part_registry=part_registry)
+            elif contract.current_step == "establish_spatial_context":
+                if "establish_spatial_context" not in contract.completed_steps:
+                    contract.completed_steps.append("establish_spatial_context")
+                contract.current_step = "create_primary_masses"
+                contract.last_spatial_check_version = contract.spatial_state_version
+                contract.spatial_state_stale = False
+                contract.blocked_families = []
+                _flow_state_for_current_step(contract, part_registry=part_registry)
+        return contract.model_dump(mode="json")
+
+    if tool_name == _GUIDED_SCOPE_BINDING_TOOL_NAME and normalized_scope is not None:
+        should_rebind = contract.active_target_scope is None or contract.spatial_refresh_required
+        if should_rebind and _is_bindable_guided_target_scope(normalized_scope):
+            contract.active_target_scope = GuidedTargetScopeContract.model_validate(normalized_scope)
+            contract.spatial_scope_fingerprint = resolved_scope_fingerprint
+
+    if contract.active_target_scope is None:
+        return contract.model_dump(mode="json")
+    if contract.spatial_refresh_required and tool_name != _GUIDED_SCOPE_BINDING_TOOL_NAME:
+        scope_check = next(
+            (check for check in contract.required_checks if check.tool_name == _GUIDED_SCOPE_BINDING_TOOL_NAME),
+            None,
+        )
+        if scope_check is not None and scope_check.status != "completed":
+            return contract.model_dump(mode="json")
+
+    active_scope_fingerprint = contract.spatial_scope_fingerprint or _build_guided_target_scope_fingerprint(
+        contract.active_target_scope.model_dump(mode="json")
+    )
+    if active_scope_fingerprint is None:
+        return contract.model_dump(mode="json")
+    contract.spatial_scope_fingerprint = active_scope_fingerprint
+
+    if resolved_scope_fingerprint is None or resolved_scope_fingerprint != active_scope_fingerprint:
+        return contract.model_dump(mode="json")
 
     for check in contract.required_checks:
         if check.tool_name == tool_name and check.status != "completed":
             check.status = "completed"
             changed = True
 
-    if (
-        changed
-        and contract.current_step == "establish_spatial_context"
-        and contract.required_checks
-        and all(check.status == "completed" for check in contract.required_checks)
-    ):
-        if "establish_spatial_context" not in contract.completed_steps:
-            contract.completed_steps.append("establish_spatial_context")
-        contract.current_step = "create_primary_masses"
-        contract.required_checks = []
-        contract.next_actions = ["begin_primary_masses"]
-        contract.blocked_families = []
-        contract.step_status = "ready"
-        required_prompts, preferred_prompts = _build_required_prompt_bundle(
-            domain_profile=contract.domain_profile,
-            current_step=contract.current_step,
-        )
-        contract.required_prompts = required_prompts
-        contract.preferred_prompts = preferred_prompts
-        contract.allowed_families = _build_allowed_families(
-            domain_profile=contract.domain_profile,
-            current_step=contract.current_step,
-        )
-        role_summary = _build_role_summary(
-            domain_profile=contract.domain_profile,
-            current_step=contract.current_step,
-            part_registry=part_registry,
-        )
-        contract.allowed_roles = role_summary["allowed_roles"]
-        contract.completed_roles = role_summary["completed_roles"]
-        contract.missing_roles = role_summary["missing_roles"]
-        contract.required_role_groups = role_summary["required_role_groups"]
+    if changed and contract.required_checks and all(check.status == "completed" for check in contract.required_checks):
+        if contract.spatial_refresh_required:
+            _clear_spatial_refresh_gate(contract, part_registry=part_registry)
+        elif contract.current_step == "establish_spatial_context":
+            if "establish_spatial_context" not in contract.completed_steps:
+                contract.completed_steps.append("establish_spatial_context")
+            contract.current_step = "create_primary_masses"
+            contract.last_spatial_check_version = contract.spatial_state_version
+            contract.spatial_state_stale = False
+            contract.blocked_families = []
+            _flow_state_for_current_step(contract, part_registry=part_registry)
 
     return contract.model_dump(mode="json")
 
@@ -1516,6 +1861,7 @@ def record_guided_flow_spatial_check_completion(
     ctx: Context,
     *,
     tool_name: str,
+    resolved_scope: dict[str, Any] | None = None,
 ) -> SessionCapabilityState:
     """Mark one spatial-context check as completed and advance the flow when ready."""
 
@@ -1529,6 +1875,7 @@ def record_guided_flow_spatial_check_completion(
     updated_flow_state = _mark_guided_flow_check_completed_dict(
         current.guided_flow_state,
         tool_name=tool_name,
+        resolved_scope=resolved_scope,
         part_registry=current.guided_part_registry,
     )
     state = SessionCapabilityState(
@@ -1560,6 +1907,7 @@ async def record_guided_flow_spatial_check_completion_async(
     ctx: Context,
     *,
     tool_name: str,
+    resolved_scope: dict[str, Any] | None = None,
 ) -> SessionCapabilityState:
     """Async variant of spatial-check completion recording."""
 
@@ -1573,6 +1921,7 @@ async def record_guided_flow_spatial_check_completion_async(
     updated_flow_state = _mark_guided_flow_check_completed_dict(
         current.guided_flow_state,
         tool_name=tool_name,
+        resolved_scope=resolved_scope,
         part_registry=current.guided_part_registry,
     )
     state = SessionCapabilityState(
@@ -1613,49 +1962,19 @@ def _advance_guided_flow_for_iteration_dict(
 
     if loop_disposition == "inspect_validate":
         contract.current_step = "inspect_validate"
-        contract.next_actions = ["switch_to_inspect_validate"]
         contract.blocked_families = ["late_refinement", "finish"]
-        contract.step_status = "needs_validation"
     elif loop_disposition == "stop":
         contract.current_step = "finish_or_stop"
-        contract.next_actions = ["stop_or_finalize"]
         contract.blocked_families = []
-        contract.step_status = "ready"
     else:
         if current_step == "create_primary_masses":
             contract.current_step = "place_secondary_parts"
         else:
             contract.current_step = "checkpoint_iterate"
-        contract.next_actions = ["continue_build"]
         contract.blocked_families = []
-        contract.step_status = "ready"
-
-    required_prompts, preferred_prompts = _build_required_prompt_bundle(
-        domain_profile=contract.domain_profile,
-        current_step=contract.current_step,
-    )
-    contract.required_prompts = required_prompts
-    contract.preferred_prompts = preferred_prompts
-    contract.required_checks = [
-        GuidedFlowCheckContract.model_validate(item)
-        for item in _build_required_checks(
-            domain_profile=contract.domain_profile,
-            current_step=contract.current_step,
-        )
-    ]
-    contract.allowed_families = _build_allowed_families(
-        domain_profile=contract.domain_profile,
-        current_step=contract.current_step,
-    )
-    role_summary = _build_role_summary(
-        domain_profile=contract.domain_profile,
-        current_step=contract.current_step,
-        part_registry=part_registry,
-    )
-    contract.allowed_roles = role_summary["allowed_roles"]
-    contract.completed_roles = role_summary["completed_roles"]
-    contract.missing_roles = role_summary["missing_roles"]
-    contract.required_role_groups = role_summary["required_role_groups"]
+    _flow_state_for_current_step(contract, part_registry=part_registry)
+    if contract.spatial_state_stale:
+        _apply_spatial_refresh_gate(contract, part_registry=part_registry, force=True)
     return contract.model_dump(mode="json")
 
 

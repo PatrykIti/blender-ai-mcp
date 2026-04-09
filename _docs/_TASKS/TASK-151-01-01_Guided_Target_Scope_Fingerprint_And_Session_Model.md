@@ -1,7 +1,7 @@
 # TASK-151-01-01: Guided Target Scope Fingerprint And Session Model
 
 **Parent:** [TASK-151-01](./TASK-151-01_Target_Bound_Spatial_Check_Validity.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -91,5 +91,12 @@ def _build_guided_target_scope_fingerprint(...): ...
 
 ## Status / Closeout Note
 
-- this leaf is done only when downstream leaves can consume the fingerprint
-  instead of recomputing ad-hoc scope identity from raw request arguments
+- completed on 2026-04-09; downstream leaves now consume the shared scope
+  contract/fingerprint instead of recomputing ad-hoc identity from raw request
+  arguments
+
+## Completion Summary
+
+- added compact guided target-scope identity fields to `GuidedFlowStateContract`
+- added deterministic `spatial_scope_fingerprint` generation and session
+  round-tripping for the normalized target scope

@@ -1,7 +1,7 @@
 # TASK-151-03-01: Unit And Transport Regression Matrix For Spatial Freshness
 
 **Parent:** [TASK-151-03](./TASK-151-03_Regression_And_Docs_For_Spatial_Rearm.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -59,5 +59,11 @@ re-arm behavior.
 
 ## Status / Closeout Note
 
-- this leaf is done only when both stdio and streamable harnesses cover the new
-  target-bound and freshness-aware behavior
+- completed on 2026-04-09 with both unit and transport harness coverage for
+  the new target-bound and freshness-aware behavior
+
+## Completion Summary
+
+- added unit regressions for target binding, stale marking, and spatial re-arm
+- added transport regressions for spoofed helper scopes and same-session
+  refresh behavior on guided stdio/streamable flows

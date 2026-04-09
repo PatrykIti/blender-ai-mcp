@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-151-01](./TASK-151-01_Target_Bound_Spatial_Check_Validity.md)
 **Depends On:** [TASK-151-01-01](./TASK-151-01-01_Guided_Target_Scope_Fingerprint_And_Session_Model.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -95,5 +95,13 @@ record_guided_flow_spatial_check_completion(
 
 ## Status / Closeout Note
 
-- this leaf closes only after both stdio and streamable harnesses prove that an
-  unrelated object scope cannot spoof the guided spatial gate
+- completed on 2026-04-09 after stdio/streamable regressions proved that an
+  unrelated helper scope cannot spoof the guided spatial gate
+
+## Completion Summary
+
+- `scene_scope_graph(...)`, `scene_relation_graph(...)`, and
+  `scene_view_diagnostics(...)` now pass normalized target scope identity into
+  the guided flow helper
+- unrelated scopes return normal read-only payloads but no longer complete the
+  active guided spatial check

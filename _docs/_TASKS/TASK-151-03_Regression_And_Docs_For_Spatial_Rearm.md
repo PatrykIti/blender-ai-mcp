@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-151](./TASK-151_Spatial_Check_Freshness_Target_Binding_And_Guided_Rearm.md)
 **Depends On:** [TASK-151-01](./TASK-151-01_Target_Bound_Spatial_Check_Validity.md), [TASK-151-02](./TASK-151-02_Spatial_Freshness_And_Rearm_Policy.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -79,5 +79,12 @@ and operator docs.
 
 ## Status / Closeout Note
 
-- do not close TASK-151 until the regression leaf and the docs leaf both land
-  in the same branch as the final runtime behavior
+- closed on 2026-04-09 together with the runtime implementation so regression
+  coverage and public docs match the final shipped behavior
+
+## Completion Summary
+
+- added target-bound/freshness-aware regression coverage across unit and
+  transport layers
+- updated README, MCP docs, prompt docs, changelog, and task board for the new
+  guided spatial re-arm contract

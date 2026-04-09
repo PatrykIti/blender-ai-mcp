@@ -1,6 +1,6 @@
 # TASK-151: Spatial Check Freshness, Target Binding, And Guided Re-Arm
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** Guided Runtime / Spatial Discipline
 **Estimated Effort:** Large
@@ -155,6 +155,22 @@ ongoing spatial discipline of the session.
 
 ## Status / Board Update
 
-- promoted as a board-level follow-on because TASK-150 solved the first guided
-  execution contract, but real sessions still need stronger target-bound and
-  freshness-aware spatial discipline
+- completed on 2026-04-09 and moved from the board-level follow-on queue to
+  the Done section once target-bound spatial checks, freshness-aware re-arm,
+  regression coverage, and public docs landed together
+
+## Completion Summary
+
+- added target-bound spatial gating through
+  `guided_flow_state.active_target_scope` plus a deterministic
+  `spatial_scope_fingerprint`
+- added freshness/version bookkeeping on `guided_flow_state`:
+  `spatial_state_version`, `spatial_state_stale`,
+  `last_spatial_check_version`, and `spatial_refresh_required`
+- `scene_scope_graph(...)` now binds/rebinds the active guided target scope,
+  while unrelated helper scopes such as a single `Camera` no longer satisfy
+  the creature/building spatial gate
+- successful scene/build mutations can now stale the spatial layer and re-arm
+  `required_checks` plus `next_actions=["refresh_spatial_context"]`
+- updated README, MCP docs, prompt docs, changelog, task board, and regression
+  coverage to match the shipped runtime behavior

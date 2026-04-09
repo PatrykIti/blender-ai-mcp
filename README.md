@@ -308,6 +308,12 @@ contract in addition to `guided_handoff`.
   - `domain_profile`
   - `current_step`
   - `completed_steps`
+  - `active_target_scope`
+  - `spatial_scope_fingerprint`
+  - `spatial_state_version`
+  - `spatial_state_stale`
+  - `last_spatial_check_version`
+  - `spatial_refresh_required`
   - `required_checks`
   - `next_actions`
   - `blocked_families`
@@ -325,6 +331,18 @@ contract in addition to `guided_handoff`.
   - `building`
 - early guided build sessions now start from a step-gated spatial-context
   phase instead of exposing the whole build surface immediately
+- `scene_scope_graph(...)` now binds the active guided target scope for the
+  spatial gate; unrelated view checks such as
+  `scene_view_diagnostics(target_object="Camera", ...)` do not satisfy a
+  creature/building spatial check by themselves
+- after material scene changes such as `scene_clean_scene(...)`,
+  `modeling_create_primitive(...)`, `modeling_transform_object(...)`, or
+  bounded attachment/alignment macros, the guided runtime can mark the spatial
+  layer stale and re-arm the required checks
+- when `guided_flow_state.spatial_refresh_required == true`, treat
+  `next_actions=["refresh_spatial_context"]` as authoritative server state,
+  not advisory prose; refresh with `scene_scope_graph(...)` first, then rerun
+  the remaining required spatial checks on the same target scope
 - if a needed tool family is hidden/blocked-by-flow, inspect
   `router_get_status().guided_flow_state`, complete the listed
   `required_checks`, and follow `next_actions` instead of guessing hidden tool

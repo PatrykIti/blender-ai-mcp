@@ -1,7 +1,7 @@
 # TASK-151-01: Target-Bound Spatial Check Validity
 
 **Parent:** [TASK-151](./TASK-151_Spatial_Check_Freshness_Target_Binding_And_Guided_Rearm.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -77,6 +77,12 @@ That is the exact spoofing hole this subtask closes.
 
 ## Status / Closeout Note
 
-- do not close this subtask until:
-  - the active target-scope identity is exposed on `guided_flow_state`
-  - unrelated scopes can no longer complete the spatial gate in transport tests
+- closed on 2026-04-09 after the guided flow contract gained explicit target
+  scope identity and transport regressions proved unrelated helper scopes do
+  not satisfy the active guided spatial gate
+
+## Completion Summary
+
+- added explicit target-bound guided scope identity to `guided_flow_state`
+- required spatial checks now complete only when they match the active guided
+  target scope, with `scene_scope_graph(...)` as the binding/rebind step

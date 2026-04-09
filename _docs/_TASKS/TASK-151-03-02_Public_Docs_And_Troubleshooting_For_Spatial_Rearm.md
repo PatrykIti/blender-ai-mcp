@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-151-03](./TASK-151-03_Regression_And_Docs_For_Spatial_Rearm.md)
 **Depends On:** [TASK-151-03-01](./TASK-151-03-01_Unit_And_Transport_Regression_Matrix_For_Spatial_Freshness.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -70,5 +70,12 @@ and freshness-bound, not a one-time ritual at the beginning of the session.
 
 ## Status / Closeout Note
 
-- this leaf closes only after the docs describe the same field names and
-  troubleshooting flow that transport tests expose
+- completed on 2026-04-09 after README, MCP docs, and prompt docs described
+  the same field names and troubleshooting flow that transport tests expose
+
+## Completion Summary
+
+- public docs now explain target-bound scope binding, spatial freshness, and
+  `refresh_spatial_context`
+- docs parity tests now assert the new `guided_flow_state` fields and
+  troubleshooting wording

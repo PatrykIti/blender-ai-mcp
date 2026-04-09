@@ -46,6 +46,12 @@ def test_readme_documents_llm_guided_public_aliases():
         "guided_flow_state",
         "domain_profile",
         "current_step",
+        "active_target_scope",
+        "spatial_scope_fingerprint",
+        "spatial_state_version",
+        "spatial_state_stale",
+        "last_spatial_check_version",
+        "spatial_refresh_required",
         "required_checks",
         "allowed_families",
         "allowed_roles",
@@ -53,6 +59,8 @@ def test_readme_documents_llm_guided_public_aliases():
         "guided_register_part",
         "required prompt bundle",
         "preferred prompt bundle",
+        "refresh_spatial_context",
+        'scene_view_diagnostics(target_object="Camera"',
         "Contact Truth Semantics",
         "mesh-surface contact/gap semantics",
         "bbox fallback semantics",
@@ -107,11 +115,20 @@ def test_mcp_docs_describe_aliases_and_hidden_arguments():
         "generic search-first stabilizer",
         "bounded recovery hatch",
         "Server-Driven Guided Flow State",
+        "active_target_scope",
+        "spatial_scope_fingerprint",
+        "spatial_state_version",
+        "spatial_state_stale",
+        "last_spatial_check_version",
+        "spatial_refresh_required",
         "required_prompts",
         "preferred_prompts",
         "allowed_roles",
         "missing_roles",
         "guided_register_part",
+        "scene_scope_graph(...) now binds the active guided target scope",
+        "Camera",
+        "refresh_spatial_context",
         "hidden/blocked-by-flow",
         "scene_hide_object",
         "scene_show_all_objects",
@@ -289,8 +306,14 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "generic search-first stabilizer" in prompt_readme
     assert "server-driven guided flow" in prompt_readme
     assert "guided_flow_state" in prompt_readme
+    assert "active_target_scope" in prompt_readme
+    assert "spatial_scope_fingerprint" in prompt_readme
+    assert "spatial_state_version" in prompt_readme
+    assert "last_spatial_check_version" in prompt_readme
+    assert "spatial_refresh_required" in prompt_readme
     assert "required prompt bundle" in prompt_readme
     assert "preferred prompt bundle" in prompt_readme
+    assert "refresh_spatial_context" in prompt_readme
     assert "guided_register_part(object_name=..., role=...)" in prompt_readme
     assert "guided_role=..." in prompt_readme
     assert "allowed_families" in prompt_readme

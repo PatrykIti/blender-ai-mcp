@@ -2522,7 +2522,11 @@ def scene_scope_graph(
                 ),
                 message="Scope graph derived from explicit targets plus deterministic role/anchor heuristics.",
             )
-            record_guided_flow_spatial_check_completion(ctx, tool_name="scene_scope_graph")
+            record_guided_flow_spatial_check_completion(
+                ctx,
+                tool_name="scene_scope_graph",
+                resolved_scope=payload.scope.model_dump(mode="json"),
+            )
             return SceneScopeGraphResponseContract(payload=payload)
         except RuntimeError as e:
             return SceneScopeGraphResponseContract(error=str(e))
@@ -2576,7 +2580,11 @@ def scene_relation_graph(
                     include_truth_payloads=False,
                 )
             )
-            record_guided_flow_spatial_check_completion(ctx, tool_name="scene_relation_graph")
+            record_guided_flow_spatial_check_completion(
+                ctx,
+                tool_name="scene_relation_graph",
+                resolved_scope=payload.scope.model_dump(mode="json"),
+            )
             return SceneRelationGraphResponseContract(payload=payload)
         except RuntimeError as e:
             return SceneRelationGraphResponseContract(error=str(e))
@@ -2687,7 +2695,11 @@ def scene_view_diagnostics(
                     "View diagnostics report projection/framing/occlusion state for the requested scope only; use measure/assert tools for truth-space verification."
                 ),
             )
-            record_guided_flow_spatial_check_completion(ctx, tool_name="scene_view_diagnostics")
+            record_guided_flow_spatial_check_completion(
+                ctx,
+                tool_name="scene_view_diagnostics",
+                resolved_scope=payload.scope.model_dump(mode="json"),
+            )
             return SceneViewDiagnosticsResponseContract(payload=payload)
         except (RuntimeError, ValueError) as e:
             return SceneViewDiagnosticsResponseContract(error=str(e))

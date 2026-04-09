@@ -187,6 +187,8 @@ Interpretation:
 - before broad build actions, inspect:
   - `guided_flow_state.domain_profile`
   - `guided_flow_state.current_step`
+  - `guided_flow_state.active_target_scope`
+  - `guided_flow_state.spatial_refresh_required`
   - `guided_flow_state.required_checks`
   - `guided_flow_state.next_actions`
 - use the `required prompt bundle` and `preferred prompt bundle` named in
@@ -248,6 +250,20 @@ contract.
 - inspect `guided_flow_state.allowed_roles` and
   `guided_flow_state.missing_roles` before creating or transforming
   role-sensitive build parts
+- if `guided_flow_state.spatial_refresh_required == true`, treat that as
+  authoritative stale-spatial state:
+  - expect `guided_flow_state.next_actions=["refresh_spatial_context"]`
+  - call `scene_scope_graph(...)` first to bind/rebind the active target scope
+  - then rerun the remaining `required_checks` on that same scope
+- do not treat a successful read-only payload on an unrelated helper object as
+  proof that the spatial gate is satisfied; for example
+  `scene_view_diagnostics(target_object="Camera", ...)` may still return a
+  payload without satisfying a creature/building spatial check
+- inspect `guided_flow_state.active_target_scope`,
+  `guided_flow_state.spatial_scope_fingerprint`,
+  `guided_flow_state.spatial_state_version`, and
+  `guided_flow_state.last_spatial_check_version` when the session seems to be
+  looping on stale placement/framing facts
 - the server may keep build visibility step-gated during
   `establish_spatial_context`, so prompt text must not override that gating
 - `required_prompts` = required prompt bundle names for the current

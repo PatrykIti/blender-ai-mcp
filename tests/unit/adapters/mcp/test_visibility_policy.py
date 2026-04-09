@@ -209,6 +209,32 @@ def test_visibility_rules_can_gate_build_phase_by_guided_flow_step():
     assert "scene_scope_graph" in rules[-1]["names"]
 
 
+def test_visibility_rules_rearm_build_phase_to_spatial_context_when_refresh_required():
+    """Stale guided build sessions should narrow direct build visibility back to spatial refresh tools."""
+
+    rules = build_visibility_rules(
+        "llm-guided",
+        SessionPhase.BUILD,
+        guided_handoff={
+            "kind": "guided_manual_build",
+            "recipe_id": "low_poly_creature_blockout",
+            "direct_tools": list(CREATURE_LOW_POLY_BLOCKOUT_DIRECT_TOOLS),
+            "supporting_tools": list(CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS),
+        },
+        guided_flow_state={
+            "flow_id": "guided_creature_flow",
+            "domain_profile": "creature",
+            "current_step": "place_secondary_parts",
+            "spatial_refresh_required": True,
+        },
+    )
+
+    assert rules[-1]["names"] == set(GUIDED_SPATIAL_CONTEXT_DIRECT_TOOLS)
+    assert "modeling_create_primitive" not in rules[-1]["names"]
+    assert "guided_register_part" not in rules[-1]["names"]
+    assert "scene_view_diagnostics" in rules[-1]["names"]
+
+
 def test_llm_guided_surface_materializes_visibility_transforms():
     """llm-guided should carry concrete visibility transforms while legacy-flat stays unfiltered."""
 

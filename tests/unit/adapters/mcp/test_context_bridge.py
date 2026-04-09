@@ -16,8 +16,12 @@ from server.adapters.mcp.context_utils import (
 )
 from server.adapters.mcp.execution_context import MCPExecutionContext
 from server.adapters.mcp.execution_report import ExecutionStep, MCPExecutionReport
-from server.adapters.mcp.router_helper import route_tool_call_report
-from server.adapters.mcp.session_capabilities import SessionCapabilityState
+from server.adapters.mcp.router_helper import route_tool_call, route_tool_call_report
+from server.adapters.mcp.session_capabilities import (
+    SessionCapabilityState,
+    get_session_capability_state,
+    set_session_capability_state,
+)
 from server.adapters.mcp.session_phase import SessionPhase
 
 
@@ -385,3 +389,74 @@ def test_route_tool_call_report_allows_registered_object_transform_without_expli
     assert report.router_disposition == "bypassed"
     assert report.context.guided_role == "body_core"
     assert report.steps[0].result == "Transformed object 'Squirrel_Body'"
+
+
+def test_route_tool_call_marks_guided_spatial_state_stale_after_successful_transform(monkeypatch):
+    """Successful guided build mutations should dirty the spatial layer for later re-arm logic."""
+
+    from fastmcp.server.context import _current_context
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            surface_profile="llm-guided",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "active_target_scope": {
+                    "scope_kind": "object_set",
+                    "primary_target": "Squirrel_Body",
+                    "object_names": ["Squirrel_Body", "Squirrel_Head"],
+                    "object_count": 2,
+                },
+                "spatial_scope_fingerprint": "scope_1",
+                "spatial_state_version": 0,
+                "last_spatial_check_version": 0,
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": ["body_core"],
+                "missing_roles": ["head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+            guided_part_registry=[
+                {
+                    "object_name": "Squirrel_Body",
+                    "role": "body_core",
+                    "role_group": "primary_masses",
+                    "status": "registered",
+                }
+            ],
+        ),
+    )
+
+    token = _current_context.set(ctx)
+    try:
+        result = route_tool_call(
+            tool_name="modeling_transform_object",
+            params={"name": "Squirrel_Body", "scale": [0.9, 0.8, 1.2]},
+            direct_executor=lambda: "Transformed object 'Squirrel_Body'",
+        )
+    finally:
+        _current_context.reset(token)
+
+    state = get_session_capability_state(ctx)
+
+    assert result == "Transformed object 'Squirrel_Body'"
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["spatial_state_version"] == 1
+    assert state.guided_flow_state["spatial_state_stale"] is True
+    assert state.guided_flow_state["spatial_refresh_required"] is False

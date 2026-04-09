@@ -473,6 +473,12 @@ Current machine-readable `guided_flow_state` fields:
 | `domain_profile` | Current guided overlay: `generic`, `creature`, or `building` |
 | `current_step` | Active guided step such as `understand_goal`, `establish_spatial_context`, `create_primary_masses`, `checkpoint_iterate`, or `inspect_validate` |
 | `completed_steps` | Steps already completed in the current guided run |
+| `active_target_scope` | Compact target scope identity the guided spatial checks currently apply to |
+| `spatial_scope_fingerprint` | Deterministic fingerprint for the active guided target scope |
+| `spatial_state_version` | Monotonic version for scene-changing guided mutations that can stale spatial facts |
+| `spatial_state_stale` | Whether the last trusted spatial facts are stale relative to the current scene version |
+| `last_spatial_check_version` | The scene spatial version last validated by the required spatial checks |
+| `spatial_refresh_required` | Whether the server has explicitly re-armed the spatial gate for the current step |
 | `required_checks` | Structured checks that must complete before the next family unlocks |
 | `next_actions` | Next machine-readable move(s) the client/model should take |
 | `blocked_families` | Bounded tool-family restrictions still active for the current step |
@@ -499,6 +505,23 @@ Current guided-flow behavior:
 - during `establish_spatial_context`, the visible guided build surface stays
   bounded to spatial-context / inspection / reference-support tools until the
   required checks complete
+- `scene_scope_graph(...)` now binds the active guided target scope.
+- `scene_scope_graph(...) now binds the active guided target scope`.
+- `scene_scope_graph(...)` now binds the active guided target scope for the
+  spatial gate; later `scene_relation_graph(...)` /
+  `scene_view_diagnostics(...)` completions must match that scope instead of
+  satisfying the gate on arbitrary unrelated objects
+- helper-only scopes such as a single `Camera` do not initialize or satisfy a
+  creature/building spatial gate by themselves
+- after material scene changes such as `scene_clean_scene(...)`,
+  `modeling_create_primitive(...)`, `modeling_transform_object(...)`, or
+  bounded attachment/alignment cleanup macros, the runtime can mark the
+  spatial layer stale and re-arm the required checks
+- when `spatial_refresh_required=true`, the server expects a fresh
+  `scene_scope_graph(...)` rebind first, then the remaining required spatial
+  checks on that same target scope
+- the machine-readable next action for this path is
+  `refresh_spatial_context`
 - guided execution policy can now fail closed when a call resolves to the
   wrong shared family or an explicit guided role that is not allowed for the
   current step
@@ -542,9 +565,18 @@ If a needed tool is not visible or a build tool seems to have disappeared on
 4. Check `current_step`, `required_checks`, and `next_actions`.
 5. If `step_status == "blocked"`, complete the required step instead of
    guessing hidden tool names.
-6. If a family is hidden/blocked-by-flow, do not treat `call_tool(...)` as a
+6. If `spatial_refresh_required == true`, treat that as an explicit stale
+   spatial-state re-arm:
+   - call `scene_scope_graph(...)` first to bind/rebind the active target
+     scope
+   - then rerun the remaining `required_checks` on that same scope
+7. If `scene_view_diagnostics(target_object="Camera", ...)` or another
+   unrelated helper scope appears to “work” but the flow did not advance, that
+   is expected. Read-only payloads can still succeed even when they do not
+   satisfy the active guided spatial gate.
+8. If a family is hidden/blocked-by-flow, do not treat `call_tool(...)` as a
    bypass. Follow the flow gate, then re-check visibility/search.
-7. If the server rejects a call with a guided family/role error, do not retry
+9. If the server rejects a call with a guided family/role error, do not retry
    the same action under a different hidden/internal tool name; inspect the
    current `allowed_families` and `allowed_roles` first.
 

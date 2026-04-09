@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-151](./TASK-151_Spatial_Check_Freshness_Target_Binding_And_Guided_Rearm.md)
 **Depends On:** [TASK-151-01](./TASK-151-01_Target_Bound_Spatial_Check_Validity.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -94,5 +94,13 @@ The current flow contract still treats spatial checks as first-use-only:
 
 ## Status / Closeout Note
 
-- do not close this subtask until stale-spatial behavior is visible through
-  `router_get_status().guided_flow_state`, not only through prose guidance
+- closed on 2026-04-09 once stale-spatial behavior became visible through
+  `router_get_status().guided_flow_state` and transport-backed guided sessions
+  could re-arm/clear the spatial refresh requirement
+
+## Completion Summary
+
+- added explicit spatial freshness/version fields to `guided_flow_state`
+- successful guided scene mutations can now stale the spatial layer
+- guided flows can now re-arm and later clear `refresh_spatial_context`
+  without rewinding the semantic step name

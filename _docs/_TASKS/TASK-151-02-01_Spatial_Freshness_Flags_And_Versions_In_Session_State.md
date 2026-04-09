@@ -1,7 +1,7 @@
 # TASK-151-02-01: Spatial Freshness Flags And Versions In Session State
 
 **Parent:** [TASK-151-02](./TASK-151-02_Spatial_Freshness_And_Rearm_Policy.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -83,5 +83,10 @@ class GuidedFlowStateContract(MCPContract):
 
 ## Status / Closeout Note
 
-- this leaf is purely contract/session groundwork; do not mark TASK-151-02
-  done until later leaves actually mutate and consume these fields
+- completed on 2026-04-09; later leaves now mutate and consume these fields in
+  runtime logic, transport payloads, and docs
+
+## Completion Summary
+
+- added guided spatial freshness/version fields to `GuidedFlowStateContract`
+- exposed those fields through the existing `guided_flow_state` payloads

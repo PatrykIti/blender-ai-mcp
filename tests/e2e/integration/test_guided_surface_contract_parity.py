@@ -45,7 +45,7 @@ _PATCHED_GUIDED_CONTRACT_SERVER = textwrap.dedent(
             names = [name for name in [target_object, *(target_objects or [])] if name]
             primary = target_object or (names[0] if names else None)
             return {
-                "scope_kind": "object_set",
+                "scope_kind": "object_set" if len(names) > 1 else "single_object",
                 "primary_target": primary,
                 "object_names": names,
                 "object_count": len(names),
@@ -64,7 +64,7 @@ _PATCHED_GUIDED_CONTRACT_SERVER = textwrap.dedent(
             primary = target_object or (names[0] if names else None)
             return {
                 "scope": {
-                    "scope_kind": "object_set",
+                    "scope_kind": "object_set" if len(names) > 1 else "single_object",
                     "primary_target": primary,
                     "object_names": names,
                     "object_count": len(names),
@@ -117,6 +117,9 @@ _PATCHED_GUIDED_CONTRACT_SERVER = textwrap.dedent(
     class ModelingHandler:
         def create_primitive(self, primitive_type, radius=1.0, size=2.0, location=None, rotation=None, name=None):
             return f"Created {primitive_type} named '{name or primitive_type}'"
+
+        def transform_object(self, name, location=None, rotation=None, scale=None):
+            return f"Transformed object '{name}'"
 
 
     router_area.get_router_handler = lambda: RouterHandler()
@@ -225,17 +228,28 @@ def test_guided_surface_contract_parity_over_stdio(tmp_path: Path):
             )
             assert build_cleanup == "Scene cleaned."
 
+            spoof_attempt = result_payload(
+                await client.call_tool(
+                    "scene_view_diagnostics",
+                    {"target_object": "Camera", "view_name": "TOP"},
+                )
+            )
+            assert spoof_attempt["payload"]["scope"]["primary_target"] == "Camera"
+            spoof_status = result_payload(await client.call_tool("router_get_status", {}))
+            assert spoof_status["guided_flow_state"]["current_step"] == "establish_spatial_context"
+
+            spatial_scope = {"target_object": "Squirrel_Body", "target_objects": ["Squirrel_Head", "Squirrel_Tail"]}
             await client.call_tool(
                 "scene_scope_graph",
-                {"target_object": "Squirrel_Body", "target_objects": ["Squirrel_Head", "Squirrel_Tail"]},
+                spatial_scope,
             )
             await client.call_tool(
                 "scene_relation_graph",
-                {"target_objects": ["Squirrel_Head", "Squirrel_Body"], "goal_hint": "assembled creature"},
+                {**spatial_scope, "goal_hint": "assembled creature"},
             )
             await client.call_tool(
                 "scene_view_diagnostics",
-                {"target_object": "Squirrel_Head", "target_objects": ["Squirrel_Body"], "view_name": "TOP"},
+                {**spatial_scope, "view_name": "TOP"},
             )
 
             unlocked_status_result = result_payload(await client.call_tool("router_get_status", {}))
@@ -287,6 +301,32 @@ def test_guided_surface_contract_parity_over_stdio(tmp_path: Path):
 
             role_unlocked_status = result_payload(await client.call_tool("router_get_status", {}))
             assert role_unlocked_status["guided_flow_state"]["current_step"] == "place_secondary_parts"
+            assert role_unlocked_status["guided_flow_state"]["spatial_refresh_required"] is True
+            assert role_unlocked_status["guided_flow_state"]["next_actions"] == ["refresh_spatial_context"]
+            assert role_unlocked_status["guided_flow_state"]["allowed_families"] == [
+                "spatial_context",
+                "reference_context",
+            ]
+
+            refresh_scope = {"target_object": "Squirrel_Body", "target_objects": ["Squirrel_Head"]}
+            await client.call_tool("scene_scope_graph", refresh_scope)
+            await client.call_tool(
+                "scene_relation_graph",
+                {**refresh_scope, "goal_hint": "assembled creature"},
+            )
+            await client.call_tool(
+                "scene_view_diagnostics",
+                {**refresh_scope, "view_name": "TOP"},
+            )
+
+            refreshed_status = result_payload(await client.call_tool("router_get_status", {}))
+            assert refreshed_status["guided_flow_state"]["spatial_refresh_required"] is False
+            assert refreshed_status["guided_flow_state"]["allowed_roles"] == [
+                "snout_mass",
+                "ear_pair",
+                "foreleg_pair",
+                "hindleg_pair",
+            ]
             assert role_unlocked_status["guided_flow_state"]["allowed_roles"] == [
                 "snout_mass",
                 "ear_pair",

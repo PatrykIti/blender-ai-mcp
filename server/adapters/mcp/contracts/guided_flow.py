@@ -34,6 +34,16 @@ GuidedFlowStepLiteral = Literal[
 GuidedFlowStepStatusLiteral = Literal["ready", "blocked", "needs_checkpoint", "needs_validation"]
 
 
+class GuidedTargetScopeContract(MCPContract):
+    """Compact guided target identity used for spatial-check binding."""
+
+    scope_kind: Literal["single_object", "object_set", "collection", "part_groups", "scene"] = "scene"
+    primary_target: str | None = None
+    object_names: list[str] = []
+    object_count: int = 0
+    collection_name: str | None = None
+
+
 class GuidedFlowCheckContract(MCPContract):
     """One server-defined check required by the current guided flow step."""
 
@@ -51,6 +61,13 @@ class GuidedFlowStateContract(MCPContract):
     domain_profile: GuidedFlowDomainProfileLiteral
     current_step: GuidedFlowStepLiteral
     completed_steps: list[GuidedFlowStepLiteral] = []
+    active_target_scope: GuidedTargetScopeContract | None = None
+    spatial_scope_fingerprint: str | None = None
+    spatial_state_version: int = 0
+    spatial_state_stale: bool = False
+    last_spatial_check_version: int | None = None
+    spatial_refresh_required: bool = False
+    last_spatial_mutation_reason: str | None = None
     required_checks: list[GuidedFlowCheckContract] = []
     required_prompts: list[str] = []
     preferred_prompts: list[str] = []

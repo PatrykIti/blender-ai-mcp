@@ -626,6 +626,40 @@ def test_spatial_context_flow_list_tools_stays_bounded_to_required_checks():
     assert "macro_finish_form" not in names
 
 
+def test_spatial_refresh_required_search_stays_bounded_to_spatial_context_tools():
+    """Discovery should not reopen broad build families while spatial refresh is explicitly pending."""
+
+    server = _build_flow_search_server(
+        SessionPhase.BUILD,
+        {
+            "flow_id": "guided_creature_flow",
+            "domain_profile": "creature",
+            "current_step": "place_secondary_parts",
+            "spatial_refresh_required": True,
+        },
+        guided_handoff={
+            "kind": "guided_manual_build",
+            "recipe_id": "low_poly_creature_blockout",
+            "direct_tools": ["modeling_create_primitive", "mesh_extrude_region", "macro_finish_form"],
+            "supporting_tools": ["reference_images", "reference_iterate_stage_checkpoint", "router_get_status"],
+        },
+    )
+
+    async def run():
+        result = await server.call_tool(
+            "search_tools",
+            {"query": "scene scope graph relation graph view diagnostics refresh spatial context"},
+        )
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+    names = {tool["name"] for tool in payload}
+
+    assert "modeling_create_primitive" not in names
+    assert "macro_finish_form" not in names
+    assert "guided_register_part" not in names
+
+
 @pytest.mark.parametrize(
     ("query", "expected_tool"),
     [

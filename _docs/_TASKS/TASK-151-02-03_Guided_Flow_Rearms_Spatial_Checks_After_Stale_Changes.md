@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-151-02](./TASK-151-02_Spatial_Freshness_And_Rearm_Policy.md)
 **Depends On:** [TASK-151-02-02](./TASK-151-02-02_Material_Scene_Changes_Mark_Spatial_State_Stale.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -105,5 +105,13 @@ if flow_state.spatial_refresh_required and all_required_spatial_checks_completed
 
 ## Status / Closeout Note
 
-- this leaf is done only when the server can both re-arm and later clear the
-  spatial refresh requirement in one transport-backed session
+- completed on 2026-04-09 once the server could both re-arm and later clear
+  the spatial refresh requirement in one transport-backed guided session
+
+## Completion Summary
+
+- stale guided flows now expose `spatial_refresh_required` plus
+  `next_actions=["refresh_spatial_context"]`
+- `scene_scope_graph(...)` rebinds the active target scope during refresh and
+  the remaining spatial checks clear the stale state without changing the
+  semantic step

@@ -569,9 +569,10 @@ def build_visibility_rules(
     )
 
     current_flow_step = str((guided_flow_state or {}).get("current_step") or "").strip().lower()
+    spatial_refresh_required = bool((guided_flow_state or {}).get("spatial_refresh_required"))
 
     if resolved_phase == SessionPhase.BUILD:
-        if current_flow_step == "establish_spatial_context":
+        if current_flow_step == "establish_spatial_context" or spatial_refresh_required:
             build_tools = set(GUIDED_SPATIAL_CONTEXT_DIRECT_TOOLS)
         else:
             build_tools = (

@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-151-02](./TASK-151-02_Spatial_Freshness_And_Rearm_Policy.md)
 **Depends On:** [TASK-151-02-01](./TASK-151-02-01_Spatial_Freshness_Flags_And_Versions_In_Session_State.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -105,5 +105,13 @@ if report.error is None and executed_tool_mutates_guided_spatial_state(report):
 
 ## Status / Closeout Note
 
-- this leaf is not complete until at least one transport test proves the stale
-  flag changes after a real scene mutation in the same session
+- completed on 2026-04-09 after unit and transport coverage proved that real
+  guided scene mutations dirty the spatial layer in-session
+
+## Completion Summary
+
+- routed guided execution now marks spatial state stale after successful scene
+  resets, primitive creation/transform, and bounded attachment/alignment
+  mutations
+- blocked/failed calls and read-only spatial checks do not dirty the spatial
+  layer
