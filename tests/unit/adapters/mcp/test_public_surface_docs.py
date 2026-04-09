@@ -47,6 +47,10 @@ def test_readme_documents_llm_guided_public_aliases():
         "domain_profile",
         "current_step",
         "required_checks",
+        "allowed_families",
+        "allowed_roles",
+        "missing_roles",
+        "guided_register_part",
         "required prompt bundle",
         "preferred prompt bundle",
         "Contact Truth Semantics",
@@ -105,6 +109,9 @@ def test_mcp_docs_describe_aliases_and_hidden_arguments():
         "Server-Driven Guided Flow State",
         "required_prompts",
         "preferred_prompts",
+        "allowed_roles",
+        "missing_roles",
+        "guided_register_part",
         "hidden/blocked-by-flow",
         "scene_hide_object",
         "scene_show_all_objects",
@@ -284,6 +291,8 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "guided_flow_state" in prompt_readme
     assert "required prompt bundle" in prompt_readme
     assert "preferred prompt bundle" in prompt_readme
+    assert "guided_register_part(object_name=..., role=...)" in prompt_readme
+    assert "guided_role=..." in prompt_readme
     assert "If a tool is not already directly visible" in prompt_readme
     assert '`continuation_mode="guided_manual_build"`' in prompt_readme
     assert "`guided_handoff`" in prompt_readme

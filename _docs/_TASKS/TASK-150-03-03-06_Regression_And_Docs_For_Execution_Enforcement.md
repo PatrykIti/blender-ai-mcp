@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-150-03-03](./TASK-150-03-03_Generic_Families_Part_Roles_And_Execution_Enforcement.md)
 **Depends On:** [TASK-150-03-03-04](./TASK-150-03-03-04_Router_Execution_Guards_And_Blocked_Response_Policy.md), [TASK-150-03-03-05](./TASK-150-03-03-05_Flow_Transitions_From_Role_Groups_And_Checkpoints.md)
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -100,3 +100,12 @@ def test_creature_secondary_parts_blocked_before_primary_role_groups_complete():
 ## Changelog Impact
 
 - include in the parent TASK-150 execution-enforcement changelog entry
+
+## Completion Summary
+
+- added unit and transport-backed regression coverage for the current
+  family/role execution-enforcement slice
+- aligned README/MCP/prompt docs with the new runtime contract
+- the remaining follow-on work for TASK-150 now sits outside the original
+  execution-enforcement planning slice rather than inside this regression/doc
+  wave

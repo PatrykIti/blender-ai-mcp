@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-150-03](./TASK-150-03_Step_Gated_Visibility_And_Execution_Policy.md)
 **Depends On:** [TASK-150-02](./TASK-150-02_Domain_Profile_Selection_And_Overlay_Policy.md), [TASK-150-03-02](./TASK-150-03-02_Step_Completion_Checks_And_Execution_Blocks.md)
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -138,3 +138,16 @@ order even when the outer `guided_flow_state.current_step` says
 ## Changelog Impact
 
 - include in the parent TASK-150 changelog wave when this continuation ships
+
+## Completion Summary
+
+- added shared build-family vocabulary and overlay order
+- added internal part registry and public role summaries on `guided_flow_state`
+- added canonical role registration plus convenience `guided_role` hints on
+  build tools
+- added execution-time family/role fail-closed policy
+- added role-group-based transitions from:
+  - `create_primary_masses`
+  - `place_secondary_parts`
+- added unit and transport-backed regression coverage plus public docs for the
+  shipped execution-enforcement model

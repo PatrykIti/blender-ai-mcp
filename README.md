@@ -311,6 +311,11 @@ contract in addition to `guided_handoff`.
   - `required_checks`
   - `next_actions`
   - `blocked_families`
+  - `allowed_families`
+  - `allowed_roles`
+  - `completed_roles`
+  - `missing_roles`
+  - `required_role_groups`
   - `required_prompts`
   - `preferred_prompts`
   - `step_status`
@@ -324,6 +329,11 @@ contract in addition to `guided_handoff`.
   `router_get_status().guided_flow_state`, complete the listed
   `required_checks`, and follow `next_actions` instead of guessing hidden tool
   names into `call_tool(...)`
+- for role-sensitive build steps, treat `allowed_roles` and `missing_roles` as
+  part of the execution contract, not as advisory prose
+- use `guided_register_part(object_name=..., role=...)` as the canonical
+  way to tell the server what semantic part one object represents; optional
+  `guided_role=...` hints on build tools are convenience-only
 - the `required prompt bundle` and `preferred prompt bundle` named in
   `guided_flow_state` are prompt asset names, not a replacement for the
   server-driven flow; prompts support the flow, they do not become the flow

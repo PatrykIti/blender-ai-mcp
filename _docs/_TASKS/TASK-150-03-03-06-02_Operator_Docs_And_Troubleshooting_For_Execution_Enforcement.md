@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-150-03-03-06](./TASK-150-03-03-06_Regression_And_Docs_For_Execution_Enforcement.md)
 **Depends On:** [TASK-150-03-03-06-01](./TASK-150-03-03-06-01_Unit_And_Transport_Regression_Matrix_For_Family_Role_Enforcement.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -33,6 +33,19 @@ Explain the new execution-enforcement semantics to operators and maintainers.
   remains authoritative
 - troubleshooting guidance explains why “build unlocked” does not mean “every
   part can be created in any order”
+
+## Completion Summary
+
+- updated README with public `guided_flow_state` family/role summary fields
+- updated docs parity expectations for:
+  - `allowed_families`
+  - `allowed_roles`
+  - `missing_roles`
+  - `guided_register_part(...)`
+- clarified in prompt docs that:
+  - `guided_register_part(...)` is canonical
+  - `guided_role=...` is convenience-only
+  - family/role execution policy is authoritative
 
 ## Planned Unit Test Scenarios
 
