@@ -114,7 +114,7 @@ def test_guided_surface_phase_baselines_stay_intentional():
     inspect_names, _ = _tool_names_and_payload_size(SessionPhase.INSPECT_VALIDATE)
 
     assert len(bootstrap_names) == 9
-    assert len(build_names) == 123
+    assert len(build_names) == 124
     assert len(inspect_names) == 45
 
     assert bootstrap_names == {
@@ -139,6 +139,7 @@ def test_guided_surface_phase_baselines_stay_intentional():
     assert "macro_adjust_segment_chain_arc" in build_names
     assert "macro_finish_form" in build_names
     assert "macro_cutout_recess" in build_names
+    assert "guided_register_part" in build_names
     assert "modeling_create_primitive" in build_names
     assert "modeling_add_modifier" not in build_names
     assert "modeling_apply_modifier" not in build_names
