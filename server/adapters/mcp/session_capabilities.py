@@ -503,10 +503,10 @@ def _flow_state_for_current_step(
 
 
 def _should_rearm_spatial_gate(contract: GuidedFlowStateContract, *, force: bool = False) -> bool:
-    if not contract.spatial_state_stale:
-        return False
     if force:
         return True
+    if not contract.spatial_state_stale:
+        return False
     if contract.current_step not in _SPATIAL_REARM_ALLOWED_STEPS:
         return False
     if contract.last_spatial_mutation_reason in _SPATIAL_REARM_ALWAYS_BLOCK_REASONS:
