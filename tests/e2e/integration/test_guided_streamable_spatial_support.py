@@ -184,7 +184,7 @@ def test_streamable_guided_session_expands_visible_tools_after_goal_handoff(tmp_
                     {"primitive_type": "Cone", "name": "Squirrel_Ear_L", "radius": 0.1, "guided_role": "ear_pair"},
                 )
             )
-            assert "role 'ear_pair'" in blocked
+            assert "tool family 'secondary_parts'" in blocked
 
             await client.call_tool(
                 "guided_register_part",
