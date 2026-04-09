@@ -3,7 +3,7 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 8 tasks
+- **To Do:** 9 tasks
 - **In Progress:** 0 tasks
 - **Done:** 217
 - **Superseded:** 10
@@ -39,6 +39,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 |----|-------|----------|-------|
 | [TASK-130](./TASK-130_Default_Guided_Surface_Bootstrap_Consistency.md) | **Default Guided Surface Bootstrap Consistency** | 🟠 High | Board-level follow-on from the TASK-128 audit. Align the repo's documented "default production" story with the actual bootstrap surface configured in runtime defaults and examples. |
 | [TASK-148](./TASK-148_No_Auth_HTTP_MCP_Client_Compatibility_And_Auth_Misclassification_Recovery.md) | **No-Auth HTTP MCP Client Compatibility And Auth Misclassification Recovery** | 🔴 High | Board-level follow-on after TASK-125 for hardening the no-auth Streamable HTTP path across Claude, Codex, Gemini, and similar MCP clients without falsely advertising OAuth support. |
+| [TASK-151](./TASK-151_Spatial_Check_Freshness_Target_Binding_And_Guided_Rearm.md) | **Spatial Check Freshness, Target Binding, And Guided Re-Arm** | 🔴 High | Board-level follow-on after TASK-150 for preventing spoofed spatial checks and re-arming the spatial layer after material scene changes during long guided sessions. |
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|

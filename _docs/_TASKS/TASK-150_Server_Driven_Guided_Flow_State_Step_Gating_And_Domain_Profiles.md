@@ -344,3 +344,6 @@ That continuation is now explicitly tracked under:
 - guided execution no longer depends only on prompt discipline; the runtime can
   shape visibility, require role registration, fail closed on wrong families,
   and advance steps from completed role groups
+- explicit follow-on work remains under
+  [TASK-151](./TASK-151_Spatial_Check_Freshness_Target_Binding_And_Guided_Rearm.md)
+  for target-bound spatial validity and freshness-aware spatial re-arm
