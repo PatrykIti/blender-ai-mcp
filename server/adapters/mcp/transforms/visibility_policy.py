@@ -137,7 +137,7 @@ GUIDED_TOOL_FAMILY_MAP: dict[str, GuidedFlowFamilyLiteral] = {
     "reference_iterate_stage_checkpoint": "checkpoint_iterate",
     "modeling_create_primitive": "primary_masses",
     "modeling_transform_object": "primary_masses",
-    "collection_manage": "primary_masses",
+    "collection_manage": "utility",
     "scene_create": "primary_masses",
     "macro_relative_layout": "secondary_parts",
     "macro_place_symmetry_pair": "secondary_parts",
@@ -186,6 +186,7 @@ GUIDED_OVERLAY_FAMILY_ORDER: dict[str, tuple[GuidedFlowFamilyLiteral, ...]] = {
     ),
     "building": (
         "spatial_context",
+        "reference_context",
         "primary_masses",
         "secondary_parts",
         "checkpoint_iterate",

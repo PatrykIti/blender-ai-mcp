@@ -449,6 +449,12 @@ def test_primary_mass_role_registration_advances_creature_flow_after_required_ro
     assert second.guided_flow_state is not None
     assert second.guided_flow_state["current_step"] == "place_secondary_parts"
     assert second.guided_flow_state["required_role_groups"] == ["secondary_parts"]
+    assert second.guided_flow_state["allowed_families"] == [
+        "primary_masses",
+        "secondary_parts",
+        "attachment_alignment",
+        "reference_context",
+    ]
     assert second.guided_flow_state["allowed_roles"] == [
         "snout_mass",
         "ear_pair",
@@ -492,4 +498,10 @@ def test_secondary_role_registration_advances_creature_flow_to_checkpoint_iterat
     assert state.guided_flow_state["current_step"] == "checkpoint_iterate"
     assert state.guided_flow_state["step_status"] == "needs_checkpoint"
     assert state.guided_flow_state["required_role_groups"] == ["checkpoint_iterate"]
-    assert state.guided_flow_state["allowed_families"] == ["checkpoint_iterate", "reference_context"]
+    assert state.guided_flow_state["allowed_families"] == [
+        "primary_masses",
+        "secondary_parts",
+        "attachment_alignment",
+        "checkpoint_iterate",
+        "reference_context",
+    ]

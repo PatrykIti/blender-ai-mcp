@@ -387,11 +387,21 @@ def _build_allowed_families(
             ["primary_masses", "reference_context"] if domain_profile == "creature" else ["primary_masses"]
         ),
         "place_secondary_parts": (
-            ["secondary_parts", "attachment_alignment"] if domain_profile == "creature" else ["secondary_parts"]
+            ["primary_masses", "secondary_parts", "attachment_alignment", "reference_context"]
+            if domain_profile == "creature"
+            else ["primary_masses", "secondary_parts"]
         ),
-        "checkpoint_iterate": ["checkpoint_iterate", "reference_context"],
-        "inspect_validate": ["inspect_validate"],
-        "finish_or_stop": ["finish"],
+        "checkpoint_iterate": (
+            ["primary_masses", "secondary_parts", "attachment_alignment", "checkpoint_iterate", "reference_context"]
+            if domain_profile == "creature"
+            else ["primary_masses", "secondary_parts", "checkpoint_iterate", "reference_context"]
+        ),
+        "inspect_validate": (
+            ["inspect_validate", "attachment_alignment", "primary_masses", "secondary_parts"]
+            if domain_profile == "creature"
+            else ["inspect_validate", "primary_masses", "secondary_parts"]
+        ),
+        "finish_or_stop": ["finish", "inspect_validate"],
     }
     allowed = by_step[current_step]
     return [family for family in allowed if family in known]

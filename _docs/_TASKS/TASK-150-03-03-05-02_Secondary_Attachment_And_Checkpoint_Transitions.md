@@ -41,6 +41,9 @@ elif loop_disposition == "stop":
 
 - registering the required secondary roles now advances:
   - `place_secondary_parts` -> `checkpoint_iterate`
+- later steps now keep bounded carry-over families available for corrective
+  edits on already-created masses instead of blocking every earlier build
+  family immediately
 - preserved the existing iterate-loop semantics for:
   - `inspect_validate`
   - `finish_or_stop`

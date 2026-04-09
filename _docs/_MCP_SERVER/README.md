@@ -523,6 +523,9 @@ Current guided-flow behavior:
 - overlays that use secondary-part role groups can likewise move from
   `place_secondary_parts` into `checkpoint_iterate` when the required
   secondary roles are complete
+- later guided steps may still keep earlier corrective build families
+  available for already-created masses, so the runtime can support bounded
+  in-place refinement without reopening the entire generic build surface
 
 ## Guided Flow Troubleshooting
 

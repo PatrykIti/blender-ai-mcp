@@ -337,7 +337,7 @@ def test_guided_surface_contract_parity_over_stdio(tmp_path: Path):
             collection_result = result_payload(
                 await client.call_tool("collection_manage", {"action": "create", "name": "Squirrel"})
             )
-            assert "tool family 'primary_masses'" in collection_result
+            assert collection_result == "Created collection 'Squirrel' under Scene Collection"
 
             with pytest.raises(ToolError, match="modeling_transform_object\\(scale=\\.\\.\\.\\)"):
                 await client.call_tool(

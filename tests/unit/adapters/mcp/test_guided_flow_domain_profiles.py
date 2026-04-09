@@ -158,6 +158,7 @@ def test_building_flow_primary_roles_require_footprint_and_main_volume_before_ad
 
     assert second.guided_flow_state is not None
     assert second.guided_flow_state["current_step"] == "place_secondary_parts"
+    assert second.guided_flow_state["allowed_families"] == ["primary_masses", "secondary_parts"]
     assert second.guided_flow_state["allowed_roles"] == [
         "facade_opening",
         "support_element",
@@ -197,4 +198,10 @@ def test_building_flow_secondary_roles_advance_to_checkpoint_iterate():
 
     assert state.guided_flow_state is not None
     assert state.guided_flow_state["current_step"] == "checkpoint_iterate"
+    assert state.guided_flow_state["allowed_families"] == [
+        "primary_masses",
+        "secondary_parts",
+        "checkpoint_iterate",
+        "reference_context",
+    ]
     assert state.guided_flow_state["required_role_groups"] == ["checkpoint_iterate"]
