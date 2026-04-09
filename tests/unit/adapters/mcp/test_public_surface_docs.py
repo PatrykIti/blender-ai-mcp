@@ -293,6 +293,9 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "preferred prompt bundle" in prompt_readme
     assert "guided_register_part(object_name=..., role=...)" in prompt_readme
     assert "guided_role=..." in prompt_readme
+    assert "allowed_families" in prompt_readme
+    assert "allowed_roles" in prompt_readme
+    assert "missing_roles" in prompt_readme
     assert "If a tool is not already directly visible" in prompt_readme
     assert '`continuation_mode="guided_manual_build"`' in prompt_readme
     assert "`guided_handoff`" in prompt_readme
@@ -335,6 +338,11 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert '`continuation_mode == "guided_manual_build"`' in workflow_prompt
     assert "`guided_handoff.direct_tools`" in workflow_prompt
     assert "`guided_flow_state`" in workflow_prompt
+    assert "`allowed_families`" in workflow_prompt
+    assert "`allowed_roles`" in workflow_prompt
+    assert "`missing_roles`" in workflow_prompt
+    assert "`guided_register_part(object_name=..., role=...)`" in workflow_prompt
+    assert "`guided_role=...`" in workflow_prompt
     assert "`workflow_import_recommended=false`" in workflow_prompt
     assert "Do not guess hidden internal tool names and feed them into `call_tool(...)`." in workflow_prompt
     assert "If a needed tool is not already directly visible, run `search_tools(...)`" in workflow_prompt
@@ -390,6 +398,12 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "generic search-first operating baseline" in creature_prompt
     assert "`guided_flow_state`" in creature_prompt
     assert "required prompt bundle" in creature_prompt
+    assert "`guided_register_part(object_name=..., role=...)`" in creature_prompt
+    assert "`guided_role=...`" in creature_prompt
+    assert "`allowed_roles`" in creature_prompt
+    assert "`missing_roles`" in creature_prompt
+    assert "body + head primary masses" in creature_prompt
+    assert "do not jump early to ears or legs" in creature_prompt
     assert "if a tool is not already directly visible, use `search_tools(...)` before" in creature_prompt
     assert "allowed build-phase recovery hatch" in creature_prompt
     assert "`guided_reference_readiness`" in creature_prompt

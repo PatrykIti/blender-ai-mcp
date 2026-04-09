@@ -243,6 +243,11 @@ contract.
 - if `guided_flow_state.step_status == "blocked"`, complete
   `guided_flow_state.required_checks` first and follow
   `guided_flow_state.next_actions`
+- inspect `guided_flow_state.allowed_families` before switching to a different
+  build family
+- inspect `guided_flow_state.allowed_roles` and
+  `guided_flow_state.missing_roles` before creating or transforming
+  role-sensitive build parts
 - the server may keep build visibility step-gated during
   `establish_spatial_context`, so prompt text must not override that gating
 - `required_prompts` = required prompt bundle names for the current

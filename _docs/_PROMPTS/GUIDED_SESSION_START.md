@@ -22,6 +22,9 @@ Fail-safe rules:
 - For utility/capture requests, do not force `router_set_goal(...)`; use the guided utility path.
 - Cleanup rule: prefer `scene_clean_scene(...)` before `router_set_goal(...)`, but if scene drift is discovered after entering build phase, the same tool is an allowed recovery hatch on the guided build surface.
 - If the router returns `needs_input`, answer it with a follow-up `router_set_goal(..., resolved_params={...})`.
+- If `guided_flow_state` is present, treat `current_step`, `allowed_families`, `allowed_roles`, `missing_roles`, and `next_actions` as the active execution contract.
+- If the server says the current step is `create_primary_masses`, do not jump ahead to ears, paws, facade openings, polish, or finish work.
+- For role-sensitive build calls, use either `guided_register_part(object_name=..., role=...)` or `guided_role=...` on the build tool call.
 - If the router pushes an obviously irrelevant workflow for the current task, stop and report that blocker instead of improvising with hidden tools.
 - Use directly visible tools first.
 - Default to `search_tools(...)` before `call_tool(...)` for any non-entry tool that is not already directly visible.
@@ -34,6 +37,7 @@ Recovery protocol:
 2. Wrong workflow path -> stop and report the bad workflow match.
 3. Missing reference path or missing required user input -> report the missing input explicitly.
 4. If `guided_handoff` is present -> use `guided_handoff.direct_tools` first.
+5. If a build call is blocked by family/role policy -> inspect `allowed_families`, `allowed_roles`, and `missing_roles` instead of retrying with guessed tool names.
 ```
 
 ---

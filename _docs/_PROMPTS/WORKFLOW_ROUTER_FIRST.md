@@ -45,7 +45,8 @@ REQUEST TRIAGE (FIRST STEP)
        * Proceed with visible build tools/macros.
        * Prefer macro/workflow paths when they are a good fit.
        * Do not keep re-searching if the right tool is already visible.
-       * If `guided_flow_state` is present, respect `current_step`, `required_checks`, and `next_actions`.
+       * If `guided_flow_state` is present, respect `current_step`, `required_checks`, `next_actions`, `allowed_families`, `allowed_roles`, and `missing_roles`.
+       * For role-sensitive build calls, use either `guided_register_part(object_name=..., role=...)` or the convenience hint `guided_role=...` on the build tool call.
        * If the server names a `required prompt bundle` / `preferred prompt bundle`, treat those as supporting prompt assets, not as permission to bypass the guided flow.
 
 3) For B) utility/capture/scene-prep:
@@ -94,11 +95,13 @@ WORKFLOW MATCHING (ONLY WHEN REQUEST TYPE = BUILD/WORKFLOW)
    - If status == "ready":
        * Proceed with modeling. Prefer workflow/macro paths and only drop lower when necessary.
        * Do not treat the whole internal catalog as the default action space.
+       * If `guided_flow_state.current_step == "create_primary_masses"`, stay on core mass creation/placement before moving to appendages, openings, polish, or finish.
        * If a needed tool is already directly visible on the current surface/phase, call it directly.
        * If a needed tool is not already directly visible, use `search_tools(...)`
          before `call_tool(...)`.
        * Use search_tools / call_tool only when you need discovery or need to reach a non-entry tool that is not already visible.
        * If `call_tool(...)` reports `Unknown tool`, do not keep guessing names; re-check the current phase/surface and whether build tools have actually been unlocked.
+       * If the server rejects a call because the family or role is wrong for the current step, do not retry by guessing another build tool name. Read `allowed_families`, `allowed_roles`, and `missing_roles`, then continue with the permitted family/role.
        * If the task is a bounded recess/cutout/opening, prefer `macro_cutout_recess` over manually creating cutters, placing them, and chaining boolean cleanup.
        * If the task is bounded relative placement/alignment/contact-gap work, prefer `macro_relative_layout` over transform-by-transform placement.
        * If the task is a bounded finishing stack (rounded housing, panel finish, shell thicken, smooth subdivision), prefer `macro_finish_form` over manually rebuilding the modifier stack with `modeling_add_modifier(...)`.
@@ -106,6 +109,7 @@ WORKFLOW MATCHING (ONLY WHEN REQUEST TYPE = BUILD/WORKFLOW)
        * If `continuation_mode == "guided_manual_build"`, continue on the guided build surface.
        * If `guided_handoff` is present, start from `guided_handoff.direct_tools` and respect `workflow_import_recommended=false`.
        * If `guided_flow_state` is present, respect its step gating before broad build or finish actions.
+       * Use `guided_register_part(...)` or `guided_role=...` when the server needs semantic part roles to keep the build order enforceable.
        * Use directly visible build tools first.
        * Use search_tools / call_tool only when discovery is actually needed.
        * Only consider workflow import/create when the user explicitly wants that.
