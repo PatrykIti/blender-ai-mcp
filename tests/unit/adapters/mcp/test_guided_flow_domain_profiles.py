@@ -158,7 +158,15 @@ def test_building_flow_primary_roles_require_footprint_and_main_volume_before_ad
 
     assert second.guided_flow_state is not None
     assert second.guided_flow_state["current_step"] == "place_secondary_parts"
-    assert second.guided_flow_state["allowed_families"] == ["primary_masses", "secondary_parts"]
+    assert second.guided_flow_state["required_role_groups"] == ["secondary_parts"]
+    assert second.guided_flow_state["spatial_refresh_required"] is True
+    assert second.guided_flow_state["step_status"] == "blocked"
+    assert second.guided_flow_state["allowed_families"] == ["spatial_context"]
+    assert [check["tool_name"] for check in second.guided_flow_state["required_checks"]] == [
+        "scene_scope_graph",
+        "scene_view_diagnostics",
+    ]
+    assert second.guided_flow_state["next_actions"] == ["refresh_spatial_context"]
     assert second.guided_flow_state["allowed_roles"] == [
         "facade_opening",
         "support_element",
@@ -198,10 +206,12 @@ def test_building_flow_secondary_roles_advance_to_checkpoint_iterate():
 
     assert state.guided_flow_state is not None
     assert state.guided_flow_state["current_step"] == "checkpoint_iterate"
-    assert state.guided_flow_state["allowed_families"] == [
-        "primary_masses",
-        "secondary_parts",
-        "checkpoint_iterate",
-        "reference_context",
+    assert state.guided_flow_state["spatial_refresh_required"] is True
+    assert state.guided_flow_state["step_status"] == "blocked"
+    assert state.guided_flow_state["allowed_families"] == ["spatial_context"]
+    assert [check["tool_name"] for check in state.guided_flow_state["required_checks"]] == [
+        "scene_scope_graph",
+        "scene_view_diagnostics",
     ]
+    assert state.guided_flow_state["next_actions"] == ["refresh_spatial_context"]
     assert state.guided_flow_state["required_role_groups"] == ["checkpoint_iterate"]
