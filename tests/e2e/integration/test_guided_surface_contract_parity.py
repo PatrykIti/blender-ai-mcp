@@ -336,12 +336,14 @@ def test_guided_surface_contract_parity_over_stdio(tmp_path: Path):
             refreshed_status = result_payload(await client.call_tool("router_get_status", {}))
             assert refreshed_status["guided_flow_state"]["spatial_refresh_required"] is False
             assert refreshed_status["guided_flow_state"]["allowed_roles"] == [
+                "tail_mass",
                 "snout_mass",
                 "ear_pair",
                 "foreleg_pair",
                 "hindleg_pair",
             ]
             assert role_unlocked_status["guided_flow_state"]["allowed_roles"] == [
+                "tail_mass",
                 "snout_mass",
                 "ear_pair",
                 "foreleg_pair",

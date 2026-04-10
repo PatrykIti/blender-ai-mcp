@@ -198,6 +198,8 @@ Interpretation:
   `HindLeg_L`, `HindLeg_R` over opaque abbreviations like `ForeL` / `HindR`
 - the guided runtime can now warn on weak role-sensitive names and block
   clearly opaque placeholder names such as `Sphere` / `Object`
+- default placeholder scope targets such as `Cube` / root `Collection` should
+  not be treated as meaningful guided worksets by themselves
 - use the `required prompt bundle` and `preferred prompt bundle` named in
   `guided_flow_state` as prompt asset selection guidance
 - if the server needs explicit semantic part roles for the current flow,
@@ -208,6 +210,9 @@ Interpretation:
   `guided_register_part(...)` as the canonical explicit registration surface
 - if the server returns naming guidance, prefer the suggested semantic names
   instead of retrying weak abbreviations unchanged
+- later guided steps may still allow bounded refinement of already-created
+  primary masses plus utility/workset operations; read the current guided flow
+  contract instead of assuming every earlier object is frozen
 - current server-driven guided flow domain overlays are:
   - `generic`
   - `creature`

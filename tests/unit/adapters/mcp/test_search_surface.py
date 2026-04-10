@@ -623,6 +623,7 @@ def test_spatial_context_flow_list_tools_stays_bounded_to_required_checks():
     assert "scene_scope_graph" in names
     assert "scene_relation_graph" in names
     assert "scene_view_diagnostics" in names
+    assert "collection_manage" in names
     assert "modeling_create_primitive" not in names
     assert "macro_finish_form" not in names
 

@@ -246,6 +246,7 @@ def test_streamable_guided_session_expands_visible_tools_after_goal_handoff(tmp_
             refreshed_status = result_payload(await client.call_tool("router_get_status", {}))
             assert refreshed_status["guided_flow_state"]["spatial_refresh_required"] is False
             assert refreshed_status["guided_flow_state"]["allowed_roles"] == [
+                "tail_mass",
                 "snout_mass",
                 "ear_pair",
                 "foreleg_pair",

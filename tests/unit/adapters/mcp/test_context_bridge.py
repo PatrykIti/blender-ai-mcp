@@ -473,6 +473,102 @@ def test_route_tool_call_report_allows_registered_object_transform_without_expli
     assert report.steps[0].result == "Transformed object 'Squirrel_Body'"
 
 
+def test_route_tool_call_report_allows_registered_primary_object_transform_during_secondary_step(monkeypatch):
+    """A previously registered primary object should remain transformable during secondary steps."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "secondary_parts", "attachment_alignment", "reference_context"],
+                "allowed_roles": ["tail_mass", "snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass"],
+                "missing_roles": ["tail_mass", "snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+            guided_part_registry=[
+                {
+                    "object_name": "Squirrel_Head",
+                    "role": "head_mass",
+                    "role_group": "primary_masses",
+                    "status": "registered",
+                }
+            ],
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="modeling_transform_object",
+        params={"name": "Squirrel_Head", "scale": [1.1, 0.9, 0.95]},
+        direct_executor=lambda: "Transformed object 'Squirrel_Head'",
+    )
+
+    assert report.router_disposition == "bypassed"
+    assert report.context.guided_tool_family == "primary_masses"
+    assert report.context.guided_role == "head_mass"
+
+
+def test_route_tool_call_report_keeps_collection_manage_as_utility_even_for_registered_objects(monkeypatch):
+    """Workset/housekeeping operations should not inherit role-group blocking from the moved object."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "secondary_parts", "attachment_alignment", "reference_context"],
+                "allowed_roles": ["tail_mass", "snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass"],
+                "missing_roles": ["tail_mass", "snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+            guided_part_registry=[
+                {
+                    "object_name": "Squirrel_Head",
+                    "role": "head_mass",
+                    "role_group": "primary_masses",
+                    "status": "registered",
+                }
+            ],
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="collection_manage",
+        params={"action": "move_object", "collection_name": "Squirrel", "object_name": "Squirrel_Head"},
+        direct_executor=lambda: "Moved 'Squirrel_Head' to 'Squirrel' (was in: Collection)",
+    )
+
+    assert report.router_disposition == "bypassed"
+    assert report.context.guided_tool_family == "utility"
+    assert report.steps[0].result.startswith("Moved 'Squirrel_Head'")
+
+
 def test_route_tool_call_marks_guided_spatial_state_stale_after_successful_transform(monkeypatch):
     """Successful guided build mutations should dirty the spatial layer for later re-arm logic."""
 

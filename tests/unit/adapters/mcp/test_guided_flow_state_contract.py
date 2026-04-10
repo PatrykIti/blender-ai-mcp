@@ -342,6 +342,84 @@ def test_scene_scope_graph_binds_active_target_scope_and_blocks_unrelated_spoofe
     assert checks_by_tool["scene_view_diagnostics"] == "pending"
 
 
+def test_default_cube_scope_does_not_bind_active_guided_target_scope():
+    ctx = FakeContext()
+    update_session_from_router_goal(
+        ctx,
+        "create a low-poly squirrel matching front and side reference images",
+        {
+            "status": "no_match",
+            "phase_hint": "build",
+            "guided_handoff": {
+                "kind": "guided_manual_build",
+                "recipe_id": "low_poly_creature_blockout",
+                "target_phase": "build",
+                "surface_profile": "llm-guided",
+                "direct_tools": ["modeling_create_primitive"],
+                "supporting_tools": ["scene_scope_graph", "scene_relation_graph", "scene_view_diagnostics"],
+                "discovery_tools": ["search_tools", "call_tool"],
+                "workflow_import_recommended": False,
+                "message": "Continue on the guided creature blockout surface.",
+            },
+        },
+        surface_profile="llm-guided",
+    )
+
+    state = record_guided_flow_spatial_check_completion(
+        ctx,
+        tool_name="scene_scope_graph",
+        resolved_scope={
+            "scope_kind": "single_object",
+            "primary_target": "Cube",
+            "object_names": ["Cube"],
+            "object_count": 1,
+        },
+    )
+
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["active_target_scope"] is None
+    assert state.guided_flow_state["current_step"] == "establish_spatial_context"
+
+
+def test_default_collection_scope_does_not_bind_active_guided_target_scope():
+    ctx = FakeContext()
+    update_session_from_router_goal(
+        ctx,
+        "rebuild a low-poly tower facade from front and side references",
+        {
+            "status": "no_match",
+            "phase_hint": "build",
+            "guided_handoff": {
+                "kind": "guided_manual_build",
+                "target_phase": "build",
+                "surface_profile": "llm-guided",
+                "direct_tools": ["scene_create"],
+                "supporting_tools": ["scene_scope_graph", "scene_view_diagnostics"],
+                "discovery_tools": ["search_tools", "call_tool"],
+                "workflow_import_recommended": False,
+                "message": "Continue on the guided building surface.",
+            },
+        },
+        surface_profile="llm-guided",
+    )
+
+    state = record_guided_flow_spatial_check_completion(
+        ctx,
+        tool_name="scene_scope_graph",
+        resolved_scope={
+            "scope_kind": "collection",
+            "primary_target": None,
+            "object_names": [],
+            "object_count": 0,
+            "collection_name": "Collection",
+        },
+    )
+
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["active_target_scope"] is None
+    assert state.guided_flow_state["current_step"] == "establish_spatial_context"
+
+
 def test_non_scope_graph_cannot_bind_initial_guided_target_scope():
     ctx = FakeContext()
     update_session_from_router_goal(
@@ -690,11 +768,52 @@ def test_primary_mass_role_registration_advances_creature_flow_after_required_ro
         "reference_context",
     ]
     assert second.guided_flow_state["allowed_roles"] == [
+        "tail_mass",
         "snout_mass",
         "ear_pair",
         "foreleg_pair",
         "hindleg_pair",
     ]
+
+
+def test_place_secondary_parts_allows_missing_primary_mass_role_on_explicit_build_call(monkeypatch):
+    from server.adapters.mcp.router_helper import route_tool_call_report
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "secondary_parts", "attachment_alignment", "reference_context"],
+                "allowed_roles": ["tail_mass", "snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass"],
+                "missing_roles": ["tail_mass", "snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="modeling_create_primitive",
+        params={"primitive_type": "Sphere", "name": "Tail", "guided_role": "tail_mass"},
+        direct_executor=lambda: "Created Sphere named 'Tail'",
+    )
+
+    assert report.router_disposition == "bypassed"
+    assert report.context.guided_tool_family == "primary_masses"
+    assert report.context.guided_role == "tail_mass"
 
 
 def test_secondary_role_registration_advances_creature_flow_to_checkpoint_iterate():

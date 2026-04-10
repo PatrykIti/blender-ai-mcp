@@ -351,6 +351,9 @@ contract in addition to `guided_handoff`.
 - during an active guided spatial gate or spatial refresh re-arm, all three of
   those spatial helpers should be treated as explicit-scope tools, not as
   whole-scene probes
+- default placeholder scopes such as a stock `Cube` or the generic root
+  `Collection` are no longer treated as meaningful guided target/workset
+  bindings by themselves
 - after material scene changes such as `scene_clean_scene(...)`,
   `modeling_create_primitive(...)`, `modeling_transform_object(...)`, or
   bounded attachment/alignment macros, the guided runtime can mark the spatial
@@ -363,6 +366,10 @@ contract in addition to `guided_handoff`.
   role/workset slice is still incomplete, the governor can now keep the session
   in bounded build continuation instead of escalating too early into
   `inspect_validate`
+- after the flow reaches a later step such as `place_secondary_parts`, the
+  server can still keep missing primary masses available when they are part of
+  the same bounded workset, instead of forcing a squirrel/building run to
+  abandon an unfinished core mass immediately
 - for creature blockout seams, `intersecting` can still be acceptable for
   embedded ear/head or snout/head placement, but `floating_gap` on head/body,
   tail/body, or limb/body remains actionable
@@ -375,6 +382,12 @@ contract in addition to `guided_handoff`.
   expanded payload for simple lookups
 - for role-sensitive build steps, treat `allowed_roles` and `missing_roles` as
   part of the execution contract, not as advisory prose
+- housekeeping/workset operations such as `collection_manage(...)` should stay
+  available for already-created objects even when their semantic role was
+  registered in an earlier step
+- bounded refinement of an already-registered primary object can remain
+  possible after the session moves into the next step; later steps are not
+  meant to freeze all earlier masses completely
 - use `guided_register_part(object_name=..., role=...)` as the canonical
   way to tell the server what semantic part one object represents; optional
   `guided_role=...` hints on build tools are convenience-only

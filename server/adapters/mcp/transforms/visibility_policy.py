@@ -44,6 +44,7 @@ GUIDED_SPATIAL_CONTEXT_DIRECT_TOOLS: tuple[str, ...] = (
     *GUIDED_SPATIAL_SUPPORT_TOOLS,
     "check_scene",
     "inspect_scene",
+    "collection_manage",
     "scene_clean_scene",
     "scene_get_viewport",
     "reference_images",

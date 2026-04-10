@@ -99,6 +99,16 @@ _SPATIAL_CONTEXT_CHECKS: tuple[tuple[str, str, str], ...] = (
 _SPATIAL_CONTEXT_TOOL_NAMES = {tool_name for _check_id, tool_name, _reason in _SPATIAL_CONTEXT_CHECKS}
 _GUIDED_SCOPE_BINDING_TOOL_NAME = "scene_scope_graph"
 _GUIDED_HELPER_OBJECT_HINTS: tuple[str, ...] = ("camera", "light", "lamp", "sun")
+_GUIDED_BOOTSTRAP_PLACEHOLDER_OBJECT_HINTS: tuple[str, ...] = (
+    "cube",
+    "sphere",
+    "cone",
+    "cylinder",
+    "plane",
+    "torus",
+    "monkey",
+)
+_GUIDED_BOOTSTRAP_PLACEHOLDER_COLLECTION_NAMES: set[str] = {"collection", "scene collection"}
 _SPATIAL_REARM_ALLOWED_STEPS: set[GuidedFlowStepLiteral] = {
     "create_primary_masses",
     "place_secondary_parts",
@@ -412,6 +422,11 @@ def _looks_like_guided_helper_object(name: str) -> bool:
     return any(hint in normalized for hint in _GUIDED_HELPER_OBJECT_HINTS)
 
 
+def _looks_like_guided_bootstrap_placeholder_object(name: str) -> bool:
+    normalized = name.strip().lower()
+    return normalized in _GUIDED_BOOTSTRAP_PLACEHOLDER_OBJECT_HINTS
+
+
 def _is_bindable_guided_target_scope(scope: dict[str, Any] | None) -> bool:
     if scope is None:
         return False
@@ -425,11 +440,23 @@ def _is_bindable_guided_target_scope(scope: dict[str, Any] | None) -> bool:
         return False
     if not primary_target and not object_names and not collection_name:
         return False
+    if (
+        collection_name
+        and collection_name.strip().lower() in _GUIDED_BOOTSTRAP_PLACEHOLDER_COLLECTION_NAMES
+        and not any(
+            not _looks_like_guided_helper_object(name) and not _looks_like_guided_bootstrap_placeholder_object(name)
+            for name in object_names
+        )
+    ):
+        return False
     if collection_name:
         return True
     if not object_names and primary_target:
         object_names = [primary_target]
-    return any(not _looks_like_guided_helper_object(name) for name in object_names)
+    return any(
+        not _looks_like_guided_helper_object(name) and not _looks_like_guided_bootstrap_placeholder_object(name)
+        for name in object_names
+    )
 
 
 def _build_spatial_refresh_allowed_families(
@@ -679,6 +706,10 @@ def _build_role_summary(
             if isinstance(item, dict) and str(item.get("role") or "").strip()
         }
     )
+    if current_step in {"place_secondary_parts", "checkpoint_iterate"}:
+        primary_roles = list(_GUIDED_ROLE_SUMMARY_PLAN[domain_profile]["create_primary_masses"]["allowed_roles"])
+        missing_primary_roles = [role for role in primary_roles if role not in completed_roles]
+        allowed_roles = [*missing_primary_roles, *allowed_roles]
     missing_roles = [role for role in allowed_roles if role not in completed_roles]
     return {
         "allowed_roles": allowed_roles,

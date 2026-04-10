@@ -527,6 +527,9 @@ Current guided-flow behavior:
   - `scene_scope_graph(...)`
   - `scene_relation_graph(...)`
   - `scene_view_diagnostics(...)`
+- default placeholder scopes such as a stock `Cube` or the generic root
+  `Collection` no longer count as meaningful guided target/workset bindings by
+  themselves
 - helper-only scopes such as a single `Camera` do not initialize or satisfy a
   creature/building spatial gate by themselves
 - if guided references are already attached, they should be treated as the
@@ -573,6 +576,8 @@ Current guided-flow behavior:
 - stage compare/iterate may now keep the session in bounded build continuation
   when the current guided role/workset slice is still incomplete, instead of
   escalating too early into `inspect_validate`
+- later guided steps may still keep missing primary masses available when those
+  masses are part of the same bounded workset and are not yet complete
 - exact tool-name searches on the shaped guided surface now return a tighter,
   smaller result shape to reduce noisy discovery dumps during the active build
   loop
@@ -585,6 +590,8 @@ Current guided-flow behavior:
 - later guided steps may still keep earlier corrective build families
   available for already-created masses, so the runtime can support bounded
   in-place refinement without reopening the entire generic build surface
+- `collection_manage(...)` remain utility-family actions and should not be blocked just because the moved object was registered under an earlier semantic role
+- collection_manage(...) remain utility-family actions for guided workset housekeeping.
 
 ## Guided Flow Troubleshooting
 

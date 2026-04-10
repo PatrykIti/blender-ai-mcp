@@ -168,6 +168,7 @@ def test_building_flow_primary_roles_require_footprint_and_main_volume_before_ad
     ]
     assert second.guided_flow_state["next_actions"] == ["refresh_spatial_context"]
     assert second.guided_flow_state["allowed_roles"] == [
+        "roof_mass",
         "facade_opening",
         "support_element",
         "detail_element",

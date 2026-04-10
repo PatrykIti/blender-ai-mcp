@@ -27,9 +27,11 @@ Fail-safe rules:
 - Use full semantic object names such as `Body`, `Head`, `Tail`, `ForeLeg_L`, and `HindLeg_R`; avoid opaque abbreviations like `ForeL` / `HindR`.
 - On `llm-guided`, the server may warn on weak role-sensitive names and block clearly opaque placeholder names such as `Sphere` / `Object`; when that happens, rename or create the object using one of the suggested semantic names.
 - Do not call `scene_scope_graph(...)`, `scene_relation_graph(...)`, or `scene_view_diagnostics(...)` with no explicit scope and assume that means “inspect the whole scene”.
+- Do not treat a default placeholder like `Cube` or the root `Collection` as a meaningful guided target/workset by itself.
 - Treat the initial spatial gate as meaningful only after a real target scope exists, e.g. primary masses already exist or the build collection already exists.
 - If the server says the current step is `create_primary_masses`, do not jump ahead to ears, paws, facade openings, polish, or finish work.
 - For role-sensitive build calls, use either `guided_register_part(object_name=..., role=...)` or `guided_role=...` on the build tool call.
+- If the session has already moved to a later guided step, the server may still allow bounded refinement of already-created primary masses or utility/workset operations when they remain part of the same active workset.
 - If the router pushes an obviously irrelevant workflow for the current task, stop and report that blocker instead of improvising with hidden tools.
 - Use directly visible tools first.
 - Default to `search_tools(...)` before `call_tool(...)` for any non-entry tool that is not already directly visible.

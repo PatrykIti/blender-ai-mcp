@@ -319,7 +319,7 @@ def _resolve_guided_effective_family(tool_name: str, params: Dict[str, Any]) -> 
 
     base_family = resolve_guided_tool_family(tool_name)
     _role, role_group = _resolve_guided_role_context(tool_name, params)
-    if role_group in {
+    if tool_name in _GUIDED_ROLE_REQUIRED_TOOLS and role_group in {
         "spatial_context",
         "reference_context",
         "primary_masses",
@@ -361,6 +361,7 @@ def _evaluate_guided_execution_policy(
     }
     family = _resolve_guided_effective_family(tool_name, params)
     role, role_group = _resolve_guided_role_context(tool_name, params)
+    explicit_guided_role = isinstance(params.get("guided_role"), str) and str(params.get("guided_role")).strip()
 
     if family == "utility":
         return {
@@ -404,6 +405,19 @@ def _evaluate_guided_execution_policy(
         }
 
     if role is not None and allowed_roles and role not in allowed_roles:
+        if (
+            tool_name == "modeling_transform_object"
+            and not explicit_guided_role
+            and family in allowed_families
+            and role_group == family
+        ):
+            return {
+                "status": "allowed",
+                "current_step": current_step,
+                "family": family,
+                "role": role,
+                "role_group": role_group,
+            }
         return {
             "status": "blocked",
             "current_step": current_step,
