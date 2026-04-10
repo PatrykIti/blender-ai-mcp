@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-153](./TASK-153_Guided_Visibility_Authority_And_Manifest_Demotion.md)
 **Depends On:** [TASK-153-01](./TASK-153-01_Responsibility_Split_For_Capability_Metadata_And_Runtime_Visibility.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -129,3 +129,11 @@ authority path instead of overlapping metadata-plus-policy gates.
 ## Changelog Impact
 
 - include in the parent TASK-153 changelog entry
+
+## Completion Summary
+
+- demoted phase semantics out of runtime-facing capability tags
+- preserved metadata usefulness via manifest `phase_hints` and discovery/search
+  enrichment
+- aligned guided diagnostics with the same runtime rule model that shapes the
+  actual `llm-guided` surface

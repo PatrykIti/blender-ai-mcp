@@ -45,6 +45,7 @@ def build_search_document(tool: Tool, entry: DiscoveryEntry | None) -> str:
                     entry.capability_id,
                     entry.category,
                     *entry.tags,
+                    *entry.phase_hints,
                     *entry.aliases,
                 ),
             )

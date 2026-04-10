@@ -27,9 +27,10 @@ from server.adapters.mcp.transforms.visibility_policy import (
     build_guided_handoff_payload,
     build_visibility_rules,
     get_guided_overlay_family_order,
+    materialize_visible_tool_names,
     resolve_guided_tool_family,
 )
-from server.adapters.mcp.visibility.tags import ENTRY_GUIDED, get_capability_tags, phase_tag
+from server.adapters.mcp.visibility.tags import ENTRY_GUIDED, get_capability_phase_hints, get_capability_tags, phase_tag
 
 
 @dataclass
@@ -63,15 +64,18 @@ class FakeRegistrarTarget:
         return register
 
 
-def test_capability_manifest_carries_canonical_visibility_tags():
-    """Capability manifest should be the canonical visibility registry."""
+def test_capability_manifest_carries_coarse_tags_and_metadata_only_phase_hints():
+    """Capability manifest should keep coarse tags while phase context moves to metadata-only hints."""
 
     manifest = {entry.capability_id: entry for entry in get_capability_manifest()}
 
     assert ENTRY_GUIDED in manifest["router"].tags
     assert ENTRY_GUIDED in manifest["workflow_catalog"].tags
-    assert phase_tag(SessionPhase.BUILD) in manifest["modeling"].tags
-    assert phase_tag(SessionPhase.INSPECT_VALIDATE) in manifest["mesh"].tags
+    assert not any(tag.startswith("phase:") for tag in manifest["modeling"].tags)
+    assert not any(tag.startswith("phase:") for tag in manifest["mesh"].tags)
+    assert phase_tag(SessionPhase.BUILD) in manifest["modeling"].phase_hints
+    assert phase_tag(SessionPhase.INSPECT_VALIDATE) in manifest["mesh"].phase_hints
+    assert manifest["scene"].phase_hints == get_capability_phase_hints("scene")
 
 
 def test_registrars_apply_manifest_tags_to_registered_tools():
@@ -126,6 +130,37 @@ def test_visibility_rules_are_profile_and_phase_deterministic():
     assert code_mode_rules[0]["match_all"] is True
     assert "scene_snapshot_state" in code_mode_rules[1]["names"]
     assert "mesh_extrude_region" not in code_mode_rules[1]["names"]
+
+
+def test_materialize_visible_tool_names_follows_ordered_runtime_rules():
+    """Visibility diagnostics should derive from the same ordered rule model as the shaped runtime surface."""
+
+    rules = build_visibility_rules("llm-guided", SessionPhase.BOOTSTRAP)
+    visible_names = materialize_visible_tool_names(
+        {
+            "router_set_goal",
+            "router_get_status",
+            "workflow_catalog",
+            "browse_workflows",
+            "reference_images",
+            "scene_scope_graph",
+            "scene_relation_graph",
+            "scene_view_diagnostics",
+            "search_tools",
+            "call_tool",
+            "modeling_create_primitive",
+        },
+        rules,
+    )
+
+    assert "router_set_goal" in visible_names
+    assert "router_get_status" in visible_names
+    assert "browse_workflows" in visible_names
+    assert "scene_scope_graph" in visible_names
+    assert "scene_view_diagnostics" in visible_names
+    assert "search_tools" in visible_names
+    assert "call_tool" in visible_names
+    assert "modeling_create_primitive" not in visible_names
 
 
 def test_guided_handoff_payloads_stay_explicit_and_bounded():

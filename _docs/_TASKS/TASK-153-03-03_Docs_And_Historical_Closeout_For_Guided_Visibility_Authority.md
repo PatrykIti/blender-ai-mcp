@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-153-03](./TASK-153-03_Regression_And_Docs_Closeout_For_Guided_Visibility_Authority.md)
 **Depends On:** [TASK-153-03-01](./TASK-153-03-01_Unit_Regression_Matrix_For_Single_Runtime_Visibility_Authority.md), [TASK-153-03-02](./TASK-153-03-02_Transport_Parity_For_Guided_Runtime_Visibility_Authority.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -75,3 +75,8 @@ assert "second hidden phase gate" not in docs.ambiguous_contract_language
 ## Changelog Impact
 
 - add the parent TASK-153 historical entry here
+
+## Completion Summary
+
+- updated boundaries docs, MCP server docs, task board state, and the
+  historical changelog entry for the shipped TASK-153 behavior

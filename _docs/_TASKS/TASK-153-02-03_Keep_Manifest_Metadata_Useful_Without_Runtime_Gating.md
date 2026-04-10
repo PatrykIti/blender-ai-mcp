@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-153-02](./TASK-153-02_Runtime_Visibility_Authority_Consolidation_For_LLM_Guided.md)
 **Depends On:** [TASK-153-02-02](./TASK-153-02-02_Make_Visibility_Policy_The_Single_Runtime_Source_Of_Truth.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -127,3 +127,10 @@ assert entry_map["router_get_status"].capability_id == "router"
 ## Changelog Impact
 
 - include in the parent TASK-153 changelog entry
+
+## Completion Summary
+
+- preserved provider groups, aliases, pinned defaults, discovery categories,
+  and metadata enrichment
+- kept phase-shaped catalog context available through metadata-only
+  `phase_hints` and search-document enrichment

@@ -48,6 +48,9 @@ def test_discovery_inventory_tracks_aliases_and_pinned_defaults():
     assert entry_map["reference_images"].pinned is True
     assert entry_map["router_set_goal"].pinned is True
     assert entry_map["router_get_status"].pinned is True
+    assert "phase:planning" in entry_map["check_scene"].phase_hints
+    assert "phase:build" in entry_map["check_scene"].phase_hints
+    assert entry_map["browse_workflows"].phase_hints == ("phase:planning",)
 
 
 def test_discovery_inventory_metadata_enrichment_covers_extended_router_areas():

@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-153-01](./TASK-153-01_Responsibility_Split_For_Capability_Metadata_And_Runtime_Visibility.md)
 **Depends On:** [TASK-153-01-01](./TASK-153-01-01_Audit_Current_Dual_Layer_Visibility_Decisions.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -116,3 +116,9 @@ assert runtime_rules_are_used_for(
 ## Changelog Impact
 
 - include in the parent TASK-153 changelog entry
+
+## Completion Summary
+
+- `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md` and `_docs/_MCP_SERVER/README.md`
+  now state explicitly that guided runtime visibility is rule-driven and that
+  tags/manifest are metadata-only

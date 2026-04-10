@@ -68,6 +68,25 @@ If the question is:
 
 the answer belongs primarily to FastMCP.
 
+### Guided Visibility Note
+
+On `llm-guided`, runtime visibility should have one clear authority:
+
+- `build_visibility_rules(...)`
+- the current session phase / `guided_handoff`
+- the current `guided_flow_state`
+
+Capability tags and the capability manifest are allowed to carry coarse
+metadata for:
+
+- discovery and inventory
+- provider grouping
+- pinned/default entry hints
+- phase-shaped catalog hints
+
+They must not become a second hidden runtime phase gate once the guided
+visibility rules are built.
+
 ---
 
 ## Layer 2: LaBSE Semantic Layer

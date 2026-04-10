@@ -588,3 +588,33 @@ def build_visibility_rules(
         rules.append({"enabled": True, "components": {"tool"}, "names": set(GUIDED_INSPECT_ESCAPE_HATCH_TOOLS)})
 
     return rules
+
+
+def materialize_visible_tool_names(
+    tool_names: set[str] | tuple[str, ...] | list[str],
+    rules: list[dict[str, Any]],
+) -> tuple[str, ...]:
+    """Return the visible tool names implied by one ordered visibility rule set."""
+
+    known_tool_names = {str(name) for name in tool_names if str(name).strip()}
+    visible_by_name = {name: True for name in known_tool_names}
+
+    for rule in rules:
+        components = {str(component) for component in rule.get("components") or ()}
+        if components and "tool" not in components:
+            continue
+
+        enabled = bool(rule.get("enabled"))
+        if rule.get("match_all"):
+            for name in known_tool_names:
+                visible_by_name[name] = enabled
+            continue
+
+        rule_names = {str(name) for name in rule.get("names") or () if str(name).strip()}
+        if not rule_names:
+            continue
+
+        for name in known_tool_names.intersection(rule_names):
+            visible_by_name[name] = enabled
+
+    return tuple(sorted(name for name, is_visible in visible_by_name.items() if is_visible))

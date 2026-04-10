@@ -1,7 +1,7 @@
 # TASK-153-01: Responsibility Split For Capability Metadata And Runtime Visibility
 
 **Parent:** [TASK-153](./TASK-153_Guided_Visibility_Authority_And_Manifest_Demotion.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -86,3 +86,10 @@ Make the architecture explicit:
 ## Changelog Impact
 
 - include in the parent TASK-153 changelog entry
+
+## Completion Summary
+
+- documented that `build_visibility_rules(...)` plus session state own guided
+  runtime visibility
+- documented that capability tags/manifest are coarse metadata and must not
+  become a second hidden runtime gate

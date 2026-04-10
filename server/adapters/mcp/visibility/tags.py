@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2024-2026 Patryk Ciechański
 # SPDX-License-Identifier: Apache-2.0
 
-"""Canonical visibility tags for FastMCP surface shaping."""
+"""Canonical visibility tags and metadata hints for FastMCP surface shaping."""
 
 from __future__ import annotations
 
@@ -29,95 +29,99 @@ CAPABILITY_TAGS: dict[str, tuple[str, ...]] = {
     "scene": (
         AUDIENCE_LEGACY,
         AUDIENCE_LLM,
-        *capability_phase_tag(
-            SessionPhase.PLANNING,
-            SessionPhase.BUILD,
-            SessionPhase.INSPECT_VALIDATE,
-        ),
     ),
     "mesh": (
         AUDIENCE_LEGACY,
         AUDIENCE_LLM,
-        *capability_phase_tag(SessionPhase.BUILD, SessionPhase.INSPECT_VALIDATE),
     ),
     "modeling": (
         AUDIENCE_LEGACY,
         AUDIENCE_LLM,
-        *capability_phase_tag(SessionPhase.BUILD),
     ),
     "material": (
         AUDIENCE_LEGACY,
         AUDIENCE_LLM,
-        *capability_phase_tag(SessionPhase.BUILD, SessionPhase.INSPECT_VALIDATE),
     ),
     "reference": (
         AUDIENCE_LEGACY,
         AUDIENCE_LLM,
         ENTRY_GUIDED,
-        *capability_phase_tag(SessionPhase.PLANNING, SessionPhase.BUILD),
     ),
     "uv": (
         AUDIENCE_LEGACY,
         AUDIENCE_LLM,
-        *capability_phase_tag(SessionPhase.BUILD, SessionPhase.INSPECT_VALIDATE),
     ),
     "collection": (
         AUDIENCE_LEGACY,
         AUDIENCE_LLM,
-        *capability_phase_tag(SessionPhase.PLANNING, SessionPhase.BUILD),
     ),
     "curve": (
         AUDIENCE_LEGACY,
         AUDIENCE_LLM,
-        *capability_phase_tag(SessionPhase.BUILD),
     ),
     "lattice": (
         AUDIENCE_LEGACY,
         AUDIENCE_LLM,
-        *capability_phase_tag(SessionPhase.BUILD),
     ),
     "sculpt": (
         AUDIENCE_LEGACY,
         AUDIENCE_LLM,
-        *capability_phase_tag(SessionPhase.BUILD),
     ),
     "baking": (
         AUDIENCE_LEGACY,
         AUDIENCE_LLM,
-        *capability_phase_tag(SessionPhase.INSPECT_VALIDATE),
     ),
     "text": (
         AUDIENCE_LEGACY,
         AUDIENCE_LLM,
-        *capability_phase_tag(SessionPhase.BUILD),
     ),
     "armature": (
         AUDIENCE_LEGACY,
         AUDIENCE_LLM,
-        *capability_phase_tag(SessionPhase.BUILD),
     ),
     "system": (
         AUDIENCE_LEGACY,
         AUDIENCE_LLM,
-        *capability_phase_tag(SessionPhase.INSPECT_VALIDATE),
     ),
     "extraction": (
         AUDIENCE_LEGACY,
         AUDIENCE_LLM,
-        *capability_phase_tag(SessionPhase.INSPECT_VALIDATE),
     ),
     "router": (
         AUDIENCE_LEGACY,
         AUDIENCE_LLM,
         ENTRY_GUIDED,
-        *capability_phase_tag(SessionPhase.PLANNING),
     ),
     "workflow_catalog": (
         AUDIENCE_LEGACY,
         AUDIENCE_LLM,
         ENTRY_GUIDED,
-        *capability_phase_tag(SessionPhase.PLANNING),
     ),
+}
+
+
+CAPABILITY_PHASE_HINTS: dict[str, tuple[str, ...]] = {
+    "scene": capability_phase_tag(
+        SessionPhase.PLANNING,
+        SessionPhase.BUILD,
+        SessionPhase.INSPECT_VALIDATE,
+    ),
+    "mesh": capability_phase_tag(SessionPhase.BUILD, SessionPhase.INSPECT_VALIDATE),
+    "modeling": capability_phase_tag(SessionPhase.BUILD),
+    "material": capability_phase_tag(SessionPhase.BUILD, SessionPhase.INSPECT_VALIDATE),
+    "reference": capability_phase_tag(SessionPhase.PLANNING, SessionPhase.BUILD),
+    "uv": capability_phase_tag(SessionPhase.BUILD, SessionPhase.INSPECT_VALIDATE),
+    "collection": capability_phase_tag(SessionPhase.PLANNING, SessionPhase.BUILD),
+    "curve": capability_phase_tag(SessionPhase.BUILD),
+    "lattice": capability_phase_tag(SessionPhase.BUILD),
+    "sculpt": capability_phase_tag(SessionPhase.BUILD),
+    "baking": capability_phase_tag(SessionPhase.INSPECT_VALIDATE),
+    "text": capability_phase_tag(SessionPhase.BUILD),
+    "armature": capability_phase_tag(SessionPhase.BUILD),
+    "system": capability_phase_tag(SessionPhase.INSPECT_VALIDATE),
+    "extraction": capability_phase_tag(SessionPhase.INSPECT_VALIDATE),
+    "router": capability_phase_tag(SessionPhase.PLANNING),
+    "workflow_catalog": capability_phase_tag(SessionPhase.PLANNING),
 }
 
 
@@ -125,3 +129,9 @@ def get_capability_tags(capability_id: str) -> tuple[str, ...]:
     """Return canonical tags for a capability manifest entry."""
 
     return CAPABILITY_TAGS[capability_id]
+
+
+def get_capability_phase_hints(capability_id: str) -> tuple[str, ...]:
+    """Return metadata-only phase hints for a capability manifest entry."""
+
+    return CAPABILITY_PHASE_HINTS[capability_id]

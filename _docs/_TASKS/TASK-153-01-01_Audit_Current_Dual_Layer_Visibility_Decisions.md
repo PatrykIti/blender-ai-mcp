@@ -1,7 +1,7 @@
 # TASK-153-01-01: Audit Current Dual-Layer Visibility Decisions
 
 **Parent:** [TASK-153-01](./TASK-153-01_Responsibility_Split_For_Capability_Metadata_And_Runtime_Visibility.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -122,3 +122,9 @@ for entry in get_capability_manifest():
 ## Changelog Impact
 
 - include in the parent TASK-153 changelog entry
+
+## Completion Summary
+
+- audited the overlap and confirmed the real remaining drift was in
+  phase-shaped capability tags plus diagnostics/wording, not in the main
+  runtime visibility transform path

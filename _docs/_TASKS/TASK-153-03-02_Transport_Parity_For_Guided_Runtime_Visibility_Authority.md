@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-153-03](./TASK-153-03_Regression_And_Docs_Closeout_For_Guided_Visibility_Authority.md)
 **Depends On:** [TASK-153-03-01](./TASK-153-03-01_Unit_Regression_Matrix_For_Single_Runtime_Visibility_Authority.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -72,3 +72,8 @@ assert blocked_tool in search_after_unlock
 ## Changelog Impact
 
 - include in the parent TASK-153 changelog entry
+
+## Completion Summary
+
+- reran the guided stdio/streamable parity slice after the refactor and kept
+  transport-backed visibility behavior aligned with the rule-driven model

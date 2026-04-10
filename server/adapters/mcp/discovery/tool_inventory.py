@@ -29,6 +29,7 @@ class DiscoveryEntry:
     category: str
     provider_group: str
     tags: tuple[str, ...]
+    phase_hints: tuple[str, ...]
     aliases: tuple[str, ...]
     pinned: bool
     hidden_from_search: bool
@@ -97,6 +98,7 @@ def build_discovery_inventory(
                     category=category,
                     provider_group=manifest_entry.provider_group,
                     tags=tuple(sorted(set(manifest_entry.tags))),
+                    phase_hints=tuple(sorted(set(manifest_entry.phase_hints))),
                     aliases=_build_aliases(manifest_entry, internal_name, public_name),
                     pinned=internal_name in manifest_entry.pinned_tools,
                     hidden_from_search=internal_name in manifest_entry.hidden_from_search_tools,

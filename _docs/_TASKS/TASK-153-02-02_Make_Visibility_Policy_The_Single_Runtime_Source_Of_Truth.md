@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-153-02](./TASK-153-02_Runtime_Visibility_Authority_Consolidation_For_LLM_Guided.md)
 **Depends On:** [TASK-153-02-01](./TASK-153-02-01_Demote_Phase_Tags_From_LLM_Guided_Runtime_Gating.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -143,3 +143,9 @@ def build_visibility_diagnostics(...):
 ## Changelog Impact
 
 - include in the parent TASK-153 changelog entry
+
+## Completion Summary
+
+- added `materialize_visible_tool_names(...)` as the shared rule-driven helper
+- rebuilt guided capability diagnostics from runtime-visible tool membership
+  instead of manifest/tag overlap inference

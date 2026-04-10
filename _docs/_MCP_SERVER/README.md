@@ -389,6 +389,15 @@ The `llm-guided` surface now has a first complete guided-mode visibility baselin
 - deterministic phase/profile visibility rules owned by FastMCP platform code, not by router metadata
 - native FastMCP session visibility application via `enable_components`, `disable_components`, and `reset_visibility`
 - operator-facing visibility diagnostics exposed through `router_get_status()`
+- `build_visibility_rules(...)` plus session state are now the single runtime
+  visibility authority on `llm-guided`
+- capability tags and `capability_manifest` remain coarse metadata for
+  discovery, inventory, provider wiring, pinned defaults, and metadata-only
+  phase hints; they are no longer treated as a second hidden runtime gate
+- guided visibility diagnostics now derive capability visibility from the same
+  runtime-visible tool membership that shapes the actual surface
+- the same runtime-visible tool membership now drives capability diagnostics
+  instead of inferring runtime state from manifest/tag overlap alone
 
 This visibility baseline is complete for guided-mode surface shaping.
 Search-first default rollout remains a separate TASK-084 concern.

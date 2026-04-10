@@ -1,6 +1,6 @@
 # TASK-153: Guided Visibility Authority And Manifest Demotion
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** FastMCP Platform / Visibility Architecture
 **Estimated Effort:** Large
@@ -224,7 +224,17 @@ This means the repo still lacks one fully explicit rule such as:
 
 ## Status / Board Update
 
-- promoted as the next board-level follow-on because `TASK-152` fixed practical
-  model-facing usability issues, but the repo still needs an architectural
-  cleanup so visibility bugs do not keep reappearing from layered authority
-  drift
+- completed on 2026-04-10 and moved from the follow-on queue into Done once
+  runtime visibility authority, metadata demotion, regression coverage, and
+  docs/history landed together
+
+## Completion Summary
+
+- demoted `phase:*` from runtime-facing capability tags into metadata-only
+  manifest `phase_hints`
+- kept capability tags/manifest useful for discovery, inventory, provider
+  wiring, pinned defaults, and search enrichment
+- rebuilt guided visibility diagnostics from the same runtime-visible tool
+  membership implied by `build_visibility_rules(...)`
+- updated docs and changelog so the runtime-vs-metadata ownership split is now
+  explicit

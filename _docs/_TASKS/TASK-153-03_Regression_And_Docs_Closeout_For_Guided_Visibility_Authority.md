@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-153](./TASK-153_Guided_Visibility_Authority_And_Manifest_Demotion.md)
 **Depends On:** [TASK-153-01](./TASK-153-01_Responsibility_Split_For_Capability_Metadata_And_Runtime_Visibility.md), [TASK-153-02](./TASK-153-02_Runtime_Visibility_Authority_Consolidation_For_LLM_Guided.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -95,3 +95,11 @@ benchmarks, docs, and changelog closeout.
 ## Changelog Impact
 
 - add a dedicated `_docs/_CHANGELOG/*` entry when TASK-153 ships
+
+## Completion Summary
+
+- completed the unit regression matrix around visibility rules, diagnostics,
+  discovery, inventory, and factory metadata
+- verified transport parity on the guided stdio/streamable surface slice
+- updated docs, board state, and changelog together with the shipped runtime
+  behavior

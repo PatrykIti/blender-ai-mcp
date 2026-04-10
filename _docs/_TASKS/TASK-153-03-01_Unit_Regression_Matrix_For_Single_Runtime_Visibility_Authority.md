@@ -1,7 +1,7 @@
 # TASK-153-03-01: Unit Regression Matrix For Single Runtime Visibility Authority
 
 **Parent:** [TASK-153-03](./TASK-153-03_Regression_And_Docs_Closeout_For_Guided_Visibility_Authority.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -96,3 +96,11 @@ assert "modeling_create_primitive" in search_results_after_unlock
 ## Changelog Impact
 
 - include in the parent TASK-153 changelog entry
+
+## Completion Summary
+
+- added/updated unit coverage for:
+  - coarse tags plus metadata-only phase hints
+  - rule-driven visible-tool materialization
+  - guided diagnostics parity
+  - manifest/discovery/factory metadata preservation

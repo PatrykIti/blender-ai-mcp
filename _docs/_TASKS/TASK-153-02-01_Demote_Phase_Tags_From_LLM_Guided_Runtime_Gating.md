@@ -1,7 +1,7 @@
 # TASK-153-02-01: Demote Phase Tags From LLM Guided Runtime Gating
 
 **Parent:** [TASK-153-02](./TASK-153-02_Runtime_Visibility_Authority_Consolidation_For_LLM_Guided.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -140,3 +140,10 @@ CapabilityManifestEntry(
 ## Changelog Impact
 
 - include in the parent TASK-153 changelog entry
+
+## Completion Summary
+
+- removed `phase:*` from runtime-facing capability tags returned by
+  `get_capability_tags(...)`
+- preserved phase context as metadata-only `CAPABILITY_PHASE_HINTS` /
+  manifest `phase_hints`
