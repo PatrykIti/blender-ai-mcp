@@ -24,13 +24,17 @@ asset as the generic search-first operating baseline.
 3. `reference_images(action="attach", ...)` for:
    - front reference
    - side reference
-4. `router_set_goal("create a low-poly creature matching front and side reference images")`
-5. if the router returns `continuation_mode="guided_manual_build"`, continue on
+4. inspect/read the attached references as the primary grounding input for:
+   - initial body/head/tail proportions
+   - broad silhouette
+   - rough part placement
+5. `router_set_goal("create a low-poly creature matching front and side reference images")`
+6. if the router returns `continuation_mode="guided_manual_build"`, continue on
    the shaped manual build surface
    - if `guided_handoff.recipe_id == "low_poly_creature_blockout"`, stay on the
      modeling/mesh-first creature blockout recipe instead of widening into the
      full generic build surface
-6. if the router returns `needs_input`, answer that first and wait until
+7. if the router returns `needs_input`, answer that first and wait until
    `guided_reference_readiness.compare_ready == true`
    - if you only discover stale scene state after this point, `scene_clean_scene(...)`
      remains an allowed build-phase recovery hatch even though cleanup-before-goal
@@ -38,14 +42,14 @@ asset as the generic search-first operating baseline.
    - once the goal is active, inspect `guided_flow_state` and treat
      `establish_spatial_context` plus its `required_checks` as a real gate
      before broad free-form modeling
-7. build in short stages:
+8. build in short stages:
    - body + head primary masses
    - tail mass
    - snout + ears
    - forelegs + hindlegs + final proportion cleanup
-8. after each stage run:
+9. after each stage run:
    - `reference_iterate_stage_checkpoint(target_object="Creature", checkpoint_label="<stage>", preset_profile="compact")`
-9. use the response in this order:
+10. use the response in this order:
    - `loop_disposition`
    - `guided_reference_readiness`
    - `correction_candidates`
@@ -56,7 +60,7 @@ asset as the generic search-first operating baseline.
    - `vision_assistant.result.shape_mismatches`
    - `vision_assistant.result.proportion_mismatches`
    - `vision_assistant.result.next_corrections`
-10. repeat the next stage or correction step
+11. repeat the next stage or correction step
 
 ## Prompt Template
 
@@ -91,9 +95,22 @@ Rules:
   schema noise
 - keep parts as separate objects
 - focus on low-poly shape match, not materials or fur detail
+- attached reference images are the primary grounding input for how the first
+  masses should look and sit; do not start from generic animal priors when the
+  active guided session already has references
 - attach references one at a time with
   `reference_images(action="attach", source_path=..., ...)`; do not pass
   batch shapes such as `images=[...]`
+- use full semantic object names:
+  - `Body`
+  - `Head`
+  - `Tail`
+  - `ForeLeg_L`
+  - `ForeLeg_R`
+  - `HindLeg_L`
+  - `HindLeg_R`
+- avoid opaque abbreviations like `ForeL`, `ForeR`, `HindL`, `HindR` because
+  guided seam/role heuristics are more reliable on full readable names
 - use `collection_manage(action="create", collection_name=...)`, not
   `name=...`
 - use `modeling_create_primitive(...)` only with its public shape:
@@ -108,12 +125,13 @@ Rules:
 - if you need to place a new object into a collection, create it first and then
   call `collection_manage(action="move_object", collection_name=..., object_name=...)`
 - after each stage use `reference_iterate_stage_checkpoint(...)`
+- do not call `scene_scope_graph(...)` / `scene_relation_graph(...)` with no
+  scope and assume that means “inspect the whole scene”
+- `scene_view_diagnostics(...)` also requires explicit scope
 - for stages with one clear primary mass you may use `target_object=...`
 - for a full assembled silhouette use:
   - `target_objects=[...]`
   - or `collection_name="Squirrel"`
-  - or no explicit scope if you want to compare the whole assembled
-    scene/silhouette
 - on full assembled-creature checkpoints, treat `truth_followup.focus_pairs`
   as the required creature seam set for the current scope; one improved local
   pair does not mean the whole creature stage is done
@@ -122,32 +140,39 @@ Rules:
   - `floating_gap`
   - `intersecting`
   - `misaligned_attachment`
+- interpret seam verdicts explicitly:
+  - `intersecting` can be acceptable for embedded seams such as ear/head or
+    snout/head during blockout
+  - `floating_gap` remains actionable for segment seams such as head/body,
+    tail/body, or limb/body
 
 Workflow:
 1. `router_get_status()`
 2. clean the scene but keep lights and cameras
 3. attach both references through `reference_images(...)`
    - use one `source_path` per attach call, not `images=[...]`
-4. set the goal:
+4. inspect/read the attached reference set before deciding the first body/head
+   masses and rough silhouette
+5. set the goal:
    `create a low-poly creature matching front and side reference images`
-5. if the router returns `guided_manual_build`, continue manually on the
+6. if the router returns `guided_manual_build`, continue manually on the
    shaped build surface
    - if `guided_handoff.recipe_id == "low_poly_creature_blockout"`, use that
      smaller recipe as the default direct-tool surface
-6. if the router returns `needs_input`, answer that first and wait until
+7. if the router returns `needs_input`, answer that first and wait until
    `guided_reference_readiness.compare_ready == true`
-7. build in 4 stages:
+8. build in 4 stages:
    - stage 1: body + head primary masses
    - stage 2: tail mass
    - stage 3: snout + ears
    - stage 4: forelegs + hindlegs + final proportion cleanup
-8. during the primary-mass stages, do not jump early to ears or legs
+9. during the primary-mass stages, do not jump early to ears or legs
    - if the server reports `guided_flow_state.allowed_roles=["body_core","head_mass","tail_mass"]`, stay inside that role set
    - read `allowed_roles` and `missing_roles` literally from the active guided flow state before creating the next creature part
    - register semantic part roles with `guided_register_part(...)` or use the convenience hint `guided_role=...` on the build call
-9. after each stage call:
+10. after each stage call:
    `reference_iterate_stage_checkpoint(target_object="Creature", checkpoint_label="<stage_name>", preset_profile="compact")`
-10. on the next iteration prioritize:
+11. on the next iteration prioritize:
    - `loop_disposition`
    - `guided_reference_readiness`
    - `correction_candidates`
@@ -159,29 +184,35 @@ Workflow:
    - then `vision_assistant.result.shape_mismatches`
    - then `vision_assistant.result.proportion_mismatches`
    - then `vision_assistant.result.next_corrections`
-11. if `guided_reference_readiness.compare_ready == false`, execute
+12. if `guided_reference_readiness.compare_ready == false`, execute
     `guided_reference_readiness.next_action` instead of trying to recover the
     session with `goal_override`
-12. if `loop_disposition == "inspect_validate"`, stop free-form modeling and
+13. if `loop_disposition == "inspect_validate"`, stop free-form modeling and
     switch to inspect/measure/assert before making another large change
-13. if staged compare/iterate returns a vision error but still includes strong
+    - bounded attachment repair macros and spatial re-check tools may still be
+      available there; use that bounded surface instead of broad free-form
+      modeling
+14. if staged compare/iterate returns a vision error but still includes strong
     deterministic `truth_followup` / `correction_candidates`, use that as an
     inspect/measure/assert handoff instead of guessing another large free-form
     correction
-14. if `part_segmentation.status == "disabled"`, stay on the silhouette-first
+15. if `part_segmentation.status == "disabled"`, stay on the silhouette-first
     path; the segmentation sidecar is optional and not part of the default
     guided baseline
-15. if a build call is blocked because the family or role is wrong for the
+16. if a build call is blocked because the family or role is wrong for the
     current step, do not try another guessed build tool name
     - inspect `guided_flow_state.allowed_families`
     - inspect `guided_flow_state.allowed_roles`
     - inspect `guided_flow_state.missing_roles`
-16. when the current issue is an embedded organic seam such as snout/head or
+17. when the current issue is an embedded organic seam such as snout/head or
     nose/snout, prefer `macro_attach_part_to_surface`
-17. when the current issue is head/body, tail/body, or limb/body seating,
+18. when the current issue is head/body, tail/body, or limb/body seating,
     prefer `macro_align_part_with_contact`
-18. do not treat generic overlap cleanup as success for a creature seam unless
+19. do not treat generic overlap cleanup as success for a creature seam unless
     the final attachment verdict has also moved to `seated_contact`
+20. for segment seams such as head/body, tail/body, and limb/body, do not
+    rationalize `floating_gap` as “expected blockout state”; it still needs
+    correction
 
 At the end of each stage, return only:
 - what was done

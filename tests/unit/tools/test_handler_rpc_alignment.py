@@ -251,6 +251,41 @@ def test_scene_spatial_graph_handlers_reuse_existing_scene_truth_rpc_commands():
     ]
 
 
+def test_scene_relation_graph_treats_forel_hindr_names_as_limb_body_pairs():
+    rpc = DummyRpc(
+        {
+            "scene.get_bounding_box": _ok({"dimensions": [2.0, 2.0, 2.0], "center": [0.0, 0.0, 0.0]}),
+            "scene.measure_gap": _ok({"gap": 0.1, "relation": "separated", "measurement_basis": "bounding_box"}),
+            "scene.measure_alignment": _ok({"is_aligned": True, "aligned_axes": ["X", "Y"]}),
+            "scene.measure_overlap": _ok(
+                {"overlaps": False, "relation": "disjoint", "measurement_basis": "bounding_box"}
+            ),
+            "scene.assert_contact": _ok(
+                {
+                    "assertion": "scene_assert_contact",
+                    "passed": False,
+                    "actual": {"gap": 0.1, "relation": "separated"},
+                    "details": {"measurement_basis": "bounding_box"},
+                }
+            ),
+        }
+    )
+    handler = SceneToolHandler(rpc)
+
+    relations = handler.get_relation_graph(target_objects=["Body", "ForeL", "HindR"], goal_hint="assembled creature")
+    pair_ids = {item["pair_id"] for item in relations["pairs"]}
+    seam_kinds = {
+        item["pair_id"]: item["attachment_semantics"]["seam_kind"]
+        for item in relations["pairs"]
+        if item.get("attachment_semantics")
+    }
+
+    assert "forel__body" in pair_ids
+    assert "hindr__body" in pair_ids
+    assert seam_kinds["forel__body"] == "limb_body"
+    assert seam_kinds["hindr__body"] == "limb_body"
+
+
 def test_scene_view_diagnostics_handler_resolves_collection_scope_and_forwards_view_args():
     rpc = DummyRpc(
         {

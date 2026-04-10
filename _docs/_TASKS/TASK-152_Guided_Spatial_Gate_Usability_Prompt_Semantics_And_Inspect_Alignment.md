@@ -1,6 +1,6 @@
 # TASK-152: Guided Spatial Gate Usability, Prompt Semantics, And Inspect Alignment
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** Guided Runtime / Prompt Contract / Inspect Surface
 **Estimated Effort:** Medium
@@ -166,6 +166,22 @@ The current behavior is concentrated in a few concrete places:
 
 ## Status / Board Update
 
-- proposed as the next board-level follow-on after TASK-151 because the
-  remaining failures are now primarily model-facing contract/alignment issues
-  rather than missing spatial-state mechanics
+- completed on 2026-04-10 and moved from the board-level follow-on queue to
+  the Done section once prompt semantics, inspect visibility alignment,
+  heuristic-name support, regression coverage, and docs landed together
+
+## Completion Summary
+
+- prompt/docs guidance now explicitly tells the model to:
+  - use attached references as the primary grounding input
+  - avoid empty/no-scope spatial checks
+  - prefer full semantic object names
+  - interpret embedded vs floating seams correctly
+- abbreviated names like `ForeL` / `HindR` now still map into limb seams
+  through the guided spatial heuristics
+- `inspect_validate` now exposes a bounded attachment-repair + spatial
+  verification surface consistent with `guided_flow_state.allowed_families`
+- regression coverage now includes:
+  - abbreviated-name seam scenarios
+  - inspect-phase visibility consistency
+  - prompt/docs parity for the new guided contract

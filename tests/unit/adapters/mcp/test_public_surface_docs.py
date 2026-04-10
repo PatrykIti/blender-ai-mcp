@@ -61,6 +61,11 @@ def test_readme_documents_llm_guided_public_aliases():
         "preferred prompt bundle",
         "refresh_spatial_context",
         'scene_view_diagnostics(target_object="Camera"',
+        "primary grounding input",
+        "ForeLeg_L",
+        "HindLeg_R",
+        "inspect the whole scene",
+        "floating_gap",
         "Contact Truth Semantics",
         "mesh-surface contact/gap semantics",
         "bbox fallback semantics",
@@ -129,6 +134,11 @@ def test_mcp_docs_describe_aliases_and_hidden_arguments():
         "scene_scope_graph(...) now binds the active guided target scope",
         "Camera",
         "refresh_spatial_context",
+        "primary grounding input",
+        "ForeLeg_L",
+        "HindLeg_R",
+        "do not treat “no scope” as “whole scene”",
+        "bounded attachment repair macros",
         "hidden/blocked-by-flow",
         "scene_hide_object",
         "scene_show_all_objects",
@@ -314,6 +324,11 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "required prompt bundle" in prompt_readme
     assert "preferred prompt bundle" in prompt_readme
     assert "refresh_spatial_context" in prompt_readme
+    assert "primary grounding input" in prompt_readme
+    assert "ForeLeg_L" in prompt_readme
+    assert "HindLeg_R" in prompt_readme
+    assert "inspect the whole scene" in prompt_readme
+    assert "floating_gap" in prompt_readme
     assert "guided_register_part(object_name=..., role=...)" in prompt_readme
     assert "guided_role=..." in prompt_readme
     assert "allowed_families" in prompt_readme
@@ -361,6 +376,9 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert '`continuation_mode == "guided_manual_build"`' in workflow_prompt
     assert "`guided_handoff.direct_tools`" in workflow_prompt
     assert "`guided_flow_state`" in workflow_prompt
+    assert "primary grounding input" in workflow_prompt
+    assert "ForeLeg_L" in workflow_prompt
+    assert "HindLeg_R" in workflow_prompt
     assert "`allowed_families`" in workflow_prompt
     assert "`allowed_roles`" in workflow_prompt
     assert "`missing_roles`" in workflow_prompt
@@ -381,6 +399,10 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "macro_cutout_recess" in prompt_readme
     assert "macro_relative_layout" in prompt_readme
     assert "macro_finish_form" in prompt_readme
+    assert "primary grounding input" in creature_prompt
+    assert "ForeLeg_L" in creature_prompt
+    assert "HindLeg_R" in creature_prompt
+    assert "floating_gap" in creature_prompt
     assert 'search_tools(query="align panel housing gap contact placement")' in workflow_prompt
     assert (
         'call_tool(name="macro_relative_layout", arguments={"moving_object":"Panel","reference_object":"Housing","x_mode":"center","y_mode":"center","contact_axis":"Z","contact_side":"positive","gap":0.002})'

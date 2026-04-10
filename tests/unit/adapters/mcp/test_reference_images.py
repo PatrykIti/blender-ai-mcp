@@ -60,6 +60,15 @@ class FakeContext:
     def info(self, message, logger_name=None, extra=None):
         return None
 
+    async def reset_visibility(self) -> None:
+        return None
+
+    async def enable_components(self, **kwargs) -> None:
+        return None
+
+    async def disable_components(self, **kwargs) -> None:
+        return None
+
 
 def _write_test_silhouette(path: Path, *, with_ears: bool) -> None:
     from PIL import Image, ImageDraw
@@ -549,6 +558,88 @@ def test_build_correction_truth_bundle_expands_required_creature_seams(monkeypat
     assert bundle.checks[4].attachment_semantics.preferred_macro == "macro_attach_part_to_surface"
     assert bundle.checks[5].attachment_semantics is not None
     assert bundle.checks[5].attachment_semantics.seam_kind == "nose_snout"
+
+
+def test_build_correction_truth_bundle_treats_forel_hindr_as_limb_body_seams(monkeypatch):
+    class SceneHandler:
+        def get_bounding_box(self, object_name: str, world_space: bool = True):
+            dimensions = {
+                "Body": [2.6, 1.8, 1.6],
+                "Head": [1.2, 1.0, 1.0],
+                "Tail": [1.4, 0.4, 0.4],
+                "ForeL": [0.6, 0.35, 0.35],
+                "ForeR": [0.6, 0.35, 0.35],
+                "HindL": [0.7, 0.4, 0.4],
+                "HindR": [0.7, 0.4, 0.4],
+            }[object_name]
+            return {"object_name": object_name, "dimensions": dimensions}
+
+        def measure_gap(self, from_object, to_object, tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "gap": 0.1,
+                "axis_gap": {"x": 0.0, "y": 0.0, "z": 0.1},
+                "relation": "separated",
+                "tolerance": tolerance,
+                "units": "blender_units",
+            }
+
+        def measure_alignment(self, from_object, to_object, axes=None, reference="CENTER", tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "reference": reference,
+                "axes": axes or ["X", "Y", "Z"],
+                "deltas": {"x": 0.0, "y": 0.0, "z": 0.1},
+                "is_aligned": True,
+                "tolerance": tolerance,
+                "units": "blender_units",
+            }
+
+        def measure_overlap(self, from_object, to_object, tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "overlaps": False,
+                "relation": "disjoint",
+                "tolerance": tolerance,
+                "units": "blender_units",
+            }
+
+        def assert_contact(self, from_object, to_object, max_gap=0.0001, allow_overlap=False):
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": False,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.1, "relation": "separated"},
+                "delta": {"gap_overage": 0.0999},
+                "tolerance": max_gap,
+                "units": "blender_units",
+            }
+
+    scene_handler = SceneHandler()
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: scene_handler)
+
+    scope = _assembled_target_scope(
+        target_object=None,
+        target_objects=["Body", "Head", "Tail", "ForeL", "ForeR", "HindL", "HindR"],
+        collection_name=None,
+    )
+
+    bundle = _build_correction_truth_bundle(scene_handler, scope)
+    seam_kinds_by_pair = {
+        f"{item.from_object} -> {item.to_object}": item.attachment_semantics.seam_kind
+        for item in bundle.checks
+        if item.attachment_semantics is not None
+    }
+
+    assert seam_kinds_by_pair["ForeL -> Body"] == "limb_body"
+    assert seam_kinds_by_pair["ForeR -> Body"] == "limb_body"
+    assert seam_kinds_by_pair["HindL -> Body"] == "limb_body"
+    assert seam_kinds_by_pair["HindR -> Body"] == "limb_body"
 
 
 def test_truth_followup_keeps_multiple_required_creature_seams_and_macro_families_visible():

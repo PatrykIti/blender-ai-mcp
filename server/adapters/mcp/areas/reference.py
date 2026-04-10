@@ -59,6 +59,7 @@ from server.adapters.mcp.sampling.result_types import to_vision_assistant_contra
 from server.adapters.mcp.session_capabilities import (
     GuidedReferenceReadinessState,
     advance_guided_flow_from_iteration_async,
+    apply_visibility_for_session_state,
     build_guided_reference_readiness,
     build_guided_reference_readiness_payload,
     get_session_capability_state_async,
@@ -1527,7 +1528,14 @@ def _is_tail_like(object_name: str) -> bool:
 
 
 def _is_limb_like(object_name: str) -> bool:
-    return _has_name_hint(object_name, _LIMB_ROLE_HINTS)
+    if _has_name_hint(object_name, _LIMB_ROLE_HINTS):
+        return True
+
+    tokens = _name_role_tokens(object_name)
+    if len(tokens) <= 3 and any(token in {"fore", "hind", "front", "rear", "back"} for token in tokens):
+        if any(token in {"l", "r", "left", "right"} for token in tokens):
+            return True
+    return False
 
 
 def _is_distal_limb_like(object_name: str) -> bool:
@@ -3428,6 +3436,7 @@ async def reference_iterate_stage_checkpoint(
         ctx,
         loop_disposition=loop_disposition,
     )
+    await apply_visibility_for_session_state(ctx, advanced_state)
 
     return _iterate_stage_response(
         session_id=compare_result.session_id,

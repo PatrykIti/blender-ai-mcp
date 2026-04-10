@@ -511,8 +511,15 @@ Current guided-flow behavior:
   spatial gate; later `scene_relation_graph(...)` /
   `scene_view_diagnostics(...)` completions must match that scope instead of
   satisfying the gate on arbitrary unrelated objects
+- the spatial tools do not treat “no scope” as “whole scene”; use
+  `target_object`, `target_objects`, or `collection_name`
 - helper-only scopes such as a single `Camera` do not initialize or satisfy a
   creature/building spatial gate by themselves
+- if guided references are already attached, they should be treated as the
+  primary grounding input for the first blockout masses and placement
+- full semantic object names such as `ForeLeg_L`, `ForeLeg_R`, `HindLeg_L`,
+  and `HindLeg_R` are preferred over abbreviations like `ForeL` / `HindR`
+  because seam/role heuristics classify them more reliably
 - after material scene changes such as `scene_clean_scene(...)`,
   `modeling_create_primitive(...)`, `modeling_transform_object(...)`, or
   bounded attachment/alignment cleanup macros, the runtime can mark the
@@ -522,6 +529,10 @@ Current guided-flow behavior:
   checks on that same target scope
 - the machine-readable next action for this path is
   `refresh_spatial_context`
+- on the guided inspect surface, bounded attachment repair macros and spatial
+  re-check tools remain aligned with the inspect family policy instead of
+  advertising one surface through `allowed_families` and another through tool
+  visibility
 - guided execution policy can now fail closed when a call resolves to the
   wrong shared family or an explicit guided role that is not allowed for the
   current step
@@ -579,6 +590,9 @@ If a needed tool is not visible or a build tool seems to have disappeared on
 9. If the server rejects a call with a guided family/role error, do not retry
    the same action under a different hidden/internal tool name; inspect the
    current `allowed_families` and `allowed_roles` first.
+10. For creature blockout naming, prefer full semantic names such as
+    `ForeLeg_L` / `HindLeg_R`; abbreviations like `ForeL` / `HindR` can weaken
+    seam inference unless the heuristic layer explicitly supports them.
 
 ## Guided Reference Readiness Contract
 

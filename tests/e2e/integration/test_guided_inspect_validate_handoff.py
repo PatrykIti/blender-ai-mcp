@@ -199,6 +199,25 @@ async def _call_iterate(script_path: Path, checkpoint_label: str) -> dict[str, o
         return payload
 
 
+async def _iterate_and_collect_visibility(
+    script_path: Path, checkpoint_label: str
+) -> tuple[dict[str, object], dict[str, object]]:
+    async with stdio_client(script_path) as client:
+        await client.call_tool(
+            "router_set_goal",
+            {"goal": "create a low-poly squirrel matching front and side reference images"},
+        )
+        result = await client.call_tool(
+            "reference_iterate_stage_checkpoint",
+            {"target_object": "TruthHead", "target_objects": ["TruthBody"], "checkpoint_label": checkpoint_label},
+        )
+        payload = result_payload(result)
+        assert isinstance(payload, dict)
+        status_result = result_payload(await client.call_tool("router_get_status", {}))
+        assert isinstance(status_result, dict)
+        return payload, status_result
+
+
 @pytest.mark.slow
 def test_guided_inspect_validate_handoff_is_truth_first_on_active_stdio_surface(tmp_path: Path):
     """High-priority truth findings should force a stop-and-check branch on the active client path."""
@@ -224,3 +243,29 @@ def test_guided_degraded_compare_handoff_keeps_same_truth_first_story(tmp_path: 
     assert "Vision compare did not complete successfully" in str(payload["message"])
     assert "Stop free-form modeling" in str(payload["message"])
     assert "synthetic degraded compare" in str(payload["stop_reason"])
+
+
+@pytest.mark.slow
+def test_guided_inspect_validate_surface_exposes_spatial_and_attachment_tools_consistently(tmp_path: Path):
+    """The inspect phase should expose the same bounded repair surface implied by guided family policy."""
+
+    script_path = write_server_script(tmp_path, _PATCHED_HANDOFF_SERVER)
+    payload, status = asyncio.run(_iterate_and_collect_visibility(script_path, "truth_first"))
+    visibility_rules = status.get("visibility_rules")
+    assert isinstance(visibility_rules, list)
+    visible_tool_names = {
+        name
+        for rule in visibility_rules
+        if isinstance(rule, dict)
+        for name in (rule.get("names") or [])
+        if rule.get("components") == ["tool"] or rule.get("components") == {"tool"}
+    }
+
+    assert payload["loop_disposition"] == "inspect_validate"
+    assert status["current_phase"] == "inspect_validate"
+    assert "scene_scope_graph" in visible_tool_names
+    assert "scene_relation_graph" in visible_tool_names
+    assert "scene_view_diagnostics" in visible_tool_names
+    assert "macro_attach_part_to_surface" in visible_tool_names
+    assert "macro_align_part_with_contact" in visible_tool_names
+    assert "macro_cleanup_part_intersections" in visible_tool_names

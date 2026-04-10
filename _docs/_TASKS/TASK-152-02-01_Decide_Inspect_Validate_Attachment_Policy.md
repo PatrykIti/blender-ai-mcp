@@ -1,7 +1,7 @@
 # TASK-152-02-01: Decide Inspect Validate Attachment Policy
 
 **Parent:** [TASK-152-02](./TASK-152-02_Inspect_Validate_Surface_And_Attachment_Family_Alignment.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -57,3 +57,8 @@ Choose one of:
 ## Changelog Impact
 
 - include in the parent TASK-152 changelog entry
+
+## Completion Summary
+
+- chose the policy to keep bounded attachment repair available in
+  `inspect_validate` and expose the relevant macros there

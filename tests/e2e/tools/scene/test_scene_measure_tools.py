@@ -115,3 +115,51 @@ def test_scene_spatial_graph_handlers_expose_scope_and_relation_state(scene_hand
                 scene_handler.delete_object(name)
             except RuntimeError:
                 pass
+
+
+def test_scene_relation_graph_treats_forel_hindr_names_as_limb_body_pairs(scene_handler, modeling_handler):
+    object_names = {
+        "Body": "E2E_Abbrev_Body",
+        "ForeL": "E2E_Abbrev_ForeL",
+        "HindR": "E2E_Abbrev_HindR",
+    }
+
+    try:
+        for name in object_names.values():
+            try:
+                scene_handler.delete_object(name)
+            except RuntimeError:
+                pass
+
+        modeling_handler.create_primitive(
+            primitive_type="CUBE", name=object_names["Body"], size=2.5, location=[0, 0, 0]
+        )
+        modeling_handler.create_primitive(
+            primitive_type="CUBE", name=object_names["ForeL"], size=0.8, location=[-2, 0, -1]
+        )
+        modeling_handler.create_primitive(
+            primitive_type="CUBE", name=object_names["HindR"], size=0.8, location=[2, 0, -1]
+        )
+
+        relations = scene_handler.get_relation_graph(
+            target_objects=list(object_names.values()),
+            goal_hint="assembled creature limb placement",
+        )
+        seam_kinds = {
+            item["pair_id"]: item["attachment_semantics"]["seam_kind"]
+            for item in relations["pairs"]
+            if item.get("attachment_semantics")
+        }
+
+        assert f"{object_names['ForeL'].lower()}__{object_names['Body'].lower()}" in seam_kinds
+        assert f"{object_names['HindR'].lower()}__{object_names['Body'].lower()}" in seam_kinds
+        assert seam_kinds[f"{object_names['ForeL'].lower()}__{object_names['Body'].lower()}"] == "limb_body"
+        assert seam_kinds[f"{object_names['HindR'].lower()}__{object_names['Body'].lower()}"] == "limb_body"
+    except RuntimeError as e:
+        pytest.skip(f"Blender not available: {e}")
+    finally:
+        for name in object_names.values():
+            try:
+                scene_handler.delete_object(name)
+            except RuntimeError:
+                pass

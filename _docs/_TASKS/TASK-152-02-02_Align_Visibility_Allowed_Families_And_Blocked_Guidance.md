@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-152-02](./TASK-152-02_Inspect_Validate_Surface_And_Attachment_Family_Alignment.md)
 **Depends On:** [TASK-152-02-01](./TASK-152-02-01_Decide_Inspect_Validate_Attachment_Policy.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -88,3 +88,9 @@ inspect_allowed = ["inspect_validate", "primary_masses", "secondary_parts"]
 ## Changelog Impact
 
 - include in the parent TASK-152 changelog entry
+
+## Completion Summary
+
+- updated inspect visibility/tool exposure to match the allowed family policy
+- added regression coverage so inspect-phase attachment tooling and guided
+  family semantics stay aligned

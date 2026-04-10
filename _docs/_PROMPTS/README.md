@@ -191,6 +191,11 @@ Interpretation:
   - `guided_flow_state.spatial_refresh_required`
   - `guided_flow_state.required_checks`
   - `guided_flow_state.next_actions`
+- if `reference_images(...)` are already attached for the active guided goal,
+  treat them as the primary grounding input before deciding the initial masses,
+  silhouette, and rough placement
+- prefer full semantic object names such as `ForeLeg_L`, `ForeLeg_R`,
+  `HindLeg_L`, `HindLeg_R` over opaque abbreviations like `ForeL` / `HindR`
 - use the `required prompt bundle` and `preferred prompt bundle` named in
   `guided_flow_state` as prompt asset selection guidance
 - if the server needs explicit semantic part roles for the current flow,
@@ -255,6 +260,9 @@ contract.
   - expect `guided_flow_state.next_actions=["refresh_spatial_context"]`
   - call `scene_scope_graph(...)` first to bind/rebind the active target scope
   - then rerun the remaining `required_checks` on that same scope
+- do not call `scene_scope_graph(...)`, `scene_relation_graph(...)`, or
+  `scene_view_diagnostics(...)` with no explicit scope and assume that means
+  “inspect the whole scene”
 - do not treat a successful read-only payload on an unrelated helper object as
   proof that the spatial gate is satisfied; for example
   `scene_view_diagnostics(target_object="Camera", ...)` may still return a
@@ -266,6 +274,10 @@ contract.
   looping on stale placement/framing facts
 - the server may keep build visibility step-gated during
   `establish_spatial_context`, so prompt text must not override that gating
+- for creature blockout seams, treat verdicts explicitly:
+  - embedded ear/head or snout/head seams may remain `intersecting` at blockout
+    stage
+  - `floating_gap` on head/body, tail/body, or limb/body remains actionable
 - `required_prompts` = required prompt bundle names for the current
   flow/domain/step
 - `preferred_prompts` = strong recommendations for the current flow/domain/step

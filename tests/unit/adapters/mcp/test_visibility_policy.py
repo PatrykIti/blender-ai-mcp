@@ -117,6 +117,9 @@ def test_visibility_rules_are_profile_and_phase_deterministic():
     assert inspect_rules[-1]["names"] == set(GUIDED_INSPECT_ESCAPE_HATCH_TOOLS)
     assert set(GUIDED_SPATIAL_GRAPH_TOOLS).issubset(inspect_rules[-1]["names"])
     assert set(GUIDED_VIEW_DIAGNOSTIC_TOOLS).issubset(inspect_rules[-1]["names"])
+    assert "macro_attach_part_to_surface" in inspect_rules[-1]["names"]
+    assert "macro_align_part_with_contact" in inspect_rules[-1]["names"]
+    assert "macro_cleanup_part_intersections" in inspect_rules[-1]["names"]
 
     code_mode_rules = build_visibility_rules(get_surface_profile("code-mode-pilot"), SessionPhase.BOOTSTRAP)
     assert code_mode_rules[0]["enabled"] is False

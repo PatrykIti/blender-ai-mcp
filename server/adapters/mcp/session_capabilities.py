@@ -654,9 +654,9 @@ def _build_allowed_families(
             else ["primary_masses", "secondary_parts", "checkpoint_iterate", "reference_context"]
         ),
         "inspect_validate": (
-            ["inspect_validate", "attachment_alignment", "primary_masses", "secondary_parts"]
+            ["inspect_validate", "spatial_context", "checkpoint_iterate", "attachment_alignment"]
             if domain_profile == "creature"
-            else ["inspect_validate", "primary_masses", "secondary_parts"]
+            else ["inspect_validate", "spatial_context", "checkpoint_iterate"]
         ),
         "finish_or_stop": ["finish", "inspect_validate"],
     }
@@ -1994,8 +1994,13 @@ async def advance_guided_flow_from_iteration_async(
         loop_disposition=loop_disposition,
         part_registry=current.guided_part_registry,
     )
+    next_phase = current.phase
+    if loop_disposition == "inspect_validate":
+        next_phase = SessionPhase.INSPECT_VALIDATE
+    elif current.phase == SessionPhase.INSPECT_VALIDATE and loop_disposition != "inspect_validate":
+        next_phase = SessionPhase.BUILD
     state = SessionCapabilityState(
-        phase=current.phase,
+        phase=next_phase,
         goal=current.goal,
         pending_clarification=current.pending_clarification,
         last_router_status=current.last_router_status,

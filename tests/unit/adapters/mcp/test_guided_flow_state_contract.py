@@ -612,6 +612,13 @@ def test_iteration_can_move_flow_into_inspect_validate():
     assert state.guided_flow_state is not None
     assert state.guided_flow_state["current_step"] == "inspect_validate"
     assert state.guided_flow_state["step_status"] == "needs_validation"
+    assert state.phase == SessionPhase.INSPECT_VALIDATE
+    assert state.guided_flow_state["allowed_families"] == [
+        "inspect_validate",
+        "spatial_context",
+        "checkpoint_iterate",
+        "attachment_alignment",
+    ]
 
 
 def test_clear_session_goal_state_clears_guided_part_registry():

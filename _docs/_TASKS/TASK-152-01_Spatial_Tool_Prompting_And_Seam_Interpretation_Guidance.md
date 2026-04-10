@@ -1,7 +1,7 @@
 # TASK-152-01: Spatial Tool Prompting And Seam Interpretation Guidance
 
 **Parent:** [TASK-152](./TASK-152_Guided_Spatial_Gate_Usability_Prompt_Semantics_And_Inspect_Alignment.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -94,3 +94,11 @@ Make `llm-guided` prompt assets and public docs explicit about:
 ## Changelog Impact
 
 - include in the parent TASK-152 changelog entry
+
+## Completion Summary
+
+- prompt assets and public docs now explicitly cover:
+  - valid spatial scope preconditions
+  - attached-reference grounding
+  - heuristic-friendly full names
+  - seam-verdict interpretation for creature blockout

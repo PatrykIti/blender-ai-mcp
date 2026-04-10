@@ -1,7 +1,7 @@
 # TASK-152-01-01: Valid Spatial Scope Preconditions In LLM Guides
 
 **Parent:** [TASK-152-01](./TASK-152-01_Spatial_Tool_Prompting_And_Seam_Interpretation_Guidance.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -83,3 +83,9 @@ Prompt rule:
 ## Changelog Impact
 
 - include in the parent TASK-152 changelog entry
+
+## Completion Summary
+
+- prompt/docs contract now says plainly that spatial tools require explicit
+  scope and that the initial spatial gate is only meaningful once a real target
+  scope exists

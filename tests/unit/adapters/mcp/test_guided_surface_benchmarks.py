@@ -115,7 +115,7 @@ def test_guided_surface_phase_baselines_stay_intentional():
 
     assert len(bootstrap_names) == 9
     assert len(build_names) == 124
-    assert len(inspect_names) == 45
+    assert len(inspect_names) == 48
 
     assert bootstrap_names == {
         "browse_workflows",
@@ -157,11 +157,11 @@ def test_guided_surface_phase_baselines_stay_intentional():
     assert "scene_relation_graph" in inspect_names
     assert "scene_view_diagnostics" in inspect_names
     assert "macro_relative_layout" not in inspect_names
-    assert "macro_attach_part_to_surface" not in inspect_names
-    assert "macro_align_part_with_contact" not in inspect_names
+    assert "macro_attach_part_to_surface" in inspect_names
+    assert "macro_align_part_with_contact" in inspect_names
     assert "macro_place_symmetry_pair" not in inspect_names
     assert "macro_place_supported_pair" not in inspect_names
-    assert "macro_cleanup_part_intersections" not in inspect_names
+    assert "macro_cleanup_part_intersections" in inspect_names
     assert "macro_adjust_relative_proportion" not in inspect_names
     assert "macro_adjust_segment_chain_arc" not in inspect_names
     assert "macro_finish_form" not in inspect_names

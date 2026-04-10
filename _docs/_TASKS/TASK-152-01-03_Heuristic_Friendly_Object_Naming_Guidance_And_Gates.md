@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-152-01](./TASK-152-01_Spatial_Tool_Prompting_And_Seam_Interpretation_Guidance.md)
 **Depends On:** [TASK-152-01-02](./TASK-152-01-02_Reference_Image_Grounding_In_Guided_Blockout_Prompts.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -119,3 +119,9 @@ def _build_guided_name_warning(...) -> str: ...
 ## Changelog Impact
 
 - include in the parent TASK-152 changelog entry
+
+## Completion Summary
+
+- prompt/docs guidance now explicitly prefers full semantic names
+- the runtime heuristic layer now also recognizes abbreviated fore/hind limb
+  forms well enough to recover limb-body seams in guided creature scopes

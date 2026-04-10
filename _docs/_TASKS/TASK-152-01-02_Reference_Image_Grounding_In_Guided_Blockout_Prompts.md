@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-152-01](./TASK-152-01_Spatial_Tool_Prompting_And_Seam_Interpretation_Guidance.md)
 **Depends On:** [TASK-152-01-01](./TASK-152-01-01_Valid_Spatial_Scope_Preconditions_In_LLM_Guides.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -81,3 +81,8 @@ Prompt rule:
 ## Changelog Impact
 
 - include in the parent TASK-152 changelog entry
+
+## Completion Summary
+
+- prompt assets now describe attached `reference_images(...)` as the primary
+  grounding input for first-pass mass proportions, silhouette, and placement

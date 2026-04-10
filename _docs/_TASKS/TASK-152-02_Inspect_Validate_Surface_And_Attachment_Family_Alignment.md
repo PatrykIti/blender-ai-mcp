@@ -1,7 +1,7 @@
 # TASK-152-02: Inspect Validate Surface And Attachment Family Alignment
 
 **Parent:** [TASK-152](./TASK-152_Guided_Spatial_Gate_Usability_Prompt_Semantics_And_Inspect_Alignment.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -82,3 +82,9 @@ Remove the contradiction between:
 ## Changelog Impact
 
 - include in the parent TASK-152 changelog entry
+
+## Completion Summary
+
+- `inspect_validate` family semantics and inspect-visible tools are now aligned
+- bounded attachment repair macros and spatial re-check tools are exposed
+  consistently on the inspect surface

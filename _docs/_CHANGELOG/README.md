@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [229](./229-2026-04-10-guided-spatial-usability-and-inspect-alignment.md) | 2026-04-10 | **Guided spatial usability and inspect alignment** | - |
 | [228](./228-2026-04-09-guided-spatial-rearm.md) | 2026-04-09 | **Guided spatial target binding and freshness re-arm** | - |
 | [227](./227-2026-04-09-guided-execution-enforcement.md) | 2026-04-09 | **Guided execution enforcement and role sequencing** | - |
 | [226](./226-2026-04-08-addon-rpc-watchdog-and-e2e-retry.md) | 2026-04-08 | **Addon RPC watchdog and E2E RPC startup retry** | - |

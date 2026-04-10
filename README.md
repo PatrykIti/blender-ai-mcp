@@ -335,6 +335,16 @@ contract in addition to `guided_handoff`.
   spatial gate; unrelated view checks such as
   `scene_view_diagnostics(target_object="Camera", ...)` do not satisfy a
   creature/building spatial check by themselves
+- if reference images are attached for the active guided goal, treat them as
+  the primary grounding input before deciding the first body/head/tail masses
+  and rough silhouette
+- use full semantic object names such as `Body`, `Head`, `Tail`,
+  `ForeLeg_L`, and `HindLeg_R` instead of opaque abbreviations like `ForeL`
+  / `HindR`, because guided seam/role heuristics are more reliable on readable
+  names
+- do not call `scene_scope_graph(...)`, `scene_relation_graph(...)`, or
+  `scene_view_diagnostics(...)` with no explicit scope and assume that means
+  “inspect the whole scene”
 - after material scene changes such as `scene_clean_scene(...)`,
   `modeling_create_primitive(...)`, `modeling_transform_object(...)`, or
   bounded attachment/alignment macros, the guided runtime can mark the spatial
@@ -343,6 +353,9 @@ contract in addition to `guided_handoff`.
   `next_actions=["refresh_spatial_context"]` as authoritative server state,
   not advisory prose; refresh with `scene_scope_graph(...)` first, then rerun
   the remaining required spatial checks on the same target scope
+- for creature blockout seams, `intersecting` can still be acceptable for
+  embedded ear/head or snout/head placement, but `floating_gap` on head/body,
+  tail/body, or limb/body remains actionable
 - if a needed tool family is hidden/blocked-by-flow, inspect
   `router_get_status().guided_flow_state`, complete the listed
   `required_checks`, and follow `next_actions` instead of guessing hidden tool

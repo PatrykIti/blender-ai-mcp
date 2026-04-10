@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-152](./TASK-152_Guided_Spatial_Gate_Usability_Prompt_Semantics_And_Inspect_Alignment.md)
 **Depends On:** [TASK-152-01](./TASK-152-01_Spatial_Tool_Prompting_And_Seam_Interpretation_Guidance.md), [TASK-152-02](./TASK-152-02_Inspect_Validate_Surface_And_Attachment_Family_Alignment.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -70,3 +70,8 @@ operator-facing docs closeout.
 ## Changelog Impact
 
 - add a dedicated `_docs/_CHANGELOG/*` entry when TASK-152 ships
+
+## Completion Summary
+
+- docs parity, visibility tests, transport tests, changelog, and board state
+  are now aligned with the shipped `TASK-152` behavior

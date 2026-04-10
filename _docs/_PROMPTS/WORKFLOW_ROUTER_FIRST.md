@@ -46,6 +46,8 @@ REQUEST TRIAGE (FIRST STEP)
        * Prefer macro/workflow paths when they are a good fit.
        * Do not keep re-searching if the right tool is already visible.
        * If `guided_flow_state` is present, respect `current_step`, `required_checks`, `next_actions`, `allowed_families`, `allowed_roles`, and `missing_roles`.
+       * If `reference_images(...)` are already attached for the active goal, read them as the primary grounding input before deciding the initial masses and silhouette.
+       * Use full semantic object names such as `Body`, `Head`, `Tail`, `ForeLeg_L`, and `HindLeg_R` instead of opaque abbreviations like `ForeL` / `HindR`.
        * For role-sensitive build calls, use either `guided_register_part(object_name=..., role=...)` or the convenience hint `guided_role=...` on the build tool call.
        * If the server names a `required prompt bundle` / `preferred prompt bundle`, treat those as supporting prompt assets, not as permission to bypass the guided flow.
 
@@ -96,6 +98,7 @@ WORKFLOW MATCHING (ONLY WHEN REQUEST TYPE = BUILD/WORKFLOW)
        * Proceed with modeling. Prefer workflow/macro paths and only drop lower when necessary.
        * Do not treat the whole internal catalog as the default action space.
        * If `guided_flow_state.current_step == "create_primary_masses"`, stay on core mass creation/placement before moving to appendages, openings, polish, or finish.
+       * Do not call `scene_scope_graph(...)`, `scene_relation_graph(...)`, or `scene_view_diagnostics(...)` with no explicit scope and assume that means “inspect the whole scene”.
        * If a needed tool is already directly visible on the current surface/phase, call it directly.
        * If a needed tool is not already directly visible, use `search_tools(...)`
          before `call_tool(...)`.
@@ -121,6 +124,7 @@ RELIABILITY (STILL REQUIRED)
 - If vision should support the task, prefer flows where:
    * the goal is already active
    * reference_images(...) are attached if available
+   * attached references are read/used as the primary grounding input before the first major build decisions
    * staged pending references may be attached before the goal exists and will be adopted by the next router_set_goal(...)
    * the build happens through macros or deterministic capture-aware steps
    * inspection/measure/assert tools confirm correctness after the visual summary

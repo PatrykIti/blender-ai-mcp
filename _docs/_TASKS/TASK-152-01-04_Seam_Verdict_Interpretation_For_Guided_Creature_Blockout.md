@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-152-01](./TASK-152-01_Spatial_Tool_Prompting_And_Seam_Interpretation_Guidance.md)
 **Depends On:** [TASK-152-01-03](./TASK-152-01-03_Heuristic_Friendly_Object_Naming_Guidance_And_Gates.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -75,3 +75,8 @@ Prompt rule:
 ## Changelog Impact
 
 - include in the parent TASK-152 changelog entry
+
+## Completion Summary
+
+- prompt/docs guidance now explicitly distinguishes acceptable embedded seams
+  from actionable floating segment/body seams during creature blockout
