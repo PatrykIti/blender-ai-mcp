@@ -1,7 +1,7 @@
 # TASK-130-01-01: Align Runtime Default Client Examples And Operator Story
 
 **Parent:** [TASK-130-01](./TASK-130-01_Default_Guided_Bootstrap_And_Request_Triage_Consistency.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -38,3 +38,8 @@ Production default:
 ## Changelog Impact
 
 - include in the parent TASK-130 changelog entry
+
+## Completion Summary
+
+- operator-facing docs now describe the tighter guided governor posture around
+  explicit scope, bounded continuation, and tighter search lookups

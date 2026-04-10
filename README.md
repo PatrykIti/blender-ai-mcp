@@ -348,6 +348,9 @@ contract in addition to `guided_handoff`.
 - do not call `scene_scope_graph(...)`, `scene_relation_graph(...)`, or
   `scene_view_diagnostics(...)` with no explicit scope and assume that means
   “inspect the whole scene”
+- during an active guided spatial gate or spatial refresh re-arm, all three of
+  those spatial helpers should be treated as explicit-scope tools, not as
+  whole-scene probes
 - after material scene changes such as `scene_clean_scene(...)`,
   `modeling_create_primitive(...)`, `modeling_transform_object(...)`, or
   bounded attachment/alignment macros, the guided runtime can mark the spatial
@@ -356,6 +359,10 @@ contract in addition to `guided_handoff`.
   `next_actions=["refresh_spatial_context"]` as authoritative server state,
   not advisory prose; refresh with `scene_scope_graph(...)` first, then rerun
   the remaining required spatial checks on the same target scope
+- if stage compare/iterate finds important issues while the current guided
+  role/workset slice is still incomplete, the governor can now keep the session
+  in bounded build continuation instead of escalating too early into
+  `inspect_validate`
 - for creature blockout seams, `intersecting` can still be acceptable for
   embedded ear/head or snout/head placement, but `floating_gap` on head/body,
   tail/body, or limb/body remains actionable
@@ -363,6 +370,9 @@ contract in addition to `guided_handoff`.
   `router_get_status().guided_flow_state`, complete the listed
   `required_checks`, and follow `next_actions` instead of guessing hidden tool
   names into `call_tool(...)`
+- exact tool-name searches on the guided surface are now shaped to return a
+  tighter, smaller result set instead of flooding the model with a full
+  expanded payload for simple lookups
 - for role-sensitive build steps, treat `allowed_roles` and `missing_roles` as
   part of the execution contract, not as advisory prose
 - use `guided_register_part(object_name=..., role=...)` as the canonical

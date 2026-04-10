@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-130-03](./TASK-130-03_Regression_And_Docs_Closeout_For_Generic_Guided_Governor.md)
 **Depends On:** [TASK-130-03-01](./TASK-130-03-01_Unit_And_Transport_Regression_Matrix_For_Generic_Guided_Governor.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -30,3 +30,8 @@ with the final generic guided governor behavior.
 ## Changelog Impact
 
 - add the parent TASK-130 historical entry here
+
+## Completion Summary
+
+- updated prompt/operator docs and historical tracking to match the shipped
+  guided governor behavior

@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-130-01](./TASK-130-01_Default_Guided_Bootstrap_And_Request_Triage_Consistency.md)
 **Depends On:** [TASK-130-01-01](./TASK-130-01-01_Align_Runtime_Default_Client_Examples_And_Operator_Story.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -33,3 +33,8 @@ drift.
 ## Changelog Impact
 
 - include in the parent TASK-130 changelog entry
+
+## Completion Summary
+
+- the guided docs now state a clearer recovery path for wrong-scope probing,
+  bounded build continuation, and tighter search-driven lookup

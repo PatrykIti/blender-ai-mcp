@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-130](./TASK-130_Default_Guided_Surface_Bootstrap_Consistency.md)
 **Depends On:** [TASK-130-01](./TASK-130-01_Default_Guided_Bootstrap_And_Request_Triage_Consistency.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -63,3 +63,8 @@ path without squirrel-specific hacks.
 ## Changelog Impact
 
 - include in the parent TASK-130 changelog entry
+
+## Completion Summary
+
+- reused the existing guided runtime pieces instead of adding a second planner
+- tightened step/target/discovery behavior generically across the guided loop

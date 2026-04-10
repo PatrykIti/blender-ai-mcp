@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-130](./TASK-130_Default_Guided_Surface_Bootstrap_Consistency.md)
 **Depends On:** [TASK-130-01](./TASK-130-01_Default_Guided_Bootstrap_And_Request_Triage_Consistency.md), [TASK-130-02](./TASK-130-02_Generic_Guided_Governor_Hardening_For_Step_Target_And_Domain_Discipline.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -68,3 +68,9 @@ operator/prompt docs, and historical closeout.
 ## Changelog Impact
 
 - add a dedicated `_docs/_CHANGELOG/*` entry when TASK-130 ships
+
+## Completion Summary
+
+- added regression coverage for explicit guided-scope requirements, delayed
+  inspect escalation, compact/exact-match search, and transport-backed parity
+- updated docs, changelog, and board state in the same branch

@@ -41,7 +41,13 @@ from server.adapters.mcp.sampling.result_types import (
     AssistantRunResult,
     VisionAssistContract,
 )
-from server.adapters.mcp.session_capabilities import update_session_from_router_goal
+from server.adapters.mcp.session_capabilities import (
+    SessionCapabilityState,
+    get_session_capability_state,
+    set_session_capability_state,
+    update_session_from_router_goal,
+)
+from server.adapters.mcp.session_phase import SessionPhase
 from server.adapters.mcp.vision.silhouette import build_silhouette_analysis
 
 
@@ -3163,6 +3169,112 @@ def test_reference_iterate_stage_checkpoint_escalates_when_truth_signal_is_high_
     assert result.loop_disposition == "inspect_validate"
     assert result.correction_focus == ["TruthHead -> TruthBody failed the contact assertion."]
     assert "Deterministic truth findings remain high-priority" in (result.message or "")
+
+
+def test_reference_iterate_stage_checkpoint_holds_build_when_role_group_is_incomplete(monkeypatch):
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="low poly creature",
+            surface_profile="llm-guided",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "secondary_parts", "attachment_alignment", "reference_context"],
+                "allowed_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass"],
+                "missing_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    compare = ReferenceCompareStageCheckpointResponseContract.model_validate(
+        {
+            "action": "compare_stage_checkpoint",
+            "goal": "low poly creature",
+            "guided_flow_state": get_session_capability_state(ctx).guided_flow_state,
+            "target_object": "TruthHead",
+            "target_objects": ["TruthHead", "TruthBody"],
+            "checkpoint_id": "checkpoint_truth_hold",
+            "checkpoint_label": "stage_truth_hold",
+            "preset_profile": "compact",
+            "preset_names": ["context_wide"],
+            "capture_count": 1,
+            "captures": [],
+            "reference_count": 0,
+            "reference_ids": [],
+            "reference_labels": [],
+            "correction_candidates": [
+                {
+                    "candidate_id": "pair:truthhead_truthbody",
+                    "summary": "TruthHead -> TruthBody failed the contact assertion.",
+                    "priority_rank": 1,
+                    "priority": "high",
+                    "candidate_kind": "truth_only",
+                    "target_object": "TruthHead",
+                    "target_objects": ["TruthHead", "TruthBody"],
+                    "focus_pairs": ["TruthHead -> TruthBody"],
+                    "source_signals": ["truth", "macro"],
+                    "truth_evidence": {
+                        "focus_pairs": ["TruthHead -> TruthBody"],
+                        "item_kinds": ["contact_failure"],
+                        "items": [
+                            {
+                                "kind": "contact_failure",
+                                "summary": "TruthHead -> TruthBody failed the contact assertion.",
+                                "priority": "high",
+                                "from_object": "TruthHead",
+                                "to_object": "TruthBody",
+                                "tool_name": "scene_assert_contact",
+                            }
+                        ],
+                        "macro_candidates": [
+                            {
+                                "macro_name": "macro_align_part_with_contact",
+                                "reason": "Repair the pair with a bounded nudge.",
+                                "priority": "high",
+                                "arguments_hint": {
+                                    "part_object": "TruthHead",
+                                    "reference_object": "TruthBody",
+                                },
+                            }
+                        ],
+                    },
+                }
+            ],
+        }
+    )
+
+    async def _fake_reference_compare_stage_checkpoint(*args, **kwargs):
+        return compare
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.reference_compare_stage_checkpoint",
+        _fake_reference_compare_stage_checkpoint,
+    )
+
+    result = asyncio.run(
+        reference_iterate_stage_checkpoint(
+            ctx,
+            target_object="TruthHead",
+            target_objects=["TruthBody"],
+            checkpoint_label="stage_truth_hold",
+        )
+    )
+
+    assert result.loop_disposition == "continue_build"
+    assert "Guided governor is holding the session in the current build stage" in (result.message or "")
 
 
 def test_reference_iterate_stage_checkpoint_falls_back_to_truth_handoff_when_vision_compare_errors(monkeypatch):

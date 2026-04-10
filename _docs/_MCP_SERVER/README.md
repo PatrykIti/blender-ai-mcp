@@ -522,6 +522,11 @@ Current guided-flow behavior:
   satisfying the gate on arbitrary unrelated objects
 - the spatial tools do not treat “no scope” as “whole scene”; use
   `target_object`, `target_objects`, or `collection_name`
+- during an active spatial gate / spatial-refresh re-arm, this explicit-scope
+  rule now applies consistently to:
+  - `scene_scope_graph(...)`
+  - `scene_relation_graph(...)`
+  - `scene_view_diagnostics(...)`
 - helper-only scopes such as a single `Camera` do not initialize or satisfy a
   creature/building spatial gate by themselves
 - if guided references are already attached, they should be treated as the
@@ -565,6 +570,12 @@ Current guided-flow behavior:
   also carry an optional `guided_role` convenience hint on guided surfaces, but
   `guided_register_part(...)` remains the canonical explicit registration path
 - if guided naming returns warnings or blocks, replace the weak name with one of the suggested semantic names instead of retrying the same placeholder or opaque abbreviation unchanged
+- stage compare/iterate may now keep the session in bounded build continuation
+  when the current guided role/workset slice is still incomplete, instead of
+  escalating too early into `inspect_validate`
+- exact tool-name searches on the shaped guided surface now return a tighter,
+  smaller result shape to reduce noisy discovery dumps during the active build
+  loop
 - for overlays that use primary-mass role groups, registering the required
   primary roles can now move the flow from `create_primary_masses` into
   `place_secondary_parts`

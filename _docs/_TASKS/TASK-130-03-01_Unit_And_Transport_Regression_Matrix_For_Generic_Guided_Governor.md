@@ -1,7 +1,7 @@
 # TASK-130-03-01: Unit And Transport Regression Matrix For Generic Guided Governor
 
 **Parent:** [TASK-130-03](./TASK-130-03_Regression_And_Docs_Closeout_For_Generic_Guided_Governor.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -51,3 +51,11 @@ assert "collection_manage" not in search_results_before_unlock
 ## Changelog Impact
 
 - include in the parent TASK-130 changelog entry
+
+## Completion Summary
+
+- added unit coverage for:
+  - explicit guided-scope discipline
+  - delayed inspect escalation
+  - exact-match / compact search
+- reran stdio/streamable parity against the updated governor behavior

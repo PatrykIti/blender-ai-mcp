@@ -48,6 +48,7 @@ from server.adapters.mcp.router_helper import route_tool_call
 from server.adapters.mcp.sampling.assistant_runner import run_inspection_summary_assistant
 from server.adapters.mcp.sampling.result_types import to_inspection_assistant_contract
 from server.adapters.mcp.session_capabilities import (
+    get_session_capability_state,
     get_session_capability_state_async,
     record_guided_flow_spatial_check_completion,
 )
@@ -112,6 +113,28 @@ SCENE_PUBLIC_TOOL_NAMES = (
     "scene_assert_symmetry",
     "scene_assert_proportion",
 )
+
+
+def _guided_scope_requirement_error(tool_name: str) -> str:
+    return (
+        f"Provide target_object, target_objects, or collection_name for {tool_name}. "
+        "On llm-guided, the active spatial gate requires explicit scope instead of an implicit whole-scene check."
+    )
+
+
+def _should_require_explicit_guided_scope(ctx: Context) -> bool:
+    try:
+        session = get_session_capability_state(ctx)
+    except Exception:
+        return False
+
+    flow_state = session.guided_flow_state or {}
+    if not flow_state:
+        return False
+    current_step = str(flow_state.get("current_step") or "").strip().lower()
+    spatial_refresh_required = bool(flow_state.get("spatial_refresh_required"))
+    return current_step == "establish_spatial_context" or spatial_refresh_required
+
 
 MacroErrorStatus = Literal["blocked", "failed"]
 
@@ -2510,6 +2533,9 @@ def scene_scope_graph(
     """
 
     def execute() -> SceneScopeGraphResponseContract:
+        if not any([target_object, target_objects, collection_name]) and _should_require_explicit_guided_scope(ctx):
+            return SceneScopeGraphResponseContract(error=_guided_scope_requirement_error("scene_scope_graph"))
+
         handler = get_scene_handler()
         try:
             payload = SceneScopeGraphPayloadContract(
@@ -2569,6 +2595,9 @@ def scene_relation_graph(
     """
 
     def execute() -> SceneRelationGraphResponseContract:
+        if not any([target_object, target_objects, collection_name]) and _should_require_explicit_guided_scope(ctx):
+            return SceneRelationGraphResponseContract(error=_guided_scope_requirement_error("scene_relation_graph"))
+
         handler = get_scene_handler()
         try:
             payload = SceneRelationGraphPayloadContract.model_validate(
@@ -2647,7 +2676,7 @@ def scene_view_diagnostics(
     def execute() -> SceneViewDiagnosticsResponseContract:
         if not any([target_object, target_objects, collection_name]):
             return SceneViewDiagnosticsResponseContract(
-                error="Provide target_object, target_objects, or collection_name for scene_view_diagnostics.",
+                error=_guided_scope_requirement_error("scene_view_diagnostics"),
             )
 
         handler = get_scene_handler()

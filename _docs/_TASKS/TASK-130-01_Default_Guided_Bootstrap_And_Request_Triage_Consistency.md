@@ -1,7 +1,7 @@
 # TASK-130-01: Default Guided Bootstrap And Request Triage Consistency
 
 **Parent:** [TASK-130](./TASK-130_Default_Guided_Surface_Bootstrap_Consistency.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -52,3 +52,8 @@ not waste time on mismatched bootstrap assumptions.
 ## Changelog Impact
 
 - include in the parent TASK-130 changelog entry
+
+## Completion Summary
+
+- retained the default guided production story as a first-class concern, but
+  folded it into the broader guided-governor reliability posture

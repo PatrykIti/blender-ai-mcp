@@ -50,7 +50,46 @@ class BlenderDiscoverySearchTransform(BM25SearchTransform):
         self._entry_map = entry_map or build_discovery_entry_map()
         self._contract_line = contract_line
 
+    def _exact_match_tools(self, tools: Sequence[Tool], query: str) -> Sequence[Tool]:
+        normalized_query = query.strip().lower()
+        if not normalized_query:
+            return ()
+
+        matches: list[Tool] = []
+        for tool in tools:
+            entry = self._entry_map.get(tool.name)
+            exact_names = {tool.name.lower()}
+            if entry is not None:
+                exact_names.add(entry.internal_name.lower())
+                exact_names.update(alias.lower() for alias in entry.aliases)
+            if normalized_query in exact_names:
+                matches.append(tool)
+        return matches
+
+    def _serialize_results(self, tools: Sequence[Tool]) -> list[dict[str, Any]]:
+        rendered: list[dict[str, Any]] = []
+        for tool in tools:
+            entry = self._entry_map.get(tool.name)
+            description = (tool.description or "").strip().replace("\n", " ")
+            if len(description) > 220:
+                description = f"{description[:217].rstrip()}..."
+            item: dict[str, Any] = {
+                "name": tool.name,
+                "description": description,
+            }
+            if entry is not None:
+                item["category"] = entry.category
+                item["capability_id"] = entry.capability_id
+                if entry.aliases:
+                    item["aliases"] = list(entry.aliases)
+            rendered.append(item)
+        return rendered
+
     async def _search(self, tools: Sequence[Tool], query: str) -> Sequence[Tool]:
+        exact_matches = self._exact_match_tools(tools, query)
+        if exact_matches:
+            return tuple(exact_matches[: self._max_results])
+
         search_documents = build_search_documents(tools, entry_map=self._entry_map)
         current_hash = _catalog_hash(search_documents)
         if current_hash != self._last_hash:
@@ -81,6 +120,9 @@ class BlenderDiscoverySearchTransform(BM25SearchTransform):
             await apply_visibility_for_session_state(ctx, session_state)
         except Exception:
             return
+
+    async def _render_results(self, tools: Sequence[Tool]) -> list[dict[str, Any]]:
+        return self._serialize_results(tools)
 
     def _make_search_tool(self) -> Tool:
         transform = self

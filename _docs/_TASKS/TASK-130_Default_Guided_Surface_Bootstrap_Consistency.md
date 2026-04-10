@@ -1,6 +1,6 @@
 # TASK-130: Default Guided Bootstrap And Generic Governor Reliability
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** Guided Runtime / Production Default / Governor Reliability
 **Estimated Effort:** Large
@@ -207,3 +207,11 @@ This umbrella does **not** cover:
 - repurpose/expand the earlier bootstrap-consistency follow-on into the broader
   guided-governor reliability umbrella, because the real remaining product gap
   is no longer only docs/runtime bootstrap drift
+
+## Completion Summary
+
+- aligned the guided production story with a broader generic-governor framing
+- tightened explicit-scope discipline for active spatial-gate tools
+- delayed too-early inspect escalation while the current build role/workset
+  slice is still incomplete
+- reduced search noise for exact tool-name lookups on the shaped guided surface

@@ -1247,6 +1247,22 @@ def test_call_tool_can_block_placeholder_name_for_guided_role_hint(monkeypatch):
     assert "Body" in payload
 
 
+def test_search_tools_exact_match_returns_compact_result_for_visible_tool():
+    """Exact tool-name queries should return a compact, tightly bounded result row."""
+
+    server = _build_phase_search_server(SessionPhase.BUILD)
+
+    async def run():
+        result = await server.call_tool("search_tools", {"query": "collection_manage"})
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+
+    assert payload
+    assert payload[0]["name"] == "collection_manage"
+    assert set(payload[0]).issubset({"name", "description", "category", "capability_id", "aliases"})
+
+
 def test_search_first_rollout_reduces_visible_tool_count_and_payload_size():
     """llm-guided search-first should materially reduce the initial tool payload."""
 

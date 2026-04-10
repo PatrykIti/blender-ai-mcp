@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-130-02](./TASK-130-02_Generic_Guided_Governor_Hardening_For_Step_Target_And_Domain_Discipline.md)
 **Depends On:** [TASK-130-02-03](./TASK-130-02-03_Domain_Adaptive_Progression_And_Inspect_Escalation.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -40,3 +40,8 @@ smaller, less noisy, and more aligned with the current step/domain/workset.
 ## Changelog Impact
 
 - include in the parent TASK-130 changelog entry
+
+## Completion Summary
+
+- exact tool-name searches now return a tighter, smaller result row and no
+  longer need to dump the full expanded tool definition payload

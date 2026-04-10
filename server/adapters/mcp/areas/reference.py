@@ -505,6 +505,26 @@ def _iterate_stage_response(
     )
 
 
+def _should_hold_guided_build_loop_in_build(
+    guided_flow_state: dict[str, Any] | None,
+) -> bool:
+    if guided_flow_state is None:
+        return False
+
+    if hasattr(guided_flow_state, "model_dump"):
+        try:
+            guided_flow_state = guided_flow_state.model_dump(mode="json")
+        except Exception:
+            return False
+
+    if not isinstance(guided_flow_state, dict):
+        return False
+
+    current_step = str(guided_flow_state.get("current_step") or "").strip().lower()
+    missing_roles = [str(role).strip() for role in guided_flow_state.get("missing_roles") or [] if str(role).strip()]
+    return current_step in {"create_primary_masses", "place_secondary_parts"} and bool(missing_roles)
+
+
 def _normalized_focus_key(value: str) -> str:
     return " ".join(value.strip().lower().split())
 
@@ -3313,6 +3333,8 @@ async def reference_iterate_stage_checkpoint(
         prompt_hint=prompt_hint,
         preset_profile=preset_profile,
     )
+    session = await get_session_capability_state_async(ctx)
+    hold_in_build = _should_hold_guided_build_loop_in_build(session.guided_flow_state)
     readiness = compare_result.guided_reference_readiness
     goal = compare_result.goal
     correction_focus = _resolve_actionable_focus(compare_result)
@@ -3396,6 +3418,9 @@ async def reference_iterate_stage_checkpoint(
     if continue_recommended and stagnation_count >= _REFERENCE_CORRECTION_STAGNATION_THRESHOLD:
         loop_disposition = "inspect_validate"
 
+    if loop_disposition == "inspect_validate" and hold_in_build:
+        loop_disposition = "continue_build"
+
     await set_session_value_async(
         ctx,
         _REFERENCE_CORRECTION_LOOP_STATE_KEY,
@@ -3426,7 +3451,13 @@ async def reference_iterate_stage_checkpoint(
                 "Stop free-form modeling and switch to inspect/measure/assert now."
             )
     elif continue_recommended:
-        if correction_focus:
+        if hold_in_build:
+            message = (
+                "Guided governor is holding the session in the current build stage until the required role/workset "
+                "slice is complete. Continue the bounded build loop on the active workset before escalating to "
+                "inspect/measure/assert."
+            )
+        elif correction_focus:
             message = "Continue the guided build loop using correction_focus first."
         else:
             message = "Continue the guided build loop using typed action_hints from silhouette analysis."

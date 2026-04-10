@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-130-02](./TASK-130-02_Generic_Guided_Governor_Hardening_For_Step_Target_And_Domain_Discipline.md)
 **Depends On:** [TASK-130-02-01](./TASK-130-02-01_Step_Next_Action_And_Allowed_Move_Governor.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -48,3 +48,9 @@ right time.
 ## Changelog Impact
 
 - include in the parent TASK-130 changelog entry
+
+## Completion Summary
+
+- active guided spatial-gate helpers now require explicit scope consistently
+  across `scene_scope_graph(...)`, `scene_relation_graph(...)`, and
+  `scene_view_diagnostics(...)`

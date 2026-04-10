@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-130-02](./TASK-130-02_Generic_Guided_Governor_Hardening_For_Step_Target_And_Domain_Discipline.md)
 **Depends On:** [TASK-130-02-02](./TASK-130-02-02_Target_Scope_And_Active_Workset_Discipline.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -40,3 +40,8 @@ fallback `generic` sessions.
 ## Changelog Impact
 
 - include in the parent TASK-130 changelog entry
+
+## Completion Summary
+
+- inspect escalation is now more domain-generic because it respects whether the
+  current guided role/workset stage is still incomplete
