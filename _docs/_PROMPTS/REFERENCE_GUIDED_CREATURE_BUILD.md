@@ -111,6 +111,9 @@ Rules:
   - `HindLeg_R`
 - avoid opaque abbreviations like `ForeL`, `ForeR`, `HindL`, `HindR` because
   guided seam/role heuristics are more reliable on full readable names
+- on `llm-guided`, weak role-sensitive names can now produce explicit server
+  warnings and clearly opaque placeholder names such as `Sphere` / `Object`
+  can be blocked until you use a semantic part name
 - use `collection_manage(action="create", collection_name=...)`, not
   `name=...`
 - use `modeling_create_primitive(...)` only with its public shape:

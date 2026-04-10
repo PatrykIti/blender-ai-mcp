@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-154-03](./TASK-154-03_Regression_And_Docs_Closeout_For_Guided_Naming_Policy.md)
 **Depends On:** [TASK-154-03-01](./TASK-154-03-01_Unit_And_Transport_Regression_Matrix_For_Guided_Naming_Policy.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -55,3 +55,8 @@ final guided naming-policy behavior.
 ## Changelog Impact
 
 - add the parent TASK-154 historical entry here
+
+## Completion Summary
+
+- updated prompt/operator docs, changelog history, and task board state to
+  match the shipped naming-policy behavior

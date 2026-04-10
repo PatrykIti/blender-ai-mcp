@@ -343,6 +343,88 @@ def test_route_tool_call_report_fail_closes_when_guided_role_is_missing_for_buil
     assert report.context.guided_role is None
 
 
+def test_route_tool_call_report_records_guided_naming_warning_for_weak_abbreviation(monkeypatch):
+    """Role-sensitive guided build calls should keep deterministic naming warnings in policy_context."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "secondary_parts", "attachment_alignment", "reference_context"],
+                "allowed_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass"],
+                "missing_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="modeling_create_primitive",
+        params={"primitive_type": "Cone", "name": "ForeL", "guided_role": "foreleg_pair"},
+        direct_executor=lambda: "Created Cone named 'ForeL'",
+    )
+
+    assert report.router_disposition == "bypassed"
+    assert report.policy_context is not None
+    assert report.policy_context["guided_naming"]["status"] == "warning"
+    assert "ForeLeg_L" in report.policy_context["guided_naming"]["message"]
+
+
+def test_route_tool_call_report_blocks_placeholder_name_for_role_sensitive_build(monkeypatch):
+    """Role-sensitive guided build calls should fail closed on placeholder names."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": [],
+                "missing_roles": ["body_core", "head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="modeling_create_primitive",
+        params={"primitive_type": "Sphere", "name": "Sphere", "guided_role": "body_core"},
+        direct_executor=lambda: "should not run",
+    )
+
+    assert report.router_disposition == "failed_closed_error"
+    assert "Guided naming blocked object name 'Sphere'" in str(report.error)
+    assert report.policy_context is not None
+    assert report.policy_context["guided_naming"]["status"] == "blocked"
+
+
 def test_route_tool_call_report_allows_registered_object_transform_without_explicit_role(monkeypatch):
     """A previously registered object should not need guided_role repeated on every transform call."""
 

@@ -32,6 +32,10 @@ class Config(BaseSettings):
     MCP_HTTP_HOST: str = Field(default="127.0.0.1", description="Host for streamable HTTP MCP mode")
     MCP_HTTP_PORT: int = Field(default=8000, gt=0, description="Port for streamable HTTP MCP mode")
     MCP_STREAMABLE_HTTP_PATH: str = Field(default="/mcp", description="HTTP path for streamable MCP mode")
+    MCP_GUIDED_NAMING_POLICY_MODE: str = Field(
+        default="warn",
+        description="Guided naming policy mode: warn|block_opaque_role_sensitive",
+    )
 
     # Vision runtime scaffold
     VISION_ENABLED: bool = Field(default=False, description="Enable bounded vision-assist runtime")
@@ -161,6 +165,8 @@ class Config(BaseSettings):
             raise ValueError("MCP_TRANSPORT_MODE must be one of: stdio, streamable")
         if not self.MCP_STREAMABLE_HTTP_PATH.startswith("/"):
             raise ValueError("MCP_STREAMABLE_HTTP_PATH must start with '/'")
+        if self.MCP_GUIDED_NAMING_POLICY_MODE not in {"warn", "block_opaque_role_sensitive"}:
+            raise ValueError("MCP_GUIDED_NAMING_POLICY_MODE must be one of: warn, block_opaque_role_sensitive")
         return self
 
     @model_validator(mode="after")
@@ -201,6 +207,7 @@ def get_config() -> Config:
         MCP_HTTP_HOST=os.getenv("MCP_HTTP_HOST", "127.0.0.1"),
         MCP_HTTP_PORT=int(os.getenv("MCP_HTTP_PORT", 8000)),
         MCP_STREAMABLE_HTTP_PATH=os.getenv("MCP_STREAMABLE_HTTP_PATH", "/mcp"),
+        MCP_GUIDED_NAMING_POLICY_MODE=os.getenv("MCP_GUIDED_NAMING_POLICY_MODE", "warn"),
         VISION_ENABLED=os.getenv("VISION_ENABLED", "false").lower() in ("true", "1", "yes"),
         VISION_PROVIDER=os.getenv("VISION_PROVIDER", "transformers_local"),
         VISION_ALLOW_ON_GUIDED=os.getenv("VISION_ALLOW_ON_GUIDED", "true").lower() in ("true", "1", "yes"),

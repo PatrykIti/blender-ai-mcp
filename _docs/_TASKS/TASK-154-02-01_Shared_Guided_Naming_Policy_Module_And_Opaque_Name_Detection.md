@@ -1,7 +1,7 @@
 # TASK-154-02-01: Shared Guided Naming Policy Module And Opaque Name Detection
 
 **Parent:** [TASK-154-02](./TASK-154-02_Runtime_Advisory_And_Enforcement_Integration_For_Guided_Naming.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -92,3 +92,8 @@ return allowed(...)
 ## Changelog Impact
 
 - include in the parent TASK-154 changelog entry
+
+## Completion Summary
+
+- added the shared policy module, placeholder-name detection, weak-abbreviation
+  handling, and domain-specific role naming specs

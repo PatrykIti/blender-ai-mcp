@@ -1,7 +1,7 @@
 # TASK-154-03-01: Unit And Transport Regression Matrix For Guided Naming Policy
 
 **Parent:** [TASK-154-03](./TASK-154-03_Regression_And_Docs_Closeout_For_Guided_Naming_Policy.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -114,3 +114,8 @@ assert blocked["guided_naming"]["status"] in {"warning", "blocked"}
 ## Changelog Impact
 
 - include in the parent TASK-154 changelog entry
+
+## Completion Summary
+
+- added pure policy, runtime integration, proxy parity, docs parity, and
+  heuristic backstop regressions for the guided naming policy

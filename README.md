@@ -342,6 +342,9 @@ contract in addition to `guided_handoff`.
   `ForeLeg_L`, and `HindLeg_R` instead of opaque abbreviations like `ForeL`
   / `HindR`, because guided seam/role heuristics are more reliable on readable
   names
+- on `llm-guided`, the server can now warn on weak role-sensitive names and
+  block clearly opaque placeholder names such as `Sphere` / `Object` when they
+  are used as semantic part names
 - do not call `scene_scope_graph(...)`, `scene_relation_graph(...)`, or
   `scene_view_diagnostics(...)` with no explicit scope and assume that means
   “inspect the whole scene”
@@ -365,6 +368,9 @@ contract in addition to `guided_handoff`.
 - use `guided_register_part(object_name=..., role=...)` as the canonical
   way to tell the server what semantic part one object represents; optional
   `guided_role=...` hints on build tools are convenience-only
+- if the server warns or blocks on guided naming, rename or create the object
+  using one of the suggested semantic names instead of retrying the same weak
+  abbreviation
 - the `required prompt bundle` and `preferred prompt bundle` named in
   `guided_flow_state` are prompt asset names, not a replacement for the
   server-driven flow; prompts support the flow, they do not become the flow

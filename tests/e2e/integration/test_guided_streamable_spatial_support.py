@@ -200,6 +200,20 @@ def test_streamable_guided_session_expands_visible_tools_after_goal_handoff(tmp_
             )
             assert "tool family 'secondary_parts'" in blocked
 
+            blocked_named_body = result_payload(
+                await client.call_tool(
+                    "modeling_create_primitive",
+                    {
+                        "primitive_type": "Sphere",
+                        "name": "Sphere",
+                        "radius": 0.5,
+                        "guided_role": "body_core",
+                    },
+                )
+            )
+            assert "Guided naming blocked object name 'Sphere'" in blocked_named_body
+            assert "Body" in blocked_named_body
+
             await client.call_tool(
                 "guided_register_part",
                 {"object_name": "Squirrel_Body", "role": "body_core"},
@@ -237,6 +251,15 @@ def test_streamable_guided_session_expands_visible_tools_after_goal_handoff(tmp_
                 "foreleg_pair",
                 "hindleg_pair",
             ]
+
+            weak_name_warning = result_payload(
+                await client.call_tool(
+                    "guided_register_part",
+                    {"object_name": "ForeL", "role": "foreleg_pair"},
+                )
+            )
+            assert weak_name_warning["guided_naming"]["status"] == "warning"
+            assert "ForeLeg_L" in weak_name_warning["message"]
 
             ear_result = result_payload(
                 await client.call_tool(

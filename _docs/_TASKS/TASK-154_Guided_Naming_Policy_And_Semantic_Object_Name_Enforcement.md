@@ -1,6 +1,6 @@
 # TASK-154: Guided Naming Policy And Semantic Object Name Enforcement
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** Guided Runtime / LLM UX / Naming Policy
 **Estimated Effort:** Large
@@ -194,6 +194,16 @@ heuristic recovery, instead of making it an explicit guided-loop policy.
 
 ## Status / Board Update
 
-- promoted as a board-level follow-on because TASK-152 documented and partially
-  hardened naming hygiene, but the repo still lacks one deterministic
-  server-owned policy for naming quality on `llm-guided`
+- completed on 2026-04-10 and moved from the board-level follow-on queue into
+  Done once runtime naming policy, regressions, docs, and changelog/history
+  landed together
+
+## Completion Summary
+
+- added one shared guided naming-policy module and structured decision contract
+- integrated naming checks into `guided_register_part(...)` and role-sensitive
+  `guided_role=...` build paths
+- preserved seam heuristics as recovery/backstop logic instead of using them as
+  the primary naming policy
+- aligned prompts, MCP docs, and transport/runtime behavior around semantic
+  naming warnings/blocks

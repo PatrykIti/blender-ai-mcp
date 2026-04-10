@@ -7,6 +7,7 @@ Provides utilities for routing tool calls through SupervisorRouter.
 import logging
 from typing import Any, Callable, Dict, List, Literal, Optional, cast
 
+from server.adapters.mcp.context_utils import ctx_warning
 from server.adapters.mcp.contracts.correction_audit import (
     CorrectionAuditEventContract,
     CorrectionExecutionContract,
@@ -16,6 +17,7 @@ from server.adapters.mcp.contracts.correction_audit import (
 from server.adapters.mcp.dispatcher import get_dispatcher
 from server.adapters.mcp.execution_context import MCPExecutionContext
 from server.adapters.mcp.execution_report import ExecutionStep, MCPExecutionReport
+from server.adapters.mcp.guided_naming_policy import evaluate_guided_object_name
 from server.adapters.mcp.session_capabilities import (
     get_session_capability_state,
     mark_guided_spatial_state_stale,
@@ -259,6 +261,17 @@ def _get_active_session_state():
         return None
 
 
+def _get_active_context():
+    """Best-effort current MCP Context lookup for adapter helpers."""
+
+    try:
+        from fastmcp.server.context import _current_context  # type: ignore
+
+        return _current_context.get(None)
+    except Exception:
+        return None
+
+
 def _resolve_guided_role_context(tool_name: str, params: Dict[str, Any]) -> tuple[str | None, str | None]:
     """Resolve guided role metadata from explicit params first, then session registry."""
 
@@ -414,6 +427,50 @@ def _evaluate_guided_execution_policy(
     }
 
 
+def _evaluate_guided_naming_policy(
+    *,
+    surface_profile: str,
+    tool_name: str,
+    params: Dict[str, Any],
+) -> dict[str, Any] | None:
+    """Return a typed guided naming-policy decision for role-sensitive build calls."""
+
+    if surface_profile != "llm-guided":
+        return None
+    if tool_name not in _GUIDED_ROLE_REQUIRED_TOOLS:
+        return None
+
+    explicit_role = params.get("guided_role")
+    object_name = params.get("name") or params.get("object_name")
+    if not isinstance(explicit_role, str) or not explicit_role.strip():
+        return None
+    if not isinstance(object_name, str) or not object_name.strip():
+        return None
+
+    session = _get_active_session_state()
+    if session is None or not session.guided_flow_state:
+        return None
+
+    flow_state = session.guided_flow_state
+    domain_profile = str(flow_state.get("domain_profile") or "").strip()
+    if domain_profile not in {"generic", "creature", "building"}:
+        return None
+    current_step = str(flow_state.get("current_step") or "").strip() or None
+
+    decision = evaluate_guided_object_name(
+        object_name=object_name,
+        role=explicit_role.strip(),
+        domain_profile=cast(Literal["generic", "creature", "building"], domain_profile),
+        current_step=current_step,
+    )
+    payload = decision.model_dump(mode="json")
+    return {
+        "status": decision.status,
+        "message": decision.message,
+        "guided_naming": payload,
+    }
+
+
 def _apply_postcondition_verification(
     audit_events: tuple[CorrectionAuditEventContract, ...],
 ) -> tuple[tuple[CorrectionAuditEventContract, ...], str]:
@@ -528,6 +585,24 @@ def route_tool_call_report(
             _record_router_execution_report(report)
             _log_audit_exposure(report)
             return report
+    naming_policy = _evaluate_guided_naming_policy(
+        surface_profile=surface_profile,
+        tool_name=tool_name,
+        params=params,
+    )
+    if naming_policy is not None and naming_policy.get("status") == "blocked":
+        report = MCPExecutionReport(
+            context=context,
+            router_enabled=is_router_enabled(),
+            router_applied=False,
+            router_disposition="failed_closed_error",
+            error=str(naming_policy.get("message") or "Guided naming blocked."),
+            policy_context=naming_policy,
+            audit_ids=(),
+        )
+        _record_router_execution_report(report)
+        _log_audit_exposure(report)
+        return report
 
     if not is_router_enabled():
         result = direct_executor()
@@ -537,6 +612,7 @@ def route_tool_call_report(
             router_applied=False,
             router_disposition="bypassed",
             steps=(ExecutionStep(tool_name=tool_name, params=params, result=result),),
+            policy_context=naming_policy,
             audit_ids=(),
         )
         _record_router_execution_report(report)
@@ -551,6 +627,7 @@ def route_tool_call_report(
             router_applied=False,
             router_disposition="bypassed",
             steps=(ExecutionStep(tool_name=tool_name, params=params, result=result),),
+            policy_context=naming_policy,
             audit_ids=(),
         )
         _record_router_execution_report(report)
@@ -618,6 +695,24 @@ def route_tool_call_report(
                     _record_router_execution_report(report)
                     _log_audit_exposure(report)
                     return report
+            naming_policy = _evaluate_guided_naming_policy(
+                surface_profile=surface_profile,
+                tool_name=final_tool_name,
+                params=final_tool_params,
+            )
+            if naming_policy is not None and naming_policy.get("status") == "blocked":
+                report = MCPExecutionReport(
+                    context=context,
+                    router_enabled=True,
+                    router_applied=False,
+                    router_disposition="failed_closed_error",
+                    error=str(naming_policy.get("message") or "Guided naming blocked."),
+                    policy_context=naming_policy,
+                    audit_ids=(),
+                )
+                _record_router_execution_report(report)
+                _log_audit_exposure(report)
+                return report
 
         if len(corrected_tools) == 1 and corrected_tools[0]["tool"] == tool_name:
             if corrected_tools[0]["params"] == params:
@@ -628,6 +723,7 @@ def route_tool_call_report(
                     router_applied=False,
                     router_disposition="direct",
                     steps=(ExecutionStep(tool_name=tool_name, params=params, result=result),),
+                    policy_context=naming_policy,
                     audit_ids=(),
                 )
                 _record_router_execution_report(report)
@@ -671,6 +767,7 @@ def route_tool_call_report(
             router_applied=True,
             router_disposition="corrected",
             steps=tuple(steps),
+            policy_context=naming_policy,
             audit_events=audit_events,
             audit_ids=_extract_audit_ids(audit_events),
             verification_status=cast(Any, verification_status),
@@ -742,6 +839,11 @@ def route_tool_call(
         direct_executor=direct_executor,
         prompt=prompt,
     )
+    naming_payload = report.policy_context.get("guided_naming") if report.policy_context else None
+    if isinstance(naming_payload, dict) and naming_payload.get("status") == "warning":
+        current_ctx = _get_active_context()
+        if current_ctx is not None and naming_payload.get("message"):
+            ctx_warning(current_ctx, str(naming_payload["message"]))
     _maybe_mark_guided_spatial_state_stale_from_report(report)
     if report.error is None and len(report.steps) == 1:
         result = report.steps[0].result

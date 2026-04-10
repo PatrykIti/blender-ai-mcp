@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional, cast
 
 from fastmcp import Context
 
-from server.adapters.mcp.context_utils import ctx_info, ctx_session_id, ctx_transport_type
+from server.adapters.mcp.context_utils import ctx_info, ctx_session_id, ctx_transport_type, ctx_warning
 from server.adapters.mcp.contracts.router import (
     RouterGoalResponseContract,
     RouterStatusContract,
@@ -27,6 +27,7 @@ from server.adapters.mcp.elicitation_contracts import (
     build_fallback_payload,
 )
 from server.adapters.mcp.guided_mode import build_visibility_diagnostics
+from server.adapters.mcp.guided_naming_policy import evaluate_guided_object_name
 from server.adapters.mcp.router_helper import get_router_status
 from server.adapters.mcp.sampling.assistant_runner import run_repair_suggestion_assistant
 from server.adapters.mcp.sampling.result_types import to_repair_assistant_contract
@@ -479,6 +480,24 @@ async def guided_register_part(
     a specific semantic part role such as `body_core`, `head_mass`, or
     `roof_mass`, without introducing a separate build tool per domain part.
     """
+    session = await get_session_capability_state_async(ctx)
+    guided_flow_state = session.guided_flow_state or {}
+    domain_profile = str(guided_flow_state.get("domain_profile") or "").strip()
+    current_step = str(guided_flow_state.get("current_step") or "").strip() or None
+    naming_decision = None
+    if domain_profile in {"generic", "creature", "building"}:
+        naming_decision = evaluate_guided_object_name(
+            object_name=object_name,
+            role=role,
+            domain_profile=cast(Any, domain_profile),
+            current_step=current_step,
+        )
+        if naming_decision.status == "blocked":
+            status = await router_get_status(ctx)
+            payload = status.model_dump(mode="json", exclude_none=True)
+            payload["message"] = naming_decision.message
+            payload["guided_naming"] = naming_decision.model_dump(mode="json")
+            return RouterStatusContract.model_validate(payload)
 
     await register_guided_part_role_async(
         ctx,
@@ -489,6 +508,11 @@ async def guided_register_part(
     status = await router_get_status(ctx)
     payload = status.model_dump(mode="json", exclude_none=True)
     payload["message"] = f"Registered guided role '{role}' for '{object_name}'."
+    if naming_decision is not None:
+        payload["guided_naming"] = naming_decision.model_dump(mode="json")
+        if naming_decision.status == "warning" and naming_decision.message:
+            payload["message"] = f"{payload['message']} {naming_decision.message}"
+            ctx_warning(ctx, naming_decision.message)
     return RouterStatusContract.model_validate(payload)
 
 

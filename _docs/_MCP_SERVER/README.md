@@ -529,6 +529,10 @@ Current guided-flow behavior:
 - full semantic object names such as `ForeLeg_L`, `ForeLeg_R`, `HindLeg_L`,
   and `HindLeg_R` are preferred over abbreviations like `ForeL` / `HindR`
   because seam/role heuristics classify them more reliably
+- the guided runtime now has one explicit naming-policy layer for role-sensitive registration/build paths:
+  - weak abbreviations can warn on weak role-sensitive names with suggested semantic names
+  - clearly opaque placeholder names such as `Sphere` / `Object` can be
+    blocked until the object uses a semantic role-shaped name
 - after material scene changes such as `scene_clean_scene(...)`,
   `modeling_create_primitive(...)`, `modeling_transform_object(...)`, or
   bounded attachment/alignment cleanup macros, the runtime can mark the
@@ -560,6 +564,7 @@ Current guided-flow behavior:
 - `modeling_create_primitive(...)` and `modeling_transform_object(...)` may
   also carry an optional `guided_role` convenience hint on guided surfaces, but
   `guided_register_part(...)` remains the canonical explicit registration path
+- if guided naming returns warnings or blocks, replace the weak name with one of the suggested semantic names instead of retrying the same placeholder or opaque abbreviation unchanged
 - for overlays that use primary-mass role groups, registering the required
   primary roles can now move the flow from `create_primary_masses` into
   `place_secondary_parts`

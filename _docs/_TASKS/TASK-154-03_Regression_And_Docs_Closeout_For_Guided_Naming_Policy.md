@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-154](./TASK-154_Guided_Naming_Policy_And_Semantic_Object_Name_Enforcement.md)
 **Depends On:** [TASK-154-01](./TASK-154-01_Naming_Policy_Contract_And_Role_Based_Suggestion_Vocabulary.md), [TASK-154-02](./TASK-154-02_Runtime_Advisory_And_Enforcement_Integration_For_Guided_Naming.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -100,3 +100,9 @@ prompt/operator docs, and changelog closeout.
 ## Changelog Impact
 
 - add a dedicated `_docs/_CHANGELOG/*` entry when TASK-154 ships
+
+## Completion Summary
+
+- completed unit/runtime/docs parity for naming policy
+- verified transport-backed parity on the guided stdio/streamable slice
+- updated prompts, MCP docs, board state, and changelog in the same branch

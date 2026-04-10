@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [232](./232-2026-04-10-guided-naming-policy-and-semantic-name-enforcement.md) | 2026-04-10 | **Guided naming policy and semantic name enforcement** | - |
 | [231](./231-2026-04-10-guided-visibility-authority-and-manifest-demotion.md) | 2026-04-10 | **Guided visibility authority and manifest demotion** | - |
 | [230](./230-2026-04-10-guided-limb-heuristic-and-iterate-visibility-followup.md) | 2026-04-10 | **Guided limb heuristic and iterate visibility follow-up** | - |
 | [229](./229-2026-04-10-guided-spatial-usability-and-inspect-alignment.md) | 2026-04-10 | **Guided spatial usability and inspect alignment** | - |

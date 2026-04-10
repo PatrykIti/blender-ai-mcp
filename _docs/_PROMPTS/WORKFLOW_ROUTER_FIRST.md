@@ -48,6 +48,7 @@ REQUEST TRIAGE (FIRST STEP)
        * If `guided_flow_state` is present, respect `current_step`, `required_checks`, `next_actions`, `allowed_families`, `allowed_roles`, and `missing_roles`.
        * If `reference_images(...)` are already attached for the active goal, read them as the primary grounding input before deciding the initial masses and silhouette.
        * Use full semantic object names such as `Body`, `Head`, `Tail`, `ForeLeg_L`, and `HindLeg_R` instead of opaque abbreviations like `ForeL` / `HindR`.
+       * If the server warns or blocks on guided naming, replace the weak name with one of the suggested semantic names instead of retrying the same placeholder/abbreviation.
        * For role-sensitive build calls, use either `guided_register_part(object_name=..., role=...)` or the convenience hint `guided_role=...` on the build tool call.
        * If the server names a `required prompt bundle` / `preferred prompt bundle`, treat those as supporting prompt assets, not as permission to bypass the guided flow.
 

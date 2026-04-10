@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-154-01](./TASK-154-01_Naming_Policy_Contract_And_Role_Based_Suggestion_Vocabulary.md)
 **Depends On:** [TASK-154-01-01](./TASK-154-01-01_Audit_Current_Naming_Drift_And_Runtime_Hook_Points.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -97,3 +97,8 @@ SUGGESTED_NAMES = {
 ## Changelog Impact
 
 - include in the parent TASK-154 changelog entry
+
+## Completion Summary
+
+- delivered the structured naming decision contract, canonical patterns, reason
+  codes, and role/domain-specific suggested names

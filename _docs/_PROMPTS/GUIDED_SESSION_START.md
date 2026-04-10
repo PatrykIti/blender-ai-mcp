@@ -25,6 +25,7 @@ Fail-safe rules:
 - If `guided_flow_state` is present, treat `current_step`, `allowed_families`, `allowed_roles`, `missing_roles`, and `next_actions` as the active execution contract.
 - If `reference_images(...)` are attached for the active guided goal, treat them as the primary grounding input before deciding the first primary masses, silhouette, and placement.
 - Use full semantic object names such as `Body`, `Head`, `Tail`, `ForeLeg_L`, and `HindLeg_R`; avoid opaque abbreviations like `ForeL` / `HindR`.
+- On `llm-guided`, the server may warn on weak role-sensitive names and block clearly opaque placeholder names such as `Sphere` / `Object`; when that happens, rename or create the object using one of the suggested semantic names.
 - Do not call `scene_scope_graph(...)`, `scene_relation_graph(...)`, or `scene_view_diagnostics(...)` with no explicit scope and assume that means “inspect the whole scene”.
 - Treat the initial spatial gate as meaningful only after a real target scope exists, e.g. primary masses already exist or the build collection already exists.
 - If the server says the current step is `create_primary_masses`, do not jump ahead to ears, paws, facade openings, polish, or finish work.

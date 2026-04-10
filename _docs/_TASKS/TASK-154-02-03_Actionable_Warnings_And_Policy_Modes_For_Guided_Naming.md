@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-154-02](./TASK-154-02_Runtime_Advisory_And_Enforcement_Integration_For_Guided_Naming.md)
 **Depends On:** [TASK-154-02-02](./TASK-154-02-02_Integrate_Naming_Policy_Into_Guided_Register_Part_And_Build_Calls.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -79,3 +79,8 @@ message = (
 ## Changelog Impact
 
 - include in the parent TASK-154 changelog entry
+
+## Completion Summary
+
+- shipped deterministic warning/block messages plus explicit rollout config via
+  `MCP_GUIDED_NAMING_POLICY_MODE`

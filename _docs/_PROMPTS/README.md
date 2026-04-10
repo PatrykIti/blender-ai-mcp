@@ -196,6 +196,8 @@ Interpretation:
   silhouette, and rough placement
 - prefer full semantic object names such as `ForeLeg_L`, `ForeLeg_R`,
   `HindLeg_L`, `HindLeg_R` over opaque abbreviations like `ForeL` / `HindR`
+- the guided runtime can now warn on weak role-sensitive names and block
+  clearly opaque placeholder names such as `Sphere` / `Object`
 - use the `required prompt bundle` and `preferred prompt bundle` named in
   `guided_flow_state` as prompt asset selection guidance
 - if the server needs explicit semantic part roles for the current flow,
@@ -204,6 +206,8 @@ Interpretation:
 - optional `guided_role=...` hints on `modeling_create_primitive(...)` or
   `modeling_transform_object(...)` are only a convenience path; keep
   `guided_register_part(...)` as the canonical explicit registration surface
+- if the server returns naming guidance, prefer the suggested semantic names
+  instead of retrying weak abbreviations unchanged
 - current server-driven guided flow domain overlays are:
   - `generic`
   - `creature`

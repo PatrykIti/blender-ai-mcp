@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-154-02](./TASK-154-02_Runtime_Advisory_And_Enforcement_Integration_For_Guided_Naming.md)
 **Depends On:** [TASK-154-02-01](./TASK-154-02-01_Shared_Guided_Naming_Policy_Module_And_Opaque_Name_Detection.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -91,3 +91,9 @@ return attach_naming_guidance_if_needed(result, decision)
 ## Changelog Impact
 
 - include in the parent TASK-154 changelog entry
+
+## Completion Summary
+
+- `guided_register_part(...)` now returns structured `guided_naming`
+  diagnostics and can block placeholder names without mutating session state
+- role-sensitive build calls now share the same naming-policy block path

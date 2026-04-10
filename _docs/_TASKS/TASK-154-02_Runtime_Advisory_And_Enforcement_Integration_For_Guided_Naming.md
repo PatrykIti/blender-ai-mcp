@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-154](./TASK-154_Guided_Naming_Policy_And_Semantic_Object_Name_Enforcement.md)
 **Depends On:** [TASK-154-01](./TASK-154-01_Naming_Policy_Contract_And_Role_Based_Suggestion_Vocabulary.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -113,3 +113,9 @@ registration/build paths can surface deterministic warnings or blocks.
 ## Changelog Impact
 
 - include in the parent TASK-154 changelog entry
+
+## Completion Summary
+
+- wired naming-policy warnings/blocks into both canonical registration and
+  role-sensitive build convenience paths
+- preserved existing family/role execution enforcement as the primary step gate

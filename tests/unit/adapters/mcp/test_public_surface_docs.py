@@ -64,6 +64,8 @@ def test_readme_documents_llm_guided_public_aliases():
         "primary grounding input",
         "ForeLeg_L",
         "HindLeg_R",
+        "warn on weak role-sensitive names",
+        "block clearly opaque placeholder names",
         "inspect the whole scene",
         "floating_gap",
         "Contact Truth Semantics",
@@ -131,12 +133,16 @@ def test_mcp_docs_describe_aliases_and_hidden_arguments():
         "allowed_roles",
         "missing_roles",
         "guided_register_part",
+        "replace the weak name with one of the suggested semantic names",
         "scene_scope_graph(...) now binds the active guided target scope",
         "Camera",
         "refresh_spatial_context",
         "primary grounding input",
         "ForeLeg_L",
         "HindLeg_R",
+        "explicit naming-policy layer",
+        "warn on weak role-sensitive names",
+        "blocked until the object uses a semantic role-shaped name",
         "do not treat “no scope” as “whole scene”",
         "bounded attachment repair macros",
         "hidden/blocked-by-flow",
@@ -330,6 +336,9 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "primary grounding input" in prompt_readme
     assert "ForeLeg_L" in prompt_readme
     assert "HindLeg_R" in prompt_readme
+    assert "warn on weak role-sensitive names" in prompt_readme
+    assert "clearly opaque placeholder names" in prompt_readme
+    assert "`Sphere` / `Object`" in prompt_readme
     assert "inspect the whole scene" in prompt_readme
     assert "floating_gap" in prompt_readme
     assert "guided_register_part(object_name=..., role=...)" in prompt_readme
@@ -382,6 +391,7 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "primary grounding input" in workflow_prompt
     assert "ForeLeg_L" in workflow_prompt
     assert "HindLeg_R" in workflow_prompt
+    assert "warns or blocks on guided naming" in workflow_prompt
     assert "`allowed_families`" in workflow_prompt
     assert "`allowed_roles`" in workflow_prompt
     assert "`missing_roles`" in workflow_prompt
@@ -405,6 +415,8 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "primary grounding input" in creature_prompt
     assert "ForeLeg_L" in creature_prompt
     assert "HindLeg_R" in creature_prompt
+    assert "weak role-sensitive names can now produce explicit server" in creature_prompt
+    assert "opaque placeholder names such as `Sphere` / `Object`" in creature_prompt
     assert "floating_gap" in creature_prompt
     assert 'search_tools(query="align panel housing gap contact placement")' in workflow_prompt
     assert (

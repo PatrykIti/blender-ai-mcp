@@ -12,6 +12,7 @@ from fastmcp import FastMCP
 from fastmcp.exceptions import NotFoundError, ToolError
 from fastmcp.server.transforms.visibility import create_visibility_transforms
 from server.adapters.mcp.factory import build_server, build_surface_providers
+from server.adapters.mcp.session_capabilities import SessionCapabilityState
 from server.adapters.mcp.session_phase import SessionPhase
 from server.adapters.mcp.surfaces import get_surface_profile
 from server.adapters.mcp.transforms import build_surface_transform_pipeline, materialize_transforms
@@ -1187,6 +1188,63 @@ def test_call_tool_can_forward_guided_role_hint_for_modeling_create_primitive(mo
 
     assert "Created Sphere named 'Squirrel_Head'" == payload
     assert recorded == [("Squirrel_Head", "head_mass", None)]
+
+
+def test_call_tool_can_block_placeholder_name_for_guided_role_hint(monkeypatch):
+    """Proxied guided build calls should preserve naming-policy blocking for opaque placeholder names."""
+
+    class Handler:
+        def create_primitive(self, primitive_type, radius=1.0, size=2.0, location=None, rotation=None, name=None):
+            raise AssertionError("Handler should not be reached when guided naming blocks the call")
+
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.get_modeling_handler", lambda: Handler())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": [],
+                "missing_roles": ["body_core", "head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    server = _build_phase_search_server(SessionPhase.BUILD)
+
+    async def run():
+        result = await server.call_tool(
+            "call_tool",
+            {
+                "name": "modeling_create_primitive",
+                "arguments": {
+                    "primitive_type": "Sphere",
+                    "name": "Sphere",
+                    "radius": 0.5,
+                    "guided_role": "body_core",
+                },
+            },
+        )
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+
+    assert "Guided naming blocked object name 'Sphere'" in payload
+    assert "Body" in payload
 
 
 def test_search_first_rollout_reduces_visible_tool_count_and_payload_size():

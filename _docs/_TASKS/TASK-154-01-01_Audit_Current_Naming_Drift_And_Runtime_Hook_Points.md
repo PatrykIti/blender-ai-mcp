@@ -1,7 +1,7 @@
 # TASK-154-01-01: Audit Current Naming Drift And Runtime Hook Points
 
 **Parent:** [TASK-154-01](./TASK-154-01_Naming_Policy_Contract_And_Role_Based_Suggestion_Vocabulary.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -85,3 +85,9 @@ for hook in hook_points:
 ## Changelog Impact
 
 - include in the parent TASK-154 changelog entry
+
+## Completion Summary
+
+- confirmed that naming policy belongs on `guided_register_part(...)` and
+  explicit `guided_role=...` build calls, not in public naming transforms or
+  scene-wide global renaming logic

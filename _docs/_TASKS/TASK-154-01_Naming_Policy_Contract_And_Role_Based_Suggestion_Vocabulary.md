@@ -1,7 +1,7 @@
 # TASK-154-01: Naming Policy Contract And Role-Based Suggestion Vocabulary
 
 **Parent:** [TASK-154](./TASK-154_Guided_Naming_Policy_And_Semantic_Object_Name_Enforcement.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -78,3 +78,8 @@ canonical role/domain-specific suggestion vocabulary it will use.
 ## Changelog Impact
 
 - include in the parent TASK-154 changelog entry
+
+## Completion Summary
+
+- froze the naming-policy contract, role/domain vocabulary, reason codes, and
+  suggestion map before runtime wiring landed
