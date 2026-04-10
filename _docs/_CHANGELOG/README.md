@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [230](./230-2026-04-10-guided-limb-heuristic-and-iterate-visibility-followup.md) | 2026-04-10 | **Guided limb heuristic and iterate visibility follow-up** | - |
 | [229](./229-2026-04-10-guided-spatial-usability-and-inspect-alignment.md) | 2026-04-10 | **Guided spatial usability and inspect alignment** | - |
 | [228](./228-2026-04-09-guided-spatial-rearm.md) | 2026-04-09 | **Guided spatial target binding and freshness re-arm** | - |
 | [227](./227-2026-04-09-guided-execution-enforcement.md) | 2026-04-09 | **Guided execution enforcement and role sequencing** | - |

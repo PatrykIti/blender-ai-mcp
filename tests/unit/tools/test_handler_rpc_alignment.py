@@ -286,6 +286,41 @@ def test_scene_relation_graph_treats_forel_hindr_names_as_limb_body_pairs():
     assert seam_kinds["hindr__body"] == "limb_body"
 
 
+def test_scene_relation_graph_treats_prefixed_forel_hindr_names_as_limb_body_pairs():
+    rpc = DummyRpc(
+        {
+            "scene.get_bounding_box": _ok({"dimensions": [2.0, 2.0, 2.0], "center": [0.0, 0.0, 0.0]}),
+            "scene.measure_gap": _ok({"gap": 0.1, "relation": "separated", "measurement_basis": "bounding_box"}),
+            "scene.measure_alignment": _ok({"is_aligned": True, "aligned_axes": ["X", "Y"]}),
+            "scene.measure_overlap": _ok(
+                {"overlaps": False, "relation": "disjoint", "measurement_basis": "bounding_box"}
+            ),
+            "scene.assert_contact": _ok(
+                {
+                    "assertion": "scene_assert_contact",
+                    "passed": False,
+                    "actual": {"gap": 0.1, "relation": "separated"},
+                    "details": {"measurement_basis": "bounding_box"},
+                }
+            ),
+        }
+    )
+    handler = SceneToolHandler(rpc)
+
+    relations = handler.get_relation_graph(
+        target_objects=["E2E_Abbrev_Body", "E2E_Abbrev_ForeL", "E2E_Abbrev_HindR"],
+        goal_hint="assembled creature",
+    )
+    seam_kinds = {
+        item["pair_id"]: item["attachment_semantics"]["seam_kind"]
+        for item in relations["pairs"]
+        if item.get("attachment_semantics")
+    }
+
+    assert seam_kinds["e2e_abbrev_forel__e2e_abbrev_body"] == "limb_body"
+    assert seam_kinds["e2e_abbrev_hindr__e2e_abbrev_body"] == "limb_body"
+
+
 def test_scene_view_diagnostics_handler_resolves_collection_scope_and_forwards_view_args():
     rpc = DummyRpc(
         {

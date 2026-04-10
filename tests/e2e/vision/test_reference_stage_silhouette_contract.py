@@ -38,6 +38,15 @@ class FakeContext:
     def info(self, message, logger_name=None, extra=None):
         return None
 
+    async def reset_visibility(self) -> None:
+        return None
+
+    async def enable_components(self, **kwargs) -> None:
+        return None
+
+    async def disable_components(self, **kwargs) -> None:
+        return None
+
 
 def _write_creature_silhouette(path: Path, *, with_ears: bool) -> None:
     image = Image.new("RGBA", (220, 220), (255, 255, 255, 255))

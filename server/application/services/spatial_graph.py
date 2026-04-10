@@ -194,9 +194,10 @@ def _is_limb_like(object_name: str) -> bool:
         return True
 
     tokens = _name_role_tokens(object_name)
-    if len(tokens) <= 3 and any(token in {"fore", "hind", "front", "rear", "back"} for token in tokens):
-        if any(token in {"l", "r", "left", "right"} for token in tokens):
-            return True
+    directional_tokens = {"fore", "hind", "front", "rear", "back"}
+    side_tokens = {"l", "r", "left", "right"}
+    if any(token in directional_tokens for token in tokens) and any(token in side_tokens for token in tokens):
+        return True
     return False
 
 
