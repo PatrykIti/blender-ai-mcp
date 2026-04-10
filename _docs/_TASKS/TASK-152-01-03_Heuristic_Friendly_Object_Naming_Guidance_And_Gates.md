@@ -21,7 +21,10 @@ evaluating whether a lightweight runtime gate or warning should exist.
 - `_docs/_MCP_SERVER/README.md`
 - `server/application/services/spatial_graph.py`
 - `server/adapters/mcp/router_helper.py`
+- `server/adapters/mcp/areas/router.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
+- `tests/unit/tools/scene/test_scene_contracts.py`
+- `tests/e2e/integration/test_guided_surface_contract_parity.py`
 
 ## Planned Guidance Shape
 
@@ -44,6 +47,54 @@ evaluating whether a lightweight runtime gate or warning should exist.
     build calls when names are too opaque
   - heuristic expansion support for common abbreviations
 
+## Current Code Anchors
+
+- `server/application/services/spatial_graph.py`
+  - `_LIMB_ROLE_HINTS`
+  - `_is_limb_like(...)`
+  - `_required_creature_seams(...)`
+- `server/adapters/mcp/areas/router.py`
+  - `guided_register_part(...)`
+- `server/adapters/mcp/router_helper.py`
+  - role-sensitive build enforcement already has one place for actionable
+    blocked guidance
+
+## Planned Code Shape
+
+Choose one concrete implementation path and document it explicitly:
+
+```python
+# Option A: heuristic expansion
+_LIMB_ROLE_HINTS += ("fore", "hind")
+_ABBREVIATED_LIMB_PATTERNS = (...)
+def _is_limb_like(name: str) -> bool: ...
+
+# Option B: naming warning/gate
+def _looks_too_abbreviated_for_guided_spatial_heuristics(name: str) -> bool: ...
+def _build_guided_name_warning(...) -> str: ...
+```
+
+## Planned Unit Test Scenarios
+
+- if heuristic expansion is chosen:
+  - `_is_limb_like("ForeL")` is true
+  - collection/object-set with `ForeL` / `HindR` produces limb-body seams
+- if warning/gate is chosen:
+  - role-sensitive guided call with `ForeL` returns explicit naming guidance
+  - `guided_register_part(...)` or blocked guidance suggests full semantic
+    names like `ForeLeg_L`
+
+## Planned E2E Scenarios
+
+- guided creature collection scope with:
+  - `Body`, `Head`, `Tail`, `ForeL`, `ForeR`, `HindL`, `HindR`
+  should either:
+  - produce limb-body seam checks
+  - or surface an explicit warning/block that names are too opaque
+- same scenario with:
+  - `ForeLeg_L`, `ForeLeg_R`, `HindLeg_L`, `HindLeg_R`
+  should produce stable limb-body seam checks
+
 ## Acceptance Criteria
 
 - prompt/docs guidance clearly tells the model to use full readable names
@@ -62,6 +113,8 @@ evaluating whether a lightweight runtime gate or warning should exist.
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
+- `tests/unit/tools/scene/test_scene_contracts.py`
+- `tests/e2e/integration/test_guided_surface_contract_parity.py`
 
 ## Changelog Impact
 

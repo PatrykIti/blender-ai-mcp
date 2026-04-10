@@ -61,6 +61,31 @@ It is a model-facing contract alignment problem between:
 - guided-flow family semantics
 - blocked/exposed repair surface in `inspect_validate`
 
+## Current Code Baseline
+
+The current behavior is concentrated in a few concrete places:
+
+- prompt assets:
+  - `_docs/_PROMPTS/GUIDED_SESSION_START.md`
+  - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
+  - `_docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md`
+- spatial naming/seam heuristics:
+  - `server/application/services/spatial_graph.py`
+    - `_LIMB_ROLE_HINTS`
+    - `_is_limb_like(...)`
+    - `_required_creature_seams(...)`
+- inspect/runtime alignment:
+  - `server/adapters/mcp/session_capabilities.py`
+    - `_build_allowed_families(...)`
+  - `server/adapters/mcp/transforms/visibility_policy.py`
+    - `GUIDED_INSPECT_ESCAPE_HATCH_TOOLS`
+    - `build_visibility_rules(...)`
+- existing regression anchors:
+  - `tests/unit/adapters/mcp/test_public_surface_docs.py`
+  - `tests/unit/adapters/mcp/test_visibility_policy.py`
+  - `tests/e2e/integration/test_guided_surface_contract_parity.py`
+  - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
+
 ## Acceptance Criteria
 
 - prompt assets explicitly explain when the spatial gate is actually
@@ -110,6 +135,22 @@ It is a model-facing contract alignment problem between:
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/e2e/integration/test_guided_surface_contract_parity.py`
 - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
+
+## Planned Validation Matrix
+
+- unit/docs parity:
+  - valid scope preconditions are explicit
+  - attached references are described as the primary grounding input
+  - full semantic naming guidance is explicit
+  - seam verdict interpretation is explicit
+- unit/runtime:
+  - inspect visibility policy matches the chosen family policy
+  - if heuristic expansion is chosen, abbreviated limb names produce limb seams
+  - if warning/gating is chosen instead, blocked guidance is explicit
+- E2E / transport:
+  - creature flow with attached refs and meaningful scope
+  - abbreviated-name scenario (`ForeL` / `HindR`)
+  - inspect-phase attachment-repair scenario
 
 ## Changelog Impact
 

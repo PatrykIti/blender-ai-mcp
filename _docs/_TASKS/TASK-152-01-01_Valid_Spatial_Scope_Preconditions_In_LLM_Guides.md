@@ -18,6 +18,7 @@ meaningless helper objects.
 - `_docs/_PROMPTS/README.md`
 - `README.md`
 - `_docs/_MCP_SERVER/README.md`
+- `tests/unit/adapters/mcp/test_public_surface_docs.py`
 
 ## Planned Guidance Shape
 
@@ -30,6 +31,28 @@ meaningless helper objects.
     - primary masses already exist
     - or the build collection exists
     - or there is a meaningful part set to inspect
+
+## Planned Code / Doc Shape
+
+```text
+Prompt rule:
+- Do not call scene_scope_graph()/scene_relation_graph() with no explicit scope
+  and assume that this means “inspect the whole scene”.
+- Use one of:
+  - target_object=...
+  - target_objects=[...]
+  - collection_name=...
+- For creature blockout:
+  - first create meaningful primary masses or the build collection
+  - then run the spatial gate on that scope
+```
+
+## Planned Unit Test Scenarios
+
+- docs parity asserts wording equivalent to:
+  - “scene_scope_graph(...) / scene_relation_graph(...) need explicit scope”
+  - “scene_view_diagnostics(...) requires explicit scope”
+  - “do not satisfy initial spatial gate from blank scene / no scope”
 
 ## Acceptance Criteria
 
@@ -51,6 +74,11 @@ meaningless helper objects.
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
+
+## Planned E2E Scenarios
+
+- none directly from this leaf; covered indirectly by the transport leaves in
+  `TASK-152-03`
 
 ## Changelog Impact
 

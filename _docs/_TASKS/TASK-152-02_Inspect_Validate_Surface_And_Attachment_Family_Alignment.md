@@ -12,6 +12,27 @@ Remove the contradiction between:
 - inspect-visible tool exposure
 - the actual availability of attachment macros during `inspect_validate`
 
+## Current Code Baseline
+
+- `server/adapters/mcp/session_capabilities.py`
+  - `_build_allowed_families(...)` currently includes
+    `attachment_alignment` for `inspect_validate`
+- `server/adapters/mcp/transforms/visibility_policy.py`
+  - `GUIDED_INSPECT_ESCAPE_HATCH_TOOLS` currently does not expose attachment
+    macros on the inspect surface
+- real guided runs therefore can report:
+  - attachment families allowed
+  - attachment macros hidden
+  - blocked spatial/context repair follow-ups during inspect
+
+## Detailed Implementation Notes
+
+- this subtask must end with one product decision, not partial wording
+- whichever policy is chosen, three surfaces must agree:
+  - `guided_flow_state.allowed_families`
+  - visible inspect tools
+  - prompt/docs troubleshooting
+
 ## Repository Touchpoints
 
 - `server/adapters/mcp/transforms/visibility_policy.py`
@@ -48,6 +69,15 @@ Remove the contradiction between:
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/e2e/integration/test_guided_surface_contract_parity.py`
 - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
+
+## Planned Validation Matrix
+
+- unit:
+  - inspect visibility policy matches the chosen family policy
+- E2E / transport:
+  - inspect-phase guided session does not claim attachment repair is available
+    while hiding the only relevant macros
+  - or, if enabled, inspect-phase guided session actually exposes those macros
 
 ## Changelog Impact
 

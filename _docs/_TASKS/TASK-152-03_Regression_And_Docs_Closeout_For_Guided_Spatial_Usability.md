@@ -28,6 +28,16 @@ operator-facing docs closeout.
 - visibility/integration tests assert the final `inspect_validate` policy
 - board/changelog/docs are updated in the same branch when TASK-152 ships
 
+## Detailed Implementation Notes
+
+- this closeout leaf should not invent new runtime semantics
+- its job is to make sure:
+  - the prompt library
+  - MCP docs / README
+  - visibility tests
+  - transport regressions
+  all tell the same story
+
 ## Docs To Update
 
 - `README.md`
@@ -42,6 +52,20 @@ operator-facing docs closeout.
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/e2e/integration/test_guided_surface_contract_parity.py`
 - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
+
+## Planned Validation Matrix
+
+- docs parity:
+  - valid scope preconditions
+  - attached reference grounding
+  - full semantic naming guidance
+  - seam-verdict interpretation
+- visibility/runtime:
+  - chosen inspect policy is reflected in both family state and visible tools
+- transport:
+  - creature guided session with attached refs and meaningful scope
+  - abbreviated-name scenario
+  - inspect-phase attachment-repair scenario
 
 ## Changelog Impact
 

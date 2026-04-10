@@ -30,6 +30,24 @@ acceptable for embedded organic parts and which still require correction.
   - acceptable embedded blockout seam
   - unacceptable hanging/floating segment seam
 
+## Planned Code / Doc Shape
+
+```text
+Prompt rule:
+- embedded seam (ear/head, snout/head):
+  intersecting can be acceptable at blockout stage
+- segment seam (head/body, tail/body, limb/body):
+  floating_gap remains actionable
+  intersecting is also still a placement defect unless the repair macro/plan
+  explicitly resolves it
+```
+
+## Planned Unit Test Scenarios
+
+- docs parity asserts wording equivalent to:
+  - “floating_gap on head_body/tail_body/limb_body is still actionable”
+  - “intersecting may be acceptable only for embedded seams”
+
 ## Acceptance Criteria
 
 - the prompt/docs contract no longer lets the model rationalize visible
@@ -45,6 +63,14 @@ acceptable for embedded organic parts and which still require correction.
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
+
+## Planned E2E Scenarios
+
+- transport regression/playbook should verify that a run with:
+  - embedded ears/snout
+  - floating head/body or limb/body gaps
+  is summarized/documented as “embedded seams acceptable, floating segment
+  seams still need correction”
 
 ## Changelog Impact
 

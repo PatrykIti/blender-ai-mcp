@@ -18,6 +18,7 @@ model should begin the blockout.
 - `_docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md`
 - `_docs/_PROMPTS/README.md`
 - `README.md`
+- `tests/unit/adapters/mcp/test_public_surface_docs.py`
 
 ## Planned Guidance Shape
 
@@ -35,6 +36,25 @@ model should begin the blockout.
   3. read the attached reference set as the grounding input
   4. start primary masses
 
+## Planned Code / Doc Shape
+
+```text
+Prompt rule:
+- If reference_images are attached for the active guided goal, inspect/read
+  them before deciding:
+  - body/head/tail relative scale
+  - broad silhouette
+  - initial placement
+- Do not start from generic animal priors when active references already exist.
+```
+
+## Planned Unit Test Scenarios
+
+- docs parity asserts wording equivalent to:
+  - “attached references are the primary grounding input”
+  - “read/inspect the attached references before initial mass decisions”
+  - “do not start guess-first when references already exist”
+
 ## Acceptance Criteria
 
 - prompt assets no longer let the model behave as if attached references are
@@ -51,6 +71,12 @@ model should begin the blockout.
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
+
+## Planned E2E Scenarios
+
+- transport scenarios should later verify that the revised prompt/docs contract
+  is exercised in guided creature benchmark/playbook runs, but this leaf itself
+  is prompt/docs focused
 
 ## Changelog Impact
 

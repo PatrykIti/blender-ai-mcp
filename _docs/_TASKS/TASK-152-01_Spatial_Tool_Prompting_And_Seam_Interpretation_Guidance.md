@@ -17,6 +17,24 @@ Make `llm-guided` prompt assets and public docs explicit about:
 - which seam verdicts still require correction versus which are acceptable for
   organic blockout embeddings
 
+## Current Code Anchors
+
+- `_docs/_PROMPTS/GUIDED_SESSION_START.md`
+- `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
+- `_docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md`
+- `_docs/_PROMPTS/README.md`
+- `_docs/_MCP_SERVER/README.md`
+
+## Detailed Implementation Notes
+
+- this subtask defines the model-facing contract; it should not stay at the
+  level of generic prose
+- each prompt/doc surface should include at least one operational example for:
+  - valid spatial scope
+  - attached-reference grounding
+  - full semantic naming
+  - seam-verdict interpretation
+
 ## Repository Touchpoints
 
 - `README.md`
@@ -64,6 +82,14 @@ Make `llm-guided` prompt assets and public docs explicit about:
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
+
+## Planned Validation Matrix
+
+- docs parity:
+  - scope preconditions are explicit
+  - attached-reference grounding is explicit
+  - naming guidance is explicit
+  - seam-verdict interpretation is explicit
 
 ## Changelog Impact
 
