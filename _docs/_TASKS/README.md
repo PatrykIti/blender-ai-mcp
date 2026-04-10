@@ -3,7 +3,7 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 7 tasks
+- **To Do:** 8 tasks
 - **In Progress:** 0 tasks
 - **Done:** 222
 - **Superseded:** 10
@@ -38,6 +38,12 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-148](./TASK-148_No_Auth_HTTP_MCP_Client_Compatibility_And_Auth_Misclassification_Recovery.md) | **No-Auth HTTP MCP Client Compatibility And Auth Misclassification Recovery** | 🔴 High | Board-level follow-on after TASK-125 for hardening the no-auth Streamable HTTP path across Claude, Codex, Gemini, and similar MCP clients without falsely advertising OAuth support. |
+
+### Guided Runtime Reliability
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| [TASK-155](./TASK-155_Guided_Post_Run_Reliability_Followups.md) | **Guided Post-Run Reliability Follow-Ups** | 🔴 High | Board-level follow-on after TASK-130 for post-run guided runtime failures around attachment verdict contracts, spatial refresh/worksets, checkpoint scope, role summaries, macro/assert UX, compact payloads, and empty-scene bootstrap. |
+
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|

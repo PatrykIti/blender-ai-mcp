@@ -215,3 +215,6 @@ This umbrella does **not** cover:
 - delayed too-early inspect escalation while the current build role/workset
   slice is still incomplete
 - reduced search noise for exact tool-name lookups on the shaped guided surface
+- follow-on post-run reliability gaps are tracked as
+  [TASK-155](./TASK-155_Guided_Post_Run_Reliability_Followups.md) instead of
+  reopening this closed umbrella
