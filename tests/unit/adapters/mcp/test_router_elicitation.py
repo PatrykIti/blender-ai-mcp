@@ -298,10 +298,11 @@ def test_router_set_goal_workflow_confirmation_stays_model_facing_on_llm_guided(
     assert ctx.calls == []
 
 
-def test_router_set_goal_no_match_with_guided_manual_continuation_moves_session_to_build(monkeypatch):
-    """A guided-manual no_match handoff should update the session into build phase."""
+def test_router_set_goal_no_match_with_guided_manual_continuation_bootstraps_empty_scene(monkeypatch):
+    """A guided-manual no_match handoff should bootstrap primary workset creation for an empty scene."""
 
     monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
+    monkeypatch.setattr(router_area, "_scene_has_meaningful_guided_objects", lambda: False)
 
     class Handler:
         def set_goal(self, goal, resolved_params=None):
@@ -343,12 +344,14 @@ def test_router_set_goal_no_match_with_guided_manual_continuation_moves_session_
     assert result.guided_reference_readiness.next_action == "attach_reference_images"
     assert result.guided_flow_state is not None
     assert result.guided_flow_state.domain_profile == "creature"
-    assert result.guided_flow_state.current_step == "establish_spatial_context"
+    assert result.guided_flow_state.current_step == "bootstrap_primary_workset"
+    assert result.guided_flow_state.next_actions == ["create_primary_workset"]
     assert session.phase.value == "build"
     assert session.guided_handoff is not None
     assert session.guided_handoff["kind"] == "guided_manual_build"
     assert session.guided_flow_state is not None
     assert session.guided_flow_state["domain_profile"] == "creature"
+    assert session.guided_flow_state["current_step"] == "bootstrap_primary_workset"
 
 
 def test_router_get_status_exposes_session_id_and_transport(monkeypatch):
