@@ -251,6 +251,35 @@ def test_scene_spatial_graph_handlers_reuse_existing_scene_truth_rpc_commands():
     ]
 
 
+def test_scene_relation_graph_keeps_contact_pass_as_seated_even_when_center_z_differs():
+    rpc = DummyRpc(
+        {
+            "scene.get_bounding_box": _ok({"dimensions": [2.0, 2.0, 2.0], "center": [0.0, 0.0, 0.0]}),
+            "scene.measure_gap": _ok({"gap": 0.0, "relation": "contact", "measurement_basis": "bounding_box"}),
+            "scene.measure_alignment": _ok({"is_aligned": False, "aligned_axes": ["X", "Y"], "misaligned_axes": ["Z"]}),
+            "scene.measure_overlap": _ok(
+                {"overlaps": False, "relation": "disjoint", "measurement_basis": "bounding_box"}
+            ),
+            "scene.assert_contact": _ok(
+                {
+                    "assertion": "scene_assert_contact",
+                    "passed": True,
+                    "actual": {"gap": 0.0, "relation": "contact"},
+                    "details": {"measurement_basis": "bounding_box"},
+                }
+            ),
+        }
+    )
+    handler = SceneToolHandler(rpc)
+
+    relations = handler.get_relation_graph(target_objects=["Head", "Body"], goal_hint="assembled creature")
+
+    pair = relations["pairs"][0]
+    assert pair["attachment_semantics"]["attachment_verdict"] == "seated_contact"
+    assert "seated_contact" in pair["relation_verdicts"]
+    assert "misaligned_attachment" not in pair["relation_verdicts"]
+
+
 def test_scene_relation_graph_treats_forel_hindr_names_as_limb_body_pairs():
     rpc = DummyRpc(
         {

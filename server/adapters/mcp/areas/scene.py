@@ -48,6 +48,7 @@ from server.adapters.mcp.router_helper import route_tool_call
 from server.adapters.mcp.sampling.assistant_runner import run_inspection_summary_assistant
 from server.adapters.mcp.sampling.result_types import to_inspection_assistant_contract
 from server.adapters.mcp.session_capabilities import (
+    describe_guided_scope_mismatch,
     get_session_capability_state,
     get_session_capability_state_async,
     record_guided_flow_spatial_check_completion,
@@ -134,6 +135,23 @@ def _should_require_explicit_guided_scope(ctx: Context) -> bool:
     current_step = str(flow_state.get("current_step") or "").strip().lower()
     spatial_refresh_required = bool(flow_state.get("spatial_refresh_required"))
     return current_step == "establish_spatial_context" or spatial_refresh_required
+
+
+def _guided_scope_mismatch_message(
+    ctx: Context,
+    *,
+    tool_name: str,
+    resolved_scope: dict[str, Any] | None,
+) -> str | None:
+    try:
+        session = get_session_capability_state(ctx)
+    except Exception:
+        return None
+    return describe_guided_scope_mismatch(
+        session.guided_flow_state,
+        tool_name=tool_name,
+        resolved_scope=resolved_scope,
+    )
 
 
 MacroErrorStatus = Literal["blocked", "failed"]
@@ -2609,6 +2627,13 @@ def scene_relation_graph(
                     include_truth_payloads=False,
                 )
             )
+            mismatch_message = _guided_scope_mismatch_message(
+                ctx,
+                tool_name="scene_relation_graph",
+                resolved_scope=payload.scope.model_dump(mode="json"),
+            )
+            if mismatch_message:
+                payload.message = mismatch_message
             record_guided_flow_spatial_check_completion(
                 ctx,
                 tool_name="scene_relation_graph",
@@ -2721,9 +2746,17 @@ def scene_view_diagnostics(
                 summary=SceneViewDiagnosticsSummaryContract.model_validate(raw_payload.get("summary") or {}),
                 targets=target_contracts,
                 message=(
-                    "View diagnostics report projection/framing/occlusion state for the requested scope only; use measure/assert tools for truth-space verification."
+                    "View diagnostics report projection/framing/occlusion state for the requested scope only; "
+                    "use measure/assert tools for truth-space verification."
                 ),
             )
+            mismatch_message = _guided_scope_mismatch_message(
+                ctx,
+                tool_name="scene_view_diagnostics",
+                resolved_scope=payload.scope.model_dump(mode="json"),
+            )
+            if mismatch_message:
+                payload.message = f"{payload.message} {mismatch_message}" if payload.message else mismatch_message
             record_guided_flow_spatial_check_completion(
                 ctx,
                 tool_name="scene_view_diagnostics",

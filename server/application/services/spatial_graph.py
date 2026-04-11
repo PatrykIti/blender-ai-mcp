@@ -677,6 +677,8 @@ def _measurement_basis(
 
 def _attachment_verdict(
     *,
+    relation_kind: _CreatureRelationKind | None = None,
+    seam_kind: _CreatureSeamKind | None = None,
     gap_payload: dict[str, Any] | None,
     alignment_payload: dict[str, Any] | None,
     overlap_payload: dict[str, Any] | None,
@@ -686,8 +688,6 @@ def _attachment_verdict(
         return "intersecting"
     if contact_assertion is not None:
         if bool(contact_assertion.get("passed")):
-            if alignment_payload is not None and not bool(alignment_payload.get("is_aligned")):
-                return "misaligned_attachment"
             return "seated_contact"
         actual_relation = str(((contact_assertion.get("actual") or {}).get("relation")) or "").lower()
         if actual_relation == "separated":
@@ -819,9 +819,15 @@ def _build_relation_verdicts(
     overlap_relation = str((overlap_payload or {}).get("relation") or "").strip().lower()
     if overlap_relation:
         verdicts.append(overlap_relation)
-    verdicts.append(_alignment_status(alignment_payload))
+    attachment_verdict = (
+        str(attachment_semantics.get("attachment_verdict") or "needs_followup")
+        if attachment_semantics is not None
+        else None
+    )
+    if attachment_verdict != "seated_contact":
+        verdicts.append(_alignment_status(alignment_payload))
     if attachment_semantics is not None:
-        verdicts.append(str(attachment_semantics.get("attachment_verdict") or "needs_followup"))
+        verdicts.append(attachment_verdict or "needs_followup")
     if support_semantics is not None:
         verdicts.append(str(support_semantics.get("verdict") or "unsupported"))
     if symmetry_semantics is not None:
@@ -1016,6 +1022,8 @@ class SpatialGraphService:
                     "required_seam": is_required_seam,
                     "preferred_macro": _preferred_attachment_macro(relation_kind),
                     "attachment_verdict": _attachment_verdict(
+                        relation_kind=relation_kind,
+                        seam_kind=seam_kind,
                         gap_payload=gap_payload,
                         alignment_payload=alignment_payload,
                         overlap_payload=overlap_payload,
@@ -1100,7 +1108,10 @@ class SpatialGraphService:
                     if item.get("error")
                     or "floating_gap" in item.get("relation_verdicts", [])
                     or "intersecting" in item.get("relation_verdicts", [])
-                    or item.get("alignment_status") == "misaligned"
+                    or (
+                        item.get("alignment_status") == "misaligned"
+                        and (item.get("attachment_semantics") or {}).get("attachment_verdict") != "seated_contact"
+                    )
                     or item.get("contact_passed") is False
                     or (item.get("support_semantics") or {}).get("verdict") == "unsupported"
                     or (item.get("symmetry_semantics") or {}).get("verdict") == "asymmetric"

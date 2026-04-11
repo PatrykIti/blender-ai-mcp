@@ -51,6 +51,44 @@ def _guided_ctx() -> FakeContext:
     return ctx
 
 
+def _guided_refresh_ctx() -> FakeContext:
+    ctx = FakeContext()
+    set_session_capability_state(
+        cast(Context, ctx),
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            surface_profile="llm-guided",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "active_target_scope": {
+                    "scope_kind": "object_set",
+                    "primary_target": "Body",
+                    "object_names": ["Body", "Head"],
+                    "object_count": 2,
+                },
+                "spatial_state_version": 1,
+                "last_spatial_check_version": 0,
+                "spatial_refresh_required": True,
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["refresh_spatial_context"],
+                "blocked_families": [],
+                "allowed_families": ["spatial_context", "reference_context"],
+                "allowed_roles": [],
+                "completed_roles": ["body_core", "head_mass"],
+                "missing_roles": [],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "blocked",
+            },
+        ),
+    )
+    return ctx
+
+
 def test_scene_scope_graph_requires_explicit_scope_during_guided_spatial_gate(monkeypatch):
     monkeypatch.setattr(scene_area, "route_tool_call", lambda tool_name, params, direct_executor: direct_executor())
 
@@ -104,3 +142,40 @@ def test_scene_relation_graph_requires_explicit_scope_during_guided_spatial_gate
     assert result.payload is None
     assert result.error is not None
     assert "Provide target_object, target_objects, or collection_name" in result.error
+
+
+def test_scene_relation_graph_reports_active_scope_mismatch_during_refresh(monkeypatch):
+    monkeypatch.setattr(scene_area, "route_tool_call", lambda tool_name, params, direct_executor: direct_executor())
+
+    class Handler:
+        def get_relation_graph(
+            self,
+            target_object=None,
+            target_objects=None,
+            collection_name=None,
+            goal_hint=None,
+            include_truth_payloads=False,
+        ):
+            return {
+                "scope": {
+                    "scope_kind": "object_set",
+                    "primary_target": "Body",
+                    "object_names": ["Body", "Tail"],
+                    "object_count": 2,
+                },
+                "summary": {"pair_count": 0},
+                "pairs": [],
+            }
+
+    monkeypatch.setattr(scene_area, "get_scene_handler", lambda: Handler())
+
+    result = scene_area.scene_relation_graph(
+        _guided_refresh_ctx(),
+        target_objects=["Body", "Tail"],
+        goal_hint="ear on head",
+    )
+
+    assert result.payload is not None
+    assert result.payload.message is not None
+    assert "did not satisfy the active guided spatial scope" in result.payload.message
+    assert "target_objects=['Body', 'Head']" in result.payload.message

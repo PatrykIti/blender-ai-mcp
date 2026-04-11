@@ -12,6 +12,7 @@ from fastmcp import FastMCP
 from fastmcp.exceptions import NotFoundError, ToolError
 from fastmcp.server.transforms.visibility import create_visibility_transforms
 from server.adapters.mcp.factory import build_server, build_surface_providers
+from server.adapters.mcp.guided_contract import canonicalize_guided_tool_arguments
 from server.adapters.mcp.session_capabilities import SessionCapabilityState
 from server.adapters.mcp.session_phase import SessionPhase
 from server.adapters.mcp.surfaces import get_surface_profile
@@ -1030,6 +1031,43 @@ def test_call_tool_rejects_ambiguous_legacy_scene_clean_scene_split_flags(monkey
             )
 
     asyncio.run(run())
+
+
+def test_guided_call_argument_canonicalization_accepts_common_macro_aliases():
+    payload = canonicalize_guided_tool_arguments(
+        "macro_attach_part_to_surface",
+        {
+            "part_object": "Head",
+            "reference_object": "Body",
+            "surface_axis": "+Z",
+        },
+    )
+
+    assert payload == {
+        "part_object": "Head",
+        "surface_object": "Body",
+        "surface_axis": "Z",
+        "surface_side": "positive",
+    }
+
+
+def test_guided_call_argument_canonicalization_accepts_proportion_axis_alias():
+    payload = canonicalize_guided_tool_arguments(
+        "scene_assert_proportion",
+        {
+            "object_name": "Head",
+            "axis": "Z",
+            "expected_ratio": 0.7,
+            "reference_object": "Body",
+        },
+    )
+
+    assert payload == {
+        "object_name": "Head",
+        "axis_a": "Z",
+        "expected_ratio": 0.7,
+        "reference_object": "Body",
+    }
 
 
 def test_direct_modeling_create_primitive_rejects_non_public_shape_with_actionable_guidance(monkeypatch):

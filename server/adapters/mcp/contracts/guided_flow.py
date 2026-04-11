@@ -23,6 +23,7 @@ GuidedFlowFamilyLiteral = Literal[
 ]
 GuidedFlowStepLiteral = Literal[
     "understand_goal",
+    "bootstrap_primary_workset",
     "establish_spatial_context",
     "establish_reference_context",
     "create_primary_masses",

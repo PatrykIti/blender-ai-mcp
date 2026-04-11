@@ -10,6 +10,7 @@ from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract
 from server.adapters.mcp.session_capabilities import (
     SessionCapabilityState,
     advance_guided_flow_from_iteration_async,
+    bootstrap_guided_empty_scene_primary_workset_async,
     get_session_capability_state,
     mark_guided_spatial_state_stale,
     record_guided_flow_spatial_check_completion,
@@ -570,6 +571,51 @@ def test_scene_clean_scene_immediately_rearms_spatial_context_for_active_primary
     assert state.guided_flow_state["next_actions"] == ["refresh_spatial_context"]
 
 
+def test_empty_scene_bootstrap_moves_guided_flow_to_primary_workset_creation():
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "establish_spatial_context",
+                "completed_steps": ["understand_goal"],
+                "required_checks": [
+                    {
+                        "check_id": "scope_graph",
+                        "tool_name": "scene_scope_graph",
+                        "reason": "Establish scope",
+                        "status": "pending",
+                        "priority": "high",
+                    }
+                ],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["run_required_checks"],
+                "blocked_families": ["build", "late_refinement", "finish"],
+                "allowed_families": ["spatial_context", "reference_context"],
+                "allowed_roles": [],
+                "completed_roles": [],
+                "missing_roles": [],
+                "required_role_groups": ["spatial_context"],
+                "step_status": "blocked",
+            },
+        ),
+    )
+
+    state = asyncio.run(bootstrap_guided_empty_scene_primary_workset_async(ctx))
+
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["current_step"] == "bootstrap_primary_workset"
+    assert state.guided_flow_state["required_checks"] == []
+    assert state.guided_flow_state["next_actions"] == ["create_primary_workset"]
+    assert state.guided_flow_state["allowed_families"] == ["primary_masses", "reference_context"]
+    assert state.guided_flow_state["allowed_roles"] == ["body_core", "head_mass", "tail_mass"]
+
+
 def test_stale_secondary_step_rearms_and_refresh_clear_restores_secondary_families():
     ctx = FakeContext()
     set_session_capability_state(
@@ -856,3 +902,85 @@ def test_secondary_role_registration_advances_creature_flow_to_checkpoint_iterat
         "spatial_context",
         "reference_context",
     ]
+    assert state.guided_flow_state["allowed_roles"] == ["tail_mass", "snout_mass"]
+
+
+def test_checkpoint_iterate_role_summary_keeps_missing_build_roles_visible():
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "checkpoint_iterate",
+                "completed_steps": [
+                    "understand_goal",
+                    "establish_spatial_context",
+                    "create_primary_masses",
+                    "place_secondary_parts",
+                ],
+                "active_target_scope": _scope("Squirrel_Body", "Squirrel_Head", "Squirrel_Ears"),
+                "spatial_scope_fingerprint": "scope_1",
+                "spatial_state_version": 0,
+                "last_spatial_check_version": 0,
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["run_checkpoint_iterate"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "secondary_parts", "checkpoint_iterate"],
+                "allowed_roles": [],
+                "completed_roles": ["body_core", "head_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "missing_roles": [],
+                "required_role_groups": ["checkpoint_iterate"],
+                "step_status": "needs_checkpoint",
+            },
+            guided_part_registry=[
+                {
+                    "object_name": "Squirrel_Body",
+                    "role": "body_core",
+                    "role_group": "primary_masses",
+                    "status": "registered",
+                },
+                {
+                    "object_name": "Squirrel_Head",
+                    "role": "head_mass",
+                    "role_group": "primary_masses",
+                    "status": "registered",
+                },
+                {
+                    "object_name": "Squirrel_Ears",
+                    "role": "ear_pair",
+                    "role_group": "secondary_parts",
+                    "status": "registered",
+                },
+                {
+                    "object_name": "Squirrel_ForeLegs",
+                    "role": "foreleg_pair",
+                    "role_group": "secondary_parts",
+                    "status": "registered",
+                },
+                {
+                    "object_name": "Squirrel_HindLegs",
+                    "role": "hindleg_pair",
+                    "role_group": "secondary_parts",
+                    "status": "registered",
+                },
+            ],
+        ),
+    )
+
+    state = mark_guided_spatial_state_stale(
+        ctx,
+        tool_name="modeling_transform_object",
+        family="primary_masses",
+        reason="modeling_transform_object",
+    )
+
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["spatial_state_stale"] is True
+    assert state.guided_flow_state["spatial_refresh_required"] is False
+    assert state.guided_flow_state["allowed_roles"] == ["tail_mass", "snout_mass"]

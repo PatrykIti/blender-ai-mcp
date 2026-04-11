@@ -141,6 +141,10 @@ SESSION_GUIDED_PART_REGISTRY_KEY = "guided_part_registry"
 _GUIDED_ROLE_SUMMARY_PLAN: dict[str, dict[GuidedFlowStepLiteral, dict[str, list[str]]]] = {
     "generic": {
         "understand_goal": {"allowed_roles": [], "required_role_groups": []},
+        "bootstrap_primary_workset": {
+            "allowed_roles": ["anchor_core", "primary_mass"],
+            "required_role_groups": ["primary_masses"],
+        },
         "establish_spatial_context": {"allowed_roles": [], "required_role_groups": ["spatial_context"]},
         "establish_reference_context": {"allowed_roles": [], "required_role_groups": ["reference_context"]},
         "create_primary_masses": {
@@ -157,6 +161,10 @@ _GUIDED_ROLE_SUMMARY_PLAN: dict[str, dict[GuidedFlowStepLiteral, dict[str, list[
     },
     "creature": {
         "understand_goal": {"allowed_roles": [], "required_role_groups": []},
+        "bootstrap_primary_workset": {
+            "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+            "required_role_groups": ["primary_masses"],
+        },
         "establish_spatial_context": {"allowed_roles": [], "required_role_groups": ["spatial_context"]},
         "establish_reference_context": {"allowed_roles": [], "required_role_groups": ["reference_context"]},
         "create_primary_masses": {
@@ -173,6 +181,10 @@ _GUIDED_ROLE_SUMMARY_PLAN: dict[str, dict[GuidedFlowStepLiteral, dict[str, list[
     },
     "building": {
         "understand_goal": {"allowed_roles": [], "required_role_groups": []},
+        "bootstrap_primary_workset": {
+            "allowed_roles": ["footprint_mass", "main_volume", "roof_mass"],
+            "required_role_groups": ["primary_masses"],
+        },
         "establish_spatial_context": {"allowed_roles": [], "required_role_groups": ["spatial_context"]},
         "establish_reference_context": {"allowed_roles": [], "required_role_groups": ["reference_context"]},
         "create_primary_masses": {
@@ -375,6 +387,12 @@ def _normalize_guided_target_scope(value: Any) -> dict[str, Any] | None:
         return None
 
     try:
+        if isinstance(value, dict):
+            value = {
+                key: value.get(key)
+                for key in ("scope_kind", "primary_target", "object_names", "object_count", "collection_name")
+                if key in value
+            }
         contract = GuidedTargetScopeContract.model_validate(value)
     except Exception:
         return None
@@ -476,6 +494,7 @@ def _build_spatial_refresh_allowed_families(
 def _default_next_actions_for_step(current_step: GuidedFlowStepLiteral) -> list[str]:
     return {
         "understand_goal": ["answer_router_questions"],
+        "bootstrap_primary_workset": ["create_primary_workset"],
         "establish_spatial_context": ["run_required_checks"],
         "establish_reference_context": ["attach_reference_images"],
         "create_primary_masses": ["begin_primary_masses"],
@@ -519,6 +538,7 @@ def _flow_state_for_current_step(
         domain_profile=contract.domain_profile,
         current_step=contract.current_step,
         part_registry=part_registry,
+        completed_role_hints=contract.completed_roles,
     )
     contract.allowed_roles = role_summary["allowed_roles"]
     contract.completed_roles = role_summary["completed_roles"]
@@ -542,6 +562,11 @@ def _should_rearm_spatial_gate(contract: GuidedFlowStateContract, *, force: bool
         contract.current_step == "place_secondary_parts"
         and contract.last_spatial_mutation_reason == "modeling_create_primitive"
     ):
+        return False
+    if contract.current_step == "checkpoint_iterate" and contract.last_spatial_mutation_reason in {
+        "modeling_create_primitive",
+        "modeling_transform_object",
+    }:
         return False
     return contract.current_step in {
         "place_secondary_parts",
@@ -579,6 +604,7 @@ def _apply_spatial_refresh_gate(
         domain_profile=contract.domain_profile,
         current_step=contract.current_step,
         part_registry=part_registry,
+        completed_role_hints=contract.completed_roles,
     )
     contract.allowed_roles = role_summary["allowed_roles"]
     contract.completed_roles = role_summary["completed_roles"]
@@ -663,6 +689,9 @@ def _build_allowed_families(
     known = set(order)
     by_step: dict[GuidedFlowStepLiteral, list[GuidedFlowFamilyLiteral]] = {
         "understand_goal": ["reference_context", "utility"],
+        "bootstrap_primary_workset": (
+            ["primary_masses", "reference_context"] if domain_profile == "creature" else ["primary_masses"]
+        ),
         "establish_spatial_context": (
             ["spatial_context", "reference_context"] if domain_profile == "creature" else ["spatial_context"]
         ),
@@ -696,6 +725,7 @@ def _build_role_summary(
     domain_profile: Literal["generic", "creature", "building"],
     current_step: GuidedFlowStepLiteral,
     part_registry: list[dict[str, Any]] | None = None,
+    completed_role_hints: list[str] | None = None,
 ) -> dict[str, list[str]]:
     plan = _GUIDED_ROLE_SUMMARY_PLAN[domain_profile][current_step]
     allowed_roles = list(plan["allowed_roles"])
@@ -705,11 +735,16 @@ def _build_role_summary(
             for item in part_registry or []
             if isinstance(item, dict) and str(item.get("role") or "").strip()
         }
+        | {str(role).strip() for role in completed_role_hints or [] if str(role).strip()}
     )
     if current_step in {"place_secondary_parts", "checkpoint_iterate"}:
         primary_roles = list(_GUIDED_ROLE_SUMMARY_PLAN[domain_profile]["create_primary_masses"]["allowed_roles"])
         missing_primary_roles = [role for role in primary_roles if role not in completed_roles]
         allowed_roles = [*missing_primary_roles, *allowed_roles]
+    if current_step == "checkpoint_iterate":
+        secondary_roles = list(_GUIDED_ROLE_SUMMARY_PLAN[domain_profile]["place_secondary_parts"]["allowed_roles"])
+        missing_secondary_roles = [role for role in secondary_roles if role not in completed_roles]
+        allowed_roles = [*allowed_roles, *missing_secondary_roles]
     missing_roles = [role for role in allowed_roles if role not in completed_roles]
     return {
         "allowed_roles": allowed_roles,
@@ -729,6 +764,7 @@ def _update_guided_flow_role_summary_dict(
         domain_profile=contract.domain_profile,
         current_step=contract.current_step,
         part_registry=part_registry,
+        completed_role_hints=contract.completed_roles,
     )
     contract.allowed_roles = role_summary["allowed_roles"]
     contract.completed_roles = role_summary["completed_roles"]
@@ -749,9 +785,14 @@ def _maybe_advance_guided_flow_from_part_registry_dict(
         if isinstance(item, dict) and str(item.get("role") or "").strip()
     }
 
-    if contract.current_step == "create_primary_masses":
+    if contract.current_step in {"bootstrap_primary_workset", "create_primary_masses"}:
         required_roles = _GUIDED_PRIMARY_REQUIRED_ROLES[contract.domain_profile]
         if all(role in completed_roles for role in required_roles):
+            if (
+                contract.current_step == "bootstrap_primary_workset"
+                and "bootstrap_primary_workset" not in contract.completed_steps
+            ):
+                contract.completed_steps.append("bootstrap_primary_workset")
             if "create_primary_masses" not in contract.completed_steps:
                 contract.completed_steps.append("create_primary_masses")
             contract.current_step = "place_secondary_parts"
@@ -772,6 +813,7 @@ def _maybe_advance_guided_flow_from_part_registry_dict(
         domain_profile=contract.domain_profile,
         current_step=contract.current_step,
         part_registry=part_registry,
+        completed_role_hints=contract.completed_roles,
     )
     contract.allowed_roles = role_summary["allowed_roles"]
     contract.completed_roles = role_summary["completed_roles"]
@@ -782,6 +824,44 @@ def _maybe_advance_guided_flow_from_part_registry_dict(
 
 def _get_valid_guided_roles(domain_profile: Literal["generic", "creature", "building"]) -> list[str]:
     return sorted(_GUIDED_ROLE_GROUP_BY_ROLE[domain_profile].keys())
+
+
+def describe_guided_scope_mismatch(
+    flow_state: dict[str, Any] | None,
+    *,
+    tool_name: str,
+    resolved_scope: dict[str, Any] | None,
+) -> str | None:
+    """Return actionable guidance when a spatial read used the wrong active guided scope."""
+
+    if flow_state is None:
+        return None
+    try:
+        contract = GuidedFlowStateContract.model_validate(flow_state)
+    except Exception:
+        return None
+    if contract.active_target_scope is None:
+        return None
+    if contract.current_step != "establish_spatial_context" and not contract.spatial_refresh_required:
+        return None
+    resolved_fingerprint = _build_guided_target_scope_fingerprint(resolved_scope)
+    active_scope = contract.active_target_scope.model_dump(mode="json")
+    active_fingerprint = contract.spatial_scope_fingerprint or _build_guided_target_scope_fingerprint(active_scope)
+    if resolved_fingerprint is None or active_fingerprint is None or resolved_fingerprint == active_fingerprint:
+        return None
+
+    active_objects = list(active_scope.get("object_names") or [])
+    active_collection = active_scope.get("collection_name")
+    if active_collection:
+        expected = f"collection_name={active_collection!r}"
+    elif active_objects:
+        expected = f"target_objects={active_objects!r}"
+    else:
+        expected = f"target_object={active_scope.get('primary_target')!r}"
+    return (
+        f"{tool_name}(...) was read-only but did not satisfy the active guided spatial scope. "
+        f"Active scope is {expected}; rerun this check with that scope before relying on it for the guided gate."
+    )
 
 
 def _resolve_guided_role_group(
@@ -947,6 +1027,52 @@ async def get_session_capability_state_async(ctx: Context) -> SessionCapabilityS
         ),
         pending_reference_images=await get_session_value_async(ctx, SESSION_PENDING_REFERENCE_IMAGES_KEY),
     )
+
+
+async def bootstrap_guided_empty_scene_primary_workset_async(ctx: Context) -> SessionCapabilityState:
+    """Move an empty guided scene from spatial bootstrap to first primary workset creation."""
+
+    current = await get_session_capability_state_async(ctx)
+    if current.guided_flow_state is None:
+        return current
+
+    contract = GuidedFlowStateContract.model_validate(current.guided_flow_state)
+    if contract.current_step != "establish_spatial_context":
+        return current
+
+    contract.current_step = "bootstrap_primary_workset"
+    contract.blocked_families = []
+    contract.required_checks = []
+    contract.active_target_scope = None
+    contract.spatial_scope_fingerprint = None
+    contract.spatial_refresh_required = False
+    contract.spatial_state_stale = False
+    contract.last_spatial_check_version = None
+    _flow_state_for_current_step(contract, part_registry=current.guided_part_registry)
+
+    state = SessionCapabilityState(
+        phase=current.phase,
+        goal=current.goal,
+        pending_clarification=current.pending_clarification,
+        last_router_status=current.last_router_status,
+        policy_context=current.policy_context,
+        surface_profile=current.surface_profile,
+        contract_version=current.contract_version,
+        pending_elicitation_id=current.pending_elicitation_id,
+        pending_workflow_name=current.pending_workflow_name,
+        partial_answers=current.partial_answers,
+        pending_question_set_id=current.pending_question_set_id,
+        last_elicitation_action=current.last_elicitation_action,
+        last_router_disposition=current.last_router_disposition,
+        last_router_error=current.last_router_error,
+        reference_images=current.reference_images,
+        guided_handoff=current.guided_handoff,
+        guided_flow_state=contract.model_dump(mode="json"),
+        guided_part_registry=current.guided_part_registry,
+        pending_reference_images=current.pending_reference_images,
+    )
+    await set_session_capability_state_async(ctx, state)
+    return state
 
 
 def set_session_capability_state(ctx: Context, state: SessionCapabilityState) -> None:
@@ -1610,6 +1736,16 @@ def _mark_guided_spatial_state_stale_dict(
         contract.last_spatial_check_version = None
 
     _apply_spatial_refresh_gate(contract, part_registry=part_registry)
+    role_summary = _build_role_summary(
+        domain_profile=contract.domain_profile,
+        current_step=contract.current_step,
+        part_registry=part_registry,
+        completed_role_hints=contract.completed_roles,
+    )
+    contract.allowed_roles = role_summary["allowed_roles"]
+    contract.completed_roles = role_summary["completed_roles"]
+    contract.missing_roles = role_summary["missing_roles"]
+    contract.required_role_groups = role_summary["required_role_groups"]
     return contract.model_dump(mode="json")
 
 

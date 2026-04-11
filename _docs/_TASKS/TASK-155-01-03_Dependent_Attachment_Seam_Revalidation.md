@@ -1,7 +1,7 @@
 # TASK-155-01-03: Dependent Attachment Seam Revalidation
 
 **Parent:** [TASK-155-01](./TASK-155-01_Attachment_Verdict_Contract_And_Truth_Semantics.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -46,3 +46,8 @@ broken while the flow continues.
 ## Changelog Impact
 
 - include in the TASK-155 changelog entry
+
+## Completion Summary
+
+- kept assembled-workset seam validation active by enforcing checkpoint scope
+  coverage, so dependent seams are not hidden by narrowing to one safe object

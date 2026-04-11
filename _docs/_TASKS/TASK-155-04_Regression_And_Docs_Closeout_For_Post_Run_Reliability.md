@@ -1,7 +1,7 @@
 # TASK-155-04: Regression And Docs Closeout For Post-Run Reliability
 
 **Parent:** [TASK-155](./TASK-155_Guided_Post_Run_Reliability_Followups.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟠 High
 
 ## Objective
@@ -49,3 +49,13 @@ then align operator docs, prompt assets, task status, and changelog history.
 ## Changelog Impact
 
 - add and index a dedicated TASK-155 changelog entry during closeout
+
+## Completion Summary
+
+- updated MCP/prompt docs, task board, descendant task statuses, and the
+  `_docs/_CHANGELOG/234-*` entry
+- focused TASK-155 unit regression pack passed with `157 passed`
+- docs/visibility parity passed with `37 passed`
+- guided transport E2E passed with `4 passed, 2 skipped`
+- Blender-backed vision/macro E2E was attempted and skipped locally because
+  the Blender RPC-backed cases were not available in this environment

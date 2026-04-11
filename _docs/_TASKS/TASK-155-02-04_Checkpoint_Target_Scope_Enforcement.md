@@ -1,7 +1,7 @@
 # TASK-155-02-04: Checkpoint Target Scope Enforcement
 
 **Parent:** [TASK-155-02](./TASK-155-02_Governor_Workset_Refresh_And_Bootstrap_Discipline.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -44,3 +44,8 @@ after `Body + Head + Snout` was the active stage.
 ## Changelog Impact
 
 - include in the TASK-155 changelog entry
+
+## Completion Summary
+
+- stage checkpoint compare/iterate now blocks active assembled-workset bypasses
+  that narrow to a single safe object while required seams remain out of scope

@@ -1,7 +1,7 @@
 # TASK-155-02: Governor Workset, Refresh, And Bootstrap Discipline
 
 **Parent:** [TASK-155](./TASK-155_Guided_Post_Run_Reliability_Followups.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -62,3 +62,9 @@ misleading role summaries, and empty-scene bootstrap.
 | 3 | [TASK-155-02-03](./TASK-155-02-03_Scope_Mismatch_Actionable_Guidance.md) | Return actionable active-scope mismatch guidance for spatial refresh tools |
 | 4 | [TASK-155-02-04](./TASK-155-02-04_Checkpoint_Target_Scope_Enforcement.md) | Prevent checkpoint target bypasses that ignore active required seams |
 | 5 | [TASK-155-02-05](./TASK-155-02-05_Checkpoint_Role_Summary_Consistency.md) | Keep role summaries consistent with allowed execution after checkpoints and refresh |
+
+## Completion Summary
+
+- delivered empty-scene bootstrap, bounded checkpoint-iterate create/transform
+  refresh behavior, active-scope mismatch guidance, checkpoint scope
+  enforcement, and role-summary consistency for checkpoint/post-refresh states

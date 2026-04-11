@@ -1,7 +1,7 @@
 # TASK-155-01: Attachment Verdict Contract And Truth Semantics
 
 **Parent:** [TASK-155](./TASK-155_Guided_Post_Run_Reliability_Followups.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -55,3 +55,12 @@ valid seated seams into false correction loops.
 | 1 | [TASK-155-01-01](./TASK-155-01-01_Misaligned_Attachment_Relation_Verdict_Contract.md) | Make the relation verdict contract accept `misaligned_attachment` end to end |
 | 2 | [TASK-155-01-02](./TASK-155-01-02_Seam_Aware_Attachment_Alignment_Semantics.md) | Avoid false `misaligned_attachment` on valid seated support seams |
 | 3 | [TASK-155-01-03](./TASK-155-01-03_Dependent_Attachment_Seam_Revalidation.md) | Revalidate or preserve dependent attached parts after seating macros move an anchor/part |
+
+## Completion Summary
+
+- `misaligned_attachment` is now a valid relation verdict, and contact-passing
+  seams remain `seated_contact` instead of being escalated solely from center
+  alignment
+- dependent seam risk is addressed through active-workset checkpoint scope
+  enforcement and assembled seam revalidation rather than hidden single-object
+  bypasses

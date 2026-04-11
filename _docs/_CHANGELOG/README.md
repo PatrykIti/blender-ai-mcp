@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [234](./234-2026-04-11-guided-post-run-reliability-followups.md) | 2026-04-11 | **Guided post-run reliability follow-ups** | - |
 | [233](./233-2026-04-10-generic-guided-governor-hardening.md) | 2026-04-10 | **Generic guided governor hardening** | - |
 | [232](./232-2026-04-10-guided-naming-policy-and-semantic-name-enforcement.md) | 2026-04-10 | **Guided naming policy and semantic name enforcement** | - |
 | [231](./231-2026-04-10-guided-visibility-authority-and-manifest-demotion.md) | 2026-04-10 | **Guided visibility authority and manifest demotion** | - |

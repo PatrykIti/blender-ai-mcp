@@ -388,9 +388,11 @@ def _stage_compare_response(
     action_hints: list[ReferenceActionHintContract] | None = None,
     part_segmentation: ReferencePartSegmentationContract | None = None,
     view_diagnostics_hints: list[ReferenceViewDiagnosticsHintContract] | None = None,
+    include_captures: bool = True,
     message: str | None = None,
     error: str | None = None,
 ) -> ReferenceCompareStageCheckpointResponseContract:
+    emitted_captures = list(captures) if include_captures else []
     return ReferenceCompareStageCheckpointResponseContract(
         action="compare_stage_checkpoint",
         session_id=session_id,
@@ -420,7 +422,7 @@ def _stage_compare_response(
         preset_profile=preset_profile,
         preset_names=preset_names,
         capture_count=len(captures),
-        captures=list(captures),
+        captures=emitted_captures,
         reference_count=len(reference_ids),
         reference_ids=reference_ids,
         reference_labels=reference_labels,
@@ -609,6 +611,53 @@ def _guided_stage_reference_recovery_error(
         f"{base_error} The requested Blender objects/collection already exist, so the scene may still be intact "
         "while the guided MCP session state was reset or reconnected. Re-run router_set_goal(...), then restore "
         "reference_images(...) only if guided_reference_readiness still reports them missing."
+    )
+
+
+def _guided_checkpoint_scope_error(
+    guided_flow_state: dict[str, Any] | None,
+    requested_scope: SceneAssembledTargetScopeContract,
+) -> str | None:
+    """Return an actionable error when a checkpoint narrows away from the active workset."""
+
+    if not guided_flow_state:
+        return None
+    try:
+        flow_state = GuidedFlowStateContract.model_validate(guided_flow_state)
+    except Exception:
+        return None
+    if flow_state.current_step not in {"checkpoint_iterate", "inspect_validate"}:
+        return None
+    active_scope = flow_state.active_target_scope
+    if active_scope is None:
+        return None
+
+    active_collection = str(active_scope.collection_name or "").strip()
+    requested_collection = str(requested_scope.collection_name or "").strip()
+    if active_collection and requested_collection == active_collection:
+        return None
+
+    active_objects = {name.lower() for name in active_scope.object_names if name.strip()}
+    requested_objects = {name.lower() for name in requested_scope.object_names if name.strip()}
+    if active_scope.primary_target:
+        active_objects.add(active_scope.primary_target.lower())
+    if requested_scope.primary_target:
+        requested_objects.add(requested_scope.primary_target.lower())
+
+    if len(active_objects) <= 1:
+        return None
+    if active_objects and active_objects.issubset(requested_objects):
+        return None
+
+    expected = (
+        f"collection_name={active_collection!r}"
+        if active_collection
+        else f"target_objects={list(active_scope.object_names)!r}"
+    )
+    return (
+        "Checkpoint target scope does not cover the active guided workset. "
+        f"Use {expected} so required seams remain visible; do not narrow to a single safe object while the "
+        "assembled workset is still active."
     )
 
 
@@ -2058,7 +2107,11 @@ def _build_correction_truth_bundle(
             separated_pairs += 1
         if overlap is not None and bool(overlap.get("overlaps")):
             overlap_pairs += 1
-        if alignment is not None and not bool(alignment.get("is_aligned")):
+        if (
+            alignment is not None
+            and not bool(alignment.get("is_aligned"))
+            and not (contact_assertion is not None and contact_assertion.passed)
+        ):
             misaligned_pairs += 1
         if contact_assertion is not None and not contact_assertion.passed:
             contact_failures += 1
@@ -2145,6 +2198,8 @@ def _contact_semantics_note(
 
 def _attachment_verdict(
     *,
+    relation_kind: _CreatureRelationKind | None = None,
+    seam_kind: _CreatureSeamKind | None = None,
     gap_payload: dict[str, Any] | None,
     alignment_payload: dict[str, Any] | None,
     overlap_payload: dict[str, Any] | None,
@@ -2154,8 +2209,6 @@ def _attachment_verdict(
         return "intersecting"
     if contact_assertion is not None:
         if contact_assertion.passed:
-            if alignment_payload is not None and not bool(alignment_payload.get("is_aligned")):
-                return "misaligned_attachment"
             return "seated_contact"
         actual_relation = str((contact_assertion.actual or {}).get("relation") or "").lower()
         if actual_relation == "separated":
@@ -2167,6 +2220,21 @@ def _attachment_verdict(
     if alignment_payload is not None and not bool(alignment_payload.get("is_aligned")):
         return "misaligned_attachment"
     return "needs_followup"
+
+
+def _has_actionable_attachment_alignment_issue(
+    *,
+    attachment_semantics: SceneAttachmentSemanticsContract | None,
+    alignment_payload: dict[str, Any] | None,
+    contact_assertion: SceneAssertionPayloadContract | None,
+) -> bool:
+    """Return True only when alignment drift should remain an attachment finding."""
+
+    if alignment_payload is None or bool(alignment_payload.get("is_aligned")):
+        return False
+    if contact_assertion is not None and contact_assertion.passed:
+        return False
+    return attachment_semantics is None or attachment_semantics.attachment_verdict == "misaligned_attachment"
 
 
 def _preferred_attach_surface_axis(
@@ -2261,6 +2329,8 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
                     required_seam=False,
                     preferred_macro=_preferred_attachment_macro(relation_kind),
                     attachment_verdict=_attachment_verdict(
+                        relation_kind=relation_kind,
+                        seam_kind=_attachment_seam_kind(part_object, anchor_object),
                         gap_payload=check.gap,
                         alignment_payload=check.alignment,
                         overlap_payload=check.overlap,
@@ -2270,7 +2340,11 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
             has_contact_failure = check.contact_assertion is not None and not check.contact_assertion.passed
             has_gap = check.gap is not None and str(check.gap.get("relation") or "").lower() == "separated"
             has_overlap = check.overlap is not None and bool(check.overlap.get("overlaps"))
-            has_alignment_issue = check.alignment is not None and not bool(check.alignment.get("is_aligned"))
+            has_alignment_issue = _has_actionable_attachment_alignment_issue(
+                attachment_semantics=attachment_semantics,
+                alignment_payload=check.alignment,
+                contact_assertion=check.contact_assertion,
+            )
             if attachment_semantics is not None and (
                 has_contact_failure or has_gap or has_overlap or has_alignment_issue
             ):
@@ -2345,7 +2419,7 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
                         relation_verdicts=list(check.relation_verdicts or []),
                     )
                 )
-            if check.alignment is not None and not bool(check.alignment.get("is_aligned")):
+            if has_alignment_issue:
                 pair_items.append(
                     SceneTruthFollowupItemContract(
                         kind="alignment",
@@ -2677,6 +2751,27 @@ async def _run_stage_checkpoint_compare(
         target_objects=resolved_target_objects,
         collection_name=resolved_collection_name,
     )
+    scope_error = _guided_checkpoint_scope_error(session.guided_flow_state, assembled_target_scope)
+    if scope_error:
+        return _stage_compare_response(
+            session_id=session_id,
+            transport=transport,
+            guided_flow_state=session.guided_flow_state,
+            checkpoint_id=checkpoint_id,
+            checkpoint_label=checkpoint_label,
+            goal=goal,
+            target_object=resolved_target_object,
+            target_objects=resolved_target_objects,
+            collection_name=resolved_collection_name,
+            assembled_target_scope=assembled_target_scope,
+            target_view=target_view,
+            preset_profile=preset_profile,
+            preset_names=[],
+            reference_ids=[],
+            reference_labels=[],
+            guided_reference_readiness=readiness_contract,
+            error=scope_error,
+        )
 
     references = list(session.reference_images or [])
     selected_reference_records = select_reference_records_for_target(
@@ -2877,6 +2972,7 @@ async def _run_stage_checkpoint_compare(
     )
     refinement_route = _select_refinement_route(staged_compare_contract)
     refinement_handoff = _build_refinement_handoff(staged_compare_contract, refinement_route)
+    compact_capture_trimmed = preset_profile == "compact" and bool(captures)
     budget_control = ReferenceHybridBudgetControlContract(
         model_name=runtime_model_name,
         max_input_chars=VISION_ASSIST_POLICY.max_input_chars,
@@ -2886,10 +2982,16 @@ async def _run_stage_checkpoint_compare(
         emitted_pair_count=budgeted_truth_bundle.summary.pair_count,
         original_candidate_count=len(full_correction_candidates),
         emitted_candidate_count=len(correction_candidates),
-        trimming_applied=scope_trimmed or detail_trimmed,
+        trimming_applied=scope_trimmed or detail_trimmed or compact_capture_trimmed,
         scope_trimmed=scope_trimmed,
-        detail_trimmed=detail_trimmed,
-        trim_reason=("model_aware_budget_control" if scope_trimmed or detail_trimmed else None),
+        detail_trimmed=detail_trimmed or compact_capture_trimmed,
+        trim_reason=(
+            "model_aware_budget_control"
+            if scope_trimmed or detail_trimmed
+            else "compact_checkpoint_payload"
+            if compact_capture_trimmed
+            else None
+        ),
         selected_focus_pairs=list(truth_followup.focus_pairs or []),
     )
     return _stage_compare_response(
@@ -2920,6 +3022,7 @@ async def _run_stage_checkpoint_compare(
         silhouette_analysis=silhouette_analysis,
         action_hints=action_hints,
         part_segmentation=part_segmentation,
+        include_captures=preset_profile != "compact",
         message=(
             f"Captured and compared stage checkpoint '{checkpoint_label or checkpoint_id}' using {len(captures)} deterministic view(s)."
             if outcome.status == "success"

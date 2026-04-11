@@ -33,6 +33,7 @@ from server.adapters.mcp.sampling.assistant_runner import run_repair_suggestion_
 from server.adapters.mcp.sampling.result_types import to_repair_assistant_contract
 from server.adapters.mcp.session_capabilities import (
     apply_visibility_for_session_state,
+    bootstrap_guided_empty_scene_primary_workset_async,
     build_guided_reference_readiness_payload,
     clear_session_goal_state_async,
     get_session_capability_state_async,
@@ -44,7 +45,7 @@ from server.adapters.mcp.tasks.job_registry import get_background_job_registry
 from server.adapters.mcp.transforms.visibility_policy import build_guided_handoff_payload
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.infrastructure.config import get_config
-from server.infrastructure.di import get_router_handler
+from server.infrastructure.di import get_router_handler, get_scene_handler
 from server.infrastructure.telemetry import get_telemetry_state
 
 ROUTER_PUBLIC_TOOL_NAMES = (
@@ -56,6 +57,20 @@ ROUTER_PUBLIC_TOOL_NAMES = (
     "router_get_inherited_proportions",
     "router_feedback",
 )
+
+_GUIDED_HELPER_OR_PLACEHOLDER_NAMES = {
+    "camera",
+    "light",
+    "lamp",
+    "sun",
+    "cube",
+    "sphere",
+    "cone",
+    "cylinder",
+    "plane",
+    "torus",
+    "monkey",
+}
 
 
 def _register_existing_tool(target: Any, tool_name: str) -> Any:
@@ -79,6 +94,27 @@ def _get_runtime_contract_line(ctx: Context) -> str | None:
         return getattr(ctx.fastmcp, "_bam_contract_line", None)
     except Exception:
         return None
+
+
+def _scene_has_meaningful_guided_objects() -> bool:
+    """Return True when the scene has non-helper, non-placeholder objects."""
+
+    try:
+        objects = get_scene_handler().list_objects()
+    except Exception:
+        return True
+    for item in objects:
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("name") or "").strip().lower()
+        object_type = str(item.get("type") or "").strip().lower()
+        if object_type in {"camera", "light"}:
+            continue
+        if name in _GUIDED_HELPER_OR_PLACEHOLDER_NAMES:
+            continue
+        if name:
+            return True
+    return False
 
 
 def _build_background_job_diagnostics() -> tuple[int, dict[str, int], list[dict[str, Any]]]:
@@ -372,6 +408,8 @@ async def router_set_goal(
         surface_profile=surface_profile,
         contract_version=_get_runtime_contract_line(ctx),
     )
+    if surface_profile == "llm-guided" and state.guided_flow_state and not _scene_has_meaningful_guided_objects():
+        state = await bootstrap_guided_empty_scene_primary_workset_async(ctx)
     result["session_id"] = ctx_session_id(ctx)
     result["transport"] = ctx_transport_type(ctx)
     result["guided_flow_state"] = state.guided_flow_state

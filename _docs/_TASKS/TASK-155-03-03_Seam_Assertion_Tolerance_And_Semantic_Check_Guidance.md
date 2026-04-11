@@ -1,7 +1,7 @@
 # TASK-155-03-03: Seam Assertion Tolerance And Semantic Check Guidance
 
 **Parent:** [TASK-155-03](./TASK-155-03_Guided_Tool_UX_And_Response_Budget.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟠 High
 
 ## Objective
@@ -44,3 +44,8 @@ assertions, such as allowing a small `Snout -> Head` gap by using
 ## Changelog Impact
 
 - include in the TASK-155 changelog entry
+
+## Completion Summary
+
+- prompt/MCP guidance now steers required seam validation toward attachment
+  verdicts and away from broad ad hoc tolerance checks

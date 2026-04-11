@@ -1,7 +1,7 @@
 # TASK-155-02-01: Empty-Scene Bootstrap Primary Workset Path
 
 **Parent:** [TASK-155-02](./TASK-155-02_Governor_Workset_Refresh_And_Bootstrap_Discipline.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -45,3 +45,8 @@ to inspect.
 ## Changelog Impact
 
 - include in the TASK-155 changelog entry
+
+## Completion Summary
+
+- added `bootstrap_primary_workset` flow handling for guided sessions with no
+  meaningful scene targets before spatial checks can be satisfied

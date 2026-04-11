@@ -1,7 +1,7 @@
 # TASK-155-01-02: Seam-Aware Attachment Alignment Semantics
 
 **Parent:** [TASK-155-01](./TASK-155-01_Attachment_Verdict_Contract_And_Truth_Semantics.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -48,3 +48,8 @@ on the support/contact axis.
 ## Changelog Impact
 
 - include in the TASK-155 changelog entry
+
+## Completion Summary
+
+- changed attachment verdict handling so a passing contact assertion wins over
+  generic bbox-center alignment drift for seated organic seams

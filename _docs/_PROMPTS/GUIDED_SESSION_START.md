@@ -29,9 +29,15 @@ Fail-safe rules:
 - Do not call `scene_scope_graph(...)`, `scene_relation_graph(...)`, or `scene_view_diagnostics(...)` with no explicit scope and assume that means “inspect the whole scene”.
 - Do not treat a default placeholder like `Cube` or the root `Collection` as a meaningful guided target/workset by itself.
 - Treat the initial spatial gate as meaningful only after a real target scope exists, e.g. primary masses already exist or the build collection already exists.
+- If the scene is empty after cleanup, follow `bootstrap_primary_workset` /
+  `create_primary_workset` and create the first semantic primary masses before
+  trying to satisfy spatial checks.
 - If the server says the current step is `create_primary_masses`, do not jump ahead to ears, paws, facade openings, polish, or finish work.
 - For role-sensitive build calls, use either `guided_register_part(object_name=..., role=...)` or `guided_role=...` on the build tool call.
 - If the session has already moved to a later guided step, the server may still allow bounded refinement of already-created primary masses or utility/workset operations when they remain part of the same active workset.
+- If a spatial graph/view response says it was read-only but did not satisfy
+  the active guided scope, rerun that same check with the expected scope from
+  the message before continuing.
 - If the router pushes an obviously irrelevant workflow for the current task, stop and report that blocker instead of improvising with hidden tools.
 - Use directly visible tools first.
 - Default to `search_tools(...)` before `call_tool(...)` for any non-entry tool that is not already directly visible.

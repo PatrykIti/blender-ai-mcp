@@ -1,7 +1,7 @@
 # TASK-155-01-01: `misaligned_attachment` Relation Verdict Contract
 
 **Parent:** [TASK-155-01](./TASK-155-01_Attachment_Verdict_Contract_And_Truth_Semantics.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -44,3 +44,8 @@ does not accept it in relation/checkpoint contracts.
 ## Changelog Impact
 
 - include in the TASK-155 changelog entry
+
+## Completion Summary
+
+- added `misaligned_attachment` to the shared relation verdict literal and
+  covered it in scene contract tests

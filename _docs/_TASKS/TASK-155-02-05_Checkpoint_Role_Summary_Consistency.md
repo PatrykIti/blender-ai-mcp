@@ -1,7 +1,7 @@
 # TASK-155-02-05: Checkpoint Role Summary Consistency
 
 **Parent:** [TASK-155-02](./TASK-155-02_Governor_Workset_Refresh_And_Bootstrap_Discipline.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -45,3 +45,8 @@ while role-sensitive calls such as `tail_mass` are still accepted.
 ## Changelog Impact
 
 - include in the TASK-155 changelog entry
+
+## Completion Summary
+
+- checkpoint/post-refresh role summaries now preserve completed-role hints and
+  show missing build roles that execution policy would still allow

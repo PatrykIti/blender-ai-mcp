@@ -215,7 +215,7 @@ def test_scene_relation_graph_contract_carries_compact_pair_semantics():
                     to_object="Squirrel_Body",
                     pair_source="required_creature_seam",
                     relation_kinds=["contact", "gap", "alignment", "attachment"],
-                    relation_verdicts=["separated", "misaligned", "floating_gap"],
+                    relation_verdicts=["separated", "misaligned", "misaligned_attachment", "floating_gap"],
                     gap_relation="separated",
                     gap_distance=0.1,
                     overlap_relation="disjoint",
@@ -264,6 +264,7 @@ def test_scene_relation_graph_contract_carries_compact_pair_semantics():
 
     assert response.payload is not None
     assert response.payload.summary.pairing_strategy == "guided_spatial_pairs"
+    assert "misaligned_attachment" in response.payload.pairs[0].relation_verdicts
     assert response.payload.pairs[0].attachment_semantics is not None
     assert response.payload.pairs[1].support_semantics is not None
 

@@ -1,7 +1,7 @@
 # TASK-155-02-02: Bounded Create And Initial Transform Window
 
 **Parent:** [TASK-155-02](./TASK-155-02_Governor_Workset_Refresh_And_Bootstrap_Discipline.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -48,3 +48,8 @@ that transform immediately because spatial refresh is pending.
 ## Changelog Impact
 
 - include in the TASK-155 changelog entry
+
+## Completion Summary
+
+- kept checkpoint-iterate create/initial-transform batches from immediately
+  forcing a spatial refresh on every small object adjustment

@@ -3,9 +3,9 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 8 tasks
+- **To Do:** 7 tasks
 - **In Progress:** 0 tasks
-- **Done:** 222
+- **Done:** 223
 - **Superseded:** 10
 
 ## 📐 Board Scope
@@ -38,11 +38,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-148](./TASK-148_No_Auth_HTTP_MCP_Client_Compatibility_And_Auth_Misclassification_Recovery.md) | **No-Auth HTTP MCP Client Compatibility And Auth Misclassification Recovery** | 🔴 High | Board-level follow-on after TASK-125 for hardening the no-auth Streamable HTTP path across Claude, Codex, Gemini, and similar MCP clients without falsely advertising OAuth support. |
-
-### Guided Runtime Reliability
-| ID | Title | Priority | Notes |
-|----|-------|----------|-------|
-| [TASK-155](./TASK-155_Guided_Post_Run_Reliability_Followups.md) | **Guided Post-Run Reliability Follow-Ups** | 🔴 High | Board-level follow-on after TASK-130 for post-run guided runtime failures around attachment verdict contracts, spatial refresh/worksets, checkpoint scope, role summaries, macro/assert UX, compact payloads, and empty-scene bootstrap. |
 
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
@@ -82,6 +77,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-155](./TASK-155_Guided_Post_Run_Reliability_Followups.md) | **Guided Post-Run Reliability Follow-Ups** | 🔴 High | 2026-04-11 |
 | [TASK-130](./TASK-130_Default_Guided_Surface_Bootstrap_Consistency.md) | **Default Guided Bootstrap And Generic Governor Reliability** | 🔴 High | 2026-04-10 |
 | [TASK-154](./TASK-154_Guided_Naming_Policy_And_Semantic_Object_Name_Enforcement.md) | **Guided Naming Policy And Semantic Object Name Enforcement** | 🔴 High | 2026-04-10 |
 | [TASK-153](./TASK-153_Guided_Visibility_Authority_And_Manifest_Demotion.md) | **Guided Visibility Authority And Manifest Demotion** | 🔴 High | 2026-04-10 |

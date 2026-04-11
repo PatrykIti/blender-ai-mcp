@@ -1,6 +1,6 @@
 # TASK-155: Guided Post-Run Reliability Follow-Ups
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** Guided Runtime / Production Reliability / Post-Run Hardening
 **Follow-on After:** [TASK-130](./TASK-130_Default_Guided_Surface_Bootstrap_Consistency.md)
@@ -100,3 +100,13 @@ generic guided-governor hardening wave:
   failures cross several closed guided-runtime waves
 - keep descendant work under this new open umbrella so closed historical
   parents do not accumulate open direct children
+
+## Completion Summary
+
+- completed on 2026-04-11 after implementing the attachment verdict contract
+  fix, seam-aware `seated_contact` semantics, active-scope mismatch guidance,
+  empty-scene primary-workset bootstrap, checkpoint-scope enforcement,
+  checkpoint role-summary consistency, guided argument canonicalization, and
+  compact stage checkpoint payload trimming
+- updated MCP/prompt docs plus `_docs/_CHANGELOG/234-*`
+- validated with the focused TASK-155 unit regression pack

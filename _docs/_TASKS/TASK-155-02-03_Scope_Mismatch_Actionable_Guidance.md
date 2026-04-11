@@ -1,7 +1,7 @@
 # TASK-155-02-03: Scope Mismatch Actionable Guidance
 
 **Parent:** [TASK-155-02](./TASK-155-02_Governor_Workset_Refresh_And_Bootstrap_Discipline.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -41,3 +41,8 @@ scope mid-gate, for example `scene_scope_graph(Head, Ear_L)` followed by
 ## Changelog Impact
 
 - include in the TASK-155 changelog entry
+
+## Completion Summary
+
+- relation/view spatial reads now report when they are read-only but do not
+  satisfy the active guided refresh scope

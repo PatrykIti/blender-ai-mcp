@@ -16,6 +16,7 @@ from server.adapters.mcp.areas.reference import (
     _build_truth_followup,
     _effective_candidate_budget,
     _effective_pair_budget,
+    _guided_checkpoint_scope_error,
     _iterate_stage_response,
     _model_budget_bias,
     _select_refinement_route,
@@ -411,6 +412,44 @@ def test_assembled_target_scope_prefers_body_anchor_over_head_when_core_mass_is_
     assert scope.scope_kind == "object_set"
     assert scope.primary_target == "Squirrel_Body"
     assert any(item.object_name == "Squirrel_Tail" and item.role == "attached_appendage" for item in scope.object_roles)
+
+
+def test_guided_checkpoint_scope_error_blocks_single_object_bypass_of_active_workset():
+    active_flow_state = {
+        "flow_id": "guided_creature_flow",
+        "domain_profile": "creature",
+        "current_step": "checkpoint_iterate",
+        "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+        "active_target_scope": {
+            "scope_kind": "object_set",
+            "primary_target": "Body",
+            "object_names": ["Body", "Head", "Snout"],
+            "object_count": 3,
+        },
+        "required_checks": [],
+        "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+        "preferred_prompts": ["workflow_router_first"],
+        "next_actions": ["run_checkpoint_iterate"],
+        "blocked_families": [],
+        "allowed_families": ["checkpoint_iterate"],
+        "allowed_roles": [],
+        "completed_roles": ["body_core", "head_mass", "snout_mass"],
+        "missing_roles": [],
+        "required_role_groups": ["checkpoint_iterate"],
+        "step_status": "needs_checkpoint",
+    }
+    requested_scope = SceneAssembledTargetScopeContract(
+        scope_kind="single_object",
+        primary_target="Body",
+        object_names=["Body"],
+        object_count=1,
+    )
+
+    error = _guided_checkpoint_scope_error(active_flow_state, requested_scope)
+
+    assert error is not None
+    assert "does not cover the active guided workset" in error
+    assert "target_objects=['Body', 'Head', 'Snout']" in error
 
 
 def test_assembled_target_scope_prefers_trailing_body_role_over_embedded_body_substring(monkeypatch):
@@ -2689,6 +2728,9 @@ def test_reference_compare_stage_checkpoint_preserves_required_creature_seams_un
     assert result.budget_control.model_name == "mlx-community/Qwen3-VL-4B-Instruct-4bit"
     assert result.budget_control.original_pair_count == 4
     assert result.budget_control.emitted_pair_count == 4
+    assert result.capture_count == 1
+    assert result.captures == []
+    assert result.budget_control.detail_trimmed is True
     assert result.truth_bundle is not None
     assert result.truth_bundle.summary.pair_count == 4
     assert captured["request"].truth_summary["summary"]["pair_count"] == 4

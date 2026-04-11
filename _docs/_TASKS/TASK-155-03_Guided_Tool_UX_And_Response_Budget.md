@@ -1,7 +1,7 @@
 # TASK-155-03: Guided Tool UX And Response Budget
 
 **Parent:** [TASK-155](./TASK-155_Guided_Post_Run_Reliability_Followups.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟠 High
 
 ## Objective
@@ -52,3 +52,8 @@ responses on the shaped guided surface.
 | 1 | [TASK-155-03-01](./TASK-155-03-01_Macro_And_Assert_Argument_Canonicalization.md) | Normalize common guided macro/assert parameter slips or produce actionable errors |
 | 2 | [TASK-155-03-02](./TASK-155-03-02_Compact_Checkpoint_Response_Mode.md) | Add a compact checkpoint payload path for long guided sessions |
 | 3 | [TASK-155-03-03](./TASK-155-03-03_Seam_Assertion_Tolerance_And_Semantic_Check_Guidance.md) | Keep seam validation from passing with overly broad tolerances |
+
+## Completion Summary
+
+- added guided call argument canonicalization for common macro/assert mistakes,
+  compact checkpoint capture trimming, and seam guidance updates

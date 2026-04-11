@@ -30,6 +30,7 @@ SceneRelationVerdictLiteral = Literal[
     "contained",
     "aligned",
     "misaligned",
+    "misaligned_attachment",
     "floating_gap",
     "seated_contact",
     "intersecting",
@@ -277,6 +278,7 @@ class SceneRelationGraphPayloadContract(MCPContract):
     scope: SceneAssembledTargetScopeContract
     summary: SceneRelationGraphSummaryContract
     pairs: list[SceneRelationGraphPairContract] = []
+    message: str | None = None
 
 
 class SceneRelationGraphResponseContract(MCPContract):

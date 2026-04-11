@@ -144,6 +144,50 @@ def canonicalize_scene_clean_scene_arguments(arguments: dict[str, Any]) -> dict[
     return canonical_arguments
 
 
+def canonicalize_macro_attach_part_to_surface_arguments(arguments: dict[str, Any]) -> dict[str, Any]:
+    """Normalize common guided seating macro aliases into the public contract."""
+
+    canonical_arguments = dict(arguments)
+    legacy_reference_object = canonical_arguments.pop("reference_object", None)
+    if legacy_reference_object is not None:
+        if canonical_arguments.get("surface_object") not in {None, legacy_reference_object}:
+            raise ValueError(
+                "macro_attach_part_to_surface(...) uses `surface_object`; legacy `reference_object` is accepted "
+                "only when it matches `surface_object`."
+            )
+        canonical_arguments["surface_object"] = legacy_reference_object
+
+    surface_axis = canonical_arguments.get("surface_axis")
+    if isinstance(surface_axis, str):
+        stripped_axis = surface_axis.strip().upper()
+        if stripped_axis in {"+X", "+Y", "+Z", "-X", "-Y", "-Z"}:
+            canonical_arguments["surface_axis"] = stripped_axis[-1]
+            canonical_arguments.setdefault(
+                "surface_side",
+                "negative" if stripped_axis.startswith("-") else "positive",
+            )
+        elif stripped_axis in {"X", "Y", "Z"}:
+            canonical_arguments["surface_axis"] = stripped_axis
+
+    return canonical_arguments
+
+
+def canonicalize_scene_assert_proportion_arguments(arguments: dict[str, Any]) -> dict[str, Any]:
+    """Normalize a narrow `axis` alias into the canonical `axis_a` field."""
+
+    canonical_arguments = dict(arguments)
+    legacy_axis = canonical_arguments.pop("axis", None)
+    if legacy_axis is None:
+        return canonical_arguments
+    if canonical_arguments.get("axis_a") not in {None, legacy_axis}:
+        raise ValueError(
+            "scene_assert_proportion(...) uses `axis_a` for the numerator axis. "
+            "Compatibility alias `axis` is accepted only when it matches `axis_a`."
+        )
+    canonical_arguments["axis_a"] = legacy_axis
+    return canonical_arguments
+
+
 def canonicalize_guided_tool_arguments(
     name: str,
     arguments: dict[str, Any] | None,
@@ -164,4 +208,8 @@ def canonicalize_guided_tool_arguments(
         return canonicalize_modeling_create_primitive_arguments(arguments)
     if canonical_name == "scene_clean_scene":
         return canonicalize_scene_clean_scene_arguments(arguments)
+    if canonical_name == "macro_attach_part_to_surface":
+        return canonicalize_macro_attach_part_to_surface_arguments(arguments)
+    if canonical_name == "scene_assert_proportion":
+        return canonicalize_scene_assert_proportion_arguments(arguments)
     return arguments

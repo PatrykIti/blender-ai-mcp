@@ -120,6 +120,9 @@ Rules:
   `primitive_type`, `radius`/`size`, `location`, `rotation`, optional `name`
 - if you need non-uniform scale, create the primitive first and then call
   `modeling_transform_object(scale=...)`
+- during `checkpoint_iterate`, the server may keep bounded initial transforms
+  available for a newly created part before the next checkpoint; do not use
+  that as permission for broad free-form edits outside the active workset
 - when the server needs semantic part roles for build enforcement, use the
   canonical `guided_register_part(object_name=..., role=...)` path
 - optional `guided_role=...` on `modeling_create_primitive(...)` or
@@ -138,6 +141,9 @@ Rules:
 - on full assembled-creature checkpoints, treat `truth_followup.focus_pairs`
   as the required creature seam set for the current scope; one improved local
   pair does not mean the whole creature stage is done
+- do not narrow an assembled-creature checkpoint to a single safe object when
+  the active workset has multiple required seams; use the active
+  `target_objects=[...]` or `collection_name=...`
 - read seam outcomes using the explicit attachment verdict model:
   - `seated_contact`
   - `floating_gap`
@@ -148,6 +154,8 @@ Rules:
     snout/head during blockout
   - `floating_gap` remains actionable for segment seams such as head/body,
     tail/body, or limb/body
+  - `seated_contact` remains valid even when center alignment differs along a
+    natural support/contact axis such as a head sitting above a body
 
 Workflow:
 1. `router_get_status()`

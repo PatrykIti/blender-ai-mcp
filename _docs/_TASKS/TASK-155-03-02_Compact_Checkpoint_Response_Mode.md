@@ -1,7 +1,7 @@
 # TASK-155-03-02: Compact Checkpoint Response Mode
 
 **Parent:** [TASK-155-03](./TASK-155-03_Guided_Tool_UX_And_Response_Budget.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟠 High
 
 ## Objective
@@ -43,3 +43,8 @@ token payloads during normal long-running guided sessions.
 ## Changelog Impact
 
 - include in the TASK-155 changelog entry
+
+## Completion Summary
+
+- compact stage checkpoint responses now omit full capture records while
+  retaining capture counts, preset names, truth, and correction summaries

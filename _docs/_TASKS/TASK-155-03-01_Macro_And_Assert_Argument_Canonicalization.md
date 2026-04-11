@@ -1,7 +1,7 @@
 # TASK-155-03-01: Macro And Assert Argument Canonicalization
 
 **Parent:** [TASK-155-03](./TASK-155-03_Guided_Tool_UX_And_Response_Budget.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟠 High
 
 ## Objective
@@ -47,3 +47,8 @@ Reduce raw Pydantic validation noise for natural guided mistakes such as
 ## Changelog Impact
 
 - include in the TASK-155 changelog entry
+
+## Completion Summary
+
+- normalized `reference_object` / signed-axis macro slips and the
+  `scene_assert_proportion(axis=...)` alias on the guided call proxy path

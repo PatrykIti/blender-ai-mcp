@@ -532,6 +532,9 @@ Current guided-flow behavior:
   themselves
 - helper-only scopes such as a single `Camera` do not initialize or satisfy a
   creature/building spatial gate by themselves
+- when the scene has no meaningful target/workset objects yet, the guided flow
+  can enter `bootstrap_primary_workset` and expose primary-mass creation before
+  requiring target-bound spatial checks
 - if guided references are already attached, they should be treated as the
   primary grounding input for the first blockout masses and placement
 - full semantic object names such as `ForeLeg_L`, `ForeLeg_R`, `HindLeg_L`,
@@ -548,6 +551,9 @@ Current guided-flow behavior:
 - when `spatial_refresh_required=true`, the server expects a fresh
   `scene_scope_graph(...)` rebind first, then the remaining required spatial
   checks on that same target scope
+- if a read-only spatial check uses a different scope while refresh is active,
+  it can still return its payload, but the response message says it did not
+  satisfy the active guided scope and shows the expected rerun scope
 - the machine-readable next action for this path is
   `refresh_spatial_context`
 - on the guided inspect surface, bounded attachment repair macros and spatial
@@ -572,6 +578,9 @@ Current guided-flow behavior:
 - `modeling_create_primitive(...)` and `modeling_transform_object(...)` may
   also carry an optional `guided_role` convenience hint on guided surfaces, but
   `guided_register_part(...)` remains the canonical explicit registration path
+- after newly created blockout parts during `checkpoint_iterate`, bounded
+  initial transforms can remain available before the next checkpoint instead
+  of immediately forcing a spatial refresh on every small adjustment
 - if guided naming returns warnings or blocks, replace the weak name with one of the suggested semantic names instead of retrying the same placeholder or opaque abbreviation unchanged
 - stage compare/iterate may now keep the session in bounded build continuation
   when the current guided role/workset slice is still incomplete, instead of
@@ -967,6 +976,13 @@ Invalid target-scope inputs such as an unavailable `collection_name` now return
 structured error payloads on the stage-compare path instead of failing again
 while building the error response.
 Stage compare/iterate responses now also expose `guided_reference_readiness`, `assembled_target_scope`, `truth_bundle`, `truth_followup`, `correction_candidates`, `budget_control`, `refinement_route`, `refinement_handoff`, `silhouette_analysis`, `action_hints`, and `part_segmentation`, so assembled-model correction flows can consume explicit session readiness, a structured target scope, correction-oriented truth findings, loop-ready follow-up items, an explicitly ranked merged correction list, explicit trimming metadata, a deterministic refinement-family decision, typed perception metrics/tool hints, and an optional advisory-only sidecar placeholder instead of inferring everything from loose `target_object` / `target_objects` / `collection_name` fields. On `reference_iterate_stage_checkpoint(...)`, the loop-facing `correction_focus` now prefers ranked `correction_candidates` summaries when they are present, and high-priority deterministic truth findings can also move `loop_disposition` to `inspect_validate` instead of waiting only for repeated vision focus. `action_hints` complement that loop by exposing deterministic silhouette-driven tool suggestions, while `part_segmentation` stays disabled unless an operator explicitly enables the separate sidecar path. Collection/object-set targeting now also avoids obviously accessory-first primary anchors when a more structural target is present, expands supported creature scopes into deterministic `required_creature_seams`, keeps multiple failing required seams live together in `truth_followup` / `correction_candidates`, normalizes vision-side `recommended_checks` to canonical MCP tool ids or drops them, applies model-aware budget control when the active runtime profile is too small for the full payload, and exposes `refinement_route` for bounded family choices such as `macro`, `modeling_mesh`, `sculpt_region`, or `inspect_only`. At this stage sculpt stays hidden on the normal guided surface; `refinement_handoff` is recommendation-only.
+Compact stage compare/iterate responses keep `capture_count`, `preset_names`,
+truth, and correction summaries, but omit the full capture list to reduce
+normal guided response size. Rich/debug capture detail remains available through
+the richer profile path. During active assembled-workset checkpointing, the
+requested `target_object` / `target_objects` / `collection_name` must still
+cover the active guided workset; narrowing to a single safe object returns an
+actionable scope error instead of advancing the loop.
 
 The full scope/relation graphs stay separate from those default stage payloads.
 When a guided step needs richer spatial state instead of just the current
