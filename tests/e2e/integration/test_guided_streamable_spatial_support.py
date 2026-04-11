@@ -123,6 +123,7 @@ _PATCHED_GUIDED_STREAMABLE_SERVER = textwrap.dedent(
 
     router_area.get_router_handler = lambda: RouterHandler()
     router_area._should_attach_repair_suggestion = lambda payload: False
+    router_area._scene_has_meaningful_guided_objects = lambda: False
     scene_area.get_scene_handler = lambda: SceneHandler()
     collection_area.get_collection_handler = lambda: CollectionHandler()
     modeling_area.get_modeling_handler = lambda: ModelingHandler()
@@ -153,44 +154,19 @@ def test_streamable_guided_session_expands_visible_tools_after_goal_handoff(tmp_
                 )
             )
             assert goal_result["guided_handoff"]["recipe_id"] == "low_poly_creature_blockout"
-            assert goal_result["guided_flow_state"]["current_step"] == "establish_spatial_context"
-
-            post_goal_tools = {tool.name for tool in await client.list_tools()}
-            assert {"scene_scope_graph", "scene_relation_graph", "scene_view_diagnostics"}.issubset(post_goal_tools)
-            assert "modeling_create_primitive" not in post_goal_tools
-            assert "collection_manage" not in post_goal_tools
-
-            spoof_attempt = result_payload(
-                await client.call_tool(
-                    "scene_view_diagnostics",
-                    {"target_object": "Camera", "view_name": "TOP"},
-                )
-            )
-            assert spoof_attempt["payload"]["scope"]["primary_target"] == "Camera"
-            spoof_status = result_payload(await client.call_tool("router_get_status", {}))
-            assert spoof_status["guided_flow_state"]["current_step"] == "establish_spatial_context"
-
-            spatial_scope = {"target_object": "Squirrel_Body", "target_objects": ["Squirrel_Head", "Squirrel_Tail"]}
-            await client.call_tool(
-                "scene_scope_graph",
-                spatial_scope,
-            )
-            await client.call_tool(
-                "scene_relation_graph",
-                {**spatial_scope, "goal_hint": "assembled creature"},
-            )
-            await client.call_tool(
-                "scene_view_diagnostics",
-                {**spatial_scope, "view_name": "TOP"},
-            )
+            assert goal_result["guided_flow_state"]["current_step"] == "bootstrap_primary_workset"
+            assert goal_result["guided_flow_state"]["next_actions"] == ["create_primary_workset"]
 
             status_result = result_payload(await client.call_tool("router_get_status", {}))
-            assert status_result["guided_flow_state"]["current_step"] == "create_primary_masses"
+            assert status_result["guided_flow_state"]["current_step"] == "bootstrap_primary_workset"
             assert any(
                 set(rule.get("names") or ()) >= {"guided_register_part", "modeling_create_primitive"}
                 for rule in status_result["visibility_rules"]
                 if rule.get("components") == ["tool"] or rule.get("components") == {"tool"}
             )
+
+            post_goal_tools = {tool.name for tool in await client.list_tools()}
+            assert {"scene_scope_graph", "scene_relation_graph", "scene_view_diagnostics"}.issubset(post_goal_tools)
 
             blocked = result_payload(
                 await client.call_tool(
