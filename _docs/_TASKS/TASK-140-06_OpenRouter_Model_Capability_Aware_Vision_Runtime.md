@@ -92,3 +92,11 @@ resolution:
 | 2 | [TASK-140-06-02](./TASK-140-06-02_Capability_Driven_Vision_Request_Policy.md) | Use resolved capabilities to choose output budget and safe request parameters |
 | 3 | [TASK-140-06-03](./TASK-140-06-03_Static_Fallback_Model_Capability_Registry_And_Overrides.md) | Add local fallback capability data and explicit operator override precedence |
 | 4 | [TASK-140-06-04](./TASK-140-06-04_Diagnostics_Harness_Docs_And_Closeout_For_Model_Capabilities.md) | Expose diagnostics, add harness/docs coverage, and close out the implementation slice |
+
+## Progress Update
+
+- `TASK-140-06-03` is complete for the first known fallback model,
+  `openai/gpt-5.4-nano`
+- API-first OpenRouter catalog resolution, richer provider capability merging,
+  env override taxonomy, harness diagnostics, and final closeout remain open
+  under the other TASK-140-06 leaves

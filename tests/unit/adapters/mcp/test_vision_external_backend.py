@@ -238,6 +238,51 @@ def test_external_backend_supports_openrouter_headers_and_default_endpoint(monke
     assert "visible_changes" in captured["json"]["response_format"]["json_schema"]["schema"]["properties"]
 
 
+def test_openrouter_openai_family_uses_capability_aware_output_cap(monkeypatch, tmp_path):
+    image_path = tmp_path / "after.png"
+    image_path.write_bytes(b"fake-png")
+
+    runtime = build_vision_runtime_config(
+        _config(
+            VISION_EXTERNAL_PROVIDER="openrouter",
+            VISION_OPENROUTER_MODEL="openai/gpt-5.4-nano",
+            VISION_OPENROUTER_API_KEY="openrouter-secret",
+            VISION_MAX_TOKENS=600,
+        )
+    )
+    backend = OpenAICompatibleVisionBackend(runtime)
+    request = VisionRequest(
+        goal="low poly squirrel",
+        images=(VisionImageInput(path=str(image_path), role="after"),),
+        prompt_hint="comparison_mode=stage_checkpoint_vs_reference",
+    )
+
+    captured: dict = {}
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda timeout=None: _FakeAsyncClient(
+            response=_FakeResponse(
+                {
+                    "choices": [
+                        {
+                            "message": {
+                                "content": '{"goal_summary":"ok","shape_mismatches":[],"proportion_mismatches":[],"correction_focus":[],"next_corrections":[]}'
+                            }
+                        }
+                    ]
+                }
+            ),
+            captured=captured,
+        ),
+    )
+
+    result = asyncio.run(backend.analyze(request))
+
+    assert result["vision_contract_profile"] == "google_family_compare"
+    assert captured["json"]["max_tokens"] == 4096
+
+
 def test_external_backend_uses_json_object_for_qwen_family_on_openrouter(monkeypatch, tmp_path):
     image_path = tmp_path / "after.png"
     image_path.write_bytes(b"fake-png")

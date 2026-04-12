@@ -1,7 +1,7 @@
 # TASK-140-06-03: Static Fallback Model Capability Registry And Overrides
 
 **Parent:** [TASK-140-06](./TASK-140-06_OpenRouter_Model_Capability_Aware_Vision_Runtime.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟠 High
 
 ## Objective
@@ -50,3 +50,12 @@ source of truth.
 ## Changelog Impact
 
 - include in the TASK-140-06 changelog entry
+
+## Completion Summary
+
+- added the first local fallback capability entry for `openai/gpt-5.4-nano`
+  with reviewed context/output/modalities metadata
+- added typed capability diagnostics and `effective_max_tokens` so the runtime
+  can request a safer bounded checkpoint cap when fallback metadata is known
+- full OpenRouter API-first metadata lookup remains tracked under
+  [TASK-140-06-01](./TASK-140-06-01_OpenRouter_Model_Metadata_Client_And_Capability_Contract.md)

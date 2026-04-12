@@ -13,6 +13,21 @@ VisionBackendKind = Literal["transformers_local", "mlx_local", "openai_compatibl
 VisionExternalProviderName = Literal["generic", "openrouter", "google_ai_studio"]
 VisionContractProfile = Literal["generic_full", "google_family_compare"]
 VisionSegmentationProviderName = Literal["generic_sidecar"]
+VisionModelCapabilitySource = Literal["fallback_registry", "unknown"]
+
+
+class VisionModelCapabilities(BaseModel):
+    """Bounded model capability metadata used for request policy decisions."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    model_id: str
+    capability_source: VisionModelCapabilitySource = "unknown"
+    context_length: int | None = None
+    max_completion_tokens: int | None = None
+    input_modalities: list[str] = []
+    output_modalities: list[str] = []
+    supported_parameters: list[str] = []
 
 
 class VisionTransformersLocalConfig(BaseModel):
@@ -50,6 +65,7 @@ class VisionOpenAICompatibleConfig(BaseModel):
     require_parameters: bool = True
     enable_response_healing: bool = True
     prefer_json_object_for_qwen: bool = True
+    model_capabilities: VisionModelCapabilities | None = None
 
     @model_validator(mode="after")
     def validate_endpoint(self) -> "VisionOpenAICompatibleConfig":
@@ -94,6 +110,20 @@ class VisionRuntimeConfig(BaseModel):
     mlx_local: VisionMLXLocalConfig | None = None
     openai_compatible_external: VisionOpenAICompatibleConfig | None = None
     segmentation_sidecar: "VisionSegmentationSidecarConfig | None" = None
+
+    @property
+    def effective_max_tokens(self) -> int:
+        """Return the output-token cap after model-capability fallback policy."""
+
+        model_capabilities = (
+            self.openai_compatible_external.model_capabilities if self.openai_compatible_external is not None else None
+        )
+        model_cap = model_capabilities.max_completion_tokens if model_capabilities is not None else None
+        if model_cap is None:
+            return self.max_tokens
+        profile = self.active_vision_contract_profile
+        profile_floor = 4096 if profile == "google_family_compare" else 2048
+        return min(max(self.max_tokens, profile_floor), model_cap)
 
     @model_validator(mode="after")
     def validate_provider_config(self) -> "VisionRuntimeConfig":

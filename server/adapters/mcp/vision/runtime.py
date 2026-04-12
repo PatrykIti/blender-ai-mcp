@@ -21,6 +21,7 @@ from .config import (
     VisionBackendKind,
     VisionContractProfile,
     VisionMLXLocalConfig,
+    VisionModelCapabilities,
     VisionOpenAICompatibleConfig,
     VisionRuntimeConfig,
     VisionSegmentationSidecarConfig,
@@ -31,6 +32,17 @@ _OPENROUTER_DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
 _GOOGLE_AI_STUDIO_DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
 _GOOGLE_FAMILY_MODEL_MARKERS = ("gemini", "gemma", "learnlm")
 _OPENAI_FAMILY_MODEL_MARKERS = ("openai/", "gpt-")
+_OPENROUTER_FALLBACK_CAPABILITIES: dict[str, VisionModelCapabilities] = {
+    "openai/gpt-5.4-nano": VisionModelCapabilities(
+        model_id="openai/gpt-5.4-nano",
+        capability_source="fallback_registry",
+        context_length=400_000,
+        max_completion_tokens=128_000,
+        input_modalities=["text", "image"],
+        output_modalities=["text"],
+        supported_parameters=["response_format", "structured_outputs"],
+    ),
+}
 
 
 def _looks_like_google_family_model(model_name: str | None) -> bool:
@@ -64,6 +76,13 @@ def _resolve_vision_contract_profile(
     if provider_name == "google_ai_studio":
         return "google_family_compare"
     return "generic_full"
+
+
+def _resolve_openrouter_fallback_capabilities(model_name: str | None) -> VisionModelCapabilities | None:
+    normalized = str(model_name or "").strip().lower()
+    if not normalized:
+        return None
+    return _OPENROUTER_FALLBACK_CAPABILITIES.get(normalized)
 
 
 def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
@@ -171,6 +190,9 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
             else False,
             prefer_json_object_for_qwen=(
                 config.VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN if use_openrouter_profile else False
+            ),
+            model_capabilities=(
+                _resolve_openrouter_fallback_capabilities(external_model) if use_openrouter_profile else None
             ),
         )
 

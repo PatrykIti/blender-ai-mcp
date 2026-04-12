@@ -324,6 +324,14 @@ OpenAI/Azure strict structured-output note:
   the narrower checkpoint compare contract, because the full generic contract
   is unnecessarily large for stage compare and can be truncated by small
   output budgets
+- `openai/gpt-5.4-nano` currently has a reviewed fallback capability entry
+  (`context_length=400000`, `max_completion_tokens=128000`, `text+image`
+  input) so the runtime can raise the effective checkpoint output cap above a
+  small static `VISION_MAX_TOKENS` value when OpenRouter API metadata is not
+  yet available
+- the fallback registry is secondary to future OpenRouter API metadata and
+  should be treated as last-reviewed operational knowledge, not as a permanent
+  source of truth
 - set `VISION_EXTERNAL_CONTRACT_PROFILE=generic_full` only when an operator
   explicitly wants the full response envelope and has confirmed the selected
   model/provider can return it reliably

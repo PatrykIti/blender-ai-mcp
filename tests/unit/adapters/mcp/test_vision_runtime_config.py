@@ -260,6 +260,11 @@ def test_openrouter_openai_family_models_use_narrow_compare_contract_by_default(
     assert runtime.openai_compatible_external.provider_name == "openrouter"
     assert runtime.openai_compatible_external.vision_contract_profile == "google_family_compare"
     assert runtime.active_vision_contract_profile == "google_family_compare"
+    assert runtime.openai_compatible_external.model_capabilities is not None
+    assert runtime.openai_compatible_external.model_capabilities.capability_source == "fallback_registry"
+    assert runtime.openai_compatible_external.model_capabilities.context_length == 400_000
+    assert runtime.openai_compatible_external.model_capabilities.max_completion_tokens == 128_000
+    assert runtime.effective_max_tokens == 4096
 
 
 def test_generic_external_provider_defaults_to_generic_full_contract_profile():

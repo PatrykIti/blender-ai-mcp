@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [236](./236-2026-04-12-openrouter-gpt54-nano-fallback-capabilities.md) | 2026-04-12 | **OpenRouter GPT-5.4 Nano fallback capabilities** | - |
 | [235](./235-2026-04-12-openai-azure-vision-schema-strictness.md) | 2026-04-12 | **OpenAI/Azure vision schema strictness** | - |
 | [234](./234-2026-04-11-guided-post-run-reliability-followups.md) | 2026-04-11 | **Guided post-run reliability follow-ups** | - |
 | [233](./233-2026-04-10-generic-guided-governor-hardening.md) | 2026-04-10 | **Generic guided governor hardening** | - |

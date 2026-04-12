@@ -209,8 +209,20 @@ def _request_payload_summary(
         "image_labels": image_labels,
         "image_file_bytes": image_bytes,
         "max_tokens": runtime_config.max_tokens,
+        "effective_max_tokens": runtime_config.effective_max_tokens,
         "prompt_hint": _truncate_text(request.prompt_hint, limit=240),
     }
+    model_capabilities = (
+        runtime_config.openai_compatible_external.model_capabilities
+        if runtime_config.openai_compatible_external is not None
+        else None
+    )
+    if model_capabilities is not None:
+        summary["model_capability_source"] = model_capabilities.capability_source
+        summary["model_context_length"] = model_capabilities.context_length
+        summary["model_max_completion_tokens"] = model_capabilities.max_completion_tokens
+        summary["model_input_modalities"] = list(model_capabilities.input_modalities)
+        summary["model_supported_parameters"] = list(model_capabilities.supported_parameters)
     if isinstance(payload.get("provider"), dict):
         summary["provider_preferences"] = dict(payload["provider"])
     if isinstance(payload.get("plugins"), list):
@@ -648,7 +660,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
                 "contents": [{"parts": parts}],
                 "generationConfig": {
                     "temperature": 0.0,
-                    "maxOutputTokens": self._runtime_config.max_tokens,
+                    "maxOutputTokens": self._runtime_config.effective_max_tokens,
                     "responseMimeType": "application/json",
                     "responseJsonSchema": build_vision_response_json_schema(
                         vision_contract_profile=vision_contract_profile,
@@ -705,7 +717,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
         payload = {
             "model": self.model_name,
             "temperature": 0.0,
-            "max_tokens": self._runtime_config.max_tokens,
+            "max_tokens": self._runtime_config.effective_max_tokens,
             "response_format": response_format,
             "messages": [
                 {
