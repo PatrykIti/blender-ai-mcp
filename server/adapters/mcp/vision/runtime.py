@@ -30,6 +30,7 @@ from .config import (
 _OPENROUTER_DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
 _GOOGLE_AI_STUDIO_DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
 _GOOGLE_FAMILY_MODEL_MARKERS = ("gemini", "gemma", "learnlm")
+_OPENAI_FAMILY_MODEL_MARKERS = ("openai/", "gpt-")
 
 
 def _looks_like_google_family_model(model_name: str | None) -> bool:
@@ -37,6 +38,13 @@ def _looks_like_google_family_model(model_name: str | None) -> bool:
     if not normalized:
         return False
     return any(marker in normalized for marker in _GOOGLE_FAMILY_MODEL_MARKERS)
+
+
+def _looks_like_openai_family_model(model_name: str | None) -> bool:
+    normalized = str(model_name or "").strip().lower()
+    if not normalized:
+        return False
+    return any(marker in normalized for marker in _OPENAI_FAMILY_MODEL_MARKERS)
 
 
 def _resolve_vision_contract_profile(
@@ -50,6 +58,8 @@ def _resolve_vision_contract_profile(
     if explicit_contract_profile == "google_family_compare":
         return "google_family_compare"
     if _looks_like_google_family_model(model_name):
+        return "google_family_compare"
+    if provider_name == "openrouter" and _looks_like_openai_family_model(model_name):
         return "google_family_compare"
     if provider_name == "google_ai_studio":
         return "google_family_compare"

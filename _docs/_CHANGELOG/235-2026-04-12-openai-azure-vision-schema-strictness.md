@@ -18,6 +18,9 @@ the provider rejected the generic vision schema.
   - `recommended_checks.items.priority`
 - kept optional/low-confidence fields represented as nullable values or empty
   arrays instead of omitting keys from strict structured output
+- defaulted OpenRouter-hosted OpenAI-family model ids such as `openai/gpt-*` to
+  the narrower checkpoint compare contract, while preserving the explicit
+  `VISION_EXTERNAL_CONTRACT_PROFILE=generic_full` override
 - documented the OpenAI/Azure strict structured-output requirement in
   `_docs/_VISION/README.md`
 - added recursive unit coverage to keep strict schema `required` keys aligned

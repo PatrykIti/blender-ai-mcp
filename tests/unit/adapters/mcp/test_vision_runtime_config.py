@@ -246,6 +246,22 @@ def test_explicit_openrouter_provider_wins_even_if_gemini_env_is_present():
     assert runtime.active_vision_contract_profile == "google_family_compare"
 
 
+def test_openrouter_openai_family_models_use_narrow_compare_contract_by_default():
+    config = _base_config(
+        VISION_ENABLED=True,
+        VISION_PROVIDER="openai_compatible_external",
+        VISION_EXTERNAL_PROVIDER="openrouter",
+        VISION_OPENROUTER_MODEL="openai/gpt-5.4-nano",
+    )
+
+    runtime = build_vision_runtime_config(config)
+
+    assert runtime.openai_compatible_external is not None
+    assert runtime.openai_compatible_external.provider_name == "openrouter"
+    assert runtime.openai_compatible_external.vision_contract_profile == "google_family_compare"
+    assert runtime.active_vision_contract_profile == "google_family_compare"
+
+
 def test_generic_external_provider_defaults_to_generic_full_contract_profile():
     config = _base_config(
         VISION_ENABLED=True,

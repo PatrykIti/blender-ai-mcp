@@ -320,6 +320,13 @@ OpenAI/Azure strict structured-output note:
   `recommended_checks.items` also require every declared property
 - optional/low-confidence fields should be represented by nullable values or
   empty arrays, not by omitting keys from strict structured output
+- OpenRouter-hosted OpenAI-family models such as `openai/gpt-*` now default to
+  the narrower checkpoint compare contract, because the full generic contract
+  is unnecessarily large for stage compare and can be truncated by small
+  output budgets
+- set `VISION_EXTERNAL_CONTRACT_PROFILE=generic_full` only when an operator
+  explicitly wants the full response envelope and has confirmed the selected
+  model/provider can return it reliably
 
 Operator reporting rule before model promotion:
 
