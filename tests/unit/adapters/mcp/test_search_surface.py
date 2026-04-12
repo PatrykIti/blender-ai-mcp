@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from dataclasses import replace
 from typing import Any, cast
 
@@ -852,6 +853,50 @@ def test_call_tool_refreshes_visibility_from_session_state_before_proxying(monke
     assert events == ["get_session", "apply_visibility", "proxy:modeling_create_primitive"]
 
 
+def test_call_tool_logs_proxied_tool_name_and_canonical_argument_keys(monkeypatch, caplog):
+    """Docker/server logs should show which real tool the synthetic call_tool proxy invoked."""
+
+    class FakeFastMCP:
+        async def call_tool(self, name, arguments):
+            return {"result": "ok"}
+
+    class Ctx:
+        fastmcp = FakeFastMCP()
+
+    transform = build_discovery_transform(get_surface_profile("llm-guided"))
+    assert transform is not None
+
+    async def fake_get_session_capability_state_async(_ctx):
+        return object()
+
+    async def fake_apply_visibility_for_session_state(_ctx, _state):
+        return None
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.discovery.search_surface.get_session_capability_state_async",
+        fake_get_session_capability_state_async,
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.discovery.search_surface.apply_visibility_for_session_state",
+        fake_apply_visibility_for_session_state,
+    )
+
+    call_tool = transform._make_call_tool().fn  # type: ignore[attr-defined]
+
+    with caplog.at_level(logging.INFO, logger="server.adapters.mcp.discovery.search_surface"):
+        asyncio.run(
+            call_tool(
+                name="modeling_transform_object",
+                arguments={"object_name": "Body", "scale": [1.0, 0.8, 0.8]},
+                ctx=Ctx(),
+            )
+        )
+
+    log_text = "\n".join(caplog.messages)
+    assert "[CALL_TOOL_PROXY] name=modeling_transform_object" in log_text
+    assert "canonical_arg_keys=['name', 'scale']" in log_text
+
+
 def test_call_tool_can_invoke_scene_clean_scene_during_bootstrap(monkeypatch):
     """Visible guided utility tools should stay callable through call_tool during bootstrap."""
 
@@ -1049,6 +1094,56 @@ def test_guided_call_argument_canonicalization_accepts_common_macro_aliases():
         "surface_axis": "Z",
         "surface_side": "positive",
     }
+
+
+def test_guided_call_argument_canonicalization_accepts_align_and_transform_aliases():
+    align_payload = canonicalize_guided_tool_arguments(
+        "macro_align_part_with_contact",
+        {
+            "part_object": "Head",
+            "anchor_object": "Body",
+            "contact_mode": "seat_on_surface",
+        },
+    )
+    transform_payload = canonicalize_guided_tool_arguments(
+        "modeling_transform_object",
+        {
+            "object_name": "Body",
+            "scale": [1.15, 0.72, 0.82],
+        },
+    )
+
+    assert align_payload == {
+        "part_object": "Head",
+        "reference_object": "Body",
+        "target_relation": "contact",
+    }
+    assert transform_payload == {
+        "name": "Body",
+        "scale": [1.15, 0.72, 0.82],
+    }
+
+
+def test_call_tool_accepts_json_object_string_arguments(monkeypatch):
+    class Handler:
+        def clean_scene(self, keep_lights_and_cameras: bool):
+            return f"cleaned={keep_lights_and_cameras}"
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.scene.get_scene_handler",
+        lambda: Handler(),
+    )
+
+    server = build_server("llm-guided")
+
+    async def run():
+        result = await server.call_tool(
+            "call_tool",
+            {"name": "scene_clean_scene", "arguments": '{"keep_lights_and_cameras": true}'},
+        )
+        return _decode_tool_result(result)
+
+    assert asyncio.run(run()) == "cleaned=True"
 
 
 def test_guided_call_argument_canonicalization_accepts_proportion_axis_alias():

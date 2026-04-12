@@ -768,8 +768,11 @@ class OpenAICompatibleVisionBackend(VisionBackend):
             )
             status_code = response.status_code if response is not None else "unknown"
             reason_phrase = response.reason_phrase if response is not None else "HTTP error"
+            response_preview = _response_preview(response)
+            detail_suffix = f" Response preview: {response_preview}" if response_preview else ""
             raise VisionBackendUnavailableError(
-                f"Vision endpoint request failed: HTTP {status_code} {reason_phrase} for url '{endpoint_url}'"
+                f"Vision endpoint request failed: HTTP {status_code} {reason_phrase} for url '{endpoint_url}'."
+                f"{detail_suffix}"
             ) from exc
         except httpx.HTTPError as exc:
             logger.error(

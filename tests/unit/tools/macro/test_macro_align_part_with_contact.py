@@ -93,14 +93,25 @@ class FakeSceneTool:
         }
 
     def measure_overlap(self, from_object, to_object, tolerance=0.0001):
+        left = self.boxes[from_object]
+        right = self.boxes[to_object]
+        overlap_dimensions = [
+            max(
+                0.0,
+                min(float(left["max"][idx]), float(right["max"][idx]))
+                - max(float(left["min"][idx]), float(right["min"][idx])),
+            )
+            for idx in range(3)
+        ]
+        overlaps = all(value > tolerance for value in overlap_dimensions)
         return {
             "from_object": from_object,
             "to_object": to_object,
-            "overlaps": False,
+            "overlaps": overlaps,
             "touching": self.measure_gap(from_object, to_object, tolerance)["relation"] == "contact",
-            "relation": "disjoint",
-            "overlap_dimensions": [0.0, 0.0, 0.0],
-            "overlap_volume": 0.0,
+            "relation": "overlap" if overlaps else "disjoint",
+            "overlap_dimensions": overlap_dimensions,
+            "overlap_volume": overlap_dimensions[0] * overlap_dimensions[1] * overlap_dimensions[2],
             "intersection_min": None,
             "intersection_max": None,
             "tolerance": tolerance,
@@ -176,6 +187,27 @@ def test_macro_align_part_with_contact_blocks_when_nudge_exceeds_bound():
     assert result["macro_name"] == "macro_align_part_with_contact"
     assert modeling.calls == []
     assert "exceeds max_nudge" in (result["error"] or "")
+
+
+def test_macro_align_part_with_contact_blocks_implicit_axis_for_overlapping_pair():
+    scene = FakeSceneTool()
+    scene.boxes["Head"]["center"] = [0.4, 0.0, 0.65]
+    scene.set_center("Head", scene.boxes["Head"]["center"])
+    modeling = FakeModelingTool(scene)
+    handler = MacroToolHandler(scene, modeling)
+
+    result = handler.align_part_with_contact(
+        part_object="Head",
+        reference_object="Body",
+        target_relation="contact",
+        align_mode="none",
+        max_nudge=0.5,
+    )
+
+    assert result["status"] == "blocked"
+    assert modeling.calls == []
+    assert "already overlaps/intersects" in (result["error"] or "")
+    assert "can detach dependent parts" in (result["error"] or "")
 
 
 def test_macro_align_part_with_contact_repairs_forelimb_body_gap_as_attachment():

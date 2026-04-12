@@ -172,6 +172,49 @@ def canonicalize_macro_attach_part_to_surface_arguments(arguments: dict[str, Any
     return canonical_arguments
 
 
+def canonicalize_macro_align_part_with_contact_arguments(arguments: dict[str, Any]) -> dict[str, Any]:
+    """Normalize common guided contact-repair aliases into the public contract."""
+
+    canonical_arguments = dict(arguments)
+    legacy_anchor_object = canonical_arguments.pop("anchor_object", None)
+    if legacy_anchor_object is not None:
+        if canonical_arguments.get("reference_object") not in {None, legacy_anchor_object}:
+            raise ValueError(
+                "macro_align_part_with_contact(...) uses `reference_object`; legacy `anchor_object` is accepted "
+                "only when it matches `reference_object`."
+            )
+        canonical_arguments["reference_object"] = legacy_anchor_object
+
+    contact_mode = canonical_arguments.pop("contact_mode", None)
+    if contact_mode is not None:
+        normalized_mode = str(contact_mode).strip().lower()
+        if normalized_mode in {"seat_on_surface", "contact", "touch", "attach"}:
+            canonical_arguments.setdefault("target_relation", "contact")
+        else:
+            raise ValueError(
+                "macro_align_part_with_contact(...) does not use `contact_mode`. "
+                "Use `target_relation='contact'` or `target_relation='gap'`."
+            )
+
+    return canonical_arguments
+
+
+def canonicalize_modeling_transform_object_arguments(arguments: dict[str, Any]) -> dict[str, Any]:
+    """Normalize a narrow object-name alias into the canonical transform field."""
+
+    canonical_arguments = dict(arguments)
+    legacy_object_name = canonical_arguments.pop("object_name", None)
+    if legacy_object_name is None:
+        return canonical_arguments
+    if canonical_arguments.get("name") not in {None, legacy_object_name}:
+        raise ValueError(
+            "modeling_transform_object(...) uses `name` for the object to transform. "
+            "Compatibility alias `object_name` is accepted only when it matches `name`."
+        )
+    canonical_arguments["name"] = legacy_object_name
+    return canonical_arguments
+
+
 def canonicalize_scene_assert_proportion_arguments(arguments: dict[str, Any]) -> dict[str, Any]:
     """Normalize a narrow `axis` alias into the canonical `axis_a` field."""
 
@@ -206,10 +249,14 @@ def canonicalize_guided_tool_arguments(
         return canonicalize_reference_images_arguments(arguments)
     if canonical_name == "modeling_create_primitive":
         return canonicalize_modeling_create_primitive_arguments(arguments)
+    if canonical_name == "modeling_transform_object":
+        return canonicalize_modeling_transform_object_arguments(arguments)
     if canonical_name == "scene_clean_scene":
         return canonicalize_scene_clean_scene_arguments(arguments)
     if canonical_name == "macro_attach_part_to_surface":
         return canonicalize_macro_attach_part_to_surface_arguments(arguments)
+    if canonical_name == "macro_align_part_with_contact":
+        return canonicalize_macro_align_part_with_contact_arguments(arguments)
     if canonical_name == "scene_assert_proportion":
         return canonicalize_scene_assert_proportion_arguments(arguments)
     return arguments

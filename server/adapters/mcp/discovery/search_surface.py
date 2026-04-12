@@ -6,6 +6,8 @@
 from __future__ import annotations
 
 import hashlib
+import json
+import logging
 from collections.abc import Sequence
 from typing import Annotated, Any
 
@@ -25,6 +27,8 @@ from server.adapters.mcp.version_policy import CONTRACT_LINE_LLM_GUIDED_V2
 
 from .search_documents import build_search_documents
 from .tool_inventory import build_discovery_entry_map, get_pinned_public_tools
+
+logger = logging.getLogger(__name__)
 
 
 def _catalog_hash(search_documents: dict[str, str]) -> str:
@@ -147,9 +151,9 @@ class BlenderDiscoverySearchTransform(BM25SearchTransform):
 
         async def call_tool(
             name: Annotated[str | None, "The canonical public name of the tool to call"] = None,
-            arguments: Annotated[dict[str, Any] | None, "Arguments to pass to the tool"] = None,
+            arguments: Annotated[dict[str, Any] | str | None, "Arguments to pass to the tool"] = None,
             tool: Annotated[str | None, "Legacy compatibility alias for `name`"] = None,
-            params: Annotated[dict[str, Any] | None, "Legacy compatibility alias for `arguments`"] = None,
+            params: Annotated[dict[str, Any] | str | None, "Legacy compatibility alias for `arguments`"] = None,
             ctx: Context = None,  # type: ignore[assignment]
         ) -> ToolResult:
             resolved_name = name or tool
@@ -174,10 +178,30 @@ class BlenderDiscoverySearchTransform(BM25SearchTransform):
 
             await transform._sync_visibility_if_needed(ctx)
             resolved_arguments = arguments if arguments is not None else params
+            if isinstance(resolved_arguments, str):
+                try:
+                    parsed_arguments = json.loads(resolved_arguments)
+                except json.JSONDecodeError as exc:
+                    raise ValueError(
+                        "call_tool(..., arguments=...) must be a dictionary or a JSON object string."
+                    ) from exc
+                if not isinstance(parsed_arguments, dict):
+                    raise ValueError("call_tool(..., arguments=...) JSON string must decode to an object/dict.")
+                resolved_arguments = parsed_arguments
             canonical_arguments = transform._canonicalize_call_arguments(resolved_name, resolved_arguments)
+            logger.info(
+                "[CALL_TOOL_PROXY] name=%s canonical_arg_keys=%s",
+                resolved_name,
+                sorted(canonical_arguments.keys()) if isinstance(canonical_arguments, dict) else [],
+            )
             try:
                 return await ctx.fastmcp.call_tool(resolved_name, canonical_arguments)
             except NotFoundError as exc:
+                logger.warning(
+                    "[CALL_TOOL_PROXY] unknown_tool name=%s canonical_arg_keys=%s",
+                    resolved_name,
+                    sorted(canonical_arguments.keys()) if isinstance(canonical_arguments, dict) else [],
+                )
                 raise ToolError(
                     f"Unknown tool: '{resolved_name}'. On the shaped guided surface, do not guess tool names into "
                     "call_tool(...). Use search_tools(...) first unless the tool is already directly visible."

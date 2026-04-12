@@ -585,7 +585,7 @@ def test_openrouter_http_error_logs_payload_summary_and_response_preview(monkeyp
     )
 
     with caplog.at_level("ERROR"):
-        with pytest.raises(VisionBackendUnavailableError, match="400 Bad Request"):
+        with pytest.raises(VisionBackendUnavailableError, match="Provider rejected json_schema"):
             asyncio.run(backend.analyze(request))
 
     log_text = "\n".join(caplog.messages)

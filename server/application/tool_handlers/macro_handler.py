@@ -403,6 +403,24 @@ class MacroToolHandler(IMacroTool):
         reference_bbox = self._scene.get_bounding_box(reference_object, world_space=True)
         moving_bbox = self._scene.get_bounding_box(part_object, world_space=True)
         before_truth = self._pair_truth_summary(part_object, reference_object)
+        before_overlap = before_truth.get("overlap") if isinstance(before_truth, dict) else None
+        if (
+            relation_name == "contact"
+            and normal_axis is None
+            and isinstance(before_overlap, dict)
+            and bool(before_overlap.get("overlaps"))
+        ):
+            return self._blocked_repair_report(
+                macro_name="macro_align_part_with_contact",
+                intent=f"Repair '{part_object}' relative to '{reference_object}'",
+                message=(
+                    "The pair already overlaps/intersects. Inferring a contact axis here would push only "
+                    f"'{part_object}' to one side of '{reference_object}' and can detach dependent parts. "
+                    "Use an explicit normal_axis if you intentionally want a side contact repair, or use "
+                    "macro_attach_part_to_surface / semantic seam validation for organic embedded seating."
+                ),
+                before_truth=before_truth,
+            )
 
         resolved_normal_axis = self._normalize_contact_axis(normal_axis) if normal_axis is not None else None
         if resolved_normal_axis is None:
