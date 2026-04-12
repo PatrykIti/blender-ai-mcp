@@ -16,6 +16,7 @@ from server.adapters.mcp.vision import (
     VisionRequest,
     build_vision_runtime_config,
 )
+from server.adapters.mcp.vision.model_profiles import resolve_fallback_model_capabilities
 from server.infrastructure.config import Config
 
 
@@ -265,6 +266,19 @@ def test_openrouter_openai_family_models_use_narrow_compare_contract_by_default(
     assert runtime.openai_compatible_external.model_capabilities.context_length == 400_000
     assert runtime.openai_compatible_external.model_capabilities.max_completion_tokens == 128_000
     assert runtime.effective_max_tokens == 4096
+
+
+def test_openrouter_openai_fallback_profile_resolves_from_family_registry():
+    capabilities = resolve_fallback_model_capabilities(
+        provider="openrouter",
+        model_id="openai/gpt-5.4-nano",
+    )
+
+    assert capabilities is not None
+    assert capabilities.capability_source == "fallback_registry"
+    assert capabilities.context_length == 400_000
+    assert capabilities.max_completion_tokens == 128_000
+    assert capabilities.input_modalities == ["text", "image"]
 
 
 def test_generic_external_provider_defaults_to_generic_full_contract_profile():

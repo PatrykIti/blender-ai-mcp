@@ -57,5 +57,22 @@ source of truth.
   with reviewed context/output/modalities metadata
 - added typed capability diagnostics and `effective_max_tokens` so the runtime
   can request a safer bounded checkpoint cap when fallback metadata is known
+- implemented the fallback as a reviewed family-profile module under
+  `server/adapters/mcp/vision/model_profiles/openrouter_openai.py`, with a
+  central registry resolver instead of keeping the data inline in runtime
 - full OpenRouter API-first metadata lookup remains tracked under
   [TASK-140-06-01](./TASK-140-06-01_OpenRouter_Model_Metadata_Client_And_Capability_Contract.md)
+
+## Follow-up Design Note
+
+- the fallback registry is implemented as reviewed family-profile modules, not
+  as an unstructured inline dictionary
+- preferred layout:
+  - `server/adapters/mcp/vision/model_profiles/types.py`
+  - `server/adapters/mcp/vision/model_profiles/registry.py`
+  - `server/adapters/mcp/vision/model_profiles/openrouter_openai.py`
+  - future family modules such as `openrouter_anthropic.py`,
+    `openrouter_google.py`, `openrouter_qwen.py`, and `openrouter_xai.py`
+- each reviewed model profile should include model id, provider, family,
+  modalities, context/output limits, supported parameters, preferred contract
+  posture, docs URL, and `last_reviewed`

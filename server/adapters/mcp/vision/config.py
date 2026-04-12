@@ -13,7 +13,7 @@ VisionBackendKind = Literal["transformers_local", "mlx_local", "openai_compatibl
 VisionExternalProviderName = Literal["generic", "openrouter", "google_ai_studio"]
 VisionContractProfile = Literal["generic_full", "google_family_compare"]
 VisionSegmentationProviderName = Literal["generic_sidecar"]
-VisionModelCapabilitySource = Literal["fallback_registry", "unknown"]
+VisionModelCapabilitySource = Literal["fallback_registry", "openrouter_api", "env_override", "unknown"]
 
 
 class VisionModelCapabilities(BaseModel):
