@@ -11,6 +11,20 @@ from server.adapters.mcp.vision.prompting import (
 )
 
 
+def _assert_strict_required_matches_properties(schema: dict) -> None:
+    if schema.get("type") != "object":
+        return
+    properties = schema.get("properties")
+    if isinstance(properties, dict):
+        assert set(schema.get("required") or []) == set(properties)
+        for nested in properties.values():
+            if isinstance(nested, dict):
+                _assert_strict_required_matches_properties(nested)
+                items = nested.get("items")
+                if isinstance(items, dict):
+                    _assert_strict_required_matches_properties(items)
+
+
 def _request() -> VisionRequest:
     return VisionRequest(
         goal="rounded housing",
@@ -131,6 +145,7 @@ def test_google_family_compare_profile_uses_narrow_contract_even_on_openrouter()
         "correction_focus",
         "next_corrections",
     }
+    _assert_strict_required_matches_properties(schema)
 
 
 def test_google_family_compare_profile_keeps_full_contract_for_non_checkpoint_requests():
@@ -161,3 +176,4 @@ def test_google_family_compare_profile_keeps_full_contract_for_non_checkpoint_re
     assert "visible_changes" in system_prompt
     assert '"goal": "rounded housing"' in payload_text
     assert "visible_changes" in schema["properties"]
+    _assert_strict_required_matches_properties(schema)

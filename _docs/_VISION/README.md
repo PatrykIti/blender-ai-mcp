@@ -311,6 +311,16 @@ OpenRouter/Qwen hardening note:
   - require parameter-aware provider routing
   - enable OpenRouter response-healing by default
 
+OpenAI/Azure strict structured-output note:
+
+- OpenAI/Azure-style strict `response_format=json_schema` rejects schemas when
+  an object has `properties` whose keys are not all listed in `required`
+- the generic full vision schema therefore keeps every top-level property in
+  `required`, and nested objects such as `likely_issues.items` and
+  `recommended_checks.items` also require every declared property
+- optional/low-confidence fields should be represented by nullable values or
+  empty arrays, not by omitting keys from strict structured output
+
 Operator reporting rule before model promotion:
 
 - if an operator reports instability, record:

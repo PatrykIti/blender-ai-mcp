@@ -346,13 +346,7 @@ def build_vision_response_json_schema(
                 "correction_focus": {"type": "array", "items": {"type": "string"}},
                 "next_corrections": {"type": "array", "items": {"type": "string"}},
             },
-            "required": [
-                "goal_summary",
-                "shape_mismatches",
-                "proportion_mismatches",
-                "correction_focus",
-                "next_corrections",
-            ],
+            "required": list(_GEMINI_COMPARE_EXPECTED_KEYS),
         }
 
     return {
@@ -375,7 +369,7 @@ def build_vision_response_json_schema(
                         "summary": {"type": "string"},
                         "severity": {"type": "string", "enum": ["high", "medium", "low"]},
                     },
-                    "required": ["category", "summary"],
+                    "required": ["category", "summary", "severity"],
                 },
             },
             "next_corrections": {"type": "array", "items": {"type": "string"}},
@@ -389,11 +383,11 @@ def build_vision_response_json_schema(
                         "reason": {"type": "string"},
                         "priority": {"type": "string", "enum": ["high", "normal"]},
                     },
-                    "required": ["tool_name", "reason"],
+                    "required": ["tool_name", "reason", "priority"],
                 },
             },
             "confidence": {"type": ["number", "null"]},
             "captures_used": {"type": "array", "items": {"type": "string"}},
         },
-        "required": ["goal_summary", "visible_changes", "captures_used"],
+        "required": list(_EXPECTED_KEYS),
     }

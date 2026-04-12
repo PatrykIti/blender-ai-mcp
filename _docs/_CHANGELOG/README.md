@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [235](./235-2026-04-12-openai-azure-vision-schema-strictness.md) | 2026-04-12 | **OpenAI/Azure vision schema strictness** | - |
 | [234](./234-2026-04-11-guided-post-run-reliability-followups.md) | 2026-04-11 | **Guided post-run reliability follow-ups** | - |
 | [233](./233-2026-04-10-generic-guided-governor-hardening.md) | 2026-04-10 | **Generic guided governor hardening** | - |
 | [232](./232-2026-04-10-guided-naming-policy-and-semantic-name-enforcement.md) | 2026-04-10 | **Guided naming policy and semantic name enforcement** | - |
