@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 import tomllib
 import types
@@ -41,6 +42,72 @@ def test_streamable_openrouter_shell_script_contains_required_runtime_env():
         'VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN="${VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN}"',
     ):
         assert expected in script
+
+
+def test_update_openrouter_model_profiles_generates_vision_candidates(tmp_path):
+    module = _load_script("update_openrouter_model_profiles")
+    output_path = tmp_path / "openrouter_candidates.py"
+    catalog_path = tmp_path / "models.json"
+    catalog_path.write_text(
+        json.dumps(
+            {
+                "data": [
+                    {
+                        "id": "google/gemma-4-31b-it",
+                        "context_length": 262144,
+                        "architecture": {
+                            "input_modalities": ["image", "text"],
+                            "output_modalities": ["text"],
+                        },
+                        "top_provider": {"max_completion_tokens": 131072},
+                        "supported_parameters": ["max_tokens", "response_format"],
+                    },
+                    {
+                        "id": "openai/gpt-5.4-nano",
+                        "context_length": 400000,
+                        "architecture": {
+                            "input_modalities": ["file", "image", "text"],
+                            "output_modalities": ["text"],
+                        },
+                        "top_provider": {"max_completion_tokens": 128000},
+                        "supported_parameters": ["max_tokens", "response_format", "structured_outputs"],
+                    },
+                    {
+                        "id": "z-ai/glm-5.1",
+                        "context_length": 202752,
+                        "architecture": {
+                            "input_modalities": ["text"],
+                            "output_modalities": ["text"],
+                        },
+                        "top_provider": {"max_completion_tokens": 65535},
+                        "supported_parameters": ["max_tokens"],
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = module.main(
+        [
+            "--catalog-json",
+            str(catalog_path),
+            "--output",
+            str(output_path),
+            "--top-n",
+            "1",
+            "--reviewed-on",
+            "2026-04-12",
+        ]
+    )
+
+    output = output_path.read_text(encoding="utf-8")
+    assert result == 0
+    assert "google/gemma-4-31b-it" in output
+    assert "openai/gpt-5.4-nano" in output
+    assert "z-ai/glm-5.1" not in output
+    assert "context_length=400000" in output
+    assert "last_reviewed='2026-04-12'" in output
 
 
 def test_docker_runtime_install_path_keeps_pillow_in_main_dependencies():
