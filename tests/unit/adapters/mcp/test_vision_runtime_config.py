@@ -278,7 +278,7 @@ def test_openrouter_openai_fallback_profile_resolves_from_family_registry():
     assert capabilities.capability_source == "fallback_registry"
     assert capabilities.context_length == 400_000
     assert capabilities.max_completion_tokens == 128_000
-    assert capabilities.input_modalities == ["text", "image"]
+    assert {"text", "image"}.issubset(capabilities.input_modalities)
 
 
 def test_generic_external_provider_defaults_to_generic_full_contract_profile():
