@@ -58,6 +58,19 @@ Recent runs show a repeated failure mode:
   - Blender-backed tail/body rounded seam repair
   - assembled creature checkpoint after repair reports `seated_contact`
 
+## Docs To Update
+
+- `_docs/_MCP_SERVER/README.md`
+- `_docs/_VISION/README.md`
+- `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
+- `_docs/_TASKS/README.md` if promoted board state changes
+
 ## Changelog Impact
 
 - include in the TASK-145 changelog entry when this ships
+
+## Status / Closeout Note
+
+- when this leaf closes, record whether the fix landed as a new mesh-aware
+  seating macro, an improved existing macro, or a planner-selection policy
+  change, plus which Blender-backed rounded-part E2Es were run

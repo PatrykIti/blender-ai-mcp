@@ -29,6 +29,17 @@ and legs.
 - Unit coverage for `ear_pair`, `foreleg_pair`, and `hindleg_pair`
 - E2E guided creature transport coverage for side-pair creation
 
+## Docs To Update
+
+- `_docs/_MCP_SERVER/README.md`
+- `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
+- `_docs/_PROMPTS/GUIDED_SESSION_START.md`
+
 ## Changelog Impact
 
 - include in the TASK-156 changelog entry
+
+## Status / Closeout Note
+
+- when this leaf closes, record the role cardinality policy, side-specific
+  naming suggestions, and the exact block message for over-cardinality calls

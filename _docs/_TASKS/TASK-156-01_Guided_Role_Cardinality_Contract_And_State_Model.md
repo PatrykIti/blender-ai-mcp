@@ -27,6 +27,16 @@ summaries.
 
 - Unit coverage for singleton and pair cardinality summary generation
 
+## Docs To Update
+
+- `_docs/_MCP_SERVER/README.md`
+- `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
+
 ## Changelog Impact
 
 - include in the TASK-156 changelog entry
+
+## Status / Closeout Note
+
+- when this leaf closes, record the public role-summary shape and any backward
+  compatibility notes for existing `allowed_roles` / `completed_roles` fields

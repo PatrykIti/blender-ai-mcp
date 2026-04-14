@@ -63,6 +63,14 @@ contract problem: pair roles should not be treated as singletons.
   - guided creature flow creates `ForeLeg_L` + `ForeLeg_R` and
     `HindLeg_L` + `HindLeg_R`
 
+## Docs To Update
+
+- `_docs/_MCP_SERVER/README.md`
+- `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
+- `_docs/_PROMPTS/GUIDED_SESSION_START.md`
+- `_docs/_TASKS/README.md`
+- `_docs/_CHANGELOG/README.md`
+
 ## Changelog Impact
 
 - add a dedicated `_docs/_CHANGELOG/*` entry when this task ships
@@ -79,3 +87,9 @@ contract problem: pair roles should not be treated as singletons.
 
 - promote as a board-level follow-on because TASK-155 is closed and this work
   changes guided role semantics rather than only planner behavior
+
+## Status / Closeout Note
+
+- when this umbrella closes, update every descendant status, record validation
+  commands, add the changelog entry, and keep the board row synchronized with
+  the parent task status

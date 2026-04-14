@@ -61,6 +61,18 @@ full candidate evidence, silhouette metrics, and duplicated state.
 - E2E:
   - guided stage iterate returns compact payload suitable for direct LLM reading
 
+## Docs To Update
+
+- `_docs/_MCP_SERVER/README.md`
+- `_docs/_VISION/README.md`
+- `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
+- `_docs/_TASKS/README.md` if promoted board state changes
+
 ## Changelog Impact
 
 - include in the TASK-145 changelog entry when this ships
+
+## Status / Closeout Note
+
+- when this leaf closes, record the compact-vs-debug response contract, exact
+  validation commands, and whether a dedicated debug retrieval tool was added
