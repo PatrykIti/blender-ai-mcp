@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [238](./238-2026-04-14-compact-iterate-and-organic-seating-planner.md) | 2026-04-14 | **Compact iterate and organic seating planner** | - |
 | [237](./237-2026-04-14-guided-pair-role-cardinality.md) | 2026-04-14 | **Guided pair role cardinality** | - |
 | [236](./236-2026-04-12-openrouter-gpt54-nano-fallback-capabilities.md) | 2026-04-12 | **OpenRouter GPT-5.4 Nano fallback capabilities** | - |
 | [235](./235-2026-04-12-openai-azure-vision-schema-strictness.md) | 2026-04-12 | **OpenAI/Azure vision schema strictness** | - |

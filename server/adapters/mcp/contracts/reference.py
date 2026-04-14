@@ -359,5 +359,6 @@ class ReferenceIterateStageCheckpointResponseContract(MCPContract):
     stagnation_count: int = 0
     stop_reason: str | None = None
     compare_result: ReferenceCompareStageCheckpointResponseContract
+    debug_payload_omitted: bool = False
     message: str | None = None
     error: str | None = None

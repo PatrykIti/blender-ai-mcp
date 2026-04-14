@@ -989,6 +989,12 @@ the richer profile path. During active assembled-workset checkpointing, the
 requested `target_object` / `target_objects` / `collection_name` must still
 cover the active guided workset; narrowing to a single safe object returns an
 actionable scope error instead of advancing the loop.
+Compact iterate responses also slim the nested `compare_result` debug payload:
+top-level iterate fields keep the actionable truth, candidate, hint, and route
+summaries, while duplicated nested `truth_bundle`, `truth_followup`, full
+candidate evidence, full silhouette metrics, and action hints are omitted from
+`compare_result`. Use the rich/debug path when a maintainer needs the full
+nested compare payload.
 
 The full scope/relation graphs stay separate from those default stage payloads.
 When a guided step needs richer spatial state instead of just the current
@@ -1127,6 +1133,12 @@ If the pair is already almost correct and only needs a small repair nudge, prefe
 On the guided creature path, embedded seams such as snout/head or nose/snout
 prefer `macro_attach_part_to_surface`, while head/body, tail/body, and
 limb/body seams prefer `macro_align_part_with_contact`.
+When a rounded organic segment seam such as head/body, tail/body, or limb/body
+is already intersecting, the planner should prefer `macro_attach_part_to_surface`
+over a blind bbox side-push. `macro_align_part_with_contact` remains best for
+small non-overlapping contact/gap nudges; using an explicit normal axis on a
+rounded overlapping part can still produce bbox contact while mesh-surface
+truth reports a residual gap.
 If the task is specifically "place or correct this mirrored pair", prefer `macro_place_symmetry_pair` over manual mirrored transforms.
 If the task is specifically "keep this mirrored pair symmetric while seating both parts on the same support", prefer `macro_place_supported_pair` over manually combining symmetry and per-part contact moves.
 If the task is specifically "separate these two overlapping parts with a bounded fix", prefer `macro_cleanup_part_intersections` over ad hoc manual transform cleanup.

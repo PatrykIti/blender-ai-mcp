@@ -1,7 +1,7 @@
 # TASK-145-01-04: Compact Iterate Response Envelope And Debug Payload Split
 
 **Parent:** [TASK-145-01](./TASK-145-01_Repair_Planner_Payload_And_Family_Selection_Policy.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -76,3 +76,13 @@ full candidate evidence, silhouette metrics, and duplicated state.
 
 - when this leaf closes, record the compact-vs-debug response contract, exact
   validation commands, and whether a dedicated debug retrieval tool was added
+
+## Completion Summary
+
+- compact iterate responses now set `debug_payload_omitted=true` and slim the
+  nested `compare_result` by omitting duplicated heavy debug fields
+- top-level iterate fields still carry actionable truth/candidate/route/handoff
+  summaries for LLM execution
+- no dedicated debug retrieval tool was added in this slice; rich/debug payload
+  delivery remains the future path for full nested data
+- validation: `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`

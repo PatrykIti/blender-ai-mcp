@@ -203,6 +203,9 @@ def test_iterate_stage_response_carries_silhouette_analysis_and_action_hints():
     assert result.silhouette_analysis.status == "available"
     assert result.action_hints
     assert result.action_hints[0].hint_type == "inspect_before_edit"
+    assert result.debug_payload_omitted is True
+    assert result.compare_result.silhouette_analysis is None
+    assert result.compare_result.action_hints == []
 
 
 def test_truth_followup_emits_cleanup_macro_candidate_for_overlap_pairs():
@@ -807,7 +810,66 @@ def test_truth_followup_keeps_multiple_required_creature_seams_and_macro_familie
         "part_object": "Squirrel_Snout",
         "surface_object": "Squirrel_Head",
         "surface_axis": "X",
-        "surface_side": "positive",
+        "surface_side": "negative",
+        "align_mode": "center",
+        "gap": 0.0,
+    }
+
+
+def test_truth_followup_prefers_surface_attach_for_intersecting_segment_attachment():
+    bundle = SceneCorrectionTruthBundleContract(
+        scope=SceneAssembledTargetScopeContract(
+            scope_kind="object_set",
+            primary_target="Body",
+            object_names=["Body", "Tail"],
+            object_count=2,
+        ),
+        summary=SceneCorrectionTruthSummaryContract(
+            pairing_strategy="required_creature_seams",
+            pair_count=1,
+            evaluated_pairs=1,
+            contact_failures=1,
+            overlap_pairs=1,
+        ),
+        checks=[
+            SceneCorrectionTruthPairContract(
+                from_object="Tail",
+                to_object="Body",
+                relation_pair_id="tail__body",
+                relation_kinds=["contact", "gap", "overlap", "alignment", "attachment"],
+                relation_verdicts=["overlapping", "overlap", "intersecting"],
+                gap={"relation": "overlapping", "gap": 0.0, "axis_gap": {"x": 0.0, "y": 0.0, "z": 0.0}},
+                alignment={"is_aligned": False, "deltas": {"x": 0.0, "y": 0.4, "z": 0.0}},
+                overlap={"overlaps": True, "relation": "overlap"},
+                contact_assertion=SceneAssertionPayloadContract(
+                    assertion="scene_assert_contact",
+                    passed=False,
+                    subject="Tail",
+                    target="Body",
+                    expected={"max_gap": 0.0001, "allow_overlap": False},
+                    actual={"gap": 0.0, "relation": "overlapping"},
+                ),
+                attachment_semantics=SceneAttachmentSemanticsContract(
+                    relation_kind="segment_attachment",
+                    seam_kind="tail_body",
+                    part_object="Tail",
+                    anchor_object="Body",
+                    required_seam=True,
+                    preferred_macro="macro_align_part_with_contact",
+                    attachment_verdict="intersecting",
+                ),
+            )
+        ],
+    )
+
+    followup = _build_truth_followup(bundle)
+
+    assert followup.macro_candidates[0].macro_name == "macro_attach_part_to_surface"
+    assert followup.macro_candidates[0].arguments_hint == {
+        "part_object": "Tail",
+        "surface_object": "Body",
+        "surface_axis": "Y",
+        "surface_side": "negative",
         "align_mode": "center",
         "gap": 0.0,
     }

@@ -1,7 +1,7 @@
 # TASK-145-01-05: Mesh-Aware Organic Seating Repair For Rounded Parts
 
 **Parent:** [TASK-145-01](./TASK-145-01_Repair_Planner_Payload_And_Family_Selection_Policy.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -74,3 +74,14 @@ Recent runs show a repeated failure mode:
 - when this leaf closes, record whether the fix landed as a new mesh-aware
   seating macro, an improved existing macro, or a planner-selection policy
   change, plus which Blender-backed rounded-part E2Es were run
+
+## Completion Summary
+
+- implemented this slice as a planner-selection policy change: intersecting
+  organic segment seams now prefer `macro_attach_part_to_surface`
+- corrected generated surface-side hints so negative-side rounded attachments
+  are not sent to the positive side by default
+- no new macro was added in this slice; Blender-backed rounded-part E2E remains
+  a recommended follow-up when the planner policy is expanded into a deeper
+  mesh-aware seating macro
+- validation: `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`

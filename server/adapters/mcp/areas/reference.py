@@ -466,6 +466,8 @@ def _iterate_stage_response(
     message: str | None = None,
     error: str | None = None,
 ) -> ReferenceIterateStageCheckpointResponseContract:
+    compact_compare_result = _compact_compare_result_for_iterate(compare_result)
+    debug_payload_omitted = compact_compare_result is not compare_result
     return ReferenceIterateStageCheckpointResponseContract(
         action="iterate_stage_checkpoint",
         session_id=session_id,
@@ -501,9 +503,33 @@ def _iterate_stage_response(
         repeated_correction_focus=repeated_correction_focus,
         stagnation_count=stagnation_count,
         stop_reason=stop_reason,
-        compare_result=compare_result,
+        compare_result=compact_compare_result,
+        debug_payload_omitted=debug_payload_omitted,
         message=message,
         error=error,
+    )
+
+
+def _compact_compare_result_for_iterate(
+    compare_result: ReferenceCompareStageCheckpointResponseContract,
+) -> ReferenceCompareStageCheckpointResponseContract:
+    """Return a slim compare_result copy for normal compact iterate responses."""
+
+    if compare_result.preset_profile != "compact":
+        return compare_result
+    return compare_result.model_copy(
+        update={
+            "truth_bundle": None,
+            "truth_followup": None,
+            "correction_candidates": [],
+            "silhouette_analysis": None,
+            "action_hints": [],
+            "part_segmentation": _disabled_part_segmentation(),
+            "captures": [],
+            "message": (
+                "Compact iterate response omitted nested debug compare payload details; use rich/debug delivery for full data."
+            ),
+        }
     )
 
 
@@ -2249,7 +2275,7 @@ def _preferred_attach_surface_axis(
             key=lambda item: (item[1], item[0]),
             reverse=True,
         )
-        if axis_by_gap and axis_by_gap[0][0] in {"X", "Y", "Z"}:
+        if axis_by_gap and axis_by_gap[0][1] > 1e-6 and axis_by_gap[0][0] in {"X", "Y", "Z"}:
             return cast(Literal["X", "Y", "Z"], axis_by_gap[0][0])
 
     deltas = (alignment_payload or {}).get("deltas")
@@ -2276,7 +2302,7 @@ def _preferred_attach_surface_side(
     axis_delta = deltas.get(axis_name.lower())
     if axis_delta is None:
         return "positive"
-    return "positive" if float(axis_delta) >= 0.0 else "negative"
+    return "negative" if float(axis_delta) >= 0.0 else "positive"
 
 
 def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTruthFollowupContract:
@@ -2454,6 +2480,11 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
             preferred_macro = attachment_semantics.preferred_macro or _preferred_attachment_macro(
                 attachment_semantics.relation_kind
             )
+            if attachment_semantics.attachment_verdict == "intersecting" and attachment_semantics.relation_kind in {
+                "segment_attachment",
+                "seated_attachment",
+            }:
+                preferred_macro = "macro_attach_part_to_surface"
             if preferred_macro == "macro_attach_part_to_surface":
                 surface_axis = _preferred_attach_surface_axis(
                     gap_payload=pair_check.gap if pair_check is not None else None,
@@ -2467,8 +2498,8 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
                     SceneRepairMacroCandidateContract(
                         macro_name="macro_attach_part_to_surface",
                         reason=(
-                            "Use a bounded surface-seating move for this embedded creature seam instead of treating "
-                            "it as generic overlap cleanup."
+                            "Use a bounded surface-seating move for this organic creature seam instead of treating "
+                            "intersecting rounded parts as a generic side-push cleanup."
                         ),
                         priority="high",
                         arguments_hint={
