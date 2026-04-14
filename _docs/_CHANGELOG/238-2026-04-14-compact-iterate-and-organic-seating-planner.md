@@ -23,6 +23,9 @@ TASK-145-01-05:
 - adjusted truth follow-up macro candidate selection so intersecting organic
   segment attachments (`head_body`, `tail_body`, `limb_body`) prefer
   `macro_attach_part_to_surface`
+- improved `macro_attach_part_to_surface` with a bounded nearest-point
+  mesh-surface nudge after bbox seating, closing small mesh gaps that remain
+  after rounded parts reach coarse bbox contact
 - fixed surface-side inference so a part currently on the negative side of an
   anchor receives `surface_side="negative"` in generated attach macro hints
 - updated MCP/prompt docs for compact debug split and rounded organic seating
@@ -32,3 +35,5 @@ TASK-145-01-05:
 
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
   - result on this machine: `56 passed`
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/macro/test_macro_attach_part_to_surface.py -q`
+  - result on this machine: `5 passed`

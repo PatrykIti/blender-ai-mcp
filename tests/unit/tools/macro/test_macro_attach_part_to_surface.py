@@ -6,6 +6,7 @@ from server.application.tool_handlers.macro_handler import MacroToolHandler
 
 class FakeSceneTool:
     def __init__(self):
+        self.mesh_gap_after_first_seat: dict[tuple[str, str], dict] = {}
         self.boxes = {
             "Head": {
                 "object_name": "Head",
@@ -48,6 +49,9 @@ class FakeSceneTool:
         bbox["max"] = [round(center[idx] + half[idx], 6) for idx in range(3)]
 
     def measure_gap(self, from_object, to_object, tolerance=0.0001):
+        mesh_gap = self.mesh_gap_after_first_seat.get((from_object, to_object))
+        if mesh_gap is not None:
+            return mesh_gap
         left = self.boxes[from_object]
         right = self.boxes[to_object]
         gap_axes = {}
@@ -272,3 +276,83 @@ def test_macro_attach_part_to_surface_reports_partial_when_part_is_still_detache
     assert result["status"] == "partial"
     assert "still not seated/attached correctly" in (result["error"] or "")
     assert result["actions_taken"][-1]["details"]["attachment_verdict"] == "floating_gap"
+
+
+def test_macro_attach_part_to_surface_applies_mesh_surface_nudge_after_bbox_seating():
+    scene = FakeSceneTool()
+    modeling = FakeModelingTool(scene)
+    handler = MacroToolHandler(scene, modeling)
+    scene.mesh_gap_after_first_seat[("Ear", "Head")] = {
+        "from_object": "Ear",
+        "to_object": "Head",
+        "gap": 0.05,
+        "axis_gap": {"x": 0.05, "y": 0.0, "z": 0.0},
+        "relation": "separated",
+        "measurement_basis": "mesh_surface",
+        "bbox_relation": "contact",
+        "nearest_points": {
+            "from_object": [1.1, 0.0, 1.0],
+            "to_object": [1.05, 0.0, 1.0],
+        },
+    }
+    original_measure_gap = scene.measure_gap
+    mesh_gap_reads = {"count": 0}
+
+    def _measure_gap(from_object, to_object, tolerance=0.0001):
+        if (from_object, to_object) == ("Ear", "Head") and mesh_gap_reads["count"] >= 3:
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "gap": 0.0,
+                "axis_gap": {"x": 0.0, "y": 0.0, "z": 0.0},
+                "relation": "contact",
+                "measurement_basis": "mesh_surface",
+                "bbox_relation": "overlap",
+                "nearest_points": {
+                    "from_object": [1.05, 0.0, 1.0],
+                    "to_object": [1.05, 0.0, 1.0],
+                },
+            }
+        payload = original_measure_gap(from_object, to_object, tolerance)
+        if (from_object, to_object) == ("Ear", "Head"):
+            mesh_gap_reads["count"] += 1
+            if mesh_gap_reads["count"] >= 3:
+                scene.mesh_gap_after_first_seat.pop((from_object, to_object), None)
+        return payload
+
+    scene.measure_gap = _measure_gap
+    original_measure_overlap = scene.measure_overlap
+
+    def _measure_overlap(from_object, to_object, tolerance=0.0001):
+        if (from_object, to_object) == ("Ear", "Head") and mesh_gap_reads["count"] >= 3:
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "overlaps": False,
+                "touching": True,
+                "relation": "touching",
+                "overlap_dimensions": [0.0, 0.0, 0.0],
+                "overlap_volume": 0.0,
+                "tolerance": tolerance,
+                "units": "blender_units",
+                "measurement_basis": "mesh_surface",
+            }
+        return original_measure_overlap(from_object, to_object, tolerance)
+
+    scene.measure_overlap = _measure_overlap
+
+    result = handler.attach_part_to_surface(
+        part_object="Ear",
+        surface_object="Head",
+        surface_axis="X",
+        surface_side="positive",
+        align_mode="center",
+        gap=0.0,
+        max_mesh_nudge=0.1,
+    )
+
+    assert result["status"] == "success"
+    assert modeling.calls[0][1]["location"] == pytest.approx([1.1, 0.0, 1.0], abs=1e-9)
+    assert modeling.calls[1][1]["location"] == pytest.approx([1.05, 0.0, 1.0], abs=1e-9)
+    assert any(action["action"] == "mesh_surface_gap_nudge" for action in result["actions_taken"])
+    assert result["actions_taken"][-1]["details"]["attachment_verdict"] == "seated_contact"

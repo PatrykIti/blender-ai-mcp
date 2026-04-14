@@ -314,6 +314,7 @@ class MacroToolHandler(IMacroTool):
         align_mode: str = "center",
         gap: float = 0.0,
         offset: Optional[List[float]] = None,
+        max_mesh_nudge: float = 0.15,
         capture_profile: Optional[str] = None,
     ) -> Dict[str, Any]:
         if part_object == surface_object:
@@ -323,6 +324,7 @@ class MacroToolHandler(IMacroTool):
         resolved_surface_side = self._normalize_contact_side(surface_side)
         resolved_align_mode = self._normalize_layout_mode(align_mode, field_name="align_mode")
         gap_value = self._require_non_negative(gap, "gap")
+        max_mesh_nudge_value = self._require_non_negative(max_mesh_nudge, "max_mesh_nudge")
         offset_vector = self._normalize_offset(offset)
 
         modes = {
@@ -359,6 +361,60 @@ class MacroToolHandler(IMacroTool):
                 "details": after_truth,
             }
         )
+        mesh_nudge_delta = self._mesh_surface_gap_nudge_delta(after_truth)
+        if (
+            gap_value == 0.0
+            and attachment_verdict == "floating_gap"
+            and mesh_nudge_delta is not None
+            and max_mesh_nudge_value > 0.0
+        ):
+            nudge_distance = round(math.sqrt(sum(value * value for value in mesh_nudge_delta)), 6)
+            if nudge_distance <= max_mesh_nudge_value:
+                current_bbox = self._scene.get_bounding_box(part_object, world_space=True)
+                current_center = [float(value) for value in current_bbox["center"]]
+                target_center = [round(current_center[index] + mesh_nudge_delta[index], 6) for index in range(3)]
+                self._modeling.transform_object(name=part_object, location=target_center)
+                actions_taken.append(
+                    {
+                        "status": "applied",
+                        "action": "mesh_surface_gap_nudge",
+                        "tool_name": "modeling_transform_object",
+                        "summary": (
+                            "Applied a bounded mesh-surface nudge using nearest surface points after bbox seating."
+                        ),
+                        "details": {
+                            "translation_delta": mesh_nudge_delta,
+                            "nudge_distance": nudge_distance,
+                            "max_mesh_nudge": max_mesh_nudge_value,
+                            "target_center": target_center,
+                        },
+                    }
+                )
+                after_truth = self._pair_truth_summary(part_object, surface_object)
+                attachment_verdict = self._pair_attachment_verdict(after_truth)
+                actions_taken.append(
+                    {
+                        "status": "applied",
+                        "action": "inspect_pair_truth_after_mesh_nudge",
+                        "tool_name": "scene_measure_gap",
+                        "summary": f"Read pair truth after mesh-surface nudge for '{part_object}' and '{surface_object}'",
+                        "details": after_truth,
+                    }
+                )
+            else:
+                actions_taken.append(
+                    {
+                        "status": "blocked",
+                        "action": "mesh_surface_gap_nudge",
+                        "tool_name": "modeling_transform_object",
+                        "summary": "Skipped mesh-surface nudge because it exceeded the bounded repair limit.",
+                        "details": {
+                            "translation_delta": mesh_nudge_delta,
+                            "nudge_distance": nudge_distance,
+                            "max_mesh_nudge": max_mesh_nudge_value,
+                        },
+                    }
+                )
         actions_taken.append(
             {
                 "status": "applied",
@@ -375,6 +431,37 @@ class MacroToolHandler(IMacroTool):
                 "The bounded seating move completed, but the pair is still not seated/attached correctly."
             )
         return base_report
+
+    def _mesh_surface_gap_nudge_delta(self, truth_summary: Dict[str, Any]) -> list[float] | None:
+        gap_payload = truth_summary.get("gap") if isinstance(truth_summary, dict) else None
+        contact_assertion = truth_summary.get("contact_assertion") if isinstance(truth_summary, dict) else None
+        if not isinstance(gap_payload, dict):
+            return None
+        if str(gap_payload.get("measurement_basis") or "") != "mesh_surface":
+            return None
+        if str(gap_payload.get("relation") or "").lower() != "separated":
+            return None
+        if isinstance(contact_assertion, dict):
+            actual_value = contact_assertion.get("actual")
+            actual = actual_value if isinstance(actual_value, dict) else {}
+            if str(actual.get("relation") or "").lower() != "separated":
+                return None
+        nearest_points = gap_payload.get("nearest_points")
+        if not isinstance(nearest_points, dict):
+            return None
+        from_point = nearest_points.get("from_object")
+        to_point = nearest_points.get("to_object")
+        if (
+            not isinstance(from_point, list)
+            or not isinstance(to_point, list)
+            or len(from_point) != 3
+            or len(to_point) != 3
+        ):
+            return None
+        try:
+            return [round(float(to_point[index]) - float(from_point[index]), 6) for index in range(3)]
+        except (TypeError, ValueError):
+            return None
 
     def align_part_with_contact(
         self,

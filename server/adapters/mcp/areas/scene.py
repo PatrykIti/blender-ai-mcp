@@ -317,6 +317,7 @@ async def macro_attach_part_to_surface(
     surface_side: Literal["positive", "negative"] = "positive",
     align_mode: Literal["center", "min", "max"] = "center",
     gap: float = 0.0,
+    max_mesh_nudge: float = 0.15,
     offset: Union[str, List[float], None] = None,
 ) -> MacroExecutionReportContract:
     """
@@ -330,6 +331,7 @@ async def macro_attach_part_to_surface(
     - one required surface side (`positive`, `negative`)
     - one shared tangential alignment mode for the two remaining axes
     - optional non-negative contact gap
+    - optional bounded mesh-surface nudge after bbox seating
     - optional world offset after seating
 
     Args:
@@ -339,6 +341,7 @@ async def macro_attach_part_to_surface(
         surface_side: Which side of the target surface bbox to attach against.
         align_mode: Alignment rule applied to the two axes tangent to the surface.
         gap: Optional non-negative spacing along the surface normal.
+        max_mesh_nudge: Maximum mesh-surface nearest-point nudge after bbox seating.
         offset: Optional world-axis offset `[x, y, z]` applied after seating.
     """
 
@@ -354,6 +357,7 @@ async def macro_attach_part_to_surface(
                 surface_side=surface_side,
                 align_mode=align_mode,
                 gap=gap,
+                max_mesh_nudge=max_mesh_nudge,
                 offset=parsed_offset,
                 capture_profile=capture_profile,
             )
@@ -377,6 +381,7 @@ async def macro_attach_part_to_surface(
             "surface_side": surface_side,
             "align_mode": align_mode,
             "gap": gap,
+            "max_mesh_nudge": max_mesh_nudge,
             "offset": offset,
         },
         direct_executor=execute,

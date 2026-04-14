@@ -79,9 +79,11 @@ Recent runs show a repeated failure mode:
 
 - implemented this slice as a planner-selection policy change: intersecting
   organic segment seams now prefer `macro_attach_part_to_surface`
+- improved `macro_attach_part_to_surface` with a bounded nearest-point
+  mesh-surface nudge after bbox seating, so rounded parts can close small
+  mesh gaps without manual transform nudges
 - corrected generated surface-side hints so negative-side rounded attachments
   are not sent to the positive side by default
-- no new macro was added in this slice; Blender-backed rounded-part E2E remains
-  a recommended follow-up when the planner policy is expanded into a deeper
-  mesh-aware seating macro
-- validation: `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- no new macro was added; the behavior landed as an improved existing
+  `macro_attach_part_to_surface`
+- validation: `PYTHONPATH=. poetry run pytest tests/unit/tools/macro/test_macro_attach_part_to_surface.py tests/unit/adapters/mcp/test_reference_images.py -q`
