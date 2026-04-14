@@ -3,7 +3,7 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 7 tasks
+- **To Do:** 8 tasks
 - **In Progress:** 0 tasks
 - **Done:** 223
 - **Superseded:** 10
@@ -64,6 +64,10 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 |----|-------|----------|-------|
 | [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) | **Expand External Vision Contract Profiles Across Qwen, Anthropic, OpenAI, and NVIDIA** | 🔴 High | Board-level follow-on after TASK-139 for extending the external `vision_contract_profile` architecture across additional multimodal families on the existing provider surface, including OpenRouter model capability resolution and no new provider branches under this umbrella. |
 | [TASK-145](./TASK-145_Spatial_Repair_Planner_And_Sculpt_Handoff_Context.md) | **Spatial Repair Planner and Sculpt Handoff Context** | 🔴 High | Board-level umbrella for turning current scope/relation/view facts into stronger bounded repair-family selection and safer sculpt handoff context on the guided loop. |
+### Guided Runtime Reliability
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| [TASK-156](./TASK-156_Guided_Pair_Role_Cardinality_And_Sibling_Part_Registration.md) | **Guided Pair Role Cardinality And Sibling Part Registration** | 🔴 High | Board-level follow-on after TASK-155 for pair-role cardinality so `ear_pair`, `foreleg_pair`, and `hindleg_pair` can register both left/right siblings instead of behaving like singleton roles. |
 ---
 
 ## 🚧 In Progress
