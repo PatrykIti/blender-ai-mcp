@@ -79,4 +79,7 @@ class GuidedFlowStateContract(MCPContract):
     completed_roles: list[str] = []
     missing_roles: list[str] = []
     required_role_groups: list[str] = []
+    role_counts: dict[str, int] = {}
+    role_cardinality: dict[str, int] = {}
+    role_objects: dict[str, list[str]] = {}
     step_status: GuidedFlowStepStatusLiteral = "ready"

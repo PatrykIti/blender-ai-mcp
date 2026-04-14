@@ -384,6 +384,54 @@ def test_route_tool_call_report_records_guided_naming_warning_for_weak_abbreviat
     assert "ForeLeg_L" in report.policy_context["guided_naming"]["message"]
 
 
+def test_route_tool_call_report_blocks_third_object_for_completed_pair_role(monkeypatch):
+    """Pair roles should allow two siblings but block over-cardinality calls."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "checkpoint_iterate",
+                "completed_steps": [
+                    "understand_goal",
+                    "establish_spatial_context",
+                    "create_primary_masses",
+                    "place_secondary_parts",
+                ],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["run_checkpoint_iterate"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "secondary_parts", "checkpoint_iterate"],
+                "allowed_roles": ["foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass", "tail_mass", "snout_mass", "ear_pair"],
+                "missing_roles": ["foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["checkpoint_iterate"],
+                "role_counts": {"ear_pair": 2},
+                "role_cardinality": {"ear_pair": 2},
+                "role_objects": {"ear_pair": ["Ear_L", "Ear_R"]},
+                "step_status": "needs_checkpoint",
+            },
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="modeling_create_primitive",
+        params={"primitive_type": "Cone", "name": "Ear_Center", "guided_role": "ear_pair"},
+        direct_executor=lambda: "should not run",
+    )
+
+    assert report.router_disposition == "failed_closed_error"
+    assert "Guided execution blocked role 'ear_pair'" in str(report.error)
+    assert report.context.guided_role == "ear_pair"
+
+
 def test_route_tool_call_report_blocks_placeholder_name_for_role_sensitive_build(monkeypatch):
     """Role-sensitive guided build calls should fail closed on placeholder names."""
 

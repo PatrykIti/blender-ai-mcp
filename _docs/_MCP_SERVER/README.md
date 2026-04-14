@@ -572,6 +572,12 @@ Current guided-flow behavior:
   policy
 - role/family summaries are intentionally compact public fields; the full
   internal part registry remains session-scoped implementation state
+- role summaries now include compact cardinality diagnostics:
+  - `role_counts`
+  - `role_cardinality`
+  - `role_objects`
+  so pair roles such as `ear_pair`, `foreleg_pair`, and `hindleg_pair` remain
+  available until both left/right sibling objects are registered
 - `guided_register_part(object_name=..., role=...)` is the canonical guided
   surface for telling the server that an existing object now counts as one
   semantic role such as `body_core`, `head_mass`, or `roof_mass`

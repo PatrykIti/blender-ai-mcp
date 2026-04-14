@@ -34,6 +34,9 @@ Fail-safe rules:
   trying to satisfy spatial checks.
 - If the server says the current step is `create_primary_masses`, do not jump ahead to ears, paws, facade openings, polish, or finish work.
 - For role-sensitive build calls, use either `guided_register_part(object_name=..., role=...)` or `guided_role=...` on the build tool call.
+- Treat pair roles such as `ear_pair`, `foreleg_pair`, and `hindleg_pair` as
+  requiring left/right siblings. If `role_counts` / `role_cardinality` are
+  present, use them before deciding whether the next sibling is still allowed.
 - If the session has already moved to a later guided step, the server may still allow bounded refinement of already-created primary masses or utility/workset operations when they remain part of the same active workset.
 - If a spatial graph/view response says it was read-only but did not satisfy
   the active guided scope, rerun that same check with the expected scope from

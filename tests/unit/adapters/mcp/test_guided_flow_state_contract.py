@@ -905,6 +905,53 @@ def test_secondary_role_registration_advances_creature_flow_to_checkpoint_iterat
     assert state.guided_flow_state["allowed_roles"] == ["tail_mass", "snout_mass"]
 
 
+def test_pair_role_registration_requires_two_side_specific_objects_before_completion():
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["secondary_parts", "attachment_alignment"],
+                "allowed_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass", "tail_mass", "snout_mass"],
+                "missing_roles": ["ear_pair", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    first = register_guided_part_role(ctx, object_name="Ear_L", role="ear_pair")
+    second = register_guided_part_role(ctx, object_name="Ear_R", role="ear_pair")
+
+    assert first.guided_flow_state is not None
+    assert first.guided_flow_state["current_step"] == "place_secondary_parts"
+    assert first.guided_flow_state["role_counts"]["ear_pair"] == 1
+    assert first.guided_flow_state["role_cardinality"]["ear_pair"] == 2
+    assert first.guided_flow_state["role_objects"]["ear_pair"] == ["Ear_L"]
+    assert "ear_pair" in first.guided_flow_state["allowed_roles"]
+    assert "ear_pair" in first.guided_flow_state["missing_roles"]
+    assert "ear_pair" not in first.guided_flow_state["completed_roles"]
+
+    assert second.guided_flow_state is not None
+    assert second.guided_flow_state["role_counts"]["ear_pair"] == 2
+    assert second.guided_flow_state["role_objects"]["ear_pair"] == ["Ear_L", "Ear_R"]
+    assert "ear_pair" in second.guided_flow_state["completed_roles"]
+    assert "ear_pair" not in second.guided_flow_state["allowed_roles"]
+    assert "ear_pair" not in second.guided_flow_state["missing_roles"]
+
+
 def test_checkpoint_iterate_role_summary_keeps_missing_build_roles_visible():
     ctx = FakeContext()
     set_session_capability_state(

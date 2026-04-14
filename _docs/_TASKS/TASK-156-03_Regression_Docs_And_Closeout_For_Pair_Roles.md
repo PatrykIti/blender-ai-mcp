@@ -1,7 +1,7 @@
 # TASK-156-03: Regression, Docs, And Closeout For Pair Roles
 
 **Parent:** [TASK-156](./TASK-156_Guided_Pair_Role_Cardinality_And_Sibling_Part_Registration.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟠 High
 
 ## Objective
@@ -43,3 +43,8 @@ Close TASK-156 with role-cardinality docs, test coverage, and changelog history.
 
 - close this leaf with the TASK-156 parent after task docs, board state,
   changelog, and transport/unit validation are updated in the same branch
+
+## Completion Summary
+
+- updated MCP/prompt docs, task board, descendant statuses, and changelog history
+- focused unit validation passed for guided role cardinality and over-cardinality execution blocking

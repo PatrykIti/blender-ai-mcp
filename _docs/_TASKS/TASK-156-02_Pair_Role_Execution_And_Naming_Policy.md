@@ -1,7 +1,7 @@
 # TASK-156-02: Pair Role Execution And Naming Policy
 
 **Parent:** [TASK-156](./TASK-156_Guided_Pair_Role_Cardinality_And_Sibling_Part_Registration.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -43,3 +43,8 @@ and legs.
 
 - when this leaf closes, record the role cardinality policy, side-specific
   naming suggestions, and the exact block message for over-cardinality calls
+
+## Completion Summary
+
+- role completion now depends on cardinality, so one side-specific pair object no longer completes the whole pair role
+- execution policy continues to allow the second sibling and blocks a third sibling once the pair is complete

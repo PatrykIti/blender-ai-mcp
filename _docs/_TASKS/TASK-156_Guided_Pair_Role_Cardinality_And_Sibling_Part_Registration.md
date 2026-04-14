@@ -1,6 +1,6 @@
 # TASK-156: Guided Pair Role Cardinality And Sibling Part Registration
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** Guided Runtime / Role Semantics / Creature Blockout
 **Follow-on After:** [TASK-155](./TASK-155_Guided_Post_Run_Reliability_Followups.md)
@@ -93,3 +93,11 @@ contract problem: pair roles should not be treated as singletons.
 - when this umbrella closes, update every descendant status, record validation
   commands, add the changelog entry, and keep the board row synchronized with
   the parent task status
+
+## Completion Summary
+
+- completed on 2026-04-14 by adding role cardinality metadata and public compact role diagnostics
+- pair roles `ear_pair`, `foreleg_pair`, and `hindleg_pair` now remain allowed until two side-specific siblings or one aggregate pair object is registered
+- execution policy blocks over-cardinality calls once the pair role is complete
+- updated MCP/prompt docs and added `_docs/_CHANGELOG/237-2026-04-14-guided-pair-role-cardinality.md`
+- validated with focused guided flow and context bridge unit tests

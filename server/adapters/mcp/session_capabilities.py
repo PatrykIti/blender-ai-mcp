@@ -226,11 +226,46 @@ _GUIDED_ROLE_GROUP_BY_ROLE: dict[str, dict[str, str]] = {
         "detail_element": "secondary_parts",
     },
 }
+_GUIDED_ROLE_CARDINALITY: dict[str, dict[str, int]] = {
+    "generic": {},
+    "creature": {
+        "ear_pair": 2,
+        "foreleg_pair": 2,
+        "hindleg_pair": 2,
+    },
+    "building": {},
+}
 _GUIDED_PRIMARY_REQUIRED_ROLES: dict[str, tuple[str, ...]] = {
     "generic": ("anchor_core", "primary_mass"),
     "creature": ("body_core", "head_mass"),
     "building": ("footprint_mass", "main_volume"),
 }
+
+
+def _guided_role_cardinality(domain_profile: Literal["generic", "creature", "building"], role: str) -> int:
+    return _GUIDED_ROLE_CARDINALITY.get(domain_profile, {}).get(role, 1)
+
+
+def _guided_role_instance_count(
+    *,
+    domain_profile: Literal["generic", "creature", "building"],
+    role: str,
+    object_name: str,
+) -> int:
+    cardinality = _guided_role_cardinality(domain_profile, role)
+    if cardinality <= 1:
+        return 1
+    normalized = object_name.strip().lower()
+    aggregate_tokens = {
+        "ear_pair": ("ears", "ear_pair", "earpair"),
+        "foreleg_pair": ("forelegs", "fore_legs", "frontlegs", "front_legs", "foreleg_pair", "forelegpair"),
+        "hindleg_pair": ("hindlegs", "hind_legs", "backlegs", "back_legs", "hindleg_pair", "hindlegpair"),
+    }.get(role, ())
+    if any(token in normalized for token in aggregate_tokens):
+        return cardinality
+    return 1
+
+
 _GUIDED_SECONDARY_REQUIRED_ROLES: dict[str, tuple[str, ...]] = {
     "generic": ("secondary_mass", "support_part"),
     "creature": ("ear_pair", "foreleg_pair", "hindleg_pair"),
@@ -540,10 +575,7 @@ def _flow_state_for_current_step(
         part_registry=part_registry,
         completed_role_hints=contract.completed_roles,
     )
-    contract.allowed_roles = role_summary["allowed_roles"]
-    contract.completed_roles = role_summary["completed_roles"]
-    contract.missing_roles = role_summary["missing_roles"]
-    contract.required_role_groups = role_summary["required_role_groups"]
+    _apply_role_summary(contract, role_summary)
     contract.next_actions = _default_next_actions_for_step(contract.current_step)
     contract.step_status = _default_step_status_for_step(contract.current_step)
     contract.required_checks = []
@@ -606,10 +638,7 @@ def _apply_spatial_refresh_gate(
         part_registry=part_registry,
         completed_role_hints=contract.completed_roles,
     )
-    contract.allowed_roles = role_summary["allowed_roles"]
-    contract.completed_roles = role_summary["completed_roles"]
-    contract.missing_roles = role_summary["missing_roles"]
-    contract.required_role_groups = role_summary["required_role_groups"]
+    _apply_role_summary(contract, role_summary)
 
 
 def _clear_spatial_refresh_gate(
@@ -726,16 +755,38 @@ def _build_role_summary(
     current_step: GuidedFlowStepLiteral,
     part_registry: list[dict[str, Any]] | None = None,
     completed_role_hints: list[str] | None = None,
-) -> dict[str, list[str]]:
+) -> dict[str, Any]:
     plan = _GUIDED_ROLE_SUMMARY_PLAN[domain_profile][current_step]
     allowed_roles = list(plan["allowed_roles"])
+    role_counts: dict[str, int] = {}
+    role_objects: dict[str, list[str]] = {}
+    for item in part_registry or []:
+        if not isinstance(item, dict):
+            continue
+        role = str(item.get("role") or "").strip()
+        object_name = str(item.get("object_name") or "").strip()
+        if not role:
+            continue
+        role_counts[role] = role_counts.get(role, 0) + _guided_role_instance_count(
+            domain_profile=domain_profile,
+            role=role,
+            object_name=object_name,
+        )
+        if object_name:
+            role_objects.setdefault(role, [])
+            if object_name not in role_objects[role]:
+                role_objects[role].append(object_name)
+
+    for role in completed_role_hints or []:
+        normalized_role = str(role).strip()
+        if not normalized_role or normalized_role in role_counts:
+            continue
+        role_counts[normalized_role] = _guided_role_cardinality(domain_profile, normalized_role)
+
+    known_roles = sorted(set(_GUIDED_ROLE_GROUP_BY_ROLE[domain_profile]) | set(role_counts) | set(allowed_roles))
+    role_cardinality = {role: _guided_role_cardinality(domain_profile, role) for role in known_roles}
     completed_roles = sorted(
-        {
-            str(item.get("role"))
-            for item in part_registry or []
-            if isinstance(item, dict) and str(item.get("role") or "").strip()
-        }
-        | {str(role).strip() for role in completed_role_hints or [] if str(role).strip()}
+        role for role, count in role_counts.items() if count >= _guided_role_cardinality(domain_profile, role)
     )
     if current_step in {"place_secondary_parts", "checkpoint_iterate"}:
         primary_roles = list(_GUIDED_ROLE_SUMMARY_PLAN[domain_profile]["create_primary_masses"]["allowed_roles"])
@@ -745,12 +796,28 @@ def _build_role_summary(
         secondary_roles = list(_GUIDED_ROLE_SUMMARY_PLAN[domain_profile]["place_secondary_parts"]["allowed_roles"])
         missing_secondary_roles = [role for role in secondary_roles if role not in completed_roles]
         allowed_roles = [*allowed_roles, *missing_secondary_roles]
+    allowed_roles = list(dict.fromkeys(role for role in allowed_roles if role not in completed_roles))
     missing_roles = [role for role in allowed_roles if role not in completed_roles]
     return {
         "allowed_roles": allowed_roles,
         "completed_roles": completed_roles,
         "missing_roles": missing_roles,
         "required_role_groups": list(plan["required_role_groups"]),
+        "role_counts": {role: min(count, role_cardinality.get(role, 1)) for role, count in sorted(role_counts.items())},
+        "role_cardinality": role_cardinality,
+        "role_objects": {role: sorted(objects) for role, objects in sorted(role_objects.items())},
+    }
+
+
+def _apply_role_summary(contract: GuidedFlowStateContract, role_summary: dict[str, Any]) -> None:
+    contract.allowed_roles = list(role_summary["allowed_roles"])
+    contract.completed_roles = list(role_summary["completed_roles"])
+    contract.missing_roles = list(role_summary["missing_roles"])
+    contract.required_role_groups = list(role_summary["required_role_groups"])
+    contract.role_counts = dict(role_summary.get("role_counts") or {})
+    contract.role_cardinality = dict(role_summary.get("role_cardinality") or {})
+    contract.role_objects = {
+        str(role): list(objects) for role, objects in dict(role_summary.get("role_objects") or {}).items()
     }
 
 
@@ -766,10 +833,7 @@ def _update_guided_flow_role_summary_dict(
         part_registry=part_registry,
         completed_role_hints=contract.completed_roles,
     )
-    contract.allowed_roles = role_summary["allowed_roles"]
-    contract.completed_roles = role_summary["completed_roles"]
-    contract.missing_roles = role_summary["missing_roles"]
-    contract.required_role_groups = role_summary["required_role_groups"]
+    _apply_role_summary(contract, role_summary)
     return contract.model_dump(mode="json")
 
 
@@ -779,11 +843,13 @@ def _maybe_advance_guided_flow_from_part_registry_dict(
     part_registry: list[dict[str, Any]] | None,
 ) -> dict[str, Any]:
     contract = GuidedFlowStateContract.model_validate(flow_state)
-    completed_roles = {
-        str(item.get("role"))
-        for item in part_registry or []
-        if isinstance(item, dict) and str(item.get("role") or "").strip()
-    }
+    current_role_summary = _build_role_summary(
+        domain_profile=contract.domain_profile,
+        current_step=contract.current_step,
+        part_registry=part_registry,
+        completed_role_hints=contract.completed_roles,
+    )
+    completed_roles = set(current_role_summary["completed_roles"])
 
     if contract.current_step in {"bootstrap_primary_workset", "create_primary_masses"}:
         required_roles = _GUIDED_PRIMARY_REQUIRED_ROLES[contract.domain_profile]
@@ -815,10 +881,7 @@ def _maybe_advance_guided_flow_from_part_registry_dict(
         part_registry=part_registry,
         completed_role_hints=contract.completed_roles,
     )
-    contract.allowed_roles = role_summary["allowed_roles"]
-    contract.completed_roles = role_summary["completed_roles"]
-    contract.missing_roles = role_summary["missing_roles"]
-    contract.required_role_groups = role_summary["required_role_groups"]
+    _apply_role_summary(contract, role_summary)
     return contract.model_dump(mode="json")
 
 
@@ -1742,10 +1805,7 @@ def _mark_guided_spatial_state_stale_dict(
         part_registry=part_registry,
         completed_role_hints=contract.completed_roles,
     )
-    contract.allowed_roles = role_summary["allowed_roles"]
-    contract.completed_roles = role_summary["completed_roles"]
-    contract.missing_roles = role_summary["missing_roles"]
-    contract.required_role_groups = role_summary["required_role_groups"]
+    _apply_role_summary(contract, role_summary)
     return contract.model_dump(mode="json")
 
 

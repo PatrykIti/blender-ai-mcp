@@ -128,6 +128,10 @@ Rules:
 - optional `guided_role=...` on `modeling_create_primitive(...)` or
   `modeling_transform_object(...)` is a convenience path only; do not rely on
   it as a substitute for reading the active guided flow state
+- pair roles such as `ear_pair`, `foreleg_pair`, and `hindleg_pair` are
+  cardinality-aware: create/register both left and right siblings before
+  treating the role as complete, and use `role_counts` / `role_cardinality`
+  when present to decide whether another sibling is still allowed
 - if you need to place a new object into a collection, create it first and then
   call `collection_manage(action="move_object", collection_name=..., object_name=...)`
 - after each stage use `reference_iterate_stage_checkpoint(...)`
