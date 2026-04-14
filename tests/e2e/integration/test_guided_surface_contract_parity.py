@@ -262,18 +262,16 @@ def test_guided_surface_contract_parity_over_stdio(tmp_path: Path):
             assert "Guided naming blocked object name 'Sphere'" in blocked_named_body
             assert "Body" in blocked_named_body
 
-            register_body = result_payload(
-                await client.call_tool(
-                    "guided_register_part",
-                    {"object_name": "Squirrel_Body", "role": "body_core"},
-                )
-            )
-            assert register_body["guided_flow_state"]["completed_roles"] == ["body_core"]
-
             body_result = result_payload(
                 await client.call_tool(
                     "modeling_create_primitive",
-                    {"primitive_type": "Sphere", "name": "Squirrel_Body", "location": [0.0, 0.0, 0.6], "radius": 0.5},
+                    {
+                        "primitive_type": "Sphere",
+                        "name": "Squirrel_Body",
+                        "location": [0.0, 0.0, 0.6],
+                        "radius": 0.5,
+                        "guided_role": "body_core",
+                    },
                 )
             )
             assert body_result == "Created Sphere named 'Squirrel_Body'"
