@@ -26,6 +26,9 @@ TASK-145-01-05:
 - improved `macro_attach_part_to_surface` with a bounded nearest-point
   mesh-surface nudge after bbox seating, closing small mesh gaps that remain
   after rounded parts reach coarse bbox contact
+- expanded `macro_attach_part_to_surface(align_mode=...)` to accept `none`,
+  allowing appendage seating along the surface normal while preserving existing
+  tangential offsets
 - fixed surface-side inference so a part currently on the negative side of an
   anchor receives `surface_side="negative"` in generated attach macro hints
 - updated MCP/prompt docs for compact debug split and rounded organic seating
@@ -37,3 +40,7 @@ TASK-145-01-05:
   - result on this machine: `56 passed`
 - `PYTHONPATH=. poetry run pytest tests/unit/tools/macro/test_macro_attach_part_to_surface.py -q`
   - result on this machine: `5 passed`
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_macro_attach_part_to_surface_mcp.py tests/unit/tools/macro/test_macro_attach_part_to_surface.py -q`
+  - result on this machine: `7 passed`
+- `poetry run pre-commit run --files server/router/infrastructure/tools_metadata/scene/macro_attach_part_to_surface.json`
+  - result on this machine: passed

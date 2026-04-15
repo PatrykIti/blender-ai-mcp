@@ -315,7 +315,7 @@ async def macro_attach_part_to_surface(
     surface_object: str,
     surface_axis: Literal["X", "Y", "Z"],
     surface_side: Literal["positive", "negative"] = "positive",
-    align_mode: Literal["center", "min", "max"] = "center",
+    align_mode: Literal["none", "center", "min", "max"] = "center",
     gap: float = 0.0,
     max_mesh_nudge: float = 0.15,
     offset: Union[str, List[float], None] = None,
@@ -329,7 +329,8 @@ async def macro_attach_part_to_surface(
 
     - one required surface axis (`X`, `Y`, `Z`)
     - one required surface side (`positive`, `negative`)
-    - one shared tangential alignment mode for the two remaining axes
+    - one shared tangential alignment mode for the two remaining axes; use
+      `none` to preserve existing tangential offsets
     - optional non-negative contact gap
     - optional bounded mesh-surface nudge after bbox seating
     - optional world offset after seating
@@ -340,6 +341,7 @@ async def macro_attach_part_to_surface(
         surface_axis: Axis normal of the target surface (`X`, `Y`, `Z`).
         surface_side: Which side of the target surface bbox to attach against.
         align_mode: Alignment rule applied to the two axes tangent to the surface.
+            Use `none` to preserve current tangential offsets.
         gap: Optional non-negative spacing along the surface normal.
         max_mesh_nudge: Maximum mesh-surface nearest-point nudge after bbox seating.
         offset: Optional world-axis offset `[x, y, z]` applied after seating.

@@ -226,6 +226,9 @@ Workflow:
     - if the same rounded organic seam is already `intersecting`, prefer
       `macro_attach_part_to_surface` instead of pushing the part sideways to
       bbox contact
+    - use `align_mode="none"` when seating legs or appendages that should keep
+      their current lateral/vertical offsets while moving only along the
+      surface normal
 19. do not treat generic overlap cleanup as success for a creature seam unless
     the final attachment verdict has also moved to `seated_contact`
 20. for segment seams such as head/body, tail/body, and limb/body, do not

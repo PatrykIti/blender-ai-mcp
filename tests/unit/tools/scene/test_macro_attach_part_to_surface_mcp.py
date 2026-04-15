@@ -39,6 +39,7 @@ def test_macro_attach_part_to_surface_mcp_tool_returns_structured_contract(monke
             part_object="Ear",
             surface_object="Head",
             surface_axis="X",
+            align_mode="none",
         )
     )
 
@@ -46,3 +47,37 @@ def test_macro_attach_part_to_surface_mcp_tool_returns_structured_contract(monke
     assert result.macro_name == "macro_attach_part_to_surface"
     assert result.actions_taken[0].action == "attach_part_to_surface"
     assert result.actions_taken[-1].details["attachment_verdict"] == "seated_contact"
+
+
+def test_macro_attach_part_to_surface_mcp_tool_accepts_none_alignment(monkeypatch):
+    from server.adapters.mcp.areas.scene import macro_attach_part_to_surface
+
+    captured = {}
+
+    class Handler:
+        def attach_part_to_surface(self, **kwargs):
+            captured.update(kwargs)
+            return {
+                "status": "success",
+                "macro_name": "macro_attach_part_to_surface",
+                "intent": "Attach while preserving offsets",
+                "actions_taken": [],
+                "objects_modified": [kwargs["part_object"]],
+                "requires_followup": True,
+            }
+
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.get_macro_handler", lambda: Handler())
+
+    result = asyncio.run(
+        macro_attach_part_to_surface(
+            MagicMock(),
+            part_object="ForeLeg_L",
+            surface_object="Body",
+            surface_axis="Y",
+            surface_side="positive",
+            align_mode="none",
+        )
+    )
+
+    assert result.status == "success"
+    assert captured["align_mode"] == "none"
