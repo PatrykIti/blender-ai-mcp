@@ -124,7 +124,7 @@ def test_modeling_create_primitive_registers_guided_role_with_actual_created_nam
 
     class Handler:
         def create_primitive(self, primitive_type, radius, size, location, rotation, name):
-            return "Created Monkey named 'Suzanne'"
+            return "Created Monkey named 'Head.001'"
 
     monkeypatch.setattr("server.adapters.mcp.areas.modeling.get_modeling_handler", lambda: Handler())
     monkeypatch.setattr("server.adapters.mcp.areas.modeling.route_tool_call", _direct_route)
@@ -145,11 +145,12 @@ def test_modeling_create_primitive_registers_guided_role_with_actual_created_nam
     result = modeling_create_primitive(
         MagicMock(),
         primitive_type="Monkey",
+        name="Head",
         guided_role="head_mass",
     )
 
-    assert result == "Created Monkey named 'Suzanne'"
-    assert recorded == [("Suzanne", "head_mass", None)]
+    assert result == "Created Monkey named 'Head.001'"
+    assert recorded == [("Head.001", "head_mass", None)]
 
 
 def test_modeling_create_primitive_skips_guided_registration_without_active_flow(monkeypatch):

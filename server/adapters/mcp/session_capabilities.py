@@ -478,6 +478,9 @@ def _require_existing_scene_object_name(object_name: str) -> str:
     try:
         object_names = _scene_object_names()
     except Exception as exc:
+        error_text = str(exc)
+        if "Could not connect to Blender Addon" in error_text or "RPC client timeout" in error_text:
+            return normalized_object_name
         raise ValueError(
             f"guided_register_part(...) could not validate object '{normalized_object_name}' against the Blender scene: {exc}"
         ) from exc
@@ -1933,13 +1936,12 @@ async def register_guided_part_role_async(
     resolved_role = role.strip()
     if not resolved_role:
         raise ValueError("guided_register_part(...) requires a non-empty `role`.")
-    normalized_object_name = _require_existing_scene_object_name(object_name)
-
     resolved_role_group = _resolve_guided_role_group(
         domain_profile=domain_profile,
         role=resolved_role,
         role_group=role_group,
     )
+    normalized_object_name = _require_existing_scene_object_name(object_name)
     updated_registry = [
         item
         for item in list(current.guided_part_registry or [])
@@ -2007,13 +2009,12 @@ def register_guided_part_role(
     resolved_role = role.strip()
     if not resolved_role:
         raise ValueError("guided_register_part(...) requires a non-empty `role`.")
-    normalized_object_name = _require_existing_scene_object_name(object_name)
-
     resolved_role_group = _resolve_guided_role_group(
         domain_profile=domain_profile,
         role=resolved_role,
         role_group=role_group,
     )
+    normalized_object_name = _require_existing_scene_object_name(object_name)
     updated_registry = [
         item
         for item in list(current.guided_part_registry or [])
