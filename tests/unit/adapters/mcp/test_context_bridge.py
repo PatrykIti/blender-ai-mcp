@@ -583,6 +583,116 @@ def test_route_tool_call_updates_guided_registry_after_scene_rename(monkeypatch)
     assert report.context.guided_role == "body_core"
 
 
+def test_route_tool_call_removes_guided_registry_entries_after_join(monkeypatch):
+    """Joining registered parts should drop stale source registrations until the result is re-registered."""
+
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "secondary_parts", "attachment_alignment", "reference_context"],
+                "allowed_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass", "ear_pair"],
+                "missing_roles": ["snout_mass", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+            guided_part_registry=[
+                {
+                    "object_name": "Ear_L",
+                    "role": "ear_pair",
+                    "role_group": "secondary_parts",
+                    "status": "registered",
+                },
+                {
+                    "object_name": "Ear_R",
+                    "role": "ear_pair",
+                    "role_group": "secondary_parts",
+                    "status": "registered",
+                },
+            ],
+        ),
+    )
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_context", lambda: ctx)
+
+    result = route_tool_call(
+        tool_name="modeling_join_objects",
+        params={"object_names": ["Ear_L", "Ear_R"]},
+        direct_executor=lambda: "Objects Ear_L, Ear_R joined into 'Ear_R'. Joined count: 2",
+    )
+    state = get_session_capability_state(ctx)
+
+    assert result == "Objects Ear_L, Ear_R joined into 'Ear_R'. Joined count: 2"
+    assert state.guided_part_registry is None
+    assert state.guided_flow_state is not None
+    assert "ear_pair" not in state.guided_flow_state["completed_roles"]
+
+
+def test_route_tool_call_removes_guided_registry_entry_after_separate(monkeypatch):
+    """Separating a registered object should drop the stale source registration."""
+
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "secondary_parts", "attachment_alignment", "reference_context"],
+                "allowed_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass", "ear_pair"],
+                "missing_roles": ["snout_mass", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+            guided_part_registry=[
+                {
+                    "object_name": "Squirrel_Ears",
+                    "role": "ear_pair",
+                    "role_group": "secondary_parts",
+                    "status": "registered",
+                }
+            ],
+        ),
+    )
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_context", lambda: ctx)
+
+    result = route_tool_call(
+        tool_name="modeling_separate_object",
+        params={"name": "Squirrel_Ears", "type": "LOOSE"},
+        direct_executor=lambda: "['Ear_L', 'Ear_R']",
+    )
+    state = get_session_capability_state(ctx)
+
+    assert result == "['Ear_L', 'Ear_R']"
+    assert state.guided_part_registry is None
+    assert state.guided_flow_state is not None
+    assert "ear_pair" not in state.guided_flow_state["completed_roles"]
+
+
 def test_route_tool_call_report_allows_registered_primary_object_transform_during_secondary_step(monkeypatch):
     """A previously registered primary object should remain transformable during secondary steps."""
 

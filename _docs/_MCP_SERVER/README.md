@@ -590,6 +590,9 @@ Current guided-flow behavior:
 - those `guided_role=...` convenience hints only auto-register when the
   session already has an active `guided_flow_state`; outside an active guided
   flow they do not create persistent guided role state on their own
+- on `modeling_create_primitive(...)`, the convenience path now also requires
+  an explicit semantic `name`; guided create does not allow auto-generated
+  Blender names to become semantic part registrations
 - for `modeling_create_primitive(...)`, the convenience path registers the
   real created object name returned by Blender/tool execution, not the raw
   requested primitive token, so role state remains correct for names such as
@@ -597,9 +600,16 @@ Current guided-flow behavior:
 - successful `scene_rename_object(...)` calls now keep the guided part
   registry aligned with the renamed object so later role-sensitive calls can
   still recover the stored role/role_group
+- successful `scene_rename_object(...)` calls also mark guided spatial state
+  stale so the name-bound target scope can be rebound on the next required
+  spatial refresh
 - `scene_clean_scene(...)` now clears the guided part registry and returns the
   guided flow to `bootstrap_primary_workset`, so empty-scene resets do not
   keep stale completed parts from an earlier workset
+- destructive identity/topology changes such as `modeling_join_objects(...)`
+  and `modeling_separate_object(...)` now remove stale guided part
+  registrations; re-register the resulting object(s) explicitly when they
+  should still count toward guided role completion
 - after newly created blockout parts during `checkpoint_iterate`, bounded
   initial transforms can remain available before the next checkpoint instead
   of immediately forcing a spatial refresh on every small adjustment

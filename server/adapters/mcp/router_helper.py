@@ -23,6 +23,7 @@ from server.adapters.mcp.session_capabilities import (
     get_session_capability_state,
     mark_guided_spatial_state_stale,
     record_router_execution_outcome,
+    remove_guided_part_registrations,
     rename_guided_part_registration,
     resolve_guided_role_group_for_domain,
 )
@@ -118,13 +119,13 @@ def _renamed_object_name_from_result(result: Any) -> str | None:
 
 
 def _maybe_sync_guided_part_registry_from_report(report: MCPExecutionReport) -> None:
-    """Update guided part registration after one successful scene rename."""
+    """Update guided part registration after successful scene-identity mutations."""
 
     if report.error is not None or not report.steps:
         return
 
     final_step = report.steps[-1]
-    if final_step.tool_name != "scene_rename_object":
+    if final_step.tool_name not in {"scene_rename_object", "modeling_join_objects", "modeling_separate_object"}:
         return
     if final_step.error is not None:
         return
@@ -135,18 +136,44 @@ def _maybe_sync_guided_part_registry_from_report(report: MCPExecutionReport) -> 
     if current_ctx is None:
         return
 
-    old_name = final_step.params.get("old_name")
-    new_name = _renamed_object_name_from_result(final_step.result) or final_step.params.get("new_name")
-    if not isinstance(old_name, str) or not old_name.strip():
-        return
-    if not isinstance(new_name, str) or not new_name.strip():
+    if final_step.tool_name == "scene_rename_object":
+        old_name = final_step.params.get("old_name")
+        new_name = _renamed_object_name_from_result(final_step.result) or final_step.params.get("new_name")
+        if not isinstance(old_name, str) or not old_name.strip():
+            return
+        if not isinstance(new_name, str) or not new_name.strip():
+            return
+
+        try:
+            rename_guided_part_registration(
+                current_ctx,
+                old_name=old_name,
+                new_name=new_name,
+            )
+        except Exception:
+            return
         return
 
+    if final_step.tool_name == "modeling_join_objects":
+        object_names = final_step.params.get("object_names")
+        if not isinstance(object_names, list):
+            return
+        try:
+            remove_guided_part_registrations(
+                current_ctx,
+                object_names=[str(name) for name in object_names if str(name).strip()],
+            )
+        except Exception:
+            return
+        return
+
+    source_name = final_step.params.get("name")
+    if not isinstance(source_name, str) or not source_name.strip():
+        return
     try:
-        rename_guided_part_registration(
+        remove_guided_part_registrations(
             current_ctx,
-            old_name=old_name,
-            new_name=new_name,
+            object_names=[source_name],
         )
     except Exception:
         return

@@ -1292,6 +1292,42 @@ def test_direct_modeling_create_primitive_can_register_guided_role_hint(monkeypa
     assert recorded == [("Squirrel_Body", "body_core", None)]
 
 
+def test_direct_modeling_create_primitive_rejects_guided_role_without_explicit_name(monkeypatch):
+    """Guided convenience create should require an explicit semantic name before mutation."""
+
+    class Handler:
+        def create_primitive(self, primitive_type, radius=1.0, size=2.0, location=None, rotation=None, name=None):
+            raise AssertionError("Handler should not be reached when guided create has no semantic name")
+
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.get_modeling_handler", lambda: Handler())
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.get_session_capability_state",
+        lambda ctx: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+            },
+        ),
+    )
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    server = _build_phase_search_server(SessionPhase.BUILD)
+
+    async def run():
+        with pytest.raises(ToolError, match="explicit semantic `name`"):
+            await server.call_tool(
+                "modeling_create_primitive",
+                {
+                    "primitive_type": "Sphere",
+                    "guided_role": "body_core",
+                },
+            )
+
+    asyncio.run(run())
+
+
 def test_call_tool_can_forward_guided_role_hint_for_modeling_create_primitive(monkeypatch):
     """Proxied guided build calls should preserve guided_role just like direct guided tool calls."""
 

@@ -5,6 +5,7 @@ from fastmcp import Context
 
 from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
 from server.adapters.mcp.guided_contract import canonicalize_modeling_create_primitive_arguments
+from server.adapters.mcp.guided_naming_policy import evaluate_guided_object_name
 from server.adapters.mcp.router_helper import route_tool_call
 from server.adapters.mcp.session_capabilities import (
     get_session_capability_state,
@@ -74,6 +75,48 @@ def _maybe_register_guided_role(
         object_name=normalized_object_name,
         role=guided_role,
         role_group=role_group,
+    )
+
+
+def _guided_create_requires_explicit_name(
+    ctx: Context,
+    *,
+    guided_role: str | None,
+    object_name: str | None,
+) -> str | None:
+    """Return one actionable error when guided create would rely on an auto-generated name."""
+
+    if not guided_role:
+        return None
+
+    session = get_session_capability_state(ctx)
+    if session.guided_flow_state is None:
+        return None
+
+    normalized_object_name = str(object_name or "").strip()
+    if normalized_object_name:
+        return None
+
+    domain_profile = str((session.guided_flow_state or {}).get("domain_profile") or "").strip()
+    current_step = str((session.guided_flow_state or {}).get("current_step") or "").strip() or None
+    suggested_names: list[str] = []
+    if domain_profile in {"generic", "creature", "building"}:
+        try:
+            decision = evaluate_guided_object_name(
+                object_name="Object",
+                role=guided_role,
+                domain_profile=domain_profile,  # type: ignore[arg-type]
+                current_step=current_step,
+            )
+            suggested_names = list(decision.suggested_names or [])
+        except Exception:
+            suggested_names = []
+
+    suggestion_suffix = f" Suggested names: {', '.join(suggested_names)}." if suggested_names else ""
+    return (
+        "Guided execution requires an explicit semantic `name` when `guided_role=...` is used on "
+        "modeling_create_primitive(...). Auto-generated Blender names are not accepted for semantic role "
+        f"registration.{suggestion_suffix}"
     )
 
 
@@ -387,6 +430,13 @@ def _modeling_create_primitive_impl(
     location_value = canonical_arguments.get("location", location)
     rotation_value = canonical_arguments.get("rotation", rotation)
     name_value = canonical_arguments.get("name")
+    guided_name_error = _guided_create_requires_explicit_name(
+        ctx,
+        guided_role=guided_role,
+        object_name=str(name_value).strip() if name_value else None,
+    )
+    if guided_name_error is not None:
+        raise ValueError(guided_name_error)
 
     def execute():
         handler = get_modeling_handler()

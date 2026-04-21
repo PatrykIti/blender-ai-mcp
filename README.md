@@ -397,6 +397,9 @@ contract in addition to `guided_handoff`.
 - those optional `guided_role=...` hints only auto-register when an active
   guided flow already exists; outside an active guided flow they do not create
   persistent role state by themselves
+- on `modeling_create_primitive(...)`, `guided_role=...` now also requires an
+  explicit semantic `name`; guided create does not allow auto-generated Blender
+  names to become semantic part registrations
 - on `modeling_create_primitive(...)`, guided-role auto-registration now binds
   to the actual created object name returned by Blender, so role state stays
   aligned even when Blender auto-numbers a default name such as `Cube.001` or
@@ -404,9 +407,15 @@ contract in addition to `guided_handoff`.
 - successful `scene_rename_object(...)` calls now keep the guided part registry
   aligned with the renamed Blender object, so later role-sensitive transforms
   still recover the registered role without manual re-registration
+- successful `scene_rename_object(...)` calls also re-arm guided spatial
+  checks, because the bound target-scope fingerprint is name-based
 - `scene_clean_scene(...)` now clears the guided part registry and returns the
   guided flow to `bootstrap_primary_workset` instead of carrying completed
   parts forward on an empty scene
+- destructive identity/topology changes such as `modeling_join_objects(...)`
+  or `modeling_separate_object(...)` now drop stale guided part registrations;
+  re-register the resulting object(s) explicitly if they should still count
+  toward guided role completion
 - if the server warns or blocks on guided naming, rename or create the object
   using one of the suggested semantic names instead of retrying the same weak
   abbreviation

@@ -588,6 +588,51 @@ def test_scene_clean_scene_clears_guided_part_registry_and_returns_to_primary_bo
     assert state.guided_part_registry is None
 
 
+def test_scene_rename_object_marks_guided_spatial_state_stale():
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "active_target_scope": _scope("Squirrel_Body", "Squirrel_Head"),
+                "spatial_scope_fingerprint": "scope_1",
+                "spatial_state_version": 0,
+                "last_spatial_check_version": 0,
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": [],
+                "missing_roles": ["body_core", "head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    state = mark_guided_spatial_state_stale(
+        ctx,
+        tool_name="scene_rename_object",
+        family="utility",
+        reason="scene_rename_object",
+    )
+
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["spatial_state_stale"] is True
+    assert state.guided_flow_state["spatial_refresh_required"] is True
+    assert state.guided_flow_state["allowed_families"] == ["spatial_context", "reference_context"]
+    assert state.guided_flow_state["next_actions"] == ["refresh_spatial_context"]
+
+
 def test_empty_scene_bootstrap_moves_guided_flow_to_primary_workset_creation():
     ctx = FakeContext()
     set_session_capability_state(

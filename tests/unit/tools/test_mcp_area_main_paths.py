@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
+import pytest
 from server.adapters.mcp.session_capabilities import SessionCapabilityState
 from server.adapters.mcp.session_phase import SessionPhase
 
@@ -176,6 +177,35 @@ def test_modeling_create_primitive_skips_guided_registration_without_active_flow
     )
 
     assert result == "Created Cube named 'Cube.001'"
+
+
+def test_modeling_create_primitive_requires_explicit_name_for_guided_role_in_active_flow(monkeypatch):
+    class Handler:
+        def create_primitive(self, primitive_type, radius, size, location, rotation, name):
+            raise AssertionError("Handler should not run when guided create lacks an explicit semantic name")
+
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.get_modeling_handler", lambda: Handler())
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.route_tool_call", _direct_route)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.get_session_capability_state",
+        lambda ctx: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+            },
+        ),
+    )
+
+    from server.adapters.mcp.areas.modeling import modeling_create_primitive
+
+    with pytest.raises(ValueError, match="requires an explicit semantic `name`"):
+        modeling_create_primitive(
+            MagicMock(),
+            primitive_type="Sphere",
+            guided_role="body_core",
+        )
 
 
 def test_modeling_transform_object_skips_guided_registration_without_active_flow(monkeypatch):

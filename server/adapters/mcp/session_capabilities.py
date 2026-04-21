@@ -119,6 +119,7 @@ _SPATIAL_REARM_ALLOWED_STEPS: set[GuidedFlowStepLiteral] = {
 _SPATIAL_REARM_ALWAYS_BLOCK_REASONS: set[str] = {"scene_clean_scene"}
 _SPATIAL_STATE_DIRTY_TOOL_NAMES: set[str] = {
     "scene_clean_scene",
+    "scene_rename_object",
     "modeling_create_primitive",
     "modeling_transform_object",
     "macro_attach_part_to_surface",
@@ -623,6 +624,8 @@ def _should_rearm_spatial_gate(contract: GuidedFlowStateContract, *, force: bool
     if contract.current_step not in _SPATIAL_REARM_ALLOWED_STEPS:
         return False
     if contract.last_spatial_mutation_reason in _SPATIAL_REARM_ALWAYS_BLOCK_REASONS:
+        return True
+    if contract.last_spatial_mutation_reason == "scene_rename_object":
         return True
     if (
         contract.current_step == "place_secondary_parts"
@@ -2115,6 +2118,65 @@ def rename_guided_part_registration(
         guided_handoff=current.guided_handoff,
         guided_flow_state=updated_flow_state,
         guided_part_registry=updated_registry,
+        pending_reference_images=current.pending_reference_images,
+    )
+    set_session_capability_state(ctx, state)
+    return state
+
+
+def remove_guided_part_registrations(
+    ctx: Context,
+    *,
+    object_names: list[str],
+) -> SessionCapabilityState:
+    """Remove guided part registrations for objects whose topology/identity changed materially."""
+
+    current = get_session_capability_state(ctx)
+    if current.guided_part_registry is None:
+        return current
+
+    names_to_remove = {str(name).strip() for name in object_names if str(name).strip()}
+    if not names_to_remove:
+        return current
+
+    updated_registry = [
+        dict(item)
+        for item in list(current.guided_part_registry or [])
+        if isinstance(item, dict) and str(item.get("object_name") or "").strip() not in names_to_remove
+    ]
+    if len(updated_registry) == len(list(current.guided_part_registry or [])):
+        return current
+
+    updated_flow_state = None
+    if current.guided_flow_state is not None:
+        contract = GuidedFlowStateContract.model_validate(current.guided_flow_state)
+        contract.completed_roles = []
+        contract.role_counts = {}
+        contract.role_cardinality = {}
+        contract.role_objects = {}
+        updated_flow_state = _update_guided_flow_role_summary_dict(
+            contract.model_dump(mode="json"),
+            part_registry=updated_registry or None,
+        )
+    state = SessionCapabilityState(
+        phase=current.phase,
+        goal=current.goal,
+        pending_clarification=current.pending_clarification,
+        last_router_status=current.last_router_status,
+        policy_context=current.policy_context,
+        surface_profile=current.surface_profile,
+        contract_version=current.contract_version,
+        pending_elicitation_id=current.pending_elicitation_id,
+        pending_workflow_name=current.pending_workflow_name,
+        partial_answers=current.partial_answers,
+        pending_question_set_id=current.pending_question_set_id,
+        last_elicitation_action=current.last_elicitation_action,
+        last_router_disposition=current.last_router_disposition,
+        last_router_error=current.last_router_error,
+        reference_images=current.reference_images,
+        guided_handoff=current.guided_handoff,
+        guided_flow_state=updated_flow_state,
+        guided_part_registry=updated_registry or None,
         pending_reference_images=current.pending_reference_images,
     )
     set_session_capability_state(ctx, state)
