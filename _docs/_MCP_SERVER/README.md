@@ -581,6 +581,9 @@ Current guided-flow behavior:
 - `guided_register_part(object_name=..., role=...)` is the canonical guided
   surface for telling the server that an existing object now counts as one
   semantic role such as `body_core`, `head_mass`, or `roof_mass`
+- `guided_register_part(...)` now validates that the named Blender object
+  actually exists before updating guided role completion; a typo does not
+  populate `completed_roles`
 - `modeling_create_primitive(...)` and `modeling_transform_object(...)` may
   also carry an optional `guided_role` convenience hint on guided surfaces, but
   `guided_register_part(...)` remains the canonical explicit registration path
@@ -591,6 +594,12 @@ Current guided-flow behavior:
   real created object name returned by Blender/tool execution, not the raw
   requested primitive token, so role state remains correct for names such as
   `Cube.001` or Blender defaults such as `Suzanne`
+- successful `scene_rename_object(...)` calls now keep the guided part
+  registry aligned with the renamed object so later role-sensitive calls can
+  still recover the stored role/role_group
+- `scene_clean_scene(...)` now clears the guided part registry and returns the
+  guided flow to `bootstrap_primary_workset`, so empty-scene resets do not
+  keep stale completed parts from an earlier workset
 - after newly created blockout parts during `checkpoint_iterate`, bounded
   initial transforms can remain available before the next checkpoint instead
   of immediately forcing a spatial refresh on every small adjustment

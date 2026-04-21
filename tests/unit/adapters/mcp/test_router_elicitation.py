@@ -655,3 +655,40 @@ def test_guided_register_part_rejects_invalid_role_for_domain(monkeypatch):
 
     with pytest.raises(ValueError, match="Unknown guided part role 'roof_mass'"):
         asyncio.run(router_area.guided_register_part(ctx, object_name="Squirrel_Roof", role="roof_mass"))
+
+
+def test_guided_register_part_rejects_missing_scene_object(monkeypatch):
+    """guided_register_part should fail clearly when the requested object does not exist in Blender."""
+
+    monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
+    monkeypatch.setattr("server.adapters.mcp.session_capabilities._scene_object_names", lambda: {"Squirrel_Body"})
+
+    ctx = FakeContext(response=object())
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            surface_profile="llm-guided",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": [],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": [],
+                "missing_roles": ["body_core", "head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    with pytest.raises(ValueError, match="requires an existing Blender object named 'MissingHead'"):
+        asyncio.run(router_area.guided_register_part(ctx, object_name="MissingHead", role="head_mass"))

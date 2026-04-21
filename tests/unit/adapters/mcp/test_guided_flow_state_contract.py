@@ -524,18 +524,32 @@ def test_building_flow_advances_after_scope_and_view_checks_only():
     assert state.guided_flow_state["completed_steps"] == ["establish_spatial_context"]
 
 
-def test_scene_clean_scene_immediately_rearms_spatial_context_for_active_primary_step():
+def test_scene_clean_scene_clears_guided_part_registry_and_returns_to_primary_bootstrap():
     ctx = FakeContext()
     set_session_capability_state(
         ctx,
         SessionCapabilityState(
             phase=SessionPhase.BUILD,
             goal="create a low-poly squirrel matching front and side reference images",
+            guided_part_registry=[
+                {
+                    "object_name": "Squirrel_Body",
+                    "role": "body_core",
+                    "role_group": "primary_masses",
+                    "status": "registered",
+                },
+                {
+                    "object_name": "Squirrel_Head",
+                    "role": "head_mass",
+                    "role_group": "primary_masses",
+                    "status": "registered",
+                },
+            ],
             guided_flow_state={
                 "flow_id": "guided_creature_flow",
                 "domain_profile": "creature",
-                "current_step": "create_primary_masses",
-                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
                 "active_target_scope": _scope("Squirrel_Body", "Squirrel_Head"),
                 "spatial_scope_fingerprint": "scope_1",
                 "spatial_state_version": 0,
@@ -543,13 +557,13 @@ def test_scene_clean_scene_immediately_rearms_spatial_context_for_active_primary
                 "required_checks": [],
                 "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
                 "preferred_prompts": ["workflow_router_first"],
-                "next_actions": ["begin_primary_masses"],
+                "next_actions": ["begin_secondary_parts"],
                 "blocked_families": [],
-                "allowed_families": ["primary_masses", "reference_context"],
-                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
-                "completed_roles": [],
-                "missing_roles": ["body_core", "head_mass", "tail_mass"],
-                "required_role_groups": ["primary_masses"],
+                "allowed_families": ["primary_masses", "secondary_parts", "attachment_alignment", "reference_context"],
+                "allowed_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass"],
+                "missing_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
                 "step_status": "ready",
             },
         ),
@@ -563,12 +577,15 @@ def test_scene_clean_scene_immediately_rearms_spatial_context_for_active_primary
     )
 
     assert state.guided_flow_state is not None
-    assert state.guided_flow_state["current_step"] == "create_primary_masses"
-    assert state.guided_flow_state["spatial_state_stale"] is True
-    assert state.guided_flow_state["spatial_refresh_required"] is True
+    assert state.guided_flow_state["current_step"] == "bootstrap_primary_workset"
+    assert state.guided_flow_state["spatial_state_stale"] is False
+    assert state.guided_flow_state["spatial_refresh_required"] is False
     assert state.guided_flow_state["active_target_scope"] is None
-    assert state.guided_flow_state["allowed_families"] == ["spatial_context", "reference_context"]
-    assert state.guided_flow_state["next_actions"] == ["refresh_spatial_context"]
+    assert state.guided_flow_state["allowed_families"] == ["primary_masses", "reference_context"]
+    assert state.guided_flow_state["next_actions"] == ["create_primary_workset"]
+    assert state.guided_flow_state["completed_roles"] == []
+    assert state.guided_flow_state["missing_roles"] == ["body_core", "head_mass", "tail_mass"]
+    assert state.guided_part_registry is None
 
 
 def test_empty_scene_bootstrap_moves_guided_flow_to_primary_workset_creation():
@@ -903,6 +920,38 @@ def test_secondary_role_registration_advances_creature_flow_to_checkpoint_iterat
         "reference_context",
     ]
     assert state.guided_flow_state["allowed_roles"] == ["tail_mass", "snout_mass"]
+
+
+def test_register_guided_part_role_rejects_nonexistent_scene_object(monkeypatch):
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": [],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": [],
+                "missing_roles": ["body_core", "head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+    monkeypatch.setattr("server.adapters.mcp.session_capabilities._scene_object_names", lambda: {"ExistingBody"})
+
+    with pytest.raises(ValueError, match="requires an existing Blender object named 'MissingBody'"):
+        register_guided_part_role(ctx, object_name="MissingBody", role="body_core")
 
 
 def test_pair_role_registration_requires_two_side_specific_objects_before_completion():

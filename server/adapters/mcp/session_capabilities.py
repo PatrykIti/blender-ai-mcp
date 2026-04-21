@@ -455,6 +455,40 @@ def _normalize_guided_target_scope(value: Any) -> dict[str, Any] | None:
     return normalized.model_dump(mode="json", exclude_none=True)
 
 
+def _scene_object_names() -> set[str]:
+    from server.infrastructure.di import get_scene_handler
+
+    objects = get_scene_handler().list_objects()
+    names: set[str] = set()
+    for item in objects:
+        if not isinstance(item, dict):
+            continue
+        name = item.get("name")
+        if isinstance(name, str) and name.strip():
+            names.add(name.strip())
+    return names
+
+
+def _require_existing_scene_object_name(object_name: str) -> str:
+    normalized_object_name = str(object_name or "").strip()
+    if not normalized_object_name:
+        raise ValueError("guided_register_part(...) requires a non-empty `object_name`.")
+
+    try:
+        object_names = _scene_object_names()
+    except Exception as exc:
+        raise ValueError(
+            f"guided_register_part(...) could not validate object '{normalized_object_name}' against the Blender scene: {exc}"
+        ) from exc
+
+    if normalized_object_name not in object_names:
+        raise ValueError(
+            f"guided_register_part(...) requires an existing Blender object named '{normalized_object_name}'."
+        )
+
+    return normalized_object_name
+
+
 def _build_guided_target_scope_fingerprint(value: Any) -> str | None:
     normalized = _normalize_guided_target_scope(value)
     if normalized is None:
@@ -1786,7 +1820,11 @@ def _mark_guided_spatial_state_stale_dict(
 ) -> dict[str, Any]:
     contract = GuidedFlowStateContract.model_validate(flow_state)
 
-    if contract.active_target_scope is None and contract.last_spatial_check_version is None:
+    if (
+        tool_name != "scene_clean_scene"
+        and contract.active_target_scope is None
+        and contract.last_spatial_check_version is None
+    ):
         return contract.model_dump(mode="json")
 
     contract.spatial_state_version += 1
@@ -1794,9 +1832,25 @@ def _mark_guided_spatial_state_stale_dict(
     contract.last_spatial_mutation_reason = reason
 
     if tool_name == "scene_clean_scene":
+        contract.current_step = "bootstrap_primary_workset"
+        contract.completed_steps = [
+            step
+            for step in contract.completed_steps
+            if step in {"understand_goal", "establish_reference_context", "bootstrap_primary_workset"}
+        ]
+        contract.completed_roles = []
+        contract.role_counts = {}
+        contract.role_cardinality = {}
+        contract.role_objects = {}
         contract.active_target_scope = None
         contract.spatial_scope_fingerprint = None
         contract.last_spatial_check_version = None
+        contract.spatial_refresh_required = False
+        contract.spatial_state_stale = False
+        contract.required_checks = []
+        contract.blocked_families = []
+        _flow_state_for_current_step(contract, part_registry=part_registry)
+        return contract.model_dump(mode="json")
 
     _apply_spatial_refresh_gate(contract, part_registry=part_registry)
     role_summary = _build_role_summary(
@@ -1826,11 +1880,12 @@ def mark_guided_spatial_state_stale(
     if current.guided_flow_state is None:
         return current
 
+    updated_registry = None if tool_name == "scene_clean_scene" else current.guided_part_registry
     updated_flow_state = _mark_guided_spatial_state_stale_dict(
         current.guided_flow_state,
         tool_name=tool_name,
         reason=reason or tool_name,
-        part_registry=current.guided_part_registry,
+        part_registry=updated_registry,
     )
     state = SessionCapabilityState(
         phase=current.phase,
@@ -1850,7 +1905,7 @@ def mark_guided_spatial_state_stale(
         reference_images=current.reference_images,
         guided_handoff=current.guided_handoff,
         guided_flow_state=updated_flow_state,
-        guided_part_registry=current.guided_part_registry,
+        guided_part_registry=updated_registry,
         pending_reference_images=current.pending_reference_images,
     )
     set_session_capability_state(ctx, state)
@@ -1875,6 +1930,7 @@ async def register_guided_part_role_async(
     resolved_role = role.strip()
     if not resolved_role:
         raise ValueError("guided_register_part(...) requires a non-empty `role`.")
+    normalized_object_name = _require_existing_scene_object_name(object_name)
 
     resolved_role_group = _resolve_guided_role_group(
         domain_profile=domain_profile,
@@ -1884,12 +1940,12 @@ async def register_guided_part_role_async(
     updated_registry = [
         item
         for item in list(current.guided_part_registry or [])
-        if isinstance(item, dict) and item.get("object_name") != object_name
+        if isinstance(item, dict) and item.get("object_name") != normalized_object_name
     ]
     updated_registry.append(
         asdict(
             GuidedPartRegistryItem(
-                object_name=object_name,
+                object_name=normalized_object_name,
                 role=resolved_role,
                 role_group=resolved_role_group,
                 status="registered",
@@ -1948,6 +2004,7 @@ def register_guided_part_role(
     resolved_role = role.strip()
     if not resolved_role:
         raise ValueError("guided_register_part(...) requires a non-empty `role`.")
+    normalized_object_name = _require_existing_scene_object_name(object_name)
 
     resolved_role_group = _resolve_guided_role_group(
         domain_profile=domain_profile,
@@ -1957,12 +2014,12 @@ def register_guided_part_role(
     updated_registry = [
         item
         for item in list(current.guided_part_registry or [])
-        if isinstance(item, dict) and item.get("object_name") != object_name
+        if isinstance(item, dict) and item.get("object_name") != normalized_object_name
     ]
     updated_registry.append(
         asdict(
             GuidedPartRegistryItem(
-                object_name=object_name,
+                object_name=normalized_object_name,
                 role=resolved_role,
                 role_group=resolved_role_group,
                 status="registered",
@@ -1977,6 +2034,67 @@ def register_guided_part_role(
     updated_flow_state = _maybe_advance_guided_flow_from_part_registry_dict(
         updated_flow_state,
         part_registry=updated_registry,
+    )
+    state = SessionCapabilityState(
+        phase=current.phase,
+        goal=current.goal,
+        pending_clarification=current.pending_clarification,
+        last_router_status=current.last_router_status,
+        policy_context=current.policy_context,
+        surface_profile=current.surface_profile,
+        contract_version=current.contract_version,
+        pending_elicitation_id=current.pending_elicitation_id,
+        pending_workflow_name=current.pending_workflow_name,
+        partial_answers=current.partial_answers,
+        pending_question_set_id=current.pending_question_set_id,
+        last_elicitation_action=current.last_elicitation_action,
+        last_router_disposition=current.last_router_disposition,
+        last_router_error=current.last_router_error,
+        reference_images=current.reference_images,
+        guided_handoff=current.guided_handoff,
+        guided_flow_state=updated_flow_state,
+        guided_part_registry=updated_registry,
+        pending_reference_images=current.pending_reference_images,
+    )
+    set_session_capability_state(ctx, state)
+    return state
+
+
+def rename_guided_part_registration(
+    ctx: Context,
+    *,
+    old_name: str,
+    new_name: str,
+) -> SessionCapabilityState:
+    """Keep guided part registration aligned with one successful scene object rename."""
+
+    current = get_session_capability_state(ctx)
+    if current.guided_part_registry is None:
+        return current
+
+    normalized_old_name = str(old_name or "").strip()
+    normalized_new_name = _require_existing_scene_object_name(new_name)
+    if not normalized_old_name or normalized_old_name == normalized_new_name:
+        return current
+
+    changed = False
+    updated_registry: list[dict[str, Any]] = []
+    for item in list(current.guided_part_registry or []):
+        if not isinstance(item, dict):
+            continue
+        updated_item = dict(item)
+        if updated_item.get("object_name") == normalized_old_name:
+            updated_item["object_name"] = normalized_new_name
+            changed = True
+        updated_registry.append(updated_item)
+
+    if not changed:
+        return current
+
+    updated_flow_state = (
+        _update_guided_flow_role_summary_dict(current.guided_flow_state, part_registry=updated_registry)
+        if current.guided_flow_state is not None
+        else None
     )
     state = SessionCapabilityState(
         phase=current.phase,

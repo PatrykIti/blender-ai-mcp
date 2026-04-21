@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [241](./241-2026-04-21-guided-registry-scene-reset-and-rename-sync.md) | 2026-04-21 | **Guided registry scene reset and rename sync** | - |
 | [240](./240-2026-04-21-guided-role-convenience-registration-fixes.md) | 2026-04-21 | **Guided role convenience registration fixes** | - |
 | [239](./239-2026-04-21-openrouter-require-parameters-default-false.md) | 2026-04-21 | **OpenRouter require_parameters default false** | - |
 | [238](./238-2026-04-14-compact-iterate-and-organic-seating-planner.md) | 2026-04-14 | **Compact iterate and organic seating planner** | - |

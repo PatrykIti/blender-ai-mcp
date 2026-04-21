@@ -5,6 +5,7 @@ Provides utilities for routing tool calls through SupervisorRouter.
 """
 
 import logging
+import re
 from typing import Any, Callable, Dict, List, Literal, Optional, cast
 
 from server.adapters.mcp.context_utils import ctx_warning
@@ -22,6 +23,7 @@ from server.adapters.mcp.session_capabilities import (
     get_session_capability_state,
     mark_guided_spatial_state_stale,
     record_router_execution_outcome,
+    rename_guided_part_registration,
     resolve_guided_role_group_for_domain,
 )
 from server.adapters.mcp.session_state import set_session_value
@@ -40,6 +42,7 @@ _GUIDED_ROLE_REQUIRED_TOOLS: tuple[str, ...] = (
     "modeling_create_primitive",
     "modeling_transform_object",
 )
+_RENAMED_OBJECT_RESULT_PATTERN = re.compile(r"^Renamed '.*' to '(.+?)'(?: .*)?$")
 
 
 def _result_represents_success(tool_name: str, result: Any) -> bool:
@@ -99,6 +102,51 @@ def _maybe_mark_guided_spatial_state_stale_from_report(report: MCPExecutionRepor
             tool_name=final_step.tool_name,
             family=report.context.guided_tool_family,
             reason=final_step.tool_name,
+        )
+    except Exception:
+        return
+
+
+def _renamed_object_name_from_result(result: Any) -> str | None:
+    if not isinstance(result, str):
+        return None
+    match = _RENAMED_OBJECT_RESULT_PATTERN.match(result.strip())
+    if match is None:
+        return None
+    object_name = match.group(1).strip()
+    return object_name or None
+
+
+def _maybe_sync_guided_part_registry_from_report(report: MCPExecutionReport) -> None:
+    """Update guided part registration after one successful scene rename."""
+
+    if report.error is not None or not report.steps:
+        return
+
+    final_step = report.steps[-1]
+    if final_step.tool_name != "scene_rename_object":
+        return
+    if final_step.error is not None:
+        return
+    if not _result_represents_success(final_step.tool_name, final_step.result):
+        return
+
+    current_ctx = _get_active_context()
+    if current_ctx is None:
+        return
+
+    old_name = final_step.params.get("old_name")
+    new_name = _renamed_object_name_from_result(final_step.result) or final_step.params.get("new_name")
+    if not isinstance(old_name, str) or not old_name.strip():
+        return
+    if not isinstance(new_name, str) or not new_name.strip():
+        return
+
+    try:
+        rename_guided_part_registration(
+            current_ctx,
+            old_name=old_name,
+            new_name=new_name,
         )
     except Exception:
         return
@@ -859,6 +907,7 @@ def route_tool_call(
         if current_ctx is not None and naming_payload.get("message"):
             ctx_warning(current_ctx, str(naming_payload["message"]))
     _maybe_mark_guided_spatial_state_stale_from_report(report)
+    _maybe_sync_guided_part_registry_from_report(report)
     if report.error is None and len(report.steps) == 1:
         result = report.steps[0].result
         if not isinstance(result, str):
