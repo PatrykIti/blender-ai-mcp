@@ -207,6 +207,7 @@ def test_external_backend_supports_openrouter_headers_and_default_endpoint(monke
             VISION_OPENROUTER_API_KEY="openrouter-secret",
             VISION_OPENROUTER_SITE_URL="https://example.com",
             VISION_OPENROUTER_SITE_NAME="blender-ai-mcp-dev",
+            VISION_OPENROUTER_REQUIRE_PARAMETERS=True,
         )
     )
     backend = OpenAICompatibleVisionBackend(runtime)
@@ -236,6 +237,41 @@ def test_external_backend_supports_openrouter_headers_and_default_endpoint(monke
     assert captured["json"]["response_format"]["json_schema"]["name"] == "vision_assist"
     assert captured["json"]["response_format"]["json_schema"]["strict"] is True
     assert "visible_changes" in captured["json"]["response_format"]["json_schema"]["schema"]["properties"]
+
+
+def test_external_backend_defaults_openrouter_require_parameters_to_false(monkeypatch, tmp_path):
+    image_path = tmp_path / "after.png"
+    image_path.write_bytes(b"fake-png")
+
+    runtime = build_vision_runtime_config(
+        _config(
+            VISION_EXTERNAL_PROVIDER="openrouter",
+            VISION_EXTERNAL_BASE_URL=None,
+            VISION_EXTERNAL_MODEL=None,
+            VISION_EXTERNAL_API_KEY=None,
+            VISION_EXTERNAL_API_KEY_ENV=None,
+            VISION_OPENROUTER_MODEL="google/gemma-3-27b-it:free",
+            VISION_OPENROUTER_API_KEY="openrouter-secret",
+        )
+    )
+    backend = OpenAICompatibleVisionBackend(runtime)
+    request = VisionRequest(goal="goal", images=(VisionImageInput(path=str(image_path), role="after"),))
+
+    captured: dict = {}
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda timeout=None: _FakeAsyncClient(
+            response=_FakeResponse(
+                {"choices": [{"message": {"content": '{"goal_summary":"ok","visible_changes":[]}'}}]}
+            ),
+            captured=captured,
+        ),
+    )
+
+    asyncio.run(backend.analyze(request))
+
+    assert captured["json"]["provider"] == {"require_parameters": False}
 
 
 def test_openrouter_openai_family_uses_capability_aware_output_cap(monkeypatch, tmp_path):
@@ -311,7 +347,7 @@ def test_external_backend_uses_json_object_for_qwen_family_on_openrouter(monkeyp
 
     asyncio.run(backend.analyze(request))
 
-    assert captured["json"]["provider"] == {"require_parameters": True}
+    assert captured["json"]["provider"] == {"require_parameters": False}
     assert captured["json"]["plugins"] == [{"id": "response-healing"}]
     assert captured["json"]["response_format"] == {"type": "json_object"}
 

@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [239](./239-2026-04-21-openrouter-require-parameters-default-false.md) | 2026-04-21 | **OpenRouter require_parameters default false** | - |
 | [238](./238-2026-04-14-compact-iterate-and-organic-seating-planner.md) | 2026-04-14 | **Compact iterate and organic seating planner** | - |
 | [237](./237-2026-04-14-guided-pair-role-cardinality.md) | 2026-04-14 | **Guided pair role cardinality** | - |
 | [236](./236-2026-04-12-openrouter-gpt54-nano-fallback-capabilities.md) | 2026-04-12 | **OpenRouter GPT-5.4 Nano fallback capabilities** | - |

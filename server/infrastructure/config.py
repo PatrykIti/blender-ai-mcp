@@ -91,8 +91,8 @@ class Config(BaseSettings):
         description="Optional X-Title / site name sent to OpenRouter for ranking/analytics",
     )
     VISION_OPENROUTER_REQUIRE_PARAMETERS: bool = Field(
-        default=True,
-        description="Require OpenRouter to route only through providers that support the requested parameters",
+        default=False,
+        description="When enabled, require OpenRouter to route only through providers that support the requested parameters",
     )
     VISION_OPENROUTER_ENABLE_RESPONSE_HEALING: bool = Field(
         default=True,
@@ -233,7 +233,7 @@ def get_config() -> Config:
         VISION_OPENROUTER_SITE_URL=os.getenv("VISION_OPENROUTER_SITE_URL") or None,
         VISION_OPENROUTER_SITE_NAME=os.getenv("VISION_OPENROUTER_SITE_NAME") or None,
         VISION_OPENROUTER_REQUIRE_PARAMETERS=(
-            os.getenv("VISION_OPENROUTER_REQUIRE_PARAMETERS", "true").lower() not in {"0", "false", "no"}
+            os.getenv("VISION_OPENROUTER_REQUIRE_PARAMETERS", "false").lower() not in {"0", "false", "no"}
         ),
         VISION_OPENROUTER_ENABLE_RESPONSE_HEALING=(
             os.getenv("VISION_OPENROUTER_ENABLE_RESPONSE_HEALING", "true").lower() not in {"0", "false", "no"}

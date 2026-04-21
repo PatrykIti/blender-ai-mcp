@@ -111,7 +111,7 @@ gate or shape the current E2E suites.
 OpenRouter/Qwen runtime defaults used by the current repo unless you override
 them:
 
-- `VISION_OPENROUTER_REQUIRE_PARAMETERS=true`
+- `VISION_OPENROUTER_REQUIRE_PARAMETERS=false`
 - `VISION_OPENROUTER_ENABLE_RESPONSE_HEALING=true`
 - `VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN=true`
 

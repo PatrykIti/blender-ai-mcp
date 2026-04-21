@@ -439,7 +439,7 @@ export VISION_EXTERNAL_CONTRACT_PROFILE="google_family_compare"
 export VISION_OPENROUTER_MODEL="google/gemma-3-27b-it:free"
 export VISION_OPENROUTER_API_KEY_ENV=OPENROUTER_API_KEY
 export OPENROUTER_API_KEY="<your-openrouter-key>"
-export VISION_OPENROUTER_REQUIRE_PARAMETERS=true
+export VISION_OPENROUTER_REQUIRE_PARAMETERS=false
 export VISION_OPENROUTER_ENABLE_RESPONSE_HEALING=true
 export VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN=true
 ```
@@ -454,6 +454,13 @@ Config precedence note:
   ids such as `gemma` or `gemini` auto-match to
   `google_family_compare`; the explicit env above keeps the compare-contract
   assumption visible in reproducible harness runs
+- `VISION_OPENROUTER_REQUIRE_PARAMETERS` now defaults to `false` in this repo
+  because some vision requests need broader fallback routing than the strict
+  provider capability filter allows
+- if an OpenRouter-hosted model works in a simpler project but returns
+  `404` / `not found` / `no route` here, the first thing to check is whether a
+  stricter `require_parameters=true` request filtered out every compatible
+  provider for the richer vision payload
 
 Optional OpenRouter ranking headers:
 
@@ -469,6 +476,8 @@ Qwen-family OpenRouter note:
   `json_schema`
 - this follows the official Qwen structured-output guidance more closely while
   still keeping the repo's bounded JSON contract on the parsing side
+- keep `VISION_OPENROUTER_REQUIRE_PARAMETERS=true` as an explicit opt-in when
+  you want stricter provider filtering for a repro or compatibility check
 
 Harness example:
 

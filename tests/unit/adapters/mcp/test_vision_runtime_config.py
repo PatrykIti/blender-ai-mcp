@@ -60,7 +60,7 @@ def _base_config(**overrides) -> Config:
         "VISION_OPENROUTER_API_KEY_ENV": None,
         "VISION_OPENROUTER_SITE_URL": None,
         "VISION_OPENROUTER_SITE_NAME": None,
-        "VISION_OPENROUTER_REQUIRE_PARAMETERS": True,
+        "VISION_OPENROUTER_REQUIRE_PARAMETERS": False,
         "VISION_OPENROUTER_ENABLE_RESPONSE_HEALING": True,
         "VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN": True,
         "VISION_GEMINI_BASE_URL": None,
@@ -143,9 +143,24 @@ def test_build_vision_runtime_config_supports_openrouter_aliases():
     assert runtime.openai_compatible_external.api_key_env == "OPENROUTER_API_KEY"
     assert runtime.openai_compatible_external.site_url == "https://example.com"
     assert runtime.openai_compatible_external.site_name == "blender-ai-mcp-dev"
-    assert runtime.openai_compatible_external.require_parameters is True
+    assert runtime.openai_compatible_external.require_parameters is False
     assert runtime.openai_compatible_external.enable_response_healing is True
     assert runtime.openai_compatible_external.prefer_json_object_for_qwen is True
+
+
+def test_openrouter_require_parameters_can_be_enabled_explicitly():
+    config = _base_config(
+        VISION_ENABLED=True,
+        VISION_PROVIDER="openai_compatible_external",
+        VISION_EXTERNAL_PROVIDER="openrouter",
+        VISION_OPENROUTER_MODEL="google/gemma-3-27b-it:free",
+        VISION_OPENROUTER_REQUIRE_PARAMETERS=True,
+    )
+
+    runtime = build_vision_runtime_config(config)
+
+    assert runtime.openai_compatible_external is not None
+    assert runtime.openai_compatible_external.require_parameters is True
 
 
 def test_explicit_openrouter_provider_supports_generic_model_fallback():
