@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
+from server.adapters.mcp.session_capabilities import SessionCapabilityState
+from server.adapters.mcp.session_phase import SessionPhase
+
 
 def _direct_route(tool_name, params, direct_executor, prompt=None):
     return direct_executor()
@@ -113,6 +116,94 @@ def test_modeling_create_primitive_parses_string_vectors_and_delegates(monkeypat
 
     assert result == "Created Cube named 'Block'"
     assert calls["args"] == ("Cube", 1.0, 2.0, [1.0, 2.0, 3.0], [0.0, 0.0, 1.57], "Block")
+
+
+def test_modeling_create_primitive_registers_guided_role_with_actual_created_name(monkeypatch):
+    recorded: list[tuple[str, str, str | None]] = []
+
+    class Handler:
+        def create_primitive(self, primitive_type, radius, size, location, rotation, name):
+            return "Created Monkey named 'Suzanne'"
+
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.get_modeling_handler", lambda: Handler())
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.route_tool_call", _direct_route)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.get_session_capability_state",
+        lambda ctx: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={"flow_id": "guided_creature_flow"},
+        ),
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.register_guided_part_role",
+        lambda ctx, **kwargs: recorded.append((kwargs["object_name"], kwargs["role"], kwargs.get("role_group"))),
+    )
+
+    from server.adapters.mcp.areas.modeling import modeling_create_primitive
+
+    result = modeling_create_primitive(
+        MagicMock(),
+        primitive_type="Monkey",
+        guided_role="head_mass",
+    )
+
+    assert result == "Created Monkey named 'Suzanne'"
+    assert recorded == [("Suzanne", "head_mass", None)]
+
+
+def test_modeling_create_primitive_skips_guided_registration_without_active_flow(monkeypatch):
+    class Handler:
+        def create_primitive(self, primitive_type, radius, size, location, rotation, name):
+            return "Created Cube named 'Cube.001'"
+
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.get_modeling_handler", lambda: Handler())
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.route_tool_call", _direct_route)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.get_session_capability_state",
+        lambda ctx: SessionCapabilityState(phase=SessionPhase.BOOTSTRAP, guided_flow_state=None),
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.register_guided_part_role",
+        lambda ctx, **kwargs: (_ for _ in ()).throw(AssertionError("guided role should not be registered")),
+    )
+
+    from server.adapters.mcp.areas.modeling import modeling_create_primitive
+
+    result = modeling_create_primitive(
+        MagicMock(),
+        primitive_type="Cube",
+        guided_role="body_core",
+    )
+
+    assert result == "Created Cube named 'Cube.001'"
+
+
+def test_modeling_transform_object_skips_guided_registration_without_active_flow(monkeypatch):
+    class Handler:
+        def transform_object(self, name, location=None, rotation=None, scale=None):
+            return f"Transformed object '{name}'"
+
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.get_modeling_handler", lambda: Handler())
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.route_tool_call", _direct_route)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.get_session_capability_state",
+        lambda ctx: SessionCapabilityState(phase=SessionPhase.BOOTSTRAP, guided_flow_state=None),
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.register_guided_part_role",
+        lambda ctx, **kwargs: (_ for _ in ()).throw(AssertionError("guided role should not be registered")),
+    )
+
+    from server.adapters.mcp.areas.modeling import modeling_transform_object
+
+    result = modeling_transform_object(
+        MagicMock(),
+        name="Cube.001",
+        location=[1, 2, 3],
+        guided_role="body_core",
+    )
+
+    assert result == "Transformed object 'Cube.001'"
 
 
 def test_sculpt_auto_main_path_delegates_to_handler(monkeypatch):

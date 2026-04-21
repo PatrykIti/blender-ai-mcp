@@ -391,6 +391,13 @@ contract in addition to `guided_handoff`.
 - use `guided_register_part(object_name=..., role=...)` as the canonical
   way to tell the server what semantic part one object represents; optional
   `guided_role=...` hints on build tools are convenience-only
+- those optional `guided_role=...` hints only auto-register when an active
+  guided flow already exists; outside an active guided flow they do not create
+  persistent role state by themselves
+- on `modeling_create_primitive(...)`, guided-role auto-registration now binds
+  to the actual created object name returned by Blender, so role state stays
+  aligned even when Blender auto-numbers a default name such as `Cube.001` or
+  uses a different default object name such as `Suzanne`
 - if the server warns or blocks on guided naming, rename or create the object
   using one of the suggested semantic names instead of retrying the same weak
   abbreviation

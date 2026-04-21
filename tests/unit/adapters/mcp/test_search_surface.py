@@ -1263,6 +1263,13 @@ def test_direct_modeling_create_primitive_can_register_guided_role_hint(monkeypa
         "server.adapters.mcp.areas.modeling.register_guided_part_role",
         lambda ctx, **kwargs: recorded.append((kwargs["object_name"], kwargs["role"], kwargs.get("role_group"))),
     )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.get_session_capability_state",
+        lambda ctx: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={"flow_id": "guided_creature_flow"},
+        ),
+    )
     monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
 
     server = _build_phase_search_server(SessionPhase.BUILD)
@@ -1298,6 +1305,13 @@ def test_call_tool_can_forward_guided_role_hint_for_modeling_create_primitive(mo
     monkeypatch.setattr(
         "server.adapters.mcp.areas.modeling.register_guided_part_role",
         lambda ctx, **kwargs: recorded.append((kwargs["object_name"], kwargs["role"], kwargs.get("role_group"))),
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.get_session_capability_state",
+        lambda ctx: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={"flow_id": "guided_creature_flow"},
+        ),
     )
     monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
 

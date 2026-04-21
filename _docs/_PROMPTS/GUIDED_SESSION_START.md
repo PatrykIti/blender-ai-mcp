@@ -34,6 +34,8 @@ Fail-safe rules:
   trying to satisfy spatial checks.
 - If the server says the current step is `create_primary_masses`, do not jump ahead to ears, paws, facade openings, polish, or finish work.
 - For role-sensitive build calls, use either `guided_register_part(object_name=..., role=...)` or `guided_role=...` on the build tool call.
+- Treat `guided_role=...` as a convenience path only after an active guided
+  flow already exists; it is not a substitute for goal/session initialization.
 - Treat pair roles such as `ear_pair`, `foreleg_pair`, and `hindleg_pair` as
   requiring left/right siblings. If `role_counts` / `role_cardinality` are
   present, use them before deciding whether the next sibling is still allowed.

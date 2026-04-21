@@ -1,3 +1,4 @@
+import re
 from typing import Any, Dict, List, Optional, Union
 
 from fastmcp import Context
@@ -6,6 +7,7 @@ from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
 from server.adapters.mcp.guided_contract import canonicalize_modeling_create_primitive_arguments
 from server.adapters.mcp.router_helper import route_tool_call
 from server.adapters.mcp.session_capabilities import (
+    get_session_capability_state,
     get_session_capability_state_async,
     register_guided_part_role,
 )
@@ -33,6 +35,46 @@ MODELING_PUBLIC_TOOL_NAMES = (
     "skin_create_skeleton",
     "skin_set_radius",
 )
+
+_CREATED_OBJECT_RESULT_PATTERN = re.compile(r"^Created .+ named '(.+)'$")
+
+
+def _extract_created_object_name(result: str) -> str | None:
+    """Return the created object name from the canonical modeling success string."""
+
+    match = _CREATED_OBJECT_RESULT_PATTERN.match(result.strip())
+    if match is None:
+        return None
+    object_name = match.group(1).strip()
+    return object_name or None
+
+
+def _maybe_register_guided_role(
+    ctx: Context,
+    *,
+    object_name: str | None,
+    guided_role: str | None,
+    role_group: str | None,
+) -> None:
+    """Register one guided role only when an active guided flow exists."""
+
+    if not guided_role:
+        return
+
+    session = get_session_capability_state(ctx)
+    if session.guided_flow_state is None:
+        return
+
+    normalized_object_name = str(object_name or "").strip()
+    if not normalized_object_name:
+        return
+
+    register_guided_part_role(
+        ctx,
+        object_name=normalized_object_name,
+        role=guided_role,
+        role_group=role_group,
+    )
 
 
 def _register_tool(target: Any, fn: Any, tool_name: str) -> Any:
@@ -377,10 +419,10 @@ def _modeling_create_primitive_impl(
         direct_executor=execute,
     )
     if guided_role and isinstance(result, str) and result.startswith("Created "):
-        register_guided_part_role(
+        _maybe_register_guided_role(
             ctx,
-            object_name=str(name_value or primitive_type_value),
-            role=guided_role,
+            object_name=_extract_created_object_name(result) or (str(name_value).strip() if name_value else None),
+            guided_role=guided_role,
             role_group=role_group,
         )
     return result
@@ -477,10 +519,10 @@ def _modeling_transform_object_impl(
         direct_executor=execute,
     )
     if guided_role and isinstance(result, str) and result.startswith("Transformed object "):
-        register_guided_part_role(
+        _maybe_register_guided_role(
             ctx,
             object_name=name,
-            role=guided_role,
+            guided_role=guided_role,
             role_group=role_group,
         )
     return result

@@ -208,6 +208,9 @@ Interpretation:
 - optional `guided_role=...` hints on `modeling_create_primitive(...)` or
   `modeling_transform_object(...)` are only a convenience path; keep
   `guided_register_part(...)` as the canonical explicit registration surface
+- those convenience hints only auto-register while an active guided flow
+  exists; if there is no active guided flow yet, do not assume a role hint on
+  a successful create/transform call created persistent guided role state
 - if the server returns naming guidance, prefer the suggested semantic names
   instead of retrying weak abbreviations unchanged
 - later guided steps may still allow bounded refinement of already-created

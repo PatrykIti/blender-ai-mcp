@@ -51,6 +51,7 @@ REQUEST TRIAGE (FIRST STEP)
        * If the server warns or blocks on guided naming, replace the weak name with one of the suggested semantic names instead of retrying the same placeholder/abbreviation.
        * Do not treat a default `Cube` or the generic root `Collection` as a meaningful guided target/workset on its own.
        * For role-sensitive build calls, use either `guided_register_part(object_name=..., role=...)` or the convenience hint `guided_role=...` on the build tool call.
+       * Treat `guided_role=...` as convenience-only after an active guided flow exists; do not use it as a substitute for goal/session setup.
        * If the session already advanced, bounded refinement of already-created primary masses and utility/workset operations can still be valid; read `allowed_roles`, `missing_roles`, and `next_actions` instead of assuming earlier objects are frozen forever.
        * If the server names a `required prompt bundle` / `preferred prompt bundle`, treat those as supporting prompt assets, not as permission to bypass the guided flow.
 

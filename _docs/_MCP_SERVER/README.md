@@ -584,6 +584,13 @@ Current guided-flow behavior:
 - `modeling_create_primitive(...)` and `modeling_transform_object(...)` may
   also carry an optional `guided_role` convenience hint on guided surfaces, but
   `guided_register_part(...)` remains the canonical explicit registration path
+- those `guided_role=...` convenience hints only auto-register when the
+  session already has an active `guided_flow_state`; outside an active guided
+  flow they do not create persistent guided role state on their own
+- for `modeling_create_primitive(...)`, the convenience path registers the
+  real created object name returned by Blender/tool execution, not the raw
+  requested primitive token, so role state remains correct for names such as
+  `Cube.001` or Blender defaults such as `Suzanne`
 - after newly created blockout parts during `checkpoint_iterate`, bounded
   initial transforms can remain available before the next checkpoint instead
   of immediately forcing a spatial refresh on every small adjustment

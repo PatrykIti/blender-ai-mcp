@@ -128,6 +128,9 @@ Rules:
 - optional `guided_role=...` on `modeling_create_primitive(...)` or
   `modeling_transform_object(...)` is a convenience path only; do not rely on
   it as a substitute for reading the active guided flow state
+- if the guided flow is not active yet, do not assume a successful
+  `guided_role=...` create/transform call persisted role state; initialize the
+  guided session first, then use the canonical registration path when needed
 - pair roles such as `ear_pair`, `foreleg_pair`, and `hindleg_pair` are
   cardinality-aware: create/register both left and right siblings before
   treating the role as complete, and use `role_counts` / `role_cardinality`
