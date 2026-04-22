@@ -379,6 +379,9 @@ contract in addition to `guided_handoff`.
   `next_actions=["refresh_spatial_context"]` as authoritative server state,
   not advisory prose; refresh with `scene_scope_graph(...)` first, then rerun
   the remaining required spatial checks on the same target scope
+- `scene_view_diagnostics(...)` only counts toward the guided spatial gate when
+  it returns real available view-space evidence; a headless/unavailable probe
+  stays read-only and does not satisfy the required check by itself
 - if stage compare/iterate finds important issues while the current guided
   role/workset slice is still incomplete, the governor can now keep the session
   in bounded build continuation instead of escalating too early into
@@ -417,6 +420,9 @@ contract in addition to `guided_handoff`.
 - if guided object validation cannot read the Blender scene at all,
   `guided_register_part(...)` now fails clearly instead of mutating guided
   session state from an unverified object name
+- explicit target names passed into `scene_scope_graph(...)` / scope-building
+  paths now follow the same Blender-truth validation rule before the guided
+  scope can bind
 - those optional `guided_role=...` hints only auto-register when an active
   guided flow already exists; outside an active guided flow they do not create
   persistent role state by themselves
@@ -466,6 +472,10 @@ contract in addition to `guided_handoff`.
   refreshes its post-action capture bundle after the extra mesh-surface nudge,
   so attached images and truth summary describe the final seated pose instead
   of the pre-nudge intermediate pose
+- if the optional segmentation sidecar is enabled on runtime config but not yet
+  executed on the current compare path, staged compare/iterate responses now
+  report `part_segmentation.status="unavailable"` instead of silently staying
+  `disabled`
 - if the server warns or blocks on guided naming, rename or create the object
   using one of the suggested semantic names instead of retrying the same weak
   abbreviation

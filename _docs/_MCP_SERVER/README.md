@@ -568,6 +568,9 @@ Current guided-flow behavior:
 - when `spatial_refresh_required=true`, the server expects a fresh
   `scene_scope_graph(...)` rebind first, then the remaining required spatial
   checks on that same target scope
+- `scene_view_diagnostics(...)` only satisfies that guided spatial gate when it
+  returns real available view-space evidence; a headless/unavailable probe
+  remains read-only and does not complete the check by itself
 - if a read-only spatial check uses a different scope while refresh is active,
   it can still return its payload, but the response message says it did not
   satisfy the active guided scope and shows the expected rerun scope
@@ -604,6 +607,9 @@ Current guided-flow behavior:
 - if guided object validation cannot read the Blender scene at all,
   `guided_register_part(...)` now fails clearly instead of mutating guided
   session state from an unverified object name
+- explicit target names passed into `scene_scope_graph(...)` / scope-building
+  paths now follow the same Blender-truth validation rule before the guided
+  scope can bind
 - `modeling_create_primitive(...)` and `modeling_transform_object(...)` may
   also carry an optional `guided_role` convenience hint on guided surfaces, but
   `guided_register_part(...)` remains the canonical explicit registration path
@@ -657,6 +663,10 @@ Current guided-flow behavior:
   refreshes its post-action capture bundle after the extra mesh-surface nudge,
   so attached images and truth summary describe the final seated pose instead
   of the pre-nudge intermediate pose
+- if the optional segmentation sidecar is enabled on runtime config but not yet
+  executed on the current compare path, staged compare/iterate responses now
+  report `part_segmentation.status="unavailable"` instead of silently staying
+  `disabled`
 - after newly created blockout parts during `checkpoint_iterate`, bounded
   initial transforms can remain available before the next checkpoint instead
   of immediately forcing a spatial refresh on every small adjustment

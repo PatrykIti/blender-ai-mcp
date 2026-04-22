@@ -321,6 +321,16 @@ class TestViewportControl(unittest.TestCase):
                 view_name="TOP",
             )
 
+    def test_view_diagnostics_explicit_camera_rejects_non_camera_object(self):
+        non_camera = self.add_object("MeshObject")
+        non_camera.type = "MESH"
+
+        with self.assertRaisesRegex(ValueError, "is not a camera"):
+            self.handler.get_view_diagnostics(
+                target_object="Cube",
+                camera_name="MeshObject",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -197,6 +197,7 @@ def test_scene_assert_tools_align_with_rpc_commands_and_args():
 def test_scene_spatial_graph_handlers_reuse_existing_scene_truth_rpc_commands():
     rpc = DummyRpc(
         {
+            "scene.list_objects": _ok([{"name": "Head", "type": "MESH"}, {"name": "Body", "type": "MESH"}]),
             "scene.get_bounding_box": _ok({"dimensions": [2.0, 2.0, 2.0], "center": [0.0, 0.0, 0.0]}),
             "scene.measure_gap": _ok({"gap": 0.1, "relation": "separated", "measurement_basis": "bounding_box"}),
             "scene.measure_alignment": _ok({"is_aligned": False, "aligned_axes": ["Y", "Z"]}),
@@ -223,15 +224,17 @@ def test_scene_spatial_graph_handlers_reuse_existing_scene_truth_rpc_commands():
     assert relations["summary"]["pair_count"] == 1
     assert relations["pairs"][0]["from_object"] == "Head"
     assert "contact" in relations["pairs"][0]["relation_kinds"]
-    assert rpc.calls[:6] == [
+    assert rpc.calls[:8] == [
+        ("scene.list_objects", None),
         ("scene.get_bounding_box", {"object_name": "Head", "world_space": True}),
         ("scene.get_bounding_box", {"object_name": "Body", "world_space": True}),
+        ("scene.list_objects", None),
         ("scene.get_bounding_box", {"object_name": "Head", "world_space": True}),
         ("scene.get_bounding_box", {"object_name": "Body", "world_space": True}),
         ("scene.get_bounding_box", {"object_name": "Head", "world_space": True}),
         ("scene.get_bounding_box", {"object_name": "Body", "world_space": True}),
     ]
-    assert rpc.calls[6:] == [
+    assert rpc.calls[8:] == [
         ("scene.measure_gap", {"from_object": "Head", "to_object": "Body", "tolerance": 0.0001}),
         (
             "scene.measure_alignment",
@@ -254,6 +257,7 @@ def test_scene_spatial_graph_handlers_reuse_existing_scene_truth_rpc_commands():
 def test_scene_relation_graph_keeps_contact_pass_as_seated_even_when_center_z_differs():
     rpc = DummyRpc(
         {
+            "scene.list_objects": _ok([{"name": "Head", "type": "MESH"}, {"name": "Body", "type": "MESH"}]),
             "scene.get_bounding_box": _ok({"dimensions": [2.0, 2.0, 2.0], "center": [0.0, 0.0, 0.0]}),
             "scene.measure_gap": _ok({"gap": 0.0, "relation": "contact", "measurement_basis": "bounding_box"}),
             "scene.measure_alignment": _ok({"is_aligned": False, "aligned_axes": ["X", "Y"], "misaligned_axes": ["Z"]}),
@@ -283,6 +287,13 @@ def test_scene_relation_graph_keeps_contact_pass_as_seated_even_when_center_z_di
 def test_scene_relation_graph_treats_forel_hindr_names_as_limb_body_pairs():
     rpc = DummyRpc(
         {
+            "scene.list_objects": _ok(
+                [
+                    {"name": "Body", "type": "MESH"},
+                    {"name": "ForeL", "type": "MESH"},
+                    {"name": "HindR", "type": "MESH"},
+                ]
+            ),
             "scene.get_bounding_box": _ok({"dimensions": [2.0, 2.0, 2.0], "center": [0.0, 0.0, 0.0]}),
             "scene.measure_gap": _ok({"gap": 0.1, "relation": "separated", "measurement_basis": "bounding_box"}),
             "scene.measure_alignment": _ok({"is_aligned": True, "aligned_axes": ["X", "Y"]}),
@@ -318,6 +329,13 @@ def test_scene_relation_graph_treats_forel_hindr_names_as_limb_body_pairs():
 def test_scene_relation_graph_treats_prefixed_forel_hindr_names_as_limb_body_pairs():
     rpc = DummyRpc(
         {
+            "scene.list_objects": _ok(
+                [
+                    {"name": "E2E_Abbrev_Body", "type": "MESH"},
+                    {"name": "E2E_Abbrev_ForeL", "type": "MESH"},
+                    {"name": "E2E_Abbrev_HindR", "type": "MESH"},
+                ]
+            ),
             "scene.get_bounding_box": _ok({"dimensions": [2.0, 2.0, 2.0], "center": [0.0, 0.0, 0.0]}),
             "scene.measure_gap": _ok({"gap": 0.1, "relation": "separated", "measurement_basis": "bounding_box"}),
             "scene.measure_alignment": _ok({"is_aligned": True, "aligned_axes": ["X", "Y"]}),

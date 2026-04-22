@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 from server.application.services.spatial_graph import SpatialGraphService
 
 
@@ -35,6 +36,9 @@ class FakeReader:
     def get_bounding_box(self, object_name: str, world_space: bool = True) -> dict:
         payload = self.boxes[object_name]
         return {"object_name": object_name, **payload}
+
+    def list_objects(self) -> list[dict]:
+        return [{"name": name, "type": "MESH"} for name in self.boxes]
 
     def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001) -> dict:
         if {from_object, to_object} == {"Body", "Base"}:
@@ -199,3 +203,16 @@ def test_build_relation_graph_does_not_count_healthy_symmetry_pair_as_failure():
     assert relation_graph["pairs"][0]["symmetry_semantics"]["verdict"] == "symmetric"
     assert "symmetry" in relation_graph["pairs"][0]["relation_kinds"]
     assert "symmetric" in relation_graph["pairs"][0]["relation_verdicts"]
+
+
+def test_build_scope_graph_rejects_missing_explicit_target_object():
+    service = SpatialGraphService()
+    reader = FakeReader()
+
+    with pytest.raises(ValueError, match="Object\\(s\\) not found in scene: 'Boddy'"):
+        service.build_scope_graph(
+            reader=reader,
+            target_object="Boddy",
+            target_objects=None,
+            collection_name=None,
+        )

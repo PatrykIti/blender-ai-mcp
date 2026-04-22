@@ -300,6 +300,86 @@ def test_spatial_check_completion_advances_flow_to_primary_masses():
     assert state.guided_flow_state["required_role_groups"] == ["primary_masses"]
 
 
+def test_scene_view_diagnostics_unavailable_does_not_complete_guided_spatial_check(monkeypatch):
+    from server.adapters.mcp.areas import scene as scene_area
+
+    ctx = FakeContext()
+    update_session_from_router_goal(
+        ctx,
+        "create a low-poly squirrel matching front and side reference images",
+        {
+            "status": "no_match",
+            "phase_hint": "build",
+            "guided_handoff": {
+                "kind": "guided_manual_build",
+                "recipe_id": "low_poly_creature_blockout",
+                "target_phase": "build",
+                "surface_profile": "llm-guided",
+                "direct_tools": ["modeling_create_primitive"],
+                "supporting_tools": ["scene_scope_graph", "scene_relation_graph", "scene_view_diagnostics"],
+                "discovery_tools": ["search_tools", "call_tool"],
+                "workflow_import_recommended": False,
+                "message": "Continue on the guided creature blockout surface.",
+            },
+        },
+        surface_profile="llm-guided",
+    )
+
+    class Handler:
+        def get_scope_graph(self, **kwargs):
+            return {
+                "scope_kind": "single_object",
+                "primary_target": "Body",
+                "object_names": ["Body"],
+                "object_count": 1,
+                "object_roles": [],
+            }
+
+        def get_view_diagnostics(self, **kwargs):
+            return {
+                "view_query": {
+                    "requested_view_source": "user_perspective",
+                    "resolved_view_source": None,
+                    "analysis_backend": "mirrored_user_perspective",
+                    "available": False,
+                    "unavailable_reason": "active_user_viewport_required",
+                    "state_restored": True,
+                },
+                "summary": {
+                    "target_count": 1,
+                    "visible_count": 0,
+                    "partially_visible_count": 0,
+                    "fully_occluded_count": 0,
+                    "outside_frame_count": 0,
+                    "unavailable_count": 1,
+                    "centered_target_count": 0,
+                    "framing_issue_count": 0,
+                },
+                "targets": [
+                    {
+                        "object_name": "Body",
+                        "visibility_verdict": "unavailable",
+                        "projection_status": "unavailable",
+                        "unavailable_reason": "active_user_viewport_required",
+                    }
+                ],
+            }
+
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.get_scene_handler", lambda: Handler())
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.route_tool_call", lambda **kwargs: kwargs["direct_executor"]())
+
+    record_guided_flow_spatial_check_completion(ctx, tool_name="scene_scope_graph")
+    record_guided_flow_spatial_check_completion(ctx, tool_name="scene_relation_graph")
+    result = scene_area.scene_view_diagnostics(ctx, target_object="Body")
+    state = get_session_capability_state(ctx)
+    checks_by_tool = {item["tool_name"]: item["status"] for item in state.guided_flow_state["required_checks"]}
+
+    assert result.payload is not None
+    assert result.payload.view_query.available is False
+    assert checks_by_tool["scene_view_diagnostics"] == "pending"
+    assert state.guided_flow_state["current_step"] == "establish_spatial_context"
+
+
 def test_scene_scope_graph_binds_active_target_scope_and_blocks_unrelated_spoofed_view_check():
     ctx = FakeContext()
     update_session_from_router_goal(

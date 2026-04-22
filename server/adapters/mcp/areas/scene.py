@@ -154,6 +154,14 @@ def _guided_scope_mismatch_message(
     )
 
 
+def _view_diagnostics_can_complete_guided_check(
+    payload: SceneViewDiagnosticsPayloadContract,
+) -> bool:
+    if not payload.view_query.available:
+        return False
+    return any(target.projection_status != "unavailable" for target in payload.targets)
+
+
 MacroErrorStatus = Literal["blocked", "failed"]
 
 
@@ -2764,11 +2772,12 @@ def scene_view_diagnostics(
             )
             if mismatch_message:
                 payload.message = f"{payload.message} {mismatch_message}" if payload.message else mismatch_message
-            record_guided_flow_spatial_check_completion(
-                ctx,
-                tool_name="scene_view_diagnostics",
-                resolved_scope=payload.scope.model_dump(mode="json"),
-            )
+            if _view_diagnostics_can_complete_guided_check(payload):
+                record_guided_flow_spatial_check_completion(
+                    ctx,
+                    tool_name="scene_view_diagnostics",
+                    resolved_scope=payload.scope.model_dump(mode="json"),
+                )
             return SceneViewDiagnosticsResponseContract(payload=payload)
         except (RuntimeError, ValueError) as e:
             return SceneViewDiagnosticsResponseContract(error=str(e))

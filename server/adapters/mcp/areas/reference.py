@@ -1279,6 +1279,27 @@ def _disabled_part_segmentation() -> ReferencePartSegmentationContract:
     )
 
 
+def _configured_part_segmentation() -> ReferencePartSegmentationContract:
+    from server.infrastructure.di import get_vision_backend_resolver
+
+    resolver = get_vision_backend_resolver()
+    runtime_config = getattr(resolver, "runtime_config", None)
+    sidecar = getattr(runtime_config, "active_segmentation_sidecar", None) if runtime_config is not None else None
+    if sidecar is None or not getattr(sidecar, "enabled", False):
+        return _disabled_part_segmentation()
+    return ReferencePartSegmentationContract(
+        status="unavailable",
+        provider_name=getattr(sidecar, "provider_name", None),
+        advisory_only=True,
+        parts=[],
+        notes=[
+            "Optional part segmentation sidecar is enabled on the runtime config.",
+            "This compare/iterate path does not yet execute the sidecar and currently reports it as unavailable.",
+            "The sidecar path is advisory-only and separate from vision_contract_profile routing.",
+        ],
+    )
+
+
 def _build_silhouette_analysis_payload(
     *,
     selected_reference_records: list[ReferenceImageRecordContract] | tuple[ReferenceImageRecordContract, ...],
@@ -2938,7 +2959,7 @@ async def _run_stage_checkpoint_compare(
         silhouette_analysis,
         target_object=resolved_target_object or assembled_target_scope.primary_target,
     )
-    part_segmentation = _disabled_part_segmentation()
+    part_segmentation = _configured_part_segmentation()
     full_correction_candidates = _build_correction_candidates(
         ReferenceCompareStageCheckpointResponseContract(
             action="compare_stage_checkpoint",

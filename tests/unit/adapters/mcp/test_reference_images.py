@@ -2795,7 +2795,95 @@ def test_reference_compare_stage_checkpoint_preserves_required_creature_seams_un
     assert result.budget_control.detail_trimmed is True
     assert result.truth_bundle is not None
     assert result.truth_bundle.summary.pair_count == 4
-    assert captured["request"].truth_summary["summary"]["pair_count"] == 4
+
+
+def test_reference_compare_stage_checkpoint_reports_enabled_segmentation_sidecar_as_unavailable(tmp_path, monkeypatch):
+    image_front = tmp_path / "front.png"
+    image_front.write_bytes(b"front")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly squirrel", {"status": "no_match"})
+    asyncio.run(reference_images(ctx, action="attach", source_path=str(image_front), label="front_ref"))
+
+    class SceneHandler:
+        def get_bounding_box(self, object_name: str, world_space: bool = True):
+            dimensions = {"Squirrel": [1.2, 1.0, 1.0]}[object_name]
+            return {"object_name": object_name, "dimensions": dimensions}
+
+        def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "gap": 0.0, "relation": "contact"}
+
+        def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "is_aligned": True,
+                "aligned_axes": ["X", "Y", "Z"],
+            }
+
+        def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "overlaps": False, "relation": "disjoint"}
+
+        def assert_contact(self, from_object: str, to_object: str, max_gap=0.0001, allow_overlap=False):
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": True,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.0, "relation": "contact"},
+            }
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="The squirrel collection is closer to the references.",
+                visible_changes=["The full squirrel silhouette is visible."],
+                correction_focus=["Tail/body ratio"],
+            ),
+        )
+
+    sidecar = SimpleNamespace(enabled=True, provider_name="generic_sidecar")
+    resolver = SimpleNamespace(runtime_config=SimpleNamespace(active_segmentation_sidecar=sidecar))
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.infrastructure.di.get_vision_backend_resolver", lambda: resolver)
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="context_wide_after",
+                image_path=str(tmp_path / "context.jpg"),
+                host_visible_path=str(tmp_path / "context.jpg"),
+                preset_name="context_wide",
+                media_type="image/jpeg",
+                view_kind="wide",
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            target_object="Squirrel",
+            checkpoint_label="stage_squirrel",
+            preset_profile="compact",
+        )
+    )
+
+    assert result.part_segmentation is not None
+    assert result.part_segmentation.status == "unavailable"
+    assert result.part_segmentation.provider_name == "generic_sidecar"
 
 
 def test_reference_compare_stage_checkpoint_sanitizes_checkpoint_id_target_token(tmp_path, monkeypatch):

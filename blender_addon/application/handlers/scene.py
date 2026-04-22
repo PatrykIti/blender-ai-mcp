@@ -1901,6 +1901,8 @@ class SceneHandler:
                 analysis_camera = bpy.data.objects.get(camera_name)
                 if analysis_camera is None:
                     raise ValueError(f"Camera '{camera_name}' not found.")
+                if getattr(analysis_camera, "type", None) != "CAMERA":
+                    raise ValueError(f"Object '{camera_name}' is not a camera.")
             else:
                 if not view_area or not view_region or not view_space:
                     result = {

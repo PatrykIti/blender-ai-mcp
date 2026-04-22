@@ -153,6 +153,21 @@ def _dedupe_names(values: list[str]) -> list[str]:
     return result
 
 
+def _scene_object_names(reader: _SceneSpatialReader) -> set[str] | None:
+    list_objects = getattr(reader, "list_objects", None)
+    if not callable(list_objects):
+        return None
+    objects = list_objects()
+    names: set[str] = set()
+    for item in objects:
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("name") or "").strip()
+        if name:
+            names.add(name)
+    return names
+
+
 def _name_role_tokens(object_name: str) -> list[str]:
     normalized = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", object_name.strip())
     return [token for token in re.split(r"[^a-zA-Z0-9]+", normalized.lower()) if token]
@@ -899,6 +914,18 @@ class SpatialGraphService:
             object_names = _dedupe_names([target_object, *object_names])
         if collection_name and list_collection_objects is not None:
             object_names = _dedupe_names([*object_names, *list_collection_objects(collection_name)])
+        explicit_target_names = _dedupe_names(
+            [
+                *([target_object] if isinstance(target_object, str) and target_object.strip() else []),
+                *list(target_objects or []),
+            ]
+        )
+        existing_scene_object_names = _scene_object_names(reader)
+        if existing_scene_object_names is not None:
+            missing_targets = [name for name in explicit_target_names if name not in existing_scene_object_names]
+            if missing_targets:
+                quoted = ", ".join(repr(name) for name in missing_targets)
+                raise ValueError(f"Object(s) not found in scene: {quoted}")
 
         primary_target: str | None
         if len(object_names) == 1:
