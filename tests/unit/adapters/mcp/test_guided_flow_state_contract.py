@@ -424,7 +424,7 @@ def test_scene_scope_graph_binds_active_target_scope_and_blocks_unrelated_spoofe
     assert checks_by_tool["scene_view_diagnostics"] == "pending"
 
 
-def test_default_cube_scope_does_not_bind_active_guided_target_scope():
+def test_default_cube_scope_can_bind_active_guided_target_scope_when_explicitly_requested():
     ctx = FakeContext()
     update_session_from_router_goal(
         ctx,
@@ -459,8 +459,46 @@ def test_default_cube_scope_does_not_bind_active_guided_target_scope():
     )
 
     assert state.guided_flow_state is not None
-    assert state.guided_flow_state["active_target_scope"] is None
+    assert state.guided_flow_state["active_target_scope"]["primary_target"] == "Cube"
     assert state.guided_flow_state["current_step"] == "establish_spatial_context"
+
+
+def test_helper_token_scope_can_bind_active_guided_target_scope_when_explicitly_requested():
+    ctx = FakeContext()
+    update_session_from_router_goal(
+        ctx,
+        "create a low-poly squirrel matching front and side reference images",
+        {
+            "status": "no_match",
+            "phase_hint": "build",
+            "guided_handoff": {
+                "kind": "guided_manual_build",
+                "recipe_id": "low_poly_creature_blockout",
+                "target_phase": "build",
+                "surface_profile": "llm-guided",
+                "direct_tools": ["modeling_create_primitive"],
+                "supporting_tools": ["scene_scope_graph", "scene_relation_graph", "scene_view_diagnostics"],
+                "discovery_tools": ["search_tools", "call_tool"],
+                "workflow_import_recommended": False,
+                "message": "Continue on the guided creature blockout surface.",
+            },
+        },
+        surface_profile="llm-guided",
+    )
+
+    state = record_guided_flow_spatial_check_completion(
+        ctx,
+        tool_name="scene_scope_graph",
+        resolved_scope={
+            "scope_kind": "single_object",
+            "primary_target": "Sunflower",
+            "object_names": ["Sunflower"],
+            "object_count": 1,
+        },
+    )
+
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["active_target_scope"]["primary_target"] == "Sunflower"
 
 
 def test_default_collection_scope_does_not_bind_active_guided_target_scope():

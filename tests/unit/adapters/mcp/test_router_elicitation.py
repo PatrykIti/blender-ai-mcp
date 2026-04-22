@@ -393,6 +393,20 @@ def test_scene_has_meaningful_guided_objects_treats_multi_primitive_blockout_as_
     assert router_area._scene_has_meaningful_guided_objects() is True
 
 
+def test_scene_has_meaningful_guided_objects_treats_single_default_named_mesh_with_helpers_as_nonempty(monkeypatch):
+    class SceneHandler:
+        def list_objects(self):
+            return [
+                {"name": "Sphere", "type": "MESH"},
+                {"name": "Camera", "type": "CAMERA"},
+                {"name": "Light", "type": "LIGHT"},
+            ]
+
+    monkeypatch.setattr(router_area, "get_scene_handler", lambda: SceneHandler())
+
+    assert router_area._scene_has_meaningful_guided_objects() is True
+
+
 def test_router_set_goal_no_match_bootstraps_empty_scene_for_default_startup_scene(monkeypatch):
     """A fresh startup scene should still use empty-scene bootstrap."""
 
@@ -456,6 +470,45 @@ def test_router_set_goal_no_match_keeps_spatial_bootstrap_for_lone_default_named
     class SceneHandler:
         def list_objects(self):
             return [{"name": "Cube", "type": "MESH"}]
+
+    monkeypatch.setattr(router_area, "get_router_handler", lambda: Handler())
+    monkeypatch.setattr(router_area, "get_scene_handler", lambda: SceneHandler())
+
+    ctx = FakeContext(response=object())
+    result = asyncio.run(router_area.router_set_goal(ctx, goal="low poly squirrel 3D model"))
+
+    assert result.guided_flow_state is not None
+    assert result.guided_flow_state.current_step == "establish_spatial_context"
+
+
+def test_router_set_goal_no_match_keeps_spatial_bootstrap_for_single_default_named_mesh_with_helpers(monkeypatch):
+    """A real lone mesh named like a default primitive should still count as existing geometry."""
+
+    monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
+
+    class Handler:
+        def set_goal(self, goal, resolved_params=None):
+            return {
+                "status": "no_match",
+                "continuation_mode": "guided_manual_build",
+                "workflow": None,
+                "resolved": {},
+                "unresolved": [],
+                "resolution_sources": {},
+                "phase_hint": "build",
+                "message": "Continue on the guided build surface.",
+            }
+
+        def clear_goal(self):
+            return "cleared"
+
+    class SceneHandler:
+        def list_objects(self):
+            return [
+                {"name": "Sphere", "type": "MESH"},
+                {"name": "Camera", "type": "CAMERA"},
+                {"name": "Light", "type": "LIGHT"},
+            ]
 
     monkeypatch.setattr(router_area, "get_router_handler", lambda: Handler())
     monkeypatch.setattr(router_area, "get_scene_handler", lambda: SceneHandler())

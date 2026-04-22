@@ -73,6 +73,7 @@ _GUIDED_HELPER_OR_PLACEHOLDER_NAMES = {
     "torus",
     "monkey",
 }
+_GUIDED_STARTUP_SCENE_OBJECT_NAMES = {"cube", "camera", "light"}
 
 
 def _register_existing_tool(target: Any, tool_name: str) -> Any:
@@ -127,8 +128,8 @@ def _scene_has_meaningful_guided_objects() -> bool:
         return False
     if placeholder_object_count > 1:
         return True
-    non_placeholder_names = {name for name in object_names if name not in _GUIDED_HELPER_OR_PLACEHOLDER_NAMES}
-    if helper_object_count > 0 and not non_placeholder_names:
+    names_set = {name for name in object_names if name}
+    if names_set == _GUIDED_STARTUP_SCENE_OBJECT_NAMES:
         return False
     return True
 

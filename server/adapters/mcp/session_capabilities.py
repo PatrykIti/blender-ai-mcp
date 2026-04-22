@@ -544,14 +544,7 @@ def _is_bindable_guided_target_scope(scope: dict[str, Any] | None) -> bool:
         )
     ):
         return False
-    if collection_name:
-        return True
-    if not object_names and primary_target:
-        object_names = [primary_target]
-    return any(
-        not _looks_like_guided_helper_object(name) and not _looks_like_guided_bootstrap_placeholder_object(name)
-        for name in object_names
-    )
+    return True
 
 
 def _build_spatial_refresh_allowed_families(
