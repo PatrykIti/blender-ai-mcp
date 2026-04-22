@@ -303,6 +303,9 @@ class BlenderRpcServer:
             self.running = False
 
     def stop(self):
+        self._stop(clear_background_jobs=True)
+
+    def _stop(self, *, clear_background_jobs: bool) -> None:
         self.running = False
         if self.server_socket:
             try:
@@ -320,8 +323,9 @@ class BlenderRpcServer:
             except Exception:
                 pass
         self.server_thread = None
-        with self._jobs_lock:
-            self.background_jobs.clear()
+        if clear_background_jobs:
+            with self._jobs_lock:
+                self.background_jobs.clear()
         print("[BlenderRpc] Server stopped")
 
     def is_listener_healthy(self) -> bool:
@@ -354,7 +358,7 @@ class BlenderRpcServer:
                 "thread_alive": self.server_thread.is_alive() if self.server_thread is not None else False,
             },
         )
-        self.stop()
+        self._stop(clear_background_jobs=False)
         self.start()
         return self.is_listener_healthy()
 

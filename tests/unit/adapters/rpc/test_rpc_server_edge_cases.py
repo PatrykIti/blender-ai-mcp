@@ -72,11 +72,26 @@ def test_rpc_server_watchdog_restarts_unhealthy_listener(monkeypatch):
 
     restarted = []
 
-    monkeypatch.setattr(server, "stop", lambda: restarted.append("stop"))
+    monkeypatch.setattr(server, "_stop", lambda clear_background_jobs: restarted.append("stop"))
     monkeypatch.setattr(server, "start", lambda: restarted.append("start"))
 
     assert server.ensure_running() is False
     assert restarted == ["stop", "start"]
+
+
+def test_rpc_server_watchdog_restart_preserves_background_jobs(monkeypatch):
+    server = BlenderRpcServer()
+    server.running = True
+    server.server_socket = MagicMock()
+    server.server_socket.fileno.return_value = -1
+    server.server_thread = None
+    server.background_jobs["job-1"] = rpc_module.BackgroundJob(job_id="job-1", cmd="demo", args={}, timeout_seconds=5.0)
+
+    monkeypatch.setattr(server, "start", lambda: None)
+
+    server.ensure_running()
+
+    assert "job-1" in server.background_jobs
 
 
 def test_rpc_server_watchdog_register_and_stop(monkeypatch):

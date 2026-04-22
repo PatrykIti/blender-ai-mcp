@@ -58,6 +58,9 @@ The addon-side RPC listener now has a lightweight watchdog.
   socket are still healthy
 - if the listener is no longer healthy, the addon performs a best-effort
   `stop()` + `start()` cycle for the RPC server
+- watchdog self-heal now preserves tracked `background_jobs`, so long-running
+  task-mode jobs do not disappear from `rpc.get_job` / `rpc.collect_job` just
+  because the listener had to restart
 - the watchdog is stopped during addon `unregister()`
 
 Current tuning:

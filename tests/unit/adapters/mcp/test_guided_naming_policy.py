@@ -58,6 +58,17 @@ def test_guided_naming_policy_can_block_weak_abbreviation_in_strict_mode():
     assert decision.reason_code == "opaque_abbreviation"
 
 
+def test_guided_naming_policy_does_not_accept_unrelated_substring_match():
+    decision = evaluate_guided_object_name(
+        object_name="Heart",
+        role="ear_pair",
+        domain_profile="creature",
+        current_step="place_secondary_parts",
+    )
+
+    assert decision.status != "allowed"
+
+
 def test_guided_naming_policy_keeps_building_role_suggestions_domain_specific():
     decision = evaluate_guided_object_name(
         object_name="Tower_WindowCuts",

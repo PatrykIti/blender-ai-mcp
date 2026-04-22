@@ -204,8 +204,15 @@ def _looks_like_placeholder_name(object_name: str) -> bool:
 
 
 def _matches_strong_semantic_name(object_name: str, spec: _RoleNamingSpec) -> bool:
-    normalized = _normalize_name(object_name)
-    return any(hint in normalized for hint in spec.strong_hints)
+    tokens = _name_tokens(object_name)
+    joined = "".join(tokens)
+    for hint in spec.strong_hints:
+        normalized_hint = _normalize_name(hint)
+        if not normalized_hint:
+            continue
+        if normalized_hint in tokens or normalized_hint == joined:
+            return True
+    return False
 
 
 def _matches_weak_semantic_name(object_name: str, spec: _RoleNamingSpec) -> bool:

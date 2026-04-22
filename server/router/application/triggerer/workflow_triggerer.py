@@ -145,17 +145,17 @@ class WorkflowTriggerer:
             logger.debug(f"[TRIGGERER] Using explicit workflow: {self._explicit_workflow}")
             return self._explicit_workflow
 
+        # Priority 2: Pattern-suggested workflow
+        if pattern and pattern.suggested_workflow:
+            logger.debug(f"[TRIGGERER] Using pattern workflow: {pattern.suggested_workflow}")
+            return pattern.suggested_workflow
+
         # If the operator already set an explicit goal but the router intentionally
         # chose a manual/no-match path, do not let low-confidence heuristics reopen
         # unrelated workflows during ordinary direct tool usage.
         if self._explicit_goal:
             logger.debug("[TRIGGERER] Explicit goal present without workflow match; suppressing heuristics")
             return None
-
-        # Priority 2: Pattern-suggested workflow
-        if pattern and pattern.suggested_workflow:
-            logger.debug(f"[TRIGGERER] Using pattern workflow: {pattern.suggested_workflow}")
-            return pattern.suggested_workflow
 
         # Priority 3: Heuristic-based detection
         heuristic_workflow = self._check_heuristic_trigger(tool_name, params, context)

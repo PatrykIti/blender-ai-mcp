@@ -379,6 +379,9 @@ contract in addition to `guided_handoff`.
   `router_get_status().guided_flow_state`, complete the listed
   `required_checks`, and follow `next_actions` instead of guessing hidden tool
   names into `call_tool(...)`
+- if an explicit guided goal stayed on a manual/no-match path, a strong
+  pattern-suggested workflow can still expand; what remains suppressed in that
+  state is the lower-confidence heuristic reopening path
 - exact tool-name searches on the guided surface are now shaped to return a
   tighter, smaller result set instead of flooding the model with a full
   expanded payload for simple lookups
@@ -424,6 +427,9 @@ contract in addition to `guided_handoff`.
 - if the server warns or blocks on guided naming, rename or create the object
   using one of the suggested semantic names instead of retrying the same weak
   abbreviation
+- guided naming and guided spatial role inference now use token-boundary style
+  matches instead of raw substring hits, so names such as `Heart` or
+  `TruthBodyAnchorHead` do not become accidental semantic ear/body/head roles
 - the `required prompt bundle` and `preferred prompt bundle` named in
   `guided_flow_state` are prompt asset names, not a replacement for the
   server-driven flow; prompts support the flow, they do not become the flow

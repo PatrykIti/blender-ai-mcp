@@ -615,10 +615,16 @@ Current guided-flow behavior:
   and `modeling_separate_object(...)` now remove stale guided part
   registrations; re-register the resulting object(s) explicitly when they
   should still count toward guided role completion
+- those same destructive topology changes also re-arm guided spatial checks,
+  because previously captured scope/view facts are no longer trustworthy after
+  objects were merged away or split apart
 - after newly created blockout parts during `checkpoint_iterate`, bounded
   initial transforms can remain available before the next checkpoint instead
   of immediately forcing a spatial refresh on every small adjustment
 - if guided naming returns warnings or blocks, replace the weak name with one of the suggested semantic names instead of retrying the same placeholder or opaque abbreviation unchanged
+- guided naming and guided spatial role inference now use token-boundary style
+  matches instead of raw substring hits, so names such as `Heart` or
+  `TruthBodyAnchorHead` do not become accidental semantic ear/body/head roles
 - stage compare/iterate may now keep the session in bounded build continuation
   when the current guided role/workset slice is still incomplete, instead of
   escalating too early into `inspect_validate`
@@ -665,12 +671,15 @@ If a needed tool is not visible or a build tool seems to have disappeared on
    satisfy the active guided spatial gate.
 8. If a family is hidden/blocked-by-flow, do not treat `call_tool(...)` as a
    bypass. Follow the flow gate, then re-check visibility/search.
-9. If the server rejects a call with a guided family/role error, do not retry
+9. If an explicit goal is active but the router stayed on the manual/no-match
+   path, a strong pattern-suggested workflow may still expand; what stays
+   suppressed there is the lower-confidence heuristic reopening path.
+10. If the server rejects a call with a guided family/role error, do not retry
    the same action under a different hidden/internal tool name; inspect the
    current `allowed_families` and `allowed_roles` first.
-10. For creature blockout naming, prefer full semantic names such as
+11. For creature blockout naming, prefer full semantic names such as
     `ForeLeg_L` / `HindLeg_R`; abbreviations like `ForeL` / `HindR` can weaken
-    seam inference unless the heuristic layer explicitly supports them.
+   seam inference unless the heuristic layer explicitly supports them.
 
 ## Guided Reference Readiness Contract
 

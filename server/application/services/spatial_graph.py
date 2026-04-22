@@ -157,8 +157,15 @@ def _name_role_tokens(object_name: str) -> list[str]:
 
 
 def _has_name_hint(object_name: str, hints: tuple[str, ...]) -> bool:
-    normalized = object_name.strip().lower()
-    return any(hint in normalized for hint in hints)
+    tokens = _name_role_tokens(object_name)
+    joined = "".join(tokens)
+    for hint in hints:
+        normalized_hint = str(hint).strip().lower()
+        if not normalized_hint:
+            continue
+        if normalized_hint in tokens or normalized_hint == joined:
+            return True
+    return False
 
 
 def _is_head_like(object_name: str) -> bool:
