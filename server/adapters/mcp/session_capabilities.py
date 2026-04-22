@@ -8,6 +8,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import re
 from dataclasses import asdict, dataclass
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -513,8 +514,9 @@ def _build_guided_target_scope_fingerprint(value: Any) -> str | None:
 
 
 def _looks_like_guided_helper_object(name: str) -> bool:
-    normalized = name.strip().lower()
-    return any(hint in normalized for hint in _GUIDED_HELPER_OBJECT_HINTS)
+    normalized = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", name.strip())
+    tokens = [token for token in re.split(r"[^a-zA-Z0-9]+", normalized.lower()) if token]
+    return any(token in _GUIDED_HELPER_OBJECT_HINTS for token in tokens)
 
 
 def _looks_like_guided_bootstrap_placeholder_object(name: str) -> bool:
@@ -544,6 +546,8 @@ def _is_bindable_guided_target_scope(scope: dict[str, Any] | None) -> bool:
         )
     ):
         return False
+    if not collection_name and object_names:
+        return any(not _looks_like_guided_helper_object(name) for name in object_names)
     return True
 
 

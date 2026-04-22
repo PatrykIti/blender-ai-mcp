@@ -129,7 +129,7 @@ def _scene_has_meaningful_guided_objects() -> bool:
     if placeholder_object_count > 1:
         return True
     names_set = {name for name in object_names if name}
-    if names_set == _GUIDED_STARTUP_SCENE_OBJECT_NAMES:
+    if helper_object_count > 0 and names_set <= _GUIDED_STARTUP_SCENE_OBJECT_NAMES:
         return False
     return True
 

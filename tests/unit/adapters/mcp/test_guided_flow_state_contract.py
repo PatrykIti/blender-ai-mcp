@@ -501,6 +501,39 @@ def test_helper_token_scope_can_bind_active_guided_target_scope_when_explicitly_
     assert state.guided_flow_state["active_target_scope"]["primary_target"] == "Sunflower"
 
 
+def test_helper_only_camera_scope_does_not_bind_active_guided_target_scope():
+    ctx = FakeContext()
+    update_session_from_router_goal(
+        ctx,
+        "create a low-poly squirrel matching front and side reference images",
+        {
+            "status": "no_match",
+            "phase_hint": "build",
+            "guided_handoff": {
+                "kind": "guided_manual_build",
+                "recipe_id": "low_poly_creature_blockout",
+                "target_phase": "build",
+                "surface_profile": "llm-guided",
+                "direct_tools": ["modeling_create_primitive"],
+                "supporting_tools": ["scene_scope_graph", "scene_relation_graph", "scene_view_diagnostics"],
+                "discovery_tools": ["search_tools", "call_tool"],
+                "workflow_import_recommended": False,
+                "message": "Continue on the guided creature blockout surface.",
+            },
+        },
+        surface_profile="llm-guided",
+    )
+
+    state = record_guided_flow_spatial_check_completion(
+        ctx,
+        tool_name="scene_scope_graph",
+        resolved_scope=_scope("Camera"),
+    )
+
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["active_target_scope"] is None
+
+
 def test_default_collection_scope_does_not_bind_active_guided_target_scope():
     ctx = FakeContext()
     update_session_from_router_goal(

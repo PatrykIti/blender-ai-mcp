@@ -362,6 +362,9 @@ contract in addition to `guided_handoff`.
   scene as empty when the only non-helper mesh is one default placeholder
   primitive such as `Cube`; multiple placeholder meshes still count as a real
   rough blockout worth inspecting
+- explicit guided scopes now bind from caller intent instead of name
+  heuristics, so real objects named like `Cube`, `Sphere`, or `Sunflower`
+  can still become the active guided workset when the operator targets them
 - after material scene changes such as `scene_clean_scene(...)`,
   `scene_rename_object(...)`, `modeling_create_primitive(...)`,
   `modeling_transform_object(...)`, `modeling_join_objects(...)`,

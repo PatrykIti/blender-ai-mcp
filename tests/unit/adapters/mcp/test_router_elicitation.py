@@ -368,6 +368,19 @@ def test_scene_has_meaningful_guided_objects_treats_default_startup_cube_as_empt
     assert router_area._scene_has_meaningful_guided_objects() is False
 
 
+def test_scene_has_meaningful_guided_objects_treats_startup_subset_cube_and_camera_as_empty(monkeypatch):
+    class SceneHandler:
+        def list_objects(self):
+            return [
+                {"name": "Cube", "type": "MESH"},
+                {"name": "Camera", "type": "CAMERA"},
+            ]
+
+    monkeypatch.setattr(router_area, "get_scene_handler", lambda: SceneHandler())
+
+    assert router_area._scene_has_meaningful_guided_objects() is False
+
+
 def test_scene_has_meaningful_guided_objects_treats_lone_default_named_mesh_as_nonempty(monkeypatch):
     class SceneHandler:
         def list_objects(self):

@@ -538,6 +538,9 @@ Current guided-flow behavior:
   scene as empty when the only non-helper mesh is one default placeholder
   primitive such as `Cube`; multiple placeholder meshes still count as a real
   rough blockout worth inspecting
+- explicit guided scopes now bind from caller intent instead of name
+  heuristics, so real objects named like `Cube`, `Sphere`, or `Sunflower`
+  can still become the active guided workset when the operator targets them
 - helper-only scopes such as a single `Camera` do not initialize or satisfy a
   creature/building spatial gate by themselves
 - when the scene has no meaningful target/workset objects yet, the guided flow
