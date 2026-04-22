@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [249](./249-2026-04-22-guided-create-failure-and-new-goal-registry-reset.md) | 2026-04-22 | **Guided create failure and new-goal registry reset** | - |
 | [248](./248-2026-04-22-guided-pair-semantics-and-post-nudge-capture-refresh.md) | 2026-04-22 | **Guided pair semantics and post-nudge capture refresh** | - |
 | [247](./247-2026-04-22-guided-startup-bootstrap-and-quoted-name-registration.md) | 2026-04-22 | **Guided startup bootstrap and quoted-name registration** | - |
 | [246](./246-2026-04-22-guided-failed-mutation-guards-and-nonempty-blockout-detection.md) | 2026-04-22 | **Guided failed-mutation guards and non-empty blockout detection** | - |

@@ -457,16 +457,23 @@ def test_non_scope_graph_cannot_bind_initial_guided_target_scope():
     assert {check["status"] for check in state.guided_flow_state["required_checks"]} == {"pending"}
 
 
-def test_router_goal_flow_summary_uses_part_registry_for_completed_and_missing_roles():
+def test_router_goal_flow_summary_uses_part_registry_for_same_goal_followup():
     ctx = FakeContext()
-    ctx.state["guided_part_registry"] = [
-        {
-            "object_name": "Squirrel_Body",
-            "role": "body_core",
-            "role_group": "primary_masses",
-            "status": "registered",
-        }
-    ]
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            guided_part_registry=[
+                {
+                    "object_name": "Squirrel_Body",
+                    "role": "body_core",
+                    "role_group": "primary_masses",
+                    "status": "registered",
+                }
+            ],
+        ),
+    )
 
     state = update_session_from_router_goal(
         ctx,

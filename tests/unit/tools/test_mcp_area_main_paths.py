@@ -219,6 +219,35 @@ def test_modeling_create_primitive_registers_guided_role_after_multi_step_report
     assert recorded == [("Body", "body_core", None)]
 
 
+def test_modeling_create_primitive_does_not_register_guided_role_after_failed_string_result(monkeypatch):
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.route_tool_call",
+        lambda **kwargs: "Object 'Body' not found",
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.get_session_capability_state",
+        lambda ctx: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={"flow_id": "guided_creature_flow"},
+        ),
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.register_guided_part_role",
+        lambda ctx, **kwargs: (_ for _ in ()).throw(AssertionError("guided role should not be registered")),
+    )
+
+    from server.adapters.mcp.areas.modeling import modeling_create_primitive
+
+    result = modeling_create_primitive(
+        MagicMock(),
+        primitive_type="Sphere",
+        name="Body",
+        guided_role="body_core",
+    )
+
+    assert result == "Object 'Body' not found"
+
+
 def test_modeling_create_primitive_skips_guided_registration_without_active_flow(monkeypatch):
     class Handler:
         def create_primitive(self, primitive_type, radius, size, location, rotation, name):

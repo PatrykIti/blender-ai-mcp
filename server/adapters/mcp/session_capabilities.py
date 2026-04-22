@@ -1367,13 +1367,14 @@ def update_session_from_router_goal(
     current_partial_answers = dict(current.partial_answers or {})
     current_partial_answers.update(provided_answers or {})
     same_goal = current.goal == goal
+    retained_guided_part_registry = current.guided_part_registry if same_goal else None
     previous_flow_state = _normalize_guided_flow_state(current.guided_flow_state)
     guided_flow_state = (
         _build_initial_guided_flow_state(
             goal=goal,
             router_result=router_result,
             previous_flow_state=previous_flow_state,
-            part_registry=current.guided_part_registry,
+            part_registry=retained_guided_part_registry,
             preserve_existing=same_goal,
         )
         if (surface_profile or current.surface_profile or "legacy-flat") == "llm-guided"
@@ -1427,7 +1428,7 @@ def update_session_from_router_goal(
         reference_images=reference_images,
         guided_handoff=router_result.get("guided_handoff"),
         guided_flow_state=guided_flow_state,
-        guided_part_registry=current.guided_part_registry,
+        guided_part_registry=retained_guided_part_registry,
         pending_reference_images=pending_reference_images,
     )
     set_session_capability_state(ctx, state)
@@ -1454,13 +1455,14 @@ async def update_session_from_router_goal_async(
     current_partial_answers = dict(current.partial_answers or {})
     current_partial_answers.update(provided_answers or {})
     same_goal = current.goal == goal
+    retained_guided_part_registry = current.guided_part_registry if same_goal else None
     previous_flow_state = _normalize_guided_flow_state(current.guided_flow_state)
     guided_flow_state = (
         _build_initial_guided_flow_state(
             goal=goal,
             router_result=router_result,
             previous_flow_state=previous_flow_state,
-            part_registry=current.guided_part_registry,
+            part_registry=retained_guided_part_registry,
             preserve_existing=same_goal,
         )
         if (surface_profile or current.surface_profile or "legacy-flat") == "llm-guided"
@@ -1514,7 +1516,7 @@ async def update_session_from_router_goal_async(
         reference_images=reference_images,
         guided_handoff=router_result.get("guided_handoff"),
         guided_flow_state=guided_flow_state,
-        guided_part_registry=current.guided_part_registry,
+        guided_part_registry=retained_guided_part_registry,
         pending_reference_images=pending_reference_images,
     )
     await set_session_capability_state_async(ctx, state)

@@ -420,6 +420,9 @@ contract in addition to `guided_handoff`.
 - those optional `guided_role=...` hints only auto-register when an active
   guided flow already exists; outside an active guided flow they do not create
   persistent role state by themselves
+- a failed create call now stays non-mutating for guided role state as well:
+  if `modeling_create_primitive(...)` returns a failure string, the requested
+  role is not auto-registered just because a semantic `name` was supplied
 - on `modeling_create_primitive(...)`, `guided_role=...` now also requires an
   explicit semantic `name`; guided create does not allow auto-generated Blender
   names to become semantic part registrations
@@ -449,6 +452,9 @@ contract in addition to `guided_handoff`.
 - `scene_clean_scene(...)` now clears the guided part registry and returns the
   guided flow to `bootstrap_primary_workset` instead of carrying completed
   parts forward on an empty scene
+- starting a different guided goal in the same session now resets guided part
+  registration for that new flow instead of carrying completed roles forward
+  from the previous object
 - destructive identity/topology changes such as `modeling_join_objects(...)`
   or `modeling_separate_object(...)` now drop stale guided part registrations;
   re-register the resulting object(s) explicitly if they should still count

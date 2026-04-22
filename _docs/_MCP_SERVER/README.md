@@ -610,6 +610,9 @@ Current guided-flow behavior:
 - those `guided_role=...` convenience hints only auto-register when the
   session already has an active `guided_flow_state`; outside an active guided
   flow they do not create persistent guided role state on their own
+- a failed create call now stays non-mutating for guided role state as well:
+  if `modeling_create_primitive(...)` returns a failure string, the requested
+  role is not auto-registered just because a semantic `name` was supplied
 - on `modeling_create_primitive(...)`, the convenience path now also requires
   an explicit semantic `name`; guided create does not allow auto-generated
   Blender names to become semantic part registrations
@@ -640,6 +643,9 @@ Current guided-flow behavior:
 - `scene_clean_scene(...)` now clears the guided part registry and returns the
   guided flow to `bootstrap_primary_workset`, so empty-scene resets do not
   keep stale completed parts from an earlier workset
+- starting a different guided goal in the same session now resets guided part
+  registration for that new flow instead of carrying completed roles forward
+  from the previous object
 - destructive identity/topology changes such as `modeling_join_objects(...)`
   and `modeling_separate_object(...)` now remove stale guided part
   registrations; re-register the resulting object(s) explicitly when they

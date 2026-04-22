@@ -482,10 +482,11 @@ def _modeling_create_primitive_impl(
         },
         direct_executor=execute,
     )
-    if guided_role and isinstance(result, str):
+    created_object_name = _extract_created_object_name(result) if isinstance(result, str) else None
+    if guided_role and created_object_name is not None:
         _maybe_register_guided_role(
             ctx,
-            object_name=_extract_created_object_name(result) or (str(name_value).strip() if name_value else None),
+            object_name=created_object_name,
             guided_role=guided_role,
             role_group=role_group,
         )

@@ -572,3 +572,19 @@ def test_update_session_from_router_goal_preserves_reference_images_for_same_goa
     )
 
     assert state.reference_images == [{"reference_id": "ref_1"}]
+
+
+def test_update_session_from_router_goal_clears_guided_part_registry_when_goal_changes():
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "chair", {"status": "ready"})
+    ctx.state["guided_part_registry"] = [{"object_name": "ChairBody", "role": "body_core"}]
+
+    state = update_session_from_router_goal(
+        ctx,
+        "lamp",
+        {
+            "status": "ready",
+        },
+    )
+
+    assert state.guided_part_registry is None
