@@ -354,8 +354,37 @@ def test_router_set_goal_no_match_with_guided_manual_continuation_bootstraps_emp
     assert session.guided_flow_state["current_step"] == "bootstrap_primary_workset"
 
 
-def test_router_set_goal_no_match_keeps_spatial_bootstrap_for_default_named_blockout(monkeypatch):
-    """A rough blockout built from default primitive names should still count as a non-empty scene."""
+def test_scene_has_meaningful_guided_objects_treats_default_startup_cube_as_empty(monkeypatch):
+    class SceneHandler:
+        def list_objects(self):
+            return [
+                {"name": "Cube", "type": "MESH"},
+                {"name": "Camera", "type": "CAMERA"},
+                {"name": "Light", "type": "LIGHT"},
+            ]
+
+    monkeypatch.setattr(router_area, "get_scene_handler", lambda: SceneHandler())
+
+    assert router_area._scene_has_meaningful_guided_objects() is False
+
+
+def test_scene_has_meaningful_guided_objects_treats_multi_primitive_blockout_as_nonempty(monkeypatch):
+    class SceneHandler:
+        def list_objects(self):
+            return [
+                {"name": "Cube", "type": "MESH"},
+                {"name": "Sphere", "type": "MESH"},
+                {"name": "Camera", "type": "CAMERA"},
+                {"name": "Light", "type": "LIGHT"},
+            ]
+
+    monkeypatch.setattr(router_area, "get_scene_handler", lambda: SceneHandler())
+
+    assert router_area._scene_has_meaningful_guided_objects() is True
+
+
+def test_router_set_goal_no_match_bootstraps_empty_scene_for_single_default_startup_cube(monkeypatch):
+    """A fresh startup scene with only the default cube should still use empty-scene bootstrap."""
 
     monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
 
@@ -386,7 +415,7 @@ def test_router_set_goal_no_match_keeps_spatial_bootstrap_for_default_named_bloc
     result = asyncio.run(router_area.router_set_goal(ctx, goal="low poly squirrel 3D model"))
 
     assert result.guided_flow_state is not None
-    assert result.guided_flow_state.current_step == "establish_spatial_context"
+    assert result.guided_flow_state.current_step == "bootstrap_primary_workset"
 
 
 def test_router_get_status_exposes_session_id_and_transport(monkeypatch):

@@ -37,23 +37,31 @@ MODELING_PUBLIC_TOOL_NAMES = (
     "skin_set_radius",
 )
 
-_CREATED_OBJECT_RESULT_PATTERN = re.compile(r"Created .+ named '(.+?)'")
-_TRANSFORMED_OBJECT_RESULT_PATTERN = re.compile(r"Transformed object '(.+?)'")
+_CREATED_OBJECT_RESULT_PATTERN = re.compile(r"Created .+ named '(.+)'$")
+_TRANSFORMED_OBJECT_RESULT_PATTERN = re.compile(r"Transformed object '(.+)'$")
 
 
 def _extract_created_object_name(result: str) -> str | None:
     """Return the created object name from the canonical modeling success string."""
 
-    matches = _CREATED_OBJECT_RESULT_PATTERN.findall(result)
-    if not matches:
-        return None
-    object_name = str(matches[-1]).strip()
-    return object_name or None
+    for line in reversed(result.splitlines()):
+        match = _CREATED_OBJECT_RESULT_PATTERN.search(line.strip())
+        if match is None:
+            continue
+        object_name = match.group(1).strip()
+        if object_name:
+            return object_name
+    return None
 
 
 def _has_transform_success(result: str, *, object_name: str) -> bool:
-    matches = _TRANSFORMED_OBJECT_RESULT_PATTERN.findall(result)
-    return any(str(match).strip() == object_name for match in matches)
+    for line in result.splitlines():
+        match = _TRANSFORMED_OBJECT_RESULT_PATTERN.search(line.strip())
+        if match is None:
+            continue
+        if str(match.group(1)).strip() == object_name:
+            return True
+    return False
 
 
 def _maybe_register_guided_role(

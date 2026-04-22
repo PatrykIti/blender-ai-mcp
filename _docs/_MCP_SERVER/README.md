@@ -534,6 +534,10 @@ Current guided-flow behavior:
   ordinary mesh objects with default primitive names such as `Cube` or
   `Sphere` still count as an existing rough blockout instead of forcing an
   empty-scene primary-workset jump
+- the special-case empty-scene bootstrap still treats Blender's stock startup
+  scene as empty when the only non-helper mesh is one default placeholder
+  primitive such as `Cube`; multiple placeholder meshes still count as a real
+  rough blockout worth inspecting
 - helper-only scopes such as a single `Camera` do not initialize or satisfy a
   creature/building spatial gate by themselves
 - when the scene has no meaningful target/workset objects yet, the guided flow
@@ -606,6 +610,9 @@ Current guided-flow behavior:
   guided-role convenience path still registers against the final successful
   modeling step instead of dropping the role hint just because the call became
   multi-step
+- guided-role convenience registration now also handles valid object names
+  containing apostrophes, such as `King's Crown`, instead of truncating the
+  stored object name
 - canonical pair names such as `ForeLeg_L`, `ForeLeg_R`, and `ForeLegPair`
   now count as strong semantic names for pair roles instead of warning or
   blocking under the stricter naming policy

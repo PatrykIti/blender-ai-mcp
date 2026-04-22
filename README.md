@@ -358,6 +358,10 @@ contract in addition to `guided_handoff`.
   ordinary mesh objects with default primitive names such as `Cube` or
   `Sphere` now still count as an existing rough blockout instead of forcing an
   empty-scene primary-workset jump
+- the special-case empty-scene bootstrap still treats Blender's stock startup
+  scene as empty when the only non-helper mesh is one default placeholder
+  primitive such as `Cube`; multiple placeholder meshes still count as a real
+  rough blockout worth inspecting
 - after material scene changes such as `scene_clean_scene(...)`,
   `scene_rename_object(...)`, `modeling_create_primitive(...)`,
   `modeling_transform_object(...)`, `modeling_join_objects(...)`,
@@ -416,6 +420,9 @@ contract in addition to `guided_handoff`.
   successful guided create/transform calls still register the resulting role
   against the final modeling step instead of dropping the convenience
   registration just because the call became multi-step
+- guided-role convenience registration now also handles valid object names
+  containing apostrophes, such as `King's Crown`, instead of truncating the
+  stored object name
 - canonical pair names such as `ForeLeg_L`, `ForeLeg_R`, and `ForeLegPair`
   now count as strong semantic names for `foreleg_pair` / `hindleg_pair`
   instead of warning or blocking under the stricter naming policy

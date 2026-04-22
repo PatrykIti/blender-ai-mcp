@@ -105,6 +105,7 @@ def _scene_has_meaningful_guided_objects() -> bool:
         objects = get_scene_handler().list_objects()
     except Exception:
         return True
+    placeholder_object_count = 0
     for item in objects:
         if not isinstance(item, dict):
             continue
@@ -112,9 +113,12 @@ def _scene_has_meaningful_guided_objects() -> bool:
         object_type = str(item.get("type") or "").strip().lower()
         if object_type in {"camera", "light"}:
             continue
+        if name in _GUIDED_HELPER_OR_PLACEHOLDER_NAMES:
+            placeholder_object_count += 1
+            continue
         if name:
             return True
-    return False
+    return placeholder_object_count > 1
 
 
 def _build_background_job_diagnostics() -> tuple[int, dict[str, int], list[dict[str, Any]]]:
