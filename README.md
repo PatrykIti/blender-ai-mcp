@@ -354,6 +354,10 @@ contract in addition to `guided_handoff`.
 - default placeholder scopes such as a stock `Cube` or the generic root
   `Collection` are no longer treated as meaningful guided target/workset
   bindings by themselves
+- but for the earlier “is this scene already non-empty?” bootstrap decision,
+  ordinary mesh objects with default primitive names such as `Cube` or
+  `Sphere` now still count as an existing rough blockout instead of forcing an
+  empty-scene primary-workset jump
 - after material scene changes such as `scene_clean_scene(...)`,
   `scene_rename_object(...)`, `modeling_create_primitive(...)`,
   `modeling_transform_object(...)`, `modeling_join_objects(...)`,
@@ -424,6 +428,10 @@ contract in addition to `guided_handoff`.
   still recover the registered role without manual re-registration
 - successful `scene_rename_object(...)` calls also re-arm guided spatial
   checks, because the bound target-scope fingerprint is name-based
+- failed plain-string mutation results such as `Object 'Missing' not found`
+  now stay non-mutating for guided session state; they do not re-arm spatial
+  checks or rewrite guided role registration just because the wrapper returned
+  a string
 - `scene_clean_scene(...)` now clears the guided part registry and returns the
   guided flow to `bootstrap_primary_workset` instead of carrying completed
   parts forward on an empty scene

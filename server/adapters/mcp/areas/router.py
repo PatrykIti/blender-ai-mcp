@@ -99,7 +99,7 @@ def _get_runtime_contract_line(ctx: Context) -> str | None:
 
 
 def _scene_has_meaningful_guided_objects() -> bool:
-    """Return True when the scene has non-helper, non-placeholder objects."""
+    """Return True when the scene already has operator-meaningful objects to inspect."""
 
     try:
         objects = get_scene_handler().list_objects()
@@ -111,8 +111,6 @@ def _scene_has_meaningful_guided_objects() -> bool:
         name = str(item.get("name") or "").strip().lower()
         object_type = str(item.get("type") or "").strip().lower()
         if object_type in {"camera", "light"}:
-            continue
-        if name in _GUIDED_HELPER_OR_PLACEHOLDER_NAMES:
             continue
         if name:
             return True

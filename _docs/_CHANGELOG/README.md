@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [246](./246-2026-04-22-guided-failed-mutation-guards-and-nonempty-blockout-detection.md) | 2026-04-22 | **Guided failed-mutation guards and non-empty blockout detection** | - |
 | [245](./245-2026-04-22-guided-multistep-registration-and-canonical-pair-names.md) | 2026-04-22 | **Guided multi-step registration and canonical pair names** | - |
 | [244](./244-2026-04-22-pattern-token-boundaries-and-watchdog-job-preservation.md) | 2026-04-22 | **Pattern, token-boundary, and watchdog job preservation fixes** | - |
 | [243](./243-2026-04-22-guided-scene-validation-boundary-and-topology-dirty-ops.md) | 2026-04-22 | **Guided scene validation boundary and topology dirty ops** | - |

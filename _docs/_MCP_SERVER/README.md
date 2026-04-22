@@ -530,6 +530,10 @@ Current guided-flow behavior:
 - default placeholder scopes such as a stock `Cube` or the generic root
   `Collection` no longer count as meaningful guided target/workset bindings by
   themselves
+- but for the earlier “is this scene already non-empty?” bootstrap decision,
+  ordinary mesh objects with default primitive names such as `Cube` or
+  `Sphere` still count as an existing rough blockout instead of forcing an
+  empty-scene primary-workset jump
 - helper-only scopes such as a single `Camera` do not initialize or satisfy a
   creature/building spatial gate by themselves
 - when the scene has no meaningful target/workset objects yet, the guided flow
@@ -615,6 +619,10 @@ Current guided-flow behavior:
 - successful `scene_rename_object(...)` calls also mark guided spatial state
   stale so the name-bound target scope can be rebound on the next required
   spatial refresh
+- failed plain-string mutation results such as `Object 'Missing' not found`
+  now stay non-mutating for guided session state; they do not re-arm spatial
+  checks or rewrite guided role registration just because the wrapper returned
+  a string payload
 - `scene_clean_scene(...)` now clears the guided part registry and returns the
   guided flow to `bootstrap_primary_workset`, so empty-scene resets do not
   keep stale completed parts from an earlier workset

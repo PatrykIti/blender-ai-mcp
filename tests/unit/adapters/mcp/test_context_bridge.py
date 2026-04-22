@@ -693,6 +693,136 @@ def test_route_tool_call_removes_guided_registry_entry_after_separate(monkeypatc
     assert "ear_pair" not in state.guided_flow_state["completed_roles"]
 
 
+def test_route_tool_call_does_not_mutate_guided_state_after_failed_rename_string(monkeypatch):
+    """Failed string results must not mark spatial state stale or rename guided registrations."""
+
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "active_target_scope": {
+                    "scope_kind": "single_object",
+                    "primary_target": "Body",
+                    "object_names": ["Body"],
+                    "object_count": 1,
+                },
+                "spatial_scope_fingerprint": "scope_body",
+                "spatial_state_version": 0,
+                "spatial_state_stale": False,
+                "last_spatial_check_version": 0,
+                "spatial_refresh_required": False,
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": ["body_core"],
+                "missing_roles": ["head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+            guided_part_registry=[
+                {
+                    "object_name": "Body",
+                    "role": "body_core",
+                    "role_group": "primary_masses",
+                    "status": "registered",
+                }
+            ],
+        ),
+    )
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_context", lambda: ctx)
+
+    result = route_tool_call(
+        tool_name="scene_rename_object",
+        params={"old_name": "Body", "new_name": "BodyMain"},
+        direct_executor=lambda: "Object 'Body' not found",
+    )
+    state = get_session_capability_state(ctx)
+
+    assert result == "Object 'Body' not found"
+    assert state.guided_part_registry is not None
+    assert state.guided_part_registry[0]["object_name"] == "Body"
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["spatial_state_stale"] is False
+    assert state.guided_flow_state["spatial_refresh_required"] is False
+
+
+def test_route_tool_call_does_not_mutate_guided_state_after_failed_separate_string(monkeypatch):
+    """Failed string results must not drop registrations or rearm spatial checks."""
+
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "active_target_scope": {
+                    "scope_kind": "single_object",
+                    "primary_target": "Squirrel_Ears",
+                    "object_names": ["Squirrel_Ears"],
+                    "object_count": 1,
+                },
+                "spatial_scope_fingerprint": "scope_ears",
+                "spatial_state_version": 0,
+                "spatial_state_stale": False,
+                "last_spatial_check_version": 0,
+                "spatial_refresh_required": False,
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "secondary_parts", "attachment_alignment", "reference_context"],
+                "allowed_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass", "ear_pair"],
+                "missing_roles": ["snout_mass", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+            guided_part_registry=[
+                {
+                    "object_name": "Squirrel_Ears",
+                    "role": "ear_pair",
+                    "role_group": "secondary_parts",
+                    "status": "registered",
+                }
+            ],
+        ),
+    )
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_context", lambda: ctx)
+
+    result = route_tool_call(
+        tool_name="modeling_separate_object",
+        params={"name": "Squirrel_Ears", "type": "LOOSE"},
+        direct_executor=lambda: "Object 'Squirrel_Ears' not found",
+    )
+    state = get_session_capability_state(ctx)
+
+    assert result == "Object 'Squirrel_Ears' not found"
+    assert state.guided_part_registry is not None
+    assert state.guided_part_registry[0]["object_name"] == "Squirrel_Ears"
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["spatial_state_stale"] is False
+    assert state.guided_flow_state["spatial_refresh_required"] is False
+
+
 def test_route_tool_call_report_allows_registered_primary_object_transform_during_secondary_step(monkeypatch):
     """A previously registered primary object should remain transformable during secondary steps."""
 

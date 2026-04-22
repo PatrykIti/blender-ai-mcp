@@ -6,6 +6,7 @@ Provides utilities for routing tool calls through SupervisorRouter.
 
 import logging
 import re
+from ast import literal_eval
 from typing import Any, Callable, Dict, List, Literal, Optional, cast
 
 from server.adapters.mcp.context_utils import ctx_warning
@@ -43,6 +44,9 @@ _GUIDED_ROLE_REQUIRED_TOOLS: tuple[str, ...] = (
     "modeling_create_primitive",
     "modeling_transform_object",
 )
+_CREATED_OBJECT_RESULT_PATTERN = re.compile(r"^Created .+ named '(.+?)'$")
+_TRANSFORMED_OBJECT_RESULT_PATTERN = re.compile(r"^Transformed object '(.+?)'$")
+_JOINED_OBJECT_RESULT_PATTERN = re.compile(r"^Objects .+ joined into '(.+?)'\. Joined count: \d+$")
 _RENAMED_OBJECT_RESULT_PATTERN = re.compile(r"^Renamed '.*' to '(.+?)'(?: .*)?$")
 
 
@@ -51,13 +55,24 @@ def _result_represents_success(tool_name: str, result: Any) -> bool:
         return False
 
     if isinstance(result, str):
+        text = result.strip()
         if tool_name == "scene_clean_scene":
-            return result.strip().lower().startswith("scene cleaned")
+            return text.lower().startswith("scene cleaned")
         if tool_name == "modeling_create_primitive":
-            return result.startswith("Created ")
+            return _CREATED_OBJECT_RESULT_PATTERN.fullmatch(text) is not None
         if tool_name == "modeling_transform_object":
-            return result.startswith("Transformed object ")
-        return not result.strip().lower().startswith(("error", "failed"))
+            return _TRANSFORMED_OBJECT_RESULT_PATTERN.fullmatch(text) is not None
+        if tool_name == "scene_rename_object":
+            return _RENAMED_OBJECT_RESULT_PATTERN.fullmatch(text) is not None
+        if tool_name == "modeling_join_objects":
+            return _JOINED_OBJECT_RESULT_PATTERN.fullmatch(text) is not None
+        if tool_name == "modeling_separate_object":
+            try:
+                parsed = literal_eval(text)
+            except (SyntaxError, ValueError):
+                return False
+            return isinstance(parsed, list) and all(isinstance(item, str) for item in parsed)
+        return False
 
     if isinstance(result, dict):
         status = str(result.get("status") or "").strip().lower()
