@@ -2074,6 +2074,7 @@ def _assembled_target_scope(
         target_objects=target_objects,
         collection_name=collection_name,
         list_collection_objects=_list_collection_objects,
+        allow_scene_scope=True,
     )
     return SceneAssembledTargetScopeContract.model_validate(scope_payload)
 

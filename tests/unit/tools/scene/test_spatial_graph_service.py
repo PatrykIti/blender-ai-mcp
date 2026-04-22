@@ -216,3 +216,33 @@ def test_build_scope_graph_rejects_missing_explicit_target_object():
             target_objects=None,
             collection_name=None,
         )
+
+
+def test_build_scope_graph_rejects_missing_explicit_scope():
+    service = SpatialGraphService()
+    reader = FakeReader()
+
+    with pytest.raises(ValueError, match="Provide target_object, target_objects, or collection_name"):
+        service.build_scope_graph(
+            reader=reader,
+            target_object=None,
+            target_objects=None,
+            collection_name=None,
+        )
+
+
+def test_build_scope_graph_can_allow_internal_scene_scope():
+    service = SpatialGraphService()
+    reader = FakeReader()
+
+    scope = service.build_scope_graph(
+        reader=reader,
+        target_object=None,
+        target_objects=None,
+        collection_name=None,
+        allow_scene_scope=True,
+    )
+
+    assert scope["scope_kind"] == "scene"
+    assert scope["object_names"] == []
+    assert scope["object_count"] == 0

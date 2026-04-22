@@ -21,6 +21,15 @@ class FakeContext:
     def set_state(self, key: str, value, *, serializable: bool = True) -> None:
         self.state[key] = value
 
+    async def reset_visibility(self) -> None:
+        return None
+
+    async def enable_components(self, **kwargs) -> None:
+        return None
+
+    async def disable_components(self, **kwargs) -> None:
+        return None
+
 
 def _guided_ctx() -> FakeContext:
     ctx = FakeContext()
@@ -216,3 +225,40 @@ def test_scene_relation_graph_returns_structured_error_for_missing_target_name(m
 
     assert result.payload is None
     assert result.error == "Object(s) not found in scene: 'Boddy'"
+
+
+def test_scene_scope_graph_returns_structured_error_for_missing_explicit_scope_outside_guided_gate(monkeypatch):
+    monkeypatch.setattr(scene_area, "route_tool_call", lambda tool_name, params, direct_executor: direct_executor())
+
+    class Handler:
+        def get_scope_graph(self, target_object=None, target_objects=None, collection_name=None):
+            raise ValueError("Provide target_object, target_objects, or collection_name for the spatial graph scope.")
+
+    monkeypatch.setattr(scene_area, "get_scene_handler", lambda: Handler())
+
+    result = scene_area.scene_scope_graph(FakeContext())
+
+    assert result.payload is None
+    assert result.error == "Provide target_object, target_objects, or collection_name for the spatial graph scope."
+
+
+def test_scene_relation_graph_returns_structured_error_for_missing_explicit_scope_outside_guided_gate(monkeypatch):
+    monkeypatch.setattr(scene_area, "route_tool_call", lambda tool_name, params, direct_executor: direct_executor())
+
+    class Handler:
+        def get_relation_graph(
+            self,
+            target_object=None,
+            target_objects=None,
+            collection_name=None,
+            goal_hint=None,
+            include_truth_payloads=False,
+        ):
+            raise ValueError("Provide target_object, target_objects, or collection_name for the spatial graph scope.")
+
+    monkeypatch.setattr(scene_area, "get_scene_handler", lambda: Handler())
+
+    result = scene_area.scene_relation_graph(FakeContext())
+
+    assert result.payload is None
+    assert result.error == "Provide target_object, target_objects, or collection_name for the spatial graph scope."

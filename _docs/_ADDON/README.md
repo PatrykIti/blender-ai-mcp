@@ -157,6 +157,7 @@ Technical details.
   - `camera_name="USER_PERSPECTIVE"` captures the live 3D viewport, can apply bounded view/orbit/zoom adjustments, and requires an active 3D view
 - if OpenGL capture is unavailable for `USER_PERSPECTIVE`, the addon mirrors the live view into a temporary camera and falls back through Workbench/Cycles so the result still tracks what the operator saw
 - `scene.get_view_diagnostics` reuses the same named-camera vs `USER_PERSPECTIVE` split and the same bounded user-view adjustment semantics, but returns typed projection/framing/occlusion facts instead of pixels
+- when `scene.get_view_diagnostics` mirrors a standard `USER_PERSPECTIVE` view such as `FRONT`, `RIGHT`, or `TOP`, the temporary analysis camera now preserves orthographic projection instead of falling back to perspective framing
 - `scene.measure_gap`, `scene.measure_overlap`, and `scene.assert_contact` now distinguish:
   - `measurement_basis="mesh_surface"` when a bounded evaluated-mesh/BVH path is available for mesh pairs
   - `measurement_basis="bounding_box"` when the addon must fall back to coarse bbox-only truth

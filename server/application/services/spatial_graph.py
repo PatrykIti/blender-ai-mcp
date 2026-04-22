@@ -908,7 +908,16 @@ class SpatialGraphService:
         target_objects: list[str] | None,
         collection_name: str | None,
         list_collection_objects: Callable[[str], list[str]] | None = None,
+        allow_scene_scope: bool = False,
     ) -> dict[str, Any]:
+        has_explicit_scope = (
+            (isinstance(target_object, str) and target_object.strip())
+            or any(isinstance(name, str) and name.strip() for name in list(target_objects or []))
+            or (isinstance(collection_name, str) and collection_name.strip())
+        )
+        if not has_explicit_scope and not allow_scene_scope:
+            raise ValueError("Provide target_object, target_objects, or collection_name for the spatial graph scope.")
+
         object_names = _dedupe_names(list(target_objects or []))
         if target_object:
             object_names = _dedupe_names([target_object, *object_names])

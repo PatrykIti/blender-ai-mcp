@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from typing import Any, cast
 
 import pytest
+import server.adapters.mcp.session_capabilities as session_capabilities
 from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract
 from server.adapters.mcp.session_capabilities import (
     SessionCapabilityState,
@@ -298,6 +299,53 @@ def test_spatial_check_completion_advances_flow_to_primary_masses():
     assert state.guided_flow_state["allowed_roles"] == ["body_core", "head_mass", "tail_mass"]
     assert state.guided_flow_state["missing_roles"] == ["body_core", "head_mass", "tail_mass"]
     assert state.guided_flow_state["required_role_groups"] == ["primary_masses"]
+
+
+def test_spatial_check_completion_reapplies_visibility(monkeypatch):
+    ctx = FakeContext()
+    update_session_from_router_goal(
+        ctx,
+        "create a low-poly squirrel matching front and side reference images",
+        {
+            "status": "no_match",
+            "phase_hint": "build",
+            "guided_handoff": {
+                "kind": "guided_manual_build",
+                "recipe_id": "low_poly_creature_blockout",
+                "target_phase": "build",
+                "surface_profile": "llm-guided",
+                "direct_tools": ["modeling_create_primitive"],
+                "supporting_tools": ["scene_scope_graph", "scene_relation_graph", "scene_view_diagnostics"],
+                "discovery_tools": ["search_tools", "call_tool"],
+                "workflow_import_recommended": False,
+                "message": "Continue on the guided creature blockout surface.",
+            },
+        },
+        surface_profile="llm-guided",
+    )
+
+    events: list[tuple[str, str | None]] = []
+
+    def fake_refresh_visibility_for_session_state(_ctx, state):
+        current_step = None
+        if state.guided_flow_state is not None:
+            current_step = str(state.guided_flow_state.get("current_step"))
+        events.append(("refresh_visibility", current_step))
+
+    monkeypatch.setattr(
+        session_capabilities, "refresh_visibility_for_session_state", fake_refresh_visibility_for_session_state
+    )
+
+    record_guided_flow_spatial_check_completion(ctx, tool_name="scene_scope_graph")
+    record_guided_flow_spatial_check_completion(ctx, tool_name="scene_relation_graph")
+    state = record_guided_flow_spatial_check_completion(ctx, tool_name="scene_view_diagnostics")
+
+    assert state.guided_flow_state is not None
+    assert events == [
+        ("refresh_visibility", "establish_spatial_context"),
+        ("refresh_visibility", "establish_spatial_context"),
+        ("refresh_visibility", "create_primary_masses"),
+    ]
 
 
 def test_scene_view_diagnostics_unavailable_does_not_complete_guided_spatial_check(monkeypatch):

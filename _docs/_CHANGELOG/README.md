@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [252](./252-2026-04-22-spatial-scope-errors-visibility-refresh-and-ortho-diagnostics.md) | 2026-04-22 | **Spatial scope errors, visibility refresh, and ortho diagnostics** | - |
 | [251](./251-2026-04-22-guided-explicit-scope-binding-and-startup-subset-bootstrap.md) | 2026-04-22 | **Guided explicit-scope binding and startup-subset bootstrap** | - |
 | [250](./250-2026-04-22-guided-scope-validation-unavailable-view-checks-and-sidecar-status.md) | 2026-04-22 | **Guided scope validation, unavailable view checks, and sidecar status** | - |
 | [249](./249-2026-04-22-guided-create-failure-and-new-goal-registry-reset.md) | 2026-04-22 | **Guided create failure and new-goal registry reset** | - |

@@ -26,6 +26,9 @@ class TestViewportControl(unittest.TestCase):
         self.mock_space = MagicMock()
         self.mock_space.type = "VIEW_3D"
         self.mock_space.shading = self.mock_shading
+        self.mock_rv3d = MagicMock()
+        self.mock_rv3d.view_perspective = "PERSP"
+        self.mock_space.region_3d = self.mock_rv3d
 
         self.mock_region = MagicMock()
         self.mock_region.type = "WINDOW"
@@ -330,6 +333,28 @@ class TestViewportControl(unittest.TestCase):
                 target_object="Cube",
                 camera_name="MeshObject",
             )
+
+    def test_mirror_user_view_to_temp_camera_preserves_orthographic_projection(self):
+        temp_camera = MagicMock()
+        temp_camera.data = MagicMock()
+        temp_camera.data.type = "PERSP"
+        bpy.context.active_object = temp_camera
+        self.mock_space.region_3d.view_perspective = "ORTHO"
+
+        scene = MagicMock()
+
+        mirrored = self.handler._mirror_user_view_to_temp_camera(
+            scene,
+            self.mock_area,
+            self.mock_region,
+            self.mock_space,
+        )
+
+        bpy.ops.object.camera_add.assert_called_once()
+        bpy.ops.view3d.camera_to_view.assert_called_once()
+        self.assertEqual(mirrored, temp_camera)
+        self.assertEqual(scene.camera, temp_camera)
+        self.assertEqual(temp_camera.data.type, "ORTHO")
 
 
 if __name__ == "__main__":

@@ -522,6 +522,9 @@ Current guided-flow behavior:
   satisfying the gate on arbitrary unrelated objects
 - the spatial tools do not treat “no scope” as “whole scene”; use
   `target_object`, `target_objects`, or `collection_name`
+- that explicit-scope rule now also applies outside the guided gate for the
+  scope/relation graph builders; a bare call fails instead of returning an
+  empty `scene` scope payload
 - during an active spatial gate / spatial-refresh re-arm, this explicit-scope
   rule now applies consistently to:
   - `scene_scope_graph(...)`
@@ -571,6 +574,9 @@ Current guided-flow behavior:
 - when `spatial_refresh_required=true`, the server expects a fresh
   `scene_scope_graph(...)` rebind first, then the remaining required spatial
   checks on that same target scope
+- when a required spatial check does advance the guided flow, FastMCP
+  visibility is reapplied immediately so ordinary discovery/list clients see
+  the unlocked tool surface without waiting for a later router/status call
 - `scene_view_diagnostics(...)` only satisfies that guided spatial gate when it
   returns real available view-space evidence; a headless/unavailable probe
   remains read-only and does not complete the check by itself

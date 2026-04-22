@@ -351,6 +351,9 @@ contract in addition to `guided_handoff`.
 - during an active guided spatial gate or spatial refresh re-arm, all three of
   those spatial helpers should be treated as explicit-scope tools, not as
   whole-scene probes
+- outside that guided gate, the scope/relation graph builders still require an
+  explicit `target_object`, `target_objects`, or `collection_name`; a bare
+  call now fails instead of silently returning an empty `scene` scope
 - default placeholder scopes such as a stock `Cube` or the generic root
   `Collection` are no longer treated as meaningful guided target/workset
   bindings by themselves
@@ -371,6 +374,9 @@ contract in addition to `guided_handoff`.
   `modeling_separate_object(...)`, or bounded attachment/alignment macros, the
   guided runtime can mark the spatial layer stale and re-arm the required
   checks
+- when one of those required spatial checks completes and advances the guided
+  flow, the server now reapplies FastMCP visibility immediately instead of
+  waiting for a later status/search refresh
 - support/symmetry-aware relation pairs now preserve support and symmetry
   annotations even when they share the same `(from_object, to_object)` key as a
   generic primary-target pair, so later guided planners still see
