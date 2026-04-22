@@ -39,6 +39,8 @@ from server.adapters.mcp.session_capabilities import (
     get_session_capability_state_async,
     merge_resolved_params_with_session_answers_async,
     register_guided_part_role_async,
+    require_existing_scene_object_name,
+    resolve_guided_role_group_for_domain,
     update_session_from_router_goal_async,
 )
 from server.adapters.mcp.tasks.job_registry import get_background_job_registry
@@ -536,6 +538,13 @@ async def guided_register_part(
             payload["message"] = naming_decision.message
             payload["guided_naming"] = naming_decision.model_dump(mode="json")
             return RouterStatusContract.model_validate(payload)
+        resolve_guided_role_group_for_domain(
+            cast(Any, domain_profile),
+            role,
+            role_group,
+        )
+
+    require_existing_scene_object_name(object_name)
 
     await register_guided_part_role_async(
         ctx,

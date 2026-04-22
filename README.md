@@ -355,9 +355,11 @@ contract in addition to `guided_handoff`.
   `Collection` are no longer treated as meaningful guided target/workset
   bindings by themselves
 - after material scene changes such as `scene_clean_scene(...)`,
-  `modeling_create_primitive(...)`, `modeling_transform_object(...)`, or
-  bounded attachment/alignment macros, the guided runtime can mark the spatial
-  layer stale and re-arm the required checks
+  `scene_rename_object(...)`, `modeling_create_primitive(...)`,
+  `modeling_transform_object(...)`, `modeling_join_objects(...)`,
+  `modeling_separate_object(...)`, or bounded attachment/alignment macros, the
+  guided runtime can mark the spatial layer stale and re-arm the required
+  checks
 - when `guided_flow_state.spatial_refresh_required == true`, treat
   `next_actions=["refresh_spatial_context"]` as authoritative server state,
   not advisory prose; refresh with `scene_scope_graph(...)` first, then rerun
@@ -394,6 +396,9 @@ contract in addition to `guided_handoff`.
 - `guided_register_part(...)` now validates that the named Blender object
   actually exists before it can count toward guided role completion; typos do
   not create completed roles on their own
+- if guided object validation cannot read the Blender scene at all,
+  `guided_register_part(...)` now fails clearly instead of mutating guided
+  session state from an unverified object name
 - those optional `guided_role=...` hints only auto-register when an active
   guided flow already exists; outside an active guided flow they do not create
   persistent role state by themselves

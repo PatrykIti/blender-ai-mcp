@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
+from typing import Any, cast
 
 import pytest
 from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract
@@ -527,7 +528,7 @@ def test_building_flow_advances_after_scope_and_view_checks_only():
 def test_scene_clean_scene_clears_guided_part_registry_and_returns_to_primary_bootstrap():
     ctx = FakeContext()
     set_session_capability_state(
-        ctx,
+        cast(Any, ctx),
         SessionCapabilityState(
             phase=SessionPhase.BUILD,
             goal="create a low-poly squirrel matching front and side reference images",
@@ -624,6 +625,52 @@ def test_scene_rename_object_marks_guided_spatial_state_stale():
         tool_name="scene_rename_object",
         family="utility",
         reason="scene_rename_object",
+    )
+
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["spatial_state_stale"] is True
+    assert state.guided_flow_state["spatial_refresh_required"] is True
+    assert state.guided_flow_state["allowed_families"] == ["spatial_context", "reference_context"]
+    assert state.guided_flow_state["next_actions"] == ["refresh_spatial_context"]
+
+
+@pytest.mark.parametrize("tool_name", ["modeling_join_objects", "modeling_separate_object"])
+def test_topology_changing_modeling_ops_mark_guided_spatial_state_stale(tool_name: str):
+    ctx = FakeContext()
+    set_session_capability_state(
+        cast(Any, ctx),
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "active_target_scope": _scope("Ear_L", "Ear_R"),
+                "spatial_scope_fingerprint": "scope_ears",
+                "spatial_state_version": 0,
+                "last_spatial_check_version": 0,
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "secondary_parts", "attachment_alignment", "reference_context"],
+                "allowed_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass"],
+                "missing_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    state = mark_guided_spatial_state_stale(
+        cast(Any, ctx),
+        tool_name=tool_name,
+        family=None,
+        reason=tool_name,
     )
 
     assert state.guided_flow_state is not None
@@ -967,7 +1014,7 @@ def test_secondary_role_registration_advances_creature_flow_to_checkpoint_iterat
     assert state.guided_flow_state["allowed_roles"] == ["tail_mass", "snout_mass"]
 
 
-def test_register_guided_part_role_rejects_nonexistent_scene_object(monkeypatch):
+def test_register_guided_part_role_stays_pure_state_update_without_scene_lookup(monkeypatch):
     ctx = FakeContext()
     set_session_capability_state(
         ctx,
@@ -993,10 +1040,17 @@ def test_register_guided_part_role_rejects_nonexistent_scene_object(monkeypatch)
             },
         ),
     )
-    monkeypatch.setattr("server.adapters.mcp.session_capabilities._scene_object_names", lambda: {"ExistingBody"})
+    monkeypatch.setattr(
+        "server.adapters.mcp.session_capabilities._scene_object_names",
+        lambda: (_ for _ in ()).throw(AssertionError("scene lookup should not run for pure state helper")),
+    )
 
-    with pytest.raises(ValueError, match="requires an existing Blender object named 'MissingBody'"):
-        register_guided_part_role(ctx, object_name="MissingBody", role="body_core")
+    state = register_guided_part_role(ctx, object_name="MissingBody", role="body_core")
+
+    assert state.guided_part_registry is not None
+    assert state.guided_part_registry[0]["object_name"] == "MissingBody"
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["completed_roles"] == ["body_core"]
 
 
 def test_pair_role_registration_requires_two_side_specific_objects_before_completion():

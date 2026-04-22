@@ -545,9 +545,11 @@ Current guided-flow behavior:
   - clearly opaque placeholder names such as `Sphere` / `Object` can be
     blocked until the object uses a semantic role-shaped name
 - after material scene changes such as `scene_clean_scene(...)`,
-  `modeling_create_primitive(...)`, `modeling_transform_object(...)`, or
-  bounded attachment/alignment cleanup macros, the runtime can mark the
-  spatial layer stale and re-arm the required checks
+  `scene_rename_object(...)`, `modeling_create_primitive(...)`,
+  `modeling_transform_object(...)`, `modeling_join_objects(...)`,
+  `modeling_separate_object(...)`, or bounded attachment/alignment cleanup
+  macros, the runtime can mark the spatial layer stale and re-arm the
+  required checks
 - when `spatial_refresh_required=true`, the server expects a fresh
   `scene_scope_graph(...)` rebind first, then the remaining required spatial
   checks on that same target scope
@@ -584,6 +586,9 @@ Current guided-flow behavior:
 - `guided_register_part(...)` now validates that the named Blender object
   actually exists before updating guided role completion; a typo does not
   populate `completed_roles`
+- if guided object validation cannot read the Blender scene at all,
+  `guided_register_part(...)` now fails clearly instead of mutating guided
+  session state from an unverified object name
 - `modeling_create_primitive(...)` and `modeling_transform_object(...)` may
   also carry an optional `guided_role` convenience hint on guided surfaces, but
   `guided_register_part(...)` remains the canonical explicit registration path

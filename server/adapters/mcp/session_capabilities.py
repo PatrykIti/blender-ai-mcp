@@ -122,6 +122,8 @@ _SPATIAL_STATE_DIRTY_TOOL_NAMES: set[str] = {
     "scene_rename_object",
     "modeling_create_primitive",
     "modeling_transform_object",
+    "modeling_join_objects",
+    "modeling_separate_object",
     "macro_attach_part_to_surface",
     "macro_align_part_with_contact",
     "macro_place_symmetry_pair",
@@ -470,17 +472,19 @@ def _scene_object_names() -> set[str]:
     return names
 
 
-def _require_existing_scene_object_name(object_name: str) -> str:
+def _normalize_guided_object_name(object_name: str) -> str:
     normalized_object_name = str(object_name or "").strip()
     if not normalized_object_name:
         raise ValueError("guided_register_part(...) requires a non-empty `object_name`.")
+    return normalized_object_name
+
+
+def require_existing_scene_object_name(object_name: str) -> str:
+    normalized_object_name = _normalize_guided_object_name(object_name)
 
     try:
         object_names = _scene_object_names()
     except Exception as exc:
-        error_text = str(exc)
-        if "Could not connect to Blender Addon" in error_text or "RPC client timeout" in error_text:
-            return normalized_object_name
         raise ValueError(
             f"guided_register_part(...) could not validate object '{normalized_object_name}' against the Blender scene: {exc}"
         ) from exc
@@ -1941,7 +1945,7 @@ async def register_guided_part_role_async(
         role=resolved_role,
         role_group=role_group,
     )
-    normalized_object_name = _require_existing_scene_object_name(object_name)
+    normalized_object_name = _normalize_guided_object_name(object_name)
     updated_registry = [
         item
         for item in list(current.guided_part_registry or [])
@@ -2014,7 +2018,7 @@ def register_guided_part_role(
         role=resolved_role,
         role_group=role_group,
     )
-    normalized_object_name = _require_existing_scene_object_name(object_name)
+    normalized_object_name = _normalize_guided_object_name(object_name)
     updated_registry = [
         item
         for item in list(current.guided_part_registry or [])
@@ -2077,7 +2081,7 @@ def rename_guided_part_registration(
         return current
 
     normalized_old_name = str(old_name or "").strip()
-    normalized_new_name = _require_existing_scene_object_name(new_name)
+    normalized_new_name = require_existing_scene_object_name(new_name)
     if not normalized_old_name or normalized_old_name == normalized_new_name:
         return current
 
