@@ -130,12 +130,14 @@ class _PlannedCreatureSeam:
     seam_kind: _CreatureSeamKind
 
 
-@dataclass(frozen=True)
+@dataclass
 class _PlannedRelationPair:
     from_object: str
     to_object: str
     pair_source: _PairSource
     seam: _PlannedCreatureSeam | None = None
+    include_support: bool = False
+    include_symmetry: bool = False
 
 
 def _dedupe_names(values: list[str]) -> list[str]:
@@ -850,6 +852,36 @@ def _build_relation_verdicts(
     return list(dict.fromkeys(item for item in verdicts if item and item != "unknown"))
 
 
+def _counts_as_failing_pair(item: dict[str, Any]) -> bool:
+    if item.get("error"):
+        return True
+
+    support_verdict = str(((item.get("support_semantics") or {}).get("verdict")) or "").lower()
+    symmetry_verdict = str(((item.get("symmetry_semantics") or {}).get("verdict")) or "").lower()
+    if support_verdict == "unsupported" or symmetry_verdict == "asymmetric":
+        return True
+
+    attachment_semantics = item.get("attachment_semantics") or {}
+    attachment_verdict = str(attachment_semantics.get("attachment_verdict") or "").lower()
+    if attachment_semantics:
+        return (
+            "floating_gap" in item.get("relation_verdicts", [])
+            or "intersecting" in item.get("relation_verdicts", [])
+            or (item.get("alignment_status") == "misaligned" and attachment_verdict != "seated_contact")
+            or item.get("contact_passed") is False
+        )
+
+    if item.get("support_semantics") is not None or item.get("symmetry_semantics") is not None:
+        return False
+
+    return (
+        "floating_gap" in item.get("relation_verdicts", [])
+        or "intersecting" in item.get("relation_verdicts", [])
+        or item.get("alignment_status") == "misaligned"
+        or item.get("contact_passed") is False
+    )
+
+
 class SpatialGraphService:
     """Builds compact scope/relation artifacts from existing scene truth primitives."""
 
@@ -928,20 +960,23 @@ class SpatialGraphService:
             }
 
         planned_pairs: list[_PlannedRelationPair] = []
-        seen_pairs: set[tuple[str, str]] = set()
+        planned_pairs_by_key: dict[tuple[str, str], _PlannedRelationPair] = {}
         required_seams = _required_creature_seams(reader, object_names)
         if required_seams:
             for required_seam in required_seams:
                 pair_key = (required_seam.part_object, required_seam.anchor_object)
-                seen_pairs.add(pair_key)
-                planned_pairs.append(
-                    _PlannedRelationPair(
+                planned_pair = planned_pairs_by_key.get(pair_key)
+                if planned_pair is None:
+                    planned_pair = _PlannedRelationPair(
                         from_object=required_seam.part_object,
                         to_object=required_seam.anchor_object,
                         pair_source="required_creature_seam",
                         seam=required_seam,
                     )
-                )
+                    planned_pairs.append(planned_pair)
+                    planned_pairs_by_key[pair_key] = planned_pair
+                else:
+                    planned_pair.seam = required_seam
         else:
             primary_target = scope_graph.get("primary_target")
             if isinstance(primary_target, str) and primary_target:
@@ -949,30 +984,33 @@ class SpatialGraphService:
                     if object_name == primary_target:
                         continue
                     pair_key = (primary_target, object_name)
-                    seen_pairs.add(pair_key)
-                    planned_pairs.append(
-                        _PlannedRelationPair(
+                    planned_pair = planned_pairs_by_key.get(pair_key)
+                    if planned_pair is None:
+                        planned_pair = _PlannedRelationPair(
                             from_object=primary_target,
                             to_object=object_name,
                             pair_source="primary_to_other",
                         )
-                    )
+                        planned_pairs.append(planned_pair)
+                        planned_pairs_by_key[pair_key] = planned_pair
 
         symmetry_pairs: list[tuple[str, str]] = []
         if include_guided_pairs:
             symmetry_pairs = _symmetry_candidate_pairs(object_names, goal_hint=goal_hint)
             for left_object, right_object in symmetry_pairs:
                 pair_key = (left_object, right_object)
-                if pair_key in seen_pairs:
-                    continue
-                seen_pairs.add(pair_key)
-                planned_pairs.append(
-                    _PlannedRelationPair(
+                planned_pair = planned_pairs_by_key.get(pair_key)
+                if planned_pair is None:
+                    planned_pair = _PlannedRelationPair(
                         from_object=left_object,
                         to_object=right_object,
                         pair_source="symmetry_candidate",
+                        include_symmetry=True,
                     )
-                )
+                    planned_pairs.append(planned_pair)
+                    planned_pairs_by_key[pair_key] = planned_pair
+                else:
+                    planned_pair.include_symmetry = True
 
             support_pairs = _resolve_support_pairs(
                 primary_target=scope_graph.get("primary_target"),
@@ -982,16 +1020,18 @@ class SpatialGraphService:
             )
             for supported_object, support_object in support_pairs:
                 pair_key = (supported_object, support_object)
-                if pair_key in seen_pairs:
-                    continue
-                seen_pairs.add(pair_key)
-                planned_pairs.append(
-                    _PlannedRelationPair(
+                planned_pair = planned_pairs_by_key.get(pair_key)
+                if planned_pair is None:
+                    planned_pair = _PlannedRelationPair(
                         from_object=supported_object,
                         to_object=support_object,
                         pair_source="support_candidate",
+                        include_support=True,
                     )
-                )
+                    planned_pairs.append(planned_pair)
+                    planned_pairs_by_key[pair_key] = planned_pair
+                else:
+                    planned_pair.include_support = True
 
         relation_pairs: list[dict[str, Any]] = []
         for pair in planned_pairs:
@@ -1049,14 +1089,14 @@ class SpatialGraphService:
             support_semantics = _support_semantics(
                 from_object=pair.from_object,
                 to_object=pair.to_object,
-                pair_source=pair.pair_source,
+                pair_source="support_candidate" if pair.include_support else pair.pair_source,
                 reader=reader,
                 gap_payload=gap_payload,
             )
             symmetry_semantics = _symmetry_semantics(
                 from_object=pair.from_object,
                 to_object=pair.to_object,
-                pair_source=pair.pair_source,
+                pair_source="symmetry_candidate" if pair.include_symmetry else pair.pair_source,
                 reader=reader,
             )
 
@@ -1117,20 +1157,7 @@ class SpatialGraphService:
                 "pairing_strategy": pairing_strategy,
                 "pair_count": len(relation_pairs),
                 "evaluated_pairs": sum(1 for item in relation_pairs if item.get("error") is None),
-                "failing_pairs": sum(
-                    1
-                    for item in relation_pairs
-                    if item.get("error")
-                    or "floating_gap" in item.get("relation_verdicts", [])
-                    or "intersecting" in item.get("relation_verdicts", [])
-                    or (
-                        item.get("alignment_status") == "misaligned"
-                        and (item.get("attachment_semantics") or {}).get("attachment_verdict") != "seated_contact"
-                    )
-                    or item.get("contact_passed") is False
-                    or (item.get("support_semantics") or {}).get("verdict") == "unsupported"
-                    or (item.get("symmetry_semantics") or {}).get("verdict") == "asymmetric"
-                ),
+                "failing_pairs": sum(1 for item in relation_pairs if _counts_as_failing_pair(item)),
                 "attachment_pairs": sum(1 for item in relation_pairs if item.get("attachment_semantics") is not None),
                 "support_pairs": sum(1 for item in relation_pairs if item.get("support_semantics") is not None),
                 "symmetry_pairs": sum(1 for item in relation_pairs if item.get("symmetry_semantics") is not None),

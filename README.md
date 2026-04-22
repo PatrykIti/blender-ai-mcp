@@ -368,6 +368,13 @@ contract in addition to `guided_handoff`.
   `modeling_separate_object(...)`, or bounded attachment/alignment macros, the
   guided runtime can mark the spatial layer stale and re-arm the required
   checks
+- support/symmetry-aware relation pairs now preserve support and symmetry
+  annotations even when they share the same `(from_object, to_object)` key as a
+  generic primary-target pair, so later guided planners still see
+  support/symmetry semantics instead of only a generic edge
+- healthy support/symmetry pairs no longer count as failing just because their
+  centers differ or they are not literal contact pairs; only `unsupported` /
+  `asymmetric` support/symmetry verdicts count as failures there
 - when `guided_flow_state.spatial_refresh_required == true`, treat
   `next_actions=["refresh_spatial_context"]` as authoritative server state,
   not advisory prose; refresh with `scene_scope_graph(...)` first, then rerun
@@ -446,6 +453,13 @@ contract in addition to `guided_handoff`.
   or `modeling_separate_object(...)` now drop stale guided part registrations;
   re-register the resulting object(s) explicitly if they should still count
   toward guided role completion
+- those same destructive topology changes also re-arm guided spatial checks,
+  because previously captured scope/view facts are no longer trustworthy after
+  objects were merged away or split apart
+- for macro capture/vision artifacts, `macro_attach_part_to_surface(...)` now
+  refreshes its post-action capture bundle after the extra mesh-surface nudge,
+  so attached images and truth summary describe the final seated pose instead
+  of the pre-nudge intermediate pose
 - if the server warns or blocks on guided naming, rename or create the object
   using one of the suggested semantic names instead of retrying the same weak
   abbreviation

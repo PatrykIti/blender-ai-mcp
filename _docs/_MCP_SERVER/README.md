@@ -558,6 +558,13 @@ Current guided-flow behavior:
   `modeling_separate_object(...)`, or bounded attachment/alignment cleanup
   macros, the runtime can mark the spatial layer stale and re-arm the
   required checks
+- support/symmetry-aware relation pairs now preserve support and symmetry
+  annotations even when they share the same `(from_object, to_object)` key as a
+  generic primary-target pair, so downstream planners still see
+  support/symmetry semantics instead of only a generic edge
+- healthy support/symmetry pairs no longer count as failing just because their
+  centers differ or they are not literal contact pairs; only `unsupported` /
+  `asymmetric` support/symmetry verdicts count as failures there
 - when `spatial_refresh_required=true`, the server expects a fresh
   `scene_scope_graph(...)` rebind first, then the remaining required spatial
   checks on that same target scope
@@ -640,6 +647,10 @@ Current guided-flow behavior:
 - those same destructive topology changes also re-arm guided spatial checks,
   because previously captured scope/view facts are no longer trustworthy after
   objects were merged away or split apart
+- for macro capture/vision artifacts, `macro_attach_part_to_surface(...)` now
+  refreshes its post-action capture bundle after the extra mesh-surface nudge,
+  so attached images and truth summary describe the final seated pose instead
+  of the pre-nudge intermediate pose
 - after newly created blockout parts during `checkpoint_iterate`, bounded
   initial transforms can remain available before the next checkpoint instead
   of immediately forcing a spatial refresh on every small adjustment

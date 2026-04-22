@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Literal, Optional, cast, overload
 from uuid import uuid4
 
 from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
+from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
 from server.adapters.mcp.vision.capture_runtime import (
     CapturePresetProfile,
     CaptureStage,
@@ -415,6 +416,33 @@ class MacroToolHandler(IMacroTool):
                         },
                     }
                 )
+        capture_bundle = base_report.get("capture_bundle") if isinstance(base_report, dict) else None
+        if isinstance(capture_bundle, dict):
+            captures_before = [
+                VisionCaptureImageContract.model_validate(item)
+                for item in list(capture_bundle.get("captures_before") or [])
+            ]
+            refreshed_captures_after = self._maybe_capture_stage(
+                bundle_id=str(
+                    capture_bundle.get("bundle_id")
+                    or self._make_capture_bundle_id("macro_attach_part_to_surface", part_object)
+                ),
+                stage="after",
+                target_object=part_object,
+                capture_profile=capture_profile,
+            )
+            if captures_before and refreshed_captures_after:
+                refreshed_bundle = build_capture_bundle(
+                    bundle_id=str(
+                        capture_bundle.get("bundle_id")
+                        or self._make_capture_bundle_id("macro_attach_part_to_surface", part_object)
+                    ),
+                    target_object=part_object,
+                    captures_before=captures_before,
+                    captures_after=refreshed_captures_after,
+                    truth_summary=self._build_truth_summary(part_object),
+                )
+                base_report["capture_bundle"] = refreshed_bundle.model_dump(mode="json", exclude_none=True)
         actions_taken.append(
             {
                 "status": "applied",
