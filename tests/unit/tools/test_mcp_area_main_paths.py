@@ -153,6 +153,38 @@ def test_modeling_create_primitive_registers_guided_role_with_actual_created_nam
     assert recorded == [("Head.001", "head_mass", None)]
 
 
+def test_modeling_create_primitive_registers_guided_role_after_multi_step_report(monkeypatch):
+    recorded: list[tuple[str, str, str | None]] = []
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.route_tool_call",
+        lambda **kwargs: "[Step 1: scene_set_mode] OK\n[Step 2: modeling_create_primitive] Created Sphere named 'Body'",
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.get_session_capability_state",
+        lambda ctx: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={"flow_id": "guided_creature_flow"},
+        ),
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.register_guided_part_role",
+        lambda ctx, **kwargs: recorded.append((kwargs["object_name"], kwargs["role"], kwargs.get("role_group"))),
+    )
+
+    from server.adapters.mcp.areas.modeling import modeling_create_primitive
+
+    result = modeling_create_primitive(
+        MagicMock(),
+        primitive_type="Sphere",
+        name="Body",
+        guided_role="body_core",
+    )
+
+    assert result == "[Step 1: scene_set_mode] OK\n[Step 2: modeling_create_primitive] Created Sphere named 'Body'"
+    assert recorded == [("Body", "body_core", None)]
+
+
 def test_modeling_create_primitive_skips_guided_registration_without_active_flow(monkeypatch):
     class Handler:
         def create_primitive(self, primitive_type, radius, size, location, rotation, name):
@@ -235,6 +267,38 @@ def test_modeling_transform_object_skips_guided_registration_without_active_flow
     )
 
     assert result == "Transformed object 'Cube.001'"
+
+
+def test_modeling_transform_object_registers_guided_role_after_multi_step_report(monkeypatch):
+    recorded: list[tuple[str, str, str | None]] = []
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.route_tool_call",
+        lambda **kwargs: "[Step 1: scene_set_mode] OK\n[Step 2: modeling_transform_object] Transformed object 'Body'",
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.get_session_capability_state",
+        lambda ctx: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={"flow_id": "guided_creature_flow"},
+        ),
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.register_guided_part_role",
+        lambda ctx, **kwargs: recorded.append((kwargs["object_name"], kwargs["role"], kwargs.get("role_group"))),
+    )
+
+    from server.adapters.mcp.areas.modeling import modeling_transform_object
+
+    result = modeling_transform_object(
+        MagicMock(),
+        name="Body",
+        scale=[1.0, 1.0, 1.0],
+        guided_role="body_core",
+    )
+
+    assert result == "[Step 1: scene_set_mode] OK\n[Step 2: modeling_transform_object] Transformed object 'Body'"
+    assert recorded == [("Body", "body_core", None)]
 
 
 def test_sculpt_auto_main_path_delegates_to_handler(monkeypatch):

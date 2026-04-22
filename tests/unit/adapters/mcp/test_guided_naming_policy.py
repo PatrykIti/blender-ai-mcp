@@ -69,6 +69,32 @@ def test_guided_naming_policy_does_not_accept_unrelated_substring_match():
     assert decision.status != "allowed"
 
 
+def test_guided_naming_policy_allows_canonical_pair_name_with_side_suffix():
+    decision = evaluate_guided_object_name(
+        object_name="ForeLeg_L",
+        role="foreleg_pair",
+        domain_profile="creature",
+        current_step="place_secondary_parts",
+        mode="block_opaque_role_sensitive",
+    )
+
+    assert decision.status == "allowed"
+    assert decision.reason_code == "semantic_name"
+
+
+def test_guided_naming_policy_allows_canonical_pair_name_with_pair_suffix():
+    decision = evaluate_guided_object_name(
+        object_name="ForeLegPair",
+        role="foreleg_pair",
+        domain_profile="creature",
+        current_step="place_secondary_parts",
+        mode="block_opaque_role_sensitive",
+    )
+
+    assert decision.status == "allowed"
+    assert decision.reason_code == "semantic_name"
+
+
 def test_guided_naming_policy_keeps_building_role_suggestions_domain_specific():
     decision = evaluate_guided_object_name(
         object_name="Tower_WindowCuts",

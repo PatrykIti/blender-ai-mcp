@@ -85,3 +85,16 @@ def test_triggerer_uses_public_primitive_type_parameter_for_flat_cube_heuristic(
     )
 
     assert result == "phone_workflow"
+
+
+def test_triggerer_uses_flat_cube_heuristic_for_canonical_public_title_case_value():
+    triggerer = WorkflowTriggerer()
+    context = SceneContext(proportions=ProportionInfo(is_flat=True))
+
+    result = triggerer.determine_workflow(
+        "modeling_create_primitive",
+        {"primitive_type": "Cube", "name": "PhoneBody"},
+        context,
+    )
+
+    assert result == "phone_workflow"

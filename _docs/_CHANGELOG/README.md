@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [245](./245-2026-04-22-guided-multistep-registration-and-canonical-pair-names.md) | 2026-04-22 | **Guided multi-step registration and canonical pair names** | - |
 | [244](./244-2026-04-22-pattern-token-boundaries-and-watchdog-job-preservation.md) | 2026-04-22 | **Pattern, token-boundary, and watchdog job preservation fixes** | - |
 | [243](./243-2026-04-22-guided-scene-validation-boundary-and-topology-dirty-ops.md) | 2026-04-22 | **Guided scene validation boundary and topology dirty ops** | - |
 | [242](./242-2026-04-22-guided-name-and-registry-sync-hardening.md) | 2026-04-22 | **Guided name and registry sync hardening** | - |

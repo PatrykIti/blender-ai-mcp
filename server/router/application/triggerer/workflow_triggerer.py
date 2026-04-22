@@ -212,7 +212,11 @@ class WorkflowTriggerer:
             if ":" in key:
                 param_key, param_value = key.split(":", 1)
                 # Check if param matches
-                if params.get(param_key) != param_value:
+                actual_value = params.get(param_key)
+                if isinstance(actual_value, str) and isinstance(param_value, str):
+                    if actual_value.casefold() != param_value.casefold():
+                        continue
+                elif actual_value != param_value:
                     continue
             else:
                 param_key = key

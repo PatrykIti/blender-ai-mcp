@@ -598,6 +598,13 @@ Current guided-flow behavior:
 - on `modeling_create_primitive(...)`, the convenience path now also requires
   an explicit semantic `name`; guided create does not allow auto-generated
   Blender names to become semantic part registrations
+- if the router prepends corrective steps such as `scene_set_mode(...)`, the
+  guided-role convenience path still registers against the final successful
+  modeling step instead of dropping the role hint just because the call became
+  multi-step
+- canonical pair names such as `ForeLeg_L`, `ForeLeg_R`, and `ForeLegPair`
+  now count as strong semantic names for pair roles instead of warning or
+  blocking under the stricter naming policy
 - for `modeling_create_primitive(...)`, the convenience path registers the
   real created object name returned by Blender/tool execution, not the raw
   requested primitive token, so role state remains correct for names such as

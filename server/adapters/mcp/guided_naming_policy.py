@@ -212,6 +212,40 @@ def _matches_strong_semantic_name(object_name: str, spec: _RoleNamingSpec) -> bo
             continue
         if normalized_hint in tokens or normalized_hint == joined:
             return True
+        for start in range(len(tokens)):
+            combined = ""
+            for token in tokens[start:]:
+                combined += token
+                if combined == normalized_hint:
+                    return True
+                if len(combined) > len(normalized_hint):
+                    break
+        if normalized_hint.endswith("s"):
+            singular_hint = normalized_hint[:-1]
+            if singular_hint and singular_hint in tokens:
+                return True
+            for start in range(len(tokens)):
+                combined = ""
+                for token in tokens[start:]:
+                    combined += token
+                    if combined == singular_hint:
+                        return True
+                    if len(combined) > len(singular_hint):
+                        break
+        if normalized_hint.endswith("pair"):
+            pair_base = normalized_hint[: -len("pair")]
+            if pair_base and pair_base == joined:
+                return True
+            for start in range(len(tokens)):
+                combined = ""
+                for token in tokens[start:]:
+                    combined += token
+                    if combined == pair_base:
+                        return True
+                    if len(combined) > len(pair_base):
+                        break
+            if pair_base and "pair" in tokens:
+                return True
     return False
 
 

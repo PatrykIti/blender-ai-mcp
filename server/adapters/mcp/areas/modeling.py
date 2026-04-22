@@ -37,17 +37,23 @@ MODELING_PUBLIC_TOOL_NAMES = (
     "skin_set_radius",
 )
 
-_CREATED_OBJECT_RESULT_PATTERN = re.compile(r"^Created .+ named '(.+)'$")
+_CREATED_OBJECT_RESULT_PATTERN = re.compile(r"Created .+ named '(.+?)'")
+_TRANSFORMED_OBJECT_RESULT_PATTERN = re.compile(r"Transformed object '(.+?)'")
 
 
 def _extract_created_object_name(result: str) -> str | None:
     """Return the created object name from the canonical modeling success string."""
 
-    match = _CREATED_OBJECT_RESULT_PATTERN.match(result.strip())
-    if match is None:
+    matches = _CREATED_OBJECT_RESULT_PATTERN.findall(result)
+    if not matches:
         return None
-    object_name = match.group(1).strip()
+    object_name = str(matches[-1]).strip()
     return object_name or None
+
+
+def _has_transform_success(result: str, *, object_name: str) -> bool:
+    matches = _TRANSFORMED_OBJECT_RESULT_PATTERN.findall(result)
+    return any(str(match).strip() == object_name for match in matches)
 
 
 def _maybe_register_guided_role(
@@ -468,7 +474,7 @@ def _modeling_create_primitive_impl(
         },
         direct_executor=execute,
     )
-    if guided_role and isinstance(result, str) and result.startswith("Created "):
+    if guided_role and isinstance(result, str):
         _maybe_register_guided_role(
             ctx,
             object_name=_extract_created_object_name(result) or (str(name_value).strip() if name_value else None),
@@ -568,7 +574,7 @@ def _modeling_transform_object_impl(
         },
         direct_executor=execute,
     )
-    if guided_role and isinstance(result, str) and result.startswith("Transformed object "):
+    if guided_role and isinstance(result, str) and _has_transform_success(result, object_name=name):
         _maybe_register_guided_role(
             ctx,
             object_name=name,

@@ -408,6 +408,13 @@ contract in addition to `guided_handoff`.
 - on `modeling_create_primitive(...)`, `guided_role=...` now also requires an
   explicit semantic `name`; guided create does not allow auto-generated Blender
   names to become semantic part registrations
+- when the router prepends corrective steps such as `scene_set_mode(...)`,
+  successful guided create/transform calls still register the resulting role
+  against the final modeling step instead of dropping the convenience
+  registration just because the call became multi-step
+- canonical pair names such as `ForeLeg_L`, `ForeLeg_R`, and `ForeLegPair`
+  now count as strong semantic names for `foreleg_pair` / `hindleg_pair`
+  instead of warning or blocking under the stricter naming policy
 - on `modeling_create_primitive(...)`, guided-role auto-registration now binds
   to the actual created object name returned by Blender, so role state stays
   aligned even when Blender auto-numbers a default name such as `Cube.001` or

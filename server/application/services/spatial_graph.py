@@ -165,6 +165,14 @@ def _has_name_hint(object_name: str, hints: tuple[str, ...]) -> bool:
             continue
         if normalized_hint in tokens or normalized_hint == joined:
             return True
+        for start in range(len(tokens)):
+            combined = ""
+            for token in tokens[start:]:
+                combined += token
+                if combined == normalized_hint:
+                    return True
+                if len(combined) > len(normalized_hint):
+                    break
     return False
 
 
