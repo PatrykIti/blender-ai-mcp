@@ -2587,7 +2587,7 @@ def scene_scope_graph(
                 resolved_scope=payload.scope.model_dump(mode="json"),
             )
             return SceneScopeGraphResponseContract(payload=payload)
-        except RuntimeError as e:
+        except (RuntimeError, ValueError) as e:
             return SceneScopeGraphResponseContract(error=str(e))
 
     result = route_tool_call(
@@ -2655,7 +2655,7 @@ def scene_relation_graph(
                 resolved_scope=payload.scope.model_dump(mode="json"),
             )
             return SceneRelationGraphResponseContract(payload=payload)
-        except RuntimeError as e:
+        except (RuntimeError, ValueError) as e:
             return SceneRelationGraphResponseContract(error=str(e))
 
     result = route_tool_call(

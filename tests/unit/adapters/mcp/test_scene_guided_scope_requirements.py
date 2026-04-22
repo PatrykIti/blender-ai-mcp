@@ -179,3 +179,40 @@ def test_scene_relation_graph_reports_active_scope_mismatch_during_refresh(monke
     assert result.payload.message is not None
     assert "did not satisfy the active guided spatial scope" in result.payload.message
     assert "target_objects=['Body', 'Head']" in result.payload.message
+
+
+def test_scene_scope_graph_returns_structured_error_for_missing_target_name(monkeypatch):
+    monkeypatch.setattr(scene_area, "route_tool_call", lambda tool_name, params, direct_executor: direct_executor())
+
+    class Handler:
+        def get_scope_graph(self, target_object=None, target_objects=None, collection_name=None):
+            raise ValueError("Object(s) not found in scene: 'Boddy'")
+
+    monkeypatch.setattr(scene_area, "get_scene_handler", lambda: Handler())
+
+    result = scene_area.scene_scope_graph(_guided_ctx(), target_object="Boddy")
+
+    assert result.payload is None
+    assert result.error == "Object(s) not found in scene: 'Boddy'"
+
+
+def test_scene_relation_graph_returns_structured_error_for_missing_target_name(monkeypatch):
+    monkeypatch.setattr(scene_area, "route_tool_call", lambda tool_name, params, direct_executor: direct_executor())
+
+    class Handler:
+        def get_relation_graph(
+            self,
+            target_object=None,
+            target_objects=None,
+            collection_name=None,
+            goal_hint=None,
+            include_truth_payloads=False,
+        ):
+            raise ValueError("Object(s) not found in scene: 'Boddy'")
+
+    monkeypatch.setattr(scene_area, "get_scene_handler", lambda: Handler())
+
+    result = scene_area.scene_relation_graph(_guided_ctx(), target_object="Boddy")
+
+    assert result.payload is None
+    assert result.error == "Object(s) not found in scene: 'Boddy'"
