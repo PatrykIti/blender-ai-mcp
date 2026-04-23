@@ -13,6 +13,7 @@ from server.adapters.mcp.areas.reference import (
     _build_action_hints_from_silhouette,
     _build_correction_candidates,
     _build_correction_truth_bundle,
+    _build_silhouette_analysis_payload,
     _build_truth_followup,
     _effective_candidate_budget,
     _effective_pair_budget,
@@ -27,7 +28,10 @@ from server.adapters.mcp.areas.reference import (
     reference_images,
     reference_iterate_stage_checkpoint,
 )
-from server.adapters.mcp.contracts.reference import ReferenceCompareStageCheckpointResponseContract
+from server.adapters.mcp.contracts.reference import (
+    ReferenceCompareStageCheckpointResponseContract,
+    ReferenceImageRecordContract,
+)
 from server.adapters.mcp.contracts.scene import (
     SceneAssembledTargetScopeContract,
     SceneAssertionPayloadContract,
@@ -127,6 +131,50 @@ def test_silhouette_analysis_produces_metrics_and_upper_profile_action_hint(tmp_
     hint_types = {hint.hint_type for hint in action_hints}
 
     assert "widen_upper_profile" in hint_types
+
+
+def test_silhouette_analysis_selects_matching_focus_capture(tmp_path: Path):
+    reference_path = tmp_path / "reference_front.png"
+    wide_capture_path = tmp_path / "wide_capture.png"
+    focus_capture_path = tmp_path / "focus_capture.png"
+    _write_test_silhouette(reference_path, with_ears=True)
+    _write_test_silhouette(wide_capture_path, with_ears=True)
+    _write_test_silhouette(focus_capture_path, with_ears=False)
+
+    analysis = _build_silhouette_analysis_payload(
+        selected_reference_records=[
+            ReferenceImageRecordContract(
+                reference_id="ref_front",
+                goal="low poly creature",
+                media_type="image/png",
+                original_path=str(reference_path),
+                stored_path=str(reference_path),
+                added_at="2026-04-23T00:00:00Z",
+                label="front_ref",
+                target_object="Creature",
+                target_view="front",
+            )
+        ],
+        captures=[
+            VisionCaptureImageContract(
+                label="context_wide_after",
+                image_path=str(wide_capture_path),
+                preset_name="context_wide",
+                view_kind="wide",
+            ),
+            VisionCaptureImageContract(
+                label="target_front_after",
+                image_path=str(focus_capture_path),
+                preset_name="target_front",
+                view_kind="focus",
+            ),
+        ],
+        target_view="front",
+    )
+
+    assert analysis is not None
+    assert analysis.capture_label == "target_front_after"
+    assert any(metric.metric_id == "upper_band_width_delta" for metric in analysis.metrics)
 
 
 def test_iterate_stage_response_carries_silhouette_analysis_and_action_hints():
@@ -1979,6 +2027,117 @@ def test_reference_compare_current_view_emits_compact_view_diagnostics_hint_when
     assert result.view_diagnostics_hints[0].arguments_hint["target_object"] == "Squirrel"
 
 
+def test_reference_compare_current_view_does_not_double_apply_persisted_view_adjustments(tmp_path, monkeypatch):
+    image = tmp_path / "ref.png"
+    image.write_bytes(b"fake")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly squirrel", {"status": "no_match"})
+    asyncio.run(
+        reference_images(
+            ctx,
+            action="attach",
+            source_path=str(image),
+            label="front_ref",
+            target_object="Squirrel",
+            target_view="front",
+        )
+    )
+
+    class SceneHandler:
+        def __init__(self) -> None:
+            self.viewport_kwargs: dict[str, object] | None = None
+            self.diagnostics_kwargs: dict[str, object] | None = None
+
+        def get_viewport(self, **kwargs):
+            self.viewport_kwargs = kwargs
+            return "ZmFrZQ=="
+
+        def get_view_diagnostics(self, **kwargs):
+            self.diagnostics_kwargs = kwargs
+            return {
+                "view_query": {
+                    "requested_view_source": "user_perspective",
+                    "resolved_view_source": "user_perspective",
+                    "analysis_backend": "mirrored_user_perspective",
+                    "available": True,
+                    "state_restored": True,
+                },
+                "targets": [
+                    {
+                        "object_name": "Squirrel",
+                        "visibility_verdict": "visible",
+                        "projection_status": "visible",
+                        "projection": {
+                            "frame_coverage_ratio": 1.0,
+                            "centered": True,
+                        },
+                    }
+                ],
+                "summary": {
+                    "target_count": 1,
+                    "visible_count": 1,
+                    "partially_visible_count": 0,
+                    "fully_occluded_count": 0,
+                    "outside_frame_count": 0,
+                    "unavailable_count": 0,
+                    "centered_target_count": 1,
+                    "framing_issue_count": 0,
+                },
+            }
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="Current front checkpoint is visible.",
+                visible_changes=["The front creature profile is visible."],
+            ),
+        )
+
+    scene_handler = SceneHandler()
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: scene_handler)
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: object())
+
+    result = asyncio.run(
+        reference_compare_current_view(
+            ctx,
+            checkpoint_label="stage_front",
+            target_object="Squirrel",
+            target_view="front",
+            focus_target="Squirrel",
+            view_name="FRONT",
+            orbit_horizontal=20.0,
+            orbit_vertical=5.0,
+            zoom_factor=1.4,
+            persist_view=True,
+        )
+    )
+
+    assert result.error is None
+    assert scene_handler.viewport_kwargs is not None
+    assert scene_handler.viewport_kwargs["view_name"] == "FRONT"
+    assert scene_handler.viewport_kwargs["orbit_horizontal"] == 20.0
+    assert scene_handler.viewport_kwargs["zoom_factor"] == 1.4
+    assert scene_handler.viewport_kwargs["persist_view"] is True
+    assert scene_handler.diagnostics_kwargs is not None
+    assert scene_handler.diagnostics_kwargs["focus_target"] is None
+    assert scene_handler.diagnostics_kwargs["view_name"] is None
+    assert scene_handler.diagnostics_kwargs["orbit_horizontal"] == 0.0
+    assert scene_handler.diagnostics_kwargs["orbit_vertical"] == 0.0
+    assert scene_handler.diagnostics_kwargs["zoom_factor"] is None
+    assert scene_handler.diagnostics_kwargs["persist_view"] is True
+
+
 def test_reference_compare_current_view_uses_unique_checkpoint_filename(tmp_path, monkeypatch):
     image = tmp_path / "ref.png"
     image.write_bytes(b"fake")
@@ -3467,6 +3626,9 @@ def test_reference_iterate_stage_checkpoint_holds_build_when_role_group_is_incom
 
     assert result.loop_disposition == "continue_build"
     assert "Guided governor is holding the session in the current build stage" in (result.message or "")
+    assert result.guided_flow_state is not None
+    assert result.guided_flow_state.current_step == "place_secondary_parts"
+    assert "place_secondary_parts" not in result.guided_flow_state.completed_steps
 
 
 def test_reference_iterate_stage_checkpoint_falls_back_to_truth_handoff_when_vision_compare_errors(monkeypatch):

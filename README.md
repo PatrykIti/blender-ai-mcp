@@ -401,6 +401,11 @@ contract in addition to `guided_handoff`.
   role/workset slice is still incomplete, the governor can now keep the session
   in bounded build continuation instead of escalating too early into
   `inspect_validate`
+- when that incomplete-stage hold returns
+  `loop_disposition="continue_build"`, the persisted `guided_flow_state`
+  remains on the same current step and does not mark the unfinished role slice
+  as completed; keep following `missing_roles` before relying on later-stage
+  visibility
 - after the flow reaches a later step such as `place_secondary_parts`, the
   server can still keep missing primary masses available when they are part of
   the same bounded workset, instead of forcing a squirrel/building run to
@@ -524,11 +529,21 @@ hidden ordering assumptions.
 - if `reference_iterate_stage_checkpoint(...)` returns
   `loop_disposition="inspect_validate"`, stop free-form modeling and switch to
   inspect/measure/assert immediately
+- if it returns `loop_disposition="continue_build"` while
+  `guided_flow_state.missing_roles` is still non-empty, continue the current
+  role slice; the server intentionally keeps the guided step in place instead
+  of advancing to the next stage
 - if staged compare degrades but strong deterministic truth findings still
   exist, use the same inspect/measure/assert handoff instead of improvising
   another large free-form correction
 - for staged compare/iterate, `goal_override` is no longer a session
   substitute; use an active guided goal session instead
+- deterministic silhouette metrics prefer the target/focus capture for the
+  requested `target_view`, not the broad `context_wide` capture
+- `reference_compare_current_view(..., persist_view=True, view_name=...,
+  orbit_horizontal=..., zoom_factor=...)` keeps the captured user view and does
+  not replay those same view adjustments a second time during compact view
+  diagnostics
 
 ## Session Diagnostics
 

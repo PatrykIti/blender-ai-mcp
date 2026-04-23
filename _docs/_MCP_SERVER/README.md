@@ -586,6 +586,11 @@ Current guided-flow behavior:
 - `scene_view_diagnostics(...)` only satisfies that guided spatial gate when it
   returns real available view-space evidence; a headless/unavailable probe
   remains read-only and does not complete the check by itself
+- stage iterate may still return `loop_disposition="continue_build"` when a
+  high-priority issue is visible but the current guided role slice is
+  incomplete; in that case the persisted `guided_flow_state.current_step`
+  remains on the unfinished build step and `missing_roles` remains the
+  authority
 - if a read-only spatial check uses a different scope while refresh is active,
   it can still return its payload, but the response message says it did not
   satisfy the active guided scope and shows the expected rerun scope
@@ -1086,6 +1091,10 @@ Invalid target-scope inputs such as an unavailable `collection_name` now return
 structured error payloads on the stage-compare path instead of failing again
 while building the error response.
 Stage compare/iterate responses now also expose `guided_reference_readiness`, `assembled_target_scope`, `truth_bundle`, `truth_followup`, `correction_candidates`, `budget_control`, `refinement_route`, `refinement_handoff`, `silhouette_analysis`, `action_hints`, and `part_segmentation`, so assembled-model correction flows can consume explicit session readiness, a structured target scope, correction-oriented truth findings, loop-ready follow-up items, an explicitly ranked merged correction list, explicit trimming metadata, a deterministic refinement-family decision, typed perception metrics/tool hints, and an optional advisory-only sidecar placeholder instead of inferring everything from loose `target_object` / `target_objects` / `collection_name` fields. On `reference_iterate_stage_checkpoint(...)`, the loop-facing `correction_focus` now prefers ranked `correction_candidates` summaries when they are present, and high-priority deterministic truth findings can also move `loop_disposition` to `inspect_validate` instead of waiting only for repeated vision focus. `action_hints` complement that loop by exposing deterministic silhouette-driven tool suggestions, while `part_segmentation` stays disabled unless an operator explicitly enables the separate sidecar path. Collection/object-set targeting now also avoids obviously accessory-first primary anchors when a more structural target is present, expands supported creature scopes into deterministic `required_creature_seams`, keeps multiple failing required seams live together in `truth_followup` / `correction_candidates`, normalizes vision-side `recommended_checks` to canonical MCP tool ids or drops them, applies model-aware budget control when the active runtime profile is too small for the full payload, and exposes `refinement_route` for bounded family choices such as `macro`, `modeling_mesh`, `sculpt_region`, or `inspect_only`. At this stage sculpt stays hidden on the normal guided surface; `refinement_handoff` is recommendation-only.
+Silhouette metrics use a target-view or focus capture when one is available;
+the broad `context_wide` capture is only a fallback. A staged iterate result
+that is held in `continue_build` because required roles are still missing does
+not complete or advance the current guided step.
 Compact stage compare/iterate responses keep `capture_count`, `preset_names`,
 truth, and correction summaries, but omit the full capture list to reduce
 normal guided response size. Rich/debug capture detail remains available through
@@ -1112,7 +1121,11 @@ checkpoint handoff, call the explicit read-only artifacts:
 `view_diagnostics_hints` when the current framing or occlusion state makes the
 captured checkpoint a weak basis for the next correction step. That hint is
 recommendation-only and does not embed a heavyweight view graph into the
-default compare payload.
+default compare payload. When `persist_view=True` is used with user-view
+adjustments such as `view_name`, `orbit_horizontal`, or `zoom_factor`, the
+checkpoint capture applies and keeps those adjustments; the follow-up compact
+diagnostics read the already-persisted view instead of applying the same
+adjustments again.
 
 For the guided creature path specifically, pair truth now carries one explicit
 attachment verdict for each required seam:

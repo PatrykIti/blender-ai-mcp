@@ -1310,7 +1310,7 @@ def _build_silhouette_analysis_payload(
         return None
 
     reference_record = selected_reference_records[0]
-    capture = captures[0]
+    capture = _select_silhouette_analysis_capture(captures=captures, target_view=target_view)
     payload = build_silhouette_analysis(
         reference_path=reference_record.stored_path,
         capture_path=capture.image_path,
@@ -1319,6 +1319,42 @@ def _build_silhouette_analysis_payload(
         target_view=target_view,
     )
     return ReferenceSilhouetteAnalysisContract.model_validate(payload)
+
+
+def _capture_matches_target_view(capture: VisionCaptureImageContract, target_view: str) -> bool:
+    normalized_target = target_view.strip().lower()
+    if not normalized_target:
+        return False
+
+    for value in (capture.preset_name, capture.label):
+        normalized_value = str(value or "").strip().lower()
+        if not normalized_value:
+            continue
+        if normalized_value == normalized_target or normalized_value.endswith(f"_{normalized_target}"):
+            return True
+        tokens = [token for token in re.split(r"[^a-z0-9]+", normalized_value) if token]
+        if normalized_target in tokens:
+            return True
+    return False
+
+
+def _select_silhouette_analysis_capture(
+    *,
+    captures: list[VisionCaptureImageContract] | tuple[VisionCaptureImageContract, ...],
+    target_view: str | None,
+) -> VisionCaptureImageContract:
+    if target_view:
+        for capture in captures:
+            if capture.view_kind == "focus" and _capture_matches_target_view(capture, target_view):
+                return capture
+        for capture in captures:
+            if _capture_matches_target_view(capture, target_view):
+                return capture
+
+    for capture in captures:
+        if capture.view_kind == "focus":
+            return capture
+    return captures[0]
 
 
 def _build_action_hints_from_silhouette(
@@ -3384,26 +3420,38 @@ async def reference_compare_current_view(
     view_diagnostics_hints: list[ReferenceViewDiagnosticsHintContract] | None = None
     diagnostic_target = target_object or focus_target
     if diagnostic_target:
+        use_explicit_scene_camera = bool(camera_name and camera_name != "USER_PERSPECTIVE")
+        diagnostics_focus_target = focus_target
+        diagnostics_view_name = view_name
+        diagnostics_orbit_horizontal = orbit_horizontal
+        diagnostics_orbit_vertical = orbit_vertical
+        diagnostics_zoom_factor = zoom_factor
+        if persist_view and not use_explicit_scene_camera:
+            diagnostics_focus_target = None
+            diagnostics_view_name = None
+            diagnostics_orbit_horizontal = 0.0
+            diagnostics_orbit_vertical = 0.0
+            diagnostics_zoom_factor = None
         try:
             diagnostics_payload = get_scene_handler().get_view_diagnostics(
                 target_object=diagnostic_target,
                 camera_name=camera_name,
-                focus_target=focus_target,
-                view_name=view_name,
-                orbit_horizontal=orbit_horizontal,
-                orbit_vertical=orbit_vertical,
-                zoom_factor=zoom_factor,
+                focus_target=diagnostics_focus_target,
+                view_name=diagnostics_view_name,
+                orbit_horizontal=diagnostics_orbit_horizontal,
+                orbit_vertical=diagnostics_orbit_vertical,
+                zoom_factor=diagnostics_zoom_factor,
                 persist_view=persist_view,
             )
             candidate_hints = _build_view_diagnostics_hints(
                 diagnostics_payload=diagnostics_payload,
                 target_object=diagnostic_target,
                 camera_name=camera_name,
-                focus_target=focus_target,
-                view_name=view_name,
-                orbit_horizontal=orbit_horizontal,
-                orbit_vertical=orbit_vertical,
-                zoom_factor=zoom_factor,
+                focus_target=diagnostics_focus_target,
+                view_name=diagnostics_view_name,
+                orbit_horizontal=diagnostics_orbit_horizontal,
+                orbit_vertical=diagnostics_orbit_vertical,
+                zoom_factor=diagnostics_zoom_factor,
             )
             if candidate_hints:
                 view_diagnostics_hints = candidate_hints

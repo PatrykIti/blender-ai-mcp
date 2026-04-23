@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [254](./254-2026-04-23-guided-stage-checkpoint-viewport-and-silhouette-fixes.md) | 2026-04-23 | **Guided stage checkpoint, viewport, and silhouette fixes** | - |
 | [253](./253-2026-04-23-guided-mesh-family-and-relation-bootstrap-fixes.md) | 2026-04-23 | **Guided mesh family and relation/bootstrap fixes** | - |
 | [252](./252-2026-04-22-spatial-scope-errors-visibility-refresh-and-ortho-diagnostics.md) | 2026-04-22 | **Spatial scope errors, visibility refresh, and ortho diagnostics** | - |
 | [251](./251-2026-04-22-guided-explicit-scope-binding-and-startup-subset-bootstrap.md) | 2026-04-22 | **Guided explicit-scope binding and startup-subset bootstrap** | - |

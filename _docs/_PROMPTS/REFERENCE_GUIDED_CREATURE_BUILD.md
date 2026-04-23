@@ -138,6 +138,9 @@ Rules:
 - if you need to place a new object into a collection, create it first and then
   call `collection_manage(action="move_object", collection_name=..., object_name=...)`
 - after each stage use `reference_iterate_stage_checkpoint(...)`
+- if that checkpoint returns `loop_disposition="continue_build"` and
+  `guided_flow_state.missing_roles` is non-empty, keep building the current
+  role slice; do not assume the server advanced to the next guided stage
 - do not call `scene_scope_graph(...)` / `scene_relation_graph(...)` with no
   scope and assume that means “inspect the whole scene”
 - `scene_view_diagnostics(...)` also requires explicit scope
@@ -264,7 +267,12 @@ At the end of each stage, return only:
   `action_hints` carry a stronger bounded signal
 - `silhouette_analysis` is deterministic perception evidence:
   - use it for contour/ratio drift, not for scene truth
+  - read it as target/focus-view evidence when a matching focus capture exists;
+    the broad context capture is only a fallback
   - `action_hints` are typed tool suggestions derived from those metrics
+- for current-view compares that keep `persist_view=True`, do not repeat the
+  same view/orbit/zoom adjustment in a later manual diagnostics call unless
+  you intentionally want a new camera/view change
 - `loop_disposition="inspect_validate"` means the system is detecting repeated
   focus or a high-priority truth signal, so it is better to pause free-form
   correction and switch briefly to truth-layer verification

@@ -99,6 +99,9 @@ The repo now has the first implementation scaffolding for the vision layer:
   `view_diagnostics_hints` when the active framing/occlusion state makes the
   current checkpoint a weak basis for the next correction step; the full
   view-space report still stays separate from the default compare payload
+- when current-view compare persists user-view adjustments, compact diagnostics
+  read the already-persisted view instead of replaying the same view/orbit/zoom
+  change a second time
 - `reference_iterate_stage_checkpoint(...)` now derives its loop-facing
   `correction_focus` from ranked `correction_candidates` when they are present,
   so deterministic truth-only findings can still reach the staged correction
@@ -106,6 +109,9 @@ The repo now has the first implementation scaffolding for the vision layer:
 - `reference_iterate_stage_checkpoint(...)` now also lets high-priority
   deterministic truth findings move `loop_disposition` to
   `inspect_validate`, instead of waiting only for repeated vision focus
+- if the current guided build step still has missing required roles, the same
+  iterate path can hold the loop in `continue_build` without advancing the
+  persisted guided step
 - mesh-pair truth now distinguishes mesh-surface gap/contact from coarse bbox
   touching when the bounded scene truth path can do so, which reduces false
   "contact passed" claims on visibly gapped rounded primitives
@@ -600,6 +606,8 @@ and `reference_iterate_stage_checkpoint(...)`:
 Interpretation rules:
 
 - silhouette metrics are perception evidence, not truth
+- silhouette metrics are computed from the matching target/focus capture when
+  available; the wide context capture is only the fallback source
 - `action_hints` complement `correction_candidates` and `truth_followup`
 - `vision_contract_profile` still only routes external prompt/schema/parser
   behavior; it is not itself evidence or proof that the result is correct

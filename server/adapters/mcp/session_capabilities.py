@@ -2370,6 +2370,20 @@ def _advance_guided_flow_for_iteration_dict(
 ) -> dict[str, Any]:
     contract = GuidedFlowStateContract.model_validate(flow_state)
     current_step = contract.current_step
+    if loop_disposition == "continue_build" and current_step in {"create_primary_masses", "place_secondary_parts"}:
+        current_role_summary = _build_role_summary(
+            domain_profile=contract.domain_profile,
+            current_step=current_step,
+            part_registry=part_registry,
+            completed_role_hints=contract.completed_roles,
+        )
+        if current_role_summary["missing_roles"]:
+            _flow_state_for_current_step(contract, part_registry=part_registry)
+            contract.blocked_families = []
+            if contract.spatial_state_stale:
+                _apply_spatial_refresh_gate(contract, part_registry=part_registry, force=True)
+            return contract.model_dump(mode="json")
+
     if current_step not in contract.completed_steps and current_step not in _GUIDED_FLOW_STOPPED_STEPS:
         contract.completed_steps.append(current_step)
 
