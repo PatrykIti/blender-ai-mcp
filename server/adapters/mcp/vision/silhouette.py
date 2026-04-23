@@ -67,6 +67,8 @@ def _otsu_threshold(values: np.ndarray) -> int:
     total = float(values.size)
     if total <= 0:
         return 127
+    if int(np.count_nonzero(histogram)) <= 1:
+        return 127
 
     cumulative = np.cumsum(histogram)
     cumulative_mean = np.cumsum(histogram * np.arange(256, dtype=np.float64))
@@ -75,6 +77,8 @@ def _otsu_threshold(values: np.ndarray) -> int:
     denominator = cumulative * (total - cumulative)
     denominator[denominator == 0.0] = np.nan
     between_class_variance = ((global_mean * cumulative - cumulative_mean) ** 2) / denominator
+    if not bool(np.isfinite(between_class_variance).any()):
+        return 127
     threshold = int(np.nanargmax(between_class_variance))
     return max(1, min(254, threshold))
 
@@ -124,6 +128,9 @@ def _extract_mask_from_image(image_path: str) -> tuple[np.ndarray | None, list[s
         notes.append("Alpha channel was present, but no stable foreground component was found.")
 
     grayscale = np.dot(rgba[:, :, :3], np.array([0.299, 0.587, 0.114], dtype=np.float64)).astype(np.uint8)
+    if int(grayscale.min()) == int(grayscale.max()):
+        notes.append("Image luminance was uniform; Otsu thresholding could not isolate a silhouette mask.")
+        return None, notes
     threshold = _otsu_threshold(grayscale)
     candidates = (
         _largest_component(grayscale <= threshold),
@@ -205,8 +212,6 @@ def build_silhouette_analysis(
             "notes": notes or ["Silhouette extraction was unavailable for the provided images."],
         }
 
-    normalized_reference = _normalize_mask(reference_mask)
-    normalized_capture = _normalize_mask(capture_mask)
     reference_crop, reference_bbox = _crop_bbox(reference_mask)
     capture_crop, capture_bbox = _crop_bbox(capture_mask)
 
@@ -221,6 +226,9 @@ def build_silhouette_analysis(
             "metrics": [],
             "notes": notes or ["Silhouette masks did not contain a usable foreground bbox."],
         }
+
+    normalized_reference = _normalize_mask(reference_crop)
+    normalized_capture = _normalize_mask(capture_crop)
 
     intersection = float(np.logical_and(normalized_reference, normalized_capture).sum())
     union = float(np.logical_or(normalized_reference, normalized_capture).sum()) or 1.0

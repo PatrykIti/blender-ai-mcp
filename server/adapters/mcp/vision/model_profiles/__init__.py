@@ -3,7 +3,7 @@
 
 """Reviewed fallback model-capability profiles for vision runtimes."""
 
-from .registry import resolve_fallback_model_capabilities
+from .registry import resolve_fallback_model_capabilities, resolve_model_profile
 from .types import ModelCapabilityProfile
 
-__all__ = ["ModelCapabilityProfile", "resolve_fallback_model_capabilities"]
+__all__ = ["ModelCapabilityProfile", "resolve_fallback_model_capabilities", "resolve_model_profile"]

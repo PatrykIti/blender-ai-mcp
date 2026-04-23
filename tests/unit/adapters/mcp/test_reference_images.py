@@ -93,11 +93,22 @@ def _write_test_silhouette(path: Path, *, with_ears: bool) -> None:
     image.save(path)
 
 
+def _write_upper_profile_silhouette(path: Path, *, upper_width: int) -> None:
+    from PIL import Image, ImageDraw
+
+    image = Image.new("RGBA", (200, 200), (255, 255, 255, 255))
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((45, 90, 155, 175), fill=(0, 0, 0, 255))
+    half_width = upper_width // 2
+    draw.rectangle((100 - half_width, 45, 100 + half_width, 90), fill=(0, 0, 0, 255))
+    image.save(path)
+
+
 def test_silhouette_analysis_produces_metrics_and_upper_profile_action_hint(tmp_path: Path):
     reference_path = tmp_path / "reference.png"
     capture_path = tmp_path / "capture.png"
-    _write_test_silhouette(reference_path, with_ears=True)
-    _write_test_silhouette(capture_path, with_ears=False)
+    _write_upper_profile_silhouette(reference_path, upper_width=110)
+    _write_upper_profile_silhouette(capture_path, upper_width=50)
 
     payload = build_silhouette_analysis(
         reference_path=str(reference_path),

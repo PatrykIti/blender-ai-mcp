@@ -281,12 +281,14 @@ Current vocabulary:
 Resolution precedence:
 
 1. explicit `VISION_EXTERNAL_CONTRACT_PROFILE` override
-2. deterministic model-family match on external model ids such as
+2. reviewed OpenRouter fallback profile `preferred_contract_profile`, when the
+   selected model has one
+3. deterministic model-family match on external model ids such as
    `gemma` / `gemini` / `learnlm`
-3. provider default
+4. provider default
    - current `google_ai_studio` default resolves to
      `google_family_compare`
-4. fallback to `generic_full`
+5. fallback to `generic_full`
 
 Important runtime note:
 
@@ -330,6 +332,9 @@ OpenAI/Azure strict structured-output note:
   the narrower checkpoint compare contract, because the full generic contract
   is unnecessarily large for stage compare and can be truncated by small
   output budgets
+- reviewed OpenRouter fallback profiles can also declare a preferred compare
+  contract for model ids whose names do not match the simple family heuristics
+  such as `anthropic/claude-opus-4.6-fast`
 - `openai/gpt-5.4-nano` currently has a reviewed fallback capability entry
   (`context_length=400000`, `max_completion_tokens=128000`, `text+image`
   input) so the runtime can raise the effective checkpoint output cap above a

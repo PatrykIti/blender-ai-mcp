@@ -21,13 +21,12 @@ from .config import (
     VisionBackendKind,
     VisionContractProfile,
     VisionMLXLocalConfig,
-    VisionModelCapabilities,
     VisionOpenAICompatibleConfig,
     VisionRuntimeConfig,
     VisionSegmentationSidecarConfig,
     VisionTransformersLocalConfig,
 )
-from .model_profiles import resolve_fallback_model_capabilities
+from .model_profiles import ModelCapabilityProfile, resolve_model_profile
 
 _OPENROUTER_DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
 _GOOGLE_AI_STUDIO_DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
@@ -52,6 +51,7 @@ def _looks_like_openai_family_model(model_name: str | None) -> bool:
 def _resolve_vision_contract_profile(
     *,
     explicit_contract_profile: str | None,
+    preferred_contract_profile: VisionContractProfile | None,
     provider_name: str,
     model_name: str | None,
 ) -> VisionContractProfile:
@@ -59,6 +59,8 @@ def _resolve_vision_contract_profile(
         return "generic_full"
     if explicit_contract_profile == "google_family_compare":
         return "google_family_compare"
+    if preferred_contract_profile is not None:
+        return preferred_contract_profile
     if _looks_like_google_family_model(model_name):
         return "google_family_compare"
     if provider_name == "openrouter" and _looks_like_openai_family_model(model_name):
@@ -68,8 +70,8 @@ def _resolve_vision_contract_profile(
     return "generic_full"
 
 
-def _resolve_openrouter_fallback_capabilities(model_name: str | None) -> VisionModelCapabilities | None:
-    return resolve_fallback_model_capabilities(provider="openrouter", model_id=model_name)
+def _resolve_openrouter_fallback_profile(model_name: str | None) -> ModelCapabilityProfile | None:
+    return resolve_model_profile(provider="openrouter", model_id=model_name)
 
 
 def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
@@ -129,6 +131,7 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
         external_api_key_env: str | None
         site_url: str | None
         site_name: str | None
+        openrouter_fallback_profile: ModelCapabilityProfile | None = None
 
         if use_openrouter_profile:
             external_provider_name = "openrouter"
@@ -138,6 +141,7 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
             external_api_key_env = config.VISION_OPENROUTER_API_KEY_ENV or config.VISION_EXTERNAL_API_KEY_ENV
             site_url = config.VISION_OPENROUTER_SITE_URL
             site_name = config.VISION_OPENROUTER_SITE_NAME
+            openrouter_fallback_profile = _resolve_openrouter_fallback_profile(external_model)
         elif use_google_ai_studio_profile:
             external_provider_name = "google_ai_studio"
             external_base_url = config.VISION_GEMINI_BASE_URL or _GOOGLE_AI_STUDIO_DEFAULT_BASE_URL
@@ -159,6 +163,11 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
 
         vision_contract_profile = _resolve_vision_contract_profile(
             explicit_contract_profile=config.VISION_EXTERNAL_CONTRACT_PROFILE,
+            preferred_contract_profile=(
+                openrouter_fallback_profile.preferred_contract_profile
+                if openrouter_fallback_profile is not None
+                else None
+            ),
             provider_name=external_provider_name,
             model_name=external_model,
         )
@@ -178,9 +187,9 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
             prefer_json_object_for_qwen=(
                 config.VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN if use_openrouter_profile else False
             ),
-            model_capabilities=(
-                _resolve_openrouter_fallback_capabilities(external_model) if use_openrouter_profile else None
-            ),
+            model_capabilities=openrouter_fallback_profile.to_runtime_capabilities()
+            if openrouter_fallback_profile is not None
+            else None,
         )
 
     if segmentation_enabled:

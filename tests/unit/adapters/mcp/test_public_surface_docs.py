@@ -154,7 +154,7 @@ def test_mcp_docs_describe_aliases_and_hidden_arguments():
         "warn on weak role-sensitive names",
         "blocked until the object uses a semantic role-shaped name",
         "placeholder scopes such as a stock `Cube`",
-        "single mesh named",
+        "stock `Cube` plus stock camera/light helpers",
         "`mesh_extrude_region(...)`",
         "`secondary_parts` family",
         "`primary_to_other` pairs for non-seam objects",

@@ -354,7 +354,7 @@ def test_router_set_goal_no_match_with_guided_manual_continuation_bootstraps_emp
     assert session.guided_flow_state["current_step"] == "bootstrap_primary_workset"
 
 
-def test_scene_has_meaningful_guided_objects_treats_default_startup_cube_as_nonempty(monkeypatch):
+def test_scene_has_meaningful_guided_objects_treats_default_startup_cube_as_empty(monkeypatch):
     class SceneHandler:
         def list_objects(self):
             return [
@@ -365,10 +365,10 @@ def test_scene_has_meaningful_guided_objects_treats_default_startup_cube_as_none
 
     monkeypatch.setattr(router_area, "get_scene_handler", lambda: SceneHandler())
 
-    assert router_area._scene_has_meaningful_guided_objects() is True
+    assert router_area._scene_has_meaningful_guided_objects() is False
 
 
-def test_scene_has_meaningful_guided_objects_treats_startup_subset_cube_and_camera_as_nonempty(monkeypatch):
+def test_scene_has_meaningful_guided_objects_treats_startup_subset_cube_and_camera_as_empty(monkeypatch):
     class SceneHandler:
         def list_objects(self):
             return [
@@ -378,7 +378,7 @@ def test_scene_has_meaningful_guided_objects_treats_startup_subset_cube_and_came
 
     monkeypatch.setattr(router_area, "get_scene_handler", lambda: SceneHandler())
 
-    assert router_area._scene_has_meaningful_guided_objects() is True
+    assert router_area._scene_has_meaningful_guided_objects() is False
 
 
 def test_scene_has_meaningful_guided_objects_treats_helper_only_scene_as_empty(monkeypatch):
@@ -433,8 +433,8 @@ def test_scene_has_meaningful_guided_objects_treats_single_default_named_mesh_wi
     assert router_area._scene_has_meaningful_guided_objects() is True
 
 
-def test_router_set_goal_no_match_keeps_spatial_bootstrap_for_default_startup_scene(monkeypatch):
-    """A lone default-named mesh with stock helpers should still count as existing geometry."""
+def test_router_set_goal_no_match_bootstraps_primary_workset_for_default_startup_scene(monkeypatch):
+    """The stock startup scene should enter the empty-scene primary workset path."""
 
     monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
 
@@ -469,7 +469,7 @@ def test_router_set_goal_no_match_keeps_spatial_bootstrap_for_default_startup_sc
     result = asyncio.run(router_area.router_set_goal(ctx, goal="low poly squirrel 3D model"))
 
     assert result.guided_flow_state is not None
-    assert result.guided_flow_state.current_step == "establish_spatial_context"
+    assert result.guided_flow_state.current_step == "bootstrap_primary_workset"
 
 
 def test_router_set_goal_no_match_keeps_spatial_bootstrap_for_lone_default_named_blockout(monkeypatch):

@@ -534,12 +534,12 @@ Current guided-flow behavior:
   `Collection` no longer count as meaningful guided target/workset bindings by
   themselves
 - but for the earlier “is this scene already non-empty?” bootstrap decision,
-  ordinary mesh objects with default primitive names such as `Cube` or
-  `Sphere` still count as an existing rough blockout instead of forcing an
-  empty-scene primary-workset jump
-- this non-empty decision is intentionally name-light: a single mesh named
-  `Cube` plus stock camera/light helpers is treated as geometry to inspect,
-  while helper-only scenes can still enter `bootstrap_primary_workset`
+  Blender's stock `Cube` plus stock camera/light helpers still enters the
+  empty-scene primary-workset bootstrap path
+- this non-empty decision is intentionally name-light after startup: real
+  multi-object rough blockouts with default primitive names such as `Cube` or
+  `Sphere` still count as existing geometry, while helper-only scenes can still
+  enter `bootstrap_primary_workset`
 - explicit guided scopes now bind from caller intent instead of name
   heuristics, so real objects named like `Cube`, `Sphere`, or `Sunflower`
   can still become the active guided workset when the operator targets them

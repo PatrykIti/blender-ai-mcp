@@ -283,6 +283,26 @@ def test_openrouter_openai_family_models_use_narrow_compare_contract_by_default(
     assert runtime.effective_max_tokens == 4096
 
 
+def test_openrouter_reviewed_profile_preferred_contract_wins_without_model_name_heuristic():
+    config = _base_config(
+        VISION_ENABLED=True,
+        VISION_PROVIDER="openai_compatible_external",
+        VISION_EXTERNAL_PROVIDER="openrouter",
+        VISION_OPENROUTER_MODEL="anthropic/claude-opus-4.6-fast",
+    )
+
+    runtime = build_vision_runtime_config(config)
+
+    assert runtime.openai_compatible_external is not None
+    assert runtime.openai_compatible_external.provider_name == "openrouter"
+    assert runtime.openai_compatible_external.vision_contract_profile == "google_family_compare"
+    assert runtime.active_vision_contract_profile == "google_family_compare"
+    assert runtime.openai_compatible_external.model_capabilities is not None
+    assert runtime.openai_compatible_external.model_capabilities.capability_source == "fallback_registry"
+    assert runtime.openai_compatible_external.model_capabilities.context_length == 1_000_000
+    assert runtime.effective_max_tokens == 4096
+
+
 def test_openrouter_openai_fallback_profile_resolves_from_family_registry():
     capabilities = resolve_fallback_model_capabilities(
         provider="openrouter",
