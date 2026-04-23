@@ -72,6 +72,22 @@ def _result_represents_success(tool_name: str, result: Any) -> bool:
             except (SyntaxError, ValueError):
                 return False
             return isinstance(parsed, list) and all(isinstance(item, str) for item in parsed)
+        mesh_success_prefixes = {
+            "mesh_extrude_region": ("extruded region",),
+            "mesh_loop_cut": ("subdivided selected geometry",),
+            "mesh_bevel": ("bevel applied",),
+            "mesh_symmetrize": ("symmetrized mesh",),
+            "mesh_merge_by_distance": ("merged vertices by distance",),
+            "mesh_dissolve": (
+                "limited dissolve",
+                "dissolved selected vertices",
+                "dissolved selected edges",
+                "dissolved selected faces",
+            ),
+        }
+        prefixes = mesh_success_prefixes.get(tool_name)
+        if prefixes is not None:
+            return text.lower().startswith(prefixes)
         return False
 
     if isinstance(result, dict):

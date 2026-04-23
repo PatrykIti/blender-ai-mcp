@@ -1013,22 +1013,26 @@ class SpatialGraphService:
                     planned_pairs_by_key[pair_key] = planned_pair
                 else:
                     planned_pair.seam = required_seam
-        else:
-            primary_target = scope_graph.get("primary_target")
-            if isinstance(primary_target, str) and primary_target:
-                for object_name in object_names:
-                    if object_name == primary_target:
-                        continue
-                    pair_key = (primary_target, object_name)
-                    planned_pair = planned_pairs_by_key.get(pair_key)
-                    if planned_pair is None:
-                        planned_pair = _PlannedRelationPair(
-                            from_object=primary_target,
-                            to_object=object_name,
-                            pair_source="primary_to_other",
-                        )
-                        planned_pairs.append(planned_pair)
-                        planned_pairs_by_key[pair_key] = planned_pair
+        primary_target = scope_graph.get("primary_target")
+        if isinstance(primary_target, str) and primary_target:
+            seam_objects = {
+                object_name
+                for required_seam in required_seams
+                for object_name in (required_seam.part_object, required_seam.anchor_object)
+            }
+            for object_name in object_names:
+                if object_name == primary_target or (required_seams and object_name in seam_objects):
+                    continue
+                pair_key = (primary_target, object_name)
+                planned_pair = planned_pairs_by_key.get(pair_key)
+                if planned_pair is None:
+                    planned_pair = _PlannedRelationPair(
+                        from_object=primary_target,
+                        to_object=object_name,
+                        pair_source="primary_to_other",
+                    )
+                    planned_pairs.append(planned_pair)
+                    planned_pairs_by_key[pair_key] = planned_pair
 
         symmetry_pairs: list[tuple[str, str]] = []
         if include_guided_pairs:

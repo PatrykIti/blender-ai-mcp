@@ -261,6 +261,46 @@ def test_route_tool_call_report_fail_closes_when_guided_family_is_not_allowed(mo
     assert report.context.guided_tool_family == "finish"
 
 
+def test_route_tool_call_report_fail_closes_for_mesh_edit_family_during_spatial_gate(monkeypatch):
+    """Mesh edit tools should not bypass guided step gating by resolving to family=None."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "establish_spatial_context",
+                "completed_steps": ["understand_goal"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["run_required_checks"],
+                "blocked_families": ["build", "late_refinement", "finish"],
+                "allowed_families": ["spatial_context", "reference_context"],
+                "allowed_roles": [],
+                "completed_roles": [],
+                "missing_roles": [],
+                "required_role_groups": ["spatial_context"],
+                "step_status": "blocked",
+            },
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="mesh_extrude_region",
+        params={"move": [0.0, 0.0, 0.5]},
+        direct_executor=lambda: "should not run",
+    )
+
+    assert report.router_disposition == "failed_closed_error"
+    assert "tool family 'secondary_parts'" in str(report.error)
+    assert report.context.guided_tool_family == "secondary_parts"
+
+
 def test_route_tool_call_report_fail_closes_when_guided_role_is_not_allowed(monkeypatch):
     """Guided execution policy should block explicit roles that do not belong to the current step."""
 
@@ -988,3 +1028,66 @@ def test_route_tool_call_marks_guided_spatial_state_stale_after_successful_trans
     assert state.guided_flow_state["spatial_state_version"] == 1
     assert state.guided_flow_state["spatial_state_stale"] is True
     assert state.guided_flow_state["spatial_refresh_required"] is False
+
+
+def test_route_tool_call_marks_guided_spatial_state_stale_after_successful_mesh_edit(monkeypatch):
+    """Successful guided mesh edits should dirty the spatial layer for later re-arm logic."""
+
+    from fastmcp.server.context import _current_context
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            surface_profile="llm-guided",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "active_target_scope": {
+                    "scope_kind": "object_set",
+                    "primary_target": "Squirrel_Body",
+                    "object_names": ["Squirrel_Body", "Squirrel_Head"],
+                    "object_count": 2,
+                },
+                "spatial_scope_fingerprint": "scope_1",
+                "spatial_state_version": 0,
+                "last_spatial_check_version": 0,
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "secondary_parts", "attachment_alignment", "reference_context"],
+                "allowed_roles": ["tail_mass", "snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass"],
+                "missing_roles": ["tail_mass", "snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    token = _current_context.set(ctx)
+    try:
+        result = route_tool_call(
+            tool_name="mesh_extrude_region",
+            params={"move": [0.0, 0.0, 0.5]},
+            direct_executor=lambda: "Extruded region",
+        )
+    finally:
+        _current_context.reset(token)
+
+    state = get_session_capability_state(ctx)
+
+    assert result == "Extruded region"
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["spatial_state_version"] == 1
+    assert state.guided_flow_state["spatial_state_stale"] is True
+    assert state.guided_flow_state["spatial_refresh_required"] is True

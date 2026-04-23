@@ -361,10 +361,9 @@ contract in addition to `guided_handoff`.
   ordinary mesh objects with default primitive names such as `Cube` or
   `Sphere` now still count as an existing rough blockout instead of forcing an
   empty-scene primary-workset jump
-- the special-case empty-scene bootstrap still treats Blender's stock startup
-  scene as empty when the only non-helper mesh is one default placeholder
-  primitive such as `Cube`; multiple placeholder meshes still count as a real
-  rough blockout worth inspecting
+- this non-empty decision is intentionally name-light: a single mesh named
+  `Cube` plus stock camera/light helpers is treated as geometry to inspect,
+  while helper-only scenes can still enter `bootstrap_primary_workset`
 - explicit guided scopes now bind from caller intent instead of name
   heuristics, so real objects named like `Cube`, `Sphere`, or `Sunflower`
   can still become the active guided workset when the operator targets them
@@ -374,6 +373,10 @@ contract in addition to `guided_handoff`.
   `modeling_separate_object(...)`, or bounded attachment/alignment macros, the
   guided runtime can mark the spatial layer stale and re-arm the required
   checks
+- guided mesh edit tools such as `mesh_extrude_region(...)`,
+  `mesh_loop_cut(...)`, and `mesh_bevel(...)` are now mapped to the
+  `secondary_parts` family, so they are blocked during spatial-context gates
+  and re-arm spatial checks after successful geometry edits
 - when one of those required spatial checks completes and advances the guided
   flow, the server now reapplies FastMCP visibility immediately instead of
   waiting for a later status/search refresh
@@ -381,6 +384,9 @@ contract in addition to `guided_handoff`.
   annotations even when they share the same `(from_object, to_object)` key as a
   generic primary-target pair, so later guided planners still see
   support/symmetry semantics instead of only a generic edge
+- relation graphs that include required creature seams still add fallback
+  `primary_to_other` pairs for non-seam objects in the requested scope, so
+  unclassified objects do not disappear from mixed guided diagnostics
 - healthy support/symmetry pairs no longer count as failing just because their
   centers differ or they are not literal contact pairs; only `unsupported` /
   `asymmetric` support/symmetry verdicts count as failures there

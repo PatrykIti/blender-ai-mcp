@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [253](./253-2026-04-23-guided-mesh-family-and-relation-bootstrap-fixes.md) | 2026-04-23 | **Guided mesh family and relation/bootstrap fixes** | - |
 | [252](./252-2026-04-22-spatial-scope-errors-visibility-refresh-and-ortho-diagnostics.md) | 2026-04-22 | **Spatial scope errors, visibility refresh, and ortho diagnostics** | - |
 | [251](./251-2026-04-22-guided-explicit-scope-binding-and-startup-subset-bootstrap.md) | 2026-04-22 | **Guided explicit-scope binding and startup-subset bootstrap** | - |
 | [250](./250-2026-04-22-guided-scope-validation-unavailable-view-checks-and-sidecar-status.md) | 2026-04-22 | **Guided scope validation, unavailable view checks, and sidecar status** | - |

@@ -60,20 +60,7 @@ ROUTER_PUBLIC_TOOL_NAMES = (
     "router_feedback",
 )
 
-_GUIDED_HELPER_OR_PLACEHOLDER_NAMES = {
-    "camera",
-    "light",
-    "lamp",
-    "sun",
-    "cube",
-    "sphere",
-    "cone",
-    "cylinder",
-    "plane",
-    "torus",
-    "monkey",
-}
-_GUIDED_STARTUP_SCENE_OBJECT_NAMES = {"cube", "camera", "light"}
+_GUIDED_HELPER_OBJECT_TYPES = {"camera", "light"}
 
 
 def _register_existing_tool(target: Any, tool_name: str) -> Any:
@@ -106,32 +93,16 @@ def _scene_has_meaningful_guided_objects() -> bool:
         objects = get_scene_handler().list_objects()
     except Exception:
         return True
-    placeholder_object_count = 0
-    helper_object_count = 0
-    object_names: list[str] = []
     for item in objects:
         if not isinstance(item, dict):
             continue
         name = str(item.get("name") or "").strip().lower()
         object_type = str(item.get("type") or "").strip().lower()
-        if name:
-            object_names.append(name)
-        if object_type in {"camera", "light"}:
-            helper_object_count += 1
-            continue
-        if name in _GUIDED_HELPER_OR_PLACEHOLDER_NAMES:
-            placeholder_object_count += 1
+        if object_type in _GUIDED_HELPER_OBJECT_TYPES:
             continue
         if name:
             return True
-    if placeholder_object_count == 0:
-        return False
-    if placeholder_object_count > 1:
-        return True
-    names_set = {name for name in object_names if name}
-    if helper_object_count > 0 and names_set <= _GUIDED_STARTUP_SCENE_OBJECT_NAMES:
-        return False
-    return True
+    return False
 
 
 def _build_background_job_diagnostics() -> tuple[int, dict[str, int], list[dict[str, Any]]]:

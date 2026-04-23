@@ -537,10 +537,9 @@ Current guided-flow behavior:
   ordinary mesh objects with default primitive names such as `Cube` or
   `Sphere` still count as an existing rough blockout instead of forcing an
   empty-scene primary-workset jump
-- the special-case empty-scene bootstrap still treats Blender's stock startup
-  scene as empty when the only non-helper mesh is one default placeholder
-  primitive such as `Cube`; multiple placeholder meshes still count as a real
-  rough blockout worth inspecting
+- this non-empty decision is intentionally name-light: a single mesh named
+  `Cube` plus stock camera/light helpers is treated as geometry to inspect,
+  while helper-only scenes can still enter `bootstrap_primary_workset`
 - explicit guided scopes now bind from caller intent instead of name
   heuristics, so real objects named like `Cube`, `Sphere`, or `Sunflower`
   can still become the active guided workset when the operator targets them
@@ -564,10 +563,17 @@ Current guided-flow behavior:
   `modeling_separate_object(...)`, or bounded attachment/alignment cleanup
   macros, the runtime can mark the spatial layer stale and re-arm the
   required checks
+- guided mesh edit tools such as `mesh_extrude_region(...)`,
+  `mesh_loop_cut(...)`, and `mesh_bevel(...)` are classified as the
+  `secondary_parts` family for guided gating, and successful geometry edits
+  re-arm the spatial layer like other material scene mutations
 - support/symmetry-aware relation pairs now preserve support and symmetry
   annotations even when they share the same `(from_object, to_object)` key as a
   generic primary-target pair, so downstream planners still see
   support/symmetry semantics instead of only a generic edge
+- when required creature seams exist, relation graphs still keep fallback
+  `primary_to_other` pairs for non-seam objects in the requested scope instead
+  of dropping those objects from diagnostics
 - healthy support/symmetry pairs no longer count as failing just because their
   centers differ or they are not literal contact pairs; only `unsupported` /
   `asymmetric` support/symmetry verdicts count as failures there

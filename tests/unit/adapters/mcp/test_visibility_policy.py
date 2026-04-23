@@ -132,6 +132,20 @@ def test_visibility_rules_are_profile_and_phase_deterministic():
     assert "mesh_extrude_region" not in code_mode_rules[1]["names"]
 
 
+def test_guided_mesh_edit_tools_resolve_to_secondary_parts_family():
+    """Visible mesh edit tools should participate in guided family gating."""
+
+    for tool_name in (
+        "mesh_extrude_region",
+        "mesh_loop_cut",
+        "mesh_bevel",
+        "mesh_symmetrize",
+        "mesh_merge_by_distance",
+        "mesh_dissolve",
+    ):
+        assert resolve_guided_tool_family(tool_name) == "secondary_parts"
+
+
 def test_materialize_visible_tool_names_follows_ordered_runtime_rules():
     """Visibility diagnostics should derive from the same ordered rule model as the shaped runtime surface."""
 

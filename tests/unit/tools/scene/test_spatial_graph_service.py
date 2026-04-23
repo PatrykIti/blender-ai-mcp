@@ -13,6 +13,18 @@ class FakeReader:
                 "center": [0.0, 0.0, 1.0],
                 "dimensions": [2.0, 2.0, 2.0],
             },
+            "Head": {
+                "min": [-0.6, -0.8, 2.0],
+                "max": [0.6, 0.4, 3.0],
+                "center": [0.0, -0.2, 2.5],
+                "dimensions": [1.2, 1.2, 1.0],
+            },
+            "Wing": {
+                "min": [1.2, -0.2, 0.5],
+                "max": [2.4, 0.2, 1.5],
+                "center": [1.8, 0.0, 1.0],
+                "dimensions": [1.2, 0.4, 1.0],
+            },
             "Base": {
                 "min": [-2.0, -2.0, -0.5],
                 "max": [2.0, 2.0, 0.0],
@@ -203,6 +215,38 @@ def test_build_relation_graph_does_not_count_healthy_symmetry_pair_as_failure():
     assert relation_graph["pairs"][0]["symmetry_semantics"]["verdict"] == "symmetric"
     assert "symmetry" in relation_graph["pairs"][0]["relation_kinds"]
     assert "symmetric" in relation_graph["pairs"][0]["relation_verdicts"]
+
+
+def test_build_relation_graph_preserves_non_seam_objects_when_creature_seams_exist():
+    service = SpatialGraphService()
+    reader = FakeReader()
+
+    relation_graph = service.build_relation_graph(
+        reader=reader,
+        scope_graph={
+            "scope_kind": "object_set",
+            "primary_target": "Body",
+            "object_names": ["Body", "Head", "Wing"],
+            "object_count": 3,
+            "object_roles": [
+                {"object_name": "Body", "role": "anchor_core"},
+                {"object_name": "Head", "role": "attached_mass"},
+                {"object_name": "Wing", "role": "structural_peer"},
+            ],
+        },
+        goal_hint=None,
+        include_truth_payloads=False,
+        include_guided_pairs=True,
+    )
+
+    relation_pairs = {(pair["from_object"], pair["to_object"]): pair for pair in relation_graph["pairs"]}
+
+    assert relation_graph["summary"]["pairing_strategy"] == "guided_spatial_pairs"
+    assert relation_graph["summary"]["pair_count"] == 2
+    assert ("Head", "Body") in relation_pairs
+    assert relation_pairs[("Head", "Body")]["pair_source"] == "required_creature_seam"
+    assert ("Body", "Wing") in relation_pairs
+    assert relation_pairs[("Body", "Wing")]["pair_source"] == "primary_to_other"
 
 
 def test_build_scope_graph_rejects_missing_explicit_target_object():
