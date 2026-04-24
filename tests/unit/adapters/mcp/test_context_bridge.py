@@ -176,6 +176,58 @@ def test_guided_spatial_dirty_tracking_scans_all_successful_routed_steps(monkeyp
     ]
 
 
+def test_guided_spatial_dirty_tracking_treats_partial_mutating_macro_reports_as_dirty(monkeypatch):
+    """Partial macro reports can still move objects and must stale guided spatial facts."""
+
+    ctx = FakeContext()
+    calls: list[dict[str, object]] = []
+    monkeypatch.setattr(router_helper, "_get_active_context", lambda: ctx)
+    monkeypatch.setattr(
+        router_helper,
+        "mark_guided_spatial_state_stale",
+        lambda current_ctx, **kwargs: calls.append({"ctx": current_ctx, **kwargs}),
+    )
+    report = MCPExecutionReport(
+        context=MCPExecutionContext(
+            tool_name="macro_attach_part_to_surface",
+            params={"part_object": "Ear", "surface_object": "Head"},
+        ),
+        router_enabled=True,
+        router_applied=False,
+        router_disposition="direct",
+        steps=(
+            ExecutionStep(
+                tool_name="macro_attach_part_to_surface",
+                params={"part_object": "Ear", "surface_object": "Head"},
+                result={
+                    "status": "partial",
+                    "macro_name": "macro_attach_part_to_surface",
+                    "actions_taken": [
+                        {
+                            "status": "applied",
+                            "action": "attach_part_to_surface",
+                            "tool_name": "modeling_transform_object",
+                        }
+                    ],
+                    "objects_modified": ["Ear"],
+                    "error": "The bounded seating move completed, but the pair is still not seated.",
+                },
+            ),
+        ),
+    )
+
+    router_helper._maybe_mark_guided_spatial_state_stale_from_report(report)
+
+    assert calls == [
+        {
+            "ctx": ctx,
+            "tool_name": "macro_attach_part_to_surface",
+            "family": "attachment_alignment",
+            "reason": "macro_attach_part_to_surface",
+        }
+    ]
+
+
 def test_route_tool_call_report_returns_direct_execution_when_router_disabled(monkeypatch):
     """route_tool_call_report should still build a structured report on direct execution."""
 

@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [256](./256-2026-04-24-guided-iterate-recovery-and-partial-macro-dirty-state.md) | 2026-04-24 | **Guided iterate recovery and partial macro dirty state** | - |
 | [255](./255-2026-04-24-guided-macro-schema-and-routed-spatial-dirty-tracking.md) | 2026-04-24 | **Guided macro schema and routed spatial dirty tracking** | - |
 | [254](./254-2026-04-23-guided-stage-checkpoint-viewport-and-silhouette-fixes.md) | 2026-04-23 | **Guided stage checkpoint, viewport, and silhouette fixes** | - |
 | [253](./253-2026-04-23-guided-mesh-family-and-relation-bootstrap-fixes.md) | 2026-04-23 | **Guided mesh family and relation/bootstrap fixes** | - |

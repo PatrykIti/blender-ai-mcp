@@ -3727,6 +3727,97 @@ def test_reference_iterate_stage_checkpoint_falls_back_to_truth_handoff_when_vis
     assert "HTTP 400 Bad Request" in result.stop_reason
 
 
+def test_reference_iterate_stage_checkpoint_preserves_flow_on_recoverable_reference_setup_error(monkeypatch):
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="low poly creature",
+            surface_profile="llm-guided",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "secondary_parts", "attachment_alignment", "reference_context"],
+                "allowed_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass"],
+                "missing_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+        ),
+    )
+    session = get_session_capability_state(ctx)
+    compare = ReferenceCompareStageCheckpointResponseContract.model_validate(
+        {
+            "action": "compare_stage_checkpoint",
+            "goal": "low poly creature",
+            "guided_flow_state": session.guided_flow_state,
+            "guided_reference_readiness": {
+                "status": "blocked",
+                "goal": "low poly creature",
+                "has_active_goal": True,
+                "attached_reference_count": 0,
+                "pending_reference_count": 0,
+                "compare_ready": False,
+                "iterate_ready": False,
+                "blocking_reason": "reference_images_required",
+                "next_action": "attach_reference_images",
+            },
+            "target_object": "TruthHead",
+            "target_objects": ["TruthHead", "TruthBody"],
+            "checkpoint_id": "checkpoint_missing_refs",
+            "checkpoint_label": "stage_missing_refs",
+            "preset_profile": "compact",
+            "preset_names": [],
+            "capture_count": 0,
+            "captures": [],
+            "reference_count": 0,
+            "reference_ids": [],
+            "reference_labels": [],
+            "error": "Attach at least one reference image with reference_images(action='attach', ...) before staging compare/iterate.",
+        }
+    )
+
+    async def _fake_reference_compare_stage_checkpoint(*args, **kwargs):
+        return compare
+
+    async def _fail_advance_guided_flow_from_iteration_async(*args, **kwargs):
+        raise AssertionError("recoverable setup errors must not advance the guided flow")
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.reference_compare_stage_checkpoint",
+        _fake_reference_compare_stage_checkpoint,
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.advance_guided_flow_from_iteration_async",
+        _fail_advance_guided_flow_from_iteration_async,
+    )
+
+    result = asyncio.run(
+        reference_iterate_stage_checkpoint(
+            ctx,
+            target_object="TruthHead",
+            target_objects=["TruthBody"],
+            checkpoint_label="stage_missing_refs",
+        )
+    )
+
+    assert result.loop_disposition == "continue_build"
+    assert result.continue_recommended is False
+    assert result.guided_flow_state is not None
+    assert result.guided_flow_state.current_step == "place_secondary_parts"
+    assert "place_secondary_parts" not in result.guided_flow_state.completed_steps
+    assert "setup is incomplete" in (result.message or "")
+
+
 def test_reference_iterate_stage_checkpoint_does_not_reuse_state_across_target_view_or_profile(monkeypatch):
     ctx = FakeContext()
     update_session_from_router_goal(ctx, "low poly squirrel", {"status": "no_match"})

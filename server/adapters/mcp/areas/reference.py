@@ -687,6 +687,27 @@ def _guided_checkpoint_scope_error(
     )
 
 
+def _is_recoverable_stage_compare_setup_error(
+    compare_result: ReferenceCompareStageCheckpointResponseContract,
+) -> bool:
+    """Return True for setup/precondition errors that should not advance the guided loop."""
+
+    if not compare_result.error:
+        return False
+
+    readiness = compare_result.guided_reference_readiness
+    if readiness is not None and readiness.status == "blocked":
+        return True
+
+    error_text = compare_result.error.strip()
+    recoverable_prefixes = (
+        "Checkpoint target scope does not cover the active guided workset.",
+        "No matching reference images are attached for the requested target_object/target_view.",
+        "Reference session is not ready for staged compare/iterate yet.",
+    )
+    return any(error_text.startswith(prefix) for prefix in recoverable_prefixes)
+
+
 def _resolve_actionable_focus(compare_result: ReferenceCompareStageCheckpointResponseContract) -> list[str]:
     candidate_summaries = list(compare_result.correction_candidates or [])
     if candidate_summaries:
@@ -3554,13 +3575,18 @@ async def reference_iterate_stage_checkpoint(
 
     if compare_result.error or goal is None:
         truth_only_handoff = bool(goal is not None and correction_focus and inspect_from_truth_signal)
-        advanced_state = (
-            await advance_guided_flow_from_iteration_async(
+        recoverable_setup_error = (
+            goal is not None and not truth_only_handoff and _is_recoverable_stage_compare_setup_error(compare_result)
+        )
+        if recoverable_setup_error or goal is None:
+            advanced_state = await get_session_capability_state_async(ctx)
+        else:
+            advanced_state = await advance_guided_flow_from_iteration_async(
                 ctx,
                 loop_disposition="inspect_validate" if truth_only_handoff else "stop",
             )
-            if goal is not None
-            else await get_session_capability_state_async(ctx)
+        error_loop_disposition: Literal["continue_build", "inspect_validate", "stop"] = (
+            "continue_build" if recoverable_setup_error else ("inspect_validate" if truth_only_handoff else "stop")
         )
         return _iterate_stage_response(
             session_id=compare_result.session_id,
@@ -3574,7 +3600,7 @@ async def reference_iterate_stage_checkpoint(
             checkpoint_id=compare_result.checkpoint_id,
             checkpoint_label=checkpoint_label,
             iteration_index=1,
-            loop_disposition="inspect_validate" if truth_only_handoff else "stop",
+            loop_disposition=error_loop_disposition,
             continue_recommended=truth_only_handoff,
             prior_checkpoint_id=None,
             prior_correction_focus=[],
@@ -3592,7 +3618,11 @@ async def reference_iterate_stage_checkpoint(
                 "Vision compare did not complete successfully, but deterministic truth findings are available. "
                 "Stop free-form modeling and switch to inspect/measure/assert before another large change."
                 if truth_only_handoff
-                else "Stage iteration did not complete successfully."
+                else (
+                    "Stage iteration setup is incomplete; fix the referenced precondition and rerun the same checkpoint."
+                    if recoverable_setup_error
+                    else "Stage iteration did not complete successfully."
+                )
             ),
             error=compare_result.error,
         )

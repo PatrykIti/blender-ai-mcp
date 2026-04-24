@@ -95,6 +95,10 @@ def _result_represents_success(tool_name: str, result: Any) -> bool:
         status = str(result.get("status") or "").strip().lower()
         if status in {"failed", "blocked", "error"}:
             return False
+        if status == "partial":
+            return True
+        if result.get("objects_modified"):
+            return True
         if result.get("error") is not None:
             return False
         return True
@@ -102,6 +106,10 @@ def _result_represents_success(tool_name: str, result: Any) -> bool:
     status = str(getattr(result, "status", "") or "").strip().lower()
     if status in {"failed", "blocked", "error"}:
         return False
+    if status == "partial":
+        return True
+    if getattr(result, "objects_modified", None):
+        return True
     if getattr(result, "error", None) is not None:
         return False
     return True
