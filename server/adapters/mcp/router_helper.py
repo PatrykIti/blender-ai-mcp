@@ -22,6 +22,7 @@ from server.adapters.mcp.execution_report import ExecutionStep, MCPExecutionRepo
 from server.adapters.mcp.guided_naming_policy import evaluate_guided_object_name
 from server.adapters.mcp.session_capabilities import (
     get_session_capability_state,
+    is_guided_spatial_state_dirtying_operation,
     mark_guided_spatial_state_stale,
     record_router_execution_outcome,
     remove_guided_part_registrations,
@@ -112,28 +113,33 @@ def _maybe_mark_guided_spatial_state_stale_from_report(report: MCPExecutionRepor
     if report.error is not None or not report.steps:
         return
 
-    final_step = report.steps[-1]
-    if final_step.error is not None:
+    dirty_step: ExecutionStep | None = None
+    dirty_family: str | None = None
+    for step in report.steps:
+        if step.error is not None:
+            continue
+        if not _result_represents_success(step.tool_name, step.result):
+            continue
+        step_family = resolve_guided_tool_family(step.tool_name)
+        if not is_guided_spatial_state_dirtying_operation(tool_name=step.tool_name, family=step_family):
+            continue
+        dirty_step = step
+        dirty_family = step_family
+        break
+
+    if dirty_step is None:
         return
-    if not _result_represents_success(final_step.tool_name, final_step.result):
-        return
 
-    try:
-        from fastmcp.server.context import _current_context  # type: ignore
-
-        current_ctx = _current_context.get(None)
-    except Exception:
-        current_ctx = None
-
+    current_ctx = _get_active_context()
     if current_ctx is None:
         return
 
     try:
         mark_guided_spatial_state_stale(
             current_ctx,
-            tool_name=final_step.tool_name,
-            family=report.context.guided_tool_family,
-            reason=final_step.tool_name,
+            tool_name=dirty_step.tool_name,
+            family=dirty_family,
+            reason=dirty_step.tool_name,
         )
     except Exception:
         return

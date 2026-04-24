@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
 from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
 from server.application.tool_handlers.macro_handler import MacroToolHandler
 
@@ -357,6 +358,41 @@ def test_macro_attach_part_to_surface_applies_mesh_surface_nudge_after_bbox_seat
     assert modeling.calls[1][1]["location"] == pytest.approx([1.05, 0.0, 1.0], abs=1e-9)
     assert any(action["action"] == "mesh_surface_gap_nudge" for action in result["actions_taken"])
     assert result["actions_taken"][-1]["details"]["attachment_verdict"] == "seated_contact"
+
+
+def test_macro_attach_part_to_surface_uses_contract_status_when_mesh_nudge_exceeds_limit():
+    scene = FakeSceneTool()
+    modeling = FakeModelingTool(scene)
+    handler = MacroToolHandler(scene, modeling)
+    scene.mesh_gap_after_first_seat[("Ear", "Head")] = {
+        "from_object": "Ear",
+        "to_object": "Head",
+        "gap": 0.05,
+        "axis_gap": {"x": 0.05, "y": 0.0, "z": 0.0},
+        "relation": "separated",
+        "measurement_basis": "mesh_surface",
+        "bbox_relation": "contact",
+        "nearest_points": {
+            "from_object": [1.1, 0.0, 1.0],
+            "to_object": [1.05, 0.0, 1.0],
+        },
+    }
+
+    result = handler.attach_part_to_surface(
+        part_object="Ear",
+        surface_object="Head",
+        surface_axis="X",
+        surface_side="positive",
+        align_mode="center",
+        gap=0.0,
+        max_mesh_nudge=0.01,
+    )
+    report = MacroExecutionReportContract.model_validate(result)
+    nudge_actions = [action for action in report.actions_taken if action.action == "mesh_surface_gap_nudge"]
+
+    assert report.status == "partial"
+    assert nudge_actions
+    assert nudge_actions[-1].status == "skipped"
 
 
 def test_macro_attach_part_to_surface_refreshes_capture_bundle_after_mesh_surface_nudge(monkeypatch):

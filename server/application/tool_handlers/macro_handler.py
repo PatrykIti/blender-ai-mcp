@@ -405,7 +405,7 @@ class MacroToolHandler(IMacroTool):
             else:
                 actions_taken.append(
                     {
-                        "status": "blocked",
+                        "status": "skipped",
                         "action": "mesh_surface_gap_nudge",
                         "tool_name": "modeling_transform_object",
                         "summary": "Skipped mesh-surface nudge because it exceeded the bounded repair limit.",

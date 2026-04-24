@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+import server.adapters.mcp.router_helper as router_helper
 from server.adapters.mcp.context_utils import (
     ctx_error,
     ctx_info,
@@ -131,6 +132,48 @@ def test_execution_report_renders_legacy_text_for_multi_step_sequence():
 
     assert report.to_dict()["context"]["tool_name"] == "mesh_extrude_region"
     assert report.to_legacy_text() == "[Step 1: scene_set_mode] OK\n[Step 2: mesh_extrude_region] Extruded"
+
+
+def test_guided_spatial_dirty_tracking_scans_all_successful_routed_steps(monkeypatch):
+    """Earlier geometry mutations should dirty spatial state even when the final routed step is material-only."""
+
+    ctx = FakeContext()
+    calls: list[dict[str, object]] = []
+    monkeypatch.setattr(router_helper, "_get_active_context", lambda: ctx)
+    monkeypatch.setattr(
+        router_helper,
+        "mark_guided_spatial_state_stale",
+        lambda current_ctx, **kwargs: calls.append({"ctx": current_ctx, **kwargs}),
+    )
+    report = MCPExecutionReport(
+        context=MCPExecutionContext(tool_name="modeling_create_primitive", params={"primitive_type": "Cube"}),
+        router_enabled=True,
+        router_applied=True,
+        router_disposition="corrected",
+        steps=(
+            ExecutionStep(
+                tool_name="modeling_create_primitive",
+                params={"primitive_type": "Cube", "name": "Body"},
+                result="Created Cube named 'Body'",
+            ),
+            ExecutionStep(
+                tool_name="material_assign",
+                params={"object_name": "Body", "material_name": "BodyMat"},
+                result="Assigned material 'BodyMat' to object 'Body'",
+            ),
+        ),
+    )
+
+    router_helper._maybe_mark_guided_spatial_state_stale_from_report(report)
+
+    assert calls == [
+        {
+            "ctx": ctx,
+            "tool_name": "modeling_create_primitive",
+            "family": "primary_masses",
+            "reason": "modeling_create_primitive",
+        }
+    ]
 
 
 def test_route_tool_call_report_returns_direct_execution_when_router_disabled(monkeypatch):

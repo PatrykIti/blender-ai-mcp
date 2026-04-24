@@ -1881,8 +1881,7 @@ def mark_guided_spatial_state_stale(
 ) -> SessionCapabilityState:
     """Mark the active guided flow's spatial facts stale after one scene mutation."""
 
-    dirty_family = family in _SPATIAL_STATE_DIRTY_FAMILIES if isinstance(family, str) else False
-    if tool_name not in _SPATIAL_STATE_DIRTY_TOOL_NAMES and not dirty_family:
+    if not is_guided_spatial_state_dirtying_operation(tool_name=tool_name, family=family):
         return get_session_capability_state(ctx)
 
     current = get_session_capability_state(ctx)
@@ -1992,6 +1991,17 @@ async def register_guided_part_role_async(
     )
     await set_session_capability_state_async(ctx, state)
     return state
+
+
+def is_guided_spatial_state_dirtying_operation(
+    *,
+    tool_name: str,
+    family: str | None = None,
+) -> bool:
+    """Return True when a successful tool operation invalidates guided spatial facts."""
+
+    dirty_family = family in _SPATIAL_STATE_DIRTY_FAMILIES if isinstance(family, str) else False
+    return tool_name in _SPATIAL_STATE_DIRTY_TOOL_NAMES or dirty_family
 
 
 def register_guided_part_role(
