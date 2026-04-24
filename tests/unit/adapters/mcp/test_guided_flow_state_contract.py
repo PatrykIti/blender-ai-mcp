@@ -348,6 +348,60 @@ def test_spatial_check_completion_reapplies_visibility(monkeypatch):
     ]
 
 
+def test_guided_role_hint_registration_reapplies_visibility(monkeypatch):
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            surface_profile="llm-guided",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass"],
+                "completed_roles": [],
+                "missing_roles": ["body_core", "head_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+    events: list[tuple[str | None, bool, list[str]]] = []
+
+    def fake_refresh_visibility_for_session_state(_ctx, state):
+        flow_state = state.guided_flow_state or {}
+        events.append(
+            (
+                str(flow_state.get("current_step")) if flow_state else None,
+                bool(flow_state.get("spatial_refresh_required")),
+                [str(family) for family in flow_state.get("allowed_families", [])],
+            )
+        )
+
+    monkeypatch.setattr(
+        session_capabilities, "refresh_visibility_for_session_state", fake_refresh_visibility_for_session_state
+    )
+
+    register_guided_part_role(ctx, object_name="Squirrel_Body", role="body_core")
+    state = register_guided_part_role(ctx, object_name="Squirrel_Head", role="head_mass")
+
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["current_step"] == "place_secondary_parts"
+    assert state.guided_flow_state["spatial_refresh_required"] is True
+    assert events == [
+        ("create_primary_masses", False, ["primary_masses", "reference_context"]),
+        ("place_secondary_parts", True, ["spatial_context", "reference_context"]),
+    ]
+
+
 def test_scene_view_diagnostics_unavailable_does_not_complete_guided_spatial_check(monkeypatch):
     from server.adapters.mcp.areas import scene as scene_area
 

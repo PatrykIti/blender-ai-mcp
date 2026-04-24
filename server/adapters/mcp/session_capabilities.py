@@ -1638,6 +1638,11 @@ def refresh_visibility_for_session_state(
 
     if state.guided_flow_state is None:
         return
+    if not all(
+        callable(getattr(ctx, method_name, None))
+        for method_name in ("reset_visibility", "enable_components", "disable_components")
+    ):
+        return
 
     try:
         asyncio.get_running_loop()
@@ -2074,6 +2079,7 @@ def register_guided_part_role(
         pending_reference_images=current.pending_reference_images,
     )
     set_session_capability_state(ctx, state)
+    refresh_visibility_for_session_state(ctx, state)
     return state
 
 
