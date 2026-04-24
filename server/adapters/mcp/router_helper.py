@@ -67,6 +67,7 @@ _GUIDED_UNMAPPED_NON_MUTATING_PREFIXES: tuple[str, ...] = (
     "mesh_get_",
     "mesh_select",
 )
+_GUIDED_POLICY_ONLY_PARAM_NAMES: frozenset[str] = frozenset({"guided_role", "role_group"})
 _CREATED_OBJECT_RESULT_PATTERN = re.compile(r"^Created .+ named '(.+?)'$")
 _TRANSFORMED_OBJECT_RESULT_PATTERN = re.compile(r"^Transformed object '(.+?)'$")
 _JOINED_OBJECT_RESULT_PATTERN = re.compile(r"^Objects .+ joined into '(.+?)'\. Joined count: \d+$")
@@ -83,6 +84,14 @@ def _is_unmapped_guided_mutating_tool(tool_name: str) -> bool:
     if tool_name.startswith(_GUIDED_UNMAPPED_NON_MUTATING_PREFIXES):
         return False
     return tool_name.startswith(_GUIDED_UNMAPPED_MUTATING_PREFIXES)
+
+
+def _strip_guided_policy_params_for_dispatch(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Remove MCP guided policy-only fields before application-handler dispatch."""
+
+    if not any(name in params for name in _GUIDED_POLICY_ONLY_PARAM_NAMES):
+        return params
+    return {key: value for key, value in params.items() if key not in _GUIDED_POLICY_ONLY_PARAM_NAMES}
 
 
 def _result_represents_success(tool_name: str, result: Any) -> bool:
@@ -850,6 +859,65 @@ def route_tool_call_report(
     try:
         corrected_tools = router.process_llm_tool_call(tool_name, params, prompt)
         if corrected_tools:
+            final_guided_policy: dict[str, Any] | None = None
+            final_naming_policy: dict[str, Any] | None = None
+            for index, corrected_tool in enumerate(corrected_tools):
+                corrected_tool_name = corrected_tool["tool"]
+                corrected_tool_params = corrected_tool["params"]
+                step_guided_policy = _evaluate_guided_execution_policy(
+                    surface_profile=surface_profile,
+                    tool_name=corrected_tool_name,
+                    params=corrected_tool_params,
+                )
+                if step_guided_policy is not None:
+                    if index == len(corrected_tools) - 1:
+                        final_guided_policy = step_guided_policy
+                    if step_guided_policy.get("status") == "blocked":
+                        context.guided_tool_family = step_guided_policy.get("family")
+                        context.guided_role = step_guided_policy.get("role")
+                        context.guided_role_group = step_guided_policy.get("role_group")
+                        report = MCPExecutionReport(
+                            context=context,
+                            router_enabled=True,
+                            router_applied=False,
+                            router_disposition="failed_closed_error",
+                            error=str(step_guided_policy.get("message") or "Guided execution blocked."),
+                            policy_context=step_guided_policy,
+                            audit_ids=(),
+                        )
+                        _record_router_execution_report(report)
+                        _log_audit_exposure(report)
+                        return report
+                step_naming_policy = _evaluate_guided_naming_policy(
+                    surface_profile=surface_profile,
+                    tool_name=corrected_tool_name,
+                    params=corrected_tool_params,
+                )
+                if step_naming_policy is not None:
+                    if index == len(corrected_tools) - 1:
+                        final_naming_policy = step_naming_policy
+                    if step_naming_policy.get("status") == "blocked":
+                        context.guided_tool_family = _resolve_guided_effective_family(
+                            corrected_tool_name,
+                            corrected_tool_params,
+                        )
+                        context.guided_role, context.guided_role_group = _resolve_guided_role_context(
+                            corrected_tool_name,
+                            corrected_tool_params,
+                        )
+                        report = MCPExecutionReport(
+                            context=context,
+                            router_enabled=True,
+                            router_applied=False,
+                            router_disposition="failed_closed_error",
+                            error=str(step_naming_policy.get("message") or "Guided naming blocked."),
+                            policy_context=step_naming_policy,
+                            audit_ids=(),
+                        )
+                        _record_router_execution_report(report)
+                        _log_audit_exposure(report)
+                        return report
+
             final_tool = corrected_tools[-1]
             final_tool_name = final_tool["tool"]
             final_tool_params = final_tool["params"]
@@ -858,46 +926,11 @@ def route_tool_call_report(
                 final_tool_name,
                 final_tool_params,
             )
-            guided_policy = _evaluate_guided_execution_policy(
-                surface_profile=surface_profile,
-                tool_name=final_tool_name,
-                params=final_tool_params,
-            )
-            if guided_policy is not None:
-                context.guided_tool_family = guided_policy.get("family")
-                context.guided_role = guided_policy.get("role")
-                context.guided_role_group = guided_policy.get("role_group")
-                if guided_policy.get("status") == "blocked":
-                    report = MCPExecutionReport(
-                        context=context,
-                        router_enabled=True,
-                        router_applied=False,
-                        router_disposition="failed_closed_error",
-                        error=str(guided_policy.get("message") or "Guided execution blocked."),
-                        policy_context=guided_policy,
-                        audit_ids=(),
-                    )
-                    _record_router_execution_report(report)
-                    _log_audit_exposure(report)
-                    return report
-            naming_policy = _evaluate_guided_naming_policy(
-                surface_profile=surface_profile,
-                tool_name=final_tool_name,
-                params=final_tool_params,
-            )
-            if naming_policy is not None and naming_policy.get("status") == "blocked":
-                report = MCPExecutionReport(
-                    context=context,
-                    router_enabled=True,
-                    router_applied=False,
-                    router_disposition="failed_closed_error",
-                    error=str(naming_policy.get("message") or "Guided naming blocked."),
-                    policy_context=naming_policy,
-                    audit_ids=(),
-                )
-                _record_router_execution_report(report)
-                _log_audit_exposure(report)
-                return report
+            if final_guided_policy is not None:
+                context.guided_tool_family = final_guided_policy.get("family")
+                context.guided_role = final_guided_policy.get("role")
+                context.guided_role_group = final_guided_policy.get("role_group")
+            naming_policy = final_naming_policy
 
         if len(corrected_tools) == 1 and corrected_tools[0]["tool"] == tool_name:
             if corrected_tools[0]["params"] == params:
@@ -921,6 +954,7 @@ def route_tool_call_report(
         for index, tool in enumerate(corrected_tools):
             tool_to_execute = tool["tool"]
             tool_params = tool["params"]
+            dispatch_params = _strip_guided_policy_params_for_dispatch(tool_params)
 
             logger.debug(
                 "Router executing step %s/%s: %s",
@@ -931,12 +965,12 @@ def route_tool_call_report(
 
             if tool_to_execute == tool_name and index == len(corrected_tools) - 1:
                 result = (
-                    direct_executor() if tool_params == params else dispatcher.execute(tool_to_execute, tool_params)
+                    direct_executor() if tool_params == params else dispatcher.execute(tool_to_execute, dispatch_params)
                 )
             else:
-                result = dispatcher.execute(tool_to_execute, tool_params)
+                result = dispatcher.execute(tool_to_execute, dispatch_params)
 
-            steps.append(ExecutionStep(tool_name=tool_to_execute, params=tool_params, result=result))
+            steps.append(ExecutionStep(tool_name=tool_to_execute, params=dispatch_params, result=result))
 
         audit_events = _build_correction_audit_events(
             original_tool_name=tool_name,

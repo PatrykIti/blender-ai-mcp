@@ -356,6 +356,28 @@ class TestViewportControl(unittest.TestCase):
         self.assertEqual(scene.camera, temp_camera)
         self.assertEqual(temp_camera.data.type, "ORTHO")
 
+    def test_mirror_user_view_to_temp_camera_cleans_temp_camera_when_view_copy_fails(self):
+        temp_camera = MagicMock()
+        temp_camera.data = MagicMock()
+        bpy.context.active_object = temp_camera
+        original_camera = MagicMock()
+        scene = MagicMock()
+        scene.camera = original_camera
+        self.mock_override.__exit__.return_value = False
+        bpy.ops.view3d.camera_to_view.side_effect = RuntimeError("camera copy failed")
+
+        with self.assertRaisesRegex(RuntimeError, "camera copy failed"):
+            self.handler._mirror_user_view_to_temp_camera(
+                scene,
+                self.mock_area,
+                self.mock_region,
+                self.mock_space,
+            )
+
+        bpy.ops.object.camera_add.assert_called_once()
+        self.assertEqual(scene.camera, original_camera)
+        bpy.data.objects.remove.assert_called_once_with(temp_camera, do_unlink=True)
+
 
 if __name__ == "__main__":
     unittest.main()

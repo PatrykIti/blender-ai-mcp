@@ -1829,19 +1829,33 @@ class SceneHandler:
         return summary
 
     def _mirror_user_view_to_temp_camera(self, scene, view_area, view_region, view_space):
-        bpy.ops.object.camera_add()
-        temp_camera_obj = bpy.context.active_object
-        region_3d = getattr(view_space, "region_3d", None)
-        if (
-            temp_camera_obj is not None
-            and getattr(temp_camera_obj, "data", None) is not None
-            and str(getattr(region_3d, "view_perspective", "") or "").upper() == "ORTHO"
-        ):
-            temp_camera_obj.data.type = "ORTHO"
-        scene.camera = temp_camera_obj
-        with bpy.context.temp_override(area=view_area, region=view_region):
-            bpy.ops.view3d.camera_to_view()
-        return temp_camera_obj
+        original_camera = scene.camera
+        temp_camera_obj = None
+        try:
+            bpy.ops.object.camera_add()
+            temp_camera_obj = bpy.context.active_object
+            region_3d = getattr(view_space, "region_3d", None)
+            if (
+                temp_camera_obj is not None
+                and getattr(temp_camera_obj, "data", None) is not None
+                and str(getattr(region_3d, "view_perspective", "") or "").upper() == "ORTHO"
+            ):
+                temp_camera_obj.data.type = "ORTHO"
+            scene.camera = temp_camera_obj
+            with bpy.context.temp_override(area=view_area, region=view_region):
+                bpy.ops.view3d.camera_to_view()
+            return temp_camera_obj
+        except Exception:
+            if temp_camera_obj is not None:
+                try:
+                    scene.camera = original_camera
+                except Exception:
+                    pass
+                try:
+                    bpy.data.objects.remove(temp_camera_obj, do_unlink=True)
+                except Exception:
+                    pass
+            raise
 
     def get_view_diagnostics(
         self,

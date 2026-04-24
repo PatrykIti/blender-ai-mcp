@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [258](./258-2026-04-24-guided-routed-step-policy-and-view-diagnostics-cleanup.md) | 2026-04-24 | **Guided routed-step policy and view diagnostics cleanup** | - |
 | [257](./257-2026-04-24-guided-governor-unmapped-mutator-fail-closed.md) | 2026-04-24 | **Guided governor unmapped mutator fail-closed** | - |
 | [256](./256-2026-04-24-guided-iterate-recovery-and-partial-macro-dirty-state.md) | 2026-04-24 | **Guided iterate recovery and partial macro dirty state** | - |
 | [255](./255-2026-04-24-guided-macro-schema-and-routed-spatial-dirty-tracking.md) | 2026-04-24 | **Guided macro schema and routed spatial dirty tracking** | - |
