@@ -45,10 +45,44 @@ _GUIDED_ROLE_REQUIRED_TOOLS: tuple[str, ...] = (
     "modeling_create_primitive",
     "modeling_transform_object",
 )
+_GUIDED_UNMAPPED_MUTATING_PREFIXES: tuple[str, ...] = (
+    "modeling_",
+    "mesh_",
+    "macro_",
+    "material_",
+    "uv_",
+)
+_GUIDED_UNMAPPED_NON_MUTATING_TOOLS: frozenset[str] = frozenset(
+    {
+        "modeling_list_modifiers",
+        "mesh_inspect",
+        "mesh_list_groups",
+        "material_list",
+        "material_list_by_object",
+        "material_inspect_nodes",
+        "uv_list_maps",
+    }
+)
+_GUIDED_UNMAPPED_NON_MUTATING_PREFIXES: tuple[str, ...] = (
+    "mesh_get_",
+    "mesh_select",
+)
 _CREATED_OBJECT_RESULT_PATTERN = re.compile(r"^Created .+ named '(.+?)'$")
 _TRANSFORMED_OBJECT_RESULT_PATTERN = re.compile(r"^Transformed object '(.+?)'$")
 _JOINED_OBJECT_RESULT_PATTERN = re.compile(r"^Objects .+ joined into '(.+?)'\. Joined count: \d+$")
 _RENAMED_OBJECT_RESULT_PATTERN = re.compile(r"^Renamed '.*' to '(.+?)'(?: .*)?$")
+
+
+def _is_unmapped_guided_mutating_tool(tool_name: str) -> bool:
+    """Return True when a guided mutator has no family and must fail closed."""
+
+    if resolve_guided_tool_family(tool_name) is not None:
+        return False
+    if tool_name in _GUIDED_UNMAPPED_NON_MUTATING_TOOLS:
+        return False
+    if tool_name.startswith(_GUIDED_UNMAPPED_NON_MUTATING_PREFIXES):
+        return False
+    return tool_name.startswith(_GUIDED_UNMAPPED_MUTATING_PREFIXES)
 
 
 def _result_represents_success(tool_name: str, result: Any) -> bool:
@@ -490,6 +524,23 @@ def _evaluate_guided_execution_policy(
             "family": family,
             "role": role,
             "role_group": role_group,
+        }
+
+    if family is None and allowed_families and _is_unmapped_guided_mutating_tool(tool_name):
+        return {
+            "status": "blocked",
+            "current_step": current_step,
+            "family": family,
+            "role": role,
+            "role_group": role_group,
+            "tool_name": tool_name,
+            "allowed_families": sorted(allowed_families),
+            "allowed_roles": sorted(allowed_roles),
+            "message": (
+                f"Guided execution blocked unmapped mutating tool '{tool_name}' during step '{current_step}'. "
+                "Add it to GUIDED_TOOL_FAMILY_MAP before using it under the guided family contract. "
+                f"Allowed families now: {', '.join(sorted(allowed_families)) or 'none'}."
+            ),
         }
 
     if tool_name in _GUIDED_ROLE_REQUIRED_TOOLS and role is None:

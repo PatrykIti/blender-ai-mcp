@@ -396,6 +396,46 @@ def test_route_tool_call_report_fail_closes_for_mesh_edit_family_during_spatial_
     assert report.context.guided_tool_family == "secondary_parts"
 
 
+def test_route_tool_call_report_fail_closes_unmapped_guided_mutating_tools(monkeypatch):
+    """Unmapped mutators should not bypass a guided step just because family resolution returns None."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": [],
+                "missing_roles": ["body_core", "head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="material_assign",
+        params={"object_name": "Squirrel_Body", "material_name": "BrownFur"},
+        direct_executor=lambda: "should not run",
+    )
+
+    assert report.router_disposition == "failed_closed_error"
+    assert "unmapped mutating tool 'material_assign'" in str(report.error)
+    assert report.context.guided_tool_family is None
+
+
 def test_route_tool_call_report_fail_closes_when_guided_role_is_not_allowed(monkeypatch):
     """Guided execution policy should block explicit roles that do not belong to the current step."""
 

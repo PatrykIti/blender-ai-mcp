@@ -136,14 +136,61 @@ def test_guided_mesh_edit_tools_resolve_to_secondary_parts_family():
     """Visible mesh edit tools should participate in guided family gating."""
 
     for tool_name in (
+        "mesh_delete_selected",
         "mesh_extrude_region",
+        "mesh_fill_holes",
+        "mesh_inset",
+        "mesh_boolean",
         "mesh_loop_cut",
         "mesh_bevel",
+        "mesh_subdivide",
+        "mesh_smooth",
+        "mesh_flatten",
+        "mesh_randomize",
+        "mesh_shrink_fatten",
+        "mesh_transform_selected",
+        "mesh_bridge_edge_loops",
+        "mesh_duplicate_selected",
+        "mesh_bisect",
+        "mesh_edge_slide",
+        "mesh_vert_slide",
+        "mesh_triangulate",
+        "mesh_remesh_voxel",
+        "mesh_spin",
+        "mesh_screw",
+        "mesh_add_vertex",
+        "mesh_add_edge_face",
+        "mesh_create_vertex_group",
+        "mesh_assign_to_group",
+        "mesh_remove_from_group",
+        "mesh_edge_crease",
+        "mesh_bevel_weight",
+        "mesh_mark_sharp",
         "mesh_symmetrize",
         "mesh_merge_by_distance",
         "mesh_dissolve",
+        "mesh_tris_to_quads",
+        "mesh_normals_make_consistent",
+        "mesh_decimate",
+        "mesh_knife_project",
+        "mesh_rip",
+        "mesh_split",
+        "mesh_edge_split",
+        "mesh_set_proportional_edit",
+        "mesh_grid_fill",
+        "mesh_poke_faces",
+        "mesh_beautify_fill",
+        "mesh_mirror",
     ):
         assert resolve_guided_tool_family(tool_name) == "secondary_parts"
+
+
+def test_guided_family_map_covers_bounded_build_mutators():
+    """Bounded build mutators should not bypass family gating by resolving to None."""
+
+    assert resolve_guided_tool_family("macro_cutout_recess") == "secondary_parts"
+    assert resolve_guided_tool_family("mesh_boolean") == "secondary_parts"
+    assert resolve_guided_tool_family("modeling_add_modifier") == "finish"
 
 
 def test_materialize_visible_tool_names_follows_ordered_runtime_rules():
