@@ -440,6 +440,48 @@ def test_route_tool_call_report_fail_closes_when_guided_family_is_not_allowed(mo
     assert report.context.guided_tool_family == "finish"
 
 
+def test_route_tool_call_report_allows_pinned_spatial_helpers_when_family_is_omitted(monkeypatch):
+    """Visible read-only spatial helpers should stay callable during guided build steps."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["secondary_parts", "attachment_alignment"],
+                "allowed_roles": ["tail_mass", "snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass"],
+                "missing_roles": ["tail_mass", "snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    for tool_name in ("scene_scope_graph", "scene_relation_graph", "scene_view_diagnostics"):
+        report = route_tool_call_report(
+            tool_name=tool_name,
+            params={"target_object": "Squirrel_Body"},
+            direct_executor=lambda: {"payload": {"tool_name": tool_name}},
+        )
+
+        assert report.router_disposition == "bypassed"
+        assert report.error is None
+        assert report.context.guided_tool_family == "spatial_context"
+        assert report.steps[0].result == {"payload": {"tool_name": tool_name}}
+
+
 def test_route_tool_call_report_fail_closes_for_mesh_edit_family_during_spatial_gate(monkeypatch):
     """Mesh edit tools should not bypass guided step gating by resolving to family=None."""
 

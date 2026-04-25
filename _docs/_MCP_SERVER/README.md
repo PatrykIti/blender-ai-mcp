@@ -202,6 +202,11 @@ Current contract direction for macro/workflow reports:
   inference is wired into those paths
 - MCP macro adapters now have the request-bound attachment point for
   `vision_assistant` once a macro report already carries a capture bundle
+- routed macro results may legitimately return `status="partial"` together
+  with an `error` string when bounded progress happened but the requested
+  relation is still not fully satisfied; MCP adapters must validate and
+  preserve those structured reports before falling back to failed/blocked
+  adapter envelopes
 
 ## Vision, Measurement, and Assertion
 
@@ -306,6 +311,10 @@ Search-first behavior now respects guided visibility:
   `scene_view_diagnostics`, are now directly visible on `llm-guided` as the
   default spatial-orientation support layer instead of remaining hidden
   bootstrap-only discovery targets
+- while those pinned spatial helpers remain visible, guided execution policy
+  keeps them callable even if the current flow step's `allowed_families` omits
+  `spatial_context`; this exception is read-only and does not reopen hidden
+  mutating families
 
 Current guided utility prep path:
 

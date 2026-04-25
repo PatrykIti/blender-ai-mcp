@@ -30,7 +30,7 @@ from server.adapters.mcp.session_capabilities import (
     resolve_guided_role_group_for_domain,
 )
 from server.adapters.mcp.session_state import set_session_value
-from server.adapters.mcp.transforms.visibility_policy import resolve_guided_tool_family
+from server.adapters.mcp.transforms.visibility_policy import GUIDED_SPATIAL_SUPPORT_TOOLS, resolve_guided_tool_family
 from server.infrastructure.config import get_config
 from server.infrastructure.di import get_postcondition_registry, get_router, get_scene_handler, is_router_enabled
 from server.router.domain.entities.correction_policy import CorrectionCategory
@@ -68,6 +68,7 @@ _GUIDED_UNMAPPED_NON_MUTATING_PREFIXES: tuple[str, ...] = (
     "mesh_select",
 )
 _GUIDED_POLICY_ONLY_PARAM_NAMES: frozenset[str] = frozenset({"guided_role", "role_group"})
+_GUIDED_PINNED_SPATIAL_HELPER_TOOLS: frozenset[str] = frozenset(GUIDED_SPATIAL_SUPPORT_TOOLS)
 _CREATED_OBJECT_RESULT_PATTERN = re.compile(r"^Created .+ named '(.+?)'$")
 _TRANSFORMED_OBJECT_RESULT_PATTERN = re.compile(r"^Transformed object '(.+?)'$")
 _JOINED_OBJECT_RESULT_PATTERN = re.compile(r"^Objects .+ joined into '(.+?)'\. Joined count: \d+$")
@@ -527,6 +528,15 @@ def _evaluate_guided_execution_policy(
     explicit_guided_role = isinstance(params.get("guided_role"), str) and str(params.get("guided_role")).strip()
 
     if family == "utility":
+        return {
+            "status": "allowed",
+            "current_step": current_step,
+            "family": family,
+            "role": role,
+            "role_group": role_group,
+        }
+
+    if family == "spatial_context" and tool_name in _GUIDED_PINNED_SPATIAL_HELPER_TOOLS:
         return {
             "status": "allowed",
             "current_step": current_step,

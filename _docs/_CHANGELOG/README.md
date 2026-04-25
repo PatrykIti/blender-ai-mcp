@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [260](./260-2026-04-25-guided-partial-macro-and-spatial-helper-policy.md) | 2026-04-25 | **Guided partial macro and spatial-helper policy preservation** | - |
 | [259](./259-2026-04-24-guided-role-hint-visibility-refresh.md) | 2026-04-24 | **Guided role-hint visibility refresh** | - |
 | [258](./258-2026-04-24-guided-routed-step-policy-and-view-diagnostics-cleanup.md) | 2026-04-24 | **Guided routed-step policy and view diagnostics cleanup** | - |
 | [257](./257-2026-04-24-guided-governor-unmapped-mutator-fail-closed.md) | 2026-04-24 | **Guided governor unmapped mutator fail-closed** | - |

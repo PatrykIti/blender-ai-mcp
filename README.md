@@ -351,6 +351,11 @@ contract in addition to `guided_handoff`.
 - during an active guided spatial gate or spatial refresh re-arm, all three of
   those spatial helpers should be treated as explicit-scope tools, not as
   whole-scene probes
+- those pinned read-only spatial helpers remain callable while visible on
+  `llm-guided`; guided family blocking must not reject
+  `scene_scope_graph(...)`, `scene_relation_graph(...)`, or
+  `scene_view_diagnostics(...)` simply because the current build step's
+  `allowed_families` omits `spatial_context`
 - outside that guided gate, the scope/relation graph builders still require an
   explicit `target_object`, `target_objects`, or `collection_name`; a bare
   call now fails instead of silently returning an empty `scene` scope
@@ -492,6 +497,10 @@ contract in addition to `guided_handoff`.
   refreshes its post-action capture bundle after the extra mesh-surface nudge,
   so attached images and truth summary describe the final seated pose instead
   of the pre-nudge intermediate pose
+- routed macro reports can be `partial` and still carry an `error`; MCP
+  adapters preserve that structured report, including `actions_taken`,
+  modified objects, verification recommendations, capture/truth data, and
+  follow-up guidance, instead of coercing it into an empty failed envelope
 - if the optional segmentation sidecar is enabled on runtime config but not yet
   executed on the current compare path, staged compare/iterate responses now
   report `part_segmentation.status="unavailable"` instead of silently staying

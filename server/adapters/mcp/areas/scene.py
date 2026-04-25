@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Literal, Optional, Union
 
 from fastmcp import Context
 from fastmcp.utilities.types import Image
+from pydantic import ValidationError
 
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
@@ -171,6 +172,44 @@ def _coerce_macro_error_status(value: object) -> MacroErrorStatus:
     return "blocked" if value == "blocked" else "failed"
 
 
+async def _finalize_macro_execution_result(
+    ctx: Context,
+    result: object,
+    *,
+    macro_name: str,
+    intent: str,
+) -> MacroExecutionReportContract:
+    """Preserve structured macro reports before falling back to adapter errors."""
+
+    if isinstance(result, MacroExecutionReportContract):
+        contract = result
+    elif isinstance(result, dict):
+        try:
+            contract = MacroExecutionReportContract.model_validate(result)
+        except ValidationError:
+            contract = MacroExecutionReportContract(
+                status=_coerce_macro_error_status(result.get("status")),
+                macro_name=macro_name,
+                intent=intent,
+                actions_taken=list(result.get("actions_taken") or []),
+                requires_followup=bool(result.get("requires_followup")),
+                error=str(result.get("error") or result),
+            )
+    else:
+        contract = MacroExecutionReportContract(
+            status="failed",
+            macro_name=macro_name,
+            intent=intent,
+            actions_taken=[],
+            requires_followup=False,
+            error=str(result),
+        )
+
+    if contract.status in {"blocked", "failed"}:
+        return contract
+    return await maybe_attach_macro_vision(ctx, contract)
+
+
 def _register_existing_tool(target: Any, tool_name: str) -> Any:
     """Register an existing scene tool on a FastMCP-compatible target."""
 
@@ -293,27 +332,11 @@ async def macro_relative_layout(
         },
         direct_executor=execute,
     )
-    if isinstance(result, MacroExecutionReportContract):
-        return result if result.status == "failed" else await maybe_attach_macro_vision(ctx, result)
-    if isinstance(result, dict):
-        if result.get("status") == "failed" or result.get("error"):
-            return MacroExecutionReportContract(
-                status="failed",
-                macro_name="macro_relative_layout",
-                intent=f"layout '{moving_object}' relative to '{reference_object}'",
-                actions_taken=[],
-                requires_followup=False,
-                error=str(result.get("error") or result),
-            )
-        contract = MacroExecutionReportContract.model_validate(result)
-        return contract if contract.status == "failed" else await maybe_attach_macro_vision(ctx, contract)
-    return MacroExecutionReportContract(
-        status="failed",
+    return await _finalize_macro_execution_result(
+        ctx,
+        result,
         macro_name="macro_relative_layout",
         intent=f"layout '{moving_object}' relative to '{reference_object}'",
-        actions_taken=[],
-        requires_followup=False,
-        error=str(result),
     )
 
 
@@ -396,27 +419,11 @@ async def macro_attach_part_to_surface(
         },
         direct_executor=execute,
     )
-    if isinstance(result, MacroExecutionReportContract):
-        return result if result.status == "failed" else await maybe_attach_macro_vision(ctx, result)
-    if isinstance(result, dict):
-        if result.get("status") == "failed" or result.get("error"):
-            return MacroExecutionReportContract(
-                status="failed",
-                macro_name="macro_attach_part_to_surface",
-                intent=f"attach '{part_object}' to '{surface_object}'",
-                actions_taken=[],
-                requires_followup=False,
-                error=str(result.get("error") or result),
-            )
-        contract = MacroExecutionReportContract.model_validate(result)
-        return contract if contract.status == "failed" else await maybe_attach_macro_vision(ctx, contract)
-    return MacroExecutionReportContract(
-        status="failed",
+    return await _finalize_macro_execution_result(
+        ctx,
+        result,
         macro_name="macro_attach_part_to_surface",
         intent=f"attach '{part_object}' to '{surface_object}'",
-        actions_taken=[],
-        requires_followup=False,
-        error=str(result),
     )
 
 
@@ -501,27 +508,11 @@ async def macro_align_part_with_contact(
         },
         direct_executor=execute,
     )
-    if isinstance(result, MacroExecutionReportContract):
-        return result if result.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, result)
-    if isinstance(result, dict):
-        if result.get("status") in {"failed", "blocked"} or result.get("error"):
-            return MacroExecutionReportContract(
-                status=_coerce_macro_error_status(result.get("status")),
-                macro_name="macro_align_part_with_contact",
-                intent=f"repair '{part_object}' relative to '{reference_object}'",
-                actions_taken=list(result.get("actions_taken") or []),
-                requires_followup=bool(result.get("requires_followup")),
-                error=str(result.get("error") or result),
-            )
-        contract = MacroExecutionReportContract.model_validate(result)
-        return contract if contract.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, contract)
-    return MacroExecutionReportContract(
-        status="failed",
+    return await _finalize_macro_execution_result(
+        ctx,
+        result,
         macro_name="macro_align_part_with_contact",
         intent=f"repair '{part_object}' relative to '{reference_object}'",
-        actions_taken=[],
-        requires_followup=False,
-        error=str(result),
     )
 
 
@@ -585,27 +576,11 @@ async def macro_place_symmetry_pair(
         },
         direct_executor=execute,
     )
-    if isinstance(result, MacroExecutionReportContract):
-        return result if result.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, result)
-    if isinstance(result, dict):
-        if result.get("status") in {"failed", "blocked"} or result.get("error"):
-            return MacroExecutionReportContract(
-                status=_coerce_macro_error_status(result.get("status")),
-                macro_name="macro_place_symmetry_pair",
-                intent=f"place symmetry pair '{left_object}' / '{right_object}'",
-                actions_taken=list(result.get("actions_taken") or []),
-                requires_followup=bool(result.get("requires_followup")),
-                error=str(result.get("error") or result),
-            )
-        contract = MacroExecutionReportContract.model_validate(result)
-        return contract if contract.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, contract)
-    return MacroExecutionReportContract(
-        status="failed",
+    return await _finalize_macro_execution_result(
+        ctx,
+        result,
         macro_name="macro_place_symmetry_pair",
         intent=f"place symmetry pair '{left_object}' / '{right_object}'",
-        actions_taken=[],
-        requires_followup=False,
-        error=str(result),
     )
 
 
@@ -679,27 +654,11 @@ async def macro_place_supported_pair(
         },
         direct_executor=execute,
     )
-    if isinstance(result, MacroExecutionReportContract):
-        return result if result.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, result)
-    if isinstance(result, dict):
-        if result.get("status") in {"failed", "blocked"} or result.get("error"):
-            return MacroExecutionReportContract(
-                status=_coerce_macro_error_status(result.get("status")),
-                macro_name="macro_place_supported_pair",
-                intent=f"place supported pair '{left_object}' / '{right_object}' on '{support_object}'",
-                actions_taken=list(result.get("actions_taken") or []),
-                requires_followup=bool(result.get("requires_followup")),
-                error=str(result.get("error") or result),
-            )
-        contract = MacroExecutionReportContract.model_validate(result)
-        return contract if contract.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, contract)
-    return MacroExecutionReportContract(
-        status="failed",
+    return await _finalize_macro_execution_result(
+        ctx,
+        result,
         macro_name="macro_place_supported_pair",
         intent=f"place supported pair '{left_object}' / '{right_object}' on '{support_object}'",
-        actions_taken=[],
-        requires_followup=False,
-        error=str(result),
     )
 
 
@@ -756,27 +715,11 @@ async def macro_cleanup_part_intersections(
         },
         direct_executor=execute,
     )
-    if isinstance(result, MacroExecutionReportContract):
-        return result if result.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, result)
-    if isinstance(result, dict):
-        if result.get("status") in {"failed", "blocked"} or result.get("error"):
-            return MacroExecutionReportContract(
-                status=_coerce_macro_error_status(result.get("status")),
-                macro_name="macro_cleanup_part_intersections",
-                intent=f"clean intersection between '{part_object}' and '{reference_object}'",
-                actions_taken=list(result.get("actions_taken") or []),
-                requires_followup=bool(result.get("requires_followup")),
-                error=str(result.get("error") or result),
-            )
-        contract = MacroExecutionReportContract.model_validate(result)
-        return contract if contract.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, contract)
-    return MacroExecutionReportContract(
-        status="failed",
+    return await _finalize_macro_execution_result(
+        ctx,
+        result,
         macro_name="macro_cleanup_part_intersections",
         intent=f"clean intersection between '{part_object}' and '{reference_object}'",
-        actions_taken=[],
-        requires_followup=False,
-        error=str(result),
     )
 
 
@@ -842,27 +785,11 @@ async def macro_adjust_relative_proportion(
         },
         direct_executor=execute,
     )
-    if isinstance(result, MacroExecutionReportContract):
-        return result if result.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, result)
-    if isinstance(result, dict):
-        if result.get("status") in {"failed", "blocked"} or result.get("error"):
-            return MacroExecutionReportContract(
-                status=_coerce_macro_error_status(result.get("status")),
-                macro_name="macro_adjust_relative_proportion",
-                intent=f"repair relative proportion for '{primary_object}' relative to '{reference_object}'",
-                actions_taken=list(result.get("actions_taken") or []),
-                requires_followup=bool(result.get("requires_followup")),
-                error=str(result.get("error") or result),
-            )
-        contract = MacroExecutionReportContract.model_validate(result)
-        return contract if contract.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, contract)
-    return MacroExecutionReportContract(
-        status="failed",
+    return await _finalize_macro_execution_result(
+        ctx,
+        result,
         macro_name="macro_adjust_relative_proportion",
         intent=f"repair relative proportion for '{primary_object}' relative to '{reference_object}'",
-        actions_taken=[],
-        requires_followup=False,
-        error=str(result),
     )
 
 
@@ -918,27 +845,11 @@ async def macro_adjust_segment_chain_arc(
         },
         direct_executor=execute,
     )
-    if isinstance(result, MacroExecutionReportContract):
-        return result if result.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, result)
-    if isinstance(result, dict):
-        if result.get("status") in {"failed", "blocked"} or result.get("error"):
-            return MacroExecutionReportContract(
-                status=_coerce_macro_error_status(result.get("status")),
-                macro_name="macro_adjust_segment_chain_arc",
-                intent=f"adjust segment chain arc for {len(segment_objects)} segment(s)",
-                actions_taken=list(result.get("actions_taken") or []),
-                requires_followup=bool(result.get("requires_followup")),
-                error=str(result.get("error") or result),
-            )
-        contract = MacroExecutionReportContract.model_validate(result)
-        return contract if contract.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, contract)
-    return MacroExecutionReportContract(
-        status="failed",
+    return await _finalize_macro_execution_result(
+        ctx,
+        result,
         macro_name="macro_adjust_segment_chain_arc",
         intent=f"adjust segment chain arc for {len(segment_objects)} segment(s)",
-        actions_taken=[],
-        requires_followup=False,
-        error=str(result),
     )
 
 

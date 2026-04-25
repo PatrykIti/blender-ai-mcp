@@ -197,6 +197,10 @@ The first TASK-143 slice is now present in the product surface:
 - `scene_view_diagnostics(...)` now ships as a separate read-only view-space
   artifact for projected extent, frame coverage, centering, and
   visible/partial/occluded/off-frame verdicts
+- when these spatial helpers are visible on `llm-guided`, they remain callable
+  as pinned read-only orientation helpers even if the active guided build step
+  is currently gated to another family such as secondary parts or attachment
+  alignment
 - `assembled_target_scope` now carries deterministic object-role hints
 - `truth_bundle`, `truth_followup`, and `correction_candidates` reuse the same
   scope/relation derivation layer instead of keeping all of that logic private
