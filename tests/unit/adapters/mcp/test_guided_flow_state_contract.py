@@ -849,7 +849,8 @@ def test_scene_clean_scene_clears_guided_part_registry_and_returns_to_primary_bo
     assert state.guided_part_registry is None
 
 
-def test_scene_rename_object_marks_guided_spatial_state_stale():
+@pytest.mark.parametrize("tool_name", ["scene_rename_object", "scene_duplicate_object"])
+def test_scene_object_mutations_mark_guided_spatial_state_stale(tool_name):
     ctx = FakeContext()
     set_session_capability_state(
         ctx,
@@ -882,9 +883,9 @@ def test_scene_rename_object_marks_guided_spatial_state_stale():
 
     state = mark_guided_spatial_state_stale(
         ctx,
-        tool_name="scene_rename_object",
+        tool_name=tool_name,
         family="utility",
-        reason="scene_rename_object",
+        reason=tool_name,
     )
 
     assert state.guided_flow_state is not None

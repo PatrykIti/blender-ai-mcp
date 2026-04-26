@@ -373,11 +373,11 @@ contract in addition to `guided_handoff`.
   heuristics, so real objects named like `Cube`, `Sphere`, or `Sunflower`
   can still become the active guided workset when the operator targets them
 - after material scene changes such as `scene_clean_scene(...)`,
-  `scene_rename_object(...)`, `modeling_create_primitive(...)`,
-  `modeling_transform_object(...)`, `modeling_join_objects(...)`,
-  `modeling_separate_object(...)`, or bounded attachment/alignment macros, the
-  guided runtime can mark the spatial layer stale and re-arm the required
-  checks
+  `scene_duplicate_object(...)`, `scene_rename_object(...)`,
+  `modeling_create_primitive(...)`, `modeling_transform_object(...)`,
+  `modeling_join_objects(...)`, `modeling_separate_object(...)`, or bounded
+  attachment/alignment macros, the guided runtime can mark the spatial layer
+  stale and re-arm the required checks
 - guided mesh edit tools such as `mesh_extrude_region(...)`,
   `mesh_loop_cut(...)`, and `mesh_bevel(...)` are now mapped to the
   `secondary_parts` family, so they are blocked during spatial-context gates
@@ -483,6 +483,8 @@ contract in addition to `guided_handoff`.
   still recover the registered role without manual re-registration
 - successful `scene_rename_object(...)` calls also re-arm guided spatial
   checks, because the bound target-scope fingerprint is name-based
+- successful `scene_duplicate_object(...)` calls also re-arm guided spatial
+  checks, because duplication changes the visible workset/scope relation facts
 - failed plain-string mutation results such as `Object 'Missing' not found`
   now stay non-mutating for guided session state; they do not re-arm spatial
   checks or rewrite guided role registration just because the wrapper returned

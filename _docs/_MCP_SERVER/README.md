@@ -567,11 +567,11 @@ Current guided-flow behavior:
   - clearly opaque placeholder names such as `Sphere` / `Object` can be
     blocked until the object uses a semantic role-shaped name
 - after material scene changes such as `scene_clean_scene(...)`,
-  `scene_rename_object(...)`, `modeling_create_primitive(...)`,
-  `modeling_transform_object(...)`, `modeling_join_objects(...)`,
-  `modeling_separate_object(...)`, or bounded attachment/alignment cleanup
-  macros, the runtime can mark the spatial layer stale and re-arm the
-  required checks
+  `scene_duplicate_object(...)`, `scene_rename_object(...)`,
+  `modeling_create_primitive(...)`, `modeling_transform_object(...)`,
+  `modeling_join_objects(...)`, `modeling_separate_object(...)`, or bounded
+  attachment/alignment cleanup macros, the runtime can mark the spatial layer
+  stale and re-arm the required checks
 - guided mesh edit tools such as `mesh_extrude_region(...)`,
   `mesh_loop_cut(...)`, and `mesh_bevel(...)` are classified as the
   `secondary_parts` family for guided gating, and successful geometry edits
@@ -678,6 +678,9 @@ Current guided-flow behavior:
 - successful `scene_rename_object(...)` calls also mark guided spatial state
   stale so the name-bound target scope can be rebound on the next required
   spatial refresh
+- successful `scene_duplicate_object(...)` calls also mark guided spatial
+  state stale so duplicated parts force fresh scope/relation facts before later
+  checkpoint or attachment decisions
 - failed plain-string mutation results such as `Object 'Missing' not found`
   now stay non-mutating for guided session state; they do not re-arm spatial
   checks or rewrite guided role registration just because the wrapper returned

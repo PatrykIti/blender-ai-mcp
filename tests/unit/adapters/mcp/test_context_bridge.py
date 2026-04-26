@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+import pytest
 import server.adapters.mcp.router_helper as router_helper
 from server.adapters.mcp.context_utils import (
     ctx_error,
@@ -1327,7 +1328,30 @@ def test_route_tool_call_report_keeps_collection_manage_as_utility_even_for_regi
     assert report.steps[0].result.startswith("Moved 'Squirrel_Head'")
 
 
-def test_route_tool_call_marks_guided_spatial_state_stale_after_successful_transform(monkeypatch):
+@pytest.mark.parametrize(
+    ("tool_name", "params", "result_message", "expected_refresh_required"),
+    [
+        (
+            "modeling_transform_object",
+            {"name": "Squirrel_Body", "scale": [0.9, 0.8, 1.2]},
+            "Transformed object 'Squirrel_Body'",
+            False,
+        ),
+        (
+            "scene_duplicate_object",
+            {"name": "Squirrel_Body", "translation": [0.5, 0.0, 0.0]},
+            "{'original': 'Squirrel_Body', 'new_object': 'Squirrel_Body.001', 'location': [0.5, 0.0, 0.0]}",
+            True,
+        ),
+    ],
+)
+def test_route_tool_call_marks_guided_spatial_state_stale_after_successful_visible_mutation(
+    monkeypatch,
+    tool_name,
+    params,
+    result_message,
+    expected_refresh_required,
+):
     """Successful guided build mutations should dirty the spatial layer for later re-arm logic."""
 
     from fastmcp.server.context import _current_context
@@ -1382,20 +1406,20 @@ def test_route_tool_call_marks_guided_spatial_state_stale_after_successful_trans
     token = _current_context.set(ctx)
     try:
         result = route_tool_call(
-            tool_name="modeling_transform_object",
-            params={"name": "Squirrel_Body", "scale": [0.9, 0.8, 1.2]},
-            direct_executor=lambda: "Transformed object 'Squirrel_Body'",
+            tool_name=tool_name,
+            params=params,
+            direct_executor=lambda: result_message,
         )
     finally:
         _current_context.reset(token)
 
     state = get_session_capability_state(ctx)
 
-    assert result == "Transformed object 'Squirrel_Body'"
+    assert result == result_message
     assert state.guided_flow_state is not None
     assert state.guided_flow_state["spatial_state_version"] == 1
     assert state.guided_flow_state["spatial_state_stale"] is True
-    assert state.guided_flow_state["spatial_refresh_required"] is False
+    assert state.guided_flow_state["spatial_refresh_required"] is expected_refresh_required
 
 
 def test_route_tool_call_marks_guided_spatial_state_stale_after_successful_mesh_edit(monkeypatch):

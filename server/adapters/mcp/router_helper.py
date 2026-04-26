@@ -107,6 +107,12 @@ def _result_represents_success(tool_name: str, result: Any) -> bool:
             return _CREATED_OBJECT_RESULT_PATTERN.fullmatch(text) is not None
         if tool_name == "modeling_transform_object":
             return _TRANSFORMED_OBJECT_RESULT_PATTERN.fullmatch(text) is not None
+        if tool_name == "scene_duplicate_object":
+            try:
+                parsed = literal_eval(text)
+            except (SyntaxError, ValueError):
+                return False
+            return isinstance(parsed, dict) and bool(parsed.get("new_object") or parsed.get("name"))
         if tool_name == "scene_rename_object":
             return _RENAMED_OBJECT_RESULT_PATTERN.fullmatch(text) is not None
         if tool_name == "modeling_join_objects":

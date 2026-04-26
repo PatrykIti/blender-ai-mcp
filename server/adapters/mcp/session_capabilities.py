@@ -120,6 +120,7 @@ _SPATIAL_REARM_ALLOWED_STEPS: set[GuidedFlowStepLiteral] = {
 _SPATIAL_REARM_ALWAYS_BLOCK_REASONS: set[str] = {"scene_clean_scene"}
 _SPATIAL_STATE_DIRTY_TOOL_NAMES: set[str] = {
     "scene_clean_scene",
+    "scene_duplicate_object",
     "scene_rename_object",
     "modeling_create_primitive",
     "modeling_transform_object",
@@ -629,7 +630,7 @@ def _should_rearm_spatial_gate(contract: GuidedFlowStateContract, *, force: bool
         return False
     if contract.last_spatial_mutation_reason in _SPATIAL_REARM_ALWAYS_BLOCK_REASONS:
         return True
-    if contract.last_spatial_mutation_reason == "scene_rename_object":
+    if contract.last_spatial_mutation_reason in {"scene_rename_object", "scene_duplicate_object"}:
         return True
     if (
         contract.current_step == "place_secondary_parts"
