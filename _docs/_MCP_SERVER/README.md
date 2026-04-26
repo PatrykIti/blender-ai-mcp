@@ -612,6 +612,9 @@ Current guided-flow behavior:
 - guided execution policy can now fail closed when a call resolves to the
   wrong shared family or an explicit guided role that is not allowed for the
   current step
+- caller-supplied `role_group` values are validation hints only; they must
+  match the active domain role map before family enforcement runs and cannot
+  relabel role-sensitive mutating tools as `utility` or another allowed family
 - for role-sensitive build families, `modeling_create_primitive(...)` and
   `modeling_transform_object(...)` now require either:
   - an explicit `guided_role=...`

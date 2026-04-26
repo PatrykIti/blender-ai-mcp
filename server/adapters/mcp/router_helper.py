@@ -443,7 +443,8 @@ def _resolve_guided_role_context(tool_name: str, params: Dict[str, Any]) -> tupl
     explicit_role_group = params.get("role_group")
     if isinstance(explicit_role, str) and explicit_role.strip():
         session = _get_active_session_state()
-        derived_role_group = explicit_role_group.strip() if isinstance(explicit_role_group, str) else None
+        supplied_role_group = explicit_role_group.strip() if isinstance(explicit_role_group, str) else None
+        derived_role_group = supplied_role_group
         if session is not None and session.guided_flow_state is not None:
             try:
                 domain_profile = str(session.guided_flow_state.get("domain_profile") or "").strip()
@@ -453,7 +454,7 @@ def _resolve_guided_role_context(tool_name: str, params: Dict[str, Any]) -> tupl
                         typed_domain_profile, explicit_role.strip(), derived_role_group
                     )
             except Exception:
-                pass
+                derived_role_group = None
         return explicit_role.strip(), derived_role_group
 
     session = _get_active_session_state()
@@ -498,6 +499,70 @@ def _resolve_guided_effective_family(tool_name: str, params: Dict[str, Any]) -> 
     return base_family
 
 
+def _evaluate_explicit_guided_role_group_policy(
+    *,
+    flow_state: dict[str, Any],
+    tool_name: str,
+    params: Dict[str, Any],
+    allowed_families: set[str],
+    allowed_roles: set[str],
+) -> dict[str, Any] | None:
+    """Validate caller-supplied role_group against the active domain role map."""
+
+    explicit_role = params.get("guided_role")
+    explicit_role_group = params.get("role_group")
+    if not isinstance(explicit_role, str) or not explicit_role.strip():
+        return None
+    if not isinstance(explicit_role_group, str) or not explicit_role_group.strip():
+        return None
+
+    domain_profile = str(flow_state.get("domain_profile") or "").strip()
+    if domain_profile not in {"generic", "creature", "building"}:
+        return None
+
+    typed_domain_profile = cast(Literal["generic", "creature", "building"], domain_profile)
+    role = explicit_role.strip()
+    supplied_role_group = explicit_role_group.strip()
+    try:
+        expected_role_group = resolve_guided_role_group_for_domain(
+            typed_domain_profile,
+            role,
+        )
+    except ValueError as exc:
+        return {
+            "status": "blocked",
+            "current_step": str(flow_state.get("current_step") or "").strip(),
+            "family": resolve_guided_tool_family(tool_name),
+            "role": role,
+            "role_group": None,
+            "tool_name": tool_name,
+            "allowed_families": sorted(allowed_families),
+            "allowed_roles": sorted(allowed_roles),
+            "message": str(exc),
+        }
+
+    if supplied_role_group == expected_role_group:
+        return None
+
+    return {
+        "status": "blocked",
+        "current_step": str(flow_state.get("current_step") or "").strip(),
+        "family": expected_role_group
+        if tool_name in _GUIDED_ROLE_REQUIRED_TOOLS
+        else resolve_guided_tool_family(tool_name),
+        "role": role,
+        "role_group": supplied_role_group,
+        "expected_role_group": expected_role_group,
+        "tool_name": tool_name,
+        "allowed_families": sorted(allowed_families),
+        "allowed_roles": sorted(allowed_roles),
+        "message": (
+            f"Guided execution blocked role_group '{supplied_role_group}' for role '{role}'. "
+            f"Expected role_group '{expected_role_group}' for domain profile '{domain_profile}'."
+        ),
+    }
+
+
 def _evaluate_guided_execution_policy(
     *,
     surface_profile: str,
@@ -523,6 +588,16 @@ def _evaluate_guided_execution_policy(
     allowed_roles = {
         str(role) for role in (flow_state.get("allowed_roles") or []) if isinstance(role, str) and role.strip()
     }
+    role_group_policy = _evaluate_explicit_guided_role_group_policy(
+        flow_state=flow_state,
+        tool_name=tool_name,
+        params=params,
+        allowed_families=allowed_families,
+        allowed_roles=allowed_roles,
+    )
+    if role_group_policy is not None:
+        return role_group_policy
+
     family = _resolve_guided_effective_family(tool_name, params)
     role, role_group = _resolve_guided_role_context(tool_name, params)
     explicit_guided_role = isinstance(params.get("guided_role"), str) and str(params.get("guided_role")).strip()

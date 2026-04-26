@@ -440,6 +440,54 @@ def test_route_tool_call_report_fail_closes_when_guided_family_is_not_allowed(mo
     assert report.context.guided_tool_family == "finish"
 
 
+def test_route_tool_call_report_fail_closes_mismatched_role_group_before_family_bypass(monkeypatch):
+    """Caller-supplied role_group must not reclassify role-sensitive mutators as utility."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "establish_spatial_context",
+                "completed_steps": ["understand_goal"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["run_required_checks"],
+                "blocked_families": ["build", "late_refinement", "finish"],
+                "allowed_families": ["spatial_context", "reference_context"],
+                "allowed_roles": [],
+                "completed_roles": [],
+                "missing_roles": [],
+                "required_role_groups": ["spatial_context"],
+                "step_status": "blocked",
+            },
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="modeling_create_primitive",
+        params={
+            "primitive_type": "Sphere",
+            "name": "Squirrel_Body",
+            "guided_role": "body_core",
+            "role_group": "utility",
+        },
+        direct_executor=lambda: "should not run",
+    )
+
+    assert report.router_disposition == "failed_closed_error"
+    assert "role_group 'utility'" in str(report.error)
+    assert "Expected role_group 'primary_masses'" in str(report.error)
+    assert report.context.guided_tool_family == "primary_masses"
+    assert report.context.guided_role == "body_core"
+    assert report.context.guided_role_group == "utility"
+
+
 def test_route_tool_call_report_allows_pinned_spatial_helpers_when_family_is_omitted(monkeypatch):
     """Visible read-only spatial helpers should stay callable during guided build steps."""
 

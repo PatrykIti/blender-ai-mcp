@@ -974,9 +974,6 @@ def _resolve_guided_role_group(
     role: str,
     role_group: str | None = None,
 ) -> str:
-    if role_group is not None and role_group.strip():
-        return role_group.strip()
-
     mapping = _GUIDED_ROLE_GROUP_BY_ROLE[domain_profile]
     resolved = mapping.get(role)
     if resolved is None:
@@ -984,6 +981,8 @@ def _resolve_guided_role_group(
         raise ValueError(
             f"Unknown guided part role '{role}' for domain profile '{domain_profile}'. Expected one of: {known}"
         )
+    if role_group is not None and role_group.strip() and role_group.strip() != resolved:
+        raise ValueError(f"Guided role '{role}' belongs to role_group '{resolved}', not '{role_group.strip()}'.")
     return resolved
 
 

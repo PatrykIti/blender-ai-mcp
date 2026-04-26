@@ -439,6 +439,10 @@ contract in addition to `guided_handoff`.
 - use `guided_register_part(object_name=..., role=...)` as the canonical
   way to tell the server what semantic part one object represents; optional
   `guided_role=...` hints on build tools are convenience-only
+- optional `role_group=...` values must match the server's domain role map;
+  callers cannot reclassify `body_core`, `head_mass`, or similar
+  role-sensitive mutating calls as `utility` or another family to bypass the
+  current guided phase gate
 - `guided_register_part(...)` now validates that the named Blender object
   actually exists before it can count toward guided role completion; typos do
   not create completed roles on their own

@@ -1274,6 +1274,41 @@ def test_secondary_role_registration_advances_creature_flow_to_checkpoint_iterat
     assert state.guided_flow_state["allowed_roles"] == ["tail_mass", "snout_mass"]
 
 
+def test_guided_part_role_registration_rejects_mismatched_role_group():
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": [],
+                "missing_roles": ["body_core", "head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    with pytest.raises(ValueError, match="belongs to role_group 'primary_masses', not 'utility'"):
+        register_guided_part_role(
+            ctx,
+            object_name="Squirrel_Body",
+            role="body_core",
+            role_group="utility",
+        )
+
+
 def test_register_guided_part_role_stays_pure_state_update_without_scene_lookup(monkeypatch):
     ctx = FakeContext()
     set_session_capability_state(
