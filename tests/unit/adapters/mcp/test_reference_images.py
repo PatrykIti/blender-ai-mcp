@@ -3533,6 +3533,26 @@ def test_reference_iterate_stage_checkpoint_escalates_when_truth_signal_is_high_
     assert "Deterministic truth findings remain high-priority" in (result.message or "")
 
 
+def _guided_incomplete_secondary_flow_state() -> dict[str, object]:
+    return {
+        "flow_id": "guided_creature_flow",
+        "domain_profile": "creature",
+        "current_step": "place_secondary_parts",
+        "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+        "required_checks": [],
+        "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+        "preferred_prompts": ["workflow_router_first"],
+        "next_actions": ["begin_secondary_parts"],
+        "blocked_families": [],
+        "allowed_families": ["primary_masses", "secondary_parts", "attachment_alignment", "reference_context"],
+        "allowed_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+        "completed_roles": ["body_core", "head_mass"],
+        "missing_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+        "required_role_groups": ["secondary_parts"],
+        "step_status": "ready",
+    }
+
+
 def test_reference_iterate_stage_checkpoint_holds_build_when_role_group_is_incomplete(monkeypatch):
     ctx = FakeContext()
     set_session_capability_state(
@@ -3541,23 +3561,7 @@ def test_reference_iterate_stage_checkpoint_holds_build_when_role_group_is_incom
             phase=SessionPhase.BUILD,
             goal="low poly creature",
             surface_profile="llm-guided",
-            guided_flow_state={
-                "flow_id": "guided_creature_flow",
-                "domain_profile": "creature",
-                "current_step": "place_secondary_parts",
-                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
-                "required_checks": [],
-                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
-                "preferred_prompts": ["workflow_router_first"],
-                "next_actions": ["begin_secondary_parts"],
-                "blocked_families": [],
-                "allowed_families": ["primary_masses", "secondary_parts", "attachment_alignment", "reference_context"],
-                "allowed_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
-                "completed_roles": ["body_core", "head_mass"],
-                "missing_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
-                "required_role_groups": ["secondary_parts"],
-                "step_status": "ready",
-            },
+            guided_flow_state=_guided_incomplete_secondary_flow_state(),
         ),
     )
 
@@ -3640,6 +3644,69 @@ def test_reference_iterate_stage_checkpoint_holds_build_when_role_group_is_incom
     assert result.guided_flow_state is not None
     assert result.guided_flow_state.current_step == "place_secondary_parts"
     assert "place_secondary_parts" not in result.guided_flow_state.completed_steps
+
+
+def test_reference_iterate_stage_checkpoint_holds_incomplete_build_on_no_action_compare(monkeypatch):
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="low poly creature",
+            surface_profile="llm-guided",
+            guided_flow_state=_guided_incomplete_secondary_flow_state(),
+        ),
+    )
+
+    compare = ReferenceCompareStageCheckpointResponseContract.model_validate(
+        {
+            "action": "compare_stage_checkpoint",
+            "goal": "low poly creature",
+            "guided_flow_state": get_session_capability_state(ctx).guided_flow_state,
+            "target_object": "Creature",
+            "target_objects": ["Creature"],
+            "checkpoint_id": "checkpoint_no_action_hold",
+            "checkpoint_label": "stage_no_action_hold",
+            "preset_profile": "compact",
+            "preset_names": ["context_wide"],
+            "capture_count": 1,
+            "captures": [],
+            "reference_count": 0,
+            "reference_ids": [],
+            "reference_labels": [],
+        }
+    )
+
+    async def _fake_reference_compare_stage_checkpoint(*args, **kwargs):
+        return compare
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.reference_compare_stage_checkpoint",
+        _fake_reference_compare_stage_checkpoint,
+    )
+
+    result = asyncio.run(
+        reference_iterate_stage_checkpoint(
+            ctx,
+            target_object="Creature",
+            target_objects=["Creature"],
+            checkpoint_label="stage_no_action_hold",
+        )
+    )
+
+    assert result.loop_disposition == "continue_build"
+    assert result.continue_recommended is False
+    assert result.stop_reason is None
+    assert "Guided governor is holding the session in the current build stage" in (result.message or "")
+    assert result.guided_flow_state is not None
+    assert result.guided_flow_state.current_step == "place_secondary_parts"
+    assert "place_secondary_parts" not in result.guided_flow_state.completed_steps
+    assert set(result.guided_flow_state.missing_roles) >= {
+        "snout_mass",
+        "ear_pair",
+        "foreleg_pair",
+        "hindleg_pair",
+    }
 
 
 def test_reference_iterate_stage_checkpoint_falls_back_to_truth_handoff_when_vision_compare_errors(monkeypatch):

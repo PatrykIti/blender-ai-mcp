@@ -3652,8 +3652,9 @@ async def reference_iterate_stage_checkpoint(
     if continue_recommended and stagnation_count >= _REFERENCE_CORRECTION_STAGNATION_THRESHOLD:
         loop_disposition = "inspect_validate"
 
-    if loop_disposition == "inspect_validate" and hold_in_build:
+    if hold_in_build and loop_disposition != "continue_build":
         loop_disposition = "continue_build"
+        stop_reason = None
 
     await set_session_value_async(
         ctx,
@@ -3684,7 +3685,7 @@ async def reference_iterate_stage_checkpoint(
                 "Repeated correction focus persists across stage iterations. "
                 "Stop free-form modeling and switch to inspect/measure/assert now."
             )
-    elif continue_recommended:
+    elif loop_disposition == "continue_build":
         if hold_in_build:
             message = (
                 "Guided governor is holding the session in the current build stage until the required role/workset "

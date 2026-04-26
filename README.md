@@ -411,6 +411,9 @@ contract in addition to `guided_handoff`.
   remains on the same current step and does not mark the unfinished role slice
   as completed; keep following `missing_roles` before relying on later-stage
   visibility
+- this incomplete-stage hold also applies when stage iterate has no
+  `correction_focus` or `action_hints`; a no-action compare result must not
+  advance a guided build with required missing roles to `finish_or_stop`
 - after the flow reaches a later step such as `place_secondary_parts`, the
   server can still keep missing primary masses available when they are part of
   the same bounded workset, instead of forcing a squirrel/building run to
@@ -545,7 +548,8 @@ hidden ordering assumptions.
 - if it returns `loop_disposition="continue_build"` while
   `guided_flow_state.missing_roles` is still non-empty, continue the current
   role slice; the server intentionally keeps the guided step in place instead
-  of advancing to the next stage
+  of advancing to the next stage, even when the compare result itself produced
+  no actionable correction hints
 - if staged compare degrades but strong deterministic truth findings still
   exist, use the same inspect/measure/assert handoff instead of improvising
   another large free-form correction

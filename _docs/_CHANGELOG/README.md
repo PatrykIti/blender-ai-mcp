@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [262](./262-2026-04-26-guided-incomplete-build-iterate-hold.md) | 2026-04-26 | **Guided incomplete-build iterate hold** | - |
 | [261](./261-2026-04-26-guided-role-group-validation.md) | 2026-04-26 | **Guided role-group validation** | - |
 | [260](./260-2026-04-25-guided-partial-macro-and-spatial-helper-policy.md) | 2026-04-25 | **Guided partial macro and spatial-helper policy preservation** | - |
 | [259](./259-2026-04-24-guided-role-hint-visibility-refresh.md) | 2026-04-24 | **Guided role-hint visibility refresh** | - |

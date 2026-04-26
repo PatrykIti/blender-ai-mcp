@@ -600,6 +600,10 @@ Current guided-flow behavior:
   incomplete; in that case the persisted `guided_flow_state.current_step`
   remains on the unfinished build step and `missing_roles` remains the
   authority
+- the same incomplete-role hold applies to no-action stage iterate results
+  with no `correction_focus` and no `action_hints`; those results must not
+  move an active guided build to `finish_or_stop` while required roles are
+  still missing
 - if a read-only spatial check uses a different scope while refresh is active,
   it can still return its payload, but the response message says it did not
   satisfy the active guided scope and shows the expected rerun scope
