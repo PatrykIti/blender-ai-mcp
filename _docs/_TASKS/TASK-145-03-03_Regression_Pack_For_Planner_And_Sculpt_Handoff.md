@@ -1,8 +1,8 @@
 # TASK-145-03-03: Regression Pack For Planner and Sculpt Handoff
 
-**Parent:** [TASK-145-03](./TASK-145-03_Guided_Adoption_Visibility_Docs_And_Regression_Pack.md)  
-**Status:** ⏳ To Do  
-**Priority:** 🔴 High  
+**Parent:** [TASK-145-03](./TASK-145-03_Guided_Adoption_Visibility_Docs_And_Regression_Pack.md)
+**Status:** ⏳ To Do
+**Priority:** 🔴 High
 **Depends On:** [TASK-145-03-01](./TASK-145-03-01_Planner_And_Sculpt_Delivery_On_LLM_Guided.md), [TASK-145-03-02](./TASK-145-03-02_Planner_First_Prompting_And_Documentation.md)
 
 ## Objective

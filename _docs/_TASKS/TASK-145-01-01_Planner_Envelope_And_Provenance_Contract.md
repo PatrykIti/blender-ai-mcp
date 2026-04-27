@@ -1,8 +1,8 @@
 # TASK-145-01-01: Planner Envelope and Provenance Contract
 
-**Parent:** [TASK-145-01](./TASK-145-01_Repair_Planner_Payload_And_Family_Selection_Policy.md)  
-**Status:** ⏳ To Do  
-**Priority:** 🔴 High  
+**Parent:** [TASK-145-01](./TASK-145-01_Repair_Planner_Payload_And_Family_Selection_Policy.md)
+**Status:** ⏳ To Do
+**Priority:** 🔴 High
 **Depends On:** [TASK-122-03-07](./TASK-122-03-07_Deterministic_Cross_Domain_Refinement_Routing_And_Sculpt_Exposure.md), [TASK-143](./TASK-143_Guided_Spatial_Scope_And_Relation_Graphs.md), [TASK-144](./TASK-144_Camera_Aware_View_Graph_And_Visibility_Diagnostics.md)
 
 ## Objective

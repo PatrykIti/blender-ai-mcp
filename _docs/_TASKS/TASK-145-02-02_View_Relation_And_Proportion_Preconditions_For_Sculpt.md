@@ -1,8 +1,8 @@
 # TASK-145-02-02: View, Relation, and Proportion Preconditions For Sculpt
 
-**Parent:** [TASK-145-02](./TASK-145-02_Sculpt_Handoff_Context_And_Precondition_Model.md)  
-**Status:** ⏳ To Do  
-**Priority:** 🔴 High  
+**Parent:** [TASK-145-02](./TASK-145-02_Sculpt_Handoff_Context_And_Precondition_Model.md)
+**Status:** ⏳ To Do
+**Priority:** 🔴 High
 **Depends On:** [TASK-145-02-01](./TASK-145-02-01_Sculpt_Handoff_Contract_And_Local_Target_Semantics.md), [TASK-143](./TASK-143_Guided_Spatial_Scope_And_Relation_Graphs.md), [TASK-144](./TASK-144_Camera_Aware_View_Graph_And_Visibility_Diagnostics.md)
 
 ## Objective

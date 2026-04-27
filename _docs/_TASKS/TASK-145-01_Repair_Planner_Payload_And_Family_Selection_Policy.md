@@ -1,8 +1,8 @@
 # TASK-145-01: Repair Planner Payload and Family Selection Policy
 
-**Parent:** [TASK-145](./TASK-145_Spatial_Repair_Planner_And_Sculpt_Handoff_Context.md)  
-**Status:** ⏳ To Do  
-**Priority:** 🔴 High  
+**Parent:** [TASK-145](./TASK-145_Spatial_Repair_Planner_And_Sculpt_Handoff_Context.md)
+**Status:** ⏳ To Do
+**Priority:** 🔴 High
 **Depends On:** [TASK-122-03-07](./TASK-122-03-07_Deterministic_Cross_Domain_Refinement_Routing_And_Sculpt_Exposure.md), [TASK-143](./TASK-143_Guided_Spatial_Scope_And_Relation_Graphs.md), [TASK-144](./TASK-144_Camera_Aware_View_Graph_And_Visibility_Diagnostics.md)
 
 ## Objective

@@ -1,8 +1,8 @@
 # TASK-144-03-01: LLM-Guided Disclosure And Discovery Shaping For View Diagnostics
 
-**Parent:** [TASK-144-03](./TASK-144-03_Goal_Aware_Disclosure_Guided_Adoption_And_Regression_Pack.md)  
-**Status:** ✅ Done  
-**Priority:** 🟠 High  
+**Parent:** [TASK-144-03](./TASK-144-03_Goal_Aware_Disclosure_Guided_Adoption_And_Regression_Pack.md)
+**Status:** ✅ Done
+**Priority:** 🟠 High
 **Depends On:** [TASK-144-02-02](./TASK-144-02-02_Scene_View_Diagnostics_Surface_RPC_Wiring_And_Metadata.md)
 
 **Completion Summary:** Completed on 2026-04-07. Updated the guided

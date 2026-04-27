@@ -1,8 +1,8 @@
 # TASK-144-02-02: Scene View Diagnostics Surface, RPC Wiring, And Metadata
 
-**Parent:** [TASK-144-02](./TASK-144-02_Visibility_Report_Contract_And_Read_Surface.md)  
-**Status:** ✅ Done  
-**Priority:** 🔴 High  
+**Parent:** [TASK-144-02](./TASK-144-02_Visibility_Report_Contract_And_Read_Surface.md)
+**Status:** ✅ Done
+**Priority:** 🔴 High
 **Depends On:** [TASK-144-01-02](./TASK-144-01-02_Blender_View_Projection_Runtime_And_Frame_Coverage.md), [TASK-144-02-01](./TASK-144-02-01_Visibility_Verdict_Taxonomy_And_Report_Schema.md)
 
 **Completion Summary:** Completed on 2026-04-07. Wired the new view

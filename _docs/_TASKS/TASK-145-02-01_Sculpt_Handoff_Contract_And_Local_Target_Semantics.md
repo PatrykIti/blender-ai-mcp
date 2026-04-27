@@ -1,8 +1,8 @@
 # TASK-145-02-01: Sculpt Handoff Contract and Local Target Semantics
 
-**Parent:** [TASK-145-02](./TASK-145-02_Sculpt_Handoff_Context_And_Precondition_Model.md)  
-**Status:** ⏳ To Do  
-**Priority:** 🔴 High  
+**Parent:** [TASK-145-02](./TASK-145-02_Sculpt_Handoff_Context_And_Precondition_Model.md)
+**Status:** ⏳ To Do
+**Priority:** 🔴 High
 **Depends On:** [TASK-145-01-01](./TASK-145-01-01_Planner_Envelope_And_Provenance_Contract.md)
 
 ## Objective

@@ -287,16 +287,16 @@ The following papers most directly shaped these recommendations. **SceneCraft** 
 
 ## Prioritized implementation roadmap
 
-**Phase 1 (weeks 1–3): Scene context layer — highest impact, lowest risk.**  
+**Phase 1 (weeks 1–3): Scene context layer — highest impact, lowest risk.**
 Add the scene context serializer to the Blender addon (export transforms, bboxes, hierarchy as JSON). Add `scene_get_spatial_graph` to the MCP server (compute support/adjacency/containment relationships using scipy KDTree + bounding box math). Integrate networkx for graph construction and serialization. Adopt CoS notation in the router system prompt. Add explicit spatial reasoning rules and the INSPECT→COMPUTE→EXECUTE→VERIFY decomposition pattern. These changes require only scipy and networkx (pure Python, zero dependency risk) and will transform the LLM's spatial reasoning accuracy.
 
-**Phase 2 (weeks 4–6): Geometric analysis engine.**  
+**Phase 2 (weeks 4–6): Geometric analysis engine.**
 Add trimesh to the MCP server for mesh-level analysis: watertight validation, volume computation, proximity queries, OBB computation, convex hull ratio. Add `scene_assert_manifold`, `scene_assert_clearance`, `scene_measure_surface_quality`, `scene_measure_convexity`. Implement binary mesh transfer (foreach_get → .npy → trimesh). Add per-object analysis caching with hash-based invalidation.
 
-**Phase 3 (weeks 7–9): Advanced spatial queries.**  
+**Phase 3 (weeks 7–9): Advanced spatial queries.**
 Add Open3D's RaycastingScene for multi-mesh distance queries and occupancy testing. Add rtree for bounding-box spatial indexing in large scenes. Add shapely for 2D footprint analysis. Implement the full spatial relationship taxonomy (support, containment, alignment, symmetry, facing) with configurable distance thresholds.
 
-**Phase 4 (weeks 10–12): Optional semantic layer.**  
+**Phase 4 (weeks 10–12): Optional semantic layer.**
 Package OpenShape or Uni3D as an optional module for zero-shot object classification on unnamed geometry. Add PointNet++ part segmentation for sub-object labeling. These are opt-in dependencies — the system works fully without them. Only relevant when the agent encounters imported or unnamed meshes.
 
 ## Conclusion

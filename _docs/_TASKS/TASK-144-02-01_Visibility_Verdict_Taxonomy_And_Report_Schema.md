@@ -1,8 +1,8 @@
 # TASK-144-02-01: Visibility Verdict Taxonomy And Report Schema
 
-**Parent:** [TASK-144-02](./TASK-144-02_Visibility_Report_Contract_And_Read_Surface.md)  
-**Status:** ✅ Done  
-**Priority:** 🔴 High  
+**Parent:** [TASK-144-02](./TASK-144-02_Visibility_Report_Contract_And_Read_Surface.md)
+**Status:** ✅ Done
+**Priority:** 🔴 High
 **Depends On:** [TASK-144-01-01](./TASK-144-01-01_View_Query_Selector_And_Projection_Contract.md)
 
 **Completion Summary:** Completed on 2026-04-07. Finalized the bounded schema

@@ -1,8 +1,8 @@
 # TASK-144-02: Visibility Report Contract And Read Surface
 
-**Parent:** [TASK-144](./TASK-144_Camera_Aware_View_Graph_And_Visibility_Diagnostics.md)  
-**Status:** ✅ Done  
-**Priority:** 🔴 High  
+**Parent:** [TASK-144](./TASK-144_Camera_Aware_View_Graph_And_Visibility_Diagnostics.md)
+**Status:** ✅ Done
+**Priority:** 🔴 High
 **Depends On:** [TASK-144-01](./TASK-144-01_Projection_View_Space_Contract_And_Runtime_Foundation.md)
 
 **Completion Summary:** Completed on 2026-04-07. Shipped the compact

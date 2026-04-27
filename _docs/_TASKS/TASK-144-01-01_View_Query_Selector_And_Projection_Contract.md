@@ -1,8 +1,8 @@
 # TASK-144-01-01: View Query Selector And Projection Contract
 
-**Parent:** [TASK-144-01](./TASK-144-01_Projection_View_Space_Contract_And_Runtime_Foundation.md)  
-**Status:** ✅ Done  
-**Priority:** 🔴 High  
+**Parent:** [TASK-144-01](./TASK-144-01_Projection_View_Space_Contract_And_Runtime_Foundation.md)
+**Status:** ✅ Done
+**Priority:** 🔴 High
 **Depends On:** [TASK-121-03-03](./TASK-121-03-03_Camera_Faithful_Viewport_Capture_Semantics.md), [TASK-121-03-04](./TASK-121-03-04_User_View_Manipulation_For_Viewport_Capture.md), [TASK-121-03-05](./TASK-121-03-05_Render_Visibility_Consistency_For_Viewport_Capture.md)
 
 **Completion Summary:** Completed on 2026-04-07. Added the typed request and

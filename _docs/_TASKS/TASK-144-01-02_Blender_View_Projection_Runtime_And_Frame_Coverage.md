@@ -1,8 +1,8 @@
 # TASK-144-01-02: Blender View Projection Runtime And Frame Coverage
 
-**Parent:** [TASK-144-01](./TASK-144-01_Projection_View_Space_Contract_And_Runtime_Foundation.md)  
-**Status:** ✅ Done  
-**Priority:** 🔴 High  
+**Parent:** [TASK-144-01](./TASK-144-01_Projection_View_Space_Contract_And_Runtime_Foundation.md)
+**Status:** ✅ Done
+**Priority:** 🔴 High
 **Depends On:** [TASK-144-01-01](./TASK-144-01-01_View_Query_Selector_And_Projection_Contract.md)
 
 **Completion Summary:** Completed on 2026-04-07. Implemented the Blender-side
