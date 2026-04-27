@@ -523,7 +523,7 @@ Current guided-flow behavior:
 - during `establish_spatial_context`, the visible guided build surface stays
   bounded to spatial-context / inspection / reference-support tools until the
   required checks complete
-- `scene_scope_graph(...)` binds the active guided target scope when no active
+- scene_scope_graph(...) now binds the active guided target scope when no active
   scope exists yet.
 - `scene_scope_graph(...)` does not rebind an existing active target during a
   spatial refresh; the refreshed scope must match the already-bound target

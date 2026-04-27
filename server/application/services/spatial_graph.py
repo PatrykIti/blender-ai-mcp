@@ -228,9 +228,12 @@ def _is_limb_like(object_name: str) -> bool:
     tokens = _name_role_tokens(object_name)
     directional_tokens = {"fore", "hind"}
     side_tokens = {"l", "r", "left", "right"}
-    if not any(token in directional_tokens for token in tokens) or not any(token in side_tokens for token in tokens):
-        return False
-    return all(token in directional_tokens or token in side_tokens or token.isdigit() for token in tokens)
+    for index, token in enumerate(tokens[:-1]):
+        if token not in directional_tokens or tokens[index + 1] not in side_tokens:
+            continue
+        if all(trailing.isdigit() for trailing in tokens[index + 2 :]):
+            return True
+    return False
 
 
 def _is_distal_limb_like(object_name: str) -> bool:

@@ -15,6 +15,9 @@ limb heuristics, and addon RPC trace overhead.
   - restricted side/direction-only limb fallback to anatomical `fore` / `hind`
     tokens, avoiding false creature seams for non-anatomical names such as
     `front_right_window`
+  - preserved prefixed anatomical abbreviations such as `E2E_Abbrev_ForeL`
+    and `E2E_Abbrev_HindR` by requiring the `fore` / `hind` plus side marker
+    at the end of the token sequence instead of rejecting all prefixed names
 - in `server/adapters/mcp/session_capabilities.py` and
   `server/adapters/mcp/areas/scene.py`:
   - kept `spatial_refresh_required` checks bound to the already-active guided
@@ -44,3 +47,16 @@ limb heuristics, and addon RPC trace overhead.
   - result on this machine: passed
 - `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --files README.md _docs/_ADDON/README.md _docs/_CHANGELOG/README.md _docs/_CHANGELOG/264-2026-04-27-guided-spatial-scope-and-rpc-trace-hardening.md _docs/_MCP_SERVER/README.md _docs/_PROMPTS/README.md blender_addon/infrastructure/rpc_server.py server/adapters/mcp/areas/reference.py server/adapters/mcp/areas/scene.py server/adapters/mcp/session_capabilities.py server/application/services/spatial_graph.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_scene_guided_scope_requirements.py tests/unit/adapters/rpc/test_rpc_server_edge_cases.py tests/unit/tools/scene/test_spatial_graph_service.py`
   - result on this machine: passed
+
+## Follow-up Validation
+
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py::test_mcp_docs_describe_aliases_and_hidden_arguments tests/unit/tools/test_handler_rpc_alignment.py::test_scene_relation_graph_treats_forel_hindr_names_as_limb_body_pairs tests/unit/tools/test_handler_rpc_alignment.py::test_scene_relation_graph_treats_prefixed_forel_hindr_names_as_limb_body_pairs -q`
+  - result on this machine: `3 passed`
+- `poetry run ruff check server/application/services/spatial_graph.py`
+  - result on this machine: passed
+- `poetry run mypy server/application/services/spatial_graph.py`
+  - result on this machine: passed
+- `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --files server/application/services/spatial_graph.py _docs/_MCP_SERVER/README.md _docs/_CHANGELOG/264-2026-04-27-guided-spatial-scope-and-rpc-trace-hardening.md`
+  - result on this machine: passed
+- `PYTHONPATH=. poetry run pytest tests/unit -q`
+  - result on this machine: `3106 passed`
