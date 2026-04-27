@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from dataclasses import replace
 from typing import Any, cast
 
@@ -12,6 +13,8 @@ from fastmcp import FastMCP
 from fastmcp.exceptions import NotFoundError, ToolError
 from fastmcp.server.transforms.visibility import create_visibility_transforms
 from server.adapters.mcp.factory import build_server, build_surface_providers
+from server.adapters.mcp.guided_contract import canonicalize_guided_tool_arguments
+from server.adapters.mcp.session_capabilities import SessionCapabilityState
 from server.adapters.mcp.session_phase import SessionPhase
 from server.adapters.mcp.surfaces import get_surface_profile
 from server.adapters.mcp.transforms import build_surface_transform_pipeline, materialize_transforms
@@ -70,6 +73,84 @@ def _build_phase_search_server(phase: SessionPhase) -> FastMCP:
     return cast(FastMCP, server)
 
 
+def _build_handoff_search_server(phase: SessionPhase, guided_handoff: dict[str, object]) -> FastMCP:
+    surface = replace(get_surface_profile("llm-guided"), search_enabled=True)
+    base_pipeline = build_surface_transform_pipeline(surface)
+    transforms = []
+    for stage in base_pipeline:
+        if stage.name == "visibility":
+            transforms.extend(
+                create_visibility_transforms(build_visibility_rules(surface.name, phase, guided_handoff=guided_handoff))
+            )
+            continue
+        transform = stage.transform
+        if transform is None:
+            continue
+        if isinstance(transform, (list, tuple)):
+            transforms.extend(transform)
+        else:
+            transforms.append(transform)
+
+    server: Any = FastMCP(
+        surface.server_name,
+        providers=build_surface_providers(surface),
+        transforms=transforms,
+        list_page_size=surface.list_page_size,
+        tasks=surface.tasks_enabled,
+        instructions=surface.instructions,
+    )
+    prompts_bridge = build_prompts_bridge_transform(surface, provider=server)
+    if prompts_bridge is not None:
+        server.add_transform(prompts_bridge)
+    server._bam_surface_profile = surface.name
+    return cast(FastMCP, server)
+
+
+def _build_flow_search_server(
+    phase: SessionPhase,
+    guided_flow_state: dict[str, object],
+    *,
+    guided_handoff: dict[str, object] | None = None,
+) -> FastMCP:
+    surface = replace(get_surface_profile("llm-guided"), search_enabled=True)
+    base_pipeline = build_surface_transform_pipeline(surface)
+    transforms = []
+    for stage in base_pipeline:
+        if stage.name == "visibility":
+            transforms.extend(
+                create_visibility_transforms(
+                    build_visibility_rules(
+                        surface.name,
+                        phase,
+                        guided_handoff=guided_handoff,
+                        guided_flow_state=guided_flow_state,
+                    )
+                )
+            )
+            continue
+        transform = stage.transform
+        if transform is None:
+            continue
+        if isinstance(transform, (list, tuple)):
+            transforms.extend(transform)
+        else:
+            transforms.append(transform)
+
+    server: Any = FastMCP(
+        surface.server_name,
+        providers=build_surface_providers(surface),
+        transforms=transforms,
+        list_page_size=surface.list_page_size,
+        tasks=surface.tasks_enabled,
+        instructions=surface.instructions,
+    )
+    prompts_bridge = build_prompts_bridge_transform(surface, provider=server)
+    if prompts_bridge is not None:
+        server.add_transform(prompts_bridge)
+    server._bam_surface_profile = surface.name
+    return cast(FastMCP, server)
+
+
 def _build_phase_visible_server(phase: SessionPhase) -> FastMCP:
     surface = replace(get_surface_profile("llm-guided"), search_enabled=False)
     base_pipeline = build_surface_transform_pipeline(surface)
@@ -77,6 +158,50 @@ def _build_phase_visible_server(phase: SessionPhase) -> FastMCP:
     for stage in base_pipeline:
         if stage.name == "visibility":
             transforms.extend(create_visibility_transforms(build_visibility_rules(surface.name, phase)))
+            continue
+        if stage.name == "discovery":
+            continue
+        transform = stage.transform
+        if transform is None:
+            continue
+        if isinstance(transform, (list, tuple)):
+            transforms.extend(transform)
+        else:
+            transforms.append(transform)
+
+    server: Any = FastMCP(
+        surface.server_name,
+        providers=build_surface_providers(surface),
+        transforms=transforms,
+        list_page_size=surface.list_page_size,
+        tasks=surface.tasks_enabled,
+        instructions=surface.instructions,
+    )
+    server._bam_surface_profile = surface.name
+    return cast(FastMCP, server)
+
+
+def _build_flow_visible_server(
+    phase: SessionPhase,
+    guided_flow_state: dict[str, object],
+    *,
+    guided_handoff: dict[str, object] | None = None,
+) -> FastMCP:
+    surface = replace(get_surface_profile("llm-guided"), search_enabled=False)
+    base_pipeline = build_surface_transform_pipeline(surface)
+    transforms = []
+    for stage in base_pipeline:
+        if stage.name == "visibility":
+            transforms.extend(
+                create_visibility_transforms(
+                    build_visibility_rules(
+                        surface.name,
+                        phase,
+                        guided_handoff=guided_handoff,
+                        guided_flow_state=guided_flow_state,
+                    )
+                )
+            )
             continue
         if stage.name == "discovery":
             continue
@@ -118,8 +243,8 @@ def test_discovery_transform_enabled_by_default_for_llm_guided():
     assert build_discovery_transform(get_surface_profile("llm-guided")) is not None
 
 
-def test_default_llm_guided_surface_lists_only_pinned_and_synthetic_tools():
-    """Default llm-guided surface should expose only pinned entry tools plus search proxies."""
+def test_default_llm_guided_surface_lists_pinned_search_and_spatial_support_tools():
+    """Default llm-guided surface should expose pinned direct tools plus search proxies."""
 
     server = build_server("llm-guided")
 
@@ -134,6 +259,9 @@ def test_default_llm_guided_surface_lists_only_pinned_and_synthetic_tools():
         "router_set_goal",
         "router_get_status",
         "browse_workflows",
+        "scene_scope_graph",
+        "scene_relation_graph",
+        "scene_view_diagnostics",
         "list_prompts",
         "get_prompt",
         "search_tools",
@@ -187,6 +315,18 @@ def test_build_phase_search_uses_public_alias_names_for_discovered_tools():
     assert all(tool["name"] != "scene_inspect" for tool in payload)
 
 
+def test_build_phase_search_can_surface_scene_cleanup_as_recovery_hatch():
+    server = _build_phase_search_server(SessionPhase.BUILD)
+
+    async def run():
+        return await server.call_tool("search_tools", {"query": "clean reset stale default cube scene"})
+
+    payload = _decode_tool_result(asyncio.run(run()))
+    names = {tool["name"] for tool in payload}
+
+    assert "scene_clean_scene" in names
+
+
 def test_phase_search_results_follow_visibility_profile_changes():
     """Search results should swap build-only and inspect-only capabilities by session phase."""
 
@@ -212,6 +352,37 @@ def test_phase_search_results_follow_visibility_profile_changes():
     assert "modeling_create_primitive" not in inspect_names
 
 
+def test_inspect_phase_list_tools_keeps_default_spatial_graph_support_visible():
+    server = _build_phase_visible_server(SessionPhase.INSPECT_VALIDATE)
+
+    async def run():
+        tools = await server.list_tools()
+        return {tool.name for tool in tools}
+
+    names = asyncio.run(run())
+
+    assert "scene_scope_graph" in names
+    assert "scene_relation_graph" in names
+
+
+def test_bootstrap_and_build_phase_both_surface_default_spatial_support_tools():
+    build_phase_server = _build_phase_search_server(SessionPhase.BUILD)
+    bootstrap_server = build_server("llm-guided")
+
+    async def run():
+        build_result = await build_phase_server.call_tool(
+            "search_tools",
+            {"query": "occluded off screen framing visibility diagnostics"},
+        )
+        bootstrap_tools = await bootstrap_server.list_tools()
+        return _decode_tool_result(build_result), {tool.name for tool in bootstrap_tools}
+
+    _build_payload, bootstrap_names = asyncio.run(run())
+    assert "scene_scope_graph" in bootstrap_names
+    assert "scene_relation_graph" in bootstrap_names
+    assert "scene_view_diagnostics" in bootstrap_names
+
+
 def test_phase_shaped_list_tools_follow_visibility_without_discovery():
     """Visibility policy should affect the actual listed tools even without discovery collapse."""
 
@@ -229,6 +400,9 @@ def test_phase_shaped_list_tools_follow_visibility_without_discovery():
     assert "macro_finish_form" in build_names
     assert "macro_relative_layout" in build_names
     assert "modeling_create_primitive" in build_names
+    assert "scene_scope_graph" in build_names
+    assert "scene_relation_graph" in build_names
+    assert "scene_view_diagnostics" in build_names
     assert "modeling_add_modifier" not in build_names
     assert "modeling_apply_modifier" not in build_names
     assert "modeling_list_modifiers" not in build_names
@@ -236,6 +410,9 @@ def test_phase_shaped_list_tools_follow_visibility_without_discovery():
     assert "sculpt_auto" not in build_names
     assert "extraction_render_angles" not in build_names
     assert "extraction_render_angles" in inspect_names
+    assert "scene_scope_graph" in inspect_names
+    assert "scene_relation_graph" in inspect_names
+    assert "scene_view_diagnostics" in inspect_names
     assert "modeling_create_primitive" not in inspect_names
     assert "armature_create" not in inspect_names
     assert "router_clear_goal" not in build_names
@@ -261,6 +438,28 @@ def test_build_phase_search_prefers_macro_finish_tool_over_hidden_modifier_atomi
     assert "macro_finish_form" in names
     assert "modeling_add_modifier" not in names
     assert "modeling_apply_modifier" not in names
+
+
+def test_spatial_context_flow_search_hides_finish_family_until_checks_complete():
+    """Flow-step gating should keep later build families out of search until required checks finish."""
+
+    server = _build_flow_search_server(
+        SessionPhase.BUILD,
+        {
+            "flow_id": "guided_building_flow",
+            "domain_profile": "building",
+            "current_step": "establish_spatial_context",
+        },
+    )
+
+    async def run():
+        finish = await server.call_tool("search_tools", {"query": "finish housing bevel subdivision shell"})
+        return _decode_tool_result(finish)
+
+    finish_payload = asyncio.run(run())
+    finish_names = {tool["name"] for tool in finish_payload}
+
+    assert "macro_finish_form" not in finish_names
 
 
 def test_build_phase_search_can_discover_reference_compare_checkpoint():
@@ -313,6 +512,156 @@ def test_build_phase_search_can_discover_reference_iterate_stage_checkpoint():
 
     assert "reference_iterate_stage_checkpoint" in names
     assert "modeling_list_modifiers" not in names
+
+
+def test_build_phase_search_prefers_creature_blockout_tools_for_creature_queries():
+    """Generic build search should bias creature blockout queries toward real blockout tools."""
+
+    server = _build_phase_search_server(SessionPhase.BUILD)
+
+    async def run():
+        result = await server.call_tool(
+            "search_tools",
+            {"query": "low poly creature ears snout tail arc paw placement organic blockout"},
+        )
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+    names = [tool["name"] for tool in payload]
+
+    assert any(
+        name in names[:3]
+        for name in {
+            "modeling_create_primitive",
+            "mesh_extrude_region",
+            "mesh_loop_cut",
+            "macro_adjust_relative_proportion",
+            "macro_adjust_segment_chain_arc",
+        }
+    )
+    assert "mesh_randomize" not in names[:3]
+    assert "mesh_create_vertex_group" not in names[:3]
+    assert "mesh_assign_to_group" not in names[:3]
+    assert "mesh_remove_from_group" not in names[:3]
+
+
+def test_creature_handoff_search_hides_noise_tools_and_keeps_blockout_surface_small():
+    """Creature handoff search should stay within the bounded blockout recipe instead of broad build noise."""
+
+    server = _build_handoff_search_server(
+        SessionPhase.BUILD,
+        guided_handoff={
+            "kind": "guided_manual_build",
+            "recipe_id": "low_poly_creature_blockout",
+            "direct_tools": [
+                "modeling_create_primitive",
+                "modeling_transform_object",
+                "mesh_select",
+                "mesh_select_targeted",
+                "mesh_extrude_region",
+                "mesh_loop_cut",
+                "mesh_bevel",
+                "mesh_symmetrize",
+                "mesh_merge_by_distance",
+                "mesh_dissolve",
+                "macro_adjust_relative_proportion",
+                "macro_adjust_segment_chain_arc",
+                "macro_align_part_with_contact",
+                "macro_cleanup_part_intersections",
+                "inspect_scene",
+                "scene_measure_dimensions",
+                "scene_assert_proportion",
+            ],
+            "supporting_tools": [
+                "reference_images",
+                "reference_compare_stage_checkpoint",
+                "reference_iterate_stage_checkpoint",
+                "router_get_status",
+            ],
+        },
+    )
+
+    async def run():
+        result = await server.call_tool(
+            "search_tools",
+            {"query": "low poly creature ears snout tail arc paw placement organic blockout"},
+        )
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+    names = {tool["name"] for tool in payload}
+
+    assert "modeling_create_primitive" in names or "mesh_extrude_region" in names
+    assert "macro_adjust_segment_chain_arc" in names
+    assert "mesh_randomize" not in names
+    assert "mesh_create_vertex_group" not in names
+    assert "mesh_assign_to_group" not in names
+    assert "mesh_remove_from_group" not in names
+
+
+def test_spatial_context_flow_list_tools_stays_bounded_to_required_checks():
+    """The directly visible tool list should match the same step-gated flow surface as discovery."""
+
+    server = _build_flow_visible_server(
+        SessionPhase.BUILD,
+        {
+            "flow_id": "guided_creature_flow",
+            "domain_profile": "creature",
+            "current_step": "establish_spatial_context",
+        },
+        guided_handoff={
+            "kind": "guided_manual_build",
+            "recipe_id": "low_poly_creature_blockout",
+            "direct_tools": ["modeling_create_primitive", "mesh_extrude_region", "macro_finish_form"],
+            "supporting_tools": ["reference_images", "reference_iterate_stage_checkpoint", "router_get_status"],
+        },
+    )
+
+    async def run():
+        return {tool.name for tool in await server.list_tools()}
+
+    names = asyncio.run(run())
+
+    assert "scene_scope_graph" in names
+    assert "scene_relation_graph" in names
+    assert "scene_view_diagnostics" in names
+    assert "collection_manage" in names
+    assert "modeling_create_primitive" not in names
+    assert "macro_finish_form" not in names
+
+
+def test_spatial_refresh_required_search_stays_bounded_to_spatial_context_tools():
+    """Discovery should not reopen broad build families while spatial refresh is explicitly pending."""
+
+    server = _build_flow_search_server(
+        SessionPhase.BUILD,
+        {
+            "flow_id": "guided_creature_flow",
+            "domain_profile": "creature",
+            "current_step": "place_secondary_parts",
+            "spatial_refresh_required": True,
+        },
+        guided_handoff={
+            "kind": "guided_manual_build",
+            "recipe_id": "low_poly_creature_blockout",
+            "direct_tools": ["modeling_create_primitive", "mesh_extrude_region", "macro_finish_form"],
+            "supporting_tools": ["reference_images", "reference_iterate_stage_checkpoint", "router_get_status"],
+        },
+    )
+
+    async def run():
+        result = await server.call_tool(
+            "search_tools",
+            {"query": "scene scope graph relation graph view diagnostics refresh spatial context"},
+        )
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+    names = {tool["name"] for tool in payload}
+
+    assert "modeling_create_primitive" not in names
+    assert "macro_finish_form" not in names
+    assert "guided_register_part" not in names
 
 
 @pytest.mark.parametrize(
@@ -369,6 +718,37 @@ def test_call_tool_proxy_matches_direct_public_alias_execution(monkeypatch):
     assert _decode_tool_result(direct) == _decode_tool_result(discovered)
 
 
+def test_call_tool_accepts_legacy_tool_and_params_aliases(monkeypatch):
+    """Legacy wrapper aliases should still resolve to the canonical call_tool path."""
+
+    class Handler:
+        def list_workflows(self, offset: int = 0, limit: int = 100):
+            return {"workflows_dir": "/tmp", "count": 1, "workflows": [{"name": "chair"}]}
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.workflow_catalog.get_workflow_catalog_handler",
+        lambda: Handler(),
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.workflow_catalog.ctx_info",
+        lambda ctx, message: None,
+    )
+
+    server = build_server("llm-guided")
+
+    async def run():
+        result = await server.call_tool(
+            "call_tool",
+            {"tool": "browse_workflows", "params": {"action": "list"}},
+        )
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+
+    assert payload["count"] == 1
+    assert payload["workflows"][0]["name"] == "chair"
+
+
 def test_call_tool_proxy_preserves_proxied_valueerror_as_tool_error(monkeypatch):
     """call_tool should keep direct-tool failure semantics instead of turning validation errors into success text."""
 
@@ -390,6 +770,133 @@ def test_call_tool_proxy_preserves_proxied_valueerror_as_tool_error(monkeypatch)
         asyncio.run(run())
 
 
+def test_search_tool_refreshes_visibility_from_session_state_before_query(monkeypatch):
+    """search_tools should auto-sync visibility after guided-flow state mutations."""
+
+    transform = build_discovery_transform(get_surface_profile("llm-guided"))
+    assert transform is not None
+    events: list[str] = []
+
+    async def fake_get_session_capability_state_async(_ctx):
+        events.append("get_session")
+        return object()
+
+    async def fake_apply_visibility_for_session_state(_ctx, _state):
+        events.append("apply_visibility")
+
+    async def fake_get_visible_tools(_ctx):
+        events.append("get_visible_tools")
+        return []
+
+    async def fake_search(_tools, _query):
+        events.append("search")
+        return []
+
+    async def fake_render_results(_results):
+        events.append("render")
+        return []
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.discovery.search_surface.get_session_capability_state_async",
+        fake_get_session_capability_state_async,
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.discovery.search_surface.apply_visibility_for_session_state",
+        fake_apply_visibility_for_session_state,
+    )
+    monkeypatch.setattr(transform, "_get_visible_tools", fake_get_visible_tools)
+    monkeypatch.setattr(transform, "_search", fake_search)
+    monkeypatch.setattr(transform, "_render_results", fake_render_results)
+
+    search_tool = transform._make_search_tool().fn  # type: ignore[attr-defined]
+
+    asyncio.run(search_tool(query="squirrel blockout", ctx=object()))
+
+    assert events == ["get_session", "apply_visibility", "get_visible_tools", "search", "render"]
+
+
+def test_call_tool_refreshes_visibility_from_session_state_before_proxying(monkeypatch):
+    """call_tool should auto-sync visibility before proxying newly unlocked guided tools."""
+
+    class FakeFastMCP:
+        async def call_tool(self, name, arguments):
+            events.append(f"proxy:{name}")
+            return {"result": "ok"}
+
+    class Ctx:
+        fastmcp = FakeFastMCP()
+
+    transform = build_discovery_transform(get_surface_profile("llm-guided"))
+    assert transform is not None
+    events: list[str] = []
+
+    async def fake_get_session_capability_state_async(_ctx):
+        events.append("get_session")
+        return object()
+
+    async def fake_apply_visibility_for_session_state(_ctx, _state):
+        events.append("apply_visibility")
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.discovery.search_surface.get_session_capability_state_async",
+        fake_get_session_capability_state_async,
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.discovery.search_surface.apply_visibility_for_session_state",
+        fake_apply_visibility_for_session_state,
+    )
+
+    call_tool = transform._make_call_tool().fn  # type: ignore[attr-defined]
+
+    asyncio.run(call_tool(name="modeling_create_primitive", arguments={"primitive_type": "CUBE"}, ctx=Ctx()))
+
+    assert events == ["get_session", "apply_visibility", "proxy:modeling_create_primitive"]
+
+
+def test_call_tool_logs_proxied_tool_name_and_canonical_argument_keys(monkeypatch, caplog):
+    """Docker/server logs should show which real tool the synthetic call_tool proxy invoked."""
+
+    class FakeFastMCP:
+        async def call_tool(self, name, arguments):
+            return {"result": "ok"}
+
+    class Ctx:
+        fastmcp = FakeFastMCP()
+
+    transform = build_discovery_transform(get_surface_profile("llm-guided"))
+    assert transform is not None
+
+    async def fake_get_session_capability_state_async(_ctx):
+        return object()
+
+    async def fake_apply_visibility_for_session_state(_ctx, _state):
+        return None
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.discovery.search_surface.get_session_capability_state_async",
+        fake_get_session_capability_state_async,
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.discovery.search_surface.apply_visibility_for_session_state",
+        fake_apply_visibility_for_session_state,
+    )
+
+    call_tool = transform._make_call_tool().fn  # type: ignore[attr-defined]
+
+    with caplog.at_level(logging.INFO, logger="server.adapters.mcp.discovery.search_surface"):
+        asyncio.run(
+            call_tool(
+                name="modeling_transform_object",
+                arguments={"object_name": "Body", "scale": [1.0, 0.8, 0.8]},
+                ctx=Ctx(),
+            )
+        )
+
+    log_text = "\n".join(caplog.messages)
+    assert "[CALL_TOOL_PROXY] name=modeling_transform_object" in log_text
+    assert "canonical_arg_keys=['name', 'scale']" in log_text
+
+
 def test_call_tool_can_invoke_scene_clean_scene_during_bootstrap(monkeypatch):
     """Visible guided utility tools should stay callable through call_tool during bootstrap."""
 
@@ -404,6 +911,33 @@ def test_call_tool_can_invoke_scene_clean_scene_during_bootstrap(monkeypatch):
     )
 
     server = build_server("llm-guided")
+
+    async def run():
+        result = await server.call_tool(
+            "call_tool",
+            {"name": "scene_clean_scene", "arguments": {"keep_lights_and_cameras": True}},
+        )
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+
+    assert payload == "Scene cleaned."
+
+
+def test_call_tool_can_invoke_scene_clean_scene_during_build_phase(monkeypatch):
+    """scene_clean_scene should stay callable as a bounded recovery hatch during build phase."""
+
+    class Handler:
+        def clean_scene(self, keep_lights_and_cameras: bool):
+            assert keep_lights_and_cameras is True
+            return "Scene cleaned."
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.scene.get_scene_handler",
+        lambda: Handler(),
+    )
+
+    server = _build_phase_search_server(SessionPhase.BUILD)
 
     async def run():
         result = await server.call_tool(
@@ -444,6 +978,82 @@ def test_call_tool_can_canonicalize_legacy_scene_clean_scene_split_flags(monkeyp
     assert payload == "Scene cleaned."
 
 
+def test_direct_scene_clean_scene_can_canonicalize_legacy_split_flags(monkeypatch):
+    """Direct guided utility execution should keep the same cleanup compatibility policy as call_tool."""
+
+    class Handler:
+        def clean_scene(self, keep_lights_and_cameras: bool):
+            assert keep_lights_and_cameras is True
+            return "Scene cleaned."
+
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.get_scene_handler", lambda: Handler())
+
+    server = build_server("llm-guided")
+
+    async def run():
+        result = await server.call_tool(
+            "scene_clean_scene",
+            {"keep_lights": True, "keep_cameras": True},
+        )
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+
+    assert payload == "Scene cleaned."
+
+
+def test_call_tool_can_canonicalize_collection_manage_name_alias(monkeypatch):
+    """Guided call_tool should tolerate legacy `name` for collection creation while keeping `collection_name` canonical."""
+
+    class Handler:
+        def manage_collection(self, action, collection_name, new_name=None, parent_name=None, object_name=None):
+            assert action == "create"
+            assert collection_name == "Squirrel"
+            return "Created collection 'Squirrel' under Scene Collection"
+
+    monkeypatch.setattr("server.adapters.mcp.areas.collection.get_collection_handler", lambda: Handler())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    server = _build_phase_search_server(SessionPhase.BUILD)
+
+    async def run():
+        result = await server.call_tool(
+            "call_tool",
+            {"name": "collection_manage", "arguments": {"action": "create", "name": "Squirrel"}},
+        )
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+
+    assert "Created collection 'Squirrel'" in payload
+
+
+def test_direct_collection_manage_can_canonicalize_name_alias(monkeypatch):
+    """Direct guided build execution should tolerate the narrow `name` compatibility alias."""
+
+    class Handler:
+        def manage_collection(self, action, collection_name, new_name=None, parent_name=None, object_name=None):
+            assert action == "create"
+            assert collection_name == "Squirrel"
+            return "Created collection 'Squirrel' under Scene Collection"
+
+    monkeypatch.setattr("server.adapters.mcp.areas.collection.get_collection_handler", lambda: Handler())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    server = _build_phase_search_server(SessionPhase.BUILD)
+
+    async def run():
+        result = await server.call_tool(
+            "collection_manage",
+            {"action": "create", "name": "Squirrel"},
+        )
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+
+    assert "Created collection 'Squirrel'" in payload
+
+
 def test_call_tool_rejects_ambiguous_legacy_scene_clean_scene_split_flags(monkeypatch):
     """Split cleanup flags should fail clearly when they imply different cleanup behavior."""
 
@@ -468,6 +1078,375 @@ def test_call_tool_rejects_ambiguous_legacy_scene_clean_scene_split_flags(monkey
     asyncio.run(run())
 
 
+def test_guided_call_argument_canonicalization_accepts_common_macro_aliases():
+    payload = canonicalize_guided_tool_arguments(
+        "macro_attach_part_to_surface",
+        {
+            "part_object": "Head",
+            "reference_object": "Body",
+            "surface_axis": "+Z",
+        },
+    )
+
+    assert payload == {
+        "part_object": "Head",
+        "surface_object": "Body",
+        "surface_axis": "Z",
+        "surface_side": "positive",
+    }
+
+
+def test_guided_call_argument_canonicalization_accepts_align_and_transform_aliases():
+    align_payload = canonicalize_guided_tool_arguments(
+        "macro_align_part_with_contact",
+        {
+            "part_object": "Head",
+            "anchor_object": "Body",
+            "contact_mode": "seat_on_surface",
+        },
+    )
+    transform_payload = canonicalize_guided_tool_arguments(
+        "modeling_transform_object",
+        {
+            "object_name": "Body",
+            "scale": [1.15, 0.72, 0.82],
+        },
+    )
+
+    assert align_payload == {
+        "part_object": "Head",
+        "reference_object": "Body",
+        "target_relation": "contact",
+    }
+    assert transform_payload == {
+        "name": "Body",
+        "scale": [1.15, 0.72, 0.82],
+    }
+
+
+def test_call_tool_accepts_json_object_string_arguments(monkeypatch):
+    class Handler:
+        def clean_scene(self, keep_lights_and_cameras: bool):
+            return f"cleaned={keep_lights_and_cameras}"
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.scene.get_scene_handler",
+        lambda: Handler(),
+    )
+
+    server = build_server("llm-guided")
+
+    async def run():
+        result = await server.call_tool(
+            "call_tool",
+            {"name": "scene_clean_scene", "arguments": '{"keep_lights_and_cameras": true}'},
+        )
+        return _decode_tool_result(result)
+
+    assert asyncio.run(run()) == "cleaned=True"
+
+
+def test_guided_call_argument_canonicalization_accepts_proportion_axis_alias():
+    payload = canonicalize_guided_tool_arguments(
+        "scene_assert_proportion",
+        {
+            "object_name": "Head",
+            "axis": "Z",
+            "expected_ratio": 0.7,
+            "reference_object": "Body",
+        },
+    )
+
+    assert payload == {
+        "object_name": "Head",
+        "axis_a": "Z",
+        "expected_ratio": 0.7,
+        "reference_object": "Body",
+    }
+
+
+def test_direct_modeling_create_primitive_rejects_non_public_shape_with_actionable_guidance(monkeypatch):
+    """Direct guided build execution should fail loudly for primitive drift instead of raw schema noise."""
+
+    class Handler:
+        def create_primitive(self, primitive_type, radius=1.0, size=2.0, location=None, rotation=None, name=None):
+            raise AssertionError("Handler should not be reached for unsupported public primitive args")
+
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.get_modeling_handler", lambda: Handler())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    server = _build_phase_search_server(SessionPhase.BUILD)
+
+    async def run():
+        with pytest.raises(ToolError, match="modeling_transform_object\\(scale=\\.\\.\\.\\)"):
+            await server.call_tool(
+                "modeling_create_primitive",
+                {
+                    "primitive_type": "uv_sphere",
+                    "name": "Head",
+                    "location": [0.0, 0.0, 1.1],
+                    "scale": [0.42, 0.38, 0.38],
+                    "segments": 8,
+                    "rings": 6,
+                    "collection_name": "Squirrel",
+                },
+            )
+
+    asyncio.run(run())
+
+
+def test_call_tool_rejects_reference_images_batch_attach_shape():
+    """Guided call_tool should explain that reference_images attach is one-reference-per-call."""
+
+    server = build_server("llm-guided")
+
+    async def run():
+        with pytest.raises(ToolError, match="one reference per call"):
+            await server.call_tool(
+                "call_tool",
+                {
+                    "name": "reference_images",
+                    "arguments": {
+                        "action": "attach",
+                        "images": [{"source_path": "/tmp/front.png"}, {"source_path": "/tmp/side.png"}],
+                    },
+                },
+            )
+
+    asyncio.run(run())
+
+
+def test_call_tool_rejects_non_public_modeling_create_primitive_shape_with_actionable_guidance(monkeypatch):
+    """Guided call_tool should fail with actionable guidance for primitive drift instead of opaque validation noise."""
+
+    class Handler:
+        def create_primitive(self, primitive_type, radius=1.0, size=2.0, location=None, rotation=None, name=None):
+            raise AssertionError("Handler should not be reached for unsupported public primitive args")
+
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.get_modeling_handler", lambda: Handler())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    server = _build_phase_search_server(SessionPhase.BUILD)
+
+    async def run():
+        with pytest.raises(ToolError, match="modeling_transform_object\\(scale=\\.\\.\\.\\)"):
+            await server.call_tool(
+                "call_tool",
+                {
+                    "name": "modeling_create_primitive",
+                    "arguments": {
+                        "primitive_type": "uv_sphere",
+                        "name": "Head",
+                        "location": [0.0, 0.0, 1.1],
+                        "scale": [0.42, 0.38, 0.38],
+                        "segments": 8,
+                        "rings": 6,
+                        "collection_name": "Squirrel",
+                    },
+                },
+            )
+
+    asyncio.run(run())
+
+
+def test_direct_modeling_create_primitive_can_register_guided_role_hint(monkeypatch):
+    """Direct guided build execution may use guided_role as a convenience path on top of the canonical register tool."""
+
+    recorded: list[tuple[str, str, str | None]] = []
+
+    class Handler:
+        def create_primitive(self, primitive_type, radius=1.0, size=2.0, location=None, rotation=None, name=None):
+            return f"Created {primitive_type} named '{name or primitive_type}'"
+
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.get_modeling_handler", lambda: Handler())
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.register_guided_part_role",
+        lambda ctx, **kwargs: recorded.append((kwargs["object_name"], kwargs["role"], kwargs.get("role_group"))),
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.get_session_capability_state",
+        lambda ctx: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={"flow_id": "guided_creature_flow"},
+        ),
+    )
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    server = _build_phase_search_server(SessionPhase.BUILD)
+
+    async def run():
+        result = await server.call_tool(
+            "modeling_create_primitive",
+            {
+                "primitive_type": "Sphere",
+                "name": "Squirrel_Body",
+                "radius": 0.5,
+                "guided_role": "body_core",
+            },
+        )
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+
+    assert "Created Sphere named 'Squirrel_Body'" == payload
+    assert recorded == [("Squirrel_Body", "body_core", None)]
+
+
+def test_direct_modeling_create_primitive_rejects_guided_role_without_explicit_name(monkeypatch):
+    """Guided convenience create should require an explicit semantic name before mutation."""
+
+    class Handler:
+        def create_primitive(self, primitive_type, radius=1.0, size=2.0, location=None, rotation=None, name=None):
+            raise AssertionError("Handler should not be reached when guided create has no semantic name")
+
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.get_modeling_handler", lambda: Handler())
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.get_session_capability_state",
+        lambda ctx: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+            },
+        ),
+    )
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    server = _build_phase_search_server(SessionPhase.BUILD)
+
+    async def run():
+        with pytest.raises(ToolError, match="explicit semantic `name`"):
+            await server.call_tool(
+                "modeling_create_primitive",
+                {
+                    "primitive_type": "Sphere",
+                    "guided_role": "body_core",
+                },
+            )
+
+    asyncio.run(run())
+
+
+def test_call_tool_can_forward_guided_role_hint_for_modeling_create_primitive(monkeypatch):
+    """Proxied guided build calls should preserve guided_role just like direct guided tool calls."""
+
+    recorded: list[tuple[str, str, str | None]] = []
+
+    class Handler:
+        def create_primitive(self, primitive_type, radius=1.0, size=2.0, location=None, rotation=None, name=None):
+            return f"Created {primitive_type} named '{name or primitive_type}'"
+
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.get_modeling_handler", lambda: Handler())
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.register_guided_part_role",
+        lambda ctx, **kwargs: recorded.append((kwargs["object_name"], kwargs["role"], kwargs.get("role_group"))),
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.get_session_capability_state",
+        lambda ctx: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={"flow_id": "guided_creature_flow"},
+        ),
+    )
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    server = _build_phase_search_server(SessionPhase.BUILD)
+
+    async def run():
+        result = await server.call_tool(
+            "call_tool",
+            {
+                "name": "modeling_create_primitive",
+                "arguments": {
+                    "primitive_type": "Sphere",
+                    "name": "Squirrel_Head",
+                    "radius": 0.35,
+                    "guided_role": "head_mass",
+                },
+            },
+        )
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+
+    assert "Created Sphere named 'Squirrel_Head'" == payload
+    assert recorded == [("Squirrel_Head", "head_mass", None)]
+
+
+def test_call_tool_can_block_placeholder_name_for_guided_role_hint(monkeypatch):
+    """Proxied guided build calls should preserve naming-policy blocking for opaque placeholder names."""
+
+    class Handler:
+        def create_primitive(self, primitive_type, radius=1.0, size=2.0, location=None, rotation=None, name=None):
+            raise AssertionError("Handler should not be reached when guided naming blocks the call")
+
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.get_modeling_handler", lambda: Handler())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": [],
+                "missing_roles": ["body_core", "head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    server = _build_phase_search_server(SessionPhase.BUILD)
+
+    async def run():
+        result = await server.call_tool(
+            "call_tool",
+            {
+                "name": "modeling_create_primitive",
+                "arguments": {
+                    "primitive_type": "Sphere",
+                    "name": "Sphere",
+                    "radius": 0.5,
+                    "guided_role": "body_core",
+                },
+            },
+        )
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+
+    assert "Guided naming blocked object name 'Sphere'" in payload
+    assert "Body" in payload
+
+
+def test_search_tools_exact_match_returns_compact_result_for_visible_tool():
+    """Exact tool-name queries should return a compact, tightly bounded result row."""
+
+    server = _build_phase_search_server(SessionPhase.BUILD)
+
+    async def run():
+        result = await server.call_tool("search_tools", {"query": "collection_manage"})
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+
+    assert payload
+    assert payload[0]["name"] == "collection_manage"
+    assert set(payload[0]).issubset({"name", "description", "category", "capability_id", "aliases"})
+
+
 def test_search_first_rollout_reduces_visible_tool_count_and_payload_size():
     """llm-guided search-first should materially reduce the initial tool payload."""
 
@@ -488,8 +1467,8 @@ def test_search_first_rollout_reduces_visible_tool_count_and_payload_size():
 
     legacy_count, guided_count, legacy_bytes, guided_bytes = asyncio.run(run())
 
-    assert legacy_count == 183
-    assert guided_count == 8
+    assert legacy_count == 187
+    assert guided_count == 11
     assert guided_bytes < legacy_bytes
 
 
@@ -504,7 +1483,7 @@ def test_call_tool_cannot_invoke_hidden_tool_during_bootstrap():
             {"name": "inspect_scene", "arguments": {"action": "object", "target_object": "Cube"}},
         )
 
-    with pytest.raises((NotFoundError, ToolError)):
+    with pytest.raises((NotFoundError, ToolError), match="search_tools"):
         asyncio.run(run())
 
 

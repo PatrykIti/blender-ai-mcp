@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 
 from .backend import VisionRequest
+from .config import VisionContractProfile
 
 _EXPECTED_KEYS = (
     "goal_summary",
@@ -36,6 +37,7 @@ _REFERENCE_GUIDED_CHECKPOINT_MODES = (
     "comparison_mode=current_view_checkpoint",
     "comparison_mode=stage_checkpoint_vs_reference",
 )
+_DEFAULT_VISION_CONTRACT_PROFILE: VisionContractProfile = "generic_full"
 
 
 def _is_reference_guided_checkpoint(request: VisionRequest) -> bool:
@@ -44,8 +46,33 @@ def _is_reference_guided_checkpoint(request: VisionRequest) -> bool:
     return has_reference and any(mode in prompt_hint for mode in _REFERENCE_GUIDED_CHECKPOINT_MODES)
 
 
-def _uses_gemini_compare_contract(*, provider_name: str | None, request: VisionRequest | None) -> bool:
-    return provider_name == "google_ai_studio" and request is not None and _is_reference_guided_checkpoint(request)
+def resolve_vision_contract_profile(
+    *,
+    vision_contract_profile: VisionContractProfile | None = None,
+    provider_name: str | None = None,
+) -> VisionContractProfile:
+    """Resolve one prompt/parser contract profile with backward-compatible provider fallback."""
+
+    if vision_contract_profile is not None:
+        return vision_contract_profile
+    if provider_name == "google_ai_studio":
+        return "google_family_compare"
+    return _DEFAULT_VISION_CONTRACT_PROFILE
+
+
+def _uses_google_family_compare_contract(
+    *,
+    vision_contract_profile: VisionContractProfile | None,
+    provider_name: str | None,
+    request: VisionRequest | None,
+) -> bool:
+    resolved_profile = resolve_vision_contract_profile(
+        vision_contract_profile=vision_contract_profile,
+        provider_name=provider_name,
+    )
+    return (
+        resolved_profile == "google_family_compare" and request is not None and _is_reference_guided_checkpoint(request)
+    )
 
 
 def _local_output_template(request: VisionRequest) -> str:
@@ -81,15 +108,20 @@ def _gemini_compare_output_template() -> str:
 def build_vision_system_prompt(
     *,
     backend_kind: str,
+    vision_contract_profile: VisionContractProfile | None = None,
     provider_name: str | None = None,
     request: VisionRequest | None = None,
 ) -> str:
     """Return the bounded system prompt, tuned slightly by backend family."""
 
-    if _uses_gemini_compare_contract(provider_name=provider_name, request=request):
+    if _uses_google_family_compare_contract(
+        vision_contract_profile=vision_contract_profile,
+        provider_name=provider_name,
+        request=request,
+    ):
         return (
             "You are a bounded vision assistant for Blender modeling.\n\n"
-            "This request is a reference-guided checkpoint comparison for Gemini.\n"
+            "This request is a reference-guided checkpoint comparison for a Google-family vision contract.\n"
             "You are not the truth source. Use images only to compare the current checkpoint against the goal and references.\n"
             "Do not claim geometric correctness from images alone.\n\n"
             "Return exactly one JSON object with only these keys:\n"
@@ -192,11 +224,16 @@ def _build_gemini_compare_payload_text(request: VisionRequest) -> str:
 def build_vision_payload_text(
     request: VisionRequest,
     *,
+    vision_contract_profile: VisionContractProfile | None = None,
     provider_name: str | None = None,
 ) -> str:
     """Serialize the bounded vision input payload."""
 
-    if _uses_gemini_compare_contract(provider_name=provider_name, request=request):
+    if _uses_google_family_compare_contract(
+        vision_contract_profile=vision_contract_profile,
+        provider_name=provider_name,
+        request=request,
+    ):
         return _build_gemini_compare_payload_text(request)
 
     payload = {
@@ -270,24 +307,34 @@ def build_local_vision_payload_text(request: VisionRequest) -> str:
 
 def expected_json_keys(
     *,
+    vision_contract_profile: VisionContractProfile | None = None,
     provider_name: str | None = None,
     request: VisionRequest | None = None,
 ) -> tuple[str, ...]:
     """Expose the canonical required JSON keys for tests and parse repair."""
 
-    if _uses_gemini_compare_contract(provider_name=provider_name, request=request):
+    if _uses_google_family_compare_contract(
+        vision_contract_profile=vision_contract_profile,
+        provider_name=provider_name,
+        request=request,
+    ):
         return _GEMINI_COMPARE_EXPECTED_KEYS
     return _EXPECTED_KEYS
 
 
 def build_vision_response_json_schema(
     *,
+    vision_contract_profile: VisionContractProfile | None = None,
     provider_name: str | None = None,
     request: VisionRequest | None = None,
 ) -> dict[str, object]:
     """Return a provider-agnostic JSON Schema for bounded vision responses."""
 
-    if _uses_gemini_compare_contract(provider_name=provider_name, request=request):
+    if _uses_google_family_compare_contract(
+        vision_contract_profile=vision_contract_profile,
+        provider_name=provider_name,
+        request=request,
+    ):
         return {
             "type": "object",
             "additionalProperties": False,
@@ -299,13 +346,7 @@ def build_vision_response_json_schema(
                 "correction_focus": {"type": "array", "items": {"type": "string"}},
                 "next_corrections": {"type": "array", "items": {"type": "string"}},
             },
-            "required": [
-                "goal_summary",
-                "shape_mismatches",
-                "proportion_mismatches",
-                "correction_focus",
-                "next_corrections",
-            ],
+            "required": list(_GEMINI_COMPARE_EXPECTED_KEYS),
         }
 
     return {
@@ -328,7 +369,7 @@ def build_vision_response_json_schema(
                         "summary": {"type": "string"},
                         "severity": {"type": "string", "enum": ["high", "medium", "low"]},
                     },
-                    "required": ["category", "summary"],
+                    "required": ["category", "summary", "severity"],
                 },
             },
             "next_corrections": {"type": "array", "items": {"type": "string"}},
@@ -342,11 +383,11 @@ def build_vision_response_json_schema(
                         "reason": {"type": "string"},
                         "priority": {"type": "string", "enum": ["high", "normal"]},
                     },
-                    "required": ["tool_name", "reason"],
+                    "required": ["tool_name", "reason", "priority"],
                 },
             },
             "confidence": {"type": ["number", "null"]},
             "captures_used": {"type": "array", "items": {"type": "string"}},
         },
-        "required": ["goal_summary", "visible_changes", "captures_used"],
+        "required": list(_EXPECTED_KEYS),
     }

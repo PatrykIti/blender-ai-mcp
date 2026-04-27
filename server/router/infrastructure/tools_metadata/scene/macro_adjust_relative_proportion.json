@@ -9,6 +9,12 @@
     "head too big",
     "head too small",
     "body proportion",
+    "ear height",
+    "snout length",
+    "paw size",
+    "creature silhouette ratio",
+    "front reference",
+    "side reference",
     "napraw proporcje",
     "głowa za duża",
     "głowa za mała",
@@ -17,6 +23,9 @@
   "sample_prompts": [
     "make the head a bit smaller relative to the body without rebuilding the model",
     "repair the relative proportion drift with a bounded scale change",
+    "reduce the head size a little to better match the creature side reference",
+    "adjust the paw size relative to the body without rebuilding the mesh",
+    "repair the ear or snout proportion drift with a bounded macro change",
     "napraw proporcje między częściami bez przebudowy modelu",
     "skoryguj proporcję jednego elementu względem drugiego"
   ],

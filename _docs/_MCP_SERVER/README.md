@@ -17,9 +17,15 @@ Documentation for the MCP Server (Client Side).
   - Canonical policy for layered tools, small public surfaces, hidden atomic tools, `set_goal`-first orchestration, and vision/assert boundaries.
 - **[Vision Layer Docs](../_VISION/README.md)**
   - Working notes for vision runtime choices, capture bundles, reference context, and macro/workflow integration.
-  - Includes a provider/model notes table covering the current MLX, OpenRouter, and Gemini status, including the provider-specific Gemini compare contract path.
+  - Includes provider/model notes plus the external `vision_contract_profile` model, so transport provider selection stays separate from prompt/schema/parser routing.
+- **[LLM Guide v2](../LLM_GUIDE_V2.md)**
+  - Strategy doc for typed spatial state, relation/view graphs, and bounded guided handoffs for stronger LLM spatial reasoning.
+- **[Spatial Intelligence Research Brief](../FEATURES_LLM_GUIDE_V1.md)**
+  - External research handoff describing the current MCP surface plus open questions for LLM/VLM spatial reasoning and geometry-aware planning.
+- **[Spatial Intelligence Upgrade Proposal](../Spacial-intelligence-upgrades-for-blender-ai-mcp.md)**
+  - Research-derived proposal for scene graphs, Chain-of-Symbol notation, and supporting geometry-library options.
 - **[MCP Client Config Examples](./MCP_CLIENT_CONFIG_EXAMPLES.md)**
-  - Ready-to-paste local MCP client config examples for `llm-guided`, legacy surfaces, MLX vision, OpenRouter, and Gemini.
+  - Ready-to-paste local MCP client config examples for `llm-guided`, legacy surfaces, MLX vision, OpenRouter, and Gemini, including optional external contract-profile overrides.
 - **[Router / Runtime Responsibility Boundaries](../_ROUTER/RESPONSIBILITY_BOUNDARIES.md)**
   - Defines the role split between FastMCP platform features, LaBSE semantics, router safety policy, and inspection/assertion truth.
   - Use this before changing discovery, semantic matching, correction logic, or structured validation behavior.
@@ -58,6 +64,9 @@ The composition document linked above is the canonical reference for the current
 ## LLM-Guided Public Surface Baseline
 
 The first `llm-guided` public contract line is now available on top of the canonical internal tool surface.
+
+Canonical operator guidance for this surface now lives in `_docs/_PROMPTS/`.
+When a client drifts on `llm-guided`, treat `GUIDED_SESSION_START.md` as the generic search-first stabilizer and prefer `_PROMPTS/` assets over ad hoc instruction text.
 
 Current public tool aliases:
 
@@ -193,6 +202,11 @@ Current contract direction for macro/workflow reports:
   inference is wired into those paths
 - MCP macro adapters now have the request-bound attachment point for
   `vision_assistant` once a macro report already carries a capture bundle
+- routed macro results may legitimately return `status="partial"` together
+  with an `error` string when bounded progress happened but the requested
+  relation is still not fully satisfied; MCP adapters must validate and
+  preserve those structured reports before falling back to failed/blocked
+  adapter envelopes
 
 ## Vision, Measurement, and Assertion
 
@@ -281,8 +295,8 @@ Current visible entry set on `llm-guided`:
 
 Measured baseline from the current unit suite:
 
-- `legacy-manual`: `163` visible tools, router/workflow capabilities omitted from the namespace
-- `legacy-flat`: `170` visible tools, now fitting in one `tools/list` page by default for compatibility clients
+- `legacy-manual`: `179` visible tools, router/workflow capabilities omitted from the namespace
+- `legacy-flat`: `186` visible tools, now fitting in one `tools/list` page by default for compatibility clients
 - `llm-guided`: `8` visible tools
 
 Search-first behavior now respects guided visibility:
@@ -290,10 +304,22 @@ Search-first behavior now respects guided visibility:
 - hidden tools do not appear in bootstrap-phase search results
 - hidden tools cannot be invoked through `call_tool`
 - direct public calls and discovered `call_tool` calls share the same guided-surface router failure behavior
+- if a tool is not already directly visible, the intended operator path is
+  `search_tools(...)` before `call_tool(...)`, not speculative name guessing
+- read-only spatial graph tools such as `scene_scope_graph` and
+  `scene_relation_graph`, plus the view-space artifact
+  `scene_view_diagnostics`, are now directly visible on `llm-guided` as the
+  default spatial-orientation support layer instead of remaining hidden
+  bootstrap-only discovery targets
+- while those pinned spatial helpers remain visible, guided execution policy
+  keeps them callable even if the current flow step's `allowed_families` omits
+  `spatial_context`; this exception is read-only and does not reopen hidden
+  mutating families
 
 Current guided utility prep path:
 
-- the direct bootstrap surface still stays at `8` visible tools
+- the direct bootstrap surface now includes the default spatial-orientation
+  support tools in addition to the core guided goal/discovery entry tools
 - bootstrap/planning search can now surface a small guided-safe utility set:
   - `scene_get_viewport`
   - `scene_clean_scene`
@@ -301,12 +327,29 @@ Current guided utility prep path:
   and should be used instead of forcing those requests through
   `router_set_goal(...)`
 - the canonical public cleanup flag is `keep_lights_and_cameras`
+- cleanup before `router_set_goal(...)` is still the preferred path, but
+  `scene_clean_scene(...)` is now also exposed on the guided build surface as a
+  bounded recovery hatch when stale scene state is discovered later
 - guided `call_tool(...)` now also tolerates the older
   `keep_lights` / `keep_cameras` split form only when both values are provided
   and agree; mixed split values are rejected with a deterministic contract error
 - guided `call_tool(...)` preserves the same failure semantics as a direct tool
   call; proxied validation/runtime errors still surface as tool failures
   instead of being flattened into apparent success text
+- the canonical guided `call_tool(...)` wrapper is `name=...` plus
+  `arguments=...`; legacy `tool=...` / `params=...` aliases are compatibility-
+  only
+- the same contract hardening now also applies on directly visible guided tools
+  instead of only through the proxy path:
+  - direct `scene_clean_scene(...)` accepts legacy split cleanup flags only in
+    the same narrow compatible form
+  - direct `reference_images(...)` attach catches batch-like `images=[...]` /
+    `source_paths=[...]` drift with actionable guidance
+  - direct `collection_manage(...)` keeps `collection_name` canonical while
+    tolerating the narrow legacy `name` alias
+  - direct `modeling_create_primitive(...)` rejects `scale`, `segments`,
+    `rings`, `subdivisions`, and primitive-time `collection_name` shortcuts
+    with actionable guidance instead of raw FastMCP schema noise
 
 Goal-scoped reference intake is now part of the guided entry layer:
 
@@ -314,6 +357,8 @@ Goal-scoped reference intake is now part of the guided entry layer:
 - `reference_images(action="list")`
 - `reference_images(action="remove", reference_id=...)`
 - `reference_images(action="clear")`
+- attach is one-reference-per-call on the guided public surface; do not send
+  `images=[...]` or `source_paths=[...]` batch shapes
 
 For staged/manual reference-guided work, the guided build/inspect surface now
 also exposes a bounded checkpoint comparison tool:
@@ -353,6 +398,15 @@ The `llm-guided` surface now has a first complete guided-mode visibility baselin
 - deterministic phase/profile visibility rules owned by FastMCP platform code, not by router metadata
 - native FastMCP session visibility application via `enable_components`, `disable_components`, and `reset_visibility`
 - operator-facing visibility diagnostics exposed through `router_get_status()`
+- `build_visibility_rules(...)` plus session state are now the single runtime
+  visibility authority on `llm-guided`
+- capability tags and `capability_manifest` remain coarse metadata for
+  discovery, inventory, provider wiring, pinned defaults, and metadata-only
+  phase hints; they are no longer treated as a second hidden runtime gate
+- guided visibility diagnostics now derive capability visibility from the same
+  runtime-visible tool membership that shapes the actual surface
+- the same runtime-visible tool membership now drives capability diagnostics
+  instead of inferring runtime state from manifest/tag overlap alone
 
 This visibility baseline is complete for guided-mode surface shaping.
 Search-first default rollout remains a separate TASK-084 concern.
@@ -416,8 +470,314 @@ On `llm-guided`, `router_set_goal()` now exposes explicit typed continuation met
 
 - `guided_handoff` is returned for bounded guided continuations such as `guided_manual_build` and `guided_utility`
 - it names `target_phase`, `direct_tools`, `supporting_tools`, and `discovery_tools`
+- creature-oriented manual-build handoffs can also expose a stable
+  `recipe_id`, currently `low_poly_creature_blockout`, so session visibility
+  and search shaping can narrow to the smaller creature recipe instead of the
+  broad generic build surface
 - `workflow_import_recommended` remains `false` on these paths unless the user explicitly asks for workflow import/create behavior
 - `router_get_status()` re-exposes the active `guided_handoff` from session state for recovery/debugging
+
+## Server-Driven Guided Flow State
+
+On `llm-guided`, guided sequencing is no longer represented only by prose
+prompting and phase-level visibility. The server now owns one explicit
+`guided_flow_state` envelope.
+
+Current machine-readable `guided_flow_state` fields:
+
+| Field | Meaning |
+|---|---|
+| `flow_id` | Stable flow identifier for the current guided runtime contract |
+| `domain_profile` | Current guided overlay: `generic`, `creature`, or `building` |
+| `current_step` | Active guided step such as `understand_goal`, `establish_spatial_context`, `create_primary_masses`, `checkpoint_iterate`, or `inspect_validate` |
+| `completed_steps` | Steps already completed in the current guided run |
+| `active_target_scope` | Compact target scope identity the guided spatial checks currently apply to |
+| `spatial_scope_fingerprint` | Deterministic fingerprint for the active guided target scope |
+| `spatial_state_version` | Monotonic version for scene-changing guided mutations that can stale spatial facts |
+| `spatial_state_stale` | Whether the last trusted spatial facts are stale relative to the current scene version |
+| `last_spatial_check_version` | The scene spatial version last validated by the required spatial checks |
+| `spatial_refresh_required` | Whether the server has explicitly re-armed the spatial gate for the current step |
+| `required_checks` | Structured checks that must complete before the next family unlocks |
+| `next_actions` | Next machine-readable move(s) the client/model should take |
+| `blocked_families` | Bounded tool-family restrictions still active for the current step |
+| `required_prompts` | Required prompt bundle names for the current flow/domain/step |
+| `preferred_prompts` | Strongly preferred prompt bundle names for the current flow/domain/step |
+| `allowed_roles` | Role names currently expected or permitted for the active step |
+| `completed_roles` | Roles already registered/completed in the current guided session summary |
+| `missing_roles` | Roles still missing for the active step summary |
+| `required_role_groups` | Coarse role-group milestones the current step is trying to complete |
+| `step_status` | Coarse status such as `ready`, `blocked`, or `needs_validation` |
+
+Current guided-flow behavior:
+
+- `router_set_goal()`, `router_get_status()`,
+  `guided_register_part()`,
+  `reference_compare_stage_checkpoint()`, and
+  `reference_iterate_stage_checkpoint()` can expose `guided_flow_state`
+- domain overlays are deterministic and currently include:
+  - `generic`
+  - `creature`
+  - `building`
+- step-gated visibility now consults `guided_flow_state.current_step`, not
+  only coarse `SessionPhase`
+- during `establish_spatial_context`, the visible guided build surface stays
+  bounded to spatial-context / inspection / reference-support tools until the
+  required checks complete
+- scene_scope_graph(...) now binds the active guided target scope when no active
+  scope exists yet.
+- `scene_scope_graph(...)` does not rebind an existing active target during a
+  spatial refresh; the refreshed scope must match the already-bound target
+  scope.
+- later `scene_relation_graph(...)` /
+  `scene_view_diagnostics(...)` completions must match that scope instead of
+  satisfying the gate on arbitrary unrelated objects
+- the spatial tools do not treat “no scope” as “whole scene”; use
+  `target_object`, `target_objects`, or `collection_name`
+- that explicit-scope rule now also applies outside the guided gate for the
+  scope/relation graph builders; a bare call fails instead of returning an
+  empty `scene` scope payload
+- during an active spatial gate / spatial-refresh re-arm, this explicit-scope
+  rule now applies consistently to:
+  - `scene_scope_graph(...)`
+  - `scene_relation_graph(...)`
+  - `scene_view_diagnostics(...)`
+- default placeholder scopes such as a stock `Cube` or the generic root
+  `Collection` no longer count as meaningful guided target/workset bindings by
+  themselves
+- but for the earlier “is this scene already non-empty?” bootstrap decision,
+  Blender's stock `Cube` plus stock camera/light helpers still enters the
+  empty-scene primary-workset bootstrap path
+- this non-empty decision is intentionally name-light after startup: real
+  multi-object rough blockouts with default primitive names such as `Cube` or
+  `Sphere` still count as existing geometry, while helper-only scenes can still
+  enter `bootstrap_primary_workset`
+- explicit guided scopes now bind from caller intent instead of name
+  heuristics, so real objects named like `Cube`, `Sphere`, or `Sunflower`
+  can still become the active guided workset when the operator targets them
+- helper-only scopes such as a single `Camera` do not initialize or satisfy a
+  creature/building spatial gate by themselves
+- when the scene has no meaningful target/workset objects yet, the guided flow
+  can enter `bootstrap_primary_workset` and expose primary-mass creation before
+  requiring target-bound spatial checks
+- if guided references are already attached, they should be treated as the
+  primary grounding input for the first blockout masses and placement
+- full semantic object names such as `ForeLeg_L`, `ForeLeg_R`, `HindLeg_L`,
+  and `HindLeg_R` are preferred over abbreviations like `ForeL` / `HindR`
+  because seam/role heuristics classify them more reliably
+- the guided runtime now has one explicit naming-policy layer for role-sensitive registration/build paths:
+  - weak abbreviations can warn on weak role-sensitive names with suggested semantic names
+  - clearly opaque placeholder names such as `Sphere` / `Object` can be
+    blocked until the object uses a semantic role-shaped name
+- after material scene changes such as `scene_clean_scene(...)`,
+  `scene_duplicate_object(...)`, `scene_rename_object(...)`,
+  `modeling_create_primitive(...)`, `modeling_transform_object(...)`,
+  `modeling_join_objects(...)`, `modeling_separate_object(...)`, or bounded
+  attachment/alignment cleanup macros, the runtime can mark the spatial layer
+  stale and re-arm the required checks
+- guided mesh edit tools such as `mesh_extrude_region(...)`,
+  `mesh_loop_cut(...)`, and `mesh_bevel(...)` are classified as the
+  `secondary_parts` family for guided gating, and successful geometry edits
+  re-arm the spatial layer like other material scene mutations
+- support/symmetry-aware relation pairs now preserve support and symmetry
+  annotations even when they share the same `(from_object, to_object)` key as a
+  generic primary-target pair, so downstream planners still see
+  support/symmetry semantics instead of only a generic edge
+- when required creature seams exist, relation graphs still keep fallback
+  `primary_to_other` pairs for non-seam objects in the requested scope instead
+  of dropping those objects from diagnostics
+- healthy support/symmetry pairs no longer count as failing just because their
+  centers differ or they are not literal contact pairs; only `unsupported` /
+  `asymmetric` support/symmetry verdicts count as failures there
+- when `spatial_refresh_required=true`, the server expects a fresh
+  `scene_scope_graph(...)` check against the already-bound active target scope,
+  then the remaining required spatial checks on that same target scope
+- marking guided spatial state stale after a successful material mutation also
+  reapplies FastMCP visibility immediately, so clients see the spatial support
+  tools required by the refreshed gate without waiting for a later status or
+  discovery call
+- when a required spatial check does advance the guided flow, FastMCP
+  visibility is reapplied immediately so ordinary discovery/list clients see
+  the unlocked tool surface without waiting for a later router/status call
+- `scene_view_diagnostics(...)` only satisfies that guided spatial gate when it
+  returns real available view-space evidence; a headless/unavailable probe
+  remains read-only and does not complete the check by itself
+- stage iterate may still return `loop_disposition="continue_build"` when a
+  high-priority issue is visible but the current guided role slice is
+  incomplete; in that case the persisted `guided_flow_state.current_step`
+  remains on the unfinished build step and `missing_roles` remains the
+  authority
+- the same incomplete-role hold applies to no-action stage iterate results
+  with no `correction_focus` and no `action_hints`; those results must not
+  move an active guided build to `finish_or_stop` while required roles are
+  still missing
+- if a read-only spatial check uses a different scope while refresh is active,
+  it can still return its payload, but the response message says it did not
+  satisfy the active guided scope and shows the expected rerun scope
+- the machine-readable next action for this path is
+  `refresh_spatial_context`
+- on the guided inspect surface, bounded attachment repair macros and spatial
+  re-check tools remain aligned with the inspect family policy instead of
+  advertising one surface through `allowed_families` and another through tool
+  visibility
+- guided execution policy can now fail closed when a call resolves to the
+  wrong shared family or an explicit guided role that is not allowed for the
+  current step
+- caller-supplied `role_group` values are validation hints only; they must
+  match the active domain role map before family enforcement runs and cannot
+  relabel role-sensitive mutating tools as `utility` or another allowed family
+- for role-sensitive build families, `modeling_create_primitive(...)` and
+  `modeling_transform_object(...)` now require either:
+  - an explicit `guided_role=...`
+  - or a previously registered role in the session part registry
+- `required_prompts` and `preferred_prompts` are stable prompt asset names;
+  they support the server-driven flow instead of replacing it with prompt-only
+  policy
+- role/family summaries are intentionally compact public fields; the full
+  internal part registry remains session-scoped implementation state
+- role summaries now include compact cardinality diagnostics:
+  - `role_counts`
+  - `role_cardinality`
+  - `role_objects`
+  so pair roles such as `ear_pair`, `foreleg_pair`, and `hindleg_pair` remain
+  available until both left/right sibling objects are registered
+- `guided_register_part(object_name=..., role=...)` is the canonical guided
+  surface for telling the server that an existing object now counts as one
+  semantic role such as `body_core`, `head_mass`, or `roof_mass`
+- `guided_register_part(...)` now validates that the named Blender object
+  actually exists before updating guided role completion; a typo does not
+  populate `completed_roles`
+- if guided object validation cannot read the Blender scene at all,
+  `guided_register_part(...)` now fails clearly instead of mutating guided
+  session state from an unverified object name
+- explicit target names passed into `scene_scope_graph(...)` / scope-building
+  paths now follow the same Blender-truth validation rule before the guided
+  scope can bind
+- `modeling_create_primitive(...)` and `modeling_transform_object(...)` may
+  also carry an optional `guided_role` convenience hint on guided surfaces, but
+  `guided_register_part(...)` remains the canonical explicit registration path
+- those `guided_role=...` convenience hints only auto-register when the
+  session already has an active `guided_flow_state`; outside an active guided
+  flow they do not create persistent guided role state on their own
+- a failed create call now stays non-mutating for guided role state as well:
+  if `modeling_create_primitive(...)` returns a failure string, the requested
+  role is not auto-registered just because a semantic `name` was supplied
+- on `modeling_create_primitive(...)`, the convenience path now also requires
+  an explicit semantic `name`; guided create does not allow auto-generated
+  Blender names to become semantic part registrations
+- if the router prepends corrective steps such as `scene_set_mode(...)`, the
+  guided-role convenience path still registers against the final successful
+  modeling step instead of dropping the role hint just because the call became
+  multi-step
+- guided-role convenience registration now also handles valid object names
+  containing apostrophes, such as `King's Crown`, instead of truncating the
+  stored object name
+- guided runtime success parsing also treats apostrophes inside quoted object
+  names as part of the object name for create/transform/rename/join results,
+  so stale-state marking and guided registry sync still run after successful
+  mutations
+- canonical pair names such as `ForeLeg_L`, `ForeLeg_R`, and `ForeLegPair`
+  now count as strong semantic names for pair roles instead of warning or
+  blocking under the stricter naming policy
+- for `modeling_create_primitive(...)`, the convenience path registers the
+  real created object name returned by Blender/tool execution, not the raw
+  requested primitive token, so role state remains correct for names such as
+  `Cube.001` or Blender defaults such as `Suzanne`
+- successful `scene_rename_object(...)` calls now keep the guided part
+  registry aligned with the renamed object so later role-sensitive calls can
+  still recover the stored role/role_group
+- successful `scene_rename_object(...)` calls also mark guided spatial state
+  stale so the name-bound target scope can be rebound on the next required
+  spatial refresh
+- successful `scene_duplicate_object(...)` calls also mark guided spatial
+  state stale so duplicated parts force fresh scope/relation facts before later
+  checkpoint or attachment decisions
+- failed plain-string mutation results such as `Object 'Missing' not found`
+  now stay non-mutating for guided session state; they do not re-arm spatial
+  checks or rewrite guided role registration just because the wrapper returned
+  a string payload
+- `scene_clean_scene(...)` now clears the guided part registry and returns the
+  guided flow to `bootstrap_primary_workset`, so empty-scene resets do not
+  keep stale completed parts from an earlier workset
+- starting a different guided goal in the same session now resets guided part
+  registration for that new flow instead of carrying completed roles forward
+  from the previous object
+- destructive identity/topology changes such as `modeling_join_objects(...)`
+  and `modeling_separate_object(...)` now remove stale guided part
+  registrations; re-register the resulting object(s) explicitly when they
+  should still count toward guided role completion
+- those same destructive topology changes also re-arm guided spatial checks,
+  because previously captured scope/view facts are no longer trustworthy after
+  objects were merged away or split apart
+- for macro capture/vision artifacts, `macro_attach_part_to_surface(...)` now
+  refreshes its post-action capture bundle after the extra mesh-surface nudge,
+  so attached images and truth summary describe the final seated pose instead
+  of the pre-nudge intermediate pose
+- if the optional segmentation sidecar is enabled on runtime config but not yet
+  executed on the current compare path, staged compare/iterate responses now
+  report `part_segmentation.status="unavailable"` instead of silently staying
+  `disabled`
+- after newly created blockout parts during `checkpoint_iterate`, bounded
+  initial transforms can remain available before the next checkpoint instead
+  of immediately forcing a spatial refresh on every small adjustment
+- if guided naming returns warnings or blocks, replace the weak name with one of the suggested semantic names instead of retrying the same placeholder or opaque abbreviation unchanged
+- guided naming and guided spatial role inference now use token-boundary style
+  matches instead of raw substring hits, so names such as `Heart` or
+  `TruthBodyAnchorHead` do not become accidental semantic ear/body/head roles
+- stage compare/iterate may now keep the session in bounded build continuation
+  when the current guided role/workset slice is still incomplete, instead of
+  escalating too early into `inspect_validate`
+- later guided steps may still keep missing primary masses available when those
+  masses are part of the same bounded workset and are not yet complete
+- exact tool-name searches on the shaped guided surface now return a tighter,
+  smaller result shape to reduce noisy discovery dumps during the active build
+  loop
+- for overlays that use primary-mass role groups, registering the required
+  primary roles can now move the flow from `create_primary_masses` into
+  `place_secondary_parts`
+- overlays that use secondary-part role groups can likewise move from
+  `place_secondary_parts` into `checkpoint_iterate` when the required
+  secondary roles are complete
+- later guided steps may still keep earlier corrective build families
+  available for already-created masses, so the runtime can support bounded
+  in-place refinement without reopening the entire generic build surface
+- `collection_manage(...)` remain utility-family actions and should not be blocked just because the moved object was registered under an earlier semantic role
+- collection_manage(...) remain utility-family actions for guided workset housekeeping.
+
+## Guided Flow Troubleshooting
+
+If a needed tool is not visible or a build tool seems to have disappeared on
+`llm-guided`, diagnose the session in this order:
+
+1. Call `router_get_status()` and inspect `guided_flow_state`.
+2. If `guided_flow_state` is `null`, the session is not on an active guided
+   flow yet. Set or re-set the goal first.
+3. Check `domain_profile`:
+   - `generic` = fallback build/object flow
+   - `creature` = creature/manual blockout overlay
+   - `building` = building/facade/structural overlay
+4. Check `current_step`, `required_checks`, and `next_actions`.
+5. If `step_status == "blocked"`, complete the required step instead of
+   guessing hidden tool names.
+6. If `spatial_refresh_required == true`, treat that as an explicit stale
+   spatial-state re-arm:
+   - call `scene_scope_graph(...)` first with the already-bound active target
+     scope
+   - then rerun the remaining `required_checks` on that same scope
+7. If `scene_view_diagnostics(target_object="Camera", ...)` or another
+   unrelated helper scope appears to “work” but the flow did not advance, that
+   is expected. Read-only payloads can still succeed even when they do not
+   satisfy the active guided spatial gate.
+8. If a family is hidden/blocked-by-flow, do not treat `call_tool(...)` as a
+   bypass. Follow the flow gate, then re-check visibility/search.
+9. If an explicit goal is active but the router stayed on the manual/no-match
+   path, a strong pattern-suggested workflow may still expand; what stays
+   suppressed there is the lower-confidence heuristic reopening path.
+10. If the server rejects a call with a guided family/role error, do not retry
+   the same action under a different hidden/internal tool name; inspect the
+   current `allowed_families` and `allowed_roles` first.
+11. For creature blockout naming, prefer full semantic names such as
+    `ForeLeg_L` / `HindLeg_R`; abbreviations like `ForeL` / `HindR` can weaken
+   seam inference unless the heuristic layer explicitly supports them.
 
 ## Guided Reference Readiness Contract
 
@@ -438,6 +798,11 @@ instead of hidden sequencing assumptions.
   guided goal/session; stale pending refs for another goal do not block a ready
   staged compare/iterate path by themselves
 - staged compare/iterate now fail fast when the readiness payload is blocked
+- `loop_disposition="inspect_validate"` is a stop-and-check branch:
+  pause free-form modeling and switch to inspect/measure/assert immediately
+- if staged compare degrades but deterministic truth findings remain strong,
+  the same inspect/measure/assert handoff stays authoritative instead of
+  dropping the run back into ad hoc free-form modeling
 - `goal_override` is not a substitute for an active staged guided session on
   `reference_compare_stage_checkpoint()` / `reference_iterate_stage_checkpoint()`;
   use lower-level checkpoint/current-view compare only when you intentionally
@@ -555,7 +920,30 @@ The prompt layer is now part of the MCP product surface:
 - tool-only clients can use:
   - `list_prompts`
   - `get_prompt`
-- `recommended_prompts` provides phase/profile-aware recommendations
+- native prompt asset names now include `reference_guided_creature_build`
+- `recommended_prompts` now uses phase/profile plus explicit session goal and
+  guided-handoff context to steer creature sessions toward the creature prompt path
+
+## Deterministic Silhouette Guidance
+
+Stage compare/iterate responses now expose one deterministic perception layer
+alongside the existing vision/truth outputs:
+
+- `silhouette_analysis`
+  - typed silhouette metrics such as IoU, contour drift, aspect-ratio delta,
+    band-width deltas, and side-profile projection deltas
+- `action_hints`
+  - typed corrective tool suggestions derived from those metrics
+- `part_segmentation`
+  - a vendor-neutral, advisory-only sidecar payload that defaults to
+    `status="disabled"` on the normal guided runtime
+
+Consumption order:
+
+- `correction_candidates` and `truth_followup` stay ahead of perception hints
+- `action_hints` complement `correction_focus`; they do not replace truth or router policy
+- `vision_contract_profile` remains prompt/schema/parser routing only and is
+  not itself evidence, truth, or policy
 
 ## Code Mode Pilot Baseline
 
@@ -731,7 +1119,54 @@ Managing objects at the scene level.
 Invalid target-scope inputs such as an unavailable `collection_name` now return
 structured error payloads on the stage-compare path instead of failing again
 while building the error response.
-Stage compare/iterate responses now also expose `guided_reference_readiness`, `assembled_target_scope`, `truth_bundle`, `truth_followup`, `correction_candidates`, `budget_control`, `refinement_route`, and `refinement_handoff`, so assembled-model correction flows can consume explicit session readiness, a structured target scope, correction-oriented truth findings, loop-ready follow-up items, an explicitly ranked merged correction list, explicit trimming metadata, a deterministic refinement-family decision, and a bounded next-tool-family handoff instead of inferring everything from loose `target_object` / `target_objects` / `collection_name` fields. On `reference_iterate_stage_checkpoint(...)`, the loop-facing `correction_focus` now prefers ranked `correction_candidates` summaries when they are present, and high-priority deterministic truth findings can also move `loop_disposition` to `inspect_validate` instead of waiting only for repeated vision focus. Collection/object-set targeting now also avoids obviously accessory-first primary anchors when a more structural target is present, vision-side `recommended_checks` are normalized to canonical MCP tool ids or dropped, model-aware budget control trims pair/candidate detail when the active runtime profile is too small for the full payload, and `refinement_route` now distinguishes bounded family choices such as `macro`, `modeling_mesh`, `sculpt_region`, or `inspect_only`. At this stage sculpt stays hidden on the normal guided surface; `refinement_handoff` is recommendation-only.
+Stage compare/iterate responses now also expose `guided_reference_readiness`, `assembled_target_scope`, `truth_bundle`, `truth_followup`, `correction_candidates`, `budget_control`, `refinement_route`, `refinement_handoff`, `silhouette_analysis`, `action_hints`, and `part_segmentation`, so assembled-model correction flows can consume explicit session readiness, a structured target scope, correction-oriented truth findings, loop-ready follow-up items, an explicitly ranked merged correction list, explicit trimming metadata, a deterministic refinement-family decision, typed perception metrics/tool hints, and an optional advisory-only sidecar placeholder instead of inferring everything from loose `target_object` / `target_objects` / `collection_name` fields. On `reference_iterate_stage_checkpoint(...)`, the loop-facing `correction_focus` now prefers ranked `correction_candidates` summaries when they are present, and high-priority deterministic truth findings can also move `loop_disposition` to `inspect_validate` instead of waiting only for repeated vision focus. `action_hints` complement that loop by exposing deterministic silhouette-driven tool suggestions, while `part_segmentation` stays disabled unless an operator explicitly enables the separate sidecar path. Collection/object-set targeting now also avoids obviously accessory-first primary anchors when a more structural target is present, expands supported creature scopes into deterministic `required_creature_seams`, keeps multiple failing required seams live together in `truth_followup` / `correction_candidates`, normalizes vision-side `recommended_checks` to canonical MCP tool ids or drops them, applies model-aware budget control when the active runtime profile is too small for the full payload, and exposes `refinement_route` for bounded family choices such as `macro`, `modeling_mesh`, `sculpt_region`, or `inspect_only`. At this stage sculpt stays hidden on the normal guided surface; `refinement_handoff` is recommendation-only.
+Silhouette metrics use a target-view or focus capture when one is available;
+the broad `context_wide` capture is only a fallback. A staged iterate result
+that is held in `continue_build` because required roles are still missing does
+not complete or advance the current guided step. Collection and object-set
+stage captures now focus on the assembled target scope's primary target when no
+explicit `target_object` is supplied, and error-stage iterate handoffs that move
+to `inspect_validate` or `finish_or_stop` reapply the matching guided
+visibility before returning.
+Compact stage compare/iterate responses keep `capture_count`, `preset_names`,
+truth, and correction summaries, but omit the full capture list to reduce
+normal guided response size. Rich/debug capture detail remains available through
+the richer profile path. During active assembled-workset checkpointing, the
+requested `target_object` / `target_objects` / `collection_name` must still
+cover the active guided workset; narrowing to a single safe object returns an
+actionable scope error instead of advancing the loop.
+Compact iterate responses also slim the nested `compare_result` debug payload:
+top-level iterate fields keep the actionable truth, candidate, hint, and route
+summaries, while duplicated nested `truth_bundle`, `truth_followup`, full
+candidate evidence, full silhouette metrics, and action hints are omitted from
+`compare_result`. Use the rich/debug path when a maintainer needs the full
+nested compare payload.
+
+The full scope/relation graphs stay separate from those default stage payloads.
+When a guided step needs richer spatial state instead of just the current
+checkpoint handoff, call the explicit read-only artifacts:
+
+- `scene_scope_graph(...)`
+- `scene_relation_graph(...)`
+- `scene_view_diagnostics(...)`
+
+`reference_compare_current_view(...)` may also emit compact
+`view_diagnostics_hints` when the current framing or occlusion state makes the
+captured checkpoint a weak basis for the next correction step. That hint is
+recommendation-only and does not embed a heavyweight view graph into the
+default compare payload. When `persist_view=True` is used with user-view
+adjustments such as `view_name`, `orbit_horizontal`, or `zoom_factor`, the
+checkpoint capture applies and keeps those adjustments; the follow-up compact
+diagnostics read the already-persisted view instead of applying the same
+adjustments again.
+
+For the guided creature path specifically, pair truth now carries one explicit
+attachment verdict for each required seam:
+
+- `seated_contact`
+- `floating_gap`
+- `intersecting`
+- `misaligned_attachment`
 | `scene_camera_orbit` | `angle_horizontal` (float), `angle_vertical` (float), `target_object` (str, optional), `target_point` ([x,y,z], optional) | Orbits the viewport around a target object or point. |
 | `scene_camera_focus` | `object_name` (str), `zoom_factor` (float) | Focuses the viewport on one object. Use `object_name` here, not `target`, `target_object`, or `focus_target`. |
 | `scene_get_viewport` | `width` (int), `height` (int), `shading` (str), `camera_name` (str), `focus_target` (str), `view_name` (str, optional), `orbit_horizontal` (float, optional), `orbit_vertical` (float, optional), `zoom_factor` (float, optional), `persist_view` (bool, optional), `output_mode` (str) | Returns a rendered image. `shading`: WIREFRAME/SOLID/MATERIAL. `camera_name`: specific cam or "USER_PERSPECTIVE". `USER_PERSPECTIVE` follows the live active 3D viewport; named cameras follow render visibility. `view_name`/`orbit_*`/`zoom_factor`/`persist_view` apply only to bounded `USER_PERSPECTIVE` capture adjustments. `focus_target`: object to frame. `output_mode`: IMAGE (default Image resource), BASE64 (raw string), FILE (host-visible path), MARKDOWN (inline preview + path). |
@@ -743,6 +1178,9 @@ Stage compare/iterate responses now also expose `guided_reference_readiness`, `a
 | `scene_get_hierarchy` | `object_name` (str, optional), `include_transforms` (bool) | Gets parent-child hierarchy for specific object or full scene tree. |
 | `scene_get_bounding_box` | `object_name` (str), `world_space` (bool) | Gets bounding box corners, min/max, center, dimensions, and volume. |
 | `scene_get_origin_info` | `object_name` (str) | Gets origin (pivot point) information relative to geometry and bounding box. |
+| `scene_scope_graph` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional) | Returns one compact read-only structural scope artifact for a target object/object set/collection, including the inferred anchor plus bounded object-role hints. Intended for on-demand guided spatial reasoning rather than bootstrap exposure. |
+| `scene_relation_graph` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional), `goal_hint` (str, optional) | Returns one compact read-only pair-relation graph derived from current gap/alignment/overlap/contact truth, including bounded attachment/support/symmetry interpretations where justified. Intended for on-demand guided spatial reasoning rather than bootstrap exposure. |
+| `scene_view_diagnostics` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional), `camera_name` (str, optional), `focus_target` (str, optional), `view_name` (str, optional), `orbit_horizontal` (float, optional), `orbit_vertical` (float, optional), `zoom_factor` (float, optional), `persist_view` (bool, optional) | Returns one compact read-only view-space diagnostics artifact with projected extent, frame coverage, centering, and visible/partial/occluded/off-frame verdicts for a named camera or the live `USER_PERSPECTIVE` path. This is view-space only and does not replace truth-space measure/assert semantics. |
 | `scene_measure_distance` | `from_object` (str), `to_object` (str), `reference` (str) | Measures origin-to-origin or bbox-center distance between two objects. |
 | `scene_measure_dimensions` | `object_name` (str), `world_space` (bool) | Measures object dimensions and volume from its bounding box. |
 | `scene_measure_gap` | `from_object` (str), `to_object` (str), `tolerance` (float) | Measures nearest gap/contact state between two objects. For mesh pairs it now prefers a mesh-surface path and exposes `measurement_basis` plus bbox fallback diagnostics. |
@@ -787,7 +1225,7 @@ Organizational tools for managing Blender collections.
 |-----------|-----------|-------------|
 | `collection_list` | `include_objects` (bool) | Lists all collections with hierarchy, object counts, and visibility flags. |
 | `collection_list_objects` | `collection_name` (str), `recursive` (bool), `include_hidden` (bool) | Lists objects within a collection, optionally recursive through child collections. |
-| `collection_manage` | `action` (create/delete/rename/move_object/link_object/unlink_object), `collection_name`, `new_name`, `parent_name`, `object_name` | Manages collections: create, delete, rename, and move/link/unlink objects between collections. |
+| `collection_manage` | `action` (create/delete/rename/move_object/link_object/unlink_object), `collection_name`, `new_name`, `parent_name`, `object_name` | Manages collections: create, delete, rename, and move/link/unlink objects between collections. Canonical public target name is `collection_name`; legacy `name` is compatibility-only on the guided proxy path. |
 
 ### Material Tools
 Material and shader management.
@@ -819,7 +1257,7 @@ Bounded multi-step tools above the atomic layer and below full workflows.
 |-----------|-----------|-------------|
 | `macro_cutout_recess` | `target_object` (str), `width` (float), `height` (float), `depth` (float), `face` (str), `offset` ([x,y,z]), `mode` (str), `bevel_width` (float), `bevel_segments` (int), `cleanup` (str), `cutter_name` (str) | Creates one bounded recess/cutout by orchestrating cutter creation, placement, optional bevel, boolean application, and helper cleanup on a target object. |
 | `macro_finish_form` | `target_object` (str), `preset` (str), `bevel_width` (float), `bevel_segments` (int), `subsurf_levels` (int), `thickness` (float), `solidify_offset` (float) | Applies one bounded finishing stack to an object using a preset such as `rounded_housing`, `panel_finish`, `shell_thicken`, or `smooth_subdivision` instead of hand-building the modifier chain. |
-| `macro_attach_part_to_surface` | `part_object` (str), `surface_object` (str), `surface_axis` (`X`/`Y`/`Z`), `surface_side` (`positive`/`negative`), `align_mode` (`center`/`min`/`max`), `gap` (float), `offset` ([x,y,z]) | Seats one part onto another object's surface/body using one explicit surface axis, one side, shared tangential alignment, optional gap, and one deterministic transform. |
+| `macro_attach_part_to_surface` | `part_object` (str), `surface_object` (str), `surface_axis` (`X`/`Y`/`Z`), `surface_side` (`positive`/`negative`), `align_mode` (`none`/`center`/`min`/`max`), `gap` (float), `max_mesh_nudge` (float), `offset` ([x,y,z]) | Seats one part onto another object's surface/body using one explicit surface axis, one side, shared tangential alignment, optional gap, and one deterministic transform. Use `align_mode="none"` to preserve tangential offsets while seating along the surface normal. |
 | `macro_align_part_with_contact` | `part_object` (str), `reference_object` (str), `target_relation` (`contact`/`gap`), `gap` (float), `align_mode` (`none`/`center`/`min`/`max`), `normal_axis` (`X`/`Y`/`Z`, optional), `preserve_side` (bool), `max_nudge` (float), `offset` ([x,y,z]) | Repairs an already-related pair with a bounded minimal nudge. It reads the current truth state, infers a repair axis/side when possible, preserves the current side by default, and refuses broader moves once the required nudge exceeds `max_nudge`. |
 | `macro_place_symmetry_pair` | `left_object` (str), `right_object` (str), `axis` (`X`/`Y`/`Z`), `mirror_coordinate` (float), `anchor_object` (`auto`/`left`/`right`), `tolerance` (float) | Places or corrects one mirrored pair around an explicit mirror plane by preserving one anchor object and moving the follower object to the mirrored center position. |
 | `macro_place_supported_pair` | `left_object` (str), `right_object` (str), `support_object` (str), `axis` (`X`/`Y`/`Z`), `mirror_coordinate` (float), `support_axis` (`X`/`Y`/`Z`), `support_side` (`positive`/`negative`), `anchor_object` (`auto`/`left`/`right`), `gap` (float), `tolerance` (float) | Places or corrects one mirrored pair against a shared support surface by combining explicit mirror placement with explicit support contact. It blocks when those constraints would require materially different support coordinates and stays outside rigging or free-form posing. |
@@ -842,9 +1280,21 @@ Example guided macro flow for finishing:
 If `macro_finish_form` matches the user's intent, prefer it over manually chaining `modeling_add_modifier(...)` calls.
 If the task is specifically "seat/attach this part onto that surface/body", prefer `macro_attach_part_to_surface` over the more general `macro_relative_layout`.
 If the pair is already almost correct and only needs a small repair nudge, prefer `macro_align_part_with_contact` over a full re-placement macro.
+On the guided creature path, embedded seams such as snout/head or nose/snout
+prefer `macro_attach_part_to_surface`, while head/body, tail/body, and
+limb/body seams prefer `macro_align_part_with_contact`.
+When a rounded organic segment seam such as head/body, tail/body, or limb/body
+is already intersecting, the planner should prefer `macro_attach_part_to_surface`
+over a blind bbox side-push. `macro_align_part_with_contact` remains best for
+small non-overlapping contact/gap nudges; using an explicit normal axis on a
+rounded overlapping part can still produce bbox contact while mesh-surface
+truth reports a residual gap.
 If the task is specifically "place or correct this mirrored pair", prefer `macro_place_symmetry_pair` over manual mirrored transforms.
 If the task is specifically "keep this mirrored pair symmetric while seating both parts on the same support", prefer `macro_place_supported_pair` over manually combining symmetry and per-part contact moves.
 If the task is specifically "separate these two overlapping parts with a bounded fix", prefer `macro_cleanup_part_intersections` over ad hoc manual transform cleanup.
+On required creature seams, overlap removal alone does not count as success if
+the attachment verdict is still `floating_gap`, `intersecting`, or
+`misaligned_attachment`.
 If the main issue is cross-object size/ratio drift, prefer `macro_adjust_relative_proportion` over ad hoc scale guessing or open-ended sculpting.
 If the task is to reshape an ordered segment chain into a cleaner arc, prefer `macro_adjust_segment_chain_arc` over manual per-segment transform chaining.
 If the task is bounded relative placement/alignment, prefer `macro_relative_layout` over manual transform-by-transform placement.
@@ -862,7 +1312,7 @@ Geometry creation and editing.
 
 | Tool Name | Arguments | Description |
 |-----------|-----------|-------------|
-| `modeling_create_primitive` | `primitive_type` (str), `size` (float), `location` ([x,y,z]), `rotation` ([x,y,z]) | Creates a simple 3D object (Cube, Sphere, Cylinder, Plane, Cone, Torus, Monkey). |
+| `modeling_create_primitive` | `primitive_type` (str), `radius` (float), `size` (float), `location` ([x,y,z]), `rotation` ([x,y,z]), `name` (str, optional) | Creates a simple 3D object (Cube, Sphere, Cylinder, Plane, Cone, Torus, Monkey). Use `radius` for sphere/cylinder/cone, `size` for coarse primitive size, then `modeling_transform_object(scale=...)` for non-uniform scale. Collection placement happens after creation via `collection_manage(...)`, not via a `collection_name` primitive argument. |
 | `modeling_transform_object` | `name` (str), `location` (opt), `rotation` (opt), `scale` (opt) | Changes position, rotation, or scale of an existing object. |
 | `modeling_add_modifier` | `name` (str), `modifier_type` (str), `properties` (dict) | Adds a non-destructive object modifier (e.g., `SUBSURF`, `BEVEL`). Successful addon responses use structured modifier metadata under the hood. |
 | `modeling_apply_modifier` | `name` (str), `modifier_name` (str) | Applies a modifier, permanently changing the mesh geometry. |
@@ -1057,8 +1507,8 @@ Tools for managing the Router Supervisor and executing matched workflows.
 
 | Tool Name | Arguments | Description |
 |-----------|-----------|-------------|
-| `router_set_goal` | `goal` (str), `resolved_params` (dict, optional) | Sets the active build goal for the router session. Returns status (ready/needs_input/no_match/disabled/error), matched workflow info, resolved params with sources, any unresolved inputs for follow-up calls, explicit `guided_handoff` metadata when the intended path is guided manual build/utility continuation instead of workflow execution, and `guided_reference_readiness` for staged reference work. |
-| `router_get_status` | *none* | Returns current router session state, visibility diagnostics, pending clarification info, active `guided_handoff` when present, `guided_reference_readiness`, and router/component stats. |
+| `router_set_goal` | `goal` (str), `resolved_params` (dict, optional) | Sets the active build goal for the router session. Returns status (ready/needs_input/no_match/disabled/error), matched workflow info, resolved params with sources, any unresolved inputs for follow-up calls, explicit `guided_handoff` metadata when the intended path is guided manual build/utility continuation instead of workflow execution, machine-readable `guided_flow_state` for the current guided step/domain/required checks, and `guided_reference_readiness` for staged reference work. |
+| `router_get_status` | *none* | Returns current router session state, visibility diagnostics, pending clarification info, active `guided_handoff` when present, `guided_flow_state`, `guided_reference_readiness`, and router/component stats. |
 | `router_clear_goal` | *none* | Clears the current modeling goal. |
 
 ## 🛠 Key Components

@@ -4,11 +4,13 @@ import os
 import queue
 import socket
 import struct
+import tempfile
 import threading
 import time
 import traceback
 import uuid
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Callable, Dict
 
 from ..application.handlers.job_utils import JobCancelledError
@@ -22,6 +24,8 @@ except ImportError:
 HOST = "0.0.0.0"  # Listen on all interfaces within container
 PORT = 8765
 DEFAULT_EXECUTION_TIMEOUT_SECONDS = float(os.environ.get("ADDON_EXECUTION_TIMEOUT_SECONDS", "30.0"))
+DEFAULT_WATCHDOG_INTERVAL_SECONDS = float(os.environ.get("BLENDER_AI_MCP_RPC_WATCHDOG_INTERVAL_SECONDS", "5.0"))
+RPC_TRACE_DIR = Path(os.environ.get("BLENDER_AI_MCP_TRACE_DIR", Path(tempfile.gettempdir()) / "blender-ai-mcp"))
 
 # If enabled, the addon will push an explicit undo step after each mutating RPC command.
 # This makes `system_undo(steps=1)` behave more like "undo the last MCP tool call"
@@ -55,6 +59,7 @@ _NO_UNDO_PUSH_CMDS = {
     "scene.get_view_state",
     "scene.restore_view_state",
     "scene.set_standard_view",
+    "scene.get_view_diagnostics",
     "scene.isolate_object",
     "scene.hide_object",
     "scene.show_all_objects",
@@ -128,6 +133,33 @@ def _safe_undo_push(message: str) -> None:
         pass
 
 
+def _trace_timestamp() -> str:
+    return time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime()) + f".{int((time.time() % 1) * 1000):03d}"
+
+
+def _summarize_trace_value(value: Any, *, depth: int = 0) -> Any:
+    if depth >= 2:
+        return f"<{type(value).__name__}>"
+    if isinstance(value, (str, int, float, bool)) or value is None:
+        if isinstance(value, str) and len(value) > 240:
+            return value[:240] + "...<truncated>"
+        return value
+    if isinstance(value, dict):
+        summary: dict[str, Any] = {}
+        for index, (key, nested) in enumerate(value.items()):
+            if index >= 12:
+                summary["..."] = f"{len(value) - 12} more key(s)"
+                break
+            summary[str(key)] = _summarize_trace_value(nested, depth=depth + 1)
+        return summary
+    if isinstance(value, (list, tuple)):
+        items = [_summarize_trace_value(item, depth=depth + 1) for item in list(value)[:12]]
+        if len(value) > 12:
+            items.append(f"... {len(value) - 12} more item(s)")
+        return items
+    return f"<{type(value).__name__}>"
+
+
 def send_msg(sock, msg):
     # Prefix each message with a 4-byte length (network byte order)
     msg = struct.pack(">I", len(msg)) + msg
@@ -186,11 +218,54 @@ class BlenderRpcServer:
         self.running = False
         self.command_registry = {}
         self.background_command_registry = {}
+        self.watchdog_interval_seconds = DEFAULT_WATCHDOG_INTERVAL_SECONDS
+        self._watchdog_callback: Callable[[], float | None] | None = None
+        self._watchdog_enabled = False
 
         # Queue for results from main thread
         self.result_queues = {}  # request_id -> Queue
         self.background_jobs: Dict[str, BackgroundJob] = {}
         self._jobs_lock = threading.Lock()
+        self.trace_file_path: Path | None = self._create_trace_file_path()
+        self._record_trace_event(
+            "server_initialized",
+            cmd=None,
+            request_id=None,
+            detail={"host": self.host, "port": self.port, "pid": os.getpid()},
+        )
+
+    def _create_trace_file_path(self) -> Path | None:
+        try:
+            RPC_TRACE_DIR.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            return None
+        timestamp = time.strftime("%Y%m%d_%H%M%S", time.localtime())
+        return RPC_TRACE_DIR / f"rpc_trace_{timestamp}_{os.getpid()}.jsonl"
+
+    def _record_trace_event(
+        self,
+        event_type: str,
+        *,
+        cmd: str | None,
+        request_id: str | None,
+        args: Dict[str, Any] | None = None,
+        detail: Dict[str, Any] | None = None,
+    ) -> None:
+        payload = {
+            "ts": _trace_timestamp(),
+            "event": event_type,
+            "request_id": request_id,
+            "cmd": cmd,
+            "args": _summarize_trace_value(args or {}),
+            "detail": _summarize_trace_value(detail or {}),
+        }
+        if self.trace_file_path is None:
+            return
+        try:
+            with self.trace_file_path.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps(payload, ensure_ascii=True) + "\n")
+        except Exception:
+            pass
 
     def register_handler(self, cmd: str, handler_func):
         """Register a function to handle a specific command."""
@@ -218,18 +293,131 @@ class BlenderRpcServer:
             self.server_thread.start()
         except Exception as e:
             print(f"[BlenderRpc] Failed to start server: {e}")
+            if self.server_socket:
+                try:
+                    self.server_socket.close()
+                except Exception:
+                    pass
+            self.server_socket = None
+            self.server_thread = None
             self.running = False
 
     def stop(self):
+        self._stop(clear_background_jobs=True)
+
+    def _stop(self, *, clear_background_jobs: bool) -> None:
         self.running = False
         if self.server_socket:
             try:
                 self.server_socket.close()
             except Exception:
                 pass
-        with self._jobs_lock:
-            self.background_jobs.clear()
+            self.server_socket = None
+        if (
+            self.server_thread
+            and self.server_thread.is_alive()
+            and threading.current_thread() is not self.server_thread
+        ):
+            try:
+                self.server_thread.join(timeout=0.2)
+            except Exception:
+                pass
+        self.server_thread = None
+        if clear_background_jobs:
+            with self._jobs_lock:
+                self.background_jobs.clear()
         print("[BlenderRpc] Server stopped")
+
+    def is_listener_healthy(self) -> bool:
+        """Return True when the RPC listener thread and socket are still usable."""
+
+        if not self.running:
+            return False
+        if self.server_socket is None:
+            return False
+        try:
+            if self.server_socket.fileno() < 0:
+                return False
+        except Exception:
+            return False
+        return bool(self.server_thread is not None and self.server_thread.is_alive())
+
+    def ensure_running(self) -> bool:
+        """Best-effort self-heal for the addon-side RPC listener."""
+
+        if self.is_listener_healthy():
+            return True
+
+        self._record_trace_event(
+            "server_watchdog_restart",
+            cmd=None,
+            request_id=None,
+            detail={
+                "running": self.running,
+                "has_socket": self.server_socket is not None,
+                "thread_alive": self.server_thread.is_alive() if self.server_thread is not None else False,
+            },
+        )
+        self._stop(clear_background_jobs=False)
+        self.start()
+        return self.is_listener_healthy()
+
+    def start_watchdog(self, interval_seconds: float | None = None) -> bool:
+        """Register a Blender timer that keeps the addon RPC listener alive."""
+
+        if not bpy:
+            return False
+        timers = getattr(getattr(bpy, "app", None), "timers", None)
+        if timers is None or not hasattr(timers, "register"):
+            return False
+
+        self.watchdog_interval_seconds = (
+            float(interval_seconds) if isinstance(interval_seconds, (int, float)) else self.watchdog_interval_seconds
+        )
+        if self.watchdog_interval_seconds <= 0:
+            return False
+        if self._watchdog_enabled:
+            return True
+
+        def _watchdog_tick() -> float | None:
+            if not self._watchdog_enabled:
+                return None
+            try:
+                self.ensure_running()
+            except Exception as exc:
+                self._record_trace_event(
+                    "server_watchdog_error",
+                    cmd=None,
+                    request_id=None,
+                    detail={"error": str(exc)},
+                )
+            return self.watchdog_interval_seconds if self._watchdog_enabled else None
+
+        self._watchdog_callback = _watchdog_tick
+        self._watchdog_enabled = True
+        timers.register(_watchdog_tick, first_interval=self.watchdog_interval_seconds)
+        return True
+
+    def stop_watchdog(self) -> None:
+        """Unregister the Blender timer used for addon RPC self-healing."""
+
+        self._watchdog_enabled = False
+        if not bpy or self._watchdog_callback is None:
+            return
+        timers = getattr(getattr(bpy, "app", None), "timers", None)
+        if timers is None:
+            return
+        unregister = getattr(timers, "unregister", None)
+        is_registered = getattr(timers, "is_registered", None)
+        if callable(unregister):
+            try:
+                if callable(is_registered):
+                    if is_registered(self._watchdog_callback):
+                        unregister(self._watchdog_callback)
+                else:
+                    unregister(self._watchdog_callback)
+            except Exception:
+                pass
 
     def _accept_loop(self):
         while self.running:
@@ -369,6 +557,13 @@ class BlenderRpcServer:
         job = self._get_background_job(job_id)
         if job is None:
             return
+        self._record_trace_event(
+            "background_job_started",
+            cmd=job.cmd,
+            request_id=job.job_id,
+            args=job.args,
+            detail={"timeout_seconds": job.timeout_seconds},
+        )
 
         handler_func = self.background_command_registry.get(job.cmd)
         if handler_func is None:
@@ -377,6 +572,13 @@ class BlenderRpcServer:
                 status="failed",
                 error=f"No background handler registered for '{job.cmd}'",
                 finished_at=time.time(),
+            )
+            self._record_trace_event(
+                "background_job_failed",
+                cmd=job.cmd,
+                request_id=job.job_id,
+                args=job.args,
+                detail={"error": f"No background handler registered for '{job.cmd}'"},
             )
             return
 
@@ -387,6 +589,13 @@ class BlenderRpcServer:
                 cancelled=True,
                 error="Background job cancelled before start",
                 finished_at=time.time(),
+            )
+            self._record_trace_event(
+                "background_job_cancelled",
+                cmd=job.cmd,
+                request_id=job.job_id,
+                args=job.args,
+                detail={"error": "Background job cancelled before start"},
             )
             return
 
@@ -422,6 +631,13 @@ class BlenderRpcServer:
                 status_message="Completed",
                 error=None,
             )
+            self._record_trace_event(
+                "background_job_completed",
+                cmd=job.cmd,
+                request_id=job.job_id,
+                args=job.args,
+                detail={"status": "completed"},
+            )
         except JobCancelledError as exc:
             self._update_background_job(
                 job_id,
@@ -431,6 +647,13 @@ class BlenderRpcServer:
                 finished_at=time.time(),
                 status_message="Cancelled",
             )
+            self._record_trace_event(
+                "background_job_cancelled",
+                cmd=job.cmd,
+                request_id=job.job_id,
+                args=job.args,
+                detail={"error": str(exc)},
+            )
         except Exception as exc:
             traceback.print_exc()
             self._update_background_job(
@@ -439,6 +662,13 @@ class BlenderRpcServer:
                 error=str(exc),
                 finished_at=time.time(),
                 status_message="Failed",
+            )
+            self._record_trace_event(
+                "background_job_failed",
+                cmd=job.cmd,
+                request_id=job.job_id,
+                args=job.args,
+                detail={"error": str(exc)},
             )
 
     def _handle_background_rpc(
@@ -455,6 +685,13 @@ class BlenderRpcServer:
 
         if rpc_cmd == "rpc.launch_job":
             if not isinstance(cmd, str):
+                self._record_trace_event(
+                    "background_rpc_error",
+                    cmd=rpc_cmd,
+                    request_id=request_id,
+                    args=args,
+                    detail={"error": "cmd required for rpc.launch_job"},
+                )
                 return {
                     "request_id": request_id,
                     "status": "error",
@@ -463,6 +700,13 @@ class BlenderRpcServer:
                     "error_boundary": "addon_execution",
                 }
             if cmd not in self.background_command_registry:
+                self._record_trace_event(
+                    "background_rpc_error",
+                    cmd=rpc_cmd,
+                    request_id=request_id,
+                    args=args,
+                    detail={"error": f"Unknown background command: {cmd}"},
+                )
                 return {
                     "request_id": request_id,
                     "status": "error",
@@ -486,6 +730,13 @@ class BlenderRpcServer:
             with self._jobs_lock:
                 self.background_jobs[background_job.job_id] = background_job
             self._schedule_background_job(background_job.job_id)
+            self._record_trace_event(
+                "background_job_queued",
+                cmd=cmd,
+                request_id=background_job.job_id,
+                args=background_job.args,
+                detail={"timeout_seconds": background_job.timeout_seconds},
+            )
             return {
                 "request_id": request_id,
                 "status": "ok",
@@ -493,6 +744,13 @@ class BlenderRpcServer:
             }
 
         if not isinstance(job_id, str) or not job_id:
+            self._record_trace_event(
+                "background_rpc_error",
+                cmd=rpc_cmd,
+                request_id=request_id,
+                args=args,
+                detail={"error": "job_id required"},
+            )
             return {
                 "request_id": request_id,
                 "status": "error",
@@ -503,6 +761,13 @@ class BlenderRpcServer:
 
         tracked_job = self._get_background_job(job_id)
         if tracked_job is None:
+            self._record_trace_event(
+                "background_rpc_error",
+                cmd=rpc_cmd,
+                request_id=request_id,
+                args=args,
+                detail={"error": f"Unknown background job: {job_id}"},
+            )
             return {
                 "request_id": request_id,
                 "status": "error",
@@ -512,6 +777,13 @@ class BlenderRpcServer:
             }
 
         if rpc_cmd == "rpc.get_job":
+            self._record_trace_event(
+                "background_job_status_read",
+                cmd=tracked_job.cmd,
+                request_id=job_id,
+                args=tracked_job.args,
+                detail={"status": tracked_job.status},
+            )
             return {
                 "request_id": request_id,
                 "status": "ok",
@@ -535,6 +807,13 @@ class BlenderRpcServer:
                 status_message="Cancellation requested",
             )
             updated_job = self._get_background_job(job_id)
+            self._record_trace_event(
+                "background_job_cancel_requested",
+                cmd=tracked_job.cmd,
+                request_id=job_id,
+                args=tracked_job.args,
+                detail={"status": (updated_job or tracked_job).status},
+            )
             return {
                 "request_id": request_id,
                 "status": "ok",
@@ -543,6 +822,13 @@ class BlenderRpcServer:
 
         if rpc_cmd == "rpc.collect_job":
             if tracked_job.status != "completed":
+                self._record_trace_event(
+                    "background_rpc_error",
+                    cmd=rpc_cmd,
+                    request_id=request_id,
+                    args=args,
+                    detail={"error": f"Background job {job_id} is not completed yet"},
+                )
                 return {
                     "request_id": request_id,
                     "status": "error",
@@ -575,8 +861,12 @@ class BlenderRpcServer:
             return {"status": "error", "error": "Missing request_id or cmd", "request_id": request_id}
 
         print(f"[BlenderRpc] Received cmd: {cmd}")
+        self._record_trace_event("rpc_received", cmd=cmd, request_id=request_id, args=args)
 
         if cmd == "ping":
+            self._record_trace_event(
+                "rpc_completed", cmd=cmd, request_id=request_id, args=args, detail={"status": "ok"}
+            )
             return {
                 "request_id": request_id,
                 "status": "ok",
@@ -594,14 +884,30 @@ class BlenderRpcServer:
         def main_thread_exec():
             try:
                 if cmd in self.command_registry:
+                    self._record_trace_event("rpc_handler_started", cmd=cmd, request_id=request_id, args=args)
                     res = self.command_registry[cmd](**args)
                     if _should_push_undo(cmd):
                         _safe_undo_push(f"MCP: {cmd}")
+                    self._record_trace_event("rpc_handler_completed", cmd=cmd, request_id=request_id, args=args)
                     result_queue.put({"status": "ok", "result": res})
                 else:
+                    self._record_trace_event(
+                        "rpc_handler_failed",
+                        cmd=cmd,
+                        request_id=request_id,
+                        args=args,
+                        detail={"error": f"Unknown command: {cmd}"},
+                    )
                     result_queue.put({"status": "error", "error": f"Unknown command: {cmd}"})
             except Exception as e:
                 traceback.print_exc()
+                self._record_trace_event(
+                    "rpc_handler_failed",
+                    cmd=cmd,
+                    request_id=request_id,
+                    args=args,
+                    detail={"error": str(e)},
+                )
                 result_queue.put({"status": "error", "error": str(e)})
 
         # Schedule on main thread
@@ -623,6 +929,13 @@ class BlenderRpcServer:
                 effective_timeout = min(effective_timeout, remaining_seconds)
             response_payload = result_queue.get(timeout=effective_timeout)
         except queue.Empty:
+            self._record_trace_event(
+                "rpc_timeout",
+                cmd=cmd,
+                request_id=request_id,
+                args=args,
+                detail={"timeout_seconds": effective_timeout},
+            )
             response_payload = {
                 "status": "error",
                 "error": f"Addon execution timeout after {effective_timeout:.1f}s for '{cmd}'",
@@ -631,6 +944,13 @@ class BlenderRpcServer:
             }
 
         del self.result_queues[request_id]
+        self._record_trace_event(
+            "rpc_response_sent",
+            cmd=cmd,
+            request_id=request_id,
+            args=args,
+            detail={"status": response_payload.get("status"), "error": response_payload.get("error")},
+        )
 
         return {"request_id": request_id, **response_payload}
 

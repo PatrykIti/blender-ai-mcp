@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -26,7 +27,68 @@ class PromptCatalogEntry:
     audience: str
     phase_tags: tuple[str, ...] = ()
     profile_tags: tuple[str, ...] = ()
+    goal_tags: tuple[str, ...] = ()
     recommended: bool = True
+
+
+_CREATURE_GOAL_HINTS: tuple[str, ...] = (
+    "animal",
+    "bird",
+    "character",
+    "creature",
+    "ears",
+    "face",
+    "fox",
+    "owl",
+    "paw",
+    "rabbit",
+    "snout",
+    "squirrel",
+    "tail",
+)
+_LOW_POLY_GOAL_HINTS: tuple[str, ...] = (
+    "blockout",
+    "low poly",
+    "low-poly",
+)
+_REFERENCE_GOAL_HINTS: tuple[str, ...] = (
+    "front and side",
+    "front reference",
+    "front/side",
+    "matching reference",
+    "reference image",
+    "reference images",
+    "side reference",
+)
+
+
+def _goal_contains_phrase(goal: str, phrase: str) -> bool:
+    normalized_phrase = re.escape(phrase.strip().lower())
+    return re.search(rf"(?<![a-z0-9]){normalized_phrase}(?![a-z0-9])", goal) is not None
+
+
+def derive_prompt_goal_tags(
+    *,
+    goal: str | None,
+    guided_handoff: dict[str, object] | None = None,
+) -> tuple[str, ...]:
+    """Return deterministic recommendation tags derived from explicit session state."""
+
+    normalized_goal = str(goal or "").strip().lower()
+    tags: set[str] = set()
+
+    if any(_goal_contains_phrase(normalized_goal, token) for token in _CREATURE_GOAL_HINTS):
+        tags.add("goal:creature")
+    if any(_goal_contains_phrase(normalized_goal, token) for token in _LOW_POLY_GOAL_HINTS):
+        tags.add("goal:low_poly")
+    if any(_goal_contains_phrase(normalized_goal, token) for token in _REFERENCE_GOAL_HINTS):
+        tags.add("goal:reference_guided")
+
+    recipe_id = str((guided_handoff or {}).get("recipe_id") or "").strip().lower()
+    if recipe_id == "low_poly_creature_blockout":
+        tags.update({"goal:creature", "goal:low_poly"})
+
+    return tuple(sorted(tags))
 
 
 PROMPT_CATALOG: tuple[PromptCatalogEntry, ...] = (
@@ -93,6 +155,18 @@ PROMPT_CATALOG: tuple[PromptCatalogEntry, ...] = (
         phase_tags=("phase:planning", "phase:build"),
     ),
     PromptCatalogEntry(
+        name="reference_guided_creature_build",
+        title="Reference Guided Creature Build",
+        description="Generic creature-build guidance for llm-guided sessions using staged reference checkpoints and bounded compare/iterate loops.",
+        source_path=PROMPTS_DIR / "REFERENCE_GUIDED_CREATURE_BUILD.md",
+        tags=("mode:guided-reference", "audience:guided", "domain:creature"),
+        operating_mode="guided-reference",
+        audience="guided",
+        phase_tags=("phase:planning", "phase:build"),
+        profile_tags=("profile:llm-guided",),
+        goal_tags=("goal:creature",),
+    ),
+    PromptCatalogEntry(
         name="recommended_prompts",
         title="Recommended Prompts",
         description="Dynamic recommendation prompt based on session phase and surface profile.",
@@ -126,20 +200,33 @@ def get_recommended_prompt_entries(
     *,
     surface_profile: str,
     phase: SessionPhase | str,
+    goal: str | None = None,
+    guided_handoff: dict[str, object] | None = None,
 ) -> tuple[PromptCatalogEntry, ...]:
     """Return the recommended prompts for one surface profile and session phase."""
 
     resolved_phase = coerce_session_phase(phase)
     phase_tag = f"phase:{resolved_phase.value}"
     profile_tag = f"profile:{surface_profile}"
+    goal_tags = set(
+        derive_prompt_goal_tags(
+            goal=goal,
+            guided_handoff=guided_handoff,
+        )
+    )
 
-    recommendations: list[PromptCatalogEntry] = []
-    for entry in PROMPT_CATALOG:
+    recommendations: list[tuple[int, int, PromptCatalogEntry]] = []
+    for index, entry in enumerate(PROMPT_CATALOG):
         if not entry.recommended:
             continue
         if entry.profile_tags and profile_tag not in entry.profile_tags:
             continue
         if entry.phase_tags and phase_tag not in entry.phase_tags:
             continue
-        recommendations.append(entry)
-    return tuple(recommendations)
+        goal_overlap = len(goal_tags.intersection(entry.goal_tags))
+        if entry.goal_tags and goal_overlap == 0:
+            continue
+        recommendations.append((goal_overlap, index, entry))
+
+    recommendations.sort(key=lambda item: (-item[0], item[1]))
+    return tuple(entry for _goal_overlap, _index, entry in recommendations)

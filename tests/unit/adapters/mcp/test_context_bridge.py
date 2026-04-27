@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+import pytest
+import server.adapters.mcp.router_helper as router_helper
 from server.adapters.mcp.context_utils import (
     ctx_error,
     ctx_info,
@@ -16,7 +18,13 @@ from server.adapters.mcp.context_utils import (
 )
 from server.adapters.mcp.execution_context import MCPExecutionContext
 from server.adapters.mcp.execution_report import ExecutionStep, MCPExecutionReport
-from server.adapters.mcp.router_helper import route_tool_call_report
+from server.adapters.mcp.router_helper import route_tool_call, route_tool_call_report
+from server.adapters.mcp.session_capabilities import (
+    SessionCapabilityState,
+    get_session_capability_state,
+    set_session_capability_state,
+)
+from server.adapters.mcp.session_phase import SessionPhase
 
 
 @dataclass
@@ -127,6 +135,100 @@ def test_execution_report_renders_legacy_text_for_multi_step_sequence():
     assert report.to_legacy_text() == "[Step 1: scene_set_mode] OK\n[Step 2: mesh_extrude_region] Extruded"
 
 
+def test_guided_spatial_dirty_tracking_scans_all_successful_routed_steps(monkeypatch):
+    """Earlier geometry mutations should dirty spatial state even when the final routed step is material-only."""
+
+    ctx = FakeContext()
+    calls: list[dict[str, object]] = []
+    monkeypatch.setattr(router_helper, "_get_active_context", lambda: ctx)
+    monkeypatch.setattr(
+        router_helper,
+        "mark_guided_spatial_state_stale",
+        lambda current_ctx, **kwargs: calls.append({"ctx": current_ctx, **kwargs}),
+    )
+    report = MCPExecutionReport(
+        context=MCPExecutionContext(tool_name="modeling_create_primitive", params={"primitive_type": "Cube"}),
+        router_enabled=True,
+        router_applied=True,
+        router_disposition="corrected",
+        steps=(
+            ExecutionStep(
+                tool_name="modeling_create_primitive",
+                params={"primitive_type": "Cube", "name": "Body"},
+                result="Created Cube named 'Body'",
+            ),
+            ExecutionStep(
+                tool_name="material_assign",
+                params={"object_name": "Body", "material_name": "BodyMat"},
+                result="Assigned material 'BodyMat' to object 'Body'",
+            ),
+        ),
+    )
+
+    router_helper._maybe_mark_guided_spatial_state_stale_from_report(report)
+
+    assert calls == [
+        {
+            "ctx": ctx,
+            "tool_name": "modeling_create_primitive",
+            "family": "primary_masses",
+            "reason": "modeling_create_primitive",
+        }
+    ]
+
+
+def test_guided_spatial_dirty_tracking_treats_partial_mutating_macro_reports_as_dirty(monkeypatch):
+    """Partial macro reports can still move objects and must stale guided spatial facts."""
+
+    ctx = FakeContext()
+    calls: list[dict[str, object]] = []
+    monkeypatch.setattr(router_helper, "_get_active_context", lambda: ctx)
+    monkeypatch.setattr(
+        router_helper,
+        "mark_guided_spatial_state_stale",
+        lambda current_ctx, **kwargs: calls.append({"ctx": current_ctx, **kwargs}),
+    )
+    report = MCPExecutionReport(
+        context=MCPExecutionContext(
+            tool_name="macro_attach_part_to_surface",
+            params={"part_object": "Ear", "surface_object": "Head"},
+        ),
+        router_enabled=True,
+        router_applied=False,
+        router_disposition="direct",
+        steps=(
+            ExecutionStep(
+                tool_name="macro_attach_part_to_surface",
+                params={"part_object": "Ear", "surface_object": "Head"},
+                result={
+                    "status": "partial",
+                    "macro_name": "macro_attach_part_to_surface",
+                    "actions_taken": [
+                        {
+                            "status": "applied",
+                            "action": "attach_part_to_surface",
+                            "tool_name": "modeling_transform_object",
+                        }
+                    ],
+                    "objects_modified": ["Ear"],
+                    "error": "The bounded seating move completed, but the pair is still not seated.",
+                },
+            ),
+        ),
+    )
+
+    router_helper._maybe_mark_guided_spatial_state_stale_from_report(report)
+
+    assert calls == [
+        {
+            "ctx": ctx,
+            "tool_name": "macro_attach_part_to_surface",
+            "family": "attachment_alignment",
+            "reason": "macro_attach_part_to_surface",
+        }
+    ]
+
+
 def test_route_tool_call_report_returns_direct_execution_when_router_disabled(monkeypatch):
     """route_tool_call_report should still build a structured report on direct execution."""
 
@@ -165,3 +267,1296 @@ def test_route_tool_call_report_bypasses_router_for_scene_utility_tools(monkeypa
     assert report.router_applied is False
     assert report.router_disposition == "bypassed"
     assert report.steps[0].result == "Scene cleaned"
+
+
+def test_route_tool_call_report_exposes_guided_family_and_role_for_direct_call(monkeypatch):
+    """Direct guided calls should still resolve family and role metadata in the execution context."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    report = route_tool_call_report(
+        tool_name="modeling_create_primitive",
+        params={"primitive_type": "Sphere", "name": "Squirrel_Body", "guided_role": "body_core"},
+        direct_executor=lambda: "Created Sphere named 'Squirrel_Body'",
+    )
+
+    assert report.context.guided_tool_family == "primary_masses"
+    assert report.context.guided_role == "body_core"
+    assert report.context.guided_role_group is None
+
+
+def test_route_tool_call_report_uses_final_corrected_tool_for_guided_family_metadata(monkeypatch):
+    """Corrected guided calls should resolve family metadata from the final effective tool call."""
+
+    class Router:
+        def process_llm_tool_call(self, tool_name, params, prompt):
+            return [
+                {
+                    "tool": "macro_finish_form",
+                    "params": {"target_object": "Housing"},
+                }
+            ]
+
+    class Dispatcher:
+        def execute(self, tool_name, params):
+            assert tool_name == "macro_finish_form"
+            return "Finished Housing"
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: True)
+    monkeypatch.setattr("server.adapters.mcp.router_helper.get_router", lambda: Router())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.get_dispatcher", lambda: Dispatcher())
+
+    report = route_tool_call_report(
+        tool_name="modeling_create_primitive",
+        params={"primitive_type": "Cube", "name": "Housing"},
+        direct_executor=lambda: "should not run",
+    )
+
+    assert report.router_applied is True
+    assert report.context.guided_tool_family == "finish"
+    assert report.steps[-1].tool_name == "macro_finish_form"
+
+
+def test_route_tool_call_report_strips_guided_policy_params_before_corrected_dispatch(monkeypatch):
+    """Guided role metadata should stay policy-side when corrected calls use dispatcher execution."""
+
+    class Router:
+        def process_llm_tool_call(self, tool_name, params, prompt):
+            return [
+                {
+                    "tool": "modeling_create_primitive",
+                    "params": {
+                        "primitive_type": "Sphere",
+                        "radius": 1.0,
+                        "size": 1.2,
+                        "name": "Squirrel_Body",
+                        "guided_role": "body_core",
+                        "role_group": "primary_masses",
+                    },
+                }
+            ]
+
+    dispatched: list[tuple[str, dict[str, object]]] = []
+
+    class Dispatcher:
+        def execute(self, tool_name, params):
+            dispatched.append((tool_name, dict(params)))
+            return "Created Sphere named 'Squirrel_Body'"
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: True)
+    monkeypatch.setattr("server.adapters.mcp.router_helper.get_router", lambda: Router())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.get_dispatcher", lambda: Dispatcher())
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": [],
+                "missing_roles": ["body_core", "head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="modeling_create_primitive",
+        params={
+            "primitive_type": "Sphere",
+            "radius": 1.0,
+            "size": 1.0,
+            "name": "Squirrel_Body",
+            "guided_role": "body_core",
+        },
+        direct_executor=lambda: "should not run",
+    )
+
+    assert report.router_disposition == "corrected"
+    assert dispatched == [
+        (
+            "modeling_create_primitive",
+            {
+                "primitive_type": "Sphere",
+                "radius": 1.0,
+                "size": 1.2,
+                "name": "Squirrel_Body",
+            },
+        )
+    ]
+    assert report.context.guided_role == "body_core"
+    assert report.context.guided_role_group == "primary_masses"
+    assert "guided_role" not in report.steps[0].params
+    assert "role_group" not in report.steps[0].params
+
+
+def test_route_tool_call_report_fail_closes_when_guided_family_is_not_allowed(monkeypatch):
+    """Guided execution policy should block a disallowed family even before direct execution runs."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": ["body_core"],
+                "missing_roles": ["head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="macro_finish_form",
+        params={"target_object": "Squirrel_Body"},
+        direct_executor=lambda: "should not run",
+    )
+
+    assert report.router_disposition == "failed_closed_error"
+    assert "tool family 'finish'" in str(report.error)
+    assert report.context.guided_tool_family == "finish"
+
+
+def test_route_tool_call_report_fail_closes_mismatched_role_group_before_family_bypass(monkeypatch):
+    """Caller-supplied role_group must not reclassify role-sensitive mutators as utility."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "establish_spatial_context",
+                "completed_steps": ["understand_goal"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["run_required_checks"],
+                "blocked_families": ["build", "late_refinement", "finish"],
+                "allowed_families": ["spatial_context", "reference_context"],
+                "allowed_roles": [],
+                "completed_roles": [],
+                "missing_roles": [],
+                "required_role_groups": ["spatial_context"],
+                "step_status": "blocked",
+            },
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="modeling_create_primitive",
+        params={
+            "primitive_type": "Sphere",
+            "name": "Squirrel_Body",
+            "guided_role": "body_core",
+            "role_group": "utility",
+        },
+        direct_executor=lambda: "should not run",
+    )
+
+    assert report.router_disposition == "failed_closed_error"
+    assert "role_group 'utility'" in str(report.error)
+    assert "Expected role_group 'primary_masses'" in str(report.error)
+    assert report.context.guided_tool_family == "primary_masses"
+    assert report.context.guided_role == "body_core"
+    assert report.context.guided_role_group == "utility"
+
+
+def test_route_tool_call_report_allows_pinned_spatial_helpers_when_family_is_omitted(monkeypatch):
+    """Visible read-only spatial helpers should stay callable during guided build steps."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["secondary_parts", "attachment_alignment"],
+                "allowed_roles": ["tail_mass", "snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass"],
+                "missing_roles": ["tail_mass", "snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    for tool_name in ("scene_scope_graph", "scene_relation_graph", "scene_view_diagnostics"):
+        report = route_tool_call_report(
+            tool_name=tool_name,
+            params={"target_object": "Squirrel_Body"},
+            direct_executor=lambda: {"payload": {"tool_name": tool_name}},
+        )
+
+        assert report.router_disposition == "bypassed"
+        assert report.error is None
+        assert report.context.guided_tool_family == "spatial_context"
+        assert report.steps[0].result == {"payload": {"tool_name": tool_name}}
+
+
+def test_route_tool_call_report_fail_closes_for_mesh_edit_family_during_spatial_gate(monkeypatch):
+    """Mesh edit tools should not bypass guided step gating by resolving to family=None."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "establish_spatial_context",
+                "completed_steps": ["understand_goal"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["run_required_checks"],
+                "blocked_families": ["build", "late_refinement", "finish"],
+                "allowed_families": ["spatial_context", "reference_context"],
+                "allowed_roles": [],
+                "completed_roles": [],
+                "missing_roles": [],
+                "required_role_groups": ["spatial_context"],
+                "step_status": "blocked",
+            },
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="mesh_extrude_region",
+        params={"move": [0.0, 0.0, 0.5]},
+        direct_executor=lambda: "should not run",
+    )
+
+    assert report.router_disposition == "failed_closed_error"
+    assert "tool family 'secondary_parts'" in str(report.error)
+    assert report.context.guided_tool_family == "secondary_parts"
+
+
+def test_route_tool_call_report_fail_closes_unmapped_guided_mutating_tools(monkeypatch):
+    """Unmapped mutators should not bypass a guided step just because family resolution returns None."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": [],
+                "missing_roles": ["body_core", "head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="material_assign",
+        params={"object_name": "Squirrel_Body", "material_name": "BrownFur"},
+        direct_executor=lambda: "should not run",
+    )
+
+    assert report.router_disposition == "failed_closed_error"
+    assert "unmapped mutating tool 'material_assign'" in str(report.error)
+    assert report.context.guided_tool_family is None
+
+
+def test_route_tool_call_report_validates_every_corrected_step_before_dispatch(monkeypatch):
+    """A blocked earlier corrected step must not execute just because the final step is allowed."""
+
+    class Router:
+        def process_llm_tool_call(self, tool_name, params, prompt):
+            return [
+                {
+                    "tool": "material_assign",
+                    "params": {"object_name": "Squirrel_Body", "material_name": "BrownFur"},
+                },
+                {
+                    "tool": "reference_images",
+                    "params": {"action": "status"},
+                },
+            ]
+
+    class Dispatcher:
+        def execute(self, tool_name, params):
+            raise AssertionError("blocked corrected steps must not reach dispatcher")
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: True)
+    monkeypatch.setattr("server.adapters.mcp.router_helper.get_router", lambda: Router())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.get_dispatcher", lambda: Dispatcher())
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": [],
+                "missing_roles": ["body_core", "head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="reference_images",
+        params={"action": "status"},
+        direct_executor=lambda: "should not run",
+    )
+
+    assert report.router_disposition == "failed_closed_error"
+    assert "unmapped mutating tool 'material_assign'" in str(report.error)
+    assert report.steps == ()
+
+
+def test_route_tool_call_report_fail_closes_when_guided_role_is_not_allowed(monkeypatch):
+    """Guided execution policy should block explicit roles that do not belong to the current step."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": ["body_core"],
+                "missing_roles": ["head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="modeling_create_primitive",
+        params={"primitive_type": "Cone", "name": "Squirrel_Ear_L", "guided_role": "ear_pair"},
+        direct_executor=lambda: "should not run",
+    )
+
+    assert report.router_disposition == "failed_closed_error"
+    assert "tool family 'secondary_parts'" in str(report.error)
+    assert report.context.guided_tool_family == "secondary_parts"
+    assert report.context.guided_role == "ear_pair"
+
+
+def test_route_tool_call_report_fail_closes_when_guided_role_is_missing_for_build_family(monkeypatch):
+    """Primary/secondary build tools should require semantic part roles on guided surfaces."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": [],
+                "missing_roles": ["body_core", "head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="modeling_create_primitive",
+        params={"primitive_type": "Sphere", "name": "Squirrel_Body"},
+        direct_executor=lambda: "should not run",
+    )
+
+    assert report.router_disposition == "failed_closed_error"
+    assert "requires an explicit semantic role" in str(report.error)
+    assert report.context.guided_tool_family == "primary_masses"
+    assert report.context.guided_role is None
+
+
+def test_route_tool_call_report_records_guided_naming_warning_for_weak_abbreviation(monkeypatch):
+    """Role-sensitive guided build calls should keep deterministic naming warnings in policy_context."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "secondary_parts", "attachment_alignment", "reference_context"],
+                "allowed_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass"],
+                "missing_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="modeling_create_primitive",
+        params={"primitive_type": "Cone", "name": "ForeL", "guided_role": "foreleg_pair"},
+        direct_executor=lambda: "Created Cone named 'ForeL'",
+    )
+
+    assert report.router_disposition == "bypassed"
+    assert report.policy_context is not None
+    assert report.policy_context["guided_naming"]["status"] == "warning"
+    assert "ForeLeg_L" in report.policy_context["guided_naming"]["message"]
+
+
+def test_route_tool_call_report_blocks_third_object_for_completed_pair_role(monkeypatch):
+    """Pair roles should allow two siblings but block over-cardinality calls."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "checkpoint_iterate",
+                "completed_steps": [
+                    "understand_goal",
+                    "establish_spatial_context",
+                    "create_primary_masses",
+                    "place_secondary_parts",
+                ],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["run_checkpoint_iterate"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "secondary_parts", "checkpoint_iterate"],
+                "allowed_roles": ["foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass", "tail_mass", "snout_mass", "ear_pair"],
+                "missing_roles": ["foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["checkpoint_iterate"],
+                "role_counts": {"ear_pair": 2},
+                "role_cardinality": {"ear_pair": 2},
+                "role_objects": {"ear_pair": ["Ear_L", "Ear_R"]},
+                "step_status": "needs_checkpoint",
+            },
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="modeling_create_primitive",
+        params={"primitive_type": "Cone", "name": "Ear_Center", "guided_role": "ear_pair"},
+        direct_executor=lambda: "should not run",
+    )
+
+    assert report.router_disposition == "failed_closed_error"
+    assert "Guided execution blocked role 'ear_pair'" in str(report.error)
+    assert report.context.guided_role == "ear_pair"
+
+
+def test_route_tool_call_report_blocks_placeholder_name_for_role_sensitive_build(monkeypatch):
+    """Role-sensitive guided build calls should fail closed on placeholder names."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": [],
+                "missing_roles": ["body_core", "head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="modeling_create_primitive",
+        params={"primitive_type": "Sphere", "name": "Sphere", "guided_role": "body_core"},
+        direct_executor=lambda: "should not run",
+    )
+
+    assert report.router_disposition == "failed_closed_error"
+    assert "Guided naming blocked object name 'Sphere'" in str(report.error)
+    assert report.policy_context is not None
+    assert report.policy_context["guided_naming"]["status"] == "blocked"
+
+
+def test_route_tool_call_report_allows_registered_object_transform_without_explicit_role(monkeypatch):
+    """A previously registered object should not need guided_role repeated on every transform call."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": ["body_core"],
+                "missing_roles": ["head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+            guided_part_registry=[
+                {
+                    "object_name": "Squirrel_Body",
+                    "role": "body_core",
+                    "role_group": "primary_masses",
+                    "status": "registered",
+                }
+            ],
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="modeling_transform_object",
+        params={"name": "Squirrel_Body", "scale": [0.9, 0.8, 1.2]},
+        direct_executor=lambda: "Transformed object 'Squirrel_Body'",
+    )
+
+    assert report.router_disposition == "bypassed"
+    assert report.context.guided_role == "body_core"
+    assert report.steps[0].result == "Transformed object 'Squirrel_Body'"
+
+
+def test_route_tool_call_updates_guided_registry_after_scene_rename(monkeypatch):
+    """Successful scene renames should keep guided part registration aligned with the new object name."""
+
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": ["body_core"],
+                "missing_roles": ["head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+            guided_part_registry=[
+                {
+                    "object_name": "Squirrel_Body",
+                    "role": "body_core",
+                    "role_group": "primary_masses",
+                    "status": "registered",
+                }
+            ],
+        ),
+    )
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_context", lambda: ctx)
+    monkeypatch.setattr("server.adapters.mcp.session_capabilities._scene_object_names", lambda: {"Body"})
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: get_session_capability_state(ctx),
+    )
+
+    result = route_tool_call(
+        tool_name="scene_rename_object",
+        params={"old_name": "Squirrel_Body", "new_name": "Body"},
+        direct_executor=lambda: "Renamed 'Squirrel_Body' to 'Body'",
+    )
+    report = route_tool_call_report(
+        tool_name="modeling_transform_object",
+        params={"name": "Body", "scale": [0.9, 0.8, 1.2]},
+        direct_executor=lambda: "Transformed object 'Body'",
+    )
+    state = get_session_capability_state(ctx)
+
+    assert result == "Renamed 'Squirrel_Body' to 'Body'"
+    assert state.guided_part_registry is not None
+    assert state.guided_part_registry[0]["object_name"] == "Body"
+    assert report.context.guided_role == "body_core"
+
+
+def test_route_tool_call_removes_guided_registry_entries_after_join(monkeypatch):
+    """Joining registered parts should drop stale source registrations until the result is re-registered."""
+
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "secondary_parts", "attachment_alignment", "reference_context"],
+                "allowed_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass", "ear_pair"],
+                "missing_roles": ["snout_mass", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+            guided_part_registry=[
+                {
+                    "object_name": "Ear_L",
+                    "role": "ear_pair",
+                    "role_group": "secondary_parts",
+                    "status": "registered",
+                },
+                {
+                    "object_name": "Ear_R",
+                    "role": "ear_pair",
+                    "role_group": "secondary_parts",
+                    "status": "registered",
+                },
+            ],
+        ),
+    )
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_context", lambda: ctx)
+
+    result = route_tool_call(
+        tool_name="modeling_join_objects",
+        params={"object_names": ["Ear_L", "Ear_R"]},
+        direct_executor=lambda: "Objects Ear_L, Ear_R joined into 'Ear_R'. Joined count: 2",
+    )
+    state = get_session_capability_state(ctx)
+
+    assert result == "Objects Ear_L, Ear_R joined into 'Ear_R'. Joined count: 2"
+    assert state.guided_part_registry is None
+    assert state.guided_flow_state is not None
+    assert "ear_pair" not in state.guided_flow_state["completed_roles"]
+
+
+def test_route_tool_call_removes_guided_registry_entry_after_separate(monkeypatch):
+    """Separating a registered object should drop the stale source registration."""
+
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "secondary_parts", "attachment_alignment", "reference_context"],
+                "allowed_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass", "ear_pair"],
+                "missing_roles": ["snout_mass", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+            guided_part_registry=[
+                {
+                    "object_name": "Squirrel_Ears",
+                    "role": "ear_pair",
+                    "role_group": "secondary_parts",
+                    "status": "registered",
+                }
+            ],
+        ),
+    )
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_context", lambda: ctx)
+
+    result = route_tool_call(
+        tool_name="modeling_separate_object",
+        params={"name": "Squirrel_Ears", "type": "LOOSE"},
+        direct_executor=lambda: "['Ear_L', 'Ear_R']",
+    )
+    state = get_session_capability_state(ctx)
+
+    assert result == "['Ear_L', 'Ear_R']"
+    assert state.guided_part_registry is None
+    assert state.guided_flow_state is not None
+    assert "ear_pair" not in state.guided_flow_state["completed_roles"]
+
+
+def test_route_tool_call_does_not_mutate_guided_state_after_failed_rename_string(monkeypatch):
+    """Failed string results must not mark spatial state stale or rename guided registrations."""
+
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "active_target_scope": {
+                    "scope_kind": "single_object",
+                    "primary_target": "Body",
+                    "object_names": ["Body"],
+                    "object_count": 1,
+                },
+                "spatial_scope_fingerprint": "scope_body",
+                "spatial_state_version": 0,
+                "spatial_state_stale": False,
+                "last_spatial_check_version": 0,
+                "spatial_refresh_required": False,
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": ["body_core"],
+                "missing_roles": ["head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+            guided_part_registry=[
+                {
+                    "object_name": "Body",
+                    "role": "body_core",
+                    "role_group": "primary_masses",
+                    "status": "registered",
+                }
+            ],
+        ),
+    )
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_context", lambda: ctx)
+
+    result = route_tool_call(
+        tool_name="scene_rename_object",
+        params={"old_name": "Body", "new_name": "BodyMain"},
+        direct_executor=lambda: "Object 'Body' not found",
+    )
+    state = get_session_capability_state(ctx)
+
+    assert result == "Object 'Body' not found"
+    assert state.guided_part_registry is not None
+    assert state.guided_part_registry[0]["object_name"] == "Body"
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["spatial_state_stale"] is False
+    assert state.guided_flow_state["spatial_refresh_required"] is False
+
+
+def test_route_tool_call_does_not_mutate_guided_state_after_failed_separate_string(monkeypatch):
+    """Failed string results must not drop registrations or rearm spatial checks."""
+
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "active_target_scope": {
+                    "scope_kind": "single_object",
+                    "primary_target": "Squirrel_Ears",
+                    "object_names": ["Squirrel_Ears"],
+                    "object_count": 1,
+                },
+                "spatial_scope_fingerprint": "scope_ears",
+                "spatial_state_version": 0,
+                "spatial_state_stale": False,
+                "last_spatial_check_version": 0,
+                "spatial_refresh_required": False,
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "secondary_parts", "attachment_alignment", "reference_context"],
+                "allowed_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass", "ear_pair"],
+                "missing_roles": ["snout_mass", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+            guided_part_registry=[
+                {
+                    "object_name": "Squirrel_Ears",
+                    "role": "ear_pair",
+                    "role_group": "secondary_parts",
+                    "status": "registered",
+                }
+            ],
+        ),
+    )
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_context", lambda: ctx)
+
+    result = route_tool_call(
+        tool_name="modeling_separate_object",
+        params={"name": "Squirrel_Ears", "type": "LOOSE"},
+        direct_executor=lambda: "Object 'Squirrel_Ears' not found",
+    )
+    state = get_session_capability_state(ctx)
+
+    assert result == "Object 'Squirrel_Ears' not found"
+    assert state.guided_part_registry is not None
+    assert state.guided_part_registry[0]["object_name"] == "Squirrel_Ears"
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["spatial_state_stale"] is False
+    assert state.guided_flow_state["spatial_refresh_required"] is False
+
+
+def test_route_tool_call_report_allows_registered_primary_object_transform_during_secondary_step(monkeypatch):
+    """A previously registered primary object should remain transformable during secondary steps."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "secondary_parts", "attachment_alignment", "reference_context"],
+                "allowed_roles": ["tail_mass", "snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass"],
+                "missing_roles": ["tail_mass", "snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+            guided_part_registry=[
+                {
+                    "object_name": "Squirrel_Head",
+                    "role": "head_mass",
+                    "role_group": "primary_masses",
+                    "status": "registered",
+                }
+            ],
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="modeling_transform_object",
+        params={"name": "Squirrel_Head", "scale": [1.1, 0.9, 0.95]},
+        direct_executor=lambda: "Transformed object 'Squirrel_Head'",
+    )
+
+    assert report.router_disposition == "bypassed"
+    assert report.context.guided_tool_family == "primary_masses"
+    assert report.context.guided_role == "head_mass"
+
+
+def test_route_tool_call_report_keeps_collection_manage_as_utility_even_for_registered_objects(monkeypatch):
+    """Workset/housekeeping operations should not inherit role-group blocking from the moved object."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "secondary_parts", "attachment_alignment", "reference_context"],
+                "allowed_roles": ["tail_mass", "snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass"],
+                "missing_roles": ["tail_mass", "snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+            guided_part_registry=[
+                {
+                    "object_name": "Squirrel_Head",
+                    "role": "head_mass",
+                    "role_group": "primary_masses",
+                    "status": "registered",
+                }
+            ],
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="collection_manage",
+        params={"action": "move_object", "collection_name": "Squirrel", "object_name": "Squirrel_Head"},
+        direct_executor=lambda: "Moved 'Squirrel_Head' to 'Squirrel' (was in: Collection)",
+    )
+
+    assert report.router_disposition == "bypassed"
+    assert report.context.guided_tool_family == "utility"
+    assert report.steps[0].result.startswith("Moved 'Squirrel_Head'")
+
+
+@pytest.mark.parametrize(
+    ("tool_name", "result"),
+    [
+        ("modeling_create_primitive", "Created Cube named 'O'Brien_Block'"),
+        ("modeling_transform_object", "Transformed object 'O'Brien_Block'"),
+        ("scene_rename_object", "Renamed 'Body' to 'O'Brien_Block'"),
+        ("modeling_join_objects", "Objects A, B joined into 'O'Brien_Block'. Joined count: 2"),
+    ],
+)
+def test_guided_success_detection_accepts_apostrophes_inside_object_names(tool_name, result):
+    assert router_helper._result_represents_success(tool_name, result) is True
+
+
+@pytest.mark.parametrize(
+    ("tool_name", "params", "result_message", "expected_refresh_required"),
+    [
+        (
+            "modeling_transform_object",
+            {"name": "Squirrel_Body", "scale": [0.9, 0.8, 1.2]},
+            "Transformed object 'Squirrel_Body'",
+            False,
+        ),
+        (
+            "scene_duplicate_object",
+            {"name": "Squirrel_Body", "translation": [0.5, 0.0, 0.0]},
+            "{'original': 'Squirrel_Body', 'new_object': 'Squirrel_Body.001', 'location': [0.5, 0.0, 0.0]}",
+            True,
+        ),
+    ],
+)
+def test_route_tool_call_marks_guided_spatial_state_stale_after_successful_visible_mutation(
+    monkeypatch,
+    tool_name,
+    params,
+    result_message,
+    expected_refresh_required,
+):
+    """Successful guided build mutations should dirty the spatial layer for later re-arm logic."""
+
+    from fastmcp.server.context import _current_context
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            surface_profile="llm-guided",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "active_target_scope": {
+                    "scope_kind": "object_set",
+                    "primary_target": "Squirrel_Body",
+                    "object_names": ["Squirrel_Body", "Squirrel_Head"],
+                    "object_count": 2,
+                },
+                "spatial_scope_fingerprint": "scope_1",
+                "spatial_state_version": 0,
+                "last_spatial_check_version": 0,
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": ["body_core"],
+                "missing_roles": ["head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+            guided_part_registry=[
+                {
+                    "object_name": "Squirrel_Body",
+                    "role": "body_core",
+                    "role_group": "primary_masses",
+                    "status": "registered",
+                }
+            ],
+        ),
+    )
+
+    token = _current_context.set(ctx)
+    try:
+        result = route_tool_call(
+            tool_name=tool_name,
+            params=params,
+            direct_executor=lambda: result_message,
+        )
+    finally:
+        _current_context.reset(token)
+
+    state = get_session_capability_state(ctx)
+
+    assert result == result_message
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["spatial_state_version"] == 1
+    assert state.guided_flow_state["spatial_state_stale"] is True
+    assert state.guided_flow_state["spatial_refresh_required"] is expected_refresh_required
+
+
+def test_route_tool_call_renames_guided_registry_to_apostrophe_name_with_collision_suffix(monkeypatch):
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "active_target_scope": {
+                    "scope_kind": "single_object",
+                    "primary_target": "Body",
+                    "object_names": ["Body"],
+                    "object_count": 1,
+                },
+                "spatial_scope_fingerprint": "scope_body",
+                "spatial_state_version": 0,
+                "spatial_state_stale": False,
+                "last_spatial_check_version": 0,
+                "spatial_refresh_required": False,
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": ["body_core"],
+                "missing_roles": ["head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+            guided_part_registry=[
+                {
+                    "object_name": "Body",
+                    "role": "body_core",
+                    "role_group": "primary_masses",
+                    "status": "registered",
+                }
+            ],
+        ),
+    )
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_context", lambda: ctx)
+    monkeypatch.setattr("server.adapters.mcp.session_capabilities._scene_object_names", lambda: {"O' Brien_Block"})
+
+    result = route_tool_call(
+        tool_name="scene_rename_object",
+        params={"old_name": "Body", "new_name": "O' Brien_Block"},
+        direct_executor=lambda: "Renamed 'Body' to 'O' Brien_Block' (suffix added due to name collision)",
+    )
+    state = get_session_capability_state(ctx)
+
+    assert result == "Renamed 'Body' to 'O' Brien_Block' (suffix added due to name collision)"
+    assert state.guided_part_registry is not None
+    assert state.guided_part_registry[0]["object_name"] == "O' Brien_Block"
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["spatial_state_stale"] is True
+    assert state.guided_flow_state["spatial_refresh_required"] is True
+
+
+def test_route_tool_call_marks_guided_spatial_state_stale_after_successful_mesh_edit(monkeypatch):
+    """Successful guided mesh edits should dirty the spatial layer for later re-arm logic."""
+
+    from fastmcp.server.context import _current_context
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            surface_profile="llm-guided",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "active_target_scope": {
+                    "scope_kind": "object_set",
+                    "primary_target": "Squirrel_Body",
+                    "object_names": ["Squirrel_Body", "Squirrel_Head"],
+                    "object_count": 2,
+                },
+                "spatial_scope_fingerprint": "scope_1",
+                "spatial_state_version": 0,
+                "last_spatial_check_version": 0,
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "secondary_parts", "attachment_alignment", "reference_context"],
+                "allowed_roles": ["tail_mass", "snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass"],
+                "missing_roles": ["tail_mass", "snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    token = _current_context.set(ctx)
+    try:
+        result = route_tool_call(
+            tool_name="mesh_extrude_region",
+            params={"move": [0.0, 0.0, 0.5]},
+            direct_executor=lambda: "Extruded region",
+        )
+    finally:
+        _current_context.reset(token)
+
+    state = get_session_capability_state(ctx)
+
+    assert result == "Extruded region"
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["spatial_state_version"] == 1
+    assert state.guided_flow_state["spatial_state_stale"] is True
+    assert state.guided_flow_state["spatial_refresh_required"] is True

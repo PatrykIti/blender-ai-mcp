@@ -1,7 +1,7 @@
 # TASK-128-01-01: Generic Creature Prompt Catalog Exposure
 
 **Parent:** [TASK-128-01](./TASK-128-01_Guided_Creature_Prompting_Handoff_And_Discovery_Hints.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective

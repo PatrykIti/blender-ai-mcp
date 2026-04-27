@@ -1,7 +1,7 @@
 # TASK-128-01-03: Creature-Aware Guided Handoff and Tool Recipes
 
 **Parent:** [TASK-128-01](./TASK-128-01_Guided_Creature_Prompting_Handoff_And_Discovery_Hints.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective

@@ -115,6 +115,7 @@ def register():
         rpc_server.register_handler("scene.get_view_state", scene_handler.get_view_state)
         rpc_server.register_handler("scene.restore_view_state", scene_handler.restore_view_state)
         rpc_server.register_handler("scene.set_standard_view", scene_handler.set_standard_view)
+        rpc_server.register_handler("scene.get_view_diagnostics", scene_handler.get_view_diagnostics)
         # TASK-045: Object Inspection Tools
         rpc_server.register_handler("scene.get_custom_properties", scene_handler.get_custom_properties)
         rpc_server.register_handler("scene.set_custom_property", scene_handler.set_custom_property)
@@ -345,6 +346,7 @@ def register():
         rpc_server.register_handler("armature.get_data", armature_handler.get_data)
 
         rpc_server.start()
+        rpc_server.start_watchdog()
     else:
         print("[Blender AI MCP] Mock registration (bpy not found)")
 
@@ -352,6 +354,7 @@ def register():
 def unregister():
     if bpy:
         print("[Blender AI MCP] Unregistering addon...")
+        rpc_server.stop_watchdog()
         rpc_server.stop()
 
 

@@ -9,14 +9,25 @@
     "rotate",
     "scale",
     "position",
-    "object"
+    "object",
+    "blockout placement",
+    "ear placement",
+    "snout placement",
+    "paw placement",
+    "tail placement",
+    "front reference",
+    "side reference",
+    "creature proportion"
   ],
   "sample_prompts": [
     "move the object",
     "rotate object 90 degrees",
     "scale object to double",
     "set object position",
-    "transform the cube"
+    "transform the cube",
+    "place the ear blocker to match the front reference",
+    "move the snout object forward in side view",
+    "scale the body mass to better match creature proportions"
   ],
   "parameters": {
     "name": {
@@ -45,5 +56,5 @@
     "scene_set_active_object"
   ],
   "patterns": [],
-  "description": "Transforms (move, rotate, scale) an existing object."
+  "description": "Transforms (move, rotate, scale) an existing object and is useful for placing creature blocker parts against front/side references."
 }

@@ -38,6 +38,27 @@ python3 scripts/run_e2e_tests.py --keep-blender    # Don't kill Blender after te
 python3 scripts/run_e2e_tests.py --quiet           # Don't stream output to console
 ```
 
+Current runner diagnostics written automatically on every automated run:
+
+- Blender stdout/stderr runtime log:
+  `tests/e2e/blender_runtime_YYYYMMDD_HHMMSS.log`
+- pytest session log:
+  `tests/e2e/e2e_test_{PASSED|FAILED}_YYYYMMDD_HHMMSS.log`
+- addon-side RPC crash trace:
+  `/tmp/blender-ai-mcp/rpc_trace_YYYYMMDD_HHMMSS_<pid>.jsonl`
+  unless `BLENDER_AI_MCP_TRACE_DIR` overrides the directory
+
+When Blender disappears mid-run, start from those two artifacts:
+
+- the runner-side `blender_runtime_*.log`
+- the addon-side `rpc_trace_*.jsonl`
+
+Together they usually reveal whether the last visible event was:
+
+- Blender startup/runtime output
+- one specific RPC command entering the addon
+- one specific background job starting/failing
+
 **Manual:**
 ```bash
 # 1. Start Blender with addon enabled
@@ -47,6 +68,58 @@ PYTHONPATH=. poetry run pytest tests/e2e/ -v
 # Or run unit and E2E in two separate pytest processes
 ./scripts/run_unit_then_e2e.sh
 ```
+
+### E2E RPC Availability Behavior
+
+`tests/e2e/conftest.py` now does a short retry window before deciding that
+Blender RPC is unavailable for the current pytest session.
+
+- the initial E2E availability check now performs a real `ping` RPC instead of
+  relying on one fast connect attempt only
+- this reduces false `skipped` runs when Blender/addon startup is slightly
+  slower than pytest collection
+- router/tool E2E suites are still marked `skip` for the current pytest
+  session if RPC never becomes reachable during that startup window
+
+Current tuning:
+
+- `E2E_RPC_STARTUP_WAIT_SECONDS`
+  default: `8.0`
+- `E2E_RPC_RETRY_INTERVAL_SECONDS`
+  default: `0.5`
+
+Practical note:
+
+- if Blender RPC was down during collection and then comes back later, rerun
+  `pytest tests/e2e ...` in a new process so the session-level availability
+  cache is rebuilt
+
+## E2E Env Matrix
+
+Use this table as the single quick-reference for environment variables that
+gate or shape the current E2E suites.
+
+| Test family | Required env vars | Optional env vars | Typical command |
+|---|---|---|---|
+| Standard Blender-backed E2E | none if Blender RPC is already reachable on the default host/port | `BLENDER_RPC_HOST`, `BLENDER_RPC_PORT` | `PYTHONPATH=. poetry run pytest tests/e2e/ -v` |
+| Automated addon reinstall + Blender launch flow | none | `--blender-path`, `--skip-build`, `--keep-blender`, `--quiet` CLI flags | `python3 scripts/run_e2e_tests.py` |
+| Real view-variant MLX comparison | `RUN_REAL_VISION_MODEL_COMPARISON=1` | use the repo/runtime MLX model defaults unless you intentionally change local config | `RUN_REAL_VISION_MODEL_COMPARISON=1 poetry run pytest tests/e2e/vision/test_real_view_variant_model_comparison.py -q -m slow` |
+| Real reference-guided creature comparison | `RUN_REAL_REFERENCE_GUIDED_CREATURE_EVAL=1`, `VISION_REFERENCE_FRONT_PATH`, `VISION_REFERENCE_SIDE_PATH` | `VISION_REFERENCE_CREATURE_MODEL` | `RUN_REAL_REFERENCE_GUIDED_CREATURE_EVAL=1 VISION_REFERENCE_FRONT_PATH=/abs/front.png VISION_REFERENCE_SIDE_PATH=/abs/side.png PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_guided_creature_comparison.py -q` |
+| Live OpenRouter/Qwen structured-output smoke | `RUN_REAL_OPENROUTER_QWEN_JSON_MODE=1`, `OPENROUTER_API_KEY` | `VISION_OPENROUTER_MODEL` | `RUN_REAL_OPENROUTER_QWEN_JSON_MODE=1 OPENROUTER_API_KEY=... PYTHONPATH=. poetry run pytest tests/e2e/vision/test_openrouter_qwen_json_mode.py -q -s` |
+| Docker runtime dependency smoke | `RUN_DOCKER_RUNTIME_VISION_SMOKE=1` | `BLENDER_AI_MCP_DOCKER_IMAGE` (defaults to `blender-ai-mcp:local`) | `RUN_DOCKER_RUNTIME_VISION_SMOKE=1 PYTHONPATH=. poetry run pytest tests/e2e/integration/test_docker_runtime_vision_dependencies.py -q` |
+
+OpenRouter/Qwen runtime defaults used by the current repo unless you override
+them:
+
+- `VISION_OPENROUTER_REQUIRE_PARAMETERS=false`
+- `VISION_OPENROUTER_ENABLE_RESPONSE_HEALING=true`
+- `VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN=true`
+
+Source-of-truth pointers:
+
+- env names and defaults: [`.env.example`](../../.env.example)
+- OpenRouter/Gemini runtime examples: [`_docs/_VISION/README.md`](../_VISION/README.md)
+- MCP client/container examples: [`_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`](../_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md)
 
 ---
 
@@ -212,6 +285,53 @@ Primary local validation commands for TASK-121 vision runtime/capture/evaluation
 poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/tools/macro/test_macro_capture_bundle.py tests/unit/adapters/mcp/test_macro_contracts.py tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_result_types.py tests/unit/adapters/mcp/test_vision_external_backend.py tests/unit/adapters/mcp/test_vision_local_backend.py tests/unit/adapters/mcp/test_vision_capture_bundle.py tests/unit/adapters/mcp/test_vision_capture_runtime.py tests/unit/adapters/mcp/test_vision_runner.py tests/unit/adapters/mcp/test_vision_macro_reporting.py tests/unit/adapters/mcp/test_vision_macro_mcp_integration.py tests/unit/adapters/mcp/test_vision_macro_reference_integration.py tests/unit/adapters/mcp/test_vision_evaluation.py tests/unit/infrastructure/test_vision_di.py tests/unit/adapters/mcp/test_assistant_runner.py tests/unit/adapters/mcp/test_sampling_assistant_docs.py -q
 ```
 
+Primary local validation commands for TASK-144 camera-aware view diagnostics:
+
+```bash
+PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_viewport_control.py tests/unit/tools/test_handler_rpc_alignment.py tests/unit/adapters/mcp/test_structured_contract_delivery.py tests/unit/adapters/mcp/test_provider_inventory.py tests/unit/adapters/mcp/test_tool_inventory.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py tests/unit/adapters/mcp/test_reference_images.py -q
+
+PYTHONPATH=. poetry run pytest tests/e2e/tools/scene/test_scene_view_diagnostics.py tests/e2e/tools/scene/test_scene_get_viewport.py tests/e2e/tools/scene/test_scene_get_viewport_camera.py -q
+```
+
+Primary local validation commands for TASK-146 guided runtime hardening:
+
+```bash
+PYTHONPATH=. poetry run pytest tests/unit/router/application/test_workflow_triggerer.py tests/unit/adapters/mcp/test_vision_external_backend.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/adapters/mcp/test_server_factory.py tests/unit/scripts/test_script_tooling.py tests/e2e/router/test_guided_manual_handoff.py -q
+
+poetry run mypy
+```
+
+Primary local validation commands for TASK-147 guided build cleanup recovery hatch:
+
+```bash
+PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/e2e/integration/test_guided_surface_contract_parity.py -q
+```
+
+Additional coverage added after the first TASK-146 hardening slice:
+
+- transport-backed guided search/call boundary:
+  - `tests/e2e/integration/test_guided_search_first_call_tool_boundary.py`
+- broader guided direct-call trigger regressions:
+  - `tests/e2e/router/test_guided_direct_calls_do_not_trigger_workflows.py`
+- OpenRouter/Qwen live structured-output smoke (opt-in):
+  - `tests/e2e/vision/test_openrouter_qwen_json_mode.py`
+- Docker runtime dependency smoke (opt-in):
+  - `tests/e2e/integration/test_docker_runtime_vision_dependencies.py`
+
+Targeted validation command for those additions:
+
+```bash
+PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/e2e/integration/test_guided_search_first_call_tool_boundary.py tests/e2e/router/test_guided_direct_calls_do_not_trigger_workflows.py tests/e2e/vision/test_openrouter_qwen_json_mode.py tests/e2e/integration/test_docker_runtime_vision_dependencies.py -q
+```
+
+Opt-in environment gates for the new real-runtime smokes:
+
+- `RUN_REAL_OPENROUTER_QWEN_JSON_MODE=1`
+  - requires `OPENROUTER_API_KEY`
+- `RUN_DOCKER_RUNTIME_VISION_SMOKE=1`
+  - optional `BLENDER_AI_MCP_DOCKER_IMAGE=<image>` override, defaults to
+    `blender-ai-mcp:local`
+
 Repo-tracked synthetic vision evaluation scenarios now live under:
 
 - `tests/fixtures/vision_eval/synthetic_round_cutout/`
@@ -258,12 +378,29 @@ Hybrid-loop assembled-creature regression pack:
   - `refinement_route`
   - `refinement_handoff`
   - `truth_followup`
+  - `action_hints`
   - `correction_focus`
+
+Focused unit coverage now also protects:
+
+- deterministic silhouette metric/action-hint contracts on
+  `tests/unit/adapters/mcp/test_reference_images.py`
+- optional segmentation-sidecar config defaults and opt-in validation on
+  `tests/unit/adapters/mcp/test_vision_runtime_config.py`
+- compact view-space contracts, search/discovery shaping, and reference-loop
+  adoption hints on:
+  - `tests/unit/tools/scene/test_scene_contracts.py`
+  - `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
+  - `tests/unit/tools/scene/test_viewport_control.py`
+  - `tests/unit/adapters/mcp/test_search_surface.py`
+  - `tests/unit/adapters/mcp/test_visibility_policy.py`
+  - `tests/unit/adapters/mcp/test_reference_images.py`
 
 First Blender-backed E2E coverage for the guided utility prep path now includes:
 
 - `tests/e2e/tools/scene/test_scene_clean_scene.py`
 - `tests/e2e/tools/scene/test_scene_get_viewport.py`
+- `tests/e2e/tools/scene/test_scene_view_diagnostics.py`
 - `tests/e2e/router/test_utility_goal_boundary.py`
 
 Camera-faithful viewport capture regression coverage now also includes:

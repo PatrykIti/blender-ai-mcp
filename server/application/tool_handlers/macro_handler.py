@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Literal, Optional, cast, overload
 from uuid import uuid4
 
 from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
+from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
 from server.adapters.mcp.vision.capture_runtime import (
     CapturePresetProfile,
     CaptureStage,
@@ -314,6 +315,7 @@ class MacroToolHandler(IMacroTool):
         align_mode: str = "center",
         gap: float = 0.0,
         offset: Optional[List[float]] = None,
+        max_mesh_nudge: float = 0.15,
         capture_profile: Optional[str] = None,
     ) -> Dict[str, Any]:
         if part_object == surface_object:
@@ -323,6 +325,7 @@ class MacroToolHandler(IMacroTool):
         resolved_surface_side = self._normalize_contact_side(surface_side)
         resolved_align_mode = self._normalize_layout_mode(align_mode, field_name="align_mode")
         gap_value = self._require_non_negative(gap, "gap")
+        max_mesh_nudge_value = self._require_non_negative(max_mesh_nudge, "max_mesh_nudge")
         offset_vector = self._normalize_offset(offset)
 
         modes = {
@@ -330,7 +333,7 @@ class MacroToolHandler(IMacroTool):
             for axis_name in self._AXIS_INDEX
         }
         tangential_axes = [axis_name for axis_name in self._AXIS_INDEX if axis_name != resolved_surface_axis]
-        return self._execute_relative_layout_macro(
+        base_report = self._execute_relative_layout_macro(
             macro_name="macro_attach_part_to_surface",
             moving_object=part_object,
             reference_object=surface_object,
@@ -347,6 +350,146 @@ class MacroToolHandler(IMacroTool):
             placement_action="attach_part_to_surface",
             placement_summary=f"Seated '{part_object}' onto '{surface_object}'",
         )
+        after_truth = self._pair_truth_summary(part_object, surface_object)
+        attachment_verdict = self._pair_attachment_verdict(after_truth)
+        actions_taken = list(base_report.get("actions_taken") or [])
+        actions_taken.append(
+            {
+                "status": "applied",
+                "action": "inspect_pair_truth_after",
+                "tool_name": "scene_measure_gap",
+                "summary": f"Read pair truth after seating '{part_object}' onto '{surface_object}'",
+                "details": after_truth,
+            }
+        )
+        mesh_nudge_delta = self._mesh_surface_gap_nudge_delta(after_truth)
+        if (
+            gap_value == 0.0
+            and attachment_verdict == "floating_gap"
+            and mesh_nudge_delta is not None
+            and max_mesh_nudge_value > 0.0
+        ):
+            nudge_distance = round(math.sqrt(sum(value * value for value in mesh_nudge_delta)), 6)
+            if nudge_distance <= max_mesh_nudge_value:
+                current_bbox = self._scene.get_bounding_box(part_object, world_space=True)
+                current_center = [float(value) for value in current_bbox["center"]]
+                target_center = [round(current_center[index] + mesh_nudge_delta[index], 6) for index in range(3)]
+                self._modeling.transform_object(name=part_object, location=target_center)
+                actions_taken.append(
+                    {
+                        "status": "applied",
+                        "action": "mesh_surface_gap_nudge",
+                        "tool_name": "modeling_transform_object",
+                        "summary": (
+                            "Applied a bounded mesh-surface nudge using nearest surface points after bbox seating."
+                        ),
+                        "details": {
+                            "translation_delta": mesh_nudge_delta,
+                            "nudge_distance": nudge_distance,
+                            "max_mesh_nudge": max_mesh_nudge_value,
+                            "target_center": target_center,
+                        },
+                    }
+                )
+                after_truth = self._pair_truth_summary(part_object, surface_object)
+                attachment_verdict = self._pair_attachment_verdict(after_truth)
+                actions_taken.append(
+                    {
+                        "status": "applied",
+                        "action": "inspect_pair_truth_after_mesh_nudge",
+                        "tool_name": "scene_measure_gap",
+                        "summary": f"Read pair truth after mesh-surface nudge for '{part_object}' and '{surface_object}'",
+                        "details": after_truth,
+                    }
+                )
+            else:
+                actions_taken.append(
+                    {
+                        "status": "skipped",
+                        "action": "mesh_surface_gap_nudge",
+                        "tool_name": "modeling_transform_object",
+                        "summary": "Skipped mesh-surface nudge because it exceeded the bounded repair limit.",
+                        "details": {
+                            "translation_delta": mesh_nudge_delta,
+                            "nudge_distance": nudge_distance,
+                            "max_mesh_nudge": max_mesh_nudge_value,
+                        },
+                    }
+                )
+        capture_bundle = base_report.get("capture_bundle") if isinstance(base_report, dict) else None
+        if isinstance(capture_bundle, dict):
+            captures_before = [
+                VisionCaptureImageContract.model_validate(item)
+                for item in list(capture_bundle.get("captures_before") or [])
+            ]
+            refreshed_captures_after = self._maybe_capture_stage(
+                bundle_id=str(
+                    capture_bundle.get("bundle_id")
+                    or self._make_capture_bundle_id("macro_attach_part_to_surface", part_object)
+                ),
+                stage="after",
+                target_object=part_object,
+                capture_profile=capture_profile,
+            )
+            if captures_before and refreshed_captures_after:
+                refreshed_bundle = build_capture_bundle(
+                    bundle_id=str(
+                        capture_bundle.get("bundle_id")
+                        or self._make_capture_bundle_id("macro_attach_part_to_surface", part_object)
+                    ),
+                    target_object=part_object,
+                    captures_before=captures_before,
+                    captures_after=refreshed_captures_after,
+                    truth_summary=self._build_truth_summary(part_object),
+                )
+                base_report["capture_bundle"] = refreshed_bundle.model_dump(mode="json", exclude_none=True)
+        actions_taken.append(
+            {
+                "status": "applied",
+                "action": "evaluate_attachment_outcome",
+                "tool_name": "scene_assert_contact",
+                "summary": f"Attachment verdict after bounded seating: {attachment_verdict}",
+                "details": {"attachment_verdict": attachment_verdict},
+            }
+        )
+        base_report["actions_taken"] = actions_taken
+        if gap_value == 0.0 and attachment_verdict != "seated_contact":
+            base_report["status"] = "partial"
+            base_report["error"] = (
+                "The bounded seating move completed, but the pair is still not seated/attached correctly."
+            )
+        return base_report
+
+    def _mesh_surface_gap_nudge_delta(self, truth_summary: Dict[str, Any]) -> list[float] | None:
+        gap_payload = truth_summary.get("gap") if isinstance(truth_summary, dict) else None
+        contact_assertion = truth_summary.get("contact_assertion") if isinstance(truth_summary, dict) else None
+        if not isinstance(gap_payload, dict):
+            return None
+        if str(gap_payload.get("measurement_basis") or "") != "mesh_surface":
+            return None
+        if str(gap_payload.get("relation") or "").lower() != "separated":
+            return None
+        if isinstance(contact_assertion, dict):
+            actual_value = contact_assertion.get("actual")
+            actual = actual_value if isinstance(actual_value, dict) else {}
+            if str(actual.get("relation") or "").lower() != "separated":
+                return None
+        nearest_points = gap_payload.get("nearest_points")
+        if not isinstance(nearest_points, dict):
+            return None
+        from_point = nearest_points.get("from_object")
+        to_point = nearest_points.get("to_object")
+        if (
+            not isinstance(from_point, list)
+            or not isinstance(to_point, list)
+            or len(from_point) != 3
+            or len(to_point) != 3
+        ):
+            return None
+        try:
+            return [round(float(to_point[index]) - float(from_point[index]), 6) for index in range(3)]
+        except (TypeError, ValueError):
+            return None
 
     def align_part_with_contact(
         self,
@@ -375,6 +518,24 @@ class MacroToolHandler(IMacroTool):
         reference_bbox = self._scene.get_bounding_box(reference_object, world_space=True)
         moving_bbox = self._scene.get_bounding_box(part_object, world_space=True)
         before_truth = self._pair_truth_summary(part_object, reference_object)
+        before_overlap = before_truth.get("overlap") if isinstance(before_truth, dict) else None
+        if (
+            relation_name == "contact"
+            and normal_axis is None
+            and isinstance(before_overlap, dict)
+            and bool(before_overlap.get("overlaps"))
+        ):
+            return self._blocked_repair_report(
+                macro_name="macro_align_part_with_contact",
+                intent=f"Repair '{part_object}' relative to '{reference_object}'",
+                message=(
+                    "The pair already overlaps/intersects. Inferring a contact axis here would push only "
+                    f"'{part_object}' to one side of '{reference_object}' and can detach dependent parts. "
+                    "Use an explicit normal_axis if you intentionally want a side contact repair, or use "
+                    "macro_attach_part_to_surface / semantic seam validation for organic embedded seating."
+                ),
+                before_truth=before_truth,
+            )
 
         resolved_normal_axis = self._normalize_contact_axis(normal_axis) if normal_axis is not None else None
         if resolved_normal_axis is None:
@@ -503,6 +664,16 @@ class MacroToolHandler(IMacroTool):
                 "details": after_truth,
             }
         )
+        attachment_verdict = self._pair_attachment_verdict(after_truth)
+        actions_taken.append(
+            {
+                "status": "applied",
+                "action": "evaluate_attachment_outcome",
+                "tool_name": "scene_assert_contact",
+                "summary": f"Attachment verdict after bounded repair: {attachment_verdict}",
+                "details": {"attachment_verdict": attachment_verdict},
+            }
+        )
         verification_recommended = list(base_report.get("verification_recommended") or [])
         verification_recommended.append(
             {
@@ -514,6 +685,9 @@ class MacroToolHandler(IMacroTool):
         )
         base_report["actions_taken"] = actions_taken
         base_report["verification_recommended"] = verification_recommended
+        if relation_name == "contact" and attachment_verdict != "seated_contact":
+            base_report["status"] = "partial"
+            base_report["error"] = "The bounded repair completed, but the pair is still not seated/attached correctly."
         return base_report
 
     def place_symmetry_pair(
@@ -1285,6 +1459,16 @@ class MacroToolHandler(IMacroTool):
                 "details": after_truth,
             }
         )
+        attachment_verdict = self._pair_attachment_verdict(after_truth)
+        actions_taken.append(
+            {
+                "status": "applied",
+                "action": "evaluate_attachment_outcome",
+                "tool_name": "scene_assert_contact",
+                "summary": f"Attachment verdict after bounded cleanup: {attachment_verdict}",
+                "details": {"attachment_verdict": attachment_verdict},
+            }
+        )
 
         cleanup_report: Dict[str, Any] = {
             "status": "success",
@@ -1329,6 +1513,11 @@ class MacroToolHandler(IMacroTool):
             ],
             "requires_followup": True,
         }
+        if gap_value == 0.0 and attachment_verdict != "seated_contact":
+            cleanup_report["status"] = "partial"
+            cleanup_report["error"] = (
+                "The bounded cleanup removed or reduced overlap, but the pair is still not seated/attached correctly."
+            )
         captures_after = self._maybe_capture_stage(
             bundle_id=bundle_id,
             stage="after",
@@ -2304,6 +2493,29 @@ class MacroToolHandler(IMacroTool):
         if contact_semantics is not None:
             summary["contact_semantics"] = contact_semantics
         return summary
+
+    def _pair_attachment_verdict(self, truth_summary: Dict[str, Any]) -> str:
+        overlap = truth_summary.get("overlap") if isinstance(truth_summary, dict) else None
+        if isinstance(overlap, dict) and bool(overlap.get("overlaps")):
+            return "intersecting"
+
+        contact_assertion = truth_summary.get("contact_assertion") if isinstance(truth_summary, dict) else None
+        if isinstance(contact_assertion, dict) and contact_assertion.get("passed") is True:
+            return "seated_contact"
+        if isinstance(contact_assertion, dict):
+            actual_value = contact_assertion.get("actual")
+            actual = actual_value if isinstance(actual_value, dict) else {}
+            actual_relation = str(actual.get("relation") or "").lower()
+            if actual_relation == "separated":
+                return "floating_gap"
+            if actual_relation == "overlapping":
+                return "intersecting"
+
+        gap = truth_summary.get("gap") if isinstance(truth_summary, dict) else None
+        if isinstance(gap, dict) and str(gap.get("relation") or "").lower() == "separated":
+            return "floating_gap"
+
+        return "needs_followup"
 
     def _support_truth_summary(self, part_object: str, support_object: str) -> Dict[str, Any]:
         gap = self._scene.measure_gap(part_object, support_object)

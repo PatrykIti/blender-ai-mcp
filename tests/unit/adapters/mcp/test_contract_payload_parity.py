@@ -83,9 +83,45 @@ from server.adapters.mcp.contracts.workflow_catalog import WorkflowCatalogRespon
                     "blocking_reason": "reference_images_required",
                     "next_action": "attach_reference_images",
                 },
+                "guided_flow_state": {
+                    "flow_id": "guided_creature_flow",
+                    "domain_profile": "creature",
+                    "current_step": "establish_spatial_context",
+                    "completed_steps": [],
+                    "active_target_scope": {
+                        "scope_kind": "object_set",
+                        "primary_target": "Squirrel_Body",
+                        "object_names": ["Squirrel_Body", "Squirrel_Head"],
+                        "object_count": 2,
+                    },
+                    "spatial_scope_fingerprint": "scope_1",
+                    "spatial_state_version": 0,
+                    "spatial_state_stale": False,
+                    "last_spatial_check_version": 0,
+                    "spatial_refresh_required": False,
+                    "required_checks": [
+                        {
+                            "check_id": "scope_graph",
+                            "tool_name": "scene_scope_graph",
+                            "reason": "Establish the structural anchor and active object scope before broad edits.",
+                            "status": "pending",
+                            "priority": "high",
+                        }
+                    ],
+                    "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                    "preferred_prompts": ["workflow_router_first"],
+                    "next_actions": ["run_required_checks"],
+                    "blocked_families": ["build", "late_refinement", "finish"],
+                    "allowed_families": ["spatial_context", "reference_context"],
+                    "allowed_roles": [],
+                    "completed_roles": [],
+                    "missing_roles": [],
+                    "required_role_groups": ["spatial_context"],
+                    "step_status": "blocked",
+                },
             },
-            "continuation_mode",
-            "workflow",
+            "guided_flow_state.domain_profile",
+            "creature",
         ),
         (
             RouterStatusContract,
@@ -112,11 +148,39 @@ from server.adapters.mcp.contracts.workflow_catalog import WorkflowCatalogRespon
                     "blocking_reason": "pending_references_detected",
                     "next_action": "call_router_get_status",
                 },
+                "guided_flow_state": {
+                    "flow_id": "guided_building_flow",
+                    "domain_profile": "building",
+                    "current_step": "create_primary_masses",
+                    "completed_steps": ["understand_goal", "establish_spatial_context"],
+                    "active_target_scope": {
+                        "scope_kind": "single_object",
+                        "primary_target": "Tower_MainVolume",
+                        "object_names": ["Tower_MainVolume"],
+                        "object_count": 1,
+                    },
+                    "spatial_scope_fingerprint": "scope_2",
+                    "spatial_state_version": 3,
+                    "spatial_state_stale": True,
+                    "last_spatial_check_version": 2,
+                    "spatial_refresh_required": False,
+                    "required_checks": [],
+                    "required_prompts": ["guided_session_start"],
+                    "preferred_prompts": ["workflow_router_first"],
+                    "next_actions": ["begin_primary_masses"],
+                    "blocked_families": [],
+                    "allowed_families": ["primary_masses"],
+                    "allowed_roles": ["footprint_mass", "main_volume", "roof_mass"],
+                    "completed_roles": ["footprint_mass"],
+                    "missing_roles": ["main_volume", "roof_mass"],
+                    "required_role_groups": ["primary_masses"],
+                    "step_status": "ready",
+                },
                 "list_page_size": 250,
                 "background_job_count": 0,
             },
-            "surface_profile",
-            "legacy-flat",
+            "guided_flow_state.current_step",
+            "create_primary_masses",
         ),
         (
             WorkflowCatalogResponseContract,
@@ -168,3 +232,21 @@ def test_contracts_accept_representative_handler_shaped_payloads(contract_cls, p
         current = getattr(current, part) if hasattr(current, part) else current[part]
 
     assert current == expected
+
+
+def test_router_goal_contract_omits_optional_guided_flow_state_cleanly():
+    contract = RouterGoalResponseContract(
+        status="ready",
+        session_id="sess-1",
+        transport="stdio",
+        continuation_mode="workflow",
+        workflow="chair_workflow",
+        resolved={},
+        unresolved=[],
+        resolution_sources={},
+        message="ok",
+        phase_hint="build",
+        executed=0,
+    )
+
+    assert contract.guided_flow_state is None

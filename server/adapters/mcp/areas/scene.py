@@ -4,10 +4,12 @@ from typing import Any, Dict, List, Literal, Optional, Union
 
 from fastmcp import Context
 from fastmcp.utilities.types import Image
+from pydantic import ValidationError
 
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
 from server.adapters.mcp.contracts.scene import (
+    SceneAssembledTargetScopeContract,
     SceneAssertContactContract,
     SceneAssertContainmentContract,
     SceneAssertDimensionsContract,
@@ -28,14 +30,30 @@ from server.adapters.mcp.contracts.scene import (
     SceneMeasureOverlapContract,
     SceneModeContract,
     SceneOriginInfoContract,
+    SceneRelationGraphPayloadContract,
+    SceneRelationGraphResponseContract,
+    SceneScopeGraphPayloadContract,
+    SceneScopeGraphResponseContract,
     SceneSelectionContract,
     SceneSnapshotDiffContract,
     SceneSnapshotStateContract,
+    SceneViewDiagnosticsPayloadContract,
+    SceneViewDiagnosticsResponseContract,
+    SceneViewDiagnosticsSummaryContract,
+    SceneViewDiagnosticsTargetContract,
+    SceneViewProjectionEvidenceContract,
+    SceneViewQueryContract,
 )
+from server.adapters.mcp.guided_contract import canonicalize_scene_clean_scene_arguments
 from server.adapters.mcp.router_helper import route_tool_call
 from server.adapters.mcp.sampling.assistant_runner import run_inspection_summary_assistant
 from server.adapters.mcp.sampling.result_types import to_inspection_assistant_contract
-from server.adapters.mcp.session_capabilities import get_session_capability_state_async
+from server.adapters.mcp.session_capabilities import (
+    describe_guided_scope_mismatch,
+    get_session_capability_state,
+    get_session_capability_state_async,
+    record_guided_flow_spatial_check_completion,
+)
 from server.adapters.mcp.tasks.candidacy import get_tool_task_config
 from server.adapters.mcp.tasks.task_bridge import (
     is_background_task_context,
@@ -83,6 +101,9 @@ SCENE_PUBLIC_TOOL_NAMES = (
     "scene_get_hierarchy",
     "scene_get_bounding_box",
     "scene_get_origin_info",
+    "scene_scope_graph",
+    "scene_relation_graph",
+    "scene_view_diagnostics",
     "scene_measure_distance",
     "scene_measure_dimensions",
     "scene_measure_gap",
@@ -95,6 +116,53 @@ SCENE_PUBLIC_TOOL_NAMES = (
     "scene_assert_proportion",
 )
 
+
+def _guided_scope_requirement_error(tool_name: str) -> str:
+    return (
+        f"Provide target_object, target_objects, or collection_name for {tool_name}. "
+        "On llm-guided, the active spatial gate requires explicit scope instead of an implicit whole-scene check."
+    )
+
+
+def _should_require_explicit_guided_scope(ctx: Context) -> bool:
+    try:
+        session = get_session_capability_state(ctx)
+    except Exception:
+        return False
+
+    flow_state = session.guided_flow_state or {}
+    if not flow_state:
+        return False
+    current_step = str(flow_state.get("current_step") or "").strip().lower()
+    spatial_refresh_required = bool(flow_state.get("spatial_refresh_required"))
+    return current_step == "establish_spatial_context" or spatial_refresh_required
+
+
+def _guided_scope_mismatch_message(
+    ctx: Context,
+    *,
+    tool_name: str,
+    resolved_scope: dict[str, Any] | None,
+) -> str | None:
+    try:
+        session = get_session_capability_state(ctx)
+    except Exception:
+        return None
+    return describe_guided_scope_mismatch(
+        session.guided_flow_state,
+        tool_name=tool_name,
+        resolved_scope=resolved_scope,
+    )
+
+
+def _view_diagnostics_can_complete_guided_check(
+    payload: SceneViewDiagnosticsPayloadContract,
+) -> bool:
+    if not payload.view_query.available:
+        return False
+    return any(target.projection_status != "unavailable" for target in payload.targets)
+
+
 MacroErrorStatus = Literal["blocked", "failed"]
 
 
@@ -102,6 +170,44 @@ def _coerce_macro_error_status(value: object) -> MacroErrorStatus:
     """Narrow adapter-side fallback statuses to the contract's error states."""
 
     return "blocked" if value == "blocked" else "failed"
+
+
+async def _finalize_macro_execution_result(
+    ctx: Context,
+    result: object,
+    *,
+    macro_name: str,
+    intent: str,
+) -> MacroExecutionReportContract:
+    """Preserve structured macro reports before falling back to adapter errors."""
+
+    if isinstance(result, MacroExecutionReportContract):
+        contract = result
+    elif isinstance(result, dict):
+        try:
+            contract = MacroExecutionReportContract.model_validate(result)
+        except ValidationError:
+            contract = MacroExecutionReportContract(
+                status=_coerce_macro_error_status(result.get("status")),
+                macro_name=macro_name,
+                intent=intent,
+                actions_taken=list(result.get("actions_taken") or []),
+                requires_followup=bool(result.get("requires_followup")),
+                error=str(result.get("error") or result),
+            )
+    else:
+        contract = MacroExecutionReportContract(
+            status="failed",
+            macro_name=macro_name,
+            intent=intent,
+            actions_taken=[],
+            requires_followup=False,
+            error=str(result),
+        )
+
+    if contract.status in {"blocked", "failed"}:
+        return contract
+    return await maybe_attach_macro_vision(ctx, contract)
 
 
 def _register_existing_tool(target: Any, tool_name: str) -> Any:
@@ -226,27 +332,11 @@ async def macro_relative_layout(
         },
         direct_executor=execute,
     )
-    if isinstance(result, MacroExecutionReportContract):
-        return result if result.status == "failed" else await maybe_attach_macro_vision(ctx, result)
-    if isinstance(result, dict):
-        if result.get("status") == "failed" or result.get("error"):
-            return MacroExecutionReportContract(
-                status="failed",
-                macro_name="macro_relative_layout",
-                intent=f"layout '{moving_object}' relative to '{reference_object}'",
-                actions_taken=[],
-                requires_followup=False,
-                error=str(result.get("error") or result),
-            )
-        contract = MacroExecutionReportContract.model_validate(result)
-        return contract if contract.status == "failed" else await maybe_attach_macro_vision(ctx, contract)
-    return MacroExecutionReportContract(
-        status="failed",
+    return await _finalize_macro_execution_result(
+        ctx,
+        result,
         macro_name="macro_relative_layout",
         intent=f"layout '{moving_object}' relative to '{reference_object}'",
-        actions_taken=[],
-        requires_followup=False,
-        error=str(result),
     )
 
 
@@ -256,8 +346,9 @@ async def macro_attach_part_to_surface(
     surface_object: str,
     surface_axis: Literal["X", "Y", "Z"],
     surface_side: Literal["positive", "negative"] = "positive",
-    align_mode: Literal["center", "min", "max"] = "center",
+    align_mode: Literal["none", "center", "min", "max"] = "center",
     gap: float = 0.0,
+    max_mesh_nudge: float = 0.15,
     offset: Union[str, List[float], None] = None,
 ) -> MacroExecutionReportContract:
     """
@@ -269,8 +360,10 @@ async def macro_attach_part_to_surface(
 
     - one required surface axis (`X`, `Y`, `Z`)
     - one required surface side (`positive`, `negative`)
-    - one shared tangential alignment mode for the two remaining axes
+    - one shared tangential alignment mode for the two remaining axes; use
+      `none` to preserve existing tangential offsets
     - optional non-negative contact gap
+    - optional bounded mesh-surface nudge after bbox seating
     - optional world offset after seating
 
     Args:
@@ -279,7 +372,9 @@ async def macro_attach_part_to_surface(
         surface_axis: Axis normal of the target surface (`X`, `Y`, `Z`).
         surface_side: Which side of the target surface bbox to attach against.
         align_mode: Alignment rule applied to the two axes tangent to the surface.
+            Use `none` to preserve current tangential offsets.
         gap: Optional non-negative spacing along the surface normal.
+        max_mesh_nudge: Maximum mesh-surface nearest-point nudge after bbox seating.
         offset: Optional world-axis offset `[x, y, z]` applied after seating.
     """
 
@@ -295,6 +390,7 @@ async def macro_attach_part_to_surface(
                 surface_side=surface_side,
                 align_mode=align_mode,
                 gap=gap,
+                max_mesh_nudge=max_mesh_nudge,
                 offset=parsed_offset,
                 capture_profile=capture_profile,
             )
@@ -318,31 +414,16 @@ async def macro_attach_part_to_surface(
             "surface_side": surface_side,
             "align_mode": align_mode,
             "gap": gap,
+            "max_mesh_nudge": max_mesh_nudge,
             "offset": offset,
         },
         direct_executor=execute,
     )
-    if isinstance(result, MacroExecutionReportContract):
-        return result if result.status == "failed" else await maybe_attach_macro_vision(ctx, result)
-    if isinstance(result, dict):
-        if result.get("status") == "failed" or result.get("error"):
-            return MacroExecutionReportContract(
-                status="failed",
-                macro_name="macro_attach_part_to_surface",
-                intent=f"attach '{part_object}' to '{surface_object}'",
-                actions_taken=[],
-                requires_followup=False,
-                error=str(result.get("error") or result),
-            )
-        contract = MacroExecutionReportContract.model_validate(result)
-        return contract if contract.status == "failed" else await maybe_attach_macro_vision(ctx, contract)
-    return MacroExecutionReportContract(
-        status="failed",
+    return await _finalize_macro_execution_result(
+        ctx,
+        result,
         macro_name="macro_attach_part_to_surface",
         intent=f"attach '{part_object}' to '{surface_object}'",
-        actions_taken=[],
-        requires_followup=False,
-        error=str(result),
     )
 
 
@@ -427,27 +508,11 @@ async def macro_align_part_with_contact(
         },
         direct_executor=execute,
     )
-    if isinstance(result, MacroExecutionReportContract):
-        return result if result.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, result)
-    if isinstance(result, dict):
-        if result.get("status") in {"failed", "blocked"} or result.get("error"):
-            return MacroExecutionReportContract(
-                status=_coerce_macro_error_status(result.get("status")),
-                macro_name="macro_align_part_with_contact",
-                intent=f"repair '{part_object}' relative to '{reference_object}'",
-                actions_taken=list(result.get("actions_taken") or []),
-                requires_followup=bool(result.get("requires_followup")),
-                error=str(result.get("error") or result),
-            )
-        contract = MacroExecutionReportContract.model_validate(result)
-        return contract if contract.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, contract)
-    return MacroExecutionReportContract(
-        status="failed",
+    return await _finalize_macro_execution_result(
+        ctx,
+        result,
         macro_name="macro_align_part_with_contact",
         intent=f"repair '{part_object}' relative to '{reference_object}'",
-        actions_taken=[],
-        requires_followup=False,
-        error=str(result),
     )
 
 
@@ -511,27 +576,11 @@ async def macro_place_symmetry_pair(
         },
         direct_executor=execute,
     )
-    if isinstance(result, MacroExecutionReportContract):
-        return result if result.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, result)
-    if isinstance(result, dict):
-        if result.get("status") in {"failed", "blocked"} or result.get("error"):
-            return MacroExecutionReportContract(
-                status=_coerce_macro_error_status(result.get("status")),
-                macro_name="macro_place_symmetry_pair",
-                intent=f"place symmetry pair '{left_object}' / '{right_object}'",
-                actions_taken=list(result.get("actions_taken") or []),
-                requires_followup=bool(result.get("requires_followup")),
-                error=str(result.get("error") or result),
-            )
-        contract = MacroExecutionReportContract.model_validate(result)
-        return contract if contract.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, contract)
-    return MacroExecutionReportContract(
-        status="failed",
+    return await _finalize_macro_execution_result(
+        ctx,
+        result,
         macro_name="macro_place_symmetry_pair",
         intent=f"place symmetry pair '{left_object}' / '{right_object}'",
-        actions_taken=[],
-        requires_followup=False,
-        error=str(result),
     )
 
 
@@ -605,27 +654,11 @@ async def macro_place_supported_pair(
         },
         direct_executor=execute,
     )
-    if isinstance(result, MacroExecutionReportContract):
-        return result if result.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, result)
-    if isinstance(result, dict):
-        if result.get("status") in {"failed", "blocked"} or result.get("error"):
-            return MacroExecutionReportContract(
-                status=_coerce_macro_error_status(result.get("status")),
-                macro_name="macro_place_supported_pair",
-                intent=f"place supported pair '{left_object}' / '{right_object}' on '{support_object}'",
-                actions_taken=list(result.get("actions_taken") or []),
-                requires_followup=bool(result.get("requires_followup")),
-                error=str(result.get("error") or result),
-            )
-        contract = MacroExecutionReportContract.model_validate(result)
-        return contract if contract.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, contract)
-    return MacroExecutionReportContract(
-        status="failed",
+    return await _finalize_macro_execution_result(
+        ctx,
+        result,
         macro_name="macro_place_supported_pair",
         intent=f"place supported pair '{left_object}' / '{right_object}' on '{support_object}'",
-        actions_taken=[],
-        requires_followup=False,
-        error=str(result),
     )
 
 
@@ -682,27 +715,11 @@ async def macro_cleanup_part_intersections(
         },
         direct_executor=execute,
     )
-    if isinstance(result, MacroExecutionReportContract):
-        return result if result.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, result)
-    if isinstance(result, dict):
-        if result.get("status") in {"failed", "blocked"} or result.get("error"):
-            return MacroExecutionReportContract(
-                status=_coerce_macro_error_status(result.get("status")),
-                macro_name="macro_cleanup_part_intersections",
-                intent=f"clean intersection between '{part_object}' and '{reference_object}'",
-                actions_taken=list(result.get("actions_taken") or []),
-                requires_followup=bool(result.get("requires_followup")),
-                error=str(result.get("error") or result),
-            )
-        contract = MacroExecutionReportContract.model_validate(result)
-        return contract if contract.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, contract)
-    return MacroExecutionReportContract(
-        status="failed",
+    return await _finalize_macro_execution_result(
+        ctx,
+        result,
         macro_name="macro_cleanup_part_intersections",
         intent=f"clean intersection between '{part_object}' and '{reference_object}'",
-        actions_taken=[],
-        requires_followup=False,
-        error=str(result),
     )
 
 
@@ -768,27 +785,11 @@ async def macro_adjust_relative_proportion(
         },
         direct_executor=execute,
     )
-    if isinstance(result, MacroExecutionReportContract):
-        return result if result.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, result)
-    if isinstance(result, dict):
-        if result.get("status") in {"failed", "blocked"} or result.get("error"):
-            return MacroExecutionReportContract(
-                status=_coerce_macro_error_status(result.get("status")),
-                macro_name="macro_adjust_relative_proportion",
-                intent=f"repair relative proportion for '{primary_object}' relative to '{reference_object}'",
-                actions_taken=list(result.get("actions_taken") or []),
-                requires_followup=bool(result.get("requires_followup")),
-                error=str(result.get("error") or result),
-            )
-        contract = MacroExecutionReportContract.model_validate(result)
-        return contract if contract.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, contract)
-    return MacroExecutionReportContract(
-        status="failed",
+    return await _finalize_macro_execution_result(
+        ctx,
+        result,
         macro_name="macro_adjust_relative_proportion",
         intent=f"repair relative proportion for '{primary_object}' relative to '{reference_object}'",
-        actions_taken=[],
-        requires_followup=False,
-        error=str(result),
     )
 
 
@@ -844,27 +845,11 @@ async def macro_adjust_segment_chain_arc(
         },
         direct_executor=execute,
     )
-    if isinstance(result, MacroExecutionReportContract):
-        return result if result.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, result)
-    if isinstance(result, dict):
-        if result.get("status") in {"failed", "blocked"} or result.get("error"):
-            return MacroExecutionReportContract(
-                status=_coerce_macro_error_status(result.get("status")),
-                macro_name="macro_adjust_segment_chain_arc",
-                intent=f"adjust segment chain arc for {len(segment_objects)} segment(s)",
-                actions_taken=list(result.get("actions_taken") or []),
-                requires_followup=bool(result.get("requires_followup")),
-                error=str(result.get("error") or result),
-            )
-        contract = MacroExecutionReportContract.model_validate(result)
-        return contract if contract.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, contract)
-    return MacroExecutionReportContract(
-        status="failed",
+    return await _finalize_macro_execution_result(
+        ctx,
+        result,
         macro_name="macro_adjust_segment_chain_arc",
         intent=f"adjust segment chain arc for {len(segment_objects)} segment(s)",
-        actions_taken=[],
-        requires_followup=False,
-        error=str(result),
     )
 
 
@@ -946,7 +931,12 @@ def scene_delete_object(name: str, ctx: Context) -> str:
     )
 
 
-def scene_clean_scene(ctx: Context, keep_lights_and_cameras: bool = True) -> str:
+def scene_clean_scene(
+    ctx: Context,
+    keep_lights_and_cameras: bool | None = None,
+    keep_lights: bool | None = None,
+    keep_cameras: bool | None = None,
+) -> str:
     """
     [SCENE][DESTRUCTIVE] Deletes objects from the scene.
     WARNING: If keep_lights_and_cameras=False, deletes EVERYTHING (hard reset).
@@ -954,13 +944,29 @@ def scene_clean_scene(ctx: Context, keep_lights_and_cameras: bool = True) -> str
     Workflow: START → fresh scene | AFTER → modeling_create_primitive
 
     Args:
-        keep_lights_and_cameras: If True (default), keeps Lights and Cameras.
-                                 If False, deletes EVERYTHING (hard reset).
+        keep_lights_and_cameras: Canonical public cleanup flag. If True (default),
+            keeps Lights and Cameras. If False, deletes EVERYTHING (hard reset).
+        keep_lights: Legacy compatibility-only split flag. Use only when it
+            matches `keep_cameras`.
+        keep_cameras: Legacy compatibility-only split flag. Use only when it
+            matches `keep_lights`.
     """
+    canonical_arguments = canonicalize_scene_clean_scene_arguments(
+        {
+            key: value
+            for key, value in {
+                "keep_lights_and_cameras": keep_lights_and_cameras,
+                "keep_lights": keep_lights,
+                "keep_cameras": keep_cameras,
+            }.items()
+            if value is not None
+        }
+    )
+    keep_lights_and_cameras_value = bool(canonical_arguments.get("keep_lights_and_cameras", True))
     return route_tool_call(
         tool_name="scene_clean_scene",
-        params={"keep_lights_and_cameras": keep_lights_and_cameras},
-        direct_executor=lambda: get_scene_handler().clean_scene(keep_lights_and_cameras),
+        params={"keep_lights_and_cameras": keep_lights_and_cameras_value},
+        direct_executor=lambda: get_scene_handler().clean_scene(keep_lights_and_cameras_value),
     )
 
 
@@ -2444,6 +2450,277 @@ async def scene_get_origin_info(
         subject="scene_get_origin_info",
         object_name=object_name,
     )
+
+
+def scene_scope_graph(
+    ctx: Context,
+    target_object: str | None = None,
+    target_objects: list[str] | None = None,
+    collection_name: str | None = None,
+) -> SceneScopeGraphResponseContract:
+    """
+    [OBJECT MODE][SAFE][READ-ONLY] Returns the compact structural scope graph for the active guided target set.
+
+    Use this when you need one explicit answer to:
+    - what the current scope kind is
+    - which object is the structural anchor
+    - which objects behave like core masses, appendages, or accessories
+
+    This is a read-only spatial-state artifact. It stays separate from the staged
+    reference checkpoint payloads so the guided loop can request it only when the
+    current reasoning step genuinely needs richer structural scope detail.
+
+    Args:
+        target_object: Optional primary object to force into scope.
+        target_objects: Optional additional object names for an explicit object set.
+        collection_name: Optional collection to expand into the scope artifact.
+    """
+
+    def execute() -> SceneScopeGraphResponseContract:
+        if not any([target_object, target_objects, collection_name]) and _should_require_explicit_guided_scope(ctx):
+            return SceneScopeGraphResponseContract(error=_guided_scope_requirement_error("scene_scope_graph"))
+
+        handler = get_scene_handler()
+        try:
+            payload = SceneScopeGraphPayloadContract(
+                scope=SceneAssembledTargetScopeContract.model_validate(
+                    handler.get_scope_graph(
+                        target_object=target_object,
+                        target_objects=target_objects,
+                        collection_name=collection_name,
+                    )
+                ),
+                message="Scope graph derived from explicit targets plus deterministic role/anchor heuristics.",
+            )
+            mismatch_message = _guided_scope_mismatch_message(
+                ctx,
+                tool_name="scene_scope_graph",
+                resolved_scope=payload.scope.model_dump(mode="json"),
+            )
+            if mismatch_message:
+                payload.message = mismatch_message
+            record_guided_flow_spatial_check_completion(
+                ctx,
+                tool_name="scene_scope_graph",
+                resolved_scope=payload.scope.model_dump(mode="json"),
+            )
+            return SceneScopeGraphResponseContract(payload=payload)
+        except (RuntimeError, ValueError) as e:
+            return SceneScopeGraphResponseContract(error=str(e))
+
+    result = route_tool_call(
+        tool_name="scene_scope_graph",
+        params={
+            "target_object": target_object,
+            "target_objects": target_objects,
+            "collection_name": collection_name,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, SceneScopeGraphResponseContract):
+        return result
+    if isinstance(result, dict):
+        return SceneScopeGraphResponseContract.model_validate(result)
+    return SceneScopeGraphResponseContract(error=str(result))
+
+
+def scene_relation_graph(
+    ctx: Context,
+    target_object: str | None = None,
+    target_objects: list[str] | None = None,
+    collection_name: str | None = None,
+    goal_hint: str | None = None,
+) -> SceneRelationGraphResponseContract:
+    """
+    [OBJECT MODE][SAFE][READ-ONLY] Returns the compact spatial relation graph for the active guided target set.
+
+    The graph is derived from current truth primitives such as gap/alignment/overlap/contact checks.
+    It exposes typed pair relations and verdicts without forcing the caller to reconstruct them from
+    scattered measure/assert calls.
+
+    Args:
+        target_object: Optional primary object to force into scope.
+        target_objects: Optional additional object names for an explicit object set.
+        collection_name: Optional collection to expand into the relation graph scope.
+        goal_hint: Optional goal text used only for bounded pair expansion such as symmetry/support candidates.
+    """
+
+    def execute() -> SceneRelationGraphResponseContract:
+        if not any([target_object, target_objects, collection_name]) and _should_require_explicit_guided_scope(ctx):
+            return SceneRelationGraphResponseContract(error=_guided_scope_requirement_error("scene_relation_graph"))
+
+        handler = get_scene_handler()
+        try:
+            payload = SceneRelationGraphPayloadContract.model_validate(
+                handler.get_relation_graph(
+                    target_object=target_object,
+                    target_objects=target_objects,
+                    collection_name=collection_name,
+                    goal_hint=goal_hint,
+                    include_truth_payloads=False,
+                )
+            )
+            mismatch_message = _guided_scope_mismatch_message(
+                ctx,
+                tool_name="scene_relation_graph",
+                resolved_scope=payload.scope.model_dump(mode="json"),
+            )
+            if mismatch_message:
+                payload.message = mismatch_message
+            record_guided_flow_spatial_check_completion(
+                ctx,
+                tool_name="scene_relation_graph",
+                resolved_scope=payload.scope.model_dump(mode="json"),
+            )
+            return SceneRelationGraphResponseContract(payload=payload)
+        except (RuntimeError, ValueError) as e:
+            return SceneRelationGraphResponseContract(error=str(e))
+
+    result = route_tool_call(
+        tool_name="scene_relation_graph",
+        params={
+            "target_object": target_object,
+            "target_objects": target_objects,
+            "collection_name": collection_name,
+            "goal_hint": goal_hint,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, SceneRelationGraphResponseContract):
+        return result
+    if isinstance(result, dict):
+        return SceneRelationGraphResponseContract.model_validate(result)
+    return SceneRelationGraphResponseContract(error=str(result))
+
+
+def scene_view_diagnostics(
+    ctx: Context,
+    target_object: str | None = None,
+    target_objects: list[str] | None = None,
+    collection_name: str | None = None,
+    camera_name: str | None = None,
+    focus_target: str | None = None,
+    view_name: Literal["FRONT", "RIGHT", "TOP"] | None = None,
+    orbit_horizontal: float = 0.0,
+    orbit_vertical: float = 0.0,
+    zoom_factor: float | None = None,
+    persist_view: bool = False,
+) -> SceneViewDiagnosticsResponseContract:
+    """
+    [OBJECT MODE][SAFE][READ-ONLY] Returns compact view-space diagnostics for one explicit target scope.
+
+    Use this when you need typed answers to questions like:
+    - is the target actually on screen from this camera or viewport?
+    - is it fully visible, partially visible, or fully occluded?
+    - how centered is it in the current frame?
+
+    This is a view-space artifact only. It reports projection/framing/occlusion facts
+    for the current camera or live USER_PERSPECTIVE path; it does not claim contact,
+    attachment, overlap, or other truth-space geometry semantics.
+
+    Args:
+        target_object: Optional primary object to force into the diagnostics scope.
+        target_objects: Optional additional object names for an explicit object set.
+        collection_name: Optional collection to expand into the diagnostics scope.
+        camera_name: Optional explicit named camera. Use None or "USER_PERSPECTIVE" for the live 3D view.
+        focus_target: Optional target to focus before USER_PERSPECTIVE diagnostics.
+        view_name: Optional standard USER_PERSPECTIVE preset ('FRONT', 'RIGHT', 'TOP').
+        orbit_horizontal: Optional horizontal orbit in degrees for USER_PERSPECTIVE diagnostics.
+        orbit_vertical: Optional vertical orbit in degrees for USER_PERSPECTIVE diagnostics.
+        zoom_factor: Optional USER_PERSPECTIVE zoom factor.
+        persist_view: If True, keeps any USER_PERSPECTIVE adjustment after diagnostics. Defaults to False.
+    """
+
+    def execute() -> SceneViewDiagnosticsResponseContract:
+        if not any([target_object, target_objects, collection_name]):
+            return SceneViewDiagnosticsResponseContract(
+                error=_guided_scope_requirement_error("scene_view_diagnostics"),
+            )
+
+        handler = get_scene_handler()
+        try:
+            scope = SceneAssembledTargetScopeContract.model_validate(
+                handler.get_scope_graph(
+                    target_object=target_object,
+                    target_objects=target_objects,
+                    collection_name=collection_name,
+                )
+            )
+            raw_payload = handler.get_view_diagnostics(
+                target_object=scope.primary_target or target_object,
+                target_objects=list(scope.object_names or []),
+                camera_name=camera_name,
+                focus_target=focus_target,
+                view_name=view_name,
+                orbit_horizontal=orbit_horizontal,
+                orbit_vertical=orbit_vertical,
+                zoom_factor=zoom_factor,
+                persist_view=persist_view,
+            )
+            target_contracts = [
+                SceneViewDiagnosticsTargetContract.model_validate(
+                    {
+                        **item,
+                        "projection": (
+                            SceneViewProjectionEvidenceContract.model_validate(item["projection"])
+                            if isinstance(item, dict) and isinstance(item.get("projection"), dict)
+                            else item.get("projection")
+                            if isinstance(item, dict)
+                            else None
+                        ),
+                    }
+                )
+                for item in list(raw_payload.get("targets") or [])
+                if isinstance(item, dict)
+            ]
+            payload = SceneViewDiagnosticsPayloadContract(
+                view_query=SceneViewQueryContract.model_validate(raw_payload.get("view_query") or {}),
+                scope=scope,
+                summary=SceneViewDiagnosticsSummaryContract.model_validate(raw_payload.get("summary") or {}),
+                targets=target_contracts,
+                message=(
+                    "View diagnostics report projection/framing/occlusion state for the requested scope only; "
+                    "use measure/assert tools for truth-space verification."
+                ),
+            )
+            mismatch_message = _guided_scope_mismatch_message(
+                ctx,
+                tool_name="scene_view_diagnostics",
+                resolved_scope=payload.scope.model_dump(mode="json"),
+            )
+            if mismatch_message:
+                payload.message = f"{payload.message} {mismatch_message}" if payload.message else mismatch_message
+            if _view_diagnostics_can_complete_guided_check(payload):
+                record_guided_flow_spatial_check_completion(
+                    ctx,
+                    tool_name="scene_view_diagnostics",
+                    resolved_scope=payload.scope.model_dump(mode="json"),
+                )
+            return SceneViewDiagnosticsResponseContract(payload=payload)
+        except (RuntimeError, ValueError) as e:
+            return SceneViewDiagnosticsResponseContract(error=str(e))
+
+    result = route_tool_call(
+        tool_name="scene_view_diagnostics",
+        params={
+            "target_object": target_object,
+            "target_objects": target_objects,
+            "collection_name": collection_name,
+            "camera_name": camera_name,
+            "focus_target": focus_target,
+            "view_name": view_name,
+            "orbit_horizontal": orbit_horizontal,
+            "orbit_vertical": orbit_vertical,
+            "zoom_factor": zoom_factor,
+            "persist_view": persist_view,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, SceneViewDiagnosticsResponseContract):
+        return result
+    if isinstance(result, dict):
+        return SceneViewDiagnosticsResponseContract.model_validate(result)
+    return SceneViewDiagnosticsResponseContract(error=str(result))
 
 
 def scene_measure_distance(

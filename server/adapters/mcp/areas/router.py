@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional, cast
 
 from fastmcp import Context
 
-from server.adapters.mcp.context_utils import ctx_info, ctx_session_id, ctx_transport_type
+from server.adapters.mcp.context_utils import ctx_info, ctx_session_id, ctx_transport_type, ctx_warning
 from server.adapters.mcp.contracts.router import (
     RouterGoalResponseContract,
     RouterStatusContract,
@@ -27,32 +27,53 @@ from server.adapters.mcp.elicitation_contracts import (
     build_fallback_payload,
 )
 from server.adapters.mcp.guided_mode import build_visibility_diagnostics
+from server.adapters.mcp.guided_naming_policy import evaluate_guided_object_name
 from server.adapters.mcp.router_helper import get_router_status
 from server.adapters.mcp.sampling.assistant_runner import run_repair_suggestion_assistant
 from server.adapters.mcp.sampling.result_types import to_repair_assistant_contract
 from server.adapters.mcp.session_capabilities import (
     apply_visibility_for_session_state,
+    bootstrap_guided_empty_scene_primary_workset_async,
     build_guided_reference_readiness_payload,
     clear_session_goal_state_async,
     get_session_capability_state_async,
     merge_resolved_params_with_session_answers_async,
+    register_guided_part_role_async,
+    require_existing_scene_object_name,
+    resolve_guided_role_group_for_domain,
     update_session_from_router_goal_async,
 )
 from server.adapters.mcp.tasks.job_registry import get_background_job_registry
 from server.adapters.mcp.transforms.visibility_policy import build_guided_handoff_payload
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.infrastructure.config import get_config
-from server.infrastructure.di import get_router_handler
+from server.infrastructure.di import get_router_handler, get_scene_handler
 from server.infrastructure.telemetry import get_telemetry_state
 
 ROUTER_PUBLIC_TOOL_NAMES = (
     "router_set_goal",
     "router_get_status",
+    "guided_register_part",
     "router_clear_goal",
     "router_find_similar_workflows",
     "router_get_inherited_proportions",
     "router_feedback",
 )
+
+_GUIDED_HELPER_OR_PLACEHOLDER_NAMES = {
+    "camera",
+    "light",
+    "lamp",
+    "sun",
+    "cube",
+    "sphere",
+    "cone",
+    "cylinder",
+    "plane",
+    "torus",
+    "monkey",
+}
+_GUIDED_STARTUP_SCENE_OBJECT_NAMES = {"cube", "camera", "light"}
 
 
 def _register_existing_tool(target: Any, tool_name: str) -> Any:
@@ -76,6 +97,41 @@ def _get_runtime_contract_line(ctx: Context) -> str | None:
         return getattr(ctx.fastmcp, "_bam_contract_line", None)
     except Exception:
         return None
+
+
+def _scene_has_meaningful_guided_objects() -> bool:
+    """Return True when the scene already has operator-meaningful objects to inspect."""
+
+    try:
+        objects = get_scene_handler().list_objects()
+    except Exception:
+        return True
+    placeholder_object_count = 0
+    helper_object_count = 0
+    object_names: list[str] = []
+    for item in objects:
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("name") or "").strip().lower()
+        object_type = str(item.get("type") or "").strip().lower()
+        if name:
+            object_names.append(name)
+        if object_type in {"camera", "light"}:
+            helper_object_count += 1
+            continue
+        if name in _GUIDED_HELPER_OR_PLACEHOLDER_NAMES:
+            placeholder_object_count += 1
+            continue
+        if name:
+            return True
+    if placeholder_object_count == 0:
+        return False
+    if placeholder_object_count > 1:
+        return True
+    names_set = {name for name in object_names if name}
+    if helper_object_count > 0 and names_set <= _GUIDED_STARTUP_SCENE_OBJECT_NAMES:
+        return False
+    return True
 
 
 def _build_background_job_diagnostics() -> tuple[int, dict[str, int], list[dict[str, Any]]]:
@@ -195,6 +251,7 @@ def _maybe_attach_guided_handoff(
     payload: Dict[str, Any],
     *,
     surface_profile: str,
+    goal: str,
 ) -> Dict[str, Any]:
     """Attach the explicit guided continuation contract when the router requests one."""
 
@@ -208,6 +265,7 @@ def _maybe_attach_guided_handoff(
         str(continuation_mode),
         surface_profile=surface_profile,
         phase=str(phase_hint),
+        goal=goal,
     )
     if guided_handoff is None:
         payload.pop("guided_handoff", None)
@@ -358,7 +416,7 @@ async def router_set_goal(
                 question_set_id=session.pending_question_set_id,
             ).model_dump()
 
-    result = _maybe_attach_guided_handoff(result, surface_profile=surface_profile)
+    result = _maybe_attach_guided_handoff(result, surface_profile=surface_profile, goal=goal)
     state = await update_session_from_router_goal_async(
         ctx,
         goal,
@@ -367,8 +425,11 @@ async def router_set_goal(
         surface_profile=surface_profile,
         contract_version=_get_runtime_contract_line(ctx),
     )
+    if surface_profile == "llm-guided" and state.guided_flow_state and not _scene_has_meaningful_guided_objects():
+        state = await bootstrap_guided_empty_scene_primary_workset_async(ctx)
     result["session_id"] = ctx_session_id(ctx)
     result["transport"] = ctx_transport_type(ctx)
+    result["guided_flow_state"] = state.guided_flow_state
     result["guided_reference_readiness"] = build_guided_reference_readiness_payload(state)
     await apply_visibility_for_session_state(ctx, state)
 
@@ -407,7 +468,13 @@ async def router_get_status(ctx: Context) -> RouterStatusContract:
     session = await get_session_capability_state_async(ctx)
     surface_profile = session.surface_profile or get_config().MCP_SURFACE_PROFILE
     contract_line = session.contract_version or _get_runtime_contract_line(ctx)
-    diagnostics = build_visibility_diagnostics(surface_profile, session.phase)
+    await apply_visibility_for_session_state(ctx, session)
+    diagnostics = build_visibility_diagnostics(
+        surface_profile,
+        session.phase,
+        guided_handoff=session.guided_handoff,
+        guided_flow_state=session.guided_flow_state,
+    )
     status_payload = get_router_status()
     background_job_count, background_job_counts_by_status, background_jobs = _build_background_job_diagnostics()
     status_payload.update(
@@ -427,6 +494,7 @@ async def router_get_status(ctx: Context) -> RouterStatusContract:
             "last_router_error": session.last_router_error,
             "policy_context": session.policy_context,
             "guided_handoff": session.guided_handoff,
+            "guided_flow_state": session.guided_flow_state,
             "visibility_rules": [dict(rule) for rule in diagnostics.rules],
             "visible_capabilities": list(diagnostics.visible_capability_ids),
             "visible_entry_capabilities": list(diagnostics.visible_entry_capability_ids),
@@ -452,6 +520,62 @@ async def router_get_status(ctx: Context) -> RouterStatusContract:
         )
         status_payload["repair_suggestion"] = to_repair_assistant_contract(repair_outcome).model_dump()
     return RouterStatusContract.model_validate(status_payload)
+
+
+async def guided_register_part(
+    ctx: Context,
+    object_name: str,
+    role: str,
+    role_group: str | None = None,
+) -> RouterStatusContract:
+    """
+    [SYSTEM][SAFE] Register one object role for the active guided flow session.
+
+    Use this to tell the guided runtime that an existing object should count as
+    a specific semantic part role such as `body_core`, `head_mass`, or
+    `roof_mass`, without introducing a separate build tool per domain part.
+    """
+    session = await get_session_capability_state_async(ctx)
+    guided_flow_state = session.guided_flow_state or {}
+    domain_profile = str(guided_flow_state.get("domain_profile") or "").strip()
+    current_step = str(guided_flow_state.get("current_step") or "").strip() or None
+    naming_decision = None
+    if domain_profile in {"generic", "creature", "building"}:
+        naming_decision = evaluate_guided_object_name(
+            object_name=object_name,
+            role=role,
+            domain_profile=cast(Any, domain_profile),
+            current_step=current_step,
+        )
+        if naming_decision.status == "blocked":
+            status = await router_get_status(ctx)
+            payload = status.model_dump(mode="json", exclude_none=True)
+            payload["message"] = naming_decision.message
+            payload["guided_naming"] = naming_decision.model_dump(mode="json")
+            return RouterStatusContract.model_validate(payload)
+        resolve_guided_role_group_for_domain(
+            cast(Any, domain_profile),
+            role,
+            role_group,
+        )
+
+    require_existing_scene_object_name(object_name)
+
+    await register_guided_part_role_async(
+        ctx,
+        object_name=object_name,
+        role=role,
+        role_group=role_group,
+    )
+    status = await router_get_status(ctx)
+    payload = status.model_dump(mode="json", exclude_none=True)
+    payload["message"] = f"Registered guided role '{role}' for '{object_name}'."
+    if naming_decision is not None:
+        payload["guided_naming"] = naming_decision.model_dump(mode="json")
+        if naming_decision.status == "warning" and naming_decision.message:
+            payload["message"] = f"{payload['message']} {naming_decision.message}"
+            ctx_warning(ctx, naming_decision.message)
+    return RouterStatusContract.model_validate(payload)
 
 
 async def router_clear_goal(ctx: Context) -> str:

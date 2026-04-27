@@ -8,6 +8,8 @@ from __future__ import annotations
 from typing import Any, Literal
 
 from server.adapters.mcp.contracts.base import MCPContract
+from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract
+from server.adapters.mcp.contracts.guided_naming import GuidedNamingDecisionContract
 from server.adapters.mcp.contracts.reference import GuidedReferenceReadinessContract, ReferenceImageRecordContract
 from server.adapters.mcp.elicitation_contracts import ClarificationFallbackPayload
 from server.adapters.mcp.sampling.result_types import RepairSuggestionAssistantContract
@@ -37,6 +39,7 @@ class RouterGuidedHandoffContract(MCPContract):
     """Explicit guided-surface continuation contract after router handoff states."""
 
     kind: Literal["guided_manual_build", "guided_utility"]
+    recipe_id: Literal["low_poly_creature_blockout", "mid_poly_organic_refine"] | None = None
     target_phase: Literal["planning", "build", "inspect_validate"]
     surface_profile: str
     direct_tools: list[str]
@@ -66,6 +69,8 @@ class RouterGoalResponseContract(MCPContract):
     elicitation_answers: dict[str, Any] | None = None
     policy_context: RouterPolicyContextContract | None = None
     guided_handoff: RouterGuidedHandoffContract | None = None
+    guided_flow_state: GuidedFlowStateContract | None = None
+    guided_naming: GuidedNamingDecisionContract | None = None
     guided_reference_readiness: GuidedReferenceReadinessContract | None = None
     repair_suggestion: RepairSuggestionAssistantContract | None = None
 
@@ -93,6 +98,8 @@ class RouterStatusContract(MCPContract):
     last_router_status: str | None = None
     policy_context: RouterPolicyContextContract | None = None
     guided_handoff: RouterGuidedHandoffContract | None = None
+    guided_flow_state: GuidedFlowStateContract | None = None
+    guided_naming: GuidedNamingDecisionContract | None = None
     visibility_rules: list[dict[str, Any]] | None = None
     visible_capabilities: list[str] | None = None
     visible_entry_capabilities: list[str] | None = None

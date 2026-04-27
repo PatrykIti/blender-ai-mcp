@@ -1,7 +1,7 @@
 # TASK-128-03-03-01: Creature Part Vocabulary and Promptable Targets
 
 **Parent:** [TASK-128-03-03](./TASK-128-03-03_Part_Masks_Crops_Landmarks_And_Localized_Hints.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟠 High
 
 ## Objective

@@ -14,8 +14,8 @@ from server.adapters.mcp.prompts.rendering import (
     render_prompt_asset,
     render_recommended_prompts,
 )
+from server.adapters.mcp.session_capabilities import get_session_capability_state_async
 from server.adapters.mcp.session_phase import SessionPhase
-from server.adapters.mcp.session_state import get_session_value_async
 from server.infrastructure.config import get_config
 
 LocalProvider: Any = None
@@ -50,20 +50,18 @@ def register_prompt_assets(target: Any) -> Dict[str, Any]:
         ctx: Context,
         surface_profile: str | None = None,
         session_phase: str | None = None,
+        session_goal: str | None = None,
     ):
-        resolved_surface = surface_profile or await get_session_value_async(
-            ctx,
-            "surface_profile",
-            get_config().MCP_SURFACE_PROFILE,
-        )
-        resolved_phase = session_phase or await get_session_value_async(
-            ctx,
-            "phase",
-            SessionPhase.BOOTSTRAP.value,
-        )
+        session_state = await get_session_capability_state_async(ctx)
+        resolved_surface = surface_profile or session_state.surface_profile or get_config().MCP_SURFACE_PROFILE
+        resolved_phase = session_phase or session_state.phase.value or SessionPhase.BOOTSTRAP.value
+        resolved_goal = session_goal if session_goal is not None else session_state.goal
         return render_recommended_prompts(
             surface_profile=str(resolved_surface),
             phase=str(resolved_phase),
+            goal=str(resolved_goal) if resolved_goal is not None else None,
+            guided_handoff=session_state.guided_handoff,
+            guided_flow_state=session_state.guided_flow_state,
         )
 
     registered["recommended_prompts"] = target.prompt(

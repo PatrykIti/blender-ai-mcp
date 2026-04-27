@@ -112,6 +112,14 @@ def test_update_session_from_router_goal_persists_goal_and_clarification_state()
     assert get_session_capability_state(ctx).policy_context is None
 
 
+def test_default_session_state_has_no_guided_flow_state():
+    """Fresh session state should not invent flow gating before a guided goal exists."""
+
+    ctx = FakeContext()
+
+    assert get_session_capability_state(ctx).guided_flow_state is None
+
+
 def test_update_session_from_router_goal_persists_guided_handoff():
     """Explicit guided handoff payloads should remain available in session diagnostics."""
 
@@ -172,6 +180,7 @@ def test_clear_session_goal_state_resets_goal_but_keeps_coarse_planning_phase():
     assert state.pending_clarification is None
     assert state.policy_context is None
     assert state.guided_handoff is None
+    assert state.guided_flow_state is None
 
 
 def test_update_session_from_router_goal_persists_policy_context():
@@ -268,6 +277,42 @@ def test_apply_visibility_for_session_state_uses_stored_surface_profile():
     assert any(name == "enable_components" and call["names"] == set(GUIDED_DISCOVERY_TOOLS) for name, call in calls[1:])
     assert any(
         name == "enable_components" and call["names"] == set(GUIDED_BUILD_ESCAPE_HATCH_TOOLS)
+        for name, call in calls[1:]
+    )
+
+
+def test_apply_visibility_for_session_state_can_use_creature_handoff_recipe():
+    """Session visibility should narrow to the creature handoff recipe when one is active."""
+
+    ctx = FakeContext()
+    state = SessionCapabilityState(
+        phase=SessionPhase.BUILD,
+        surface_profile="llm-guided",
+        guided_handoff={
+            "kind": "guided_manual_build",
+            "recipe_id": "low_poly_creature_blockout",
+            "direct_tools": ["modeling_create_primitive", "mesh_extrude_region", "inspect_scene"],
+            "supporting_tools": ["reference_images", "reference_iterate_stage_checkpoint", "router_get_status"],
+            "discovery_tools": ["search_tools", "call_tool"],
+            "workflow_import_recommended": False,
+            "message": "Continue on the guided creature blockout surface.",
+        },
+    )
+
+    asyncio.run(apply_visibility_for_session_state(ctx, state))
+
+    calls = ctx.state["_visibility_calls"]
+    assert any(
+        name == "enable_components"
+        and call["names"]
+        == {
+            "modeling_create_primitive",
+            "mesh_extrude_region",
+            "inspect_scene",
+            "reference_images",
+            "reference_iterate_stage_checkpoint",
+            "router_get_status",
+        }
         for name, call in calls[1:]
     )
 
@@ -527,3 +572,19 @@ def test_update_session_from_router_goal_preserves_reference_images_for_same_goa
     )
 
     assert state.reference_images == [{"reference_id": "ref_1"}]
+
+
+def test_update_session_from_router_goal_clears_guided_part_registry_when_goal_changes():
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "chair", {"status": "ready"})
+    ctx.state["guided_part_registry"] = [{"object_name": "ChairBody", "role": "body_core"}]
+
+    state = update_session_from_router_goal(
+        ctx,
+        "lamp",
+        {
+            "status": "ready",
+        },
+    )
+
+    assert state.guided_part_registry is None

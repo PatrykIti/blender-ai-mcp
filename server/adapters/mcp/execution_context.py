@@ -18,3 +18,6 @@ class MCPExecutionContext(MCPContract):
     prompt: str | None = None
     session_phase: str | None = None
     surface_profile: str | None = None
+    guided_tool_family: str | None = None
+    guided_role: str | None = None
+    guided_role_group: str | None = None

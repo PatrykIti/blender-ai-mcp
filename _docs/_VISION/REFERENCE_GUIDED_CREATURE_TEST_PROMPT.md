@@ -23,6 +23,10 @@ low-poly creature build with:
 ```text
 Use the active `blender-ai-mcp-guided-docker-openrouter` profile and build a low-poly squirrel from two local references.
 
+If that profile uses an OpenRouter Google-family model such as Gemma, keep
+`VISION_EXTERNAL_CONTRACT_PROFILE=google_family_compare` visible in the MCP
+server config so the staged compare path is deterministic and auditable.
+
 Reference files:
 - FRONT_REFERENCE_PATH=/tmp/squirrel-front.png
 - SIDE_REFERENCE_PATH=/tmp/squirrel-side.png
@@ -66,6 +70,8 @@ Workflow:
 10. on each next iteration prioritize:
    - `loop_disposition`
    - `guided_reference_readiness`
+   - `vision_assistant.result.vision_contract_profile` when using an external
+     runtime
    - `correction_candidates`
    - `truth_followup`
    - `truth_followup.focus_pairs`
@@ -102,6 +108,7 @@ At the end of each stage, return only:
 - Review outputs in this order:
   - `loop_disposition`
   - `guided_reference_readiness`
+  - `vision_assistant.result.vision_contract_profile` for external compare runs
   - `correction_candidates`
   - `truth_followup`
   - `correction_focus`

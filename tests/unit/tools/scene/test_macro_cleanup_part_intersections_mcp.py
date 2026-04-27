@@ -20,7 +20,13 @@ def test_macro_cleanup_part_intersections_mcp_tool_returns_structured_contract(m
                         "status": "applied",
                         "action": "cleanup_part_intersections",
                         "tool_name": "modeling_transform_object",
-                    }
+                    },
+                    {
+                        "status": "applied",
+                        "action": "evaluate_attachment_outcome",
+                        "tool_name": "scene_assert_contact",
+                        "details": {"attachment_verdict": "seated_contact"},
+                    },
                 ],
                 "objects_modified": [kwargs.get("part_object", "Horn")],
                 "verification_recommended": [
@@ -42,3 +48,4 @@ def test_macro_cleanup_part_intersections_mcp_tool_returns_structured_contract(m
     assert isinstance(result, MacroExecutionReportContract)
     assert result.macro_name == "macro_cleanup_part_intersections"
     assert result.actions_taken[0].action == "cleanup_part_intersections"
+    assert result.actions_taken[-1].details["attachment_verdict"] == "seated_contact"

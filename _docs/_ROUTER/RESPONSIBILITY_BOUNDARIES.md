@@ -68,6 +68,25 @@ If the question is:
 
 the answer belongs primarily to FastMCP.
 
+### Guided Visibility Note
+
+On `llm-guided`, runtime visibility should have one clear authority:
+
+- `build_visibility_rules(...)`
+- the current session phase / `guided_handoff`
+- the current `guided_flow_state`
+
+Capability tags and the capability manifest are allowed to carry coarse
+metadata for:
+
+- discovery and inventory
+- provider grouping
+- pinned/default entry hints
+- phase-shaped catalog hints
+
+They must not become a second hidden runtime phase gate once the guided
+visibility rules are built.
+
 ---
 
 ## Layer 2: LaBSE Semantic Layer
@@ -121,6 +140,8 @@ LaBSE must not be the source of truth.
 - general MCP tool discovery is owned by FastMCP search and visibility controls
 - semantic parameter memory is allowed only when the prompt is relevant to the target parameter
 - semantic workflow results are workflow-retrieval input, not proof of truth or policy approval
+- prompt recommendation may use explicit session state such as active goal,
+  phase/profile, and typed guided-handoff metadata; it must not scrape free-form history
 
 ---
 
@@ -206,6 +227,23 @@ If the question is:
 - “are these objects aligned / intersecting / inside / symmetric?”
 
 the answer belongs to inspection/assertion tools, not to LaBSE and not to speculative router logic.
+
+Silhouette metrics and future part-segmentation outputs are perception inputs:
+
+- they may inform operator-facing `action_hints`
+- they do not replace truth assertions
+- they do not become router safety policy on their own
+- `vision_contract_profile` remains routing metadata for external prompting/parsing, not evidence
+
+The same boundary applies to the shipped read-only spatial graph artifacts:
+
+- `scene_scope_graph(...)` and `scene_relation_graph(...)` are inspection/truth
+  products derived from measured/asserted state
+- FastMCP visibility/search decides when those artifacts are exposed on
+  `llm-guided`
+- the router may consume their typed findings for bounded policy decisions, but
+  it must not become the authority that invents scope or relation truth on its
+  own
 
 ---
 
@@ -347,6 +385,8 @@ Interpretation:
 - [README](./README.md)
 - [ROUTER_ARCHITECTURE.md](./ROUTER_ARCHITECTURE.md)
 - [WORKFLOWS/workflow-execution-pipeline.md](./WORKFLOWS/workflow-execution-pipeline.md)
+- [LLM Guide v2](../LLM_GUIDE_V2.md)
+- [Spatial Intelligence Upgrade Proposal](../Spacial-intelligence-upgrades-for-blender-ai-mcp.md)
 - [TASK-083](../_TASKS/TASK-083_FastMCP_3x_Platform_Migration.md)
 - [TASK-084](../_TASKS/TASK-084_Dynamic_Tool_Discovery.md)
 - [TASK-089](../_TASKS/TASK-089_Typed_Contracts_and_Structured_Responses.md)

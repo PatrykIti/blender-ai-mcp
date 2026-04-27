@@ -54,6 +54,21 @@ def log(msg: str, level: str = "INFO"):
     print(f"[{timestamp}] {prefix} {msg}")
 
 
+def create_blender_runtime_log_path() -> Path:
+    """Return one timestamped Blender runtime log path for this runner session."""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return E2E_TESTS_DIR / f"blender_runtime_{timestamp}.log"
+
+
+def tail_log_file(path: Path, max_lines: int = 80) -> str:
+    """Return the tail of a text log file, best-effort."""
+    if not path.exists():
+        return ""
+    text = path.read_text(encoding="utf-8", errors="replace")
+    lines = text.splitlines()
+    return "\n".join(lines[-max_lines:])
+
+
 def find_blender_path(custom_path: Optional[str] = None) -> str:
     """Find Blender executable path."""
     if custom_path and Path(custom_path).exists():
@@ -298,7 +313,7 @@ except Exception as e:
     return success
 
 
-def run_blender_with_rpc(blender_path: str) -> Tuple[subprocess.Popen, bool]:
+def run_blender_with_rpc(blender_path: str) -> Tuple[subprocess.Popen, bool, Path]:
     """Start Blender with RPC server running.
 
     Note: The addon's RPC server uses bpy.app.timers which requires
@@ -307,20 +322,35 @@ def run_blender_with_rpc(blender_path: str) -> Tuple[subprocess.Popen, bool]:
     """
     log("Starting Blender with RPC server...", "RUN")
     log("NOTE: Blender window will open - this is required for RPC server", "INFO")
+    runtime_log_path = create_blender_runtime_log_path()
+    runtime_log_path.parent.mkdir(parents=True, exist_ok=True)
+    runtime_log_path.write_text(
+        f"Blender runtime log started at {datetime.now().isoformat()}\n"
+        f"Executable: {blender_path}\n"
+        "============================================================\n",
+        encoding="utf-8",
+    )
+    log(f"Blender runtime log: {runtime_log_path}", "INFO")
 
     # Start Blender normally - the addon will auto-start its RPC server
     # We just open a new file to have a clean scene for testing
-    process = subprocess.Popen(
-        [blender_path],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        preexec_fn=os.setsid if sys.platform != "win32" else None,
-    )
+    with runtime_log_path.open("ab") as runtime_log_handle:
+        process = subprocess.Popen(
+            [blender_path],
+            stdout=runtime_log_handle,
+            stderr=subprocess.STDOUT,
+            preexec_fn=os.setsid if sys.platform != "win32" else None,
+        )
 
     # Wait for RPC server
     rpc_ready = wait_for_rpc_server()
+    if not rpc_ready and process.poll() is not None:
+        log(f"Blender exited before RPC became ready. See runtime log: {runtime_log_path}", "ERR")
+        tail = tail_log_file(runtime_log_path, max_lines=40)
+        if tail:
+            print(tail)
 
-    return process, rpc_ready
+    return process, rpc_ready, runtime_log_path
 
 
 def kill_blender_process(process: subprocess.Popen):
@@ -398,17 +428,31 @@ def run_e2e_tests(verbose: bool = True) -> Tuple[bool, str]:
     return success, output
 
 
-def save_test_log(output: str, success: bool):
+def save_test_log(output: str, success: bool, blender_log_path: Path | None = None):
     """Save test output to log file."""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     status = "PASSED" if success else "FAILED"
     log_file = E2E_TESTS_DIR / f"e2e_test_{status}_{timestamp}.log"
+    blender_log_tail = tail_log_file(blender_log_path, max_lines=80) if blender_log_path is not None else ""
+    blender_log_section = ""
+    if blender_log_path is not None:
+        blender_log_section = (
+            "\n"
+            "Blender runtime log path:\n"
+            f"{blender_log_path}\n"
+            "\n"
+            "Blender runtime log tail:\n"
+            "--------------------------------------------------------------------------------\n"
+            f"{blender_log_tail}\n"
+            "--------------------------------------------------------------------------------\n"
+        )
 
     log_content = f"""
 ================================================================================
 E2E Test Run - {datetime.now().isoformat()}
 Status: {status}
 ================================================================================
+{blender_log_section}
 
 {output}
 """
@@ -427,6 +471,7 @@ def main():
     args = parser.parse_args()
 
     blender_process = None
+    blender_log_path: Path | None = None
     test_success = False
 
     try:
@@ -461,17 +506,22 @@ def main():
             return 1
 
         # Step 5: Start Blender with RPC server
-        blender_process, rpc_ready = run_blender_with_rpc(blender_path)
+        blender_process, rpc_ready, blender_log_path = run_blender_with_rpc(blender_path)
 
         if not rpc_ready:
             log("RPC server not available, cannot run E2E tests", "ERR")
+            save_test_log(
+                "RPC server not available, cannot run E2E tests.",
+                False,
+                blender_log_path=blender_log_path,
+            )
             return 1
 
         # Step 6: Run E2E tests
         test_success, test_output = run_e2e_tests(verbose=not args.quiet)
 
         # Step 7: Always save log (both success and failure)
-        save_test_log(test_output, test_success)
+        save_test_log(test_output, test_success, blender_log_path=blender_log_path)
 
         return 0 if test_success else 1
 

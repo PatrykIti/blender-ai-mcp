@@ -8,6 +8,7 @@ from server.adapters.mcp.contracts.scene import (
     SceneAssertionPayloadContract,
     SceneAssertProportionContract,
     SceneAssertSymmetryContract,
+    SceneAttachmentSemanticsContract,
     SceneBoundingBoxContract,
     SceneConfigureResponseContract,
     SceneContextResponseContract,
@@ -26,12 +27,29 @@ from server.adapters.mcp.contracts.scene import (
     SceneModeContract,
     SceneOriginInfoContract,
     ScenePartGroupContract,
+    SceneRelationGraphPairContract,
+    SceneRelationGraphPayloadContract,
+    SceneRelationGraphResponseContract,
+    SceneRelationGraphSummaryContract,
     SceneRepairMacroCandidateContract,
+    SceneScopeGraphPayloadContract,
+    SceneScopeGraphResponseContract,
+    SceneScopeObjectRoleContract,
     SceneSelectionContract,
     SceneSnapshotDiffContract,
     SceneSnapshotStateContract,
+    SceneSupportSemanticsContract,
+    SceneSymmetrySemanticsContract,
     SceneTruthFollowupContract,
     SceneTruthFollowupItemContract,
+    SceneViewDiagnosticsPayloadContract,
+    SceneViewDiagnosticsResponseContract,
+    SceneViewDiagnosticsSummaryContract,
+    SceneViewDiagnosticsTargetContract,
+    SceneViewExtentContract,
+    SceneViewPointContract,
+    SceneViewProjectionEvidenceContract,
+    SceneViewQueryContract,
 )
 from server.adapters.mcp.sampling.result_types import (
     AssistantBudgetContract,
@@ -137,6 +155,208 @@ def test_scene_assembled_target_scope_contract_supports_scene_collection_and_par
     assert part_groups.part_groups[0].role == "head"
 
 
+def test_scene_scope_graph_contract_carries_object_roles_and_primary_anchor():
+    payload = SceneScopeGraphPayloadContract(
+        scope=SceneAssembledTargetScopeContract(
+            scope_kind="object_set",
+            primary_target="Squirrel_Body",
+            object_names=["Squirrel_Head", "Squirrel_Body", "Squirrel_Tail"],
+            object_count=3,
+            object_roles=[
+                SceneScopeObjectRoleContract(
+                    object_name="Squirrel_Body",
+                    role="anchor_core",
+                    is_primary=True,
+                    signals=["body_name_hint", "bbox_volume_anchor"],
+                ),
+                SceneScopeObjectRoleContract(
+                    object_name="Squirrel_Head",
+                    role="attached_mass",
+                    signals=["head_name_hint"],
+                ),
+                SceneScopeObjectRoleContract(
+                    object_name="Squirrel_Tail",
+                    role="attached_appendage",
+                    signals=["appendage_name_hint"],
+                ),
+            ],
+        ),
+        message="Scope graph derived from deterministic role heuristics.",
+    )
+    response = SceneScopeGraphResponseContract(payload=payload)
+
+    assert response.payload is not None
+    assert response.payload.scope.primary_target == "Squirrel_Body"
+    assert response.payload.scope.object_roles[0].role == "anchor_core"
+    assert response.payload.scope.object_roles[2].role == "attached_appendage"
+
+
+def test_scene_relation_graph_contract_carries_compact_pair_semantics():
+    response = SceneRelationGraphResponseContract(
+        payload=SceneRelationGraphPayloadContract(
+            scope=SceneAssembledTargetScopeContract(
+                scope_kind="object_set",
+                primary_target="Squirrel_Body",
+                object_names=["Squirrel_Body", "Squirrel_Head", "Floor"],
+                object_count=3,
+            ),
+            summary=SceneRelationGraphSummaryContract(
+                pairing_strategy="guided_spatial_pairs",
+                pair_count=2,
+                evaluated_pairs=2,
+                failing_pairs=1,
+                attachment_pairs=1,
+                support_pairs=1,
+            ),
+            pairs=[
+                SceneRelationGraphPairContract(
+                    pair_id="squirrel_body__squirrel_head",
+                    from_object="Squirrel_Head",
+                    to_object="Squirrel_Body",
+                    pair_source="required_creature_seam",
+                    relation_kinds=["contact", "gap", "alignment", "attachment"],
+                    relation_verdicts=["separated", "misaligned", "misaligned_attachment", "floating_gap"],
+                    gap_relation="separated",
+                    gap_distance=0.1,
+                    overlap_relation="disjoint",
+                    contact_passed=False,
+                    alignment_status="misaligned",
+                    aligned_axes=["Y"],
+                    measurement_basis="bounding_box",
+                    attachment_semantics=SceneAttachmentSemanticsContract(
+                        relation_kind="segment_attachment",
+                        seam_kind="head_body",
+                        part_object="Squirrel_Head",
+                        anchor_object="Squirrel_Body",
+                        required_seam=True,
+                        preferred_macro="macro_align_part_with_contact",
+                        attachment_verdict="floating_gap",
+                    ),
+                ),
+                SceneRelationGraphPairContract(
+                    pair_id="squirrel_body__floor",
+                    from_object="Squirrel_Body",
+                    to_object="Floor",
+                    pair_source="support_candidate",
+                    relation_kinds=["contact", "gap", "support"],
+                    relation_verdicts=["contact", "supported"],
+                    gap_relation="contact",
+                    gap_distance=0.0,
+                    contact_passed=True,
+                    measurement_basis="bounding_box",
+                    support_semantics=SceneSupportSemanticsContract(
+                        supported_object="Squirrel_Body",
+                        support_object="Floor",
+                        axis="Z",
+                        verdict="supported",
+                    ),
+                    symmetry_semantics=SceneSymmetrySemanticsContract(
+                        left_object="Leg_L",
+                        right_object="Leg_R",
+                        axis="X",
+                        mirror_coordinate=0.0,
+                        verdict="symmetric",
+                    ),
+                ),
+            ],
+        )
+    )
+
+    assert response.payload is not None
+    assert response.payload.summary.pairing_strategy == "guided_spatial_pairs"
+    assert "misaligned_attachment" in response.payload.pairs[0].relation_verdicts
+    assert response.payload.pairs[0].attachment_semantics is not None
+    assert response.payload.pairs[1].support_semantics is not None
+
+
+def test_scene_view_diagnostics_contract_carries_projection_and_visibility_evidence():
+    response = SceneViewDiagnosticsResponseContract(
+        payload=SceneViewDiagnosticsPayloadContract(
+            view_query=SceneViewQueryContract(
+                requested_view_source="user_perspective",
+                resolved_view_source="user_perspective",
+                analysis_backend="mirrored_user_perspective",
+                available=True,
+                state_restored=True,
+            ),
+            scope=SceneAssembledTargetScopeContract(
+                scope_kind="object_set",
+                primary_target="Squirrel_Head",
+                object_names=["Squirrel_Head", "Squirrel_Body"],
+                object_count=2,
+            ),
+            summary=SceneViewDiagnosticsSummaryContract(
+                target_count=2,
+                visible_count=1,
+                partially_visible_count=1,
+                centered_target_count=1,
+                framing_issue_count=1,
+            ),
+            targets=[
+                SceneViewDiagnosticsTargetContract(
+                    object_name="Squirrel_Head",
+                    visibility_verdict="visible",
+                    projection_status="projected",
+                    projection=SceneViewProjectionEvidenceContract(
+                        projected_center=SceneViewPointContract(x=0.5, y=0.5),
+                        projected_extent=SceneViewExtentContract(
+                            min_x=0.4,
+                            min_y=0.3,
+                            max_x=0.6,
+                            max_y=0.7,
+                            width=0.2,
+                            height=0.4,
+                        ),
+                        center_offset=SceneViewPointContract(x=0.0, y=0.0),
+                        frame_coverage_ratio=1.0,
+                        frame_occupancy_ratio=0.08,
+                        centered=True,
+                        sample_count=7,
+                        in_front_sample_count=7,
+                        in_frame_sample_count=7,
+                        visible_sample_count=7,
+                        occluded_sample_count=0,
+                        occlusion_test_available=True,
+                    ),
+                ),
+                SceneViewDiagnosticsTargetContract(
+                    object_name="Squirrel_Body",
+                    visibility_verdict="partially_visible",
+                    projection_status="projected",
+                    projection=SceneViewProjectionEvidenceContract(
+                        projected_center=SceneViewPointContract(x=1.1, y=0.52),
+                        projected_extent=SceneViewExtentContract(
+                            min_x=0.8,
+                            min_y=0.25,
+                            max_x=1.3,
+                            max_y=0.8,
+                            width=0.5,
+                            height=0.55,
+                        ),
+                        center_offset=SceneViewPointContract(x=0.6, y=0.02),
+                        frame_coverage_ratio=0.4,
+                        frame_occupancy_ratio=0.11,
+                        centered=False,
+                        sample_count=7,
+                        in_front_sample_count=7,
+                        in_frame_sample_count=3,
+                        visible_sample_count=2,
+                        occluded_sample_count=1,
+                        occlusion_test_available=True,
+                    ),
+                ),
+            ],
+            message="View-space diagnostics only; use truth tools for contact/attachment verification.",
+        )
+    )
+
+    assert response.payload is not None
+    assert response.payload.view_query.analysis_backend == "mirrored_user_perspective"
+    assert response.payload.summary.partially_visible_count == 1
+    assert response.payload.targets[0].projection.projected_center.x == 0.5
+    assert response.payload.targets[1].visibility_verdict == "partially_visible"
+
+
 def test_scene_correction_truth_bundle_contract_carries_pair_checks_and_summary():
     """Correction truth bundle should keep pairwise measure/assert results machine-readable."""
 
@@ -149,7 +369,7 @@ def test_scene_correction_truth_bundle_contract_carries_pair_checks_and_summary(
             collection_name="Squirrel",
         ),
         summary=SceneCorrectionTruthSummaryContract(
-            pairing_strategy="primary_to_others",
+            pairing_strategy="required_creature_seams",
             pair_count=1,
             evaluated_pairs=1,
             contact_failures=1,
@@ -160,6 +380,9 @@ def test_scene_correction_truth_bundle_contract_carries_pair_checks_and_summary(
             SceneCorrectionTruthPairContract(
                 from_object="Squirrel_Head",
                 to_object="Squirrel_Body",
+                relation_pair_id="squirrel_head__squirrel_body",
+                relation_kinds=["contact", "gap", "alignment", "attachment"],
+                relation_verdicts=["separated", "misaligned", "floating_gap"],
                 gap={"relation": "separated", "gap": 0.1},
                 alignment={"is_aligned": False, "axes": ["X", "Y", "Z"]},
                 overlap={"overlaps": False, "relation": "disjoint"},
@@ -171,13 +394,25 @@ def test_scene_correction_truth_bundle_contract_carries_pair_checks_and_summary(
                     expected={"max_gap": 0.0001},
                     actual={"gap": 0.1, "relation": "separated"},
                 ),
+                attachment_semantics=SceneAttachmentSemanticsContract(
+                    relation_kind="segment_attachment",
+                    seam_kind="head_body",
+                    part_object="Squirrel_Head",
+                    anchor_object="Squirrel_Body",
+                    required_seam=True,
+                    preferred_macro="macro_align_part_with_contact",
+                    attachment_verdict="floating_gap",
+                ),
             )
         ],
     )
 
-    assert bundle.summary.pairing_strategy == "primary_to_others"
+    assert bundle.summary.pairing_strategy == "required_creature_seams"
     assert bundle.checks[0].from_object == "Squirrel_Head"
     assert bundle.checks[0].contact_assertion.passed is False
+    assert bundle.checks[0].attachment_semantics is not None
+    assert bundle.checks[0].attachment_semantics.seam_kind == "head_body"
+    assert bundle.checks[0].relation_kinds == ["contact", "gap", "alignment", "attachment"]
 
 
 def test_scene_truth_followup_contract_carries_loop_ready_items():
@@ -195,13 +430,27 @@ def test_scene_truth_followup_contract_carries_loop_ready_items():
         focus_pairs=["Squirrel_Head -> Squirrel_Tail"],
         items=[
             SceneTruthFollowupItemContract(
+                kind="attachment",
+                summary="Squirrel_Body -> Squirrel_Tail is still wrong for this organic attachment relation.",
+                priority="high",
+                from_object="Squirrel_Body",
+                to_object="Squirrel_Tail",
+                tool_name="scene_assert_contact",
+                relation_pair_id="squirrel_body__squirrel_tail",
+                relation_kinds=["contact", "gap", "attachment"],
+                relation_verdicts=["floating_gap"],
+            ),
+            SceneTruthFollowupItemContract(
                 kind="gap",
                 summary="Squirrel_Head -> Squirrel_Tail still has measurable separation.",
                 priority="normal",
                 from_object="Squirrel_Head",
                 to_object="Squirrel_Tail",
                 tool_name="scene_measure_gap",
-            )
+                relation_pair_id="squirrel_head__squirrel_tail",
+                relation_kinds=["contact", "gap"],
+                relation_verdicts=["separated"],
+            ),
         ],
         macro_candidates=[
             SceneRepairMacroCandidateContract(
@@ -215,7 +464,9 @@ def test_scene_truth_followup_contract_carries_loop_ready_items():
 
     assert followup.continue_recommended is True
     assert followup.focus_pairs == ["Squirrel_Head -> Squirrel_Tail"]
-    assert followup.items[0].tool_name == "scene_measure_gap"
+    assert followup.items[0].kind == "attachment"
+    assert followup.items[1].tool_name == "scene_measure_gap"
+    assert followup.items[0].relation_kinds == ["contact", "gap", "attachment"]
     assert followup.macro_candidates[0].macro_name == "macro_align_part_with_contact"
 
 

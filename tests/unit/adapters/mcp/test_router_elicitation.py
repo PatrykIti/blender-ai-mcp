@@ -6,8 +6,14 @@ import asyncio
 from dataclasses import dataclass, field
 from types import SimpleNamespace
 
+import pytest
 from server.adapters.mcp.areas import router as router_area
-from server.adapters.mcp.session_capabilities import get_session_capability_state
+from server.adapters.mcp.session_capabilities import (
+    SessionCapabilityState,
+    get_session_capability_state,
+    set_session_capability_state,
+)
+from server.adapters.mcp.session_phase import SessionPhase
 
 
 @dataclass
@@ -40,6 +46,9 @@ class FakeContext:
         return None
 
     async def info(self, message: str, logger_name=None, extra=None):
+        return None
+
+    async def warning(self, message: str, logger_name=None, extra=None):
         return None
 
 
@@ -289,10 +298,11 @@ def test_router_set_goal_workflow_confirmation_stays_model_facing_on_llm_guided(
     assert ctx.calls == []
 
 
-def test_router_set_goal_no_match_with_guided_manual_continuation_moves_session_to_build(monkeypatch):
-    """A guided-manual no_match handoff should update the session into build phase."""
+def test_router_set_goal_no_match_with_guided_manual_continuation_bootstraps_empty_scene(monkeypatch):
+    """A guided-manual no_match handoff should bootstrap primary workset creation for an empty scene."""
 
     monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
+    monkeypatch.setattr(router_area, "_scene_has_meaningful_guided_objects", lambda: False)
 
     class Handler:
         def set_goal(self, goal, resolved_params=None):
@@ -322,16 +332,218 @@ def test_router_set_goal_no_match_with_guided_manual_continuation_moves_session_
     assert result.continuation_mode == "guided_manual_build"
     assert result.guided_handoff is not None
     assert result.guided_handoff.kind == "guided_manual_build"
+    assert result.guided_handoff.recipe_id == "low_poly_creature_blockout"
     assert result.guided_handoff.target_phase == "build"
     assert result.guided_handoff.workflow_import_recommended is False
-    assert "macro_finish_form" in result.guided_handoff.direct_tools
+    assert "modeling_create_primitive" in result.guided_handoff.direct_tools
+    assert "mesh_extrude_region" in result.guided_handoff.direct_tools
+    assert "macro_finish_form" not in result.guided_handoff.direct_tools
     assert result.guided_handoff.discovery_tools == ["search_tools", "call_tool"]
     assert result.guided_reference_readiness is not None
     assert result.guided_reference_readiness.blocking_reason == "reference_images_required"
     assert result.guided_reference_readiness.next_action == "attach_reference_images"
+    assert result.guided_flow_state is not None
+    assert result.guided_flow_state.domain_profile == "creature"
+    assert result.guided_flow_state.current_step == "bootstrap_primary_workset"
+    assert result.guided_flow_state.next_actions == ["create_primary_workset"]
     assert session.phase.value == "build"
     assert session.guided_handoff is not None
     assert session.guided_handoff["kind"] == "guided_manual_build"
+    assert session.guided_flow_state is not None
+    assert session.guided_flow_state["domain_profile"] == "creature"
+    assert session.guided_flow_state["current_step"] == "bootstrap_primary_workset"
+
+
+def test_scene_has_meaningful_guided_objects_treats_default_startup_cube_as_empty(monkeypatch):
+    class SceneHandler:
+        def list_objects(self):
+            return [
+                {"name": "Cube", "type": "MESH"},
+                {"name": "Camera", "type": "CAMERA"},
+                {"name": "Light", "type": "LIGHT"},
+            ]
+
+    monkeypatch.setattr(router_area, "get_scene_handler", lambda: SceneHandler())
+
+    assert router_area._scene_has_meaningful_guided_objects() is False
+
+
+def test_scene_has_meaningful_guided_objects_treats_startup_subset_cube_and_camera_as_empty(monkeypatch):
+    class SceneHandler:
+        def list_objects(self):
+            return [
+                {"name": "Cube", "type": "MESH"},
+                {"name": "Camera", "type": "CAMERA"},
+            ]
+
+    monkeypatch.setattr(router_area, "get_scene_handler", lambda: SceneHandler())
+
+    assert router_area._scene_has_meaningful_guided_objects() is False
+
+
+def test_scene_has_meaningful_guided_objects_treats_helper_only_scene_as_empty(monkeypatch):
+    class SceneHandler:
+        def list_objects(self):
+            return [
+                {"name": "Camera", "type": "CAMERA"},
+                {"name": "Light", "type": "LIGHT"},
+            ]
+
+    monkeypatch.setattr(router_area, "get_scene_handler", lambda: SceneHandler())
+
+    assert router_area._scene_has_meaningful_guided_objects() is False
+
+
+def test_scene_has_meaningful_guided_objects_treats_lone_default_named_mesh_as_nonempty(monkeypatch):
+    class SceneHandler:
+        def list_objects(self):
+            return [{"name": "Cube", "type": "MESH"}]
+
+    monkeypatch.setattr(router_area, "get_scene_handler", lambda: SceneHandler())
+
+    assert router_area._scene_has_meaningful_guided_objects() is True
+
+
+def test_scene_has_meaningful_guided_objects_treats_multi_primitive_blockout_as_nonempty(monkeypatch):
+    class SceneHandler:
+        def list_objects(self):
+            return [
+                {"name": "Cube", "type": "MESH"},
+                {"name": "Sphere", "type": "MESH"},
+                {"name": "Camera", "type": "CAMERA"},
+                {"name": "Light", "type": "LIGHT"},
+            ]
+
+    monkeypatch.setattr(router_area, "get_scene_handler", lambda: SceneHandler())
+
+    assert router_area._scene_has_meaningful_guided_objects() is True
+
+
+def test_scene_has_meaningful_guided_objects_treats_single_default_named_mesh_with_helpers_as_nonempty(monkeypatch):
+    class SceneHandler:
+        def list_objects(self):
+            return [
+                {"name": "Sphere", "type": "MESH"},
+                {"name": "Camera", "type": "CAMERA"},
+                {"name": "Light", "type": "LIGHT"},
+            ]
+
+    monkeypatch.setattr(router_area, "get_scene_handler", lambda: SceneHandler())
+
+    assert router_area._scene_has_meaningful_guided_objects() is True
+
+
+def test_router_set_goal_no_match_bootstraps_primary_workset_for_default_startup_scene(monkeypatch):
+    """The stock startup scene should enter the empty-scene primary workset path."""
+
+    monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
+
+    class Handler:
+        def set_goal(self, goal, resolved_params=None):
+            return {
+                "status": "no_match",
+                "continuation_mode": "guided_manual_build",
+                "workflow": None,
+                "resolved": {},
+                "unresolved": [],
+                "resolution_sources": {},
+                "phase_hint": "build",
+                "message": "Continue on the guided build surface.",
+            }
+
+        def clear_goal(self):
+            return "cleared"
+
+    class SceneHandler:
+        def list_objects(self):
+            return [
+                {"name": "Cube", "type": "MESH"},
+                {"name": "Camera", "type": "CAMERA"},
+                {"name": "Light", "type": "LIGHT"},
+            ]
+
+    monkeypatch.setattr(router_area, "get_router_handler", lambda: Handler())
+    monkeypatch.setattr(router_area, "get_scene_handler", lambda: SceneHandler())
+
+    ctx = FakeContext(response=object())
+    result = asyncio.run(router_area.router_set_goal(ctx, goal="low poly squirrel 3D model"))
+
+    assert result.guided_flow_state is not None
+    assert result.guided_flow_state.current_step == "bootstrap_primary_workset"
+
+
+def test_router_set_goal_no_match_keeps_spatial_bootstrap_for_lone_default_named_blockout(monkeypatch):
+    """A real lone mesh named like a default primitive should still count as non-empty geometry."""
+
+    monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
+
+    class Handler:
+        def set_goal(self, goal, resolved_params=None):
+            return {
+                "status": "no_match",
+                "continuation_mode": "guided_manual_build",
+                "workflow": None,
+                "resolved": {},
+                "unresolved": [],
+                "resolution_sources": {},
+                "phase_hint": "build",
+                "message": "Continue on the guided build surface.",
+            }
+
+        def clear_goal(self):
+            return "cleared"
+
+    class SceneHandler:
+        def list_objects(self):
+            return [{"name": "Cube", "type": "MESH"}]
+
+    monkeypatch.setattr(router_area, "get_router_handler", lambda: Handler())
+    monkeypatch.setattr(router_area, "get_scene_handler", lambda: SceneHandler())
+
+    ctx = FakeContext(response=object())
+    result = asyncio.run(router_area.router_set_goal(ctx, goal="low poly squirrel 3D model"))
+
+    assert result.guided_flow_state is not None
+    assert result.guided_flow_state.current_step == "establish_spatial_context"
+
+
+def test_router_set_goal_no_match_keeps_spatial_bootstrap_for_single_default_named_mesh_with_helpers(monkeypatch):
+    """A real lone mesh named like a default primitive should still count as existing geometry."""
+
+    monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
+
+    class Handler:
+        def set_goal(self, goal, resolved_params=None):
+            return {
+                "status": "no_match",
+                "continuation_mode": "guided_manual_build",
+                "workflow": None,
+                "resolved": {},
+                "unresolved": [],
+                "resolution_sources": {},
+                "phase_hint": "build",
+                "message": "Continue on the guided build surface.",
+            }
+
+        def clear_goal(self):
+            return "cleared"
+
+    class SceneHandler:
+        def list_objects(self):
+            return [
+                {"name": "Sphere", "type": "MESH"},
+                {"name": "Camera", "type": "CAMERA"},
+                {"name": "Light", "type": "LIGHT"},
+            ]
+
+    monkeypatch.setattr(router_area, "get_router_handler", lambda: Handler())
+    monkeypatch.setattr(router_area, "get_scene_handler", lambda: SceneHandler())
+
+    ctx = FakeContext(response=object())
+    result = asyncio.run(router_area.router_set_goal(ctx, goal="low poly squirrel 3D model"))
+
+    assert result.guided_flow_state is not None
+    assert result.guided_flow_state.current_step == "establish_spatial_context"
 
 
 def test_router_get_status_exposes_session_id_and_transport(monkeypatch):
@@ -350,7 +562,7 @@ def test_router_get_status_exposes_session_id_and_transport(monkeypatch):
     monkeypatch.setattr(
         router_area,
         "build_visibility_diagnostics",
-        lambda surface_profile, phase: SimpleNamespace(
+        lambda surface_profile, phase, guided_handoff=None, guided_flow_state=None: SimpleNamespace(
             rules=(),
             visible_capability_ids=("router",),
             visible_entry_capability_ids=("router",),
@@ -365,3 +577,356 @@ def test_router_get_status_exposes_session_id_and_transport(monkeypatch):
 
     assert result.session_id == "sess_test"
     assert result.transport == "stdio"
+
+
+def test_router_get_status_returns_guided_flow_state(monkeypatch):
+    """router_get_status should mirror the active guided flow envelope from session state."""
+
+    monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
+    monkeypatch.setattr(router_area, "get_router_status", lambda: {"enabled": True})
+    monkeypatch.setattr(router_area, "_build_background_job_diagnostics", lambda: (0, {}, []))
+    monkeypatch.setattr(router_area, "_build_timeout_policy_diagnostics", lambda _ctx: None)
+    monkeypatch.setattr(router_area, "_build_task_runtime_diagnostics", lambda _ctx: None)
+    monkeypatch.setattr(router_area, "_build_telemetry_diagnostics", lambda: None)
+    monkeypatch.setattr(router_area, "_get_list_page_size", lambda _ctx: 50)
+    monkeypatch.setattr(router_area, "run_repair_suggestion_assistant", lambda *args, **kwargs: None)
+    monkeypatch.setattr(router_area, "to_repair_assistant_contract", lambda *args, **kwargs: None)
+    monkeypatch.setattr(router_area, "_should_attach_repair_suggestion", lambda _payload: False)
+    monkeypatch.setattr(
+        router_area,
+        "build_visibility_diagnostics",
+        lambda surface_profile, phase, guided_handoff=None, guided_flow_state=None: SimpleNamespace(
+            rules=(),
+            visible_capability_ids=("router",),
+            visible_entry_capability_ids=("router",),
+            hidden_capability_ids=(),
+            hidden_category_counts={},
+        ),
+    )
+
+    ctx = FakeContext(response=object())
+    ctx.state["guided_flow_state"] = {
+        "flow_id": "guided_building_flow",
+        "domain_profile": "building",
+        "current_step": "establish_spatial_context",
+        "completed_steps": [],
+        "required_checks": [],
+        "required_prompts": ["guided_session_start"],
+        "preferred_prompts": ["workflow_router_first"],
+        "next_actions": ["run_required_checks"],
+        "blocked_families": ["build"],
+        "step_status": "blocked",
+    }
+
+    result = asyncio.run(router_area.router_get_status(ctx))
+
+    assert result.guided_flow_state is not None
+    assert result.guided_flow_state.domain_profile == "building"
+    assert result.guided_flow_state.current_step == "establish_spatial_context"
+
+
+def test_guided_register_part_updates_session_role_summary(monkeypatch):
+    """guided_register_part should update the internal role registry and return refreshed guided status."""
+
+    monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
+    monkeypatch.setattr("server.adapters.mcp.session_capabilities._scene_object_names", lambda: {"Squirrel_Body"})
+    monkeypatch.setattr(router_area, "get_router_status", lambda: {"enabled": True})
+    monkeypatch.setattr(router_area, "_build_background_job_diagnostics", lambda: (0, {}, []))
+    monkeypatch.setattr(router_area, "_build_timeout_policy_diagnostics", lambda _ctx: None)
+    monkeypatch.setattr(router_area, "_build_task_runtime_diagnostics", lambda _ctx: None)
+    monkeypatch.setattr(router_area, "_build_telemetry_diagnostics", lambda: None)
+    monkeypatch.setattr(router_area, "_get_list_page_size", lambda _ctx: 50)
+    monkeypatch.setattr(router_area, "run_repair_suggestion_assistant", lambda *args, **kwargs: None)
+    monkeypatch.setattr(router_area, "to_repair_assistant_contract", lambda *args, **kwargs: None)
+    monkeypatch.setattr(router_area, "_should_attach_repair_suggestion", lambda _payload: False)
+    monkeypatch.setattr(
+        router_area,
+        "build_visibility_diagnostics",
+        lambda surface_profile, phase, guided_handoff=None, guided_flow_state=None: SimpleNamespace(
+            rules=(),
+            visible_capability_ids=("router",),
+            visible_entry_capability_ids=("router",),
+            hidden_capability_ids=(),
+            hidden_category_counts={},
+        ),
+    )
+
+    ctx = FakeContext(response=object())
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            surface_profile="llm-guided",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": [],
+                "missing_roles": ["body_core", "head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    result = asyncio.run(router_area.guided_register_part(ctx, object_name="Squirrel_Body", role="body_core"))
+    session = get_session_capability_state(ctx)
+
+    assert result.guided_flow_state is not None
+    assert result.guided_flow_state.completed_roles == ["body_core"]
+    assert result.guided_flow_state.missing_roles == ["head_mass", "tail_mass"]
+    assert result.message == "Registered guided role 'body_core' for 'Squirrel_Body'."
+    assert session.guided_part_registry is not None
+    assert session.guided_part_registry[0]["object_name"] == "Squirrel_Body"
+    assert result.guided_naming is not None
+    assert result.guided_naming.status == "allowed"
+
+
+def test_guided_register_part_returns_naming_warning_for_weak_abbreviation(monkeypatch):
+    """guided_register_part should keep registration but return structured naming guidance for weak abbreviations."""
+
+    monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
+    monkeypatch.setattr("server.adapters.mcp.session_capabilities._scene_object_names", lambda: {"ForeL"})
+    monkeypatch.setattr(router_area, "get_router_status", lambda: {"enabled": True})
+    monkeypatch.setattr(router_area, "_build_background_job_diagnostics", lambda: (0, {}, []))
+    monkeypatch.setattr(router_area, "_build_timeout_policy_diagnostics", lambda _ctx: None)
+    monkeypatch.setattr(router_area, "_build_task_runtime_diagnostics", lambda _ctx: None)
+    monkeypatch.setattr(router_area, "_build_telemetry_diagnostics", lambda: None)
+    monkeypatch.setattr(router_area, "_get_list_page_size", lambda _ctx: 50)
+    monkeypatch.setattr(router_area, "run_repair_suggestion_assistant", lambda *args, **kwargs: None)
+    monkeypatch.setattr(router_area, "to_repair_assistant_contract", lambda *args, **kwargs: None)
+    monkeypatch.setattr(router_area, "_should_attach_repair_suggestion", lambda _payload: False)
+    monkeypatch.setattr(
+        router_area,
+        "build_visibility_diagnostics",
+        lambda surface_profile, phase, guided_handoff=None, guided_flow_state=None: SimpleNamespace(
+            rules=(),
+            visible_capability_ids=("router",),
+            visible_entry_capability_ids=("router",),
+            hidden_capability_ids=(),
+            hidden_category_counts={},
+        ),
+    )
+
+    ctx = FakeContext(response=object())
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            surface_profile="llm-guided",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "secondary_parts", "attachment_alignment", "reference_context"],
+                "allowed_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass"],
+                "missing_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    result = asyncio.run(router_area.guided_register_part(ctx, object_name="ForeL", role="foreleg_pair"))
+    session = get_session_capability_state(ctx)
+
+    assert result.guided_naming is not None
+    assert result.guided_naming.status == "warning"
+    assert "ForeLeg_L" in result.message
+    assert session.guided_part_registry is not None
+    assert any(item["object_name"] == "ForeL" for item in session.guided_part_registry)
+
+
+def test_guided_register_part_blocks_placeholder_name_without_mutating_registry(monkeypatch):
+    """guided_register_part should not mutate session state when naming policy blocks a placeholder name."""
+
+    monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
+    monkeypatch.setattr(router_area, "get_router_status", lambda: {"enabled": True})
+    monkeypatch.setattr(router_area, "_build_background_job_diagnostics", lambda: (0, {}, []))
+    monkeypatch.setattr(router_area, "_build_timeout_policy_diagnostics", lambda _ctx: None)
+    monkeypatch.setattr(router_area, "_build_task_runtime_diagnostics", lambda _ctx: None)
+    monkeypatch.setattr(router_area, "_build_telemetry_diagnostics", lambda: None)
+    monkeypatch.setattr(router_area, "_get_list_page_size", lambda _ctx: 50)
+    monkeypatch.setattr(router_area, "run_repair_suggestion_assistant", lambda *args, **kwargs: None)
+    monkeypatch.setattr(router_area, "to_repair_assistant_contract", lambda *args, **kwargs: None)
+    monkeypatch.setattr(router_area, "_should_attach_repair_suggestion", lambda _payload: False)
+    monkeypatch.setattr(
+        router_area,
+        "build_visibility_diagnostics",
+        lambda surface_profile, phase, guided_handoff=None, guided_flow_state=None: SimpleNamespace(
+            rules=(),
+            visible_capability_ids=("router",),
+            visible_entry_capability_ids=("router",),
+            hidden_capability_ids=(),
+            hidden_category_counts={},
+        ),
+    )
+
+    ctx = FakeContext(response=object())
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            surface_profile="llm-guided",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": [],
+                "missing_roles": ["body_core", "head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    result = asyncio.run(router_area.guided_register_part(ctx, object_name="Sphere", role="body_core"))
+    session = get_session_capability_state(ctx)
+
+    assert result.guided_naming is not None
+    assert result.guided_naming.status == "blocked"
+    assert "Body" in result.message
+    assert session.guided_part_registry is None
+
+
+def test_guided_register_part_rejects_invalid_role_for_domain(monkeypatch):
+    """guided_register_part should fail clearly when the requested role does not belong to the current overlay."""
+
+    monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
+
+    ctx = FakeContext(response=object())
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            surface_profile="llm-guided",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": [],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": [],
+                "missing_roles": ["body_core", "head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    with pytest.raises(ValueError, match="Unknown guided part role 'roof_mass'"):
+        asyncio.run(router_area.guided_register_part(ctx, object_name="Squirrel_Roof", role="roof_mass"))
+
+
+def test_guided_register_part_rejects_missing_scene_object(monkeypatch):
+    """guided_register_part should fail clearly when the requested object does not exist in Blender."""
+
+    monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
+    monkeypatch.setattr("server.adapters.mcp.session_capabilities._scene_object_names", lambda: {"Squirrel_Body"})
+
+    ctx = FakeContext(response=object())
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            surface_profile="llm-guided",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": [],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": [],
+                "missing_roles": ["body_core", "head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    with pytest.raises(ValueError, match="requires an existing Blender object named 'MissingHead'"):
+        asyncio.run(router_area.guided_register_part(ctx, object_name="MissingHead", role="head_mass"))
+
+
+def test_guided_register_part_fails_when_scene_validation_is_unavailable(monkeypatch):
+    """guided_register_part should fail clearly when Blender scene validation is unavailable."""
+
+    monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
+    monkeypatch.setattr(
+        "server.adapters.mcp.session_capabilities._scene_object_names",
+        lambda: (_ for _ in ()).throw(
+            RuntimeError(
+                "Blender Error: Could not connect to Blender Addon. Is Blender running with the addon installed?"
+            )
+        ),
+    )
+
+    ctx = FakeContext(response=object())
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            surface_profile="llm-guided",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": [],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": [],
+                "missing_roles": ["body_core", "head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    with pytest.raises(ValueError, match="could not validate object 'Squirrel_Body' against the Blender scene"):
+        asyncio.run(router_area.guided_register_part(ctx, object_name="Squirrel_Body", role="body_core"))

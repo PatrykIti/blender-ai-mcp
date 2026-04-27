@@ -11,6 +11,20 @@ from server.adapters.mcp.vision.prompting import (
 )
 
 
+def _assert_strict_required_matches_properties(schema: dict) -> None:
+    if schema.get("type") != "object":
+        return
+    properties = schema.get("properties")
+    if isinstance(properties, dict):
+        assert set(schema.get("required") or []) == set(properties)
+        for nested in properties.values():
+            if isinstance(nested, dict):
+                _assert_strict_required_matches_properties(nested)
+                items = nested.get("items")
+                if isinstance(items, dict):
+                    _assert_strict_required_matches_properties(items)
+
+
 def _request() -> VisionRequest:
     return VisionRequest(
         goal="rounded housing",
@@ -87,7 +101,7 @@ def test_local_prompt_adds_reference_guided_checkpoint_guidance_when_requested()
     assert "correction_focus should rank the most important fixes first" in local_prompt
 
 
-def test_google_ai_studio_compare_prompt_uses_narrow_contract():
+def test_google_family_compare_profile_uses_narrow_contract_even_on_openrouter():
     request = VisionRequest(
         goal="low poly squirrel",
         target_object="Squirrel",
@@ -100,11 +114,20 @@ def test_google_ai_studio_compare_prompt_uses_narrow_contract():
 
     system_prompt = build_vision_system_prompt(
         backend_kind="openai_compatible_external",
-        provider_name="google_ai_studio",
+        vision_contract_profile="google_family_compare",
+        provider_name="openrouter",
         request=request,
     )
-    payload_text = build_vision_payload_text(request, provider_name="google_ai_studio")
-    schema = build_vision_response_json_schema(provider_name="google_ai_studio", request=request)
+    payload_text = build_vision_payload_text(
+        request,
+        vision_contract_profile="google_family_compare",
+        provider_name="openrouter",
+    )
+    schema = build_vision_response_json_schema(
+        vision_contract_profile="google_family_compare",
+        provider_name="openrouter",
+        request=request,
+    )
 
     assert "Return exactly one JSON object with only these keys:" in system_prompt
     assert (
@@ -122,3 +145,35 @@ def test_google_ai_studio_compare_prompt_uses_narrow_contract():
         "correction_focus",
         "next_corrections",
     }
+    _assert_strict_required_matches_properties(schema)
+
+
+def test_google_family_compare_profile_keeps_full_contract_for_non_checkpoint_requests():
+    request = VisionRequest(
+        goal="rounded housing",
+        target_object="Housing",
+        images=(VisionImageInput(path="/tmp/after.png", role="after", label="after_1"),),
+        prompt_hint="Return JSON only.",
+    )
+
+    system_prompt = build_vision_system_prompt(
+        backend_kind="openai_compatible_external",
+        vision_contract_profile="google_family_compare",
+        provider_name="openrouter",
+        request=request,
+    )
+    payload_text = build_vision_payload_text(
+        request,
+        vision_contract_profile="google_family_compare",
+        provider_name="openrouter",
+    )
+    schema = build_vision_response_json_schema(
+        vision_contract_profile="google_family_compare",
+        provider_name="openrouter",
+        request=request,
+    )
+
+    assert "visible_changes" in system_prompt
+    assert '"goal": "rounded housing"' in payload_text
+    assert "visible_changes" in schema["properties"]
+    _assert_strict_required_matches_properties(schema)

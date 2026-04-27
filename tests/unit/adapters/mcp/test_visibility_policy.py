@@ -11,19 +11,26 @@ from server.adapters.mcp.session_phase import SessionPhase
 from server.adapters.mcp.surfaces import get_surface_profile
 from server.adapters.mcp.transforms import materialize_transforms
 from server.adapters.mcp.transforms.visibility_policy import (
+    CREATURE_LOW_POLY_BLOCKOUT_DIRECT_TOOLS,
+    CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS,
     GUIDED_BUILD_ESCAPE_HATCH_TOOLS,
     GUIDED_DISCOVERY_TOOLS,
     GUIDED_ENTRY_TOOLS,
     GUIDED_INSPECT_ESCAPE_HATCH_TOOLS,
-    GUIDED_MANUAL_BUILD_HANDOFF_TOOLS,
-    GUIDED_MANUAL_BUILD_SUPPORTING_TOOLS,
+    GUIDED_SPATIAL_CONTEXT_DIRECT_TOOLS,
+    GUIDED_SPATIAL_GRAPH_TOOLS,
+    GUIDED_SPATIAL_SUPPORT_TOOLS,
     GUIDED_UTILITY_HANDOFF_TOOLS,
     GUIDED_UTILITY_SUPPORTING_TOOLS,
     GUIDED_UTILITY_TOOLS,
+    GUIDED_VIEW_DIAGNOSTIC_TOOLS,
     build_guided_handoff_payload,
     build_visibility_rules,
+    get_guided_overlay_family_order,
+    materialize_visible_tool_names,
+    resolve_guided_tool_family,
 )
-from server.adapters.mcp.visibility.tags import ENTRY_GUIDED, get_capability_tags, phase_tag
+from server.adapters.mcp.visibility.tags import ENTRY_GUIDED, get_capability_phase_hints, get_capability_tags, phase_tag
 
 
 @dataclass
@@ -57,15 +64,18 @@ class FakeRegistrarTarget:
         return register
 
 
-def test_capability_manifest_carries_canonical_visibility_tags():
-    """Capability manifest should be the canonical visibility registry."""
+def test_capability_manifest_carries_coarse_tags_and_metadata_only_phase_hints():
+    """Capability manifest should keep coarse tags while phase context moves to metadata-only hints."""
 
     manifest = {entry.capability_id: entry for entry in get_capability_manifest()}
 
     assert ENTRY_GUIDED in manifest["router"].tags
     assert ENTRY_GUIDED in manifest["workflow_catalog"].tags
-    assert phase_tag(SessionPhase.BUILD) in manifest["modeling"].tags
-    assert phase_tag(SessionPhase.INSPECT_VALIDATE) in manifest["mesh"].tags
+    assert not any(tag.startswith("phase:") for tag in manifest["modeling"].tags)
+    assert not any(tag.startswith("phase:") for tag in manifest["mesh"].tags)
+    assert phase_tag(SessionPhase.BUILD) in manifest["modeling"].phase_hints
+    assert phase_tag(SessionPhase.INSPECT_VALIDATE) in manifest["mesh"].phase_hints
+    assert manifest["scene"].phase_hints == get_capability_phase_hints("scene")
 
 
 def test_registrars_apply_manifest_tags_to_registered_tools():
@@ -95,21 +105,123 @@ def test_visibility_rules_are_profile_and_phase_deterministic():
     assert bootstrap_rules[0]["match_all"] is True
     assert bootstrap_rules[1]["names"] == set(GUIDED_ENTRY_TOOLS)
     assert bootstrap_rules[2]["names"] == set(GUIDED_DISCOVERY_TOOLS)
-    assert bootstrap_rules[3]["names"] == set(GUIDED_UTILITY_TOOLS)
-    assert bootstrap_rules[4]["names"] == {"list_prompts", "get_prompt"}
-    assert bootstrap_rules[5]["components"] == {"prompt"}
+    assert bootstrap_rules[3]["names"] == set(GUIDED_SPATIAL_SUPPORT_TOOLS)
+    assert bootstrap_rules[4]["names"] == set(GUIDED_UTILITY_TOOLS)
+    assert bootstrap_rules[5]["names"] == {"list_prompts", "get_prompt"}
+    assert bootstrap_rules[6]["components"] == {"prompt"}
+    assert set(GUIDED_SPATIAL_GRAPH_TOOLS).issubset(bootstrap_rules[3]["names"])
+    assert set(GUIDED_VIEW_DIAGNOSTIC_TOOLS).issubset(bootstrap_rules[3]["names"])
     assert build_rules[-1]["names"] == set(GUIDED_BUILD_ESCAPE_HATCH_TOOLS)
+    assert set(GUIDED_VIEW_DIAGNOSTIC_TOOLS).issubset(build_rules[-1]["names"])
+    assert "scene_clean_scene" in build_rules[-1]["names"]
     assert "macro_finish_form" in build_rules[-1]["names"]
     assert "modeling_add_modifier" not in build_rules[-1]["names"]
     assert "modeling_apply_modifier" not in build_rules[-1]["names"]
     assert "modeling_list_modifiers" not in build_rules[-1]["names"]
     assert inspect_rules[-1]["names"] == set(GUIDED_INSPECT_ESCAPE_HATCH_TOOLS)
+    assert set(GUIDED_SPATIAL_GRAPH_TOOLS).issubset(inspect_rules[-1]["names"])
+    assert set(GUIDED_VIEW_DIAGNOSTIC_TOOLS).issubset(inspect_rules[-1]["names"])
+    assert "macro_attach_part_to_surface" in inspect_rules[-1]["names"]
+    assert "macro_align_part_with_contact" in inspect_rules[-1]["names"]
+    assert "macro_cleanup_part_intersections" in inspect_rules[-1]["names"]
 
     code_mode_rules = build_visibility_rules(get_surface_profile("code-mode-pilot"), SessionPhase.BOOTSTRAP)
     assert code_mode_rules[0]["enabled"] is False
     assert code_mode_rules[0]["match_all"] is True
     assert "scene_snapshot_state" in code_mode_rules[1]["names"]
     assert "mesh_extrude_region" not in code_mode_rules[1]["names"]
+
+
+def test_guided_mesh_edit_tools_resolve_to_secondary_parts_family():
+    """Visible mesh edit tools should participate in guided family gating."""
+
+    for tool_name in (
+        "mesh_delete_selected",
+        "mesh_extrude_region",
+        "mesh_fill_holes",
+        "mesh_inset",
+        "mesh_boolean",
+        "mesh_loop_cut",
+        "mesh_bevel",
+        "mesh_subdivide",
+        "mesh_smooth",
+        "mesh_flatten",
+        "mesh_randomize",
+        "mesh_shrink_fatten",
+        "mesh_transform_selected",
+        "mesh_bridge_edge_loops",
+        "mesh_duplicate_selected",
+        "mesh_bisect",
+        "mesh_edge_slide",
+        "mesh_vert_slide",
+        "mesh_triangulate",
+        "mesh_remesh_voxel",
+        "mesh_spin",
+        "mesh_screw",
+        "mesh_add_vertex",
+        "mesh_add_edge_face",
+        "mesh_create_vertex_group",
+        "mesh_assign_to_group",
+        "mesh_remove_from_group",
+        "mesh_edge_crease",
+        "mesh_bevel_weight",
+        "mesh_mark_sharp",
+        "mesh_symmetrize",
+        "mesh_merge_by_distance",
+        "mesh_dissolve",
+        "mesh_tris_to_quads",
+        "mesh_normals_make_consistent",
+        "mesh_decimate",
+        "mesh_knife_project",
+        "mesh_rip",
+        "mesh_split",
+        "mesh_edge_split",
+        "mesh_set_proportional_edit",
+        "mesh_grid_fill",
+        "mesh_poke_faces",
+        "mesh_beautify_fill",
+        "mesh_mirror",
+    ):
+        assert resolve_guided_tool_family(tool_name) == "secondary_parts"
+
+
+def test_guided_family_map_covers_bounded_build_mutators():
+    """Bounded build mutators should not bypass family gating by resolving to None."""
+
+    assert resolve_guided_tool_family("macro_cutout_recess") == "secondary_parts"
+    assert resolve_guided_tool_family("mesh_boolean") == "secondary_parts"
+    assert resolve_guided_tool_family("modeling_add_modifier") == "finish"
+
+
+def test_materialize_visible_tool_names_follows_ordered_runtime_rules():
+    """Visibility diagnostics should derive from the same ordered rule model as the shaped runtime surface."""
+
+    rules = build_visibility_rules("llm-guided", SessionPhase.BOOTSTRAP)
+    visible_names = materialize_visible_tool_names(
+        {
+            "router_set_goal",
+            "router_get_status",
+            "workflow_catalog",
+            "browse_workflows",
+            "reference_images",
+            "scene_scope_graph",
+            "scene_relation_graph",
+            "scene_view_diagnostics",
+            "search_tools",
+            "call_tool",
+            "modeling_create_primitive",
+        },
+        rules,
+    )
+
+    assert "router_set_goal" in visible_names
+    assert "router_get_status" in visible_names
+    assert "browse_workflows" in visible_names
+    assert "scene_scope_graph" in visible_names
+    assert "scene_view_diagnostics" in visible_names
+    assert "search_tools" in visible_names
+    assert "call_tool" in visible_names
+    assert "modeling_create_primitive" not in visible_names
 
 
 def test_guided_handoff_payloads_stay_explicit_and_bounded():
@@ -119,6 +231,7 @@ def test_guided_handoff_payloads_stay_explicit_and_bounded():
         "guided_manual_build",
         surface_profile="llm-guided",
         phase=SessionPhase.BUILD,
+        goal="create a low-poly squirrel matching front and side reference images",
     )
     utility = build_guided_handoff_payload(
         "guided_utility",
@@ -127,18 +240,98 @@ def test_guided_handoff_payloads_stay_explicit_and_bounded():
     )
 
     assert manual is not None
+    assert manual["recipe_id"] == "low_poly_creature_blockout"
     assert manual["target_phase"] == "build"
-    assert manual["direct_tools"] == list(GUIDED_MANUAL_BUILD_HANDOFF_TOOLS)
-    assert manual["supporting_tools"] == list(GUIDED_MANUAL_BUILD_SUPPORTING_TOOLS)
+    assert manual["direct_tools"] == list(CREATURE_LOW_POLY_BLOCKOUT_DIRECT_TOOLS)
+    assert manual["supporting_tools"] == list(CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS)
+    assert set(GUIDED_SPATIAL_GRAPH_TOOLS).issubset(manual["supporting_tools"])
+    assert set(GUIDED_VIEW_DIAGNOSTIC_TOOLS).issubset(manual["supporting_tools"])
     assert manual["discovery_tools"] == list(GUIDED_DISCOVERY_TOOLS)
     assert manual["workflow_import_recommended"] is False
 
     assert utility is not None
+    assert utility["recipe_id"] is None
     assert utility["target_phase"] == "planning"
     assert utility["direct_tools"] == list(GUIDED_UTILITY_HANDOFF_TOOLS)
     assert utility["supporting_tools"] == list(GUIDED_UTILITY_SUPPORTING_TOOLS)
     assert utility["discovery_tools"] == list(GUIDED_DISCOVERY_TOOLS)
     assert utility["workflow_import_recommended"] is False
+
+
+def test_visibility_rules_can_shape_build_phase_for_creature_handoff():
+    """Creature handoff should narrow build visibility without changing the generic build baseline."""
+
+    rules = build_visibility_rules(
+        "llm-guided",
+        SessionPhase.BUILD,
+        guided_handoff={
+            "kind": "guided_manual_build",
+            "recipe_id": "low_poly_creature_blockout",
+            "direct_tools": list(CREATURE_LOW_POLY_BLOCKOUT_DIRECT_TOOLS),
+            "supporting_tools": list(CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS),
+        },
+    )
+
+    build_rule = rules[-1]
+    assert build_rule["names"] == {
+        *CREATURE_LOW_POLY_BLOCKOUT_DIRECT_TOOLS,
+        *CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS,
+    }
+    assert "scene_clean_scene" in build_rule["names"]
+    assert "mesh_randomize" not in build_rule["names"]
+    assert "mesh_create_vertex_group" not in build_rule["names"]
+    assert "macro_finish_form" not in build_rule["names"]
+
+
+def test_visibility_rules_can_gate_build_phase_by_guided_flow_step():
+    """The active guided step should be able to narrow build visibility before free build actions unlock."""
+
+    rules = build_visibility_rules(
+        "llm-guided",
+        SessionPhase.BUILD,
+        guided_handoff={
+            "kind": "guided_manual_build",
+            "recipe_id": "low_poly_creature_blockout",
+            "direct_tools": list(CREATURE_LOW_POLY_BLOCKOUT_DIRECT_TOOLS),
+            "supporting_tools": list(CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS),
+        },
+        guided_flow_state={
+            "flow_id": "guided_creature_flow",
+            "domain_profile": "creature",
+            "current_step": "establish_spatial_context",
+        },
+    )
+
+    assert rules[-1]["names"] == set(GUIDED_SPATIAL_CONTEXT_DIRECT_TOOLS)
+    assert "macro_finish_form" not in rules[-1]["names"]
+    assert "modeling_create_primitive" not in rules[-1]["names"]
+    assert "scene_scope_graph" in rules[-1]["names"]
+
+
+def test_visibility_rules_rearm_build_phase_to_spatial_context_when_refresh_required():
+    """Stale guided build sessions should narrow direct build visibility back to spatial refresh tools."""
+
+    rules = build_visibility_rules(
+        "llm-guided",
+        SessionPhase.BUILD,
+        guided_handoff={
+            "kind": "guided_manual_build",
+            "recipe_id": "low_poly_creature_blockout",
+            "direct_tools": list(CREATURE_LOW_POLY_BLOCKOUT_DIRECT_TOOLS),
+            "supporting_tools": list(CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS),
+        },
+        guided_flow_state={
+            "flow_id": "guided_creature_flow",
+            "domain_profile": "creature",
+            "current_step": "place_secondary_parts",
+            "spatial_refresh_required": True,
+        },
+    )
+
+    assert rules[-1]["names"] == set(GUIDED_SPATIAL_CONTEXT_DIRECT_TOOLS)
+    assert "modeling_create_primitive" not in rules[-1]["names"]
+    assert "guided_register_part" not in rules[-1]["names"]
+    assert "scene_view_diagnostics" in rules[-1]["names"]
 
 
 def test_llm_guided_surface_materializes_visibility_transforms():
@@ -148,6 +341,27 @@ def test_llm_guided_surface_materializes_visibility_transforms():
     manual_transforms = materialize_transforms(get_surface_profile("legacy-manual"))
     legacy_transforms = materialize_transforms(get_surface_profile("legacy-flat"))
 
-    assert len(guided_transforms) == 9
+    assert len(guided_transforms) == 10
     assert len(manual_transforms) == 1
     assert len(legacy_transforms) == 1
+
+
+def test_guided_tool_family_mapping_resolves_shared_family_vocabulary():
+    """Shared tool-family mapping should stay deterministic for later execution policy work."""
+
+    assert resolve_guided_tool_family("macro_finish_form") == "finish"
+    assert resolve_guided_tool_family("reference_iterate_stage_checkpoint") == "checkpoint_iterate"
+    assert resolve_guided_tool_family("modeling_create_primitive") == "primary_masses"
+    assert resolve_guided_tool_family("scene_clean_scene") == "utility"
+
+
+def test_guided_overlay_family_order_can_differ_by_domain_profile():
+    """Overlay family order should remain shared-but-configurable across guided domains."""
+
+    creature = get_guided_overlay_family_order("creature")
+    building = get_guided_overlay_family_order("building")
+
+    assert "attachment_alignment" in creature
+    assert "attachment_alignment" not in building
+    assert creature.index("primary_masses") < creature.index("secondary_parts")
+    assert building.index("primary_masses") < building.index("secondary_parts")

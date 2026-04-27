@@ -9,6 +9,7 @@ import base64
 import mimetypes
 import re
 import shutil
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal, cast
@@ -17,8 +18,10 @@ from uuid import uuid4
 from fastmcp import Context
 
 from server.adapters.mcp.context_utils import ctx_info, ctx_session_id, ctx_transport_type
+from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract
 from server.adapters.mcp.contracts.reference import (
     GuidedReferenceReadinessContract,
+    ReferenceActionHintContract,
     ReferenceCompareCheckpointResponseContract,
     ReferenceCompareStageCheckpointResponseContract,
     ReferenceCorrectionCandidateContract,
@@ -28,23 +31,35 @@ from server.adapters.mcp.contracts.reference import (
     ReferenceImageRecordContract,
     ReferenceImagesResponseContract,
     ReferenceIterateStageCheckpointResponseContract,
+    ReferencePartSegmentationContract,
     ReferenceRefinementHandoffContract,
     ReferenceRefinementRouteContract,
     ReferenceRefinementToolCandidateContract,
+    ReferenceSilhouetteAnalysisContract,
+    ReferenceViewDiagnosticsHintContract,
 )
 from server.adapters.mcp.contracts.scene import (
     SceneAssembledTargetScopeContract,
     SceneAssertionPayloadContract,
+    SceneAttachmentSemanticsContract,
     SceneCorrectionTruthBundleContract,
     SceneCorrectionTruthPairContract,
     SceneCorrectionTruthSummaryContract,
+    SceneRelationKindLiteral,
+    SceneRelationVerdictLiteral,
     SceneRepairMacroCandidateContract,
+    SceneSupportSemanticsContract,
+    SceneSymmetrySemanticsContract,
     SceneTruthFollowupContract,
     SceneTruthFollowupItemContract,
 )
+from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
+from server.adapters.mcp.guided_contract import canonicalize_reference_images_arguments
 from server.adapters.mcp.sampling.result_types import to_vision_assistant_contract
 from server.adapters.mcp.session_capabilities import (
     GuidedReferenceReadinessState,
+    advance_guided_flow_from_iteration_async,
+    apply_visibility_for_session_state,
     build_guided_reference_readiness,
     build_guided_reference_readiness_payload,
     get_session_capability_state_async,
@@ -65,6 +80,8 @@ from server.adapters.mcp.vision import (
     select_reference_records_for_target,
 )
 from server.adapters.mcp.vision.runner import VISION_ASSIST_POLICY
+from server.adapters.mcp.vision.silhouette import build_silhouette_analysis
+from server.application.services.spatial_graph import get_spatial_graph_service
 from server.infrastructure.di import get_collection_handler, get_scene_handler, get_vision_backend_resolver
 from server.infrastructure.tmp_paths import get_reference_image_storage_path, get_viewport_output_paths
 
@@ -100,6 +117,36 @@ _ACCESSORY_ROLE_HINTS: tuple[str, ...] = (
     "antler",
     "whisker",
 )
+_HEAD_ROLE_HINTS: tuple[str, ...] = ("head", "skull", "face")
+_BODY_ROLE_HINTS: tuple[str, ...] = ("body", "torso", "trunk", "chest", "abdomen", "pelvis", "hip")
+_SNOUT_ROLE_HINTS: tuple[str, ...] = ("snout", "muzzle")
+_NOSE_ROLE_HINTS: tuple[str, ...] = ("nose", "nostril")
+_EYE_ROLE_HINTS: tuple[str, ...] = ("eye",)
+_FACE_ATTACHMENT_HINTS: tuple[str, ...] = ("ear", "eye", "nose", "snout", "whisker")
+_TAIL_ROLE_HINTS: tuple[str, ...] = ("tail",)
+_LIMB_ROLE_HINTS: tuple[str, ...] = (
+    "limb",
+    "leg",
+    "arm",
+    "paw",
+    "foot",
+    "hand",
+    "hoof",
+    "thigh",
+    "shin",
+    "calf",
+    "foreleg",
+    "hindleg",
+    "forelimb",
+    "hindlimb",
+    "forearm",
+    "lowerarm",
+    "upperarm",
+    "lowerleg",
+    "upperleg",
+)
+_DISTAL_LIMB_HINTS: tuple[str, ...] = ("paw", "foot", "hand", "hoof", "shin", "calf", "forearm", "lowerarm", "lowerleg")
+_PROXIMAL_LIMB_HINTS: tuple[str, ...] = ("upperarm", "upperleg", "thigh", "arm", "leg", "forelimb", "hindlimb")
 _LOW_POLY_HINTS: tuple[str, ...] = ("low poly", "low-poly", "blockout")
 _HARD_SURFACE_HINTS: tuple[str, ...] = (
     "housing",
@@ -168,6 +215,24 @@ _SCULPT_RECOMMENDED_TOOLS: tuple[str, ...] = (
     "sculpt_inflate_region",
     "sculpt_pinch_region",
 )
+
+_CreatureRelationKind = Literal["embedded_attachment", "seated_attachment", "segment_attachment"]
+_CreatureSeamKind = Literal["face_head", "nose_snout", "head_body", "tail_body", "limb_body", "limb_segment"]
+
+
+@dataclass(frozen=True)
+class _PlannedCreatureSeam:
+    part_object: str
+    anchor_object: str
+    relation_kind: _CreatureRelationKind
+    seam_kind: _CreatureSeamKind
+
+
+@dataclass(frozen=True)
+class _PlannedTruthPair:
+    from_object: str
+    to_object: str
+    seam: _PlannedCreatureSeam | None = None
 
 
 def _register_existing_tool(target, tool_name: str):
@@ -271,6 +336,7 @@ def _compare_response(
     target_view: str | None,
     reference_ids: list[str],
     reference_labels: list[str],
+    view_diagnostics_hints: list[ReferenceViewDiagnosticsHintContract] | None = None,
     vision_assistant=None,
     message: str | None = None,
     error: str | None = None,
@@ -285,6 +351,7 @@ def _compare_response(
         reference_count=len(reference_ids),
         reference_ids=reference_ids,
         reference_labels=reference_labels,
+        view_diagnostics_hints=view_diagnostics_hints,
         vision_assistant=vision_assistant,
         message=message,
         error=error,
@@ -295,6 +362,7 @@ def _stage_compare_response(
     *,
     session_id: str | None = None,
     transport: str | None = None,
+    guided_flow_state: dict[str, Any] | None = None,
     checkpoint_id: str,
     checkpoint_label: str | None,
     goal: str | None,
@@ -316,14 +384,23 @@ def _stage_compare_response(
     budget_control: ReferenceHybridBudgetControlContract | None = None,
     refinement_route: ReferenceRefinementRouteContract | None = None,
     refinement_handoff: ReferenceRefinementHandoffContract | None = None,
+    silhouette_analysis: ReferenceSilhouetteAnalysisContract | None = None,
+    action_hints: list[ReferenceActionHintContract] | None = None,
+    part_segmentation: ReferencePartSegmentationContract | None = None,
+    view_diagnostics_hints: list[ReferenceViewDiagnosticsHintContract] | None = None,
+    include_captures: bool = True,
     message: str | None = None,
     error: str | None = None,
 ) -> ReferenceCompareStageCheckpointResponseContract:
+    emitted_captures = list(captures) if include_captures else []
     return ReferenceCompareStageCheckpointResponseContract(
         action="compare_stage_checkpoint",
         session_id=session_id,
         transport=transport,
         goal=goal,
+        guided_flow_state=(
+            GuidedFlowStateContract.model_validate(guided_flow_state) if guided_flow_state is not None else None
+        ),
         guided_reference_readiness=guided_reference_readiness,
         target_object=target_object,
         target_objects=target_objects,
@@ -335,13 +412,17 @@ def _stage_compare_response(
         budget_control=budget_control,
         refinement_route=refinement_route,
         refinement_handoff=refinement_handoff,
+        silhouette_analysis=silhouette_analysis,
+        action_hints=list(action_hints or []),
+        part_segmentation=part_segmentation or _disabled_part_segmentation(),
+        view_diagnostics_hints=view_diagnostics_hints,
         target_view=target_view,
         checkpoint_id=checkpoint_id,
         checkpoint_label=checkpoint_label,
         preset_profile=preset_profile,
         preset_names=preset_names,
         capture_count=len(captures),
-        captures=list(captures),
+        captures=emitted_captures,
         reference_count=len(reference_ids),
         reference_ids=reference_ids,
         reference_labels=reference_labels,
@@ -356,6 +437,7 @@ def _iterate_stage_response(
     session_id: str | None = None,
     transport: str | None = None,
     goal: str | None,
+    guided_flow_state: dict[str, Any] | None = None,
     target_object: str | None,
     target_objects: list[str],
     collection_name: str | None,
@@ -376,15 +458,24 @@ def _iterate_stage_response(
     budget_control: ReferenceHybridBudgetControlContract | None = None,
     refinement_route: ReferenceRefinementRouteContract | None = None,
     refinement_handoff: ReferenceRefinementHandoffContract | None = None,
+    silhouette_analysis: ReferenceSilhouetteAnalysisContract | None = None,
+    action_hints: list[ReferenceActionHintContract] | None = None,
+    part_segmentation: ReferencePartSegmentationContract | None = None,
+    view_diagnostics_hints: list[ReferenceViewDiagnosticsHintContract] | None = None,
     stop_reason: str | None = None,
     message: str | None = None,
     error: str | None = None,
 ) -> ReferenceIterateStageCheckpointResponseContract:
+    compact_compare_result = _compact_compare_result_for_iterate(compare_result)
+    debug_payload_omitted = compact_compare_result is not compare_result
     return ReferenceIterateStageCheckpointResponseContract(
         action="iterate_stage_checkpoint",
         session_id=session_id,
         transport=transport,
         goal=goal,
+        guided_flow_state=(
+            GuidedFlowStateContract.model_validate(guided_flow_state) if guided_flow_state is not None else None
+        ),
         guided_reference_readiness=guided_reference_readiness or compare_result.guided_reference_readiness,
         target_object=target_object,
         target_objects=target_objects,
@@ -396,6 +487,10 @@ def _iterate_stage_response(
         budget_control=budget_control or compare_result.budget_control,
         refinement_route=refinement_route or compare_result.refinement_route,
         refinement_handoff=refinement_handoff or compare_result.refinement_handoff,
+        silhouette_analysis=silhouette_analysis or compare_result.silhouette_analysis,
+        action_hints=list(action_hints or compare_result.action_hints or []),
+        part_segmentation=part_segmentation or compare_result.part_segmentation or _disabled_part_segmentation(),
+        view_diagnostics_hints=view_diagnostics_hints or compare_result.view_diagnostics_hints,
         target_view=target_view,
         checkpoint_id=checkpoint_id,
         checkpoint_label=checkpoint_label,
@@ -408,10 +503,54 @@ def _iterate_stage_response(
         repeated_correction_focus=repeated_correction_focus,
         stagnation_count=stagnation_count,
         stop_reason=stop_reason,
-        compare_result=compare_result,
+        compare_result=compact_compare_result,
+        debug_payload_omitted=debug_payload_omitted,
         message=message,
         error=error,
     )
+
+
+def _compact_compare_result_for_iterate(
+    compare_result: ReferenceCompareStageCheckpointResponseContract,
+) -> ReferenceCompareStageCheckpointResponseContract:
+    """Return a slim compare_result copy for normal compact iterate responses."""
+
+    if compare_result.preset_profile != "compact":
+        return compare_result
+    return compare_result.model_copy(
+        update={
+            "truth_bundle": None,
+            "truth_followup": None,
+            "correction_candidates": [],
+            "silhouette_analysis": None,
+            "action_hints": [],
+            "part_segmentation": _disabled_part_segmentation(),
+            "captures": [],
+            "message": (
+                "Compact iterate response omitted nested debug compare payload details; use rich/debug delivery for full data."
+            ),
+        }
+    )
+
+
+def _should_hold_guided_build_loop_in_build(
+    guided_flow_state: dict[str, Any] | None,
+) -> bool:
+    if guided_flow_state is None:
+        return False
+
+    if hasattr(guided_flow_state, "model_dump"):
+        try:
+            guided_flow_state = guided_flow_state.model_dump(mode="json")
+        except Exception:
+            return False
+
+    if not isinstance(guided_flow_state, dict):
+        return False
+
+    current_step = str(guided_flow_state.get("current_step") or "").strip().lower()
+    missing_roles = [str(role).strip() for role in guided_flow_state.get("missing_roles") or [] if str(role).strip()]
+    return current_step in {"create_primary_masses", "place_secondary_parts"} and bool(missing_roles)
 
 
 def _normalized_focus_key(value: str) -> str:
@@ -501,6 +640,74 @@ def _guided_stage_reference_recovery_error(
     )
 
 
+def _guided_checkpoint_scope_error(
+    guided_flow_state: dict[str, Any] | None,
+    requested_scope: SceneAssembledTargetScopeContract,
+) -> str | None:
+    """Return an actionable error when a checkpoint narrows away from the active workset."""
+
+    if not guided_flow_state:
+        return None
+    try:
+        flow_state = GuidedFlowStateContract.model_validate(guided_flow_state)
+    except Exception:
+        return None
+    if flow_state.current_step not in {"checkpoint_iterate", "inspect_validate"}:
+        return None
+    active_scope = flow_state.active_target_scope
+    if active_scope is None:
+        return None
+
+    active_collection = str(active_scope.collection_name or "").strip()
+    requested_collection = str(requested_scope.collection_name or "").strip()
+    if active_collection and requested_collection == active_collection:
+        return None
+
+    active_objects = {name.lower() for name in active_scope.object_names if name.strip()}
+    requested_objects = {name.lower() for name in requested_scope.object_names if name.strip()}
+    if active_scope.primary_target:
+        active_objects.add(active_scope.primary_target.lower())
+    if requested_scope.primary_target:
+        requested_objects.add(requested_scope.primary_target.lower())
+
+    if len(active_objects) <= 1:
+        return None
+    if active_objects and active_objects.issubset(requested_objects):
+        return None
+
+    expected = (
+        f"collection_name={active_collection!r}"
+        if active_collection
+        else f"target_objects={list(active_scope.object_names)!r}"
+    )
+    return (
+        "Checkpoint target scope does not cover the active guided workset. "
+        f"Use {expected} so required seams remain visible; do not narrow to a single safe object while the "
+        "assembled workset is still active."
+    )
+
+
+def _is_recoverable_stage_compare_setup_error(
+    compare_result: ReferenceCompareStageCheckpointResponseContract,
+) -> bool:
+    """Return True for setup/precondition errors that should not advance the guided loop."""
+
+    if not compare_result.error:
+        return False
+
+    readiness = compare_result.guided_reference_readiness
+    if readiness is not None and readiness.status == "blocked":
+        return True
+
+    error_text = compare_result.error.strip()
+    recoverable_prefixes = (
+        "Checkpoint target scope does not cover the active guided workset.",
+        "No matching reference images are attached for the requested target_object/target_view.",
+        "Reference session is not ready for staged compare/iterate yet.",
+    )
+    return any(error_text.startswith(prefix) for prefix in recoverable_prefixes)
+
+
 def _resolve_actionable_focus(compare_result: ReferenceCompareStageCheckpointResponseContract) -> list[str]:
     candidate_summaries = list(compare_result.correction_candidates or [])
     if candidate_summaries:
@@ -548,7 +755,10 @@ def _should_inspect_from_truth_signal(
         truth_evidence = candidate.truth_evidence
         if truth_evidence is None:
             continue
-        if any(kind in {"contact_failure", "overlap", "measurement_error"} for kind in truth_evidence.item_kinds):
+        if any(
+            kind in {"contact_failure", "overlap", "attachment", "measurement_error"}
+            for kind in truth_evidence.item_kinds
+        ):
             return True
     return False
 
@@ -736,15 +946,35 @@ def _truth_summary_chars(bundle: SceneCorrectionTruthBundleContract) -> int:
     return len(bundle.model_dump_json())
 
 
-def _check_priority_score(check: SceneCorrectionTruthPairContract) -> tuple[int, int, int, int, str]:
+def _check_priority_score(check: SceneCorrectionTruthPairContract) -> tuple[int, int, int, int, int, str]:
     overlap_score = 3 if check.overlap is not None and bool(check.overlap.get("overlaps")) else 0
     contact_score = 3 if check.contact_assertion is not None and not check.contact_assertion.passed else 0
     gap_score = 2 if check.gap is not None and str(check.gap.get("relation") or "").lower() == "separated" else 0
     alignment_score = 1 if check.alignment is not None and not bool(check.alignment.get("is_aligned")) else 0
     error_score = 4 if check.error else 0
+    semantics = check.attachment_semantics
+    required_score = 4 if semantics is not None and semantics.required_seam else 0
+    verdict_score = 0
+    seam_score = 0
+    if semantics is not None:
+        if semantics.attachment_verdict == "intersecting":
+            verdict_score = 3
+        elif semantics.attachment_verdict == "floating_gap":
+            verdict_score = 2
+        elif semantics.attachment_verdict == "misaligned_attachment":
+            verdict_score = 1
+        seam_score = {
+            "head_body": 6,
+            "tail_body": 5,
+            "limb_segment": 4,
+            "limb_body": 3,
+            "face_head": 2,
+            "nose_snout": 1,
+        }.get(semantics.seam_kind, 0)
     pair_label = _pair_label(check.from_object, check.to_object)
     return (
-        error_score + overlap_score + contact_score + gap_score + alignment_score,
+        required_score + verdict_score + error_score + overlap_score + contact_score + gap_score + alignment_score,
+        seam_score,
         overlap_score,
         contact_score,
         gap_score + alignment_score,
@@ -754,7 +984,7 @@ def _check_priority_score(check: SceneCorrectionTruthPairContract) -> tuple[int,
 
 def _rebuild_truth_summary(
     *,
-    pairing_strategy: Literal["none", "primary_to_others"],
+    pairing_strategy: Literal["none", "primary_to_others", "required_creature_seams"],
     checks: list[SceneCorrectionTruthPairContract],
 ) -> SceneCorrectionTruthSummaryContract:
     return SceneCorrectionTruthSummaryContract(
@@ -780,9 +1010,95 @@ def _trim_truth_bundle_to_budget(
     pair_budget: int,
     max_truth_chars: int,
 ) -> tuple[SceneCorrectionTruthBundleContract, bool]:
+    def _compact_gap_payload(payload: dict[str, Any] | None) -> dict[str, Any] | None:
+        if payload is None:
+            return None
+        return {
+            key: payload.get(key)
+            for key in ("relation", "gap", "axis_gap", "measurement_basis", "bbox_relation")
+            if payload.get(key) is not None
+        }
+
+    def _compact_alignment_payload(payload: dict[str, Any] | None) -> dict[str, Any] | None:
+        if payload is None:
+            return None
+        return {
+            key: payload.get(key) for key in ("is_aligned", "aligned_axes", "deltas") if payload.get(key) is not None
+        }
+
+    def _compact_overlap_payload(payload: dict[str, Any] | None) -> dict[str, Any] | None:
+        if payload is None:
+            return None
+        return {
+            key: payload.get(key)
+            for key in (
+                "overlaps",
+                "relation",
+                "measurement_basis",
+                "bbox_touching",
+                "surface_gap",
+                "overlap_dimensions",
+            )
+            if payload.get(key) is not None
+        }
+
+    def _compact_contact_assertion(
+        payload: SceneAssertionPayloadContract | None,
+    ) -> SceneAssertionPayloadContract | None:
+        if payload is None:
+            return None
+        details = payload.details or {}
+        compact_details = {
+            key: details.get(key)
+            for key in ("measurement_basis", "bbox_relation", "overlap_rejected")
+            if details.get(key) is not None
+        }
+        return SceneAssertionPayloadContract(
+            assertion=payload.assertion,
+            passed=payload.passed,
+            subject=payload.subject,
+            target=payload.target,
+            expected=payload.expected,
+            actual=payload.actual,
+            details=compact_details or None,
+        )
+
+    def _compact_truth_bundle_details(bundle: SceneCorrectionTruthBundleContract) -> SceneCorrectionTruthBundleContract:
+        compact_checks = [
+            SceneCorrectionTruthPairContract(
+                from_object=item.from_object,
+                to_object=item.to_object,
+                relation_pair_id=item.relation_pair_id,
+                relation_kinds=list(item.relation_kinds or []),
+                relation_verdicts=list(item.relation_verdicts or []),
+                gap=_compact_gap_payload(item.gap),
+                alignment=_compact_alignment_payload(item.alignment),
+                overlap=_compact_overlap_payload(item.overlap),
+                contact_assertion=_compact_contact_assertion(item.contact_assertion),
+                attachment_semantics=item.attachment_semantics,
+                support_semantics=item.support_semantics,
+                symmetry_semantics=item.symmetry_semantics,
+                error=item.error,
+            )
+            for item in list(bundle.checks or [])
+        ]
+        return SceneCorrectionTruthBundleContract(
+            scope=bundle.scope,
+            summary=_rebuild_truth_summary(
+                pairing_strategy=bundle.summary.pairing_strategy,
+                checks=compact_checks,
+            ),
+            checks=compact_checks,
+            error=bundle.error,
+        )
+
     checks = list(truth_bundle.checks or [])
     if len(checks) <= pair_budget and _truth_summary_chars(truth_bundle) <= max_truth_chars:
         return truth_bundle, False
+
+    if truth_bundle.summary.pairing_strategy == "required_creature_seams" and len(checks) <= pair_budget:
+        compact_bundle = _compact_truth_bundle_details(truth_bundle)
+        return compact_bundle, True
 
     ordered_checks = sorted(checks, key=_check_priority_score, reverse=True)
     trimmed = False
@@ -838,8 +1154,15 @@ def _macro_candidate_matches_pair(
 ) -> bool:
     arguments = candidate.arguments_hint or {}
     candidate_from = arguments.get("part_object") or arguments.get("left_object") or arguments.get("primary_object")
-    candidate_to = arguments.get("reference_object") or arguments.get("right_object") or arguments.get("support_object")
-    return candidate_from == from_object and candidate_to == to_object
+    candidate_to = (
+        arguments.get("reference_object")
+        or arguments.get("surface_object")
+        or arguments.get("right_object")
+        or arguments.get("support_object")
+    )
+    return (candidate_from == from_object and candidate_to == to_object) or (
+        candidate_from == to_object and candidate_to == from_object
+    )
 
 
 def _build_vision_candidate_evidence(
@@ -920,6 +1243,12 @@ def _build_correction_candidates(
                 ),
                 truth_evidence=ReferenceCorrectionTruthEvidenceContract(
                     focus_pairs=[pair_label],
+                    relation_kinds=list(
+                        dict.fromkeys(kind for item in pair_items for kind in list(item.relation_kinds or []))
+                    ),
+                    relation_verdicts=list(
+                        dict.fromkeys(verdict for item in pair_items for verdict in list(item.relation_verdicts or []))
+                    ),
                     item_kinds=[item.kind for item in pair_items],
                     items=pair_items,
                     macro_candidates=pair_macros,
@@ -958,6 +1287,368 @@ def _build_correction_candidates(
     return candidates
 
 
+def _disabled_part_segmentation() -> ReferencePartSegmentationContract:
+    return ReferencePartSegmentationContract(
+        status="disabled",
+        provider_name=None,
+        advisory_only=True,
+        parts=[],
+        notes=[
+            "Optional part segmentation remains disabled by default.",
+            "The sidecar path is advisory-only and separate from vision_contract_profile routing.",
+        ],
+    )
+
+
+def _configured_part_segmentation() -> ReferencePartSegmentationContract:
+    from server.infrastructure.di import get_vision_backend_resolver
+
+    resolver = get_vision_backend_resolver()
+    runtime_config = getattr(resolver, "runtime_config", None)
+    sidecar = getattr(runtime_config, "active_segmentation_sidecar", None) if runtime_config is not None else None
+    if sidecar is None or not getattr(sidecar, "enabled", False):
+        return _disabled_part_segmentation()
+    return ReferencePartSegmentationContract(
+        status="unavailable",
+        provider_name=getattr(sidecar, "provider_name", None),
+        advisory_only=True,
+        parts=[],
+        notes=[
+            "Optional part segmentation sidecar is enabled on the runtime config.",
+            "This compare/iterate path does not yet execute the sidecar and currently reports it as unavailable.",
+            "The sidecar path is advisory-only and separate from vision_contract_profile routing.",
+        ],
+    )
+
+
+def _build_silhouette_analysis_payload(
+    *,
+    selected_reference_records: list[ReferenceImageRecordContract] | tuple[ReferenceImageRecordContract, ...],
+    captures: list[VisionCaptureImageContract] | tuple[VisionCaptureImageContract, ...],
+    target_view: str | None,
+) -> ReferenceSilhouetteAnalysisContract | None:
+    if not selected_reference_records or not captures:
+        return None
+
+    reference_record = selected_reference_records[0]
+    capture = _select_silhouette_analysis_capture(captures=captures, target_view=target_view)
+    payload = build_silhouette_analysis(
+        reference_path=reference_record.stored_path,
+        capture_path=capture.image_path,
+        reference_label=reference_record.label or reference_record.reference_id,
+        capture_label=capture.label,
+        target_view=target_view,
+    )
+    return ReferenceSilhouetteAnalysisContract.model_validate(payload)
+
+
+def _capture_matches_target_view(capture: VisionCaptureImageContract, target_view: str) -> bool:
+    normalized_target = target_view.strip().lower()
+    if not normalized_target:
+        return False
+
+    for value in (capture.preset_name, capture.label):
+        normalized_value = str(value or "").strip().lower()
+        if not normalized_value:
+            continue
+        if normalized_value == normalized_target or normalized_value.endswith(f"_{normalized_target}"):
+            return True
+        tokens = [token for token in re.split(r"[^a-z0-9]+", normalized_value) if token]
+        if normalized_target in tokens:
+            return True
+    return False
+
+
+def _select_silhouette_analysis_capture(
+    *,
+    captures: list[VisionCaptureImageContract] | tuple[VisionCaptureImageContract, ...],
+    target_view: str | None,
+) -> VisionCaptureImageContract:
+    if target_view:
+        for capture in captures:
+            if capture.view_kind == "focus" and _capture_matches_target_view(capture, target_view):
+                return capture
+        for capture in captures:
+            if _capture_matches_target_view(capture, target_view):
+                return capture
+
+    for capture in captures:
+        if capture.view_kind == "focus":
+            return capture
+    return captures[0]
+
+
+def _build_action_hints_from_silhouette(
+    silhouette_analysis: ReferenceSilhouetteAnalysisContract | None,
+    *,
+    target_object: str | None,
+) -> list[ReferenceActionHintContract]:
+    if silhouette_analysis is None or silhouette_analysis.status != "available":
+        return []
+
+    metrics = {metric.metric_id: metric for metric in silhouette_analysis.metrics}
+    hints: list[ReferenceActionHintContract] = []
+
+    def add_hint(
+        *,
+        hint_id: str,
+        hint_type: str,
+        summary: str,
+        metric_ids: list[str],
+        recommended_tools: list[ReferenceRefinementToolCandidateContract],
+        priority: Literal["high", "normal"] = "normal",
+    ) -> None:
+        hints.append(
+            ReferenceActionHintContract(
+                hint_id=hint_id,
+                hint_type=hint_type,  # type: ignore[arg-type]
+                summary=summary,
+                priority=priority,
+                target_object=target_object,
+                metric_ids=metric_ids,
+                recommended_tools=recommended_tools,
+            )
+        )
+
+    upper_band = metrics.get("upper_band_width_delta")
+    if upper_band is not None and upper_band.delta <= -0.03:
+        add_hint(
+            hint_id="silhouette_upper_expand",
+            hint_type="widen_upper_profile",
+            summary="Upper silhouette band is narrower than the reference; build the upper profile mass before another broad pass.",
+            metric_ids=["upper_band_width_delta"],
+            recommended_tools=[
+                ReferenceRefinementToolCandidateContract(
+                    tool_name="mesh_extrude_region",
+                    reason="Extrude the upper silhouette mass to widen the creature profile in a bounded way.",
+                    priority="high",
+                ),
+                ReferenceRefinementToolCandidateContract(
+                    tool_name="mesh_loop_cut",
+                    reason="Add support loops so the widened upper silhouette stays controllable.",
+                    priority="normal",
+                ),
+            ],
+            priority="high",
+        )
+    if upper_band is not None and upper_band.delta >= 0.03:
+        add_hint(
+            hint_id="silhouette_upper_reduce",
+            hint_type="reduce_upper_profile",
+            summary="Upper silhouette band is broader than the reference; simplify or tighten the upper profile before adding detail.",
+            metric_ids=["upper_band_width_delta"],
+            recommended_tools=[
+                ReferenceRefinementToolCandidateContract(
+                    tool_name="mesh_dissolve",
+                    reason="Dissolve or simplify support edges while preserving the overall low-poly form.",
+                    priority="normal",
+                ),
+                ReferenceRefinementToolCandidateContract(
+                    tool_name="mesh_merge_by_distance",
+                    reason="Clean up doubled or noisy vertices after reducing the upper profile.",
+                    priority="normal",
+                ),
+            ],
+        )
+
+    left_projection_metric = metrics.get("left_projection_delta")
+    if left_projection_metric is not None and left_projection_metric.delta < -0.05:
+        add_hint(
+            hint_id="silhouette_left_extend",
+            hint_type="extend_left_profile",
+            summary="Left-side silhouette projection is shorter than the reference; extend that profile mass before smoothing.",
+            metric_ids=["left_projection_delta"],
+            recommended_tools=[
+                ReferenceRefinementToolCandidateContract(
+                    tool_name="mesh_extrude_region",
+                    reason="Extend the silhouette profile with a bounded extrusion in the underbuilt direction.",
+                    priority="high",
+                ),
+                ReferenceRefinementToolCandidateContract(
+                    tool_name="modeling_transform_object",
+                    reason="If the profile is object-level, nudge the blocker object instead of overediting mesh topology.",
+                    priority="normal",
+                ),
+            ],
+            priority="high",
+        )
+
+    right_projection_metric = metrics.get("right_projection_delta")
+    if right_projection_metric is not None and right_projection_metric.delta < -0.05:
+        add_hint(
+            hint_id="silhouette_right_extend",
+            hint_type="extend_right_profile",
+            summary="Right-side silhouette projection is shorter than the reference; extend that profile mass before smoothing.",
+            metric_ids=["right_projection_delta"],
+            recommended_tools=[
+                ReferenceRefinementToolCandidateContract(
+                    tool_name="mesh_extrude_region",
+                    reason="Extend the silhouette profile with a bounded extrusion in the underbuilt direction.",
+                    priority="high",
+                ),
+                ReferenceRefinementToolCandidateContract(
+                    tool_name="modeling_transform_object",
+                    reason="If the profile is object-level, nudge the blocker object instead of overediting mesh topology.",
+                    priority="normal",
+                ),
+            ],
+            priority="high",
+        )
+
+    aspect_ratio = metrics.get("aspect_ratio_delta")
+    if aspect_ratio is not None and abs(aspect_ratio.delta) >= 0.18:
+        add_hint(
+            hint_id="silhouette_rebalance_proportion",
+            hint_type="rebalance_proportion",
+            summary="Overall silhouette aspect ratio drift is still significant; re-check proportions before continuing free-form edits.",
+            metric_ids=["aspect_ratio_delta"],
+            recommended_tools=[
+                ReferenceRefinementToolCandidateContract(
+                    tool_name="scene_measure_dimensions",
+                    reason="Measure the current object dimensions before scaling a major mass.",
+                    priority="high",
+                ),
+                ReferenceRefinementToolCandidateContract(
+                    tool_name="scene_assert_proportion",
+                    reason="Verify the repaired ratio against an explicit expected proportion.",
+                    priority="high",
+                ),
+                ReferenceRefinementToolCandidateContract(
+                    tool_name="macro_adjust_relative_proportion",
+                    reason="Use a bounded ratio repair instead of ad hoc free-form scaling when major proportions drift.",
+                    priority="high",
+                ),
+            ],
+            priority="high",
+        )
+
+    mask_iou = metrics.get("mask_iou")
+    contour_drift = metrics.get("contour_drift")
+    if (mask_iou is not None and mask_iou.observed_value <= 0.55) or (
+        contour_drift is not None and contour_drift.observed_value >= 0.14
+    ):
+        metric_ids: list[str] = []
+        if mask_iou is not None and mask_iou.observed_value <= 0.55:
+            metric_ids.append("mask_iou")
+        if contour_drift is not None and contour_drift.observed_value >= 0.14:
+            metric_ids.append("contour_drift")
+        add_hint(
+            hint_id="silhouette_inspect_before_edit",
+            hint_type="inspect_before_edit",
+            summary="Global silhouette mismatch is still high; inspect the current object state before applying another free-form correction.",
+            metric_ids=metric_ids,
+            recommended_tools=[
+                ReferenceRefinementToolCandidateContract(
+                    tool_name="inspect_scene",
+                    reason="Inspect the object state before another silhouette correction when deterministic drift remains high.",
+                    priority="high",
+                ),
+                ReferenceRefinementToolCandidateContract(
+                    tool_name="reference_iterate_stage_checkpoint",
+                    reason="Re-run a bounded iterate checkpoint after a targeted correction instead of making a large uncontrolled edit.",
+                    priority="normal",
+                ),
+            ],
+            priority="high",
+        )
+
+    return hints
+
+
+def _build_view_diagnostics_hints(
+    *,
+    diagnostics_payload: dict[str, Any] | None,
+    target_object: str | None,
+    camera_name: str | None,
+    focus_target: str | None,
+    view_name: str | None,
+    orbit_horizontal: float,
+    orbit_vertical: float,
+    zoom_factor: float | None,
+) -> list[ReferenceViewDiagnosticsHintContract]:
+    if not isinstance(diagnostics_payload, dict):
+        return []
+
+    hints: list[ReferenceViewDiagnosticsHintContract] = []
+    for item in list(diagnostics_payload.get("targets") or []):
+        if not isinstance(item, dict):
+            continue
+        object_name = str(item.get("object_name") or "").strip()
+        verdict = str(item.get("visibility_verdict") or "").strip()
+        projection = item.get("projection") if isinstance(item.get("projection"), dict) else {}
+        centered = bool(projection.get("centered")) if isinstance(projection, dict) else False
+        raw_frame_coverage_ratio = projection.get("frame_coverage_ratio") if isinstance(projection, dict) else None
+        frame_coverage_ratio: float | None
+        if isinstance(raw_frame_coverage_ratio, (int, float)):
+            frame_coverage_ratio = float(raw_frame_coverage_ratio)
+        else:
+            frame_coverage_ratio = None
+
+        trigger: Literal["framing_ambiguity", "visibility_ambiguity", "occlusion_detected", "target_off_frame"] | None
+        priority: Literal["high", "normal"] = "normal"
+        reason: str | None = None
+
+        if verdict == "fully_occluded":
+            trigger = "occlusion_detected"
+            priority = "high"
+            reason = (
+                f"'{object_name or target_object or focus_target or 'target'}' is currently fully occluded from this view. "
+                "Call scene_view_diagnostics(...) before another compare/correction step so framing and occlusion are explicit."
+            )
+        elif verdict == "outside_frame":
+            trigger = "target_off_frame"
+            priority = "high"
+            reason = (
+                f"'{object_name or target_object or focus_target or 'target'}' is currently outside the frame. "
+                "Call scene_view_diagnostics(...) before another compare/correction step so reframing is driven by typed view facts."
+            )
+        elif verdict == "partially_visible":
+            trigger = "visibility_ambiguity"
+            reason = (
+                f"'{object_name or target_object or focus_target or 'target'}' is only partially visible from this view. "
+                "Call scene_view_diagnostics(...) to inspect frame coverage and occlusion before another correction pass."
+            )
+        elif frame_coverage_ratio is not None and (frame_coverage_ratio < 0.999 or not centered):
+            trigger = "framing_ambiguity"
+            reason = (
+                f"'{object_name or target_object or focus_target or 'target'}' is not cleanly centered/framed in the current view. "
+                "Call scene_view_diagnostics(...) if the next decision depends on precise framing facts."
+            )
+        else:
+            trigger = None
+
+        if trigger is None or reason is None:
+            continue
+
+        arguments_hint: dict[str, object] = {
+            "target_object": object_name or target_object or focus_target,
+        }
+        if camera_name:
+            arguments_hint["camera_name"] = camera_name
+        if focus_target:
+            arguments_hint["focus_target"] = focus_target
+        if view_name:
+            arguments_hint["view_name"] = view_name
+        if orbit_horizontal:
+            arguments_hint["orbit_horizontal"] = orbit_horizontal
+        if orbit_vertical:
+            arguments_hint["orbit_vertical"] = orbit_vertical
+        if zoom_factor is not None:
+            arguments_hint["zoom_factor"] = zoom_factor
+
+        hints.append(
+            ReferenceViewDiagnosticsHintContract(
+                hint_id=f"view_diag_{trigger}_{(object_name or 'target').lower()}",
+                trigger=trigger,
+                reason=reason,
+                priority=priority,
+                arguments_hint=arguments_hint,
+            )
+        )
+
+    return hints
+
+
 def _dedupe_names(values: list[str]) -> list[str]:
     seen: set[str] = set()
     result: list[str] = []
@@ -969,6 +1660,367 @@ def _dedupe_names(values: list[str]) -> list[str]:
         seen.add(key)
         result.append(normalized)
     return result
+
+
+def _name_role_tokens(object_name: str) -> list[str]:
+    normalized = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", object_name.strip())
+    return [token for token in re.split(r"[^a-zA-Z0-9]+", normalized.lower()) if token]
+
+
+def _has_name_hint(object_name: str, hints: tuple[str, ...]) -> bool:
+    normalized = object_name.strip().lower()
+    return any(hint in normalized for hint in hints)
+
+
+def _is_head_like(object_name: str) -> bool:
+    return _has_name_hint(object_name, _HEAD_ROLE_HINTS)
+
+
+def _is_body_like(object_name: str) -> bool:
+    return _has_name_hint(object_name, _BODY_ROLE_HINTS)
+
+
+def _is_snout_like(object_name: str) -> bool:
+    return _has_name_hint(object_name, _SNOUT_ROLE_HINTS)
+
+
+def _is_nose_like(object_name: str) -> bool:
+    return _has_name_hint(object_name, _NOSE_ROLE_HINTS)
+
+
+def _is_eye_like(object_name: str) -> bool:
+    return _has_name_hint(object_name, _EYE_ROLE_HINTS)
+
+
+def _is_face_attachment(object_name: str) -> bool:
+    return _has_name_hint(object_name, _FACE_ATTACHMENT_HINTS)
+
+
+def _is_tail_like(object_name: str) -> bool:
+    return _has_name_hint(object_name, _TAIL_ROLE_HINTS)
+
+
+def _is_limb_like(object_name: str) -> bool:
+    if _has_name_hint(object_name, _LIMB_ROLE_HINTS):
+        return True
+
+    tokens = _name_role_tokens(object_name)
+    directional_tokens = {"fore", "hind"}
+    side_tokens = {"l", "r", "left", "right"}
+    if not any(token in directional_tokens for token in tokens) or not any(token in side_tokens for token in tokens):
+        return False
+    return all(token in directional_tokens or token in side_tokens or token.isdigit() for token in tokens)
+
+
+def _is_distal_limb_like(object_name: str) -> bool:
+    return _has_name_hint(object_name, _DISTAL_LIMB_HINTS)
+
+
+def _is_proximal_limb_like(object_name: str) -> bool:
+    return _has_name_hint(object_name, _PROXIMAL_LIMB_HINTS) and not _is_distal_limb_like(object_name)
+
+
+def _select_role_anchor(object_names: list[str]) -> str | None:
+    if not object_names:
+        return None
+    return _select_scope_primary_target(object_names)
+
+
+def _name_side_hint(object_name: str) -> Literal["left", "right"] | None:
+    normalized = object_name.strip().lower()
+    if (
+        normalized.endswith("left")
+        or normalized.endswith("_l")
+        or normalized.endswith(".l")
+        or re.search(r"(?:^|[_\-.])left(?:$|[_\-.])", normalized)
+        or re.search(r"(?:^|[_\-.])l(?:$|[_\-.])", normalized)
+    ):
+        return "left"
+    if (
+        normalized.endswith("right")
+        or normalized.endswith("_r")
+        or normalized.endswith(".r")
+        or re.search(r"(?:^|[_\-.])right(?:$|[_\-.])", normalized)
+        or re.search(r"(?:^|[_\-.])r(?:$|[_\-.])", normalized)
+    ):
+        return "right"
+    return None
+
+
+def _limb_chain_hint(object_name: str) -> Literal["fore", "hind"] | None:
+    normalized = object_name.strip().lower()
+    if any(token in normalized for token in ("fore", "front")):
+        return "fore"
+    if any(token in normalized for token in ("hind", "rear", "back")):
+        return "hind"
+    return None
+
+
+def _limb_match_score(part_object: str, anchor_object: str) -> tuple[int, int, int, str]:
+    same_side = (
+        1 if _name_side_hint(part_object) == _name_side_hint(anchor_object) and _name_side_hint(part_object) else 0
+    )
+    same_chain = (
+        1 if _limb_chain_hint(part_object) == _limb_chain_hint(anchor_object) and _limb_chain_hint(part_object) else 0
+    )
+    proximal_bonus = 1 if _is_proximal_limb_like(anchor_object) else 0
+    return (same_side, same_chain, proximal_bonus, anchor_object.lower())
+
+
+def _select_limb_anchor_for_distal(part_object: str, candidate_objects: list[str]) -> str | None:
+    if not candidate_objects:
+        return None
+    return max(candidate_objects, key=lambda name: _limb_match_score(part_object, name))
+
+
+def _preferred_attachment_macro(
+    relation_kind: _CreatureRelationKind,
+) -> Literal["macro_attach_part_to_surface", "macro_align_part_with_contact"]:
+    if relation_kind == "embedded_attachment":
+        return "macro_attach_part_to_surface"
+    return "macro_align_part_with_contact"
+
+
+def _append_creature_seam(
+    seams: list[_PlannedCreatureSeam],
+    seen_pairs: set[tuple[str, str]],
+    *,
+    part_object: str,
+    anchor_object: str,
+    relation_kind: _CreatureRelationKind,
+    seam_kind: _CreatureSeamKind,
+) -> None:
+    pair_key = (part_object, anchor_object)
+    if part_object == anchor_object or pair_key in seen_pairs:
+        return
+    seen_pairs.add(pair_key)
+    seams.append(
+        _PlannedCreatureSeam(
+            part_object=part_object,
+            anchor_object=anchor_object,
+            relation_kind=relation_kind,
+            seam_kind=seam_kind,
+        )
+    )
+
+
+def _required_creature_seams(scope: SceneAssembledTargetScopeContract) -> list[_PlannedCreatureSeam]:
+    object_names = list(scope.object_names or [])
+    if len(object_names) < 2:
+        return []
+
+    heads = [name for name in object_names if _is_head_like(name)]
+    bodies = [name for name in object_names if _is_body_like(name)]
+    snouts = [name for name in object_names if _is_snout_like(name)]
+    noses = [name for name in object_names if _is_nose_like(name)]
+    tails = [name for name in object_names if _is_tail_like(name)]
+    eyes = [name for name in object_names if _is_eye_like(name)]
+    face_attachments = [
+        name
+        for name in object_names
+        if _is_face_attachment(name) and not _is_eye_like(name) and not _is_nose_like(name) and not _is_snout_like(name)
+    ]
+    limbs = [name for name in object_names if _is_limb_like(name)]
+
+    head_anchor = _select_role_anchor(heads)
+    body_anchor = _select_role_anchor(bodies)
+    snout_anchor = _select_role_anchor(snouts)
+
+    seams: list[_PlannedCreatureSeam] = []
+    seen_pairs: set[tuple[str, str]] = set()
+
+    if head_anchor is not None and body_anchor is not None:
+        _append_creature_seam(
+            seams,
+            seen_pairs,
+            part_object=head_anchor,
+            anchor_object=body_anchor,
+            relation_kind="segment_attachment",
+            seam_kind="head_body",
+        )
+
+    if head_anchor is not None:
+        for eye_name in eyes:
+            _append_creature_seam(
+                seams,
+                seen_pairs,
+                part_object=eye_name,
+                anchor_object=head_anchor,
+                relation_kind="seated_attachment",
+                seam_kind="face_head",
+            )
+        for face_name in face_attachments:
+            _append_creature_seam(
+                seams,
+                seen_pairs,
+                part_object=face_name,
+                anchor_object=head_anchor,
+                relation_kind="embedded_attachment",
+                seam_kind="face_head",
+            )
+        for snout_name in snouts:
+            _append_creature_seam(
+                seams,
+                seen_pairs,
+                part_object=snout_name,
+                anchor_object=head_anchor,
+                relation_kind="embedded_attachment",
+                seam_kind="face_head",
+            )
+        if snout_anchor is None:
+            for nose_name in noses:
+                _append_creature_seam(
+                    seams,
+                    seen_pairs,
+                    part_object=nose_name,
+                    anchor_object=head_anchor,
+                    relation_kind="embedded_attachment",
+                    seam_kind="face_head",
+                )
+
+    if snout_anchor is not None:
+        for nose_name in noses:
+            _append_creature_seam(
+                seams,
+                seen_pairs,
+                part_object=nose_name,
+                anchor_object=snout_anchor,
+                relation_kind="embedded_attachment",
+                seam_kind="nose_snout",
+            )
+
+    if body_anchor is not None:
+        for tail_name in tails:
+            _append_creature_seam(
+                seams,
+                seen_pairs,
+                part_object=tail_name,
+                anchor_object=body_anchor,
+                relation_kind="segment_attachment",
+                seam_kind="tail_body",
+            )
+
+    distal_limbs = [name for name in limbs if _is_distal_limb_like(name)]
+    proximal_limbs = [name for name in limbs if _is_proximal_limb_like(name)]
+    remaining_limb_bodies: list[str] = []
+
+    for limb_name in limbs:
+        if limb_name in distal_limbs:
+            anchor_name = _select_limb_anchor_for_distal(
+                limb_name,
+                [candidate for candidate in proximal_limbs if candidate != limb_name],
+            )
+            if anchor_name is not None:
+                _append_creature_seam(
+                    seams,
+                    seen_pairs,
+                    part_object=limb_name,
+                    anchor_object=anchor_name,
+                    relation_kind="segment_attachment",
+                    seam_kind="limb_segment",
+                )
+                continue
+        remaining_limb_bodies.append(limb_name)
+
+    if body_anchor is not None:
+        for limb_name in remaining_limb_bodies:
+            _append_creature_seam(
+                seams,
+                seen_pairs,
+                part_object=limb_name,
+                anchor_object=body_anchor,
+                relation_kind="segment_attachment",
+                seam_kind="limb_body",
+            )
+
+    seam_priority = {
+        "head_body": 60,
+        "tail_body": 50,
+        "limb_segment": 45,
+        "limb_body": 40,
+        "face_head": 30,
+        "nose_snout": 25,
+    }
+    return sorted(
+        seams,
+        key=lambda seam: (
+            -seam_priority.get(seam.seam_kind, 0),
+            seam.part_object.lower(),
+            seam.anchor_object.lower(),
+        ),
+    )
+
+
+def _attachment_relation(
+    from_object: str,
+    to_object: str,
+) -> tuple[_CreatureRelationKind, str, str] | None:
+    if _is_nose_like(from_object) and _is_snout_like(to_object):
+        return "embedded_attachment", from_object, to_object
+    if _is_nose_like(to_object) and _is_snout_like(from_object):
+        return "embedded_attachment", to_object, from_object
+    if _is_face_attachment(from_object) and _is_head_like(to_object):
+        relation_kind: _CreatureRelationKind
+        relation_kind = "seated_attachment" if _is_eye_like(from_object) else "embedded_attachment"
+        return relation_kind, from_object, to_object
+    if _is_face_attachment(to_object) and _is_head_like(from_object):
+        relation_kind = "seated_attachment" if _is_eye_like(to_object) else "embedded_attachment"
+        return relation_kind, to_object, from_object
+    if _is_head_like(from_object) and _is_body_like(to_object):
+        return "segment_attachment", from_object, to_object
+    if _is_head_like(to_object) and _is_body_like(from_object):
+        return "segment_attachment", to_object, from_object
+    if _is_tail_like(from_object) and _is_body_like(to_object):
+        return "segment_attachment", from_object, to_object
+    if _is_tail_like(to_object) and _is_body_like(from_object):
+        return "segment_attachment", to_object, from_object
+    if _is_limb_like(from_object) and (_is_body_like(to_object) or _is_limb_like(to_object)):
+        return "segment_attachment", from_object, to_object
+    if _is_limb_like(to_object) and (_is_body_like(from_object) or _is_limb_like(from_object)):
+        if _is_distal_limb_like(from_object) and not _is_distal_limb_like(to_object):
+            return "segment_attachment", from_object, to_object
+        return "segment_attachment", to_object, from_object
+    return None
+
+
+def _attachment_seam_kind(part_object: str, anchor_object: str) -> _CreatureSeamKind:
+    if _is_nose_like(part_object) and _is_snout_like(anchor_object):
+        return "nose_snout"
+    if _is_head_like(part_object) and _is_body_like(anchor_object):
+        return "head_body"
+    if _is_tail_like(part_object) and _is_body_like(anchor_object):
+        return "tail_body"
+    if _is_limb_like(part_object) and _is_limb_like(anchor_object):
+        return "limb_segment"
+    if _is_limb_like(part_object) and _is_body_like(anchor_object):
+        return "limb_body"
+    return "face_head"
+
+
+def _attachment_item_summary(
+    *,
+    pair_label: str,
+    relation_kind: Literal["embedded_attachment", "seated_attachment", "segment_attachment"],
+    has_overlap: bool,
+    has_gap: bool,
+    has_contact_failure: bool,
+    has_alignment_issue: bool,
+) -> str:
+    if has_overlap:
+        if relation_kind == "embedded_attachment":
+            return (
+                f"{pair_label} is an organic attachment relation; generic overlap cleanup alone is not enough "
+                "to seat the part correctly into the anchor mass."
+            )
+        return (
+            f"{pair_label} is an organic attachment relation; the pair should stay seated/attached, not just be "
+            "pushed apart until overlap reaches zero."
+        )
+    if has_gap or has_contact_failure:
+        return f"{pair_label} is still floating or detached for this organic attachment relation."
+    if has_alignment_issue:
+        return f"{pair_label} is still seated on the wrong attachment line for this organic relation."
+    return f"{pair_label} still has wrong organic attachment semantics."
 
 
 def _resolve_capture_scope(
@@ -1002,13 +2054,23 @@ def _resolve_capture_scope(
 
 def _name_anchor_weight(object_name: str) -> int:
     normalized = object_name.strip().lower()
+    tokens = _name_role_tokens(object_name)
+    trailing_token = tokens[-1] if tokens else ""
     score = 0
     for token, weight in _ANCHOR_ROLE_HINTS:
-        if token in normalized:
-            score += weight
+        if trailing_token == token:
+            score += weight * 3
+        elif token in tokens:
+            score += max(1, weight // 3)
+        elif token in normalized:
+            score += max(1, weight // 4)
     for token in _ACCESSORY_ROLE_HINTS:
-        if token in normalized:
-            score -= 30
+        if trailing_token == token:
+            score -= 40
+        elif token in tokens:
+            score -= 10
+        elif token in normalized:
+            score -= 15
     return score
 
 
@@ -1034,17 +2096,14 @@ def _looks_like_accessory_anchor(object_name: str) -> bool:
 def _select_scope_primary_target(object_names: list[str]) -> str | None:
     if not object_names:
         return None
-    first_name = object_names[0]
-    if not _looks_like_accessory_anchor(first_name):
-        return first_name
-
-    candidates = [name for name in object_names if not _looks_like_accessory_anchor(name)]
-    if not candidates:
-        return first_name
-
     return max(
-        candidates,
-        key=lambda name: (_name_anchor_weight(name), _bbox_volume_or_zero(name), -object_names.index(name)),
+        object_names,
+        key=lambda name: (
+            0 if _looks_like_accessory_anchor(name) else 1,
+            _name_anchor_weight(name),
+            _bbox_volume_or_zero(name),
+            -object_names.index(name),
+        ),
     )
 
 
@@ -1054,40 +2113,54 @@ def _assembled_target_scope(
     target_objects: list[str] | None,
     collection_name: str | None,
 ) -> SceneAssembledTargetScopeContract:
-    normalized_primary, resolved_target_objects, normalized_collection = _resolve_capture_scope(
+    def _list_collection_objects(name: str) -> list[str]:
+        payload = get_collection_handler().list_objects(
+            collection_name=name,
+            recursive=True,
+            include_hidden=False,
+        )
+        return [
+            str(item.get("name")).strip()
+            for item in payload.get("objects", [])
+            if isinstance(item, dict) and str(item.get("name") or "").strip()
+        ]
+
+    scope_payload = get_spatial_graph_service().build_scope_graph(
+        reader=get_scene_handler(),
         target_object=target_object,
         target_objects=target_objects,
         collection_name=collection_name,
+        list_collection_objects=_list_collection_objects,
+        allow_scene_scope=True,
     )
-
-    if normalized_collection:
-        scope_kind: Literal["single_object", "object_set", "collection", "scene"] = "collection"
-    elif len(resolved_target_objects) > 1:
-        scope_kind = "object_set"
-    elif normalized_primary:
-        scope_kind = "single_object"
-    else:
-        scope_kind = "scene"
-
-    return SceneAssembledTargetScopeContract(
-        scope_kind=scope_kind,
-        primary_target=normalized_primary or _select_scope_primary_target(resolved_target_objects),
-        object_names=resolved_target_objects,
-        object_count=len(resolved_target_objects),
-        collection_name=normalized_collection,
-        part_groups=[],
-    )
+    return SceneAssembledTargetScopeContract.model_validate(scope_payload)
 
 
 def _truth_bundle_pairs(
     scope: SceneAssembledTargetScopeContract,
-) -> tuple[Literal["none", "primary_to_others"], list[tuple[str, str]]]:
+) -> tuple[Literal["none", "primary_to_others", "required_creature_seams"], list[_PlannedTruthPair]]:
     object_names = list(scope.object_names or [])
-    if len(object_names) < 2 or scope.primary_target is None:
+    if len(object_names) < 2:
         return "none", []
 
+    required_seams = _required_creature_seams(scope)
+    if required_seams:
+        return (
+            "required_creature_seams",
+            [
+                _PlannedTruthPair(
+                    from_object=seam.part_object,
+                    to_object=seam.anchor_object,
+                    seam=seam,
+                )
+                for seam in required_seams
+            ],
+        )
+
+    if scope.primary_target is None:
+        return "none", []
     anchor = scope.primary_target
-    pairs = [(anchor, name) for name in object_names if name != anchor]
+    pairs = [_PlannedTruthPair(from_object=anchor, to_object=name) for name in object_names if name != anchor]
     return ("primary_to_others", pairs) if pairs else ("none", [])
 
 
@@ -1095,46 +2168,93 @@ def _build_correction_truth_bundle(
     scene_handler,
     scope: SceneAssembledTargetScopeContract,
 ) -> SceneCorrectionTruthBundleContract:
-    pairing_strategy, pairs = _truth_bundle_pairs(scope)
+    relation_graph = get_spatial_graph_service().build_relation_graph(
+        reader=scene_handler,
+        scope_graph=scope.model_dump(mode="json"),
+        goal_hint=None,
+        include_truth_payloads=True,
+        include_guided_pairs=False,
+    )
+    relation_pairs = list(relation_graph.get("pairs") or [])
+    truth_pairs = [
+        pair
+        for pair in relation_pairs
+        if str(pair.get("pair_source") or "") in {"required_creature_seam", "primary_to_other"}
+    ]
+    if not truth_pairs:
+        pairing_strategy: Literal["none", "primary_to_others", "required_creature_seams"] = "none"
+    elif all(str(pair.get("pair_source") or "") == "required_creature_seam" for pair in truth_pairs):
+        pairing_strategy = "required_creature_seams"
+    else:
+        pairing_strategy = "primary_to_others"
     checks: list[SceneCorrectionTruthPairContract] = []
     contact_failures = 0
     overlap_pairs = 0
     separated_pairs = 0
     misaligned_pairs = 0
 
-    for from_object, to_object in pairs:
-        error: str | None = None
-        gap = None
-        alignment = None
-        overlap = None
-        contact_assertion = None
-        try:
-            gap = scene_handler.measure_gap(from_object, to_object)
-            alignment = scene_handler.measure_alignment(from_object, to_object, ["X", "Y", "Z"], "CENTER")
-            overlap = scene_handler.measure_overlap(from_object, to_object)
-            contact_assertion = SceneAssertionPayloadContract.model_validate(
-                scene_handler.assert_contact(from_object, to_object)
-            )
-        except RuntimeError as exc:
-            error = str(exc)
+    for pair in truth_pairs:
+        from_object = str(pair.get("from_object") or "")
+        to_object = str(pair.get("to_object") or "")
+        truth_payloads = pair.get("truth_payloads") or {}
+        error = cast(str | None, pair.get("error"))
+        gap = cast(dict[str, Any] | None, truth_payloads.get("gap"))
+        alignment = cast(dict[str, Any] | None, truth_payloads.get("alignment"))
+        overlap = cast(dict[str, Any] | None, truth_payloads.get("overlap"))
+        contact_assertion_payload = truth_payloads.get("contact_assertion")
+        contact_assertion = (
+            SceneAssertionPayloadContract.model_validate(contact_assertion_payload)
+            if isinstance(contact_assertion_payload, dict)
+            else None
+        )
 
         if gap is not None and str(gap.get("relation") or "").lower() == "separated":
             separated_pairs += 1
         if overlap is not None and bool(overlap.get("overlaps")):
             overlap_pairs += 1
-        if alignment is not None and not bool(alignment.get("is_aligned")):
+        if (
+            alignment is not None
+            and not bool(alignment.get("is_aligned"))
+            and not (contact_assertion is not None and contact_assertion.passed)
+        ):
             misaligned_pairs += 1
         if contact_assertion is not None and not contact_assertion.passed:
             contact_failures += 1
+
+        attachment_payload = pair.get("attachment_semantics")
+        support_payload = pair.get("support_semantics")
+        symmetry_payload = pair.get("symmetry_semantics")
+        semantics_contract = (
+            SceneAttachmentSemanticsContract.model_validate(attachment_payload)
+            if isinstance(attachment_payload, dict)
+            else None
+        )
+        support_contract = (
+            SceneSupportSemanticsContract.model_validate(support_payload) if isinstance(support_payload, dict) else None
+        )
+        symmetry_contract = (
+            SceneSymmetrySemanticsContract.model_validate(symmetry_payload)
+            if isinstance(symmetry_payload, dict)
+            else None
+        )
 
         checks.append(
             SceneCorrectionTruthPairContract(
                 from_object=from_object,
                 to_object=to_object,
+                relation_pair_id=cast(str | None, pair.get("pair_id")),
+                relation_kinds=cast(list[SceneRelationKindLiteral], list(pair.get("relation_kinds") or [])),
+                relation_verdicts=cast(
+                    list[SceneRelationVerdictLiteral],
+                    list(pair.get("relation_verdicts") or []),
+                ),
                 gap=gap,
                 alignment=alignment,
                 overlap=overlap,
                 contact_assertion=contact_assertion,
+                attachment_semantics=semantics_contract,
+                support_semantics=support_contract,
+                symmetry_semantics=symmetry_contract,
                 error=error,
             )
         )
@@ -1143,7 +2263,7 @@ def _build_correction_truth_bundle(
         scope=scope,
         summary=SceneCorrectionTruthSummaryContract(
             pairing_strategy=pairing_strategy,
-            pair_count=len(pairs),
+            pair_count=len(truth_pairs),
             evaluated_pairs=sum(1 for item in checks if item.error is None),
             contact_failures=contact_failures,
             overlap_pairs=overlap_pairs,
@@ -1181,6 +2301,89 @@ def _contact_semantics_note(
     return None
 
 
+def _attachment_verdict(
+    *,
+    relation_kind: _CreatureRelationKind | None = None,
+    seam_kind: _CreatureSeamKind | None = None,
+    gap_payload: dict[str, Any] | None,
+    alignment_payload: dict[str, Any] | None,
+    overlap_payload: dict[str, Any] | None,
+    contact_assertion: SceneAssertionPayloadContract | None,
+) -> Literal["seated_contact", "floating_gap", "intersecting", "misaligned_attachment", "needs_followup"]:
+    if overlap_payload is not None and bool(overlap_payload.get("overlaps")):
+        return "intersecting"
+    if contact_assertion is not None:
+        if contact_assertion.passed:
+            return "seated_contact"
+        actual_relation = str((contact_assertion.actual or {}).get("relation") or "").lower()
+        if actual_relation == "separated":
+            return "floating_gap"
+        if actual_relation == "overlapping":
+            return "intersecting"
+    if gap_payload is not None and str(gap_payload.get("relation") or "").lower() == "separated":
+        return "floating_gap"
+    if alignment_payload is not None and not bool(alignment_payload.get("is_aligned")):
+        return "misaligned_attachment"
+    return "needs_followup"
+
+
+def _has_actionable_attachment_alignment_issue(
+    *,
+    attachment_semantics: SceneAttachmentSemanticsContract | None,
+    alignment_payload: dict[str, Any] | None,
+    contact_assertion: SceneAssertionPayloadContract | None,
+) -> bool:
+    """Return True only when alignment drift should remain an attachment finding."""
+
+    if alignment_payload is None or bool(alignment_payload.get("is_aligned")):
+        return False
+    if contact_assertion is not None and contact_assertion.passed:
+        return False
+    return attachment_semantics is None or attachment_semantics.attachment_verdict == "misaligned_attachment"
+
+
+def _preferred_attach_surface_axis(
+    *,
+    gap_payload: dict[str, Any] | None,
+    alignment_payload: dict[str, Any] | None,
+) -> Literal["X", "Y", "Z"]:
+    axis_gap = (gap_payload or {}).get("axis_gap")
+    if isinstance(axis_gap, dict) and axis_gap:
+        axis_by_gap = sorted(
+            ((str(axis_name).upper(), float(axis_value)) for axis_name, axis_value in axis_gap.items()),
+            key=lambda item: (item[1], item[0]),
+            reverse=True,
+        )
+        if axis_by_gap and axis_by_gap[0][1] > 1e-6 and axis_by_gap[0][0] in {"X", "Y", "Z"}:
+            return cast(Literal["X", "Y", "Z"], axis_by_gap[0][0])
+
+    deltas = (alignment_payload or {}).get("deltas")
+    if isinstance(deltas, dict) and deltas:
+        axis_by_delta = sorted(
+            ((str(axis_name).upper(), abs(float(axis_value))) for axis_name, axis_value in deltas.items()),
+            key=lambda item: (item[1], item[0]),
+            reverse=True,
+        )
+        if axis_by_delta and axis_by_delta[0][0] in {"X", "Y", "Z"}:
+            return cast(Literal["X", "Y", "Z"], axis_by_delta[0][0])
+
+    return "X"
+
+
+def _preferred_attach_surface_side(
+    *,
+    axis_name: Literal["X", "Y", "Z"],
+    alignment_payload: dict[str, Any] | None,
+) -> Literal["positive", "negative"]:
+    deltas = (alignment_payload or {}).get("deltas")
+    if not isinstance(deltas, dict):
+        return "positive"
+    axis_delta = deltas.get(axis_name.lower())
+    if axis_delta is None:
+        return "positive"
+    return "negative" if float(axis_delta) >= 0.0 else "positive"
+
+
 def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTruthFollowupContract:
     if bundle.summary.pair_count == 0:
         return SceneTruthFollowupContract(
@@ -1197,23 +2400,82 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
     focus_pairs: list[str] = []
     seen_pairs: set[str] = set()
     pair_issue_kinds: dict[str, set[str]] = {}
+    pair_attachment_semantics: dict[str, SceneAttachmentSemanticsContract] = {}
+    pair_checks_by_label: dict[str, SceneCorrectionTruthPairContract] = {}
 
     for check in bundle.checks:
         pair_label = _pair_label(check.from_object, check.to_object)
+        pair_checks_by_label[pair_label] = check
+        pair_items: list[SceneTruthFollowupItemContract] = []
         if check.error:
-            items.append(
+            pair_items.append(
                 SceneTruthFollowupItemContract(
                     kind="measurement_error",
                     summary=f"Truth checks failed for {pair_label}: {check.error}",
                     priority="high",
                     from_object=check.from_object,
                     to_object=check.to_object,
+                    relation_pair_id=check.relation_pair_id,
+                    relation_kinds=list(check.relation_kinds or []),
+                    relation_verdicts=list(check.relation_verdicts or []),
                 )
             )
         else:
             contact_note = _contact_semantics_note(gap_payload=check.gap, contact_assertion=check.contact_assertion)
+            attachment_semantics = check.attachment_semantics
+            attachment_relation = _attachment_relation(check.from_object, check.to_object)
+            if attachment_semantics is None and attachment_relation is not None:
+                relation_kind, part_object, anchor_object = attachment_relation
+                attachment_semantics = SceneAttachmentSemanticsContract(
+                    relation_kind=relation_kind,
+                    seam_kind=_attachment_seam_kind(part_object, anchor_object),
+                    part_object=part_object,
+                    anchor_object=anchor_object,
+                    required_seam=False,
+                    preferred_macro=_preferred_attachment_macro(relation_kind),
+                    attachment_verdict=_attachment_verdict(
+                        relation_kind=relation_kind,
+                        seam_kind=_attachment_seam_kind(part_object, anchor_object),
+                        gap_payload=check.gap,
+                        alignment_payload=check.alignment,
+                        overlap_payload=check.overlap,
+                        contact_assertion=check.contact_assertion,
+                    ),
+                )
+            has_contact_failure = check.contact_assertion is not None and not check.contact_assertion.passed
+            has_gap = check.gap is not None and str(check.gap.get("relation") or "").lower() == "separated"
+            has_overlap = check.overlap is not None and bool(check.overlap.get("overlaps"))
+            has_alignment_issue = _has_actionable_attachment_alignment_issue(
+                attachment_semantics=attachment_semantics,
+                alignment_payload=check.alignment,
+                contact_assertion=check.contact_assertion,
+            )
+            if attachment_semantics is not None and (
+                has_contact_failure or has_gap or has_overlap or has_alignment_issue
+            ):
+                pair_attachment_semantics[pair_label] = attachment_semantics
+                pair_items.append(
+                    SceneTruthFollowupItemContract(
+                        kind="attachment",
+                        summary=_attachment_item_summary(
+                            pair_label=pair_label,
+                            relation_kind=attachment_semantics.relation_kind,
+                            has_overlap=has_overlap,
+                            has_gap=has_gap,
+                            has_contact_failure=has_contact_failure,
+                            has_alignment_issue=has_alignment_issue,
+                        ),
+                        priority="high",
+                        from_object=check.from_object,
+                        to_object=check.to_object,
+                        tool_name="scene_assert_contact",
+                        relation_pair_id=check.relation_pair_id,
+                        relation_kinds=list(check.relation_kinds or []),
+                        relation_verdicts=list(check.relation_verdicts or []),
+                    )
+                )
             if check.contact_assertion is not None and not check.contact_assertion.passed:
-                items.append(
+                pair_items.append(
                     SceneTruthFollowupItemContract(
                         kind="contact_failure",
                         summary=(
@@ -1225,10 +2487,13 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
                         from_object=check.from_object,
                         to_object=check.to_object,
                         tool_name="scene_assert_contact",
+                        relation_pair_id=check.relation_pair_id,
+                        relation_kinds=list(check.relation_kinds or []),
+                        relation_verdicts=list(check.relation_verdicts or []),
                     )
                 )
             if check.gap is not None and str(check.gap.get("relation") or "").lower() == "separated":
-                items.append(
+                pair_items.append(
                     SceneTruthFollowupItemContract(
                         kind="gap",
                         summary=(
@@ -1240,10 +2505,13 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
                         from_object=check.from_object,
                         to_object=check.to_object,
                         tool_name="scene_measure_gap",
+                        relation_pair_id=check.relation_pair_id,
+                        relation_kinds=list(check.relation_kinds or []),
+                        relation_verdicts=list(check.relation_verdicts or []),
                     )
                 )
             if check.overlap is not None and bool(check.overlap.get("overlaps")):
-                items.append(
+                pair_items.append(
                     SceneTruthFollowupItemContract(
                         kind="overlap",
                         summary=f"{pair_label} still overlaps.",
@@ -1251,10 +2519,13 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
                         from_object=check.from_object,
                         to_object=check.to_object,
                         tool_name="scene_measure_overlap",
+                        relation_pair_id=check.relation_pair_id,
+                        relation_kinds=list(check.relation_kinds or []),
+                        relation_verdicts=list(check.relation_verdicts or []),
                     )
                 )
-            if check.alignment is not None and not bool(check.alignment.get("is_aligned")):
-                items.append(
+            if has_alignment_issue:
+                pair_items.append(
                     SceneTruthFollowupItemContract(
                         kind="alignment",
                         summary=f"{pair_label} is still misaligned.",
@@ -1262,18 +2533,18 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
                         from_object=check.from_object,
                         to_object=check.to_object,
                         tool_name="scene_measure_alignment",
+                        relation_pair_id=check.relation_pair_id,
+                        relation_kinds=list(check.relation_kinds or []),
+                        relation_verdicts=list(check.relation_verdicts or []),
                     )
                 )
+        items.extend(pair_items)
 
         if any(item.from_object == check.from_object and item.to_object == check.to_object for item in items):
             if pair_label not in seen_pairs:
                 seen_pairs.add(pair_label)
                 focus_pairs.append(pair_label)
-            pair_issue_kinds[pair_label] = {
-                item.kind
-                for item in items
-                if item.from_object == check.from_object and item.to_object == check.to_object
-            }
+            pair_issue_kinds[pair_label] = {item.kind for item in pair_items}
 
     for pair_label in focus_pairs:
         issue_kinds = pair_issue_kinds.get(pair_label, set())
@@ -1282,6 +2553,63 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
         if "measurement_error" in issue_kinds:
             continue
         from_object, to_object = pair_label.split(" -> ", 1)
+        pair_check = pair_checks_by_label.get(pair_label)
+        attachment_semantics = pair_attachment_semantics.get(pair_label)
+        if attachment_semantics is not None:
+            preferred_macro = attachment_semantics.preferred_macro or _preferred_attachment_macro(
+                attachment_semantics.relation_kind
+            )
+            if attachment_semantics.attachment_verdict == "intersecting" and attachment_semantics.relation_kind in {
+                "segment_attachment",
+                "seated_attachment",
+            }:
+                preferred_macro = "macro_attach_part_to_surface"
+            if preferred_macro == "macro_attach_part_to_surface":
+                surface_axis = _preferred_attach_surface_axis(
+                    gap_payload=pair_check.gap if pair_check is not None else None,
+                    alignment_payload=pair_check.alignment if pair_check is not None else None,
+                )
+                surface_side = _preferred_attach_surface_side(
+                    axis_name=surface_axis,
+                    alignment_payload=pair_check.alignment if pair_check is not None else None,
+                )
+                macro_candidates.append(
+                    SceneRepairMacroCandidateContract(
+                        macro_name="macro_attach_part_to_surface",
+                        reason=(
+                            "Use a bounded surface-seating move for this organic creature seam instead of treating "
+                            "intersecting rounded parts as a generic side-push cleanup."
+                        ),
+                        priority="high",
+                        arguments_hint={
+                            "part_object": attachment_semantics.part_object,
+                            "surface_object": attachment_semantics.anchor_object,
+                            "surface_axis": surface_axis,
+                            "surface_side": surface_side,
+                            "align_mode": "center",
+                            "gap": 0.0,
+                        },
+                    )
+                )
+                continue
+            macro_candidates.append(
+                SceneRepairMacroCandidateContract(
+                    macro_name="macro_align_part_with_contact",
+                    reason=(
+                        "Use a bounded attachment/contact repair for this creature seam instead of relying on generic "
+                        "overlap cleanup alone."
+                    ),
+                    priority="high",
+                    arguments_hint={
+                        "part_object": attachment_semantics.part_object,
+                        "reference_object": attachment_semantics.anchor_object,
+                        "target_relation": "contact",
+                        "align_mode": "none",
+                        "preserve_side": True,
+                    },
+                )
+            )
+            continue
         if "overlap" in issue_kinds:
             macro_candidates.append(
                 SceneRepairMacroCandidateContract(
@@ -1480,6 +2808,7 @@ async def _run_stage_checkpoint_compare(
         return _stage_compare_response(
             session_id=session_id,
             transport=transport,
+            guided_flow_state=session.guided_flow_state,
             checkpoint_id=checkpoint_id,
             checkpoint_label=checkpoint_label,
             goal=goal,
@@ -1511,6 +2840,7 @@ async def _run_stage_checkpoint_compare(
         return _stage_compare_response(
             session_id=session_id,
             transport=transport,
+            guided_flow_state=session.guided_flow_state,
             checkpoint_id=checkpoint_id,
             checkpoint_label=checkpoint_label,
             goal=goal,
@@ -1531,6 +2861,28 @@ async def _run_stage_checkpoint_compare(
         target_objects=resolved_target_objects,
         collection_name=resolved_collection_name,
     )
+    capture_target_object = resolved_target_object or assembled_target_scope.primary_target
+    scope_error = _guided_checkpoint_scope_error(session.guided_flow_state, assembled_target_scope)
+    if scope_error:
+        return _stage_compare_response(
+            session_id=session_id,
+            transport=transport,
+            guided_flow_state=session.guided_flow_state,
+            checkpoint_id=checkpoint_id,
+            checkpoint_label=checkpoint_label,
+            goal=goal,
+            target_object=resolved_target_object,
+            target_objects=resolved_target_objects,
+            collection_name=resolved_collection_name,
+            assembled_target_scope=assembled_target_scope,
+            target_view=target_view,
+            preset_profile=preset_profile,
+            preset_names=[],
+            reference_ids=[],
+            reference_labels=[],
+            guided_reference_readiness=readiness_contract,
+            error=scope_error,
+        )
 
     references = list(session.reference_images or [])
     selected_reference_records = select_reference_records_for_target(
@@ -1542,6 +2894,7 @@ async def _run_stage_checkpoint_compare(
         return _stage_compare_response(
             session_id=session_id,
             transport=transport,
+            guided_flow_state=session.guided_flow_state,
             checkpoint_id=checkpoint_id,
             checkpoint_label=checkpoint_label,
             goal=goal,
@@ -1563,7 +2916,7 @@ async def _run_stage_checkpoint_compare(
             get_scene_handler(),
             bundle_id=checkpoint_id,
             stage="after",
-            target_object=resolved_target_object,
+            target_object=capture_target_object,
             target_objects=resolved_target_objects,
             preset_profile=preset_profile,
         )
@@ -1571,6 +2924,7 @@ async def _run_stage_checkpoint_compare(
         return _stage_compare_response(
             session_id=session_id,
             transport=transport,
+            guided_flow_state=session.guided_flow_state,
             checkpoint_id=checkpoint_id,
             checkpoint_label=checkpoint_label,
             goal=goal,
@@ -1595,9 +2949,16 @@ async def _run_stage_checkpoint_compare(
         max_tokens=runtime_max_tokens,
         model_name=runtime_model_name,
     )
+    if truth_bundle.summary.pairing_strategy == "required_creature_seams":
+        pair_budget = max(pair_budget, min(truth_bundle.summary.pair_count, 6))
+        truth_char_share = 1.0
+        truth_char_floor = 6000
+    else:
+        truth_char_share = 0.5
+        truth_char_floor = 1800
     max_truth_chars = min(
-        int(VISION_ASSIST_POLICY.max_input_chars * 0.5),
-        max(1800, runtime_max_tokens * 12),
+        int(VISION_ASSIST_POLICY.max_input_chars * truth_char_share),
+        max(truth_char_floor, runtime_max_tokens * 12),
     )
     budgeted_truth_bundle, scope_trimmed = _trim_truth_bundle_to_budget(
         truth_bundle=truth_bundle,
@@ -1648,6 +3009,16 @@ async def _run_stage_checkpoint_compare(
         resolver=resolver,
     )
     vision_assistant = to_vision_assistant_contract(outcome)
+    silhouette_analysis = _build_silhouette_analysis_payload(
+        selected_reference_records=selected_reference_records,
+        captures=captures,
+        target_view=target_view,
+    )
+    action_hints = _build_action_hints_from_silhouette(
+        silhouette_analysis,
+        target_object=resolved_target_object or assembled_target_scope.primary_target,
+    )
+    part_segmentation = _configured_part_segmentation()
     full_correction_candidates = _build_correction_candidates(
         ReferenceCompareStageCheckpointResponseContract(
             action="compare_stage_checkpoint",
@@ -1670,6 +3041,9 @@ async def _run_stage_checkpoint_compare(
             reference_ids=[item.reference_id for item in selected_reference_records],
             reference_labels=[item.label or item.reference_id for item in selected_reference_records],
             vision_assistant=vision_assistant,
+            silhouette_analysis=silhouette_analysis,
+            action_hints=action_hints,
+            part_segmentation=part_segmentation,
         )
     )
     candidate_budget = _effective_candidate_budget(
@@ -1703,9 +3077,13 @@ async def _run_stage_checkpoint_compare(
         reference_ids=[item.reference_id for item in selected_reference_records],
         reference_labels=[item.label or item.reference_id for item in selected_reference_records],
         vision_assistant=vision_assistant,
+        silhouette_analysis=silhouette_analysis,
+        action_hints=action_hints,
+        part_segmentation=part_segmentation,
     )
     refinement_route = _select_refinement_route(staged_compare_contract)
     refinement_handoff = _build_refinement_handoff(staged_compare_contract, refinement_route)
+    compact_capture_trimmed = preset_profile == "compact" and bool(captures)
     budget_control = ReferenceHybridBudgetControlContract(
         model_name=runtime_model_name,
         max_input_chars=VISION_ASSIST_POLICY.max_input_chars,
@@ -1715,15 +3093,22 @@ async def _run_stage_checkpoint_compare(
         emitted_pair_count=budgeted_truth_bundle.summary.pair_count,
         original_candidate_count=len(full_correction_candidates),
         emitted_candidate_count=len(correction_candidates),
-        trimming_applied=scope_trimmed or detail_trimmed,
+        trimming_applied=scope_trimmed or detail_trimmed or compact_capture_trimmed,
         scope_trimmed=scope_trimmed,
-        detail_trimmed=detail_trimmed,
-        trim_reason=("model_aware_budget_control" if scope_trimmed or detail_trimmed else None),
+        detail_trimmed=detail_trimmed or compact_capture_trimmed,
+        trim_reason=(
+            "model_aware_budget_control"
+            if scope_trimmed or detail_trimmed
+            else "compact_checkpoint_payload"
+            if compact_capture_trimmed
+            else None
+        ),
         selected_focus_pairs=list(truth_followup.focus_pairs or []),
     )
     return _stage_compare_response(
         session_id=session_id,
         transport=transport,
+        guided_flow_state=session.guided_flow_state,
         checkpoint_id=checkpoint_id,
         checkpoint_label=checkpoint_label,
         goal=goal,
@@ -1745,6 +3130,10 @@ async def _run_stage_checkpoint_compare(
         budget_control=budget_control,
         refinement_route=refinement_route,
         refinement_handoff=refinement_handoff,
+        silhouette_analysis=silhouette_analysis,
+        action_hints=action_hints,
+        part_segmentation=part_segmentation,
+        include_captures=preset_profile != "compact",
         message=(
             f"Captured and compared stage checkpoint '{checkpoint_label or checkpoint_id}' using {len(captures)} deterministic view(s)."
             if outcome.status == "success"
@@ -1758,6 +3147,8 @@ async def reference_images(
     ctx: Context,
     action: str,
     source_path: str | None = None,
+    images: list[dict[str, Any]] | None = None,
+    source_paths: list[str] | None = None,
     reference_id: str | None = None,
     label: str | None = None,
     notes: str | None = None,
@@ -1852,6 +3243,28 @@ async def reference_images(
             removed_reference_id=reference_id,
             message=f"Removed reference image '{reference_id}'.",
         )
+
+    try:
+        canonical_arguments = canonicalize_reference_images_arguments(
+            {
+                key: value
+                for key, value in {
+                    "action": normalized_action,
+                    "source_path": source_path,
+                    "images": images,
+                    "source_paths": source_paths,
+                }.items()
+                if value is not None
+            }
+        )
+    except ValueError as exc:
+        return _as_response(
+            action="attach",
+            goal=session.goal,
+            references=_sorted_references(visible_references),
+            error=str(exc),
+        )
+    source_path = cast(str | None, canonical_arguments.get("source_path"))
 
     if not source_path:
         return _as_response(
@@ -2026,7 +3439,48 @@ async def reference_compare_current_view(
     internal_file.write_bytes(image_bytes)
     internal_latest.write_bytes(image_bytes)
 
-    return await _run_checkpoint_compare(
+    view_diagnostics_hints: list[ReferenceViewDiagnosticsHintContract] | None = None
+    diagnostic_target = target_object or focus_target
+    if diagnostic_target:
+        use_explicit_scene_camera = bool(camera_name and camera_name != "USER_PERSPECTIVE")
+        diagnostics_focus_target = focus_target
+        diagnostics_view_name = view_name
+        diagnostics_orbit_horizontal = orbit_horizontal
+        diagnostics_orbit_vertical = orbit_vertical
+        diagnostics_zoom_factor = zoom_factor
+        if persist_view and not use_explicit_scene_camera:
+            diagnostics_focus_target = None
+            diagnostics_view_name = None
+            diagnostics_orbit_horizontal = 0.0
+            diagnostics_orbit_vertical = 0.0
+            diagnostics_zoom_factor = None
+        try:
+            diagnostics_payload = get_scene_handler().get_view_diagnostics(
+                target_object=diagnostic_target,
+                camera_name=camera_name,
+                focus_target=diagnostics_focus_target,
+                view_name=diagnostics_view_name,
+                orbit_horizontal=diagnostics_orbit_horizontal,
+                orbit_vertical=diagnostics_orbit_vertical,
+                zoom_factor=diagnostics_zoom_factor,
+                persist_view=persist_view,
+            )
+            candidate_hints = _build_view_diagnostics_hints(
+                diagnostics_payload=diagnostics_payload,
+                target_object=diagnostic_target,
+                camera_name=camera_name,
+                focus_target=diagnostics_focus_target,
+                view_name=diagnostics_view_name,
+                orbit_horizontal=diagnostics_orbit_horizontal,
+                orbit_vertical=diagnostics_orbit_vertical,
+                zoom_factor=diagnostics_zoom_factor,
+            )
+            if candidate_hints:
+                view_diagnostics_hints = candidate_hints
+        except Exception:
+            view_diagnostics_hints = None
+
+    compare_result = await _run_checkpoint_compare(
         ctx,
         checkpoint=internal_file,
         checkpoint_label=checkpoint_label,
@@ -2047,6 +3501,9 @@ async def reference_compare_current_view(
         or None,
         response_action="compare_current_view",
     )
+    if view_diagnostics_hints:
+        compare_result.view_diagnostics_hints = view_diagnostics_hints
+    return compare_result
 
 
 async def reference_compare_stage_checkpoint(
@@ -2102,10 +3559,13 @@ async def reference_iterate_stage_checkpoint(
         prompt_hint=prompt_hint,
         preset_profile=preset_profile,
     )
+    session = await get_session_capability_state_async(ctx)
+    hold_in_build = _should_hold_guided_build_loop_in_build(session.guided_flow_state)
     readiness = compare_result.guided_reference_readiness
     goal = compare_result.goal
     correction_focus = _resolve_actionable_focus(compare_result)
-    continue_recommended = bool(correction_focus)
+    action_hints = list(compare_result.action_hints or [])
+    continue_recommended = bool(correction_focus or action_hints)
     inspect_from_truth_signal = _should_inspect_from_truth_signal(compare_result.correction_candidates)
     loop_disposition: Literal["continue_build", "inspect_validate", "stop"] = (
         "inspect_validate" if inspect_from_truth_signal else ("continue_build" if continue_recommended else "stop")
@@ -2115,10 +3575,26 @@ async def reference_iterate_stage_checkpoint(
     )
 
     if compare_result.error or goal is None:
+        truth_only_handoff = bool(goal is not None and correction_focus and inspect_from_truth_signal)
+        recoverable_setup_error = (
+            goal is not None and not truth_only_handoff and _is_recoverable_stage_compare_setup_error(compare_result)
+        )
+        if recoverable_setup_error or goal is None:
+            advanced_state = await get_session_capability_state_async(ctx)
+        else:
+            advanced_state = await advance_guided_flow_from_iteration_async(
+                ctx,
+                loop_disposition="inspect_validate" if truth_only_handoff else "stop",
+            )
+            await apply_visibility_for_session_state(ctx, advanced_state)
+        error_loop_disposition: Literal["continue_build", "inspect_validate", "stop"] = (
+            "continue_build" if recoverable_setup_error else ("inspect_validate" if truth_only_handoff else "stop")
+        )
         return _iterate_stage_response(
             session_id=compare_result.session_id,
             transport=compare_result.transport,
             goal=goal,
+            guided_flow_state=advanced_state.guided_flow_state,
             target_object=target_object,
             target_objects=list(target_objects or []),
             collection_name=collection_name,
@@ -2126,8 +3602,8 @@ async def reference_iterate_stage_checkpoint(
             checkpoint_id=compare_result.checkpoint_id,
             checkpoint_label=checkpoint_label,
             iteration_index=1,
-            loop_disposition="stop",
-            continue_recommended=False,
+            loop_disposition=error_loop_disposition,
+            continue_recommended=truth_only_handoff,
             prior_checkpoint_id=None,
             prior_correction_focus=[],
             correction_focus=correction_focus,
@@ -2140,7 +3616,16 @@ async def reference_iterate_stage_checkpoint(
             refinement_route=compare_result.refinement_route,
             refinement_handoff=compare_result.refinement_handoff,
             stop_reason=compare_result.error or stop_reason,
-            message="Stage iteration did not complete successfully.",
+            message=(
+                "Vision compare did not complete successfully, but deterministic truth findings are available. "
+                "Stop free-form modeling and switch to inspect/measure/assert before another large change."
+                if truth_only_handoff
+                else (
+                    "Stage iteration setup is incomplete; fix the referenced precondition and rerun the same checkpoint."
+                    if recoverable_setup_error
+                    else "Stage iteration did not complete successfully."
+                )
+            ),
             error=compare_result.error,
         )
 
@@ -2169,6 +3654,10 @@ async def reference_iterate_stage_checkpoint(
     if continue_recommended and stagnation_count >= _REFERENCE_CORRECTION_STAGNATION_THRESHOLD:
         loop_disposition = "inspect_validate"
 
+    if hold_in_build and loop_disposition != "continue_build":
+        loop_disposition = "continue_build"
+        stop_reason = None
+
     await set_session_value_async(
         ctx,
         _REFERENCE_CORRECTION_LOOP_STATE_KEY,
@@ -2191,22 +3680,38 @@ async def reference_iterate_stage_checkpoint(
         if inspect_from_truth_signal:
             message = (
                 "Deterministic truth findings remain high-priority. "
-                "Prefer inspect/measure/assert confirmation before another free-form build step."
+                "Stop free-form modeling and switch to inspect/measure/assert now."
             )
         else:
             message = (
                 "Repeated correction focus persists across stage iterations. "
-                "Prefer inspect/measure/assert confirmation before another free-form build step."
+                "Stop free-form modeling and switch to inspect/measure/assert now."
             )
-    elif continue_recommended:
-        message = "Continue the guided build loop using correction_focus first."
+    elif loop_disposition == "continue_build":
+        if hold_in_build:
+            message = (
+                "Guided governor is holding the session in the current build stage until the required role/workset "
+                "slice is complete. Continue the bounded build loop on the active workset before escalating to "
+                "inspect/measure/assert."
+            )
+        elif correction_focus:
+            message = "Continue the guided build loop using correction_focus first."
+        else:
+            message = "Continue the guided build loop using typed action_hints from silhouette analysis."
     else:
         message = "No further correction loop action is recommended for this checkpoint."
+
+    advanced_state = await advance_guided_flow_from_iteration_async(
+        ctx,
+        loop_disposition=loop_disposition,
+    )
+    await apply_visibility_for_session_state(ctx, advanced_state)
 
     return _iterate_stage_response(
         session_id=compare_result.session_id,
         transport=compare_result.transport,
         goal=goal,
+        guided_flow_state=advanced_state.guided_flow_state,
         target_object=target_object,
         target_objects=list(compare_result.target_objects or []),
         collection_name=collection_name,

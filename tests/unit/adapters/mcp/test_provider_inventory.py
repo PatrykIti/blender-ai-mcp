@@ -77,6 +77,9 @@ EXPECTED_SCENE_TOOLS = {
     "scene_get_hierarchy",
     "scene_get_bounding_box",
     "scene_get_origin_info",
+    "scene_scope_graph",
+    "scene_relation_graph",
+    "scene_view_diagnostics",
     "scene_measure_distance",
     "scene_measure_dimensions",
     "scene_measure_gap",
@@ -144,6 +147,7 @@ EXPECTED_MESH_TOOLS = {
 EXPECTED_ROUTER_TOOLS = {
     "router_set_goal",
     "router_get_status",
+    "guided_register_part",
     "router_clear_goal",
     "router_find_similar_workflows",
     "router_get_inherited_proportions",

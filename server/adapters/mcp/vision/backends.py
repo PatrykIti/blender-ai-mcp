@@ -8,6 +8,7 @@ from __future__ import annotations
 import base64
 import importlib
 import json
+import logging
 import mimetypes
 import os
 from pathlib import Path
@@ -16,7 +17,7 @@ from typing import Any
 import httpx
 
 from .backend import VisionBackend, VisionBackendUnavailableError, VisionRequest
-from .config import VisionRuntimeConfig
+from .config import VisionContractProfile, VisionRuntimeConfig
 from .parsing import diagnose_vision_output_text, parse_vision_output_text
 from .prompting import (
     build_local_vision_payload_text,
@@ -24,6 +25,10 @@ from .prompting import (
     build_vision_response_json_schema,
     build_vision_system_prompt,
 )
+
+logger = logging.getLogger(__name__)
+
+_QWEN_MODEL_MARKERS = ("qwen", "qvq")
 
 
 def _media_type_for(path: str, fallback: str) -> str:
@@ -35,6 +40,13 @@ def _image_to_data_url(path: str, media_type: str) -> str:
     raw = Path(path).read_bytes()
     encoded = base64.b64encode(raw).decode("ascii")
     return f"data:{media_type};base64,{encoded}"
+
+
+def _looks_like_qwen_family_model(model_name: str | None) -> bool:
+    normalized = str(model_name or "").strip().lower()
+    if not normalized:
+        return False
+    return any(marker in normalized for marker in _QWEN_MODEL_MARKERS)
 
 
 def _extract_message_text(payload: dict[str, Any]) -> str:
@@ -103,11 +115,13 @@ def _normalize_assist_payload(
     model_name: str,
     request: VisionRequest,
     parsed: dict[str, Any],
+    vision_contract_profile: VisionContractProfile | None = None,
 ) -> dict[str, Any]:
     return {
         "backend_kind": backend_kind,
         "backend_name": backend_kind,
         "model_name": model_name,
+        "vision_contract_profile": vision_contract_profile,
         "goal_summary": str(parsed.get("goal_summary") or ""),
         "reference_match_summary": parsed.get("reference_match_summary"),
         "visible_changes": list(parsed.get("visible_changes") or []),
@@ -136,15 +150,138 @@ def _diagnostics_suffix(diagnostics: dict[str, Any] | None) -> str:
         return ""
     container_shape = diagnostics.get("container_shape")
     payload_shape = diagnostics.get("payload_shape")
+    vision_contract_profile = diagnostics.get("vision_contract_profile")
     preview = str(diagnostics.get("raw_preview") or "").strip().replace("\n", " ")
     preview = preview[:160]
     parts = [
         f"container_shape={container_shape}" if container_shape else None,
         f"payload_shape={payload_shape}" if payload_shape else None,
+        f"vision_contract_profile={vision_contract_profile}" if vision_contract_profile else None,
         f"preview={preview}" if preview else None,
     ]
     suffix = ", ".join(part for part in parts if part)
     return f" ({suffix})" if suffix else ""
+
+
+def _truncate_text(value: str | None, *, limit: int = 600) -> str | None:
+    text = str(value or "").strip().replace("\n", " ")
+    if not text:
+        return None
+    if len(text) <= limit:
+        return text
+    return f"{text[:limit]}... [truncated {len(text) - limit} chars]"
+
+
+def _request_payload_summary(
+    *,
+    endpoint_url: str,
+    payload: dict[str, Any],
+    request: VisionRequest,
+    runtime_config: VisionRuntimeConfig,
+    provider_name: str,
+    model_name: str,
+    vision_contract_profile: VisionContractProfile | None,
+) -> dict[str, Any]:
+    response_format = payload.get("response_format")
+    generation_config = payload.get("generationConfig")
+    user_content = []
+    messages = payload.get("messages")
+    if isinstance(messages, list) and len(messages) >= 2:
+        user_content = list(messages[1].get("content") or []) if isinstance(messages[1], dict) else []
+
+    image_roles = [image.role for image in request.images]
+    image_labels = [image.label or image.role for image in request.images]
+    image_bytes: list[int | None] = []
+    for image in request.images:
+        try:
+            image_bytes.append(Path(image.path).stat().st_size)
+        except OSError:
+            image_bytes.append(None)
+
+    summary: dict[str, Any] = {
+        "provider_name": provider_name,
+        "model_name": model_name,
+        "vision_contract_profile": vision_contract_profile,
+        "endpoint_url": endpoint_url,
+        "target_object": request.target_object,
+        "image_count": len(request.images),
+        "image_roles": image_roles,
+        "image_labels": image_labels,
+        "image_file_bytes": image_bytes,
+        "max_tokens": runtime_config.max_tokens,
+        "effective_max_tokens": runtime_config.effective_max_tokens,
+        "prompt_hint": _truncate_text(request.prompt_hint, limit=240),
+    }
+    model_capabilities = (
+        runtime_config.openai_compatible_external.model_capabilities
+        if runtime_config.openai_compatible_external is not None
+        else None
+    )
+    if model_capabilities is not None:
+        summary["model_capability_source"] = model_capabilities.capability_source
+        summary["model_context_length"] = model_capabilities.context_length
+        summary["model_max_completion_tokens"] = model_capabilities.max_completion_tokens
+        summary["model_input_modalities"] = list(model_capabilities.input_modalities)
+        summary["model_supported_parameters"] = list(model_capabilities.supported_parameters)
+    if isinstance(payload.get("provider"), dict):
+        summary["provider_preferences"] = dict(payload["provider"])
+    if isinstance(payload.get("plugins"), list):
+        summary["plugins"] = [
+            item.get("id") for item in payload["plugins"] if isinstance(item, dict) and isinstance(item.get("id"), str)
+        ]
+
+    if isinstance(response_format, dict):
+        json_schema = response_format.get("json_schema")
+        summary["response_format_type"] = response_format.get("type")
+        summary["response_format_strict"] = json_schema.get("strict") if isinstance(json_schema, dict) else None
+        summary["response_schema_name"] = json_schema.get("name") if isinstance(json_schema, dict) else None
+    elif isinstance(generation_config, dict):
+        response_schema = generation_config.get("responseJsonSchema")
+        summary["response_format_type"] = generation_config.get("responseMimeType")
+        summary["response_format_strict"] = None
+        if isinstance(response_schema, dict):
+            summary["response_schema_keys"] = sorted(response_schema.get("properties", {}).keys())
+
+    if isinstance(messages, list):
+        summary["message_count"] = len(messages)
+        if messages and isinstance(messages[0], dict):
+            summary["system_prompt_chars"] = len(str(messages[0].get("content") or ""))
+        if user_content:
+            text_parts = [
+                str(item.get("text") or "")
+                for item in user_content
+                if isinstance(item, dict) and item.get("type") == "text"
+            ]
+            summary["user_text_chars"] = sum(len(part) for part in text_parts)
+            summary["user_image_count"] = sum(
+                1 for item in user_content if isinstance(item, dict) and item.get("type") == "image_url"
+            )
+    elif isinstance(generation_config, dict):
+        summary["generation_config_keys"] = sorted(generation_config.keys())
+
+    return summary
+
+
+def _response_preview(response: httpx.Response | None) -> str | None:
+    if response is None:
+        return None
+    try:
+        return _truncate_text(response.text, limit=800)
+    except Exception:
+        return None
+
+
+def _response_headers_summary(response: httpx.Response | None) -> dict[str, str]:
+    if response is None:
+        return {}
+    interesting_headers = (
+        "x-request-id",
+        "openai-processing-ms",
+        "cf-ray",
+        "server",
+        "content-type",
+    )
+    return {header: value for header in interesting_headers if (value := response.headers.get(header)) is not None}
 
 
 class TransformersLocalVisionBackend(VisionBackend):
@@ -309,6 +446,7 @@ class TransformersLocalVisionBackend(VisionBackend):
             model_name=self.model_name,
             request=request,
             parsed=parsed_content,
+            vision_contract_profile=None,
         )
 
 
@@ -427,6 +565,7 @@ class MLXLocalVisionBackend(VisionBackend):
             model_name=self.model_name,
             request=request,
             parsed=parsed_content,
+            vision_contract_profile=None,
         )
 
 
@@ -482,11 +621,13 @@ class OpenAICompatibleVisionBackend(VisionBackend):
         return headers
 
     def _build_request_payload(self, request: VisionRequest) -> dict[str, Any]:
+        vision_contract_profile = self._external_config.vision_contract_profile
         if self._external_config.provider_name == "google_ai_studio":
             parts: list[dict[str, Any]] = [
                 {
                     "text": build_vision_payload_text(
                         request,
+                        vision_contract_profile=vision_contract_profile,
                         provider_name=self._external_config.provider_name,
                     )
                 }
@@ -509,6 +650,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
                         {
                             "text": build_vision_system_prompt(
                                 backend_kind=self.backend_kind,
+                                vision_contract_profile=vision_contract_profile,
                                 provider_name=self._external_config.provider_name,
                                 request=request,
                             ),
@@ -518,9 +660,10 @@ class OpenAICompatibleVisionBackend(VisionBackend):
                 "contents": [{"parts": parts}],
                 "generationConfig": {
                     "temperature": 0.0,
-                    "maxOutputTokens": self._runtime_config.max_tokens,
+                    "maxOutputTokens": self._runtime_config.effective_max_tokens,
                     "responseMimeType": "application/json",
                     "responseJsonSchema": build_vision_response_json_schema(
+                        vision_contract_profile=vision_contract_profile,
                         provider_name=self._external_config.provider_name,
                         request=request,
                     ),
@@ -530,7 +673,11 @@ class OpenAICompatibleVisionBackend(VisionBackend):
         content: list[dict[str, Any]] = [
             {
                 "type": "text",
-                "text": build_vision_payload_text(request),
+                "text": build_vision_payload_text(
+                    request,
+                    vision_contract_profile=vision_contract_profile,
+                    provider_name=self._external_config.provider_name,
+                ),
             }
         ]
 
@@ -546,28 +693,38 @@ class OpenAICompatibleVisionBackend(VisionBackend):
             )
 
         response_format: dict[str, Any]
-        if self._external_config.provider_name == "openrouter":
+        if (
+            self._external_config.provider_name == "openrouter"
+            and self._external_config.prefer_json_object_for_qwen
+            and _looks_like_qwen_family_model(self.model_name)
+        ):
+            response_format = {"type": "json_object"}
+        elif self._external_config.provider_name == "openrouter":
             response_format = {
                 "type": "json_schema",
                 "json_schema": {
                     "name": "vision_assist",
                     "strict": True,
-                    "schema": build_vision_response_json_schema(),
+                    "schema": build_vision_response_json_schema(
+                        vision_contract_profile=vision_contract_profile,
+                        provider_name=self._external_config.provider_name,
+                        request=request,
+                    ),
                 },
             }
         else:
             response_format = {"type": "json_object"}
-
-        return {
+        payload = {
             "model": self.model_name,
             "temperature": 0.0,
-            "max_tokens": self._runtime_config.max_tokens,
+            "max_tokens": self._runtime_config.effective_max_tokens,
             "response_format": response_format,
             "messages": [
                 {
                     "role": "system",
                     "content": build_vision_system_prompt(
                         backend_kind=self.backend_kind,
+                        vision_contract_profile=vision_contract_profile,
                         provider_name=self._external_config.provider_name,
                         request=request,
                     ),
@@ -575,6 +732,11 @@ class OpenAICompatibleVisionBackend(VisionBackend):
                 {"role": "user", "content": content},
             ],
         }
+        if self._external_config.provider_name == "openrouter":
+            payload["provider"] = {"require_parameters": self._external_config.require_parameters}
+            if self._external_config.enable_response_healing:
+                payload["plugins"] = [{"id": "response-healing"}]
+        return payload
 
     async def analyze(self, request: VisionRequest) -> dict[str, object]:
         headers = {"Content-Type": "application/json"}
@@ -587,19 +749,55 @@ class OpenAICompatibleVisionBackend(VisionBackend):
 
         timeout = httpx.Timeout(self._runtime_config.timeout_seconds)
         payload = self._build_request_payload(request)
+        endpoint_url = self._endpoint_url()
+        payload_summary = _request_payload_summary(
+            endpoint_url=endpoint_url,
+            payload=payload,
+            request=request,
+            runtime_config=self._runtime_config,
+            provider_name=self._external_config.provider_name,
+            model_name=self.model_name,
+            vision_contract_profile=self._external_config.vision_contract_profile,
+        )
 
         try:
             async with httpx.AsyncClient(timeout=timeout) as client:
                 response = await client.post(
-                    self._endpoint_url(),
+                    endpoint_url,
                     json=payload,
                     headers=headers,
                 )
                 response.raise_for_status()
                 parsed_response = response.json()
+        except httpx.HTTPStatusError as exc:
+            response = exc.response
+            logger.error(
+                "External vision request failed with HTTP status. payload_summary=%s response_status=%s response_headers=%s response_preview=%s",
+                payload_summary,
+                response.status_code if response is not None else None,
+                _response_headers_summary(response),
+                _response_preview(response),
+            )
+            status_code = response.status_code if response is not None else "unknown"
+            reason_phrase = response.reason_phrase if response is not None else "HTTP error"
+            response_preview = _response_preview(response)
+            detail_suffix = f" Response preview: {response_preview}" if response_preview else ""
+            raise VisionBackendUnavailableError(
+                f"Vision endpoint request failed: HTTP {status_code} {reason_phrase} for url '{endpoint_url}'."
+                f"{detail_suffix}"
+            ) from exc
         except httpx.HTTPError as exc:
+            logger.error(
+                "External vision request failed before a valid HTTP response was processed. payload_summary=%s error=%s",
+                payload_summary,
+                exc,
+            )
             raise VisionBackendUnavailableError(f"Vision endpoint request failed: {exc}") from exc
         except Exception as exc:  # pragma: no cover - defensive normalization
+            logger.exception(
+                "External vision request execution failed unexpectedly. payload_summary=%s",
+                payload_summary,
+            )
             raise VisionBackendUnavailableError(f"Vision endpoint execution failed: {exc}") from exc
 
         if self._external_config.provider_name == "google_ai_studio":
@@ -609,12 +807,14 @@ class OpenAICompatibleVisionBackend(VisionBackend):
         try:
             self._last_output_diagnostics = diagnose_vision_output_text(
                 content,
+                vision_contract_profile=self._external_config.vision_contract_profile,
                 request=request,
                 provider_name=self._external_config.provider_name,
             )
             parsed_content = parse_vision_output_text(
                 content,
                 request,
+                vision_contract_profile=self._external_config.vision_contract_profile,
                 provider_name=self._external_config.provider_name,
             )
         except (json.JSONDecodeError, ValueError) as exc:
@@ -628,6 +828,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
             model_name=self.model_name,
             request=request,
             parsed=parsed_content,
+            vision_contract_profile=self._external_config.vision_contract_profile,
         )
 
 

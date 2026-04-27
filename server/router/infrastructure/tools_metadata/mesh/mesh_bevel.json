@@ -3,13 +3,27 @@
   "category": "mesh",
   "mode_required": "EDIT",
   "selection_required": true,
-  "keywords": ["bevel", "round", "chamfer", "smooth edges", "soften"],
+  "keywords": [
+    "bevel",
+    "round",
+    "chamfer",
+    "smooth edges",
+    "soften",
+    "muzzle transition",
+    "paw edge",
+    "creature silhouette",
+    "low poly soften",
+    "ear edge"
+  ],
   "sample_prompts": [
     "bevel the edges",
     "round the corners",
     "chamfer the selected edges",
     "smooth the edges",
-    "add bevel to all edges"
+    "add bevel to all edges",
+    "soften the low poly creature snout edges",
+    "round the ear base slightly without adding sculpt noise",
+    "bevel a paw blocker to improve the silhouette"
   ],
   "parameters": {
     "offset": {
@@ -39,5 +53,5 @@
   },
   "related_tools": ["mesh_extrude_region", "mesh_inset", "mesh_select"],
   "patterns": ["phone_like:edge_rounding", "box_like:chamfer"],
-  "description": "Bevels selected edges or vertices to create rounded or chamfered edges."
+  "description": "Bevels selected edges or vertices to create rounded or chamfered edges during low-poly creature silhouette cleanup."
 }

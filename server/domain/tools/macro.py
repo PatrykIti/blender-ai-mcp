@@ -49,6 +49,7 @@ class IMacroTool(ABC):
         align_mode: str = "center",
         gap: float = 0.0,
         offset: Optional[List[float]] = None,
+        max_mesh_nudge: float = 0.15,
         capture_profile: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Seat one part onto another object's surface/body with bounded contact placement."""

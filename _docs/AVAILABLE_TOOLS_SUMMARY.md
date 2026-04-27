@@ -89,14 +89,22 @@ Native prompt products:
 - `getting_started`
 - `workflow_router_first`
 - `manual_tools_no_router`
+- `reference_guided_creature_build`
 - `demo_low_poly_medieval_well`
 - `demo_generic_modeling`
 - `recommended_prompts`
 
+Prompt recommendation notes:
+
+- `recommended_prompts` now reacts to active goal/session context, not only
+  phase/profile
+- creature-oriented guided goals can surface the native
+  `reference_guided_creature_build` asset directly
+
 Measured current baseline:
 
-- `legacy-manual`: `163` visible tools, without router/workflow namespace exposure
-- `legacy-flat`: `170` visible tools
+- `legacy-manual`: `179` visible tools, without router/workflow namespace exposure
+- `legacy-flat`: `186` visible tools
 - `llm-guided`: `8` visible tools
 
 Why this matters:
@@ -104,6 +112,9 @@ Why this matters:
 - discovery respects guided visibility and does not leak hidden tools during bootstrap
 - the initial tool payload stays intentionally small
 - specialist families do not quietly become the default public path
+- read-only spatial graph tools such as `scene_scope_graph` and `scene_relation_graph`
+  now follow the same rule: searchable/on-demand where justified, but not
+  bootstrap-visible by default
 
 Specialist families such as armature, sculpt, text, baking, and similar
 maintainer-oriented areas are also intentionally excluded from the normal
@@ -141,6 +152,7 @@ The current structured-contract baseline covers:
 - `scene_get_hierarchy`
 - `scene_get_bounding_box`
 - `scene_get_origin_info`
+- `scene_view_diagnostics`
 - `scene_measure_distance`
 - `scene_measure_dimensions`
 - `scene_measure_gap`
@@ -229,7 +241,7 @@ None.
 | `scene_configure` | `action` (render/color_management/world), `settings` | Grouped write-side tool for render, color-management, and bounded world/background configuration. Full node-graph rebuild stays outside this surface. | ✅ Done |
 | `scene_list_objects` | *none* | Returns a list of all objects in the scene with their type and position. | ✅ Done |
 | `scene_delete_object` | `name` (str) | Deletes the specified object. | ✅ Done |
-| `scene_clean_scene` | `keep_lights_and_cameras` (bool) | Clears the scene. Canonical public cleanup flag is `keep_lights_and_cameras`; guided `call_tool(...)` also tolerates legacy `keep_lights` / `keep_cameras` only when both values agree. Can perform a "hard reset" if set to False. | ✅ Done |
+| `scene_clean_scene` | `keep_lights_and_cameras` (bool) | Clears the scene. Canonical public cleanup flag is `keep_lights_and_cameras`; guided `call_tool(...)` also tolerates legacy `keep_lights` / `keep_cameras` only when both values agree. Can perform a "hard reset" if set to False. Preferred as a utility step before `router_set_goal(...)`, but also exposed on the guided build surface as a bounded recovery hatch when stale scene state is discovered later. | ✅ Done |
 | `scene_duplicate_object` | `name` (str), `translation` ([x,y,z]) | Duplicates an object and optionally moves it. | ✅ Done |
 | `scene_set_active_object` | `name` (str) | Sets the active object (crucial for modifiers). | ✅ Done |
 | `scene_camera_orbit` | `angle_horizontal`, `angle_vertical`, `target_object` (optional), `target_point` (optional) | Orbits the viewport around a target object or point. | ✅ Done |
@@ -248,6 +260,9 @@ None.
 | `scene_get_hierarchy` | `object_name` (optional), `include_transforms` | Gets parent-child hierarchy for object or full scene tree. | ✅ Done |
 | `scene_get_bounding_box` | `object_name`, `world_space` | Gets bounding box corners, min/max, center, dimensions, volume. | ✅ Done |
 | `scene_get_origin_info` | `object_name` | Gets origin (pivot point) information relative to geometry. | ✅ Done |
+| `scene_scope_graph` | `target_object` (optional), `target_objects` (optional), `collection_name` (optional) | Returns one compact read-only scope graph for a target object/object-set/collection, including the inferred structural anchor and deterministic object-role hints. Kept off guided bootstrap by default and intended for on-demand spatial reasoning. | ✅ Done |
+| `scene_relation_graph` | `target_object` (optional), `target_objects` (optional), `collection_name` (optional), `goal_hint` (optional) | Returns one compact read-only relation graph derived from the current measure/assert truth layer, including bounded attachment/support/symmetry interpretations when justified. Kept off guided bootstrap by default and intended for on-demand spatial reasoning. | ✅ Done |
+| `scene_view_diagnostics` | `target_object` (optional), `target_objects` (optional), `collection_name` (optional), `camera_name` (optional), `focus_target` (optional), `view_name` (optional), `orbit_horizontal` (optional), `orbit_vertical` (optional), `zoom_factor` (optional), `persist_view` (optional) | Returns one compact read-only view-space diagnostics report with projected extent, frame coverage, centering, and visible/partial/occluded/off-frame verdicts for a named camera or the live `USER_PERSPECTIVE` path. Kept off guided bootstrap by default and intentionally separate from truth-space measure/assert semantics. | ✅ Done |
 | `scene_measure_distance` | `from_object`, `to_object`, `reference` | Measures origin or bbox-center distance between two objects. | ✅ Done |
 | `scene_measure_dimensions` | `object_name`, `world_space` | Measures object dimensions and volume from its bounding box. | ✅ Done |
 | `scene_measure_gap` | `from_object`, `to_object`, `tolerance` | Measures bbox gap/contact state between two objects. | ✅ Done |

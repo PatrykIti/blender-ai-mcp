@@ -10,6 +10,24 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 VisionBackendKind = Literal["transformers_local", "mlx_local", "openai_compatible_external"]
+VisionExternalProviderName = Literal["generic", "openrouter", "google_ai_studio"]
+VisionContractProfile = Literal["generic_full", "google_family_compare"]
+VisionSegmentationProviderName = Literal["generic_sidecar"]
+VisionModelCapabilitySource = Literal["fallback_registry", "openrouter_api", "env_override", "unknown"]
+
+
+class VisionModelCapabilities(BaseModel):
+    """Bounded model capability metadata used for request policy decisions."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    model_id: str
+    capability_source: VisionModelCapabilitySource = "unknown"
+    context_length: int | None = None
+    max_completion_tokens: int | None = None
+    input_modalities: list[str] = []
+    output_modalities: list[str] = []
+    supported_parameters: list[str] = []
 
 
 class VisionTransformersLocalConfig(BaseModel):
@@ -36,13 +54,18 @@ class VisionOpenAICompatibleConfig(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    provider_name: Literal["generic", "openrouter", "google_ai_studio"] = "generic"
+    provider_name: VisionExternalProviderName = "generic"
+    vision_contract_profile: VisionContractProfile = "generic_full"
     base_url: str | None = None
     model: str | None = None
     api_key: str | None = None
     api_key_env: str | None = None
     site_url: str | None = None
     site_name: str | None = None
+    require_parameters: bool = False
+    enable_response_healing: bool = True
+    prefer_json_object_for_qwen: bool = True
+    model_capabilities: VisionModelCapabilities | None = None
 
     @model_validator(mode="after")
     def validate_endpoint(self) -> "VisionOpenAICompatibleConfig":
@@ -86,6 +109,21 @@ class VisionRuntimeConfig(BaseModel):
     transformers_local: VisionTransformersLocalConfig | None = None
     mlx_local: VisionMLXLocalConfig | None = None
     openai_compatible_external: VisionOpenAICompatibleConfig | None = None
+    segmentation_sidecar: "VisionSegmentationSidecarConfig | None" = None
+
+    @property
+    def effective_max_tokens(self) -> int:
+        """Return the output-token cap after model-capability fallback policy."""
+
+        model_capabilities = (
+            self.openai_compatible_external.model_capabilities if self.openai_compatible_external is not None else None
+        )
+        model_cap = model_capabilities.max_completion_tokens if model_capabilities is not None else None
+        if model_cap is None:
+            return self.max_tokens
+        profile = self.active_vision_contract_profile
+        profile_floor = 4096 if profile == "google_family_compare" else 2048
+        return min(max(self.max_tokens, profile_floor), model_cap)
 
     @model_validator(mode="after")
     def validate_provider_config(self) -> "VisionRuntimeConfig":
@@ -132,3 +170,40 @@ class VisionRuntimeConfig(BaseModel):
         if isinstance(active, VisionMLXLocalConfig):
             return active.model_id or active.model_path
         return active.model
+
+    @property
+    def active_vision_contract_profile(self) -> VisionContractProfile | None:
+        """Return the resolved external vision contract profile for diagnostics."""
+
+        if self.provider != "openai_compatible_external" or self.openai_compatible_external is None:
+            return None
+        return self.openai_compatible_external.vision_contract_profile
+
+    @property
+    def active_segmentation_sidecar(self) -> "VisionSegmentationSidecarConfig | None":
+        """Return the optional segmentation sidecar config when enabled."""
+
+        return self.segmentation_sidecar
+
+
+class VisionSegmentationSidecarConfig(BaseModel):
+    """Configuration for the optional part-segmentation sidecar."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = False
+    provider_name: VisionSegmentationProviderName = "generic_sidecar"
+    endpoint: str | None = None
+    model: str | None = None
+    api_key: str | None = None
+    api_key_env: str | None = None
+    timeout_seconds: float = Field(default=15.0, gt=0)
+    max_parts: int = Field(default=16, ge=1, le=64)
+
+    @model_validator(mode="after")
+    def validate_endpoint(self) -> "VisionSegmentationSidecarConfig":
+        """Require an explicit endpoint only when the sidecar is enabled."""
+
+        if self.enabled and not self.endpoint:
+            raise ValueError("enabled segmentation_sidecar requires endpoint")
+        return self

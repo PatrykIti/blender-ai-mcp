@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
+import tomllib
 import types
 import urllib.error
 import zipfile
@@ -33,9 +35,89 @@ def test_streamable_openrouter_shell_script_contains_required_runtime_env():
         "MCP_STREAMABLE_HTTP_PATH",
         "BLENDER_RPC_HOST",
         "VISION_EXTERNAL_PROVIDER=openrouter",
+        'VISION_EXTERNAL_CONTRACT_PROFILE="${VISION_EXTERNAL_CONTRACT_PROFILE}"',
         'VISION_OPENROUTER_MODEL="${VISION_OPENROUTER_MODEL}"',
+        'VISION_OPENROUTER_REQUIRE_PARAMETERS="${VISION_OPENROUTER_REQUIRE_PARAMETERS}"',
+        'VISION_OPENROUTER_ENABLE_RESPONSE_HEALING="${VISION_OPENROUTER_ENABLE_RESPONSE_HEALING}"',
+        'VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN="${VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN}"',
     ):
         assert expected in script
+
+
+def test_update_openrouter_model_profiles_generates_vision_candidates(tmp_path):
+    module = _load_script("update_openrouter_model_profiles")
+    output_path = tmp_path / "openrouter_candidates.py"
+    catalog_path = tmp_path / "models.json"
+    catalog_path.write_text(
+        json.dumps(
+            {
+                "data": [
+                    {
+                        "id": "google/gemma-4-31b-it",
+                        "context_length": 262144,
+                        "architecture": {
+                            "input_modalities": ["image", "text"],
+                            "output_modalities": ["text"],
+                        },
+                        "top_provider": {"max_completion_tokens": 131072},
+                        "supported_parameters": ["max_tokens", "response_format"],
+                    },
+                    {
+                        "id": "openai/gpt-5.4-nano",
+                        "context_length": 400000,
+                        "architecture": {
+                            "input_modalities": ["file", "image", "text"],
+                            "output_modalities": ["text"],
+                        },
+                        "top_provider": {"max_completion_tokens": 128000},
+                        "supported_parameters": ["max_tokens", "response_format", "structured_outputs"],
+                    },
+                    {
+                        "id": "z-ai/glm-5.1",
+                        "context_length": 202752,
+                        "architecture": {
+                            "input_modalities": ["text"],
+                            "output_modalities": ["text"],
+                        },
+                        "top_provider": {"max_completion_tokens": 65535},
+                        "supported_parameters": ["max_tokens"],
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = module.main(
+        [
+            "--catalog-json",
+            str(catalog_path),
+            "--output",
+            str(output_path),
+            "--top-n",
+            "1",
+            "--reviewed-on",
+            "2026-04-12",
+        ]
+    )
+
+    output = output_path.read_text(encoding="utf-8")
+    assert result == 0
+    assert "google/gemma-4-31b-it" in output
+    assert "openai/gpt-5.4-nano" in output
+    assert "z-ai/glm-5.1" not in output
+    assert "context_length=400000" in output
+    assert "last_reviewed='2026-04-12'" in output
+
+
+def test_docker_runtime_install_path_keeps_pillow_in_main_dependencies():
+    dockerfile = (REPO_ROOT / "Dockerfile").read_text(encoding="utf-8")
+    pyproject = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+
+    main_dependencies = pyproject["project"]["dependencies"]
+
+    assert "RUN poetry install --no-interaction --no-ansi --no-root --only main" in dockerfile
+    assert any(dependency.startswith("pillow ") for dependency in main_dependencies)
 
 
 def test_build_addon_creates_zip_and_skips_ignored_files(tmp_path, monkeypatch, capsys):
@@ -161,9 +243,11 @@ def test_run_blender_with_rpc_and_kill_process(monkeypatch):
     kill_calls = []
     monkeypatch.setattr(module.os, "killpg", lambda pgid, sig: kill_calls.append((pgid, sig)))
 
-    started_process, ready = module.run_blender_with_rpc("/Applications/Blender")
+    started_process, ready, runtime_log_path = module.run_blender_with_rpc("/Applications/Blender")
     assert started_process is process
     assert ready is True
+    assert runtime_log_path.name.startswith("blender_runtime_")
+    assert runtime_log_path.exists()
 
     module.kill_blender_process(process)
     assert kill_calls
@@ -183,7 +267,9 @@ def test_save_test_log_and_main_happy_path(tmp_path, monkeypatch):
     monkeypatch.setattr(module, "find_blender_path", lambda _path=None: "/Applications/Blender")
     monkeypatch.setattr(module, "check_addon_installed", lambda _path: False)
     monkeypatch.setattr(module, "install_addon", lambda _path: True)
-    monkeypatch.setattr(module, "run_blender_with_rpc", lambda _path: (MagicMock(), True))
+    runtime_log = e2e_dir / "blender_runtime_test.log"
+    runtime_log.write_text("runtime ok\n", encoding="utf-8")
+    monkeypatch.setattr(module, "run_blender_with_rpc", lambda _path: (MagicMock(), True, runtime_log))
     monkeypatch.setattr(module, "run_e2e_tests", lambda verbose=True: (True, "OK"))
     monkeypatch.setattr(module, "kill_blender_process", lambda process: None)
     monkeypatch.setattr(module.sys, "argv", ["run_e2e_tests.py", "--skip-build", "--quiet"])
@@ -194,6 +280,7 @@ def test_save_test_log_and_main_happy_path(tmp_path, monkeypatch):
     logs = sorted(e2e_dir.glob("e2e_test_PASSED_*.log"))
     assert logs
     assert "Status: PASSED" in logs[0].read_text()
+    assert str(runtime_log) in logs[0].read_text()
 
 
 def test_run_e2e_tests_verbose_streams_output(monkeypatch):
@@ -214,6 +301,21 @@ def test_run_e2e_tests_verbose_streams_output(monkeypatch):
     assert success is True
     assert "line 1" in output
     assert "line 2" in output
+
+
+def test_save_test_log_includes_blender_runtime_tail(tmp_path, monkeypatch):
+    module = _load_script("run_e2e_tests")
+    monkeypatch.setattr(module, "E2E_TESTS_DIR", tmp_path)
+
+    runtime_log = tmp_path / "blender_runtime_123.log"
+    runtime_log.write_text("line a\nline b\nline c\n", encoding="utf-8")
+
+    saved = module.save_test_log("pytest output", False, blender_log_path=runtime_log)
+
+    content = saved.read_text(encoding="utf-8")
+    assert str(runtime_log) in content
+    assert "line a" in content
+    assert "pytest output" in content
 
 
 def test_translate_docs_helpers_cover_local_parsing_paths(tmp_path):
@@ -373,6 +475,8 @@ def test_vision_harness_can_build_openrouter_backend_config():
             "/tmp/before.png",
             "--external-provider",
             "openrouter",
+            "--external-contract-profile",
+            "google_family_compare",
             "--openrouter-model",
             "google/gemma-3-27b-it:free",
             "--openrouter-api-key-env",
@@ -387,6 +491,7 @@ def test_vision_harness_can_build_openrouter_backend_config():
     config = module._config_for_backend(args, "openai_compatible_external")
 
     assert config.VISION_EXTERNAL_PROVIDER == "openrouter"
+    assert config.VISION_EXTERNAL_CONTRACT_PROFILE == "google_family_compare"
     assert config.VISION_OPENROUTER_MODEL == "google/gemma-3-27b-it:free"
     assert config.VISION_OPENROUTER_API_KEY_ENV == "OPENROUTER_API_KEY"
     assert config.VISION_OPENROUTER_SITE_URL == "https://example.com"
@@ -406,6 +511,8 @@ def test_vision_harness_can_build_gemini_backend_config():
             "/tmp/before.png",
             "--external-provider",
             "google_ai_studio",
+            "--external-contract-profile",
+            "generic_full",
             "--gemini-model",
             "gemini-2.5-flash",
             "--gemini-api-key-env",
@@ -416,5 +523,6 @@ def test_vision_harness_can_build_gemini_backend_config():
     config = module._config_for_backend(args, "openai_compatible_external")
 
     assert config.VISION_EXTERNAL_PROVIDER == "google_ai_studio"
+    assert config.VISION_EXTERNAL_CONTRACT_PROFILE == "generic_full"
     assert config.VISION_GEMINI_MODEL == "gemini-2.5-flash"
     assert config.VISION_GEMINI_API_KEY_ENV == "GEMINI_API_KEY"

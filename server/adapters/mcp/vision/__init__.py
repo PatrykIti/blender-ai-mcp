@@ -31,9 +31,13 @@ from .capture_runtime import (
 )
 from .config import (
     VisionBackendKind,
+    VisionContractProfile,
+    VisionExternalProviderName,
     VisionMLXLocalConfig,
     VisionOpenAICompatibleConfig,
     VisionRuntimeConfig,
+    VisionSegmentationProviderName,
+    VisionSegmentationSidecarConfig,
     VisionTransformersLocalConfig,
 )
 from .evaluation import (
@@ -70,6 +74,8 @@ __all__ = [
     "VisionBackend",
     "VisionBackendKind",
     "VisionBackendUnavailableError",
+    "VisionContractProfile",
+    "VisionExternalProviderName",
     "VisionImageInput",
     "LazyVisionBackendResolver",
     "MLXLocalVisionBackend",
@@ -82,6 +88,8 @@ __all__ = [
     "VisionGoldenExpectations",
     "VisionGoldenScenario",
     "VisionOpenAICompatibleConfig",
+    "VisionSegmentationProviderName",
+    "VisionSegmentationSidecarConfig",
     "VisionRequest",
     "VisionRuntimeConfig",
     "VisionTransformersLocalConfig",

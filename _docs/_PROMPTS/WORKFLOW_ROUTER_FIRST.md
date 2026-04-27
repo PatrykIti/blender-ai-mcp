@@ -5,7 +5,8 @@ guided surface.
 
 If the client tends to get lost between router flow, discovery, and hidden
 tools, prepend [`GUIDED_SESSION_START.md`](./GUIDED_SESSION_START.md) before
-this prompt.
+this prompt. Treat `GUIDED_SESSION_START.md` as the generic search-first
+stabilizer for the guided surface.
 
 ---
 
@@ -41,9 +42,18 @@ REQUEST TRIAGE (FIRST STEP)
        * Call router_set_goal(goal, resolved_params={...}) with the answers.
        * Repeat until status == "ready".
    - If status == "ready":
-     * Proceed with visible build tools/macros.
-     * Prefer macro/workflow paths when they are a good fit.
-     * Do not keep re-searching if the right tool is already visible.
+       * Proceed with visible build tools/macros.
+       * Prefer macro/workflow paths when they are a good fit.
+       * Do not keep re-searching if the right tool is already visible.
+       * If `guided_flow_state` is present, respect `current_step`, `required_checks`, `next_actions`, `allowed_families`, `allowed_roles`, and `missing_roles`.
+       * If `reference_images(...)` are already attached for the active goal, read them as the primary grounding input before deciding the initial masses and silhouette.
+       * Use full semantic object names such as `Body`, `Head`, `Tail`, `ForeLeg_L`, and `HindLeg_R` instead of opaque abbreviations like `ForeL` / `HindR`.
+       * If the server warns or blocks on guided naming, replace the weak name with one of the suggested semantic names instead of retrying the same placeholder/abbreviation.
+       * Do not treat a default `Cube` or the generic root `Collection` as a meaningful guided target/workset on its own.
+       * For role-sensitive build calls, use either `guided_register_part(object_name=..., role=...)` or the convenience hint `guided_role=...` on the build tool call.
+       * Treat `guided_role=...` as convenience-only after an active guided flow exists; do not use it as a substitute for goal/session setup.
+       * If the session already advanced, bounded refinement of already-created primary masses and utility/workset operations can still be valid; read `allowed_roles`, `missing_roles`, and `next_actions` instead of assuming earlier objects are frozen forever.
+       * If the server names a `required prompt bundle` / `preferred prompt bundle`, treat those as supporting prompt assets, not as permission to bypass the guided flow.
 
 3) For B) utility/capture/scene-prep:
    - Do NOT call router_set_goal(...).
@@ -56,6 +66,9 @@ REQUEST TRIAGE (FIRST STEP)
      * call_tool(name="scene_get_viewport", arguments={...})
      * search_tools(query="clean reset fresh scene")
      * call_tool(name="scene_clean_scene", arguments={"keep_lights_and_cameras": true})
+   - If you discover stale scene state only after entering the build surface,
+     `scene_clean_scene(...)` is still an allowed recovery hatch there; cleanup
+     before the goal remains preferred.
 
 4) For C) guided manual build:
    - If workflow matching is not useful, continue on the guided build surface.
@@ -64,6 +77,8 @@ REQUEST TRIAGE (FIRST STEP)
    - If `guided_handoff` is present, use `guided_handoff.direct_tools` first.
    - Treat `guided_handoff.discovery_tools` as fallback only, not the default first move.
    - Use directly visible tools first.
+   - If a needed tool is not already directly visible, run `search_tools(...)`
+     before `call_tool(...)`.
    - Use search_tools / call_tool only when discovery is actually needed.
    - Do not guess hidden internal tool names and feed them into `call_tool(...)`.
      `call_tool(...)` cannot bypass current surface/phase visibility.
@@ -86,15 +101,22 @@ WORKFLOW MATCHING (ONLY WHEN REQUEST TYPE = BUILD/WORKFLOW)
    - If status == "ready":
        * Proceed with modeling. Prefer workflow/macro paths and only drop lower when necessary.
        * Do not treat the whole internal catalog as the default action space.
+       * If `guided_flow_state.current_step == "create_primary_masses"`, stay on core mass creation/placement before moving to appendages, openings, polish, or finish.
+       * Do not call `scene_scope_graph(...)`, `scene_relation_graph(...)`, or `scene_view_diagnostics(...)` with no explicit scope and assume that means “inspect the whole scene”.
        * If a needed tool is already directly visible on the current surface/phase, call it directly.
+       * If a needed tool is not already directly visible, use `search_tools(...)`
+         before `call_tool(...)`.
        * Use search_tools / call_tool only when you need discovery or need to reach a non-entry tool that is not already visible.
        * If `call_tool(...)` reports `Unknown tool`, do not keep guessing names; re-check the current phase/surface and whether build tools have actually been unlocked.
+       * If the server rejects a call because the family or role is wrong for the current step, do not retry by guessing another build tool name. Read `allowed_families`, `allowed_roles`, and `missing_roles`, then continue with the permitted family/role.
        * If the task is a bounded recess/cutout/opening, prefer `macro_cutout_recess` over manually creating cutters, placing them, and chaining boolean cleanup.
        * If the task is bounded relative placement/alignment/contact-gap work, prefer `macro_relative_layout` over transform-by-transform placement.
        * If the task is a bounded finishing stack (rounded housing, panel finish, shell thicken, smooth subdivision), prefer `macro_finish_form` over manually rebuilding the modifier stack with `modeling_add_modifier(...)`.
    - If status == "no_match" or "disabled":
        * If `continuation_mode == "guided_manual_build"`, continue on the guided build surface.
        * If `guided_handoff` is present, start from `guided_handoff.direct_tools` and respect `workflow_import_recommended=false`.
+       * If `guided_flow_state` is present, respect its step gating before broad build or finish actions.
+       * Use `guided_register_part(...)` or `guided_role=...` when the server needs semantic part roles to keep the build order enforceable.
        * Use directly visible build tools first.
        * Use search_tools / call_tool only when discovery is actually needed.
        * Only consider workflow import/create when the user explicitly wants that.
@@ -106,6 +128,7 @@ RELIABILITY (STILL REQUIRED)
 - If vision should support the task, prefer flows where:
    * the goal is already active
    * reference_images(...) are attached if available
+   * attached references are read/used as the primary grounding input before the first major build decisions
    * staged pending references may be attached before the goal exists and will be adopted by the next router_set_goal(...)
    * the build happens through macros or deterministic capture-aware steps
    * inspection/measure/assert tools confirm correctness after the visual summary

@@ -1,10 +1,17 @@
+import re
 from typing import Any, Dict, List, Optional, Union
 
 from fastmcp import Context
 
 from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
+from server.adapters.mcp.guided_contract import canonicalize_modeling_create_primitive_arguments
+from server.adapters.mcp.guided_naming_policy import evaluate_guided_object_name
 from server.adapters.mcp.router_helper import route_tool_call
-from server.adapters.mcp.session_capabilities import get_session_capability_state_async
+from server.adapters.mcp.session_capabilities import (
+    get_session_capability_state,
+    get_session_capability_state_async,
+    register_guided_part_role,
+)
 from server.adapters.mcp.utils import parse_coordinate, parse_dict
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.vision.integration import maybe_attach_macro_vision
@@ -29,6 +36,102 @@ MODELING_PUBLIC_TOOL_NAMES = (
     "skin_create_skeleton",
     "skin_set_radius",
 )
+
+_CREATED_OBJECT_RESULT_PATTERN = re.compile(r"Created .+ named '(.+)'$")
+_TRANSFORMED_OBJECT_RESULT_PATTERN = re.compile(r"Transformed object '(.+)'$")
+
+
+def _extract_created_object_name(result: str) -> str | None:
+    """Return the created object name from the canonical modeling success string."""
+
+    for line in reversed(result.splitlines()):
+        match = _CREATED_OBJECT_RESULT_PATTERN.search(line.strip())
+        if match is None:
+            continue
+        object_name = match.group(1).strip()
+        if object_name:
+            return object_name
+    return None
+
+
+def _has_transform_success(result: str, *, object_name: str) -> bool:
+    for line in result.splitlines():
+        match = _TRANSFORMED_OBJECT_RESULT_PATTERN.search(line.strip())
+        if match is None:
+            continue
+        if str(match.group(1)).strip() == object_name:
+            return True
+    return False
+
+
+def _maybe_register_guided_role(
+    ctx: Context,
+    *,
+    object_name: str | None,
+    guided_role: str | None,
+    role_group: str | None,
+) -> None:
+    """Register one guided role only when an active guided flow exists."""
+
+    if not guided_role:
+        return
+
+    session = get_session_capability_state(ctx)
+    if session.guided_flow_state is None:
+        return
+
+    normalized_object_name = str(object_name or "").strip()
+    if not normalized_object_name:
+        return
+
+    register_guided_part_role(
+        ctx,
+        object_name=normalized_object_name,
+        role=guided_role,
+        role_group=role_group,
+    )
+
+
+def _guided_create_requires_explicit_name(
+    ctx: Context,
+    *,
+    guided_role: str | None,
+    object_name: str | None,
+) -> str | None:
+    """Return one actionable error when guided create would rely on an auto-generated name."""
+
+    if not guided_role:
+        return None
+
+    session = get_session_capability_state(ctx)
+    if session.guided_flow_state is None:
+        return None
+
+    normalized_object_name = str(object_name or "").strip()
+    if normalized_object_name:
+        return None
+
+    domain_profile = str((session.guided_flow_state or {}).get("domain_profile") or "").strip()
+    current_step = str((session.guided_flow_state or {}).get("current_step") or "").strip() or None
+    suggested_names: list[str] = []
+    if domain_profile in {"generic", "creature", "building"}:
+        try:
+            decision = evaluate_guided_object_name(
+                object_name="Object",
+                role=guided_role,
+                domain_profile=domain_profile,  # type: ignore[arg-type]
+                current_step=current_step,
+            )
+            suggested_names = list(decision.suggested_names or [])
+        except Exception:
+            suggested_names = []
+
+    suggestion_suffix = f" Suggested names: {', '.join(suggested_names)}." if suggested_names else ""
+    return (
+        "Guided execution requires an explicit semantic `name` when `guided_role=...` is used on "
+        "modeling_create_primitive(...). Auto-generated Blender names are not accepted for semantic role "
+        f"registration.{suggestion_suffix}"
+    )
 
 
 def _register_tool(target: Any, fn: Any, tool_name: str) -> Any:
@@ -286,6 +389,13 @@ def _modeling_create_primitive_impl(
     location: Union[str, List[float]] = [0.0, 0.0, 0.0],
     rotation: Union[str, List[float]] = [0.0, 0.0, 0.0],
     name: str = None,
+    scale: Union[str, List[float], None] = None,
+    segments: int | None = None,
+    rings: int | None = None,
+    subdivisions: int | None = None,
+    collection_name: str | None = None,
+    guided_role: str | None = None,
+    role_group: str | None = None,
 ) -> str:
     """
     [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Creates a 3D primitive object.
@@ -299,29 +409,88 @@ def _modeling_create_primitive_impl(
         location: [x, y, z] coordinates. Can be a list [0.0, 0.0, 0.0] or string '[0.0, 0.0, 0.0]'.
         rotation: [rx, ry, rz] rotation in radians. Can be a list or string.
         name: Optional name for the new object.
+        scale: Compatibility-only drift catcher. The guided public surface
+            requires a follow-up `modeling_transform_object(scale=...)` call.
+        segments: Compatibility-only drift catcher for rejected primitive-only topology knobs.
+        rings: Compatibility-only drift catcher for rejected primitive-only topology knobs.
+        subdivisions: Compatibility-only drift catcher for rejected primitive-only topology knobs.
+        collection_name: Compatibility-only drift catcher. Move/link after
+            creation with `collection_manage(...)`.
     """
+    canonical_arguments = canonicalize_modeling_create_primitive_arguments(
+        {
+            key: value
+            for key, value in {
+                "primitive_type": primitive_type,
+                "radius": radius,
+                "size": size,
+                "location": location,
+                "rotation": rotation,
+                "name": name,
+                "scale": scale,
+                "segments": segments,
+                "rings": rings,
+                "subdivisions": subdivisions,
+                "collection_name": collection_name,
+                "guided_role": guided_role,
+                "role_group": role_group,
+            }.items()
+            if value is not None
+        }
+    )
+    primitive_type_value = str(canonical_arguments["primitive_type"])
+    radius_value = float(canonical_arguments.get("radius", radius))
+    size_value = float(canonical_arguments.get("size", size))
+    location_value = canonical_arguments.get("location", location)
+    rotation_value = canonical_arguments.get("rotation", rotation)
+    name_value = canonical_arguments.get("name")
+    guided_name_error = _guided_create_requires_explicit_name(
+        ctx,
+        guided_role=guided_role,
+        object_name=str(name_value).strip() if name_value else None,
+    )
+    if guided_name_error is not None:
+        raise ValueError(guided_name_error)
 
     def execute():
         handler = get_modeling_handler()
         try:
-            parsed_location = parse_coordinate(location) or [0.0, 0.0, 0.0]
-            parsed_rotation = parse_coordinate(rotation) or [0.0, 0.0, 0.0]
-            return handler.create_primitive(primitive_type, radius, size, parsed_location, parsed_rotation, name)
+            parsed_location = parse_coordinate(location_value) or [0.0, 0.0, 0.0]
+            parsed_rotation = parse_coordinate(rotation_value) or [0.0, 0.0, 0.0]
+            return handler.create_primitive(
+                primitive_type_value,
+                radius_value,
+                size_value,
+                parsed_location,
+                parsed_rotation,
+                name_value,
+            )
         except (RuntimeError, ValueError) as e:
             return str(e)
 
-    return route_tool_call(
+    result = route_tool_call(
         tool_name="modeling_create_primitive",
         params={
-            "primitive_type": primitive_type,
-            "radius": radius,
-            "size": size,
-            "location": location,
-            "rotation": rotation,
-            "name": name,
+            "primitive_type": primitive_type_value,
+            "radius": radius_value,
+            "size": size_value,
+            "location": location_value,
+            "rotation": rotation_value,
+            "name": name_value,
+            "guided_role": guided_role,
+            "role_group": role_group,
         },
         direct_executor=execute,
     )
+    created_object_name = _extract_created_object_name(result) if isinstance(result, str) else None
+    if guided_role and created_object_name is not None:
+        _maybe_register_guided_role(
+            ctx,
+            object_name=created_object_name,
+            guided_role=guided_role,
+            role_group=role_group,
+        )
+    return result
 
 
 def modeling_create_primitive(
@@ -332,6 +501,13 @@ def modeling_create_primitive(
     location: Union[str, List[float]] = [0.0, 0.0, 0.0],
     rotation: Union[str, List[float]] = [0.0, 0.0, 0.0],
     name: str = None,
+    scale: Union[str, List[float], None] = None,
+    segments: int | None = None,
+    rings: int | None = None,
+    subdivisions: int | None = None,
+    collection_name: str | None = None,
+    guided_role: str | None = None,
+    role_group: str | None = None,
 ) -> str:
     """
     [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Creates a 3D primitive object.
@@ -354,6 +530,13 @@ def modeling_create_primitive(
         location,
         rotation,
         name,
+        scale,
+        segments,
+        rings,
+        subdivisions,
+        collection_name,
+        guided_role,
+        role_group,
     )
 
 
@@ -363,6 +546,8 @@ def _modeling_transform_object_impl(
     location: Union[str, List[float], None] = None,
     rotation: Union[str, List[float], None] = None,
     scale: Union[str, List[float], None] = None,
+    guided_role: str | None = None,
+    role_group: str | None = None,
 ) -> str:
     """
     [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Transforms (move, rotate, scale) an existing object.
@@ -386,11 +571,26 @@ def _modeling_transform_object_impl(
         except (RuntimeError, ValueError) as e:
             return str(e)
 
-    return route_tool_call(
+    result = route_tool_call(
         tool_name="modeling_transform_object",
-        params={"name": name, "location": location, "rotation": rotation, "scale": scale},
+        params={
+            "name": name,
+            "location": location,
+            "rotation": rotation,
+            "scale": scale,
+            "guided_role": guided_role,
+            "role_group": role_group,
+        },
         direct_executor=execute,
     )
+    if guided_role and isinstance(result, str) and _has_transform_success(result, object_name=name):
+        _maybe_register_guided_role(
+            ctx,
+            object_name=name,
+            guided_role=guided_role,
+            role_group=role_group,
+        )
+    return result
 
 
 def modeling_transform_object(
@@ -399,6 +599,8 @@ def modeling_transform_object(
     location: Union[str, List[float], None] = None,
     rotation: Union[str, List[float], None] = None,
     scale: Union[str, List[float], None] = None,
+    guided_role: str | None = None,
+    role_group: str | None = None,
 ) -> str:
     """
     [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Transforms (move, rotate, scale) an existing object.
@@ -411,7 +613,7 @@ def modeling_transform_object(
         rotation: New [rx, ry, rz] rotation in radians (optional). Can be a list or string.
         scale: New [sx, sy, sz] scale factors (optional). Can be a list or string.
     """
-    return _modeling_transform_object_impl(ctx, name, location, rotation, scale)
+    return _modeling_transform_object_impl(ctx, name, location, rotation, scale, guided_role, role_group)
 
 
 def _modeling_add_modifier_impl(

@@ -66,7 +66,7 @@ class WorkflowTriggerer:
         # Heuristic: CUBE with flat Z scale → phone/tablet
         self.register_heuristic(
             tool_name="modeling_create_primitive",
-            param_key="type",
+            param_key="primitive_type",
             param_value="CUBE",
             heuristic=self._heuristic_flat_cube,
         )
@@ -150,6 +150,13 @@ class WorkflowTriggerer:
             logger.debug(f"[TRIGGERER] Using pattern workflow: {pattern.suggested_workflow}")
             return pattern.suggested_workflow
 
+        # If the operator already set an explicit goal but the router intentionally
+        # chose a manual/no-match path, do not let low-confidence heuristics reopen
+        # unrelated workflows during ordinary direct tool usage.
+        if self._explicit_goal:
+            logger.debug("[TRIGGERER] Explicit goal present without workflow match; suppressing heuristics")
+            return None
+
         # Priority 3: Heuristic-based detection
         heuristic_workflow = self._check_heuristic_trigger(tool_name, params, context)
         if heuristic_workflow:
@@ -205,7 +212,11 @@ class WorkflowTriggerer:
             if ":" in key:
                 param_key, param_value = key.split(":", 1)
                 # Check if param matches
-                if params.get(param_key) != param_value:
+                actual_value = params.get(param_key)
+                if isinstance(actual_value, str) and isinstance(param_value, str):
+                    if actual_value.casefold() != param_value.casefold():
+                        continue
+                elif actual_value != param_value:
                     continue
             else:
                 param_key = key

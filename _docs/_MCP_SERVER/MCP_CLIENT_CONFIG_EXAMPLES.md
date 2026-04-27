@@ -43,6 +43,17 @@ surface:
 }
 ```
 
+Guided creature contract reminders for this profile:
+
+- use `call_tool(name=..., arguments=...)` as the canonical discovery wrapper
+- use `scene_clean_scene(keep_lights_and_cameras=...)` as the canonical cleanup shape
+- attach one reference per call with `reference_images(action="attach", source_path=...)`
+- use `collection_manage(action=..., collection_name=...)` as the canonical collection target shape
+- use `modeling_create_primitive(...)` only with `primitive_type`,
+  `radius`/`size`, `location`, `rotation`, and optional `name`
+- if `loop_disposition="inspect_validate"` or degraded compare still returns
+  strong truth findings, stop free-form modeling and switch to inspect/measure/assert
+
 ## Local Guided + MLX Vision
 
 Recommended for Apple Silicon local vision testing:
@@ -89,11 +100,15 @@ Uses the external-runtime path with OpenRouter-specific config aliases:
         "VISION_ENABLED": "true",
         "VISION_PROVIDER": "openai_compatible_external",
         "VISION_EXTERNAL_PROVIDER": "openrouter",
+        "VISION_EXTERNAL_CONTRACT_PROFILE": "google_family_compare",
         "VISION_OPENROUTER_MODEL": "google/gemma-3-27b-it:free",
         "VISION_OPENROUTER_API_KEY_ENV": "OPENROUTER_API_KEY",
         "OPENROUTER_API_KEY": "<YOUR_OPENROUTER_KEY>",
         "VISION_OPENROUTER_SITE_URL": "https://example.com",
         "VISION_OPENROUTER_SITE_NAME": "blender-ai-mcp-dev",
+        "VISION_OPENROUTER_REQUIRE_PARAMETERS": "false",
+        "VISION_OPENROUTER_ENABLE_RESPONSE_HEALING": "true",
+        "VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN": "true",
         "VISION_MAX_IMAGES": "8",
         "VISION_MAX_TOKENS": "600",
         "VISION_TIMEOUT_SECONDS": "120",
@@ -122,6 +137,7 @@ Uses the same external-runtime path with the Gemini provider profile:
         "VISION_ENABLED": "true",
         "VISION_PROVIDER": "openai_compatible_external",
         "VISION_EXTERNAL_PROVIDER": "google_ai_studio",
+        "VISION_EXTERNAL_CONTRACT_PROFILE": "google_family_compare",
         "VISION_GEMINI_MODEL": "gemini-2.5-flash",
         "VISION_GEMINI_API_KEY_ENV": "GEMINI_API_KEY",
         "GEMINI_API_KEY": "<YOUR_GEMINI_KEY>",
@@ -132,6 +148,25 @@ Uses the same external-runtime path with the Gemini provider profile:
       }
     }
   }
+}
+```
+
+## Optional Segmentation Sidecar Add-On
+
+This sidecar stays disabled by default and is separate from the normal
+`VISION_EXTERNAL_CONTRACT_PROFILE` routing surface.
+
+Add these env vars only when you explicitly want the advisory part-segmentation path:
+
+```json
+{
+  "VISION_SEGMENTATION_ENABLED": "true",
+  "VISION_SEGMENTATION_PROVIDER": "generic_sidecar",
+  "VISION_SEGMENTATION_ENDPOINT": "http://127.0.0.1:9100/segment",
+  "VISION_SEGMENTATION_MODEL": "sam-sidecar-v1",
+  "VISION_SEGMENTATION_API_KEY_ENV": "SEGMENTATION_API_KEY",
+  "VISION_SEGMENTATION_TIMEOUT_SECONDS": "15",
+  "VISION_SEGMENTATION_MAX_PARTS": "16"
 }
 ```
 
@@ -226,11 +261,15 @@ semantics and will not work reliably.
         "-e", "VISION_ENABLED=true",
         "-e", "VISION_PROVIDER=openai_compatible_external",
         "-e", "VISION_EXTERNAL_PROVIDER=openrouter",
+        "-e", "VISION_EXTERNAL_CONTRACT_PROFILE=google_family_compare",
         "-e", "VISION_OPENROUTER_MODEL=google/gemma-3-27b-it:free",
         "-e", "VISION_OPENROUTER_API_KEY_ENV=OPENROUTER_API_KEY",
         "-e", "OPENROUTER_API_KEY=<YOUR_OPENROUTER_KEY>",
         "-e", "VISION_OPENROUTER_SITE_URL=https://example.com",
         "-e", "VISION_OPENROUTER_SITE_NAME=blender-ai-mcp-dev",
+        "-e", "VISION_OPENROUTER_REQUIRE_PARAMETERS=false",
+        "-e", "VISION_OPENROUTER_ENABLE_RESPONSE_HEALING=true",
+        "-e", "VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN=true",
         "-e", "VISION_MAX_IMAGES=8",
         "-e", "VISION_MAX_TOKENS=600",
         "-e", "VISION_TIMEOUT_SECONDS=120",
@@ -262,6 +301,7 @@ semantics and will not work reliably.
         "-e", "VISION_ENABLED=true",
         "-e", "VISION_PROVIDER=openai_compatible_external",
         "-e", "VISION_EXTERNAL_PROVIDER=google_ai_studio",
+        "-e", "VISION_EXTERNAL_CONTRACT_PROFILE=google_family_compare",
         "-e", "VISION_GEMINI_MODEL=gemini-2.5-flash",
         "-e", "VISION_GEMINI_API_KEY_ENV=GEMINI_API_KEY",
         "-e", "GEMINI_API_KEY=<YOUR_GEMINI_KEY>",
@@ -328,6 +368,12 @@ Compatibility-oriented broad surface:
 - OpenRouter and Gemini both ride on the same bounded
   `openai_compatible_external` path; the difference is the provider profile and
   provider-specific env vars
+- `VISION_EXTERNAL_PROVIDER` chooses transport/provider wiring, while
+  `VISION_EXTERNAL_CONTRACT_PROFILE` optionally forces the external
+  prompt/schema/parser contract for compare flows
+- when `VISION_EXTERNAL_CONTRACT_PROFILE` is omitted, the runtime can
+  auto-match Google-family model ids such as `gemma` / `gemini`; the explicit
+  examples above keep the compare-path assumption visible in client config
 - the same env model works for both local venv launch and Docker launch; only
   `command` / `args` differ
 - for local image/file outputs, keep `/tmp` host-visible if your client expects

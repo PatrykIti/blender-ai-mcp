@@ -21,6 +21,20 @@ class FakeSceneTool:
                 "center": [1.25, 0.0, 1.0],
                 "dimensions": [0.2, 0.4, 0.6],
             },
+            "Body": {
+                "object_name": "Body",
+                "min": [-1.0, -1.0, -1.0],
+                "max": [1.0, 1.0, 1.0],
+                "center": [0.0, 0.0, 0.0],
+                "dimensions": [2.0, 2.0, 2.0],
+            },
+            "Forelimb": {
+                "object_name": "Forelimb",
+                "min": [0.7, -0.15, -1.35],
+                "max": [1.3, 0.15, -1.05],
+                "center": [1.0, 0.0, -1.2],
+                "dimensions": [0.6, 0.3, 0.3],
+            },
         }
 
     def get_bounding_box(self, object_name, world_space=True):
@@ -79,14 +93,25 @@ class FakeSceneTool:
         }
 
     def measure_overlap(self, from_object, to_object, tolerance=0.0001):
+        left = self.boxes[from_object]
+        right = self.boxes[to_object]
+        overlap_dimensions = [
+            max(
+                0.0,
+                min(float(left["max"][idx]), float(right["max"][idx]))
+                - max(float(left["min"][idx]), float(right["min"][idx])),
+            )
+            for idx in range(3)
+        ]
+        overlaps = all(value > tolerance for value in overlap_dimensions)
         return {
             "from_object": from_object,
             "to_object": to_object,
-            "overlaps": False,
+            "overlaps": overlaps,
             "touching": self.measure_gap(from_object, to_object, tolerance)["relation"] == "contact",
-            "relation": "disjoint",
-            "overlap_dimensions": [0.0, 0.0, 0.0],
-            "overlap_volume": 0.0,
+            "relation": "overlap" if overlaps else "disjoint",
+            "overlap_dimensions": overlap_dimensions,
+            "overlap_volume": overlap_dimensions[0] * overlap_dimensions[1] * overlap_dimensions[2],
             "intersection_min": None,
             "intersection_max": None,
             "tolerance": tolerance,
@@ -141,7 +166,8 @@ def test_macro_align_part_with_contact_inferrs_side_and_repairs_gap():
     assert modeling.calls[0][1]["location"] == pytest.approx([1.1, 0.0, 1.0], abs=1e-9)
     assert result["actions_taken"][1]["details"]["normal_axis"] == "X"
     assert result["actions_taken"][1]["details"]["preserved_side"] == "positive"
-    assert result["actions_taken"][-1]["details"]["contact_assertion"]["passed"] is True
+    assert result["actions_taken"][-2]["details"]["contact_assertion"]["passed"] is True
+    assert result["actions_taken"][-1]["details"]["attachment_verdict"] == "seated_contact"
 
 
 def test_macro_align_part_with_contact_blocks_when_nudge_exceeds_bound():
@@ -161,6 +187,83 @@ def test_macro_align_part_with_contact_blocks_when_nudge_exceeds_bound():
     assert result["macro_name"] == "macro_align_part_with_contact"
     assert modeling.calls == []
     assert "exceeds max_nudge" in (result["error"] or "")
+
+
+def test_macro_align_part_with_contact_blocks_implicit_axis_for_overlapping_pair():
+    scene = FakeSceneTool()
+    scene.boxes["Head"]["center"] = [0.4, 0.0, 0.65]
+    scene.set_center("Head", scene.boxes["Head"]["center"])
+    modeling = FakeModelingTool(scene)
+    handler = MacroToolHandler(scene, modeling)
+
+    result = handler.align_part_with_contact(
+        part_object="Head",
+        reference_object="Body",
+        target_relation="contact",
+        align_mode="none",
+        max_nudge=0.5,
+    )
+
+    assert result["status"] == "blocked"
+    assert modeling.calls == []
+    assert "already overlaps/intersects" in (result["error"] or "")
+    assert "can detach dependent parts" in (result["error"] or "")
+
+
+def test_macro_align_part_with_contact_repairs_forelimb_body_gap_as_attachment():
+    scene = FakeSceneTool()
+    modeling = FakeModelingTool(scene)
+    handler = MacroToolHandler(scene, modeling)
+
+    result = handler.align_part_with_contact(
+        part_object="Forelimb",
+        reference_object="Body",
+        target_relation="contact",
+        align_mode="none",
+        max_nudge=0.2,
+    )
+
+    assert result["status"] == "success"
+    assert modeling.calls[0][1]["location"] == pytest.approx([1.0, 0.0, -1.15], abs=1e-9)
+    assert result["actions_taken"][-1]["details"]["attachment_verdict"] == "seated_contact"
+
+
+def test_macro_align_part_with_contact_reports_partial_when_pair_is_still_detached():
+    scene = FakeSceneTool()
+    modeling = FakeModelingTool(scene)
+    handler = MacroToolHandler(scene, modeling)
+
+    def _assert_contact(from_object, to_object, max_gap=0.001, allow_overlap=False):
+        return {
+            "assertion": "scene_assert_contact",
+            "passed": False,
+            "subject": from_object,
+            "target": to_object,
+            "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+            "actual": {"gap": 0.02, "relation": "separated"},
+            "delta": {"gap_overage": 0.019},
+            "tolerance": max_gap,
+            "units": "blender_units",
+            "details": {
+                "axis_gap": {"x": 0.02, "y": 0.0, "z": 0.0},
+                "measured_relation": "separated",
+                "overlap_rejected": False,
+            },
+        }
+
+    scene.assert_contact = _assert_contact
+
+    result = handler.align_part_with_contact(
+        part_object="Ear",
+        reference_object="Head",
+        target_relation="contact",
+        align_mode="none",
+        max_nudge=0.2,
+    )
+
+    assert result["status"] == "partial"
+    assert "still not seated/attached correctly" in (result["error"] or "")
+    assert result["actions_taken"][-1]["details"]["attachment_verdict"] == "floating_gap"
 
 
 def test_pair_truth_summary_carries_bbox_touching_vs_surface_gap_note():

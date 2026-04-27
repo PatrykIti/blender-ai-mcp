@@ -27,6 +27,57 @@ It is not the place for:
 
 Those belong to the FastMCP platform layer and router stack on the server side.
 
+## Runtime Diagnostics
+
+The addon now also keeps one best-effort RPC crash-trace for debugging unstable
+Blender/runtime sessions:
+
+- default location:
+  `$(python -c "import tempfile; print(tempfile.gettempdir())")/blender-ai-mcp/`
+- filename pattern:
+  `rpc_trace_YYYYMMDD_HHMMSS_<pid>.jsonl`
+- override directory:
+  `BLENDER_AI_MCP_TRACE_DIR`
+- if the trace directory cannot be created or opened, the addon continues in
+  no-trace mode rather than failing RPC startup
+
+The file is newline-delimited JSON and records:
+
+- received RPC commands
+- handler start/completion/error
+- timeout events
+- background job lifecycle events
+
+This trace is meant to answer one practical question after a sudden Blender
+exit: which RPC command was the last one that actually started running?
+Trace writes are intentionally buffered by the runtime file path and do not
+force a per-event disk `fsync` on the RPC hot path.
+
+## RPC Listener Self-Healing
+
+The addon-side RPC listener now has a lightweight watchdog.
+
+- the listener still starts during addon `register()`
+- a Blender timer now periodically checks whether the RPC listener thread and
+  socket are still healthy
+- if the listener is no longer healthy, the addon performs a best-effort
+  `stop()` + `start()` cycle for the RPC server
+- watchdog self-heal now preserves tracked `background_jobs`, so long-running
+  task-mode jobs do not disappear from `rpc.get_job` / `rpc.collect_job` just
+  because the listener had to restart
+- the watchdog is stopped during addon `unregister()`
+
+Current tuning:
+
+- environment variable:
+  `BLENDER_AI_MCP_RPC_WATCHDOG_INTERVAL_SECONDS`
+- default:
+  `5.0`
+
+This watchdog is intentionally scoped to the addon's RPC listener only.
+The addon does not maintain its own outbound connection to the MCP server, so
+there is no separate "reconnect to MCP" loop on the Blender side.
+
 ## 🛠 Structure (Clean Architecture)
 
 The Addon is layered to separate Blender logic from networking mechanisms.
@@ -86,6 +137,7 @@ Technical details.
 | `scene.configure_world` | `configure_world` | Applies grouped world/background settings without taking ownership of arbitrary node-graph authoring, and rejects payloads that cross into full graph rebuild scope. |
 | `scene.get_constraints` | `get_constraints` | Returns object (and optional bone) constraints. |
 | `get_viewport` | `get_viewport` | Returns a base64 encoded viewport/image capture. `USER_PERSPECTIVE` follows the live 3D view and supports bounded `view_name` / orbit / zoom adjustments; named cameras use the scene-camera render path instead. |
+| `scene.get_view_diagnostics` | `get_view_diagnostics` | Returns compact machine-readable view-space diagnostics for one target scope, including projected extent, frame coverage, centering, and visible/partial/occluded/off-frame verdicts for a named camera or the live `USER_PERSPECTIVE` path. |
 | `scene.get_custom_properties` | `get_custom_properties` | Gets custom properties (metadata) from an object. |
 | `scene.set_custom_property` | `set_custom_property` | Sets or deletes a custom property on an object. |
 | `scene.get_hierarchy` | `get_hierarchy` | Gets parent-child hierarchy for object or full scene. |
@@ -108,6 +160,8 @@ Technical details.
   - named `camera_name` values render from the explicit scene camera and follow render visibility
   - `camera_name="USER_PERSPECTIVE"` captures the live 3D viewport, can apply bounded view/orbit/zoom adjustments, and requires an active 3D view
 - if OpenGL capture is unavailable for `USER_PERSPECTIVE`, the addon mirrors the live view into a temporary camera and falls back through Workbench/Cycles so the result still tracks what the operator saw
+- `scene.get_view_diagnostics` reuses the same named-camera vs `USER_PERSPECTIVE` split and the same bounded user-view adjustment semantics, but returns typed projection/framing/occlusion facts instead of pixels
+- when `scene.get_view_diagnostics` mirrors a standard `USER_PERSPECTIVE` view such as `FRONT`, `RIGHT`, or `TOP`, the temporary analysis camera now preserves orthographic projection instead of falling back to perspective framing
 - `scene.measure_gap`, `scene.measure_overlap`, and `scene.assert_contact` now distinguish:
   - `measurement_basis="mesh_surface"` when a bounded evaluated-mesh/BVH path is available for mesh pairs
   - `measurement_basis="bounding_box"` when the addon must fall back to coarse bbox-only truth

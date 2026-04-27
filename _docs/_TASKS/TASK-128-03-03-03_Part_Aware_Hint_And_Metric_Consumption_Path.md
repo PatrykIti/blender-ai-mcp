@@ -1,7 +1,7 @@
 # TASK-128-03-03-03: Part-Aware Hint and Metric Consumption Path
 
 **Parent:** [TASK-128-03-03](./TASK-128-03-03_Part_Masks_Crops_Landmarks_And_Localized_Hints.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟠 High
 
 ## Objective

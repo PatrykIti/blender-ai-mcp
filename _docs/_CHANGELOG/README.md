@@ -6,6 +6,60 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [266](./266-2026-04-27-guided-visibility-and-stage-capture-focus.md) | 2026-04-27 | **Guided visibility and stage capture focus** | - |
+| [265](./265-2026-04-27-guided-success-parser-apostrophes.md) | 2026-04-27 | **Guided success parser apostrophes** | - |
+| [264](./264-2026-04-27-guided-spatial-scope-and-rpc-trace-hardening.md) | 2026-04-27 | **Guided spatial scope and RPC trace hardening** | - |
+| [263](./263-2026-04-26-guided-duplicate-spatial-dirtying.md) | 2026-04-26 | **Guided duplicate spatial dirtying** | - |
+| [262](./262-2026-04-26-guided-incomplete-build-iterate-hold.md) | 2026-04-26 | **Guided incomplete-build iterate hold** | - |
+| [261](./261-2026-04-26-guided-role-group-validation.md) | 2026-04-26 | **Guided role-group validation** | - |
+| [260](./260-2026-04-25-guided-partial-macro-and-spatial-helper-policy.md) | 2026-04-25 | **Guided partial macro and spatial-helper policy preservation** | - |
+| [259](./259-2026-04-24-guided-role-hint-visibility-refresh.md) | 2026-04-24 | **Guided role-hint visibility refresh** | - |
+| [258](./258-2026-04-24-guided-routed-step-policy-and-view-diagnostics-cleanup.md) | 2026-04-24 | **Guided routed-step policy and view diagnostics cleanup** | - |
+| [257](./257-2026-04-24-guided-governor-unmapped-mutator-fail-closed.md) | 2026-04-24 | **Guided governor unmapped mutator fail-closed** | - |
+| [256](./256-2026-04-24-guided-iterate-recovery-and-partial-macro-dirty-state.md) | 2026-04-24 | **Guided iterate recovery and partial macro dirty state** | - |
+| [255](./255-2026-04-24-guided-macro-schema-and-routed-spatial-dirty-tracking.md) | 2026-04-24 | **Guided macro schema and routed spatial dirty tracking** | - |
+| [254](./254-2026-04-23-guided-stage-checkpoint-viewport-and-silhouette-fixes.md) | 2026-04-23 | **Guided stage checkpoint, viewport, and silhouette fixes** | - |
+| [253](./253-2026-04-23-guided-mesh-family-and-relation-bootstrap-fixes.md) | 2026-04-23 | **Guided mesh family and relation/bootstrap fixes** | - |
+| [252](./252-2026-04-22-spatial-scope-errors-visibility-refresh-and-ortho-diagnostics.md) | 2026-04-22 | **Spatial scope errors, visibility refresh, and ortho diagnostics** | - |
+| [251](./251-2026-04-22-guided-explicit-scope-binding-and-startup-subset-bootstrap.md) | 2026-04-22 | **Guided explicit-scope binding and startup-subset bootstrap** | - |
+| [250](./250-2026-04-22-guided-scope-validation-unavailable-view-checks-and-sidecar-status.md) | 2026-04-22 | **Guided scope validation, unavailable view checks, and sidecar status** | - |
+| [249](./249-2026-04-22-guided-create-failure-and-new-goal-registry-reset.md) | 2026-04-22 | **Guided create failure and new-goal registry reset** | - |
+| [248](./248-2026-04-22-guided-pair-semantics-and-post-nudge-capture-refresh.md) | 2026-04-22 | **Guided pair semantics and post-nudge capture refresh** | - |
+| [247](./247-2026-04-22-guided-startup-bootstrap-and-quoted-name-registration.md) | 2026-04-22 | **Guided startup bootstrap and quoted-name registration** | - |
+| [246](./246-2026-04-22-guided-failed-mutation-guards-and-nonempty-blockout-detection.md) | 2026-04-22 | **Guided failed-mutation guards and non-empty blockout detection** | - |
+| [245](./245-2026-04-22-guided-multistep-registration-and-canonical-pair-names.md) | 2026-04-22 | **Guided multi-step registration and canonical pair names** | - |
+| [244](./244-2026-04-22-pattern-token-boundaries-and-watchdog-job-preservation.md) | 2026-04-22 | **Pattern, token-boundary, and watchdog job preservation fixes** | - |
+| [243](./243-2026-04-22-guided-scene-validation-boundary-and-topology-dirty-ops.md) | 2026-04-22 | **Guided scene validation boundary and topology dirty ops** | - |
+| [242](./242-2026-04-22-guided-name-and-registry-sync-hardening.md) | 2026-04-22 | **Guided name and registry sync hardening** | - |
+| [241](./241-2026-04-21-guided-registry-scene-reset-and-rename-sync.md) | 2026-04-21 | **Guided registry scene reset and rename sync** | - |
+| [240](./240-2026-04-21-guided-role-convenience-registration-fixes.md) | 2026-04-21 | **Guided role convenience registration fixes** | - |
+| [239](./239-2026-04-21-openrouter-require-parameters-default-false.md) | 2026-04-21 | **OpenRouter require_parameters default false** | - |
+| [238](./238-2026-04-14-compact-iterate-and-organic-seating-planner.md) | 2026-04-14 | **Compact iterate and organic seating planner** | - |
+| [237](./237-2026-04-14-guided-pair-role-cardinality.md) | 2026-04-14 | **Guided pair role cardinality** | - |
+| [236](./236-2026-04-12-openrouter-gpt54-nano-fallback-capabilities.md) | 2026-04-12 | **OpenRouter GPT-5.4 Nano fallback capabilities** | - |
+| [235](./235-2026-04-12-openai-azure-vision-schema-strictness.md) | 2026-04-12 | **OpenAI/Azure vision schema strictness** | - |
+| [234](./234-2026-04-11-guided-post-run-reliability-followups.md) | 2026-04-11 | **Guided post-run reliability follow-ups** | - |
+| [233](./233-2026-04-10-generic-guided-governor-hardening.md) | 2026-04-10 | **Generic guided governor hardening** | - |
+| [232](./232-2026-04-10-guided-naming-policy-and-semantic-name-enforcement.md) | 2026-04-10 | **Guided naming policy and semantic name enforcement** | - |
+| [231](./231-2026-04-10-guided-visibility-authority-and-manifest-demotion.md) | 2026-04-10 | **Guided visibility authority and manifest demotion** | - |
+| [230](./230-2026-04-10-guided-limb-heuristic-and-iterate-visibility-followup.md) | 2026-04-10 | **Guided limb heuristic and iterate visibility follow-up** | - |
+| [229](./229-2026-04-10-guided-spatial-usability-and-inspect-alignment.md) | 2026-04-10 | **Guided spatial usability and inspect alignment** | - |
+| [228](./228-2026-04-09-guided-spatial-rearm.md) | 2026-04-09 | **Guided spatial target binding and freshness re-arm** | - |
+| [227](./227-2026-04-09-guided-execution-enforcement.md) | 2026-04-09 | **Guided execution enforcement and role sequencing** | - |
+| [226](./226-2026-04-08-addon-rpc-watchdog-and-e2e-retry.md) | 2026-04-08 | **Addon RPC watchdog and E2E RPC startup retry** | - |
+| [225](./225-2026-04-08-server-driven-guided-flow-state.md) | 2026-04-08 | **Server-driven guided flow state and step gating** | - |
+| [224](./224-2026-04-08-guided-default-spatial-support.md) | 2026-04-08 | **Guided default spatial support** | - |
+| [223](./223-2026-04-07-qwen32b-operator-compare-note.md) | 2026-04-07 | **Qwen 32B operator compare note** | - |
+| [222](./222-2026-04-07-guided-build-cleanup-recovery-hatch.md) | 2026-04-07 | **Guided build cleanup recovery hatch** | - |
+| [221](./221-2026-04-07-guided-runtime-realism-coverage.md) | 2026-04-07 | **Guided runtime realism coverage** | - |
+| [220](./220-2026-04-07-guided-runtime-guardrails-and-qwen-hardening.md) | 2026-04-07 | **Guided runtime guardrails and Qwen hardening** | - |
+| [219](./219-2026-04-07-e2e-blender-crash-trace.md) | 2026-04-07 | **E2E Blender crash trace and runtime logs** | - |
+| [218](./218-2026-04-07-camera-aware-view-diagnostics.md) | 2026-04-07 | **Camera-aware view diagnostics** | - |
+| [217](./217-2026-04-07-guided-spatial-scope-and-relation-graphs.md) | 2026-04-07 | **Guided spatial scope and relation graphs** | - |
+| [216](./216-2026-04-07-creature-attachment-seam-coverage.md) | 2026-04-07 | **Creature attachment seam coverage for guided assembled models** | - |
+| [215](./215-2026-04-06-guided-creature-contract-parity.md) | 2026-04-06 | **Guided creature contract parity on the active client surface** | - |
+| [214](./214-2026-04-06-reference-guided-creature-surface-and-perception.md) | 2026-04-06 | **Reference-guided creature surface and perception reliability** | - |
+| [213](./213-2026-04-05-external-vision-contract-profiles.md) | 2026-04-05 | **External vision contract profiles** | - |
 | [212](./212-2026-04-05-stage-compare-error-response-hardening.md) | 2026-04-05 | **Stage compare error response hardening** | - |
 | [211](./211-2026-04-05-call-tool-proxy-error-semantics.md) | 2026-04-05 | **call_tool proxy error semantics** | - |
 | [210](./210-2026-04-05-hybrid-budget-overlap-and-readiness-review-followups.md) | 2026-04-05 | **Hybrid budget, overlap, and readiness review follow-ups** | - |

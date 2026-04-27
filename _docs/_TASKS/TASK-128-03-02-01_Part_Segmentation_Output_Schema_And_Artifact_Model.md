@@ -1,7 +1,7 @@
 # TASK-128-03-02-01: Part-Segmentation Output Schema and Artifact Model
 
 **Parent:** [TASK-128-03-02](./TASK-128-03-02_Part_Segmentation_Contract_And_Provider_Interface.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective

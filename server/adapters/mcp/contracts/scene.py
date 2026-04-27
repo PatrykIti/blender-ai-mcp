@@ -10,6 +10,37 @@ from typing import Any, Literal
 from server.adapters.mcp.contracts.base import MCPContract
 from server.adapters.mcp.sampling.result_types import InspectionSummaryAssistantContract
 
+SceneObjectRoleLiteral = Literal[
+    "anchor_core",
+    "support_base",
+    "attached_mass",
+    "attached_appendage",
+    "accessory_feature",
+    "structural_peer",
+    "scene_member",
+]
+SceneRelationKindLiteral = Literal["contact", "gap", "overlap", "alignment", "attachment", "support", "symmetry"]
+SceneRelationVerdictLiteral = Literal[
+    "contact",
+    "touching",
+    "separated",
+    "overlapping",
+    "disjoint",
+    "overlap",
+    "contained",
+    "aligned",
+    "misaligned",
+    "misaligned_attachment",
+    "floating_gap",
+    "seated_contact",
+    "intersecting",
+    "needs_followup",
+    "supported",
+    "unsupported",
+    "symmetric",
+    "asymmetric",
+]
+
 
 class SceneModeContract(MCPContract):
     mode: str
@@ -141,6 +172,13 @@ class ScenePartGroupContract(MCPContract):
     role: str | None = None
 
 
+class SceneScopeObjectRoleContract(MCPContract):
+    object_name: str
+    role: SceneObjectRoleLiteral
+    is_primary: bool = False
+    signals: list[str] = []
+
+
 class SceneAssembledTargetScopeContract(MCPContract):
     scope_kind: Literal["single_object", "object_set", "collection", "part_groups", "scene"] = "scene"
     primary_target: str | None = None
@@ -148,20 +186,196 @@ class SceneAssembledTargetScopeContract(MCPContract):
     object_count: int = 0
     collection_name: str | None = None
     part_groups: list[ScenePartGroupContract] = []
+    object_roles: list[SceneScopeObjectRoleContract] = []
+
+
+class SceneScopeGraphPayloadContract(MCPContract):
+    scope: SceneAssembledTargetScopeContract
+    message: str | None = None
+
+
+class SceneScopeGraphResponseContract(MCPContract):
+    payload: SceneScopeGraphPayloadContract | None = None
+    error: str | None = None
+
+
+class SceneAttachmentSemanticsContract(MCPContract):
+    relation_kind: Literal["embedded_attachment", "seated_attachment", "segment_attachment"]
+    seam_kind: Literal[
+        "face_head",
+        "nose_snout",
+        "head_body",
+        "tail_body",
+        "limb_body",
+        "limb_segment",
+    ]
+    part_object: str
+    anchor_object: str
+    required_seam: bool = True
+    preferred_macro: (
+        Literal[
+            "macro_attach_part_to_surface",
+            "macro_align_part_with_contact",
+            "macro_cleanup_part_intersections",
+        ]
+        | None
+    ) = None
+    attachment_verdict: Literal[
+        "seated_contact",
+        "floating_gap",
+        "intersecting",
+        "misaligned_attachment",
+        "needs_followup",
+    ] = "needs_followup"
+
+
+class SceneSupportSemanticsContract(MCPContract):
+    supported_object: str
+    support_object: str
+    axis: Literal["X", "Y", "Z"] = "Z"
+    verdict: Literal["supported", "unsupported"] = "unsupported"
+
+
+class SceneSymmetrySemanticsContract(MCPContract):
+    left_object: str
+    right_object: str
+    axis: Literal["X", "Y", "Z"] = "X"
+    mirror_coordinate: float = 0.0
+    verdict: Literal["symmetric", "asymmetric"] = "asymmetric"
+
+
+class SceneRelationGraphPairContract(MCPContract):
+    pair_id: str
+    from_object: str
+    to_object: str
+    pair_source: Literal["required_creature_seam", "primary_to_other", "support_candidate", "symmetry_candidate"]
+    relation_kinds: list[SceneRelationKindLiteral] = []
+    relation_verdicts: list[SceneRelationVerdictLiteral] = []
+    gap_relation: Literal["contact", "touching", "separated", "overlapping"] | None = None
+    gap_distance: float | None = None
+    overlap_relation: Literal["disjoint", "touching", "overlap", "contained"] | None = None
+    contact_passed: bool | None = None
+    alignment_status: Literal["aligned", "misaligned", "unknown"] = "unknown"
+    aligned_axes: list[Literal["X", "Y", "Z"]] = []
+    measurement_basis: Literal["mesh_surface", "bounding_box", "mixed", "unknown"] = "unknown"
+    attachment_semantics: SceneAttachmentSemanticsContract | None = None
+    support_semantics: SceneSupportSemanticsContract | None = None
+    symmetry_semantics: SceneSymmetrySemanticsContract | None = None
+    error: str | None = None
+
+
+class SceneRelationGraphSummaryContract(MCPContract):
+    pairing_strategy: Literal["none", "primary_to_others", "required_creature_seams", "guided_spatial_pairs"] = "none"
+    pair_count: int = 0
+    evaluated_pairs: int = 0
+    failing_pairs: int = 0
+    attachment_pairs: int = 0
+    support_pairs: int = 0
+    symmetry_pairs: int = 0
+
+
+class SceneRelationGraphPayloadContract(MCPContract):
+    scope: SceneAssembledTargetScopeContract
+    summary: SceneRelationGraphSummaryContract
+    pairs: list[SceneRelationGraphPairContract] = []
+    message: str | None = None
+
+
+class SceneRelationGraphResponseContract(MCPContract):
+    payload: SceneRelationGraphPayloadContract | None = None
+    error: str | None = None
+
+
+class SceneViewQueryContract(MCPContract):
+    requested_view_source: Literal["named_camera", "user_perspective"]
+    resolved_view_source: Literal["named_camera", "user_perspective"] | None = None
+    requested_camera_name: str | None = None
+    resolved_camera_name: str | None = None
+    analysis_backend: Literal["scene_camera", "mirrored_user_perspective"] | None = None
+    available: bool = True
+    unavailable_reason: str | None = None
+    state_restored: bool = True
+
+
+class SceneViewPointContract(MCPContract):
+    x: float
+    y: float
+
+
+class SceneViewExtentContract(MCPContract):
+    min_x: float
+    min_y: float
+    max_x: float
+    max_y: float
+    width: float
+    height: float
+
+
+class SceneViewProjectionEvidenceContract(MCPContract):
+    projected_center: SceneViewPointContract | None = None
+    projected_extent: SceneViewExtentContract | None = None
+    center_offset: SceneViewPointContract | None = None
+    frame_coverage_ratio: float | None = None
+    frame_occupancy_ratio: float | None = None
+    centered: bool | None = None
+    sample_count: int = 0
+    in_front_sample_count: int = 0
+    in_frame_sample_count: int = 0
+    visible_sample_count: int = 0
+    occluded_sample_count: int = 0
+    occlusion_test_available: bool = False
+
+
+class SceneViewDiagnosticsTargetContract(MCPContract):
+    object_name: str
+    visibility_verdict: Literal["visible", "partially_visible", "fully_occluded", "outside_frame", "unavailable"]
+    projection_status: Literal["projected", "outside_frame", "behind_view", "unavailable"] = "unavailable"
+    projection: SceneViewProjectionEvidenceContract | None = None
+    unavailable_reason: str | None = None
+
+
+class SceneViewDiagnosticsSummaryContract(MCPContract):
+    target_count: int = 0
+    visible_count: int = 0
+    partially_visible_count: int = 0
+    fully_occluded_count: int = 0
+    outside_frame_count: int = 0
+    unavailable_count: int = 0
+    centered_target_count: int = 0
+    framing_issue_count: int = 0
+
+
+class SceneViewDiagnosticsPayloadContract(MCPContract):
+    view_query: SceneViewQueryContract
+    scope: SceneAssembledTargetScopeContract
+    summary: SceneViewDiagnosticsSummaryContract
+    targets: list[SceneViewDiagnosticsTargetContract] = []
+    message: str | None = None
+
+
+class SceneViewDiagnosticsResponseContract(MCPContract):
+    payload: SceneViewDiagnosticsPayloadContract | None = None
+    error: str | None = None
 
 
 class SceneCorrectionTruthPairContract(MCPContract):
     from_object: str
     to_object: str
+    relation_pair_id: str | None = None
+    relation_kinds: list[SceneRelationKindLiteral] = []
+    relation_verdicts: list[SceneRelationVerdictLiteral] = []
     gap: dict[str, Any] | None = None
     alignment: dict[str, Any] | None = None
     overlap: dict[str, Any] | None = None
     contact_assertion: SceneAssertionPayloadContract | None = None
+    attachment_semantics: SceneAttachmentSemanticsContract | None = None
+    support_semantics: SceneSupportSemanticsContract | None = None
+    symmetry_semantics: SceneSymmetrySemanticsContract | None = None
     error: str | None = None
 
 
 class SceneCorrectionTruthSummaryContract(MCPContract):
-    pairing_strategy: Literal["none", "primary_to_others"] = "none"
+    pairing_strategy: Literal["none", "primary_to_others", "required_creature_seams"] = "none"
     pair_count: int = 0
     evaluated_pairs: int = 0
     contact_failures: int = 0
@@ -178,12 +392,17 @@ class SceneCorrectionTruthBundleContract(MCPContract):
 
 
 class SceneTruthFollowupItemContract(MCPContract):
-    kind: Literal["contact_failure", "gap", "overlap", "alignment", "measurement_error", "insufficient_scope"]
+    kind: Literal[
+        "contact_failure", "gap", "overlap", "alignment", "attachment", "measurement_error", "insufficient_scope"
+    ]
     summary: str
     priority: Literal["high", "normal"] = "normal"
     from_object: str | None = None
     to_object: str | None = None
     tool_name: str | None = None
+    relation_pair_id: str | None = None
+    relation_kinds: list[SceneRelationKindLiteral] = []
+    relation_verdicts: list[SceneRelationVerdictLiteral] = []
 
 
 class SceneRepairMacroCandidateContract(MCPContract):

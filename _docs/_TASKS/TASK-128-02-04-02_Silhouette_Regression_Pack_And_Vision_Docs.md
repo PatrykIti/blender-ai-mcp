@@ -1,7 +1,7 @@
 # TASK-128-02-04-02: Silhouette Regression Pack and Vision Docs
 
 **Parent:** [TASK-128-02-04](./TASK-128-02-04_Iterate_Stage_Integration_Docs_And_Regression_Pack.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟠 High
 
 ## Objective
@@ -21,6 +21,9 @@ silhouette-analysis outputs stable.
 - the repo has a focused regression plan for silhouette metrics/action hints
 - vision docs explain the new deterministic perception layer
 - test docs call out what should be covered at unit vs E2E level
+- vision docs and the regression plan stay aligned with the current
+  contract-profile-aware provider/runtime notes instead of regressing to
+  provider-only expectations
 
 ## Docs To Update
 

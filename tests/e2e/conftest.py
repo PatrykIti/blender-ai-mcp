@@ -11,6 +11,9 @@ To run:
 The tests will skip automatically if RPC connection fails.
 """
 
+import os
+import time
+
 import pytest
 from server.adapters.rpc.client import RpcClient
 from server.infrastructure.config import get_config
@@ -18,16 +21,33 @@ from server.infrastructure.config import get_config
 
 def _check_rpc_connection():
     """Check if Blender RPC server is available."""
-    try:
-        config = get_config()
-        client = RpcClient(host=config.BLENDER_RPC_HOST, port=config.BLENDER_RPC_PORT)
-        connected = client.connect()
-        if connected:
-            client.close()
-            return True
-        return False
-    except Exception:
-        return False
+    startup_wait_seconds = float(os.environ.get("E2E_RPC_STARTUP_WAIT_SECONDS", "8.0"))
+    retry_interval_seconds = float(os.environ.get("E2E_RPC_RETRY_INTERVAL_SECONDS", "0.5"))
+    deadline = time.time() + max(startup_wait_seconds, 0.0)
+
+    while True:
+        client = None
+        try:
+            config = get_config()
+            client = RpcClient(
+                host=config.BLENDER_RPC_HOST,
+                port=config.BLENDER_RPC_PORT,
+                rpc_timeout_seconds=2.0,
+                addon_execution_timeout_seconds=2.0,
+            )
+            if client.connect():
+                response = client.send_request("ping", {}, timeout_seconds=2.0, rpc_timeout_seconds=2.0)
+                if response.status == "ok":
+                    return True
+        except Exception:
+            pass
+        finally:
+            if client is not None:
+                client.close()
+
+        if time.time() >= deadline:
+            return False
+        time.sleep(retry_interval_seconds)
 
 
 # Cache the connection check result

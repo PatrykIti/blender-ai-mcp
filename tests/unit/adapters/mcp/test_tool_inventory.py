@@ -25,6 +25,9 @@ def test_discovery_inventory_represents_each_public_tool_once():
     assert "reference_compare_current_view" in public_names
     assert "reference_compare_stage_checkpoint" in public_names
     assert "reference_iterate_stage_checkpoint" in public_names
+    assert "scene_scope_graph" in public_names
+    assert "scene_relation_graph" in public_names
+    assert "scene_view_diagnostics" in public_names
 
 
 def test_discovery_inventory_tracks_aliases_and_pinned_defaults():
@@ -45,6 +48,9 @@ def test_discovery_inventory_tracks_aliases_and_pinned_defaults():
     assert entry_map["reference_images"].pinned is True
     assert entry_map["router_set_goal"].pinned is True
     assert entry_map["router_get_status"].pinned is True
+    assert "phase:planning" in entry_map["check_scene"].phase_hints
+    assert "phase:build" in entry_map["check_scene"].phase_hints
+    assert entry_map["browse_workflows"].phase_hints == ("phase:planning",)
 
 
 def test_discovery_inventory_metadata_enrichment_covers_extended_router_areas():
@@ -63,4 +69,12 @@ def test_pinned_public_tools_are_resolved_on_public_surface_names():
 
     pinned = get_pinned_public_tools()
 
-    assert pinned == ("reference_images", "router_set_goal", "router_get_status", "browse_workflows")
+    assert pinned == (
+        "scene_scope_graph",
+        "scene_relation_graph",
+        "scene_view_diagnostics",
+        "reference_images",
+        "router_set_goal",
+        "router_get_status",
+        "browse_workflows",
+    )

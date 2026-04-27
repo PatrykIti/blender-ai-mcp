@@ -1,0 +1,126 @@
+# TASK-145-01: Repair Planner Payload and Family Selection Policy
+
+**Parent:** [TASK-145](./TASK-145_Spatial_Repair_Planner_And_Sculpt_Handoff_Context.md)
+**Status:** ⏳ To Do
+**Priority:** 🔴 High
+**Depends On:** [TASK-122-03-07](./TASK-122-03-07_Deterministic_Cross_Domain_Refinement_Routing_And_Sculpt_Exposure.md), [TASK-143](./TASK-143_Guided_Spatial_Scope_And_Relation_Graphs.md), [TASK-144](./TASK-144_Camera_Aware_View_Graph_And_Visibility_Diagnostics.md)
+
+## Objective
+
+Turn the current `refinement_route` baseline into a stronger bounded
+repair-planner contract that answers:
+
+- which bounded family should own the next step
+- which scope that family should act on
+- which typed signals justified the choice
+- which blockers still prevent a stronger handoff
+
+without turning compare / iterate into another heavy default payload.
+
+## Business Problem
+
+Today the staged reference loop already has useful planner substrate:
+
+- `assembled_target_scope`
+- `truth_followup`
+- `correction_candidates`
+- `refinement_route`
+- `budget_control`
+
+But the current planner surface is still thin:
+
+- `refinement_route` chooses a family, but not a fuller planner contract
+- family selection still leans on coarse domain inference and limited inline
+  reasoning
+- upcoming scope / relation / visibility artifacts from TASK-143 / TASK-144
+  do not yet have a clear planner-facing landing zone
+- compare / iterate cannot simply absorb another large always-on payload
+
+This subtask therefore needs to define a contract and policy layer that is
+explicit enough for the LLM, but still small enough for the shaped guided
+surface.
+
+For the first implementation wave, that should mean **extending the current
+`refinement_route` / `refinement_handoff` baseline first**, not opening a
+second parallel planner family unless the existing contracts prove too narrow.
+
+## Technical Direction
+
+Build the repair planner as a contract-and-policy upgrade over the current
+`reference.py` flow:
+
+- start from `_build_correction_candidates(...)`,
+  `_select_refinement_route(...)`, and existing budget control
+- extend the current `refinement_route` / `refinement_handoff` model before
+  introducing any separate planner contract family
+- keep provenance explicit across truth, macro, vision, scope, and future
+  view/relation inputs
+- define one compact inline planner summary plus one richer detail shape that
+  can stay goal-aware / on-demand
+- preserve the current bounded family vocabulary:
+  - `macro`
+  - `modeling_mesh`
+  - `sculpt_region`
+  - `inspect_only`
+- keep planner logic deterministic and policy-driven; do not let it become an
+  autonomous workflow engine
+
+## Repository Touchpoints
+
+- `server/adapters/mcp/contracts/reference.py`
+- `server/adapters/mcp/contracts/scene.py`
+- `server/adapters/mcp/areas/reference.py`
+- `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_contract_payload_parity.py`
+- `tests/e2e/vision/test_reference_stage_truth_handoff.py`
+- `_docs/LLM_GUIDE_V2.md`
+- `_docs/_VISION/README.md`
+
+## Acceptance Criteria
+
+- planner output is a bounded, typed contract rather than a loose combination
+  of route, handoff, and prose hints
+- planner output preserves source provenance instead of collapsing truth /
+  vision / macro / scope signals into one opaque score
+- family selection can consume current `truth_followup` /
+  `correction_candidates` plus future TASK-143 / TASK-144 artifacts without
+  duplicating those modules
+- compare / iterate stay bounded:
+  - no heavy new default planner payload
+  - planner detail remains compact or on-demand
+- planner policy remains a family selector / blocker model, not a new workflow
+  engine
+
+## Docs To Update
+
+- `_docs/LLM_GUIDE_V2.md`
+- `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/README.md`
+
+## Tests To Add/Update
+
+- `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_contract_payload_parity.py`
+- `tests/e2e/vision/test_reference_stage_truth_handoff.py`
+
+## Changelog Impact
+
+- add a `_docs/_CHANGELOG/*.md` entry when planner contract shape or
+  family-selection policy ships
+
+## Status / Board Update
+
+- planning-only execution-tree split: keep `_docs/_TASKS/README.md` unchanged
+  in this branch
+- when this subtask is implemented and closed later, update parent/child
+  statuses and the task board in the same allowed branch
+
+## Execution Structure
+
+| Order | Leaf | Purpose |
+|------|------|---------|
+| 1 | [TASK-145-01-01](./TASK-145-01-01_Planner_Envelope_And_Provenance_Contract.md) | Define the bounded planner contract shape and provenance model on top of the current reference contracts |
+| 2 | [TASK-145-01-02](./TASK-145-01-02_Deterministic_Family_Selection_From_Scope_Relation_And_View_Signals.md) | Replace coarse planner selection with explicit deterministic precedence over scope, relation, truth, and view signals |
+| 3 | [TASK-145-01-03](./TASK-145-01-03_Planner_Summary_Placement_And_Compare_Iterate_Budget_Gates.md) | Place planner outputs into compare / iterate in a compact way with goal-aware disclosure and budget guards |
+| 4 | [TASK-145-01-04](./TASK-145-01-04_Compact_Iterate_Response_Envelope_And_Debug_Payload_Split.md) | Split normal compact iterate responses from rich debug payloads so LLM clients do not need ad hoc parsing for large checkpoint outputs |
+| 5 | [TASK-145-01-05](./TASK-145-01-05_Mesh_Aware_Organic_Seating_Repair_For_Rounded_Parts.md) | Prefer mesh-aware organic seating repair for rounded creature seams instead of oscillating between bbox contact and mesh-surface gaps |

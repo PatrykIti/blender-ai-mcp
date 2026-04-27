@@ -5,8 +5,11 @@ Provides utilities for routing tool calls through SupervisorRouter.
 """
 
 import logging
-from typing import Any, Callable, Dict, List, Optional, cast
+import re
+from ast import literal_eval
+from typing import Any, Callable, Dict, List, Literal, Optional, cast
 
+from server.adapters.mcp.context_utils import ctx_warning
 from server.adapters.mcp.contracts.correction_audit import (
     CorrectionAuditEventContract,
     CorrectionExecutionContract,
@@ -16,8 +19,18 @@ from server.adapters.mcp.contracts.correction_audit import (
 from server.adapters.mcp.dispatcher import get_dispatcher
 from server.adapters.mcp.execution_context import MCPExecutionContext
 from server.adapters.mcp.execution_report import ExecutionStep, MCPExecutionReport
-from server.adapters.mcp.session_capabilities import record_router_execution_outcome
+from server.adapters.mcp.guided_naming_policy import evaluate_guided_object_name
+from server.adapters.mcp.session_capabilities import (
+    get_session_capability_state,
+    is_guided_spatial_state_dirtying_operation,
+    mark_guided_spatial_state_stale,
+    record_router_execution_outcome,
+    remove_guided_part_registrations,
+    rename_guided_part_registration,
+    resolve_guided_role_group_for_domain,
+)
 from server.adapters.mcp.session_state import set_session_value
+from server.adapters.mcp.transforms.visibility_policy import GUIDED_SPATIAL_SUPPORT_TOOLS, resolve_guided_tool_family
 from server.infrastructure.config import get_config
 from server.infrastructure.di import get_postcondition_registry, get_router, get_scene_handler, is_router_enabled
 from server.router.domain.entities.correction_policy import CorrectionCategory
@@ -28,6 +41,237 @@ logger = logging.getLogger(__name__)
 SESSION_LAST_ROUTER_DISPOSITION_KEY = "last_router_disposition"
 SESSION_LAST_ROUTER_ERROR_KEY = "last_router_error"
 ROUTER_BYPASS_PREFIXES: tuple[str, ...] = ("scene_",)
+_GUIDED_ROLE_REQUIRED_TOOLS: tuple[str, ...] = (
+    "modeling_create_primitive",
+    "modeling_transform_object",
+)
+_GUIDED_UNMAPPED_MUTATING_PREFIXES: tuple[str, ...] = (
+    "modeling_",
+    "mesh_",
+    "macro_",
+    "material_",
+    "uv_",
+)
+_GUIDED_UNMAPPED_NON_MUTATING_TOOLS: frozenset[str] = frozenset(
+    {
+        "modeling_list_modifiers",
+        "mesh_inspect",
+        "mesh_list_groups",
+        "material_list",
+        "material_list_by_object",
+        "material_inspect_nodes",
+        "uv_list_maps",
+    }
+)
+_GUIDED_UNMAPPED_NON_MUTATING_PREFIXES: tuple[str, ...] = (
+    "mesh_get_",
+    "mesh_select",
+)
+_GUIDED_POLICY_ONLY_PARAM_NAMES: frozenset[str] = frozenset({"guided_role", "role_group"})
+_GUIDED_PINNED_SPATIAL_HELPER_TOOLS: frozenset[str] = frozenset(GUIDED_SPATIAL_SUPPORT_TOOLS)
+_CREATED_OBJECT_RESULT_PATTERN = re.compile(r"^Created .+ named '(.+)'$")
+_TRANSFORMED_OBJECT_RESULT_PATTERN = re.compile(r"^Transformed object '(.+)'$")
+_JOINED_OBJECT_RESULT_PATTERN = re.compile(r"^Objects .+ joined into '(.+)'\. Joined count: \d+$")
+_RENAMED_OBJECT_RESULT_PATTERN = re.compile(r"^Renamed '.+' to '(.+)'(?: .*)?$")
+
+
+def _is_unmapped_guided_mutating_tool(tool_name: str) -> bool:
+    """Return True when a guided mutator has no family and must fail closed."""
+
+    if resolve_guided_tool_family(tool_name) is not None:
+        return False
+    if tool_name in _GUIDED_UNMAPPED_NON_MUTATING_TOOLS:
+        return False
+    if tool_name.startswith(_GUIDED_UNMAPPED_NON_MUTATING_PREFIXES):
+        return False
+    return tool_name.startswith(_GUIDED_UNMAPPED_MUTATING_PREFIXES)
+
+
+def _strip_guided_policy_params_for_dispatch(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Remove MCP guided policy-only fields before application-handler dispatch."""
+
+    if not any(name in params for name in _GUIDED_POLICY_ONLY_PARAM_NAMES):
+        return params
+    return {key: value for key, value in params.items() if key not in _GUIDED_POLICY_ONLY_PARAM_NAMES}
+
+
+def _result_represents_success(tool_name: str, result: Any) -> bool:
+    if result is None:
+        return False
+
+    if isinstance(result, str):
+        text = result.strip()
+        if tool_name == "scene_clean_scene":
+            return text.lower().startswith("scene cleaned")
+        if tool_name == "modeling_create_primitive":
+            return _CREATED_OBJECT_RESULT_PATTERN.fullmatch(text) is not None
+        if tool_name == "modeling_transform_object":
+            return _TRANSFORMED_OBJECT_RESULT_PATTERN.fullmatch(text) is not None
+        if tool_name == "scene_duplicate_object":
+            try:
+                parsed = literal_eval(text)
+            except (SyntaxError, ValueError):
+                return False
+            return isinstance(parsed, dict) and bool(parsed.get("new_object") or parsed.get("name"))
+        if tool_name == "scene_rename_object":
+            return _RENAMED_OBJECT_RESULT_PATTERN.fullmatch(text) is not None
+        if tool_name == "modeling_join_objects":
+            return _JOINED_OBJECT_RESULT_PATTERN.fullmatch(text) is not None
+        if tool_name == "modeling_separate_object":
+            try:
+                parsed = literal_eval(text)
+            except (SyntaxError, ValueError):
+                return False
+            return isinstance(parsed, list) and all(isinstance(item, str) for item in parsed)
+        mesh_success_prefixes = {
+            "mesh_extrude_region": ("extruded region",),
+            "mesh_loop_cut": ("subdivided selected geometry",),
+            "mesh_bevel": ("bevel applied",),
+            "mesh_symmetrize": ("symmetrized mesh",),
+            "mesh_merge_by_distance": ("merged vertices by distance",),
+            "mesh_dissolve": (
+                "limited dissolve",
+                "dissolved selected vertices",
+                "dissolved selected edges",
+                "dissolved selected faces",
+            ),
+        }
+        prefixes = mesh_success_prefixes.get(tool_name)
+        if prefixes is not None:
+            return text.lower().startswith(prefixes)
+        return False
+
+    if isinstance(result, dict):
+        status = str(result.get("status") or "").strip().lower()
+        if status in {"failed", "blocked", "error"}:
+            return False
+        if status == "partial":
+            return True
+        if result.get("objects_modified"):
+            return True
+        if result.get("error") is not None:
+            return False
+        return True
+
+    status = str(getattr(result, "status", "") or "").strip().lower()
+    if status in {"failed", "blocked", "error"}:
+        return False
+    if status == "partial":
+        return True
+    if getattr(result, "objects_modified", None):
+        return True
+    if getattr(result, "error", None) is not None:
+        return False
+    return True
+
+
+def _maybe_mark_guided_spatial_state_stale_from_report(report: MCPExecutionReport) -> None:
+    """Mark guided spatial state stale after one successful scene mutation."""
+
+    if report.error is not None or not report.steps:
+        return
+
+    dirty_step: ExecutionStep | None = None
+    dirty_family: str | None = None
+    for step in report.steps:
+        if step.error is not None:
+            continue
+        if not _result_represents_success(step.tool_name, step.result):
+            continue
+        step_family = resolve_guided_tool_family(step.tool_name)
+        if not is_guided_spatial_state_dirtying_operation(tool_name=step.tool_name, family=step_family):
+            continue
+        dirty_step = step
+        dirty_family = step_family
+        break
+
+    if dirty_step is None:
+        return
+
+    current_ctx = _get_active_context()
+    if current_ctx is None:
+        return
+
+    try:
+        mark_guided_spatial_state_stale(
+            current_ctx,
+            tool_name=dirty_step.tool_name,
+            family=dirty_family,
+            reason=dirty_step.tool_name,
+        )
+    except Exception:
+        return
+
+
+def _renamed_object_name_from_result(result: Any) -> str | None:
+    if not isinstance(result, str):
+        return None
+    match = _RENAMED_OBJECT_RESULT_PATTERN.match(result.strip())
+    if match is None:
+        return None
+    object_name = match.group(1).strip()
+    return object_name or None
+
+
+def _maybe_sync_guided_part_registry_from_report(report: MCPExecutionReport) -> None:
+    """Update guided part registration after successful scene-identity mutations."""
+
+    if report.error is not None or not report.steps:
+        return
+
+    final_step = report.steps[-1]
+    if final_step.tool_name not in {"scene_rename_object", "modeling_join_objects", "modeling_separate_object"}:
+        return
+    if final_step.error is not None:
+        return
+    if not _result_represents_success(final_step.tool_name, final_step.result):
+        return
+
+    current_ctx = _get_active_context()
+    if current_ctx is None:
+        return
+
+    if final_step.tool_name == "scene_rename_object":
+        old_name = final_step.params.get("old_name")
+        new_name = _renamed_object_name_from_result(final_step.result) or final_step.params.get("new_name")
+        if not isinstance(old_name, str) or not old_name.strip():
+            return
+        if not isinstance(new_name, str) or not new_name.strip():
+            return
+
+        try:
+            rename_guided_part_registration(
+                current_ctx,
+                old_name=old_name,
+                new_name=new_name,
+            )
+        except Exception:
+            return
+        return
+
+    if final_step.tool_name == "modeling_join_objects":
+        object_names = final_step.params.get("object_names")
+        if not isinstance(object_names, list):
+            return
+        try:
+            remove_guided_part_registrations(
+                current_ctx,
+                object_names=[str(name) for name in object_names if str(name).strip()],
+            )
+        except Exception:
+            return
+        return
+
+    source_name = final_step.params.get("name")
+    if not isinstance(source_name, str) or not source_name.strip():
+        return
+    try:
+        remove_guided_part_registrations(
+            current_ctx,
+            object_names=[source_name],
+        )
+    except Exception:
+        return
 
 
 def _get_active_surface_profile() -> str:
@@ -168,6 +412,350 @@ def _record_router_execution_report(report: MCPExecutionReport) -> None:
             return
 
 
+def _get_active_session_state():
+    """Best-effort current MCP session state lookup for execution-policy metadata."""
+
+    try:
+        from fastmcp.server.context import _current_context  # type: ignore
+
+        current_ctx = _current_context.get(None)
+    except Exception:
+        current_ctx = None
+
+    if current_ctx is None:
+        return None
+
+    try:
+        return get_session_capability_state(current_ctx)
+    except Exception:
+        return None
+
+
+def _get_active_context():
+    """Best-effort current MCP Context lookup for adapter helpers."""
+
+    try:
+        from fastmcp.server.context import _current_context  # type: ignore
+
+        return _current_context.get(None)
+    except Exception:
+        return None
+
+
+def _resolve_guided_role_context(tool_name: str, params: Dict[str, Any]) -> tuple[str | None, str | None]:
+    """Resolve guided role metadata from explicit params first, then session registry."""
+
+    explicit_role = params.get("guided_role")
+    explicit_role_group = params.get("role_group")
+    if isinstance(explicit_role, str) and explicit_role.strip():
+        session = _get_active_session_state()
+        supplied_role_group = explicit_role_group.strip() if isinstance(explicit_role_group, str) else None
+        derived_role_group = supplied_role_group
+        if session is not None and session.guided_flow_state is not None:
+            try:
+                domain_profile = str(session.guided_flow_state.get("domain_profile") or "").strip()
+                if domain_profile in {"generic", "creature", "building"}:
+                    typed_domain_profile = cast(Literal["generic", "creature", "building"], domain_profile)
+                    derived_role_group = resolve_guided_role_group_for_domain(
+                        typed_domain_profile, explicit_role.strip(), derived_role_group
+                    )
+            except Exception:
+                derived_role_group = None
+        return explicit_role.strip(), derived_role_group
+
+    session = _get_active_session_state()
+    if session is None or not session.guided_part_registry:
+        return None, None
+
+    object_name = params.get("name") or params.get("object_name")
+    if not isinstance(object_name, str) or not object_name.strip():
+        return None, None
+
+    for item in session.guided_part_registry:
+        if not isinstance(item, dict):
+            continue
+        if item.get("object_name") != object_name:
+            continue
+        role = item.get("role")
+        role_group = item.get("role_group")
+        return (
+            role.strip() if isinstance(role, str) and role.strip() else None,
+            role_group.strip() if isinstance(role_group, str) and role_group.strip() else None,
+        )
+    return None, None
+
+
+def _resolve_guided_effective_family(tool_name: str, params: Dict[str, Any]) -> str | None:
+    """Resolve the effective family, allowing explicit role-group overrides for role-sensitive tools."""
+
+    base_family = resolve_guided_tool_family(tool_name)
+    _role, role_group = _resolve_guided_role_context(tool_name, params)
+    if tool_name in _GUIDED_ROLE_REQUIRED_TOOLS and role_group in {
+        "spatial_context",
+        "reference_context",
+        "primary_masses",
+        "secondary_parts",
+        "attachment_alignment",
+        "checkpoint_iterate",
+        "inspect_validate",
+        "finish",
+        "utility",
+    }:
+        return role_group
+    return base_family
+
+
+def _evaluate_explicit_guided_role_group_policy(
+    *,
+    flow_state: dict[str, Any],
+    tool_name: str,
+    params: Dict[str, Any],
+    allowed_families: set[str],
+    allowed_roles: set[str],
+) -> dict[str, Any] | None:
+    """Validate caller-supplied role_group against the active domain role map."""
+
+    explicit_role = params.get("guided_role")
+    explicit_role_group = params.get("role_group")
+    if not isinstance(explicit_role, str) or not explicit_role.strip():
+        return None
+    if not isinstance(explicit_role_group, str) or not explicit_role_group.strip():
+        return None
+
+    domain_profile = str(flow_state.get("domain_profile") or "").strip()
+    if domain_profile not in {"generic", "creature", "building"}:
+        return None
+
+    typed_domain_profile = cast(Literal["generic", "creature", "building"], domain_profile)
+    role = explicit_role.strip()
+    supplied_role_group = explicit_role_group.strip()
+    try:
+        expected_role_group = resolve_guided_role_group_for_domain(
+            typed_domain_profile,
+            role,
+        )
+    except ValueError as exc:
+        return {
+            "status": "blocked",
+            "current_step": str(flow_state.get("current_step") or "").strip(),
+            "family": resolve_guided_tool_family(tool_name),
+            "role": role,
+            "role_group": None,
+            "tool_name": tool_name,
+            "allowed_families": sorted(allowed_families),
+            "allowed_roles": sorted(allowed_roles),
+            "message": str(exc),
+        }
+
+    if supplied_role_group == expected_role_group:
+        return None
+
+    return {
+        "status": "blocked",
+        "current_step": str(flow_state.get("current_step") or "").strip(),
+        "family": expected_role_group
+        if tool_name in _GUIDED_ROLE_REQUIRED_TOOLS
+        else resolve_guided_tool_family(tool_name),
+        "role": role,
+        "role_group": supplied_role_group,
+        "expected_role_group": expected_role_group,
+        "tool_name": tool_name,
+        "allowed_families": sorted(allowed_families),
+        "allowed_roles": sorted(allowed_roles),
+        "message": (
+            f"Guided execution blocked role_group '{supplied_role_group}' for role '{role}'. "
+            f"Expected role_group '{expected_role_group}' for domain profile '{domain_profile}'."
+        ),
+    }
+
+
+def _evaluate_guided_execution_policy(
+    *,
+    surface_profile: str,
+    tool_name: str,
+    params: Dict[str, Any],
+) -> dict[str, Any] | None:
+    """Return a typed guided execution-policy decision when one active flow exists."""
+
+    if surface_profile != "llm-guided":
+        return None
+
+    session = _get_active_session_state()
+    if session is None or not session.guided_flow_state:
+        return None
+
+    flow_state = session.guided_flow_state
+    current_step = str(flow_state.get("current_step") or "").strip()
+    allowed_families = {
+        str(family)
+        for family in (flow_state.get("allowed_families") or [])
+        if isinstance(family, str) and family.strip()
+    }
+    allowed_roles = {
+        str(role) for role in (flow_state.get("allowed_roles") or []) if isinstance(role, str) and role.strip()
+    }
+    role_group_policy = _evaluate_explicit_guided_role_group_policy(
+        flow_state=flow_state,
+        tool_name=tool_name,
+        params=params,
+        allowed_families=allowed_families,
+        allowed_roles=allowed_roles,
+    )
+    if role_group_policy is not None:
+        return role_group_policy
+
+    family = _resolve_guided_effective_family(tool_name, params)
+    role, role_group = _resolve_guided_role_context(tool_name, params)
+    explicit_guided_role = isinstance(params.get("guided_role"), str) and str(params.get("guided_role")).strip()
+
+    if family == "utility":
+        return {
+            "status": "allowed",
+            "current_step": current_step,
+            "family": family,
+            "role": role,
+            "role_group": role_group,
+        }
+
+    if family == "spatial_context" and tool_name in _GUIDED_PINNED_SPATIAL_HELPER_TOOLS:
+        return {
+            "status": "allowed",
+            "current_step": current_step,
+            "family": family,
+            "role": role,
+            "role_group": role_group,
+        }
+
+    if family is None and allowed_families and _is_unmapped_guided_mutating_tool(tool_name):
+        return {
+            "status": "blocked",
+            "current_step": current_step,
+            "family": family,
+            "role": role,
+            "role_group": role_group,
+            "tool_name": tool_name,
+            "allowed_families": sorted(allowed_families),
+            "allowed_roles": sorted(allowed_roles),
+            "message": (
+                f"Guided execution blocked unmapped mutating tool '{tool_name}' during step '{current_step}'. "
+                "Add it to GUIDED_TOOL_FAMILY_MAP before using it under the guided family contract. "
+                f"Allowed families now: {', '.join(sorted(allowed_families)) or 'none'}."
+            ),
+        }
+
+    if tool_name in _GUIDED_ROLE_REQUIRED_TOOLS and role is None:
+        return {
+            "status": "blocked",
+            "current_step": current_step,
+            "family": family,
+            "role": role,
+            "role_group": role_group,
+            "allowed_families": sorted(allowed_families),
+            "allowed_roles": sorted(allowed_roles),
+            "required_role_groups": list(flow_state.get("required_role_groups") or []),
+            "message": (
+                f"Guided execution requires an explicit semantic role for '{tool_name}' during step '{current_step}'. "
+                "Provide `guided_role=...` on the build tool call or register the object first with "
+                "`guided_register_part(object_name=..., role=...)`."
+            ),
+        }
+
+    if family is not None and allowed_families and family not in allowed_families:
+        return {
+            "status": "blocked",
+            "current_step": current_step,
+            "family": family,
+            "role": role,
+            "role_group": role_group,
+            "allowed_families": sorted(allowed_families),
+            "allowed_roles": sorted(allowed_roles),
+            "message": (
+                f"Guided execution blocked tool family '{family}' during step '{current_step}'. "
+                f"Allowed families now: {', '.join(sorted(allowed_families)) or 'none'}."
+            ),
+        }
+
+    if role is not None and allowed_roles and role not in allowed_roles:
+        if (
+            tool_name == "modeling_transform_object"
+            and not explicit_guided_role
+            and family in allowed_families
+            and role_group == family
+        ):
+            return {
+                "status": "allowed",
+                "current_step": current_step,
+                "family": family,
+                "role": role,
+                "role_group": role_group,
+            }
+        return {
+            "status": "blocked",
+            "current_step": current_step,
+            "family": family,
+            "role": role,
+            "role_group": role_group,
+            "allowed_families": sorted(allowed_families),
+            "allowed_roles": sorted(allowed_roles),
+            "message": (
+                f"Guided execution blocked role '{role}' during step '{current_step}'. "
+                f"Allowed roles now: {', '.join(sorted(allowed_roles)) or 'none'}."
+            ),
+        }
+
+    return {
+        "status": "allowed",
+        "current_step": current_step,
+        "family": family,
+        "role": role,
+        "role_group": role_group,
+    }
+
+
+def _evaluate_guided_naming_policy(
+    *,
+    surface_profile: str,
+    tool_name: str,
+    params: Dict[str, Any],
+) -> dict[str, Any] | None:
+    """Return a typed guided naming-policy decision for role-sensitive build calls."""
+
+    if surface_profile != "llm-guided":
+        return None
+    if tool_name not in _GUIDED_ROLE_REQUIRED_TOOLS:
+        return None
+
+    explicit_role = params.get("guided_role")
+    object_name = params.get("name") or params.get("object_name")
+    if not isinstance(explicit_role, str) or not explicit_role.strip():
+        return None
+    if not isinstance(object_name, str) or not object_name.strip():
+        return None
+
+    session = _get_active_session_state()
+    if session is None or not session.guided_flow_state:
+        return None
+
+    flow_state = session.guided_flow_state
+    domain_profile = str(flow_state.get("domain_profile") or "").strip()
+    if domain_profile not in {"generic", "creature", "building"}:
+        return None
+    current_step = str(flow_state.get("current_step") or "").strip() or None
+
+    decision = evaluate_guided_object_name(
+        object_name=object_name,
+        role=explicit_role.strip(),
+        domain_profile=cast(Literal["generic", "creature", "building"], domain_profile),
+        current_step=current_step,
+    )
+    payload = decision.model_dump(mode="json")
+    return {
+        "status": decision.status,
+        "message": decision.message,
+        "guided_naming": payload,
+    }
+
+
 def _apply_postcondition_verification(
     audit_events: tuple[CorrectionAuditEventContract, ...],
 ) -> tuple[tuple[CorrectionAuditEventContract, ...], str]:
@@ -255,6 +843,51 @@ def route_tool_call_report(
     context = MCPExecutionContext(tool_name=tool_name, params=params, prompt=prompt)
     surface_profile = _get_active_surface_profile()
     context.surface_profile = surface_profile
+    session_state = _get_active_session_state()
+    if session_state is not None:
+        context.session_phase = session_state.phase.value
+    context.guided_tool_family = _resolve_guided_effective_family(tool_name, params)
+    context.guided_role, context.guided_role_group = _resolve_guided_role_context(tool_name, params)
+    guided_policy = _evaluate_guided_execution_policy(
+        surface_profile=surface_profile,
+        tool_name=tool_name,
+        params=params,
+    )
+    if guided_policy is not None:
+        context.guided_tool_family = guided_policy.get("family")
+        context.guided_role = guided_policy.get("role")
+        context.guided_role_group = guided_policy.get("role_group")
+        if guided_policy.get("status") == "blocked":
+            report = MCPExecutionReport(
+                context=context,
+                router_enabled=is_router_enabled(),
+                router_applied=False,
+                router_disposition="failed_closed_error",
+                error=str(guided_policy.get("message") or "Guided execution blocked."),
+                policy_context=guided_policy,
+                audit_ids=(),
+            )
+            _record_router_execution_report(report)
+            _log_audit_exposure(report)
+            return report
+    naming_policy = _evaluate_guided_naming_policy(
+        surface_profile=surface_profile,
+        tool_name=tool_name,
+        params=params,
+    )
+    if naming_policy is not None and naming_policy.get("status") == "blocked":
+        report = MCPExecutionReport(
+            context=context,
+            router_enabled=is_router_enabled(),
+            router_applied=False,
+            router_disposition="failed_closed_error",
+            error=str(naming_policy.get("message") or "Guided naming blocked."),
+            policy_context=naming_policy,
+            audit_ids=(),
+        )
+        _record_router_execution_report(report)
+        _log_audit_exposure(report)
+        return report
 
     if not is_router_enabled():
         result = direct_executor()
@@ -264,6 +897,7 @@ def route_tool_call_report(
             router_applied=False,
             router_disposition="bypassed",
             steps=(ExecutionStep(tool_name=tool_name, params=params, result=result),),
+            policy_context=naming_policy,
             audit_ids=(),
         )
         _record_router_execution_report(report)
@@ -278,6 +912,7 @@ def route_tool_call_report(
             router_applied=False,
             router_disposition="bypassed",
             steps=(ExecutionStep(tool_name=tool_name, params=params, result=result),),
+            policy_context=naming_policy,
             audit_ids=(),
         )
         _record_router_execution_report(report)
@@ -314,6 +949,79 @@ def route_tool_call_report(
 
     try:
         corrected_tools = router.process_llm_tool_call(tool_name, params, prompt)
+        if corrected_tools:
+            final_guided_policy: dict[str, Any] | None = None
+            final_naming_policy: dict[str, Any] | None = None
+            for index, corrected_tool in enumerate(corrected_tools):
+                corrected_tool_name = corrected_tool["tool"]
+                corrected_tool_params = corrected_tool["params"]
+                step_guided_policy = _evaluate_guided_execution_policy(
+                    surface_profile=surface_profile,
+                    tool_name=corrected_tool_name,
+                    params=corrected_tool_params,
+                )
+                if step_guided_policy is not None:
+                    if index == len(corrected_tools) - 1:
+                        final_guided_policy = step_guided_policy
+                    if step_guided_policy.get("status") == "blocked":
+                        context.guided_tool_family = step_guided_policy.get("family")
+                        context.guided_role = step_guided_policy.get("role")
+                        context.guided_role_group = step_guided_policy.get("role_group")
+                        report = MCPExecutionReport(
+                            context=context,
+                            router_enabled=True,
+                            router_applied=False,
+                            router_disposition="failed_closed_error",
+                            error=str(step_guided_policy.get("message") or "Guided execution blocked."),
+                            policy_context=step_guided_policy,
+                            audit_ids=(),
+                        )
+                        _record_router_execution_report(report)
+                        _log_audit_exposure(report)
+                        return report
+                step_naming_policy = _evaluate_guided_naming_policy(
+                    surface_profile=surface_profile,
+                    tool_name=corrected_tool_name,
+                    params=corrected_tool_params,
+                )
+                if step_naming_policy is not None:
+                    if index == len(corrected_tools) - 1:
+                        final_naming_policy = step_naming_policy
+                    if step_naming_policy.get("status") == "blocked":
+                        context.guided_tool_family = _resolve_guided_effective_family(
+                            corrected_tool_name,
+                            corrected_tool_params,
+                        )
+                        context.guided_role, context.guided_role_group = _resolve_guided_role_context(
+                            corrected_tool_name,
+                            corrected_tool_params,
+                        )
+                        report = MCPExecutionReport(
+                            context=context,
+                            router_enabled=True,
+                            router_applied=False,
+                            router_disposition="failed_closed_error",
+                            error=str(step_naming_policy.get("message") or "Guided naming blocked."),
+                            policy_context=step_naming_policy,
+                            audit_ids=(),
+                        )
+                        _record_router_execution_report(report)
+                        _log_audit_exposure(report)
+                        return report
+
+            final_tool = corrected_tools[-1]
+            final_tool_name = final_tool["tool"]
+            final_tool_params = final_tool["params"]
+            context.guided_tool_family = _resolve_guided_effective_family(final_tool_name, final_tool_params)
+            context.guided_role, context.guided_role_group = _resolve_guided_role_context(
+                final_tool_name,
+                final_tool_params,
+            )
+            if final_guided_policy is not None:
+                context.guided_tool_family = final_guided_policy.get("family")
+                context.guided_role = final_guided_policy.get("role")
+                context.guided_role_group = final_guided_policy.get("role_group")
+            naming_policy = final_naming_policy
 
         if len(corrected_tools) == 1 and corrected_tools[0]["tool"] == tool_name:
             if corrected_tools[0]["params"] == params:
@@ -324,6 +1032,7 @@ def route_tool_call_report(
                     router_applied=False,
                     router_disposition="direct",
                     steps=(ExecutionStep(tool_name=tool_name, params=params, result=result),),
+                    policy_context=naming_policy,
                     audit_ids=(),
                 )
                 _record_router_execution_report(report)
@@ -336,6 +1045,7 @@ def route_tool_call_report(
         for index, tool in enumerate(corrected_tools):
             tool_to_execute = tool["tool"]
             tool_params = tool["params"]
+            dispatch_params = _strip_guided_policy_params_for_dispatch(tool_params)
 
             logger.debug(
                 "Router executing step %s/%s: %s",
@@ -346,12 +1056,12 @@ def route_tool_call_report(
 
             if tool_to_execute == tool_name and index == len(corrected_tools) - 1:
                 result = (
-                    direct_executor() if tool_params == params else dispatcher.execute(tool_to_execute, tool_params)
+                    direct_executor() if tool_params == params else dispatcher.execute(tool_to_execute, dispatch_params)
                 )
             else:
-                result = dispatcher.execute(tool_to_execute, tool_params)
+                result = dispatcher.execute(tool_to_execute, dispatch_params)
 
-            steps.append(ExecutionStep(tool_name=tool_to_execute, params=tool_params, result=result))
+            steps.append(ExecutionStep(tool_name=tool_to_execute, params=dispatch_params, result=result))
 
         audit_events = _build_correction_audit_events(
             original_tool_name=tool_name,
@@ -367,6 +1077,7 @@ def route_tool_call_report(
             router_applied=True,
             router_disposition="corrected",
             steps=tuple(steps),
+            policy_context=naming_policy,
             audit_events=audit_events,
             audit_ids=_extract_audit_ids(audit_events),
             verification_status=cast(Any, verification_status),
@@ -438,6 +1149,13 @@ def route_tool_call(
         direct_executor=direct_executor,
         prompt=prompt,
     )
+    naming_payload = report.policy_context.get("guided_naming") if report.policy_context else None
+    if isinstance(naming_payload, dict) and naming_payload.get("status") == "warning":
+        current_ctx = _get_active_context()
+        if current_ctx is not None and naming_payload.get("message"):
+            ctx_warning(current_ctx, str(naming_payload["message"]))
+    _maybe_mark_guided_spatial_state_stale_from_report(report)
+    _maybe_sync_guided_part_registry_from_report(report)
     if report.error is None and len(report.steps) == 1:
         result = report.steps[0].result
         if not isinstance(result, str):

@@ -1,10 +1,12 @@
 from typing import Any, Dict, List, Optional
 
+from server.application.services.spatial_graph import get_spatial_graph_service
 from server.application.tool_handlers._rpc_utils import (
     require_dict_result,
     require_list_of_dicts_result,
     require_str_result,
 )
+from server.application.tool_handlers.collection_handler import CollectionToolHandler
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.tools.scene import ISceneTool
 
@@ -397,6 +399,110 @@ class SceneToolHandler(ISceneTool):
                     "reference_axis": reference_axis,
                     "tolerance": tolerance,
                     "world_space": world_space,
+                },
+            )
+        )
+
+    def get_scope_graph(
+        self,
+        target_object: Optional[str] = None,
+        target_objects: Optional[List[str]] = None,
+        collection_name: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        collection_handler = CollectionToolHandler(self.rpc)
+
+        def _list_collection_objects(name: str) -> List[str]:
+            payload = collection_handler.list_objects(collection_name=name, recursive=True, include_hidden=False)
+            objects = payload.get("objects", []) if isinstance(payload, dict) else []
+            return [
+                str(item.get("name")).strip()
+                for item in objects
+                if isinstance(item, dict) and str(item.get("name") or "").strip()
+            ]
+
+        return get_spatial_graph_service().build_scope_graph(
+            reader=self,
+            target_object=target_object,
+            target_objects=target_objects,
+            collection_name=collection_name,
+            list_collection_objects=_list_collection_objects,
+        )
+
+    def get_relation_graph(
+        self,
+        target_object: Optional[str] = None,
+        target_objects: Optional[List[str]] = None,
+        collection_name: Optional[str] = None,
+        goal_hint: Optional[str] = None,
+        include_truth_payloads: bool = False,
+    ) -> Dict[str, Any]:
+        scope_graph = self.get_scope_graph(
+            target_object=target_object,
+            target_objects=target_objects,
+            collection_name=collection_name,
+        )
+        return get_spatial_graph_service().build_relation_graph(
+            reader=self,
+            scope_graph=scope_graph,
+            goal_hint=goal_hint,
+            include_truth_payloads=include_truth_payloads,
+        )
+
+    def get_view_diagnostics(
+        self,
+        target_object: Optional[str] = None,
+        target_objects: Optional[List[str]] = None,
+        collection_name: Optional[str] = None,
+        camera_name: Optional[str] = None,
+        focus_target: Optional[str] = None,
+        view_name: Optional[str] = None,
+        orbit_horizontal: float = 0.0,
+        orbit_vertical: float = 0.0,
+        zoom_factor: Optional[float] = None,
+        persist_view: bool = False,
+    ) -> Dict[str, Any]:
+        collection_handler = CollectionToolHandler(self.rpc)
+
+        resolved_target_objects: List[str] = [
+            str(name).strip() for name in list(target_objects or []) if str(name or "").strip()
+        ]
+        if target_object and target_object not in resolved_target_objects:
+            resolved_target_objects = [target_object, *resolved_target_objects]
+
+        if collection_name:
+            payload = collection_handler.list_objects(
+                collection_name=collection_name,
+                recursive=True,
+                include_hidden=False,
+            )
+            collection_objects = payload.get("objects", []) if isinstance(payload, dict) else []
+            resolved_target_objects.extend(
+                str(item.get("name")).strip()
+                for item in collection_objects
+                if isinstance(item, dict) and str(item.get("name") or "").strip()
+            )
+
+        deduped_target_objects: List[str] = []
+        seen_names: set[str] = set()
+        for name in resolved_target_objects:
+            if name in seen_names:
+                continue
+            seen_names.add(name)
+            deduped_target_objects.append(name)
+
+        return require_dict_result(
+            self.rpc.send_request(
+                "scene.get_view_diagnostics",
+                {
+                    "target_object": target_object,
+                    "target_objects": deduped_target_objects,
+                    "camera_name": camera_name,
+                    "focus_target": focus_target,
+                    "view_name": view_name,
+                    "orbit_horizontal": orbit_horizontal,
+                    "orbit_vertical": orbit_vertical,
+                    "zoom_factor": zoom_factor,
+                    "persist_view": persist_view,
                 },
             )
         )

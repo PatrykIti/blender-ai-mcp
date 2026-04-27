@@ -3,9 +3,9 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 3 tasks
-- **In Progress:** 2 tasks
-- **Done:** 204
+- **To Do:** 7 tasks
+- **In Progress:** 0 tasks
+- **Done:** 224
 - **Superseded:** 10
 
 ## 📐 Board Scope
@@ -37,7 +37,8 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-130](./TASK-130_Default_Guided_Surface_Bootstrap_Consistency.md) | **Default Guided Surface Bootstrap Consistency** | 🟠 High | Board-level follow-on from the TASK-128 audit. Align the repo's documented "default production" story with the actual bootstrap surface configured in runtime defaults and examples. |
+| [TASK-148](./TASK-148_No_Auth_HTTP_MCP_Client_Compatibility_And_Auth_Misclassification_Recovery.md) | **No-Auth HTTP MCP Client Compatibility And Auth Misclassification Recovery** | 🔴 High | Board-level follow-on after TASK-125 for hardening the no-auth Streamable HTTP path across Claude, Codex, Gemini, and similar MCP clients without falsely advertising OAuth support. |
+
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
@@ -53,21 +54,22 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Reconstruction (Mesh, Material, Scene)
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-135](./TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md) | **Anatomy-Aware Reference-Guided Low-Poly Creature Reconstruction** | 🔴 High | Board-level follow-on after TASK-128 for moving from generic creature blockout toward anatomy-aware low-poly reconstruction from front/side references for common quadruped mammals. |
+| [TASK-136](./TASK-136_Reference_Guided_Architecture_And_Building_Reconstruction.md) | **Reference-Guided Architecture and Building Reconstruction** | 🔴 High | Board-level architecture umbrella for turning plans/elevations/photo refs into bounded reconstruction sessions for buildings, facades, and modular structures on `llm-guided`. |
+| [TASK-137](./TASK-137_Anatomy_Aware_Reference_Guided_Organ_Reconstruction.md) | **Anatomy-Aware Reference-Guided Organ Reconstruction** | 🟠 High | Board-level organic-anatomy umbrella for bounded organ reconstruction from references with explicit medical-scope guardrails and anatomy-aware loop design. |
+| [TASK-138](./TASK-138_Anatomy_Aware_Reference_Guided_Biped_And_Fantasy_Character_Reconstruction.md) | **Anatomy-Aware Reference-Guided Biped and Fantasy Character Reconstruction** | 🔴 High | Board-level character umbrella for reference-guided humanoid and fantasy-character reconstruction with explicit body-part, symmetry, appendage, garment, and rig-handoff boundaries. |
 
 ### Vision & Hybrid Loop
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-128-02](./TASK-128-02_Deterministic_Silhouette_Analysis_And_Typed_Action_Hints.md) | **Deterministic Silhouette Analysis and Typed Action Hints** | 🔴 High | Second execution slice for mask-based shape metrics and tool-oriented corrective hints. |
-| [TASK-128-03](./TASK-128-03_Optional_Part_Segmentation_Sidecar_And_Part_Aware_Perception.md) | **Optional Part-Segmentation Sidecar and Part-Aware Perception** | 🟡 Medium | Third execution slice for an opt-in segmentation module that produces part masks, crops, and landmarks without becoming a default runtime dependency. |
-
+| [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) | **Expand External Vision Contract Profiles Across Qwen, Anthropic, OpenAI, and NVIDIA** | 🔴 High | Board-level follow-on after TASK-139 for extending the external `vision_contract_profile` architecture across additional multimodal families on the existing provider surface, including OpenRouter model capability resolution and no new provider branches under this umbrella. |
+| [TASK-145](./TASK-145_Spatial_Repair_Planner_And_Sculpt_Handoff_Context.md) | **Spatial Repair Planner and Sculpt Handoff Context** | 🔴 High | Board-level umbrella for turning current scope/relation/view facts into stronger bounded repair-family selection and safer sculpt handoff context on the guided loop. |
 ---
 
 ## 🚧 In Progress
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-128](./TASK-128_Reference_Guided_Creature_Build_Surface_And_Perception_Reliability.md) | **Reference-Guided Creature Build Surface and Perception Reliability** | 🔴 High | Active umbrella for Slice A/B/C work on creature prompting, deterministic silhouette feedback, and optional part segmentation. |
-| [TASK-128-01](./TASK-128-01_Guided_Creature_Prompting_Handoff_And_Discovery_Hints.md) | **Guided Creature Prompting, Handoff, and Discovery Hints** | 🔴 High | Active Slice A. The platform baseline exists, but the creature prompt asset, goal-aware recommendation path, creature handoff narrowing, and discovery/search bias still need to be aligned with runtime behavior. The highest-risk open gaps are now prompt-asset exposure, goal-aware recommendation routing, prompt wording/runtime-surface alignment, the session-aware creature handoff path, and the metadata-driven search-bias path: catalog/provider/bridge prompt exposure, deterministic use of session goal in `recommended_prompts`, generic-creature and guided-utility-consistent prompt docs, iterate-stage docs that describe the *current* runtime response shape, `guided_handoff` payload, session visibility/search shaping, `search_documents` enrichment, and the matching regression harness still need to describe the same bounded low-poly creature story. The broader repo-wide default-bootstrap drift is tracked separately in [TASK-130](./TASK-130_Default_Guided_Surface_Bootstrap_Consistency.md). |
 
 ---
 
@@ -75,6 +77,26 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-156](./TASK-156_Guided_Pair_Role_Cardinality_And_Sibling_Part_Registration.md) | **Guided Pair Role Cardinality And Sibling Part Registration** | 🔴 High | 2026-04-14 |
+| [TASK-155](./TASK-155_Guided_Post_Run_Reliability_Followups.md) | **Guided Post-Run Reliability Follow-Ups** | 🔴 High | 2026-04-11 |
+| [TASK-130](./TASK-130_Default_Guided_Surface_Bootstrap_Consistency.md) | **Default Guided Bootstrap And Generic Governor Reliability** | 🔴 High | 2026-04-10 |
+| [TASK-154](./TASK-154_Guided_Naming_Policy_And_Semantic_Object_Name_Enforcement.md) | **Guided Naming Policy And Semantic Object Name Enforcement** | 🔴 High | 2026-04-10 |
+| [TASK-153](./TASK-153_Guided_Visibility_Authority_And_Manifest_Demotion.md) | **Guided Visibility Authority And Manifest Demotion** | 🔴 High | 2026-04-10 |
+| [TASK-152](./TASK-152_Guided_Spatial_Gate_Usability_Prompt_Semantics_And_Inspect_Alignment.md) | **Guided Spatial Gate Usability, Prompt Semantics, And Inspect Alignment** | 🔴 High | 2026-04-10 |
+| [TASK-151](./TASK-151_Spatial_Check_Freshness_Target_Binding_And_Guided_Rearm.md) | **Spatial Check Freshness, Target Binding, And Guided Re-Arm** | 🔴 High | 2026-04-09 |
+| [TASK-150](./TASK-150_Server_Driven_Guided_Flow_State_Step_Gating_And_Domain_Profiles.md) | **Server-Driven Guided Flow State, Step Gating, and Domain Profiles** | 🔴 High | 2026-04-09 |
+| [TASK-149](./TASK-149_Guided_Default_Spatial_Graph_And_View_Diagnostics_For_All_Goal_Oriented_Sessions.md) | **Guided Default Spatial Graph And View Diagnostics For All Goal-Oriented Sessions** | 🔴 High | 2026-04-08 |
+| [TASK-147](./TASK-147_Guided_Build_Cleanup_Recovery_Hatch_And_Prompt_Alignment.md) | **Guided Build Cleanup Recovery Hatch And Prompt Alignment** | 🔴 High | 2026-04-07 |
+| [TASK-146](./TASK-146_Guided_Runtime_Guardrails_Vision_Profile_And_Prompting_Hardening.md) | **Guided Runtime Guardrails, Vision Profile, and Prompting Hardening** | 🔴 High | 2026-04-07 |
+| [TASK-144](./TASK-144_Camera_Aware_View_Graph_And_Visibility_Diagnostics.md) | **Camera-Aware View Graph and Visibility Diagnostics** | 🔴 High | 2026-04-07 |
+| [TASK-143](./TASK-143_Guided_Spatial_Scope_And_Relation_Graphs.md) | **Guided Spatial Scope and Relation Graphs** | 🔴 High | 2026-04-07 |
+| [TASK-141](./TASK-141_Guided_Creature_Run_Contract_And_Schema_Drift_Hardening.md) | **Guided Creature Run Contract and Schema Drift Hardening** | 🔴 High | 2026-04-06 |
+| [TASK-142](./TASK-142_Creature_Part_Seating_And_Organic_Attachment_Semantics.md) | **Creature Part Seating and Organic Attachment Semantics** | 🔴 High | 2026-04-07 |
+| [TASK-128](./TASK-128_Reference_Guided_Creature_Build_Surface_And_Perception_Reliability.md) | **Reference-Guided Creature Build Surface and Perception Reliability** | 🔴 High | 2026-04-06 |
+| [TASK-128-01](./TASK-128-01_Guided_Creature_Prompting_Handoff_And_Discovery_Hints.md) | **Guided Creature Prompting, Handoff, and Discovery Hints** | 🔴 High | 2026-04-06 |
+| [TASK-128-02](./TASK-128-02_Deterministic_Silhouette_Analysis_And_Typed_Action_Hints.md) | **Deterministic Silhouette Analysis and Typed Action Hints** | 🔴 High | 2026-04-06 |
+| [TASK-128-03](./TASK-128-03_Optional_Part_Segmentation_Sidecar_And_Part_Aware_Perception.md) | **Optional Part-Segmentation Sidecar and Part-Aware Perception** | 🟡 Medium | 2026-04-06 |
+| [TASK-139](./TASK-139_Model_Family_Specific_Vision_Contract_Profiles_For_External_Runtimes.md) | **Model-Family-Specific Vision Contract Profiles for External Runtimes** | 🔴 High | 2026-04-05 |
 | [TASK-134](./TASK-134_Stage_Compare_Error_Response_Hardening.md) | **Stage Compare Error Response Hardening** | 🟠 High | 2026-04-05 |
 | [TASK-133](./TASK-133_Call_Tool_Proxy_Error_Semantics_Hardening.md) | **call_tool Proxy Error Semantics Hardening** | 🟠 High | 2026-04-05 |
 | [TASK-132](./TASK-132_Hybrid_Budget_Mesh_Overlap_And_Guided_Readiness_Review_Followups.md) | **Hybrid Budget, Mesh Overlap, and Guided Readiness Review Follow-Ups** | 🔴 High | 2026-04-05 |

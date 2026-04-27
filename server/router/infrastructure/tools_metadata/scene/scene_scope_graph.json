@@ -1,0 +1,33 @@
+{
+  "tool_name": "scene_scope_graph",
+  "category": "scene",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": [
+    "scope graph",
+    "target scope",
+    "structural scope",
+    "anchor object",
+    "object roles",
+    "spatial scope",
+    "read only scope"
+  ],
+  "sample_prompts": [
+    "show the structural scope graph for these objects",
+    "which object is the anchor in this target set",
+    "give me object roles for the current assembly scope"
+  ],
+  "parameters": {
+    "target_object": {"type": "string", "required": false},
+    "target_objects": {"type": "array", "required": false},
+    "collection_name": {"type": "string", "required": false}
+  },
+  "related_tools": [
+    "scene_relation_graph",
+    "scene_get_bounding_box",
+    "scene_measure_gap",
+    "reference_compare_stage_checkpoint"
+  ],
+  "patterns": [],
+  "description": "Returns one compact read-only scope graph for a target object set, collection, or scene, including the inferred structural anchor and bounded object-role semantics."
+}

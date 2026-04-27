@@ -1,0 +1,71 @@
+# TASK-139-01: Runtime Vision Contract Profile Model and Resolution
+
+**Parent:** [TASK-139](./TASK-139_Model_Family_Specific_Vision_Contract_Profiles_For_External_Runtimes.md)
+**Status:** ✅ Done
+**Priority:** 🔴 High
+
+**Completion Summary:** Added one typed external `vision_contract_profile`
+surface through `Config`, `VisionOpenAICompatibleConfig`, and
+`VisionRuntimeConfig`, including deterministic precedence for explicit
+override, model-family auto-match, provider default, and generic fallback.
+
+## Objective
+
+Introduce one typed `vision_contract_profile` concept for external vision
+runtimes and resolve that profile deterministically from an explicit flat
+config/env override plus model-family matching rules.
+
+## Business Problem
+
+Current runtime selection already distinguishes:
+
+- local vs external backend families
+- OpenRouter vs Google AI Studio transport/provider identity
+
+But it still does not distinguish the question that now matters for staged
+compare reliability:
+
+- which prompt/schema/parser contract should this model family receive?
+
+That missing layer is why OpenRouter Google-family models still fall into the
+generic OpenAI-compatible contract path.
+
+## Repository Touchpoints
+
+- `server/infrastructure/config.py`
+- `server/adapters/mcp/vision/config.py`
+- `server/adapters/mcp/vision/runtime.py`
+- `tests/unit/adapters/mcp/test_vision_runtime_config.py`
+- `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
+
+## Acceptance Criteria
+
+- the flat application config/env surface has one explicit
+  `VISION_EXTERNAL_CONTRACT_PROFILE` override seam for external vision
+- the runtime config has an explicit `vision_contract_profile` concept for
+  external vision
+- the selected `vision_contract_profile` is resolved deterministically
+- the selected `vision_contract_profile` is available to downstream
+  prompting/backend/parsing layers without ad hoc model-name re-parsing at
+  every call site
+
+## Docs To Update
+
+- `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
+
+## Tests To Add/Update
+
+- `tests/unit/adapters/mcp/test_vision_runtime_config.py`
+
+## Changelog Impact
+
+- include in the parent umbrella changelog entry when shipped
+
+## Execution Structure
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-139-01-01](./TASK-139-01-01_Contract_Profile_Vocabulary_And_Typed_Config_Surface.md) | Define the explicit vision-contract-profile vocabulary and typed config surface |
+| 2 | [TASK-139-01-02](./TASK-139-01-02_Model_Family_Detection_And_Override_Precedence.md) | Define deterministic vision-contract-profile selection rules from overrides and model-family matching |

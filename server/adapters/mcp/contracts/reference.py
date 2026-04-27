@@ -10,6 +10,8 @@ from typing import Literal
 from server.adapters.mcp.contracts.scene import (
     SceneAssembledTargetScopeContract,
     SceneCorrectionTruthBundleContract,
+    SceneRelationKindLiteral,
+    SceneRelationVerdictLiteral,
     SceneRepairMacroCandidateContract,
     SceneTruthFollowupContract,
     SceneTruthFollowupItemContract,
@@ -18,6 +20,7 @@ from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
 from server.adapters.mcp.sampling.result_types import VisionAssistantContract
 
 from .base import MCPContract
+from .guided_flow import GuidedFlowStateContract
 
 
 class ReferenceImageRecordContract(MCPContract):
@@ -93,6 +96,7 @@ class ReferenceCompareCheckpointResponseContract(MCPContract):
     reference_count: int = 0
     reference_ids: list[str] = []
     reference_labels: list[str] = []
+    view_diagnostics_hints: list["ReferenceViewDiagnosticsHintContract"] | None = None
     vision_assistant: VisionAssistantContract | None = None
     message: str | None = None
     error: str | None = None
@@ -111,8 +115,12 @@ class ReferenceCorrectionTruthEvidenceContract(MCPContract):
     """Truth-side evidence attached to one merged correction candidate."""
 
     focus_pairs: list[str] = []
+    relation_kinds: list[SceneRelationKindLiteral] = []
+    relation_verdicts: list[SceneRelationVerdictLiteral] = []
     item_kinds: list[
-        Literal["contact_failure", "gap", "overlap", "alignment", "measurement_error", "insufficient_scope"]
+        Literal[
+            "contact_failure", "gap", "overlap", "alignment", "attachment", "measurement_error", "insufficient_scope"
+        ]
     ] = []
     items: list[SceneTruthFollowupItemContract] = []
     macro_candidates: list[SceneRepairMacroCandidateContract] = []
@@ -187,6 +195,96 @@ class ReferenceRefinementHandoffContract(MCPContract):
     recommended_tools: list[ReferenceRefinementToolCandidateContract] = []
 
 
+class ReferenceSilhouetteMetricContract(MCPContract):
+    """One deterministic silhouette metric comparing a capture against a reference."""
+
+    metric_id: Literal[
+        "mask_iou",
+        "contour_drift",
+        "aspect_ratio_delta",
+        "upper_band_width_delta",
+        "mid_band_width_delta",
+        "lower_band_width_delta",
+        "left_projection_delta",
+        "right_projection_delta",
+    ]
+    reference_value: float
+    observed_value: float
+    delta: float
+    severity: Literal["high", "medium", "low"] = "medium"
+
+
+class ReferenceActionHintContract(MCPContract):
+    """One typed corrective hint derived from deterministic perception metrics."""
+
+    hint_id: str
+    hint_type: Literal[
+        "widen_upper_profile",
+        "reduce_upper_profile",
+        "extend_left_profile",
+        "extend_right_profile",
+        "rebalance_proportion",
+        "inspect_before_edit",
+    ]
+    summary: str
+    priority: Literal["high", "normal"] = "normal"
+    target_object: str | None = None
+    metric_ids: list[str] = []
+    recommended_tools: list[ReferenceRefinementToolCandidateContract] = []
+
+
+class ReferenceViewDiagnosticsHintContract(MCPContract):
+    """Compact recommendation to call the separate view diagnostics surface."""
+
+    hint_id: str
+    trigger: Literal["framing_ambiguity", "visibility_ambiguity", "occlusion_detected", "target_off_frame"]
+    reason: str
+    recommended_tool: Literal["scene_view_diagnostics"] = "scene_view_diagnostics"
+    priority: Literal["high", "normal"] = "normal"
+    arguments_hint: dict[str, object] | None = None
+
+
+class ReferenceSilhouetteAnalysisContract(MCPContract):
+    """Deterministic silhouette-analysis payload attached to staged compare responses."""
+
+    status: Literal["available", "unavailable"] = "unavailable"
+    reference_label: str | None = None
+    capture_label: str | None = None
+    target_view: str | None = None
+    mask_extraction_mode: Literal["alpha_or_otsu_largest_component", "unavailable"] = "unavailable"
+    alignment_mode: Literal["bbox_normalized", "unavailable"] = "unavailable"
+    metrics: list[ReferenceSilhouetteMetricContract] = []
+    notes: list[str] = []
+
+
+class ReferencePartSegmentationLandmarkContract(MCPContract):
+    """One optional 2D landmark emitted by a future segmentation sidecar."""
+
+    landmark_id: str
+    x: float
+    y: float
+
+
+class ReferencePartSegmentationPartContract(MCPContract):
+    """One optional part-aware segmentation artifact for a creature region."""
+
+    part_label: str
+    mask_path: str | None = None
+    crop_path: str | None = None
+    confidence: float | None = None
+    landmarks: list[ReferencePartSegmentationLandmarkContract] = []
+
+
+class ReferencePartSegmentationContract(MCPContract):
+    """Optional vendor-neutral sidecar payload for part-aware creature perception."""
+
+    status: Literal["disabled", "available", "unavailable"] = "disabled"
+    provider_name: str | None = None
+    advisory_only: bool = True
+    parts: list[ReferencePartSegmentationPartContract] = []
+    notes: list[str] = []
+
+
 class ReferenceCompareStageCheckpointResponseContract(MCPContract):
     """Structured response for deterministic stage checkpoint capture + compare."""
 
@@ -194,6 +292,7 @@ class ReferenceCompareStageCheckpointResponseContract(MCPContract):
     session_id: str | None = None
     transport: str | None = None
     goal: str | None = None
+    guided_flow_state: GuidedFlowStateContract | None = None
     guided_reference_readiness: GuidedReferenceReadinessContract | None = None
     target_object: str | None = None
     target_objects: list[str] = []
@@ -205,6 +304,10 @@ class ReferenceCompareStageCheckpointResponseContract(MCPContract):
     budget_control: ReferenceHybridBudgetControlContract | None = None
     refinement_route: ReferenceRefinementRouteContract | None = None
     refinement_handoff: ReferenceRefinementHandoffContract | None = None
+    silhouette_analysis: ReferenceSilhouetteAnalysisContract | None = None
+    action_hints: list[ReferenceActionHintContract] = []
+    part_segmentation: ReferencePartSegmentationContract | None = None
+    view_diagnostics_hints: list[ReferenceViewDiagnosticsHintContract] | None = None
     target_view: str | None = None
     checkpoint_id: str
     checkpoint_label: str | None = None
@@ -227,6 +330,7 @@ class ReferenceIterateStageCheckpointResponseContract(MCPContract):
     session_id: str | None = None
     transport: str | None = None
     goal: str | None = None
+    guided_flow_state: GuidedFlowStateContract | None = None
     guided_reference_readiness: GuidedReferenceReadinessContract | None = None
     target_object: str | None = None
     target_objects: list[str] = []
@@ -238,6 +342,10 @@ class ReferenceIterateStageCheckpointResponseContract(MCPContract):
     budget_control: ReferenceHybridBudgetControlContract | None = None
     refinement_route: ReferenceRefinementRouteContract | None = None
     refinement_handoff: ReferenceRefinementHandoffContract | None = None
+    silhouette_analysis: ReferenceSilhouetteAnalysisContract | None = None
+    action_hints: list[ReferenceActionHintContract] = []
+    part_segmentation: ReferencePartSegmentationContract | None = None
+    view_diagnostics_hints: list[ReferenceViewDiagnosticsHintContract] | None = None
     target_view: str | None = None
     checkpoint_id: str
     checkpoint_label: str | None = None
@@ -251,5 +359,6 @@ class ReferenceIterateStageCheckpointResponseContract(MCPContract):
     stagnation_count: int = 0
     stop_reason: str | None = None
     compare_result: ReferenceCompareStageCheckpointResponseContract
+    debug_payload_omitted: bool = False
     message: str | None = None
     error: str | None = None

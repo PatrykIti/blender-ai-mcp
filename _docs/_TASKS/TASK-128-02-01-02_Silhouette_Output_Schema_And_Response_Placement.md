@@ -1,7 +1,7 @@
 # TASK-128-02-01-02: Silhouette Output Schema and Response Placement
 
 **Parent:** [TASK-128-02-01](./TASK-128-02-01_Perception_Boundary_And_Response_Contract_For_Silhouette_Analysis.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -13,6 +13,7 @@ typed `action_hints` placement in compare/iterate-stage contracts.
 
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/areas/reference.py`
+- `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
 
 ## Acceptance Criteria
@@ -20,9 +21,12 @@ typed `action_hints` placement in compare/iterate-stage contracts.
 - the schema covers silhouette metrics and typed action hints explicitly
 - compare/iterate response placement is consistent and bounded
 - docs explain how the new fields relate to existing correction outputs
+- silhouette/action-hint fields remain orthogonal to current runtime
+  diagnostics such as `vision_contract_profile`
 
 ## Docs To Update
 
+- `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
 
 ## Changelog Impact

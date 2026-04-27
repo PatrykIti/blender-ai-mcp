@@ -19,14 +19,59 @@ from .backend import VisionBackend, VisionBackendUnavailableError
 from .backends import create_vision_backend
 from .config import (
     VisionBackendKind,
+    VisionContractProfile,
     VisionMLXLocalConfig,
     VisionOpenAICompatibleConfig,
     VisionRuntimeConfig,
+    VisionSegmentationSidecarConfig,
     VisionTransformersLocalConfig,
 )
+from .model_profiles import ModelCapabilityProfile, resolve_model_profile
 
 _OPENROUTER_DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
 _GOOGLE_AI_STUDIO_DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
+_GOOGLE_FAMILY_MODEL_MARKERS = ("gemini", "gemma", "learnlm")
+_OPENAI_FAMILY_MODEL_MARKERS = ("openai/", "gpt-")
+
+
+def _looks_like_google_family_model(model_name: str | None) -> bool:
+    normalized = str(model_name or "").strip().lower()
+    if not normalized:
+        return False
+    return any(marker in normalized for marker in _GOOGLE_FAMILY_MODEL_MARKERS)
+
+
+def _looks_like_openai_family_model(model_name: str | None) -> bool:
+    normalized = str(model_name or "").strip().lower()
+    if not normalized:
+        return False
+    return any(marker in normalized for marker in _OPENAI_FAMILY_MODEL_MARKERS)
+
+
+def _resolve_vision_contract_profile(
+    *,
+    explicit_contract_profile: str | None,
+    preferred_contract_profile: VisionContractProfile | None,
+    provider_name: str,
+    model_name: str | None,
+) -> VisionContractProfile:
+    if explicit_contract_profile == "generic_full":
+        return "generic_full"
+    if explicit_contract_profile == "google_family_compare":
+        return "google_family_compare"
+    if preferred_contract_profile is not None:
+        return preferred_contract_profile
+    if _looks_like_google_family_model(model_name):
+        return "google_family_compare"
+    if provider_name == "openrouter" and _looks_like_openai_family_model(model_name):
+        return "google_family_compare"
+    if provider_name == "google_ai_studio":
+        return "google_family_compare"
+    return "generic_full"
+
+
+def _resolve_openrouter_fallback_profile(model_name: str | None) -> ModelCapabilityProfile | None:
+    return resolve_model_profile(provider="openrouter", model_id=model_name)
 
 
 def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
@@ -49,6 +94,8 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
         )
 
     external_config = None
+    segmentation_enabled = bool(getattr(config, "VISION_SEGMENTATION_ENABLED", False))
+    segmentation_sidecar_config = None
     explicit_external_provider = config.VISION_EXTERNAL_PROVIDER
     if explicit_external_provider == "openrouter":
         use_openrouter_profile = True
@@ -84,6 +131,7 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
         external_api_key_env: str | None
         site_url: str | None
         site_name: str | None
+        openrouter_fallback_profile: ModelCapabilityProfile | None = None
 
         if use_openrouter_profile:
             external_provider_name = "openrouter"
@@ -93,6 +141,7 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
             external_api_key_env = config.VISION_OPENROUTER_API_KEY_ENV or config.VISION_EXTERNAL_API_KEY_ENV
             site_url = config.VISION_OPENROUTER_SITE_URL
             site_name = config.VISION_OPENROUTER_SITE_NAME
+            openrouter_fallback_profile = _resolve_openrouter_fallback_profile(external_model)
         elif use_google_ai_studio_profile:
             external_provider_name = "google_ai_studio"
             external_base_url = config.VISION_GEMINI_BASE_URL or _GOOGLE_AI_STUDIO_DEFAULT_BASE_URL
@@ -112,14 +161,47 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
             site_url = None
             site_name = None
 
+        vision_contract_profile = _resolve_vision_contract_profile(
+            explicit_contract_profile=config.VISION_EXTERNAL_CONTRACT_PROFILE,
+            preferred_contract_profile=(
+                openrouter_fallback_profile.preferred_contract_profile
+                if openrouter_fallback_profile is not None
+                else None
+            ),
+            provider_name=external_provider_name,
+            model_name=external_model,
+        )
         external_config = VisionOpenAICompatibleConfig(
             provider_name=external_provider_name,
+            vision_contract_profile=vision_contract_profile,
             base_url=external_base_url,
             model=external_model,
             api_key=external_api_key,
             api_key_env=external_api_key_env,
             site_url=site_url,
             site_name=site_name,
+            require_parameters=config.VISION_OPENROUTER_REQUIRE_PARAMETERS if use_openrouter_profile else True,
+            enable_response_healing=config.VISION_OPENROUTER_ENABLE_RESPONSE_HEALING
+            if use_openrouter_profile
+            else False,
+            prefer_json_object_for_qwen=(
+                config.VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN if use_openrouter_profile else False
+            ),
+            model_capabilities=openrouter_fallback_profile.to_runtime_capabilities()
+            if openrouter_fallback_profile is not None
+            else None,
+        )
+
+    if segmentation_enabled:
+        segmentation_sidecar_config = VisionSegmentationSidecarConfig(
+            enabled=True,
+            provider_name=getattr(config, "VISION_SEGMENTATION_PROVIDER", "generic_sidecar"),
+            endpoint=getattr(config, "VISION_SEGMENTATION_ENDPOINT", None),
+            model=getattr(config, "VISION_SEGMENTATION_MODEL", None),
+            api_key=getattr(config, "VISION_SEGMENTATION_API_KEY", None),
+            api_key_env=getattr(config, "VISION_SEGMENTATION_API_KEY_ENV", None),
+            timeout_seconds=float(getattr(config, "VISION_SEGMENTATION_TIMEOUT_SECONDS", 15.0)),
+            max_parts=int(getattr(config, "VISION_SEGMENTATION_MAX_PARTS", 16)),
         )
 
     return VisionRuntimeConfig(
@@ -132,6 +214,7 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
         transformers_local=local_config,
         mlx_local=mlx_local_config,
         openai_compatible_external=external_config,
+        segmentation_sidecar=segmentation_sidecar_config,
     )
 
 

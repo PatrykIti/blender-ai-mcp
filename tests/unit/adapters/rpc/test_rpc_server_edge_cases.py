@@ -63,6 +63,57 @@ def test_run_background_job_error_paths_and_ping(monkeypatch):
     assert response["status"] == "ok"
 
 
+def test_rpc_server_watchdog_restarts_unhealthy_listener(monkeypatch):
+    server = BlenderRpcServer()
+    server.running = True
+    server.server_socket = MagicMock()
+    server.server_socket.fileno.return_value = -1
+    server.server_thread = None
+
+    restarted = []
+
+    monkeypatch.setattr(server, "_stop", lambda clear_background_jobs: restarted.append("stop"))
+    monkeypatch.setattr(server, "start", lambda: restarted.append("start"))
+
+    assert server.ensure_running() is False
+    assert restarted == ["stop", "start"]
+
+
+def test_rpc_server_watchdog_restart_preserves_background_jobs(monkeypatch):
+    server = BlenderRpcServer()
+    server.running = True
+    server.server_socket = MagicMock()
+    server.server_socket.fileno.return_value = -1
+    server.server_thread = None
+    server.background_jobs["job-1"] = rpc_module.BackgroundJob(job_id="job-1", cmd="demo", args={}, timeout_seconds=5.0)
+
+    monkeypatch.setattr(server, "start", lambda: None)
+
+    server.ensure_running()
+
+    assert "job-1" in server.background_jobs
+
+
+def test_rpc_server_watchdog_register_and_stop(monkeypatch):
+    registered = []
+    unregistered = []
+    fake_timers = SimpleNamespace(
+        register=lambda fn, first_interval=0.0: registered.append((fn, first_interval)),
+        unregister=lambda fn: unregistered.append(fn),
+        is_registered=lambda fn: True,
+    )
+    monkeypatch.setattr(rpc_module, "bpy", SimpleNamespace(app=SimpleNamespace(timers=fake_timers)))
+
+    server = BlenderRpcServer()
+
+    assert server.start_watchdog(interval_seconds=1.5) is True
+    assert registered
+    assert registered[0][1] == 1.5
+
+    server.stop_watchdog()
+    assert unregistered == [registered[0][0]]
+
+
 def test_process_request_unknown_command_and_background_errors(monkeypatch):
     server = BlenderRpcServer()
     monkeypatch.setattr(rpc_module, "bpy", None)
@@ -89,6 +140,46 @@ def test_process_request_unknown_command_and_background_errors(monkeypatch):
 
     unknown_verb = server._handle_background_rpc("rpc.unknown", "req", {"job_id": "job-1"}, 5.0)
     assert unknown_verb["error_code"] == "unknown_background_verb"
+
+
+def test_rpc_server_writes_trace_file(tmp_path, monkeypatch):
+    server = BlenderRpcServer()
+    monkeypatch.setattr(server, "trace_file_path", tmp_path / "rpc_trace.jsonl")
+    monkeypatch.setattr(rpc_module, "bpy", None)
+
+    response = server._process_request({"request_id": "req-1", "cmd": "unknown.cmd", "args": {"foo": "bar"}})
+
+    assert response["status"] == "error"
+    content = server.trace_file_path.read_text(encoding="utf-8")
+    assert '"event": "rpc_received"' in content
+    assert '"event": "rpc_handler_failed"' in content
+    assert '"request_id": "req-1"' in content
+    assert '"cmd": "unknown.cmd"' in content
+
+
+def test_rpc_trace_degrades_to_no_trace_when_directory_cannot_be_created(tmp_path, monkeypatch):
+    trace_dir_file = tmp_path / "trace-dir-file"
+    trace_dir_file.write_text("not a directory", encoding="utf-8")
+    monkeypatch.setattr(rpc_module, "RPC_TRACE_DIR", trace_dir_file)
+
+    server = BlenderRpcServer()
+
+    assert server.trace_file_path is None
+    server._record_trace_event("test_event", cmd=None, request_id=None)
+
+
+def test_rpc_trace_does_not_fsync_per_event(tmp_path, monkeypatch):
+    server = BlenderRpcServer()
+    monkeypatch.setattr(server, "trace_file_path", tmp_path / "rpc_trace.jsonl")
+
+    def fail_if_called(_fileno):
+        raise AssertionError("trace writes must not fsync every event")
+
+    monkeypatch.setattr(rpc_module.os, "fsync", fail_if_called)
+
+    server._record_trace_event("test_event", cmd="demo.cmd", request_id="req-1")
+
+    assert '"event": "test_event"' in server.trace_file_path.read_text(encoding="utf-8")
 
 
 def test_handle_client_invalid_json(monkeypatch):

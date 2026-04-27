@@ -80,6 +80,70 @@ def test_scene_assert_contact_rejects_bbox_touching_but_visibly_gapped_spheres(s
                 pass
 
 
+def test_scene_assert_contact_accepts_tail_body_attachment_pair(scene_handler, modeling_handler):
+    body_name = "E2E_Assert_Body"
+    tail_name = "E2E_Assert_Tail"
+
+    try:
+        for name in (body_name, tail_name):
+            try:
+                scene_handler.delete_object(name)
+            except RuntimeError:
+                pass
+
+        modeling_handler.create_primitive(primitive_type="CUBE", name=body_name, size=2.0, location=[0, 0, 0])
+        modeling_handler.create_primitive(primitive_type="CUBE", name=tail_name, size=1.0, location=[1.3, 0, 0])
+        modeling_handler.transform_object(name=tail_name, scale=[0.6, 0.25, 0.25])
+
+        gap = scene_handler.measure_gap(tail_name, body_name, tolerance=0.0001)
+        result = scene_handler.assert_contact(tail_name, body_name, max_gap=0.001)
+
+        assert gap["relation"] == "contact"
+        assert result["passed"] is True
+        assert result["actual"]["relation"] == "contact"
+    except RuntimeError as e:
+        pytest.skip(f"Blender not available: {e}")
+    finally:
+        for name in (body_name, tail_name):
+            try:
+                scene_handler.delete_object(name)
+            except RuntimeError:
+                pass
+
+
+def test_scene_assert_contact_accepts_forelimb_body_attachment_pair(scene_handler, modeling_handler):
+    body_name = "E2E_Assert_LimbBody"
+    forelimb_name = "E2E_Assert_Forelimb"
+
+    try:
+        for name in (body_name, forelimb_name):
+            try:
+                scene_handler.delete_object(name)
+            except RuntimeError:
+                pass
+
+        modeling_handler.create_primitive(primitive_type="CUBE", name=body_name, size=2.0, location=[0, 0, 0])
+        modeling_handler.create_primitive(
+            primitive_type="CUBE", name=forelimb_name, size=1.0, location=[1.0, 0.0, -1.15]
+        )
+        modeling_handler.transform_object(name=forelimb_name, scale=[0.6, 0.3, 0.3])
+
+        gap = scene_handler.measure_gap(forelimb_name, body_name, tolerance=0.0001)
+        result = scene_handler.assert_contact(forelimb_name, body_name, max_gap=0.001)
+
+        assert gap["relation"] == "contact"
+        assert result["passed"] is True
+        assert result["actual"]["relation"] == "contact"
+    except RuntimeError as e:
+        pytest.skip(f"Blender not available: {e}")
+    finally:
+        for name in (body_name, forelimb_name):
+            try:
+                scene_handler.delete_object(name)
+            except RuntimeError:
+                pass
+
+
 def test_scene_assert_dimensions(scene_handler, modeling_handler):
     cube_name = "E2E_Assert_Dimensions"
 

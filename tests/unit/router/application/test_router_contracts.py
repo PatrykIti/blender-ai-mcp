@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 
+import server.adapters.mcp.areas.router as router_area
 from server.adapters.mcp.areas.router import router_get_status, router_set_goal
 from server.adapters.mcp.areas.workflow_catalog import workflow_catalog
 from server.adapters.mcp.contracts.router import (
@@ -117,6 +118,38 @@ def test_router_set_goal_returns_structured_contract(monkeypatch):
     assert result.status == "ready"
 
 
+def test_guided_scene_meaningful_objects_ignores_stock_startup_scene(monkeypatch):
+    """The default Cube/Camera/Light scene should still enter guided bootstrap."""
+
+    class SceneHandler:
+        def list_objects(self):
+            return [
+                {"name": "Cube", "type": "MESH", "location": [0.0, 0.0, 0.0]},
+                {"name": "Camera", "type": "CAMERA", "location": [0.0, -3.0, 3.0]},
+                {"name": "Light", "type": "LIGHT", "location": [4.0, 1.0, 6.0]},
+            ]
+
+    monkeypatch.setattr(router_area, "get_scene_handler", lambda: SceneHandler())
+
+    assert router_area._scene_has_meaningful_guided_objects() is False
+
+
+def test_guided_scene_meaningful_objects_keeps_real_placeholder_blockout(monkeypatch):
+    """A multi-object rough blockout should not be mistaken for the stock startup scene."""
+
+    class SceneHandler:
+        def list_objects(self):
+            return [
+                {"name": "Cube", "type": "MESH", "location": [0.0, 0.0, 0.0]},
+                {"name": "Sphere", "type": "MESH", "location": [1.0, 0.0, 0.0]},
+                {"name": "Camera", "type": "CAMERA", "location": [0.0, -3.0, 3.0]},
+            ]
+
+    monkeypatch.setattr(router_area, "get_scene_handler", lambda: SceneHandler())
+
+    assert router_area._scene_has_meaningful_guided_objects() is True
+
+
 def test_router_set_goal_contract_accepts_guided_manual_build_no_match(monkeypatch):
     """router_set_goal should expose continuation_mode for guided manual handoff."""
 
@@ -141,13 +174,19 @@ def test_router_set_goal_contract_accepts_guided_manual_build_no_match(monkeypat
     monkeypatch.setattr("server.adapters.mcp.areas.router.get_router_handler", lambda: Handler())
 
     callable_router_set_goal = getattr(router_set_goal, "fn", router_set_goal)
-    result = asyncio.run(callable_router_set_goal(DummyContext(), goal="low poly squirrel 3D model"))
+    result = asyncio.run(
+        callable_router_set_goal(
+            DummyContext(),
+            goal="create a low-poly squirrel matching front and side reference images",
+        )
+    )
 
     assert isinstance(result, RouterGoalResponseContract)
     assert result.status == "no_match"
     assert result.continuation_mode == "guided_manual_build"
     assert result.guided_handoff is not None
     assert result.guided_handoff.kind == "guided_manual_build"
+    assert result.guided_handoff.recipe_id == "low_poly_creature_blockout"
     assert result.guided_handoff.target_phase == "build"
     assert result.guided_handoff.workflow_import_recommended is False
 

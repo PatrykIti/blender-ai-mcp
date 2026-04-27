@@ -32,6 +32,10 @@ class Config(BaseSettings):
     MCP_HTTP_HOST: str = Field(default="127.0.0.1", description="Host for streamable HTTP MCP mode")
     MCP_HTTP_PORT: int = Field(default=8000, gt=0, description="Port for streamable HTTP MCP mode")
     MCP_STREAMABLE_HTTP_PATH: str = Field(default="/mcp", description="HTTP path for streamable MCP mode")
+    MCP_GUIDED_NAMING_POLICY_MODE: str = Field(
+        default="warn",
+        description="Guided naming policy mode: warn|block_opaque_role_sensitive",
+    )
 
     # Vision runtime scaffold
     VISION_ENABLED: bool = Field(default=False, description="Enable bounded vision-assist runtime")
@@ -64,6 +68,10 @@ class Config(BaseSettings):
         default="generic",
         description="Named external vision provider profile: generic|openrouter|google_ai_studio",
     )
+    VISION_EXTERNAL_CONTRACT_PROFILE: str | None = Field(
+        default=None,
+        description="Optional external vision contract profile override: generic_full|google_family_compare",
+    )
     VISION_OPENROUTER_BASE_URL: str | None = Field(
         default=None,
         description="Optional OpenRouter base URL override for vision; defaults to https://openrouter.ai/api/v1",
@@ -82,6 +90,18 @@ class Config(BaseSettings):
         default=None,
         description="Optional X-Title / site name sent to OpenRouter for ranking/analytics",
     )
+    VISION_OPENROUTER_REQUIRE_PARAMETERS: bool = Field(
+        default=False,
+        description="When enabled, require OpenRouter to route only through providers that support the requested parameters",
+    )
+    VISION_OPENROUTER_ENABLE_RESPONSE_HEALING: bool = Field(
+        default=True,
+        description="Enable OpenRouter response-healing plugin for bounded JSON compare paths",
+    )
+    VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN: bool = Field(
+        default=True,
+        description="Use response_format=json_object for Qwen-family OpenRouter models instead of json_schema",
+    )
     VISION_GEMINI_BASE_URL: str | None = Field(
         default=None,
         description="Optional Google AI Studio base URL override for vision; defaults to https://generativelanguage.googleapis.com/v1beta",
@@ -91,6 +111,40 @@ class Config(BaseSettings):
     VISION_GEMINI_API_KEY_ENV: str | None = Field(
         default=None,
         description="Environment variable containing the Google AI Studio API key for vision",
+    )
+    VISION_SEGMENTATION_ENABLED: bool = Field(
+        default=False,
+        description="Enable optional part-segmentation sidecar for creature perception",
+    )
+    VISION_SEGMENTATION_PROVIDER: str = Field(
+        default="generic_sidecar",
+        description="Optional segmentation sidecar provider: generic_sidecar",
+    )
+    VISION_SEGMENTATION_ENDPOINT: str | None = Field(
+        default=None,
+        description="Endpoint/base URL for the optional segmentation sidecar",
+    )
+    VISION_SEGMENTATION_MODEL: str | None = Field(
+        default=None,
+        description="Optional model identifier for the segmentation sidecar",
+    )
+    VISION_SEGMENTATION_API_KEY: str | None = Field(
+        default=None,
+        description="Inline API key for the segmentation sidecar",
+    )
+    VISION_SEGMENTATION_API_KEY_ENV: str | None = Field(
+        default=None,
+        description="Environment variable containing the segmentation sidecar API key",
+    )
+    VISION_SEGMENTATION_TIMEOUT_SECONDS: float = Field(
+        default=15.0,
+        gt=0,
+        description="Timeout for one optional segmentation sidecar request",
+    )
+    VISION_SEGMENTATION_MAX_PARTS: int = Field(
+        default=16,
+        gt=0,
+        description="Maximum part outputs accepted from the optional segmentation sidecar",
     )
 
     @model_validator(mode="after")
@@ -111,6 +165,8 @@ class Config(BaseSettings):
             raise ValueError("MCP_TRANSPORT_MODE must be one of: stdio, streamable")
         if not self.MCP_STREAMABLE_HTTP_PATH.startswith("/"):
             raise ValueError("MCP_STREAMABLE_HTTP_PATH must start with '/'")
+        if self.MCP_GUIDED_NAMING_POLICY_MODE not in {"warn", "block_opaque_role_sensitive"}:
+            raise ValueError("MCP_GUIDED_NAMING_POLICY_MODE must be one of: warn, block_opaque_role_sensitive")
         return self
 
     @model_validator(mode="after")
@@ -123,6 +179,10 @@ class Config(BaseSettings):
             )
         if self.VISION_EXTERNAL_PROVIDER not in {"generic", "openrouter", "google_ai_studio"}:
             raise ValueError("VISION_EXTERNAL_PROVIDER must be one of: generic, openrouter, google_ai_studio")
+        if self.VISION_EXTERNAL_CONTRACT_PROFILE not in {None, "generic_full", "google_family_compare"}:
+            raise ValueError("VISION_EXTERNAL_CONTRACT_PROFILE must be one of: generic_full, google_family_compare")
+        if self.VISION_SEGMENTATION_PROVIDER not in {"generic_sidecar"}:
+            raise ValueError("VISION_SEGMENTATION_PROVIDER must be one of: generic_sidecar")
         return self
 
 
@@ -147,6 +207,7 @@ def get_config() -> Config:
         MCP_HTTP_HOST=os.getenv("MCP_HTTP_HOST", "127.0.0.1"),
         MCP_HTTP_PORT=int(os.getenv("MCP_HTTP_PORT", 8000)),
         MCP_STREAMABLE_HTTP_PATH=os.getenv("MCP_STREAMABLE_HTTP_PATH", "/mcp"),
+        MCP_GUIDED_NAMING_POLICY_MODE=os.getenv("MCP_GUIDED_NAMING_POLICY_MODE", "warn"),
         VISION_ENABLED=os.getenv("VISION_ENABLED", "false").lower() in ("true", "1", "yes"),
         VISION_PROVIDER=os.getenv("VISION_PROVIDER", "transformers_local"),
         VISION_ALLOW_ON_GUIDED=os.getenv("VISION_ALLOW_ON_GUIDED", "true").lower() in ("true", "1", "yes"),
@@ -164,14 +225,32 @@ def get_config() -> Config:
         VISION_EXTERNAL_API_KEY=os.getenv("VISION_EXTERNAL_API_KEY") or None,
         VISION_EXTERNAL_API_KEY_ENV=os.getenv("VISION_EXTERNAL_API_KEY_ENV") or None,
         VISION_EXTERNAL_PROVIDER=os.getenv("VISION_EXTERNAL_PROVIDER", "generic"),
+        VISION_EXTERNAL_CONTRACT_PROFILE=os.getenv("VISION_EXTERNAL_CONTRACT_PROFILE") or None,
         VISION_OPENROUTER_BASE_URL=os.getenv("VISION_OPENROUTER_BASE_URL") or None,
         VISION_OPENROUTER_MODEL=os.getenv("VISION_OPENROUTER_MODEL") or None,
         VISION_OPENROUTER_API_KEY=os.getenv("VISION_OPENROUTER_API_KEY") or None,
         VISION_OPENROUTER_API_KEY_ENV=os.getenv("VISION_OPENROUTER_API_KEY_ENV") or None,
         VISION_OPENROUTER_SITE_URL=os.getenv("VISION_OPENROUTER_SITE_URL") or None,
         VISION_OPENROUTER_SITE_NAME=os.getenv("VISION_OPENROUTER_SITE_NAME") or None,
+        VISION_OPENROUTER_REQUIRE_PARAMETERS=(
+            os.getenv("VISION_OPENROUTER_REQUIRE_PARAMETERS", "false").lower() not in {"0", "false", "no"}
+        ),
+        VISION_OPENROUTER_ENABLE_RESPONSE_HEALING=(
+            os.getenv("VISION_OPENROUTER_ENABLE_RESPONSE_HEALING", "true").lower() not in {"0", "false", "no"}
+        ),
+        VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN=(
+            os.getenv("VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN", "true").lower() not in {"0", "false", "no"}
+        ),
         VISION_GEMINI_BASE_URL=os.getenv("VISION_GEMINI_BASE_URL") or None,
         VISION_GEMINI_MODEL=os.getenv("VISION_GEMINI_MODEL") or None,
         VISION_GEMINI_API_KEY=os.getenv("VISION_GEMINI_API_KEY") or None,
         VISION_GEMINI_API_KEY_ENV=os.getenv("VISION_GEMINI_API_KEY_ENV") or None,
+        VISION_SEGMENTATION_ENABLED=os.getenv("VISION_SEGMENTATION_ENABLED", "false").lower() in ("true", "1", "yes"),
+        VISION_SEGMENTATION_PROVIDER=os.getenv("VISION_SEGMENTATION_PROVIDER", "generic_sidecar"),
+        VISION_SEGMENTATION_ENDPOINT=os.getenv("VISION_SEGMENTATION_ENDPOINT") or None,
+        VISION_SEGMENTATION_MODEL=os.getenv("VISION_SEGMENTATION_MODEL") or None,
+        VISION_SEGMENTATION_API_KEY=os.getenv("VISION_SEGMENTATION_API_KEY") or None,
+        VISION_SEGMENTATION_API_KEY_ENV=os.getenv("VISION_SEGMENTATION_API_KEY_ENV") or None,
+        VISION_SEGMENTATION_TIMEOUT_SECONDS=float(os.getenv("VISION_SEGMENTATION_TIMEOUT_SECONDS", 15.0)),
+        VISION_SEGMENTATION_MAX_PARTS=int(os.getenv("VISION_SEGMENTATION_MAX_PARTS", 16)),
     )

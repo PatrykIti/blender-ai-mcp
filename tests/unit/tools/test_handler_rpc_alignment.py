@@ -194,6 +194,243 @@ def test_scene_assert_tools_align_with_rpc_commands_and_args():
     ]
 
 
+def test_scene_spatial_graph_handlers_reuse_existing_scene_truth_rpc_commands():
+    rpc = DummyRpc(
+        {
+            "scene.list_objects": _ok([{"name": "Head", "type": "MESH"}, {"name": "Body", "type": "MESH"}]),
+            "scene.get_bounding_box": _ok({"dimensions": [2.0, 2.0, 2.0], "center": [0.0, 0.0, 0.0]}),
+            "scene.measure_gap": _ok({"gap": 0.1, "relation": "separated", "measurement_basis": "bounding_box"}),
+            "scene.measure_alignment": _ok({"is_aligned": False, "aligned_axes": ["Y", "Z"]}),
+            "scene.measure_overlap": _ok(
+                {"overlaps": False, "relation": "disjoint", "measurement_basis": "bounding_box"}
+            ),
+            "scene.assert_contact": _ok(
+                {
+                    "assertion": "scene_assert_contact",
+                    "passed": False,
+                    "actual": {"gap": 0.1, "relation": "separated"},
+                    "details": {"measurement_basis": "bounding_box"},
+                }
+            ),
+        }
+    )
+    handler = SceneToolHandler(rpc)
+
+    scope = handler.get_scope_graph(target_objects=["Head", "Body"])
+    relations = handler.get_relation_graph(target_objects=["Head", "Body"], goal_hint="assembled creature")
+
+    assert scope["primary_target"] == "Body"
+    assert scope["object_roles"][0]["object_name"] == "Head"
+    assert relations["summary"]["pair_count"] == 1
+    assert relations["pairs"][0]["from_object"] == "Head"
+    assert "contact" in relations["pairs"][0]["relation_kinds"]
+    assert rpc.calls[:8] == [
+        ("scene.list_objects", None),
+        ("scene.get_bounding_box", {"object_name": "Head", "world_space": True}),
+        ("scene.get_bounding_box", {"object_name": "Body", "world_space": True}),
+        ("scene.list_objects", None),
+        ("scene.get_bounding_box", {"object_name": "Head", "world_space": True}),
+        ("scene.get_bounding_box", {"object_name": "Body", "world_space": True}),
+        ("scene.get_bounding_box", {"object_name": "Head", "world_space": True}),
+        ("scene.get_bounding_box", {"object_name": "Body", "world_space": True}),
+    ]
+    assert rpc.calls[8:] == [
+        ("scene.measure_gap", {"from_object": "Head", "to_object": "Body", "tolerance": 0.0001}),
+        (
+            "scene.measure_alignment",
+            {
+                "from_object": "Head",
+                "to_object": "Body",
+                "axes": ["X", "Y", "Z"],
+                "reference": "CENTER",
+                "tolerance": 0.0001,
+            },
+        ),
+        ("scene.measure_overlap", {"from_object": "Head", "to_object": "Body", "tolerance": 0.0001}),
+        (
+            "scene.assert_contact",
+            {"from_object": "Head", "to_object": "Body", "max_gap": 0.0001, "allow_overlap": False},
+        ),
+    ]
+
+
+def test_scene_relation_graph_keeps_contact_pass_as_seated_even_when_center_z_differs():
+    rpc = DummyRpc(
+        {
+            "scene.list_objects": _ok([{"name": "Head", "type": "MESH"}, {"name": "Body", "type": "MESH"}]),
+            "scene.get_bounding_box": _ok({"dimensions": [2.0, 2.0, 2.0], "center": [0.0, 0.0, 0.0]}),
+            "scene.measure_gap": _ok({"gap": 0.0, "relation": "contact", "measurement_basis": "bounding_box"}),
+            "scene.measure_alignment": _ok({"is_aligned": False, "aligned_axes": ["X", "Y"], "misaligned_axes": ["Z"]}),
+            "scene.measure_overlap": _ok(
+                {"overlaps": False, "relation": "disjoint", "measurement_basis": "bounding_box"}
+            ),
+            "scene.assert_contact": _ok(
+                {
+                    "assertion": "scene_assert_contact",
+                    "passed": True,
+                    "actual": {"gap": 0.0, "relation": "contact"},
+                    "details": {"measurement_basis": "bounding_box"},
+                }
+            ),
+        }
+    )
+    handler = SceneToolHandler(rpc)
+
+    relations = handler.get_relation_graph(target_objects=["Head", "Body"], goal_hint="assembled creature")
+
+    pair = relations["pairs"][0]
+    assert pair["attachment_semantics"]["attachment_verdict"] == "seated_contact"
+    assert "seated_contact" in pair["relation_verdicts"]
+    assert "misaligned_attachment" not in pair["relation_verdicts"]
+
+
+def test_scene_relation_graph_treats_forel_hindr_names_as_limb_body_pairs():
+    rpc = DummyRpc(
+        {
+            "scene.list_objects": _ok(
+                [
+                    {"name": "Body", "type": "MESH"},
+                    {"name": "ForeL", "type": "MESH"},
+                    {"name": "HindR", "type": "MESH"},
+                ]
+            ),
+            "scene.get_bounding_box": _ok({"dimensions": [2.0, 2.0, 2.0], "center": [0.0, 0.0, 0.0]}),
+            "scene.measure_gap": _ok({"gap": 0.1, "relation": "separated", "measurement_basis": "bounding_box"}),
+            "scene.measure_alignment": _ok({"is_aligned": True, "aligned_axes": ["X", "Y"]}),
+            "scene.measure_overlap": _ok(
+                {"overlaps": False, "relation": "disjoint", "measurement_basis": "bounding_box"}
+            ),
+            "scene.assert_contact": _ok(
+                {
+                    "assertion": "scene_assert_contact",
+                    "passed": False,
+                    "actual": {"gap": 0.1, "relation": "separated"},
+                    "details": {"measurement_basis": "bounding_box"},
+                }
+            ),
+        }
+    )
+    handler = SceneToolHandler(rpc)
+
+    relations = handler.get_relation_graph(target_objects=["Body", "ForeL", "HindR"], goal_hint="assembled creature")
+    pair_ids = {item["pair_id"] for item in relations["pairs"]}
+    seam_kinds = {
+        item["pair_id"]: item["attachment_semantics"]["seam_kind"]
+        for item in relations["pairs"]
+        if item.get("attachment_semantics")
+    }
+
+    assert "forel__body" in pair_ids
+    assert "hindr__body" in pair_ids
+    assert seam_kinds["forel__body"] == "limb_body"
+    assert seam_kinds["hindr__body"] == "limb_body"
+
+
+def test_scene_relation_graph_treats_prefixed_forel_hindr_names_as_limb_body_pairs():
+    rpc = DummyRpc(
+        {
+            "scene.list_objects": _ok(
+                [
+                    {"name": "E2E_Abbrev_Body", "type": "MESH"},
+                    {"name": "E2E_Abbrev_ForeL", "type": "MESH"},
+                    {"name": "E2E_Abbrev_HindR", "type": "MESH"},
+                ]
+            ),
+            "scene.get_bounding_box": _ok({"dimensions": [2.0, 2.0, 2.0], "center": [0.0, 0.0, 0.0]}),
+            "scene.measure_gap": _ok({"gap": 0.1, "relation": "separated", "measurement_basis": "bounding_box"}),
+            "scene.measure_alignment": _ok({"is_aligned": True, "aligned_axes": ["X", "Y"]}),
+            "scene.measure_overlap": _ok(
+                {"overlaps": False, "relation": "disjoint", "measurement_basis": "bounding_box"}
+            ),
+            "scene.assert_contact": _ok(
+                {
+                    "assertion": "scene_assert_contact",
+                    "passed": False,
+                    "actual": {"gap": 0.1, "relation": "separated"},
+                    "details": {"measurement_basis": "bounding_box"},
+                }
+            ),
+        }
+    )
+    handler = SceneToolHandler(rpc)
+
+    relations = handler.get_relation_graph(
+        target_objects=["E2E_Abbrev_Body", "E2E_Abbrev_ForeL", "E2E_Abbrev_HindR"],
+        goal_hint="assembled creature",
+    )
+    seam_kinds = {
+        item["pair_id"]: item["attachment_semantics"]["seam_kind"]
+        for item in relations["pairs"]
+        if item.get("attachment_semantics")
+    }
+
+    assert seam_kinds["e2e_abbrev_forel__e2e_abbrev_body"] == "limb_body"
+    assert seam_kinds["e2e_abbrev_hindr__e2e_abbrev_body"] == "limb_body"
+
+
+def test_scene_view_diagnostics_handler_resolves_collection_scope_and_forwards_view_args():
+    rpc = DummyRpc(
+        {
+            "collection.list_objects": _ok({"objects": [{"name": "Head"}, {"name": "Body"}]}),
+            "scene.get_view_diagnostics": _ok(
+                {
+                    "view_query": {
+                        "requested_view_source": "user_perspective",
+                        "resolved_view_source": "user_perspective",
+                        "analysis_backend": "mirrored_user_perspective",
+                        "available": True,
+                        "state_restored": True,
+                    },
+                    "targets": [
+                        {
+                            "object_name": "Head",
+                            "visibility_verdict": "visible",
+                            "projection_status": "projected",
+                        }
+                    ],
+                    "summary": {
+                        "target_count": 2,
+                        "visible_count": 1,
+                        "partially_visible_count": 1,
+                    },
+                }
+            ),
+        }
+    )
+    handler = SceneToolHandler(rpc)
+
+    diagnostics = handler.get_view_diagnostics(
+        target_object="Head",
+        collection_name="CreatureParts",
+        view_name="TOP",
+        orbit_horizontal=20.0,
+        zoom_factor=1.2,
+    )
+
+    assert diagnostics["summary"]["target_count"] == 2
+    assert diagnostics["view_query"]["analysis_backend"] == "mirrored_user_perspective"
+    assert rpc.calls == [
+        (
+            "collection.list_objects",
+            {"collection_name": "CreatureParts", "recursive": True, "include_hidden": False},
+        ),
+        (
+            "scene.get_view_diagnostics",
+            {
+                "target_object": "Head",
+                "target_objects": ["Head", "Body"],
+                "camera_name": None,
+                "focus_target": None,
+                "view_name": "TOP",
+                "orbit_horizontal": 20.0,
+                "orbit_vertical": 0.0,
+                "zoom_factor": 1.2,
+                "persist_view": False,
+            },
+        ),
+    ]
+
+
 def test_scene_inspect_scene_state_handlers_align_with_rpc_commands():
     rpc = DummyRpc(
         {

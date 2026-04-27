@@ -69,6 +69,166 @@ class SceneHandler:
             "suggestions": [],
         }
 
+    def get_scope_graph(self, target_object=None, target_objects=None, collection_name=None):
+        object_names = list(target_objects or ([] if target_object is None else [target_object]))
+        if target_object and target_object not in object_names:
+            object_names = [target_object, *object_names]
+        primary_target = target_object or (object_names[-1] if object_names else None)
+        return {
+            "scope_kind": "object_set" if len(object_names) > 1 else ("single_object" if primary_target else "scene"),
+            "primary_target": primary_target,
+            "object_names": object_names,
+            "object_count": len(object_names),
+            "collection_name": collection_name,
+            "part_groups": [],
+            "object_roles": [
+                {
+                    "object_name": name,
+                    "role": "anchor_core" if name == primary_target else "attached_appendage",
+                    "is_primary": name == primary_target,
+                    "signals": ["test_fixture"],
+                }
+                for name in object_names
+            ],
+        }
+
+    def get_relation_graph(
+        self,
+        target_object=None,
+        target_objects=None,
+        collection_name=None,
+        goal_hint=None,
+        include_truth_payloads=False,
+    ):
+        scope = self.get_scope_graph(
+            target_object=target_object, target_objects=target_objects, collection_name=collection_name
+        )
+        object_names = list(scope["object_names"])
+        if len(object_names) < 2:
+            return {
+                "scope": scope,
+                "summary": {"pairing_strategy": "none", "pair_count": 0, "evaluated_pairs": 0, "failing_pairs": 0},
+                "pairs": [],
+            }
+        from_object, to_object = object_names[0], object_names[1]
+        pair = {
+            "pair_id": "pair_1",
+            "from_object": from_object,
+            "to_object": to_object,
+            "pair_source": "primary_to_other",
+            "relation_kinds": ["contact", "gap", "alignment", "attachment"],
+            "relation_verdicts": ["separated", "misaligned", "floating_gap"],
+            "gap_relation": "separated",
+            "gap_distance": 0.5,
+            "overlap_relation": "disjoint",
+            "contact_passed": False,
+            "alignment_status": "misaligned",
+            "aligned_axes": ["Y", "Z"],
+            "measurement_basis": "bounding_box",
+            "attachment_semantics": {
+                "relation_kind": "segment_attachment",
+                "seam_kind": "head_body",
+                "part_object": from_object,
+                "anchor_object": to_object,
+                "required_seam": False,
+                "preferred_macro": "macro_align_part_with_contact",
+                "attachment_verdict": "floating_gap",
+            },
+        }
+        if include_truth_payloads:
+            pair["truth_payloads"] = {
+                "gap": self.measure_gap(from_object, to_object),
+                "alignment": self.measure_alignment(from_object, to_object),
+                "overlap": self.measure_overlap(from_object, to_object),
+                "contact_assertion": self.assert_contact(from_object, to_object),
+            }
+        return {
+            "scope": scope,
+            "summary": {
+                "pairing_strategy": "primary_to_others",
+                "pair_count": 1,
+                "evaluated_pairs": 1,
+                "failing_pairs": 1,
+                "attachment_pairs": 1,
+                "support_pairs": 0,
+                "symmetry_pairs": 0,
+            },
+            "pairs": [pair],
+        }
+
+    def get_view_diagnostics(
+        self,
+        target_object=None,
+        target_objects=None,
+        collection_name=None,
+        camera_name=None,
+        focus_target=None,
+        view_name=None,
+        orbit_horizontal=0.0,
+        orbit_vertical=0.0,
+        zoom_factor=None,
+        persist_view=False,
+    ):
+        object_names = list(target_objects or ([] if target_object is None else [target_object]))
+        if target_object and target_object not in object_names:
+            object_names = [target_object, *object_names]
+        return {
+            "view_query": {
+                "requested_view_source": "named_camera"
+                if camera_name and camera_name != "USER_PERSPECTIVE"
+                else "user_perspective",
+                "resolved_view_source": "named_camera"
+                if camera_name and camera_name != "USER_PERSPECTIVE"
+                else "user_perspective",
+                "requested_camera_name": camera_name if camera_name and camera_name != "USER_PERSPECTIVE" else None,
+                "resolved_camera_name": camera_name if camera_name and camera_name != "USER_PERSPECTIVE" else None,
+                "analysis_backend": "scene_camera"
+                if camera_name and camera_name != "USER_PERSPECTIVE"
+                else "mirrored_user_perspective",
+                "available": True,
+                "state_restored": not persist_view,
+            },
+            "summary": {
+                "target_count": len(object_names),
+                "visible_count": 1 if object_names else 0,
+                "partially_visible_count": 1 if len(object_names) > 1 else 0,
+                "fully_occluded_count": 0,
+                "outside_frame_count": 0,
+                "unavailable_count": 0,
+                "centered_target_count": 1 if object_names else 0,
+                "framing_issue_count": 1 if len(object_names) > 1 else 0,
+            },
+            "targets": [
+                {
+                    "object_name": name,
+                    "visibility_verdict": "visible" if index == 0 else "partially_visible",
+                    "projection_status": "projected",
+                    "projection": {
+                        "projected_center": {"x": 0.5 + (0.35 * index), "y": 0.5},
+                        "projected_extent": {
+                            "min_x": 0.4 + (0.3 * index),
+                            "min_y": 0.3,
+                            "max_x": 0.6 + (0.35 * index),
+                            "max_y": 0.7,
+                            "width": 0.2,
+                            "height": 0.4,
+                        },
+                        "center_offset": {"x": 0.35 * index, "y": 0.0},
+                        "frame_coverage_ratio": 1.0 if index == 0 else 0.55,
+                        "frame_occupancy_ratio": 0.08,
+                        "centered": index == 0,
+                        "sample_count": 7,
+                        "in_front_sample_count": 7,
+                        "in_frame_sample_count": 7 if index == 0 else 4,
+                        "visible_sample_count": 7 if index == 0 else 3,
+                        "occluded_sample_count": 0 if index == 0 else 1,
+                        "occlusion_test_available": True,
+                    },
+                }
+                for index, name in enumerate(object_names)
+            ],
+        }
+
     def measure_distance(self, from_object, to_object, reference="ORIGIN"):
         return {
             "from_object": from_object,
@@ -341,7 +501,13 @@ class MacroHandler:
             "macro_name": "macro_attach_part_to_surface",
             "intent": "attach Ear to Head",
             "actions_taken": [
-                {"status": "applied", "action": "attach_part_to_surface", "tool_name": "modeling_transform_object"}
+                {"status": "applied", "action": "attach_part_to_surface", "tool_name": "modeling_transform_object"},
+                {
+                    "status": "applied",
+                    "action": "evaluate_attachment_outcome",
+                    "tool_name": "scene_assert_contact",
+                    "details": {"attachment_verdict": "seated_contact"},
+                },
             ],
             "objects_modified": [kwargs.get("part_object", "Ear")],
             "verification_recommended": [
@@ -356,7 +522,13 @@ class MacroHandler:
             "macro_name": "macro_align_part_with_contact",
             "intent": "repair Ear relative to Head",
             "actions_taken": [
-                {"status": "applied", "action": "align_part_with_contact", "tool_name": "modeling_transform_object"}
+                {"status": "applied", "action": "align_part_with_contact", "tool_name": "modeling_transform_object"},
+                {
+                    "status": "applied",
+                    "action": "evaluate_attachment_outcome",
+                    "tool_name": "scene_assert_contact",
+                    "details": {"attachment_verdict": "seated_contact"},
+                },
             ],
             "objects_modified": [kwargs.get("part_object", "Ear")],
             "verification_recommended": [
@@ -412,7 +584,13 @@ class MacroHandler:
                     "status": "applied",
                     "action": "cleanup_part_intersections",
                     "tool_name": "modeling_transform_object",
-                }
+                },
+                {
+                    "status": "applied",
+                    "action": "evaluate_attachment_outcome",
+                    "tool_name": "scene_assert_contact",
+                    "details": {"attachment_verdict": "seated_contact"},
+                },
             ],
             "objects_modified": [kwargs.get("part_object", "Horn")],
             "verification_recommended": [
@@ -770,6 +948,7 @@ def test_macro_attach_part_to_surface_delivers_structured_content(monkeypatch):
     payload = _unwrap_structured(result)
     assert payload["macro_name"] == "macro_attach_part_to_surface"
     assert payload["actions_taken"][0]["action"] == "attach_part_to_surface"
+    assert payload["actions_taken"][-1]["details"]["attachment_verdict"] == "seated_contact"
     assert payload["requires_followup"] is True
 
 
@@ -795,6 +974,7 @@ def test_macro_align_part_with_contact_delivers_structured_content(monkeypatch):
     payload = _unwrap_structured(result)
     assert payload["macro_name"] == "macro_align_part_with_contact"
     assert payload["actions_taken"][0]["action"] == "align_part_with_contact"
+    assert payload["actions_taken"][-1]["details"]["attachment_verdict"] == "seated_contact"
     assert payload["requires_followup"] is True
 
 
@@ -871,6 +1051,7 @@ def test_macro_cleanup_part_intersections_delivers_structured_content(monkeypatc
     payload = _unwrap_structured(result)
     assert payload["macro_name"] == "macro_cleanup_part_intersections"
     assert payload["actions_taken"][0]["action"] == "cleanup_part_intersections"
+    assert payload["actions_taken"][-1]["details"]["attachment_verdict"] == "seated_contact"
     assert payload["requires_followup"] is True
 
 
@@ -952,6 +1133,58 @@ def test_scene_measure_contract_tools_deliver_structured_content(monkeypatch):
     assert _unwrap_structured(gap)["payload"]["relation"] == "separated"
     assert _unwrap_structured(alignment)["payload"]["is_aligned"] is True
     assert _unwrap_structured(overlap)["payload"]["relation"] == "disjoint"
+
+
+def test_scene_spatial_graph_contract_tools_deliver_structured_content(monkeypatch):
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.ctx_info", lambda ctx, message: None)
+
+    server = build_server("legacy-flat")
+
+    async def run():
+        scope = await server.call_tool(
+            "scene_scope_graph",
+            {"target_object": "Squirrel_Body", "target_objects": ["Squirrel_Head", "Squirrel_Tail"]},
+        )
+        relations = await server.call_tool(
+            "scene_relation_graph",
+            {"target_objects": ["Squirrel_Head", "Squirrel_Body"], "goal_hint": "assembled creature"},
+        )
+        return scope, relations
+
+    scope, relations = asyncio.run(run())
+    scope_payload = _unwrap_structured(scope)
+    relation_payload = _unwrap_structured(relations)
+
+    assert scope_payload["payload"]["scope"]["primary_target"] == "Squirrel_Body"
+    assert scope_payload["payload"]["scope"]["object_roles"][0]["object_name"] == "Squirrel_Body"
+    assert relation_payload["payload"]["summary"]["pair_count"] == 1
+    assert relation_payload["payload"]["pairs"][0]["attachment_semantics"]["attachment_verdict"] == "floating_gap"
+
+
+def test_scene_view_diagnostics_contract_tool_delivers_structured_content(monkeypatch):
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.ctx_info", lambda ctx, message: None)
+
+    server = build_server("legacy-flat")
+
+    async def run():
+        return await server.call_tool(
+            "scene_view_diagnostics",
+            {
+                "target_object": "Squirrel_Head",
+                "target_objects": ["Squirrel_Body"],
+                "view_name": "TOP",
+            },
+        )
+
+    result = asyncio.run(run())
+    payload = _unwrap_structured(result)
+
+    assert payload["payload"]["scope"]["primary_target"] == "Squirrel_Head"
+    assert payload["payload"]["view_query"]["requested_view_source"] == "user_perspective"
+    assert payload["payload"]["summary"]["target_count"] == 2
+    assert payload["payload"]["targets"][0]["projection"]["projected_center"]["x"] == 0.5
 
 
 def test_scene_assert_contract_tools_deliver_structured_content(monkeypatch):

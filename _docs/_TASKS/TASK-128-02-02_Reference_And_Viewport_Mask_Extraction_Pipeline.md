@@ -1,7 +1,7 @@
 # TASK-128-02-02: Reference and Viewport Mask Extraction Pipeline
 
 **Parent:** [TASK-128-02](./TASK-128-02_Deterministic_Silhouette_Analysis_And_Typed_Action_Hints.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective

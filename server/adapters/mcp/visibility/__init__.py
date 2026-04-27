@@ -8,6 +8,7 @@ from .tags import (
     AUDIENCE_LLM,
     ENTRY_GUIDED,
     capability_phase_tag,
+    get_capability_phase_hints,
     get_capability_tags,
     phase_tag,
 )
@@ -17,6 +18,7 @@ __all__ = [
     "AUDIENCE_LLM",
     "ENTRY_GUIDED",
     "capability_phase_tag",
+    "get_capability_phase_hints",
     "get_capability_tags",
     "phase_tag",
 ]

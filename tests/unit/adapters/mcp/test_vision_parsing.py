@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 
+import pytest
 from server.adapters.mcp.vision.backend import VisionImageInput, VisionRequest
 from server.adapters.mcp.vision.parsing import diagnose_vision_output_text, parse_vision_output_text
 
@@ -285,7 +286,12 @@ def test_parse_gemini_compare_output_accepts_narrow_contract_and_backfills_defau
         }
     )
 
-    parsed = parse_vision_output_text(text, request, provider_name="google_ai_studio")
+    parsed = parse_vision_output_text(
+        text,
+        request,
+        vision_contract_profile="google_family_compare",
+        provider_name="openrouter",
+    )
 
     assert parsed["goal_summary"] == "Closer overall to the squirrel reference."
     assert parsed["visible_changes"] == []
@@ -294,7 +300,7 @@ def test_parse_gemini_compare_output_accepts_narrow_contract_and_backfills_defau
     assert parsed["captures_used"] == ["target_front_after", "ref_front"]
 
 
-def test_parse_gemini_compare_output_repairs_truncated_json():
+def test_parse_google_family_compare_output_repairs_truncated_json_on_openrouter():
     request = VisionRequest(
         goal="low poly squirrel",
         target_object="Squirrel",
@@ -312,9 +318,47 @@ def test_parse_gemini_compare_output_repairs_truncated_json():
         '"next_corrections":["Flatten the head silhouette slightly"]'
     )
 
-    parsed = parse_vision_output_text(text, request, provider_name="google_ai_studio")
-    diagnostics = diagnose_vision_output_text(text, request=request, provider_name="google_ai_studio")
+    parsed = parse_vision_output_text(
+        text,
+        request,
+        vision_contract_profile="google_family_compare",
+        provider_name="openrouter",
+    )
+    diagnostics = diagnose_vision_output_text(
+        text,
+        vision_contract_profile="google_family_compare",
+        request=request,
+        provider_name="openrouter",
+    )
 
     assert parsed["goal_summary"] == "Closer overall."
     assert parsed["next_corrections"] == ["Flatten the head silhouette slightly"]
     assert diagnostics["payload_shape"] == "contract"
+    assert diagnostics["vision_contract_profile"] == "google_family_compare"
+
+
+def test_generic_full_contract_profile_does_not_repair_truncated_compare_json():
+    request = VisionRequest(
+        goal="low poly squirrel",
+        target_object="Squirrel",
+        images=(
+            VisionImageInput(path="/tmp/front.png", role="after", label="target_front_after"),
+            VisionImageInput(path="/tmp/ref_front.png", role="reference", label="ref_front"),
+        ),
+        prompt_hint="comparison_mode=stage_checkpoint_vs_reference",
+    )
+    text = (
+        '{"goal_summary":"Closer overall.","reference_match_summary":"Head is closer.",'
+        '"shape_mismatches":["Head silhouette is still too spherical."],'
+        '"proportion_mismatches":["Tail still reads too small relative to the body."],'
+        '"correction_focus":["Head silhouette"],'
+        '"next_corrections":["Flatten the head silhouette slightly"]'
+    )
+
+    with pytest.raises(json.JSONDecodeError):
+        parse_vision_output_text(
+            text,
+            request,
+            vision_contract_profile="generic_full",
+            provider_name="openrouter",
+        )

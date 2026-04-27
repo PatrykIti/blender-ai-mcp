@@ -1,8 +1,14 @@
 # TASK-128-02: Deterministic Silhouette Analysis and Typed Action Hints
 
 **Parent:** [TASK-128](./TASK-128_Reference_Guided_Creature_Build_Surface_And_Perception_Reliability.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+**Depends On:** [TASK-139](./TASK-139_Model_Family_Specific_Vision_Contract_Profiles_For_External_Runtimes.md)
+
+**Completion Summary:** Completed on 2026-04-06. Stage compare/iterate
+responses now carry deterministic `silhouette_analysis` metrics, typed
+`action_hints`, updated docs for prioritization order, and regression coverage
+for the new perception payload.
 
 ## Objective
 
@@ -56,9 +62,15 @@ surface. The current runtime already has:
 - `truth_followup`
 - ranked `correction_candidates`
 - `refinement_route` and `refinement_handoff`
+- external compare/iterate diagnostics that expose the resolved
+  `vision_contract_profile`
 
 Slice B should add deterministic silhouette evidence on top of that baseline
 without weakening the existing truth-first loop behavior.
+
+It should also build on the contract-profile-aware external vision baseline
+from `TASK-139` instead of reintroducing provider-only external-runtime
+assumptions into docs or response planning.
 
 ## Scope
 
@@ -86,23 +98,36 @@ This slice does **not** cover:
   `correction_candidates`
 - docs/tests describe the new prioritization order between perception hints,
   correction candidates, and truth follow-up
+- the planned silhouette/action-hint contract layers onto the current
+  contract-profile-aware compare runtime without redefining external
+  prompt/schema/parser routing
 
 ## Repository Touchpoints
 
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/areas/reference.py`
-- `server/adapters/mcp/vision/`
+- `server/infrastructure/config.py`
+- `server/adapters/mcp/vision/config.py`
+- `server/adapters/mcp/vision/runtime.py`
+- `server/adapters/mcp/vision/prompting.py`
+- `server/adapters/mcp/vision/parsing.py`
+- `server/adapters/mcp/vision/backends.py`
+- `server/adapters/mcp/vision/capture.py`
+- `server/adapters/mcp/vision/capture_runtime.py`
+- `server/adapters/mcp/vision/reporting.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_vision_*`
 - `tests/e2e/vision/`
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 
 ## Docs To Update
 
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 
 ## Tests To Add/Update
