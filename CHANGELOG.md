@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v3.1.0 (2026-04-27)
+
+### Features
+
+- Harden llm-guided creature reconstruction and external vision runtime
+  ([#33](https://github.com/PatrykIti/blender-ai-mcp/pull/33),
+  [`eaa4419`](https://github.com/PatrykIti/blender-ai-mcp/commit/eaa441970bc87d1bfc03bb899d85653af7ec9ab8))
+
+
 ## v3.0.0 (2026-04-05)
 
 ### Features

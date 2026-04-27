@@ -1,6 +1,6 @@
 [project]
 name = "blender-ai-mcp"
-version = "3.0.0"
+version = "3.1.0"
 description = "Production-shaped MCP server for Blender with goal-first routing, curated tools, deterministic verification, and vision-assisted 3D modeling workflows."
 authors = [
     {name = "Patryk Ciechański",email = "patryk.ciechanski@patrykiti.pl"}
