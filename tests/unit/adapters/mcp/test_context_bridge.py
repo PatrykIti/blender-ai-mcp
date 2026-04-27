@@ -1329,6 +1329,19 @@ def test_route_tool_call_report_keeps_collection_manage_as_utility_even_for_regi
 
 
 @pytest.mark.parametrize(
+    ("tool_name", "result"),
+    [
+        ("modeling_create_primitive", "Created Cube named 'O'Brien_Block'"),
+        ("modeling_transform_object", "Transformed object 'O'Brien_Block'"),
+        ("scene_rename_object", "Renamed 'Body' to 'O'Brien_Block'"),
+        ("modeling_join_objects", "Objects A, B joined into 'O'Brien_Block'. Joined count: 2"),
+    ],
+)
+def test_guided_success_detection_accepts_apostrophes_inside_object_names(tool_name, result):
+    assert router_helper._result_represents_success(tool_name, result) is True
+
+
+@pytest.mark.parametrize(
     ("tool_name", "params", "result_message", "expected_refresh_required"),
     [
         (
@@ -1420,6 +1433,70 @@ def test_route_tool_call_marks_guided_spatial_state_stale_after_successful_visib
     assert state.guided_flow_state["spatial_state_version"] == 1
     assert state.guided_flow_state["spatial_state_stale"] is True
     assert state.guided_flow_state["spatial_refresh_required"] is expected_refresh_required
+
+
+def test_route_tool_call_renames_guided_registry_to_apostrophe_name_with_collision_suffix(monkeypatch):
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "active_target_scope": {
+                    "scope_kind": "single_object",
+                    "primary_target": "Body",
+                    "object_names": ["Body"],
+                    "object_count": 1,
+                },
+                "spatial_scope_fingerprint": "scope_body",
+                "spatial_state_version": 0,
+                "spatial_state_stale": False,
+                "last_spatial_check_version": 0,
+                "spatial_refresh_required": False,
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": ["body_core"],
+                "missing_roles": ["head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+            guided_part_registry=[
+                {
+                    "object_name": "Body",
+                    "role": "body_core",
+                    "role_group": "primary_masses",
+                    "status": "registered",
+                }
+            ],
+        ),
+    )
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_context", lambda: ctx)
+    monkeypatch.setattr("server.adapters.mcp.session_capabilities._scene_object_names", lambda: {"O' Brien_Block"})
+
+    result = route_tool_call(
+        tool_name="scene_rename_object",
+        params={"old_name": "Body", "new_name": "O' Brien_Block"},
+        direct_executor=lambda: "Renamed 'Body' to 'O' Brien_Block' (suffix added due to name collision)",
+    )
+    state = get_session_capability_state(ctx)
+
+    assert result == "Renamed 'Body' to 'O' Brien_Block' (suffix added due to name collision)"
+    assert state.guided_part_registry is not None
+    assert state.guided_part_registry[0]["object_name"] == "O' Brien_Block"
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["spatial_state_stale"] is True
+    assert state.guided_flow_state["spatial_refresh_required"] is True
 
 
 def test_route_tool_call_marks_guided_spatial_state_stale_after_successful_mesh_edit(monkeypatch):

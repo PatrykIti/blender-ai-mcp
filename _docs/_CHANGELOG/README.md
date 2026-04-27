@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [265](./265-2026-04-27-guided-success-parser-apostrophes.md) | 2026-04-27 | **Guided success parser apostrophes** | - |
 | [264](./264-2026-04-27-guided-spatial-scope-and-rpc-trace-hardening.md) | 2026-04-27 | **Guided spatial scope and RPC trace hardening** | - |
 | [263](./263-2026-04-26-guided-duplicate-spatial-dirtying.md) | 2026-04-26 | **Guided duplicate spatial dirtying** | - |
 | [262](./262-2026-04-26-guided-incomplete-build-iterate-hold.md) | 2026-04-26 | **Guided incomplete-build iterate hold** | - |

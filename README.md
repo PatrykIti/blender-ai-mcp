@@ -474,6 +474,10 @@ contract in addition to `guided_handoff`.
 - guided-role convenience registration now also handles valid object names
   containing apostrophes, such as `King's Crown`, instead of truncating the
   stored object name
+- guided runtime success parsing also treats apostrophes inside quoted object
+  names as part of the object name for create/transform/rename/join results,
+  so stale-state marking and guided registry sync still run after successful
+  mutations
 - canonical pair names such as `ForeLeg_L`, `ForeLeg_R`, and `ForeLegPair`
   now count as strong semantic names for `foreleg_pair` / `hindleg_pair`
   instead of warning or blocking under the stricter naming policy

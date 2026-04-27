@@ -69,10 +69,10 @@ _GUIDED_UNMAPPED_NON_MUTATING_PREFIXES: tuple[str, ...] = (
 )
 _GUIDED_POLICY_ONLY_PARAM_NAMES: frozenset[str] = frozenset({"guided_role", "role_group"})
 _GUIDED_PINNED_SPATIAL_HELPER_TOOLS: frozenset[str] = frozenset(GUIDED_SPATIAL_SUPPORT_TOOLS)
-_CREATED_OBJECT_RESULT_PATTERN = re.compile(r"^Created .+ named '(.+?)'$")
-_TRANSFORMED_OBJECT_RESULT_PATTERN = re.compile(r"^Transformed object '(.+?)'$")
-_JOINED_OBJECT_RESULT_PATTERN = re.compile(r"^Objects .+ joined into '(.+?)'\. Joined count: \d+$")
-_RENAMED_OBJECT_RESULT_PATTERN = re.compile(r"^Renamed '.*' to '(.+?)'(?: .*)?$")
+_CREATED_OBJECT_RESULT_PATTERN = re.compile(r"^Created .+ named '(.+)'$")
+_TRANSFORMED_OBJECT_RESULT_PATTERN = re.compile(r"^Transformed object '(.+)'$")
+_JOINED_OBJECT_RESULT_PATTERN = re.compile(r"^Objects .+ joined into '(.+)'\. Joined count: \d+$")
+_RENAMED_OBJECT_RESULT_PATTERN = re.compile(r"^Renamed '.+' to '(.+)'(?: .*)?$")
 
 
 def _is_unmapped_guided_mutating_tool(tool_name: str) -> bool:
