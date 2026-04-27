@@ -369,7 +369,9 @@ def test_modeling_transform_object_registers_guided_role_with_apostrophe_name(mo
 
     monkeypatch.setattr(
         "server.adapters.mcp.areas.modeling.route_tool_call",
-        lambda **kwargs: "[Step 1: scene_set_mode] OK\n[Step 2: modeling_transform_object] Transformed object 'King's Crown'",
+        lambda **kwargs: (
+            "[Step 1: scene_set_mode] OK\n[Step 2: modeling_transform_object] Transformed object 'King's Crown'"
+        ),
     )
     monkeypatch.setattr(
         "server.adapters.mcp.areas.modeling.get_session_capability_state",
