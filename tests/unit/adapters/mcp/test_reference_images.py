@@ -2629,9 +2629,10 @@ def test_reference_compare_stage_checkpoint_can_expand_collection_scope(tmp_path
     monkeypatch.setattr("server.adapters.mcp.areas.reference.get_collection_handler", lambda: CollectionHandler())
     monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: object())
     monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
-    monkeypatch.setattr(
-        "server.adapters.mcp.areas.reference.capture_stage_images",
-        lambda *args, **kwargs: [
+
+    def _fake_capture_stage_images(*args, **kwargs):
+        captured["capture_kwargs"] = kwargs
+        return [
             VisionCaptureImageContract(
                 label="context_wide_after",
                 image_path=str(tmp_path / "context.jpg"),
@@ -2640,8 +2641,9 @@ def test_reference_compare_stage_checkpoint_can_expand_collection_scope(tmp_path
                 media_type="image/jpeg",
                 view_kind="wide",
             ),
-        ],
-    )
+        ]
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.capture_stage_images", _fake_capture_stage_images)
 
     result = asyncio.run(
         reference_compare_stage_checkpoint(
@@ -2676,6 +2678,7 @@ def test_reference_compare_stage_checkpoint_can_expand_collection_scope(tmp_path
     assert result.correction_candidates[0].priority_rank == 1
     assert result.correction_candidates[0].candidate_kind == "truth_only"
     assert result.correction_candidates[0].truth_evidence is not None
+    assert captured["capture_kwargs"]["target_object"] == "Squirrel_Body"
     assert captured["request"].truth_summary["summary"]["pair_count"] == 2
     assert captured["request"].metadata["collection_name"] == "Squirrel"
 
@@ -2719,6 +2722,7 @@ def test_reference_compare_stage_checkpoint_can_track_explicit_object_set_scope(
     ctx = FakeContext()
     update_session_from_router_goal(ctx, "low poly squirrel", {"status": "no_match"})
     asyncio.run(reference_images(ctx, action="attach", source_path=str(image_front), label="front_ref"))
+    captured = {}
 
     class CollectionHandler:
         def list_objects(self, collection_name: str, recursive: bool = True, include_hidden: bool = False):
@@ -2770,9 +2774,10 @@ def test_reference_compare_stage_checkpoint_can_track_explicit_object_set_scope(
     monkeypatch.setattr("server.adapters.mcp.areas.reference.get_collection_handler", lambda: CollectionHandler())
     monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: object())
     monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
-    monkeypatch.setattr(
-        "server.adapters.mcp.areas.reference.capture_stage_images",
-        lambda *args, **kwargs: [
+
+    def _fake_capture_stage_images(*args, **kwargs):
+        captured["capture_kwargs"] = kwargs
+        return [
             VisionCaptureImageContract(
                 label="context_wide_after",
                 image_path=str(tmp_path / "context.jpg"),
@@ -2781,8 +2786,9 @@ def test_reference_compare_stage_checkpoint_can_track_explicit_object_set_scope(
                 media_type="image/jpeg",
                 view_kind="wide",
             ),
-        ],
-    )
+        ]
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.capture_stage_images", _fake_capture_stage_images)
 
     result = asyncio.run(
         reference_compare_stage_checkpoint(
@@ -2806,6 +2812,7 @@ def test_reference_compare_stage_checkpoint_can_track_explicit_object_set_scope(
     assert result.truth_followup is not None
     assert result.truth_followup.continue_recommended is False
     assert result.correction_candidates == []
+    assert captured["capture_kwargs"]["target_object"] == result.assembled_target_scope.primary_target
 
 
 def test_reference_compare_stage_checkpoint_preserves_required_creature_seams_under_low_budget(tmp_path, monkeypatch):
@@ -3553,6 +3560,37 @@ def _guided_incomplete_secondary_flow_state() -> dict[str, object]:
     }
 
 
+def _guided_checkpoint_iterate_flow_state() -> dict[str, object]:
+    return {
+        "flow_id": "guided_creature_flow",
+        "domain_profile": "creature",
+        "current_step": "checkpoint_iterate",
+        "completed_steps": [
+            "understand_goal",
+            "establish_spatial_context",
+            "create_primary_masses",
+            "place_secondary_parts",
+        ],
+        "active_target_scope": {
+            "scope_kind": "object_set",
+            "primary_target": "Creature",
+            "object_names": ["Creature", "TruthHead", "TruthBody"],
+            "object_count": 3,
+        },
+        "required_checks": [],
+        "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+        "preferred_prompts": ["workflow_router_first"],
+        "next_actions": ["run_checkpoint_iterate"],
+        "blocked_families": [],
+        "allowed_families": ["checkpoint_iterate", "spatial_context", "reference_context"],
+        "allowed_roles": [],
+        "completed_roles": ["body_core", "head_mass", "snout_mass"],
+        "missing_roles": [],
+        "required_role_groups": ["checkpoint_iterate"],
+        "step_status": "needs_checkpoint",
+    }
+
+
 def test_reference_iterate_stage_checkpoint_holds_build_when_role_group_is_incomplete(monkeypatch):
     ctx = FakeContext()
     set_session_capability_state(
@@ -3711,7 +3749,15 @@ def test_reference_iterate_stage_checkpoint_holds_incomplete_build_on_no_action_
 
 def test_reference_iterate_stage_checkpoint_falls_back_to_truth_handoff_when_vision_compare_errors(monkeypatch):
     ctx = FakeContext()
-    update_session_from_router_goal(ctx, "low poly creature", {"status": "no_match"})
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="low poly creature",
+            surface_profile="llm-guided",
+            guided_flow_state=_guided_checkpoint_iterate_flow_state(),
+        ),
+    )
 
     compare = ReferenceCompareStageCheckpointResponseContract.model_validate(
         {
@@ -3778,6 +3824,17 @@ def test_reference_iterate_stage_checkpoint_falls_back_to_truth_handoff_when_vis
         _fake_reference_compare_stage_checkpoint,
     )
 
+    visibility_steps: list[str | None] = []
+
+    async def _fake_apply_visibility_for_session_state(_ctx, state):
+        flow_state = state.guided_flow_state or {}
+        visibility_steps.append(str(flow_state.get("current_step")) if flow_state else None)
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.apply_visibility_for_session_state",
+        _fake_apply_visibility_for_session_state,
+    )
+
     result = asyncio.run(
         reference_iterate_stage_checkpoint(
             ctx,
@@ -3792,6 +3849,71 @@ def test_reference_iterate_stage_checkpoint_falls_back_to_truth_handoff_when_vis
     assert "Vision compare did not complete successfully" in (result.message or "")
     assert result.stop_reason is not None
     assert "HTTP 400 Bad Request" in result.stop_reason
+    assert visibility_steps == ["inspect_validate"]
+
+
+def test_reference_iterate_stage_checkpoint_reapplies_visibility_on_error_stop(monkeypatch):
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="low poly creature",
+            surface_profile="llm-guided",
+            guided_flow_state=_guided_checkpoint_iterate_flow_state(),
+        ),
+    )
+
+    compare = ReferenceCompareStageCheckpointResponseContract.model_validate(
+        {
+            "action": "compare_stage_checkpoint",
+            "goal": "low poly creature",
+            "target_object": "Creature",
+            "target_objects": ["Creature"],
+            "checkpoint_id": "checkpoint_error_stop",
+            "checkpoint_label": "stage_error_stop",
+            "preset_profile": "compact",
+            "preset_names": ["context_wide"],
+            "capture_count": 1,
+            "captures": [],
+            "reference_count": 0,
+            "reference_ids": [],
+            "reference_labels": [],
+            "error": "Vision endpoint request failed: timed out",
+        }
+    )
+
+    async def _fake_reference_compare_stage_checkpoint(*args, **kwargs):
+        return compare
+
+    visibility_steps: list[str | None] = []
+
+    async def _fake_apply_visibility_for_session_state(_ctx, state):
+        flow_state = state.guided_flow_state or {}
+        visibility_steps.append(str(flow_state.get("current_step")) if flow_state else None)
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.reference_compare_stage_checkpoint",
+        _fake_reference_compare_stage_checkpoint,
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.apply_visibility_for_session_state",
+        _fake_apply_visibility_for_session_state,
+    )
+
+    result = asyncio.run(
+        reference_iterate_stage_checkpoint(
+            ctx,
+            target_object="Creature",
+            target_objects=["Creature"],
+            checkpoint_label="stage_error_stop",
+        )
+    )
+
+    assert result.loop_disposition == "stop"
+    assert result.guided_flow_state is not None
+    assert result.guided_flow_state.current_step == "finish_or_stop"
+    assert visibility_steps == ["finish_or_stop"]
 
 
 def test_reference_iterate_stage_checkpoint_preserves_flow_on_recoverable_reference_setup_error(monkeypatch):

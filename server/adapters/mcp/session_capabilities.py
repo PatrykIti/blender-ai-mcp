@@ -1929,6 +1929,7 @@ def mark_guided_spatial_state_stale(
         pending_reference_images=current.pending_reference_images,
     )
     set_session_capability_state(ctx, state)
+    refresh_visibility_for_session_state(ctx, state)
     return state
 
 

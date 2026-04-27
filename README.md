@@ -380,6 +380,9 @@ contract in addition to `guided_handoff`.
   `modeling_join_objects(...)`, `modeling_separate_object(...)`, or bounded
   attachment/alignment macros, the guided runtime can mark the spatial layer
   stale and re-arm the required checks
+- that same dirty-state update now reapplies FastMCP visibility immediately,
+  so clients see the required spatial support tools as soon as
+  `spatial_refresh_required` is persisted
 - guided mesh edit tools such as `mesh_extrude_region(...)`,
   `mesh_loop_cut(...)`, and `mesh_bevel(...)` are now mapped to the
   `secondary_parts` family, so they are blocked during spatial-context gates
@@ -562,8 +565,13 @@ hidden ordering assumptions.
 - if staged compare degrades but strong deterministic truth findings still
   exist, use the same inspect/measure/assert handoff instead of improvising
   another large free-form correction
+- error-stage iterate handoffs that move to `inspect_validate` or
+  `finish_or_stop` also reapply guided visibility before returning
 - for staged compare/iterate, `goal_override` is no longer a session
   substitute; use an active guided goal session instead
+- for collection or multi-object staged captures, the capture focus now falls
+  back to the assembled target scope's primary target when no explicit
+  `target_object` is supplied
 - deterministic silhouette metrics prefer the target/focus capture for the
   requested `target_view`, not the broad `context_wide` capture
 - `reference_compare_current_view(..., persist_view=True, view_name=...,

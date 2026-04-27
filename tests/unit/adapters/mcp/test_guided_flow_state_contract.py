@@ -895,6 +895,63 @@ def test_scene_object_mutations_mark_guided_spatial_state_stale(tool_name):
     assert state.guided_flow_state["next_actions"] == ["refresh_spatial_context"]
 
 
+def test_mark_guided_spatial_state_stale_reapplies_visibility(monkeypatch):
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            surface_profile="llm-guided",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "active_target_scope": _scope("Squirrel_Body", "Squirrel_Head"),
+                "spatial_scope_fingerprint": "scope_1",
+                "spatial_state_version": 0,
+                "last_spatial_check_version": 0,
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": [],
+                "missing_roles": ["body_core", "head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+    events: list[tuple[bool, list[str]]] = []
+
+    def fake_refresh_visibility_for_session_state(_ctx, state):
+        flow_state = state.guided_flow_state or {}
+        events.append(
+            (
+                bool(flow_state.get("spatial_refresh_required")),
+                [str(family) for family in flow_state.get("allowed_families", [])],
+            )
+        )
+
+    monkeypatch.setattr(
+        session_capabilities, "refresh_visibility_for_session_state", fake_refresh_visibility_for_session_state
+    )
+
+    state = mark_guided_spatial_state_stale(
+        ctx,
+        tool_name="scene_duplicate_object",
+        family="utility",
+        reason="scene_duplicate_object",
+    )
+
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["spatial_refresh_required"] is True
+    assert events == [(True, ["spatial_context", "reference_context"])]
+
+
 @pytest.mark.parametrize("tool_name", ["modeling_join_objects", "modeling_separate_object"])
 def test_topology_changing_modeling_ops_mark_guided_spatial_state_stale(tool_name: str):
     ctx = FakeContext()

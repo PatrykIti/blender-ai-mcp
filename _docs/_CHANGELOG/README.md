@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [266](./266-2026-04-27-guided-visibility-and-stage-capture-focus.md) | 2026-04-27 | **Guided visibility and stage capture focus** | - |
 | [265](./265-2026-04-27-guided-success-parser-apostrophes.md) | 2026-04-27 | **Guided success parser apostrophes** | - |
 | [264](./264-2026-04-27-guided-spatial-scope-and-rpc-trace-hardening.md) | 2026-04-27 | **Guided spatial scope and RPC trace hardening** | - |
 | [263](./263-2026-04-26-guided-duplicate-spatial-dirtying.md) | 2026-04-26 | **Guided duplicate spatial dirtying** | - |

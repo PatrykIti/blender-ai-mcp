@@ -591,6 +591,10 @@ Current guided-flow behavior:
 - when `spatial_refresh_required=true`, the server expects a fresh
   `scene_scope_graph(...)` check against the already-bound active target scope,
   then the remaining required spatial checks on that same target scope
+- marking guided spatial state stale after a successful material mutation also
+  reapplies FastMCP visibility immediately, so clients see the spatial support
+  tools required by the refreshed gate without waiting for a later status or
+  discovery call
 - when a required spatial check does advance the guided flow, FastMCP
   visibility is reapplied immediately so ordinary discovery/list clients see
   the unlocked tool surface without waiting for a later router/status call
@@ -1119,7 +1123,11 @@ Stage compare/iterate responses now also expose `guided_reference_readiness`, `a
 Silhouette metrics use a target-view or focus capture when one is available;
 the broad `context_wide` capture is only a fallback. A staged iterate result
 that is held in `continue_build` because required roles are still missing does
-not complete or advance the current guided step.
+not complete or advance the current guided step. Collection and object-set
+stage captures now focus on the assembled target scope's primary target when no
+explicit `target_object` is supplied, and error-stage iterate handoffs that move
+to `inspect_validate` or `finish_or_stop` reapply the matching guided
+visibility before returning.
 Compact stage compare/iterate responses keep `capture_count`, `preset_names`,
 truth, and correction summaries, but omit the full capture list to reduce
 normal guided response size. Rich/debug capture detail remains available through

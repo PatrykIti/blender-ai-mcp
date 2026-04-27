@@ -2861,6 +2861,7 @@ async def _run_stage_checkpoint_compare(
         target_objects=resolved_target_objects,
         collection_name=resolved_collection_name,
     )
+    capture_target_object = resolved_target_object or assembled_target_scope.primary_target
     scope_error = _guided_checkpoint_scope_error(session.guided_flow_state, assembled_target_scope)
     if scope_error:
         return _stage_compare_response(
@@ -2915,7 +2916,7 @@ async def _run_stage_checkpoint_compare(
             get_scene_handler(),
             bundle_id=checkpoint_id,
             stage="after",
-            target_object=resolved_target_object,
+            target_object=capture_target_object,
             target_objects=resolved_target_objects,
             preset_profile=preset_profile,
         )
@@ -3585,6 +3586,7 @@ async def reference_iterate_stage_checkpoint(
                 ctx,
                 loop_disposition="inspect_validate" if truth_only_handoff else "stop",
             )
+            await apply_visibility_for_session_state(ctx, advanced_state)
         error_loop_disposition: Literal["continue_build", "inspect_validate", "stop"] = (
             "continue_build" if recoverable_setup_error else ("inspect_validate" if truth_only_handoff else "stop")
         )
