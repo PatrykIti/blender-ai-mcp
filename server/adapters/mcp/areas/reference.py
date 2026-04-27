@@ -1705,11 +1705,11 @@ def _is_limb_like(object_name: str) -> bool:
         return True
 
     tokens = _name_role_tokens(object_name)
-    directional_tokens = {"fore", "hind", "front", "rear", "back"}
+    directional_tokens = {"fore", "hind"}
     side_tokens = {"l", "r", "left", "right"}
-    if any(token in directional_tokens for token in tokens) and any(token in side_tokens for token in tokens):
-        return True
-    return False
+    if not any(token in directional_tokens for token in tokens) or not any(token in side_tokens for token in tokens):
+        return False
+    return all(token in directional_tokens or token in side_tokens or token.isdigit() for token in tokens)
 
 
 def _is_distal_limb_like(object_name: str) -> bool:

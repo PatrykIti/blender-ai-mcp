@@ -226,11 +226,11 @@ def _is_limb_like(object_name: str) -> bool:
         return True
 
     tokens = _name_role_tokens(object_name)
-    directional_tokens = {"fore", "hind", "front", "rear", "back"}
+    directional_tokens = {"fore", "hind"}
     side_tokens = {"l", "r", "left", "right"}
-    if any(token in directional_tokens for token in tokens) and any(token in side_tokens for token in tokens):
-        return True
-    return False
+    if not any(token in directional_tokens for token in tokens) or not any(token in side_tokens for token in tokens):
+        return False
+    return all(token in directional_tokens or token in side_tokens or token.isdigit() for token in tokens)
 
 
 def _is_distal_limb_like(object_name: str) -> bool:
@@ -938,7 +938,7 @@ class SpatialGraphService:
 
         primary_target: str | None
         if len(object_names) == 1:
-            primary_target = target_object or object_names[0]
+            primary_target = object_names[0]
         else:
             primary_target = _select_scope_primary_target(reader, object_names)
 

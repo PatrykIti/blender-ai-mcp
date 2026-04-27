@@ -2492,6 +2492,13 @@ def scene_scope_graph(
                 ),
                 message="Scope graph derived from explicit targets plus deterministic role/anchor heuristics.",
             )
+            mismatch_message = _guided_scope_mismatch_message(
+                ctx,
+                tool_name="scene_scope_graph",
+                resolved_scope=payload.scope.model_dump(mode="json"),
+            )
+            if mismatch_message:
+                payload.message = mismatch_message
             record_guided_flow_spatial_check_completion(
                 ctx,
                 tool_name="scene_scope_graph",

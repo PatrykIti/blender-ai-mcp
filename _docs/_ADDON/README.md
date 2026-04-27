@@ -29,7 +29,7 @@ Those belong to the FastMCP platform layer and router stack on the server side.
 
 ## Runtime Diagnostics
 
-The addon now also keeps one always-on RPC crash-trace for debugging unstable
+The addon now also keeps one best-effort RPC crash-trace for debugging unstable
 Blender/runtime sessions:
 
 - default location:
@@ -38,6 +38,8 @@ Blender/runtime sessions:
   `rpc_trace_YYYYMMDD_HHMMSS_<pid>.jsonl`
 - override directory:
   `BLENDER_AI_MCP_TRACE_DIR`
+- if the trace directory cannot be created or opened, the addon continues in
+  no-trace mode rather than failing RPC startup
 
 The file is newline-delimited JSON and records:
 
@@ -48,6 +50,8 @@ The file is newline-delimited JSON and records:
 
 This trace is meant to answer one practical question after a sudden Blender
 exit: which RPC command was the last one that actually started running?
+Trace writes are intentionally buffered by the runtime file path and do not
+force a per-event disk `fsync` on the RPC hot path.
 
 ## RPC Listener Self-Healing
 

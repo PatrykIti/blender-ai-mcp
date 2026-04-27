@@ -1037,26 +1037,40 @@ def test_stale_secondary_step_rearms_and_refresh_clear_restores_secondary_famili
     assert stale_state.guided_flow_state["next_actions"] == ["refresh_spatial_context"]
     assert len(stale_state.guided_flow_state["required_checks"]) == 3
 
-    rebound = record_guided_flow_spatial_check_completion(
+    mismatched = record_guided_flow_spatial_check_completion(
         ctx,
         tool_name="scene_scope_graph",
         resolved_scope=_scope("Squirrel_Body", "Squirrel_Head", "Squirrel_Ear_L"),
     )
+
+    assert mismatched.guided_flow_state is not None
+    assert mismatched.guided_flow_state["active_target_scope"]["object_names"] == [
+        "Squirrel_Body",
+        "Squirrel_Head",
+    ]
+    checks_by_tool = {check["tool_name"]: check["status"] for check in mismatched.guided_flow_state["required_checks"]}
+    assert checks_by_tool["scene_scope_graph"] == "pending"
+    assert mismatched.guided_flow_state["spatial_refresh_required"] is True
+
+    rebound = record_guided_flow_spatial_check_completion(
+        ctx,
+        tool_name="scene_scope_graph",
+        resolved_scope=_scope("Squirrel_Body", "Squirrel_Head"),
+    )
     refreshed = record_guided_flow_spatial_check_completion(
         ctx,
         tool_name="scene_relation_graph",
-        resolved_scope=_scope("Squirrel_Body", "Squirrel_Head", "Squirrel_Ear_L"),
+        resolved_scope=_scope("Squirrel_Body", "Squirrel_Head"),
     )
     final_state = record_guided_flow_spatial_check_completion(
         ctx,
         tool_name="scene_view_diagnostics",
-        resolved_scope=_scope("Squirrel_Body", "Squirrel_Head", "Squirrel_Ear_L"),
+        resolved_scope=_scope("Squirrel_Body", "Squirrel_Head"),
     )
 
     assert rebound.guided_flow_state is not None
     assert rebound.guided_flow_state["active_target_scope"]["object_names"] == [
         "Squirrel_Body",
-        "Squirrel_Ear_L",
         "Squirrel_Head",
     ]
     assert refreshed.guided_flow_state is not None

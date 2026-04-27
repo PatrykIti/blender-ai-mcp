@@ -157,6 +157,31 @@ def test_rpc_server_writes_trace_file(tmp_path, monkeypatch):
     assert '"cmd": "unknown.cmd"' in content
 
 
+def test_rpc_trace_degrades_to_no_trace_when_directory_cannot_be_created(tmp_path, monkeypatch):
+    trace_dir_file = tmp_path / "trace-dir-file"
+    trace_dir_file.write_text("not a directory", encoding="utf-8")
+    monkeypatch.setattr(rpc_module, "RPC_TRACE_DIR", trace_dir_file)
+
+    server = BlenderRpcServer()
+
+    assert server.trace_file_path is None
+    server._record_trace_event("test_event", cmd=None, request_id=None)
+
+
+def test_rpc_trace_does_not_fsync_per_event(tmp_path, monkeypatch):
+    server = BlenderRpcServer()
+    monkeypatch.setattr(server, "trace_file_path", tmp_path / "rpc_trace.jsonl")
+
+    def fail_if_called(_fileno):
+        raise AssertionError("trace writes must not fsync every event")
+
+    monkeypatch.setattr(rpc_module.os, "fsync", fail_if_called)
+
+    server._record_trace_event("test_event", cmd="demo.cmd", request_id="req-1")
+
+    assert '"event": "test_event"' in server.trace_file_path.read_text(encoding="utf-8")
+
+
 def test_handle_client_invalid_json(monkeypatch):
     server = BlenderRpcServer()
     server.running = True

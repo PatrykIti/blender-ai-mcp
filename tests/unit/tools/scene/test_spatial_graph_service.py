@@ -262,6 +262,74 @@ def test_build_scope_graph_rejects_missing_explicit_target_object():
         )
 
 
+def test_build_scope_graph_uses_normalized_single_target_as_primary():
+    service = SpatialGraphService()
+    reader = FakeReader()
+
+    scope = service.build_scope_graph(
+        reader=reader,
+        target_object=" Body ",
+        target_objects=None,
+        collection_name=None,
+    )
+
+    assert scope["object_names"] == ["Body"]
+    assert scope["primary_target"] == "Body"
+    assert scope["object_roles"][0]["is_primary"] is True
+
+
+def test_relation_graph_does_not_treat_positional_window_name_as_limb():
+    service = SpatialGraphService()
+    reader = FakeReader()
+
+    relation_graph = service.build_relation_graph(
+        reader=reader,
+        scope_graph={
+            "scope_kind": "object_set",
+            "primary_target": "Body",
+            "object_names": ["Body", "front_right_window"],
+            "object_count": 2,
+            "object_roles": [
+                {"object_name": "Body", "role": "anchor_core"},
+                {"object_name": "front_right_window", "role": "structural_peer"},
+            ],
+        },
+        goal_hint=None,
+        include_truth_payloads=False,
+        include_guided_pairs=True,
+    )
+
+    assert relation_graph["summary"]["attachment_pairs"] == 0
+    assert relation_graph["pairs"][0]["pair_source"] == "primary_to_other"
+    assert relation_graph["pairs"][0]["attachment_semantics"] is None
+
+
+def test_relation_graph_still_treats_bare_fore_side_name_as_limb():
+    service = SpatialGraphService()
+    reader = FakeReader()
+
+    relation_graph = service.build_relation_graph(
+        reader=reader,
+        scope_graph={
+            "scope_kind": "object_set",
+            "primary_target": "Body",
+            "object_names": ["Body", "Fore_L"],
+            "object_count": 2,
+            "object_roles": [
+                {"object_name": "Body", "role": "anchor_core"},
+                {"object_name": "Fore_L", "role": "attached_appendage"},
+            ],
+        },
+        goal_hint=None,
+        include_truth_payloads=False,
+        include_guided_pairs=True,
+    )
+
+    assert relation_graph["summary"]["attachment_pairs"] == 1
+    assert relation_graph["pairs"][0]["pair_source"] == "required_creature_seam"
+    assert relation_graph["pairs"][0]["attachment_semantics"]["seam_kind"] == "limb_body"
+
+
 def test_build_scope_graph_rejects_missing_explicit_scope():
     service = SpatialGraphService()
     reader = FakeReader()

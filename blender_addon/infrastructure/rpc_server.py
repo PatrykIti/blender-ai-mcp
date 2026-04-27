@@ -226,7 +226,7 @@ class BlenderRpcServer:
         self.result_queues = {}  # request_id -> Queue
         self.background_jobs: Dict[str, BackgroundJob] = {}
         self._jobs_lock = threading.Lock()
-        self.trace_file_path = self._create_trace_file_path()
+        self.trace_file_path: Path | None = self._create_trace_file_path()
         self._record_trace_event(
             "server_initialized",
             cmd=None,
@@ -234,8 +234,11 @@ class BlenderRpcServer:
             detail={"host": self.host, "port": self.port, "pid": os.getpid()},
         )
 
-    def _create_trace_file_path(self) -> Path:
-        RPC_TRACE_DIR.mkdir(parents=True, exist_ok=True)
+    def _create_trace_file_path(self) -> Path | None:
+        try:
+            RPC_TRACE_DIR.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            return None
         timestamp = time.strftime("%Y%m%d_%H%M%S", time.localtime())
         return RPC_TRACE_DIR / f"rpc_trace_{timestamp}_{os.getpid()}.jsonl"
 
@@ -256,14 +259,11 @@ class BlenderRpcServer:
             "args": _summarize_trace_value(args or {}),
             "detail": _summarize_trace_value(detail or {}),
         }
+        if self.trace_file_path is None:
+            return
         try:
             with self.trace_file_path.open("a", encoding="utf-8") as handle:
                 handle.write(json.dumps(payload, ensure_ascii=True) + "\n")
-                handle.flush()
-                try:
-                    os.fsync(handle.fileno())
-                except OSError:
-                    pass
         except Exception:
             pass
 

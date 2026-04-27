@@ -331,8 +331,10 @@ contract in addition to `guided_handoff`.
   - `building`
 - early guided build sessions now start from a step-gated spatial-context
   phase instead of exposing the whole build surface immediately
-- `scene_scope_graph(...)` now binds the active guided target scope for the
-  spatial gate; unrelated view checks such as
+- `scene_scope_graph(...)` binds the active guided target scope when no active
+  scope exists yet; spatial refresh checks must keep using that already-bound
+  target scope instead of rebinding to a different object set
+- unrelated view checks such as
   `scene_view_diagnostics(target_object="Camera", ...)` do not satisfy a
   creature/building spatial check by themselves
 - if reference images are attached for the active guided goal, treat them as
@@ -397,8 +399,9 @@ contract in addition to `guided_handoff`.
   `asymmetric` support/symmetry verdicts count as failures there
 - when `guided_flow_state.spatial_refresh_required == true`, treat
   `next_actions=["refresh_spatial_context"]` as authoritative server state,
-  not advisory prose; refresh with `scene_scope_graph(...)` first, then rerun
-  the remaining required spatial checks on the same target scope
+  not advisory prose; refresh with `scene_scope_graph(...)` against the
+  already-bound target scope first, then rerun the remaining required spatial
+  checks on that same scope
 - `scene_view_diagnostics(...)` only counts toward the guided spatial gate when
   it returns real available view-space evidence; a headless/unavailable probe
   stays read-only and does not satisfy the required check by itself

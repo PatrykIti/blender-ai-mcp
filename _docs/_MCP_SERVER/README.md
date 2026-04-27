@@ -523,10 +523,12 @@ Current guided-flow behavior:
 - during `establish_spatial_context`, the visible guided build surface stays
   bounded to spatial-context / inspection / reference-support tools until the
   required checks complete
-- `scene_scope_graph(...)` now binds the active guided target scope.
-- `scene_scope_graph(...) now binds the active guided target scope`.
-- `scene_scope_graph(...)` now binds the active guided target scope for the
-  spatial gate; later `scene_relation_graph(...)` /
+- `scene_scope_graph(...)` binds the active guided target scope when no active
+  scope exists yet.
+- `scene_scope_graph(...)` does not rebind an existing active target during a
+  spatial refresh; the refreshed scope must match the already-bound target
+  scope.
+- later `scene_relation_graph(...)` /
   `scene_view_diagnostics(...)` completions must match that scope instead of
   satisfying the gate on arbitrary unrelated objects
 - the spatial tools do not treat “no scope” as “whole scene”; use
@@ -587,8 +589,8 @@ Current guided-flow behavior:
   centers differ or they are not literal contact pairs; only `unsupported` /
   `asymmetric` support/symmetry verdicts count as failures there
 - when `spatial_refresh_required=true`, the server expects a fresh
-  `scene_scope_graph(...)` rebind first, then the remaining required spatial
-  checks on that same target scope
+  `scene_scope_graph(...)` check against the already-bound active target scope,
+  then the remaining required spatial checks on that same target scope
 - when a required spatial check does advance the guided flow, FastMCP
   visibility is reapplied immediately so ordinary discovery/list clients see
   the unlocked tool surface without waiting for a later router/status call
@@ -750,7 +752,7 @@ If a needed tool is not visible or a build tool seems to have disappeared on
    guessing hidden tool names.
 6. If `spatial_refresh_required == true`, treat that as an explicit stale
    spatial-state re-arm:
-   - call `scene_scope_graph(...)` first to bind/rebind the active target
+   - call `scene_scope_graph(...)` first with the already-bound active target
      scope
    - then rerun the remaining `required_checks` on that same scope
 7. If `scene_view_diagnostics(target_object="Camera", ...)` or another

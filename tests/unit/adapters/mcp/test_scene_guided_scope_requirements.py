@@ -190,6 +190,32 @@ def test_scene_relation_graph_reports_active_scope_mismatch_during_refresh(monke
     assert "target_objects=['Body', 'Head']" in result.payload.message
 
 
+def test_scene_scope_graph_reports_active_scope_mismatch_during_refresh(monkeypatch):
+    monkeypatch.setattr(scene_area, "route_tool_call", lambda tool_name, params, direct_executor: direct_executor())
+
+    class Handler:
+        def get_scope_graph(self, target_object=None, target_objects=None, collection_name=None):
+            return {
+                "scope_kind": "object_set",
+                "primary_target": "Body",
+                "object_names": ["Body", "Tail"],
+                "object_count": 2,
+                "object_roles": [],
+            }
+
+    monkeypatch.setattr(scene_area, "get_scene_handler", lambda: Handler())
+
+    result = scene_area.scene_scope_graph(
+        _guided_refresh_ctx(),
+        target_objects=["Body", "Tail"],
+    )
+
+    assert result.payload is not None
+    assert result.payload.message is not None
+    assert "did not satisfy the active guided spatial scope" in result.payload.message
+    assert "target_objects=['Body', 'Head']" in result.payload.message
+
+
 def test_scene_scope_graph_returns_structured_error_for_missing_target_name(monkeypatch):
     monkeypatch.setattr(scene_area, "route_tool_call", lambda tool_name, params, direct_executor: direct_executor())
 

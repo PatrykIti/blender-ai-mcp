@@ -514,6 +514,13 @@ def _build_guided_target_scope_fingerprint(value: Any) -> str | None:
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()[:16]
 
 
+def _build_active_guided_target_scope_fingerprint(contract: GuidedFlowStateContract) -> str | None:
+    if contract.active_target_scope is None:
+        return None
+    active_scope = contract.active_target_scope.model_dump(mode="json")
+    return _build_guided_target_scope_fingerprint(active_scope) or contract.spatial_scope_fingerprint
+
+
 def _looks_like_guided_helper_object(name: str) -> bool:
     normalized = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", name.strip())
     tokens = [token for token in re.split(r"[^a-zA-Z0-9]+", normalized.lower()) if token]
@@ -951,7 +958,7 @@ def describe_guided_scope_mismatch(
         return None
     resolved_fingerprint = _build_guided_target_scope_fingerprint(resolved_scope)
     active_scope = contract.active_target_scope.model_dump(mode="json")
-    active_fingerprint = contract.spatial_scope_fingerprint or _build_guided_target_scope_fingerprint(active_scope)
+    active_fingerprint = _build_active_guided_target_scope_fingerprint(contract)
     if resolved_fingerprint is None or active_fingerprint is None or resolved_fingerprint == active_fingerprint:
         return None
 
@@ -2239,8 +2246,8 @@ def _mark_guided_flow_check_completed_dict(
         return contract.model_dump(mode="json")
 
     if tool_name == _GUIDED_SCOPE_BINDING_TOOL_NAME and normalized_scope is not None:
-        should_rebind = contract.active_target_scope is None or contract.spatial_refresh_required
-        if should_rebind and _is_bindable_guided_target_scope(normalized_scope):
+        should_bind = contract.active_target_scope is None
+        if should_bind and _is_bindable_guided_target_scope(normalized_scope):
             contract.active_target_scope = GuidedTargetScopeContract.model_validate(normalized_scope)
             contract.spatial_scope_fingerprint = resolved_scope_fingerprint
 
@@ -2254,9 +2261,7 @@ def _mark_guided_flow_check_completed_dict(
         if scope_check is not None and scope_check.status != "completed":
             return contract.model_dump(mode="json")
 
-    active_scope_fingerprint = contract.spatial_scope_fingerprint or _build_guided_target_scope_fingerprint(
-        contract.active_target_scope.model_dump(mode="json")
-    )
+    active_scope_fingerprint = _build_active_guided_target_scope_fingerprint(contract)
     if active_scope_fingerprint is None:
         return contract.model_dump(mode="json")
     contract.spatial_scope_fingerprint = active_scope_fingerprint

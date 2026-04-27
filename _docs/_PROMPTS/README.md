@@ -270,7 +270,8 @@ contract.
 - if `guided_flow_state.spatial_refresh_required == true`, treat that as
   authoritative stale-spatial state:
   - expect `guided_flow_state.next_actions=["refresh_spatial_context"]`
-  - call `scene_scope_graph(...)` first to bind/rebind the active target scope
+  - call `scene_scope_graph(...)` first with the already-bound active target
+    scope
   - then rerun the remaining `required_checks` on that same scope
 - do not call `scene_scope_graph(...)`, `scene_relation_graph(...)`, or
   `scene_view_diagnostics(...)` with no explicit scope and assume that means
