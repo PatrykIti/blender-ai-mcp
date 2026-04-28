@@ -383,6 +383,24 @@ def test_bootstrap_and_build_phase_both_surface_default_spatial_support_tools():
     assert "scene_view_diagnostics" in bootstrap_names
 
 
+def test_async_scene_spatial_tools_preserve_public_descriptions():
+    """Async registered scene helpers should expose the public product docstrings."""
+
+    server = _build_phase_visible_server(SessionPhase.BUILD)
+
+    async def run():
+        return {tool.name: tool.description or "" for tool in await server.list_tools()}
+
+    descriptions = asyncio.run(run())
+
+    assert "compact structural scope graph" in descriptions["scene_scope_graph"]
+    assert "which object is the structural anchor" in descriptions["scene_scope_graph"]
+    assert "compact spatial relation graph" in descriptions["scene_relation_graph"]
+    assert "truth primitives such as gap/alignment/overlap/contact checks" in descriptions["scene_relation_graph"]
+    assert "compact view-space diagnostics" in descriptions["scene_view_diagnostics"]
+    assert "USER_PERSPECTIVE" in descriptions["scene_view_diagnostics"]
+
+
 def test_phase_shaped_list_tools_follow_visibility_without_discovery():
     """Visibility policy should affect the actual listed tools even without discovery collapse."""
 

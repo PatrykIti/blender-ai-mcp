@@ -224,8 +224,15 @@ async def _finalize_macro_execution_result(
 def _register_existing_tool(target: Any, tool_name: str) -> Any:
     """Register an existing scene tool on a FastMCP-compatible target."""
 
-    tool = globals().get(f"_{tool_name}_async", globals()[tool_name])
+    async_tool = globals().get(f"_{tool_name}_async")
+    public_tool = globals()[tool_name]
+    tool = async_tool or public_tool
     fn = getattr(tool, "fn", tool)
+    if async_tool is not None:
+        public_fn = getattr(public_tool, "fn", public_tool)
+        public_docstring = getattr(public_fn, "__doc__", None)
+        if public_docstring:
+            fn.__doc__ = public_docstring
     fn = wrap_sync_tool_for_async_guided_finalizers(fn, tool_name=tool_name)
     task_config = get_tool_task_config(tool_name)
     versions = get_versioned_tool_versions(tool_name)

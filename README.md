@@ -397,6 +397,12 @@ contract in addition to `guided_handoff`.
   surface `guided_naming` warnings through the active MCP context; otherwise
   weak semantic names can lose their model-facing correction hints on
   Streamable HTTP
+- async guided-role registration reapplies FastMCP visibility after the final
+  advanced `guided_flow_state` is persisted, so `list_tools()` reflects the
+  new guided step before the Streamable HTTP response completes
+- async public tool variants must preserve the original public docstrings,
+  especially for visible guided spatial helpers whose descriptions teach
+  required scope arguments and usage constraints
 - when the router corrects a successful `modeling_transform_object(...)` call
   to another valid object name, guided spatial dirty-state and guided-role
   follow-up use the transformed object name returned by the final modeling

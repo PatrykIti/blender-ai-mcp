@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [269](./269-2026-04-28-guided-visibility-and-description-finalizers.md) | 2026-04-28 | **Guided visibility and description finalizers** | - |
 | [268](./268-2026-04-28-guided-async-modeling-finalization.md) | 2026-04-28 | **Guided async modeling finalization** | - |
 | [267](./267-2026-04-28-streamable-guided-session-state-hardening.md) | 2026-04-28 | **Streamable guided session-state hardening** | - |
 | [266](./266-2026-04-27-guided-visibility-and-stage-capture-focus.md) | 2026-04-27 | **Guided visibility and stage capture focus** | - |

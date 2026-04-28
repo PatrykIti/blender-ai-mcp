@@ -2057,6 +2057,7 @@ async def register_guided_part_role_async(
         pending_reference_images=current.pending_reference_images,
     )
     await set_session_capability_state_async(ctx, state)
+    await apply_visibility_for_session_state(ctx, state)
     return state
 
 

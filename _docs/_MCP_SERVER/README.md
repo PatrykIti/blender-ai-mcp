@@ -421,6 +421,15 @@ The `llm-guided` surface now has a first complete guided-mode visibility baselin
   context. This keeps warning-mode semantic-name feedback visible to clients
   even when the modeling adapter reads a raw routed report for awaited guided
   state writes.
+- Async guided-role registration must reapply FastMCP visibility after the
+  final advanced `guided_flow_state` is stored. Completing required roles can
+  move the flow to a new step, and `list_tools()` should expose that step's
+  visible tools before the Streamable HTTP response completes.
+- Async public tool variants must preserve the original public tool docstrings.
+  This is required for visible guided spatial helpers such as
+  `scene_scope_graph(...)`, `scene_relation_graph(...)`, and
+  `scene_view_diagnostics(...)`, because their descriptions carry the
+  model-facing scope and usage contract.
 
 This visibility baseline is complete for guided-mode surface shaping.
 Search-first default rollout remains a separate TASK-084 concern.
