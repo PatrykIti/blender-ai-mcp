@@ -169,6 +169,11 @@ def _guided_create_requires_explicit_name(
 def _register_tool(target: Any, fn: Any, tool_name: str) -> Any:
     """Register one modeling tool on a FastMCP-compatible target."""
 
+    public_tool = globals().get(tool_name)
+    public_fn = getattr(public_tool, "fn", public_tool)
+    public_docstring = getattr(public_fn, "__doc__", None)
+    if public_docstring and public_fn is not fn:
+        fn.__doc__ = public_docstring
     fn = wrap_sync_tool_for_async_guided_finalizers(fn, tool_name=tool_name)
     return target.tool(fn, name=tool_name, tags=set(get_capability_tags("modeling")))
 
@@ -504,6 +509,9 @@ def _modeling_create_primitive_impl(
 
     Workflow: START → new object | AFTER → modeling_transform, scene_set_mode('EDIT')
 
+    Public guided usage: create the primitive with its base shape first, then
+    call `modeling_transform_object(scale=...)` for non-uniform scale.
+
     Args:
         primitive_type: "Cube", "Sphere", "Cylinder", "Plane", "Cone", "Monkey", "Torus".
         radius: Radius for Sphere/Cylinder/Cone.
@@ -720,6 +728,9 @@ def modeling_create_primitive(
     [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Creates a 3D primitive object.
 
     Workflow: START → new object | AFTER → modeling_transform, scene_set_mode('EDIT')
+
+    Public guided usage: create the primitive with its base shape first, then
+    call `modeling_transform_object(scale=...)` for non-uniform scale.
 
     Args:
         primitive_type: "Cube", "Sphere", "Cylinder", "Plane", "Cone", "Monkey", "Torus".

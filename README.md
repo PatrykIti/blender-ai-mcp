@@ -401,8 +401,8 @@ contract in addition to `guided_handoff`.
   advanced `guided_flow_state` is persisted, so `list_tools()` reflects the
   new guided step before the Streamable HTTP response completes
 - async public tool variants must preserve the original public docstrings,
-  especially for visible guided spatial helpers whose descriptions teach
-  required scope arguments and usage constraints
+  especially for visible guided spatial and modeling helpers whose descriptions
+  teach required scope arguments, workflow order, and argument constraints
 - when the router corrects a successful `modeling_transform_object(...)` call
   to another valid object name, guided spatial dirty-state and guided-role
   follow-up use the transformed object name returned by the final modeling

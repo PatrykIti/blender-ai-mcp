@@ -401,6 +401,23 @@ def test_async_scene_spatial_tools_preserve_public_descriptions():
     assert "USER_PERSPECTIVE" in descriptions["scene_view_diagnostics"]
 
 
+def test_async_modeling_tools_preserve_public_descriptions():
+    """Async registered modeling helpers should expose the public product docstrings."""
+
+    server = _build_phase_visible_server(SessionPhase.BUILD)
+
+    async def run():
+        return {tool.name: tool.description or "" for tool in await server.list_tools()}
+
+    descriptions = asyncio.run(run())
+
+    assert "Creates a 3D primitive object" in descriptions["modeling_create_primitive"]
+    assert "Workflow: START" in descriptions["modeling_create_primitive"]
+    assert "modeling_transform_object(scale=...)" in descriptions["modeling_create_primitive"]
+    assert "Transforms (move, rotate, scale)" in descriptions["modeling_transform_object"]
+    assert "Workflow: AFTER" in descriptions["modeling_transform_object"]
+
+
 def test_phase_shaped_list_tools_follow_visibility_without_discovery():
     """Visibility policy should affect the actual listed tools even without discovery collapse."""
 

@@ -428,8 +428,10 @@ The `llm-guided` surface now has a first complete guided-mode visibility baselin
 - Async public tool variants must preserve the original public tool docstrings.
   This is required for visible guided spatial helpers such as
   `scene_scope_graph(...)`, `scene_relation_graph(...)`, and
-  `scene_view_diagnostics(...)`, because their descriptions carry the
-  model-facing scope and usage contract.
+  `scene_view_diagnostics(...)`, and for guided modeling helpers such as
+  `modeling_create_primitive(...)` and `modeling_transform_object(...)`,
+  because their descriptions carry the model-facing scope, workflow, and
+  argument contract.
 
 This visibility baseline is complete for guided-mode surface shaping.
 Search-first default rollout remains a separate TASK-084 concern.
