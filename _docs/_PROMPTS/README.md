@@ -17,7 +17,11 @@ of improvising a new instruction stack from scratch.
 > coarse session phases (`bootstrap` / `planning` / `build` / `inspect_validate`).
 > The current guided entry surface is:
 > `router_set_goal`, `router_get_status`, `browse_workflows`, `reference_images`,
-> `search_tools`, `call_tool`, `list_prompts`, and `get_prompt`.
+> `scene_scope_graph`, `scene_relation_graph`, `scene_view_diagnostics`,
+> `search_tools`, and `call_tool`.
+> `list_prompts` and `get_prompt` are optional prompt-bridge tools when
+> `MCP_PROMPTS_AS_TOOLS_ENABLED=true`; prompt-capable clients should prefer
+> native MCP prompts.
 > On production-oriented surfaces, start from `router_set_goal(...)` first for
 > real build/workflow goals and treat the rest of the public surface in the
 > context of that active goal.
@@ -295,6 +299,11 @@ contract.
   flow/domain/step
 - `preferred_prompts` = strong recommendations for the current flow/domain/step
 - prompt bundles support the server-driven guided flow instead of replacing it
+- prompt-capable clients should prefer native MCP prompts. Tool-only clients
+  can use the bridge tools, but operators can set
+  `MCP_PROMPTS_AS_TOOLS_ENABLED=false` when a Streamable HTTP client repeatedly
+  pulls large prompt assets through `get_prompt` and spends more time managing
+  context than executing scene tools.
 - if the server rejects a call because the family or explicit role is wrong
   for the current step, treat that as authoritative guided execution policy,
   not as a hint to guess another tool name

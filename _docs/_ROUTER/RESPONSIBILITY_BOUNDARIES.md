@@ -87,6 +87,12 @@ metadata for:
 They must not become a second hidden runtime phase gate once the guided
 visibility rules are built.
 
+Guided state/visibility updates that happen during native MCP requests must be
+completed through the active request path. On Streamable HTTP, sync routed tools
+that mutate guided session state should defer post-route visibility or spatial
+finalizers to an awaited MCP wrapper instead of scheduling detached writes on the
+request loop.
+
 ---
 
 ## Layer 2: LaBSE Semantic Layer

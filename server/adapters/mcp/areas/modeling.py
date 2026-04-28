@@ -1,4 +1,5 @@
 import re
+from collections.abc import Callable
 from typing import Any, Dict, List, Optional, Union
 
 from fastmcp import Context
@@ -6,11 +7,18 @@ from fastmcp import Context
 from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
 from server.adapters.mcp.guided_contract import canonicalize_modeling_create_primitive_arguments
 from server.adapters.mcp.guided_naming_policy import evaluate_guided_object_name
-from server.adapters.mcp.router_helper import route_tool_call
+from server.adapters.mcp.router_helper import (
+    route_tool_call,
+    route_tool_call_report,
+    wrap_sync_tool_for_async_guided_finalizers,
+)
 from server.adapters.mcp.session_capabilities import (
     get_session_capability_state,
     get_session_capability_state_async,
+    mark_guided_spatial_state_stale_async,
     register_guided_part_role,
+    register_guided_part_role_async,
+    set_session_capability_state_async,
 )
 from server.adapters.mcp.utils import parse_coordinate, parse_dict
 from server.adapters.mcp.visibility.tags import get_capability_tags
@@ -137,7 +145,77 @@ def _guided_create_requires_explicit_name(
 def _register_tool(target: Any, fn: Any, tool_name: str) -> Any:
     """Register one modeling tool on a FastMCP-compatible target."""
 
+    fn = wrap_sync_tool_for_async_guided_finalizers(fn, tool_name=tool_name)
     return target.tool(fn, name=tool_name, tags=set(get_capability_tags("modeling")))
+
+
+def _legacy_route_report_result(report: Any) -> Any:
+    if report.error is None and len(report.steps) == 1:
+        result = report.steps[0].result
+        if not isinstance(result, str):
+            return result
+    return report.to_legacy_text()
+
+
+async def _hydrate_sync_route_session(ctx: Context) -> None:
+    """Mirror async FastMCP session state into request state for sync router-policy helpers."""
+
+    state = await get_session_capability_state_async(ctx)
+    await set_session_capability_state_async(ctx, state)
+
+
+async def _maybe_register_guided_role_async(
+    ctx: Context,
+    *,
+    object_name: str | None,
+    guided_role: str | None,
+    role_group: str | None,
+) -> None:
+    """Register one guided role only when an active guided flow exists."""
+
+    if not guided_role:
+        return
+
+    session = await get_session_capability_state_async(ctx)
+    if session.guided_flow_state is None:
+        return
+
+    normalized_object_name = str(object_name or "").strip()
+    if not normalized_object_name:
+        return
+
+    await register_guided_part_role_async(
+        ctx,
+        object_name=normalized_object_name,
+        role=guided_role,
+        role_group=role_group,
+    )
+
+
+def _route_tool_call_report_for_context(
+    ctx: Context,
+    *,
+    tool_name: str,
+    params: Dict[str, Any],
+    direct_executor: Callable[[], Any],
+) -> Any:
+    """Run sync router policy with the explicit async FastMCP context in scope."""
+
+    token = None
+    current_context = None
+    try:
+        from fastmcp.server.context import _current_context  # type: ignore
+
+        current_context = _current_context
+        token = current_context.set(ctx)
+    except Exception:
+        current_context = None
+        token = None
+    try:
+        return route_tool_call_report(tool_name=tool_name, params=params, direct_executor=direct_executor)
+    finally:
+        if current_context is not None and token is not None:
+            current_context.reset(token)
 
 
 def register_modeling_tools(target: Any) -> Dict[str, Any]:
@@ -146,8 +224,8 @@ def register_modeling_tools(target: Any) -> Dict[str, Any]:
     impls = {
         "macro_cutout_recess": _macro_cutout_recess_impl,
         "macro_finish_form": _macro_finish_form_impl,
-        "modeling_create_primitive": _modeling_create_primitive_impl,
-        "modeling_transform_object": _modeling_transform_object_impl,
+        "modeling_create_primitive": _modeling_create_primitive_impl_async,
+        "modeling_transform_object": _modeling_transform_object_impl_async,
         "modeling_add_modifier": _modeling_add_modifier_impl,
         "modeling_apply_modifier": _modeling_apply_modifier_impl,
         "modeling_convert_to_mesh": _modeling_convert_to_mesh_impl,
@@ -493,6 +571,110 @@ def _modeling_create_primitive_impl(
     return result
 
 
+async def _modeling_create_primitive_impl_async(
+    ctx: Context,
+    primitive_type: str,
+    radius: float = 1.0,
+    size: float = 2.0,
+    location: Union[str, List[float]] = [0.0, 0.0, 0.0],
+    rotation: Union[str, List[float]] = [0.0, 0.0, 0.0],
+    name: str = None,
+    scale: Union[str, List[float], None] = None,
+    segments: int | None = None,
+    rings: int | None = None,
+    subdivisions: int | None = None,
+    collection_name: str | None = None,
+    guided_role: str | None = None,
+    role_group: str | None = None,
+) -> str:
+    """Async registered variant that awaits guided session updates."""
+
+    await _hydrate_sync_route_session(ctx)
+    canonical_arguments = canonicalize_modeling_create_primitive_arguments(
+        {
+            key: value
+            for key, value in {
+                "primitive_type": primitive_type,
+                "radius": radius,
+                "size": size,
+                "location": location,
+                "rotation": rotation,
+                "name": name,
+                "scale": scale,
+                "segments": segments,
+                "rings": rings,
+                "subdivisions": subdivisions,
+                "collection_name": collection_name,
+                "guided_role": guided_role,
+                "role_group": role_group,
+            }.items()
+            if value is not None
+        }
+    )
+    primitive_type_value = str(canonical_arguments["primitive_type"])
+    radius_value = float(canonical_arguments.get("radius", radius))
+    size_value = float(canonical_arguments.get("size", size))
+    location_value = canonical_arguments.get("location", location)
+    rotation_value = canonical_arguments.get("rotation", rotation)
+    name_value = canonical_arguments.get("name")
+    guided_name_error = _guided_create_requires_explicit_name(
+        ctx,
+        guided_role=guided_role,
+        object_name=str(name_value).strip() if name_value else None,
+    )
+    if guided_name_error is not None:
+        raise ValueError(guided_name_error)
+
+    def execute():
+        handler = get_modeling_handler()
+        try:
+            parsed_location = parse_coordinate(location_value) or [0.0, 0.0, 0.0]
+            parsed_rotation = parse_coordinate(rotation_value) or [0.0, 0.0, 0.0]
+            return handler.create_primitive(
+                primitive_type_value,
+                radius_value,
+                size_value,
+                parsed_location,
+                parsed_rotation,
+                name_value,
+            )
+        except (RuntimeError, ValueError) as e:
+            return str(e)
+
+    report = _route_tool_call_report_for_context(
+        ctx,
+        tool_name="modeling_create_primitive",
+        params={
+            "primitive_type": primitive_type_value,
+            "radius": radius_value,
+            "size": size_value,
+            "location": location_value,
+            "rotation": rotation_value,
+            "name": name_value,
+            "guided_role": guided_role,
+            "role_group": role_group,
+        },
+        direct_executor=execute,
+    )
+    result = _legacy_route_report_result(report)
+    created_object_name = _extract_created_object_name(result) if isinstance(result, str) else None
+    if created_object_name is not None:
+        await mark_guided_spatial_state_stale_async(
+            ctx,
+            tool_name="modeling_create_primitive",
+            family="primary_masses" if guided_role in {"body_core", "head_mass", "tail_mass"} else None,
+            reason="modeling_create_primitive",
+        )
+    if created_object_name is not None:
+        await _maybe_register_guided_role_async(
+            ctx,
+            object_name=created_object_name,
+            guided_role=guided_role,
+            role_group=role_group,
+        )
+    return str(result)
+
+
 def modeling_create_primitive(
     ctx: Context,
     primitive_type: str,
@@ -591,6 +773,59 @@ def _modeling_transform_object_impl(
             role_group=role_group,
         )
     return result
+
+
+async def _modeling_transform_object_impl_async(
+    ctx: Context,
+    name: str,
+    location: Union[str, List[float], None] = None,
+    rotation: Union[str, List[float], None] = None,
+    scale: Union[str, List[float], None] = None,
+    guided_role: str | None = None,
+    role_group: str | None = None,
+) -> str:
+    """Async registered variant that awaits guided session updates."""
+
+    await _hydrate_sync_route_session(ctx)
+
+    def execute():
+        handler = get_modeling_handler()
+        try:
+            parsed_location = parse_coordinate(location)
+            parsed_rotation = parse_coordinate(rotation)
+            parsed_scale = parse_coordinate(scale)
+            return handler.transform_object(name, parsed_location, parsed_rotation, parsed_scale)
+        except (RuntimeError, ValueError) as e:
+            return str(e)
+
+    report = _route_tool_call_report_for_context(
+        ctx,
+        tool_name="modeling_transform_object",
+        params={
+            "name": name,
+            "location": location,
+            "rotation": rotation,
+            "scale": scale,
+            "guided_role": guided_role,
+            "role_group": role_group,
+        },
+        direct_executor=execute,
+    )
+    result = _legacy_route_report_result(report)
+    if isinstance(result, str) and _has_transform_success(result, object_name=name):
+        await mark_guided_spatial_state_stale_async(
+            ctx,
+            tool_name="modeling_transform_object",
+            reason="modeling_transform_object",
+        )
+    if isinstance(result, str) and _has_transform_success(result, object_name=name):
+        await _maybe_register_guided_role_async(
+            ctx,
+            object_name=name,
+            guided_role=guided_role,
+            role_group=role_group,
+        )
+    return str(result)
 
 
 def modeling_transform_object(

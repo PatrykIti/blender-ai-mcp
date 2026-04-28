@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from server.adapters.mcp.settings import SurfaceProfileSettings
+from server.infrastructure.config import get_config
 
 
 def build_prompts_bridge_transform(
@@ -19,6 +20,9 @@ def build_prompts_bridge_transform(
 
     TASK-090 populates this using FastMCP's native prompts-as-tools bridge.
     """
+
+    if not get_config().MCP_PROMPTS_AS_TOOLS_ENABLED:
+        return None
 
     if provider is None:
         return None

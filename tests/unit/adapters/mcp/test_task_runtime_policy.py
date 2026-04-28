@@ -14,8 +14,8 @@ from server.adapters.mcp.tasks.runtime_policy import (
 def test_supported_runtime_specs_are_explicit():
     """Task runtime support should be defined by one explicit FastMCP+Docket pair."""
 
-    assert str(SUPPORTED_FASTMCP_SPEC) == "<3.2.0,>=3.1.1"
-    assert str(SUPPORTED_PYDOCKET_SPEC) == "<0.19.0,>=0.18.2"
+    assert str(SUPPORTED_FASTMCP_SPEC) == "<3.3.0,>=3.2.4"
+    assert str(SUPPORTED_PYDOCKET_SPEC) == "<0.20.0,>=0.19.0"
 
 
 def test_current_environment_matches_supported_task_runtime_pair():
@@ -25,7 +25,7 @@ def test_current_environment_matches_supported_task_runtime_pair():
 
     assert report.supported is True
     assert report.reason is None
-    assert report.supported_pair_label == "fastmcp<3.2.0,>=3.1.1 + pydocket<0.19.0,>=0.18.2"
+    assert report.supported_pair_label == "fastmcp<3.3.0,>=3.2.4 + pydocket<0.20.0,>=0.19.0"
 
 
 def test_validate_task_runtime_or_raise_reports_clear_error_for_unsupported_pair(monkeypatch):
@@ -34,11 +34,11 @@ def test_validate_task_runtime_or_raise_reports_clear_error_for_unsupported_pair
     monkeypatch.setattr(
         "server.adapters.mcp.tasks.runtime_policy.get_task_runtime_report",
         lambda tasks_required: TaskRuntimeReport(
-            fastmcp_version="3.1.1",
-            pydocket_version="0.16.1",
+            fastmcp_version="3.2.4",
+            pydocket_version="0.18.2",
             tasks_required=tasks_required,
             supported=False,
-            reason="pydocket 0.16.1 is outside supported range <0.19.0,>=0.18.2",
+            reason="pydocket 0.18.2 is outside supported range <0.20.0,>=0.19.0",
         ),
     )
 
@@ -47,7 +47,7 @@ def test_validate_task_runtime_or_raise_reports_clear_error_for_unsupported_pair
     except RuntimeError as exc:
         text = str(exc)
         assert "Unsupported task runtime" in text
-        assert "fastmcp=3.1.1" in text
-        assert "pydocket=0.16.1" in text
+        assert "fastmcp=3.2.4" in text
+        assert "pydocket=0.18.2" in text
     else:
         raise AssertionError("Expected unsupported task runtime to fail")

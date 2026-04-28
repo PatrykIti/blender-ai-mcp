@@ -62,3 +62,22 @@ def test_prompt_bridge_tools_are_visible_on_guided_surface():
 
     rendered_payload = _decode_text_tool_result(rendered)
     assert rendered_payload["messages"]
+
+
+def test_prompt_bridge_tools_can_be_disabled_for_native_prompt_clients(monkeypatch):
+    """Prompt-capable clients can keep native prompts without exposing prompt bridge tools."""
+
+    monkeypatch.setenv("MCP_PROMPTS_AS_TOOLS_ENABLED", "false")
+    server = build_server("llm-guided")
+
+    async def run():
+        tools = await server.list_tools()
+        prompts = await server.list_prompts()
+        return {tool.name for tool in tools}, {prompt.name for prompt in prompts}
+
+    tool_names, prompt_names = asyncio.run(run())
+
+    assert "list_prompts" not in tool_names
+    assert "get_prompt" not in tool_names
+    assert "guided_session_start" in prompt_names
+    assert "reference_guided_creature_build" in prompt_names

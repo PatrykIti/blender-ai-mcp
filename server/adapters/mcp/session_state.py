@@ -118,6 +118,8 @@ async def set_session_value_async(
         except Exception:
             return
 
+    _mirror_request_state_value(ctx, key, value)
+
 
 def get_session_value(ctx: Context, key: str, default=None):
     """Read a session-scoped value with a default fallback."""
@@ -142,6 +144,8 @@ def set_session_value(ctx: Context, key: str, value, *, serializable: bool = Tru
         _dispatch_awaitable(ctx.set_state(key, value, serializable=serializable))
     except Exception:
         return
+
+    _mirror_request_state_value(ctx, key, value)
 
 
 def get_session_phase(ctx: Context) -> str:

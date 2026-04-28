@@ -9,12 +9,15 @@ Use this document together with `server/adapters/mcp/platform/runtime_inventory.
 - Python support for the migration series is `3.11+`
 - FastMCP baseline for the migration series is `>=3.0,<4.0`
 - FastMCP `>=3.1,<4.0` is a feature gate for Tool Search / BM25 (`TASK-084`) and Code Mode (`TASK-094`)
+- The current validated task-runtime line is FastMCP `>=3.2.4,<3.3.0`
+  with pydocket `>=0.19.0,<0.20.0`; older `3.1.x` / `0.18.x`
+  references are historical TASK-099 context, not the active baseline.
 
 ## Runtime State After TASK-083
 
 | Location | State after migration | Follow-up |
 |---|---|---|
-| `pyproject.toml` | Explicit Python/FastMCP baseline for the migration series | `TASK-084` / `TASK-094` still require moving the active runtime line to `>=3.1,<4.0` |
+| `pyproject.toml` | Explicit Python/FastMCP baseline for the migration series; current task-runtime line is `fastmcp[tasks] >=3.2.4,<3.3.0` plus `pydocket >=0.19.0,<0.20.0` | Keep runtime-baseline docs and task policy tests aligned whenever the upstream FastMCP/Docket pair moves |
 | `server/adapters/mcp/server.py` | Startup delegates to `build_server(surface_profile=...)` | none in `TASK-083` |
 | `server/adapters/mcp/areas/__init__.py` | Explicit registrar exports only; no side-effect bootstrap imports | none in `TASK-083` |
 | `server/adapters/mcp/areas/*.py` | Plain tool callables plus `register_*_tools(...)` seams; no global singleton registration | none in `TASK-083` |

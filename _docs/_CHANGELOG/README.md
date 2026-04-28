@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [267](./267-2026-04-28-streamable-guided-session-state-hardening.md) | 2026-04-28 | **Streamable guided session-state hardening** | - |
 | [266](./266-2026-04-27-guided-visibility-and-stage-capture-focus.md) | 2026-04-27 | **Guided visibility and stage capture focus** | - |
 | [265](./265-2026-04-27-guided-success-parser-apostrophes.md) | 2026-04-27 | **Guided success parser apostrophes** | - |
 | [264](./264-2026-04-27-guided-spatial-scope-and-rpc-trace-hardening.md) | 2026-04-27 | **Guided spatial scope and RPC trace hardening** | - |

@@ -22,9 +22,9 @@ from pathlib import Path
 from typing import Final, Iterable, Literal
 
 SUPPORTED_PYTHON_BASELINE: Final[str] = ">=3.11,<4.0"
-FASTMCP_BASELINE: Final[str] = ">=3.1.1,<3.2.0"
+FASTMCP_BASELINE: Final[str] = ">=3.2.4,<3.3.0"
 FASTMCP_DEPENDENCY_DECLARATION: Final[str] = "fastmcp[tasks]"
-PYDOCKET_BASELINE: Final[str] = ">=0.18.2,<0.19.0"
+PYDOCKET_BASELINE: Final[str] = ">=0.19.0,<0.20.0"
 PYDOCKET_DEPENDENCY_DECLARATION: Final[str] = "pydocket"
 FASTMCP_FEATURE_GATE_BASELINE: Final[str] = ">=3.1.1,<3.2.0"
 

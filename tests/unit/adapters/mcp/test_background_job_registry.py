@@ -91,5 +91,5 @@ def test_task_runtime_report_matches_current_supported_pair():
     report = get_task_runtime_report(tasks_required=True)
 
     assert report.supported is True
-    assert report.fastmcp_version == "3.1.1"
-    assert report.pydocket_version == "0.18.2"
+    assert report.fastmcp_version == "3.2.4"
+    assert report.pydocket_version == "0.19.2"

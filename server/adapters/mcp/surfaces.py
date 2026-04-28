@@ -76,7 +76,8 @@ SURFACE_PROFILES: dict[str, SurfaceProfileSettings] = {
         instructions=(
             "Guided MCP surface. First classify the request type: build/workflow goal, utility/capture request, or guided manual build. "
             "Current entry tools are router_set_goal, router_get_status, browse_workflows, "
-            "reference_images, search_tools, call_tool, list_prompts, and get_prompt. "
+            "reference_images, search_tools, and call_tool. "
+            "Prompt-capable clients should use native prompts; tool-only clients may also see list_prompts and get_prompt when the prompt bridge is enabled. "
             "Build/workflow request: router_get_status -> router_set_goal -> handle typed clarification -> use visible build tools/macros. "
             "Utility/capture request: skip router_set_goal and use the guided utility path directly. "
             "Guided manual build: if workflow matching is not useful, continue on the guided build surface without forcing workflow import or creation. "
@@ -144,7 +145,8 @@ SURFACE_PROFILES: dict[str, SurfaceProfileSettings] = {
             "Use only the visible read-only MCP capabilities, prompts, and resources. "
             "Do not attempt geometry-destructive or write-heavy flows on this surface. "
             "This is not the normal production write path. Goal-first is optional here. "
-            "This surface is task-capable, but keep background task usage aligned with the visible read-only pilot tools."
+            "This surface is task-capable, but keep background task usage aligned with the visible read-only pilot tools. "
+            "Prompt-capable clients should use native prompts; tool-only clients may also see list_prompts and get_prompt when the prompt bridge is enabled."
         ),
         delivery_mode="structured_first",
         code_mode_enabled=True,

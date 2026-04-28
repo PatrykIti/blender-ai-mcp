@@ -31,6 +31,7 @@ def test_server_run_uses_stdio_transport_mode(monkeypatch):
             MCP_HTTP_HOST="127.0.0.1",
             MCP_HTTP_PORT=8000,
             MCP_STREAMABLE_HTTP_PATH="/mcp",
+            MCP_PROMPTS_AS_TOOLS_ENABLED=True,
         ),
     )
 
@@ -54,6 +55,7 @@ def test_server_run_uses_streamable_http_transport_mode(monkeypatch):
             MCP_HTTP_HOST="0.0.0.0",
             MCP_HTTP_PORT=8123,
             MCP_STREAMABLE_HTTP_PATH="/custom-mcp",
+            MCP_PROMPTS_AS_TOOLS_ENABLED=False,
         ),
     )
 

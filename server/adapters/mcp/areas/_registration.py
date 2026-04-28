@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, Iterable, Mapping
 
+from server.adapters.mcp.router_helper import wrap_sync_tool_for_async_guided_finalizers
+
 
 def register_existing_tools(
     module_globals: Mapping[str, Any],
@@ -23,6 +25,7 @@ def register_existing_tools(
     for tool_name in tool_names:
         tool = module_globals[tool_name]
         fn = getattr(tool, "fn", tool)
+        fn = wrap_sync_tool_for_async_guided_finalizers(fn, tool_name=tool_name)
         kwargs: Dict[str, Any] = {"name": tool_name}
         if tag_set:
             kwargs["tags"] = set(tag_set)

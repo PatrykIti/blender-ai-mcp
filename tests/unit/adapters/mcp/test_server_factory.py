@@ -99,9 +99,9 @@ def test_build_server_fails_clearly_when_task_runtime_pair_is_unsupported(monkey
         lambda tasks_required: (_ for _ in ()).throw(
             RuntimeError(
                 "Unsupported task runtime for FastMCP task-capable surfaces. "
-                "Resolved pair: fastmcp=3.1.1, pydocket=0.16.1. "
-                "Supported pair: fastmcp>=3.1.1,<3.2.0 + pydocket>=0.18.2,<0.19.0. "
-                "Reason: pydocket 0.16.1 is outside supported range >=0.18.2,<0.19.0"
+                "Resolved pair: fastmcp=3.2.4, pydocket=0.18.2. "
+                "Supported pair: fastmcp>=3.2.4,<3.3.0 + pydocket>=0.19.0,<0.20.0. "
+                "Reason: pydocket 0.18.2 is outside supported range >=0.19.0,<0.20.0"
             )
         ),
     )
@@ -110,6 +110,6 @@ def test_build_server_fails_clearly_when_task_runtime_pair_is_unsupported(monkey
         build_server("llm-guided")
     except RuntimeError as exc:
         assert "Unsupported task runtime" in str(exc)
-        assert "pydocket=0.16.1" in str(exc)
+        assert "pydocket=0.18.2" in str(exc)
     else:
         raise AssertionError("Expected unsupported task runtime to fail fast")

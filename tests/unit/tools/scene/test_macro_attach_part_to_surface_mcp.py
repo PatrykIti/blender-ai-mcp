@@ -77,7 +77,11 @@ def test_macro_attach_part_to_surface_mcp_preserves_routed_partial_report_with_e
         "requires_followup": True,
         "error": "The bounded seating move completed, but the pair is still not seated/attached correctly.",
     }
-    monkeypatch.setattr("server.adapters.mcp.areas.scene.route_tool_call", lambda **kwargs: partial_report)
+
+    async def route_tool_call_async(*args, **kwargs):
+        return partial_report
+
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.route_tool_call_async", route_tool_call_async)
 
     result = asyncio.run(
         macro_attach_part_to_surface(

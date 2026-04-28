@@ -100,21 +100,25 @@ Prompt recommendation notes:
   phase/profile
 - creature-oriented guided goals can surface the native
   `reference_guided_creature_build` asset directly
+- `list_prompts` and `get_prompt` are optional prompt-bridge tools. Prompt-capable
+  clients can disable them with `MCP_PROMPTS_AS_TOOLS_ENABLED=false` and use
+  native MCP prompts instead.
 
 Measured current baseline:
 
 - `legacy-manual`: `179` visible tools, without router/workflow namespace exposure
 - `legacy-flat`: `186` visible tools
-- `llm-guided`: `8` visible tools
+- `llm-guided`: `9` core visible tools with the prompt bridge disabled, `11` with
+  the bridge enabled
 
 Why this matters:
 
 - discovery respects guided visibility and does not leak hidden tools during bootstrap
 - the initial tool payload stays intentionally small
 - specialist families do not quietly become the default public path
-- read-only spatial graph tools such as `scene_scope_graph` and `scene_relation_graph`
-  now follow the same rule: searchable/on-demand where justified, but not
-  bootstrap-visible by default
+- read-only spatial graph/view tools such as `scene_scope_graph`,
+  `scene_relation_graph`, and `scene_view_diagnostics` are directly visible as
+  the guided spatial-orientation support layer
 
 Specialist families such as armature, sculpt, text, baking, and similar
 maintainer-oriented areas are also intentionally excluded from the normal

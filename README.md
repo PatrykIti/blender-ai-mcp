@@ -99,8 +99,13 @@ Current guided bootstrap surface:
 - `scene_view_diagnostics`
 - `search_tools`
 - `call_tool`
-- `list_prompts`
-- `get_prompt`
+- optional prompt bridge tools when `MCP_PROMPTS_AS_TOOLS_ENABLED=true`:
+  - `list_prompts`
+  - `get_prompt`
+
+Prompt-capable clients should prefer native MCP prompts. The prompt bridge is a
+compatibility layer for tool-only clients and can be disabled for Streamable HTTP
+profiles that already consume native prompt components.
 
 Current guided utility prep path:
 
@@ -139,7 +144,8 @@ Current public aliases on `llm-guided`:
 
 Why that matters:
 
-- the guided profile starts from 8 visible tools instead of the full catalog
+- the guided profile starts from a compact visible bootstrap set instead of the
+  full catalog
 - grouped/public tools stay easy to discover
 - hidden atomic tools remain available as infrastructure, not as the default public mental model
 - specialist families stay out of the normal guided entry layer until the macro surface is broader
@@ -383,6 +389,10 @@ contract in addition to `guided_handoff`.
 - that same dirty-state update now reapplies FastMCP visibility immediately,
   so clients see the required spatial support tools as soon as
   `spatial_refresh_required` is persisted
+- on Streamable HTTP, guided dirty-state and visibility finalizers must complete
+  before the active tool response returns; routed sync tools that mutate scene
+  state defer those finalizers to the MCP async wrapper instead of scheduling
+  detached session-state writes
 - guided mesh edit tools such as `mesh_extrude_region(...)`,
   `mesh_loop_cut(...)`, and `mesh_bevel(...)` are now mapped to the
   `secondary_parts` family, so they are blocked during spatial-context gates
@@ -651,7 +661,8 @@ Current decision:
 
 - **Blender**: tested on **Blender 5.0** in E2E coverage; addon minimum remains **Blender 4.0+** on a best-effort basis.
 - **Python**: **3.11+**
-- **FastMCP task runtime**: **fastmcp 3.1.1** + **pydocket 0.18.2**
+- **FastMCP task runtime**: **fastmcp 3.2.4** + **pydocket 0.19.x**
+- **Code Mode sandbox extra**: **pydantic-monty 0.0.11**
 - **OS**: macOS / Windows / Linux
 - **Memory**: router semantic features rely on a local LaBSE model and related vector infrastructure
 
@@ -697,6 +708,7 @@ docker run --rm \
   -e MCP_HTTP_HOST=0.0.0.0 \
   -e MCP_HTTP_PORT=8000 \
   -e MCP_STREAMABLE_HTTP_PATH=/mcp \
+  -e MCP_PROMPTS_AS_TOOLS_ENABLED=false \
   -e BLENDER_RPC_HOST=host.docker.internal \
   ghcr.io/patrykiti/blender-ai-mcp:latest
 ```
@@ -731,6 +743,8 @@ Network notes:
 - **Linux:** prefer `--network host` with `BLENDER_RPC_HOST=127.0.0.1`
 - `MCP_TRANSPORT_MODE=stdio` keeps the current subprocess/stdio MCP mode
 - `MCP_TRANSPORT_MODE=streamable` starts a stateful Streamable HTTP MCP server
+- `MCP_PROMPTS_AS_TOOLS_ENABLED=false` disables the tool-compatible prompt bridge
+  for prompt-capable clients; native MCP prompts remain available
 
 For broader profile/config examples, use:
 
