@@ -3,7 +3,7 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 7 tasks
+- **To Do:** 8 tasks
 - **In Progress:** 0 tasks
 - **Done:** 224
 - **Superseded:** 10
@@ -42,6 +42,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md) | **Goal-Derived Quality Gates And Deterministic Verification** | 🔴 High | Generic cross-domain substrate where LLMs may propose flexible gates, while the server normalizes and verifies completion deterministically. |
 
 ### Mesh Introspection
 | ID | Title | Priority | Notes |
@@ -54,7 +55,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Reconstruction (Mesh, Material, Scene)
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-135](./TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md) | **Anatomy-Aware Reference-Guided Low-Poly Creature Reconstruction** | 🔴 High | Board-level follow-on after TASK-128 for moving from generic creature blockout toward anatomy-aware low-poly reconstruction from front/side references for common quadruped mammals. |
+| [TASK-135](./TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md) | **Anatomy-Aware Reference-Guided Low-Poly Creature Reconstruction** | 🔴 High | Board-level follow-on after TASK-128 and first domain consumer of TASK-157, covering creature completion gates, curved tails, required seams, and bounded mesh-form refinement. |
 | [TASK-136](./TASK-136_Reference_Guided_Architecture_And_Building_Reconstruction.md) | **Reference-Guided Architecture and Building Reconstruction** | 🔴 High | Board-level architecture umbrella for turning plans/elevations/photo refs into bounded reconstruction sessions for buildings, facades, and modular structures on `llm-guided`. |
 | [TASK-137](./TASK-137_Anatomy_Aware_Reference_Guided_Organ_Reconstruction.md) | **Anatomy-Aware Reference-Guided Organ Reconstruction** | 🟠 High | Board-level organic-anatomy umbrella for bounded organ reconstruction from references with explicit medical-scope guardrails and anatomy-aware loop design. |
 | [TASK-138](./TASK-138_Anatomy_Aware_Reference_Guided_Biped_And_Fantasy_Character_Reconstruction.md) | **Anatomy-Aware Reference-Guided Biped and Fantasy Character Reconstruction** | 🔴 High | Board-level character umbrella for reference-guided humanoid and fantasy-character reconstruction with explicit body-part, symmetry, appendage, garment, and rig-handoff boundaries. |

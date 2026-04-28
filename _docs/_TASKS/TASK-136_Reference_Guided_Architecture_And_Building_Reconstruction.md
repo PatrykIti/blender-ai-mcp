@@ -4,7 +4,7 @@
 **Priority:** 🔴 High
 **Category:** Reconstruction / Architecture and Hard Surface
 **Estimated Effort:** Large
-**Dependencies:** TASK-118, TASK-120, TASK-122, TASK-124, TASK-130
+**Dependencies:** TASK-118, TASK-120, TASK-122, TASK-124, TASK-130, TASK-157
 
 ## Objective
 
@@ -56,6 +56,16 @@ The repo already has strong foundations this umbrella should build on:
 The follow-on should extend that product foundation into the architecture
 domain. It should not reopen the old flat-catalog model or bypass the guided
 surface.
+
+## Generic Gate Dependency
+
+This umbrella should consume
+[TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md)
+instead of introducing a separate hardcoded architecture-only gate system.
+Building goals should be able to derive flexible gates such as roof seating,
+opening grids, facade rhythm, footprint ratios, support contacts, and roofline
+profiles, while the server normalizes and verifies those gates through the
+generic gate contract.
 
 ## Current Capability Ceiling
 

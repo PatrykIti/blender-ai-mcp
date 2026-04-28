@@ -171,6 +171,52 @@ Use `_docs/_ROUTER/TOOLS/README.md` as the checklist for router-facing tools.
 - Even very small leaves should still say which files/areas they touch and how completion will be validated. Do not leave active leaves as title-only placeholders.
 - When task hierarchy or status changes, update the affected task files and `_docs/_TASKS/README.md` in the same branch so board state and task-file state do not drift.
 
+## Task Specification Standards
+
+When creating or materially rewriting task documentation, make the task useful
+for a future implementer without requiring them to reverse-engineer the intent
+from conversation history.
+
+Umbrella tasks must include:
+
+- business/problem framing and the concrete user-visible failure or opportunity
+- business outcome and explicit non-goals
+- relationship to existing board items, including whether the work is a generic
+  substrate or a domain-specific consumer
+- an execution structure table listing subtasks/leaves and their purpose
+- a repository touchpoint table with path or module, expected ownership, and why
+  the area is in scope
+- a test matrix covering unit, integration/router, E2E/Blender, docs, and
+  regression fixtures where applicable
+- acceptance criteria written as observable product/runtime outcomes
+
+Technical subtasks must include:
+
+- `Parent`, `Status`, `Priority`, `Objective`, `Repository Touchpoints`, and
+  `Acceptance Criteria`
+- implementation notes grounded in concrete repo modules/classes/functions
+- pseudocode for the intended control flow or contract shape when behavior is
+  non-trivial
+- exact tests to add or update, including E2E tests whenever Blender scene
+  state, geometry, visibility, guided flow, or client-facing runtime behavior
+  changes
+- documentation surfaces to update after implementation
+- changelog impact and validation commands or validation category
+
+Leaf or micro-task files must be small enough for one focused implementation
+pass and should name the likely functions, contracts, fixtures, or metadata
+files that will change. They should not be placeholders.
+
+For quality-gate, guided-flow, or reconstruction tasks, keep this distinction
+explicit:
+
+- LLMs may propose domain-specific gates from the goal, references, and prompt
+  context.
+- The server must normalize those gates into a typed contract.
+- The server must verify gate status with deterministic inspection/assertion or
+  bounded vision evidence. Do not let prose confidence or semantic similarity
+  become the authority for gate completion.
+
 ## Task Completion Checklist
 
 - When a meaningful task/subtask/leaf is completed, do all applicable work in the same branch:

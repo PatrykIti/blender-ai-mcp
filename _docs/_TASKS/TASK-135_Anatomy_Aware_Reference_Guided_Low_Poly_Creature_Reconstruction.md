@@ -4,7 +4,7 @@
 **Priority:** 🔴 High
 **Category:** Reconstruction / Guided Creature Reliability
 **Estimated Effort:** Large
-**Dependencies:** TASK-128
+**Dependencies:** TASK-128, TASK-157
 **Follow-on After:** [TASK-128](./TASK-128_Reference_Guided_Creature_Build_Surface_And_Perception_Reliability.md)
 
 ## Objective
@@ -58,6 +58,21 @@ The repo already has the foundations this umbrella should build on:
 This matters because the follow-on should extend the current guided/reference
 product path, not replace it with an unrelated one-shot generator story.
 
+## Generic Gate Dependency
+
+This umbrella is the first creature-specific consumer of
+[TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md).
+The creature work should not hardcode one squirrel checklist into the runtime.
+Instead:
+
+- the LLM may propose creature-specific gates from the prompt and references
+- the server normalizes those gates into the generic gate vocabulary from
+  `TASK-157`
+- deterministic scene/spatial/mesh/reference evidence decides whether the gate
+  passed
+- the creature domain supplies templates, defaults, relation semantics, and
+  target-specific policy for common quadruped mammals
+
 ## Current Capability Ceiling
 
 If `TASK-128` lands completely, the product should be materially better at:
@@ -76,6 +91,9 @@ how the animal is put together at low-poly fidelity.
 
 The follow-on gap to close is:
 
+- real guided squirrel runs can still finish as primitive-only blockouts that
+  contain the expected object names but lack key visual details such as eyes,
+  visible part seating, and a curved tail silhouette
 - the public guided story does not yet promise or define anatomy-aware
   reconstruction for common creature builds
 - the expected fidelity bar is not yet explicit:
@@ -124,6 +142,19 @@ If this umbrella is done correctly, the repo gains:
   separate, or be treated as erroneous overlaps during low-poly creature work
 
 ## Product Design Requirements
+
+### Business Quality Bar
+
+The creature output is acceptable only when it visibly reads as a low-poly
+creature assembled from grounded references, not merely as named primitives.
+
+| Quality Area | Minimum Bar | Latest Squirrel Failure |
+|--------------|-------------|-------------------------|
+| Required details | Required visible roles such as eyes/snout/ears exist unless explicitly waived | no eyes were created |
+| Required seams | Head/body, tail/body, limb/body, snout/head, and eye/head gates are seated or intentionally embedded | multiple parts floated or only bbox-touched |
+| Shape profile | Major reference-driven profiles are represented, for example a curved squirrel tail | tail was one vertical oval |
+| Form refinement | Primary parts are profiled enough to read as low-poly anatomy | body/limbs remained sphere blobs |
+| Completion truth | Final status is based on gate verification, not prose | "no intersections" was treated as done |
 
 ### Vision Mode
 
@@ -265,6 +296,49 @@ This umbrella does **not** cover:
 - `_docs/_TESTS/README.md`
 - `_docs/_TASKS/README.md`
 
+## Repository Touchpoint Table
+
+| Path / Module | Scope | Expected Work |
+|---------------|-------|---------------|
+| `server/adapters/mcp/contracts/reference.py` | Reference loop contracts | Add creature gate summaries and completion blockers once `TASK-157` contracts exist |
+| `server/adapters/mcp/contracts/quality_gates.py` | Generic dependency | Consume normalized gate types for creature-specific templates |
+| `server/adapters/mcp/areas/reference.py` | Checkpoint assembly | Include creature gate status, missing visual roles, and seam/profile blockers in compare/iterate results |
+| `server/adapters/mcp/session_capabilities.py` | Guided state | Persist creature gate plan, role cardinality, stale gate versions, and next gate actions |
+| `server/application/services/spatial_graph.py` | Truth mapping | Map creature seam relations to `attachment_seam` and `support_contact` gate evidence |
+| `server/adapters/mcp/areas/scene.py` | Bounded macros | Use attach/align/arc/profile macros as gate repair tools |
+| `server/adapters/mcp/areas/mesh.py` | Form refinement | Expose bounded mesh tools during the creature refinement gate window |
+| `server/adapters/mcp/areas/modeling.py` | Primitive and transform | Keep primary/secondary creation role-aware and mark affected gates stale |
+| `server/adapters/mcp/discovery/search_documents.py` | Search shaping | Bias creature gate blockers toward attachment, arc-tail, eye/detail, and mesh-profile tools |
+| `server/router/infrastructure/tools_metadata/` | Metadata | Add gate-oriented hints for creature repair/refinement tools |
+| `blender_addon/application/handlers/mesh_handler.py` | E2E-backed behavior | Update only if mesh refinement gates require new Blender operations |
+| `blender_addon/application/handlers/modeling_handler.py` | E2E-backed behavior | Update only if profile/appendage macros need new primitive or transform support |
+| `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md` | Prompt guidance | Teach dynamic gates, required seams, eyes/detail, tail chain, and refinement window |
+| `_docs/_MCP_SERVER/README.md` | Public contract | Document creature gate status and repair recommendations |
+| `_docs/_TESTS/README.md` | Test lanes | Document creature gate unit/E2E regression commands |
+
+## First Execution Slices
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-135-01](./TASK-135-01_Creature_Blockout_Completion_Contract_And_Required_Detail_Gates.md) | Prevent primitive-only creature runs from completing when required visual details or seated required seams are missing |
+| 2 | [TASK-135-02](./TASK-135-02_Curved_Tail_And_Organic_Appendage_Build_Path.md) | Turn curved/bushy tails into an explicit tail-chain and arc-building path instead of one detached oval |
+| 3 | [TASK-135-03](./TASK-135-03_Low_Poly_Form_Refinement_Mesh_Window_And_Profile_Macros.md) | Add a bounded mesh/modeling refinement window after primitive placement so low-poly forms can be profiled instead of left as blobs |
+
+## Test Matrix
+
+| Layer | Tests To Add / Update |
+|-------|------------------------|
+| Unit gate templates | Creature template adds required roles and seams for common quadruped mammals |
+| Unit role/cardinality | `eye_pair`, `ear_pair`, `foreleg_pair`, and `hindleg_pair` require complete pairs |
+| Unit seam verification | `floating_gap` blocks completion for required creature seams |
+| Unit search/visibility | Active creature gate exposes only bounded relevant repair/refinement tools |
+| Unit reference loop | `reference_iterate_stage_checkpoint(...)` reports gate blockers and refuses completion |
+| Unit macro contracts | Attach/align/arc/profile macros expose structured gate-repair evidence |
+| E2E macro | Tail/body, limb/body, snout/head, and eye/head seam repairs satisfy gate checks |
+| E2E vision creature | Primitive-only squirrel without eyes, seated seams, and curved tail fails final completion |
+| E2E guided runtime | Creature flow advances from primitive placement to refinement gate without broad catalog exposure |
+| Docs tests | Prompt/MCP/test docs describe the same creature gate semantics |
+
 ## Docs To Update
 
 - `_docs/_PROMPTS/README.md`
@@ -297,7 +371,9 @@ This umbrella does **not** cover:
 ## Status / Board Update
 
 - promote this as a board-level follow-on after `TASK-128`
-- keep it as a standalone umbrella until it is decomposed into explicit
-  execution slices; do not treat this file itself as the decomposition
+- this umbrella now has first execution slices for completion gates, curved
+  tail/appendage construction, and low-poly form refinement
+- use `TASK-157` as the generic gate substrate and keep this task focused on
+  creature-specific templates, evidence, and tooling
 - use this umbrella to separate "generic creature blockout reliability" from
   "anatomy-aware low-poly reconstruction from realistic references"
