@@ -4,6 +4,7 @@ Router Helper for MCP Tools.
 Provides utilities for routing tool calls through SupervisorRouter.
 """
 
+import asyncio
 import contextvars
 import functools
 import inspect
@@ -1297,7 +1298,8 @@ async def route_tool_call_async(
         current_context = None
         token = None
     try:
-        report = route_tool_call_report(
+        report = await asyncio.to_thread(
+            route_tool_call_report,
             tool_name=tool_name,
             params=params,
             direct_executor=direct_executor,
@@ -1334,7 +1336,7 @@ def wrap_sync_tool_for_async_guided_finalizers(fn: Callable[..., Any], *, tool_n
     async def _wrapped(*args: Any, **kwargs: Any) -> Any:
         ctx = args[0] if args else kwargs.get("ctx")
         if not isinstance(ctx, Context):
-            return fn(*args, **kwargs)
+            return await asyncio.to_thread(fn, *args, **kwargs)
 
         state = await get_session_capability_state_async(ctx)
         await set_session_capability_state_async(ctx, state)
@@ -1351,7 +1353,7 @@ def wrap_sync_tool_for_async_guided_finalizers(fn: Callable[..., Any], *, tool_n
             except Exception:
                 current_context = None
                 context_token = None
-            result = fn(*args, **kwargs)
+            result = await asyncio.to_thread(fn, *args, **kwargs)
         finally:
             if current_context is not None and context_token is not None:
                 current_context.reset(context_token)

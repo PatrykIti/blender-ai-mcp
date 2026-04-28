@@ -416,6 +416,11 @@ The `llm-guided` surface now has a first complete guided-mode visibility baselin
   request/response path. Sync routed tools that dirty spatial or role state
   should defer post-route guided finalizers to the async MCP wrapper instead of
   scheduling detached visibility/session writes.
+- Async wrappers that await guided finalizers must still run the original
+  sync router/RPC execution on a worker thread. This keeps slow Blender-backed
+  operations such as modeling, mesh, and bounded macro calls from blocking the
+  Streamable HTTP event loop while finalizers remain awaited on the request
+  path.
 - Native async modeling tools that consume a router execution report directly
   still have to surface `guided_naming` warnings through the active MCP
   context. This keeps warning-mode semantic-name feedback visible to clients

@@ -393,6 +393,9 @@ contract in addition to `guided_handoff`.
   before the active tool response returns; routed sync tools that mutate scene
   state defer those finalizers to the MCP async wrapper instead of scheduling
   detached session-state writes
+- async wrappers and native async modeling helpers keep the blocking
+  sync router/RPC execution on a worker thread; only the guided finalizers run
+  back on the event loop before the Streamable HTTP response completes
 - native async modeling tools that consume a router execution report must still
   surface `guided_naming` warnings through the active MCP context; otherwise
   weak semantic names can lose their model-facing correction hints on

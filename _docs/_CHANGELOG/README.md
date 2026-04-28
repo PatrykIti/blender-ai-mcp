@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [271](./271-2026-04-28-streamable-worker-offload-for-guided-routes.md) | 2026-04-28 | **Streamable worker offload for guided routes** | - |
 | [270](./270-2026-04-28-modeling-async-public-descriptions.md) | 2026-04-28 | **Modeling async public descriptions** | - |
 | [269](./269-2026-04-28-guided-visibility-and-description-finalizers.md) | 2026-04-28 | **Guided visibility and description finalizers** | - |
 | [268](./268-2026-04-28-guided-async-modeling-finalization.md) | 2026-04-28 | **Guided async modeling finalization** | - |

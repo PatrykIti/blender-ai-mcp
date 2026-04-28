@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass, field
 
 import pytest
@@ -227,6 +228,148 @@ def test_guided_spatial_dirty_tracking_treats_partial_mutating_macro_reports_as_
             "reason": "macro_attach_part_to_surface",
         }
     ]
+
+
+def test_async_guided_finalizer_wrapper_offloads_sync_tool_and_finalizes_report(monkeypatch):
+    """Async Streamable wrappers should keep blocking sync tool execution off the event loop."""
+
+    ctx = FakeContext()
+    state = SessionCapabilityState(
+        phase=SessionPhase.BUILD,
+        guided_flow_state={"flow_id": "guided_creature_flow"},
+    )
+    report = MCPExecutionReport(
+        context=MCPExecutionContext(
+            tool_name="modeling_create_primitive",
+            params={"primitive_type": "Sphere", "name": "Body"},
+        ),
+        router_enabled=False,
+        router_applied=False,
+        router_disposition="direct",
+        steps=(
+            ExecutionStep(
+                tool_name="modeling_create_primitive",
+                params={"primitive_type": "Sphere", "name": "Body"},
+                result="Created Sphere named 'Body'",
+            ),
+        ),
+    )
+    offloaded: list[tuple[object, tuple[object, ...], dict[str, object]]] = []
+    finalized: list[MCPExecutionReport] = []
+
+    async def to_thread(fn, /, *args, **kwargs):
+        offloaded.append((fn, args, kwargs))
+        return fn(*args, **kwargs)
+
+    async def get_state(current_ctx):
+        assert current_ctx is ctx
+        return state
+
+    async def set_state(current_ctx, next_state):
+        assert current_ctx is ctx
+        assert next_state is state
+
+    async def finalize(current_ctx, current_report):
+        assert current_ctx is ctx
+        finalized.append(current_report)
+
+    def sync_tool(current_ctx):
+        assert current_ctx is ctx
+        deferred_reports = router_helper._DEFERRED_GUIDED_ROUTE_REPORTS.get()
+        assert deferred_reports is not None
+        deferred_reports.append(report)
+        return "Created Sphere named 'Body'"
+
+    monkeypatch.setattr(router_helper, "Context", FakeContext)
+    monkeypatch.setattr(router_helper.asyncio, "to_thread", to_thread)
+    monkeypatch.setattr(router_helper, "get_session_capability_state_async", get_state)
+    monkeypatch.setattr(router_helper, "set_session_capability_state_async", set_state)
+    monkeypatch.setattr(router_helper, "finalize_route_tool_call_report_async", finalize)
+
+    wrapped = router_helper.wrap_sync_tool_for_async_guided_finalizers(
+        sync_tool,
+        tool_name="modeling_create_primitive",
+    )
+
+    result = asyncio.run(wrapped(ctx))
+
+    assert result == "Created Sphere named 'Body'"
+    assert offloaded == [(sync_tool, (ctx,), {})]
+    assert finalized == [report]
+
+
+def test_route_tool_call_async_offloads_sync_route_report_execution(monkeypatch):
+    """Native async route helpers should not run sync router/RPC execution on the event loop."""
+
+    ctx = FakeContext()
+    state = SessionCapabilityState(
+        phase=SessionPhase.BUILD,
+        guided_flow_state={"flow_id": "guided_creature_flow"},
+    )
+    report = MCPExecutionReport(
+        context=MCPExecutionContext(tool_name="macro_relative_layout", params={}),
+        router_enabled=False,
+        router_applied=False,
+        router_disposition="direct",
+        steps=(
+            ExecutionStep(
+                tool_name="macro_relative_layout",
+                params={},
+                result="Moved ForeLeg_L relative to Body",
+            ),
+        ),
+    )
+    offloaded: list[tuple[object, tuple[object, ...], dict[str, object]]] = []
+    finalized: list[MCPExecutionReport] = []
+
+    async def to_thread(fn, /, *args, **kwargs):
+        offloaded.append((fn, args, kwargs))
+        return fn(*args, **kwargs)
+
+    async def get_state(current_ctx):
+        assert current_ctx is ctx
+        return state
+
+    async def set_state(current_ctx, next_state):
+        assert current_ctx is ctx
+        assert next_state is state
+
+    async def finalize(current_ctx, current_report):
+        assert current_ctx is ctx
+        finalized.append(current_report)
+
+    def route_report(**kwargs):
+        assert kwargs["tool_name"] == "macro_relative_layout"
+        assert kwargs["direct_executor"]() == "Moved ForeLeg_L relative to Body"
+        return report
+
+    monkeypatch.setattr(router_helper.asyncio, "to_thread", to_thread)
+    monkeypatch.setattr(router_helper, "get_session_capability_state_async", get_state)
+    monkeypatch.setattr(router_helper, "set_session_capability_state_async", set_state)
+    monkeypatch.setattr(router_helper, "finalize_route_tool_call_report_async", finalize)
+    monkeypatch.setattr(router_helper, "route_tool_call_report", route_report)
+
+    def direct_executor():
+        return "Moved ForeLeg_L relative to Body"
+
+    result = asyncio.run(
+        router_helper.route_tool_call_async(
+            ctx,
+            tool_name="macro_relative_layout",
+            params={},
+            direct_executor=direct_executor,
+        )
+    )
+
+    assert result == "Moved ForeLeg_L relative to Body"
+    assert len(offloaded) == 1
+    fn, args, kwargs = offloaded[0]
+    assert fn is route_report
+    assert args == ()
+    assert kwargs["tool_name"] == "macro_relative_layout"
+    assert kwargs["params"] == {}
+    assert kwargs["direct_executor"] is direct_executor
+    assert finalized == [report]
 
 
 def test_route_tool_call_report_returns_direct_execution_when_router_disabled(monkeypatch):

@@ -1,3 +1,4 @@
+import asyncio
 import base64
 from collections.abc import Callable
 from datetime import datetime
@@ -1059,7 +1060,8 @@ async def _scene_clean_scene_async(
         }
     )
     keep_lights_and_cameras_value = bool(canonical_arguments.get("keep_lights_and_cameras", True))
-    report = _route_tool_call_report_for_context(
+    report = await asyncio.to_thread(
+        _route_tool_call_report_for_context,
         ctx,
         tool_name="scene_clean_scene",
         params={"keep_lights_and_cameras": keep_lights_and_cameras_value},

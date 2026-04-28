@@ -1,3 +1,4 @@
+import asyncio
 import re
 from collections.abc import Callable
 from typing import Any, Dict, List, Optional, Union
@@ -673,7 +674,8 @@ async def _modeling_create_primitive_impl_async(
         except (RuntimeError, ValueError) as e:
             return str(e)
 
-    report = _route_tool_call_report_for_context(
+    report = await asyncio.to_thread(
+        _route_tool_call_report_for_context,
         ctx,
         tool_name="modeling_create_primitive",
         params={
@@ -835,7 +837,8 @@ async def _modeling_transform_object_impl_async(
         except (RuntimeError, ValueError) as e:
             return str(e)
 
-    report = _route_tool_call_report_for_context(
+    report = await asyncio.to_thread(
+        _route_tool_call_report_for_context,
         ctx,
         tool_name="modeling_transform_object",
         params={
