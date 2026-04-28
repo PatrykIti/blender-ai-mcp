@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from fastmcp import Context
 
+from server.adapters.mcp.context_utils import ctx_warning
 from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
 from server.adapters.mcp.guided_contract import canonicalize_modeling_create_primitive_arguments
 from server.adapters.mcp.guided_naming_policy import evaluate_guided_object_name
@@ -62,14 +63,37 @@ def _extract_created_object_name(result: str) -> str | None:
     return None
 
 
-def _has_transform_success(result: str, *, object_name: str) -> bool:
-    for line in result.splitlines():
+def _extract_transformed_object_name(result: str) -> str | None:
+    """Return the transformed object name from the canonical modeling success string."""
+
+    for line in reversed(result.splitlines()):
         match = _TRANSFORMED_OBJECT_RESULT_PATTERN.search(line.strip())
         if match is None:
             continue
-        if str(match.group(1)).strip() == object_name:
-            return True
-    return False
+        object_name = match.group(1).strip()
+        if object_name:
+            return object_name
+    return None
+
+
+def _has_transform_success(result: str, *, object_name: str) -> bool:
+    return _extract_transformed_object_name(result) == object_name
+
+
+def _emit_guided_naming_warning_from_report(ctx: Context, report: Any) -> None:
+    """Surface router naming feedback when an async tool consumes a raw route report."""
+
+    policy_context = getattr(report, "policy_context", None)
+    if not isinstance(policy_context, dict):
+        return
+    naming_payload = policy_context.get("guided_naming")
+    if not isinstance(naming_payload, dict):
+        return
+    if naming_payload.get("status") != "warning":
+        return
+    message = naming_payload.get("message")
+    if message:
+        ctx_warning(ctx, str(message))
 
 
 def _maybe_register_guided_role(
@@ -656,6 +680,7 @@ async def _modeling_create_primitive_impl_async(
         },
         direct_executor=execute,
     )
+    _emit_guided_naming_warning_from_report(ctx, report)
     result = _legacy_route_report_result(report)
     created_object_name = _extract_created_object_name(result) if isinstance(result, str) else None
     if created_object_name is not None:
@@ -765,10 +790,11 @@ def _modeling_transform_object_impl(
         },
         direct_executor=execute,
     )
-    if guided_role and isinstance(result, str) and _has_transform_success(result, object_name=name):
+    transformed_object_name = _extract_transformed_object_name(result) if isinstance(result, str) else None
+    if guided_role and transformed_object_name is not None:
         _maybe_register_guided_role(
             ctx,
-            object_name=name,
+            object_name=transformed_object_name,
             guided_role=guided_role,
             role_group=role_group,
         )
@@ -811,17 +837,19 @@ async def _modeling_transform_object_impl_async(
         },
         direct_executor=execute,
     )
+    _emit_guided_naming_warning_from_report(ctx, report)
     result = _legacy_route_report_result(report)
-    if isinstance(result, str) and _has_transform_success(result, object_name=name):
+    transformed_object_name = _extract_transformed_object_name(result) if isinstance(result, str) else None
+    if transformed_object_name is not None:
         await mark_guided_spatial_state_stale_async(
             ctx,
             tool_name="modeling_transform_object",
             reason="modeling_transform_object",
         )
-    if isinstance(result, str) and _has_transform_success(result, object_name=name):
+    if transformed_object_name is not None:
         await _maybe_register_guided_role_async(
             ctx,
-            object_name=name,
+            object_name=transformed_object_name,
             guided_role=guided_role,
             role_group=role_group,
         )

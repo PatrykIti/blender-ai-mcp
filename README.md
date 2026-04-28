@@ -393,6 +393,14 @@ contract in addition to `guided_handoff`.
   before the active tool response returns; routed sync tools that mutate scene
   state defer those finalizers to the MCP async wrapper instead of scheduling
   detached session-state writes
+- native async modeling tools that consume a router execution report must still
+  surface `guided_naming` warnings through the active MCP context; otherwise
+  weak semantic names can lose their model-facing correction hints on
+  Streamable HTTP
+- when the router corrects a successful `modeling_transform_object(...)` call
+  to another valid object name, guided spatial dirty-state and guided-role
+  follow-up use the transformed object name returned by the final modeling
+  step, not the original caller-supplied name
 - guided mesh edit tools such as `mesh_extrude_region(...)`,
   `mesh_loop_cut(...)`, and `mesh_bevel(...)` are now mapped to the
   `secondary_parts` family, so they are blocked during spatial-context gates
@@ -498,6 +506,10 @@ contract in addition to `guided_handoff`.
   to the actual created object name returned by Blender, so role state stays
   aligned even when Blender auto-numbers a default name such as `Cube.001` or
   uses a different default object name such as `Suzanne`
+- on `modeling_transform_object(...)`, guided-role auto-registration now binds
+  to the actual transformed object name returned by the final routed step, so
+  router-corrected object identity still re-arms spatial checks and updates
+  role state for the object that really changed
 - successful `scene_rename_object(...)` calls now keep the guided part registry
   aligned with the renamed Blender object, so later role-sensitive transforms
   still recover the registered role without manual re-registration

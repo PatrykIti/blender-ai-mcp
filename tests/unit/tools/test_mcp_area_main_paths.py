@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import asyncio
 from unittest.mock import MagicMock
 
 import pytest
+from server.adapters.mcp.execution_context import MCPExecutionContext
+from server.adapters.mcp.execution_report import ExecutionStep, MCPExecutionReport
 from server.adapters.mcp.session_capabilities import SessionCapabilityState
 from server.adapters.mcp.session_phase import SessionPhase
 
@@ -398,6 +401,123 @@ def test_modeling_transform_object_registers_guided_role_with_apostrophe_name(mo
         result == "[Step 1: scene_set_mode] OK\n[Step 2: modeling_transform_object] Transformed object 'King's Crown'"
     )
     assert recorded == [("King's Crown", "detail_part", None)]
+
+
+def test_modeling_transform_object_registers_guided_role_with_corrected_result_name(monkeypatch):
+    recorded: list[tuple[str, str, str | None]] = []
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.route_tool_call",
+        lambda **kwargs: "Transformed object 'TailRoot'",
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.get_session_capability_state",
+        lambda ctx: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={"flow_id": "guided_creature_flow"},
+        ),
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.register_guided_part_role",
+        lambda ctx, **kwargs: recorded.append((kwargs["object_name"], kwargs["role"], kwargs.get("role_group"))),
+    )
+
+    from server.adapters.mcp.areas.modeling import modeling_transform_object
+
+    result = modeling_transform_object(
+        MagicMock(),
+        name="Tail",
+        scale=[1.0, 1.0, 1.0],
+        guided_role="tail_mass",
+    )
+
+    assert result == "Transformed object 'TailRoot'"
+    assert recorded == [("TailRoot", "tail_mass", None)]
+
+
+def test_async_modeling_transform_finalizes_corrected_result_name_and_warning(monkeypatch):
+    recorded_roles: list[tuple[str, str, str | None]] = []
+    stale_calls: list[tuple[str, str | None]] = []
+    warnings: list[str] = []
+
+    async def hydrate(ctx):
+        return None
+
+    async def get_session_capability_state_async(ctx):
+        return SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={"flow_id": "guided_creature_flow"},
+        )
+
+    async def mark_guided_spatial_state_stale_async(ctx, **kwargs):
+        stale_calls.append((kwargs["tool_name"], kwargs.get("reason")))
+        return await get_session_capability_state_async(ctx)
+
+    async def register_guided_part_role_async(ctx, **kwargs):
+        recorded_roles.append((kwargs["object_name"], kwargs["role"], kwargs.get("role_group")))
+        return await get_session_capability_state_async(ctx)
+
+    report = MCPExecutionReport(
+        context=MCPExecutionContext(
+            tool_name="modeling_transform_object",
+            params={"name": "Tail", "guided_role": "tail_mass"},
+            session_phase="build",
+            surface_profile="llm-guided",
+            guided_tool_family="primary_masses",
+            guided_role="tail_mass",
+        ),
+        router_enabled=True,
+        router_applied=True,
+        router_disposition="corrected",
+        steps=(
+            ExecutionStep(
+                tool_name="modeling_transform_object",
+                params={"name": "TailRoot"},
+                result="Transformed object 'TailRoot'",
+            ),
+        ),
+        policy_context={
+            "guided_naming": {
+                "status": "warning",
+                "message": "Use full semantic object names such as TailRoot.",
+            }
+        },
+    )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling._hydrate_sync_route_session", hydrate)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling._route_tool_call_report_for_context",
+        lambda *args, **kwargs: report,
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.get_session_capability_state_async",
+        get_session_capability_state_async,
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.mark_guided_spatial_state_stale_async",
+        mark_guided_spatial_state_stale_async,
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.register_guided_part_role_async",
+        register_guided_part_role_async,
+    )
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.ctx_warning", lambda ctx, message: warnings.append(message))
+
+    from server.adapters.mcp.areas.modeling import _modeling_transform_object_impl_async
+
+    result = asyncio.run(
+        _modeling_transform_object_impl_async(
+            MagicMock(),
+            name="Tail",
+            scale=[1.0, 1.0, 1.0],
+            guided_role="tail_mass",
+        )
+    )
+
+    assert result == "Transformed object 'TailRoot'"
+    assert stale_calls == [("modeling_transform_object", "modeling_transform_object")]
+    assert recorded_roles == [("TailRoot", "tail_mass", None)]
+    assert warnings == ["Use full semantic object names such as TailRoot."]
 
 
 def test_sculpt_auto_main_path_delegates_to_handler(monkeypatch):

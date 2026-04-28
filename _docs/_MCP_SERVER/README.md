@@ -416,6 +416,11 @@ The `llm-guided` surface now has a first complete guided-mode visibility baselin
   request/response path. Sync routed tools that dirty spatial or role state
   should defer post-route guided finalizers to the async MCP wrapper instead of
   scheduling detached visibility/session writes.
+- Native async modeling tools that consume a router execution report directly
+  still have to surface `guided_naming` warnings through the active MCP
+  context. This keeps warning-mode semantic-name feedback visible to clients
+  even when the modeling adapter reads a raw routed report for awaited guided
+  state writes.
 
 This visibility baseline is complete for guided-mode surface shaping.
 Search-first default rollout remains a separate TASK-084 concern.
@@ -677,6 +682,11 @@ Current guided-flow behavior:
   guided-role convenience path still registers against the final successful
   modeling step instead of dropping the role hint just because the call became
   multi-step
+- if the router corrects `modeling_transform_object(...)` to a different valid
+  object name, the convenience path uses the transformed object name returned
+  by the final modeling step for guided role registration and spatial dirty
+  state. It must not decide success by comparing the result to the original
+  caller-supplied `name`.
 - guided-role convenience registration now also handles valid object names
   containing apostrophes, such as `King's Crown`, instead of truncating the
   stored object name
@@ -691,6 +701,10 @@ Current guided-flow behavior:
   real created object name returned by Blender/tool execution, not the raw
   requested primitive token, so role state remains correct for names such as
   `Cube.001` or Blender defaults such as `Suzanne`
+- for `modeling_transform_object(...)`, the convenience path registers and
+  re-arms guided state against the real transformed object name returned by the
+  final routed step, so router-corrected object identity still updates the
+  session for the object that actually changed
 - successful `scene_rename_object(...)` calls now keep the guided part
   registry aligned with the renamed object so later role-sensitive calls can
   still recover the stored role/role_group
