@@ -2,11 +2,17 @@
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass, field
 from typing import cast
 
 from fastmcp import Context
 from server.adapters.mcp.areas import scene as scene_area
+from server.adapters.mcp.contracts.scene import (
+    SceneRelationGraphResponseContract,
+    SceneScopeGraphResponseContract,
+    SceneViewDiagnosticsResponseContract,
+)
 from server.adapters.mcp.session_capabilities import SessionCapabilityState, set_session_capability_state
 from server.adapters.mcp.session_phase import SessionPhase
 
@@ -96,6 +102,40 @@ def _guided_refresh_ctx() -> FakeContext:
         ),
     )
     return ctx
+
+
+def test_async_spatial_graph_tools_use_async_route_helper(monkeypatch):
+    calls: list[str] = []
+
+    def route_tool_call(*args, **kwargs):
+        raise AssertionError("async spatial tool should not call the sync route helper")
+
+    async def route_tool_call_async(ctx, **kwargs):
+        calls.append(kwargs["tool_name"])
+        if kwargs["tool_name"] == "scene_scope_graph":
+            return SceneScopeGraphResponseContract(error="scope async route")
+        if kwargs["tool_name"] == "scene_relation_graph":
+            return SceneRelationGraphResponseContract(error="relation async route")
+        if kwargs["tool_name"] == "scene_view_diagnostics":
+            return SceneViewDiagnosticsResponseContract(error="view async route")
+        raise AssertionError(kwargs["tool_name"])
+
+    monkeypatch.setattr(scene_area, "route_tool_call", route_tool_call)
+    monkeypatch.setattr(scene_area, "route_tool_call_async", route_tool_call_async)
+
+    async def run():
+        ctx = _guided_refresh_ctx()
+        scope = await scene_area._scene_scope_graph_async(ctx, target_objects=["Body", "Head"])
+        relation = await scene_area._scene_relation_graph_async(ctx, target_objects=["Body", "Head"])
+        view = await scene_area._scene_view_diagnostics_async(ctx, target_objects=["Body", "Head"])
+        return scope, relation, view
+
+    scope, relation, view = asyncio.run(run())
+
+    assert scope.error == "scope async route"
+    assert relation.error == "relation async route"
+    assert view.error == "view async route"
+    assert calls == ["scene_scope_graph", "scene_relation_graph", "scene_view_diagnostics"]
 
 
 def test_scene_scope_graph_requires_explicit_scope_during_guided_spatial_gate(monkeypatch):

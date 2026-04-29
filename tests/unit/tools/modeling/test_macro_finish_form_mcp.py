@@ -36,3 +36,38 @@ def test_macro_finish_form_mcp_tool_returns_structured_contract(monkeypatch):
     assert isinstance(result, MacroExecutionReportContract)
     assert result.macro_name == "macro_finish_form"
     assert result.actions_taken[0].action == "add_bevel_finish"
+
+
+def test_macro_finish_form_mcp_tool_uses_async_route_helper(monkeypatch):
+    from server.adapters.mcp.areas.modeling import _macro_finish_form_impl
+
+    calls: list[str] = []
+    routed_report = MacroExecutionReportContract(
+        status="success",
+        macro_name="macro_finish_form",
+        intent="apply rounded_housing finishing preset",
+        actions_taken=[],
+        objects_modified=["BodyShell"],
+        requires_followup=True,
+    )
+
+    def route_tool_call(*args, **kwargs):
+        raise AssertionError("async macro tool should not call the sync route helper")
+
+    async def route_tool_call_async(ctx, **kwargs):
+        calls.append(kwargs["tool_name"])
+        return routed_report
+
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.route_tool_call", route_tool_call)
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.route_tool_call_async", route_tool_call_async)
+
+    result = asyncio.run(
+        _macro_finish_form_impl(
+            MagicMock(),
+            target_object="BodyShell",
+            preset="rounded_housing",
+        )
+    )
+
+    assert result is routed_report
+    assert calls == ["macro_finish_form"]

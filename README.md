@@ -396,6 +396,13 @@ contract in addition to `guided_handoff`.
 - async wrappers and native async modeling helpers keep the blocking
   sync router/RPC execution on a worker thread; only the guided finalizers run
   back on the event loop before the Streamable HTTP response completes
+- async dirty macro helpers such as `macro_cutout_recess(...)` and
+  `macro_finish_form(...)` use the awaited async route path so visibility is
+  reapplied before the Streamable HTTP response completes
+- async spatial helpers such as `scene_scope_graph(...)`,
+  `scene_relation_graph(...)`, and `scene_view_diagnostics(...)` route their
+  Blender-backed graph/diagnostic reads off the event loop before recording
+  guided spatial-check completion
 - native async modeling tools that consume a router execution report must still
   surface `guided_naming` warnings through the active MCP context; otherwise
   weak semantic names can lose their model-facing correction hints on

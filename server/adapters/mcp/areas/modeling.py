@@ -11,6 +11,7 @@ from server.adapters.mcp.guided_contract import canonicalize_modeling_create_pri
 from server.adapters.mcp.guided_naming_policy import evaluate_guided_object_name
 from server.adapters.mcp.router_helper import (
     route_tool_call,
+    route_tool_call_async,
     route_tool_call_report,
     wrap_sync_tool_for_async_guided_finalizers,
 )
@@ -354,7 +355,8 @@ async def _macro_cutout_recess_impl(
                 error=str(e),
             )
 
-    result = route_tool_call(
+    result = await route_tool_call_async(
+        ctx,
         tool_name="macro_cutout_recess",
         params={
             "target_object": target_object,
@@ -452,7 +454,8 @@ async def _macro_finish_form_impl(
                 error=str(e),
             )
 
-    result = route_tool_call(
+    result = await route_tool_call_async(
+        ctx,
         tool_name="macro_finish_form",
         params={
             "target_object": target_object,

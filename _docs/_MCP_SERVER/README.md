@@ -421,6 +421,14 @@ The `llm-guided` surface now has a first complete guided-mode visibility baselin
   operations such as modeling, mesh, and bounded macro calls from blocking the
   Streamable HTTP event loop while finalizers remain awaited on the request
   path.
+- Async dirty tools must use the awaited async route path when they mutate
+  guided spatial state. This keeps visibility refreshes inside the active
+  request instead of relying on the sync visibility bridge from an already
+  running Streamable HTTP loop.
+- Async spatial helper variants route their Blender-backed graph/diagnostic
+  reads through the async route helper before recording guided spatial-check
+  completion, so slow RPC reads do not block unrelated Streamable HTTP
+  requests.
 - Native async modeling tools that consume a router execution report directly
   still have to surface `guided_naming` warnings through the active MCP
   context. This keeps warning-mode semantic-name feedback visible to clients

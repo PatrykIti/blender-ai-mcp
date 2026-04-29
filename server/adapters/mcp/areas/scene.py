@@ -2669,7 +2669,8 @@ async def _scene_scope_graph_async(
         except (RuntimeError, ValueError) as e:
             return SceneScopeGraphResponseContract(error=str(e))
 
-    result = route_tool_call(
+    result = await route_tool_call_async(
+        ctx,
         tool_name="scene_scope_graph",
         params={
             "target_object": target_object,
@@ -2800,7 +2801,8 @@ async def _scene_relation_graph_async(
         except (RuntimeError, ValueError) as e:
             return SceneRelationGraphResponseContract(error=str(e))
 
-    result = route_tool_call(
+    result = await route_tool_call_async(
+        ctx,
         tool_name="scene_relation_graph",
         params={
             "target_object": target_object,
@@ -3036,7 +3038,8 @@ async def _scene_view_diagnostics_async(
         except (RuntimeError, ValueError) as e:
             return SceneViewDiagnosticsResponseContract(error=str(e))
 
-    result = route_tool_call(
+    result = await route_tool_call_async(
+        ctx,
         tool_name="scene_view_diagnostics",
         params={
             "target_object": target_object,
