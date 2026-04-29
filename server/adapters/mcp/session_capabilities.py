@@ -2220,7 +2220,7 @@ async def rename_guided_part_registration_async(
         return current
 
     normalized_old_name = str(old_name or "").strip()
-    normalized_new_name = require_existing_scene_object_name(new_name)
+    normalized_new_name = await asyncio.to_thread(require_existing_scene_object_name, new_name)
     if not normalized_old_name or normalized_old_name == normalized_new_name:
         return current
 

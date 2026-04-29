@@ -429,6 +429,9 @@ The `llm-guided` surface now has a first complete guided-mode visibility baselin
   reads through the async route helper before recording guided spatial-check
   completion, so slow RPC reads do not block unrelated Streamable HTTP
   requests.
+- Async guided identity finalizers that validate successful scene renames must
+  keep Blender-backed object-existence checks off the event loop before updating
+  the guided part registry.
 - Native async modeling tools that consume a router execution report directly
   still have to surface `guided_naming` warnings through the active MCP
   context. This keeps warning-mode semantic-name feedback visible to clients

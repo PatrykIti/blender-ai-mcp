@@ -403,6 +403,9 @@ contract in addition to `guided_handoff`.
   `scene_relation_graph(...)`, and `scene_view_diagnostics(...)` route their
   Blender-backed graph/diagnostic reads off the event loop before recording
   guided spatial-check completion
+- async guided identity finalizers such as successful `scene_rename_object(...)`
+  validation also keep Blender-backed scene lookups off the event loop before
+  updating the guided part registry
 - native async modeling tools that consume a router execution report must still
   surface `guided_naming` warnings through the active MCP context; otherwise
   weak semantic names can lose their model-facing correction hints on
