@@ -437,6 +437,11 @@ The `llm-guided` surface now has a first complete guided-mode visibility baselin
   context. This keeps warning-mode semantic-name feedback visible to clients
   even when the modeling adapter reads a raw routed report for awaited guided
   state writes.
+- Native async modeling and cleanup finalizers must derive successful mutations
+  from structured `report.steps`, not rendered legacy route text. Corrected
+  multi-step reports prefix legacy lines with step labels, so legacy text is
+  only the returned compatibility payload and must not decide guided
+  dirty-state or role-registration side effects.
 - Async guided-role registration must reapply FastMCP visibility after the
   final advanced `guided_flow_state` is stored. Completing required roles can
   move the flow to a new step, and `list_tools()` should expose that step's

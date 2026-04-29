@@ -269,6 +269,23 @@ def _legacy_route_report_result(report: Any) -> Any:
     return report.to_legacy_text()
 
 
+def _report_has_successful_scene_clean_step(report: Any) -> bool:
+    """Return whether a routed report contains a successful scene cleanup mutation."""
+
+    if getattr(report, "error", None) is not None:
+        return False
+
+    for step in getattr(report, "steps", ()) or ():
+        if getattr(step, "tool_name", None) != "scene_clean_scene":
+            continue
+        if getattr(step, "error", None) is not None:
+            continue
+        result = getattr(step, "result", None)
+        if isinstance(result, str) and result.strip().lower().startswith("scene cleaned"):
+            return True
+    return False
+
+
 async def _hydrate_sync_route_session(ctx: Context) -> None:
     """Mirror async FastMCP session state into request state for sync router-policy helpers."""
 
@@ -1068,7 +1085,7 @@ async def _scene_clean_scene_async(
         direct_executor=lambda: get_scene_handler().clean_scene(keep_lights_and_cameras_value),
     )
     result = _legacy_route_report_result(report)
-    if isinstance(result, str) and result.strip().lower().startswith("scene cleaned"):
+    if _report_has_successful_scene_clean_step(report):
         await mark_guided_spatial_state_stale_async(
             ctx,
             tool_name="scene_clean_scene",

@@ -78,6 +78,46 @@ def _extract_transformed_object_name(result: str) -> str | None:
     return None
 
 
+def _extract_created_object_name_from_report_steps(report: Any) -> str | None:
+    """Return the created object name from successful routed create steps."""
+
+    if getattr(report, "error", None) is not None:
+        return None
+
+    for step in reversed(tuple(getattr(report, "steps", ()) or ())):
+        if getattr(step, "tool_name", None) != "modeling_create_primitive":
+            continue
+        if getattr(step, "error", None) is not None:
+            continue
+        result = getattr(step, "result", None)
+        if not isinstance(result, str):
+            continue
+        object_name = _extract_created_object_name(result)
+        if object_name:
+            return object_name
+    return None
+
+
+def _extract_transformed_object_name_from_report_steps(report: Any) -> str | None:
+    """Return the transformed object name from successful routed transform steps."""
+
+    if getattr(report, "error", None) is not None:
+        return None
+
+    for step in reversed(tuple(getattr(report, "steps", ()) or ())):
+        if getattr(step, "tool_name", None) != "modeling_transform_object":
+            continue
+        if getattr(step, "error", None) is not None:
+            continue
+        result = getattr(step, "result", None)
+        if not isinstance(result, str):
+            continue
+        object_name = _extract_transformed_object_name(result)
+        if object_name:
+            return object_name
+    return None
+
+
 def _has_transform_success(result: str, *, object_name: str) -> bool:
     return _extract_transformed_object_name(result) == object_name
 
@@ -695,7 +735,7 @@ async def _modeling_create_primitive_impl_async(
     )
     _emit_guided_naming_warning_from_report(ctx, report)
     result = _legacy_route_report_result(report)
-    created_object_name = _extract_created_object_name(result) if isinstance(result, str) else None
+    created_object_name = _extract_created_object_name_from_report_steps(report)
     if created_object_name is not None:
         await mark_guided_spatial_state_stale_async(
             ctx,
@@ -856,7 +896,7 @@ async def _modeling_transform_object_impl_async(
     )
     _emit_guided_naming_warning_from_report(ctx, report)
     result = _legacy_route_report_result(report)
-    transformed_object_name = _extract_transformed_object_name(result) if isinstance(result, str) else None
+    transformed_object_name = _extract_transformed_object_name_from_report_steps(report)
     if transformed_object_name is not None:
         await mark_guided_spatial_state_stale_async(
             ctx,

@@ -410,6 +410,10 @@ contract in addition to `guided_handoff`.
   surface `guided_naming` warnings through the active MCP context; otherwise
   weak semantic names can lose their model-facing correction hints on
   Streamable HTTP
+- native async modeling and cleanup finalizers derive successful scene
+  mutations from structured `report.steps`, not the rendered legacy route text;
+  multi-step corrected routes prefix legacy lines and are not a reliable source
+  for guided dirty-state or role-registration decisions
 - async guided-role registration reapplies FastMCP visibility after the final
   advanced `guided_flow_state` is persisted, so `list_tools()` reflects the
   new guided step before the Streamable HTTP response completes
