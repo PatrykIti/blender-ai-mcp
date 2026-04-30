@@ -74,11 +74,22 @@ Do not let these roles blur together:
 ## Coding Standards
 
 - Fully type Python code.
+- Code, code comments, identifiers, commit messages, and technical contracts
+  should be in English. User-facing planning notes may use Polish only when the
+  task or discussion explicitly calls for it.
 - Tool docstrings are part of the product. Keep them explicit, accurate, and aligned with actual behavior.
 - Prefer meaningful error strings over uncaught exceptions. The server should not crash on normal tool misuse.
 - Follow naming patterns already used in the repo: `scene_*`, `modeling_*`, `mesh_*`, `router_*`, etc.
 - Repo formatting/linting/type-checking is enforced through `pre-commit`. Keep `ruff`, `mypy`, JSON/TOML/YAML validation, GitHub workflow validation, and router metadata schema validation green.
 - Do not weaken established domain/runtime contracts just to satisfy the type checker. If a contract is intentionally optional or dynamic, preserve it and narrow at call sites or use explicit helper functions/casts where needed.
+- Do not add production fallbacks only to satisfy tests. Update the real
+  contract, test fixture, wrapper, or mock so it matches shipped behavior.
+- Keep schemas, enums, defaults, result envelopes, and normalization helpers in
+  the owning contract/service module. Adapters may translate or re-export, but
+  should not duplicate contract logic.
+- Validate external, MCP, router, and RPC payloads schema-first. Reject unknown
+  or unsupported fields where a contract is meant to be strict, and preserve
+  explicit compatibility adapters when legacy payloads must still work.
 - For RPC-backed handlers, prefer explicit result-unwrapping/narrowing helpers over changing `RpcResponse` semantics.
 - Router metadata JSON now uses one deliberate type vocabulary for schema validation: `string`, `int`, `float`, `bool`, `enum`, `array`, `vector3`, `object`, `scalar`.
 
@@ -88,6 +99,18 @@ Do not let these roles blur together:
 - Keep internal single-action handlers when the router or workflows still need them, even if the public MCP wrapper is consolidated behind a mega tool.
 - Current important mega tools include `scene_context`, `scene_create`, `scene_inspect`, `mesh_select`, `mesh_select_targeted`, and `mesh_inspect`.
 - Read `_docs/AVAILABLE_TOOLS_SUMMARY.md` and `_docs/_MCP_SERVER/README.md` before changing tool exposure.
+- For any new or materially changed public MCP tool, transport surface, guided
+  visibility rule, external-provider path, or mutating RPC action, document the
+  runtime/security contract in the task or implementation notes:
+  - visibility level: public, hidden/internal, guided-phase-only, or router-only
+  - read-only vs mutating behavior and expected Blender mode/selection impact
+  - session/auth assumptions for stdio, Streamable HTTP, and local Blender RPC
+  - parameter validation, reject-unknown behavior, and compatibility shims
+  - side-effect boundaries, timeout/resource limits, and recovery behavior
+  - secret/provider-key handling, redaction, and log/debug payload limits
+- Do not create parallel discovery, visibility, or handoff flows when the
+  existing FastMCP platform, router metadata, guided mode, or reference-stage
+  contracts can be extended.
 
 ## Change Playbook: Adding Or Updating A Tool
 
@@ -133,9 +156,47 @@ Use `_docs/_ROUTER/TOOLS/README.md` as the checklist for router-facing tools.
 - Before considering work done, run the relevant `pre-commit` hooks or the full `pre-commit run --all-files` when the change is broad.
 - For meaningful repo-wide or cross-cutting changes, prefer the full command below so failures show the exact diff/context:
   - `poetry run pre-commit run --all-files --show-diff-on-failure`
+- Choose validation by dependency shape, not by folder name alone. Pure
+  contract/policy helpers usually need targeted unit tests; Router metadata
+  changes need metadata/schema tests; Blender scene state, real geometry,
+  transport behavior, guided visibility, and client-facing runtime behavior need
+  E2E or integration coverage.
+- When a task changes a public/tool/runtime contract, run the exact focused
+  tests for that contract and record the command in the task closeout. Broad
+  suites are useful only after the owner lane is covered.
 - For server-side logic, default to unit tests first.
 - For Blender behavior, add or update E2E coverage if the change affects real geometry, mode handling, selection handling, viewport output, router correction, or workflow execution.
 - Router tests should avoid repeated heavy model initialization. Follow the shared/session-scoped patterns already used in tests.
+- Before creating a manual commit, run the relevant validation or the configured
+  pre-commit path unless the commit hook itself runs it. Always stage only the
+  owned files and re-check the staged set before committing.
+
+## Task Workflow
+
+- Before starting implementation for any task, read:
+  - the task file and its parent/subtasks/leaves under `_docs/_TASKS/`
+  - related source modules and current owner functions/classes
+  - related unit, integration, and E2E tests
+  - relevant docs/contracts such as `_docs/_TESTS/README.md`,
+    `_docs/_MCP_SERVER/README.md`, `_docs/_ADDON/README.md`,
+    `_docs/_ROUTER/README.md`, `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md`,
+    and area-specific docs
+- For non-trivial tasks, process-rule changes, broad docs/task rewrites, or work
+  running alongside other active agents, prefer a dedicated branch/worktree so
+  the change is isolated from unrelated in-progress edits.
+- If a task is not broken down enough to implement safely, create or refine the
+  physical task/subtask/leaf files first. Do not proceed from vague prose when
+  the required owner, contract, tests, or runtime boundary is still ambiguous.
+- Implement in dependency order. Do not silently downgrade agreed scope to an
+  MVP; if the current task is too broad or blocked, split or mark explicit
+  follow-on work in the task docs before narrowing implementation.
+- Treat task docs as executable guidance for future implementers. A leaf should
+  name the likely files, helper/function shape, data flow, error handling,
+  contract deltas, test lane, validation command, docs updates, and acceptance
+  proof.
+- For docs-only task refinements, still validate with `git diff --check` and
+  any targeted consistency grep/audit that proves the corrected contract is not
+  contradicted elsewhere.
 
 ## Task Governance
 
@@ -197,6 +258,9 @@ Technical subtasks must include:
 - implementation notes grounded in concrete repo modules/classes/functions
 - pseudocode for the intended control flow or contract shape when behavior is
   non-trivial
+- security/runtime contract notes when the task touches public MCP tools,
+  guided visibility, Streamable HTTP/stdio behavior, external providers,
+  mutating Blender/RPC actions, file/path access, or secrets
 - exact tests to add or update, including E2E tests whenever Blender scene
   state, geometry, visibility, guided flow, or client-facing runtime behavior
   changes
@@ -204,8 +268,9 @@ Technical subtasks must include:
 - changelog impact and validation commands or validation category
 
 Leaf or micro-task files must be small enough for one focused implementation
-pass and should name the likely functions, contracts, fixtures, or metadata
-files that will change. They should not be placeholders.
+pass and should name the likely functions, contracts, fixtures, metadata files,
+error cases, and validation commands that will change. They should not be
+placeholders.
 
 For quality-gate, guided-flow, or reconstruction tasks, keep this distinction
 explicit:
@@ -226,7 +291,7 @@ explicit:
   - update the relevant `_docs/` area docs for the behavior that changed
   - run the relevant validation for the changed scope
 - Validation is scope-dependent, not one-size-fits-all:
-  - docs/admin-only changes: run targeted audit/consistency validation
+  - docs/process-only changes: run targeted audit/consistency validation
   - server/application/router changes: run unit tests first
   - Blender/runtime behavior changes: add or update E2E coverage when the behavior touches real scene state
 - When closing any task/subtask/leaf, verify and record:
