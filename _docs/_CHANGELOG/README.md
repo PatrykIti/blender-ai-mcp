@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [277](./277-2026-04-30-task-157-perception-evidence-contract-refresh.md) | 2026-04-30 | **TASK-157 perception evidence contract refresh** | - |
 | [276](./276-2026-04-30-task-145-repair-planner-handoff.md) | 2026-04-30 | **TASK-145 repair planner and sculpt handoff** | - |
 | [275](./275-2026-04-30-agent-guidelines-task-workflow-hardening.md) | 2026-04-30 | **Agent guidelines task workflow hardening** | - |
 | [274](./274-2026-04-29-routed-report-step-finalizers.md) | 2026-04-29 | **Routed report step finalizers** | - |

@@ -35,6 +35,11 @@ safe mutation inside one still-open build stage.
 - `support_contact` gates expose support/contact repair tools.
 - `shape_profile` gates expose mesh/modeling refinement tools only after
   required seam/contact gates are not failed.
+- `reference_understanding` and CLIP-style classification evidence may select
+  a domain profile, construction strategy, or candidate gate family, but must
+  not expose broad tools by themselves.
+- Optional `part_segmentation` evidence may narrow a target region for an
+  already active gate, but cannot bypass the gate's verifier prerequisites.
 - Recovery guidance should say "verify or repair active gate" instead of
   "reset router goal".
 - `router_set_goal` must not be recommended as a deadlock escape when active
@@ -104,6 +109,16 @@ def should_require_spatial_refresh(state, next_action):
     if next_action.consumes_pair_truth:
         return pair_gate_is_stale(state, next_action.pair)
     return False
+
+
+def refine_visibility_from_evidence(gate, evidence_refs, visible_families):
+    if has_reference_understanding_only(evidence_refs):
+        return visible_families | {"reference_context"}
+    if has_part_segmentation_target(gate, evidence_refs):
+        return narrow_to_gate_target(visible_families, gate.target_region)
+    if has_classification_score_only(evidence_refs):
+        return visible_families
+    return visible_families
 ```
 
 ## Tests To Add/Update
@@ -120,6 +135,10 @@ def should_require_spatial_refresh(state, next_action):
   recommend the full spatial triad when the current batch can continue safely.
 - Search for "reset goal" does not become the recommended recovery for active
   gate blockers.
+- Reference-understanding-only evidence does not expose broad sculpt or broad
+  catalog tools.
+- Segmentation-derived target hints narrow an already active gate target
+  without marking the gate passed.
 
 ## E2E Tests
 

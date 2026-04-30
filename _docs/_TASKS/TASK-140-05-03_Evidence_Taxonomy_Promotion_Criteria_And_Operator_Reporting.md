@@ -11,6 +11,12 @@ Formalize how the repo records support claims for external multimodal families
 so docs-reviewed support, automated evidence, and operator reports remain
 separate and reproducible.
 
+This evidence taxonomy is for external model-family support and promotion. It
+must not be treated as `TASK-157` gate-verifier evidence. A promoted
+`vision_contract_profile` can produce structured compare/iterate payloads that
+feed gate proposals or bounded perception evidence, but it cannot make a
+quality gate pass without the `TASK-157` verifier layer.
+
 ## Repository Touchpoints
 
 - `_docs/_VISION/README.md`
@@ -22,6 +28,8 @@ separate and reproducible.
 ## Acceptance Criteria
 
 - the repo has one explicit evidence taxonomy for external family support
+- the taxonomy explicitly distinguishes model/profile support evidence from
+  quality-gate verifier evidence
 - promotion criteria from "docs-reviewed" to "recommended default" are
   documented
 - operator reports include the selected `vision_contract_profile` and enough

@@ -14,6 +14,16 @@ Curated task board for promoted active work, promoted follow-on work, and select
 - Use the board for currently promoted work and promoted follow-ons.
 - Keep nested task files in sync with the board when their promoted state changes.
 
+## 🧭 Strategic Working Docs
+
+These documents are not task rows, but they are active reference material for
+the promoted work below and should stay visible while the related tasks are in
+flight.
+
+| Area | Document | Owner Tasks |
+|------|----------|-------------|
+| Vision / Reference Understanding | [Reference Understanding Roadmap](../_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md) | [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-135](./TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md), [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) |
+
 ## 🧱 Hierarchy Rules
 
 - Preferred planning flow: umbrella -> subtask -> deeper technical subtask when needed -> leaf/micro-task.
@@ -42,7 +52,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md) | **Goal-Derived Quality Gates And Deterministic Verification** | 🔴 High | Generic cross-domain substrate where LLMs may propose flexible gates, while the server normalizes and verifies completion deterministically. |
+| [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md) | **Goal-Derived Quality Gates And Deterministic Verification** | 🔴 High | Post-TASK-145 generic substrate where LLMs and bounded perception may propose gates, while the server normalizes and verifies completion deterministically; future SAM/CLIP-style adapters stay outside this task. |
 
 ### Mesh Introspection
 | ID | Title | Priority | Notes |

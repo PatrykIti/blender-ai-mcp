@@ -21,7 +21,8 @@ gate boundaries instead of after every single safe in-stage mutation.
 | `server/adapters/mcp/contracts/guided_flow.py` | Represent spatial refresh cadence, stale-but-continuable state, and hard refresh blockers |
 | `server/adapters/mcp/transforms/visibility_policy.py` | Expose tool families based on unresolved gates |
 | `server/adapters/mcp/discovery/search_documents.py` | Bias search by gate type and correction family |
-| `server/adapters/mcp/areas/reference.py` | Include gate state in compare/iterate responses |
+| `server/adapters/mcp/areas/reference.py` | Include gate state and optional reference-understanding/gate-proposal summaries in compare/iterate responses |
+| `server/adapters/mcp/vision/` | Provide cached perception evidence refs at stage checkpoints without forcing external calls after every mutation |
 | `server/adapters/mcp/areas/modeling.py` | Mark relevant gates stale after mutating tool calls |
 | `server/adapters/mcp/areas/mesh.py` | Mark relevant gates stale after mesh edits |
 | `server/adapters/mcp/router_helper.py` | Preserve mutation dirtying while allowing same-step continuation when policy permits it |
@@ -38,11 +39,15 @@ gate boundaries instead of after every single safe in-stage mutation.
 - Spatial staleness should not automatically hard-block every next mutation:
   the runtime should distinguish stale facts from a required refresh boundary.
 - Checkpoint responses should include:
+  - optional `reference_understanding` summary when available
   - `active_gate_plan`
   - `gate_statuses`
   - `completion_blockers`
   - `next_gate_actions`
   - `recommended_bounded_tools`
+- When references are attached before any scene exists, the guided loop may run
+  or reuse a bounded pre-build reference-understanding pass to propose a first
+  gate plan and construction path. That pass must not mark gates complete.
 - Final completion must fail closed when required gates are unresolved.
 
 ## Spatial Refresh Cadence Policy
@@ -72,6 +77,9 @@ The target runtime state should support three distinct states:
 
 For a squirrel-like creature, the intended default cadence is:
 
+0. after `router_set_goal` and reference attach, produce or reuse
+   `reference_understanding` to propose required parts, expected style,
+   construction path, and gate plan
 1. create `Body`, `Head`, and `Tail` primary masses
 2. run the spatial triad plus reference checkpoint
 3. repair `Head -> Body` and `Tail -> Body` seams
@@ -133,6 +141,8 @@ def after_mutation(state, mutation):
   next action consumes that verdict.
 - Required failed gate sets `loop_disposition="inspect_validate"`.
 - Required missing gate blocks final completion.
+- Pre-build reference-understanding can seed a gate plan and construction
+  strategy but cannot set any gate to `passed`.
 - Unresolved `attachment_seam` exposes macro repair tools, not broad sculpt.
 - `shape_profile` gate can expose mesh/modeling refinement tools only after
   required seam gates are stable.

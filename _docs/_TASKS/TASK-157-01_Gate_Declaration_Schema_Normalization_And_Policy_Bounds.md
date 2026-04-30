@@ -20,8 +20,10 @@ classification, cardinality, safety bounds, and domain template merging.
 | Path / Module | Expected Change |
 |---------------|-----------------|
 | `server/adapters/mcp/contracts/` | Add `quality_gates.py` or equivalent typed contracts |
+| `server/adapters/mcp/contracts/reference.py` | Reuse reference/vision payload identifiers for proposal provenance and evidence refs |
 | `server/adapters/mcp/session_capabilities.py` | Add gate-plan fields to session capability state |
 | `server/adapters/mcp/areas/reference.py` | Include normalized gate plan in goal/checkpoint payloads |
+| `server/adapters/mcp/vision/` | Treat silhouette/action-hint/segmentation outputs as proposal or evidence sources, not as gate state |
 | `server/adapters/mcp/prompts/` | Add model-facing guidance for gate proposal shape |
 | `tests/unit/adapters/mcp/` | Add contract/session serialization tests |
 | `_docs/_MCP_SERVER/README.md` | Document the proposal and normalized gate contract |
@@ -32,10 +34,23 @@ classification, cardinality, safety bounds, and domain template merging.
   - `GateProposalContract`
   - `NormalizedQualityGateContract`
   - `GatePlanContract`
+  - `GateEvidenceRequirementContract`
+  - `GateEvidenceRefContract`
   - `GatePolicyWarningContract`
 - Gate proposals may include LLM-supplied labels and rationale, but normalized
   gates must use repo-owned enums for type, priority, verification strategy,
   required/optional status, and allowed correction families.
+- Gate proposals may also come from `reference_understanding`,
+  `silhouette_analysis`, optional `part_segmentation`, future
+  `classification_score`, domain templates, or operator input. Those sources
+  should be represented as provenance, not as trusted pass/fail status.
+- Normalized gates should reserve fields for:
+  - `proposal_sources`
+  - `source_provenance`
+  - `evidence_requirements`
+  - `evidence_refs`
+  - `verification_strategy`
+  - `allowed_correction_families`
 - Domain templates may add required gates not present in the LLM proposal.
 - Policy bounds must reject:
   - unsupported gate types
@@ -43,6 +58,8 @@ classification, cardinality, safety bounds, and domain template merging.
   - broad free-form code or raw Blender instructions
   - completion claims without evidence
   - gates that require unavailable reference inputs
+  - perception-derived claims that attempt to set `passed`, `failed`, or
+    `waived` directly instead of becoming verifier input
 
 ## Pseudocode
 
@@ -57,6 +74,16 @@ class GateType(StrEnum):
     OPENING_OR_CUT = "opening_or_cut"
     REFINEMENT_STAGE = "refinement_stage"
     FINAL_COMPLETION = "final_completion"
+
+
+class GateProposalSource(StrEnum):
+    LLM_GOAL = "llm_goal"
+    REFERENCE_UNDERSTANDING = "reference_understanding"
+    DOMAIN_TEMPLATE = "domain_template"
+    SILHOUETTE_ANALYSIS = "silhouette_analysis"
+    PART_SEGMENTATION = "part_segmentation"
+    CLASSIFICATION_SCORE = "classification_score"
+    OPERATOR_OVERRIDE = "operator_override"
 
 
 def normalize_gate_plan(proposal, *, domain_profile, templates):
@@ -77,6 +104,9 @@ def normalize_gate_plan(proposal, *, domain_profile, templates):
   - rejects unsupported gate types
   - rejects hidden/internal tool names in proposed actions
   - preserves LLM rationale as advisory only
+  - preserves reference/perception proposal provenance as advisory only
+  - rejects perception-derived proposal statuses that claim gate completion
+  - serializes evidence requirements and empty evidence refs before verification
   - serializes/deserializes session gate plan state
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
   - includes gate plan fields without breaking existing guided state payloads

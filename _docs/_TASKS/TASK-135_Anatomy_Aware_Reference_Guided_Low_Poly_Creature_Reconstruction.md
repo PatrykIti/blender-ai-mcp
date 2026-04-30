@@ -72,6 +72,9 @@ Instead:
   passed
 - the creature domain supplies templates, defaults, relation semantics, and
   target-specific policy for common quadruped mammals
+- creature-specific prompts and future perception outputs may seed gate
+  proposals or shape-profile evidence, but this umbrella does not pull SAM,
+  CLIP, or another heavy perception adapter into the baseline implementation
 
 ## Current Capability Ceiling
 

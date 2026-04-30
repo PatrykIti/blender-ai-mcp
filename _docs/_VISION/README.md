@@ -8,9 +8,17 @@ This folder is the canonical place to describe:
 - request-bound runtime behavior
 - deterministic capture-bundle inputs
 - goal-scoped reference image context
+- pre-build reference understanding and construction-path strategy
 - macro/workflow integration of `capture_bundle` and `vision_assistant`
 - evaluation constraints and model-comparison notes
 - real hybrid-loop creature regression guidance
+
+## Roadmap Docs
+
+- [Reference Understanding Roadmap](./REFERENCE_UNDERSTANDING_ROADMAP.md)
+  defines the contract-first plan for pre-build reference understanding,
+  construction-path normalization, `TASK-157` gate proposal/evidence refs, and
+  optional later CLIP/SAM-style adapters.
 
 ## Related Spatial Docs
 

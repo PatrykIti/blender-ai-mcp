@@ -63,6 +63,14 @@ If a model family cannot be exercised correctly through the current provider
 inventory, record that as a bounded follow-on or explicit unsupported boundary
 instead of broadening provider scope inside `TASK-140`.
 
+`TASK-140` evidence is provider/profile support evidence: it proves whether a
+model family can satisfy this repo's bounded compare/iterate output contract.
+It is not quality-gate verifier evidence by itself. When `TASK-157` later
+consumes external vision output, it should reference the resulting
+`vision_contract_profile`, diagnostics, and parsed payload as proposal or
+bounded perception evidence, while gate pass/fail authority remains with the
+server-owned verifier model.
+
 ## Current Code Baseline
 
 Current code intentionally starts from a small, closed vocabulary:

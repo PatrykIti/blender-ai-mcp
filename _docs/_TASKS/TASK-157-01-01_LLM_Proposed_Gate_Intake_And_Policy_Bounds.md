@@ -11,12 +11,17 @@
 Add the first narrow intake path for LLM-proposed gate declarations without
 allowing the LLM to mark gates complete or bypass server verification.
 
+The same intake path should be able to accept gate proposals derived from a
+reference-understanding summary or bounded perception payload, but those inputs
+remain proposal sources only. They must not become verifier status.
+
 ## Repository Touchpoints
 
 | Path / Module | Expected Change |
 |---------------|-----------------|
 | `server/adapters/mcp/areas/reference.py` | Accept optional gate proposal payload on goal/checkpoint path if this is the chosen public surface |
 | `server/adapters/mcp/contracts/quality_gates.py` | Add intake contract models |
+| `server/adapters/mcp/contracts/reference.py` | Reference proposal sources by stable reference/vision payload identifiers |
 | `server/adapters/mcp/session_capabilities.py` | Store normalized proposals in session state |
 | `tests/unit/adapters/mcp/test_quality_gate_intake.py` | Add intake and policy-bound tests |
 | `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md` | Tell clients how to propose gates without claiming completion |
@@ -30,6 +35,15 @@ allowing the LLM to mark gates complete or bypass server verification.
   states such as `proposed` or `requested`.
 - Server should return policy warnings when it drops or rewrites a proposed
   gate.
+- Proposal sources should include structured provenance when available:
+  provider, model id, `vision_contract_profile`, reference ids, viewport/capture
+  ids, and generated evidence ids.
+- `reference_understanding`, `silhouette_analysis`, `part_segmentation`, and
+  `classification_score` inputs may create or refine proposed gates, but they
+  must be normalized to `pending` until a verifier produces evidence.
+- The first implementation should not call SAM, CLIP, or another heavy
+  perception model. It should only preserve a stable contract for later
+  perception outputs to plug into.
 
 ## Pseudocode
 
@@ -52,6 +66,11 @@ def ingest_llm_gate_proposal(ctx, proposal):
     state.gate_plan = normalized
     set_session_capability_state(ctx, state)
     return GateIntakeResult(status="accepted", gate_plan=normalized)
+
+
+def ingest_reference_gate_proposal(ctx, reference_summary):
+    proposal = gate_proposal_from_reference_understanding(reference_summary)
+    return ingest_llm_gate_proposal(ctx, proposal)
 ```
 
 ## Tests To Add/Update
@@ -62,6 +81,11 @@ def ingest_llm_gate_proposal(ctx, proposal):
 - Creature proposal with `eye_pair` and `tail/body seam` becomes typed gates.
 - Building proposal with `roof/wall seam` and `window grid` becomes typed
   gates.
+- Reference-understanding proposal with `curled tail`, `wedge ears`, and
+  `visible eye pair` becomes `shape_profile`, `symmetry_pair`, and
+  `required_part` gates with advisory provenance.
+- Perception proposal with a segmentation or classification source preserves
+  source provenance but cannot set `passed`.
 
 ## E2E Tests
 

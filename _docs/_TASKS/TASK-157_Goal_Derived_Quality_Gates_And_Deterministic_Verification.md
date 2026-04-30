@@ -87,6 +87,42 @@ The first vocabulary should be deliberately small and cross-domain:
   and assertion tools remain authoritative for object existence, contacts,
   measurements, and final completion.
 
+## Perception Evidence Extension Points
+
+`TASK-145` gives the reference loop a typed repair-planner handoff, but it does
+not make visual feedback a gate-status authority. This umbrella is where that
+handoff becomes usable for quality gates.
+
+The gate contract should accept proposal and evidence provenance from existing
+perception surfaces without making those surfaces responsible for completion:
+
+| Input / Evidence Source | Contract Role | Authority Boundary |
+|-------------------------|---------------|--------------------|
+| `reference_understanding` | Optional model-readable summary of what attached references depict, expected style, likely parts, and construction path | May propose gates and default correction families; cannot pass gates |
+| `silhouette_analysis` | Deterministic reference/viewport shape metrics from the existing perception layer | May support `shape_profile` and `proportion_ratio` evidence when scoped and fresh |
+| `part_segmentation` | Optional default-off segmentation sidecar output when configured | May provide target masks or part-region hints; cannot prove Blender object existence or attachment |
+| `classification_score` | Future CLIP-style or model-family classification evidence | May select a domain profile or construction strategy; cannot prove gate completion |
+| VLM compare/iterate findings | Bounded visual mismatch or action-hint payloads from the active vision contract profile | May recommend gates, blockers, or tool families; must remain advisory unless mapped to a verifier-supported evidence type |
+| scene/spatial/mesh/assertion tools | Blender truth evidence | Own object existence, contact, measurement, spatial relation, and final completion decisions |
+
+The first implementation should reserve explicit fields for:
+
+- `proposal_sources`: ordered provenance for why a gate exists, such as
+  `llm_goal`, `reference_understanding`, `domain_template`,
+  `silhouette_analysis`, `part_segmentation`, or `operator_override`
+- `evidence_requirements`: the verifier-supported evidence types needed before
+  the gate may pass
+- `evidence_refs`: concrete verifier outputs used for the current status
+- `verification_strategy`: repo-owned enum, not free prose
+- `allowed_correction_families`: bounded tool families that may address the
+  unresolved gate
+- `source_provenance`: provider/model/profile metadata where a proposal came
+  from a VLM or future perception classifier
+
+SAM, CLIP, Grounding DINO, or similar heavier perception modules are not part of
+the first `TASK-157` implementation. They should plug in later by producing the
+same bounded evidence/proposal records through the vision/perception layer.
+
 ## Execution Structure
 
 | Order | Task | Purpose |
@@ -106,6 +142,8 @@ The first vocabulary should be deliberately small and cross-domain:
 | `server/adapters/mcp/contracts/` | New gate contracts | Typed MCP-facing models for proposed gates, normalized gates, verifier status, and completion blockers |
 | `server/adapters/mcp/session_capabilities.py` | Guided state | Store active gate plan, statuses, required gates, waivers, and next gate actions |
 | `server/adapters/mcp/areas/reference.py` | Checkpoint loop | Include gate status in compare/iterate outputs and block final completion on failed required gates |
+| `server/adapters/mcp/contracts/reference.py` | Perception handoff | Reference gate proposals and evidence refs must point at existing reference/vision payload fields instead of duplicating them |
+| `server/adapters/mcp/vision/` | Perception evidence | Existing silhouette/action-hint and optional segmentation outputs may feed gate proposals/evidence through typed refs only |
 | `server/adapters/mcp/areas/scene.py` | Spatial and macro tools | Feed seam/contact/support verification and macro follow-up hints |
 | `server/application/services/spatial_graph.py` | Truth evidence | Reuse relation graph verdicts for seam/support gate status |
 | `server/router/infrastructure/tools_metadata/` | Discovery metadata | Add gate-oriented search hints and tool family metadata |
@@ -123,6 +161,7 @@ The first vocabulary should be deliberately small and cross-domain:
 | Unit contracts | Gate schema validation, unsupported gate rejection, required/optional/waived status behavior |
 | Unit guided state | Session gate plan persistence, status transitions, required gate completion blockers |
 | Unit reference loop | Compare/iterate payload includes gate state and does not mark completion while required gates fail |
+| Unit perception refs | Perception-derived proposals stay advisory and carry source provenance without marking gates passed |
 | Unit spatial truth | `attachment_seam` and `support_contact` gates map relation graph verdicts correctly |
 | Unit visibility/search | Active unresolved gates expose only bounded relevant tool families |
 | Router/integration | `router_set_goal` and checkpoint flows preserve gate state across guided phases |

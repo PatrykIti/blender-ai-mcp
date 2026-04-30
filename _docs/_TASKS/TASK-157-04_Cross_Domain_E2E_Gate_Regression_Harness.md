@@ -33,6 +33,9 @@ Use a squirrel-like low-poly reconstruction fixture:
 - seated/embedded seams pass according to gate policy
 - curved tail profile remains pending/failed until a segment chain or accepted
   profile evidence exists
+- optional reference-understanding or perception fixtures may seed the gate
+  plan, but the scenario must still fail primitive-only completion until
+  server-owned verifiers pass the required gates
 
 ## Building Scenario
 
@@ -44,6 +47,20 @@ Use a small building/facade-style fixture:
 - opening gates fail when windows/doors are missing or not cut/placed into the
   wall surface
 - proportion/alignment gates fail on obvious roof/wall or facade rhythm drift
+
+## Perception Adapter Boundary
+
+The first cross-domain harness must not require SAM, CLIP, Grounding DINO, or
+any other heavy perception sidecar. Use deterministic fixtures or mocked
+reference/perception payloads to prove:
+
+- proposal/evidence provenance is preserved
+- perception-derived proposals normalize to `pending`
+- unavailable optional perception evidence does not crash the guided loop
+- unavailable required perception evidence returns a `blocked` gate with a
+  machine-readable reason
+- final completion still depends on authoritative scene/spatial/mesh/assertion
+  evidence for the gates that require it
 
 ## Pseudocode
 
@@ -74,6 +91,8 @@ def test_building_gate_completion_blocks_floating_roof(blender_scene):
 - `tests/e2e/vision/test_goal_derived_gate_building_completion.py`
 - `tests/e2e/integration/test_guided_gate_state_transport.py`
 - Macro E2E updates for seam repair satisfying gates.
+- Fixture-backed regression for perception-derived gate proposals that does not
+  require external model calls or local segmentation/classification sidecars.
 
 ## Docs To Update
 
@@ -87,4 +106,6 @@ def test_building_gate_completion_blocks_floating_roof(blender_scene):
 - At least one building-style E2E proves missing/floating structural gates
   block completion.
 - E2E evidence exercises real Blender scene state, not only mocked contracts.
+- Future perception adapters are optional, default-off, and cannot mark gates
+  passed without verifier-supported evidence.
 - Docs explain the gate regression lanes and expected runtime requirements.

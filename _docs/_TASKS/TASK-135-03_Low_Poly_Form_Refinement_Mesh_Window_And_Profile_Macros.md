@@ -90,6 +90,15 @@ mesh tools entirely.
 - Model refinement as a generic `refinement_stage` gate with creature-specific
   `shape_profile` child gates for body, ears, limbs, snout, and tail where
   reference evidence requires them.
+- Consume `TASK-157` evidence refs rather than calling perception directly:
+  `reference_understanding` may explain that the target is a faceted
+  squirrel-like creature with wedge ears and a curled tail, while
+  `silhouette_analysis` or future segmentation masks may support active
+  `shape_profile` gates. The refinement stage still opens bounded mesh/modeling
+  tools only after gate prerequisites pass.
+- Keep broad sculpt out of the default low-poly refinement path. Sculpt remains
+  a planner-driven, preconditioned handoff from `TASK-145`, not the baseline
+  answer for faceted low-poly profile work.
 
 ## Pseudocode
 
@@ -120,6 +129,7 @@ if current_step == "refine_low_poly_forms":
 | Unit search | "profile low-poly body/ears/limbs" returns bounded mesh/profile tools |
 | Unit safety | Sculpt remains hidden unless planner emits explicit sculpt handoff |
 | Unit checkpoint | Primitive-only creature reports refinement blockers |
+| Unit evidence refs | Perception/reference-derived shape-profile evidence opens only bounded profile tools after prerequisites |
 | E2E mesh | A selected part can be profiled through guided mesh tools without losing state |
 | E2E vision | Primitive-only squirrel cannot pass final completion before refinement gate |
 | E2E macro | Any new profile macro has Blender-backed geometry assertions |
