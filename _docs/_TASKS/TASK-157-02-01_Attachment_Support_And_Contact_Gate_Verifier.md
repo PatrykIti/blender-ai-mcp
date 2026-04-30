@@ -32,6 +32,11 @@ Implement the first deterministic verifier for `attachment_seam` and
   alignment drift.
 - Cleanup of overlap cannot pass a gate unless the final relation verdict also
   satisfies the gate.
+- Embedded/organic-rooted gates must read pair-level relation semantics
+  directly instead of relying on aggregated `failing_pairs` or truth-followup
+  repair candidates. Current spatial summaries can classify `intersecting`
+  pairs as failing by default; the gate verifier must apply the normalized gate
+  policy before deciding whether an intersecting relation passes or fails.
 
 ## Runtime / Security Contract Notes
 
@@ -76,6 +81,9 @@ def verify_attachment_gate(gate, relation_pair):
 - `seated_contact` on tail/body passes.
 - `intersecting` on snout/head passes only when embedded seam is allowed.
 - `intersecting` on limb/body fails when gate requires seated contact.
+- Embedded/organic `intersecting` passes when the normalized gate policy allows
+  it, even if the broader spatial summary lists the pair as failing.
+- Non-embedded `intersecting` fails and produces a bounded repair hint.
 - `macro_cleanup_part_intersections` result does not pass the gate unless
   relation graph re-check reports a passing verdict.
 

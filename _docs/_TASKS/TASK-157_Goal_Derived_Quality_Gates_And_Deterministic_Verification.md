@@ -171,8 +171,8 @@ same bounded evidence/proposal records through the vision/perception layer.
 | `server/adapters/mcp/vision/` | Perception evidence | Existing silhouette/action-hint and optional segmentation outputs may feed gate proposals/evidence through typed refs only |
 | `server/adapters/mcp/areas/scene.py` | Spatial and macro tools | Feed seam/contact/support verification and macro follow-up hints |
 | `server/application/services/spatial_graph.py` | Truth evidence | Reuse relation graph verdicts for seam/support gate status |
-| `server/router/infrastructure/tools_metadata/` | Discovery metadata | Add gate-oriented search hints and tool family metadata |
-| `server/adapters/mcp/discovery/search_documents.py` | Search shaping | Bias search toward tools that satisfy unresolved gate families |
+| `server/router/infrastructure/tools_metadata/` | Discovery metadata | Add gate-oriented search hints through existing metadata fields first (`keywords`, `sample_prompts`, `related_tools`, `patterns`); adding a new `gate_families` field requires schema, loader, dataclass, and search tests |
+| `server/adapters/mcp/discovery/search_documents.py` | Search shaping | Bias search toward tools that satisfy unresolved gate families using existing metadata fields first |
 | `server/adapters/mcp/transforms/visibility_policy.py` | Visibility | Expose bounded tools for the active unresolved gate, not the whole catalog |
 | `server/adapters/mcp/prompts/` | Prompt assets | Teach clients how to propose gates and consume server-verified gate state |
 | `_docs/_ROUTER/` | Runtime design docs | Document the LLM-proposes/server-verifies boundary |

@@ -21,7 +21,7 @@ safe mutation inside one still-open build stage.
 | `server/adapters/mcp/discovery/search_surface.py` | Gate-aware search and call-path diagnostics |
 | `server/adapters/mcp/discovery/search_documents.py` | Gate-oriented search documents |
 | `server/adapters/mcp/session_capabilities.py` | Stale-but-continuable versus refresh-required state transitions |
-| `server/router/infrastructure/tools_metadata/` | Gate family metadata and examples |
+| `server/router/infrastructure/tools_metadata/` | Gate-oriented search hints using existing `keywords`, `sample_prompts`, `related_tools`, and `patterns`; introduce a new `gate_families` field only with schema/loader/search tests |
 | `tests/unit/adapters/mcp/test_search_surface.py` | Search/tool exposure tests |
 | `tests/unit/adapters/mcp/test_visibility_policy.py` | Gate-driven visibility tests |
 | `tests/unit/adapters/mcp/test_guided_flow_state_contract.py` | Spatial refresh cadence state tests |
@@ -84,6 +84,11 @@ safe mutation inside one still-open build stage.
 - Provider/evidence boundary: `reference_understanding`, segmentation, and
   classification evidence can narrow or prioritize policy, but cannot unlock
   broad tools or mark gates passed by themselves.
+- Metadata compatibility: the first slice should use current router metadata
+  fields (`keywords`, `sample_prompts`, `related_tools`, and `patterns`) for
+  gate-oriented search hints. If a dedicated `gate_families` field is added,
+  update `_schema.json`, `ToolMetadata`, metadata loader, search document
+  generation, and alignment tests in the same implementation slice.
 
 ## Spatial Refresh Cadence Rules
 

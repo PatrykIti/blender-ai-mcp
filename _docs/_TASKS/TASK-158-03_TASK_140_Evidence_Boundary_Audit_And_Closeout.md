@@ -34,6 +34,9 @@ Do not rewrite these unless a later audit proves they contradict the boundary:
 | `_docs/_TASKS/TASK-140-05-03_Evidence_Taxonomy_Promotion_Criteria_And_Operator_Reporting.md:14-18` | Frames evidence taxonomy as provider/profile reporting |
 | `_docs/_TASKS/TASK-140-05-03_Evidence_Taxonomy_Promotion_Criteria_And_Operator_Reporting.md:30-32` | Keeps promoted support evidence separate from quality-gate verifier evidence |
 | `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:73-76` | States perception can support/propose but not own verifier truth |
+| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:176-188` | Defines alias/future-tool mapping for `mesh_edit`, `material_finish`, and low-poly macro names |
+| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:273-277` | Keeps low-poly macro names out of first implementation |
+| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:354-355` | Leaves `material_finish` canonical-family promotion as a later decision |
 
 ## Implementation Notes
 
@@ -46,12 +49,25 @@ Do not rewrite these unless a later audit proves they contradict the boundary:
 - Update `_docs/_TASKS/README.md` counts and row placement when closing the
   promoted task.
 
+## Runtime / Security Contract Notes
+
+- This is a docs-only closeout/audit. It must not change provider routing,
+  `vision_contract_profile` values, MCP metadata, guided visibility, or runtime
+  verifier code.
+- Stdio and Streamable HTTP behavior must remain unchanged.
+- No provider call, sidecar activation, model download, or new evidence
+  collection is part of this task.
+- Documentation examples must not include raw provider payloads, keys, local
+  private paths, or unredacted debug transcripts.
+- `TASK-140` provider/profile evidence remains support/provenance evidence; it
+  must not become quality-gate pass/fail truth.
+
 ## Tests / Validation
 
 - `git diff --check`
 - `rg -n "quality-gate verifier evidence|provider/profile support evidence|vision_contract_profile" _docs/_TASKS/TASK-140*.md _docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md`
   - classify every hit as canonical/no-op or patch contradiction
-- `rg -n "reference_understand|router_apply_reference_strategy|server/adapters/mcp/router|mesh_edit|material_finish|mesh_shade_flat|macro_low_poly|scene/spatial/mesh/reference evidence|true attachment errors|true cleanup/intersection errors|reference evidence requires" _docs/blender-ai-mcp-vision-reference-understanding-plan.md _docs/_TASKS/TASK-135*.md _docs/_TASKS/TASK-140*.md`
+- `rg -n "reference_understand|router_apply_reference_strategy|server/adapters/mcp/router|mesh_edit|material_finish|mesh_shade_flat|macro_low_poly|scene/spatial/mesh/reference evidence|true attachment errors|true cleanup/intersection errors|reference evidence requires" _docs/blender-ai-mcp-vision-reference-understanding-plan.md _docs/_TASKS/TASK-135*.md _docs/_TASKS/TASK-140*.md _docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md`
   - expected result after completion: no unclassified drift
 - Confirm `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/README.md`, and the
   completion changelog entry are synchronized.
@@ -67,9 +83,10 @@ Do not rewrite these unless a later audit proves they contradict the boundary:
 
 ## Changelog Impact
 
-- Update changelog 278 or add a new completion entry with the final grep
-  results.
-- Refresh `_docs/_CHANGELOG/README.md` if a new entry is added.
+- Add a new `_docs/_CHANGELOG/279-...task-158-...completion.md` entry with the
+  final grep results.
+- Refresh `_docs/_CHANGELOG/README.md`.
+- Leave changelog 278 as the creation/plan entry.
 
 ## Acceptance Criteria
 

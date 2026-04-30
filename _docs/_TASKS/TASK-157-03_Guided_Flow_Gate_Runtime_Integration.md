@@ -118,6 +118,10 @@ fresh evidence.
 
 ## Pseudocode
 
+Helper names below are proposed implementation shapes; extend the current
+session capability and visibility helpers instead of treating these as existing
+APIs.
+
 ```python
 def build_guided_response(state):
     gate_summary = summarize_gate_plan(state.gate_plan)

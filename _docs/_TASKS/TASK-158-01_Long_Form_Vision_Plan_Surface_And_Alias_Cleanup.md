@@ -35,21 +35,39 @@ cannot be mistaken for current implementation targets.
 - `mesh_shade_flat` and `macro_low_poly_*` names are future optional candidates
   until metadata, adapters, handlers, tests, and docs ship them as real tools.
 
+## Runtime / Security Contract Notes
+
+- This is a docs-only cleanup. It must not add a public MCP tool, router
+  strategy endpoint, metadata field, guided visibility rule, or runtime handoff.
+- Stdio and Streamable HTTP behavior must remain unchanged.
+- No provider call, sidecar activation, model download, or external
+  reference-understanding run is part of this task.
+- Documentation examples must not include raw provider payloads, keys, local
+  private paths, or unredacted debug transcripts.
+- The cleanup must preserve verifier-owned gate truth: Vision and perception
+  can remain advisory/proposal/support only.
+
 ## Line-Level Targets
 
 | Range | Required Work |
 |-------|---------------|
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:25-45` | Add upfront note for historical/draft naming |
+| `:230-249` | Annotate diagram references to `mesh_edit` as aliases for current `modeling_mesh` or historical strategy labels |
 | `:279-316` | Reframe `reference_understand(...)` example through current reference/guided-state seams |
 | `:430-466` | Annotate `mesh_edit`, `material_finish`, `mesh_shade_flat`, and `macro_low_poly_finish` |
 | `:511-518` | Replace or annotate noncanonical allowed families |
 | `:641-688` | Fix allowlists that present aliases/future names as runtime vocabulary |
-| `:744-799` | Reframe `reference_understand(...)` and `router_apply_reference_strategy(...)` |
+| `:744-815` | Reframe `reference_understand(...)`, `router_apply_reference_strategy(...)`, `mesh_edit`, and `material_finish` |
 | `:948-968` | Mark low-poly macro examples as future candidates |
 | `:1006-1012` | Mark finish/low-poly macro examples as future candidates |
+| `:1155-1161` | Annotate remaining `mesh_edit` / `material_finish` JSON examples as aliases or future stage hints |
+| `:1973-1989` | Classification-only row: concept-level `reference_understanding` hits are allowed when they do not imply a current public tool or verifier authority |
 | `:2098-2183` | Replace obsolete owner-path sketches with current seams or historical notes |
+| `:2306-2316` | Reframe `reference_understand(...)` success criteria as draft shorthand routed through current seams |
 | `:2438-2459` | Reframe `reference_understand` MCP task as draft unless future public-tool review promotes it |
+| `:2468-2476` | Replace obsolete `server/adapters/mcp/router/...` implementation paths with current owner seams or historical notes |
 | `:2518-2525` | Mark remaining low-poly macro list as future optional candidates |
+| `:2588-2595` | Reframe final `reference_understand(...)` summary as draft shorthand, not a shipped public tool |
 
 ## Rewrite Pattern
 
@@ -83,8 +101,9 @@ are future candidates until shipped as canonical tools.
 
 ## Changelog Impact
 
-- Record completion in changelog 278 or a new completion entry, depending on
-  whether this slice ships alone or with the rest of `TASK-158`.
+- Record completion in a new `_docs/_CHANGELOG/279-...task-158-...completion.md`
+  entry when this slice ships, and refresh `_docs/_CHANGELOG/README.md`.
+  Changelog 278 remains the creation/plan entry.
 
 ## Acceptance Criteria
 

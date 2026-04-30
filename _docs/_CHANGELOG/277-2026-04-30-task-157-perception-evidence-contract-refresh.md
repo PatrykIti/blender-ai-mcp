@@ -14,10 +14,9 @@ Version: -
 - added evidence-authority rules so scene/spatial/mesh/assertion outputs remain
   authoritative for object existence, contact, measurements, and final
   completion
-- aligned `TASK-135` and `TASK-135-03` so low-poly creature refinement consumes
-  `TASK-157` evidence refs without pulling SAM/CLIP into the baseline
-- clarified the `TASK-140` boundary so external model-family support evidence
-  remains separate from quality-gate verifier evidence
+- partially aligned `TASK-135`, `TASK-135-03`, and `TASK-140` with the
+  `TASK-157` evidence-ref boundary, while leaving remaining Vision/creature
+  wording drift to `TASK-158` and changelog 278
 - added `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md` as the canonical
   Vision-layer roadmap that turns the long-form research plan into repo-owned
   boundaries, MVP scope, phased adapters, and task ownership

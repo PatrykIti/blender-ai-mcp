@@ -4,8 +4,8 @@
 **Priority:** 🔴 High
 **Category:** Documentation / Vision Boundary Alignment
 **Estimated Effort:** Medium
-**Follow-on After:** [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md)
-**Related:** [TASK-135](./TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md), [TASK-135-03](./TASK-135-03_Low_Poly_Form_Refinement_Mesh_Window_And_Profile_Macros.md), [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md)
+**Depends On:** [TASK-157 docs refresh / changelog 277](../_CHANGELOG/277-2026-04-30-task-157-perception-evidence-contract-refresh.md)
+**Related:** [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-135](./TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md), [TASK-135-03](./TASK-135-03_Low_Poly_Form_Refinement_Mesh_Window_And_Profile_Macros.md), [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md)
 
 ## Objective
 
@@ -63,10 +63,11 @@ consistent implementation story:
 
 ## Relationship To Existing Board Items
 
-`TASK-158` is a promoted docs-only follow-on after `TASK-157`. It does not
-extend the `TASK-157` implementation scope; it aligns downstream strategy and
-domain-consumer docs so future `TASK-135`, `TASK-135-03`, and `TASK-140`
-implementation work does not contradict the generic gate/verifier contract.
+`TASK-158` is a promoted docs-only companion to the open `TASK-157` substrate.
+It does not extend the `TASK-157` implementation scope; it aligns downstream
+strategy and domain-consumer docs so future `TASK-135`, `TASK-135-03`, and
+`TASK-140` implementation work does not contradict the generic gate/verifier
+contract.
 
 The task remains one board-level row. Its child files are execution slices for
 the docs cleanup and should not become separate board rows unless this umbrella
@@ -113,16 +114,22 @@ rediscovering the same drift with broad grep.
 | File / Range | Disposition |
 |--------------|-------------|
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:25-45` | Add or update an upfront historical/draft note so `reference_understand(...)` and `router_apply_reference_strategy(...)` do not read as current public surfaces |
+| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:230-249` | Annotate architecture diagram references to `mesh_edit` as aliases for current `modeling_mesh` or historical strategy labels |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:279-316` | Rewrite the `reference_understand(...)` example as a draft strategy sketch or map it to existing reference/guided-state seams |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:430-466` | Annotate `mesh_edit`, `material_finish`, `mesh_shade_flat`, and `macro_low_poly_finish` as aliases/future candidates, not current canonical families/tools |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:511-518` | Rewrite allowed-family examples so `mesh_edit` maps to `modeling_mesh` and `material_finish` is a stage/action hint or future family |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:641-688` | Fix family allowlists so noncanonical names are not presented as runtime vocabulary |
-| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:744-799` | Rewrite `reference_understand(...)` and `router_apply_reference_strategy(...)` as draft strategy names routed through current seams |
+| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:744-815` | Rewrite `reference_understand(...)`, `router_apply_reference_strategy(...)`, `mesh_edit`, and `material_finish` as draft strategy names routed through current seams |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:948-968` | Mark `mesh_shade_flat` and `macro_low_poly_*` examples as future candidates until shipped |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:1006-1012` | Same as above for finish/low-poly macro examples |
+| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:1155-1161` | Annotate remaining `mesh_edit` / `material_finish` JSON examples as aliases or future stage hints |
+| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:1973-1989` | Classification-only row: concept-level `reference_understanding` hits are allowed when they do not imply a current public tool or verifier authority |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2098-2183` | Replace obsolete proposed paths such as `server/adapters/mcp/router/...` with current owner seams or historical notes |
+| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2306-2316` | Reframe `reference_understand(...)` success criteria as draft shorthand routed through current reference/guided-state seams |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2438-2459` | Reframe `reference_understand` MCP surface task as historical/draft unless a future public-tool review promotes it |
+| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2468-2476` | Replace obsolete `server/adapters/mcp/router/...` implementation paths with current owner seams or historical notes |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2518-2525` | Mark low-poly macro names as future optional candidates, not current tool names |
+| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2588-2595` | Reframe final `reference_understand(...)` summary as draft shorthand, not a shipped public tool |
 | `_docs/_TASKS/TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md:68-77` | Replace `scene/spatial/mesh/reference evidence` pass/fail authority with scene/spatial/mesh/assertion/verifier truth |
 | `_docs/_TASKS/TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md:162-183` | Make Vision Mode relation findings advisory until verifier/spatial/assertion policy binds them to gate status |
 | `_docs/_TASKS/TASK-135-03_Low_Poly_Form_Refinement_Mesh_Window_And_Profile_Macros.md:90-98` | Replace standalone `reference evidence requires them` with normalized gate evidence and verifier-supported support refs |
@@ -130,6 +137,9 @@ rediscovering the same drift with broad grep.
 | `_docs/_TASKS/TASK-140-05-03_Evidence_Taxonomy_Promotion_Criteria_And_Operator_Reporting.md:14-18` | Canonical no-op anchor for provider/profile evidence reporting |
 | `_docs/_TASKS/TASK-140-05-03_Evidence_Taxonomy_Promotion_Criteria_And_Operator_Reporting.md:30-32` | Canonical no-op anchor for keeping support evidence separate from quality-gate verifier evidence |
 | `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:73-76` | Canonical no-op anchor for advisory-only Vision/perception and verifier-owned truth |
+| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:176-188` | Canonical no-op anchor for alias/future-tool mapping of `mesh_edit`, `material_finish`, and low-poly macro names |
+| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:273-277` | Canonical no-op anchor that keeps low-poly macro names out of first implementation |
+| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:354-355` | Canonical no-op anchor for deciding later whether `material_finish` becomes a canonical planner family |
 
 ## Source-Of-Truth Anchors
 
@@ -201,9 +211,10 @@ Before:
 reference evidence decides whether the gate passed
 
 After:
-scene/spatial/mesh/assertion verifier evidence decides whether the gate passed;
-reference and perception outputs may seed proposals or attach bounded support
-refs when the verifier strategy accepts them.
+scene/spatial/mesh/assertion evidence, evaluated by the quality-gate verifier,
+decides whether the gate passed; reference and perception outputs may seed
+proposals or attach bounded support refs when the verifier strategy accepts
+them.
 ```
 
 ```text
@@ -252,7 +263,7 @@ verifier-supported support refs, not standalone reference evidence.
 | Long-form plan drift | Public-surface and noncanonical-family grep commands from `TASK-158-01` |
 | Creature task drift | Truth-boundary grep commands from `TASK-158-02` |
 | TASK-140 boundary | Canonical-anchor audit and contradiction grep from `TASK-158-03` |
-| Board / changelog | `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/README.md`, and changelog 278 or a new completion entry stay in sync |
+| Board / changelog | `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/README.md`, and the new TASK-158 completion changelog entry stay in sync |
 
 ## Tests / Validation
 
@@ -281,9 +292,9 @@ longer contradict the `TASK-157` boundary.
 ## Changelog Impact
 
 - Creation is already recorded in changelog 278.
-- On completion, update changelog 278 or add a new completion changelog entry
-  with final grep results, and refresh `_docs/_CHANGELOG/README.md` if a new
-  entry is added.
+- On completion, add a new `_docs/_CHANGELOG/279-...task-158-...completion.md`
+  entry with final grep results and refresh `_docs/_CHANGELOG/README.md`.
+  Leave changelog 278 as the creation/plan entry.
 
 ## Status / Board Update
 
@@ -309,6 +320,7 @@ parent or explicitly superseded if the implementation consolidates them.
   gate pass/fail and final completion.
 - `TASK-140` provider/profile evidence remains separate from quality-gate
   verifier evidence.
-- `_docs/_TASKS/README.md` tracks this task as a board-level follow-on.
+- `_docs/_TASKS/README.md` tracks this task as a board-level docs companion to
+  the open `TASK-157` substrate.
 - Validation commands from this task are run and recorded in the completion
   summary.

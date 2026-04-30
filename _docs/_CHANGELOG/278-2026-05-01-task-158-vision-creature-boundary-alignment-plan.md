@@ -5,7 +5,7 @@ Version: -
 
 ## Summary
 
-- added `TASK-158` as a docs-only follow-on after `TASK-157` to align the
+- added `TASK-158` as a docs-only companion to the open `TASK-157` substrate to align the
   remaining Vision/reference-understanding and creature-reconstruction planning
   docs with the gate/verifier boundary
 - captured the remaining out-of-scope drift from the `TASK-157` audit:
@@ -13,7 +13,7 @@ Version: -
   `mesh_edit`/`material_finish`/`mesh_shade_flat`/`macro_low_poly_*` wording,
   and `TASK-135` wording that could grant reference/perception evidence
   pass/fail authority
-- updated the task board so `TASK-158` is tracked as a promoted follow-on in
+- updated the task board so `TASK-158` is tracked as a promoted docs companion in
   the Vision & Hybrid Loop lane and linked from the strategic Vision roadmap
   owner list
 - defined validation grep commands for public-tool drift, noncanonical family

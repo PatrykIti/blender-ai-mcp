@@ -31,6 +31,19 @@ and final completion truth.
   evidence and verifier-supported support refs.
 - Preserve the low-poly creature product goal; only tighten authority wording.
 
+## Runtime / Security Contract Notes
+
+- This is a docs-only cleanup. It must not change guided runtime behavior,
+  public MCP parameters, router metadata, visibility policy, or verifier code.
+- Stdio and Streamable HTTP behavior must remain unchanged.
+- No provider call, perception sidecar activation, SAM/CLIP/SigLIP adapter, or
+  model download is part of this task.
+- Documentation examples must not include raw provider payloads, secrets, local
+  private paths, or unredacted debug transcripts.
+- The cleanup must preserve verifier-owned gate truth: creature Vision Mode may
+  propose relation findings, but scene/spatial/mesh/assertion evidence,
+  evaluated by the quality-gate verifier, owns pass/fail status.
+
 ## Line-Level Targets
 
 | Range | Required Work |
@@ -46,9 +59,10 @@ Before:
 deterministic scene/spatial/mesh/reference evidence decides whether the gate passed
 
 After:
-scene/spatial/mesh/assertion verifier evidence decides whether the gate passed;
-reference and perception outputs may seed proposals or attach bounded support
-refs when the verifier strategy accepts them.
+scene/spatial/mesh/assertion evidence, evaluated by the quality-gate verifier,
+decides whether the gate passed; reference and perception outputs may seed
+proposals or attach bounded support refs when the verifier strategy accepts
+them.
 ```
 
 ```text
@@ -85,8 +99,9 @@ verifier-supported support refs, not standalone reference evidence.
 
 ## Changelog Impact
 
-- Record completion in changelog 278 or a new completion entry, depending on
-  whether this slice ships alone or with the rest of `TASK-158`.
+- Record completion in a new `_docs/_CHANGELOG/279-...task-158-...completion.md`
+  entry when this slice ships, and refresh `_docs/_CHANGELOG/README.md`.
+  Changelog 278 remains the creation/plan entry.
 
 ## Acceptance Criteria
 
