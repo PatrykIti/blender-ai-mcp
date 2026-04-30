@@ -3,7 +3,7 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 7 tasks
+- **To Do:** 8 tasks
 - **In Progress:** 0 tasks
 - **Done:** 225
 - **Superseded:** 10
@@ -22,7 +22,7 @@ flight.
 
 | Area | Document | Owner Tasks |
 |------|----------|-------------|
-| Vision / Reference Understanding | [Reference Understanding Roadmap](../_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md) | [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-135](./TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md), [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) |
+| Vision / Reference Understanding | [Reference Understanding Roadmap](../_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md) | [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md), [TASK-135](./TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md), [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) |
 
 ## 🧱 Hierarchy Rules
 
@@ -74,6 +74,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) | **Expand External Vision Contract Profiles Across Qwen, Anthropic, OpenAI, and NVIDIA** | 🔴 High | Board-level follow-on after TASK-139 for extending the external `vision_contract_profile` architecture across additional multimodal families on the existing provider surface, including OpenRouter model capability resolution and no new provider branches under this umbrella. |
+| [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md) | **Vision And Creature Gate Boundary Doc Alignment** | 🔴 High | Docs-only follow-on after TASK-157 to align the long-form Vision plan and creature task docs with verifier-owned gate truth, advisory perception, and noncanonical tool-name boundaries. |
 ---
 
 ## 🚧 In Progress
