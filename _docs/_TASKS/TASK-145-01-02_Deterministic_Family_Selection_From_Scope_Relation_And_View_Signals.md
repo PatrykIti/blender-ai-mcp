@@ -39,6 +39,11 @@ policy that evaluates:
   relation truth or mark sculpt ready on their own.
 - Keep policy deterministic and testable. Avoid prompt-only classifiers,
   LaBSE matching, or free-form planner text as the source of family selection.
+- `RepairPlannerEvidence` and `RepairPlannerDecision` in the pseudocode are
+  proposed framework-free helper shapes. If implementation keeps this logic in
+  private `reference.py` helpers for the first pass, it must still preserve the
+  same deterministic precedence and avoid treating those pseudocode names as
+  already existing API.
 
 ## Pseudocode
 

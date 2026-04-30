@@ -34,6 +34,9 @@ Decide exactly where planner data lives in the staged reference loop so that:
   stdio/Streamable HTTP/local RPC assumptions, parameter validation,
   reject-unknown behavior, payload limits, recovery behavior, and log/redaction
   expectations.
+- `planner_summary`, `planner_detail`, and `planner_result` below describe the
+  intended payload split. They do not exist in the current stage response until
+  this leaf adds or maps them through the owning reference contracts.
 
 ## Pseudocode
 

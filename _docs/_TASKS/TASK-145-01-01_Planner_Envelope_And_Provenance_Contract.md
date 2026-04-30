@@ -42,6 +42,11 @@ The intended v1 posture is incremental:
 - Vision and silhouette evidence may explain why local-form refinement is worth
   considering, but they cannot mark a handoff ready when deterministic
   relation/view blockers remain unresolved.
+- The `ReferenceRepairPlannerSummaryContract` and `ReferencePlanner*` names in
+  the pseudocode below are candidate contract names for this leaf. They are not
+  current repo symbols; the first implementation pass may instead extend the
+  existing `ReferenceRefinementRouteContract` and
+  `ReferenceRefinementHandoffContract` if that keeps the contract smaller.
 
 ## Pseudocode
 

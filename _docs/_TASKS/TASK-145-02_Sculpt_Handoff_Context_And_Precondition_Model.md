@@ -59,6 +59,11 @@ duplicating their responsibilities.
   recommendation, but cannot clear structural blockers.
 - Broad brush/setup flows and whole-mesh sculpting should stay out of the
   normal guided handoff unless a later task explicitly promotes them.
+- `build_sculpt_handoff(...)`, `planner_result.target_scope`, and
+  `safe_fallback_family` in the pseudocode are proposed helper/result fields.
+  They must be implemented explicitly or mapped onto the current
+  `ReferenceRefinementHandoffContract` / planner-policy result without creating
+  a standalone sculpt planner state.
 
 ## Pseudocode
 

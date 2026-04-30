@@ -28,6 +28,30 @@ instead of relying on the current minimal `object_name`-only handoff shape.
   model-facing handoff.
 - The handoff should describe recommendation readiness, not TASK-157 gate
   completion.
+- Pseudocode helper names such as `handoff_without_sculpt(...)`,
+  `sculpt_handoff(...)`, `planner_result.target_scope`, and
+  `derive_sculpt_arguments(...)` are proposed implementation shapes. They must
+  either be added explicitly or folded into the current
+  `_build_refinement_handoff(...)` path.
+
+## Runtime / Security Contract
+
+- Visibility level: this leaf is contract-local by default. It must not make any
+  `sculpt_*` tool visible on `llm-guided` by itself.
+- Behavior: the handoff is read-only recommendation metadata. Actual
+  `sculpt_*` calls remain mutating and must stay behind existing guided
+  visibility and execution gates until TASK-145-02-03 / TASK-145-03-01 wire the
+  bounded sculpt subset safely.
+- Session assumptions: stdio and Streamable HTTP clients should receive the same
+  handoff fields through the existing reference compare / iterate responses; do
+  not add a separate planner-state persistence path.
+- Validation: reject or omit unsupported sculpt tools and unsupported argument
+  hints instead of inventing hidden model-facing parameters.
+- Side effects and recovery: this leaf must not change Blender mode, selection,
+  geometry, or native MCP visibility unless a later implementation explicitly
+  promotes that behavior and covers it with the guided execution gate.
+- Limits and redaction: keep handoff payloads compact and avoid embedding raw
+  debug payloads, provider secrets, local file contents, or unbounded image data.
 
 ## Pseudocode
 

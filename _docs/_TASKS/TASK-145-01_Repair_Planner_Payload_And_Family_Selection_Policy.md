@@ -89,6 +89,13 @@ Build the repair planner as a contract-and-policy upgrade over the current
 - Any richer planner detail must be derived from the same evidence and policy
   result as the compact stage response. Do not create a separate planner
   session, persistence model, router flow, or LaBSE-backed planner.
+- Names used in pseudocode such as `RepairPlannerEvidence`,
+  `RepairPlannerDecision`, `repair_planner.select_next_family(...)`, and
+  `planner_summary` are proposed implementation shapes, not existing public API.
+  Implementers must either add them explicitly in the owning contract/service
+  modules or map the same behavior onto the existing
+  `ReferenceRefinementRouteContract` / `ReferenceRefinementHandoffContract`
+  baseline without inventing a second flow.
 
 ## Pseudocode
 
