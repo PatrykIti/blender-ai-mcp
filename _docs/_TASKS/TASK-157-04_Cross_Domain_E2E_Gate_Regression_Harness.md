@@ -93,11 +93,24 @@ def test_creature_gate_completion_blocks_primitive_only_squirrel(blender_scene):
     result = reference_iterate_stage_checkpoint(collection_name="Squirrel")
 
     assert result.completion_blockers
-    eye_gate = required_gate(result.gate_statuses, gate_type="required_part", target_role="eye_pair")
+    eye_gate = required_gate(
+        result.gate_statuses,
+        gate_type="required_part",
+        gate_target_kind="reference_part",
+        target_label="eye_pair",
+    )
     assert eye_gate.status in {"blocked", "failed"}
     assert eye_gate.blocker_reason in {"missing_required_part", "missing_scope"}
-    assert eye_gate.evidence_refs
-    symmetry_gate = required_gate(result.gate_statuses, gate_type="symmetry_pair", target_role="eye_pair")
+    if eye_gate.blocker_reason == "missing_required_part":
+        assert eye_gate.evidence_refs
+    else:
+        assert eye_gate.next_action == "provide_gate_scope"
+    symmetry_gate = required_gate(
+        result.gate_statuses,
+        gate_type="symmetry_pair",
+        gate_target_kind="reference_part",
+        target_label="eye_pair",
+    )
     assert symmetry_gate.status in {"blocked", "failed", "pending"}
     assert any(gate.gate_type == "attachment_seam" and gate.status == "failed" for gate in result.gate_statuses)
     assert result.loop_disposition == "inspect_validate"

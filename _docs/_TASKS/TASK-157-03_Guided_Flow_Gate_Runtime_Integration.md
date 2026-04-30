@@ -105,7 +105,7 @@ For a squirrel-like creature, the intended default cadence is:
 3. repair `Head -> Body` and `Tail -> Body` seams
 4. create `Snout`, `Ear_L`, `Ear_R`, `Eye_L`, `Eye_R`, forelegs, and hindlegs
 5. run the spatial triad plus reference/vision checkpoint
-6. repair failed required gates
+6. repair unresolved required gates
 7. run bounded low-poly form refinement
 8. run final spatial and reference/vision checkpoint
 
@@ -119,13 +119,17 @@ fresh evidence.
 ```python
 def build_guided_response(state):
     gate_summary = summarize_gate_plan(state.gate_plan)
+    checkpoint_loop_disposition = "continue_build"
 
     if gate_summary.has_required_blockers:
-        state.loop_disposition = "inspect_validate"
+        checkpoint_loop_disposition = "inspect_validate"
         state.next_actions = gate_summary.next_actions
-        state.visible_families = visibility_for_gate_blockers(gate_summary)
+        state.allowed_families = visibility_for_gate_blockers(gate_summary)
 
-    return response.with_gate_summary(gate_summary)
+    return response.with_gate_summary(
+        gate_summary,
+        loop_disposition=checkpoint_loop_disposition,
+    )
 
 
 def mark_gates_stale_after_mutation(state, mutation):

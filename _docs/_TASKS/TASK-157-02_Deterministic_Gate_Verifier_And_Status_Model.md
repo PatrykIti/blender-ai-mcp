@@ -54,7 +54,7 @@ into one confidence score.
 | `mesh_metric` | `opening_or_cut`, selected `shape_profile`, dimensions, topology/count checks | Authoritative when the metric directly measures the gate |
 | `silhouette_analysis` | `shape_profile`, coarse `proportion_ratio`, visible contour drift | Bounded supporting context only; must include scope/capture/reference ids and cannot pass gates by itself |
 | `part_segmentation` | Target part masks, region hints, future part-aware profile checks | Supporting evidence only; cannot prove Blender object existence/contact |
-| `classification_score` | Domain/profile or construction-strategy selection | Routing/proposal evidence only; cannot pass gates |
+| `classification_scores` | Domain/profile or construction-strategy score payloads | Routing/proposal evidence only; cannot pass gates |
 | `reference_understanding` | Candidate gate plan, style, required details, construction path | Proposal evidence only; cannot pass gates |
 | LLM prose | Rationale and client guidance | No verifier authority |
 
@@ -95,7 +95,7 @@ authoritative scene/spatial/mesh verifier.
   blockers, stale versions, and evidence refs.
 - Authority boundary: scene/spatial/mesh/assertion evidence owns truth for
   existence, contact, measurements, and final completion. Vision,
-  `reference_understanding`, `classification_score`, and segmentation payloads
+  `reference_understanding`, `classification_scores`, and segmentation payloads
   are never standalone pass evidence.
 - External providers: a verifier must not trigger an implicit SAM/CLIP/VLM call
   to satisfy a missing required source. Missing required evidence returns
@@ -155,7 +155,7 @@ def verify_gate(gate, scene_context):
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/tools/scene/ -v`
-- `rg -n "reference_understanding|part_segmentation|classification_score|quality-gate verifier|scene_truth|spatial_relation|mesh_metric" server/adapters/mcp tests/unit _docs/_TASKS/TASK-157*.md`
+- `rg -n "reference_understanding|part_segmentation|classification_scores|quality-gate verifier|scene_truth|spatial_relation|mesh_metric" server/adapters/mcp tests/unit _docs/_TASKS/TASK-157*.md`
 
 ## Acceptance Criteria
 

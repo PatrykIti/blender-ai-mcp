@@ -56,10 +56,11 @@ plans without turning every domain into a hardcoded workflow:
   "window grid aligned", or "eye pair present"
 - the server maps those proposals into a small generic vocabulary
 - deterministic checks decide whether each gate is `pending`, `blocked`,
-  `passed`, or `failed`
+  `passed`, `failed`, `waived`, or `stale`
 - guided visibility and search can open the right bounded tools for the next
   unresolved gate
-- final completion is blocked by failed required gates, not by prose summaries
+- final completion is blocked by required gates in `pending`, `blocked`,
+  `failed`, or `stale`, not by prose summaries
 
 ## Non-Goals
 
@@ -124,7 +125,7 @@ perception surfaces without making those surfaces responsible for completion:
 | `reference_understanding` | Optional model-readable summary of what attached references depict, expected style, likely parts, and construction path | May propose gates and default correction families; cannot pass gates |
 | `silhouette_analysis` | Deterministic reference/viewport shape metrics from the existing perception layer | May inform `shape_profile` and `proportion_ratio` verifier context when scoped and fresh; cannot pass gates by itself |
 | `part_segmentation` | Optional default-off segmentation sidecar output when configured | May provide target masks or part-region hints; cannot prove Blender object existence or attachment |
-| `classification_score` | Future CLIP-style or model-family classification evidence | May select a domain profile or construction strategy; cannot prove gate completion |
+| `classification_scores` | Future CLIP/SigLIP-style classification payload scores | May select a domain profile or construction strategy; cannot prove gate completion |
 | VLM compare/iterate findings | Bounded visual mismatch or action-hint payloads from the active vision contract profile | May recommend gates, blockers, or tool families and may be linked as bounded provenance/support context; cannot pass gates without separate scene/spatial/mesh/assertion evidence |
 | scene/spatial/mesh/assertion tools | Blender truth evidence | Own object existence, contact, measurement, spatial relation, and final completion decisions |
 
@@ -164,7 +165,7 @@ same bounded evidence/proposal records through the vision/perception layer.
 |---------------|-------|--------------------|
 | `server/adapters/mcp/contracts/` | New gate contracts | Typed MCP-facing models for proposed gates, normalized gates, verifier status, and completion blockers |
 | `server/adapters/mcp/session_capabilities.py` | Guided state | Store active gate plan, statuses, required gates, waivers, and next gate actions |
-| `server/adapters/mcp/areas/reference.py` | Checkpoint loop | Include gate status in compare/iterate outputs and block final completion on failed required gates |
+| `server/adapters/mcp/areas/reference.py` | Checkpoint loop | Include gate status in compare/iterate outputs and block final completion on unresolved required gates |
 | `server/adapters/mcp/contracts/reference.py` | Perception handoff | Reference gate proposals and evidence refs must point at existing reference/vision payload fields instead of duplicating them |
 | `server/adapters/mcp/vision/` | Perception evidence | Existing silhouette/action-hint and optional segmentation outputs may feed gate proposals/evidence through typed refs only |
 | `server/adapters/mcp/areas/scene.py` | Spatial and macro tools | Feed seam/contact/support verification and macro follow-up hints |
@@ -228,14 +229,16 @@ normalized = gate_normalizer.normalize(
     templates=domain_gate_templates.for_profile(session.domain_profile),
 )
 
-session.gate_plan = gate_policy.apply_bounds(normalized)
+# `gate_plan` is added by TASK-157-01; update the frozen session state
+# immutably through the owning session_capabilities helper or replace(...).
+session = replace(session, gate_plan=gate_policy.apply_bounds(normalized))
 
 for gate in session.gate_plan.required_open_gates():
     evidence = gate_verifier.collect_evidence(gate, scene_scope=session.active_target_scope)
     status = gate_verifier.evaluate(gate, evidence)
-    session.gate_plan.update(gate.gate_id, status)
+    session = replace(session, gate_plan=session.gate_plan.with_status(gate.gate_id, status))
 
-if session.gate_plan.has_failed_required_gates():
+if session.gate_plan.has_unresolved_required_gates():
     return GuidedLoopResult(
         loop_disposition="inspect_validate",
         completion_blockers=session.gate_plan.blockers(),
@@ -277,6 +280,7 @@ return maybe_advance_or_complete()
 - Deterministic verification, not LLM prose, owns gate pass/fail status.
 - Guided checkpoints expose active gates, blockers, next actions, and required
   verification evidence.
-- Final completion is blocked while required gates fail.
+- Final completion is blocked while required gates are `pending`, `blocked`,
+  `failed`, or `stale`.
 - Creature and architecture tasks can consume the same substrate with
   domain-specific templates rather than separate hardcoded flows.

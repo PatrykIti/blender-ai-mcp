@@ -19,7 +19,8 @@ remain proposal sources only. They must not become verifier status.
 
 | Path / Module | Expected Change |
 |---------------|-----------------|
-| `server/adapters/mcp/areas/reference.py` | Accept optional gate proposal payload on the existing guided/reference goal/checkpoint path |
+| `server/adapters/mcp/areas/router.py` | If goal-time proposal intake is supported, preserve optional gate proposals on `router_set_goal` before checkpoint normalization |
+| `server/adapters/mcp/areas/reference.py` | Accept optional gate proposal payload on the existing guided/reference checkpoint path |
 | `server/adapters/mcp/contracts/quality_gates.py` | Add intake contract models |
 | `server/adapters/mcp/contracts/reference.py` | Reference proposal sources by stable reference/vision payload identifiers |
 | `server/adapters/mcp/session_capabilities.py` | Store normalized proposals in session state |
@@ -39,7 +40,7 @@ remain proposal sources only. They must not become verifier status.
   provider, model id, `vision_contract_profile`, reference ids, viewport/capture
   ids, and generated evidence ids.
 - `reference_understanding`, `silhouette_analysis`, `part_segmentation`, and
-  `classification_score` inputs may create or refine proposed gates, but they
+  future `classification_scores` inputs may create or refine proposed gates, but they
   must be normalized to `pending` until a verifier produces evidence.
 - The first implementation should not call SAM, CLIP, or another heavy
   perception model. It should only preserve a stable contract for later
@@ -66,11 +67,11 @@ remain proposal sources only. They must not become verifier status.
 
 ```python
 def ingest_llm_gate_proposal(ctx, proposal):
-    state = get_session_capability_state(ctx)
-    if not state.goal or state.guided_flow_state is None:
+    current = get_session_capability_state(ctx)
+    if not current.goal or current.guided_flow_state is None:
         return GateIntakeResult(status="ignored", reason="no_active_goal")
 
-    guided_flow = GuidedFlowStateContract.model_validate(state.guided_flow_state)
+    guided_flow = GuidedFlowStateContract.model_validate(current.guided_flow_state)
     normalized = normalize_gate_plan(
         proposal,
         domain_profile=guided_flow.domain_profile,
@@ -81,8 +82,10 @@ def ingest_llm_gate_proposal(ctx, proposal):
         gate.status = "pending"
         gate.evidence = None
 
-    state.gate_plan = normalized
-    set_session_capability_state(ctx, state)
+    # TASK-157-01 adds gate_plan to the frozen session state; update through
+    # replace(...) or an owning session_capabilities helper, not direct mutation.
+    updated = replace(current, gate_plan=normalized)
+    set_session_capability_state(ctx, updated)
     return GateIntakeResult(status="accepted", gate_plan=normalized)
 
 
@@ -124,7 +127,7 @@ def ingest_reference_gate_proposal(ctx, reference_summary):
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py -v`
-- `rg -n "reference_understanding|part_segmentation|classification_score|status=\\\"passed\\\"" server/adapters/mcp tests/unit/adapters/mcp _docs/_TASKS/TASK-157*.md`
+- `rg -n "reference_understanding|part_segmentation|classification_scores|status=\\\"passed\\\"" server/adapters/mcp tests/unit/adapters/mcp _docs/_TASKS/TASK-157*.md`
 
 ## Acceptance Criteria
 

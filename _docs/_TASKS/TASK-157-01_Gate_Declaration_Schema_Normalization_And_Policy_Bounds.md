@@ -42,7 +42,7 @@ classification, cardinality, safety bounds, and domain template merging.
   required/optional status, and allowed correction families.
 - Gate proposals may also come from `reference_understanding`,
   `silhouette_analysis`, optional `part_segmentation`, future
-  `classification_score`, domain templates, or operator input. Those sources
+  `classification_scores`, domain templates, or operator input. Those sources
   should be represented as provenance, not as trusted pass/fail status.
 - Normalized gates should reserve fields for:
   - `proposal_sources`
@@ -99,7 +99,7 @@ class GateProposalSource(StrEnum):
     DOMAIN_TEMPLATE = "domain_template"
     SILHOUETTE_ANALYSIS = "silhouette_analysis"
     PART_SEGMENTATION = "part_segmentation"
-    CLASSIFICATION_SCORE = "classification_score"
+    CLASSIFICATION_SCORES = "classification_scores"
     OPERATOR_OVERRIDE = "operator_override"
 
 

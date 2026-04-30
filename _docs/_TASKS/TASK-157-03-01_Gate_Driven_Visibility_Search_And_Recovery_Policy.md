@@ -72,9 +72,9 @@ safe mutation inside one still-open build stage.
   outputs. Repair tools remain mutating only when the client explicitly calls
   existing macro/modeling/mesh tools.
 - Family vocabulary: use current `GuidedFlowFamilyLiteral` values for guided
-  visibility (`spatial_context`, `reference_context`, `secondary_parts`,
-  `attachment_alignment`, `checkpoint_iterate`, `inspect_validate`, `finish`,
-  `utility`). Planner-facing `modeling_mesh` remains a
+  visibility (`spatial_context`, `reference_context`, `primary_masses`,
+  `secondary_parts`, `attachment_alignment`, `checkpoint_iterate`,
+  `inspect_validate`, `finish`, `utility`). Planner-facing `modeling_mesh` remains a
   `ReferencePlannerFamilyLiteral` and must be translated to concrete
   mesh/modeling tool names or current guided families before visibility rules
   are materialized.
@@ -145,7 +145,7 @@ def refine_visibility_from_evidence(gate, evidence_refs, visible_families):
         return visible_families | {"reference_context"}
     if has_part_segmentation_target(gate, evidence_refs):
         return narrow_to_gate_target(visible_families, gate.target_region)
-    if has_classification_score_only(evidence_refs):
+    if has_classification_scores_only(evidence_refs):
         return visible_families
     return visible_families
 ```

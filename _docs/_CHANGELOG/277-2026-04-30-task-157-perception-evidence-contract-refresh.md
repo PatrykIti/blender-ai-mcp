@@ -51,13 +51,16 @@ Version: -
 - reinforced the Vision roadmap as the normative bridge for long-form strategy
   aliases such as `mesh_edit`, `material_finish`, `mesh_shade_flat`, and
   `macro_low_poly_*`
+- added a second-pass refinement for unresolved required-gate blockers,
+  immutable gate-plan session updates, current guided-family vocabulary, and
+  gate-only target labels that should not be confused with current guided roles
 
 ## Validation
 
 - `git diff --check`
   - result on this machine: passed
 - targeted consistency grep for `reference_understanding`, `part_segmentation`,
-  `classification_score`, `mesh_edit`, `material_finish`, `mesh_shade_flat`,
+  `classification_scores`, `mesh_edit`, `material_finish`, `mesh_shade_flat`,
   `macro_low_poly`, `SAM`, `CLIP`, and `quality-gate verifier`
   - result on this machine: passed
 - manual docs review against
