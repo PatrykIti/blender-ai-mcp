@@ -91,7 +91,9 @@ small-envelope contract remains umbrella closure work under
 
 ## Changelog Impact
 
-- include in the TASK-145 changelog entry when this ships
+- changelog already recorded in
+  `_docs/_CHANGELOG/238-2026-04-14-compact-iterate-and-organic-seating-planner.md`
+- umbrella closeout should reference that entry if needed
 
 ## Status / Closeout Note
 

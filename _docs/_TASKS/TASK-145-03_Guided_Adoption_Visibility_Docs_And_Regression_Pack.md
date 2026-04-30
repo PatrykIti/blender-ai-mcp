@@ -63,23 +63,25 @@ adoption path:
 ## Pseudocode
 
 ```python
-stage_result = reference_iterate_stage_checkpoint(ctx, preset_profile="compact")
-planner_handoff = stage_result.refinement_handoff
-session_state = await get_session_capability_state_async(ctx)
-
-visible_tools = build_visibility_rules(
-    surface_profile=session_state.surface_profile or "llm-guided",
-    phase=session_state.phase,
-    guided_handoff=session_state.guided_handoff,
-    guided_flow_state=session_state.guided_flow_state,
+# V1 can keep planner_handoff response-local and make no native visibility
+# change. If planner_handoff must affect native visibility, wire the bounded
+# visibility facts into the existing reference iteration / session-capability
+# path before that path applies visibility.
+planner_handoff = compare_result.refinement_handoff
+advanced_state = await advance_guided_flow_from_iteration_async(
+    ctx,
+    loop_disposition=loop_disposition,
 )
+advanced_state = normalize_planner_handoff_visibility_facts(
+    advanced_state,
+    planner_handoff,
+)
+await apply_visibility_for_session_state(ctx, advanced_state)
 
-await apply_visibility_for_session_state(ctx, session_state)
-
-# If planner_handoff must affect native visibility, first normalize only the
-# bounded visibility facts into the existing guided_handoff / guided_flow_state
-# persistence path. Search/discovery remains covered by the existing search
-# metadata and test_search_surface.py, not a second planner catalog.
+# `normalize_planner_handoff_visibility_facts(...)` is a proposed pseudocode
+# shape. Implement it by extending existing guided_handoff / guided_flow_state
+# handling, not by adding planner_state or a second catalog. Search/discovery
+# remains covered by existing search metadata and test_search_surface.py.
 ```
 
 ## Repository Touchpoints

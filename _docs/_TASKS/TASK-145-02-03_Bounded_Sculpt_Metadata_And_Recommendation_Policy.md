@@ -38,6 +38,28 @@ brush/setup or broad whole-mesh sculpt paths by accident.
   gate must block visible sculpt mutators whose family is not allowed by the
   current `guided_flow_state`.
 
+## Runtime / Security Contract
+
+- Visibility level: sculpt tools remain hidden by default on `llm-guided`.
+  Handoff metadata may recommend a bounded deterministic subset, but visibility
+  does not change unless the implementation explicitly normalizes that bounded
+  fact into existing `guided_handoff` / `guided_flow_state`.
+- Behavior: handoff metadata is read-only; every `sculpt_*` tool is mutating and
+  must remain behind guided visibility and guided execution gates.
+- Session/auth assumptions: stdio and Streamable HTTP must derive any sculpt
+  visibility from the same session state. Local Blender RPC stays behind the
+  existing server/addon connection and is not a new public client auth boundary.
+- Parameter validation: reject or omit unsupported sculpt tools, unsupported
+  families, unsupported argument hints, and caller-supplied role/family spoofing.
+  Do not introduce hidden model-facing sculpt arguments.
+- Side effects and recovery: do not change Blender mode, selection, geometry, or
+  native MCP visibility from metadata alone. Any visibility change must refresh
+  in the active MCP request path and remain recoverable through
+  `router_get_status` / the existing visibility refresh path.
+- Limits and redaction: keep handoff/search payloads compact and avoid provider
+  secrets, local file contents beyond configured artifact references, or
+  unbounded image/debug data in logs or responses.
+
 ## Pseudocode
 
 ```python
@@ -68,6 +90,8 @@ else:
 - `server/adapters/mcp/transforms/visibility_policy.py`
 - `server/adapters/mcp/router_helper.py`
 - `server/router/infrastructure/tools_metadata/sculpt/`
+- `_docs/_ROUTER/README.md` or the focused guided execution policy docs when
+  guided sculpt execution mapping / fail-closed behavior changes
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_guided_mode.py`
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
@@ -94,11 +118,14 @@ else:
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
 - `_docs/_PROMPTS/README.md`
+- `_docs/_ROUTER/README.md` or focused guided execution policy docs when guided
+  sculpt execution mapping / fail-closed behavior changes
 
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_guided_mode.py`
+- `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 

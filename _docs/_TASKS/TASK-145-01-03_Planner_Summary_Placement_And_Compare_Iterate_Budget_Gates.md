@@ -27,8 +27,12 @@ Decide exactly where planner data lives in the staged reference loop so that:
   contract fields or a local builder/helper. Do not assume
   `ReferenceHybridBudgetControlContract` has mutating helper methods beyond the
   existing contract/model API.
-- If a separate detail retrieval surface is introduced, it should be read-only,
-  bounded, and backed by the current stage state.
+- V1 should first use the existing `preset_profile="rich"` and compare/iterate
+  response contracts for richer planner detail. A separate detail retrieval
+  surface is allowed only if it reuses an explicit existing checkpoint/session
+  artifact lifetime; do not add a new `planner_state` persistence model.
+- If a separate detail retrieval surface is introduced later, it should be
+  read-only, bounded, and backed by the current stage state.
 - Any new planner-detail MCP surface must document the runtime/security
   contract required by `AGENTS.md`: visibility level, read-only behavior,
   stdio/Streamable HTTP/local RPC assumptions, parameter validation,

@@ -65,21 +65,25 @@ artifacts on `llm-guided` so they stay:
 ## Pseudocode
 
 ```python
-stage_result = reference_iterate_stage_checkpoint(ctx, preset_profile="compact")
-session_state = await get_session_capability_state_async(ctx)
-
-# If stage_result.refinement_handoff needs to affect native visibility, persist
-# only the bounded visibility facts through the existing guided_handoff /
-# guided_flow_state path before applying visibility.
-# Sculpt unlock is allowed only after the same tool subset is mapped/enforced by
-# guided execution policy.
-rules = build_visibility_rules(
-    surface_profile=session_state.surface_profile or "llm-guided",
-    phase=session_state.phase,
-    guided_handoff=session_state.guided_handoff,
-    guided_flow_state=session_state.guided_flow_state,
+# V1 can keep refinement_handoff response-local and make no native visibility
+# change. If handoff state must affect native visibility, integrate the bounded
+# visibility facts before the existing session-capability path applies
+# visibility.
+planner_handoff = compare_result.refinement_handoff
+advanced_state = await advance_guided_flow_from_iteration_async(
+    ctx,
+    loop_disposition=loop_disposition,
 )
-await apply_visibility_for_session_state(ctx, session_state)
+advanced_state = normalize_planner_handoff_visibility_facts(
+    advanced_state,
+    planner_handoff,
+)
+await apply_visibility_for_session_state(ctx, advanced_state)
+
+# Sculpt unlock is allowed only after the same tool subset is mapped/enforced by
+# guided execution policy. The normalization helper name is illustrative; extend
+# existing guided_handoff / guided_flow_state handling instead of adding a second
+# planner catalog or planner_state persistence model.
 ```
 
 ## Repository Touchpoints
@@ -90,6 +94,8 @@ await apply_visibility_for_session_state(ctx, session_state)
 - `server/adapters/mcp/platform/capability_manifest.py`
 - `server/adapters/mcp/contracts/guided_flow.py`
 - `server/adapters/mcp/router_helper.py`
+- `_docs/_ROUTER/README.md` or the focused guided execution policy docs when
+  guided sculpt execution mapping / fail-closed behavior changes
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_guided_mode.py`
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
@@ -119,6 +125,8 @@ await apply_visibility_for_session_state(ctx, session_state)
 
 - `_docs/_PROMPTS/README.md`
 - `_docs/_MCP_SERVER/README.md`
+- `_docs/_ROUTER/README.md` or focused guided execution policy docs when guided
+  sculpt execution mapping / fail-closed behavior changes
 
 ## Tests To Add/Update
 
