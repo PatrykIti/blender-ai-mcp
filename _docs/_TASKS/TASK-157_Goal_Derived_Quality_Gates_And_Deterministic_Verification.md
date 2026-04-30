@@ -73,8 +73,8 @@ This umbrella deliberately does not:
 - create a creature-only, building-only, or other domain-hardcoded completion
   flow; domain tasks consume this generic gate substrate
 - replace `TASK-140`; external model-family evidence remains provider/profile
-  support evidence unless a server-owned verifier maps a bounded payload into a
-  supported gate evidence type
+  diagnostics and proposal/support provenance, while gate pass/fail must cite
+  server-owned scene/spatial/mesh/assertion evidence
 - introduce a parallel discovery, visibility, or public router-strategy flow
   when existing FastMCP visibility, guided state, router metadata, and
   reference-stage contracts can be extended
@@ -125,7 +125,7 @@ perception surfaces without making those surfaces responsible for completion:
 | `silhouette_analysis` | Deterministic reference/viewport shape metrics from the existing perception layer | May inform `shape_profile` and `proportion_ratio` verifier context when scoped and fresh; cannot pass gates by itself |
 | `part_segmentation` | Optional default-off segmentation sidecar output when configured | May provide target masks or part-region hints; cannot prove Blender object existence or attachment |
 | `classification_score` | Future CLIP-style or model-family classification evidence | May select a domain profile or construction strategy; cannot prove gate completion |
-| VLM compare/iterate findings | Bounded visual mismatch or action-hint payloads from the active vision contract profile | May recommend gates, blockers, or tool families; must remain advisory unless mapped to a verifier-supported evidence type |
+| VLM compare/iterate findings | Bounded visual mismatch or action-hint payloads from the active vision contract profile | May recommend gates, blockers, or tool families and may be linked as bounded provenance/support context; cannot pass gates without separate scene/spatial/mesh/assertion evidence |
 | scene/spatial/mesh/assertion tools | Blender truth evidence | Own object existence, contact, measurement, spatial relation, and final completion decisions |
 
 The first implementation should reserve explicit fields for:

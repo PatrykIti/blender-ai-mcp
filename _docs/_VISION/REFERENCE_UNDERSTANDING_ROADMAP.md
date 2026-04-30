@@ -9,6 +9,10 @@ is useful strategy input, but it is not itself the implementation contract. This
 document is the shorter normative bridge between that strategy, the current
 Vision runtime, and the task families that should implement it.
 
+When the long-form plan names draft families or tools that are absent from the
+current MCP surface and router metadata, treat them as strategy aliases or
+future candidates and normalize them through this roadmap before implementation.
+
 ## Problem
 
 The current reference-guided loop is strongest after a scene already exists:
@@ -180,6 +184,8 @@ should not become new planner families by default:
   `macro_low_poly_facet_refine`, and similar `macro_low_poly_*` names remain
   proposed `TASK-135-03`/follow-on candidates until they exist in the MCP
   surface and router metadata
+- Long-form examples that list those names as allowed tools are illustrative
+  strategy sketches, not a current implementation contract.
 
 ## Construction Path Policy
 

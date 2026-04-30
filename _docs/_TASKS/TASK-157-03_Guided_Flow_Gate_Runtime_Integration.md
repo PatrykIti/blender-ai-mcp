@@ -17,15 +17,15 @@ gate boundaries instead of after every single safe in-stage mutation.
 
 | Path / Module | Expected Change |
 |---------------|-----------------|
-| `server/adapters/mcp/session_capabilities.py` | Add active gate state, versioning, stale markers, blockers |
+| `server/adapters/mcp/session_capabilities.py` | Add active gate state, versioning, stale markers, blockers, and centralized gate dirtying metadata |
 | `server/adapters/mcp/contracts/guided_flow.py` | Represent spatial refresh cadence, stale-but-continuable state, and hard refresh blockers |
 | `server/adapters/mcp/transforms/visibility_policy.py` | Expose tool families based on unresolved gates |
 | `server/adapters/mcp/discovery/search_documents.py` | Bias search by gate type and correction family |
 | `server/adapters/mcp/areas/reference.py` | Include gate state and optional reference-understanding/gate-proposal summaries in compare/iterate responses |
 | `server/adapters/mcp/vision/` | Provide cached perception evidence refs at stage checkpoints without forcing external calls after every mutation |
-| `server/adapters/mcp/areas/modeling.py` | Mark relevant gates stale after mutating tool calls |
-| `server/adapters/mcp/areas/mesh.py` | Mark relevant gates stale after mesh edits |
-| `server/adapters/mcp/router_helper.py` | Preserve mutation dirtying while allowing same-step continuation when policy permits it |
+| `server/adapters/mcp/router_helper.py` | Extend routed/finalizer dirtying so mutating tools invalidate gates while allowing same-step continuation when policy permits it |
+| `server/adapters/mcp/areas/modeling.py` | Add explicit mutation metadata only when centralized dirtying cannot infer affected gate scopes |
+| `server/adapters/mcp/areas/mesh.py` | Add explicit mutation metadata only when centralized dirtying cannot infer affected gate scopes |
 | `tests/unit/adapters/mcp/test_guided_flow_state_contract.py` | Cadence contract and stale-versus-blocking state tests |
 | `tests/unit/adapters/mcp/test_visibility_policy.py` | Gate-driven visibility tests |
 | `tests/unit/adapters/mcp/test_reference_images.py` | Checkpoint payload and completion-blocker tests |
@@ -46,7 +46,8 @@ gate boundaries instead of after every single safe in-stage mutation.
   - `next_gate_actions`
   - `recommended_bounded_tools`
 - When references are attached before any scene exists, the guided loop may run
-  or reuse a bounded pre-build reference-understanding pass to propose a first
+  a future bounded pre-build reference-understanding pass, or reuse one once the
+  reference-understanding/gate-proposal contract has shipped, to propose a first
   gate plan and construction path. That pass must not mark gates complete.
 - Final completion must fail closed when required gates are unresolved.
 
@@ -95,7 +96,8 @@ The target runtime state should support three distinct states:
 
 For a squirrel-like creature, the intended default cadence is:
 
-0. after `router_set_goal` and reference attach, produce or reuse
+0. after `router_set_goal` and reference attach, once the future
+   reference-understanding contract exists, produce or reuse
    `reference_understanding` to propose required parts, expected style,
    construction path, and gate plan
 1. create `Body`, `Head`, and `Tail` primary masses

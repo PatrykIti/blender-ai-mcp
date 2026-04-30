@@ -192,6 +192,9 @@ def refine_visibility_from_evidence(gate, evidence_refs, visible_families):
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py -v`
+- The grep below is a drift sentinel. Hits for `mesh_edit`,
+  `material_finish`, `mesh_shade_flat`, or `macro_low_poly_*` must remain
+  non-canonical aliases/future proposals unless a dedicated contract adds them.
 - `rg -n "macro_attachment|macro_profile|macro_cutout|inspect_assert|mesh_edit|material_finish|mesh_shade_flat|macro_low_poly" _docs/_TASKS/TASK-157*.md _docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md server/adapters/mcp server/router/infrastructure/tools_metadata`
 
 ## Acceptance Criteria

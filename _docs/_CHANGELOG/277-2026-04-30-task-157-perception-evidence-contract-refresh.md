@@ -40,6 +40,17 @@ Version: -
 - aligned intake and E2E pseudocode with current live seams by using
   `state.goal` / `guided_flow_state` and naming `TASK-157-03` gate response
   fields as new checkpoint-contract additions
+- tightened the post-audit `TASK-157` boundary so provider/profile diagnostics
+  and VLM compare findings stay provenance/support context, while gate pass/fail
+  must cite server-owned scene/spatial/mesh/assertion evidence
+- aligned `TASK-157-03` implementability notes with the current centralized
+  guided dirtying/finalizer path in `session_capabilities.py` and
+  `router_helper.py`
+- clarified that pre-build `reference_understanding` remains future/proposed
+  until the reference-understanding/gate-proposal contract ships
+- reinforced the Vision roadmap as the normative bridge for long-form strategy
+  aliases such as `mesh_edit`, `material_finish`, `mesh_shade_flat`, and
+  `macro_low_poly_*`
 
 ## Validation
 
