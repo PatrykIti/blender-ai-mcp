@@ -59,14 +59,19 @@ full candidate evidence, silhouette metrics, and duplicated state.
   - compact response still carries enough top findings for LLM execution
   - budget/capability diagnostics show final request cap, not only assistant
     policy budget
+  - contract payload parity for the compact response envelope is carried by the
+    open TASK-145-03-03 regression lane before umbrella closure
   - rich/debug detail remains covered by the open TASK-145-03-03 regression lane
 - E2E:
   - guided stage iterate returns compact payload suitable for direct LLM reading
 
 ## Validation Category
 
-- Unit lane:
+- Closed-slice unit lane:
   `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- Contract parity lane before TASK-145 umbrella closure:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
+  carried by [TASK-145-03-03](./TASK-145-03-03_Regression_Pack_For_Planner_And_Sculpt_Handoff.md)
 - E2E lane before TASK-145 umbrella closure:
   `poetry run pytest tests/e2e/vision/test_reference_stage_truth_handoff.py tests/e2e/vision/test_reference_guided_creature_comparison.py -q`
 - Docs/preflight:
@@ -91,6 +96,10 @@ full candidate evidence, silhouette metrics, and duplicated state.
 - E2E validation for direct LLM-readability is deferred to
   [TASK-145-03-03](./TASK-145-03-03_Regression_Pack_For_Planner_And_Sculpt_Handoff.md)
   before TASK-145 can close
+- `test_contract_payload_parity.py` was listed as a contract owner for this
+  response shape, but no parity validation was recorded in the implementation
+  closeout. That parity gate is carried forward by TASK-145-03-03 before the
+  umbrella can close.
 
 ## Completion Summary
 
@@ -101,6 +110,9 @@ full candidate evidence, silhouette metrics, and duplicated state.
 - no dedicated debug retrieval tool was added in this slice; full rich/debug
   retrieval remains open umbrella work tracked by TASK-145-03-03
 - validation: `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- contract parity validation was not recorded for this closed slice; the
+  explicit `test_contract_payload_parity.py` gate remains required under
+  TASK-145-03-03 before TASK-145 umbrella closure
 - docs updated: `_docs/_MCP_SERVER/README.md`,
   `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`, and
   `_docs/_VISION/README.md`

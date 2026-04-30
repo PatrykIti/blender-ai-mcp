@@ -95,8 +95,13 @@ Recent runs show a repeated failure mode:
 ## Status / Closeout Note
 
 - this closed leaf covers the implemented mesh-aware seating policy and
-  `macro_attach_part_to_surface` improvement only; the remaining macro warning
-  and dependent-part guard stay open under TASK-145-03-03
+  `macro_attach_part_to_surface` improvement only; the remaining
+  `macro_align_part_with_contact` warning/blocking lane and dependent-part guard
+  stay open under TASK-145-03-03
+- `test_macro_align_part_with_contact.py` was listed in the broader unit lane,
+  but the implementation closeout did not record that gate. Its remaining
+  warning/blocking coverage is carried forward by TASK-145-03-03 before the
+  umbrella can close.
 - Blender-backed rounded-part E2E remains required before TASK-145 closure and
   is tracked under
   [TASK-145-03-03](./TASK-145-03-03_Regression_Pack_For_Planner_And_Sculpt_Handoff.md)
@@ -113,6 +118,9 @@ Recent runs show a repeated failure mode:
 - no new macro was added; the behavior landed as an improved existing
   `macro_attach_part_to_surface`
 - validation: `PYTHONPATH=. poetry run pytest tests/unit/tools/macro/test_macro_attach_part_to_surface.py tests/unit/adapters/mcp/test_reference_images.py -q`
+- `test_macro_align_part_with_contact.py` was not recorded in this closed-slice
+  validation; the remaining align warning/blocking and dependent-part guard
+  coverage stays required under TASK-145-03-03
 - acceptance closeout: the implemented slice resolves the intersecting /
   embedded rounded-seam mesh-aware seating criteria through
   `macro_attach_part_to_surface`. Broad head/body, tail/body, limb/body E2E
