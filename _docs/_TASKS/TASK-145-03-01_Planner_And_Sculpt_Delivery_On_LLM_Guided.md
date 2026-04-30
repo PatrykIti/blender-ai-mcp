@@ -66,7 +66,7 @@ artifacts on `llm-guided` so they stay:
 
 ```python
 stage_result = reference_iterate_stage_checkpoint(ctx, preset_profile="compact")
-session_state = get_session_capability_state(ctx)
+session_state = await get_session_capability_state_async(ctx)
 
 # If stage_result.refinement_handoff needs to affect native visibility, persist
 # only the bounded visibility facts through the existing guided_handoff /
@@ -74,18 +74,12 @@ session_state = get_session_capability_state(ctx)
 # Sculpt unlock is allowed only after the same tool subset is mapped/enforced by
 # guided execution policy.
 rules = build_visibility_rules(
-    surface_profile="llm-guided",
-    phase=current_guided_phase(ctx),
+    surface_profile=session_state.surface_profile or "llm-guided",
+    phase=session_state.phase,
     guided_handoff=session_state.guided_handoff,
     guided_flow_state=session_state.guided_flow_state,
 )
-await apply_session_visibility(
-    ctx,
-    surface_profile="llm-guided",
-    phase=current_guided_phase(ctx),
-    guided_handoff=session_state.guided_handoff,
-    guided_flow_state=session_state.guided_flow_state,
-)
+await apply_visibility_for_session_state(ctx, session_state)
 ```
 
 ## Repository Touchpoints
