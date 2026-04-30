@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v3.1.1 (2026-04-30)
+
+### Bug Fixes
+
+- Streamable guided session state and plan goal-derived quality gates
+  ([#34](https://github.com/PatrykIti/blender-ai-mcp/pull/34),
+  [`d2471eb`](https://github.com/PatrykIti/blender-ai-mcp/commit/d2471eb7f102fe839b636b7476690255a8456cd4))
+
+
 ## v3.1.0 (2026-04-27)
 
 ### Features
