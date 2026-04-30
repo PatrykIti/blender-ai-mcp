@@ -29,6 +29,10 @@ class Config(BaseSettings):
     MCP_TASK_TIMEOUT_SECONDS: float = Field(default=300.0, gt=0, description="Background MCP task timeout")
     RPC_TIMEOUT_SECONDS: float = Field(default=30.0, gt=0, description="RPC socket timeout")
     ADDON_EXECUTION_TIMEOUT_SECONDS: float = Field(default=30.0, gt=0, description="Blender addon execution timeout")
+    MCP_PROMPTS_AS_TOOLS_ENABLED: bool = Field(
+        default=True,
+        description="Expose prompt assets through tool-compatible list_prompts/get_prompt bridge tools",
+    )
     MCP_HTTP_HOST: str = Field(default="127.0.0.1", description="Host for streamable HTTP MCP mode")
     MCP_HTTP_PORT: int = Field(default=8000, gt=0, description="Port for streamable HTTP MCP mode")
     MCP_STREAMABLE_HTTP_PATH: str = Field(default="/mcp", description="HTTP path for streamable MCP mode")
@@ -204,6 +208,9 @@ def get_config() -> Config:
         MCP_TASK_TIMEOUT_SECONDS=float(os.getenv("MCP_TASK_TIMEOUT_SECONDS", 300.0)),
         RPC_TIMEOUT_SECONDS=float(os.getenv("RPC_TIMEOUT_SECONDS", 30.0)),
         ADDON_EXECUTION_TIMEOUT_SECONDS=float(os.getenv("ADDON_EXECUTION_TIMEOUT_SECONDS", 30.0)),
+        MCP_PROMPTS_AS_TOOLS_ENABLED=(
+            os.getenv("MCP_PROMPTS_AS_TOOLS_ENABLED", "true").lower() not in {"0", "false", "no"}
+        ),
         MCP_HTTP_HOST=os.getenv("MCP_HTTP_HOST", "127.0.0.1"),
         MCP_HTTP_PORT=int(os.getenv("MCP_HTTP_PORT", 8000)),
         MCP_STREAMABLE_HTTP_PATH=os.getenv("MCP_STREAMABLE_HTTP_PATH", "/mcp"),

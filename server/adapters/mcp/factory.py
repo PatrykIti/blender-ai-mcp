@@ -72,6 +72,7 @@ def build_server(
     server._bam_transform_count = len(transforms)
     server._bam_transform_pipeline = tuple(stage.name for stage in pipeline)
     server._bam_timeout_policy = timeout_policy
+    server._bam_prompts_as_tools_enabled = config.MCP_PROMPTS_AS_TOOLS_ENABLED
     server._bam_delivery_mode = surface.delivery_mode
     server._bam_contract_line = surface.default_contract_line
     server._bam_task_runtime_report = task_runtime_report

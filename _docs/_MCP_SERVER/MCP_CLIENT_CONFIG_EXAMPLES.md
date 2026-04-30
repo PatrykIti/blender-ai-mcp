@@ -219,6 +219,7 @@ docker run --rm \
   -e MCP_HTTP_HOST=0.0.0.0 \
   -e MCP_HTTP_PORT=8000 \
   -e MCP_STREAMABLE_HTTP_PATH=/mcp \
+  -e MCP_PROMPTS_AS_TOOLS_ENABLED=false \
   -e BLENDER_RPC_HOST=host.docker.internal \
   -e PYTHONUNBUFFERED=1 \
   ghcr.io/patrykiti/blender-ai-mcp:latest
@@ -240,6 +241,10 @@ docker run --rm \
 Do **not** combine `command: "docker"` and `type: "http"` in the same MCP
 entry. That mixes local stdio process startup with remote HTTP connection
 semantics and will not work reliably.
+
+For prompt-capable HTTP clients, keep native MCP prompts and disable the prompt
+bridge with `MCP_PROMPTS_AS_TOOLS_ENABLED=false` to reduce tool-catalog churn.
+Set it to `true` only for clients that cannot consume native prompt components.
 
 ## Docker Guided + OpenRouter Vision
 

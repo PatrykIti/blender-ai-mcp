@@ -4,10 +4,16 @@ Router Helper for MCP Tools.
 Provides utilities for routing tool calls through SupervisorRouter.
 """
 
+import asyncio
+import contextvars
+import functools
+import inspect
 import logging
 import re
 from ast import literal_eval
 from typing import Any, Callable, Dict, List, Literal, Optional, cast
+
+from fastmcp import Context
 
 from server.adapters.mcp.context_utils import ctx_warning
 from server.adapters.mcp.contracts.correction_audit import (
@@ -22,12 +28,17 @@ from server.adapters.mcp.execution_report import ExecutionStep, MCPExecutionRepo
 from server.adapters.mcp.guided_naming_policy import evaluate_guided_object_name
 from server.adapters.mcp.session_capabilities import (
     get_session_capability_state,
+    get_session_capability_state_async,
     is_guided_spatial_state_dirtying_operation,
     mark_guided_spatial_state_stale,
+    mark_guided_spatial_state_stale_async,
     record_router_execution_outcome,
     remove_guided_part_registrations,
+    remove_guided_part_registrations_async,
     rename_guided_part_registration,
+    rename_guided_part_registration_async,
     resolve_guided_role_group_for_domain,
+    set_session_capability_state_async,
 )
 from server.adapters.mcp.session_state import set_session_value
 from server.adapters.mcp.transforms.visibility_policy import GUIDED_SPATIAL_SUPPORT_TOOLS, resolve_guided_tool_family
@@ -73,6 +84,10 @@ _CREATED_OBJECT_RESULT_PATTERN = re.compile(r"^Created .+ named '(.+)'$")
 _TRANSFORMED_OBJECT_RESULT_PATTERN = re.compile(r"^Transformed object '(.+)'$")
 _JOINED_OBJECT_RESULT_PATTERN = re.compile(r"^Objects .+ joined into '(.+)'\. Joined count: \d+$")
 _RENAMED_OBJECT_RESULT_PATTERN = re.compile(r"^Renamed '.+' to '(.+)'(?: .*)?$")
+_DEFERRED_GUIDED_ROUTE_REPORTS: contextvars.ContextVar[list[MCPExecutionReport] | None] = contextvars.ContextVar(
+    "deferred_guided_route_reports",
+    default=None,
+)
 
 
 def _is_unmapped_guided_mutating_tool(tool_name: str) -> bool:
@@ -168,23 +183,7 @@ def _result_represents_success(tool_name: str, result: Any) -> bool:
 def _maybe_mark_guided_spatial_state_stale_from_report(report: MCPExecutionReport) -> None:
     """Mark guided spatial state stale after one successful scene mutation."""
 
-    if report.error is not None or not report.steps:
-        return
-
-    dirty_step: ExecutionStep | None = None
-    dirty_family: str | None = None
-    for step in report.steps:
-        if step.error is not None:
-            continue
-        if not _result_represents_success(step.tool_name, step.result):
-            continue
-        step_family = resolve_guided_tool_family(step.tool_name)
-        if not is_guided_spatial_state_dirtying_operation(tool_name=step.tool_name, family=step_family):
-            continue
-        dirty_step = step
-        dirty_family = step_family
-        break
-
+    dirty_step, dirty_family = _first_guided_dirty_step(report)
     if dirty_step is None:
         return
 
@@ -195,6 +194,46 @@ def _maybe_mark_guided_spatial_state_stale_from_report(report: MCPExecutionRepor
     try:
         mark_guided_spatial_state_stale(
             current_ctx,
+            tool_name=dirty_step.tool_name,
+            family=dirty_family,
+            reason=dirty_step.tool_name,
+        )
+    except Exception:
+        return
+
+
+def _first_guided_dirty_step(report: MCPExecutionReport) -> tuple[ExecutionStep | None, str | None]:
+    """Return the first successful step that invalidates guided spatial facts."""
+
+    if report.error is not None or not report.steps:
+        return None, None
+
+    for step in report.steps:
+        if step.error is not None:
+            continue
+        if not _result_represents_success(step.tool_name, step.result):
+            continue
+        step_family = resolve_guided_tool_family(step.tool_name)
+        if not is_guided_spatial_state_dirtying_operation(tool_name=step.tool_name, family=step_family):
+            continue
+        return step, step_family
+
+    return None, None
+
+
+async def _maybe_mark_guided_spatial_state_stale_from_report_async(
+    ctx: Context,
+    report: MCPExecutionReport,
+) -> None:
+    """Async variant of guided spatial dirty-state recording."""
+
+    dirty_step, dirty_family = _first_guided_dirty_step(report)
+    if dirty_step is None:
+        return
+
+    try:
+        await mark_guided_spatial_state_stale_async(
+            ctx,
             tool_name=dirty_step.tool_name,
             family=dirty_family,
             reason=dirty_step.tool_name,
@@ -268,6 +307,63 @@ def _maybe_sync_guided_part_registry_from_report(report: MCPExecutionReport) -> 
     try:
         remove_guided_part_registrations(
             current_ctx,
+            object_names=[source_name],
+        )
+    except Exception:
+        return
+
+
+async def _maybe_sync_guided_part_registry_from_report_async(ctx: Context, report: MCPExecutionReport) -> None:
+    """Async variant of guided part registry identity cleanup."""
+
+    if report.error is not None or not report.steps:
+        return
+
+    final_step = report.steps[-1]
+    if final_step.tool_name not in {"scene_rename_object", "modeling_join_objects", "modeling_separate_object"}:
+        return
+    if final_step.error is not None:
+        return
+    if not _result_represents_success(final_step.tool_name, final_step.result):
+        return
+
+    if final_step.tool_name == "scene_rename_object":
+        old_name = final_step.params.get("old_name")
+        new_name = _renamed_object_name_from_result(final_step.result) or final_step.params.get("new_name")
+        if not isinstance(old_name, str) or not old_name.strip():
+            return
+        if not isinstance(new_name, str) or not new_name.strip():
+            return
+
+        try:
+            await rename_guided_part_registration_async(
+                ctx,
+                old_name=old_name,
+                new_name=new_name,
+            )
+        except Exception:
+            return
+        return
+
+    if final_step.tool_name == "modeling_join_objects":
+        object_names = final_step.params.get("object_names")
+        if not isinstance(object_names, list):
+            return
+        try:
+            await remove_guided_part_registrations_async(
+                ctx,
+                object_names=[str(name) for name in object_names if str(name).strip()],
+            )
+        except Exception:
+            return
+        return
+
+    source_name = final_step.params.get("name")
+    if not isinstance(source_name, str) or not source_name.strip():
+        return
+    try:
+        await remove_guided_part_registrations_async(
+            ctx,
             object_names=[source_name],
         )
     except Exception:
@@ -1150,17 +1246,125 @@ def route_tool_call(
         prompt=prompt,
     )
     naming_payload = report.policy_context.get("guided_naming") if report.policy_context else None
-    if isinstance(naming_payload, dict) and naming_payload.get("status") == "warning":
+    deferred_reports = _DEFERRED_GUIDED_ROUTE_REPORTS.get()
+    if deferred_reports is not None:
+        deferred_reports.append(report)
+    elif isinstance(naming_payload, dict) and naming_payload.get("status") == "warning":
         current_ctx = _get_active_context()
         if current_ctx is not None and naming_payload.get("message"):
             ctx_warning(current_ctx, str(naming_payload["message"]))
-    _maybe_mark_guided_spatial_state_stale_from_report(report)
-    _maybe_sync_guided_part_registry_from_report(report)
+        _maybe_mark_guided_spatial_state_stale_from_report(report)
+        _maybe_sync_guided_part_registry_from_report(report)
+    elif deferred_reports is None:
+        _maybe_mark_guided_spatial_state_stale_from_report(report)
+        _maybe_sync_guided_part_registry_from_report(report)
     if report.error is None and len(report.steps) == 1:
         result = report.steps[0].result
         if not isinstance(result, str):
             return result
     return report.to_legacy_text()
+
+
+async def finalize_route_tool_call_report_async(ctx: Context, report: MCPExecutionReport) -> None:
+    """Apply guided route finalizers using awaited FastMCP state/visibility writes."""
+
+    naming_payload = report.policy_context.get("guided_naming") if report.policy_context else None
+    if isinstance(naming_payload, dict) and naming_payload.get("status") == "warning" and naming_payload.get("message"):
+        ctx_warning(ctx, str(naming_payload["message"]))
+    await _maybe_mark_guided_spatial_state_stale_from_report_async(ctx, report)
+    await _maybe_sync_guided_part_registry_from_report_async(ctx, report)
+
+
+async def route_tool_call_async(
+    ctx: Context,
+    *,
+    tool_name: str,
+    params: Dict[str, Any],
+    direct_executor: Callable[[], Any],
+    prompt: Optional[str] = None,
+) -> Any:
+    """Async route wrapper that awaits guided state finalizers on native FastMCP requests."""
+
+    state = await get_session_capability_state_async(ctx)
+    await set_session_capability_state_async(ctx, state)
+    token = None
+    current_context = None
+    try:
+        from fastmcp.server.context import _current_context  # type: ignore
+
+        current_context = _current_context
+        token = current_context.set(ctx)
+    except Exception:
+        current_context = None
+        token = None
+    try:
+        report = await asyncio.to_thread(
+            route_tool_call_report,
+            tool_name=tool_name,
+            params=params,
+            direct_executor=direct_executor,
+            prompt=prompt,
+        )
+    finally:
+        if current_context is not None and token is not None:
+            current_context.reset(token)
+
+    await finalize_route_tool_call_report_async(ctx, report)
+    if report.error is None and len(report.steps) == 1:
+        result = report.steps[0].result
+        if not isinstance(result, str):
+            return result
+    return report.to_legacy_text()
+
+
+def needs_async_guided_route_finalizers(tool_name: str) -> bool:
+    """Return True when a public sync tool should defer guided finalizers to async registration."""
+
+    family = resolve_guided_tool_family(tool_name)
+    return is_guided_spatial_state_dirtying_operation(tool_name=tool_name, family=family)
+
+
+def wrap_sync_tool_for_async_guided_finalizers(fn: Callable[..., Any], *, tool_name: str) -> Callable[..., Any]:
+    """Wrap dirty sync tools so Streamable HTTP awaits guided post-route state writes."""
+
+    if inspect.iscoroutinefunction(fn) or not needs_async_guided_route_finalizers(tool_name):
+        return fn
+
+    signature = inspect.signature(fn)
+
+    @functools.wraps(fn)
+    async def _wrapped(*args: Any, **kwargs: Any) -> Any:
+        ctx = args[0] if args else kwargs.get("ctx")
+        if not isinstance(ctx, Context):
+            return await asyncio.to_thread(fn, *args, **kwargs)
+
+        state = await get_session_capability_state_async(ctx)
+        await set_session_capability_state_async(ctx, state)
+        deferred_reports: list[MCPExecutionReport] = []
+        reports_token = _DEFERRED_GUIDED_ROUTE_REPORTS.set(deferred_reports)
+        context_token = None
+        current_context = None
+        try:
+            try:
+                from fastmcp.server.context import _current_context  # type: ignore
+
+                current_context = _current_context
+                context_token = current_context.set(ctx)
+            except Exception:
+                current_context = None
+                context_token = None
+            result = await asyncio.to_thread(fn, *args, **kwargs)
+        finally:
+            if current_context is not None and context_token is not None:
+                current_context.reset(context_token)
+            _DEFERRED_GUIDED_ROUTE_REPORTS.reset(reports_token)
+
+        for report in deferred_reports:
+            await finalize_route_tool_call_report_async(ctx, report)
+        return result
+
+    _wrapped.__signature__ = signature  # type: ignore[attr-defined]
+    return _wrapped
 
 
 def execute_routed_sequence(tools: List[Dict[str, Any]]) -> str:

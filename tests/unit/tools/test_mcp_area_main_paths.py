@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import asyncio
 from unittest.mock import MagicMock
 
 import pytest
+from server.adapters.mcp.execution_context import MCPExecutionContext
+from server.adapters.mcp.execution_report import ExecutionStep, MCPExecutionReport
 from server.adapters.mcp.session_capabilities import SessionCapabilityState
 from server.adapters.mcp.session_phase import SessionPhase
 
@@ -398,6 +401,444 @@ def test_modeling_transform_object_registers_guided_role_with_apostrophe_name(mo
         result == "[Step 1: scene_set_mode] OK\n[Step 2: modeling_transform_object] Transformed object 'King's Crown'"
     )
     assert recorded == [("King's Crown", "detail_part", None)]
+
+
+def test_modeling_transform_object_registers_guided_role_with_corrected_result_name(monkeypatch):
+    recorded: list[tuple[str, str, str | None]] = []
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.route_tool_call",
+        lambda **kwargs: "Transformed object 'TailRoot'",
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.get_session_capability_state",
+        lambda ctx: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={"flow_id": "guided_creature_flow"},
+        ),
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.register_guided_part_role",
+        lambda ctx, **kwargs: recorded.append((kwargs["object_name"], kwargs["role"], kwargs.get("role_group"))),
+    )
+
+    from server.adapters.mcp.areas.modeling import modeling_transform_object
+
+    result = modeling_transform_object(
+        MagicMock(),
+        name="Tail",
+        scale=[1.0, 1.0, 1.0],
+        guided_role="tail_mass",
+    )
+
+    assert result == "Transformed object 'TailRoot'"
+    assert recorded == [("TailRoot", "tail_mass", None)]
+
+
+def test_async_modeling_transform_finalizes_corrected_result_name_and_warning(monkeypatch):
+    recorded_roles: list[tuple[str, str, str | None]] = []
+    stale_calls: list[tuple[str, str | None]] = []
+    warnings: list[str] = []
+    offloaded_calls: list[tuple[object, tuple[object, ...], dict[str, object]]] = []
+
+    async def hydrate(ctx):
+        return None
+
+    async def get_session_capability_state_async(ctx):
+        return SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={"flow_id": "guided_creature_flow"},
+        )
+
+    async def mark_guided_spatial_state_stale_async(ctx, **kwargs):
+        stale_calls.append((kwargs["tool_name"], kwargs.get("reason")))
+        return await get_session_capability_state_async(ctx)
+
+    async def register_guided_part_role_async(ctx, **kwargs):
+        recorded_roles.append((kwargs["object_name"], kwargs["role"], kwargs.get("role_group")))
+        return await get_session_capability_state_async(ctx)
+
+    report = MCPExecutionReport(
+        context=MCPExecutionContext(
+            tool_name="modeling_transform_object",
+            params={"name": "Tail", "guided_role": "tail_mass"},
+            session_phase="build",
+            surface_profile="llm-guided",
+            guided_tool_family="primary_masses",
+            guided_role="tail_mass",
+        ),
+        router_enabled=True,
+        router_applied=True,
+        router_disposition="corrected",
+        steps=(
+            ExecutionStep(
+                tool_name="modeling_transform_object",
+                params={"name": "TailRoot"},
+                result="Transformed object 'TailRoot'",
+            ),
+        ),
+        policy_context={
+            "guided_naming": {
+                "status": "warning",
+                "message": "Use full semantic object names such as TailRoot.",
+            }
+        },
+    )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling._hydrate_sync_route_session", hydrate)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling._route_tool_call_report_for_context",
+        lambda *args, **kwargs: report,
+    )
+
+    async def to_thread(fn, /, *args, **kwargs):
+        offloaded_calls.append((fn, args, kwargs))
+        return fn(*args, **kwargs)
+
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.asyncio.to_thread", to_thread)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.get_session_capability_state_async",
+        get_session_capability_state_async,
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.mark_guided_spatial_state_stale_async",
+        mark_guided_spatial_state_stale_async,
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.register_guided_part_role_async",
+        register_guided_part_role_async,
+    )
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.ctx_warning", lambda ctx, message: warnings.append(message))
+
+    from server.adapters.mcp.areas.modeling import _modeling_transform_object_impl_async
+
+    result = asyncio.run(
+        _modeling_transform_object_impl_async(
+            MagicMock(),
+            name="Tail",
+            scale=[1.0, 1.0, 1.0],
+            guided_role="tail_mass",
+        )
+    )
+
+    assert result == "Transformed object 'TailRoot'"
+    assert offloaded_calls
+    assert offloaded_calls[0][2]["tool_name"] == "modeling_transform_object"
+    assert stale_calls == [("modeling_transform_object", "modeling_transform_object")]
+    assert recorded_roles == [("TailRoot", "tail_mass", None)]
+    assert warnings == ["Use full semantic object names such as TailRoot."]
+
+
+def test_async_modeling_transform_finalizes_from_report_steps_when_legacy_text_is_not_parseable(monkeypatch):
+    recorded_roles: list[tuple[str, str, str | None]] = []
+    stale_calls: list[tuple[str, str | None]] = []
+
+    async def hydrate(ctx):
+        return None
+
+    async def get_session_capability_state_async(ctx):
+        return SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={"flow_id": "guided_creature_flow"},
+        )
+
+    async def mark_guided_spatial_state_stale_async(ctx, **kwargs):
+        stale_calls.append((kwargs["tool_name"], kwargs.get("reason")))
+        return await get_session_capability_state_async(ctx)
+
+    async def register_guided_part_role_async(ctx, **kwargs):
+        recorded_roles.append((kwargs["object_name"], kwargs["role"], kwargs.get("role_group")))
+        return await get_session_capability_state_async(ctx)
+
+    report = MCPExecutionReport(
+        context=MCPExecutionContext(
+            tool_name="modeling_transform_object",
+            params={"name": "Tail", "guided_role": "tail_mass"},
+            session_phase="build",
+            surface_profile="llm-guided",
+            guided_tool_family="primary_masses",
+            guided_role="tail_mass",
+        ),
+        router_enabled=True,
+        router_applied=True,
+        router_disposition="corrected",
+        steps=(
+            ExecutionStep(tool_name="scene_set_mode", params={"mode": "OBJECT"}, result="OK"),
+            ExecutionStep(
+                tool_name="modeling_transform_object",
+                params={"name": "TailRoot"},
+                result="Transformed object 'TailRoot'",
+            ),
+        ),
+    )
+
+    async def to_thread(fn, /, *args, **kwargs):
+        return fn(*args, **kwargs)
+
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling._hydrate_sync_route_session", hydrate)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling._route_tool_call_report_for_context",
+        lambda *args, **kwargs: report,
+    )
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.asyncio.to_thread", to_thread)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling._legacy_route_report_result",
+        lambda routed_report: "Corrected route completed.",
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.get_session_capability_state_async",
+        get_session_capability_state_async,
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.mark_guided_spatial_state_stale_async",
+        mark_guided_spatial_state_stale_async,
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.register_guided_part_role_async",
+        register_guided_part_role_async,
+    )
+
+    from server.adapters.mcp.areas.modeling import _modeling_transform_object_impl_async
+
+    result = asyncio.run(
+        _modeling_transform_object_impl_async(
+            MagicMock(),
+            name="Tail",
+            scale=[1.0, 1.0, 1.0],
+            guided_role="tail_mass",
+        )
+    )
+
+    assert result == "Corrected route completed."
+    assert stale_calls == [("modeling_transform_object", "modeling_transform_object")]
+    assert recorded_roles == [("TailRoot", "tail_mass", None)]
+
+
+def test_async_modeling_create_offloads_routed_sync_execution(monkeypatch):
+    recorded_roles: list[tuple[str, str, str | None]] = []
+    stale_calls: list[tuple[str, str | None, str | None]] = []
+    offloaded_calls: list[tuple[object, tuple[object, ...], dict[str, object]]] = []
+
+    async def hydrate(ctx):
+        return None
+
+    async def get_session_capability_state_async(ctx):
+        return SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={"flow_id": "guided_creature_flow"},
+        )
+
+    async def mark_guided_spatial_state_stale_async(ctx, **kwargs):
+        stale_calls.append((kwargs["tool_name"], kwargs.get("family"), kwargs.get("reason")))
+        return await get_session_capability_state_async(ctx)
+
+    async def register_guided_part_role_async(ctx, **kwargs):
+        recorded_roles.append((kwargs["object_name"], kwargs["role"], kwargs.get("role_group")))
+        return await get_session_capability_state_async(ctx)
+
+    report = MCPExecutionReport(
+        context=MCPExecutionContext(
+            tool_name="modeling_create_primitive",
+            params={"primitive_type": "Sphere", "name": "Body", "guided_role": "body_core"},
+            session_phase="build",
+            surface_profile="llm-guided",
+            guided_tool_family="primary_masses",
+            guided_role="body_core",
+        ),
+        router_enabled=False,
+        router_applied=False,
+        router_disposition="direct",
+        steps=(
+            ExecutionStep(
+                tool_name="modeling_create_primitive",
+                params={"primitive_type": "Sphere", "name": "Body"},
+                result="Created Sphere named 'Body'",
+            ),
+        ),
+    )
+
+    async def to_thread(fn, /, *args, **kwargs):
+        offloaded_calls.append((fn, args, kwargs))
+        return fn(*args, **kwargs)
+
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling._hydrate_sync_route_session", hydrate)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling._route_tool_call_report_for_context",
+        lambda *args, **kwargs: report,
+    )
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.asyncio.to_thread", to_thread)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.get_session_capability_state_async",
+        get_session_capability_state_async,
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.mark_guided_spatial_state_stale_async",
+        mark_guided_spatial_state_stale_async,
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.register_guided_part_role_async",
+        register_guided_part_role_async,
+    )
+
+    from server.adapters.mcp.areas.modeling import _modeling_create_primitive_impl_async
+
+    result = asyncio.run(
+        _modeling_create_primitive_impl_async(
+            MagicMock(),
+            primitive_type="Sphere",
+            radius=0.5,
+            name="Body",
+            guided_role="body_core",
+        )
+    )
+
+    assert result == "Created Sphere named 'Body'"
+    assert offloaded_calls
+    assert offloaded_calls[0][2]["tool_name"] == "modeling_create_primitive"
+    assert stale_calls == [("modeling_create_primitive", "primary_masses", "modeling_create_primitive")]
+    assert recorded_roles == [("Body", "body_core", None)]
+
+
+def test_async_modeling_create_finalizes_from_report_steps_when_legacy_text_is_not_parseable(monkeypatch):
+    recorded_roles: list[tuple[str, str, str | None]] = []
+    stale_calls: list[tuple[str, str | None, str | None]] = []
+
+    async def hydrate(ctx):
+        return None
+
+    async def get_session_capability_state_async(ctx):
+        return SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={"flow_id": "guided_creature_flow"},
+        )
+
+    async def mark_guided_spatial_state_stale_async(ctx, **kwargs):
+        stale_calls.append((kwargs["tool_name"], kwargs.get("family"), kwargs.get("reason")))
+        return await get_session_capability_state_async(ctx)
+
+    async def register_guided_part_role_async(ctx, **kwargs):
+        recorded_roles.append((kwargs["object_name"], kwargs["role"], kwargs.get("role_group")))
+        return await get_session_capability_state_async(ctx)
+
+    report = MCPExecutionReport(
+        context=MCPExecutionContext(
+            tool_name="modeling_create_primitive",
+            params={"primitive_type": "Sphere", "name": "Body", "guided_role": "body_core"},
+            session_phase="build",
+            surface_profile="llm-guided",
+            guided_tool_family="primary_masses",
+            guided_role="body_core",
+        ),
+        router_enabled=True,
+        router_applied=True,
+        router_disposition="corrected",
+        steps=(
+            ExecutionStep(tool_name="scene_set_mode", params={"mode": "OBJECT"}, result="OK"),
+            ExecutionStep(
+                tool_name="modeling_create_primitive",
+                params={"primitive_type": "Sphere", "name": "Body"},
+                result="Created Sphere named 'Body'",
+            ),
+        ),
+    )
+
+    async def to_thread(fn, /, *args, **kwargs):
+        return fn(*args, **kwargs)
+
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling._hydrate_sync_route_session", hydrate)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling._route_tool_call_report_for_context",
+        lambda *args, **kwargs: report,
+    )
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.asyncio.to_thread", to_thread)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling._legacy_route_report_result",
+        lambda routed_report: "Corrected route completed.",
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.get_session_capability_state_async",
+        get_session_capability_state_async,
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.mark_guided_spatial_state_stale_async",
+        mark_guided_spatial_state_stale_async,
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.register_guided_part_role_async",
+        register_guided_part_role_async,
+    )
+
+    from server.adapters.mcp.areas.modeling import _modeling_create_primitive_impl_async
+
+    result = asyncio.run(
+        _modeling_create_primitive_impl_async(
+            MagicMock(),
+            primitive_type="Sphere",
+            radius=0.5,
+            name="Body",
+            guided_role="body_core",
+        )
+    )
+
+    assert result == "Corrected route completed."
+    assert stale_calls == [("modeling_create_primitive", "primary_masses", "modeling_create_primitive")]
+    assert recorded_roles == [("Body", "body_core", None)]
+
+
+def test_async_scene_clean_marks_spatial_state_stale_from_report_steps_after_correction(monkeypatch):
+    stale_calls: list[tuple[str, str | None]] = []
+
+    async def hydrate(ctx):
+        return None
+
+    async def mark_guided_spatial_state_stale_async(ctx, **kwargs):
+        stale_calls.append((kwargs["tool_name"], kwargs.get("reason")))
+        return SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={"flow_id": "guided_creature_flow"},
+        )
+
+    report = MCPExecutionReport(
+        context=MCPExecutionContext(
+            tool_name="scene_clean_scene",
+            params={"keep_lights_and_cameras": True},
+            session_phase="build",
+            surface_profile="llm-guided",
+            guided_tool_family="utility",
+        ),
+        router_enabled=True,
+        router_applied=True,
+        router_disposition="corrected",
+        steps=(
+            ExecutionStep(tool_name="scene_set_mode", params={"mode": "OBJECT"}, result="OK"),
+            ExecutionStep(
+                tool_name="scene_clean_scene",
+                params={"keep_lights_and_cameras": True},
+                result="Scene cleaned.",
+            ),
+        ),
+    )
+
+    async def to_thread(fn, /, *args, **kwargs):
+        return fn(*args, **kwargs)
+
+    monkeypatch.setattr("server.adapters.mcp.areas.scene._hydrate_sync_route_session", hydrate)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.scene._route_tool_call_report_for_context",
+        lambda *args, **kwargs: report,
+    )
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.asyncio.to_thread", to_thread)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.scene.mark_guided_spatial_state_stale_async",
+        mark_guided_spatial_state_stale_async,
+    )
+
+    from server.adapters.mcp.areas.scene import _scene_clean_scene_async
+
+    result = asyncio.run(_scene_clean_scene_async(MagicMock(), keep_lights_and_cameras=True))
+
+    assert result == "[Step 1: scene_set_mode] OK\n[Step 2: scene_clean_scene] Scene cleaned."
+    assert stale_calls == [("scene_clean_scene", "scene_clean_scene")]
 
 
 def test_sculpt_auto_main_path_delegates_to_handler(monkeypatch):

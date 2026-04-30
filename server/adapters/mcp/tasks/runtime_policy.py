@@ -11,8 +11,8 @@ from importlib.metadata import PackageNotFoundError, version
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
-SUPPORTED_FASTMCP_SPEC = SpecifierSet(">=3.1.1,<3.2.0")
-SUPPORTED_PYDOCKET_SPEC = SpecifierSet(">=0.18.2,<0.19.0")
+SUPPORTED_FASTMCP_SPEC = SpecifierSet(">=3.2.4,<3.3.0")
+SUPPORTED_PYDOCKET_SPEC = SpecifierSet(">=0.19.0,<0.20.0")
 
 
 @dataclass(frozen=True)

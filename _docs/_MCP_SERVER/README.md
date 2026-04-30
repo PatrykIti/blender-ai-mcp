@@ -10,7 +10,7 @@ Documentation for the MCP Server (Client Side).
 - **[FastMCP 3.x Migration Matrix](./fastmcp_3x_migration_matrix.md)**
   - Maps the current flat/runtime-coupled MCP server to the target provider/factory/transform model for TASK-083 through TASK-097.
 - **[Runtime Baseline Matrix](./runtime_baseline_matrix.md)**
-  - Defines the supported Python and FastMCP baseline for the migration series, including 3.1+ feature gates.
+  - Defines the supported Python and FastMCP baseline for the migration series, including the current 3.2 task-runtime line and 3.1+ feature gates.
 - **[FastMCP 3.x Composition Model](./fastmcp_3x_composition.md)**
   - Documents provider groups, surface profiles, transform ordering, and the platform regression harness added during TASK-083.
 - **[Tool Layering Policy](./TOOL_LAYERING_POLICY.md)**
@@ -53,9 +53,10 @@ The MCP server is in the middle of a platform migration tracked by `TASK-083` th
 
 For this task series:
 
-- the task-capable runtime baseline is **FastMCP 3.1.1 + pydocket 0.18.2**
+- the task-capable runtime baseline is **FastMCP 3.2.4 + pydocket 0.19.x**
 - the supported server baseline is **Python 3.11+**
-- **FastMCP 3.1+** remains the line required for built-in Tool Search / BM25, Code Mode work, and the current task-capable surfaces
+- **FastMCP 3.2.x** is the current validated task-capable line
+- **FastMCP 3.1+** remains the historical feature gate for built-in Tool Search / BM25 and Code Mode work
 - the current runtime inventory lives in `server/adapters/mcp/platform/runtime_inventory.py`
 
 The migration matrix and runtime matrix linked above are the canonical audit docs for Gate 0.
@@ -288,16 +289,20 @@ Current visible entry set on `llm-guided`:
 - `router_get_status`
 - `browse_workflows`
 - `reference_images`
-- `list_prompts`
-- `get_prompt`
+- `scene_scope_graph`
+- `scene_relation_graph`
+- `scene_view_diagnostics`
 - `search_tools`
 - `call_tool`
+- optional prompt bridge tools when `MCP_PROMPTS_AS_TOOLS_ENABLED=true`:
+  - `list_prompts`
+  - `get_prompt`
 
 Measured baseline from the current unit suite:
 
 - `legacy-manual`: `179` visible tools, router/workflow capabilities omitted from the namespace
 - `legacy-flat`: `186` visible tools, now fitting in one `tools/list` page by default for compatibility clients
-- `llm-guided`: `8` visible tools
+- `llm-guided`: `9` core visible tools with the prompt bridge disabled, `11` when the bridge is enabled
 
 Search-first behavior now respects guided visibility:
 
@@ -407,6 +412,47 @@ The `llm-guided` surface now has a first complete guided-mode visibility baselin
   runtime-visible tool membership that shapes the actual surface
 - the same runtime-visible tool membership now drives capability diagnostics
   instead of inferring runtime state from manifest/tag overlap alone
+- Streamable HTTP guided-state mutations must be finalized inside the active
+  request/response path. Sync routed tools that dirty spatial or role state
+  should defer post-route guided finalizers to the async MCP wrapper instead of
+  scheduling detached visibility/session writes.
+- Async wrappers that await guided finalizers must still run the original
+  sync router/RPC execution on a worker thread. This keeps slow Blender-backed
+  operations such as modeling, mesh, and bounded macro calls from blocking the
+  Streamable HTTP event loop while finalizers remain awaited on the request
+  path.
+- Async dirty tools must use the awaited async route path when they mutate
+  guided spatial state. This keeps visibility refreshes inside the active
+  request instead of relying on the sync visibility bridge from an already
+  running Streamable HTTP loop.
+- Async spatial helper variants route their Blender-backed graph/diagnostic
+  reads through the async route helper before recording guided spatial-check
+  completion, so slow RPC reads do not block unrelated Streamable HTTP
+  requests.
+- Async guided identity finalizers that validate successful scene renames must
+  keep Blender-backed object-existence checks off the event loop before updating
+  the guided part registry.
+- Native async modeling tools that consume a router execution report directly
+  still have to surface `guided_naming` warnings through the active MCP
+  context. This keeps warning-mode semantic-name feedback visible to clients
+  even when the modeling adapter reads a raw routed report for awaited guided
+  state writes.
+- Native async modeling and cleanup finalizers must derive successful mutations
+  from structured `report.steps`, not rendered legacy route text. Corrected
+  multi-step reports prefix legacy lines with step labels, so legacy text is
+  only the returned compatibility payload and must not decide guided
+  dirty-state or role-registration side effects.
+- Async guided-role registration must reapply FastMCP visibility after the
+  final advanced `guided_flow_state` is stored. Completing required roles can
+  move the flow to a new step, and `list_tools()` should expose that step's
+  visible tools before the Streamable HTTP response completes.
+- Async public tool variants must preserve the original public tool docstrings.
+  This is required for visible guided spatial helpers such as
+  `scene_scope_graph(...)`, `scene_relation_graph(...)`, and
+  `scene_view_diagnostics(...)`, and for guided modeling helpers such as
+  `modeling_create_primitive(...)` and `modeling_transform_object(...)`,
+  because their descriptions carry the model-facing scope, workflow, and
+  argument contract.
 
 This visibility baseline is complete for guided-mode surface shaping.
 Search-first default rollout remains a separate TASK-084 concern.
@@ -668,6 +714,11 @@ Current guided-flow behavior:
   guided-role convenience path still registers against the final successful
   modeling step instead of dropping the role hint just because the call became
   multi-step
+- if the router corrects `modeling_transform_object(...)` to a different valid
+  object name, the convenience path uses the transformed object name returned
+  by the final modeling step for guided role registration and spatial dirty
+  state. It must not decide success by comparing the result to the original
+  caller-supplied `name`.
 - guided-role convenience registration now also handles valid object names
   containing apostrophes, such as `King's Crown`, instead of truncating the
   stored object name
@@ -682,6 +733,10 @@ Current guided-flow behavior:
   real created object name returned by Blender/tool execution, not the raw
   requested primitive token, so role state remains correct for names such as
   `Cube.001` or Blender defaults such as `Suzanne`
+- for `modeling_transform_object(...)`, the convenience path registers and
+  re-arms guided state against the real transformed object name returned by the
+  final routed step, so router-corrected object identity still updates the
+  session for the object that actually changed
 - successful `scene_rename_object(...)` calls now keep the guided part
   registry aligned with the renamed object so later role-sensitive calls can
   still recover the stored role/role_group
@@ -917,9 +972,12 @@ Current payload-pagination coverage includes:
 The prompt layer is now part of the MCP product surface:
 
 - native prompt components expose curated prompt assets from `_docs/_PROMPTS`
-- tool-only clients can use:
+- tool-only clients can use the prompt bridge when
+  `MCP_PROMPTS_AS_TOOLS_ENABLED=true`:
   - `list_prompts`
   - `get_prompt`
+- prompt-capable clients should prefer native MCP prompts and may disable the
+  bridge to keep Streamable HTTP tool catalogs smaller
 - native prompt asset names now include `reference_guided_creature_build`
 - `recommended_prompts` now uses phase/profile plus explicit session goal and
   guided-handoff context to steer creature sessions toward the creature prompt path
@@ -955,7 +1013,7 @@ Current guardrails:
 - the pilot uses FastMCP `CodeMode` on top of the existing composed MCP surface
 - the pilot keeps a read-only allowlist by visibility policy before Code Mode collapses the catalog
 - the sandbox dependency fails fast if `pydantic-monty` is unavailable
-- prompt bridge tools remain available (`list_prompts`, `get_prompt`) alongside Code Mode meta-tools
+- prompt bridge tools can remain available (`list_prompts`, `get_prompt`) alongside Code Mode meta-tools when the bridge is enabled
 
 Current pilot meta-tool surface:
 
@@ -1023,8 +1081,9 @@ Router-aware MCP execution now exposes a correction-transparency baseline on top
 
 The current support policy for the migration track is:
 
-- **Supported task-capable pair**: Python `3.11+` with `fastmcp 3.1.1` and `pydocket 0.18.2`
-- **Required line for current platform work**: FastMCP `3.1.x`
+- **Supported task-capable pair**: Python `3.11+` with `fastmcp 3.2.4` and `pydocket 0.19.x`
+- **Required line for current task-mode platform work**: FastMCP `3.2.x`
+- **Code Mode sandbox dependency**: `pydantic-monty==0.0.11`
 - **Not supported for TASK-083+ migration work**: Python `3.10`
 
 This keeps the runtime policy aligned with the repo's practical dependency set (`sentence-transformers`, `lancedb`, `pyarrow`) and with the now-shipped task-mode surfaces.
@@ -1063,6 +1122,11 @@ For `streamable`, the current supported knobs are:
 - `MCP_HTTP_HOST`
 - `MCP_HTTP_PORT`
 - `MCP_STREAMABLE_HTTP_PATH`
+- `MCP_PROMPTS_AS_TOOLS_ENABLED` controls whether native prompt assets are also
+  exposed as tool-compatible `list_prompts` / `get_prompt` bridge tools. Leave
+  this enabled for tool-only clients. For prompt-capable Streamable HTTP clients
+  that repeatedly fetch large prompt assets as normal tool calls, set it to
+  `false` and use native MCP prompts instead.
 
 Example Streamable HTTP Docker run:
 
@@ -1073,6 +1137,7 @@ docker run --rm \
   -e MCP_HTTP_HOST=0.0.0.0 \
   -e MCP_HTTP_PORT=8000 \
   -e MCP_STREAMABLE_HTTP_PATH=/mcp \
+  -e MCP_PROMPTS_AS_TOOLS_ENABLED=false \
   -e BLENDER_RPC_HOST=host.docker.internal \
   blender-ai-mcp
 ```

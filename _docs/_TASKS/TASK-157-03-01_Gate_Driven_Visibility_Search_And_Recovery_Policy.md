@@ -1,0 +1,144 @@
+# TASK-157-03-01: Gate-Driven Visibility, Search, And Recovery Policy
+
+**Status:** ⏳ To Do
+**Priority:** 🔴 High
+**Parent:** [TASK-157-03](./TASK-157-03_Guided_Flow_Gate_Runtime_Integration.md)
+**Category:** Guided Runtime / Visibility Policy
+**Estimated Effort:** Medium
+
+## Objective
+
+Make unresolved gates open the narrow bounded tool surface needed for the next
+repair, without encouraging the LLM to reset goals, guess hidden tools, or use
+the broad catalog, and without forcing a full spatial refresh loop after every
+safe mutation inside one still-open build stage.
+
+## Repository Touchpoints
+
+| Path / Module | Expected Change |
+|---------------|-----------------|
+| `server/adapters/mcp/transforms/visibility_policy.py` | Gate-to-tool-family visibility rules |
+| `server/adapters/mcp/discovery/search_surface.py` | Gate-aware search and call-path diagnostics |
+| `server/adapters/mcp/discovery/search_documents.py` | Gate-oriented search documents |
+| `server/adapters/mcp/session_capabilities.py` | Stale-but-continuable versus refresh-required state transitions |
+| `server/router/infrastructure/tools_metadata/` | Gate family metadata and examples |
+| `tests/unit/adapters/mcp/test_search_surface.py` | Search/tool exposure tests |
+| `tests/unit/adapters/mcp/test_visibility_policy.py` | Gate-driven visibility tests |
+| `tests/unit/adapters/mcp/test_guided_flow_state_contract.py` | Spatial refresh cadence state tests |
+
+## Technical Requirements
+
+- `attachment_seam` gates expose:
+  - `scene_relation_graph`
+  - `macro_attach_part_to_surface`
+  - `macro_align_part_with_contact`
+- `support_contact` gates expose support/contact repair tools.
+- `shape_profile` gates expose mesh/modeling refinement tools only after
+  required seam/contact gates are not failed.
+- Recovery guidance should say "verify or repair active gate" instead of
+  "reset router goal".
+- `router_set_goal` must not be recommended as a deadlock escape when active
+  unresolved gates exist.
+- A mutating tool may mark spatial state stale without hiding the remaining
+  tools for the current allowed role batch.
+- Visibility should narrow to spatial/verification tools only when stale facts
+  are about to be consumed by:
+  - a stage transition
+  - a gate transition
+  - a pair-dependent seam/support repair
+  - final completion
+- Search and recovery messages must distinguish:
+  - "continue current batch, refresh at checkpoint"
+  - from "refresh now before this gate can advance".
+
+## Spatial Refresh Cadence Rules
+
+The guided surface should steer the LLM toward checkpoint-based evidence, not
+mutation-by-mutation thrashing.
+
+Recommended cadence for creature-style work:
+
+1. Create the current stage's allowed roles as a batch.
+2. Run the spatial triad with explicit scope.
+3. Run the reference/vision checkpoint for that stage.
+4. Repair only the failed gates or pair seams.
+5. Re-check the repaired local pair or the broader stage scope, depending on
+   what the next gate consumes.
+
+Example creature stage policy:
+
+| Stage | Continue Without Full Refresh | Require Refresh Before |
+|-------|-------------------------------|------------------------|
+| Primary masses | Creating/scaling `Body`, `Head`, `Tail` while they remain in the same primary-mass gate | Advancing to seam repair or secondary details |
+| Seam repair | Running the selected attachment macro for `Head -> Body` or `Tail -> Body` | Leaving the repair gate or using the seam verdict as passed evidence |
+| Secondary details | Creating `Snout`, ears, eyes, and legs in the same allowed role batch | Advancing to refinement or final review |
+| Refinement | Bounded mesh/profile edits inside the active profile gate | Final completion |
+
+Visibility policy should therefore use the combination of:
+
+- `current_step`
+- active unresolved gate
+- stale gate versions
+- whether the next action consumes spatial truth
+
+instead of keying only on `spatial_state_stale`.
+
+## Pseudocode
+
+```python
+def visibility_for_gate(gate):
+    match gate.gate_type:
+        case "attachment_seam":
+            return {"spatial_context", "macro_attachment"}
+        case "shape_profile" if prerequisites_passed(gate):
+            return {"modeling_mesh", "macro_profile"}
+        case "opening_or_cut":
+            return {"macro_cutout", "scene_measure"}
+        case _:
+            return {"reference_context", "inspect_assert"}
+
+
+def should_require_spatial_refresh(state, next_action):
+    if next_action in {"advance_gate", "complete_stage", "final_completion"}:
+        return state.spatial_state_stale
+    if next_action.consumes_pair_truth:
+        return pair_gate_is_stale(state, next_action.pair)
+    return False
+```
+
+## Tests To Add/Update
+
+- Active seam gate makes attachment macros visible.
+- Active shape-profile gate does not expose mesh tools while seam gates fail.
+- Safe same-stage mutations keep current role-batch tools visible even when
+  `spatial_state_stale=true`.
+- Gate/stage transitions with stale spatial evidence expose refresh/checkpoint
+  tools and hide unrelated broad mutation tools.
+- Pair-dependent next actions expose local pair verification/repair tools.
+- Search for "fix floating tail gap" returns seam repair tools.
+- Search for "continue current stage" or equivalent recovery guidance does not
+  recommend the full spatial triad when the current batch can continue safely.
+- Search for "reset goal" does not become the recommended recovery for active
+  gate blockers.
+
+## E2E Tests
+
+- Add a guided Streamable/stdio scenario where a failed seam gate opens repair
+  tools and the client can proceed without `router_set_goal` reset.
+- Add a guided creature scenario proving primary-mass or secondary-detail batch
+  creation does not require the full spatial triad after each individual
+  object, but does require it at the stage boundary.
+
+## Docs To Update
+
+- `_docs/_MCP_SERVER/README.md`
+- `_docs/_PROMPTS/README.md`
+- `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md`
+
+## Acceptance Criteria
+
+- Gate blockers drive small, relevant visibility changes.
+- Clients receive recovery guidance tied to gate verification/repair.
+- Broad catalog exposure is not required to resolve common gate failures.
+- Spatial refresh is cadence-aware: stale state does not automatically become a
+  hard block until the next action needs fresh spatial evidence.

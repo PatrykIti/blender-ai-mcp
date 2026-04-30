@@ -107,6 +107,7 @@ gate or shape the current E2E suites.
 | Real reference-guided creature comparison | `RUN_REAL_REFERENCE_GUIDED_CREATURE_EVAL=1`, `VISION_REFERENCE_FRONT_PATH`, `VISION_REFERENCE_SIDE_PATH` | `VISION_REFERENCE_CREATURE_MODEL` | `RUN_REAL_REFERENCE_GUIDED_CREATURE_EVAL=1 VISION_REFERENCE_FRONT_PATH=/abs/front.png VISION_REFERENCE_SIDE_PATH=/abs/side.png PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_guided_creature_comparison.py -q` |
 | Live OpenRouter/Qwen structured-output smoke | `RUN_REAL_OPENROUTER_QWEN_JSON_MODE=1`, `OPENROUTER_API_KEY` | `VISION_OPENROUTER_MODEL` | `RUN_REAL_OPENROUTER_QWEN_JSON_MODE=1 OPENROUTER_API_KEY=... PYTHONPATH=. poetry run pytest tests/e2e/vision/test_openrouter_qwen_json_mode.py -q -s` |
 | Docker runtime dependency smoke | `RUN_DOCKER_RUNTIME_VISION_SMOKE=1` | `BLENDER_AI_MCP_DOCKER_IMAGE` (defaults to `blender-ai-mcp:local`) | `RUN_DOCKER_RUNTIME_VISION_SMOKE=1 PYTHONPATH=. poetry run pytest tests/e2e/integration/test_docker_runtime_vision_dependencies.py -q` |
+| Streamable guided session-state regression | none | local socket binding required; sandboxed runners may need approval or may skip | `poetry run pytest tests/e2e/integration/test_guided_streamable_spatial_support.py -q -rs` |
 
 OpenRouter/Qwen runtime defaults used by the current repo unless you override
 them:
@@ -127,8 +128,8 @@ Source-of-truth pointers:
 
 | Type | Count | Execution Time |
 |------|-------|----------------|
-| Unit Tests | 2436 | ~27-28 seconds |
-| E2E Tests | 142 | ~12 seconds |
+| Unit Tests | 3114 collected | collect-only ~11 seconds; full runtime depends on selected lanes |
+| E2E Tests | 428 collected | collect-only ~17 seconds; Blender-backed runtime depends on active RPC/Blender state |
 
 Current repo-wide unit coverage (`server + blender_addon + scripts`):
 
@@ -311,6 +312,11 @@ Additional coverage added after the first TASK-146 hardening slice:
 
 - transport-backed guided search/call boundary:
   - `tests/e2e/integration/test_guided_search_first_call_tool_boundary.py`
+- Streamable HTTP guided session-state/visibility regression:
+  - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
+  - validates same-session guided visibility, cleanup recovery, dirty mesh
+    re-arm, reconnect continuity, and Streamable HTTP return behavior for
+    routed mutating calls
 - broader guided direct-call trigger regressions:
   - `tests/e2e/router/test_guided_direct_calls_do_not_trigger_workflows.py`
 - OpenRouter/Qwen live structured-output smoke (opt-in):
@@ -441,10 +447,10 @@ Camera-faithful viewport capture regression coverage now also includes:
 
 See [EXAMPLE_E2E_TESTS_RESULT.md](./EXAMPLE_E2E_TESTS_RESULT.md) for full output.
 
-**Summary (2025-11-30):**
+**Historical sample (2025-11-30):**
 - **142 tests passed** in 12.25s
 - Platform: macOS (Darwin), Python 3.13.9, Blender 5.0
-- All tool areas covered
+- Kept as a sample output reference; current collection counts are listed above.
 
 ---
 

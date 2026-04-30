@@ -4,7 +4,7 @@ from fastmcp import Context
 
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.contracts.mesh import MeshInspectResponseContract, MeshSelectionResponseContract
-from server.adapters.mcp.router_helper import route_tool_call
+from server.adapters.mcp.router_helper import route_tool_call, wrap_sync_tool_for_async_guided_finalizers
 from server.adapters.mcp.sampling.assistant_runner import run_inspection_summary_assistant
 from server.adapters.mcp.sampling.result_types import to_inspection_assistant_contract
 from server.adapters.mcp.utils import parse_coordinate
@@ -74,6 +74,7 @@ def _register_existing_tool(target: Any, tool_name: str) -> Any:
 
     tool = globals()[tool_name]
     fn = getattr(tool, "fn", tool)
+    fn = wrap_sync_tool_for_async_guided_finalizers(fn, tool_name=tool_name)
     return target.tool(fn, name=tool_name, tags=set(get_capability_tags("mesh")))
 
 

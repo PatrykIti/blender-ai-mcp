@@ -1657,7 +1657,12 @@ def refresh_visibility_for_session_state(
         asyncio.run(apply_visibility_for_session_state(ctx, state))
         return
 
-    asyncio.create_task(apply_visibility_for_session_state(ctx, state))
+    # Do not schedule a background visibility update on a live FastMCP request
+    # loop. In stateful Streamable HTTP, a detached task can race the JSON-RPC
+    # response on the same request/session context and leave clients waiting
+    # until cancellation. Async state transitions should use
+    # apply_visibility_for_session_state(...) directly.
+    return
 
 
 def replace_session_reference_images(
@@ -1933,6 +1938,55 @@ def mark_guided_spatial_state_stale(
     return state
 
 
+async def mark_guided_spatial_state_stale_async(
+    ctx: Context,
+    *,
+    tool_name: str,
+    family: str | None = None,
+    reason: str | None = None,
+) -> SessionCapabilityState:
+    """Async variant of guided spatial dirty-state recording for native FastMCP requests."""
+
+    if not is_guided_spatial_state_dirtying_operation(tool_name=tool_name, family=family):
+        return await get_session_capability_state_async(ctx)
+
+    current = await get_session_capability_state_async(ctx)
+    if current.guided_flow_state is None:
+        return current
+
+    updated_registry = None if tool_name == "scene_clean_scene" else current.guided_part_registry
+    updated_flow_state = _mark_guided_spatial_state_stale_dict(
+        current.guided_flow_state,
+        tool_name=tool_name,
+        reason=reason or tool_name,
+        part_registry=updated_registry,
+    )
+    state = SessionCapabilityState(
+        phase=current.phase,
+        goal=current.goal,
+        pending_clarification=current.pending_clarification,
+        last_router_status=current.last_router_status,
+        policy_context=current.policy_context,
+        surface_profile=current.surface_profile,
+        contract_version=current.contract_version,
+        pending_elicitation_id=current.pending_elicitation_id,
+        pending_workflow_name=current.pending_workflow_name,
+        partial_answers=current.partial_answers,
+        pending_question_set_id=current.pending_question_set_id,
+        last_elicitation_action=current.last_elicitation_action,
+        last_router_disposition=current.last_router_disposition,
+        last_router_error=current.last_router_error,
+        reference_images=current.reference_images,
+        guided_handoff=current.guided_handoff,
+        guided_flow_state=updated_flow_state,
+        guided_part_registry=updated_registry,
+        pending_reference_images=current.pending_reference_images,
+    )
+    await set_session_capability_state_async(ctx, state)
+    await apply_visibility_for_session_state(ctx, state)
+    return state
+
+
 async def register_guided_part_role_async(
     ctx: Context,
     *,
@@ -2003,6 +2057,7 @@ async def register_guided_part_role_async(
         pending_reference_images=current.pending_reference_images,
     )
     await set_session_capability_state_async(ctx, state)
+    await apply_visibility_for_session_state(ctx, state)
     return state
 
 
@@ -2152,6 +2207,67 @@ def rename_guided_part_registration(
     return state
 
 
+async def rename_guided_part_registration_async(
+    ctx: Context,
+    *,
+    old_name: str,
+    new_name: str,
+) -> SessionCapabilityState:
+    """Async variant of guided part registration rename for native FastMCP requests."""
+
+    current = await get_session_capability_state_async(ctx)
+    if current.guided_part_registry is None:
+        return current
+
+    normalized_old_name = str(old_name or "").strip()
+    normalized_new_name = await asyncio.to_thread(require_existing_scene_object_name, new_name)
+    if not normalized_old_name or normalized_old_name == normalized_new_name:
+        return current
+
+    changed = False
+    updated_registry: list[dict[str, Any]] = []
+    for item in list(current.guided_part_registry or []):
+        if not isinstance(item, dict):
+            continue
+        updated_item = dict(item)
+        if updated_item.get("object_name") == normalized_old_name:
+            updated_item["object_name"] = normalized_new_name
+            changed = True
+        updated_registry.append(updated_item)
+
+    if not changed:
+        return current
+
+    updated_flow_state = (
+        _update_guided_flow_role_summary_dict(current.guided_flow_state, part_registry=updated_registry)
+        if current.guided_flow_state is not None
+        else None
+    )
+    state = SessionCapabilityState(
+        phase=current.phase,
+        goal=current.goal,
+        pending_clarification=current.pending_clarification,
+        last_router_status=current.last_router_status,
+        policy_context=current.policy_context,
+        surface_profile=current.surface_profile,
+        contract_version=current.contract_version,
+        pending_elicitation_id=current.pending_elicitation_id,
+        pending_workflow_name=current.pending_workflow_name,
+        partial_answers=current.partial_answers,
+        pending_question_set_id=current.pending_question_set_id,
+        last_elicitation_action=current.last_elicitation_action,
+        last_router_disposition=current.last_router_disposition,
+        last_router_error=current.last_router_error,
+        reference_images=current.reference_images,
+        guided_handoff=current.guided_handoff,
+        guided_flow_state=updated_flow_state,
+        guided_part_registry=updated_registry,
+        pending_reference_images=current.pending_reference_images,
+    )
+    await set_session_capability_state_async(ctx, state)
+    return state
+
+
 def remove_guided_part_registrations(
     ctx: Context,
     *,
@@ -2208,6 +2324,65 @@ def remove_guided_part_registrations(
         pending_reference_images=current.pending_reference_images,
     )
     set_session_capability_state(ctx, state)
+    return state
+
+
+async def remove_guided_part_registrations_async(
+    ctx: Context,
+    *,
+    object_names: list[str],
+) -> SessionCapabilityState:
+    """Async variant of guided part registration removal for native FastMCP requests."""
+
+    current = await get_session_capability_state_async(ctx)
+    if current.guided_part_registry is None:
+        return current
+
+    names_to_remove = {str(name).strip() for name in object_names if str(name).strip()}
+    if not names_to_remove:
+        return current
+
+    updated_registry = [
+        dict(item)
+        for item in list(current.guided_part_registry or [])
+        if isinstance(item, dict) and str(item.get("object_name") or "").strip() not in names_to_remove
+    ]
+    if len(updated_registry) == len(list(current.guided_part_registry or [])):
+        return current
+
+    updated_flow_state = None
+    if current.guided_flow_state is not None:
+        contract = GuidedFlowStateContract.model_validate(current.guided_flow_state)
+        contract.completed_roles = []
+        contract.role_counts = {}
+        contract.role_cardinality = {}
+        contract.role_objects = {}
+        updated_flow_state = _update_guided_flow_role_summary_dict(
+            contract.model_dump(mode="json"),
+            part_registry=updated_registry or None,
+        )
+    state = SessionCapabilityState(
+        phase=current.phase,
+        goal=current.goal,
+        pending_clarification=current.pending_clarification,
+        last_router_status=current.last_router_status,
+        policy_context=current.policy_context,
+        surface_profile=current.surface_profile,
+        contract_version=current.contract_version,
+        pending_elicitation_id=current.pending_elicitation_id,
+        pending_workflow_name=current.pending_workflow_name,
+        partial_answers=current.partial_answers,
+        pending_question_set_id=current.pending_question_set_id,
+        last_elicitation_action=current.last_elicitation_action,
+        last_router_disposition=current.last_router_disposition,
+        last_router_error=current.last_router_error,
+        reference_images=current.reference_images,
+        guided_handoff=current.guided_handoff,
+        guided_flow_state=updated_flow_state,
+        guided_part_registry=updated_registry or None,
+        pending_reference_images=current.pending_reference_images,
+    )
+    await set_session_capability_state_async(ctx, state)
     return state
 
 

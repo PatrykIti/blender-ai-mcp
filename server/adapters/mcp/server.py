@@ -50,6 +50,8 @@ def run(surface_profile: str | None = None):
     logger.info("MCP surface profile: %s", selected_surface)
     logger.info("MCP contract line: %s", getattr(server, "_bam_contract_line", None))
     logger.info("MCP transport mode: %s", transport_mode)
+    prompts_bridge_enabled = getattr(config, "MCP_PROMPTS_AS_TOOLS_ENABLED", True)
+    logger.info("MCP prompts-as-tools bridge: %s", "enabled" if prompts_bridge_enabled else "disabled")
 
     try:
         if transport_mode == "stdio":

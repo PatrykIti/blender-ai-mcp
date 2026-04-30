@@ -8,6 +8,7 @@ from typing import Any, cast
 
 import pytest
 import server.adapters.mcp.session_capabilities as session_capabilities
+from fastmcp import Context
 from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract
 from server.adapters.mcp.session_capabilities import (
     SessionCapabilityState,
@@ -17,6 +18,8 @@ from server.adapters.mcp.session_capabilities import (
     mark_guided_spatial_state_stale,
     record_guided_flow_spatial_check_completion,
     register_guided_part_role,
+    register_guided_part_role_async,
+    rename_guided_part_registration_async,
     set_session_capability_state,
     update_session_from_router_goal,
 )
@@ -400,6 +403,129 @@ def test_guided_role_hint_registration_reapplies_visibility(monkeypatch):
         ("create_primary_masses", False, ["primary_masses", "reference_context"]),
         ("place_secondary_parts", True, ["spatial_context", "reference_context"]),
     ]
+
+
+def test_async_guided_role_hint_registration_reapplies_visibility(monkeypatch):
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            surface_profile="llm-guided",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass"],
+                "completed_roles": [],
+                "missing_roles": ["body_core", "head_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+    events: list[tuple[str | None, bool, list[str]]] = []
+
+    async def fake_apply_visibility_for_session_state(_ctx, state):
+        flow_state = state.guided_flow_state or {}
+        events.append(
+            (
+                str(flow_state.get("current_step")) if flow_state else None,
+                bool(flow_state.get("spatial_refresh_required")),
+                [str(family) for family in flow_state.get("allowed_families", [])],
+            )
+        )
+
+    monkeypatch.setattr(
+        session_capabilities, "apply_visibility_for_session_state", fake_apply_visibility_for_session_state
+    )
+
+    async def run():
+        await register_guided_part_role_async(ctx, object_name="Squirrel_Body", role="body_core")
+        return await register_guided_part_role_async(ctx, object_name="Squirrel_Head", role="head_mass")
+
+    state = asyncio.run(run())
+
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["current_step"] == "place_secondary_parts"
+    assert state.guided_flow_state["spatial_refresh_required"] is True
+    assert events == [
+        ("create_primary_masses", False, ["primary_masses", "reference_context"]),
+        ("place_secondary_parts", True, ["spatial_context", "reference_context"]),
+    ]
+
+
+def test_async_guided_rename_validation_runs_off_event_loop(monkeypatch):
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            surface_profile="llm-guided",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass"],
+                "completed_roles": ["body_core"],
+                "missing_roles": ["head_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+            guided_part_registry=[
+                {
+                    "object_name": "Body",
+                    "role": "body_core",
+                    "role_group": "primary_masses",
+                    "status": "registered",
+                }
+            ],
+        ),
+    )
+    offloaded: list[tuple[object, tuple[object, ...], dict[str, object]]] = []
+
+    def require_existing_scene_object_name(object_name: str) -> str:
+        assert object_name == "BodyMain"
+        return "BodyMain"
+
+    async def to_thread(fn, /, *args, **kwargs):
+        offloaded.append((fn, args, kwargs))
+        return fn(*args, **kwargs)
+
+    monkeypatch.setattr(
+        session_capabilities,
+        "require_existing_scene_object_name",
+        require_existing_scene_object_name,
+    )
+    monkeypatch.setattr(session_capabilities.asyncio, "to_thread", to_thread)
+
+    state = asyncio.run(
+        rename_guided_part_registration_async(
+            cast(Context, ctx),
+            old_name="Body",
+            new_name="BodyMain",
+        )
+    )
+
+    assert offloaded == [(require_existing_scene_object_name, ("BodyMain",), {})]
+    assert state.guided_part_registry is not None
+    assert state.guided_part_registry[0]["object_name"] == "BodyMain"
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["role_objects"] == {"body_core": ["BodyMain"]}
 
 
 def test_scene_view_diagnostics_unavailable_does_not_complete_guided_spatial_check(monkeypatch):

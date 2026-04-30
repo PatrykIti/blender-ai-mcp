@@ -6,6 +6,14 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [274](./274-2026-04-29-routed-report-step-finalizers.md) | 2026-04-29 | **Routed report step finalizers** | - |
+| [273](./273-2026-04-29-async-rename-validation-offload.md) | 2026-04-29 | **Async rename validation offload** | - |
+| [272](./272-2026-04-29-async-guided-route-finalizer-coverage.md) | 2026-04-29 | **Async guided route finalizer coverage** | - |
+| [271](./271-2026-04-28-streamable-worker-offload-for-guided-routes.md) | 2026-04-28 | **Streamable worker offload for guided routes** | - |
+| [270](./270-2026-04-28-modeling-async-public-descriptions.md) | 2026-04-28 | **Modeling async public descriptions** | - |
+| [269](./269-2026-04-28-guided-visibility-and-description-finalizers.md) | 2026-04-28 | **Guided visibility and description finalizers** | - |
+| [268](./268-2026-04-28-guided-async-modeling-finalization.md) | 2026-04-28 | **Guided async modeling finalization** | - |
+| [267](./267-2026-04-28-streamable-guided-session-state-hardening.md) | 2026-04-28 | **Streamable guided session-state hardening** | - |
 | [266](./266-2026-04-27-guided-visibility-and-stage-capture-focus.md) | 2026-04-27 | **Guided visibility and stage capture focus** | - |
 | [265](./265-2026-04-27-guided-success-parser-apostrophes.md) | 2026-04-27 | **Guided success parser apostrophes** | - |
 | [264](./264-2026-04-27-guided-spatial-scope-and-rpc-trace-hardening.md) | 2026-04-27 | **Guided spatial scope and RPC trace hardening** | - |

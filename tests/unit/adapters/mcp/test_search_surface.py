@@ -383,6 +383,41 @@ def test_bootstrap_and_build_phase_both_surface_default_spatial_support_tools():
     assert "scene_view_diagnostics" in bootstrap_names
 
 
+def test_async_scene_spatial_tools_preserve_public_descriptions():
+    """Async registered scene helpers should expose the public product docstrings."""
+
+    server = _build_phase_visible_server(SessionPhase.BUILD)
+
+    async def run():
+        return {tool.name: tool.description or "" for tool in await server.list_tools()}
+
+    descriptions = asyncio.run(run())
+
+    assert "compact structural scope graph" in descriptions["scene_scope_graph"]
+    assert "which object is the structural anchor" in descriptions["scene_scope_graph"]
+    assert "compact spatial relation graph" in descriptions["scene_relation_graph"]
+    assert "truth primitives such as gap/alignment/overlap/contact checks" in descriptions["scene_relation_graph"]
+    assert "compact view-space diagnostics" in descriptions["scene_view_diagnostics"]
+    assert "USER_PERSPECTIVE" in descriptions["scene_view_diagnostics"]
+
+
+def test_async_modeling_tools_preserve_public_descriptions():
+    """Async registered modeling helpers should expose the public product docstrings."""
+
+    server = _build_phase_visible_server(SessionPhase.BUILD)
+
+    async def run():
+        return {tool.name: tool.description or "" for tool in await server.list_tools()}
+
+    descriptions = asyncio.run(run())
+
+    assert "Creates a 3D primitive object" in descriptions["modeling_create_primitive"]
+    assert "Workflow: START" in descriptions["modeling_create_primitive"]
+    assert "modeling_transform_object(scale=...)" in descriptions["modeling_create_primitive"]
+    assert "Transforms (move, rotate, scale)" in descriptions["modeling_transform_object"]
+    assert "Workflow: AFTER" in descriptions["modeling_transform_object"]
+
+
 def test_phase_shaped_list_tools_follow_visibility_without_discovery():
     """Visibility policy should affect the actual listed tools even without discovery collapse."""
 
@@ -1263,12 +1298,29 @@ def test_direct_modeling_create_primitive_can_register_guided_role_hint(monkeypa
         "server.adapters.mcp.areas.modeling.register_guided_part_role",
         lambda ctx, **kwargs: recorded.append((kwargs["object_name"], kwargs["role"], kwargs.get("role_group"))),
     )
+
+    async def register_guided_part_role_async(ctx, **kwargs):
+        recorded.append((kwargs["object_name"], kwargs["role"], kwargs.get("role_group")))
+        return SessionCapabilityState(phase=SessionPhase.BUILD, guided_flow_state={"flow_id": "guided_creature_flow"})
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.register_guided_part_role_async",
+        register_guided_part_role_async,
+    )
+
+    async def get_session_capability_state_async(ctx):
+        return SessionCapabilityState(phase=SessionPhase.BUILD, guided_flow_state={"flow_id": "guided_creature_flow"})
+
     monkeypatch.setattr(
         "server.adapters.mcp.areas.modeling.get_session_capability_state",
         lambda ctx: SessionCapabilityState(
             phase=SessionPhase.BUILD,
             guided_flow_state={"flow_id": "guided_creature_flow"},
         ),
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.get_session_capability_state_async",
+        get_session_capability_state_async,
     )
     monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
 
@@ -1342,12 +1394,29 @@ def test_call_tool_can_forward_guided_role_hint_for_modeling_create_primitive(mo
         "server.adapters.mcp.areas.modeling.register_guided_part_role",
         lambda ctx, **kwargs: recorded.append((kwargs["object_name"], kwargs["role"], kwargs.get("role_group"))),
     )
+
+    async def register_guided_part_role_async(ctx, **kwargs):
+        recorded.append((kwargs["object_name"], kwargs["role"], kwargs.get("role_group")))
+        return SessionCapabilityState(phase=SessionPhase.BUILD, guided_flow_state={"flow_id": "guided_creature_flow"})
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.register_guided_part_role_async",
+        register_guided_part_role_async,
+    )
+
+    async def get_session_capability_state_async(ctx):
+        return SessionCapabilityState(phase=SessionPhase.BUILD, guided_flow_state={"flow_id": "guided_creature_flow"})
+
     monkeypatch.setattr(
         "server.adapters.mcp.areas.modeling.get_session_capability_state",
         lambda ctx: SessionCapabilityState(
             phase=SessionPhase.BUILD,
             guided_flow_state={"flow_id": "guided_creature_flow"},
         ),
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.get_session_capability_state_async",
+        get_session_capability_state_async,
     )
     monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
 
