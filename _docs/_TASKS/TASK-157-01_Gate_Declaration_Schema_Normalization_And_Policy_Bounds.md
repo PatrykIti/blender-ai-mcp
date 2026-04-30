@@ -19,7 +19,7 @@ classification, cardinality, safety bounds, and domain template merging.
 
 | Path / Module | Expected Change |
 |---------------|-----------------|
-| `server/adapters/mcp/contracts/` | Add `quality_gates.py` or equivalent typed contracts |
+| `server/adapters/mcp/contracts/quality_gates.py` | Own the v1 gate contracts, domain-template contracts, and `templates_for_domain_profile(profile)` helper |
 | `server/adapters/mcp/contracts/reference.py` | Reuse reference/vision payload identifiers for proposal provenance and evidence refs |
 | `server/adapters/mcp/session_capabilities.py` | Add gate-plan fields to session capability state |
 | `server/adapters/mcp/areas/reference.py` | Include normalized gate plan in goal/checkpoint payloads |
@@ -42,8 +42,9 @@ classification, cardinality, safety bounds, and domain template merging.
   required/optional status, and allowed correction families.
 - Gate proposals may also come from `reference_understanding`,
   `silhouette_analysis`, optional `part_segmentation`, future
-  `classification_scores`, domain templates, or operator input. Those sources
-  should be represented as provenance, not as trusted pass/fail status.
+  `classification_scores`, VLM compare/iterate checkpoint payloads, domain
+  templates, or operator input. Those sources should be represented as
+  provenance, not as trusted pass/fail status.
 - Normalized gates should reserve fields for:
   - `proposal_sources`
   - `source_provenance`
@@ -100,6 +101,7 @@ class GateProposalSource(StrEnum):
     SILHOUETTE_ANALYSIS = "silhouette_analysis"
     PART_SEGMENTATION = "part_segmentation"
     CLASSIFICATION_SCORES = "classification_scores"
+    REFERENCE_CHECKPOINT = "reference_checkpoint"
     OPERATOR_OVERRIDE = "operator_override"
 
 
@@ -122,6 +124,7 @@ def normalize_gate_plan(proposal, *, domain_profile, templates):
   - rejects hidden/internal tool names in proposed actions
   - preserves LLM rationale as advisory only
   - preserves reference/perception proposal provenance as advisory only
+  - preserves VLM compare/iterate checkpoint provenance as advisory only
   - rejects perception-derived proposal statuses that claim gate completion
   - serializes evidence requirements and empty evidence refs before verification
   - serializes/deserializes session gate plan state

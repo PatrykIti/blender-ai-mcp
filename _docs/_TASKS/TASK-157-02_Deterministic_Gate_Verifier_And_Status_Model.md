@@ -128,8 +128,11 @@ def verify_gate(gate, scene_context):
 - Required gate without scope returns `blocked`.
 - Required gate with stale scene version returns `stale`.
 - Passed gate requires evidence payload.
-- Perception-only completion claims remain `pending` or `failed` until a
-  supported verifier evaluates concrete evidence.
+- Perception-only completion claims remain `pending` or `blocked` with a typed
+  `missing_authoritative_evidence` / `unsupported_evidence` reason until a
+  supported verifier evaluates fresh scene, spatial, mesh, or assertion
+  evidence; perception-only claims never set `passed` or `failed` by
+  themselves.
 - Unsupported required perception evidence returns `blocked` with an actionable
   reason instead of triggering an implicit SAM/CLIP call.
 - Completion blocker aggregation includes `pending`, `blocked`, `failed`, and

@@ -18,13 +18,18 @@ Version: -
   owner list
 - defined validation grep commands for public-tool drift, noncanonical family
   drift, and truth-boundary drift
+- expanded `TASK-158` into three executable child slices with line-level repair
+  inventory, canonical no-op anchors, live contract source-of-truth notes, and
+  board/changelog closeout rules
 
 ## Validation
 
 - `git diff --check`
-  - result on this machine for the task-creation docs patch: passed
-- `rg -n "TASK-158|Vision And Creature Gate Boundary|vision and creature boundary" _docs/_TASKS/README.md _docs/_CHANGELOG/README.md _docs/_CHANGELOG/278-2026-05-01-task-158-vision-creature-boundary-alignment-plan.md _docs/_TASKS/TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md`
-  - result on this machine: passed; task, board, and changelog index are linked
+  - result on this machine for the task-creation and task-expansion docs
+    patch: passed
+- `rg -n "TASK-158|TASK-158-01|TASK-158-02|TASK-158-03|Vision And Creature Gate Boundary|vision and creature boundary" _docs/_TASKS/README.md _docs/_CHANGELOG/README.md _docs/_CHANGELOG/278-2026-05-01-task-158-vision-creature-boundary-alignment-plan.md _docs/_TASKS/TASK-158*.md`
+  - result on this machine: passed; task, child slices, board, and changelog
+    index are linked
 - targeted grep for `reference_understand`,
   `router_apply_reference_strategy`, `server/adapters/mcp/router`,
   `mesh_edit`, `material_finish`, `mesh_shade_flat`, `macro_low_poly`,

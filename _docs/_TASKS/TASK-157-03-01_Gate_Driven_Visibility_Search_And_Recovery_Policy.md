@@ -124,6 +124,13 @@ def visibility_for_gate(gate):
     match gate.gate_type:
         case "attachment_seam":
             return {"spatial_context", "attachment_alignment", "inspect_validate"}
+        case "support_contact":
+            return {
+                "spatial_context",
+                "secondary_parts",
+                "attachment_alignment",
+                "inspect_validate",
+            }
         case "shape_profile" if prerequisites_passed(gate):
             return {"secondary_parts", "inspect_validate"}
         case "opening_or_cut":
@@ -132,11 +139,14 @@ def visibility_for_gate(gate):
             return {"reference_context", "inspect_validate"}
 
 
-def should_require_spatial_refresh(state, next_action):
-    if next_action in {"advance_gate", "complete_stage", "final_completion"}:
+def should_require_spatial_refresh(state, next_action_name, active_gate):
+    if next_action_name in {"advance_gate", "complete_stage", "final_completion"}:
         return state.spatial_state_stale
-    if next_action.consumes_pair_truth:
-        return pair_gate_is_stale(state, next_action.pair)
+    if active_gate.requires_pair_truth and next_action_name in {
+        "verify_active_pair_gate",
+        "repair_active_pair_gate",
+    }:
+        return pair_gate_is_stale(state, active_gate.target_pair)
     return False
 
 
@@ -195,7 +205,7 @@ def refine_visibility_from_evidence(gate, evidence_refs, visible_families):
 - The grep below is a drift sentinel. Hits for `mesh_edit`,
   `material_finish`, `mesh_shade_flat`, or `macro_low_poly_*` must remain
   non-canonical aliases/future proposals unless a dedicated contract adds them.
-- `rg -n "macro_attachment|macro_profile|macro_cutout|inspect_assert|mesh_edit|material_finish|mesh_shade_flat|macro_low_poly" _docs/_TASKS/TASK-157*.md _docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md server/adapters/mcp server/router/infrastructure/tools_metadata`
+- `rg -n -P "macro_attachment|macro_profile|macro_cutout(?!_recess)|inspect_assert|mesh_edit|material_finish|mesh_shade_flat|macro_low_poly" _docs/_TASKS/TASK-157*.md _docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md server/adapters/mcp server/router/infrastructure/tools_metadata`
 
 ## Acceptance Criteria
 

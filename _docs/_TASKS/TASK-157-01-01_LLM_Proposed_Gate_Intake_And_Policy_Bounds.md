@@ -24,8 +24,13 @@ remain proposal sources only. They must not become verifier status.
 | `server/adapters/mcp/contracts/quality_gates.py` | Add intake contract models |
 | `server/adapters/mcp/contracts/reference.py` | Reference proposal sources by stable reference/vision payload identifiers |
 | `server/adapters/mcp/session_capabilities.py` | Store normalized proposals in session state |
+| `server/router/infrastructure/tools_metadata/reference/reference_compare_stage_checkpoint.json` | Add optional proposal fields if the public checkpoint surface accepts gate proposals |
+| `server/router/infrastructure/tools_metadata/reference/reference_iterate_stage_checkpoint.json` | Add optional proposal fields if the public iterate surface accepts gate proposals |
 | `tests/unit/adapters/mcp/test_quality_gate_intake.py` | Add intake and policy-bound tests |
+| `tests/unit/router/infrastructure/test_mcp_tools_metadata_alignment.py` | Keep metadata parameters aligned with public MCP signatures |
+| `tests/unit/adapters/mcp/test_public_surface_docs.py` | Keep public docs in sync if checkpoint parameters change |
 | `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md` | Tell clients how to propose gates without claiming completion |
+| `_docs/AVAILABLE_TOOLS_SUMMARY.md` | Document public parameter changes if checkpoint intake is exposed |
 
 ## Technical Requirements
 
@@ -75,12 +80,9 @@ def ingest_llm_gate_proposal(ctx, proposal):
     normalized = normalize_gate_plan(
         proposal,
         domain_profile=guided_flow.domain_profile,
-        templates=load_domain_templates(guided_flow.domain_profile),
+        templates=templates_for_domain_profile(guided_flow.domain_profile),
     )
-
-    for gate in normalized.gates:
-        gate.status = "pending"
-        gate.evidence = None
+    normalized = strip_client_completion_claims(normalized).with_initial_status("pending")
 
     # TASK-157-01 adds gate_plan to the frozen session state; update through
     # replace(...) or an owning session_capabilities helper, not direct mutation.
@@ -96,7 +98,10 @@ def ingest_reference_gate_proposal(ctx, reference_summary):
 
 ## Tests To Add/Update
 
-- LLM proposal with `status="passed"` is normalized to `pending`.
+- LLM proposal with `status="passed"` is rejected or stripped with an
+  `unsupported_completion_status` policy warning; any server-created normalized
+  gate starts as `pending` only after the client-supplied completion status is
+  removed.
 - Unsupported tool names are dropped with a policy warning.
 - Proposal without active guided goal is ignored or rejected consistently.
 - Creature proposal with `eye_pair` and `tail/body seam` becomes typed gates.
@@ -116,6 +121,8 @@ def ingest_reference_gate_proposal(ctx, reference_summary):
 
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 - `_docs/_MCP_SERVER/README.md`
+- `_docs/AVAILABLE_TOOLS_SUMMARY.md` if the public checkpoint parameter surface
+  changes
 
 ## Changelog Impact
 
@@ -127,6 +134,7 @@ def ingest_reference_gate_proposal(ctx, reference_summary):
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py -v`
+- `PYTHONPATH=. poetry run pytest tests/unit/router/infrastructure/test_mcp_tools_metadata_alignment.py tests/unit/adapters/mcp/test_public_surface_docs.py -v` when public checkpoint parameters change
 - `rg -n "reference_understanding|part_segmentation|classification_scores|status=\\\"passed\\\"" server/adapters/mcp tests/unit/adapters/mcp _docs/_TASKS/TASK-157*.md`
 
 ## Acceptance Criteria

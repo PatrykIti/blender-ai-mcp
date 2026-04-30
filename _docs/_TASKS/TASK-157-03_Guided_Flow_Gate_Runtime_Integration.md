@@ -19,6 +19,7 @@ gate boundaries instead of after every single safe in-stage mutation.
 |---------------|-----------------|
 | `server/adapters/mcp/session_capabilities.py` | Add active gate state, versioning, stale markers, blockers, and centralized gate dirtying metadata |
 | `server/adapters/mcp/contracts/guided_flow.py` | Represent spatial refresh cadence, stale-but-continuable state, and hard refresh blockers |
+| `server/adapters/mcp/contracts/reference.py` | Add strict response fields to `ReferenceCompareStageCheckpointResponseContract` and `ReferenceIterateStageCheckpointResponseContract`; current `MCPContract` payloads forbid undeclared extras |
 | `server/adapters/mcp/transforms/visibility_policy.py` | Expose tool families based on unresolved gates |
 | `server/adapters/mcp/discovery/search_documents.py` | Bias search by gate type and correction family |
 | `server/adapters/mcp/areas/reference.py` | Include gate state and optional reference-understanding/gate-proposal summaries in compare/iterate responses |
@@ -27,6 +28,7 @@ gate boundaries instead of after every single safe in-stage mutation.
 | `server/adapters/mcp/areas/modeling.py` | Add explicit mutation metadata only when centralized dirtying cannot infer affected gate scopes |
 | `server/adapters/mcp/areas/mesh.py` | Add explicit mutation metadata only when centralized dirtying cannot infer affected gate scopes |
 | `tests/unit/adapters/mcp/test_guided_flow_state_contract.py` | Cadence contract and stale-versus-blocking state tests |
+| `tests/unit/adapters/mcp/test_contract_payload_parity.py` | Checkpoint/iterate response contract parity for new gate fields |
 | `tests/unit/adapters/mcp/test_visibility_policy.py` | Gate-driven visibility tests |
 | `tests/unit/adapters/mcp/test_reference_images.py` | Checkpoint payload and completion-blocker tests |
 
@@ -120,38 +122,61 @@ fresh evidence.
 def build_guided_response(state):
     gate_summary = summarize_gate_plan(state.gate_plan)
     checkpoint_loop_disposition = "continue_build"
+    updated_flow_state = state.guided_flow_state
 
     if gate_summary.has_required_blockers:
         checkpoint_loop_disposition = "inspect_validate"
-        state.next_actions = gate_summary.next_actions
-        state.allowed_families = visibility_for_gate_blockers(gate_summary)
+        updated_flow_state = replace_guided_flow_fields(
+            updated_flow_state,
+            next_actions=gate_summary.next_actions,
+            allowed_families=visibility_for_gate_blockers(gate_summary),
+        )
 
     return response.with_gate_summary(
         gate_summary,
+        guided_flow_state=updated_flow_state,
         loop_disposition=checkpoint_loop_disposition,
     )
 
 
-def mark_gates_stale_after_mutation(state, mutation):
-    for gate in state.gate_plan.gates:
-        if gate.scope_intersects(mutation.objects):
-            gate.status = "stale"
-            gate.stale_reason = mutation.tool_name
+def mark_gates_stale_after_mutation(gate_plan, mutation):
+    return gate_plan.with_stale_scopes(
+        objects=mutation.objects,
+        reason=mutation.tool_name,
+    )
 
 
-def after_mutation(state, mutation):
-    mark_gates_stale_after_mutation(state, mutation)
-    state.spatial_state_stale = True
+def after_mutation(current, mutation):
+    updated_gate_plan = mark_gates_stale_after_mutation(current.gate_plan, mutation)
+    updated_flow_state = mark_guided_spatial_state_stale_for_mutation(
+        current.guided_flow_state,
+        mutation,
+    )
 
-    if crosses_gate_boundary(state, mutation):
-        state.spatial_refresh_required = True
-        state.next_actions = ["refresh_spatial_context"]
-    elif next_action_depends_on_stale_pair_truth(state, mutation):
-        state.spatial_refresh_required = True
-        state.next_actions = ["verify_active_pair_gate"]
+    if crosses_gate_boundary(updated_gate_plan, mutation):
+        updated_flow_state = replace_guided_flow_fields(
+            updated_flow_state,
+            spatial_refresh_required=True,
+            next_actions=["refresh_spatial_context"],
+        )
+    elif next_action_depends_on_stale_pair_truth(updated_gate_plan, mutation):
+        updated_flow_state = replace_guided_flow_fields(
+            updated_flow_state,
+            spatial_refresh_required=True,
+            next_actions=["verify_active_pair_gate"],
+        )
     else:
-        state.spatial_refresh_required = False
-        state.next_actions = continue_current_role_batch(state)
+        updated_flow_state = replace_guided_flow_fields(
+            updated_flow_state,
+            spatial_refresh_required=False,
+            next_actions=continue_current_role_batch(updated_flow_state),
+        )
+
+    return replace(
+        current,
+        gate_plan=updated_gate_plan,
+        guided_flow_state=updated_flow_state,
+    )
 ```
 
 ## Tests To Add/Update
@@ -189,7 +214,7 @@ def after_mutation(state, mutation):
 ## Validation Commands
 
 - `git diff --check`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_reference_images.py -v`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py -v`
 - `python3 scripts/run_e2e_tests.py` for any implementation slice that changes
   Streamable HTTP/stdio guided state, Blender scene state, or final completion
   blocking.

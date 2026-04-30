@@ -133,7 +133,8 @@ The first implementation should reserve explicit fields for:
 
 - `proposal_sources`: ordered provenance for why a gate exists, such as
   `llm_goal`, `reference_understanding`, `domain_template`,
-  `silhouette_analysis`, `part_segmentation`, or `operator_override`
+  `silhouette_analysis`, `part_segmentation`, `reference_checkpoint`, or
+  `operator_override`
 - `evidence_requirements`: the verifier-supported evidence types needed before
   the gate may pass
 - `evidence_refs`: concrete verifier outputs used for the current status
@@ -226,7 +227,7 @@ proposal = GateProposal.from_llm(
 normalized = gate_normalizer.normalize(
     proposal,
     domain_profile=session.domain_profile,
-    templates=domain_gate_templates.for_profile(session.domain_profile),
+    templates=quality_gate_templates_for_domain_profile(session.domain_profile),
 )
 
 # `gate_plan` is added by TASK-157-01; update the frozen session state
@@ -257,6 +258,15 @@ return maybe_advance_or_complete()
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 - `_docs/_TESTS/README.md`
 - `_docs/_TASKS/README.md`
+
+## Status / Board Update
+
+`TASK-157` remains the single promoted To Do board row. `TASK-157-01`,
+`TASK-157-01-01`, `TASK-157-02`, `TASK-157-02-01`, `TASK-157-03`,
+`TASK-157-03-01`, and `TASK-157-04` remain open child files under this
+umbrella and are intentionally not separate board rows. Changelog 277 records
+the docs refresh only; implementation slices should add their own changelog
+entries when shipped.
 
 ## Changelog Impact
 
