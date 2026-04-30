@@ -20,6 +20,15 @@ valid, especially:
   states only. Do not use them as TASK-157 quality-gate pass/fail statuses.
 - Relation and view evidence should come from existing scope/relation/view
   artifacts rather than a new planner-specific truth pass.
+- View evidence specifically should reuse
+  `SceneToolHandler.get_view_diagnostics(...)`, `scene_view_diagnostics(...)`,
+  and the current reference-loop `view_diagnostics_hints` call site; the sculpt
+  precondition model should consume those facts instead of introducing a second
+  camera/framing evaluator.
+- If sculpt preconditions are evaluated from staged compare / iterate output,
+  the task must first wire staged `view_diagnostics_hints` or require an
+  explicit `scene_view_diagnostics(...)` support call. Do not treat current-view
+  compare hints as if they already cover staged checkpoint responses.
 - Sculpt remains blocked when deterministic relation evidence shows unresolved
   attachment, support, contact, or overlap failures.
 - Proportion and silhouette signals may keep the decision on modeling/mesh or
@@ -47,6 +56,8 @@ return SculptHandoffPreconditions(
 - `server/adapters/mcp/areas/reference.py`
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/contracts/scene.py`
+- `server/application/tool_handlers/scene_handler.py`
+- `server/adapters/mcp/areas/scene.py`
 - `server/application/services/repair_planner.py` or equivalent policy helper
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
@@ -66,6 +77,9 @@ return SculptHandoffPreconditions(
 - sculpt stays suppressed when structural relation failures still dominate
 - visibility / framing requirements are explicit and derived from view-state
   facts rather than prompt prose alone
+- staged sculpt readiness cannot read missing view evidence as `ready`; missing
+  staged view evidence must become a typed blocker or a request for
+  `scene_view_diagnostics(...)`
 - major proportion drift can still keep the next step on macro/modeling even
   when the domain looks organic
 

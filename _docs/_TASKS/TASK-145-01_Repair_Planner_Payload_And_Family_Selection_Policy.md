@@ -74,6 +74,11 @@ Build the repair planner as a contract-and-policy upgrade over the current
 - If family-selection or blocker rules become more than a small helper,
   extract them to `server/application/services/repair_planner.py` or an
   equivalent framework-free service/helper and call it from `reference.py`.
+- If that extraction happens, keep the application service free of MCP adapter
+  imports. It should return planner DTOs or framework-free policy results, and
+  `server/adapters/mcp/areas/reference.py` should translate those results into
+  `ReferenceRefinementRouteContract`, `ReferenceRefinementHandoffContract`, and
+  any compact planner response fields.
 - Keep scene truth ownership in `server/application/services/spatial_graph.py`
   and scene contracts. Planner policy consumes scope/relation/view evidence;
   it does not recalculate Blender truth.
@@ -108,6 +113,7 @@ compare.planner_summary = planner_result.compact_summary
 - `server/adapters/mcp/contracts/scene.py`
 - `server/adapters/mcp/areas/reference.py`
 - `server/application/services/spatial_graph.py`
+- `server/application/tool_handlers/scene_handler.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`

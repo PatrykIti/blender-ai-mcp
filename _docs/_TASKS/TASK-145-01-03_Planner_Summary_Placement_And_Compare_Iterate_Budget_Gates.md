@@ -23,6 +23,10 @@ Decide exactly where planner data lives in the staged reference loop so that:
   second routing loop.
 - `ReferenceHybridBudgetControlContract` remains the payload-size authority.
   Planner fields must participate in the same compact/rich budget rules.
+- If planner-specific budget counters or trim reasons are needed, add explicit
+  contract fields or a local builder/helper. Do not assume
+  `ReferenceHybridBudgetControlContract` has mutating helper methods beyond the
+  existing contract/model API.
 - If a separate detail retrieval surface is introduced, it should be read-only,
   bounded, and backed by the current stage state.
 
@@ -31,6 +35,12 @@ Decide exactly where planner data lives in the staged reference loop so that:
 ```python
 planner_summary = planner_result.to_compact_summary()
 planner_detail = planner_result.to_detail() if include_detail else None
+stage_budget_control = budget_control.model_copy(
+    update={
+        "detail_trimmed": budget_control.detail_trimmed or planner_result.detail_trimmed,
+        "trimming_applied": budget_control.trimming_applied or planner_result.detail_trimmed,
+    }
+)
 
 return _stage_compare_response(
     ...,
@@ -38,7 +48,7 @@ return _stage_compare_response(
     refinement_handoff=planner_result.handoff,
     planner_summary=planner_summary,
     planner_detail=planner_detail if preset_profile == "rich" else None,
-    budget_control=budget_control.with_planner_counts(planner_result),
+    budget_control=stage_budget_control,
 )
 ```
 

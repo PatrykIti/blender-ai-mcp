@@ -51,9 +51,42 @@ adoption path:
 - If planner or sculpt handoff state changes the bounded visible surface,
   native MCP visibility should refresh in the active request path. Do not rely
   on stale session catalog state.
+- `ReferenceRefinementHandoffContract` is response-local today. If a later
+  implementation needs it to affect native visibility, normalize only the
+  bounded visibility-relevant facts into existing `guided_handoff` and/or
+  `guided_flow_state`; do not add a separate planner-state persistence or
+  catalog gate.
 - Prompt/docs changes must describe shipped fields and visible tools only.
   Hidden or future-only planner details should be described as future work or
   omitted.
+
+## Pseudocode
+
+```python
+stage_result = reference_iterate_stage_checkpoint(ctx, preset_profile="compact")
+planner_handoff = stage_result.refinement_handoff
+session_state = get_session_capability_state(ctx)
+
+visible_tools = build_visibility_rules(
+    surface_profile="llm-guided",
+    phase=current_guided_phase(ctx),
+    guided_handoff=session_state.guided_handoff,
+    guided_flow_state=session_state.guided_flow_state,
+)
+
+await apply_session_visibility(
+    ctx,
+    surface_profile="llm-guided",
+    phase=current_guided_phase(ctx),
+    guided_handoff=session_state.guided_handoff,
+    guided_flow_state=session_state.guided_flow_state,
+)
+
+# If planner_handoff must affect native visibility, first normalize only the
+# bounded visibility facts into the existing guided_handoff / guided_flow_state
+# persistence path. Search/discovery remains covered by the existing search
+# metadata and test_search_surface.py, not a second planner catalog.
+```
 
 ## Repository Touchpoints
 
@@ -70,6 +103,8 @@ adoption path:
 - `tests/unit/adapters/mcp/test_prompt_catalog.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/e2e/vision/test_reference_guided_creature_comparison.py`
+- `tests/e2e/integration/test_guided_streamable_spatial_support.py`
+- `tests/e2e/integration/test_guided_surface_contract_parity.py`
 - `_docs/_PROMPTS/README.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 - `_docs/_VISION/README.md`
@@ -85,6 +120,8 @@ adoption path:
   or sculpt family onto bootstrap by default
 - native MCP visibility refreshes when planner/handoff state changes the
   bounded visible surface
+- any handoff-driven visibility change is represented through existing
+  `guided_handoff` / `guided_flow_state`, not a second planner-state flow
 - regression coverage protects the compact delivery model and sculpt
   recommendation boundaries
 
@@ -106,6 +143,17 @@ adoption path:
 - `tests/unit/adapters/mcp/test_prompt_catalog.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/e2e/vision/test_reference_guided_creature_comparison.py`
+- `tests/e2e/integration/test_guided_streamable_spatial_support.py`
+- `tests/e2e/integration/test_guided_surface_contract_parity.py`
+
+## Validation Category
+
+- Unit visibility/search/prompt lane:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_prompt_catalog.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- Integration/E2E visibility lane when native MCP visibility behavior changes:
+  `poetry run pytest tests/e2e/integration/test_guided_streamable_spatial_support.py tests/e2e/integration/test_guided_surface_contract_parity.py -q`
+- Docs/preflight:
+  `git diff --check`
 
 ## Changelog Impact
 

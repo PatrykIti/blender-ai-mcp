@@ -21,6 +21,14 @@ policy that evaluates:
 - Treat truth/relation/view outputs as evidence and constraints. The planner
   policy chooses the next bounded family; evidence contracts do not themselves
   become an autonomous workflow.
+- View/framing evidence should come from the current
+  `SceneToolHandler.get_view_diagnostics(...)` ->
+  `scene_view_diagnostics(...)` path and existing reference-loop view hints.
+  Do not recompute camera or visibility truth inside the planner policy helper.
+- The staged compare / iterate path must explicitly wire or consume
+  `view_diagnostics_hints` before treating view evidence as a planner input.
+  Current view-compare hints are not enough by themselves for staged planner
+  policy.
 - Macro remains the default owner for unresolved structural relation failures
   such as attachment, support, contact, and overlap.
 - Sculpt can be selected only when structural blockers are absent or explicitly
@@ -58,6 +66,8 @@ def select_next_family(evidence: RepairPlannerEvidence) -> RepairPlannerDecision
 - `server/adapters/mcp/areas/reference.py`
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/contracts/scene.py`
+- `server/application/tool_handlers/scene_handler.py`
+- `server/adapters/mcp/areas/scene.py`
 - `server/application/services/repair_planner.py` or equivalent policy helper
 - `server/application/services/spatial_graph.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
@@ -73,6 +83,9 @@ def select_next_family(evidence: RepairPlannerEvidence) -> RepairPlannerDecision
   planner policy remain the source of the family-selection decision
 - vision/silhouette signals stay advisory and cannot override unresolved
   relation blockers
+- staged compare / iterate either carries typed view-diagnostics evidence or
+  emits an explicit `scene_view_diagnostics(...)` precondition before using view
+  facts for family selection
 - the selected family is explainable from typed planner sources and does not
   rely on a prompt-only classifier
 - planner policy stays bounded to family selection / block reasons and does not
@@ -87,6 +100,7 @@ def select_next_family(evidence: RepairPlannerEvidence) -> RepairPlannerDecision
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 - `tests/e2e/vision/test_reference_guided_creature_comparison.py`
 

@@ -27,6 +27,35 @@ artifacts on `llm-guided` so they stay:
   planner or sculpt family.
 - Streamable HTTP and stdio clients should see the same truthful bounded
   visibility semantics.
+- `ReferenceRefinementHandoffContract` is currently carried by reference
+  compare / iterate responses. If this task makes handoff state affect native
+  visibility, normalize the visibility-relevant subset into existing
+  `guided_handoff` or `guided_flow_state` instead of introducing a second
+  planner-state catalog.
+
+## Pseudocode
+
+```python
+stage_result = reference_iterate_stage_checkpoint(ctx, preset_profile="compact")
+session_state = get_session_capability_state(ctx)
+
+# If stage_result.refinement_handoff needs to affect native visibility, persist
+# only the bounded visibility facts through the existing guided_handoff /
+# guided_flow_state path before applying visibility.
+rules = build_visibility_rules(
+    surface_profile="llm-guided",
+    phase=current_guided_phase(ctx),
+    guided_handoff=session_state.guided_handoff,
+    guided_flow_state=session_state.guided_flow_state,
+)
+await apply_session_visibility(
+    ctx,
+    surface_profile="llm-guided",
+    phase=current_guided_phase(ctx),
+    guided_handoff=session_state.guided_handoff,
+    guided_flow_state=session_state.guided_flow_state,
+)
+```
 
 ## Repository Touchpoints
 
@@ -36,8 +65,11 @@ artifacts on `llm-guided` so they stay:
 - `server/adapters/mcp/platform/capability_manifest.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_guided_mode.py`
+- `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
 - `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
+- `tests/e2e/integration/test_guided_streamable_spatial_support.py`
+- `tests/e2e/integration/test_guided_surface_contract_parity.py`
 
 ## Acceptance Criteria
 
@@ -48,6 +80,8 @@ artifacts on `llm-guided` so they stay:
   current handoff justifies it
 - native MCP `list_tools()` / search visibility refreshes when planner or
   handoff state changes
+- handoff-driven visibility, if implemented, uses the existing
+  `guided_handoff` / `guided_flow_state` inputs to `build_visibility_rules(...)`
 - default build and inspect phase footprints remain materially below the broad
   legacy catalog
 
@@ -63,6 +97,8 @@ artifacts on `llm-guided` so they stay:
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
 - `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
+- `tests/e2e/integration/test_guided_streamable_spatial_support.py`
+- `tests/e2e/integration/test_guided_surface_contract_parity.py`
 
 ## Validation Category
 
@@ -70,6 +106,8 @@ artifacts on `llm-guided` so they stay:
   refresh.
 - Add or update one integration-style scenario when handoff state affects
   native MCP tool visibility for Streamable HTTP / stdio clients.
+- Targeted integration lane:
+  `poetry run pytest tests/e2e/integration/test_guided_streamable_spatial_support.py tests/e2e/integration/test_guided_surface_contract_parity.py -q`
 
 ## Changelog Impact
 

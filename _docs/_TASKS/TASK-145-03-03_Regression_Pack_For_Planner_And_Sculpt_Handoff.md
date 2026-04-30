@@ -33,6 +33,11 @@ At minimum, cover:
   `llm-guided`
 - native visibility refresh: tool visibility does not stay stale after guided
   planner/handoff state changes
+- rounded-part macro regression: head/body and tail/body rounded seams still
+  prove `seated_contact`, and assembled-creature checkpoints do not regress
+  after the mesh-aware seating fix from `TASK-145-01-05`
+- macro/dependent-part guard: `macro_align_part_with_contact` still blocks or
+  warns on unsafe bbox-only side pushes that can detach dependent parts
 - docs/prompts: planner-first read order appears before raw vision prose or
   low-level edit suggestions
 
@@ -47,8 +52,13 @@ At minimum, cover:
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_prompt_catalog.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
+- `tests/e2e/integration/test_guided_streamable_spatial_support.py`
+- `tests/e2e/integration/test_guided_surface_contract_parity.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 - `tests/e2e/vision/test_reference_guided_creature_comparison.py`
+- `tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py`
+- `tests/e2e/tools/macro/test_macro_attach_part_to_surface.py`
+- `tests/e2e/tools/macro/test_macro_align_part_with_contact.py`
 - `tests/e2e/tools/sculpt/test_sculpt_tools.py`
 - `_docs/_VISION/CROSS_DOMAIN_REFINEMENT_ROUTING_EVAL.md`
 
@@ -62,6 +72,9 @@ At minimum, cover:
   changes the bounded visible surface
 - e2e coverage exercises both truth-driven assembly cases and organic/local
   sculpt-hand-off cases
+- E2E coverage also carries the deferred `TASK-145-01-05` rounded-part proof:
+  head/body seam, tail/body seam, assembled-creature `seated_contact`, and the
+  unsafe dependent-part side-push guard
 - docs/eval assets stay synchronized with the shipped contract and policy
 
 ## Docs To Update
@@ -81,8 +94,13 @@ At minimum, cover:
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_prompt_catalog.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
+- `tests/e2e/integration/test_guided_streamable_spatial_support.py`
+- `tests/e2e/integration/test_guided_surface_contract_parity.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 - `tests/e2e/vision/test_reference_guided_creature_comparison.py`
+- `tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py`
+- `tests/e2e/tools/macro/test_macro_attach_part_to_surface.py`
+- `tests/e2e/tools/macro/test_macro_align_part_with_contact.py`
 - `tests/e2e/tools/sculpt/test_sculpt_tools.py`
 
 ## Validation Category
@@ -90,7 +108,7 @@ At minimum, cover:
 - Unit lane:
   `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_prompt_catalog.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
 - E2E lane:
-  `poetry run pytest tests/e2e/vision/test_reference_stage_truth_handoff.py tests/e2e/vision/test_reference_guided_creature_comparison.py tests/e2e/tools/sculpt/test_sculpt_tools.py -q`
+  `poetry run pytest tests/e2e/integration/test_guided_streamable_spatial_support.py tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/vision/test_reference_stage_truth_handoff.py tests/e2e/vision/test_reference_guided_creature_comparison.py tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py tests/e2e/tools/macro/test_macro_attach_part_to_surface.py tests/e2e/tools/macro/test_macro_align_part_with_contact.py tests/e2e/tools/sculpt/test_sculpt_tools.py -q`
 - Docs/preflight:
   `git diff --check`
 

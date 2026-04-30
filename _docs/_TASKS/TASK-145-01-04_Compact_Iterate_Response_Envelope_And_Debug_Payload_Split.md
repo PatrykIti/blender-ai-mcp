@@ -61,6 +61,15 @@ full candidate evidence, silhouette metrics, and duplicated state.
 - E2E:
   - guided stage iterate returns compact payload suitable for direct LLM reading
 
+## Validation Category
+
+- Unit lane:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- E2E lane before TASK-145 umbrella closure:
+  `poetry run pytest tests/e2e/vision/test_reference_stage_truth_handoff.py tests/e2e/vision/test_reference_guided_creature_comparison.py -q`
+- Docs/preflight:
+  `git diff --check`
+
 ## Docs To Update
 
 - `_docs/_MCP_SERVER/README.md`
@@ -89,5 +98,14 @@ full candidate evidence, silhouette metrics, and duplicated state.
 - no dedicated debug retrieval tool was added in this slice; rich/debug payload
   delivery remains the future path for full nested data
 - validation: `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- docs updated: `_docs/_MCP_SERVER/README.md`,
+  `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`, and
+  `_docs/_VISION/README.md`
+- changelog recorded:
+  `_docs/_CHANGELOG/238-2026-04-14-compact-iterate-and-organic-seating-planner.md`
+- board/parent state: leaf closed under the still-open TASK-145 umbrella; no
+  `_docs/_TASKS/README.md` board-count change was needed
+- pre-commit status for the implementation closeout was not recorded in the
+  original leaf closeout; current docs repair is covered by `git diff --check`
 - E2E not run in this leaf closeout; the required end-to-end compact-stage
   regression is tracked under TASK-145-03-03

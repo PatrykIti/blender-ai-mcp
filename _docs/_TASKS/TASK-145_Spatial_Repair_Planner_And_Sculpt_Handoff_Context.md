@@ -165,9 +165,18 @@ The intended ownership split is:
   framework-free policy helper should own non-trivial family-selection,
   blocker, and sculpt-suppression rules once the rules outgrow the current
   private helper shape.
+- Any application-layer planner helper must preserve Clean Architecture
+  direction. It should expose framework-free DTOs or typed policy results; it
+  must not import MCP adapter contracts. `server/adapters/mcp/areas/reference.py`
+  remains responsible for translating planner results into `Reference*Contract`
+  payloads.
 - `server/application/services/spatial_graph.py` and scene graph contracts
   remain the owners of spatial truth facts; TASK-145 consumes their evidence
   instead of recomputing scene truth.
+- View/framing truth should continue to come from the existing
+  `SceneToolHandler.get_view_diagnostics(...)` and `scene_view_diagnostics(...)`
+  path. The planner consumes those typed results; it does not create a new
+  camera or visibility truth pass.
 - FastMCP visibility/search layers expose or hide bounded artifacts; they do
   not become the planner's reasoning authority.
 
@@ -313,11 +322,12 @@ This umbrella does **not** cover:
 | Path / Module | Expected Ownership | Why In Scope |
 |---------------|--------------------|--------------|
 | `server/adapters/mcp/contracts/reference.py` | Response contract owner | Add bounded planner / handoff fields without inventing a second response family. |
-| `server/application/services/repair_planner.py` or equivalent helper | Planner policy owner | Keep non-trivial family-selection and blocker rules outside thin MCP adapters. |
+| `server/application/services/repair_planner.py` or equivalent helper | Planner policy owner | Keep non-trivial family-selection and blocker rules outside thin MCP adapters while returning framework-free DTOs/results, not MCP adapter contracts. |
 | `server/adapters/mcp/areas/reference.py` | Stage response assembler | Reuse `truth_followup`, `correction_candidates`, `budget_control`, `refinement_route`, and `refinement_handoff` in compare / iterate. |
 | `server/adapters/mcp/contracts/scene.py` | Spatial evidence contract owner | Consume existing scope, relation, and view contracts as evidence instead of duplicating truth. |
 | `server/adapters/mcp/areas/scene.py` | Spatial read-tool adapter | Preserve current `scene_scope_graph`, `scene_relation_graph`, and `scene_view_diagnostics` behavior. |
 | `server/application/services/spatial_graph.py` | Spatial truth service | Remains the source for scope/relation facts used by planner policy. |
+| `server/application/tool_handlers/scene_handler.py` | View diagnostics application owner | Preserve the RPC-backed `get_view_diagnostics(...)` path as the runtime source for view/framing facts. |
 | `server/adapters/mcp/areas/sculpt.py` | Sculpt tool surface owner | Keep recommended sculpt tools aligned with real deterministic region tool signatures. |
 | `server/adapters/mcp/transforms/visibility_policy.py` | Runtime visibility owner | Keep planner/sculpt exposure phase-aware and prevent broad bootstrap visibility. |
 | `server/adapters/mcp/guided_mode.py` | Guided profile owner | Keep `llm-guided` small while allowing bounded handoff-driven discovery. |

@@ -24,6 +24,25 @@ brush/setup or broad whole-mesh sculpt paths by accident.
 - Progressive unlock, if implemented later, must be handoff-state driven and
   limited to the same deterministic subset.
 
+## Pseudocode
+
+```python
+eligible_tools = tuple(_SCULPT_RECOMMENDED_TOOLS)
+handoff = _build_refinement_handoff(compare_result, refinement_route)
+
+if handoff.selected_family == "sculpt_region" and not sculpt_preconditions.blockers:
+    handoff.recommended_tools = [
+        tool for tool in handoff.recommended_tools
+        if tool.tool_name in eligible_tools
+    ]
+else:
+    handoff.recommended_tools = []
+
+# If recommended tools should become visible, normalize that bounded fact into
+# existing guided_handoff / guided_flow_state and let build_visibility_rules(...)
+# materialize the native MCP surface.
+```
+
 ## Repository Touchpoints
 
 - `server/adapters/mcp/contracts/reference.py`

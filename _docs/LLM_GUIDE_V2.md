@@ -424,10 +424,10 @@ Suggested artifacts:
 - occlusion summary
 - focus target coverage
 
-Suggested future tools:
+Current / future artifacts:
 
 - `scene_project_to_view(object_name=..., camera_name=...|USER_PERSPECTIVE)`
-- `scene_visibility_report(object_names=[...], camera_name=...)`
+- `scene_view_diagnostics(target_object=..., camera_name=...|USER_PERSPECTIVE)`
 
 These would add real value for later sculpt handoff because the model could
 know whether the region it wants to refine is actually visible and isolated.
@@ -534,8 +534,9 @@ The intended model is:
    Returns typed pair relations for the current scope:
    contact, gap, overlap, attachment, support, alignment, symmetry-derived hints.
 
-3. `scene_visibility_report(...)`
-   Returns which requested objects are visible, partially visible, occluded, or off-frame from a selected view.
+3. `scene_view_diagnostics(...)`
+   Returns compact view-space diagnostics for an explicit scope, including
+   visibility, framing, occlusion, and camera or viewport evidence.
 
 These three would materially improve LLM spatial reasoning immediately.
 
@@ -558,13 +559,15 @@ They should be exposed in a controlled way:
 
 ### Tier C: Useful Once Sculpt Exposure Grows
 
-7. `sculpt_region_context(...)`
-   Returns the local region target, current supporting relations, visibility,
-   and preconditions for bounded sculpt-region work.
+7. Existing `refinement_handoff` / planner detail fields
+   Carry the local region target, current supporting relations, visibility, and
+   preconditions for bounded sculpt-region work through the staged reference
+   loop before adding any separate sculpt handoff tool.
 
-8. `sculpt_region_handoff(...)`
-   Machine-readable handoff payload that says:
-   "sculpt is now appropriate here, on this object, for this local reason."
+8. Bounded sculpt discovery through existing guided visibility/search policy
+   Surfaces deterministic sculpt-region tools only when the current
+   recommendation state says sculpt is appropriate for this object and local
+   reason.
 
 ---
 
@@ -736,7 +739,7 @@ refinement_handoff
   ↓
 scene_scope_graph(...)
 scene_relation_graph(...)
-scene_visibility_report(...)
+scene_view_diagnostics(...)
   ↓
 bounded macro / modeling / sculpt-region step
   ↓
@@ -795,18 +798,18 @@ Work:
 - document them more explicitly as the current spatial state model
 - keep them typed and stable
 
-### Phase 2: Add Read-Only Spatial Graph Tools
+### Phase 2: Use Read-Only Spatial Graph Tools
 
 Goal:
 
-- expose scope graph, relation graph, and visibility report as first-class
+- expose scope graph, relation graph, and view diagnostics as first-class
   read-side tools
 
 Work:
 
 - `scene_scope_graph(...)`
 - `scene_relation_graph(...)`
-- `scene_visibility_report(...)`
+- `scene_view_diagnostics(...)`
 
 Important delivery rule:
 
@@ -834,7 +837,8 @@ Goal:
 
 Work:
 
-- `sculpt_region_context(...)`
+- extend existing `refinement_handoff` / planner detail fields before adding
+  any new tool
 - view-aware sculpt preconditions
 - region-level handoff instead of broad "use sculpt now"
 
@@ -879,9 +883,9 @@ The most valuable next additions are:
 
 1. `scene_scope_graph(...)`
 2. `scene_relation_graph(...)`
-3. `scene_visibility_report(...)`
+3. `scene_view_diagnostics(...)`
 4. stronger repair-family payloads
-5. `sculpt_region_context(...)`
+5. stronger existing `refinement_handoff` / planner detail fields
 
 If those exist, the model stops guessing space from text and starts reasoning
 over structured 3D state.
