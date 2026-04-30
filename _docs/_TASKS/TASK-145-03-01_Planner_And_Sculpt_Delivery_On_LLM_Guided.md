@@ -37,6 +37,9 @@ artifacts on `llm-guided` so they stay:
   bounded sculpt subset must resolve through `GUIDED_TOOL_FAMILY_MAP` /
   `GuidedFlowFamilyLiteral`, or unmapped `sculpt_*` mutators must fail closed in
   `router_helper.py`.
+- Any implementation touching that gate must update
+  `tests/unit/adapters/mcp/test_context_bridge.py`, because it is the existing
+  owner for role-group spoofing and unmapped mutator fail-closed regressions.
 
 ## Runtime / Security Contract
 
@@ -99,6 +102,7 @@ await apply_visibility_for_session_state(ctx, advanced_state)
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_guided_mode.py`
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
+- `tests/unit/adapters/mcp/test_context_bridge.py`
 - `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
@@ -133,6 +137,7 @@ await apply_visibility_for_session_state(ctx, advanced_state)
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_guided_mode.py`
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
+- `tests/unit/adapters/mcp/test_context_bridge.py`
 - `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
@@ -143,7 +148,7 @@ await apply_visibility_for_session_state(ctx, advanced_state)
 - Unit tests must cover static policy and active guided-state visibility
   refresh.
 - Targeted unit lane:
-  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py tests/unit/adapters/mcp/test_search_surface.py -q`
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_context_bridge.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py tests/unit/adapters/mcp/test_search_surface.py -q`
 - Add or update one integration-style scenario when handoff state affects
   native MCP tool visibility for Streamable HTTP / stdio clients.
 - Targeted integration lane:

@@ -48,6 +48,9 @@ adoption path:
 - Visibility and search changes must stay on the existing FastMCP platform
   surfaces: `visibility_policy.py`, `guided_mode.py`,
   `session_capabilities.py`, capability manifest, and search metadata.
+- Guided sculpt execution enforcement remains owned by `router_helper.py` and
+  covered by `tests/unit/adapters/mcp/test_context_bridge.py`; include that
+  lane whenever handoff-driven visibility can expose mutating `sculpt_*` tools.
 - If planner or sculpt handoff state changes the bounded visible surface,
   native MCP visibility should refresh in the active request path. Do not rely
   on stale session catalog state.
@@ -89,11 +92,13 @@ await apply_visibility_for_session_state(ctx, advanced_state)
 - `server/adapters/mcp/transforms/visibility_policy.py`
 - `server/adapters/mcp/guided_mode.py`
 - `server/adapters/mcp/session_capabilities.py`
+- `server/adapters/mcp/router_helper.py`
 - `server/adapters/mcp/platform/capability_manifest.py`
 - `server/adapters/mcp/prompts/prompt_catalog.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_guided_mode.py`
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
+- `tests/unit/adapters/mcp/test_context_bridge.py`
 - `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_prompt_catalog.py`
@@ -134,6 +139,7 @@ await apply_visibility_for_session_state(ctx, advanced_state)
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_guided_mode.py`
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
+- `tests/unit/adapters/mcp/test_context_bridge.py`
 - `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_prompt_catalog.py`
@@ -145,7 +151,7 @@ await apply_visibility_for_session_state(ctx, advanced_state)
 ## Validation Category
 
 - Unit visibility/search/prompt lane:
-  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_prompt_catalog.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_context_bridge.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_prompt_catalog.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
 - Integration/E2E visibility lane when native MCP visibility behavior changes:
   `poetry run pytest tests/e2e/integration/test_guided_streamable_spatial_support.py tests/e2e/integration/test_guided_surface_contract_parity.py -q`
 - Docs/preflight:

@@ -38,7 +38,9 @@ At minimum, cover:
 - visibility/search: no broad planner/sculpt family is bootstrap-visible on
   `llm-guided`
 - guided sculpt execution gate: any handoff-visible sculpt mutator maps to an
-  allowed guided family or fails closed before execution
+  allowed guided family or fails closed before execution; cover this in
+  `tests/unit/adapters/mcp/test_context_bridge.py`, the existing owner for
+  role-group spoofing and unmapped mutator fail-closed behavior
 - native visibility refresh: tool visibility does not stay stale after guided
   planner/handoff state changes
 - rounded-part macro regression: head/body and tail/body rounded seams still
@@ -56,6 +58,7 @@ At minimum, cover:
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_guided_mode.py`
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
+- `tests/unit/adapters/mcp/test_context_bridge.py`
 - `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_prompt_catalog.py`
@@ -78,7 +81,7 @@ At minimum, cover:
   `ReferenceCompareStageCheckpointResponseContract` and
   `ReferenceIterateStageCheckpointResponseContract`
 - guided execution tests cover the bounded sculpt subset mapping or fail-closed
-  behavior for unmapped `sculpt_*` mutators
+  behavior for unmapped `sculpt_*` mutators in `test_context_bridge.py`
 - search/visibility regressions guard against planner/sculpt overexposure on
   `llm-guided`
 - guided-state tests cover visibility refresh when planner/handoff state
@@ -103,6 +106,7 @@ At minimum, cover:
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_guided_mode.py`
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
+- `tests/unit/adapters/mcp/test_context_bridge.py`
 - `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_prompt_catalog.py`
@@ -119,7 +123,7 @@ At minimum, cover:
 ## Validation Category
 
 - Unit lane:
-  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_prompt_catalog.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_context_bridge.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_prompt_catalog.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
 - E2E lane:
   `poetry run pytest tests/e2e/integration/test_guided_streamable_spatial_support.py tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/vision/test_reference_stage_truth_handoff.py tests/e2e/vision/test_reference_guided_creature_comparison.py tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py tests/e2e/tools/macro/test_macro_attach_part_to_surface.py tests/e2e/tools/macro/test_macro_align_part_with_contact.py tests/e2e/tools/sculpt/test_sculpt_tools.py -q`
 - Docs/preflight:

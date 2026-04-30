@@ -331,6 +331,7 @@ This umbrella does **not** cover:
 | `server/adapters/mcp/areas/sculpt.py` | Sculpt tool surface owner | Keep recommended sculpt tools aligned with real deterministic region tool signatures. |
 | `server/adapters/mcp/transforms/visibility_policy.py` | Runtime visibility owner | Keep planner/sculpt exposure phase-aware and prevent broad bootstrap visibility. |
 | `server/adapters/mcp/guided_mode.py` | Guided profile owner | Keep `llm-guided` small while allowing bounded handoff-driven discovery. |
+| `server/adapters/mcp/router_helper.py` | Guided execution policy owner | Ensure any guided-visible sculpt mutator maps to an allowed family or fails closed before execution. |
 | `server/adapters/mcp/platform/capability_manifest.py` | Public capability inventory | Keep public metadata aligned with any bounded planner/sculpt capability exposure. |
 | `server/adapters/mcp/prompts/prompt_catalog.py` | Prompt ordering owner | Teach planner-first interpretation without exposing hidden tools. |
 | `server/router/infrastructure/tools_metadata/scene/` | Search metadata for evidence tools | Keep scope/relation/view discovery aligned with planner evidence needs. |
@@ -340,6 +341,7 @@ This umbrella does **not** cover:
 | `tests/unit/adapters/mcp/test_contract_payload_parity.py` | Contract shape coverage | Lock compact/rich planner payload parity. |
 | `tests/unit/adapters/mcp/test_visibility_policy.py` | Visibility policy coverage | Guard against broad planner/sculpt overexposure. |
 | `tests/unit/adapters/mcp/test_guided_mode.py` | Guided profile coverage | Prove planner/sculpt handoff does not bloat default guided profile. |
+| `tests/unit/adapters/mcp/test_context_bridge.py` | Guided execution coverage | Lock role-group spoofing and unmapped mutator fail-closed behavior when sculpt visibility changes. |
 | `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py` | Catalog-size regression coverage | Keep guided build/inspect footprints bounded. |
 | `tests/unit/adapters/mcp/test_search_surface.py` | Search/discovery coverage | Prove bounded artifacts are discoverable only when appropriate. |
 | `tests/unit/adapters/mcp/test_prompt_catalog.py` | Prompt catalog coverage | Prove planner-first prompt ordering. |
@@ -376,7 +378,7 @@ This umbrella does **not** cover:
 |-------|------------------------|
 | Unit contracts | `tests/unit/adapters/mcp/test_contract_payload_parity.py` for compact/rich planner and handoff shapes. |
 | Unit reference loop | `tests/unit/adapters/mcp/test_reference_images.py` for correction candidates, route policy, planner summary, budget trimming, and sculpt blockers. |
-| Unit visibility/search | `tests/unit/adapters/mcp/test_visibility_policy.py`, `test_guided_mode.py`, `test_guided_surface_benchmarks.py`, and `test_search_surface.py` for phase-aware bounded exposure. |
+| Unit visibility/search | `tests/unit/adapters/mcp/test_visibility_policy.py`, `test_guided_mode.py`, `test_context_bridge.py`, `test_guided_surface_benchmarks.py`, and `test_search_surface.py` for phase-aware bounded exposure plus guided execution fail-closed coverage. |
 | Unit prompt/docs | `tests/unit/adapters/mcp/test_prompt_catalog.py` and `test_public_surface_docs.py` for planner-first wording and public contract alignment. |
 | Integration/router | Existing router metadata/search validation plus focused guided visibility refresh coverage when planner/handoff state changes native MCP visibility. |
 | E2E / Blender | `tests/e2e/vision/test_reference_stage_truth_handoff.py`, `tests/e2e/vision/test_reference_guided_creature_comparison.py`, and focused sculpt-handoff coverage in `tests/e2e/tools/sculpt/`. |
@@ -385,7 +387,7 @@ This umbrella does **not** cover:
 ## Validation Commands
 
 - Unit reference loop: `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
-- Visibility/search/prompt lane: `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_prompt_catalog.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- Visibility/search/prompt lane: `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_context_bridge.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_prompt_catalog.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
 - E2E/Blender lane when runtime behavior changes: `poetry run pytest tests/e2e/vision/test_reference_stage_truth_handoff.py tests/e2e/vision/test_reference_guided_creature_comparison.py tests/e2e/tools/sculpt/test_sculpt_tools.py -q`
 - Preflight docs/code hygiene: `git diff --check`
 

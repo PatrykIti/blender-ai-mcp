@@ -34,6 +34,10 @@ brush/setup or broad whole-mesh sculpt paths by accident.
     `GuidedFlowFamilyLiteral` and `GUIDED_TOOL_FAMILY_MAP`
   - or make unmapped `sculpt_*` mutators fail closed in `router_helper.py`
     until that mapping exists.
+- When that execution policy changes, include
+  `tests/unit/adapters/mcp/test_context_bridge.py`; it owns the existing
+  role-group spoofing and unmapped mutator fail-closed coverage for
+  `router_helper.py`.
 - Visibility/search metadata is not enough for sculpt safety. The execution
   gate must block visible sculpt mutators whose family is not allowed by the
   current `guided_flow_state`.
@@ -95,6 +99,7 @@ else:
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_guided_mode.py`
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
+- `tests/unit/adapters/mcp/test_context_bridge.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 
@@ -126,13 +131,14 @@ else:
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_guided_mode.py`
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
+- `tests/unit/adapters/mcp/test_context_bridge.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 
 ## Validation Category
 
 - Targeted unit lane:
-  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_search_surface.py -q`
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_context_bridge.py tests/unit/adapters/mcp/test_search_surface.py -q`
 - Router metadata schema lane when `server/router/infrastructure/tools_metadata/sculpt/*.json` changes:
   `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run check-router-tool-metadata --all-files`
 - Docs/preflight:
