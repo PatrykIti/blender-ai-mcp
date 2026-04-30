@@ -19,6 +19,10 @@ planner-first read order:
 - Prompt/docs wording should match the shipped compact stage response fields.
   Do not document hidden tools or future-only planner surfaces as default
   behavior.
+- Correct existing spatial-helper wording drift while updating planner-first
+  docs: `scene_scope_graph`, `scene_relation_graph`, and
+  `scene_view_diagnostics` are current read-only `llm-guided` spatial support
+  tools, so docs must not describe them as kept off guided bootstrap by default.
 - The read order should explicitly preserve the responsibility boundary:
   deterministic evidence and planner policy first, vision prose as advisory
   context, and low-level tools only after the bounded family/handoff decision.
@@ -62,6 +66,8 @@ Use vision prose only to explain or prioritize, not to override truth evidence.
   than a default fallback
 - documentation stays aligned with the actual shaped public surface and does
   not instruct hidden or non-default tools
+- public docs and inventory agree that current spatial helper tools are visible
+  read-only support tools on `llm-guided`, not future or hidden planner surfaces
 
 ## Docs To Update
 

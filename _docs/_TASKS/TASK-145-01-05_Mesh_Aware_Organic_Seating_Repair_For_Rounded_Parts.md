@@ -134,8 +134,10 @@ Recent runs show a repeated failure mode:
   `_docs/_CHANGELOG/238-2026-04-14-compact-iterate-and-organic-seating-planner.md`
 - board/parent state: leaf closed under the still-open TASK-145 umbrella; no
   `_docs/_TASKS/README.md` board-count change was needed
-- pre-commit status for the implementation closeout was not recorded in the
-  original leaf closeout; current docs repair is covered by `git diff --check`
+- pre-commit status for the historical implementation closeout was not recorded
+  and should not be reconstructed retroactively; this docs-only closeout repair
+  intentionally records only the current docs validation path with
+  `git diff --check`
 - Blender-backed E2E was not run in this leaf closeout; the rounded head/body,
   tail/body, and assembled-creature E2E proof is deferred to TASK-145-03-03
   before the umbrella can close

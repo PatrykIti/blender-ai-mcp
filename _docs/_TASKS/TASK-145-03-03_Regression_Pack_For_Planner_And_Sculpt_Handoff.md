@@ -30,6 +30,9 @@ At minimum, cover:
   sculpt subset only after structural blockers clear
 - compact payload: planner summary is present without full heavy debug graphs
   in compact mode
+- contract parity: extend `test_contract_payload_parity.py` to cover the
+  reference-stage compare / iterate contracts used by the planner path; do not
+  assume the existing parity file already owns those reference contracts
 - rich/detail path: richer planner detail is opt-in and uses the same policy
   result as the compact response
 - visibility/search: no broad planner/sculpt family is bootstrap-visible on
@@ -71,6 +74,9 @@ At minimum, cover:
 
 - unit tests cover the compact planner contract, disclosure rules, and sculpt
   gating policy
+- `test_contract_payload_parity.py` includes explicit parity coverage for
+  `ReferenceCompareStageCheckpointResponseContract` and
+  `ReferenceIterateStageCheckpointResponseContract`
 - guided execution tests cover the bounded sculpt subset mapping or fail-closed
   behavior for unmapped `sculpt_*` mutators
 - search/visibility regressions guard against planner/sculpt overexposure on

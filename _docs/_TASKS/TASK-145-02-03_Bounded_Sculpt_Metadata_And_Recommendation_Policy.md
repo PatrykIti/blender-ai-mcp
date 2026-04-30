@@ -21,6 +21,11 @@ brush/setup or broad whole-mesh sculpt paths by accident.
   that the handoff can actually recommend.
 - If a sculpt tool is visible in search but never recommended by the bounded
   handoff, document why it is excluded from planner-driven handoff.
+- Resolve `sculpt_crease_region` explicitly. The public sculpt surface and
+  router metadata include it, while today's `_SCULPT_RECOMMENDED_TOOLS` handoff
+  subset does not. This task must either add it to the bounded recommended
+  subset with matching policy/tests, or document why crease-region work remains
+  searchable but outside planner-driven sculpt handoff.
 - Progressive unlock, if implemented later, must be handoff-state driven and
   limited to the same deterministic subset.
 - A sculpt visibility unlock must also update guided execution policy. Before
@@ -73,6 +78,8 @@ else:
 
 - sculpt recommendation policy is explicit about which sculpt tools are
   eligible for planner-driven handoff
+- `sculpt_crease_region` is consciously included in or excluded from the bounded
+  planner-driven sculpt subset, with docs/tests matching that decision
 - metadata/search wording reflects local deterministic region work, not broad
   "just sculpt it" behavior
 - `llm-guided` does not auto-expose the whole sculpt capability by default

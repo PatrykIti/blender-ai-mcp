@@ -186,10 +186,10 @@ compare.planner_summary = planner_result.compact_summary
 
 ## Execution Structure
 
-| Order | Leaf | Purpose |
-|------|------|---------|
-| 1 | [TASK-145-01-01](./TASK-145-01-01_Planner_Envelope_And_Provenance_Contract.md) | Define the bounded planner contract shape and provenance model on top of the current reference contracts |
-| 2 | [TASK-145-01-02](./TASK-145-01-02_Deterministic_Family_Selection_From_Scope_Relation_And_View_Signals.md) | Replace coarse planner selection with explicit deterministic precedence over scope, relation, truth, and view signals |
-| 3 | [TASK-145-01-03](./TASK-145-01-03_Planner_Summary_Placement_And_Compare_Iterate_Budget_Gates.md) | Place planner outputs into compare / iterate in a compact way with goal-aware disclosure and budget guards |
-| 4 | [TASK-145-01-04](./TASK-145-01-04_Compact_Iterate_Response_Envelope_And_Debug_Payload_Split.md) | Split normal compact iterate responses from rich debug payloads so LLM clients do not need ad hoc parsing for large checkpoint outputs |
-| 5 | [TASK-145-01-05](./TASK-145-01-05_Mesh_Aware_Organic_Seating_Repair_For_Rounded_Parts.md) | Prefer mesh-aware organic seating repair for rounded creature seams instead of oscillating between bbox contact and mesh-surface gaps |
+| Order | Leaf | Status | Purpose |
+|------|------|--------|---------|
+| 1 | [TASK-145-01-01](./TASK-145-01-01_Planner_Envelope_And_Provenance_Contract.md) | ⏳ To Do | Define the bounded planner contract shape and provenance model on top of the current reference contracts |
+| 2 | [TASK-145-01-02](./TASK-145-01-02_Deterministic_Family_Selection_From_Scope_Relation_And_View_Signals.md) | ⏳ To Do | Replace coarse planner selection with explicit deterministic precedence over scope, relation, truth, and view signals |
+| 3 | [TASK-145-01-03](./TASK-145-01-03_Planner_Summary_Placement_And_Compare_Iterate_Budget_Gates.md) | ⏳ To Do | Place planner outputs into compare / iterate in a compact way with goal-aware disclosure and budget guards |
+| 4 | [TASK-145-01-04](./TASK-145-01-04_Compact_Iterate_Response_Envelope_And_Debug_Payload_Split.md) | ✅ Done | Closed compact response debug split; stricter parity and E2E gates remain carried by [TASK-145-03-03](./TASK-145-03-03_Regression_Pack_For_Planner_And_Sculpt_Handoff.md) |
+| 5 | [TASK-145-01-05](./TASK-145-01-05_Mesh_Aware_Organic_Seating_Repair_For_Rounded_Parts.md) | ✅ Done | Closed mesh-aware rounded seating slice; align warning/blocking, dependent-part guard, and Blender-backed proof remain carried by [TASK-145-03-03](./TASK-145-03-03_Regression_Pack_For_Planner_And_Sculpt_Handoff.md) |

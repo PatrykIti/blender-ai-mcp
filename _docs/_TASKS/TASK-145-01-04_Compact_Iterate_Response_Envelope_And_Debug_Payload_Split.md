@@ -128,7 +128,9 @@ small-envelope contract remains umbrella closure work under
   `_docs/_CHANGELOG/238-2026-04-14-compact-iterate-and-organic-seating-planner.md`
 - board/parent state: leaf closed under the still-open TASK-145 umbrella; no
   `_docs/_TASKS/README.md` board-count change was needed
-- pre-commit status for the implementation closeout was not recorded in the
-  original leaf closeout; current docs repair is covered by `git diff --check`
+- pre-commit status for the historical implementation closeout was not recorded
+  and should not be reconstructed retroactively; this docs-only closeout repair
+  intentionally records only the current docs validation path with
+  `git diff --check`
 - E2E not run in this leaf closeout; the required end-to-end compact-stage
   regression is tracked under TASK-145-03-03
