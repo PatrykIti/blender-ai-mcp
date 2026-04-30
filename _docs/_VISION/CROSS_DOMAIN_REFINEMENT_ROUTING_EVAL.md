@@ -15,16 +15,19 @@ Its purpose is to keep one explicit answer to:
 For refinement-routing review, inspect outputs in this order:
 
 1. `loop_disposition`
-2. `refinement_route`
-3. `refinement_handoff`
-4. `correction_candidates`
-5. `truth_followup`
-6. `correction_focus`
-7. `vision_contract_profile` when the compare path was external
+2. `planner_summary`
+3. `refinement_route`
+4. `refinement_handoff`
+5. `correction_candidates`
+6. `truth_followup`
+7. `correction_focus`
+8. `vision_contract_profile` when the compare path was external
 
 Why:
 
 - `loop_disposition` still decides whether free-form building should continue
+- `planner_summary` gives the compact family, target scope, typed blockers,
+  source-class provenance, and required support tools before lower-level hints
 - `refinement_route` decides which bounded tool family should own the next step
 - `refinement_handoff` tells the operator or client what deterministic family
   path is actually being recommended
@@ -88,6 +91,9 @@ Expected routing:
 - `refinement_route.selected_family == "sculpt_region"` can be valid
 - `refinement_handoff.recommended_tools` should stay in the deterministic
   sculpt-region subset
+- `refinement_handoff.state` must be `ready` before sculpt tools are used; if
+  `planner_summary.blockers` requires `scene_view_diagnostics(...)`, inspect
+  the view first
 
 Reason:
 
@@ -107,6 +113,8 @@ Expected routing:
 
 - `refinement_route.selected_family == "sculpt_region"` can be valid
 - hard-surface modeling fallback should not dominate by default
+- missing or poor view/framing evidence can still route to `inspect_only` until
+  the local target is explicitly diagnosed
 
 Reason:
 
@@ -154,6 +162,8 @@ Treat these as routing regressions:
 - hard-surface or low-poly assembly cases defaulting to `sculpt_region`
 - garment/anatomy/organic local-form cases never reaching `sculpt_region`
 - `refinement_handoff` recommending tools outside the bounded sculpt-region set
+- `refinement_handoff` marking sculpt `ready` while
+  `planner_summary.blockers` still contains relation/view/proportion blockers
 - `refinement_route` disagreeing with obvious truth/macro evidence without a
   deterministic reason
 - `refinement_handoff` reintroducing brush-style or event-style sculpt paths
@@ -165,7 +175,10 @@ Treat these as routing regressions:
 For cross-domain operator prompts:
 
 - check `refinement_route` before choosing the next tool family
+- check `planner_summary.blockers` and `required_support_tools` before choosing
+  any lower-level edit tool
 - if `refinement_route.selected_family == "sculpt_region"`, review
+  `refinement_handoff.state`, `refinement_handoff.local_reason`, and
   `refinement_handoff.recommended_tools` before any sculpt step
 - if the selected family is `macro` or `modeling_mesh`, do not jump to sculpt
   just because a shape mismatch exists

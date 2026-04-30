@@ -60,6 +60,7 @@ _GUIDED_UNMAPPED_MUTATING_PREFIXES: tuple[str, ...] = (
     "modeling_",
     "mesh_",
     "macro_",
+    "sculpt_",
     "material_",
     "uv_",
 )

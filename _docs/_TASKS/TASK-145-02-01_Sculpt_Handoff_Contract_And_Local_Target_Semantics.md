@@ -1,7 +1,7 @@
 # TASK-145-02-01: Sculpt Handoff Contract and Local Target Semantics
 
 **Parent:** [TASK-145-02](./TASK-145-02_Sculpt_Handoff_Context_And_Precondition_Model.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Depends On:** [TASK-145-01-01](./TASK-145-01-01_Planner_Envelope_And_Provenance_Contract.md)
 
@@ -101,9 +101,16 @@ return sculpt_handoff(
 
 ## Changelog Impact
 
-- include in the parent TASK-145 changelog entry when shipped
+- covered by the parent TASK-145 changelog entry:
+  [_docs/_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md](../_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md)
+
+## Completion Summary
+
+Closed by extending `ReferenceRefinementHandoffContract` with target object,
+target scope, local-form reason, handoff state, blockers, eligible sculpt
+tools, and compatibility-safe `object_name` argument hints for deterministic
+region tools.
 
 ## Status / Board Update
 
-- no board-count change is needed while TASK-145 remains the promoted open
-  board item
+- closed under TASK-145-02

@@ -70,6 +70,15 @@ The current router safety baseline separates decision policy, audit trail, and v
 - inconclusive verification is surfaced explicitly and must not be treated as silent success
 - router telemetry/logs carry the same `audit_ids` so operator traces can be correlated with MCP responses
 
+## Guided Execution Gate
+
+On `llm-guided`, mutating tool calls must resolve to an allowed guided family
+before execution. Unmapped mutating prefixes fail closed while an active guided
+flow has `allowed_families`; this includes `modeling_`, `mesh_`, `macro_`,
+`sculpt_`, `material_`, and `uv_` tools. Planner-driven sculpt handoff remains
+recommendation-only unless the bounded sculpt subset is explicitly mapped and
+allowed by the same guided execution policy.
+
 ---
 
 ## Components

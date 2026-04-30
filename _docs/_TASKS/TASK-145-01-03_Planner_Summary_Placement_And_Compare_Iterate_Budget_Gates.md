@@ -1,7 +1,7 @@
 # TASK-145-01-03: Planner Summary Placement and Compare/Iterate Budget Gates
 
 **Parent:** [TASK-145-01](./TASK-145-01_Repair_Planner_Payload_And_Family_Selection_Policy.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Depends On:** [TASK-145-01-01](./TASK-145-01-01_Planner_Envelope_And_Provenance_Contract.md), [TASK-145-01-02](./TASK-145-01-02_Deterministic_Family_Selection_From_Scope_Relation_And_View_Signals.md)
 
@@ -106,9 +106,16 @@ return _stage_compare_response(
 
 ## Changelog Impact
 
-- include in the parent TASK-145 changelog entry when shipped
+- covered by the parent TASK-145 changelog entry:
+  [_docs/_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md](../_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md)
+
+## Completion Summary
+
+Closed by wiring compact `planner_summary` into compare/iterate responses and
+keeping `planner_detail` on the rich profile only. Compact iterate responses
+preserve the actionable planner summary while omitting nested rich detail under
+the existing budget-control path.
 
 ## Status / Board Update
 
-- no board-count change is needed while TASK-145 remains the promoted open
-  board item
+- closed under TASK-145-01

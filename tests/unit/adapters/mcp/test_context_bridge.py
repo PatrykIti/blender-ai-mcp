@@ -754,6 +754,46 @@ def test_route_tool_call_report_fail_closes_unmapped_guided_mutating_tools(monke
     assert report.context.guided_tool_family is None
 
 
+def test_route_tool_call_report_fail_closes_unmapped_guided_sculpt_mutators(monkeypatch):
+    """Sculpt mutators should fail closed unless a bounded guided family mapping exists."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "checkpoint_iterate",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["run_checkpoint"],
+                "blocked_families": [],
+                "allowed_families": ["checkpoint_iterate", "inspect_validate"],
+                "allowed_roles": [],
+                "completed_roles": [],
+                "missing_roles": [],
+                "required_role_groups": ["checkpoint_iterate"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="sculpt_deform_region",
+        params={"object_name": "Heart", "center": [0.0, 0.0, 0.0], "delta": [0.0, 0.0, 0.1]},
+        direct_executor=lambda: "should not run",
+    )
+
+    assert report.router_disposition == "failed_closed_error"
+    assert "unmapped mutating tool 'sculpt_deform_region'" in str(report.error)
+    assert report.context.guided_tool_family is None
+
+
 def test_route_tool_call_report_validates_every_corrected_step_before_dispatch(monkeypatch):
     """A blocked earlier corrected step must not execute just because the final step is allowed."""
 

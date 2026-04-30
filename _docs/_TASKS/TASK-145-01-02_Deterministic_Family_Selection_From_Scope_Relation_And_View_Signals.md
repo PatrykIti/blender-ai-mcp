@@ -1,7 +1,7 @@
 # TASK-145-01-02: Deterministic Family Selection From Scope, Relation, and View Signals
 
 **Parent:** [TASK-145-01](./TASK-145-01_Repair_Planner_Payload_And_Family_Selection_Policy.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Depends On:** [TASK-145-01-01](./TASK-145-01-01_Planner_Envelope_And_Provenance_Contract.md), [TASK-143](./TASK-143_Guided_Spatial_Scope_And_Relation_Graphs.md), [TASK-144](./TASK-144_Camera_Aware_View_Graph_And_Visibility_Diagnostics.md)
 
@@ -121,9 +121,17 @@ def select_next_family(evidence: RepairPlannerEvidence) -> RepairPlannerDecision
 
 ## Changelog Impact
 
-- include in the parent TASK-145 changelog entry when shipped
+- covered by the parent TASK-145 changelog entry:
+  [_docs/_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md](../_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md)
+
+## Completion Summary
+
+Closed by hardening deterministic family selection: structural relation
+blockers keep the next family on macro, view blockers route to inspect-only
+support, non-local proportion drift stays on modeling/mesh, and sculpt-region
+selection requires an organic/local-form signal plus explicit non-blocking view
+evidence.
 
 ## Status / Board Update
 
-- no board-count change is needed while TASK-145 remains the promoted open
-  board item
+- closed under TASK-145-01

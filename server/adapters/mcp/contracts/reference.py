@@ -22,6 +22,19 @@ from server.adapters.mcp.sampling.result_types import VisionAssistantContract
 from .base import MCPContract
 from .guided_flow import GuidedFlowStateContract
 
+ReferencePlannerFamilyLiteral = Literal["macro", "modeling_mesh", "sculpt_region", "inspect_only"]
+ReferencePlannerSourceLiteral = Literal[
+    "vision",
+    "truth",
+    "macro",
+    "scope",
+    "relation",
+    "view",
+    "silhouette",
+    "budget",
+    "naming",
+]
+
 
 class ReferenceImageRecordContract(MCPContract):
     """One normalized reference image stored in session scope."""
@@ -160,6 +173,38 @@ class ReferenceHybridBudgetControlContract(MCPContract):
     selected_focus_pairs: list[str] = []
 
 
+class ReferencePlannerTargetScopeContract(MCPContract):
+    """Compact target scope selected by the repair planner."""
+
+    scope_kind: Literal["single_object", "object_set", "collection", "part_groups", "scene", "unknown"] = "unknown"
+    target_object: str | None = None
+    target_objects: list[str] = []
+    collection_name: str | None = None
+    local_region_hint: str | None = None
+
+
+class ReferencePlannerEvidenceSourceContract(MCPContract):
+    """One bounded provenance item used by the repair planner."""
+
+    source_id: str
+    source_class: ReferencePlannerSourceLiteral
+    summary: str
+    candidate_ids: list[str] = []
+    tool_name: str | None = None
+
+
+class ReferencePlannerBlockerContract(MCPContract):
+    """One typed blocker or precondition emitted by the repair planner."""
+
+    blocker_id: str
+    category: Literal["relation", "view", "proportion", "scope", "budget", "policy"]
+    severity: Literal["blocking", "warning"] = "blocking"
+    reason: str
+    candidate_ids: list[str] = []
+    recommended_tool: str | None = None
+    arguments_hint: dict[str, object] | None = None
+
+
 class ReferenceRefinementRouteContract(MCPContract):
     """Deterministic refinement-family routing result for hybrid loop responses."""
 
@@ -172,10 +217,13 @@ class ReferenceRefinementRouteContract(MCPContract):
         "anatomy",
         "generic_form",
     ] = "generic_form"
-    selected_family: Literal["macro", "modeling_mesh", "sculpt_region", "inspect_only"] = "inspect_only"
+    selected_family: ReferencePlannerFamilyLiteral = "inspect_only"
     reason: str
-    source_signals: list[Literal["vision", "truth", "macro", "scope", "naming"]] = []
+    source_signals: list[ReferencePlannerSourceLiteral] = []
     candidate_ids: list[str] = []
+    target_scope: ReferencePlannerTargetScopeContract | None = None
+    blockers: list[ReferencePlannerBlockerContract] = []
+    detail_available: bool = False
 
 
 class ReferenceRefinementToolCandidateContract(MCPContract):
@@ -190,9 +238,39 @@ class ReferenceRefinementToolCandidateContract(MCPContract):
 class ReferenceRefinementHandoffContract(MCPContract):
     """Explicit next-tool-family handoff payload for hybrid refinement routing."""
 
-    selected_family: Literal["macro", "modeling_mesh", "sculpt_region", "inspect_only"]
+    selected_family: ReferencePlannerFamilyLiteral
+    state: Literal["ready", "blocked", "suppressed"] = "suppressed"
     message: str
+    target_object: str | None = None
+    target_scope: ReferencePlannerTargetScopeContract | None = None
+    local_reason: str | None = None
+    blockers: list[ReferencePlannerBlockerContract] = []
+    eligible_tool_names: list[str] = []
+    visibility_unlock_recommended: bool = False
     recommended_tools: list[ReferenceRefinementToolCandidateContract] = []
+
+
+class ReferenceRepairPlannerSummaryContract(MCPContract):
+    """Compact inline repair-planner summary for staged compare/iterate responses."""
+
+    selected_family: ReferencePlannerFamilyLiteral
+    target_scope: ReferencePlannerTargetScopeContract | None = None
+    rationale: str
+    provenance: list[ReferencePlannerEvidenceSourceContract] = []
+    blockers: list[ReferencePlannerBlockerContract] = []
+    detail_available: bool = False
+    required_support_tools: list[ReferenceRefinementToolCandidateContract] = []
+
+
+class ReferenceRepairPlannerDetailContract(MCPContract):
+    """Opt-in rich repair-planner detail derived from the same stage state."""
+
+    summary: ReferenceRepairPlannerSummaryContract
+    route: ReferenceRefinementRouteContract
+    handoff: ReferenceRefinementHandoffContract
+    candidate_ids: list[str] = []
+    notes: list[str] = []
+    detail_trimmed: bool = False
 
 
 class ReferenceSilhouetteMetricContract(MCPContract):
@@ -304,6 +382,8 @@ class ReferenceCompareStageCheckpointResponseContract(MCPContract):
     budget_control: ReferenceHybridBudgetControlContract | None = None
     refinement_route: ReferenceRefinementRouteContract | None = None
     refinement_handoff: ReferenceRefinementHandoffContract | None = None
+    planner_summary: ReferenceRepairPlannerSummaryContract | None = None
+    planner_detail: ReferenceRepairPlannerDetailContract | None = None
     silhouette_analysis: ReferenceSilhouetteAnalysisContract | None = None
     action_hints: list[ReferenceActionHintContract] = []
     part_segmentation: ReferencePartSegmentationContract | None = None
@@ -342,6 +422,8 @@ class ReferenceIterateStageCheckpointResponseContract(MCPContract):
     budget_control: ReferenceHybridBudgetControlContract | None = None
     refinement_route: ReferenceRefinementRouteContract | None = None
     refinement_handoff: ReferenceRefinementHandoffContract | None = None
+    planner_summary: ReferenceRepairPlannerSummaryContract | None = None
+    planner_detail: ReferenceRepairPlannerDetailContract | None = None
     silhouette_analysis: ReferenceSilhouetteAnalysisContract | None = None
     action_hints: list[ReferenceActionHintContract] = []
     part_segmentation: ReferencePartSegmentationContract | None = None

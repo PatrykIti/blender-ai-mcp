@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [276](./276-2026-04-30-task-145-repair-planner-handoff.md) | 2026-04-30 | **TASK-145 repair planner and sculpt handoff** | - |
 | [275](./275-2026-04-30-agent-guidelines-task-workflow-hardening.md) | 2026-04-30 | **Agent guidelines task workflow hardening** | - |
 | [274](./274-2026-04-29-routed-report-step-finalizers.md) | 2026-04-29 | **Routed report step finalizers** | - |
 | [273](./273-2026-04-29-async-rename-validation-offload.md) | 2026-04-29 | **Async rename validation offload** | - |

@@ -1,7 +1,7 @@
 # TASK-145-03: Guided Adoption, Visibility, Docs, and Regression Pack
 
 **Parent:** [TASK-145](./TASK-145_Spatial_Repair_Planner_And_Sculpt_Handoff_Context.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Depends On:** [TASK-145-01](./TASK-145-01_Repair_Planner_Payload_And_Family_Selection_Policy.md), [TASK-145-02](./TASK-145-02_Sculpt_Handoff_Context_And_Precondition_Model.md)
 
@@ -159,14 +159,19 @@ await apply_visibility_for_session_state(ctx, advanced_state)
 
 ## Changelog Impact
 
-- add a `_docs/_CHANGELOG/*.md` entry when planner-first guided adoption ships
+- covered by [_docs/_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md](../_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md)
+
+## Completion Summary
+
+Closed by shipping planner-first docs, compact/rich contract coverage, guided
+execution fail-closed coverage for unmapped `sculpt_*` mutators, and visibility
+policy preservation: no broad planner or sculpt family is bootstrap-visible by
+default, and the v1 handoff does not create a separate native visibility state.
 
 ## Status / Board Update
 
-- no board-count change is needed while TASK-145 remains the promoted open
-  board item
-- when this subtask is implemented and closed later, update parent/child
-  statuses and the task board in the same allowed branch
+- closed under the completed TASK-145 umbrella
+- no separate board row is needed because TASK-145 remains the promoted item
 
 ## Execution Structure
 

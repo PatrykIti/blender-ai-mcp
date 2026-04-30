@@ -1,6 +1,6 @@
 # TASK-145: Spatial Repair Planner and Sculpt Handoff Context
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** Guided Runtime UX / Spatial Repair Planning
 **Estimated Effort:** Large
@@ -393,14 +393,27 @@ This umbrella does **not** cover:
 
 ## Changelog Impact
 
-- add a dedicated `_docs/_CHANGELOG/*` entry when this umbrella ships
+- added [_docs/_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md](../_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md)
+
+## Completion Summary
+
+Completed the v1 planner/handoff delivery on top of the existing staged
+reference loop:
+
+- added compact `planner_summary` and rich-profile `planner_detail` contracts
+  derived from the same route/handoff policy result
+- extended `refinement_route` and `refinement_handoff` with target scope,
+  provenance, typed blockers, handoff state, and bounded sculpt eligibility
+- kept sculpt recommendation-only on default `llm-guided` and fail-closed
+  unmapped `sculpt_*` mutators under active guided execution policy
+- updated MCP, prompt, vision, router, tool-inventory, changelog, and task-board
+  docs for the planner-first read order
+- validation recorded for the unit contract/reference/guided execution lane,
+  targeted lint, and targeted mypy; Blender-backed E2E was invoked but skipped
+  because local Blender / Blender RPC was not available
 
 ## Status / Board Update
 
-- `_docs/_TASKS/README.md` already tracks TASK-145 as a promoted open
-  board-level item.
-- Child/subtask documentation changes do not require a board-count change while
-  the promoted parent remains `⏳ To Do`.
-- When this umbrella closes, or if a follow-on remains open after closure,
-  update `_docs/_TASKS/README.md`, parent/child statuses, docs, changelog, and
-  validation notes in the same branch.
+- `_docs/_TASKS/README.md` now tracks TASK-145 under completed milestones.
+- Direct children TASK-145-01, TASK-145-02, and TASK-145-03 are closed in the
+  same branch.

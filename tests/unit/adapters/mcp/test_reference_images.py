@@ -13,6 +13,7 @@ from server.adapters.mcp.areas.reference import (
     _build_action_hints_from_silhouette,
     _build_correction_candidates,
     _build_correction_truth_bundle,
+    _build_refinement_handoff,
     _build_silhouette_analysis_payload,
     _build_truth_followup,
     _effective_candidate_budget,
@@ -1285,6 +1286,7 @@ def test_select_refinement_route_prefers_sculpt_for_non_low_poly_organic_refinem
             "reference_count": 0,
             "reference_ids": [],
             "reference_labels": [],
+            "view_diagnostics_hints": [],
             "correction_candidates": [
                 {
                     "candidate_id": "vision:heart_surface",
@@ -1311,6 +1313,7 @@ def test_select_refinement_route_prefers_sculpt_for_non_low_poly_organic_refinem
 
     assert route.domain_classification == "anatomy"
     assert route.selected_family == "sculpt_region"
+    assert route.blockers == []
 
 
 def test_select_refinement_route_keeps_low_poly_creature_on_modeling_mesh():
@@ -1425,15 +1428,72 @@ def test_reference_compare_stage_checkpoint_exposes_sculpt_handoff_without_visib
     )
 
     assert result.refinement_route is not None
-    assert result.refinement_route.selected_family == "sculpt_region"
+    assert result.refinement_route.selected_family == "inspect_only"
+    assert result.refinement_route.blockers
+    assert result.refinement_route.blockers[0].blocker_id == "view_diagnostics_required"
     assert result.refinement_handoff is not None
-    assert result.refinement_handoff.selected_family == "sculpt_region"
-    assert [tool.tool_name for tool in result.refinement_handoff.recommended_tools] == [
+    assert result.refinement_handoff.selected_family == "inspect_only"
+    assert result.refinement_handoff.state == "blocked"
+    assert result.refinement_handoff.recommended_tools == []
+    assert result.planner_summary is not None
+    assert result.planner_summary.selected_family == "inspect_only"
+    assert result.planner_summary.required_support_tools[0].tool_name == "scene_view_diagnostics"
+
+
+def test_refinement_handoff_recommends_bounded_deterministic_sculpt_subset():
+    compare = ReferenceCompareStageCheckpointResponseContract.model_validate(
+        {
+            "action": "compare_stage_checkpoint",
+            "goal": "refine the organic heart surface to look softer and more anatomical",
+            "target_object": "Heart",
+            "target_objects": ["Heart"],
+            "checkpoint_id": "checkpoint_sculpt",
+            "checkpoint_label": "stage_sculpt",
+            "preset_profile": "compact",
+            "preset_names": [],
+            "capture_count": 0,
+            "captures": [],
+            "reference_count": 0,
+            "reference_ids": [],
+            "reference_labels": [],
+            "view_diagnostics_hints": [],
+            "correction_candidates": [
+                {
+                    "candidate_id": "vision:heart_surface",
+                    "summary": "Heart surface still looks too lumpy.",
+                    "priority_rank": 1,
+                    "priority": "normal",
+                    "candidate_kind": "vision_only",
+                    "target_object": "Heart",
+                    "target_objects": ["Heart"],
+                    "focus_pairs": [],
+                    "source_signals": ["vision"],
+                    "vision_evidence": {
+                        "correction_focus": ["Heart surface smoothing"],
+                        "shape_mismatches": ["Heart surface still looks too lumpy."],
+                        "proportion_mismatches": [],
+                        "next_corrections": ["Smooth and slightly crease the chamber area."],
+                    },
+                }
+            ],
+        }
+    )
+
+    route = _select_refinement_route(compare)
+    handoff = _build_refinement_handoff(compare, route)
+
+    assert route.selected_family == "sculpt_region"
+    assert handoff.state == "ready"
+    assert handoff.visibility_unlock_recommended is False
+    assert [tool.tool_name for tool in handoff.recommended_tools] == [
         "sculpt_deform_region",
         "sculpt_smooth_region",
         "sculpt_inflate_region",
         "sculpt_pinch_region",
+        "sculpt_crease_region",
     ]
+    assert handoff.target_object == "Heart"
+    assert handoff.local_reason == "Heart surface smoothing"
 
 
 def test_reference_images_attach_without_active_goal_is_staged_for_next_goal(tmp_path, monkeypatch):

@@ -1,7 +1,7 @@
 # TASK-145-03-03: Regression Pack For Planner and Sculpt Handoff
 
 **Parent:** [TASK-145-03](./TASK-145-03_Guided_Adoption_Visibility_Docs_And_Regression_Pack.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Depends On:** [TASK-145-03-01](./TASK-145-03-01_Planner_And_Sculpt_Delivery_On_LLM_Guided.md), [TASK-145-03-02](./TASK-145-03-02_Planner_First_Prompting_And_Documentation.md)
 **Carries Forward:**
@@ -133,9 +133,17 @@ At minimum, cover:
 
 ## Changelog Impact
 
-- include in the parent TASK-145 changelog entry when shipped
+- covered by the parent TASK-145 changelog entry:
+  [_docs/_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md](../_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md)
+
+## Completion Summary
+
+Closed with focused unit coverage for planner contract parity, relation/view
+blockers, compact planner summary placement, bounded sculpt subset including
+`sculpt_crease_region`, and guided fail-closed behavior for unmapped
+`sculpt_*` mutators. Targeted Blender-backed E2E was invoked with `-rs`, but
+the tests skipped because local Blender / Blender RPC was not available.
 
 ## Status / Board Update
 
-- no board-count change is needed while TASK-145 remains the promoted open
-  board item
+- closed under TASK-145-03

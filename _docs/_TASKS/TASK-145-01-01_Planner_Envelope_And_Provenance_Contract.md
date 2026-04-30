@@ -1,7 +1,7 @@
 # TASK-145-01-01: Planner Envelope and Provenance Contract
 
 **Parent:** [TASK-145-01](./TASK-145-01_Repair_Planner_Payload_And_Family_Selection_Policy.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Depends On:** [TASK-122-03-07](./TASK-122-03-07_Deterministic_Cross_Domain_Refinement_Routing_And_Sculpt_Exposure.md), [TASK-143](./TASK-143_Guided_Spatial_Scope_And_Relation_Graphs.md), [TASK-144](./TASK-144_Camera_Aware_View_Graph_And_Visibility_Diagnostics.md)
 
@@ -111,9 +111,17 @@ summary = ReferenceRepairPlannerSummaryContract(
 
 ## Changelog Impact
 
-- include in the parent TASK-145 changelog entry when shipped
+- covered by the parent TASK-145 changelog entry:
+  [_docs/_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md](../_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md)
+
+## Completion Summary
+
+Closed by adding `ReferenceRepairPlannerSummaryContract`,
+`ReferenceRepairPlannerDetailContract`, `ReferencePlannerTargetScopeContract`,
+`ReferencePlannerEvidenceSourceContract`, and `ReferencePlannerBlockerContract`
+as additive reference-loop contracts. Existing `refinement_route` and
+`refinement_handoff` were extended rather than replaced.
 
 ## Status / Board Update
 
-- no board-count change is needed while TASK-145 remains the promoted open
-  board item
+- closed under TASK-145-01

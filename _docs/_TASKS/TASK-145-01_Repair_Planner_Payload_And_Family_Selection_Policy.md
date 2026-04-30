@@ -1,7 +1,7 @@
 # TASK-145-01: Repair Planner Payload and Family Selection Policy
 
 **Parent:** [TASK-145](./TASK-145_Spatial_Repair_Planner_And_Sculpt_Handoff_Context.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Depends On:** [TASK-122-03-07](./TASK-122-03-07_Deterministic_Cross_Domain_Refinement_Routing_And_Sculpt_Exposure.md), [TASK-143](./TASK-143_Guided_Spatial_Scope_And_Relation_Graphs.md), [TASK-144](./TASK-144_Camera_Aware_View_Graph_And_Visibility_Diagnostics.md)
 
@@ -174,22 +174,27 @@ compare.planner_summary = planner_result.compact_summary
 
 ## Changelog Impact
 
-- add a `_docs/_CHANGELOG/*.md` entry when planner contract shape or
-  family-selection policy ships
+- covered by [_docs/_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md](../_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md)
+
+## Completion Summary
+
+Closed by extending the existing `refinement_route` / `refinement_handoff`
+baseline with a bounded planner contract instead of introducing a second
+planner flow. The shipped response shape now carries `planner_summary`,
+rich-profile `planner_detail`, source-class provenance, target scope, blockers,
+and model-aware compact/rich placement.
 
 ## Status / Board Update
 
-- no board-count change is needed while TASK-145 remains the promoted open
-  board item
-- when this subtask is implemented and closed later, update parent/child
-  statuses and the task board in the same allowed branch
+- closed under the completed TASK-145 umbrella
+- no separate board row is needed because TASK-145 remains the promoted item
 
 ## Execution Structure
 
 | Order | Leaf | Status | Purpose |
 |------|------|--------|---------|
-| 1 | [TASK-145-01-01](./TASK-145-01-01_Planner_Envelope_And_Provenance_Contract.md) | ⏳ To Do | Define the bounded planner contract shape and provenance model on top of the current reference contracts |
-| 2 | [TASK-145-01-02](./TASK-145-01-02_Deterministic_Family_Selection_From_Scope_Relation_And_View_Signals.md) | ⏳ To Do | Replace coarse planner selection with explicit deterministic precedence over scope, relation, truth, and view signals |
-| 3 | [TASK-145-01-03](./TASK-145-01-03_Planner_Summary_Placement_And_Compare_Iterate_Budget_Gates.md) | ⏳ To Do | Place planner outputs into compare / iterate in a compact way with goal-aware disclosure and budget guards |
+| 1 | [TASK-145-01-01](./TASK-145-01-01_Planner_Envelope_And_Provenance_Contract.md) | ✅ Done | Define the bounded planner contract shape and provenance model on top of the current reference contracts |
+| 2 | [TASK-145-01-02](./TASK-145-01-02_Deterministic_Family_Selection_From_Scope_Relation_And_View_Signals.md) | ✅ Done | Replace coarse planner selection with explicit deterministic precedence over scope, relation, truth, and view signals |
+| 3 | [TASK-145-01-03](./TASK-145-01-03_Planner_Summary_Placement_And_Compare_Iterate_Budget_Gates.md) | ✅ Done | Place planner outputs into compare / iterate in a compact way with goal-aware disclosure and budget guards |
 | 4 | [TASK-145-01-04](./TASK-145-01-04_Compact_Iterate_Response_Envelope_And_Debug_Payload_Split.md) | ✅ Done | Closed compact response debug split; stricter parity and E2E gates remain carried by [TASK-145-03-03](./TASK-145-03-03_Regression_Pack_For_Planner_And_Sculpt_Handoff.md) |
 | 5 | [TASK-145-01-05](./TASK-145-01-05_Mesh_Aware_Organic_Seating_Repair_For_Rounded_Parts.md) | ✅ Done | Closed mesh-aware rounded seating slice; align warning/blocking, dependent-part guard, and Blender-backed proof remain carried by [TASK-145-03-03](./TASK-145-03-03_Regression_Pack_For_Planner_And_Sculpt_Handoff.md) |

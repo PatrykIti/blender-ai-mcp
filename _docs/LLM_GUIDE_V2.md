@@ -737,6 +737,7 @@ assembled_target_scope
 truth_bundle
 truth_followup
 correction_candidates
+planner_summary
 refinement_route
 refinement_handoff
   ↓
@@ -754,6 +755,13 @@ It does not require throwing away the existing guided loop.
 
 It also does not require turning the existing stage-checkpoint contracts into
 another massive catch-all payload.
+
+The shipped planner order is intentionally compact: read `planner_summary`
+first for source-class provenance, typed blockers, and required support tools,
+then inspect `refinement_route` and `refinement_handoff` for the selected
+family and local handoff state. If staged view evidence is missing, sculpt
+handoff stays blocked through a `scene_view_diagnostics(...)` precondition
+instead of treating vision prose as readiness.
 
 ---
 

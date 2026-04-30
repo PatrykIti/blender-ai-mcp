@@ -1,7 +1,7 @@
 # TASK-145-02-03: Bounded Sculpt Metadata and Recommendation Policy
 
 **Parent:** [TASK-145-02](./TASK-145-02_Sculpt_Handoff_Context_And_Precondition_Model.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Depends On:** [TASK-145-02-01](./TASK-145-02-01_Sculpt_Handoff_Contract_And_Local_Target_Semantics.md), [TASK-145-02-02](./TASK-145-02-02_View_Relation_And_Proportion_Preconditions_For_Sculpt.md)
 
@@ -146,9 +146,18 @@ else:
 
 ## Changelog Impact
 
-- include in the parent TASK-145 changelog entry when shipped
+- covered by the parent TASK-145 changelog entry:
+  [_docs/_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md](../_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md)
+
+## Completion Summary
+
+Closed by making the planner-driven sculpt subset explicit:
+`sculpt_deform_region`, `sculpt_smooth_region`, `sculpt_inflate_region`,
+`sculpt_pinch_region`, and `sculpt_crease_region`. The handoff stays
+recommendation-only on `llm-guided`, and unmapped `sculpt_*` mutators now fail
+closed under active guided execution policy unless a future family mapping
+explicitly governs them.
 
 ## Status / Board Update
 
-- no board-count change is needed while TASK-145 remains the promoted open
-  board item
+- closed under TASK-145-02

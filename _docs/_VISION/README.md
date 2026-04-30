@@ -160,14 +160,24 @@ The repo now has the first implementation scaffolding for the vision layer:
   - selector rationale and source signals
 - hybrid-loop compare/iterate responses now also expose `refinement_handoff`
   as an explicit recommendation-only next-tool-family handoff
+- hybrid-loop compare/iterate responses now expose `planner_summary` in both
+  compact and rich profiles, plus `planner_detail` only on the rich profile:
+  - `planner_summary` carries compact family selection, target scope,
+    source-class provenance, typed blockers, and required support tools
+  - missing staged view evidence blocks sculpt readiness through a
+    `scene_view_diagnostics(...)` precondition instead of treating screenshots
+    or vision prose as proof that a local target is framed
+  - `planner_detail` repeats the same policy result with richer route/handoff
+    context and does not create a second planner session or catalog state
 - current first-pass refinement families are:
   - `macro`
   - `modeling_mesh`
   - `sculpt_region`
   - `inspect_only`
 - current product rule: `sculpt_region` can be recommended through
-  `refinement_handoff`, but deterministic sculpt tools are still not part of
-  the normal `llm-guided` build visibility by default
+  `refinement_handoff` only when preconditions are ready; deterministic sculpt
+  tools are still not part of the normal `llm-guided` build visibility by
+  default
 - request-bound attachment of `vision_assistant` to macro MCP reports when a
   `capture_bundle` exists
 - macro report integration now also folds bounded vision-driven follow-ups back

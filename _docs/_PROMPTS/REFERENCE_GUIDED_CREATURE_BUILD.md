@@ -52,6 +52,9 @@ asset as the generic search-first operating baseline.
 10. use the response in this order:
    - `loop_disposition`
    - `guided_reference_readiness`
+   - `planner_summary`
+   - `refinement_route`
+   - `refinement_handoff`
    - `correction_candidates`
    - `truth_followup`
    - `action_hints`
@@ -196,6 +199,9 @@ Workflow:
 11. on the next iteration prioritize:
    - `loop_disposition`
    - `guided_reference_readiness`
+   - `planner_summary`
+   - `refinement_route`
+   - `refinement_handoff`
    - `correction_candidates`
    - `truth_followup.focus_pairs`
    - `truth_followup.macro_candidates`
@@ -220,7 +226,10 @@ Workflow:
 15. if `part_segmentation.status == "disabled"`, stay on the silhouette-first
     path; the segmentation sidecar is optional and not part of the default
     guided baseline
-16. if a build call is blocked because the family or role is wrong for the
+16. if `planner_summary.blockers` or `refinement_handoff.state == "blocked"`
+    names `scene_view_diagnostics(...)`, run that read-only support tool before
+    attempting any local sculpt correction
+17. if a build call is blocked because the family or role is wrong for the
     current step, do not try another guessed build tool name
     - inspect `guided_flow_state.allowed_families`
     - inspect `guided_flow_state.allowed_roles`
@@ -262,9 +271,10 @@ At the end of each stage, return only:
   compare path is using the narrow Google-family compare contract or the full
   generic contract; use that field for diagnosis instead of inferring behavior
   from provider name alone
-- `correction_focus` should be treated as the first action list, but only
-  after checking whether `correction_candidates`, `truth_followup`, or typed
-  `action_hints` carry a stronger bounded signal
+- `correction_focus` should be treated as an action list only after checking
+  whether `planner_summary`, `refinement_route`, `refinement_handoff`,
+  `correction_candidates`, `truth_followup`, or typed `action_hints` carry a
+  stronger bounded signal
 - `silhouette_analysis` is deterministic perception evidence:
   - use it for contour/ratio drift, not for scene truth
   - read it as target/focus-view evidence when a matching focus capture exists;

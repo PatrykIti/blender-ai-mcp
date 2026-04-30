@@ -1,7 +1,7 @@
 # TASK-145-03-02: Planner-First Prompting and Documentation
 
 **Parent:** [TASK-145-03](./TASK-145-03_Guided_Adoption_Visibility_Docs_And_Regression_Pack.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Depends On:** [TASK-145-03-01](./TASK-145-03-01_Planner_And_Sculpt_Delivery_On_LLM_Guided.md)
 
@@ -84,9 +84,16 @@ Use vision prose only to explain or prioritize, not to override truth evidence.
 
 ## Changelog Impact
 
-- include in the parent TASK-145 changelog entry when shipped
+- covered by the parent TASK-145 changelog entry:
+  [_docs/_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md](../_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md)
+
+## Completion Summary
+
+Closed by updating prompt and operator docs to read `planner_summary` before
+`refinement_route`, `refinement_handoff`, raw vision prose, or low-level edit
+suggestions. The docs keep `scene_scope_graph`, `scene_relation_graph`, and
+`scene_view_diagnostics` as visible read-only guided support tools.
 
 ## Status / Board Update
 
-- no board-count change is needed while TASK-145 remains the promoted open
-  board item
+- closed under TASK-145-03

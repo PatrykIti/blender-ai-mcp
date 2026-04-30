@@ -1,7 +1,7 @@
 # TASK-145-02: Sculpt Handoff Context and Precondition Model
 
 **Parent:** [TASK-145](./TASK-145_Spatial_Repair_Planner_And_Sculpt_Handoff_Context.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Depends On:** [TASK-145-01](./TASK-145-01_Repair_Planner_Payload_And_Family_Selection_Policy.md), [TASK-143](./TASK-143_Guided_Spatial_Scope_And_Relation_Graphs.md), [TASK-144](./TASK-144_Camera_Aware_View_Graph_And_Visibility_Diagnostics.md)
 
@@ -135,15 +135,21 @@ if handoff.has_blockers:
 
 ## Changelog Impact
 
-- add a `_docs/_CHANGELOG/*.md` entry when sculpt handoff contract or sculpt
-  recommendation policy ships
+- covered by [_docs/_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md](../_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md)
+
+## Completion Summary
+
+Closed by making `ReferenceRefinementHandoffContract` carry bounded local
+target semantics, `ready` / `blocked` / `suppressed` state, typed blockers,
+eligible sculpt tools, and recommendation-only visibility metadata. Missing or
+blocking staged view evidence now suppresses sculpt and asks for
+`scene_view_diagnostics(...)`; `sculpt_crease_region` is consciously included in
+the deterministic region subset.
 
 ## Status / Board Update
 
-- no board-count change is needed while TASK-145 remains the promoted open
-  board item
-- when this subtask is implemented and closed later, update parent/child
-  statuses and the task board in the same allowed branch
+- closed under the completed TASK-145 umbrella
+- no separate board row is needed because TASK-145 remains the promoted item
 
 ## Execution Structure
 

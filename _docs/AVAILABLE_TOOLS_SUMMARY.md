@@ -520,6 +520,12 @@ None.
 ## 🎨 Sculpt Tools (`sculpt_`)
 *Tools for Sculpt Mode operations (organic shape manipulation).*
 
+Planner-driven guided handoff treats only the deterministic local-region tools
+(`sculpt_deform_region`, `sculpt_smooth_region`, `sculpt_inflate_region`,
+`sculpt_pinch_region`, and `sculpt_crease_region`) as the bounded recommended
+subset. Sculpt tools remain mutating and hidden on default `llm-guided`
+bootstrap unless a future guided state explicitly unlocks and gates them.
+
 ### Implemented
 
 | Tool Name | Arguments | Description | Status |

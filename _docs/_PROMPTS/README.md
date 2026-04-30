@@ -145,7 +145,8 @@ Interpretation:
 - staged manual/reference-guided build:
     checkpoint capture -> `reference_compare_checkpoint(...)`, `reference_compare_current_view(...)`, `reference_compare_stage_checkpoint(...)`, or `reference_iterate_stage_checkpoint(...)` -> use bounded mismatch/correction hints for the next iteration
     only call staged compare/iterate when `guided_reference_readiness.compare_ready == true`
-    prioritize `loop_disposition`, then `refinement_route`, then `refinement_handoff`, then `correction_candidates`, then `truth_followup`, then `action_hints`, then `correction_focus`, then `silhouette_analysis`
+    prioritize `loop_disposition`, then `planner_summary`, then `refinement_route`, then `refinement_handoff`, then `correction_candidates`, then `truth_followup`, then `action_hints`, then `correction_focus`, then `silhouette_analysis`
+    treat `planner_summary.blockers` and `planner_summary.required_support_tools` as deterministic preconditions before lower-level edits; when staged sculpt handoff is blocked by missing view evidence, call `scene_view_diagnostics(...)` before using sculpt tools
     keep `scene_scope_graph(...)`, `scene_relation_graph(...)`, and `scene_view_diagnostics(...)` in the normal working set for 3D orientation during active guided goals
     if the next correction still depends on knowing the structural anchor or explicit pair relations, call `scene_scope_graph(...)` and/or `scene_relation_graph(...)` instead of overloading the checkpoint payload
     if the next correction still depends on whether the target is off-frame, poorly centered, or occluded from the active camera/viewport, call `scene_view_diagnostics(...)` instead of guessing from the screenshot alone
@@ -184,8 +185,9 @@ Interpretation:
   `search_tools(...)` -> `macro_relative_layout` for align/place/contact-gap work
 - if `router_set_goal(...)` returns `guided_handoff`, treat it as the typed continuation contract for what to call next on the current guided surface
 - if hybrid loop responses expose `refinement_route` / `refinement_handoff`,
-  treat those as the bounded family-selection hints for whether to stay on
-  macro/modeling/mesh or move into a narrow sculpt-region path
+  read `planner_summary` first, then treat the route/handoff fields as the
+  bounded family-selection and local precondition contract for whether to stay
+  on macro/modeling/mesh or move into a narrow sculpt-region path
 - `guided_flow_state` is the server-driven guided flow contract for the active
   session; prompts support it, but do not replace it
 - before broad build actions, inspect:

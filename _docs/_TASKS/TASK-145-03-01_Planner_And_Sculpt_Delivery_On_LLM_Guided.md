@@ -1,7 +1,7 @@
 # TASK-145-03-01: Planner and Sculpt Delivery On `llm-guided`
 
 **Parent:** [TASK-145-03](./TASK-145-03_Guided_Adoption_Visibility_Docs_And_Regression_Pack.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Depends On:** [TASK-145-01-03](./TASK-145-01-03_Planner_Summary_Placement_And_Compare_Iterate_Budget_Gates.md), [TASK-145-02-03](./TASK-145-02-03_Bounded_Sculpt_Metadata_And_Recommendation_Policy.md)
 
@@ -158,9 +158,17 @@ await apply_visibility_for_session_state(ctx, advanced_state)
 
 ## Changelog Impact
 
-- include in the parent TASK-145 changelog entry when shipped
+- covered by the parent TASK-145 changelog entry:
+  [_docs/_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md](../_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md)
+
+## Completion Summary
+
+Closed with compact planner delivery on existing reference stage responses and
+no new bootstrap-visible planner/sculpt family. The v1 implementation keeps
+handoff state response-local; if a later task unlocks native sculpt visibility,
+the same bounded facts must flow through existing guided state and execution
+gates.
 
 ## Status / Board Update
 
-- no board-count change is needed while TASK-145 remains the promoted open
-  board item
+- closed under TASK-145-03
