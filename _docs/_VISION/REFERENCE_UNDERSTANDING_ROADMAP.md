@@ -155,6 +155,15 @@ Current canonical refinement families are:
 - `sculpt_region`
 - `inspect_only`
 
+These are reference-planner refinement families, not the full guided
+visibility vocabulary. When implementing guided visibility, translate planner
+families into current `GuidedFlowFamilyLiteral` values and concrete tool names:
+for example `modeling_mesh` usually materializes through `secondary_parts`
+mesh/modeling tools, while attachment repair uses `attachment_alignment`.
+Do not invent intermediate guided families such as `macro_profile`,
+`macro_attachment`, or `inspect_assert` unless the typed guided-flow contract
+is deliberately expanded.
+
 The strategic plan mentions `mesh_edit` and `material_finish`. In current repo
 contracts those should not become new planner families by default:
 

@@ -45,6 +45,23 @@ remain proposal sources only. They must not become verifier status.
   perception model. It should only preserve a stable contract for later
   perception outputs to plug into.
 
+## Runtime / Security Contract Notes
+
+- Visibility level: prefer adding intake as an optional field on the existing
+  guided/reference surface unless a public-tool review justifies a separate MCP
+  tool.
+- Read-only vs mutating behavior: intake does not mutate Blender scene state;
+  it only stores normalized session gate state and policy warnings.
+- Session/auth assumptions: intake applies only to the active guided session;
+  no gate proposal may be reused across stdio or Streamable HTTP sessions
+  without an explicit session-state record.
+- Parameter validation: reject or rewrite unsupported statuses, hidden/internal
+  tool names, raw code, and unknown fields with machine-readable policy
+  warnings.
+- Secret/debug handling: provider/model/profile metadata is allowed as
+  provenance; provider keys, sidecar keys, and raw unbounded VLM payloads are
+  not allowed in persisted gate proposals.
+
 ## Pseudocode
 
 ```python
@@ -95,6 +112,18 @@ def ingest_reference_gate_proposal(ctx, reference_summary):
 
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 - `_docs/_MCP_SERVER/README.md`
+
+## Changelog Impact
+
+- Add a `_docs/_CHANGELOG/*` entry only if this intake slice ships as a
+  meaningful implementation change; docs-only refinement does not require a new
+  entry beyond the current task-family changelog.
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py -v`
+- `rg -n "reference_understanding|part_segmentation|classification_score|status=\\\"passed\\\"" server/adapters/mcp tests/unit/adapters/mcp _docs/_TASKS/TASK-157*.md`
 
 ## Acceptance Criteria
 

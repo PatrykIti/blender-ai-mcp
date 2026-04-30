@@ -81,6 +81,25 @@ authoritative scene/spatial/mesh verifier.
 - Completion blockers should be derived from required gates in `failed`,
   `blocked`, `pending`, or `stale`.
 
+## Runtime / Security Contract Notes
+
+- Visibility level: verifier results may be exposed through existing
+  guided/reference checkpoint payloads; the verifier itself should remain a
+  server-owned runtime/service contract unless a public read-only assertion
+  tool is intentionally promoted.
+- Read-only vs mutating behavior: verifier collection and evaluation are
+  read-only against Blender scene state. They may update session gate status,
+  blockers, stale versions, and evidence refs.
+- Authority boundary: scene/spatial/mesh/assertion evidence owns truth for
+  existence, contact, measurements, and final completion. Vision,
+  `reference_understanding`, `classification_score`, and segmentation payloads
+  are never standalone pass evidence.
+- External providers: a verifier must not trigger an implicit SAM/CLIP/VLM call
+  to satisfy a missing required source. Missing required evidence returns
+  `blocked` with a typed reason.
+- Debug limits: evidence refs should carry tool names, versions, ids, measured
+  values, and redacted provenance, not raw provider transcripts or secrets.
+
 ## Pseudocode
 
 ```python
@@ -123,6 +142,17 @@ def verify_gate(gate, scene_context):
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md`
 - `_docs/_TESTS/README.md`
+
+## Changelog Impact
+
+- Add a `_docs/_CHANGELOG/*` entry when the verifier/status model ships or when
+  verifier authority materially changes.
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/tools/scene/ -v`
+- `rg -n "reference_understanding|part_segmentation|classification_score|quality-gate verifier|scene_truth|spatial_relation|mesh_metric" server/adapters/mcp tests/unit _docs/_TASKS/TASK-157*.md`
 
 ## Acceptance Criteria
 

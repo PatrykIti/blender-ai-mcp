@@ -33,6 +33,22 @@ Implement the first deterministic verifier for `attachment_seam` and
 - Cleanup of overlap cannot pass a gate unless the final relation verdict also
   satisfies the gate.
 
+## Runtime / Security Contract Notes
+
+- Visibility level: the first seam/contact verifier should report through
+  existing guided/reference checkpoint outputs and may recommend existing
+  repair tools; it should not expose a new mutating MCP surface.
+- Read-only vs mutating behavior: relation-graph evidence collection is
+  read-only. Macro hints such as `macro_attach_part_to_surface` are
+  recommendations only until the client explicitly calls the mutating tool.
+- Verification boundary: cleanup or repair macros never mark a gate passed by
+  themselves; the verifier must re-read relation graph truth after the mutation.
+- Transport assumptions: Streamable HTTP and stdio behavior must preserve the
+  same session-scoped gate ids, evidence refs, and stale markers.
+- Side-effect limits: E2E repair flows may mutate Blender through existing macro
+  tools only, and must keep mode/selection recovery behavior aligned with those
+  tools' current contracts.
+
 ## Pseudocode
 
 ```python
@@ -75,6 +91,18 @@ def verify_attachment_gate(gate, relation_pair):
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
 - `_docs/_TESTS/README.md`
+
+## Changelog Impact
+
+- Add a `_docs/_CHANGELOG/*` entry when the first seam/contact verifier or its
+  macro repair evidence integration ships.
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/macro/test_macro_attach_part_to_surface.py -v`
+- `python3 scripts/run_e2e_tests.py` for the Blender-backed seam/contact repair
+  scenarios introduced by this slice.
 
 ## Acceptance Criteria
 

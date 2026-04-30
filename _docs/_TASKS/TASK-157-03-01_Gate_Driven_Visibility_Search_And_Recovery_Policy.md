@@ -56,6 +56,28 @@ safe mutation inside one still-open build stage.
   - "continue current batch, refresh at checkpoint"
   - from "refresh now before this gate can advance".
 
+## Runtime / Security Contract Notes
+
+- Visibility level: this slice changes guided visibility/search policy only; it
+  must not create a parallel catalog, discovery endpoint, or public
+  `router_apply_reference_strategy` style handoff.
+- Read-only vs mutating behavior: visibility and search are read-only policy
+  outputs. Repair tools remain mutating only when the client explicitly calls
+  existing macro/modeling/mesh tools.
+- Family vocabulary: use current `GuidedFlowFamilyLiteral` values for guided
+  visibility (`spatial_context`, `reference_context`, `secondary_parts`,
+  `attachment_alignment`, `checkpoint_iterate`, `inspect_validate`, `finish`,
+  `utility`). Planner-facing `modeling_mesh` remains a
+  `ReferencePlannerFamilyLiteral` and must be translated to concrete
+  mesh/modeling tool names or current guided families before visibility rules
+  are materialized.
+- Transport assumptions: Streamable HTTP and stdio must receive the same
+  gate-driven tool names for the same session state; do not rely on detached
+  refresh writes after a tool response has returned.
+- Provider/evidence boundary: `reference_understanding`, segmentation, and
+  classification evidence can narrow or prioritize policy, but cannot unlock
+  broad tools or mark gates passed by themselves.
+
 ## Spatial Refresh Cadence Rules
 
 The guided surface should steer the LLM toward checkpoint-based evidence, not
@@ -94,13 +116,13 @@ instead of keying only on `spatial_state_stale`.
 def visibility_for_gate(gate):
     match gate.gate_type:
         case "attachment_seam":
-            return {"spatial_context", "macro_attachment"}
+            return {"spatial_context", "attachment_alignment", "inspect_validate"}
         case "shape_profile" if prerequisites_passed(gate):
-            return {"modeling_mesh", "macro_profile"}
+            return {"secondary_parts", "inspect_validate"}
         case "opening_or_cut":
-            return {"macro_cutout", "scene_measure"}
+            return {"secondary_parts", "inspect_validate"}
         case _:
-            return {"reference_context", "inspect_assert"}
+            return {"reference_context", "inspect_validate"}
 
 
 def should_require_spatial_refresh(state, next_action):
@@ -153,6 +175,17 @@ def refine_visibility_from_evidence(gate, evidence_refs, visible_families):
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/_PROMPTS/README.md`
 - `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md`
+
+## Changelog Impact
+
+- Add a `_docs/_CHANGELOG/*` entry when gate-driven visibility/search behavior
+  ships or when public guided visibility semantics materially change.
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py -v`
+- `rg -n "macro_attachment|macro_profile|macro_cutout|inspect_assert|mesh_edit|material_finish|mesh_shade_flat|macro_low_poly" _docs/_TASKS/TASK-157*.md _docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md server/adapters/mcp server/router/infrastructure/tools_metadata`
 
 ## Acceptance Criteria
 

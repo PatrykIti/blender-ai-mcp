@@ -62,6 +62,22 @@ reference/perception payloads to prove:
 - final completion still depends on authoritative scene/spatial/mesh/assertion
   evidence for the gates that require it
 
+## Runtime / Security Contract Notes
+
+- Visibility level: E2E scenarios should exercise existing public/guided MCP
+  surfaces and avoid adding test-only tools or alternate discovery paths.
+- Read-only vs mutating behavior: the harness may create and repair Blender
+  geometry through existing mutating tools, but gate pass/fail assertions must
+  come from verifier-supported evidence after those mutations.
+- Transport assumptions: include the session/transport lane that changed in the
+  implementation slice; Streamable HTTP and stdio should preserve gate ids,
+  blockers, and visible repair tools consistently.
+- External provider limits: default regression fixtures must not require live
+  SAM/CLIP/Grounding DINO/SigLIP, live external VLM calls, or segmentation
+  sidecars. Optional live-provider lanes must be separately marked.
+- Secret/debug handling: captured fixtures and failure artifacts must not store
+  provider keys, sidecar keys, or unredacted external payloads.
+
 ## Pseudocode
 
 ```python
@@ -99,6 +115,18 @@ def test_building_gate_completion_blocks_floating_roof(blender_scene):
 - `_docs/_TESTS/README.md`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/_TASKS/README.md`
+
+## Changelog Impact
+
+- Add a `_docs/_CHANGELOG/*` entry when the first cross-domain gate regression
+  harness or transport/runtime gate-state lane ships.
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/adapters/mcp/test_reference_images.py -v`
+- `python3 scripts/run_e2e_tests.py` for the Blender-backed creature/building
+  gate scenarios introduced by this task.
 
 ## Acceptance Criteria
 

@@ -23,13 +23,17 @@ Version: -
   boundaries, MVP scope, phased adapters, and task ownership
 - linked that roadmap from the task board's strategic working docs section so
   it stays visible while `TASK-157`, `TASK-135`, and `TASK-140` are active
+- refined the post-`f1c23f4` `TASK-157` task family with explicit non-goals,
+  runtime/security contract notes, validation commands, changelog-impact lanes,
+  and a current guided-family vocabulary note for gate-driven visibility
 
 ## Validation
 
 - `git diff --check`
   - result on this machine: passed
 - targeted consistency grep for `reference_understanding`, `part_segmentation`,
-  `classification_score`, `TASK-157`, `TASK-135`, and `TASK-140`
+  `classification_score`, `mesh_edit`, `material_finish`, `mesh_shade_flat`,
+  `macro_low_poly`, `SAM`, `CLIP`, and `quality-gate verifier`
   - result on this machine: passed
 - manual docs review against
   `_docs/blender-ai-mcp-vision-reference-understanding-plan.md`,

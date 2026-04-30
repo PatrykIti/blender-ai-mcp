@@ -61,6 +61,23 @@ classification, cardinality, safety bounds, and domain template merging.
   - perception-derived claims that attempt to set `passed`, `failed`, or
     `waived` directly instead of becoming verifier input
 
+## Runtime / Security Contract Notes
+
+- Visibility level: this slice defines contracts and optional guided/reference
+  payload fields; it must not expose a new public tool without the public MCP
+  surface review required by `AGENTS.md`.
+- Read-only vs mutating behavior: schema normalization is read-only with
+  respect to Blender scene state, but it may persist normalized gate plans in
+  session state.
+- Parameter validation: the owning contract must use strict enums and reject
+  unknown or unsupported gate/status/tool-family values rather than accepting
+  free-form tool names.
+- Compatibility: any legacy or partial proposal payload must pass through an
+  explicit adapter; do not duplicate gate defaults in MCP wrappers.
+- Secret/debug handling: proposal provenance may include provider/model/profile
+  ids and reference ids, but must not include provider keys or unbounded raw
+  external payloads.
+
 ## Pseudocode
 
 ```python
@@ -126,6 +143,14 @@ def normalize_gate_plan(proposal, *, domain_profile, templates):
 ## Changelog Impact
 
 - Add changelog entry if this schema is shipped independently.
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_contracts.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py -v`
+- `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --files server/adapters/mcp/contracts/reference.py server/adapters/mcp/session_capabilities.py`
+- Include `server/adapters/mcp/contracts/quality_gates.py` in that
+  pre-commit file list once the implementation slice creates it.
 
 ## Acceptance Criteria
 

@@ -59,6 +59,24 @@ plans without turning every domain into a hardcoded workflow:
   unresolved gate
 - final completion is blocked by failed required gates, not by prose summaries
 
+## Non-Goals
+
+This umbrella deliberately does not:
+
+- make VLM prose, `reference_understanding`, SAM, CLIP/SigLIP,
+  Grounding DINO, or provider-profile confidence authoritative for gate
+  pass/fail status
+- ship SAM, CLIP/SigLIP, Grounding DINO, or any similar heavy perception
+  adapter as part of the first `TASK-157` implementation
+- create a creature-only, building-only, or other domain-hardcoded completion
+  flow; domain tasks consume this generic gate substrate
+- replace `TASK-140`; external model-family evidence remains provider/profile
+  support evidence unless a server-owned verifier maps a bounded payload into a
+  supported gate evidence type
+- introduce a parallel discovery, visibility, or public router-strategy flow
+  when existing FastMCP visibility, guided state, router metadata, and
+  reference-stage contracts can be extended
+
 ## Generic Gate Vocabulary
 
 The first vocabulary should be deliberately small and cross-domain:
@@ -81,7 +99,9 @@ The first vocabulary should be deliberately small and cross-domain:
   visible tool state.
 - The server normalizes proposals into typed gate records and rejects unsupported
   or unsafe gate shapes.
-- The server verifies gate status through scene/spatial/mesh/reference truth.
+- The server verifies gate status through scene/spatial/mesh/assertion truth
+  plus bounded reference/perception evidence only when a verifier strategy
+  explicitly supports that evidence class.
 - LaBSE/search may help find candidate tools, but cannot mark gates complete.
 - Vision output may recommend gates or provide bounded evidence, but scene truth
   and assertion tools remain authoritative for object existence, contacts,
@@ -154,6 +174,27 @@ same bounded evidence/proposal records through the vision/perception layer.
 | `_docs/_MCP_SERVER/README.md` | MCP contract docs | Document gate payloads, status model, and client guidance |
 | `_docs/_TASKS/README.md` | Board | Track this umbrella as the generic substrate for domain reconstruction |
 
+## Runtime / Security Contract Notes
+
+- Visibility level: the first implementation should extend existing guided and
+  reference-stage surfaces; any new public MCP tool needs the full public-tool
+  review from `AGENTS.md`.
+- Read-only vs mutating behavior: proposal intake and verifier status reporting
+  are server/session state operations; only existing Blender mutating tools or
+  macros may change scene state, and those mutations must mark affected gates
+  stale before completion can pass.
+- Session/auth assumptions: gate plans are scoped to the current stdio or
+  Streamable HTTP MCP session state and must not leak across sessions.
+- Parameter validation: normalized gate contracts must reject unknown gate
+  types, hidden/internal tool names, unsupported statuses, raw Blender code, and
+  completion claims without verifier evidence.
+- Side-effect limits: optional perception sources and external providers remain
+  bounded by existing vision runtime limits, timeouts, and disabled/unavailable
+  statuses.
+- Secret handling: provider keys, sidecar keys, local paths, and debug payloads
+  must not be copied into gate evidence refs or client-facing logs; carry stable
+  ids and redacted provider/model metadata instead.
+
 ## Test Matrix
 
 | Layer | Tests To Add / Update |
@@ -215,6 +256,15 @@ return maybe_advance_or_complete()
 
 - Add a dedicated `_docs/_CHANGELOG/*` entry when the first gate contract or
   runtime integration slice ships.
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_contracts.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py -v`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_reference_images.py -v`
+- `python3 scripts/run_e2e_tests.py` for implementation slices that change real
+  Blender scene state, geometry, transport behavior, or final completion
+  semantics.
 
 ## Acceptance Criteria
 

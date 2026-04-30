@@ -50,6 +50,24 @@ gate boundaries instead of after every single safe in-stage mutation.
   gate plan and construction path. That pass must not mark gates complete.
 - Final completion must fail closed when required gates are unresolved.
 
+## Runtime / Security Contract Notes
+
+- Visibility level: gate state should shape existing `llm-guided` visibility
+  and reference checkpoint responses rather than creating a second catalog
+  authority.
+- Read-only vs mutating behavior: checkpoint and gate-summary responses are
+  read-only; existing modeling, mesh, scene, and macro tools remain the only
+  mutating Blender paths and must mark relevant gates stale.
+- Streamable HTTP / stdio: guided state updates, visibility refreshes, and
+  spatial/gate finalizers must complete through the active request path so
+  `list_tools()` and checkpoint responses observe the same session state.
+- External providers: pre-build reference understanding is optional and bounded
+  by the existing vision runtime config, provider-key redaction, token/image
+  limits, and disabled/unavailable statuses.
+- Completion safety: final completion must fail closed when required gates are
+  `pending`, `blocked`, `failed`, or `stale`, even if the LLM summary says the
+  build is complete.
+
 ## Spatial Refresh Cadence Policy
 
 `TASK-151` deliberately made spatial facts freshness-bound and re-armable.
@@ -156,6 +174,19 @@ def after_mutation(state, mutation):
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/_PROMPTS/README.md`
 - `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md`
+
+## Changelog Impact
+
+- Add a `_docs/_CHANGELOG/*` entry when guided gate state, visibility shaping,
+  or completion-blocking behavior ships.
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_reference_images.py -v`
+- `python3 scripts/run_e2e_tests.py` for any implementation slice that changes
+  Streamable HTTP/stdio guided state, Blender scene state, or final completion
+  blocking.
 
 ## Acceptance Criteria
 
