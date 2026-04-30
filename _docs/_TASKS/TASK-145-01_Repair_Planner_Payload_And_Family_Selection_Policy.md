@@ -32,8 +32,8 @@ But the current planner surface is still thin:
 - `refinement_route` chooses a family, but not a fuller planner contract
 - family selection still leans on coarse domain inference and limited inline
   reasoning
-- upcoming scope / relation / visibility artifacts from TASK-143 / TASK-144
-  do not yet have a clear planner-facing landing zone
+- existing scope / relation / visibility artifacts from TASK-143 / TASK-144
+  do not yet have a clear planner-facing landing zone in the reference loop
 - compare / iterate cannot simply absorb another large always-on payload
 
 This subtask therefore needs to define a contract and policy layer that is
@@ -42,7 +42,9 @@ surface.
 
 For the first implementation wave, that should mean **extending the current
 `refinement_route` / `refinement_handoff` baseline first**, not opening a
-second parallel planner family unless the existing contracts prove too narrow.
+second parallel planner family. If the existing contracts prove too narrow,
+record the gap and promote a separate follow-on instead of expanding this
+slice into a new flow.
 
 ## Technical Direction
 
@@ -65,11 +67,47 @@ Build the repair planner as a contract-and-policy upgrade over the current
 - keep planner logic deterministic and policy-driven; do not let it become an
   autonomous workflow engine
 
+## Implementation Notes
+
+- Treat `server/adapters/mcp/areas/reference.py` as the stage response
+  assembler, not the long-term owner of complex planner policy.
+- If family-selection or blocker rules become more than a small helper,
+  extract them to `server/application/services/repair_planner.py` or an
+  equivalent framework-free service/helper and call it from `reference.py`.
+- Keep scene truth ownership in `server/application/services/spatial_graph.py`
+  and scene contracts. Planner policy consumes scope/relation/view evidence;
+  it does not recalculate Blender truth.
+- Any richer planner detail must be derived from the same evidence and policy
+  result as the compact stage response. Do not create a separate planner
+  session, persistence model, router flow, or LaBSE-backed planner.
+
+## Pseudocode
+
+```python
+evidence = RepairPlannerEvidence(
+    assembled_target_scope=compare.assembled_target_scope,
+    truth_followup=compare.truth_followup,
+    correction_candidates=compare.correction_candidates,
+    view_diagnostics_hints=compare.view_diagnostics_hints,
+    silhouette_analysis=compare.silhouette_analysis,
+    action_hints=compare.action_hints,
+    budget_control=compare.budget_control,
+)
+
+planner_result = repair_planner.select_next_family(evidence, goal=compare.goal)
+
+compare.refinement_route = planner_result.route
+compare.refinement_handoff = planner_result.handoff
+compare.planner_summary = planner_result.compact_summary
+```
+
 ## Repository Touchpoints
 
 - `server/adapters/mcp/contracts/reference.py`
+- `server/application/services/repair_planner.py` or equivalent policy helper
 - `server/adapters/mcp/contracts/scene.py`
 - `server/adapters/mcp/areas/reference.py`
+- `server/application/services/spatial_graph.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
@@ -83,7 +121,7 @@ Build the repair planner as a contract-and-policy upgrade over the current
 - planner output preserves source provenance instead of collapsing truth /
   vision / macro / scope signals into one opaque score
 - family selection can consume current `truth_followup` /
-  `correction_candidates` plus future TASK-143 / TASK-144 artifacts without
+  `correction_candidates` plus existing TASK-143 / TASK-144 artifacts without
   duplicating those modules
 - compare / iterate stay bounded:
   - no heavy new default planner payload
@@ -103,6 +141,14 @@ Build the repair planner as a contract-and-policy upgrade over the current
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 
+## Validation Category
+
+- Unit contract and policy coverage must pass before this subtask closes.
+- E2E coverage is required once the planner policy changes stage-loop runtime
+  behavior or sculpt handoff behavior.
+- Minimum targeted command for a contract-only slice:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
+
 ## Changelog Impact
 
 - add a `_docs/_CHANGELOG/*.md` entry when planner contract shape or
@@ -110,8 +156,8 @@ Build the repair planner as a contract-and-policy upgrade over the current
 
 ## Status / Board Update
 
-- planning-only execution-tree split: keep `_docs/_TASKS/README.md` unchanged
-  in this branch
+- no board-count change is needed while TASK-145 remains the promoted open
+  board item
 - when this subtask is implemented and closed later, update parent/child
   statuses and the task board in the same allowed branch
 

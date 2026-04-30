@@ -42,13 +42,43 @@ Keep the first product posture conservative:
 - brush/setup flows and broad whole-mesh sculpt paths do not become the normal
   guided handoff
 
-This subtask should consume planner outputs from TASK-145-01 and the future
+This subtask should consume planner outputs from TASK-145-01 and the existing
 scope / relation / visibility artifacts from TASK-143 / TASK-144 without
 duplicating their responsibilities.
+
+## Implementation Notes
+
+- `ReferenceRefinementHandoffContract`, `_SCULPT_RECOMMENDED_TOOLS`, and
+  `_build_refinement_handoff(...)` are the current recommendation owners and
+  must move together with sculpt metadata/search wording.
+- Sculpt handoff state is not a TASK-157 quality-gate status. It may report
+  local readiness, blockers, and suppressions, but final gate pass/fail and
+  completion blocking remain TASK-157 responsibilities.
+- The handoff should consume deterministic relation/view evidence before
+  recommending sculpt. Vision/silhouette evidence may support a local-form
+  recommendation, but cannot clear structural blockers.
+- Broad brush/setup flows and whole-mesh sculpting should stay out of the
+  normal guided handoff unless a later task explicitly promotes them.
+
+## Pseudocode
+
+```python
+handoff = build_sculpt_handoff(
+    route=planner_result.route,
+    target_scope=planner_result.target_scope,
+    blockers=planner_result.blockers,
+    recommended_tools=bounded_sculpt_region_tools,
+)
+
+if handoff.has_blockers:
+    handoff.selected_family = planner_result.safe_fallback_family
+    handoff.recommended_tools = []
+```
 
 ## Repository Touchpoints
 
 - `server/adapters/mcp/contracts/reference.py`
+- `server/application/services/repair_planner.py` or equivalent policy helper
 - `server/adapters/mcp/areas/reference.py`
 - `server/adapters/mcp/areas/sculpt.py`
 - `server/adapters/mcp/transforms/visibility_policy.py`
@@ -57,6 +87,13 @@ duplicating their responsibilities.
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/e2e/tools/sculpt/test_sculpt_tools.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
+
+## Validation Category
+
+- Unit reference tests must cover both ready and blocked sculpt handoff.
+- Visibility tests must prove `llm-guided` does not expose the full sculpt
+  family by default.
+- Blender E2E is required when tool arguments or real sculpt behavior change.
 
 ## Acceptance Criteria
 
@@ -92,8 +129,8 @@ duplicating their responsibilities.
 
 ## Status / Board Update
 
-- planning-only execution-tree split: keep `_docs/_TASKS/README.md` unchanged
-  in this branch
+- no board-count change is needed while TASK-145 remains the promoted open
+  board item
 - when this subtask is implemented and closed later, update parent/child
   statuses and the task board in the same allowed branch
 

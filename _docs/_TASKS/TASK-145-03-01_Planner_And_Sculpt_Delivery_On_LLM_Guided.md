@@ -14,10 +14,25 @@ artifacts on `llm-guided` so they stay:
 - discoverable when justified
 - hidden when they would bloat bootstrap or generic build paths
 
+## Implementation Notes
+
+- Any planner/sculpt visibility change must go through the existing visibility
+  policy and guided mode surfaces. Do not add a parallel catalog-shaping
+  mechanism.
+- If planner or handoff state changes the visible tool set for native MCP
+  clients, refresh/apply visibility in the active request path so
+  `list_tools()` and search do not stay stale.
+- Delivery should prefer compact fields on the existing reference stage
+  response plus bounded search/discovery hints. Avoid a broad bootstrap-visible
+  planner or sculpt family.
+- Streamable HTTP and stdio clients should see the same truthful bounded
+  visibility semantics.
+
 ## Repository Touchpoints
 
 - `server/adapters/mcp/transforms/visibility_policy.py`
 - `server/adapters/mcp/guided_mode.py`
+- `server/adapters/mcp/session_capabilities.py`
 - `server/adapters/mcp/platform/capability_manifest.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_guided_mode.py`
@@ -31,6 +46,8 @@ artifacts on `llm-guided` so they stay:
   goal-aware
 - search / visibility policy can surface the right bounded artifact when the
   current handoff justifies it
+- native MCP `list_tools()` / search visibility refreshes when planner or
+  handoff state changes
 - default build and inspect phase footprints remain materially below the broad
   legacy catalog
 
@@ -43,8 +60,16 @@ artifacts on `llm-guided` so they stay:
 
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_guided_mode.py`
+- `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
 - `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
+
+## Validation Category
+
+- Unit tests must cover static policy and active guided-state visibility
+  refresh.
+- Add or update one integration-style scenario when handoff state affects
+  native MCP tool visibility for Streamable HTTP / stdio clients.
 
 ## Changelog Impact
 
@@ -52,4 +77,5 @@ artifacts on `llm-guided` so they stay:
 
 ## Status / Board Update
 
-- no board change in this planning-only branch
+- no board-count change is needed while TASK-145 remains the promoted open
+  board item

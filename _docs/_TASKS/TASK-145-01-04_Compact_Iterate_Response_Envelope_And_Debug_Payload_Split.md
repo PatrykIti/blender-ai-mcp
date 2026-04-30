@@ -76,6 +76,9 @@ full candidate evidence, silhouette metrics, and duplicated state.
 
 - when this leaf closes, record the compact-vs-debug response contract, exact
   validation commands, and whether a dedicated debug retrieval tool was added
+- E2E validation for direct LLM-readability is deferred to
+  [TASK-145-03-03](./TASK-145-03-03_Regression_Pack_For_Planner_And_Sculpt_Handoff.md)
+  before TASK-145 can close
 
 ## Completion Summary
 
@@ -86,3 +89,5 @@ full candidate evidence, silhouette metrics, and duplicated state.
 - no dedicated debug retrieval tool was added in this slice; rich/debug payload
   delivery remains the future path for full nested data
 - validation: `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- E2E not run in this leaf closeout; the required end-to-end compact-stage
+  regression is tracked under TASK-145-03-03

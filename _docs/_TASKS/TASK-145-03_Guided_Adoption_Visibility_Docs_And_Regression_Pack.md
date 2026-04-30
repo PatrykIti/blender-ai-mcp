@@ -27,8 +27,8 @@ But planner-first usage is still incomplete:
 
 - prompt guidance is not yet consistently planner-first
 - route/handoff ordering differs between docs
-- search/visibility rules do not yet have a clear home for any future
-  planner-context surface
+- search/visibility rules do not yet have a clear home for planner-context
+  disclosure driven by current handoff state
 - regression coverage is strong for the current loop, but not yet organized
   around the planner / sculpt-handoff contract that TASK-145 wants to harden
 
@@ -43,14 +43,28 @@ adoption path:
 - regression coverage protects compact delivery and recommendation-only sculpt
   behavior
 
+## Implementation Notes
+
+- Visibility and search changes must stay on the existing FastMCP platform
+  surfaces: `visibility_policy.py`, `guided_mode.py`,
+  `session_capabilities.py`, capability manifest, and search metadata.
+- If planner or sculpt handoff state changes the bounded visible surface,
+  native MCP visibility should refresh in the active request path. Do not rely
+  on stale session catalog state.
+- Prompt/docs changes must describe shipped fields and visible tools only.
+  Hidden or future-only planner details should be described as future work or
+  omitted.
+
 ## Repository Touchpoints
 
 - `server/adapters/mcp/transforms/visibility_policy.py`
 - `server/adapters/mcp/guided_mode.py`
+- `server/adapters/mcp/session_capabilities.py`
 - `server/adapters/mcp/platform/capability_manifest.py`
 - `server/adapters/mcp/prompts/prompt_catalog.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_guided_mode.py`
+- `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
 - `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_prompt_catalog.py`
@@ -69,6 +83,8 @@ adoption path:
   before broader free-form edits
 - search / visibility / prompt selection rules do not leak a broad new planner
   or sculpt family onto bootstrap by default
+- native MCP visibility refreshes when planner/handoff state changes the
+  bounded visible surface
 - regression coverage protects the compact delivery model and sculpt
   recommendation boundaries
 
@@ -84,6 +100,7 @@ adoption path:
 
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_guided_mode.py`
+- `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
 - `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_prompt_catalog.py`
@@ -96,8 +113,8 @@ adoption path:
 
 ## Status / Board Update
 
-- planning-only execution-tree split: keep `_docs/_TASKS/README.md` unchanged
-  in this branch
+- no board-count change is needed while TASK-145 remains the promoted open
+  board item
 - when this subtask is implemented and closed later, update parent/child
   statuses and the task board in the same allowed branch
 

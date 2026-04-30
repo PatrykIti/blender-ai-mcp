@@ -13,10 +13,40 @@ Decide exactly where planner data lives in the staged reference loop so that:
 - richer planner detail is disclosed only when justified
 - existing `budget_control` and trimming behavior stay authoritative
 
+## Implementation Notes
+
+- Compact compare / iterate responses may include a small planner summary, but
+  must not embed full relation graphs, full truth bundles, or full candidate
+  evidence by default.
+- Rich/detail planner output must be derived from the same compare/iterate
+  evidence and policy result. It must not require a new planner session or a
+  second routing loop.
+- `ReferenceHybridBudgetControlContract` remains the payload-size authority.
+  Planner fields must participate in the same compact/rich budget rules.
+- If a separate detail retrieval surface is introduced, it should be read-only,
+  bounded, and backed by the current stage state.
+
+## Pseudocode
+
+```python
+planner_summary = planner_result.to_compact_summary()
+planner_detail = planner_result.to_detail() if include_detail else None
+
+return _stage_compare_response(
+    ...,
+    refinement_route=planner_result.route,
+    refinement_handoff=planner_result.handoff,
+    planner_summary=planner_summary,
+    planner_detail=planner_detail if preset_profile == "rich" else None,
+    budget_control=budget_control.with_planner_counts(planner_result),
+)
+```
+
 ## Repository Touchpoints
 
 - `server/adapters/mcp/areas/reference.py`
 - `server/adapters/mcp/contracts/reference.py`
+- `server/application/services/repair_planner.py` or equivalent policy helper
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_structured_contract_delivery.py`
 - `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
@@ -43,10 +73,18 @@ Decide exactly where planner data lives in the staged reference loop so that:
 - `tests/unit/adapters/mcp/test_structured_contract_delivery.py`
 - `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
 
+## Validation Category
+
+- Unit coverage must fail if compact mode reintroduces full heavy planner or
+  debug payloads.
+- Targeted command:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_structured_contract_delivery.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py -q`
+
 ## Changelog Impact
 
 - include in the parent TASK-145 changelog entry when shipped
 
 ## Status / Board Update
 
-- no board change in this planning-only branch
+- no board-count change is needed while TASK-145 remains the promoted open
+  board item

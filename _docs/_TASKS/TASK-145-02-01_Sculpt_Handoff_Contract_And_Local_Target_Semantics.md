@@ -16,6 +16,33 @@ Define a sculpt handoff contract that makes explicit:
 
 instead of relying on the current minimal `object_name`-only handoff shape.
 
+## Implementation Notes
+
+- Extend or compose `ReferenceRefinementHandoffContract` before adding a new
+  standalone sculpt-handoff family.
+- Keep `_build_refinement_handoff(...)` aligned with the contract fields:
+  target object, local scope, region/local-form reason, blockers, and bounded
+  recommended tools.
+- Argument hints must remain compatible with actual sculpt tool signatures in
+  `server/adapters/mcp/areas/sculpt.py`; do not invent hidden arguments for the
+  model-facing handoff.
+- The handoff should describe recommendation readiness, not TASK-157 gate
+  completion.
+
+## Pseudocode
+
+```python
+if route.selected_family != "sculpt_region":
+    return handoff_without_sculpt(route, blockers=planner_result.blockers)
+
+return sculpt_handoff(
+    target_scope=planner_result.target_scope,
+    local_reason=planner_result.local_form_reason,
+    recommended_tools=bounded_sculpt_region_tools,
+    arguments_hint=derive_sculpt_arguments(planner_result.target_scope),
+)
+```
+
 ## Repository Touchpoints
 
 - `server/adapters/mcp/contracts/reference.py`
@@ -23,6 +50,11 @@ instead of relying on the current minimal `object_name`-only handoff shape.
 - `server/adapters/mcp/areas/sculpt.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
+
+## Validation Category
+
+- Targeted command:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
 
 ## Acceptance Criteria
 
@@ -49,4 +81,5 @@ instead of relying on the current minimal `object_name`-only handoff shape.
 
 ## Status / Board Update
 
-- no board change in this planning-only branch
+- no board-count change is needed while TASK-145 remains the promoted open
+  board item

@@ -74,6 +74,9 @@ Recent runs show a repeated failure mode:
 - when this leaf closes, record whether the fix landed as a new mesh-aware
   seating macro, an improved existing macro, or a planner-selection policy
   change, plus which Blender-backed rounded-part E2Es were run
+- Blender-backed rounded-part E2E remains required before TASK-145 closure and
+  is tracked under
+  [TASK-145-03-03](./TASK-145-03-03_Regression_Pack_For_Planner_And_Sculpt_Handoff.md)
 
 ## Completion Summary
 
@@ -87,3 +90,6 @@ Recent runs show a repeated failure mode:
 - no new macro was added; the behavior landed as an improved existing
   `macro_attach_part_to_surface`
 - validation: `PYTHONPATH=. poetry run pytest tests/unit/tools/macro/test_macro_attach_part_to_surface.py tests/unit/adapters/mcp/test_reference_images.py -q`
+- Blender-backed E2E was not run in this leaf closeout; the rounded head/body,
+  tail/body, and assembled-creature E2E proof is deferred to TASK-145-03-03
+  before the umbrella can close

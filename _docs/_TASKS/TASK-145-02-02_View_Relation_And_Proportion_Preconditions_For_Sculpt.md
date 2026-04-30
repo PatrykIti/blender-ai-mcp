@@ -14,14 +14,50 @@ valid, especially:
 - missing visibility or poor framing for the intended region
 - major proportion instability that still points back to macro or modeling
 
+## Implementation Notes
+
+- Treat `ready`, `blocked`, and suppression-style states as local handoff
+  states only. Do not use them as TASK-157 quality-gate pass/fail statuses.
+- Relation and view evidence should come from existing scope/relation/view
+  artifacts rather than a new planner-specific truth pass.
+- Sculpt remains blocked when deterministic relation evidence shows unresolved
+  attachment, support, contact, or overlap failures.
+- Proportion and silhouette signals may keep the decision on modeling/mesh or
+  inspect-only, but cannot clear relation blockers.
+
+## Pseudocode
+
+```python
+blockers = []
+if relation_evidence.has_unresolved_structural_failure():
+    blockers.append("relation_failure")
+if view_evidence.target_not_visible_or_framed():
+    blockers.append("view_precondition")
+if proportion_evidence.requires_nonlocal_change():
+    blockers.append("proportion_not_local")
+
+return SculptHandoffPreconditions(
+    state="ready" if not blockers else "blocked",
+    blockers=blockers,
+)
+```
+
 ## Repository Touchpoints
 
 - `server/adapters/mcp/areas/reference.py`
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/contracts/scene.py`
+- `server/application/services/repair_planner.py` or equivalent policy helper
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 - `tests/e2e/tools/sculpt/test_sculpt_tools.py`
+
+## Validation Category
+
+- Unit tests should cover each blocker independently and one positive
+  ready-for-sculpt case.
+- E2E is required when the implementation changes real stage-loop or Blender
+  sculpt handoff behavior.
 
 ## Acceptance Criteria
 
@@ -51,4 +87,5 @@ valid, especially:
 
 ## Status / Board Update
 
-- no board change in this planning-only branch
+- no board-count change is needed while TASK-145 remains the promoted open
+  board item

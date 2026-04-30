@@ -11,14 +11,30 @@ Align sculpt handoff with the real sculpt capability surface so the guided
 runtime recommends only the intended deterministic subset and does not reopen
 brush/setup or broad whole-mesh sculpt paths by accident.
 
+## Implementation Notes
+
+- Update the real recommendation owners, not only metadata:
+  - `ReferenceRefinementHandoffContract`
+  - `_SCULPT_RECOMMENDED_TOOLS`
+  - `_build_refinement_handoff(...)`
+- Metadata/search wording must describe the same bounded deterministic subset
+  that the handoff can actually recommend.
+- If a sculpt tool is visible in search but never recommended by the bounded
+  handoff, document why it is excluded from planner-driven handoff.
+- Progressive unlock, if implemented later, must be handoff-state driven and
+  limited to the same deterministic subset.
+
 ## Repository Touchpoints
 
+- `server/adapters/mcp/contracts/reference.py`
+- `server/adapters/mcp/areas/reference.py`
 - `server/adapters/mcp/areas/sculpt.py`
 - `server/adapters/mcp/transforms/visibility_policy.py`
 - `server/router/infrastructure/tools_metadata/sculpt/`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_guided_mode.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
+- `tests/unit/adapters/mcp/test_reference_images.py`
 
 ## Acceptance Criteria
 
@@ -41,6 +57,12 @@ brush/setup or broad whole-mesh sculpt paths by accident.
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_guided_mode.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
+- `tests/unit/adapters/mcp/test_reference_images.py`
+
+## Validation Category
+
+- Targeted unit lane:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_search_surface.py -q`
 
 ## Changelog Impact
 
@@ -48,4 +70,5 @@ brush/setup or broad whole-mesh sculpt paths by accident.
 
 ## Status / Board Update
 
-- no board change in this planning-only branch
+- no board-count change is needed while TASK-145 remains the promoted open
+  board item

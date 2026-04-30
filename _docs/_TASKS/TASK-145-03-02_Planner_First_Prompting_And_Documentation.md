@@ -14,6 +14,26 @@ planner-first read order:
 - sculpt blockers and handoff context next
 - lower-level correction hints and raw vision prose after that
 
+## Implementation Notes
+
+- Prompt/docs wording should match the shipped compact stage response fields.
+  Do not document hidden tools or future-only planner surfaces as default
+  behavior.
+- The read order should explicitly preserve the responsibility boundary:
+  deterministic evidence and planner policy first, vision prose as advisory
+  context, and low-level tools only after the bounded family/handoff decision.
+- If TASK-157 gate wording is mentioned, keep it as a downstream quality-gate
+  consumer. TASK-145 prompt text should not claim gate pass/fail authority.
+
+## Pseudocode
+
+```text
+Read planner_summary.selected_family and blockers.
+If blockers exist, inspect the named evidence/tool before editing.
+If sculpt_handoff is blocked, use the recommended macro/modeling/inspect path.
+Use vision prose only to explain or prioritize, not to override truth evidence.
+```
+
 ## Repository Touchpoints
 
 - `server/adapters/mcp/prompts/prompt_catalog.py`
@@ -24,6 +44,11 @@ planner-first read order:
 - `_docs/_VISION/CROSS_DOMAIN_REFINEMENT_ROUTING_EVAL.md`
 - `tests/unit/adapters/mcp/test_prompt_catalog.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
+
+## Validation Category
+
+- Prompt/docs tests should assert planner-first ordering and absence of hidden
+  non-default tool instructions.
 
 ## Acceptance Criteria
 
@@ -53,4 +78,5 @@ planner-first read order:
 
 ## Status / Board Update
 
-- no board change in this planning-only branch
+- no board-count change is needed while TASK-145 remains the promoted open
+  board item
