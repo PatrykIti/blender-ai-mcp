@@ -9,7 +9,9 @@
 ## Objective
 
 Build the status model and verifier layer that evaluates normalized gates using
-deterministic scene, spatial, mesh, assertion, and bounded reference evidence.
+deterministic scene, spatial, mesh, and assertion evidence. Bounded reference or
+perception payloads may provide proposal/support refs, but they are not the
+truth authority for gate pass/fail status.
 
 This layer must make evidence authority explicit. Perception outputs can
 support a verifier only when the gate type allows that evidence class; they do
@@ -24,7 +26,7 @@ not become a generic substitute for Blender truth.
 | `server/application/services/spatial_graph.py` | Evidence source for relation/contact/seam gates |
 | `server/adapters/mcp/areas/scene.py` | Reuse scene assertions and relation graph outputs |
 | `server/adapters/mcp/areas/reference.py` | Attach verifier results to checkpoint/iterate payloads |
-| `server/adapters/mcp/vision/` | Source of bounded perception evidence refs when a gate supports them |
+| `server/adapters/mcp/vision/` | Source of bounded proposal/support refs when a verifier strategy accepts them |
 | `server/adapters/mcp/session_capabilities.py` | Persist gate status and last verification versions |
 | `tests/unit/adapters/mcp/test_quality_gate_verifier.py` | Gate status transition tests |
 | `tests/unit/tools/scene/` | Evidence mapping tests for scene/spatial verdicts |
@@ -50,7 +52,7 @@ into one confidence score.
 | `scene_truth` / assertion output | `required_part`, `final_completion`, object existence, mode/scope checks | Authoritative when fresh |
 | `spatial_relation` | `attachment_seam`, `support_contact`, pair seating, floating gap detection | Authoritative for spatial contact/support |
 | `mesh_metric` | `opening_or_cut`, selected `shape_profile`, dimensions, topology/count checks | Authoritative when the metric directly measures the gate |
-| `silhouette_analysis` | `shape_profile`, coarse `proportion_ratio`, visible contour drift | Bounded supporting evidence; must include scope/capture/reference ids |
+| `silhouette_analysis` | `shape_profile`, coarse `proportion_ratio`, visible contour drift | Bounded supporting context only; must include scope/capture/reference ids and cannot pass gates by itself |
 | `part_segmentation` | Target part masks, region hints, future part-aware profile checks | Supporting evidence only; cannot prove Blender object existence/contact |
 | `classification_score` | Domain/profile or construction-strategy selection | Routing/proposal evidence only; cannot pass gates |
 | `reference_understanding` | Candidate gate plan, style, required details, construction path | Proposal evidence only; cannot pass gates |
@@ -74,8 +76,9 @@ authoritative scene/spatial/mesh verifier.
 - A gate cannot become `passed` solely because a VLM, CLIP-style classifier, or
   reference-understanding summary says the target looks correct.
 - `shape_profile` and selected `proportion_ratio` gates may use bounded
-  perception evidence only when their normalized `verification_strategy`
-  explicitly allows it and the evidence carries fresh capture/reference scope.
+  perception evidence only as verifier-supported context when their normalized
+  `verification_strategy` explicitly allows it and the evidence carries fresh
+  capture/reference scope.
 - A scene mutation should mark affected gate statuses `stale` or require
   re-check before final completion.
 - Completion blockers should be derived from required gates in `failed`,

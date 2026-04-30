@@ -52,7 +52,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md) | **Goal-Derived Quality Gates And Deterministic Verification** | 🔴 High | Post-TASK-145 generic substrate where LLMs and bounded perception may propose gates, while the server normalizes and verifies completion deterministically; future SAM/CLIP-style adapters stay outside this task. |
+| [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md) | **Goal-Derived Quality Gates And Deterministic Verification** | 🔴 High | Post-TASK-145 generic substrate where LLMs and bounded perception may propose gates, while scene/spatial/mesh/assertion verifiers own deterministic completion; future SAM/CLIP-style adapters stay outside this task. |
 
 ### Mesh Introspection
 | ID | Title | Priority | Notes |

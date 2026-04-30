@@ -80,15 +80,26 @@ reference/perception payloads to prove:
 
 ## Pseudocode
 
+The field names below are `TASK-157` additions to the existing reference
+checkpoint response contract. They should align with `TASK-157-03`
+(`active_gate_plan`, `gate_statuses`, `completion_blockers`,
+`next_gate_actions`, and `recommended_bounded_tools`) rather than legacy role
+mirrors.
+
 ```python
 def test_creature_gate_completion_blocks_primitive_only_squirrel(blender_scene):
     start_guided_creature_goal()
     create_primitive_only_parts_without_eyes()
     result = reference_iterate_stage_checkpoint(collection_name="Squirrel")
 
-    assert result.gate_summary.has_required_blockers
-    assert "eye_pair" in result.gate_summary.missing_required_roles
-    assert any(gate.gate_type == "attachment_seam" for gate in result.failed_gates)
+    assert result.completion_blockers
+    eye_gate = required_gate(result.gate_statuses, gate_type="required_part", target_role="eye_pair")
+    assert eye_gate.status in {"blocked", "failed"}
+    assert eye_gate.blocker_reason in {"missing_required_part", "missing_scope"}
+    assert eye_gate.evidence_refs
+    symmetry_gate = required_gate(result.gate_statuses, gate_type="symmetry_pair", target_role="eye_pair")
+    assert symmetry_gate.status in {"blocked", "failed", "pending"}
+    assert any(gate.gate_type == "attachment_seam" and gate.status == "failed" for gate in result.gate_statuses)
     assert result.loop_disposition == "inspect_validate"
 
 
@@ -97,7 +108,7 @@ def test_building_gate_completion_blocks_floating_roof(blender_scene):
     create_wall_and_floating_roof()
     result = reference_iterate_stage_checkpoint(collection_name="Building")
 
-    assert required_gate("roof_wall_seam").status == "failed"
+    assert required_gate(result.gate_statuses, gate_id="roof_wall_seam").status == "failed"
     assert "macro_attach_part_to_surface" in result.recommended_bounded_tools
 ```
 

@@ -66,6 +66,11 @@ Hard rules:
 | `TASK-135-03` | First low-poly form-refinement consumer; owns the faceted refinement stage and any creature profile macros |
 | `TASK-140` | External VLM model-family profile reliability; owns `vision_contract_profile` expansion, not quality-gate authority |
 
+When `TASK-140` payloads are later consumed by `TASK-157`, treat
+`vision_contract_profile` as routing/provenance context only. Parsed diagnostic
+or compare payload fields may become proposal/support refs, but the quality
+gate verifier still owns pass/fail status.
+
 Do not create a second task family that duplicates these owners. New work should
 land as leaves under the nearest existing task unless a separate future adapter
 really needs its own task family.
@@ -165,11 +170,16 @@ Do not invent intermediate guided families such as `macro_profile`,
 is deliberately expanded.
 
 The strategic plan mentions `mesh_edit` and `material_finish`. In current repo
-contracts those should not become new planner families by default:
+contracts those names are non-normative strategy aliases or future concepts and
+should not become new planner families by default:
 
 - `mesh_edit` maps to `modeling_mesh`
 - `material_finish` should be modeled as a stage, action hint, or future family
   only after a dedicated contract change
+- `mesh_shade_flat`, `macro_low_poly_finish`,
+  `macro_low_poly_facet_refine`, and similar `macro_low_poly_*` names remain
+  proposed `TASK-135-03`/follow-on candidates until they exist in the MCP
+  surface and router metadata
 
 ## Construction Path Policy
 

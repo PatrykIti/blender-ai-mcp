@@ -26,6 +26,20 @@ Version: -
 - refined the post-`f1c23f4` `TASK-157` task family with explicit non-goals,
   runtime/security contract notes, validation commands, changelog-impact lanes,
   and a current guided-family vocabulary note for gate-driven visibility
+- tightened the audit wording so bounded Vision/perception payloads are
+  proposal/support refs only, while scene/spatial/mesh/assertion remains the
+  gate pass/fail truth layer
+- clarified the normative Vision roadmap so `vision_contract_profile` remains
+  routing/provenance context, `mesh_edit`/`material_finish` are not new
+  canonical planner families, and `mesh_shade_flat`/`macro_low_poly_*` names
+  remain future candidates until implemented
+- tightened TASK-157 implementability notes so the intake surface starts on the
+  existing guided/reference payloads, support-contact visibility names current
+  tools, and E2E pseudocode asserts normalized gates instead of legacy required
+  role mirrors
+- aligned intake and E2E pseudocode with current live seams by using
+  `state.goal` / `guided_flow_state` and naming `TASK-157-03` gate response
+  fields as new checkpoint-contract additions
 
 ## Validation
 

@@ -32,7 +32,14 @@ safe mutation inside one still-open build stage.
   - `scene_relation_graph`
   - `macro_attach_part_to_surface`
   - `macro_align_part_with_contact`
-- `support_contact` gates expose support/contact repair tools.
+- `support_contact` gates expose current support/contact verification and
+  repair tools:
+  - `scene_relation_graph`
+  - `scene_measure_gap`
+  - `scene_assert_contact`
+  - `macro_place_supported_pair`
+  - `macro_attach_part_to_surface` or `macro_align_part_with_contact` when the
+    support failure is also a seating/contact repair
 - `shape_profile` gates expose mesh/modeling refinement tools only after
   required seam/contact gates are not failed.
 - `reference_understanding` and CLIP-style classification evidence may select

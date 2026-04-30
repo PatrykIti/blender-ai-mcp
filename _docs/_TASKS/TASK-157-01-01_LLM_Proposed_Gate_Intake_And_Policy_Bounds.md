@@ -19,7 +19,7 @@ remain proposal sources only. They must not become verifier status.
 
 | Path / Module | Expected Change |
 |---------------|-----------------|
-| `server/adapters/mcp/areas/reference.py` | Accept optional gate proposal payload on goal/checkpoint path if this is the chosen public surface |
+| `server/adapters/mcp/areas/reference.py` | Accept optional gate proposal payload on the existing guided/reference goal/checkpoint path |
 | `server/adapters/mcp/contracts/quality_gates.py` | Add intake contract models |
 | `server/adapters/mcp/contracts/reference.py` | Reference proposal sources by stable reference/vision payload identifiers |
 | `server/adapters/mcp/session_capabilities.py` | Store normalized proposals in session state |
@@ -47,9 +47,9 @@ remain proposal sources only. They must not become verifier status.
 
 ## Runtime / Security Contract Notes
 
-- Visibility level: prefer adding intake as an optional field on the existing
-  guided/reference surface unless a public-tool review justifies a separate MCP
-  tool.
+- Visibility level: the first slice uses an optional field on the existing
+  guided/reference surface. A separate public intake tool is out of scope
+  unless a later public-tool review approves it.
 - Read-only vs mutating behavior: intake does not mutate Blender scene state;
   it only stores normalized session gate state and policy warnings.
 - Session/auth assumptions: intake applies only to the active guided session;
@@ -67,13 +67,14 @@ remain proposal sources only. They must not become verifier status.
 ```python
 def ingest_llm_gate_proposal(ctx, proposal):
     state = get_session_capability_state(ctx)
-    if not state.current_goal:
+    if not state.goal or state.guided_flow_state is None:
         return GateIntakeResult(status="ignored", reason="no_active_goal")
 
+    guided_flow = GuidedFlowStateContract.model_validate(state.guided_flow_state)
     normalized = normalize_gate_plan(
         proposal,
-        domain_profile=state.guided_flow_state.domain_profile,
-        templates=load_domain_templates(state.guided_flow_state.domain_profile),
+        domain_profile=guided_flow.domain_profile,
+        templates=load_domain_templates(guided_flow.domain_profile),
     )
 
     for gate in normalized.gates:

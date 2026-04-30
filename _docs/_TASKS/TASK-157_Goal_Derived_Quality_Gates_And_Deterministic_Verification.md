@@ -11,7 +11,9 @@
 Introduce a generic quality-gate system where an LLM can propose flexible
 domain-specific gates from the active goal and references, while the server
 normalizes those gates into typed contracts and verifies completion with
-deterministic inspection, assertion, spatial truth, or bounded vision evidence.
+server-owned scene, spatial, mesh, inspection, and assertion evidence. Bounded
+vision/perception payloads may seed proposals or support a verifier strategy,
+but they do not own gate pass/fail truth.
 
 This is the cross-domain substrate for:
 
@@ -99,9 +101,10 @@ The first vocabulary should be deliberately small and cross-domain:
   visible tool state.
 - The server normalizes proposals into typed gate records and rejects unsupported
   or unsafe gate shapes.
-- The server verifies gate status through scene/spatial/mesh/assertion truth
-  plus bounded reference/perception evidence only when a verifier strategy
-  explicitly supports that evidence class.
+- The server verifies gate status through scene/spatial/mesh/assertion truth.
+  Bounded reference/perception evidence can be attached only as
+  verifier-supported proposal or supporting evidence and cannot replace the
+  authoritative truth layer.
 - LaBSE/search may help find candidate tools, but cannot mark gates complete.
 - Vision output may recommend gates or provide bounded evidence, but scene truth
   and assertion tools remain authoritative for object existence, contacts,
@@ -119,7 +122,7 @@ perception surfaces without making those surfaces responsible for completion:
 | Input / Evidence Source | Contract Role | Authority Boundary |
 |-------------------------|---------------|--------------------|
 | `reference_understanding` | Optional model-readable summary of what attached references depict, expected style, likely parts, and construction path | May propose gates and default correction families; cannot pass gates |
-| `silhouette_analysis` | Deterministic reference/viewport shape metrics from the existing perception layer | May support `shape_profile` and `proportion_ratio` evidence when scoped and fresh |
+| `silhouette_analysis` | Deterministic reference/viewport shape metrics from the existing perception layer | May inform `shape_profile` and `proportion_ratio` verifier context when scoped and fresh; cannot pass gates by itself |
 | `part_segmentation` | Optional default-off segmentation sidecar output when configured | May provide target masks or part-region hints; cannot prove Blender object existence or attachment |
 | `classification_score` | Future CLIP-style or model-family classification evidence | May select a domain profile or construction strategy; cannot prove gate completion |
 | VLM compare/iterate findings | Bounded visual mismatch or action-hint payloads from the active vision contract profile | May recommend gates, blockers, or tool families; must remain advisory unless mapped to a verifier-supported evidence type |
@@ -149,7 +152,7 @@ same bounded evidence/proposal records through the vision/perception layer.
 |-------|------|---------|
 | 1 | [TASK-157-01](./TASK-157-01_Gate_Declaration_Schema_Normalization_And_Policy_Bounds.md) | Define the gate schema, LLM proposal intake, normalization, policy bounds, and domain template merge rules |
 | 2 | [TASK-157-01-01](./TASK-157-01-01_LLM_Proposed_Gate_Intake_And_Policy_Bounds.md) | Implement the first narrow intake contract for model-proposed gates without trusting model completion claims |
-| 3 | [TASK-157-02](./TASK-157-02_Deterministic_Gate_Verifier_And_Status_Model.md) | Build the verifier/status model that binds gates to spatial, assertion, object, and bounded vision evidence |
+| 3 | [TASK-157-02](./TASK-157-02_Deterministic_Gate_Verifier_And_Status_Model.md) | Build the verifier/status model that binds gates to spatial, assertion, object, mesh, and bounded perception-support evidence |
 | 4 | [TASK-157-02-01](./TASK-157-02-01_Attachment_Support_And_Contact_Gate_Verifier.md) | Ship the first seam/contact verifier for `attachment_seam` and `support_contact` gates |
 | 5 | [TASK-157-03](./TASK-157-03_Guided_Flow_Gate_Runtime_Integration.md) | Integrate gate state into guided flow, visibility, search, checkpoints, and completion blocking |
 | 6 | [TASK-157-03-01](./TASK-157-03-01_Gate_Driven_Visibility_Search_And_Recovery_Policy.md) | Make unresolved gates open the right bounded tool families without broad catalog exposure |
