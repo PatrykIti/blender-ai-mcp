@@ -29,6 +29,11 @@ Decide exactly where planner data lives in the staged reference loop so that:
   existing contract/model API.
 - If a separate detail retrieval surface is introduced, it should be read-only,
   bounded, and backed by the current stage state.
+- Any new planner-detail MCP surface must document the runtime/security
+  contract required by `AGENTS.md`: visibility level, read-only behavior,
+  stdio/Streamable HTTP/local RPC assumptions, parameter validation,
+  reject-unknown behavior, payload limits, recovery behavior, and log/redaction
+  expectations.
 
 ## Pseudocode
 
@@ -70,6 +75,8 @@ return _stage_compare_response(
   staying fixed for every domain
 - model-aware budget controls still trim scope/detail deterministically when
   needed
+- any separate planner-detail surface is read-only, opt-in, visibility-gated,
+  and covered by the explicit runtime/security contract checklist
 
 ## Docs To Update
 

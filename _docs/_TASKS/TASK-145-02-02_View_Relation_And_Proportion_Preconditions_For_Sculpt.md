@@ -67,8 +67,14 @@ return SculptHandoffPreconditions(
 
 - Unit tests should cover each blocker independently and one positive
   ready-for-sculpt case.
+- Targeted unit command:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
 - E2E is required when the implementation changes real stage-loop or Blender
   sculpt handoff behavior.
+- Targeted E2E command when runtime sculpt handoff changes:
+  `poetry run pytest tests/e2e/vision/test_reference_stage_truth_handoff.py tests/e2e/tools/sculpt/test_sculpt_tools.py -q`
+- Docs/preflight:
+  `git diff --check`
 
 ## Acceptance Criteria
 

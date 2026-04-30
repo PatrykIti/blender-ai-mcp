@@ -25,7 +25,7 @@ full candidate evidence, silhouette metrics, and duplicated state.
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/_VISION/README.md`
 
-## Acceptance Criteria
+## Closed Slice Acceptance Criteria
 
 - normal guided compact iterate response exposes a small model-facing envelope:
   - `loop_disposition`
@@ -45,8 +45,9 @@ full candidate evidence, silhouette metrics, and duplicated state.
   - full silhouette metrics
 - compact mode avoids duplicating the same large structures at top level and
   inside `compare_result`
-- a debug/full payload path remains available through `preset_profile="rich"`,
-  a debug flag, or a dedicated follow-up debug tool
+- this leaf does not add a new debug retrieval tool; full debug/detail delivery
+  remains an explicit umbrella follow-up tracked by
+  [TASK-145-03-03](./TASK-145-03-03_Regression_Pack_For_Planner_And_Sculpt_Handoff.md)
 - response size is protected by unit tests that assert the compact response
   shape and bounded field presence
 
@@ -54,10 +55,11 @@ full candidate evidence, silhouette metrics, and duplicated state.
 
 - Unit:
   - compact iterate response omits full debug fields by default
-  - rich/debug response keeps full data available
+  - compact response advertises that heavy debug fields were omitted
   - compact response still carries enough top findings for LLM execution
   - budget/capability diagnostics show final request cap, not only assistant
     policy budget
+  - rich/debug detail remains covered by the open TASK-145-03-03 regression lane
 - E2E:
   - guided stage iterate returns compact payload suitable for direct LLM reading
 
@@ -83,8 +85,9 @@ full candidate evidence, silhouette metrics, and duplicated state.
 
 ## Status / Closeout Note
 
-- when this leaf closes, record the compact-vs-debug response contract, exact
-  validation commands, and whether a dedicated debug retrieval tool was added
+- this closed leaf covers the compact default response split only; a dedicated
+  debug retrieval tool was not added here and is not required for this leaf's
+  `✅ Done` status
 - E2E validation for direct LLM-readability is deferred to
   [TASK-145-03-03](./TASK-145-03-03_Regression_Pack_For_Planner_And_Sculpt_Handoff.md)
   before TASK-145 can close
@@ -95,8 +98,8 @@ full candidate evidence, silhouette metrics, and duplicated state.
   nested `compare_result` by omitting duplicated heavy debug fields
 - top-level iterate fields still carry actionable truth/candidate/route/handoff
   summaries for LLM execution
-- no dedicated debug retrieval tool was added in this slice; rich/debug payload
-  delivery remains the future path for full nested data
+- no dedicated debug retrieval tool was added in this slice; full rich/debug
+  retrieval remains open umbrella work tracked by TASK-145-03-03
 - validation: `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
 - docs updated: `_docs/_MCP_SERVER/README.md`,
   `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`, and

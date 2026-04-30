@@ -4,6 +4,9 @@
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
 **Depends On:** [TASK-145-03-01](./TASK-145-03-01_Planner_And_Sculpt_Delivery_On_LLM_Guided.md), [TASK-145-03-02](./TASK-145-03-02_Planner_First_Prompting_And_Documentation.md)
+**Carries Forward:**
+- [TASK-145-01-04](./TASK-145-01-04_Compact_Iterate_Response_Envelope_And_Debug_Payload_Split.md)
+- [TASK-145-01-05](./TASK-145-01-05_Mesh_Aware_Organic_Seating_Repair_For_Rounded_Parts.md)
 
 ## Objective
 
@@ -31,6 +34,8 @@ At minimum, cover:
   result as the compact response
 - visibility/search: no broad planner/sculpt family is bootstrap-visible on
   `llm-guided`
+- guided sculpt execution gate: any handoff-visible sculpt mutator maps to an
+  allowed guided family or fails closed before execution
 - native visibility refresh: tool visibility does not stay stale after guided
   planner/handoff state changes
 - rounded-part macro regression: head/body and tail/body rounded seams still
@@ -66,6 +71,8 @@ At minimum, cover:
 
 - unit tests cover the compact planner contract, disclosure rules, and sculpt
   gating policy
+- guided execution tests cover the bounded sculpt subset mapping or fail-closed
+  behavior for unmapped `sculpt_*` mutators
 - search/visibility regressions guard against planner/sculpt overexposure on
   `llm-guided`
 - guided-state tests cover visibility refresh when planner/handoff state
@@ -111,6 +118,8 @@ At minimum, cover:
   `poetry run pytest tests/e2e/integration/test_guided_streamable_spatial_support.py tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/vision/test_reference_stage_truth_handoff.py tests/e2e/vision/test_reference_guided_creature_comparison.py tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py tests/e2e/tools/macro/test_macro_attach_part_to_surface.py tests/e2e/tools/macro/test_macro_align_part_with_contact.py tests/e2e/tools/sculpt/test_sculpt_tools.py -q`
 - Docs/preflight:
   `git diff --check`
+- Router metadata schema lane when metadata changes:
+  `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run check-router-tool-metadata --all-files`
 
 ## Changelog Impact
 

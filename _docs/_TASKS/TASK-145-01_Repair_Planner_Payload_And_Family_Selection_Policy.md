@@ -82,6 +82,10 @@ Build the repair planner as a contract-and-policy upgrade over the current
 - Keep scene truth ownership in `server/application/services/spatial_graph.py`
   and scene contracts. Planner policy consumes scope/relation/view evidence;
   it does not recalculate Blender truth.
+- Staged compare / iterate must not treat current-view `view_diagnostics_hints`
+  as present unless that evidence has actually been wired into the staged
+  checkpoint response. Missing staged view evidence should become a typed
+  blocker or an explicit request to run `scene_view_diagnostics(...)`.
 - Any richer planner detail must be derived from the same evidence and policy
   result as the compact stage response. Do not create a separate planner
   session, persistence model, router flow, or LaBSE-backed planner.
@@ -93,7 +97,13 @@ evidence = RepairPlannerEvidence(
     assembled_target_scope=compare.assembled_target_scope,
     truth_followup=compare.truth_followup,
     correction_candidates=compare.correction_candidates,
-    view_diagnostics_hints=compare.view_diagnostics_hints,
+    # Only pass staged view evidence after the staged checkpoint path populates it.
+    # Otherwise emit a typed blocker / required scene_view_diagnostics support call.
+    view_diagnostics_hints=(
+        compare.view_diagnostics_hints
+        if compare.view_diagnostics_hints
+        else None
+    ),
     silhouette_analysis=compare.silhouette_analysis,
     action_hints=compare.action_hints,
     budget_control=compare.budget_control,

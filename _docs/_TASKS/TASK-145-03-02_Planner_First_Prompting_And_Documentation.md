@@ -49,6 +49,10 @@ Use vision prose only to explain or prioritize, not to override truth evidence.
 
 - Prompt/docs tests should assert planner-first ordering and absence of hidden
   non-default tool instructions.
+- Targeted command:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_prompt_catalog.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- Docs/preflight:
+  `git diff --check`
 
 ## Acceptance Criteria
 

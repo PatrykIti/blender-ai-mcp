@@ -31,7 +31,7 @@ Recent runs show a repeated failure mode:
 - `tests/e2e/tools/macro/test_macro_attach_part_to_surface.py`
 - `tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py`
 
-## Acceptance Criteria
+## Closed Slice Acceptance Criteria
 
 - repair planner distinguishes bbox-contact from mesh-surface contact for
   rounded organic parts
@@ -42,13 +42,22 @@ Recent runs show a repeated failure mode:
     when the pair already has a stable side relation
   - embedded or intersecting rounded seams prefer the mesh-aware
     `macro_attach_part_to_surface` path instead of a blind bbox side-push
-- `macro_align_part_with_contact` blocks or warns when it can only make bbox
-  contact while mesh-surface truth remains separated
-- a dedicated mesh-aware seating path or improved `macro_attach_part_to_surface`
+- the fix lands as an improved existing `macro_attach_part_to_surface` path,
+  not as a second repair flow
+- the improved `macro_attach_part_to_surface`
   can produce `seated_contact` for rounded parts without forcing LLMs into
   manual transform nudges
-- dependent attached parts are not silently left behind when a major anchor
-  object is moved
+
+## Remaining Umbrella Closure Work
+
+- `macro_align_part_with_contact` must still block or warn when it can only make
+  bbox contact while mesh-surface truth remains separated.
+- Dependent attached parts must not be silently left behind when a major anchor
+  object is moved.
+- Blender-backed head/body, tail/body, and assembled-creature E2E proof remains
+  tracked under
+  [TASK-145-03-03](./TASK-145-03-03_Regression_Pack_For_Planner_And_Sculpt_Handoff.md)
+  and must pass before the TASK-145 umbrella closes.
 
 ## Tests To Add/Update
 
@@ -85,9 +94,9 @@ Recent runs show a repeated failure mode:
 
 ## Status / Closeout Note
 
-- when this leaf closes, record whether the fix landed as a new mesh-aware
-  seating macro, an improved existing macro, or a planner-selection policy
-  change, plus which Blender-backed rounded-part E2Es were run
+- this closed leaf covers the implemented mesh-aware seating policy and
+  `macro_attach_part_to_surface` improvement only; the remaining macro warning
+  and dependent-part guard stay open under TASK-145-03-03
 - Blender-backed rounded-part E2E remains required before TASK-145 closure and
   is tracked under
   [TASK-145-03-03](./TASK-145-03-03_Regression_Pack_For_Planner_And_Sculpt_Handoff.md)
@@ -108,8 +117,8 @@ Recent runs show a repeated failure mode:
   embedded rounded-seam mesh-aware seating criteria through
   `macro_attach_part_to_surface`. Broad head/body, tail/body, limb/body E2E
   proof plus the `macro_align_part_with_contact` warning/blocking and
-  dependent-part guard remain required regression coverage before umbrella
-  closure, not a new second flow.
+  dependent-part guard remain open umbrella closure work tracked under
+  TASK-145-03-03, not a new second flow.
 - docs updated: `_docs/_MCP_SERVER/README.md`,
   `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`, and
   `_docs/_VISION/README.md`

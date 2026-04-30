@@ -23,6 +23,15 @@ brush/setup or broad whole-mesh sculpt paths by accident.
   handoff, document why it is excluded from planner-driven handoff.
 - Progressive unlock, if implemented later, must be handoff-state driven and
   limited to the same deterministic subset.
+- A sculpt visibility unlock must also update guided execution policy. Before
+  any `sculpt_*` tool becomes guided-visible, either:
+  - add an explicit guided family / mapping for the bounded sculpt subset in
+    `GuidedFlowFamilyLiteral` and `GUIDED_TOOL_FAMILY_MAP`
+  - or make unmapped `sculpt_*` mutators fail closed in `router_helper.py`
+    until that mapping exists.
+- Visibility/search metadata is not enough for sculpt safety. The execution
+  gate must block visible sculpt mutators whose family is not allowed by the
+  current `guided_flow_state`.
 
 ## Pseudocode
 
@@ -41,6 +50,8 @@ else:
 # If recommended tools should become visible, normalize that bounded fact into
 # existing guided_handoff / guided_flow_state and let build_visibility_rules(...)
 # materialize the native MCP surface.
+# Do not expose sculpt tools until GUIDED_TOOL_FAMILY_MAP / guided execution
+# policy can resolve and enforce the same bounded sculpt family.
 ```
 
 ## Repository Touchpoints
@@ -48,10 +59,13 @@ else:
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/areas/reference.py`
 - `server/adapters/mcp/areas/sculpt.py`
+- `server/adapters/mcp/contracts/guided_flow.py`
 - `server/adapters/mcp/transforms/visibility_policy.py`
+- `server/adapters/mcp/router_helper.py`
 - `server/router/infrastructure/tools_metadata/sculpt/`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_guided_mode.py`
+- `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 
@@ -64,6 +78,9 @@ else:
 - `llm-guided` does not auto-expose the whole sculpt capability by default
 - if progressive unlock is later allowed, it is limited to the same bounded
   deterministic subset
+- any guided-visible sculpt tool is governed by guided execution policy; no
+  `sculpt_*` mutator can become visible while resolving to `family=None`
+- metadata/search changes pass router metadata schema validation
 
 ## Docs To Update
 
@@ -81,7 +98,11 @@ else:
 ## Validation Category
 
 - Targeted unit lane:
-  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_search_surface.py -q`
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_search_surface.py -q`
+- Router metadata schema lane when `server/router/infrastructure/tools_metadata/sculpt/*.json` changes:
+  `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run check-router-tool-metadata --all-files`
+- Docs/preflight:
+  `git diff --check`
 
 ## Changelog Impact
 

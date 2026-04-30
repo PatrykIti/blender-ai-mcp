@@ -93,7 +93,13 @@ if handoff.has_blockers:
 - Unit reference tests must cover both ready and blocked sculpt handoff.
 - Visibility tests must prove `llm-guided` does not expose the full sculpt
   family by default.
+- Targeted unit lane:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_visibility_policy.py -q`
 - Blender E2E is required when tool arguments or real sculpt behavior change.
+- Targeted E2E lane when runtime sculpt behavior changes:
+  `poetry run pytest tests/e2e/vision/test_reference_stage_truth_handoff.py tests/e2e/tools/sculpt/test_sculpt_tools.py -q`
+- Docs/preflight:
+  `git diff --check`
 
 ## Acceptance Criteria
 

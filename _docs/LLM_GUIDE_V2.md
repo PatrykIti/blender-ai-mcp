@@ -540,11 +540,14 @@ The intended model is:
 
 These three would materially improve LLM spatial reasoning immediately.
 
-They should be exposed in a controlled way:
+Current `llm-guided` bootstrap exposes these three read-only spatial support
+tools deliberately, because they are the first truth/view context required by
+the guided loop. Keep that exposure controlled:
 
-- not all at once on bootstrap by default
-- only when the current goal/phase/handoff justifies them
-- with one-step expansion from the current guided surface when needed
+- do not widen this into a broad spatial/planner family by default
+- keep future spatial/planner tools phase-aware and handoff-aware
+- use the existing visibility policy and guided state instead of a second
+  discovery or catalog-shaping path
 
 ### Tier B: Strong Follow-On
 
