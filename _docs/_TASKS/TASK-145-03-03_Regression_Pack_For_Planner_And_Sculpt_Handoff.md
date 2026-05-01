@@ -138,11 +138,14 @@ At minimum, cover:
 
 ## Completion Summary
 
-Closed with focused unit coverage for planner contract parity, relation/view
-blockers, compact planner summary placement, bounded sculpt subset including
+Closed with focused unit coverage for compare/iterate planner contract parity,
+rich `planner_detail` shape, relation/view blockers, compact nested debug
+payload stripping, bounded sculpt subset coverage including
 `sculpt_crease_region`, and guided fail-closed behavior for unmapped
-`sculpt_*` mutators. Targeted Blender-backed E2E was invoked with `-rs`, but
-the tests skipped because local Blender / Blender RPC was not available.
+`sculpt_*` mutators with executor non-execution proof. Host-side Blender-backed
+and guided-surface E2E now also pass for truth-driven assembly routing, rich
+sculpt-ready planner detail, rounded-part/seated-contact macro proof, the
+stdio guided surface contract harness, and deterministic sculpt tool behavior.
 
 ## Status / Board Update
 

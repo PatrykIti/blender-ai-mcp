@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
+from types import SimpleNamespace
 
 import pytest
 from server.adapters.mcp.areas.reference import reference_compare_stage_checkpoint, reference_images
@@ -148,6 +149,17 @@ def test_reference_compare_stage_checkpoint_exposes_truth_bundle_and_followup(
         assert result.correction_candidates
         assert result.correction_candidates[0].focus_pairs == [f"{head_name} -> {body_name}"]
         assert "truth" in result.correction_candidates[0].source_signals
+        assert result.refinement_route is not None
+        assert result.refinement_route.selected_family == "macro"
+        assert result.refinement_route.blockers
+        assert result.refinement_route.blockers[0].blocker_id == "relation_structural_failure"
+        assert result.refinement_handoff is not None
+        assert result.refinement_handoff.selected_family == "macro"
+        assert result.refinement_handoff.state == "blocked"
+        assert result.refinement_handoff.recommended_tools == []
+        assert result.planner_summary is not None
+        assert result.planner_summary.selected_family == "macro"
+        assert result.planner_summary.required_support_tools[0].tool_name == "scene_relation_graph"
     except RuntimeError as e:
         _skip_if_blender_unavailable(e)
 
@@ -233,5 +245,100 @@ def test_reference_compare_stage_checkpoint_prefers_body_anchor_for_multi_part_c
         ]
         assert result.correction_candidates
         assert result.correction_candidates[0].focus_pairs[0].endswith(f"-> {body_name}")
+    except RuntimeError as e:
+        _skip_if_blender_unavailable(e)
+
+
+def test_reference_compare_stage_checkpoint_rich_profile_exposes_ready_sculpt_planner_detail(
+    clean_scene,
+    scene_handler,
+    modeling_handler,
+    tmp_path,
+    monkeypatch,
+):
+    heart_name = "Heart"
+    reference_path = tmp_path / "heart_side_ref.png"
+    reference_path.write_bytes(b"fake")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    try:
+        modeling_handler.create_primitive(primitive_type="SPHERE", radius=1.0, location=[0, 0, 0], name=heart_name)
+
+        ctx = FakeContext()
+        update_session_from_router_goal(ctx, "refine the organic heart surface", {"status": "no_match"})
+        asyncio.run(
+            reference_images(
+                ctx,
+                action="attach",
+                source_path=str(reference_path),
+                label="side_ref",
+                target_object=heart_name,
+                target_view="side",
+            )
+        )
+
+        async def _fake_run_vision_assist(ctx, *, request, resolver):
+            return AssistantRunResult(
+                status="success",
+                assistant_name="vision_assist",
+                message="ok",
+                budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+                capability_source="local_runtime",
+                result=VisionAssistContract(
+                    backend_kind="mlx_local",
+                    model_name="gpt-4.1",
+                    goal_summary="The heart surface still needs softer local-form refinement.",
+                    visible_changes=["The intended side target is fully visible."],
+                    shape_mismatches=["Heart surface is still too lumpy."],
+                    correction_focus=["Heart surface smoothing"],
+                    next_corrections=["Smooth and slightly crease the chamber area."],
+                ),
+            )
+
+        monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+        monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: scene_handler)
+        monkeypatch.setattr(
+            "server.adapters.mcp.areas.reference.get_vision_backend_resolver",
+            lambda: SimpleNamespace(
+                runtime_config=SimpleNamespace(max_tokens=1000, max_images=8, active_model_name="gpt-4.1")
+            ),
+        )
+
+        result = asyncio.run(
+            reference_compare_stage_checkpoint(
+                ctx,
+                target_object=heart_name,
+                target_view="side",
+                checkpoint_label="stage_organic",
+                preset_profile="rich",
+            )
+        )
+
+        assert result.error is None
+        assert result.view_diagnostics_hints == []
+        assert result.budget_control is not None
+        assert result.budget_control.detail_trimmed is False
+        assert result.refinement_route is not None
+        assert result.refinement_route.selected_family == "sculpt_region"
+        assert result.refinement_route.blockers == []
+        assert result.refinement_handoff is not None
+        assert result.refinement_handoff.selected_family == "sculpt_region"
+        assert result.refinement_handoff.state == "ready"
+        assert [tool.tool_name for tool in result.refinement_handoff.recommended_tools] == [
+            "sculpt_deform_region",
+            "sculpt_smooth_region",
+            "sculpt_inflate_region",
+            "sculpt_pinch_region",
+            "sculpt_crease_region",
+        ]
+        assert result.planner_summary is not None
+        assert result.planner_summary.selected_family == "sculpt_region"
+        assert result.planner_summary.required_support_tools == []
+        assert result.planner_detail is not None
+        assert result.planner_detail.route.selected_family == "sculpt_region"
+        assert result.planner_detail.handoff.state == "ready"
+        assert result.planner_detail.detail_trimmed is False
+        assert "Heart surface smoothing" in (result.planner_detail.handoff.local_reason or "")
     except RuntimeError as e:
         _skip_if_blender_unavailable(e)

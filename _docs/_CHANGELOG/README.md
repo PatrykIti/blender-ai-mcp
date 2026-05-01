@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [284](./284-2026-05-01-task-145-validation-and-regression-hardening.md) | 2026-05-01 | **TASK-145 validation and regression hardening** | - |
 | [283](./283-2026-05-01-stage-checkpoint-planner-view-diagnostics-wiring.md) | 2026-05-01 | **Stage checkpoint planner view-diagnostics wiring** | - |
 | [282](./282-2026-05-01-task-157-gate-checkpoint-summaries.md) | 2026-05-01 | **TASK-157 gate checkpoint summaries** | - |
 | [281](./281-2026-05-01-task-157-gate-driven-visibility-search.md) | 2026-05-01 | **TASK-157 gate-driven visibility and search** | - |

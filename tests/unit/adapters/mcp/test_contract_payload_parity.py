@@ -26,7 +26,7 @@ from server.adapters.mcp.contracts.workflow_catalog import WorkflowCatalogRespon
                 "target_objects": ["Heart"],
                 "checkpoint_id": "stage_1",
                 "checkpoint_label": "stage",
-                "preset_profile": "compact",
+                "preset_profile": "rich",
                 "preset_names": [],
                 "capture_count": 0,
                 "captures": [],
@@ -122,6 +122,100 @@ from server.adapters.mcp.contracts.workflow_catalog import WorkflowCatalogRespon
                         }
                     ],
                 },
+                "planner_detail": {
+                    "summary": {
+                        "selected_family": "inspect_only",
+                        "target_scope": {
+                            "scope_kind": "single_object",
+                            "target_object": "Heart",
+                            "target_objects": ["Heart"],
+                        },
+                        "rationale": "View diagnostics required before sculpt-region handoff.",
+                        "provenance": [
+                            {
+                                "source_id": "vision_candidates",
+                                "source_class": "vision",
+                                "summary": "Vision mismatch text is advisory and can prioritize local-form attention.",
+                                "candidate_ids": ["vision:heart_surface"],
+                            }
+                        ],
+                        "blockers": [
+                            {
+                                "blocker_id": "view_diagnostics_required",
+                                "category": "view",
+                                "severity": "blocking",
+                                "reason": "Run scene_view_diagnostics before sculpting.",
+                                "recommended_tool": "scene_view_diagnostics",
+                                "arguments_hint": {"target_object": "Heart"},
+                            }
+                        ],
+                        "detail_available": True,
+                        "required_support_tools": [
+                            {
+                                "tool_name": "scene_view_diagnostics",
+                                "reason": "Run scene_view_diagnostics before sculpting.",
+                                "priority": "high",
+                                "arguments_hint": {"target_object": "Heart"},
+                            }
+                        ],
+                    },
+                    "route": {
+                        "domain_classification": "organic_form",
+                        "selected_family": "inspect_only",
+                        "reason": "View diagnostics required before sculpt-region handoff.",
+                        "source_signals": ["scope", "vision", "view"],
+                        "candidate_ids": ["vision:heart_surface"],
+                        "target_scope": {
+                            "scope_kind": "single_object",
+                            "target_object": "Heart",
+                            "target_objects": ["Heart"],
+                        },
+                        "blockers": [
+                            {
+                                "blocker_id": "view_diagnostics_required",
+                                "category": "view",
+                                "severity": "blocking",
+                                "reason": "Run scene_view_diagnostics before sculpting.",
+                                "recommended_tool": "scene_view_diagnostics",
+                                "arguments_hint": {"target_object": "Heart"},
+                            }
+                        ],
+                        "detail_available": True,
+                    },
+                    "handoff": {
+                        "selected_family": "inspect_only",
+                        "state": "blocked",
+                        "message": "Sculpt-region handoff is blocked by view diagnostics.",
+                        "target_object": "Heart",
+                        "target_scope": {
+                            "scope_kind": "single_object",
+                            "target_object": "Heart",
+                            "target_objects": ["Heart"],
+                        },
+                        "blockers": [
+                            {
+                                "blocker_id": "view_diagnostics_required",
+                                "category": "view",
+                                "severity": "blocking",
+                                "reason": "Run scene_view_diagnostics before sculpting.",
+                                "recommended_tool": "scene_view_diagnostics",
+                                "arguments_hint": {"target_object": "Heart"},
+                            }
+                        ],
+                        "eligible_tool_names": [
+                            "sculpt_deform_region",
+                            "sculpt_smooth_region",
+                            "sculpt_inflate_region",
+                            "sculpt_pinch_region",
+                            "sculpt_crease_region",
+                        ],
+                        "visibility_unlock_recommended": False,
+                        "recommended_tools": [],
+                    },
+                    "candidate_ids": ["vision:heart_surface"],
+                    "notes": [],
+                    "detail_trimmed": False,
+                },
             },
             "planner_summary.required_support_tools.0.tool_name",
             "scene_view_diagnostics",
@@ -150,7 +244,7 @@ from server.adapters.mcp.contracts.workflow_catalog import WorkflowCatalogRespon
                     "target_objects": ["Heart"],
                     "checkpoint_id": "stage_1",
                     "checkpoint_label": "stage",
-                    "preset_profile": "compact",
+                    "preset_profile": "rich",
                     "preset_names": [],
                     "capture_count": 0,
                     "captures": [],
@@ -162,14 +256,62 @@ from server.adapters.mcp.contracts.workflow_catalog import WorkflowCatalogRespon
                         "rationale": "View diagnostics required before sculpt-region handoff.",
                         "detail_available": True,
                     },
+                    "planner_detail": {
+                        "summary": {
+                            "selected_family": "inspect_only",
+                            "rationale": "View diagnostics required before sculpt-region handoff.",
+                            "detail_available": True,
+                        },
+                        "route": {
+                            "domain_classification": "organic_form",
+                            "selected_family": "inspect_only",
+                            "reason": "View diagnostics required before sculpt-region handoff.",
+                            "source_signals": ["scope", "vision", "view"],
+                            "candidate_ids": ["vision:heart_surface"],
+                            "detail_available": True,
+                        },
+                        "handoff": {
+                            "selected_family": "inspect_only",
+                            "state": "blocked",
+                            "message": "Sculpt-region handoff is blocked by view diagnostics.",
+                            "recommended_tools": [],
+                        },
+                        "candidate_ids": ["vision:heart_surface"],
+                        "notes": [],
+                        "detail_trimmed": False,
+                    },
                 },
                 "planner_summary": {
                     "selected_family": "inspect_only",
                     "rationale": "View diagnostics required before sculpt-region handoff.",
                     "detail_available": True,
                 },
+                "planner_detail": {
+                    "summary": {
+                        "selected_family": "inspect_only",
+                        "rationale": "View diagnostics required before sculpt-region handoff.",
+                        "detail_available": True,
+                    },
+                    "route": {
+                        "domain_classification": "organic_form",
+                        "selected_family": "inspect_only",
+                        "reason": "View diagnostics required before sculpt-region handoff.",
+                        "source_signals": ["scope", "vision", "view"],
+                        "candidate_ids": ["vision:heart_surface"],
+                        "detail_available": True,
+                    },
+                    "handoff": {
+                        "selected_family": "inspect_only",
+                        "state": "blocked",
+                        "message": "Sculpt-region handoff is blocked by view diagnostics.",
+                        "recommended_tools": [],
+                    },
+                    "candidate_ids": ["vision:heart_surface"],
+                    "notes": [],
+                    "detail_trimmed": False,
+                },
             },
-            "planner_summary.selected_family",
+            "planner_detail.route.selected_family",
             "inspect_only",
         ),
         (

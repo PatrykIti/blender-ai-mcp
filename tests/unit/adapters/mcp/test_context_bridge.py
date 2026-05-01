@@ -743,15 +743,22 @@ def test_route_tool_call_report_fail_closes_unmapped_guided_mutating_tools(monke
         ),
     )
 
+    executed = {"called": False}
+
+    def _should_not_run():
+        executed["called"] = True
+        return "should not run"
+
     report = route_tool_call_report(
         tool_name="material_assign",
         params={"object_name": "Squirrel_Body", "material_name": "BrownFur"},
-        direct_executor=lambda: "should not run",
+        direct_executor=_should_not_run,
     )
 
     assert report.router_disposition == "failed_closed_error"
     assert "unmapped mutating tool 'material_assign'" in str(report.error)
     assert report.context.guided_tool_family is None
+    assert executed["called"] is False
 
 
 def test_route_tool_call_report_fail_closes_unmapped_guided_sculpt_mutators(monkeypatch):
@@ -783,15 +790,22 @@ def test_route_tool_call_report_fail_closes_unmapped_guided_sculpt_mutators(monk
         ),
     )
 
+    executed = {"called": False}
+
+    def _should_not_run():
+        executed["called"] = True
+        return "should not run"
+
     report = route_tool_call_report(
         tool_name="sculpt_deform_region",
         params={"object_name": "Heart", "center": [0.0, 0.0, 0.0], "delta": [0.0, 0.0, 0.1]},
-        direct_executor=lambda: "should not run",
+        direct_executor=_should_not_run,
     )
 
     assert report.router_disposition == "failed_closed_error"
     assert "unmapped mutating tool 'sculpt_deform_region'" in str(report.error)
     assert report.context.guided_tool_family is None
+    assert executed["called"] is False
 
 
 def test_route_tool_call_report_validates_every_corrected_step_before_dispatch(monkeypatch):

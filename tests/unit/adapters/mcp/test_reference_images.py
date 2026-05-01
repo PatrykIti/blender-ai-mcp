@@ -195,15 +195,96 @@ def test_iterate_stage_response_carries_silhouette_analysis_and_action_hints():
         {
             "action": "compare_stage_checkpoint",
             "goal": "low poly creature",
+            "target_object": "Creature",
+            "target_objects": ["Creature"],
             "checkpoint_id": "checkpoint_iterate",
             "checkpoint_label": "stage_iterate",
             "preset_profile": "compact",
             "preset_names": ["focus"],
-            "capture_count": 0,
-            "captures": [],
+            "capture_count": 1,
+            "captures": [
+                {
+                    "label": "focus_after",
+                    "image_path": "/tmp/focus_after.png",
+                    "host_visible_path": "/tmp/focus_after.png",
+                    "preset_name": "focus",
+                    "media_type": "image/png",
+                    "view_kind": "focus",
+                }
+            ],
             "reference_count": 1,
             "reference_ids": ["ref_1"],
             "reference_labels": ["front_ref"],
+            "truth_bundle": {
+                "scope": {
+                    "scope_kind": "single_object",
+                    "primary_target": "Creature",
+                    "object_names": ["Creature"],
+                    "object_count": 1,
+                },
+                "summary": {
+                    "pairing_strategy": "none",
+                    "pair_count": 1,
+                    "evaluated_pairs": 1,
+                    "contact_failures": 1,
+                },
+                "checks": [{"from_object": "Creature", "to_object": "Ground"}],
+            },
+            "truth_followup": {
+                "scope": {
+                    "scope_kind": "single_object",
+                    "primary_target": "Creature",
+                    "object_names": ["Creature"],
+                    "object_count": 1,
+                },
+                "continue_recommended": True,
+                "message": "truth",
+                "focus_pairs": ["Creature -> Ground"],
+                "items": [
+                    {
+                        "kind": "gap",
+                        "summary": "Creature -> Ground still has measurable separation.",
+                        "priority": "normal",
+                        "from_object": "Creature",
+                        "to_object": "Ground",
+                        "tool_name": "scene_measure_gap",
+                    }
+                ],
+            },
+            "correction_candidates": [
+                {
+                    "candidate_id": "pair:creature_ground",
+                    "summary": "Creature -> Ground still has measurable separation.",
+                    "priority_rank": 1,
+                    "priority": "high",
+                    "candidate_kind": "truth_only",
+                    "target_object": "Creature",
+                    "target_objects": ["Creature"],
+                    "focus_pairs": ["Creature -> Ground"],
+                    "source_signals": ["truth"],
+                    "truth_evidence": {
+                        "focus_pairs": ["Creature -> Ground"],
+                        "item_kinds": ["gap"],
+                        "items": [
+                            {
+                                "kind": "gap",
+                                "summary": "Creature -> Ground still has measurable separation.",
+                                "priority": "normal",
+                                "from_object": "Creature",
+                                "to_object": "Ground",
+                                "tool_name": "scene_measure_gap",
+                            }
+                        ],
+                    },
+                }
+            ],
+            "part_segmentation": {
+                "status": "available",
+                "provider_name": "synthetic",
+                "advisory_only": True,
+                "parts": [{"part_label": "ear", "confidence": 0.9}],
+                "notes": ["synthetic"],
+            },
             "silhouette_analysis": {
                 "status": "available",
                 "reference_label": "front_ref",
@@ -264,7 +345,16 @@ def test_iterate_stage_response_carries_silhouette_analysis_and_action_hints():
     assert result.silhouette_analysis.status == "available"
     assert result.action_hints
     assert result.action_hints[0].hint_type == "inspect_before_edit"
+    assert result.truth_bundle is not None
+    assert result.truth_followup is not None
+    assert result.correction_candidates
     assert result.debug_payload_omitted is True
+    assert result.compare_result.truth_bundle is None
+    assert result.compare_result.truth_followup is None
+    assert result.compare_result.correction_candidates == []
+    assert result.compare_result.captures == []
+    assert result.compare_result.part_segmentation is not None
+    assert result.compare_result.part_segmentation.status == "disabled"
     assert result.compare_result.silhouette_analysis is None
     assert result.compare_result.action_hints == []
 
@@ -3273,6 +3363,162 @@ def test_reference_compare_stage_checkpoint_preserves_required_creature_seams_un
     assert result.budget_control.detail_trimmed is True
     assert result.truth_bundle is not None
     assert result.truth_bundle.summary.pair_count == 4
+
+
+def test_reference_compare_stage_checkpoint_marks_rich_planner_detail_as_trimmed_when_budget_limited(
+    tmp_path, monkeypatch
+):
+    image_front = tmp_path / "front.png"
+    image_front.write_bytes(b"front")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly squirrel", {"status": "no_match"})
+    asyncio.run(reference_images(ctx, action="attach", source_path=str(image_front), label="front_ref"))
+
+    class CollectionHandler:
+        def list_objects(self, collection_name: str, recursive: bool = True, include_hidden: bool = False):
+            assert collection_name == "Squirrel"
+            return {
+                "objects": [
+                    {"name": "Body"},
+                    {"name": "Head"},
+                    {"name": "Tail"},
+                    {"name": "BackPawLeft"},
+                    {"name": "BackPawRight"},
+                ]
+            }
+
+    class SceneHandler:
+        def get_bounding_box(self, object_name: str, world_space: bool = True):
+            dimensions = {
+                "Body": [1.2, 0.9, 1.0],
+                "Head": [0.7, 0.7, 0.8],
+                "Tail": [0.5, 0.3, 1.1],
+                "BackPawLeft": [0.2, 0.2, 0.25],
+                "BackPawRight": [0.2, 0.2, 0.25],
+            }[object_name]
+            return {"object_name": object_name, "dimensions": dimensions}
+
+        def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            relation_map = {
+                ("Head", "Body"): ("contact", 0.0),
+                ("Tail", "Body"): ("overlapping", 0.0),
+                ("BackPawLeft", "Body"): ("separated", 0.18),
+                ("BackPawRight", "Body"): ("separated", 0.19),
+            }
+            relation, gap = relation_map[(from_object, to_object)]
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "relation": relation,
+                "gap": gap,
+                "axis_gap": {"x": gap, "y": 0.0, "z": 0.0},
+            }
+
+        def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
+            misaligned = (from_object, to_object) in {
+                ("BackPawLeft", "Body"),
+                ("BackPawRight", "Body"),
+            }
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "is_aligned": not misaligned,
+                "axes": axes or ["X", "Y", "Z"],
+            }
+
+        def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            overlaps = (from_object, to_object) == ("Tail", "Body")
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "overlaps": overlaps,
+                "relation": "overlap" if overlaps else "disjoint",
+            }
+
+        def assert_contact(
+            self, from_object: str, to_object: str, max_gap: float = 0.0001, allow_overlap: bool = False
+        ):
+            passed = (from_object, to_object) == ("Head", "Body")
+            actual_relation = (
+                "contact"
+                if passed
+                else ("overlapping" if (from_object, to_object) == ("Tail", "Body") else "separated")
+            )
+            actual_gap = 0.0 if actual_relation in {"contact", "overlapping"} else 0.18
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": passed,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": actual_gap, "relation": actual_relation},
+            }
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="The body still needs contact fixes.",
+                visible_changes=["Rear paws are visible."],
+                correction_focus=["Connect rear paws to body"],
+            ),
+        )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_collection_handler", lambda: CollectionHandler())
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.get_vision_backend_resolver",
+        lambda: SimpleNamespace(
+            runtime_config=SimpleNamespace(
+                max_tokens=200,
+                max_images=8,
+                active_model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+            )
+        ),
+    )
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="context_wide_after",
+                image_path=str(tmp_path / "context.jpg"),
+                host_visible_path=str(tmp_path / "context.jpg"),
+                preset_name="context_wide",
+                media_type="image/jpeg",
+                view_kind="wide",
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            collection_name="Squirrel",
+            checkpoint_label="stage_budgeted",
+            preset_profile="rich",
+        )
+    )
+
+    assert result.error is None
+    assert result.budget_control is not None
+    assert result.budget_control.trimming_applied is True
+    assert result.budget_control.scope_trimmed is False
+    assert result.budget_control.detail_trimmed is True
+    assert result.budget_control.trim_reason == "model_aware_budget_control"
+    assert result.captures
+    assert result.planner_detail is not None
+    assert result.planner_detail.detail_trimmed is True
+    assert any("trimmed staged compare evidence" in note for note in result.planner_detail.notes)
 
 
 def test_reference_compare_stage_checkpoint_reports_enabled_segmentation_sidecar_as_unavailable(tmp_path, monkeypatch):

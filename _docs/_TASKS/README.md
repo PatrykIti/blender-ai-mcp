@@ -88,7 +88,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
-| [TASK-145](./TASK-145_Spatial_Repair_Planner_And_Sculpt_Handoff_Context.md) | **Spatial Repair Planner and Sculpt Handoff Context** | 🔴 High | 2026-04-30 |
+| [TASK-145](./TASK-145_Spatial_Repair_Planner_And_Sculpt_Handoff_Context.md) | **Spatial Repair Planner and Sculpt Handoff Context** | 🔴 High | 2026-05-01 |
 | [TASK-156](./TASK-156_Guided_Pair_Role_Cardinality_And_Sibling_Part_Registration.md) | **Guided Pair Role Cardinality And Sibling Part Registration** | 🔴 High | 2026-04-14 |
 | [TASK-155](./TASK-155_Guided_Post_Run_Reliability_Followups.md) | **Guided Post-Run Reliability Follow-Ups** | 🔴 High | 2026-04-11 |
 | [TASK-130](./TASK-130_Default_Guided_Surface_Bootstrap_Consistency.md) | **Default Guided Bootstrap And Generic Governor Reliability** | 🔴 High | 2026-04-10 |

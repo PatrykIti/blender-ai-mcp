@@ -401,7 +401,8 @@ Completed the v1 planner/handoff delivery on top of the existing staged
 reference loop:
 
 - added compact `planner_summary` and rich-profile `planner_detail` contracts
-  derived from the same route/handoff policy result
+  derived from the same route/handoff policy result, with rich detail trim
+  state kept aligned with `budget_control`
 - extended `refinement_route` and `refinement_handoff` with target scope,
   provenance, typed blockers, handoff state, and bounded sculpt eligibility
 - kept sculpt recommendation-only on default `llm-guided` and fail-closed
@@ -409,8 +410,10 @@ reference loop:
 - updated MCP, prompt, vision, router, tool-inventory, changelog, and task-board
   docs for the planner-first read order
 - validation recorded for the unit contract/reference/guided execution lane,
-  targeted lint, and targeted mypy; Blender-backed E2E was invoked but skipped
-  because local Blender / Blender RPC was not available
+  the broader TASK-145 unit regression pack, targeted lint, targeted mypy, and
+  host-side Blender-backed/stdio E2E lanes covering truth-driven assembly,
+  sculpt-ready local-form handoff, guided surface parity, macro attachment
+  proofs, and deterministic sculpt tools
 
 ## Status / Board Update
 

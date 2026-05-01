@@ -128,8 +128,8 @@ Source-of-truth pointers:
 
 | Type | Count | Execution Time |
 |------|-------|----------------|
-| Unit Tests | 3114 collected | collect-only ~11 seconds; full runtime depends on selected lanes |
-| E2E Tests | 428 collected | collect-only ~17 seconds; Blender-backed runtime depends on active RPC/Blender state |
+| Unit Tests | 3158 collected | collect-only ~9 seconds; full runtime depends on selected lanes |
+| E2E Tests | 429 collected | collect-only ~15 seconds; Blender-backed runtime depends on active RPC/Blender state |
 
 Current repo-wide unit coverage (`server + blender_addon + scripts`):
 
@@ -377,12 +377,16 @@ Hybrid-loop assembled-creature regression pack:
 - `_docs/_VISION/CROSS_DOMAIN_REFINEMENT_ROUTING_EVAL.md`
 - combines:
   - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
+  - `tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py`
   - `tests/e2e/vision/test_reference_guided_creature_comparison.py`
+  - `tests/e2e/tools/sculpt/test_sculpt_tools.py`
 - review staged hybrid-loop output in this order:
   - `loop_disposition`
-  - `correction_candidates`
+  - `planner_summary`
+  - `planner_detail` on rich profile only
   - `refinement_route`
   - `refinement_handoff`
+  - `correction_candidates`
   - `truth_followup`
   - `action_hints`
   - `correction_focus`

@@ -1402,7 +1402,7 @@ def _build_repair_planner_detail(
 ) -> ReferenceRepairPlannerDetailContract:
     notes: list[str] = []
     if detail_trimmed:
-        notes.append("Planner detail was trimmed by the compact stage profile.")
+        notes.append("Planner detail reflects trimmed staged compare evidence after budget control was applied.")
     if handoff.selected_family == "sculpt_region" and handoff.visibility_unlock_recommended is False:
         notes.append("Sculpt handoff is recommendation-only and does not unlock guided sculpt visibility by itself.")
     return ReferenceRepairPlannerDetailContract(
@@ -3660,13 +3660,13 @@ async def _run_stage_checkpoint_compare(
         max_tokens=runtime_max_tokens,
         model_name=runtime_model_name,
     )
-    correction_candidates, detail_trimmed = _trim_correction_candidates(
+    correction_candidates, candidate_detail_trimmed = _trim_correction_candidates(
         full_correction_candidates,
         candidate_budget=candidate_budget,
     )
     compact_capture_trimmed = preset_profile == "compact" and bool(captures)
     planner_detail_trimmed = preset_profile == "compact"
-    compact_detail_trimmed = detail_trimmed or compact_capture_trimmed or planner_detail_trimmed
+    compact_detail_trimmed = candidate_detail_trimmed or compact_capture_trimmed or planner_detail_trimmed
     budget_control = ReferenceHybridBudgetControlContract(
         model_name=runtime_model_name,
         max_input_chars=VISION_ASSIST_POLICY.max_input_chars,
@@ -3681,7 +3681,7 @@ async def _run_stage_checkpoint_compare(
         detail_trimmed=compact_detail_trimmed,
         trim_reason=(
             "model_aware_budget_control"
-            if scope_trimmed or detail_trimmed
+            if scope_trimmed or candidate_detail_trimmed
             else "compact_checkpoint_payload"
             if compact_capture_trimmed or planner_detail_trimmed
             else None
@@ -3729,7 +3729,7 @@ async def _run_stage_checkpoint_compare(
             summary=planner_summary,
             route=refinement_route,
             handoff=refinement_handoff,
-            detail_trimmed=False,
+            detail_trimmed=scope_trimmed or candidate_detail_trimmed,
         )
         if preset_profile == "rich"
         else None
