@@ -401,6 +401,8 @@ Focused unit coverage now also protects:
 - gate-driven guided visibility/search coverage on:
   - `tests/unit/adapters/mcp/test_visibility_policy.py`
   - `tests/unit/adapters/mcp/test_search_surface.py`
+- reference checkpoint gate summary projection coverage on:
+  - `tests/unit/adapters/mcp/test_reference_images.py`
 - compact view-space contracts, search/discovery shaping, and reference-loop
   adoption hints on:
   - `tests/unit/tools/scene/test_scene_contracts.py`

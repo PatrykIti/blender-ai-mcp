@@ -258,6 +258,9 @@ Goal-derived quality gates follow the same split:
 - gate blockers shape visibility/search through the existing FastMCP guided
   surface only; they do not create a second catalog authority and they do not
   make semantic search responsible for pass/fail truth
+- reference stage checkpoint responses may project active gate state into
+  top-level blocker/action/tool-hint fields, but those fields remain read-only
+  summaries of server-owned verifier state rather than a new policy authority
 - client-supplied completion claims and hidden tool names are policy warnings,
   not trusted truth
 

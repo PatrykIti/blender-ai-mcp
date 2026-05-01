@@ -309,6 +309,10 @@ contract.
   `active_gate_plan.completion_blockers`, gate `status_reason`, and
   `recommended_bounded_tools` before deciding whether to repair a seam,
   continue the current stage, or attempt final completion
+- after staged reference compare/iterate, prefer the top-level
+  `gate_statuses`, `completion_blockers`, `next_gate_actions`, and
+  `recommended_bounded_tools` fields for the immediate gate repair path; they
+  are derived from the same `active_gate_plan`
 - when a gate blocker is active, use `search_tools(...)` for bounded
   verification/repair tools; do not use `router_set_goal(...)` as the first
   recovery path for failed or stale gate evidence

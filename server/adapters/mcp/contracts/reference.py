@@ -21,7 +21,7 @@ from server.adapters.mcp.sampling.result_types import VisionAssistantContract
 
 from .base import MCPContract
 from .guided_flow import GuidedFlowStateContract
-from .quality_gates import GatePlanContract
+from .quality_gates import GateCompletionBlockerContract, GatePlanContract, NormalizedQualityGateContract
 
 ReferencePlannerFamilyLiteral = Literal["macro", "modeling_mesh", "sculpt_region", "inspect_only"]
 ReferencePlannerSourceLiteral = Literal[
@@ -373,6 +373,10 @@ class ReferenceCompareStageCheckpointResponseContract(MCPContract):
     goal: str | None = None
     guided_flow_state: GuidedFlowStateContract | None = None
     active_gate_plan: GatePlanContract | None = None
+    gate_statuses: list[NormalizedQualityGateContract] = []
+    completion_blockers: list[GateCompletionBlockerContract] = []
+    next_gate_actions: list[str] = []
+    recommended_bounded_tools: list[str] = []
     guided_reference_readiness: GuidedReferenceReadinessContract | None = None
     target_object: str | None = None
     target_objects: list[str] = []
@@ -414,6 +418,10 @@ class ReferenceIterateStageCheckpointResponseContract(MCPContract):
     goal: str | None = None
     guided_flow_state: GuidedFlowStateContract | None = None
     active_gate_plan: GatePlanContract | None = None
+    gate_statuses: list[NormalizedQualityGateContract] = []
+    completion_blockers: list[GateCompletionBlockerContract] = []
+    next_gate_actions: list[str] = []
+    recommended_bounded_tools: list[str] = []
     guided_reference_readiness: GuidedReferenceReadinessContract | None = None
     target_object: str | None = None
     target_objects: list[str] = []

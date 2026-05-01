@@ -22,6 +22,7 @@ from server.adapters.mcp.areas.reference import (
     _iterate_stage_response,
     _model_budget_bias,
     _select_refinement_route,
+    _stage_compare_response,
     _trim_truth_bundle_to_budget,
     reference_compare_checkpoint,
     reference_compare_current_view,
@@ -266,6 +267,89 @@ def test_iterate_stage_response_carries_silhouette_analysis_and_action_hints():
     assert result.debug_payload_omitted is True
     assert result.compare_result.silhouette_analysis is None
     assert result.compare_result.action_hints == []
+
+
+def test_stage_checkpoint_responses_project_gate_plan_summary_fields():
+    gate_plan = {
+        "plan_id": "creature_quality_gate_plan",
+        "domain_profile": "creature",
+        "required_gate_count": 1,
+        "optional_gate_count": 0,
+        "gates": [
+            {
+                "gate_id": "tail_body_seam",
+                "gate_type": "attachment_seam",
+                "label": "tail seated on body",
+                "target_kind": "object_pair",
+                "target_objects": ["Tail", "Body"],
+                "required": True,
+                "priority": "high",
+                "status": "failed",
+                "status_reason": "relation_floating_gap",
+                "verification_strategy": "spatial_contact",
+                "allowed_correction_families": ["spatial_context", "attachment_alignment"],
+                "recommended_bounded_tools": ["scene_relation_graph", "macro_attach_part_to_surface"],
+                "proposal_sources": ["llm_goal"],
+                "evidence_requirements": [{"evidence_kind": "spatial_relation", "required": True}],
+                "evidence_refs": [],
+            }
+        ],
+        "completion_blockers": [
+            {
+                "gate_id": "tail_body_seam",
+                "gate_type": "attachment_seam",
+                "label": "tail seated on body",
+                "status": "failed",
+                "reason_code": "relation_floating_gap",
+                "target_kind": "object_pair",
+                "target_objects": ["Tail", "Body"],
+                "required_evidence_kinds": ["spatial_relation"],
+                "allowed_correction_families": ["spatial_context", "attachment_alignment"],
+                "recommended_bounded_tools": ["scene_relation_graph", "macro_attach_part_to_surface"],
+                "message": "Tail seam is floating.",
+            }
+        ],
+    }
+
+    compare = _stage_compare_response(
+        goal="low poly creature",
+        active_gate_plan=gate_plan,
+        checkpoint_id="checkpoint_gate",
+        checkpoint_label="gate",
+        target_object="Creature",
+        target_objects=["Creature"],
+        collection_name=None,
+        target_view="front",
+        preset_profile="compact",
+        preset_names=[],
+        reference_ids=[],
+        reference_labels=[],
+    )
+    iterate = _iterate_stage_response(
+        goal="low poly creature",
+        target_object="Creature",
+        target_objects=["Creature"],
+        collection_name=None,
+        target_view="front",
+        checkpoint_id="checkpoint_gate_iterate",
+        checkpoint_label="gate_iterate",
+        iteration_index=2,
+        loop_disposition="inspect_validate",
+        continue_recommended=False,
+        prior_checkpoint_id="checkpoint_gate",
+        prior_correction_focus=[],
+        correction_focus=[],
+        repeated_correction_focus=[],
+        stagnation_count=0,
+        compare_result=compare,
+    )
+
+    assert compare.gate_statuses[0].gate_id == "tail_body_seam"
+    assert compare.completion_blockers[0].reason_code == "relation_floating_gap"
+    assert compare.next_gate_actions == ["resolve_quality_gate_blockers", "verify_or_repair_spatial_gate"]
+    assert compare.recommended_bounded_tools == ["scene_relation_graph", "macro_attach_part_to_surface"]
+    assert iterate.gate_statuses[0].gate_id == "tail_body_seam"
+    assert iterate.completion_blockers[0].gate_id == "tail_body_seam"
 
 
 def test_truth_followup_emits_cleanup_macro_candidate_for_overlap_pairs():

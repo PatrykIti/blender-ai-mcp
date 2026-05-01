@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [282](./282-2026-05-01-task-157-gate-checkpoint-summaries.md) | 2026-05-01 | **TASK-157 gate checkpoint summaries** | - |
 | [281](./281-2026-05-01-task-157-gate-driven-visibility-search.md) | 2026-05-01 | **TASK-157 gate-driven visibility and search** | - |
 | [280](./280-2026-05-01-task-157-deterministic-gate-verifier.md) | 2026-05-01 | **TASK-157 deterministic quality-gate verifier** | - |
 | [279](./279-2026-05-01-task-157-quality-gate-contract-intake.md) | 2026-05-01 | **TASK-157 quality-gate contract and intake** | - |

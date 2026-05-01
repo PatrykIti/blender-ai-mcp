@@ -1,6 +1,6 @@
 # TASK-157-03: Guided Flow Gate Runtime Integration
 
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md)
 **Category:** Guided Runtime / Flow Integration
@@ -26,11 +26,28 @@ gate boundaries instead of after every single safe in-stage mutation.
 - [TASK-157-03-01](./TASK-157-03-01_Gate_Driven_Visibility_Search_And_Recovery_Policy.md)
   is complete: unresolved gates now shape existing guided visibility/search
   without a parallel catalog.
+- Reference stage compare/iterate checkpoint responses now expose top-level
+  `gate_statuses`, `completion_blockers`, `next_gate_actions`, and
+  `recommended_bounded_tools` derived from the active gate plan.
 
-Remaining work under this technical subtask is the broader checkpoint summary
-surface (`gate_statuses`, `next_gate_actions`, and explicit top-level
-completion blocker fields where needed) plus any final cadence polish not
-covered by the relation-graph verifier and search/visibility slice.
+Remaining cross-domain runtime proof is tracked by
+[TASK-157-04](./TASK-157-04_Cross_Domain_E2E_Gate_Regression_Harness.md)
+as the dedicated Blender-backed E2E harness rather than as open work under this
+subtask.
+
+## Completion Summary
+
+Completed on 2026-05-01.
+
+- Added session-persisted `active_gate_plan` state, relation-graph verifier
+  updates, evidence-backed stale marking, and required-gate blockers.
+- Integrated unresolved gate blockers with the existing guided visibility and
+  search recovery path without creating a parallel catalog.
+- Projected active gate state into strict staged reference checkpoint response
+  fields: `gate_statuses`, `completion_blockers`, `next_gate_actions`, and
+  `recommended_bounded_tools`.
+- Kept final cross-domain Blender regression coverage open as
+  [TASK-157-04](./TASK-157-04_Cross_Domain_E2E_Gate_Regression_Harness.md).
 
 ## Repository Touchpoints
 
@@ -231,13 +248,14 @@ def after_mutation(current, mutation):
 
 ## Changelog Impact
 
-- Add a `_docs/_CHANGELOG/*` entry when guided gate state, visibility shaping,
-  or completion-blocking behavior ships.
+- Recorded by changelog entries 280, 281, and 282 for verifier/runtime,
+  visibility/search, and checkpoint-summary slices.
 
 ## Validation Commands
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py -v`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py::test_stage_checkpoint_responses_project_gate_plan_summary_fields tests/unit/adapters/mcp/test_reference_images.py::test_iterate_stage_response_carries_silhouette_analysis_and_action_hints -v`
 - `python3 scripts/run_e2e_tests.py` for any implementation slice that changes
   Streamable HTTP/stdio guided state, Blender scene state, or final completion
   blocking.
@@ -245,6 +263,6 @@ def after_mutation(current, mutation):
 ## Acceptance Criteria
 
 - Gate state is visible in guided checkpoint payloads.
-- Required gate blockers drive next actions and visibility.
+- Required gate blockers drive next actions, visibility, and bounded search.
 - Scene mutations invalidate affected gate statuses.
 - Completion cannot bypass unresolved required gates.

@@ -366,6 +366,45 @@ def _compare_response(
     )
 
 
+def _gate_checkpoint_fields(active_gate_plan: dict[str, Any] | None) -> dict[str, Any]:
+    """Project active gate plan details into strict checkpoint response fields."""
+
+    if active_gate_plan is None:
+        return {
+            "gate_statuses": [],
+            "completion_blockers": [],
+            "next_gate_actions": [],
+            "recommended_bounded_tools": [],
+        }
+
+    gate_plan = GatePlanContract.model_validate(active_gate_plan)
+    recommended_tools: list[str] = []
+    seen_tools: set[str] = set()
+    for blocker in gate_plan.completion_blockers:
+        for tool_name in blocker.recommended_bounded_tools:
+            if tool_name in seen_tools:
+                continue
+            seen_tools.add(tool_name)
+            recommended_tools.append(tool_name)
+
+    next_actions: list[str] = []
+    if gate_plan.completion_blockers:
+        next_actions.append("resolve_quality_gate_blockers")
+        if any(blocker.status == "stale" for blocker in gate_plan.completion_blockers):
+            next_actions.append("refresh_gate_evidence")
+        if any(
+            blocker.gate_type in {"attachment_seam", "support_contact"} for blocker in gate_plan.completion_blockers
+        ):
+            next_actions.append("verify_or_repair_spatial_gate")
+
+    return {
+        "gate_statuses": gate_plan.gates,
+        "completion_blockers": gate_plan.completion_blockers,
+        "next_gate_actions": next_actions,
+        "recommended_bounded_tools": recommended_tools,
+    }
+
+
 def _stage_compare_response(
     *,
     session_id: str | None = None,
@@ -404,6 +443,7 @@ def _stage_compare_response(
     error: str | None = None,
 ) -> ReferenceCompareStageCheckpointResponseContract:
     emitted_captures = list(captures) if include_captures else []
+    gate_fields = _gate_checkpoint_fields(active_gate_plan)
     return ReferenceCompareStageCheckpointResponseContract(
         action="compare_stage_checkpoint",
         session_id=session_id,
@@ -413,6 +453,10 @@ def _stage_compare_response(
             GuidedFlowStateContract.model_validate(guided_flow_state) if guided_flow_state is not None else None
         ),
         active_gate_plan=GatePlanContract.model_validate(active_gate_plan) if active_gate_plan is not None else None,
+        gate_statuses=gate_fields["gate_statuses"],
+        completion_blockers=gate_fields["completion_blockers"],
+        next_gate_actions=gate_fields["next_gate_actions"],
+        recommended_bounded_tools=gate_fields["recommended_bounded_tools"],
         guided_reference_readiness=guided_reference_readiness,
         target_object=target_object,
         target_objects=target_objects,
@@ -485,6 +529,10 @@ def _iterate_stage_response(
 ) -> ReferenceIterateStageCheckpointResponseContract:
     compact_compare_result = _compact_compare_result_for_iterate(compare_result)
     debug_payload_omitted = compact_compare_result is not compare_result
+    resolved_gate_plan = active_gate_plan
+    if resolved_gate_plan is None and compare_result.active_gate_plan is not None:
+        resolved_gate_plan = compare_result.active_gate_plan.model_dump(mode="json")
+    gate_fields = _gate_checkpoint_fields(resolved_gate_plan)
     return ReferenceIterateStageCheckpointResponseContract(
         action="iterate_stage_checkpoint",
         session_id=session_id,
@@ -493,7 +541,13 @@ def _iterate_stage_response(
         guided_flow_state=(
             GuidedFlowStateContract.model_validate(guided_flow_state) if guided_flow_state is not None else None
         ),
-        active_gate_plan=GatePlanContract.model_validate(active_gate_plan) if active_gate_plan is not None else None,
+        active_gate_plan=GatePlanContract.model_validate(resolved_gate_plan)
+        if resolved_gate_plan is not None
+        else None,
+        gate_statuses=gate_fields["gate_statuses"],
+        completion_blockers=gate_fields["completion_blockers"],
+        next_gate_actions=gate_fields["next_gate_actions"],
+        recommended_bounded_tools=gate_fields["recommended_bounded_tools"],
         guided_reference_readiness=guided_reference_readiness or compare_result.guided_reference_readiness,
         target_object=target_object,
         target_objects=target_objects,

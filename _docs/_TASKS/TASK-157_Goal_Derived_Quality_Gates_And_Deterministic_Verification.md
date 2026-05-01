@@ -157,7 +157,7 @@ same bounded evidence/proposal records through the vision/perception layer.
 | 2 | [TASK-157-01-01](./TASK-157-01-01_LLM_Proposed_Gate_Intake_And_Policy_Bounds.md) | Implement the first narrow intake contract for model-proposed gates without trusting model completion claims |
 | 3 | [TASK-157-02](./TASK-157-02_Deterministic_Gate_Verifier_And_Status_Model.md) | ✅ Done - build the verifier/status model that binds gates to spatial, assertion, object, mesh, and bounded perception-support evidence |
 | 4 | [TASK-157-02-01](./TASK-157-02-01_Attachment_Support_And_Contact_Gate_Verifier.md) | ✅ Done - ship the first seam/contact verifier for `attachment_seam` and `support_contact` gates |
-| 5 | [TASK-157-03](./TASK-157-03_Guided_Flow_Gate_Runtime_Integration.md) | 🚧 In Progress - integrate gate state into guided flow, visibility, search, checkpoints, and completion blocking |
+| 5 | [TASK-157-03](./TASK-157-03_Guided_Flow_Gate_Runtime_Integration.md) | ✅ Done - integrate gate state into guided flow, visibility, search, checkpoints, and completion blocking |
 | 6 | [TASK-157-03-01](./TASK-157-03-01_Gate_Driven_Visibility_Search_And_Recovery_Policy.md) | ✅ Done - make unresolved gates open the right bounded tool families without broad catalog exposure |
 | 7 | [TASK-157-04](./TASK-157-04_Cross_Domain_E2E_Gate_Regression_Harness.md) | Add cross-domain E2E/regression coverage for creature and building-style gate behavior |
 
@@ -262,13 +262,15 @@ return maybe_advance_or_complete()
 
 ## Status / Board Update
 
-`TASK-157` is the single promoted In Progress board row. `TASK-157-01` and
-`TASK-157-01-01` are complete as the first contract/intake implementation
-slice. `TASK-157-02`, `TASK-157-02-01`, `TASK-157-03`,
-`TASK-157-03-01`, and `TASK-157-04` remain open child files under this
-umbrella and are intentionally not separate board rows. Changelog 277 records
-the docs refresh only; changelog 279 records the first shipped gate contract
-and intake slice.
+`TASK-157` is the single promoted In Progress board row. `TASK-157-01`,
+`TASK-157-01-01`, `TASK-157-02`, `TASK-157-02-01`, `TASK-157-03`, and
+`TASK-157-03-01` are complete implementation slices for contract intake,
+deterministic verifier state, guided visibility/search, and checkpoint gate
+summaries. `TASK-157-04` remains the open child file for cross-domain
+Blender-backed E2E proof and is intentionally not a separate board row.
+Changelog 277 records the docs refresh; changelog 279 records the first
+gate contract/intake slice; changelogs 280-282 record the runtime verifier,
+visibility/search, and checkpoint-summary slices.
 
 ## Changelog Impact
 

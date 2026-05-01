@@ -618,6 +618,10 @@ hidden ordering assumptions.
   `reference_understanding`, silhouette, segmentation, classification, and VLM
   checkpoint sources may propose or support gates, but scene/spatial/mesh and
   assertion evidence remain the truth authority for pass/fail status.
+- staged reference compare/iterate payloads also project the active gate plan
+  into top-level `gate_statuses`, `completion_blockers`,
+  `next_gate_actions`, and `recommended_bounded_tools`, so clients do not need
+  to infer the immediate repair path from the nested plan shape.
 - `scene_relation_graph(...)` updates relation-backed quality gates with
   authoritative evidence refs, status reasons, completion blockers, and bounded
   repair-tool hints; later guided scene mutations mark those verifier-backed

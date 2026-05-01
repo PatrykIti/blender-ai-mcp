@@ -116,6 +116,9 @@ Rules:
   `status_reason`, evidence refs, and `recommended_bounded_tools` as the
   authoritative repair/completion guide; do not reset the goal just because a
   seam gate is failed or stale
+- after staged compare/iterate, consume top-level `completion_blockers`,
+  `next_gate_actions`, and `recommended_bounded_tools` first; they are the
+  checkpoint-facing projection of the same active gate plan
 - for failed seam/support blockers, expect guided visibility/search to return
   bounded relation, measure/assert, and macro repair tools before refinement or
   finish tools

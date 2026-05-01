@@ -71,6 +71,12 @@ the same guided discovery path but biases recovery queries toward the bounded
 verification/repair tools named by the blocker instead of recommending a goal
 reset or broad catalog exploration.
 
+Reference stage compare/iterate responses expose both the nested
+`active_gate_plan` and top-level gate summary fields (`gate_statuses`,
+`completion_blockers`, `next_gate_actions`, `recommended_bounded_tools`) so
+clients can consume the active repair path without duplicating gate-plan
+projection logic.
+
 Task-capable heavy-operation rollout on task-enabled surfaces:
 
 - `scene_get_viewport`
@@ -259,8 +265,8 @@ None.
 | `reference_images` | `action`, `source_path`, `reference_id`, `label`, `notes`, `target_object`, `target_view` | Goal-scoped reference image lifecycle surface. `attach` can now also stage pending references before the goal exists or while the goal is blocked; staged refs stay separate from already-active goal refs until the next ready/no-match `router_set_goal(...)` adopts them automatically, and merged visible refs now stay consistent across list/remove/clear even when explicit pending refs for another goal still exist. | ✅ Done |
 | `reference_compare_checkpoint` | `checkpoint_path`, `checkpoint_label`, `target_object`, `target_view`, `goal_override`, `prompt_hint` | Compares one current checkpoint image against the active goal plus attached references and returns bounded vision interpretation for the next correction step. | ✅ Done |
 | `reference_compare_current_view` | `checkpoint_label`, `target_object`, `target_view`, `goal_override`, `prompt_hint`, viewport/camera args | Captures one current viewport/camera checkpoint using bounded `scene_get_viewport` semantics, then compares it against the active goal plus attached references. | ✅ Done |
-| `reference_compare_stage_checkpoint` | `target_object`, `target_objects`, `collection_name`, `checkpoint_label`, `target_view`, `goal_override`, `prompt_hint`, `preset_profile` | Captures one deterministic multi-view stage checkpoint for a target object, object set, collection, or full assembled scene using the `compact` or `rich` preset profile, then compares that checkpoint set against the active goal plus attached references and echoes any normalized `active_gate_plan`. | ✅ Done |
-| `reference_iterate_stage_checkpoint` | `target_object`, `target_objects`, `collection_name`, `checkpoint_label`, `target_view`, `goal_override`, `prompt_hint`, `preset_profile` | Runs one session-aware correction-loop step: capture a deterministic stage checkpoint for one object, many objects, a collection, or the full assembled scene, compare it to attached references, remember the previous correction focus, echo any normalized `active_gate_plan`, and return whether to continue building, inspect/validate, or stop. | ✅ Done |
+| `reference_compare_stage_checkpoint` | `target_object`, `target_objects`, `collection_name`, `checkpoint_label`, `target_view`, `goal_override`, `prompt_hint`, `preset_profile` | Captures one deterministic multi-view stage checkpoint for a target object, object set, collection, or full assembled scene using the `compact` or `rich` preset profile, then compares that checkpoint set against the active goal plus attached references and echoes any normalized `active_gate_plan` plus top-level gate statuses, blockers, next actions, and bounded tool hints. | ✅ Done |
+| `reference_iterate_stage_checkpoint` | `target_object`, `target_objects`, `collection_name`, `checkpoint_label`, `target_view`, `goal_override`, `prompt_hint`, `preset_profile` | Runs one session-aware correction-loop step: capture a deterministic stage checkpoint for one object, many objects, a collection, or the full assembled scene, compare it to attached references, remember the previous correction focus, echo any normalized `active_gate_plan` plus top-level gate summaries, and return whether to continue building, inspect/validate, or stop. | ✅ Done |
 | `scene_snapshot_state` | `include_mesh_stats`, `include_materials` | Captures a JSON snapshot of scene state with SHA256 hash. | ✅ Done |
 | `scene_compare_snapshot` | `baseline_snapshot`, `target_snapshot`, `ignore_minor_transforms` | Compares two snapshots and returns diff summary. | ✅ Done |
 | `scene_set_mode` | `mode` | Sets interaction mode (OBJECT, EDIT, SCULPT, etc.). | ✅ Done |
