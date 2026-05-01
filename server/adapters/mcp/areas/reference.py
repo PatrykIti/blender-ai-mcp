@@ -78,11 +78,13 @@ from server.adapters.mcp.session_state import get_session_value_async, set_sessi
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.vision import (
     CapturePresetProfile,
+    CapturePresetSpec,
     VisionImageInput,
     VisionRequest,
     build_reference_capture_images,
     build_vision_request_from_stage_captures,
     capture_stage_images,
+    resolve_capture_preset_specs,
     run_vision_assist,
     select_reference_records_for_target,
 )
@@ -1894,6 +1896,80 @@ def _select_silhouette_analysis_capture(
     return captures[0]
 
 
+def _resolve_stage_view_diagnostics_preset(
+    *,
+    captures: list[VisionCaptureImageContract] | tuple[VisionCaptureImageContract, ...],
+    preset_profile: CapturePresetProfile,
+    target_view: str | None,
+) -> tuple[VisionCaptureImageContract, CapturePresetSpec | None]:
+    capture = _select_silhouette_analysis_capture(captures=captures, target_view=target_view)
+    preset_name = str(capture.preset_name or "").strip()
+    if not preset_name:
+        return capture, None
+
+    for preset in resolve_capture_preset_specs(preset_profile):
+        if preset.name == preset_name:
+            return capture, preset
+    return capture, None
+
+
+def _build_stage_view_diagnostics_hints(
+    *,
+    scene_handler: Any,
+    captures: list[VisionCaptureImageContract] | tuple[VisionCaptureImageContract, ...],
+    preset_profile: CapturePresetProfile,
+    target_object: str | None,
+    target_objects: list[str] | tuple[str, ...],
+    collection_name: str | None,
+    target_view: str | None,
+) -> list[ReferenceViewDiagnosticsHintContract] | None:
+    diagnostic_target = target_object or next((name for name in target_objects if str(name or "").strip()), None)
+    if not diagnostic_target or not captures or not hasattr(scene_handler, "get_view_diagnostics"):
+        return None
+
+    capture, preset = _resolve_stage_view_diagnostics_preset(
+        captures=captures,
+        preset_profile=preset_profile,
+        target_view=target_view,
+    )
+    focus_target = (
+        diagnostic_target if (preset.focus_target if preset is not None else capture.view_kind == "focus") else None
+    )
+    view_name = preset.standard_view if preset is not None else None
+    orbit_horizontal = float(preset.orbit_horizontal or 0.0) if preset is not None else 0.0
+    orbit_vertical = float(preset.orbit_vertical or 0.0) if preset is not None else 0.0
+    zoom_factor = None
+    if preset is not None and preset.focus_zoom_factor != 1.0:
+        zoom_factor = float(preset.focus_zoom_factor)
+
+    try:
+        diagnostics_payload = scene_handler.get_view_diagnostics(
+            target_object=diagnostic_target,
+            target_objects=list(target_objects or []),
+            collection_name=collection_name,
+            camera_name=None,
+            focus_target=focus_target,
+            view_name=view_name,
+            orbit_horizontal=orbit_horizontal,
+            orbit_vertical=orbit_vertical,
+            zoom_factor=zoom_factor,
+            persist_view=False,
+        )
+    except Exception:
+        return None
+
+    return _build_view_diagnostics_hints(
+        diagnostics_payload=diagnostics_payload,
+        target_object=diagnostic_target,
+        camera_name=None,
+        focus_target=focus_target,
+        view_name=view_name,
+        orbit_horizontal=orbit_horizontal,
+        orbit_vertical=orbit_vertical,
+        zoom_factor=zoom_factor,
+    )
+
+
 def _build_action_hints_from_silhouette(
     silhouette_analysis: ReferenceSilhouetteAnalysisContract | None,
     *,
@@ -3431,9 +3507,11 @@ async def _run_stage_checkpoint_compare(
             error="No matching reference images are attached for the requested target_object/target_view.",
         )
 
+    scene_handler = get_scene_handler()
+
     try:
         captures = capture_stage_images(
-            get_scene_handler(),
+            scene_handler,
             bundle_id=checkpoint_id,
             stage="after",
             target_object=capture_target_object,
@@ -3462,9 +3540,18 @@ async def _run_stage_checkpoint_compare(
             error=str(exc),
         )
 
+    view_diagnostics_hints = _build_stage_view_diagnostics_hints(
+        scene_handler=scene_handler,
+        captures=captures,
+        preset_profile=preset_profile,
+        target_object=capture_target_object,
+        target_objects=resolved_target_objects,
+        collection_name=resolved_collection_name,
+        target_view=target_view,
+    )
+
     resolver = get_vision_backend_resolver()
     runtime_max_tokens, runtime_max_images, runtime_model_name = _resolve_hybrid_budget_runtime(resolver)
-    scene_handler = get_scene_handler()
     truth_bundle = _build_correction_truth_bundle(scene_handler, assembled_target_scope)
     pair_budget = _effective_pair_budget(
         max_tokens=runtime_max_tokens,
@@ -3552,6 +3639,7 @@ async def _run_stage_checkpoint_compare(
             truth_bundle=budgeted_truth_bundle,
             truth_followup=truth_followup,
             target_view=target_view,
+            view_diagnostics_hints=view_diagnostics_hints,
             checkpoint_id=checkpoint_id,
             checkpoint_label=checkpoint_label,
             preset_profile=preset_profile,
@@ -3612,6 +3700,7 @@ async def _run_stage_checkpoint_compare(
         truth_followup=truth_followup,
         correction_candidates=correction_candidates,
         budget_control=budget_control,
+        view_diagnostics_hints=view_diagnostics_hints,
         target_view=target_view,
         checkpoint_id=checkpoint_id,
         checkpoint_label=checkpoint_label,
@@ -3676,6 +3765,7 @@ async def _run_stage_checkpoint_compare(
         silhouette_analysis=silhouette_analysis,
         action_hints=action_hints,
         part_segmentation=part_segmentation,
+        view_diagnostics_hints=view_diagnostics_hints,
         include_captures=preset_profile != "compact",
         message=(
             f"Captured and compared stage checkpoint '{checkpoint_label or checkpoint_id}' using {len(captures)} deterministic view(s)."

@@ -107,6 +107,12 @@ The repo now has the first implementation scaffolding for the vision layer:
   `view_diagnostics_hints` when the active framing/occlusion state makes the
   current checkpoint a weak basis for the next correction step; the full
   view-space report still stays separate from the default compare payload
+- `reference_compare_stage_checkpoint(...)` /
+  `reference_iterate_stage_checkpoint(...)` now reuse the selected
+  deterministic stage focus preset to compute the same compact
+  `view_diagnostics_hints` for planner/sculpt readiness, so staged local-form
+  cases can either reach `sculpt_region` with real staged view evidence or fail
+  closed with an explicit `scene_view_diagnostics(...)` support requirement
 - when current-view compare persists user-view adjustments, compact diagnostics
   read the already-persisted view instead of replaying the same view/orbit/zoom
   change a second time

@@ -1519,9 +1519,166 @@ def test_reference_compare_stage_checkpoint_exposes_sculpt_handoff_without_visib
     assert result.refinement_handoff.selected_family == "inspect_only"
     assert result.refinement_handoff.state == "blocked"
     assert result.refinement_handoff.recommended_tools == []
+    assert result.view_diagnostics_hints is None
     assert result.planner_summary is not None
     assert result.planner_summary.selected_family == "inspect_only"
     assert result.planner_summary.required_support_tools[0].tool_name == "scene_view_diagnostics"
+
+
+def test_reference_compare_stage_checkpoint_marks_sculpt_ready_when_staged_view_diagnostics_are_clear(
+    tmp_path, monkeypatch
+):
+    image_side = tmp_path / "side.png"
+    image_side.write_bytes(b"side")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "refine the organic heart surface", {"status": "no_match"})
+    asyncio.run(
+        reference_images(
+            ctx,
+            action="attach",
+            source_path=str(image_side),
+            label="side_ref",
+            target_object="Heart",
+            target_view="side",
+        )
+    )
+
+    class SceneHandler:
+        def __init__(self) -> None:
+            self.diagnostics_kwargs: dict[str, object] | None = None
+
+        def get_bounding_box(self, object_name: str, world_space: bool = True):
+            return {"object_name": object_name, "dimensions": [1.0, 1.0, 1.0]}
+
+        def get_view_diagnostics(self, **kwargs):
+            self.diagnostics_kwargs = kwargs
+            return {
+                "view_query": {
+                    "requested_view_source": "user_perspective",
+                    "resolved_view_source": "user_perspective",
+                    "analysis_backend": "mirrored_user_perspective",
+                    "available": True,
+                    "state_restored": True,
+                },
+                "targets": [
+                    {
+                        "object_name": "Heart",
+                        "visibility_verdict": "fully_visible",
+                        "projection_status": "inside_frame",
+                        "projection": {
+                            "frame_coverage_ratio": 1.0,
+                            "frame_occupancy_ratio": 0.42,
+                            "centered": True,
+                        },
+                    }
+                ],
+                "summary": {
+                    "target_count": 1,
+                    "visible_count": 1,
+                    "partially_visible_count": 0,
+                    "fully_occluded_count": 0,
+                    "outside_frame_count": 0,
+                    "unavailable_count": 0,
+                    "centered_target_count": 1,
+                    "framing_issue_count": 0,
+                },
+            }
+
+    scene_handler = SceneHandler()
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="Heart silhouette is still too lumpy.",
+                visible_changes=["The intended side target is fully visible."],
+                shape_mismatches=["Heart surface is still too lumpy."],
+                correction_focus=["Heart surface smoothing"],
+                next_corrections=["Smooth and slightly crease the chamber area."],
+            ),
+        )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: scene_handler)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.get_vision_backend_resolver",
+        lambda: SimpleNamespace(
+            runtime_config=SimpleNamespace(
+                max_tokens=400,
+                max_images=8,
+                active_model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+            )
+        ),
+    )
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="context_wide_after",
+                image_path=str(tmp_path / "context.jpg"),
+                host_visible_path=str(tmp_path / "context.jpg"),
+                preset_name="context_wide",
+                media_type="image/jpeg",
+                view_kind="wide",
+            ),
+            VisionCaptureImageContract(
+                label="target_front_after",
+                image_path=str(tmp_path / "front.jpg"),
+                host_visible_path=str(tmp_path / "front.jpg"),
+                preset_name="target_front",
+                media_type="image/jpeg",
+                view_kind="focus",
+            ),
+            VisionCaptureImageContract(
+                label="target_side_after",
+                image_path=str(tmp_path / "side.jpg"),
+                host_visible_path=str(tmp_path / "side.jpg"),
+                preset_name="target_side",
+                media_type="image/jpeg",
+                view_kind="focus",
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            target_object="Heart",
+            target_view="side",
+            checkpoint_label="stage_organic",
+            preset_profile="compact",
+        )
+    )
+
+    assert scene_handler.diagnostics_kwargs is not None
+    assert scene_handler.diagnostics_kwargs["target_object"] == "Heart"
+    assert scene_handler.diagnostics_kwargs["focus_target"] == "Heart"
+    assert scene_handler.diagnostics_kwargs["view_name"] == "RIGHT"
+    assert result.view_diagnostics_hints == []
+    assert result.refinement_route is not None
+    assert result.refinement_route.selected_family == "sculpt_region"
+    assert result.refinement_route.blockers == []
+    assert result.refinement_handoff is not None
+    assert result.refinement_handoff.selected_family == "sculpt_region"
+    assert result.refinement_handoff.state == "ready"
+    assert [tool.tool_name for tool in result.refinement_handoff.recommended_tools] == [
+        "sculpt_deform_region",
+        "sculpt_smooth_region",
+        "sculpt_inflate_region",
+        "sculpt_pinch_region",
+        "sculpt_crease_region",
+    ]
+    assert result.planner_summary is not None
+    assert result.planner_summary.required_support_tools == []
 
 
 def test_refinement_handoff_recommends_bounded_deterministic_sculpt_subset():

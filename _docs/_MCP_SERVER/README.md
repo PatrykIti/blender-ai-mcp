@@ -1248,13 +1248,16 @@ checkpoint handoff, call the explicit read-only artifacts:
 
 `reference_compare_current_view(...)` may also emit compact
 `view_diagnostics_hints` when the current framing or occlusion state makes the
-captured checkpoint a weak basis for the next correction step. That hint is
-recommendation-only and does not embed a heavyweight view graph into the
-default compare payload. When `persist_view=True` is used with user-view
-adjustments such as `view_name`, `orbit_horizontal`, or `zoom_factor`, the
-checkpoint capture applies and keeps those adjustments; the follow-up compact
-diagnostics read the already-persisted view instead of applying the same
-adjustments again.
+captured checkpoint a weak basis for the next correction step. The same compact
+hint surface is now available on `reference_compare_stage_checkpoint(...)` and
+`reference_iterate_stage_checkpoint(...)` when the selected deterministic stage
+focus preset still yields typed framing or occlusion issues for the intended
+local target. These hints are recommendation-only and do not embed a
+heavyweight view graph into the default compare payload. When
+`persist_view=True` is used with user-view adjustments such as `view_name`,
+`orbit_horizontal`, or `zoom_factor`, the checkpoint capture applies and keeps
+those adjustments; the follow-up compact diagnostics read the already-persisted
+view instead of applying the same adjustments again.
 
 For the guided creature path specifically, pair truth now carries one explicit
 attachment verdict for each required seam:
