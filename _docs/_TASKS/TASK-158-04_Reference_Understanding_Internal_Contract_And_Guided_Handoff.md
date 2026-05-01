@@ -58,20 +58,22 @@ for `TASK-157` gates, but it must not own gate pass/fail truth.
 summary = parse_reference_understanding(provider_payload)
 summary = normalize_reference_aliases(summary)
 
-proposal = gate_proposal_from_reference_understanding(
-    summary,
-    source="reference_understanding",
-)
-ingested_plan = ingest_llm_gate_proposal(proposal)
-gate_plan = normalize_gate_plan(
-    ingested_plan,
-    domain_templates=current_domain_templates,
-)
+proposal = gate_proposal_from_reference_understanding(summary)
+intake_result = ingest_llm_gate_proposal(ctx, proposal)
+if intake_result.status != "accepted":
+    return reference_understanding_summary_response(
+        summary=summary,
+        policy_warnings=intake_result.policy_warnings,
+    )
+gate_plan = intake_result.gate_plan
 
-session_state = get_session_capability_state(session_id)
-session_state.reference_understanding_summaries[summary.id] = summary.public_view()
-session_state.reference_gate_proposal_refs.extend(gate_plan.proposal_refs)
-set_session_capability_state(session_id, session_state)
+session_state = get_session_capability_state(ctx)
+session_state = record_reference_understanding_summary(
+    session_state,
+    summary=summary.public_view(),
+    gate_proposal_refs=gate_plan.proposal_refs,
+)
+set_session_capability_state(ctx, session_state)
 
 return ReferenceCompareStageCheckpointResponseContract(
     **stage_compare_payload,
@@ -79,6 +81,14 @@ return ReferenceCompareStageCheckpointResponseContract(
     gate_proposal_refs=gate_plan.proposal_refs,
 )
 ```
+
+`TASK-157-01-01` owns `ingest_llm_gate_proposal(ctx, proposal)` and its
+`normalize_gate_plan(...)` call. This task should feed that intake path and
+consume the accepted result; it should not add a second reference-specific gate
+normalizer. `SessionCapabilityState` is currently frozen and its helpers accept
+the FastMCP `Context`, so new summary/proposal-ref persistence should use an
+owning helper or `replace(...)` pattern instead of mutating fields in place or
+using a bare `session_id`.
 
 Implementation must add any new response fields explicitly to
 `ReferenceCompareStageCheckpointResponseContract` and
