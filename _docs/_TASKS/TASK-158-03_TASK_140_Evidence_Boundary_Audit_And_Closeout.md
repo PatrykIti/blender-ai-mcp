@@ -34,9 +34,11 @@ Do not rewrite these unless a later audit proves they contradict the boundary:
 | `_docs/_TASKS/TASK-140-05-03_Evidence_Taxonomy_Promotion_Criteria_And_Operator_Reporting.md:14-18` | Frames evidence taxonomy as provider/profile reporting |
 | `_docs/_TASKS/TASK-140-05-03_Evidence_Taxonomy_Promotion_Criteria_And_Operator_Reporting.md:30-32` | Keeps promoted support evidence separate from quality-gate verifier evidence |
 | `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:73-76` | States perception can support/propose but not own verifier truth |
+| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:100-108` | Leaves the first reference-understanding public surface undecided and forbids a public `router_apply_reference_strategy` tool |
 | `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:176-188` | Defines alias/future-tool mapping for `mesh_edit`, `material_finish`, and low-poly macro names |
 | `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:273-277` | Keeps low-poly macro names out of first implementation |
-| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:354-355` | Leaves `material_finish` canonical-family promotion as a later decision |
+| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:290-296` | Routes implementation through current reference/guided-state seams or real `server/router/` owners, not a non-existent MCP router package |
+| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:348-355` | Leaves public-surface and `material_finish` canonical-family promotion decisions open for later review |
 
 ## Implementation Notes
 

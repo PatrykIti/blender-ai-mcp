@@ -63,6 +63,7 @@ cannot be mistaken for current implementation targets.
 | `:1155-1161` | Annotate remaining `mesh_edit` / `material_finish` JSON examples as aliases or future stage hints |
 | `:1973-1989` | Classification-only row: concept-level `reference_understanding` hits are allowed when they do not imply a current public tool or verifier authority |
 | `:2098-2183` | Replace obsolete owner-path sketches with current seams or historical notes |
+| `:2186-2272` | Classification-only row: eval-pack test, fixture, and harness names may remain historical/future sketches when they do not imply current public tools or router surfaces |
 | `:2306-2316` | Reframe `reference_understand(...)` success criteria as draft shorthand routed through current seams |
 | `:2438-2459` | Reframe `reference_understand` MCP task as draft unless future public-tool review promotes it |
 | `:2468-2476` | Replace obsolete `server/adapters/mcp/router/...` implementation paths with current owner seams or historical notes |
@@ -101,8 +102,9 @@ are future candidates until shipped as canonical tools.
 
 ## Changelog Impact
 
-- Record completion in a new `_docs/_CHANGELOG/279-...task-158-...completion.md`
-  entry when this slice ships, and refresh `_docs/_CHANGELOG/README.md`.
+- Roll this slice into the single
+  `_docs/_CHANGELOG/279-...task-158-...completion.md` entry created during
+  `TASK-158-03` closeout; do not create a separate child changelog entry.
   Changelog 278 remains the creation/plan entry.
 
 ## Acceptance Criteria

@@ -125,6 +125,7 @@ rediscovering the same drift with broad grep.
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:1155-1161` | Annotate remaining `mesh_edit` / `material_finish` JSON examples as aliases or future stage hints |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:1973-1989` | Classification-only row: concept-level `reference_understanding` hits are allowed when they do not imply a current public tool or verifier authority |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2098-2183` | Replace obsolete proposed paths such as `server/adapters/mcp/router/...` with current owner seams or historical notes |
+| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2186-2272` | Classification-only row: eval-pack test, fixture, and harness names may remain historical/future sketches when they do not imply current public tools or router surfaces |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2306-2316` | Reframe `reference_understand(...)` success criteria as draft shorthand routed through current reference/guided-state seams |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2438-2459` | Reframe `reference_understand` MCP surface task as historical/draft unless a future public-tool review promotes it |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2468-2476` | Replace obsolete `server/adapters/mcp/router/...` implementation paths with current owner seams or historical notes |
@@ -137,9 +138,11 @@ rediscovering the same drift with broad grep.
 | `_docs/_TASKS/TASK-140-05-03_Evidence_Taxonomy_Promotion_Criteria_And_Operator_Reporting.md:14-18` | Canonical no-op anchor for provider/profile evidence reporting |
 | `_docs/_TASKS/TASK-140-05-03_Evidence_Taxonomy_Promotion_Criteria_And_Operator_Reporting.md:30-32` | Canonical no-op anchor for keeping support evidence separate from quality-gate verifier evidence |
 | `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:73-76` | Canonical no-op anchor for advisory-only Vision/perception and verifier-owned truth |
+| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:100-108` | Canonical no-op anchor that leaves the first reference-understanding public surface undecided and forbids a public `router_apply_reference_strategy` tool |
 | `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:176-188` | Canonical no-op anchor for alias/future-tool mapping of `mesh_edit`, `material_finish`, and low-poly macro names |
 | `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:273-277` | Canonical no-op anchor that keeps low-poly macro names out of first implementation |
-| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:354-355` | Canonical no-op anchor for deciding later whether `material_finish` becomes a canonical planner family |
+| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:290-296` | Canonical no-op anchor that routes implementation through current reference/guided-state seams or real `server/router/` owners, not a non-existent MCP router package |
+| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:348-355` | Canonical no-op anchor for open public-surface decisions and deciding later whether `material_finish` becomes a canonical planner family |
 
 ## Source-Of-Truth Anchors
 
@@ -156,6 +159,9 @@ Use these current contracts when deciding whether a term is canonical:
 - `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md` is the normative bridge
   from the long-form plan to the current repo contract. Its alias/future-tool
   section should be treated as the policy baseline for this task.
+- `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md:237-263` is the repo-level
+  boundary for perception inputs, `vision_contract_profile`, spatial graph
+  truth products, and Inspection/Assertion truth ownership.
 
 ## Repository Touchpoints
 

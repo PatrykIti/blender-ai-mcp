@@ -5,8 +5,8 @@ Curated task board for promoted active work, promoted follow-on work, and select
 ## 📊 Statistics
 - **To Do:** 8 tasks
 - **In Progress:** 0 tasks
-- **Done:** 225
-- **Superseded:** 10
+- **Done:** 87
+- **Superseded:** 162
 
 ## 📐 Board Scope
 

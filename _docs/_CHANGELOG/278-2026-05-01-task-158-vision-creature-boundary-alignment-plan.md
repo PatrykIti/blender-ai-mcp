@@ -21,6 +21,10 @@ Version: -
 - expanded `TASK-158` into three executable child slices with line-level repair
   inventory, canonical no-op anchors, live contract source-of-truth notes, and
   board/changelog closeout rules
+- refined the plan after a final multi-agent audit with the repo-level
+  responsibility-boundary anchor, additional roadmap no-op anchors, eval-pack
+  classification rows, corrected board statistics, and one shared completion
+  changelog rule for the child slices
 
 ## Validation
 

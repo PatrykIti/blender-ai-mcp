@@ -99,8 +99,9 @@ verifier-supported support refs, not standalone reference evidence.
 
 ## Changelog Impact
 
-- Record completion in a new `_docs/_CHANGELOG/279-...task-158-...completion.md`
-  entry when this slice ships, and refresh `_docs/_CHANGELOG/README.md`.
+- Roll this slice into the single
+  `_docs/_CHANGELOG/279-...task-158-...completion.md` entry created during
+  `TASK-158-03` closeout; do not create a separate child changelog entry.
   Changelog 278 remains the creation/plan entry.
 
 ## Acceptance Criteria
