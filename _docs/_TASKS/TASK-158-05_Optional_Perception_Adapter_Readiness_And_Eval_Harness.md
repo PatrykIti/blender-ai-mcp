@@ -28,7 +28,7 @@ records without becoming verifier truth.
 | `server/infrastructure/config.py` | Add explicit default-off config only if adapter readiness needs config flags |
 | `tests/fixtures/reference_understanding/` | Golden fixture directories for reference-understanding and optional evidence scoring |
 | `tests/unit/adapters/mcp/` | Adapter registry, default-off, fixture parsing, and evidence-boundary tests |
-| `scripts/vision_harness.py` | Add reference-understanding/eval mode only if it can run without live provider calls by default |
+| `scripts/vision_harness.py` | Add fixture-only reference-understanding/eval mode only if its default path never calls live backends |
 | `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md` | Document what is ready now vs deferred adapter implementation |
 
 ## Implementation Notes
@@ -89,8 +89,10 @@ return OptionalEvidence(
 - Unit tests that `classification_scores` and `segmentation_artifacts` cannot
   set gate status to `passed`.
 - Fixture tests for `tests/fixtures/reference_understanding/*/golden.json`.
-- Harness tests only if `scripts/vision_harness.py` gets a providerless
-  reference-understanding/eval mode.
+- `tests/unit/scripts/test_vision_harness_reference_understanding.py` if
+  `scripts/vision_harness.py` changes; default fixture mode must fail the test
+  if it calls `_run_backend`, `create_vision_backend`, or `backend.analyze`
+  without an explicit live-backend opt-in.
 
 ## Docs To Update
 
@@ -110,10 +112,11 @@ return OptionalEvidence(
 ## Validation Commands
 
 - `git diff --check`
-- Focused unit tests for optional adapter registry/config once files exist.
-- Fixture/harness command if `scripts/vision_harness.py` gains a providerless
-  reference-understanding/eval mode.
-- `rg -n "can_pass_gate=True|status=\\\"passed\\\"|model download|provider key" server/adapters/mcp/vision tests/unit/adapters/mcp scripts/vision_harness.py`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_optional_perception_adapter_registry.py tests/unit/adapters/mcp/test_optional_perception_evidence_boundary.py tests/unit/adapters/mcp/test_reference_understanding_fixtures.py -v`
+- `PYTHONPATH=. poetry run pytest tests/unit/scripts/test_vision_harness_reference_understanding.py -v` if `scripts/vision_harness.py` changes.
+- `rg -n -P "can_pass_gate\\s*[:=]\\s*true|status\\s*[:=]\\s*[\"']passed[\"']|gate_status\\s*[:=]\\s*[\"']passed[\"']|SAM|CLIP|SigLIP|Grounding ?DINO|OWL-ViT|from_pretrained|mlx_vlm\\.load|httpx\\.AsyncClient|provider key|api_key" server/adapters/mcp/vision tests/unit/adapters/mcp tests/fixtures/reference_understanding scripts/vision_harness.py`
+  - classify every hit as default-off/support-only or an explicit
+    live-provider opt-in.
 
 ## Acceptance Criteria
 

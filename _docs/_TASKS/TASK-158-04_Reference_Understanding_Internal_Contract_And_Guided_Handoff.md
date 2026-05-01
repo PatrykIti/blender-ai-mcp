@@ -57,16 +57,36 @@ for `TASK-157` gates, but it must not own gate pass/fail truth.
 ```python
 summary = parse_reference_understanding(provider_payload)
 summary = normalize_reference_aliases(summary)
-proposal_refs = quality_gates.normalize_proposals(
-    summary.proposed_gates,
+
+proposal = gate_proposal_from_reference_understanding(
+    summary,
     source="reference_understanding",
 )
-guided_state.attach_reference_summary(summary.id, proposal_refs)
-return reference_checkpoint_response.with_reference_understanding(
-    summary=summary.public_view(),
-    proposal_refs=proposal_refs,
+ingested_plan = ingest_llm_gate_proposal(proposal)
+gate_plan = normalize_gate_plan(
+    ingested_plan,
+    domain_templates=current_domain_templates,
+)
+
+session_state = get_session_capability_state(session_id)
+session_state.reference_understanding_summaries[summary.id] = summary.public_view()
+session_state.reference_gate_proposal_refs.extend(gate_plan.proposal_refs)
+set_session_capability_state(session_id, session_state)
+
+return ReferenceCompareStageCheckpointResponseContract(
+    **stage_compare_payload,
+    reference_understanding_summary=summary.public_view(),
+    gate_proposal_refs=gate_plan.proposal_refs,
 )
 ```
+
+Implementation must add any new response fields explicitly to
+`ReferenceCompareStageCheckpointResponseContract` and
+`ReferenceIterateStageCheckpointResponseContract`; `MCPContract` payloads reject
+undeclared extras. Thread those fields through `_stage_compare_response(...)`,
+`_iterate_stage_response(...)`, and `_compact_compare_result_for_iterate(...)`.
+Persist summary/proposal refs with explicit `session_capabilities.py`
+fields/helpers plus `set_session_capability_state[_async](...)`.
 
 ## Runtime / Security Contract Notes
 
@@ -87,9 +107,12 @@ return reference_checkpoint_response.with_reference_understanding(
 
 - `tests/unit/adapters/mcp/test_reference_understanding_contract.py`
 - `tests/unit/adapters/mcp/test_reference_understanding_parser.py`
-- Focused tests for reference/checkpoint response fields if `reference.py`
-  payloads change.
-- Focused guided-session tests for storing summary ids and proposal refs.
+- `tests/unit/adapters/mcp/test_reference_understanding_reference_surface.py`
+  for declared reference/checkpoint response fields and compact iterate payloads.
+- `tests/unit/adapters/mcp/test_reference_understanding_guided_state.py` for
+  session summary ids and proposal refs.
+- `tests/unit/adapters/mcp/test_reference_understanding_visibility_policy.py`
+  for bounded existing-tool exposure from unresolved gates and summary hints.
 - Metadata/search tests only if this slice adds new search hints or schema
   fields.
 
@@ -111,10 +134,8 @@ return reference_checkpoint_response.with_reference_understanding(
 ## Validation Commands
 
 - `git diff --check`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_understanding_contract.py tests/unit/adapters/mcp/test_reference_understanding_parser.py -v`
-- Add the focused reference/guided-session unit test command once the exact
-  test files exist.
-- `rg -n "router_apply_reference_strategy|status=\\\"passed\\\"|final_completion" server/adapters/mcp/vision server/adapters/mcp/contracts tests/unit/adapters/mcp`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_understanding_contract.py tests/unit/adapters/mcp/test_reference_understanding_parser.py tests/unit/adapters/mcp/test_reference_understanding_reference_surface.py tests/unit/adapters/mcp/test_reference_understanding_guided_state.py tests/unit/adapters/mcp/test_reference_understanding_visibility_policy.py -v`
+- `rg -n "reference_understand|router_apply_reference_strategy|status=\\\"passed\\\"|final_completion" server/adapters/mcp tests/unit/adapters/mcp server/router/infrastructure/tools_metadata`
 
 ## Acceptance Criteria
 

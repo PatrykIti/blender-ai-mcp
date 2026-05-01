@@ -34,6 +34,10 @@ Version: -
 - corrected the task framing so `TASK-158` is not documentation-only: it keeps
   the docs alignment scope and adds implementation slices for bounded
   reference-understanding handoff and default-off optional perception readiness
+- hardened the Scope B implementation slices after audit: `TASK-158-04` now
+  references declared strict response fields and current `TASK-157` intake
+  shapes, while `TASK-158-05` requires fixture-only eval defaults and stronger
+  optional-adapter/provider-call sentinels
 
 ## Validation
 

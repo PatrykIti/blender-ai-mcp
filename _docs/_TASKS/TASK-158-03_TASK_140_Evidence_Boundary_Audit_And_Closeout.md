@@ -78,9 +78,11 @@ Do not rewrite these unless a later audit proves they contradict the boundary:
   - expected result after completion: no unclassified drift
 - Confirm `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/README.md`, and the
   completion changelog entry are synchronized.
-- Confirm `TASK-158-04` and `TASK-158-05` focused unit/fixture validations are
-  recorded, or explicitly mark deferred implementation slices as superseded or
-  follow-on work before closing the parent.
+- Confirm `TASK-158-04` and `TASK-158-05` focused validations are recorded
+  before parent close. If either implementation slice is deferred, do not close
+  `TASK-158` unless the deferred scope is converted into a standalone
+  board-level follow-on marked `Follow-on After`, the parent acceptance
+  criteria name that follow-on, and `_docs/_TASKS/README.md` tracks it as open.
 
 ## Docs To Update
 
@@ -105,6 +107,8 @@ Do not rewrite these unless a later audit proves they contradict the boundary:
 - `TASK-140` evidence remains clearly provider/profile support evidence.
 - No `TASK-140*` wording tells implementers to use provider/profile confidence
   as quality-gate pass/fail truth.
-- `TASK-158-04` and `TASK-158-05` are implemented, explicitly deferred, or
-  superseded with reason before the parent closes.
+- `TASK-158-04` and `TASK-158-05` are implemented before the parent closes; if
+  either slice is deferred, the deferred scope is converted into a standalone
+  board-level follow-on marked `Follow-on After`, the parent acceptance
+  criteria name that follow-on, and `_docs/_TASKS/README.md` tracks it as open.
 - `TASK-158` parent, children, board, and changelog are synchronized at close.
