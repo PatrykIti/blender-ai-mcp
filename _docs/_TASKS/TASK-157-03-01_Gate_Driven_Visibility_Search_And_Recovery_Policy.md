@@ -1,6 +1,6 @@
 # TASK-157-03-01: Gate-Driven Visibility, Search, And Recovery Policy
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-157-03](./TASK-157-03_Guided_Flow_Gate_Runtime_Integration.md)
 **Category:** Guided Runtime / Visibility Policy
@@ -12,6 +12,31 @@ Make unresolved gates open the narrow bounded tool surface needed for the next
 repair, without encouraging the LLM to reset goals, guess hidden tools, or use
 the broad catalog, and without forcing a full spatial refresh loop after every
 safe mutation inside one still-open build stage.
+
+## Completion Summary
+
+Completed on 2026-05-01.
+
+- Extended the existing guided visibility policy with optional
+  session-scoped `gate_plan` input instead of creating a new catalog or
+  discovery flow.
+- Active `attachment_seam` and `support_contact` blockers expose only bounded
+  relation/measure/assert and macro repair tools.
+- `shape_profile`, proportion, refinement, and opening gates wait behind
+  unresolved required seam/support blockers before exposing refinement tools.
+- `search_tools(...)` now recognizes active gate recovery queries and returns
+  bounded verifier/repair tools for blocker resolution instead of recommending
+  `router_set_goal` as a reset path.
+- Static build-step visibility still respects existing guided cadence:
+  spatial refresh gates remain bounded to spatial-context tools, and gate tools
+  are added as a narrow overlay.
+
+## Validation
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_search_surface.py::test_failed_attachment_gate_search_surfaces_bounded_repair_tools tests/unit/adapters/mcp/test_search_surface.py::test_active_gate_recovery_search_does_not_recommend_goal_reset tests/unit/adapters/mcp/test_visibility_policy.py::test_gate_blocker_visibility_exposes_bounded_attachment_repair_tools tests/unit/adapters/mcp/test_visibility_policy.py::test_shape_profile_gate_waits_behind_unresolved_seam_gate -v`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_quality_gate_contracts.py tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/adapters/mcp/test_quality_gate_intake.py -v`
+- `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --files README.md _docs/AVAILABLE_TOOLS_SUMMARY.md _docs/_CHANGELOG/README.md _docs/_CHANGELOG/281-2026-05-01-task-157-gate-driven-visibility-search.md _docs/_MCP_SERVER/README.md _docs/_PROMPTS/README.md _docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md _docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md _docs/_TASKS/README.md _docs/_TASKS/TASK-157-03-01_Gate_Driven_Visibility_Search_And_Recovery_Policy.md _docs/_TASKS/TASK-157-03_Guided_Flow_Gate_Runtime_Integration.md _docs/_TASKS/TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md _docs/_TESTS/README.md server/adapters/mcp/discovery/search_surface.py server/adapters/mcp/guided_mode.py server/adapters/mcp/session_capabilities.py server/adapters/mcp/transforms/visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_visibility_policy.py`
 
 ## Repository Touchpoints
 

@@ -309,6 +309,9 @@ contract.
   `active_gate_plan.completion_blockers`, gate `status_reason`, and
   `recommended_bounded_tools` before deciding whether to repair a seam,
   continue the current stage, or attempt final completion
+- when a gate blocker is active, use `search_tools(...)` for bounded
+  verification/repair tools; do not use `router_set_goal(...)` as the first
+  recovery path for failed or stale gate evidence
 - the server may keep build visibility step-gated during
   `establish_spatial_context`, so prompt text must not override that gating
 - for creature blockout seams, treat verdicts explicitly:

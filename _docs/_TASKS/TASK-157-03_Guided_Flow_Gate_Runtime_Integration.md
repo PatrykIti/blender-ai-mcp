@@ -1,6 +1,6 @@
 # TASK-157-03: Guided Flow Gate Runtime Integration
 
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
 **Priority:** 🔴 High
 **Parent:** [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md)
 **Category:** Guided Runtime / Flow Integration
@@ -12,6 +12,25 @@ Integrate gate plans and gate status into `llm-guided` runtime flow so active
 gates drive next actions, visibility, checkpoint responses, and completion
 blocking, while spatial and vision refreshes happen at meaningful stage and
 gate boundaries instead of after every single safe in-stage mutation.
+
+## Progress Notes
+
+2026-05-01:
+
+- `active_gate_plan` is now persisted through guided session state and exposed
+  through router/reference status payloads.
+- `scene_relation_graph(...)` updates relation-backed gate statuses, evidence
+  refs, completion blockers, and bounded repair-tool hints.
+- Guided scene mutations mark evidence-backed gate statuses `stale` through the
+  existing spatial dirtying path.
+- [TASK-157-03-01](./TASK-157-03-01_Gate_Driven_Visibility_Search_And_Recovery_Policy.md)
+  is complete: unresolved gates now shape existing guided visibility/search
+  without a parallel catalog.
+
+Remaining work under this technical subtask is the broader checkpoint summary
+surface (`gate_statuses`, `next_gate_actions`, and explicit top-level
+completion blocker fields where needed) plus any final cadence polish not
+covered by the relation-graph verifier and search/visibility slice.
 
 ## Repository Touchpoints
 

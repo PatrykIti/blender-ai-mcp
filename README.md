@@ -622,6 +622,9 @@ hidden ordering assumptions.
   authoritative evidence refs, status reasons, completion blockers, and bounded
   repair-tool hints; later guided scene mutations mark those verifier-backed
   statuses `stale` through the existing spatial dirtying path.
+- active gate blockers narrow guided visibility/search toward existing
+  verifier and repair tools; a failed seam gate should lead to relation
+  graph/measure/assert/macro repair tools, not a broad catalog or goal reset.
 - if staged compare degrades but strong deterministic truth findings still
   exist, use the same inspect/measure/assert handoff instead of improvising
   another large free-form correction

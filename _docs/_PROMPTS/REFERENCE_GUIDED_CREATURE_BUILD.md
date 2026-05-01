@@ -116,6 +116,9 @@ Rules:
   `status_reason`, evidence refs, and `recommended_bounded_tools` as the
   authoritative repair/completion guide; do not reset the goal just because a
   seam gate is failed or stale
+- for failed seam/support blockers, expect guided visibility/search to return
+  bounded relation, measure/assert, and macro repair tools before refinement or
+  finish tools
 - attach references one at a time with
   `reference_images(action="attach", source_path=..., ...)`; do not pass
   batch shapes such as `images=[...]`

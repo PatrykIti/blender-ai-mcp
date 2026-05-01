@@ -66,6 +66,11 @@ Default `llm-guided` entry surface:
 - `search_tools`
 - `call_tool`
 
+When `active_gate_plan.completion_blockers` exist, `search_tools(...)` stays on
+the same guided discovery path but biases recovery queries toward the bounded
+verification/repair tools named by the blocker instead of recommending a goal
+reset or broad catalog exploration.
+
 Task-capable heavy-operation rollout on task-enabled surfaces:
 
 - `scene_get_viewport`

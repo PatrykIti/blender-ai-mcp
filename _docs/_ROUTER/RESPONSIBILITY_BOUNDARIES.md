@@ -255,6 +255,9 @@ Goal-derived quality gates follow the same split:
   `support_contact` gates with authoritative `scene_truth` or
   `spatial_relation` evidence refs, while guided mutations mark prior evidence
   stale through the existing spatial dirtying path
+- gate blockers shape visibility/search through the existing FastMCP guided
+  surface only; they do not create a second catalog authority and they do not
+  make semantic search responsible for pass/fail truth
 - client-supplied completion claims and hidden tool names are policy warnings,
   not trusted truth
 

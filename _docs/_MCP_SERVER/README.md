@@ -581,6 +581,10 @@ Current guided-flow behavior:
 - guided scene mutations reuse the existing spatial dirtying path to mark
   evidence-backed gate statuses `stale`; final completion remains blocked by
   required gates in `pending`, `blocked`, `failed`, or `stale`
+- active gate blockers now shape the existing guided visibility/search layer:
+  failed seam/support gates expose bounded relation, measure/assert, and macro
+  repair tools; refinement/profile gates wait behind unresolved required
+  seam/support blockers
 - supported first-pass gate types are `required_part`, `attachment_seam`,
   `support_contact`, `symmetry_pair`, `proportion_ratio`, `shape_profile`,
   `opening_or_cut`, `refinement_stage`, and `final_completion`

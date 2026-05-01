@@ -1783,6 +1783,7 @@ async def apply_visibility_for_session_state(
         phase=state.phase,
         guided_handoff=state.guided_handoff,
         guided_flow_state=state.guided_flow_state,
+        gate_plan=state.gate_plan,
     )
 
 

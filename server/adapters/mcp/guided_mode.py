@@ -37,6 +37,7 @@ def build_visibility_diagnostics(
     *,
     guided_handoff: dict[str, Any] | None = None,
     guided_flow_state: dict[str, Any] | None = None,
+    gate_plan: dict[str, Any] | None = None,
 ) -> VisibilityDiagnostics:
     """Build a deterministic visibility snapshot from the current policy model."""
 
@@ -47,6 +48,7 @@ def build_visibility_diagnostics(
         resolved_phase,
         guided_handoff=guided_handoff,
         guided_flow_state=guided_flow_state,
+        gate_plan=gate_plan,
     )
     from server.adapters.mcp.platform.capability_manifest import get_capability_manifest
 
@@ -93,6 +95,7 @@ async def apply_session_visibility(
     phase: SessionPhase | str,
     guided_handoff: dict[str, Any] | None = None,
     guided_flow_state: dict[str, Any] | None = None,
+    gate_plan: dict[str, Any] | None = None,
 ) -> VisibilityDiagnostics:
     """Apply the current visibility policy to one session using native FastMCP APIs."""
 
@@ -101,6 +104,7 @@ async def apply_session_visibility(
         phase,
         guided_handoff=guided_handoff,
         guided_flow_state=guided_flow_state,
+        gate_plan=gate_plan,
     )
     await ctx.reset_visibility()
 
