@@ -1,6 +1,6 @@
 # TASK-157-01: Gate Declaration Schema, Normalization, And Policy Bounds
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md)
 **Category:** Guided Runtime / Gate Contracts
@@ -161,3 +161,18 @@ def normalize_gate_plan(proposal, *, domain_profile, templates):
 - Domain templates can merge required gates with LLM-proposed gates.
 - Unsupported or unsafe gate declarations fail with actionable errors.
 - Existing guided state tests remain backward compatible.
+
+## Completion Summary
+
+- completed on 2026-05-01 with `server/adapters/mcp/contracts/quality_gates.py`
+  as the owning v1 contract module for proposals, normalized gates, gate plans,
+  evidence requirements/refs, policy warnings, and domain templates
+- added session-scoped `gate_plan` persistence beside `guided_flow_state`
+  without creating a parallel discovery or verifier flow
+- exposed normalized `active_gate_plan` on router status/goal and staged
+  reference compare/iterate payloads
+- documented the proposal/verifier boundary in README, MCP, prompts,
+  available-tools, and router responsibility docs
+- added changelog 279 for the implementation slice
+- validated with:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_contracts.py tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py -v`

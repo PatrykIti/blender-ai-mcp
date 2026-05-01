@@ -101,6 +101,17 @@ Rules:
 - attached reference images are the primary grounding input for how the first
   masses should look and sit; do not start from generic animal priors when the
   active guided session already has references
+- if you can identify creature-specific quality gates from the goal or
+  references, provide them through `router_set_goal(..., gate_proposal={...})`
+  using gate types such as `required_part`, `attachment_seam`,
+  `symmetry_pair`, `proportion_ratio`, or `shape_profile`
+- a gate proposal may name expected parts such as `eye_pair`, `ear_pair`, or a
+  `tail_body` seam, but it must use declaration statuses like `proposed` or
+  `requested`; never claim `passed`, `failed`, `waived`, or `stale`
+- after goal setup, read `active_gate_plan` and
+  `gate_intake_result.policy_warnings`; hidden tool names, raw Blender/Python
+  instructions, and perception-only completion claims are dropped or rewritten
+  by server policy
 - attach references one at a time with
   `reference_images(action="attach", source_path=..., ...)`; do not pass
   batch shapes such as `images=[...]`

@@ -256,6 +256,16 @@ guided surface:
    - if `compare_ready` / `iterate_ready` is `true`, proceed
    - otherwise follow `next_action` and do not use `goal_override` as a staged
      session substitute
+8. If the client/model proposes quality gates, pass them through the optional
+   `gate_proposal` envelope on `router_set_goal(...)` and then read
+   `active_gate_plan`.
+   - use declaration statuses such as `proposed` or `requested`
+   - do not claim `passed`, `failed`, `waived`, or `stale`
+   - do not include hidden tool names, raw Blender/Python instructions, or
+     provider secrets in the proposal
+   - treat `reference_understanding`, silhouette, segmentation,
+     classification, and VLM checkpoint sources as proposal/support provenance,
+     not truth
 
 ## Guided Flow State And Prompt Bundles
 
@@ -291,6 +301,10 @@ contract.
   `guided_flow_state.spatial_state_version`, and
   `guided_flow_state.last_spatial_check_version` when the session seems to be
   looping on stale placement/framing facts
+- inspect `active_gate_plan.gates`, `active_gate_plan.policy_warnings`, and
+  `gate_intake_result.policy_warnings` when the model proposed dynamic quality
+  gates; normalized gate statuses start as `pending` until later
+  scene/spatial/mesh/assertion verifier evidence updates them
 - the server may keep build visibility step-gated during
   `establish_spatial_context`, so prompt text must not override that gating
 - for creature blockout seams, treat verdicts explicitly:

@@ -1,6 +1,6 @@
 # TASK-157-01-01: LLM-Proposed Gate Intake And Policy Bounds
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-157-01](./TASK-157-01_Gate_Declaration_Schema_Normalization_And_Policy_Bounds.md)
 **Category:** Guided Runtime / Gate Intake
@@ -142,3 +142,19 @@ def ingest_reference_gate_proposal(ctx, reference_summary):
 - LLMs can propose gates.
 - LLMs cannot mark gates complete.
 - Server policy warnings explain dropped or rewritten gates.
+
+## Completion Summary
+
+- completed on 2026-05-01 by adding optional `gate_proposal` intake on the
+  existing `router_set_goal(...)` surface
+- intake requires an active guided goal/flow, normalizes through the shared
+  quality-gate contract, persists `active_gate_plan` in session state, and
+  returns `gate_intake_result` with policy warnings
+- client/model statuses such as `passed` are rewritten to server-owned
+  `pending`; unsupported gate types, hidden tool names, raw Blender/Python
+  instructions, unknown fields, and unsupported evidence kinds are rejected or
+  dropped through typed policy results
+- reference/perception provenance is preserved as advisory source metadata
+  only; it does not become verifier status
+- validated with:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_contracts.py tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py -v`

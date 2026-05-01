@@ -393,6 +393,10 @@ Focused unit coverage now also protects:
   `tests/unit/adapters/mcp/test_reference_images.py`
 - optional segmentation-sidecar config defaults and opt-in validation on
   `tests/unit/adapters/mcp/test_vision_runtime_config.py`
+- goal-derived quality-gate contract and intake coverage on:
+  - `tests/unit/adapters/mcp/test_quality_gate_contracts.py`
+  - `tests/unit/adapters/mcp/test_quality_gate_intake.py`
+  - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
 - compact view-space contracts, search/discovery shaping, and reference-loop
   adoption hints on:
   - `tests/unit/tools/scene/test_scene_contracts.py`

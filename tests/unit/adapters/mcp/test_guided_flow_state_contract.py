@@ -10,6 +10,7 @@ import pytest
 import server.adapters.mcp.session_capabilities as session_capabilities
 from fastmcp import Context
 from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract
+from server.adapters.mcp.contracts.quality_gates import normalize_gate_plan
 from server.adapters.mcp.session_capabilities import (
     SessionCapabilityState,
     advance_guided_flow_from_iteration_async,
@@ -90,6 +91,37 @@ def test_session_state_round_trips_guided_flow_state():
     assert restored.guided_flow_state["current_step"] == "establish_spatial_context"
     assert restored.guided_flow_state["required_checks"][0]["tool_name"] == "scene_scope_graph"
     assert restored.guided_flow_state["allowed_families"] == ["spatial_context", "reference_context"]
+
+
+def test_session_state_round_trips_gate_plan_state():
+    ctx = FakeContext()
+    gate_plan = normalize_gate_plan(
+        {
+            "proposal_id": "squirrel-gates",
+            "source": "llm_goal",
+            "gates": [
+                {
+                    "gate_type": "required_part",
+                    "label": "visible eye pair",
+                    "target_kind": "reference_part",
+                    "target_label": "eye_pair",
+                }
+            ],
+        },
+        domain_profile="creature",
+        templates=[],
+    ).model_dump(mode="json")
+    state = SessionCapabilityState(
+        phase=SessionPhase.BUILD,
+        gate_plan=gate_plan,
+    )
+    set_session_capability_state(ctx, state)
+
+    restored = get_session_capability_state(ctx)
+
+    assert restored.gate_plan is not None
+    assert restored.gate_plan["plan_id"] == "creature_squirrel_gates"
+    assert restored.gate_plan["gates"][0]["target_label"] == "eye_pair"
 
 
 def test_default_session_state_has_no_guided_part_registry():

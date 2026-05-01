@@ -19,6 +19,7 @@ from fastmcp import Context
 
 from server.adapters.mcp.context_utils import ctx_info, ctx_session_id, ctx_transport_type
 from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract
+from server.adapters.mcp.contracts.quality_gates import GatePlanContract
 from server.adapters.mcp.contracts.reference import (
     GuidedReferenceReadinessContract,
     ReferenceActionHintContract,
@@ -370,6 +371,7 @@ def _stage_compare_response(
     session_id: str | None = None,
     transport: str | None = None,
     guided_flow_state: dict[str, Any] | None = None,
+    active_gate_plan: dict[str, Any] | None = None,
     checkpoint_id: str,
     checkpoint_label: str | None,
     goal: str | None,
@@ -410,6 +412,7 @@ def _stage_compare_response(
         guided_flow_state=(
             GuidedFlowStateContract.model_validate(guided_flow_state) if guided_flow_state is not None else None
         ),
+        active_gate_plan=GatePlanContract.model_validate(active_gate_plan) if active_gate_plan is not None else None,
         guided_reference_readiness=guided_reference_readiness,
         target_object=target_object,
         target_objects=target_objects,
@@ -449,6 +452,7 @@ def _iterate_stage_response(
     transport: str | None = None,
     goal: str | None,
     guided_flow_state: dict[str, Any] | None = None,
+    active_gate_plan: dict[str, Any] | None = None,
     target_object: str | None,
     target_objects: list[str],
     collection_name: str | None,
@@ -489,6 +493,7 @@ def _iterate_stage_response(
         guided_flow_state=(
             GuidedFlowStateContract.model_validate(guided_flow_state) if guided_flow_state is not None else None
         ),
+        active_gate_plan=GatePlanContract.model_validate(active_gate_plan) if active_gate_plan is not None else None,
         guided_reference_readiness=guided_reference_readiness or compare_result.guided_reference_readiness,
         target_object=target_object,
         target_objects=target_objects,
@@ -3266,6 +3271,7 @@ async def _run_stage_checkpoint_compare(
             session_id=session_id,
             transport=transport,
             guided_flow_state=session.guided_flow_state,
+            active_gate_plan=session.gate_plan,
             checkpoint_id=checkpoint_id,
             checkpoint_label=checkpoint_label,
             goal=goal,
@@ -3298,6 +3304,7 @@ async def _run_stage_checkpoint_compare(
             session_id=session_id,
             transport=transport,
             guided_flow_state=session.guided_flow_state,
+            active_gate_plan=session.gate_plan,
             checkpoint_id=checkpoint_id,
             checkpoint_label=checkpoint_label,
             goal=goal,
@@ -3325,6 +3332,7 @@ async def _run_stage_checkpoint_compare(
             session_id=session_id,
             transport=transport,
             guided_flow_state=session.guided_flow_state,
+            active_gate_plan=session.gate_plan,
             checkpoint_id=checkpoint_id,
             checkpoint_label=checkpoint_label,
             goal=goal,
@@ -3352,6 +3360,7 @@ async def _run_stage_checkpoint_compare(
             session_id=session_id,
             transport=transport,
             guided_flow_state=session.guided_flow_state,
+            active_gate_plan=session.gate_plan,
             checkpoint_id=checkpoint_id,
             checkpoint_label=checkpoint_label,
             goal=goal,
@@ -3382,6 +3391,7 @@ async def _run_stage_checkpoint_compare(
             session_id=session_id,
             transport=transport,
             guided_flow_state=session.guided_flow_state,
+            active_gate_plan=session.gate_plan,
             checkpoint_id=checkpoint_id,
             checkpoint_label=checkpoint_label,
             goal=goal,
@@ -3585,6 +3595,7 @@ async def _run_stage_checkpoint_compare(
         session_id=session_id,
         transport=transport,
         guided_flow_state=session.guided_flow_state,
+        active_gate_plan=session.gate_plan,
         checkpoint_id=checkpoint_id,
         checkpoint_label=checkpoint_label,
         goal=goal,
@@ -4073,6 +4084,7 @@ async def reference_iterate_stage_checkpoint(
             transport=compare_result.transport,
             goal=goal,
             guided_flow_state=advanced_state.guided_flow_state,
+            active_gate_plan=advanced_state.gate_plan,
             target_object=target_object,
             target_objects=list(target_objects or []),
             collection_name=collection_name,
@@ -4190,6 +4202,7 @@ async def reference_iterate_stage_checkpoint(
         transport=compare_result.transport,
         goal=goal,
         guided_flow_state=advanced_state.guided_flow_state,
+        active_gate_plan=advanced_state.gate_plan,
         target_object=target_object,
         target_objects=list(compare_result.target_objects or []),
         collection_name=collection_name,

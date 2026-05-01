@@ -241,6 +241,18 @@ Silhouette metrics and future part-segmentation outputs are perception inputs:
 - they do not become router safety policy on their own
 - `vision_contract_profile` remains routing metadata for external prompting/parsing, not evidence
 
+Goal-derived quality gates follow the same split:
+
+- LLMs, `reference_understanding`, silhouette analysis, segmentation,
+  classification scores, and VLM checkpoint findings may propose gates or
+  bounded evidence refs
+- the MCP/session layer normalizes those proposals into `active_gate_plan` and
+  starts every gate as `pending`
+- scene, spatial, mesh, and assertion verifiers own later `passed`, `failed`,
+  `blocked`, `stale`, or `waived` status transitions
+- client-supplied completion claims and hidden tool names are policy warnings,
+  not trusted truth
+
 The same boundary applies to the shipped read-only spatial graph artifacts:
 
 - `scene_scope_graph(...)` and `scene_relation_graph(...)` are inspection/truth

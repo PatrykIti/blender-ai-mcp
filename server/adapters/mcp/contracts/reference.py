@@ -21,6 +21,7 @@ from server.adapters.mcp.sampling.result_types import VisionAssistantContract
 
 from .base import MCPContract
 from .guided_flow import GuidedFlowStateContract
+from .quality_gates import GatePlanContract
 
 ReferencePlannerFamilyLiteral = Literal["macro", "modeling_mesh", "sculpt_region", "inspect_only"]
 ReferencePlannerSourceLiteral = Literal[
@@ -371,6 +372,7 @@ class ReferenceCompareStageCheckpointResponseContract(MCPContract):
     transport: str | None = None
     goal: str | None = None
     guided_flow_state: GuidedFlowStateContract | None = None
+    active_gate_plan: GatePlanContract | None = None
     guided_reference_readiness: GuidedReferenceReadinessContract | None = None
     target_object: str | None = None
     target_objects: list[str] = []
@@ -411,6 +413,7 @@ class ReferenceIterateStageCheckpointResponseContract(MCPContract):
     transport: str | None = None
     goal: str | None = None
     guided_flow_state: GuidedFlowStateContract | None = None
+    active_gate_plan: GatePlanContract | None = None
     guided_reference_readiness: GuidedReferenceReadinessContract | None = None
     target_object: str | None = None
     target_objects: list[str] = []

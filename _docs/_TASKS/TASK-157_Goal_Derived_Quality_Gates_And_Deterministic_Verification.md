@@ -1,6 +1,6 @@
 # TASK-157: Goal-Derived Quality Gates And Deterministic Verification
 
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
 **Priority:** 🔴 High
 **Category:** Guided Runtime / Cross-Domain Quality Gates
 **Estimated Effort:** Large
@@ -262,12 +262,13 @@ return maybe_advance_or_complete()
 
 ## Status / Board Update
 
-`TASK-157` remains the single promoted To Do board row. `TASK-157-01`,
-`TASK-157-01-01`, `TASK-157-02`, `TASK-157-02-01`, `TASK-157-03`,
+`TASK-157` is the single promoted In Progress board row. `TASK-157-01` and
+`TASK-157-01-01` are complete as the first contract/intake implementation
+slice. `TASK-157-02`, `TASK-157-02-01`, `TASK-157-03`,
 `TASK-157-03-01`, and `TASK-157-04` remain open child files under this
 umbrella and are intentionally not separate board rows. Changelog 277 records
-the docs refresh only; implementation slices should add their own changelog
-entries when shipped.
+the docs refresh only; changelog 279 records the first shipped gate contract
+and intake slice.
 
 ## Changelog Impact
 

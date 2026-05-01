@@ -607,6 +607,17 @@ hidden ordering assumptions.
   role slice; the server intentionally keeps the guided step in place instead
   of advancing to the next stage, even when the compare result itself produced
   no actionable correction hints
+- `router_set_goal(..., gate_proposal={...})` may accept an optional model- or
+  reference-derived gate proposal for the active guided goal. The server
+  normalizes it into `active_gate_plan`, starts every gate as `pending`, and
+  returns `gate_intake_result.policy_warnings` for dropped hidden tool names,
+  unsupported gate types, raw Blender/Python instructions, or client-supplied
+  completion claims such as `passed`.
+- `router_get_status(...)`, `router_set_goal(...)`, and staged
+  reference compare/iterate payloads can expose `active_gate_plan`; LLM,
+  `reference_understanding`, silhouette, segmentation, classification, and VLM
+  checkpoint sources may propose or support gates, but scene/spatial/mesh and
+  assertion evidence remain the truth authority for pass/fail status.
 - if staged compare degrades but strong deterministic truth findings still
   exist, use the same inspect/measure/assert handoff instead of improvising
   another large free-form correction
