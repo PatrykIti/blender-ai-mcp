@@ -618,6 +618,10 @@ hidden ordering assumptions.
   `reference_understanding`, silhouette, segmentation, classification, and VLM
   checkpoint sources may propose or support gates, but scene/spatial/mesh and
   assertion evidence remain the truth authority for pass/fail status.
+- `scene_relation_graph(...)` updates relation-backed quality gates with
+  authoritative evidence refs, status reasons, completion blockers, and bounded
+  repair-tool hints; later guided scene mutations mark those verifier-backed
+  statuses `stale` through the existing spatial dirtying path.
 - if staged compare degrades but strong deterministic truth findings still
   exist, use the same inspect/measure/assert handoff instead of improvising
   another large free-form correction

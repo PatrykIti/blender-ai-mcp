@@ -80,7 +80,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md) | **Goal-Derived Quality Gates And Deterministic Verification** | 🔴 High | First contract/intake slice is complete: `gate_proposal` normalizes into `active_gate_plan`, while deterministic verifier/status, gate-driven visibility, and cross-domain E2E slices remain open. |
+| [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md) | **Goal-Derived Quality Gates And Deterministic Verification** | 🔴 High | Contract/intake plus deterministic relation-graph verifier/status slices are complete; gate-driven visibility/search and cross-domain E2E remain open. |
 
 ---
 

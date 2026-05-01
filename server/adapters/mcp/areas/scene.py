@@ -63,6 +63,8 @@ from server.adapters.mcp.session_capabilities import (
     record_guided_flow_spatial_check_completion,
     record_guided_flow_spatial_check_completion_async,
     set_session_capability_state_async,
+    update_quality_gate_plan_from_relation_graph,
+    update_quality_gate_plan_from_relation_graph_async,
 )
 from server.adapters.mcp.tasks.candidacy import get_tool_task_config
 from server.adapters.mcp.tasks.task_bridge import (
@@ -2775,10 +2777,15 @@ def scene_relation_graph(
         direct_executor=execute,
     )
     if isinstance(result, SceneRelationGraphResponseContract):
-        return result
-    if isinstance(result, dict):
-        return SceneRelationGraphResponseContract.model_validate(result)
-    return SceneRelationGraphResponseContract(error=str(result))
+        contract = result
+    elif isinstance(result, dict):
+        contract = SceneRelationGraphResponseContract.model_validate(result)
+    else:
+        contract = SceneRelationGraphResponseContract(error=str(result))
+
+    if contract.payload is not None:
+        update_quality_gate_plan_from_relation_graph(ctx, contract.payload.model_dump(mode="json"))
+    return contract
 
 
 async def _scene_relation_graph_async(
@@ -2842,6 +2849,7 @@ async def _scene_relation_graph_async(
             tool_name="scene_relation_graph",
             resolved_scope=contract.payload.scope.model_dump(mode="json"),
         )
+        await update_quality_gate_plan_from_relation_graph_async(ctx, contract.payload.model_dump(mode="json"))
     return contract
 
 

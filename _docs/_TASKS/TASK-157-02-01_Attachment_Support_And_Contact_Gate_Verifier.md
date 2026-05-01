@@ -1,6 +1,6 @@
 # TASK-157-02-01: Attachment, Support, And Contact Gate Verifier
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-157-02](./TASK-157-02_Deterministic_Gate_Verifier_And_Status_Model.md)
 **Category:** Guided Runtime / Spatial Gate Verification
@@ -10,6 +10,34 @@
 
 Implement the first deterministic verifier for `attachment_seam` and
 `support_contact` gates using existing spatial relation graph evidence.
+
+## Completion Summary
+
+Completed on 2026-05-01.
+
+- Implemented `attachment_seam` and `support_contact` evaluation from
+  `SceneRelationGraphPayloadContract` pairs.
+- `floating_gap`, non-embedded `intersecting`, unsupported support, and
+  relation errors now produce machine-readable `failed` or `blocked` states.
+- `seated_contact` and `supported` relation verdicts pass only with
+  authoritative spatial relation evidence refs.
+- Embedded/organic intersections pass only when the normalized gate policy sets
+  `allow_embedded_intersection=true`.
+- Repair hints reuse existing bounded tools such as
+  `scene_relation_graph`, `scene_measure_gap`, `scene_assert_contact`,
+  `macro_attach_part_to_surface`, `macro_align_part_with_contact`, and
+  `macro_place_supported_pair`.
+
+Blender-backed creature/building regression coverage remains under
+[TASK-157-04](./TASK-157-04_Cross_Domain_E2E_Gate_Regression_Harness.md) so the
+first verifier slice does not create an isolated E2E flow.
+
+## Validation
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_contracts.py tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/adapters/mcp/test_quality_gate_intake.py -v`
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_spatial_graph_service.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/adapters/mcp/test_quality_gate_verifier.py -v`
+- `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --files README.md _docs/AVAILABLE_TOOLS_SUMMARY.md _docs/_CHANGELOG/README.md _docs/_CHANGELOG/280-2026-05-01-task-157-deterministic-gate-verifier.md _docs/_MCP_SERVER/README.md _docs/_PROMPTS/README.md _docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md _docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md _docs/_TASKS/README.md _docs/_TASKS/TASK-157-02-01_Attachment_Support_And_Contact_Gate_Verifier.md _docs/_TASKS/TASK-157-02_Deterministic_Gate_Verifier_And_Status_Model.md _docs/_TASKS/TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md _docs/_TESTS/README.md server/adapters/mcp/areas/scene.py server/adapters/mcp/contracts/__init__.py server/adapters/mcp/contracts/quality_gates.py server/adapters/mcp/session_capabilities.py server/adapters/mcp/transforms/quality_gate_verifier.py tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_quality_gate_verifier.py`
 
 ## Repository Touchpoints
 

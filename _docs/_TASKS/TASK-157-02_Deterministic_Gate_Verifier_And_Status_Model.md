@@ -1,6 +1,6 @@
 # TASK-157-02: Deterministic Gate Verifier And Status Model
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md)
 **Category:** Guided Runtime / Gate Verification
@@ -16,6 +16,35 @@ truth authority for gate pass/fail status.
 This layer must make evidence authority explicit. Perception outputs can
 support a verifier only when the gate type allows that evidence class; they do
 not become a generic substitute for Blender truth.
+
+## Completion Summary
+
+Completed on 2026-05-01.
+
+- Added evidence-backed gate status contracts, status summaries,
+  `completion_blockers`, verifier results, evidence authority, and bounded
+  repair-tool hints in `server/adapters/mcp/contracts/quality_gates.py`.
+- Added the deterministic relation-graph verifier in
+  `server/adapters/mcp/transforms/quality_gate_verifier.py`.
+- Persisted verifier results into session `active_gate_plan` whenever
+  `scene_relation_graph(...)` returns authoritative payloads.
+- Marked evidence-backed gates `stale` after guided scene mutations, using the
+  existing guided spatial dirtying path instead of a parallel invalidation
+  flow.
+- Kept perception/reference sources advisory: they may seed proposals or
+  evidence refs, but only scene/spatial/mesh/assertion verifier evidence can
+  move gates to `passed` or `failed`.
+
+Follow-on: cross-domain Blender-backed runtime/E2E proof remains tracked by
+[TASK-157-04](./TASK-157-04_Cross_Domain_E2E_Gate_Regression_Harness.md).
+
+## Validation
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_contracts.py tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/adapters/mcp/test_quality_gate_intake.py -v`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_contracts.py tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/tools/scene/test_scene_contracts.py -v`
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_spatial_graph_service.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/adapters/mcp/test_quality_gate_verifier.py -v`
+- `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --files README.md _docs/AVAILABLE_TOOLS_SUMMARY.md _docs/_CHANGELOG/README.md _docs/_CHANGELOG/280-2026-05-01-task-157-deterministic-gate-verifier.md _docs/_MCP_SERVER/README.md _docs/_PROMPTS/README.md _docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md _docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md _docs/_TASKS/README.md _docs/_TASKS/TASK-157-02-01_Attachment_Support_And_Contact_Gate_Verifier.md _docs/_TASKS/TASK-157-02_Deterministic_Gate_Verifier_And_Status_Model.md _docs/_TASKS/TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md _docs/_TESTS/README.md server/adapters/mcp/areas/scene.py server/adapters/mcp/contracts/__init__.py server/adapters/mcp/contracts/quality_gates.py server/adapters/mcp/session_capabilities.py server/adapters/mcp/transforms/quality_gate_verifier.py tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_quality_gate_verifier.py`
 
 ## Repository Touchpoints
 

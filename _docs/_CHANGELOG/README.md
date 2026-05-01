@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [280](./280-2026-05-01-task-157-deterministic-gate-verifier.md) | 2026-05-01 | **TASK-157 deterministic quality-gate verifier** | - |
 | [279](./279-2026-05-01-task-157-quality-gate-contract-intake.md) | 2026-05-01 | **TASK-157 quality-gate contract and intake** | - |
 | [278](./278-2026-05-01-task-158-vision-creature-boundary-alignment-plan.md) | 2026-05-01 | **TASK-158 reference understanding follow-up and boundary alignment plan** | - |
 | [277](./277-2026-04-30-task-157-perception-evidence-contract-refresh.md) | 2026-04-30 | **TASK-157 perception evidence contract refresh** | - |

@@ -32,9 +32,41 @@ GateProposalSourceLiteral: TypeAlias = Literal[
     "reference_checkpoint",
     "operator_override",
 ]
+GateEvidenceSourceLiteral: TypeAlias = Literal[
+    "llm_goal",
+    "reference_understanding",
+    "domain_template",
+    "silhouette_analysis",
+    "part_segmentation",
+    "classification_scores",
+    "reference_checkpoint",
+    "operator_override",
+    "scene_truth",
+    "spatial_relation",
+    "mesh_metric",
+    "assertion_tool",
+]
 GatePriorityLiteral: TypeAlias = Literal["high", "normal", "low"]
 GateDeclarationStatusLiteral: TypeAlias = Literal["proposed", "requested"]
 GateStatusLiteral: TypeAlias = Literal["pending", "blocked", "passed", "failed", "waived", "stale"]
+GateStatusReasonCodeLiteral: TypeAlias = Literal[
+    "alignment_drift_allowed",
+    "missing_authoritative_evidence",
+    "missing_relation_pair",
+    "missing_required_evidence",
+    "missing_required_part",
+    "missing_scope",
+    "relation_error",
+    "relation_floating_gap",
+    "relation_intersecting_not_allowed",
+    "relation_misaligned",
+    "relation_supported",
+    "relation_unsupported",
+    "required_gate_unresolved",
+    "scene_mutation_after_verification",
+    "unsupported_verifier",
+    "verifier_needs_followup",
+]
 GateTargetKindLiteral: TypeAlias = Literal[
     "object",
     "object_role",
@@ -66,6 +98,7 @@ GateVerificationStrategyLiteral: TypeAlias = Literal[
     "stage_completion",
     "aggregate_required_gates",
 ]
+GateEvidenceAuthorityLiteral: TypeAlias = Literal["authoritative", "supporting", "proposal", "none"]
 GatePolicyWarningCodeLiteral: TypeAlias = Literal[
     "unsupported_gate_type",
     "unsupported_priority",
@@ -142,6 +175,31 @@ _CORRECTION_FAMILIES_BY_GATE_TYPE: dict[GateTypeLiteral, tuple[GuidedFlowFamilyL
     "refinement_stage": ("secondary_parts", "inspect_validate"),
     "final_completion": ("inspect_validate", "finish"),
 }
+_RECOMMENDED_TOOLS_BY_GATE_TYPE: dict[GateTypeLiteral, tuple[str, ...]] = {
+    "required_part": ("scene_scope_graph",),
+    "attachment_seam": (
+        "scene_relation_graph",
+        "scene_measure_gap",
+        "scene_assert_contact",
+        "macro_attach_part_to_surface",
+        "macro_align_part_with_contact",
+    ),
+    "support_contact": (
+        "scene_relation_graph",
+        "scene_measure_gap",
+        "scene_assert_contact",
+        "macro_place_supported_pair",
+        "macro_attach_part_to_surface",
+        "macro_align_part_with_contact",
+    ),
+    "symmetry_pair": ("scene_relation_graph", "scene_assert_symmetry"),
+    "proportion_ratio": ("scene_measure_dimensions",),
+    "shape_profile": ("mesh_inspect", "scene_view_diagnostics"),
+    "opening_or_cut": ("mesh_inspect", "scene_view_diagnostics"),
+    "refinement_stage": ("scene_inspect", "mesh_inspect"),
+    "final_completion": ("scene_scope_graph", "scene_relation_graph", "scene_view_diagnostics"),
+}
+_BLOCKING_GATE_STATUSES: set[GateStatusLiteral] = {"pending", "blocked", "failed", "stale"}
 
 
 class GateSourceProvenanceContract(MCPContract):
@@ -171,13 +229,21 @@ class GateEvidenceRefContract(MCPContract):
 
     evidence_id: str
     evidence_kind: GateEvidenceKindLiteral
-    source: GateProposalSourceLiteral
+    source: GateEvidenceSourceLiteral
     status: Literal["available", "unavailable", "stale"] = "available"
+    authority: GateEvidenceAuthorityLiteral = "supporting"
     tool_name: str | None = None
     reference_id: str | None = None
     capture_id: str | None = None
     scope_fingerprint: str | None = None
+    relation_pair_id: str | None = None
+    from_object: str | None = None
+    to_object: str | None = None
+    verdict: str | None = None
+    measured_value: float | None = None
+    reason_code: GateStatusReasonCodeLiteral | None = None
     summary: str | None = None
+    metadata: dict[str, Any] = {}
 
 
 class GatePolicyWarningContract(MCPContract):
@@ -205,6 +271,8 @@ class GateProposalGateContract(MCPContract):
     priority: str | None = None
     status: str | None = None
     rationale: str | None = None
+    allow_embedded_intersection: bool | None = None
+    allow_alignment_drift: bool | None = None
     allowed_correction_families: list[str] = []
     evidence_requirements: list[Any] = []
     source_provenance: list[GateSourceProvenanceContract] = []
@@ -232,12 +300,18 @@ class NormalizedQualityGateContract(MCPContract):
     required: bool = True
     priority: GatePriorityLiteral = "normal"
     status: GateStatusLiteral = "pending"
+    status_reason: GateStatusReasonCodeLiteral | None = None
     verification_strategy: GateVerificationStrategyLiteral
     allowed_correction_families: list[GuidedFlowFamilyLiteral] = []
+    recommended_bounded_tools: list[str] = []
     proposal_sources: list[GateProposalSourceLiteral] = []
     source_provenance: list[GateSourceProvenanceContract] = []
     evidence_requirements: list[GateEvidenceRequirementContract] = []
     evidence_refs: list[GateEvidenceRefContract] = []
+    verified_at_spatial_version: int | None = None
+    stale_since_spatial_version: int | None = None
+    allow_embedded_intersection: bool = False
+    allow_alignment_drift: bool = False
     rationale: str | None = None
 
 
@@ -256,6 +330,46 @@ class DomainQualityGateTemplateContract(MCPContract):
     verification_strategy: GateVerificationStrategyLiteral | None = None
     allowed_correction_families: list[GuidedFlowFamilyLiteral] = []
     evidence_requirements: list[GateEvidenceRequirementContract] = []
+    allow_embedded_intersection: bool = False
+    allow_alignment_drift: bool = False
+
+
+class GateCompletionBlockerContract(MCPContract):
+    """Machine-readable reason why final completion cannot pass yet."""
+
+    gate_id: str
+    gate_type: GateTypeLiteral
+    label: str
+    status: GateStatusLiteral
+    reason_code: GateStatusReasonCodeLiteral
+    target_kind: GateTargetKindLiteral = "unknown"
+    target_label: str | None = None
+    target_objects: list[str] = []
+    required_evidence_kinds: list[GateEvidenceKindLiteral] = []
+    allowed_correction_families: list[GuidedFlowFamilyLiteral] = []
+    recommended_bounded_tools: list[str] = []
+    message: str
+
+
+class GateStatusSummaryContract(MCPContract):
+    """Compact status counters for a normalized gate plan."""
+
+    required_total: int = 0
+    required_passed: int = 0
+    required_blocking: int = 0
+    optional_total: int = 0
+    status_counts: dict[GateStatusLiteral, int] = {}
+
+
+class GateVerifierResultContract(MCPContract):
+    """Verifier result for one gate after reading authoritative evidence."""
+
+    gate_id: str
+    status: GateStatusLiteral
+    reason_code: GateStatusReasonCodeLiteral | None = None
+    evidence_refs: list[GateEvidenceRefContract] = []
+    completion_blocker: GateCompletionBlockerContract | None = None
+    recommended_bounded_tools: list[str] = []
 
 
 class GatePlanContract(MCPContract):
@@ -268,6 +382,9 @@ class GatePlanContract(MCPContract):
     proposal_id: str | None = None
     required_gate_count: int = 0
     optional_gate_count: int = 0
+    completion_blockers: list[GateCompletionBlockerContract] = []
+    status_summary: GateStatusSummaryContract | None = None
+    last_verification_source: str | None = None
 
 
 class GateIntakeResultContract(MCPContract):
@@ -400,6 +517,78 @@ def normalize_gate_plan(
         proposal_id=proposal_contract.proposal_id,
         required_gate_count=sum(1 for gate in normalized_gates if gate.required),
         optional_gate_count=sum(1 for gate in normalized_gates if not gate.required),
+        completion_blockers=_completion_blockers_for_gates(normalized_gates),
+        status_summary=_status_summary_for_gates(normalized_gates),
+    )
+
+
+def refresh_gate_plan_status(
+    plan: GatePlanContract | Mapping[str, Any],
+    *,
+    last_verification_source: str | None = None,
+) -> GatePlanContract:
+    """Recompute derived blockers and counters for a gate plan."""
+
+    contract = GatePlanContract.model_validate(plan)
+    gates = list(contract.gates)
+    return contract.model_copy(
+        update={
+            "gates": gates,
+            "required_gate_count": sum(1 for gate in gates if gate.required),
+            "optional_gate_count": sum(1 for gate in gates if not gate.required),
+            "completion_blockers": _completion_blockers_for_gates(gates),
+            "status_summary": _status_summary_for_gates(gates),
+            "last_verification_source": last_verification_source or contract.last_verification_source,
+        }
+    )
+
+
+def completion_blockers_for_gate_plan(
+    plan: GatePlanContract | Mapping[str, Any],
+) -> list[GateCompletionBlockerContract]:
+    """Return required unresolved gates as machine-readable completion blockers."""
+
+    contract = GatePlanContract.model_validate(plan)
+    return _completion_blockers_for_gates(contract.gates)
+
+
+def mark_gate_plan_stale(
+    plan: GatePlanContract | Mapping[str, Any],
+    *,
+    reason: str,
+    spatial_state_version: int | None = None,
+    affected_objects: list[str] | None = None,
+) -> GatePlanContract:
+    """Mark evidence-backed gate statuses stale after a scene mutation."""
+
+    contract = GatePlanContract.model_validate(plan)
+    affected = {_normalize_token(item) for item in affected_objects or [] if item}
+    updated_gates: list[NormalizedQualityGateContract] = []
+    for gate in contract.gates:
+        if gate.status not in {"passed", "failed", "blocked"}:
+            updated_gates.append(gate)
+            continue
+        if affected and not _gate_targets_any_object(gate, affected):
+            updated_gates.append(gate)
+            continue
+        updated_gates.append(
+            gate.model_copy(
+                update={
+                    "status": "stale",
+                    "status_reason": "scene_mutation_after_verification",
+                    "stale_since_spatial_version": spatial_state_version,
+                    "recommended_bounded_tools": gate.recommended_bounded_tools
+                    or _recommended_tools_for_gate_type(gate.gate_type),
+                    "evidence_refs": [
+                        ref.model_copy(update={"status": "stale", "reason_code": "scene_mutation_after_verification"})
+                        for ref in gate.evidence_refs
+                    ],
+                }
+            )
+        )
+    return refresh_gate_plan_status(
+        contract.model_copy(update={"gates": updated_gates}),
+        last_verification_source=reason,
     )
 
 
@@ -492,10 +681,13 @@ def _normalize_one_gate(
         status="pending",
         verification_strategy=_VERIFICATION_STRATEGY_BY_GATE_TYPE[gate_type],
         allowed_correction_families=allowed_correction_families,
+        recommended_bounded_tools=_recommended_tools_for_gate_type(gate_type),
         proposal_sources=[proposal.source],
         source_provenance=provenance,
         evidence_requirements=evidence_requirements,
         evidence_refs=[],
+        allow_embedded_intersection=bool(gate.allow_embedded_intersection),
+        allow_alignment_drift=bool(gate.allow_alignment_drift),
         rationale=_clean_text(gate.rationale),
     )
 
@@ -609,6 +801,7 @@ def _normalized_gate_from_template(template: DomainQualityGateTemplateContract) 
         status="pending",
         verification_strategy=template.verification_strategy or _VERIFICATION_STRATEGY_BY_GATE_TYPE[template.gate_type],
         allowed_correction_families=allowed_correction_families,
+        recommended_bounded_tools=_recommended_tools_for_gate_type(template.gate_type),
         proposal_sources=["domain_template"],
         source_provenance=[
             GateSourceProvenanceContract(
@@ -619,6 +812,8 @@ def _normalized_gate_from_template(template: DomainQualityGateTemplateContract) 
         ],
         evidence_requirements=evidence_requirements,
         evidence_refs=[],
+        allow_embedded_intersection=template.allow_embedded_intersection,
+        allow_alignment_drift=template.allow_alignment_drift,
     )
 
 
@@ -711,6 +906,76 @@ def _gate_match_key(
         tuple(sorted(_normalize_token(item) for item in target_objects if item)),
         target_kind,
     )
+
+
+def _completion_blockers_for_gates(
+    gates: list[NormalizedQualityGateContract],
+) -> list[GateCompletionBlockerContract]:
+    blockers: list[GateCompletionBlockerContract] = []
+    for gate in gates:
+        if not gate.required or gate.status not in _BLOCKING_GATE_STATUSES:
+            continue
+        reason_code = gate.status_reason or "required_gate_unresolved"
+        blockers.append(
+            GateCompletionBlockerContract(
+                gate_id=gate.gate_id,
+                gate_type=gate.gate_type,
+                label=gate.label,
+                status=gate.status,
+                reason_code=reason_code,
+                target_kind=gate.target_kind,
+                target_label=gate.target_label,
+                target_objects=gate.target_objects,
+                required_evidence_kinds=[
+                    requirement.evidence_kind for requirement in gate.evidence_requirements if requirement.required
+                ],
+                allowed_correction_families=gate.allowed_correction_families,
+                recommended_bounded_tools=gate.recommended_bounded_tools
+                or _recommended_tools_for_gate_type(gate.gate_type),
+                message=_blocker_message(gate, reason_code),
+            )
+        )
+    return blockers
+
+
+def _status_summary_for_gates(
+    gates: list[NormalizedQualityGateContract],
+) -> GateStatusSummaryContract:
+    status_counts = {status: 0 for status in get_args(GateStatusLiteral)}
+    for gate in gates:
+        status_counts[gate.status] += 1
+    return GateStatusSummaryContract(
+        required_total=sum(1 for gate in gates if gate.required),
+        required_passed=sum(1 for gate in gates if gate.required and gate.status in {"passed", "waived"}),
+        required_blocking=sum(1 for gate in gates if gate.required and gate.status in _BLOCKING_GATE_STATUSES),
+        optional_total=sum(1 for gate in gates if not gate.required),
+        status_counts=cast(dict[GateStatusLiteral, int], status_counts),
+    )
+
+
+def _blocker_message(
+    gate: NormalizedQualityGateContract,
+    reason_code: GateStatusReasonCodeLiteral,
+) -> str:
+    target = gate.target_label or ", ".join(gate.target_objects) or gate.target_kind
+    return f"Required quality gate '{gate.label}' for {target} is {gate.status}: {reason_code}."
+
+
+def _recommended_tools_for_gate_type(gate_type: GateTypeLiteral) -> list[str]:
+    return list(_RECOMMENDED_TOOLS_BY_GATE_TYPE[gate_type])
+
+
+def _gate_targets_any_object(
+    gate: NormalizedQualityGateContract,
+    affected_objects: set[str],
+) -> bool:
+    if not affected_objects:
+        return True
+    target_names = {_normalize_token(item) for item in gate.target_objects if item}
+    target_label = _normalize_token(gate.target_label or "")
+    if target_names & affected_objects:
+        return True
+    return any(token and token in target_label for token in affected_objects)
 
 
 def _warning(

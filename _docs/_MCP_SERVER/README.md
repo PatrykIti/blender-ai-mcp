@@ -573,6 +573,14 @@ Current guided-flow behavior:
   sources may propose gates and provenance, but they cannot mark gates
   `passed`, `failed`, `waived`, or `stale` without later server-owned verifier
   evidence
+- `scene_relation_graph(...)` now feeds authoritative spatial evidence into
+  the active gate plan for `required_part`, `attachment_seam`, and
+  `support_contact` verifier strategies; verifier output persists
+  evidence refs, `status_reason`, `completion_blockers`, status summaries,
+  and bounded repair-tool hints on `active_gate_plan`
+- guided scene mutations reuse the existing spatial dirtying path to mark
+  evidence-backed gate statuses `stale`; final completion remains blocked by
+  required gates in `pending`, `blocked`, `failed`, or `stale`
 - supported first-pass gate types are `required_part`, `attachment_seam`,
   `support_contact`, `symmetry_pair`, `proportion_ratio`, `shape_profile`,
   `opening_or_cut`, `refinement_stage`, and `final_completion`

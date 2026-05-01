@@ -250,6 +250,11 @@ Goal-derived quality gates follow the same split:
   starts every gate as `pending`
 - scene, spatial, mesh, and assertion verifiers own later `passed`, `failed`,
   `blocked`, `stale`, or `waived` status transitions
+- the first shipped verifier transition is relation-graph based:
+  `scene_relation_graph(...)` may mark `required_part`, `attachment_seam`, and
+  `support_contact` gates with authoritative `scene_truth` or
+  `spatial_relation` evidence refs, while guided mutations mark prior evidence
+  stale through the existing spatial dirtying path
 - client-supplied completion claims and hidden tool names are policy warnings,
   not trusted truth
 

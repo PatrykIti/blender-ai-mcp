@@ -155,8 +155,8 @@ same bounded evidence/proposal records through the vision/perception layer.
 |-------|------|---------|
 | 1 | [TASK-157-01](./TASK-157-01_Gate_Declaration_Schema_Normalization_And_Policy_Bounds.md) | Define the gate schema, LLM proposal intake, normalization, policy bounds, and domain template merge rules |
 | 2 | [TASK-157-01-01](./TASK-157-01-01_LLM_Proposed_Gate_Intake_And_Policy_Bounds.md) | Implement the first narrow intake contract for model-proposed gates without trusting model completion claims |
-| 3 | [TASK-157-02](./TASK-157-02_Deterministic_Gate_Verifier_And_Status_Model.md) | Build the verifier/status model that binds gates to spatial, assertion, object, mesh, and bounded perception-support evidence |
-| 4 | [TASK-157-02-01](./TASK-157-02-01_Attachment_Support_And_Contact_Gate_Verifier.md) | Ship the first seam/contact verifier for `attachment_seam` and `support_contact` gates |
+| 3 | [TASK-157-02](./TASK-157-02_Deterministic_Gate_Verifier_And_Status_Model.md) | ✅ Done - build the verifier/status model that binds gates to spatial, assertion, object, mesh, and bounded perception-support evidence |
+| 4 | [TASK-157-02-01](./TASK-157-02-01_Attachment_Support_And_Contact_Gate_Verifier.md) | ✅ Done - ship the first seam/contact verifier for `attachment_seam` and `support_contact` gates |
 | 5 | [TASK-157-03](./TASK-157-03_Guided_Flow_Gate_Runtime_Integration.md) | Integrate gate state into guided flow, visibility, search, checkpoints, and completion blocking |
 | 6 | [TASK-157-03-01](./TASK-157-03-01_Gate_Driven_Visibility_Search_And_Recovery_Policy.md) | Make unresolved gates open the right bounded tool families without broad catalog exposure |
 | 7 | [TASK-157-04](./TASK-157-04_Cross_Domain_E2E_Gate_Regression_Harness.md) | Add cross-domain E2E/regression coverage for creature and building-style gate behavior |

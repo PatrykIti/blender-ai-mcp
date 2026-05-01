@@ -24,6 +24,7 @@ from server.adapters.mcp.contracts.guided_flow import (
 from server.adapters.mcp.contracts.quality_gates import (
     GateIntakeResultContract,
     GatePlanContract,
+    mark_gate_plan_stale,
     normalize_gate_plan,
 )
 from server.adapters.mcp.session_phase import SessionPhase, coerce_session_phase
@@ -33,6 +34,7 @@ from server.adapters.mcp.session_state import (
     set_session_value,
     set_session_value_async,
 )
+from server.adapters.mcp.transforms.quality_gate_verifier import verify_gate_plan_with_relation_graph
 from server.adapters.mcp.transforms.visibility_policy import get_guided_overlay_family_order
 from server.router.application.session_phase_hints import derive_phase_hint_from_router_result
 
@@ -1307,6 +1309,70 @@ async def ingest_quality_gate_proposal_async(
     return result
 
 
+def _spatial_state_version_from_flow_state(flow_state: dict[str, Any] | None) -> int | None:
+    if flow_state is None:
+        return None
+    try:
+        contract = GuidedFlowStateContract.model_validate(flow_state)
+    except Exception:
+        return None
+    return contract.spatial_state_version
+
+
+def _scope_fingerprint_from_flow_state(flow_state: dict[str, Any] | None) -> str | None:
+    if flow_state is None:
+        return None
+    try:
+        contract = GuidedFlowStateContract.model_validate(flow_state)
+    except Exception:
+        return None
+    return contract.spatial_scope_fingerprint
+
+
+def update_quality_gate_plan_from_relation_graph(
+    ctx: Context,
+    relation_graph_payload: dict[str, Any],
+) -> SessionCapabilityState:
+    """Apply scene relation graph truth to the active session gate plan."""
+
+    current = get_session_capability_state(ctx)
+    if current.gate_plan is None:
+        return current
+
+    updated_gate_plan = verify_gate_plan_with_relation_graph(
+        current.gate_plan,
+        relation_graph_payload,
+        spatial_state_version=_spatial_state_version_from_flow_state(current.guided_flow_state),
+        scope_fingerprint=_scope_fingerprint_from_flow_state(current.guided_flow_state),
+    )
+    state = replace(current, gate_plan=updated_gate_plan.model_dump(mode="json", exclude_none=True))
+    set_session_capability_state(ctx, state)
+    refresh_visibility_for_session_state(ctx, state)
+    return state
+
+
+async def update_quality_gate_plan_from_relation_graph_async(
+    ctx: Context,
+    relation_graph_payload: dict[str, Any],
+) -> SessionCapabilityState:
+    """Async variant of quality-gate relation graph verification."""
+
+    current = await get_session_capability_state_async(ctx)
+    if current.gate_plan is None:
+        return current
+
+    updated_gate_plan = verify_gate_plan_with_relation_graph(
+        current.gate_plan,
+        relation_graph_payload,
+        spatial_state_version=_spatial_state_version_from_flow_state(current.guided_flow_state),
+        scope_fingerprint=_scope_fingerprint_from_flow_state(current.guided_flow_state),
+    )
+    state = replace(current, gate_plan=updated_gate_plan.model_dump(mode="json", exclude_none=True))
+    await set_session_capability_state_async(ctx, state)
+    await apply_visibility_for_session_state(ctx, state)
+    return state
+
+
 def _split_pending_reference_images_for_goal(
     pending_reference_images: list[dict[str, Any]] | None,
     *,
@@ -2000,6 +2066,15 @@ def mark_guided_spatial_state_stale(
         reason=reason or tool_name,
         part_registry=updated_registry,
     )
+    updated_gate_plan = (
+        mark_gate_plan_stale(
+            current.gate_plan,
+            reason=reason or tool_name,
+            spatial_state_version=_spatial_state_version_from_flow_state(updated_flow_state),
+        ).model_dump(mode="json", exclude_none=True)
+        if current.gate_plan is not None
+        else None
+    )
     state = SessionCapabilityState(
         phase=current.phase,
         goal=current.goal,
@@ -2018,7 +2093,7 @@ def mark_guided_spatial_state_stale(
         reference_images=current.reference_images,
         guided_handoff=current.guided_handoff,
         guided_flow_state=updated_flow_state,
-        gate_plan=current.gate_plan,
+        gate_plan=updated_gate_plan,
         guided_part_registry=updated_registry,
         pending_reference_images=current.pending_reference_images,
     )
@@ -2050,6 +2125,15 @@ async def mark_guided_spatial_state_stale_async(
         reason=reason or tool_name,
         part_registry=updated_registry,
     )
+    updated_gate_plan = (
+        mark_gate_plan_stale(
+            current.gate_plan,
+            reason=reason or tool_name,
+            spatial_state_version=_spatial_state_version_from_flow_state(updated_flow_state),
+        ).model_dump(mode="json", exclude_none=True)
+        if current.gate_plan is not None
+        else None
+    )
     state = SessionCapabilityState(
         phase=current.phase,
         goal=current.goal,
@@ -2068,7 +2152,7 @@ async def mark_guided_spatial_state_stale_async(
         reference_images=current.reference_images,
         guided_handoff=current.guided_handoff,
         guided_flow_state=updated_flow_state,
-        gate_plan=current.gate_plan,
+        gate_plan=updated_gate_plan,
         guided_part_registry=updated_registry,
         pending_reference_images=current.pending_reference_images,
     )

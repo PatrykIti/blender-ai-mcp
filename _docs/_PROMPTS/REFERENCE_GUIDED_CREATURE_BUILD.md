@@ -112,6 +112,10 @@ Rules:
   `gate_intake_result.policy_warnings`; hidden tool names, raw Blender/Python
   instructions, and perception-only completion claims are dropped or rewritten
   by server policy
+- after spatial checks, treat `active_gate_plan.completion_blockers`,
+  `status_reason`, evidence refs, and `recommended_bounded_tools` as the
+  authoritative repair/completion guide; do not reset the goal just because a
+  seam gate is failed or stale
 - attach references one at a time with
   `reference_images(action="attach", source_path=..., ...)`; do not pass
   batch shapes such as `images=[...]`

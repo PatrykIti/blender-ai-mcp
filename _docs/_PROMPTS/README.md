@@ -305,6 +305,10 @@ contract.
   `gate_intake_result.policy_warnings` when the model proposed dynamic quality
   gates; normalized gate statuses start as `pending` until later
   scene/spatial/mesh/assertion verifier evidence updates them
+- after `scene_relation_graph(...)`, inspect
+  `active_gate_plan.completion_blockers`, gate `status_reason`, and
+  `recommended_bounded_tools` before deciding whether to repair a seam,
+  continue the current stage, or attempt final completion
 - the server may keep build visibility step-gated during
   `establish_spatial_context`, so prompt text must not override that gating
 - for creature blockout seams, treat verdicts explicitly:
