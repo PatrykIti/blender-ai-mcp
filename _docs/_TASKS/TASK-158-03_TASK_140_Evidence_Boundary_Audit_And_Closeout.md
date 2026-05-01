@@ -36,6 +36,7 @@ Do not rewrite these unless a later audit proves they contradict the boundary:
 | `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:73-76` | States perception can support/propose but not own verifier truth |
 | `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:100-108` | Leaves the first reference-understanding public surface undecided and forbids a public `router_apply_reference_strategy` tool |
 | `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:176-188` | Defines alias/future-tool mapping for `mesh_edit`, `material_finish`, and low-poly macro names |
+| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:227-256` | Keeps SAM, CLIP/SigLIP, segmentation sidecars, and related heavy perception adapters optional and later |
 | `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:273-277` | Keeps low-poly macro names out of first implementation |
 | `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:290-296` | Routes implementation through current reference/guided-state seams or real `server/router/` owners, not a non-existent MCP router package |
 | `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:348-355` | Leaves public-surface and `material_finish` canonical-family promotion decisions open for later review |
@@ -69,7 +70,7 @@ Do not rewrite these unless a later audit proves they contradict the boundary:
 - `git diff --check`
 - `rg -n "quality-gate verifier evidence|provider/profile support evidence|vision_contract_profile" _docs/_TASKS/TASK-140*.md _docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md`
   - classify every hit as canonical/no-op or patch contradiction
-- `rg -n "reference_understand|router_apply_reference_strategy|server/adapters/mcp/router|mesh_edit|material_finish|mesh_shade_flat|macro_low_poly|scene/spatial/mesh/reference evidence|true attachment errors|true cleanup/intersection errors|reference evidence requires" _docs/blender-ai-mcp-vision-reference-understanding-plan.md _docs/_TASKS/TASK-135*.md _docs/_TASKS/TASK-140*.md _docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md`
+- `rg -n "reference_understand|router_apply_reference_strategy|server/adapters/mcp/router|mesh_edit|material_finish|mesh_shade_flat|macro_low_poly|macro_create_part|SAM|CLIP|SigLIP|GroundingDINO|OWL-ViT|scene/spatial/mesh/reference evidence|true attachment errors|true cleanup/intersection errors|reference evidence requires" _docs/blender-ai-mcp-vision-reference-understanding-plan.md _docs/_TASKS/TASK-135*.md _docs/_TASKS/TASK-140*.md _docs/_TASKS/TASK-157*.md _docs/_TASKS/TASK-158*.md _docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md`
   - expected result after completion: no unclassified drift
 - Confirm `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/README.md`, and the
   completion changelog entry are synchronized.

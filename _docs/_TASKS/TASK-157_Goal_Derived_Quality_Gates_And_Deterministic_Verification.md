@@ -118,13 +118,14 @@ not make visual feedback a gate-status authority. This umbrella is where that
 handoff becomes usable for quality gates.
 
 The gate contract should accept proposal and evidence provenance from existing
-perception surfaces without making those surfaces responsible for completion:
+and planned reference/perception surfaces without making those surfaces
+responsible for completion:
 
 | Input / Evidence Source | Contract Role | Authority Boundary |
 |-------------------------|---------------|--------------------|
-| `reference_understanding` | Optional model-readable summary of what attached references depict, expected style, likely parts, and construction path | May propose gates and default correction families; cannot pass gates |
+| `reference_understanding` | Planned/undecided model-readable summary of what attached references depict, expected style, likely parts, and construction path | May propose gates and default correction families; cannot pass gates |
 | `silhouette_analysis` | Deterministic reference/viewport shape metrics from the existing perception layer | May inform `shape_profile` and `proportion_ratio` verifier context when scoped and fresh; cannot pass gates by itself |
-| `part_segmentation` | Optional default-off segmentation sidecar output when configured | May provide target masks or part-region hints; cannot prove Blender object existence or attachment |
+| `part_segmentation` | Optional default-off segmentation sidecar output when configured later | May provide target masks or part-region hints; cannot prove Blender object existence or attachment |
 | `classification_scores` | Future CLIP/SigLIP-style classification payload scores | May select a domain profile or construction strategy; cannot prove gate completion |
 | VLM compare/iterate findings | Bounded visual mismatch or action-hint payloads from the active vision contract profile | May recommend gates, blockers, or tool families and may be linked as bounded provenance/support context; cannot pass gates without separate scene/spatial/mesh/assertion evidence |
 | scene/spatial/mesh/assertion tools | Blender truth evidence | Own object existence, contact, measurement, spatial relation, and final completion decisions |

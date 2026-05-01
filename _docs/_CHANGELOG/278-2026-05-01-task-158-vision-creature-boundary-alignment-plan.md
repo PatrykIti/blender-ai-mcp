@@ -25,6 +25,9 @@ Version: -
   responsibility-boundary anchor, additional roadmap no-op anchors, eval-pack
   classification rows, corrected board statistics, and one shared completion
   changelog rule for the child slices
+- added follow-up audit coverage for `macro_create_part` historical shorthand
+  and SAM/CLIP/SigLIP optional-adapter clusters so they cannot be mistaken for
+  current canonical tools or `TASK-158`/MVP runtime requirements
 
 ## Validation
 

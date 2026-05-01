@@ -34,7 +34,8 @@ mislead implementers:
   and `router_apply_reference_strategy(...)` as if they were planned public
   runtime surfaces
 - the same plan lists `mesh_edit`, `material_finish`, `mesh_shade_flat`, and
-  `macro_low_poly_*` in places that read like current canonical vocabulary
+  `macro_low_poly_*` in places that read like current canonical vocabulary, and
+  uses `macro_create_part` as if it were an existing create/register tool
 - `TASK-135` still says `reference evidence` can decide whether a gate passed
 - `TASK-135` Vision Mode wording can read as if perception defines true
   attachment or cleanup errors instead of proposing relation findings for the
@@ -89,7 +90,7 @@ This task deliberately does not:
 - add public MCP tools such as `reference_understand` or
   `router_apply_reference_strategy`
 - add canonical families named `mesh_edit`, `material_finish`,
-  `mesh_shade_flat`, or `macro_low_poly_*`
+  `mesh_shade_flat`, `macro_low_poly_*`, or `macro_create_part`
 - ship SAM, CLIP/SigLIP, Grounding DINO, or other heavy perception adapters
 - rewrite the full long-form Vision plan from scratch
 - change root `CHANGELOG.md`
@@ -100,7 +101,8 @@ This task deliberately does not:
 |------|---------------|--------------------|
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md` | `reference_understand(...)` and `router_apply_reference_strategy(...)` read as planned public/runtime surfaces | Mark as historical/draft strategy names or rewrite to current reference/guided-state seams; no public router strategy tool |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md` | `server/adapters/mcp/router/...` appears as a planned location | Replace or annotate as obsolete path sketch; current router/guided/reference owners must be named from live repo seams |
-| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md` | `mesh_edit`, `material_finish`, `mesh_shade_flat`, and `macro_low_poly_*` appear in allowed vocab/task examples | Map `mesh_edit` to current `modeling_mesh`, model `material_finish` as a stage/action hint or future family, and keep low-poly macro names explicitly future/noncanonical until shipped |
+| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md` | `mesh_edit`, `material_finish`, `mesh_shade_flat`, `macro_low_poly_*`, and `macro_create_part` appear in allowed vocab/task examples | Map `mesh_edit` to current `modeling_mesh`, model `material_finish` as a stage/action hint or future family, map `macro_create_part` to current create/register seams, and keep low-poly macro names explicitly future/noncanonical until shipped |
+| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md` | SAM/CLIP/SigLIP clusters appear as later implementation tasks | Classify as historical/future optional adapter sketches; no sidecar, model download, provider call, or runtime activation is part of TASK-158 or the MVP |
 | `TASK-135` | `scene/spatial/mesh/reference evidence` decides whether a gate passed | Replace with scene/spatial/mesh/assertion/verifier truth; reference/perception may seed proposals or bounded support only |
 | `TASK-135` | Vision Mode defines true attachment and cleanup errors | Vision may propose relation findings; verifier/spatial/assertion policy decides true errors and pass/fail |
 | `TASK-135-03` | `reference evidence requires them` for `shape_profile` child gates | Use normalized gate evidence and verifier-backed support refs; perception remains advisory |
@@ -116,21 +118,26 @@ rediscovering the same drift with broad grep.
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:25-45` | Add or update an upfront historical/draft note so `reference_understand(...)` and `router_apply_reference_strategy(...)` do not read as current public surfaces |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:230-249` | Annotate architecture diagram references to `mesh_edit` as aliases for current `modeling_mesh` or historical strategy labels |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:279-316` | Rewrite the `reference_understand(...)` example as a draft strategy sketch or map it to existing reference/guided-state seams |
-| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:430-466` | Annotate `mesh_edit`, `material_finish`, `mesh_shade_flat`, and `macro_low_poly_finish` as aliases/future candidates, not current canonical families/tools |
+| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:430-466` | Annotate `mesh_edit`, `material_finish`, `mesh_shade_flat`, `macro_low_poly_finish`, and `macro_create_part` as aliases/future candidates or historical shorthand, not current canonical families/tools |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:511-518` | Rewrite allowed-family examples so `mesh_edit` maps to `modeling_mesh` and `material_finish` is a stage/action hint or future family |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:641-688` | Fix family allowlists so noncanonical names are not presented as runtime vocabulary |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:744-815` | Rewrite `reference_understand(...)`, `router_apply_reference_strategy(...)`, `mesh_edit`, and `material_finish` as draft strategy names routed through current seams |
+| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:836-852` | Map `macro_create_part` to current `modeling_create_primitive(...)` with guided role/group auto-registration or `guided_register_part(...)` for existing objects |
+| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:912-919` | Same as above for remaining `macro_create_part` tool-list wording |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:948-968` | Mark `mesh_shade_flat` and `macro_low_poly_*` examples as future candidates until shipped |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:1006-1012` | Same as above for finish/low-poly macro examples |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:1155-1161` | Annotate remaining `mesh_edit` / `material_finish` JSON examples as aliases or future stage hints |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:1973-1989` | Classification-only row: concept-level `reference_understanding` hits are allowed when they do not imply a current public tool or verifier authority |
+| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2029-2043` | Classify CLIP/SigLIP and SAM sidecar phases as historical/future optional adapter sketches; no runtime activation is part of TASK-158 or the MVP |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2098-2183` | Replace obsolete proposed paths such as `server/adapters/mcp/router/...` with current owner seams or historical notes |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2186-2272` | Classification-only row: eval-pack test, fixture, and harness names may remain historical/future sketches when they do not imply current public tools or router surfaces |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2306-2316` | Reframe `reference_understand(...)` success criteria as draft shorthand routed through current reference/guided-state seams |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2438-2459` | Reframe `reference_understand` MCP surface task as historical/draft unless a future public-tool review promotes it |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2468-2476` | Replace obsolete `server/adapters/mcp/router/...` implementation paths with current owner seams or historical notes |
 | `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2518-2525` | Mark low-poly macro names as future optional candidates, not current tool names |
-| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2588-2595` | Reframe final `reference_understand(...)` summary as draft shorthand, not a shipped public tool |
+| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2553-2581` | Classify CLIP/SigLIP and SAM task blocks as future optional adapter sketches requiring their own follow-on contract/runtime task |
+| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2588-2605` | Reframe final `reference_understand(...)` summary as draft shorthand and keep CLIP/SigLIP and SAM as optional later adapters, not MVP dependencies |
+| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2697-2700` | Classify CLIP/SigLIP, SAM, and related part-localization libraries as future optional adapters, not TASK-158 or MVP runtime scope |
 | `_docs/_TASKS/TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md:68-77` | Replace `scene/spatial/mesh/reference evidence` pass/fail authority with scene/spatial/mesh/assertion/verifier truth |
 | `_docs/_TASKS/TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md:162-183` | Make Vision Mode relation findings advisory until verifier/spatial/assertion policy binds them to gate status |
 | `_docs/_TASKS/TASK-135-03_Low_Poly_Form_Refinement_Mesh_Window_And_Profile_Macros.md:90-98` | Replace standalone `reference evidence requires them` with normalized gate evidence and verifier-supported support refs |
@@ -140,6 +147,7 @@ rediscovering the same drift with broad grep.
 | `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:73-76` | Canonical no-op anchor for advisory-only Vision/perception and verifier-owned truth |
 | `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:100-108` | Canonical no-op anchor that leaves the first reference-understanding public surface undecided and forbids a public `router_apply_reference_strategy` tool |
 | `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:176-188` | Canonical no-op anchor for alias/future-tool mapping of `mesh_edit`, `material_finish`, and low-poly macro names |
+| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:227-256` | Canonical no-op anchor that keeps SAM, CLIP/SigLIP, segmentation sidecars, and related heavy perception adapters as optional later work |
 | `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:273-277` | Canonical no-op anchor that keeps low-poly macro names out of first implementation |
 | `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:290-296` | Canonical no-op anchor that routes implementation through current reference/guided-state seams or real `server/router/` owners, not a non-existent MCP router package |
 | `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:348-355` | Canonical no-op anchor for open public-surface decisions and deciding later whether `material_finish` becomes a canonical planner family |
@@ -203,10 +211,15 @@ Use these current contracts when deciding whether a term is canonical:
   evidence.
 - Treat the `TASK-140` anchors listed above as canonical references. Do not
   rewrite them during this cleanup; use them to evaluate other `TASK-140*` hits.
-- Every remaining `mesh_edit`, `material_finish`, `mesh_shade_flat`, and
-  `macro_low_poly_*` hit must be rewritten or annotated against the live
+- Every remaining `mesh_edit`, `material_finish`, `mesh_shade_flat`,
+  `macro_low_poly_*`, and `macro_create_part` hit must be rewritten or
+  annotated against the live create/register seams, live
   `ReferencePlannerFamilyLiteral`, live `GuidedFlowFamilyLiteral`, and the
   Vision roadmap alias policy.
+- Every remaining SAM, CLIP/SigLIP, Grounding DINO, OWL-ViT, or segmentation
+  sidecar hit must stay explicitly future optional and must not trigger a
+  sidecar, model download, provider call, or runtime activation under
+  `TASK-158`.
 
 ## Rewrite Pattern
 
@@ -241,6 +254,17 @@ After:
 `mesh_edit` is a strategy alias for current `modeling_mesh`; `material_finish`
 is a stage/action hint or future family until implemented and documented as a
 canonical surface.
+```
+
+```text
+Before:
+macro_create_part builds each creature part.
+
+After:
+`macro_create_part` is historical shorthand. Use current
+`modeling_create_primitive(...)` with guided role/group auto-registration for
+new objects, or `guided_register_part(...)` for existing objects, until a future
+macro surface is explicitly designed and shipped.
 ```
 
 ```text
@@ -280,7 +304,8 @@ longer contradict the `TASK-157` boundary.
 |-------|------------|
 | Whitespace / markdown patch hygiene | `git diff --check` |
 | Public-tool drift | `rg -n "reference_understand|router_apply_reference_strategy|server/adapters/mcp/router" _docs/blender-ai-mcp-vision-reference-understanding-plan.md` and manually classify every remaining hit as historical/draft or rewrite it |
-| Noncanonical family drift | `rg -n "mesh_edit|material_finish|mesh_shade_flat|macro_low_poly" _docs/blender-ai-mcp-vision-reference-understanding-plan.md _docs/_TASKS/TASK-135*.md _docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md` and verify no hit presents the name as a current canonical family/tool |
+| Noncanonical family/tool drift | `rg -n "mesh_edit|material_finish|mesh_shade_flat|macro_low_poly|macro_create_part" _docs/blender-ai-mcp-vision-reference-understanding-plan.md _docs/_TASKS/TASK-135*.md _docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md` and verify no hit presents the name as a current canonical family/tool |
+| Heavy perception adapter drift | `rg -n "SAM|CLIP|SigLIP|GroundingDINO|OWL-ViT" _docs/blender-ai-mcp-vision-reference-understanding-plan.md _docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md _docs/_TASKS/TASK-157*.md _docs/_TASKS/TASK-158*.md` and verify every hit is future optional, default-off, or explicitly out of MVP scope |
 | Truth-boundary drift | `rg -n "reference evidence|true attachment errors|true cleanup/intersection errors|decides whether the gate passed|quality-gate verifier evidence" _docs/_TASKS/TASK-135*.md _docs/_TASKS/TASK-140*.md _docs/blender-ai-mcp-vision-reference-understanding-plan.md` and verify authority remains with scene/spatial/mesh/assertion/verifier evidence |
 | Board / changelog | Confirm `_docs/_TASKS/README.md` and `_docs/_CHANGELOG/README.md` stay in sync with added or completed task docs |
 
@@ -317,8 +342,11 @@ parent or explicitly superseded if the implementation consolidates them.
   or `router_apply_reference_strategy(...)` are current public MCP/runtime
   surfaces.
 - The long-form Vision plan no longer presents `mesh_edit`,
-  `material_finish`, `mesh_shade_flat`, or `macro_low_poly_*` as current
-  canonical families/tools.
+  `material_finish`, `mesh_shade_flat`, `macro_low_poly_*`, or
+  `macro_create_part` as current canonical families/tools.
+- The long-form Vision plan no longer lets SAM, CLIP/SigLIP, segmentation
+  sidecars, or related heavy perception adapters read as `TASK-158` or MVP
+  implementation requirements.
 - `TASK-135` and `TASK-135-03` state that Vision/perception/reference evidence
   is advisory/proposal/support context unless a server-owned verifier maps it
   into bounded evidence refs.
