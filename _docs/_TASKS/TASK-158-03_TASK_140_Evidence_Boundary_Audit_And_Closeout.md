@@ -1,17 +1,17 @@
-# TASK-158-03: TASK-140 Evidence Boundary Audit And Closeout
+# TASK-158-03: TASK-140 Evidence Boundary Audit And TASK-158 Closeout
 
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
 **Parent:** [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md)
-**Category:** Documentation / Evidence Boundary Closeout
+**Category:** Guided Runtime / Evidence Boundary Closeout
 **Estimated Effort:** Small
 
 ## Objective
 
 Use existing `TASK-140` and roadmap wording as canonical anchors for
 provider/profile evidence separation, patch only contradictory `TASK-140*`
-wording if found, and close `TASK-158` with board/changelog/validation state in
-sync.
+wording if found, and close both `TASK-158` scopes with board/changelog,
+runtime validation, and docs validation state in sync.
 
 ## Repository Touchpoints
 
@@ -21,6 +21,8 @@ sync.
 | `_docs/_TASKS/TASK-140-05-03_Evidence_Taxonomy_Promotion_Criteria_And_Operator_Reporting.md` | Canonical anchor for support evidence reporting |
 | `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md` | Canonical anchor for advisory perception and verifier-owned truth |
 | `_docs/_TASKS/TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md` | Completion summary and status update |
+| `_docs/_TASKS/TASK-158-04_Reference_Understanding_Internal_Contract_And_Guided_Handoff.md` | Implementation closeout for bounded reference-understanding handoff |
+| `_docs/_TASKS/TASK-158-05_Optional_Perception_Adapter_Readiness_And_Eval_Harness.md` | Implementation closeout for default-off optional perception readiness |
 | `_docs/_TASKS/README.md` | Board status/count update |
 | `_docs/_CHANGELOG/` | Completion changelog update |
 
@@ -44,6 +46,8 @@ Do not rewrite these unless a later audit proves they contradict the boundary:
 ## Implementation Notes
 
 - Run the `TASK-158` validation grep after `TASK-158-01` and `TASK-158-02`.
+- Run the focused runtime/unit validation from `TASK-158-04` and `TASK-158-05`
+  after implementation slices complete.
 - Classify remaining `TASK-140*` hits as canonical/no-op or contradictory.
 - Patch only contradictory wording that blurs provider/profile evidence with
   quality-gate verifier evidence.
@@ -54,9 +58,9 @@ Do not rewrite these unless a later audit proves they contradict the boundary:
 
 ## Runtime / Security Contract Notes
 
-- This is a docs-only closeout/audit. It must not change provider routing,
-  `vision_contract_profile` values, MCP metadata, guided visibility, or runtime
-  verifier code.
+- This closeout must not change provider routing, `vision_contract_profile`
+  values, MCP metadata, guided visibility, or runtime verifier code by itself.
+  Runtime changes belong in `TASK-158-04` or `TASK-158-05` before closeout.
 - Stdio and Streamable HTTP behavior must remain unchanged.
 - No provider call, sidecar activation, model download, or new evidence
   collection is part of this task.
@@ -74,6 +78,9 @@ Do not rewrite these unless a later audit proves they contradict the boundary:
   - expected result after completion: no unclassified drift
 - Confirm `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/README.md`, and the
   completion changelog entry are synchronized.
+- Confirm `TASK-158-04` and `TASK-158-05` focused unit/fixture validations are
+  recorded, or explicitly mark deferred implementation slices as superseded or
+  follow-on work before closing the parent.
 
 ## Docs To Update
 
@@ -81,13 +88,15 @@ Do not rewrite these unless a later audit proves they contradict the boundary:
 - `_docs/_TASKS/TASK-158-01_Long_Form_Vision_Plan_Surface_And_Alias_Cleanup.md`
 - `_docs/_TASKS/TASK-158-02_Creature_Gate_Truth_Boundary_Alignment.md`
 - `_docs/_TASKS/TASK-158-03_TASK_140_Evidence_Boundary_Audit_And_Closeout.md`
+- `_docs/_TASKS/TASK-158-04_Reference_Understanding_Internal_Contract_And_Guided_Handoff.md`
+- `_docs/_TASKS/TASK-158-05_Optional_Perception_Adapter_Readiness_And_Eval_Harness.md`
 - `_docs/_TASKS/README.md`
 - `_docs/_CHANGELOG/`
 
 ## Changelog Impact
 
 - Add a new `_docs/_CHANGELOG/279-...task-158-...completion.md` entry with the
-  final grep results.
+  final grep results, implementation summary, and focused validation commands.
 - Refresh `_docs/_CHANGELOG/README.md`.
 - Leave changelog 278 as the creation/plan entry.
 
@@ -96,4 +105,6 @@ Do not rewrite these unless a later audit proves they contradict the boundary:
 - `TASK-140` evidence remains clearly provider/profile support evidence.
 - No `TASK-140*` wording tells implementers to use provider/profile confidence
   as quality-gate pass/fail truth.
+- `TASK-158-04` and `TASK-158-05` are implemented, explicitly deferred, or
+  superseded with reason before the parent closes.
 - `TASK-158` parent, children, board, and changelog are synchronized at close.

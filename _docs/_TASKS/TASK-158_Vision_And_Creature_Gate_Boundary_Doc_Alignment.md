@@ -1,16 +1,29 @@
-# TASK-158: Vision And Creature Gate Boundary Doc Alignment
+# TASK-158: Reference Understanding Follow-Up And Boundary Alignment
 
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
-**Category:** Documentation / Vision Boundary Alignment
-**Estimated Effort:** Medium
-**Depends On:** [TASK-157 docs refresh / changelog 277](../_CHANGELOG/277-2026-04-30-task-157-perception-evidence-contract-refresh.md)
+**Category:** Guided Runtime / Reference Understanding Follow-Up
+**Estimated Effort:** Large
+**Depends On:** [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-157 docs refresh / changelog 277](../_CHANGELOG/277-2026-04-30-task-157-perception-evidence-contract-refresh.md)
 **Related:** [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-135](./TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md), [TASK-135-03](./TASK-135-03_Low_Poly_Form_Refinement_Mesh_Window_And_Profile_Macros.md), [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md)
 
 ## Objective
 
-Align the remaining Vision/reference-understanding and creature-reconstruction
-planning docs with the `TASK-157` boundary:
+Carry the work that intentionally does not belong in `TASK-157` after the
+generic gate/verifier substrate lands, while preserving the boundary cleanup
+already planned for the Vision and creature docs.
+
+`TASK-158` has two explicit scopes:
+
+- **Scope A - Documentation and boundary alignment:** align the remaining
+  Vision/reference-understanding and creature-reconstruction planning docs with
+  the `TASK-157` boundary.
+- **Scope B - Post-TASK-157 implementation follow-up:** implement the bounded
+  reference-understanding contract, parser/prompt, guided/reference handoff,
+  alias normalization, and optional-perception readiness that were kept out of
+  `TASK-157`.
+
+Both scopes must preserve these authority rules:
 
 - Vision and perception may propose gates, relation findings, strategy hints,
   and bounded support/provenance evidence.
@@ -21,8 +34,10 @@ planning docs with the `TASK-157` boundary:
 - Draft tool and planner names from the long-form Vision plan must not read as
   current canonical families, public MCP tools, or shipped router surfaces.
 
-This is a docs-only alignment task. It should not change runtime code,
-metadata, tool exposure, or tests beyond documentation validation commands.
+Scope A is documentation-only. Scope B may change runtime code, contracts,
+metadata, tests, and docs, but only after `TASK-157` supplies the generic
+quality-gate substrate and only through existing reference/guided surfaces
+unless a separate public-tool review promotes a new public MCP tool.
 
 ## Business Problem
 
@@ -48,6 +63,13 @@ Leaving these drifts in place raises the chance that a future implementation
 will add a second router strategy flow, treat perception as truth, or introduce
 noncanonical tool families before the existing seams are extended.
 
+At the same time, treating `TASK-158` as documentation-only leaves important
+post-`TASK-157` product work without an execution home: bounded
+reference-understanding summaries, strategy normalization into guided state,
+optional default-off perception evidence, and eval fixtures that can make
+reference-guided reconstruction more reliable without expanding the core
+quality-gate substrate.
+
 ## Business Outcome
 
 After this task, the Vision and creature planning docs should give one
@@ -62,36 +84,64 @@ consistent implementation story:
 - future implementers know which names are aliases or candidates and which
   seams are current implementation targets
 
+After the implementation scope, the repo should also have a bounded
+reference-understanding follow-up path:
+
+- attached references can produce typed reference-understanding summaries
+  through current reference/guided seams
+- those summaries can propose or support gates created by `TASK-157`, but they
+  cannot mark gates passed
+- draft families and macro names are normalized to current guided/reference
+  family values and create/register seams
+- optional SAM/CLIP/SigLIP-style adapters remain default-off follow-ons with
+  explicit contracts, fixtures, and no implicit model downloads or provider
+  calls
+
 ## Relationship To Existing Board Items
 
-`TASK-158` is a promoted docs-only companion to the open `TASK-157` substrate.
-It does not extend the `TASK-157` implementation scope; it aligns downstream
-strategy and domain-consumer docs so future `TASK-135`, `TASK-135-03`, and
-`TASK-140` implementation work does not contradict the generic gate/verifier
-contract.
+`TASK-158` is a promoted follow-up after the open `TASK-157` substrate. It does
+not widen `TASK-157`; instead, it holds two pieces of work that sit outside the
+generic gate/verifier core:
+
+- alignment of downstream strategy and domain-consumer docs so future
+  `TASK-135`, `TASK-135-03`, and `TASK-140` implementation work does not
+  contradict the generic gate/verifier contract
+- implementation of reference-understanding and optional-perception support
+  that consumes `TASK-157` gate contracts after they exist
 
 The task remains one board-level row. Its child files are execution slices for
-the docs cleanup and should not become separate board rows unless this umbrella
-is later split.
+the docs cleanup and implementation follow-up and should not become separate
+board rows unless this umbrella is later split.
 
 ## Execution Structure
 
-| Order | Task | Purpose |
-|-------|------|---------|
-| 1 | [TASK-158-01](./TASK-158-01_Long_Form_Vision_Plan_Surface_And_Alias_Cleanup.md) | Mark or rewrite stale long-form Vision plan references to draft public surfaces, obsolete router paths, and noncanonical family/tool names |
-| 2 | [TASK-158-02](./TASK-158-02_Creature_Gate_Truth_Boundary_Alignment.md) | Align `TASK-135` and `TASK-135-03` with advisory Vision/perception and verifier-owned gate truth |
-| 3 | [TASK-158-03](./TASK-158-03_TASK_140_Evidence_Boundary_Audit_And_Closeout.md) | Treat `TASK-140` as the provider/profile evidence boundary anchor, run final grep validation, and close board/changelog state |
+| Order | Scope | Task | Purpose |
+|-------|-------|------|---------|
+| 1 | A | [TASK-158-01](./TASK-158-01_Long_Form_Vision_Plan_Surface_And_Alias_Cleanup.md) | Mark or rewrite stale long-form Vision plan references to draft public surfaces, obsolete router paths, and noncanonical family/tool names |
+| 2 | A | [TASK-158-02](./TASK-158-02_Creature_Gate_Truth_Boundary_Alignment.md) | Align `TASK-135` and `TASK-135-03` with advisory Vision/perception and verifier-owned gate truth |
+| 3 | B | [TASK-158-04](./TASK-158-04_Reference_Understanding_Internal_Contract_And_Guided_Handoff.md) | Implement the bounded reference-understanding contract, parser/prompt path, alias normalization, and guided/reference handoff after `TASK-157` exists |
+| 4 | B | [TASK-158-05](./TASK-158-05_Optional_Perception_Adapter_Readiness_And_Eval_Harness.md) | Add default-off optional-perception adapter readiness and eval fixtures without making SAM/CLIP/SigLIP MVP dependencies |
+| 5 | A+B | [TASK-158-03](./TASK-158-03_TASK_140_Evidence_Boundary_Audit_And_Closeout.md) | Treat `TASK-140` as the provider/profile evidence boundary anchor, run final grep/runtime validation, and close board/changelog state |
 
 ## Non-Goals
 
 This task deliberately does not:
 
-- implement `TASK-157`, `TASK-135`, `TASK-135-03`, or `TASK-140`
-- add public MCP tools such as `reference_understand` or
-  `router_apply_reference_strategy`
+- implement the generic gate/verifier substrate owned by `TASK-157`
+- make `TASK-135`, `TASK-135-03`, or `TASK-140` domain/provider work part of
+  the generic substrate
+- add a public `router_apply_reference_strategy` tool
+- add a public `reference_understand` MCP tool unless a dedicated public-tool
+  review promotes it; the default implementation path is an existing
+  reference/guided surface or internal automatic pass
 - add canonical families named `mesh_edit`, `material_finish`,
-  `mesh_shade_flat`, `macro_low_poly_*`, or `macro_create_part`
-- ship SAM, CLIP/SigLIP, Grounding DINO, or other heavy perception adapters
+  `mesh_shade_flat`, `macro_low_poly_*`, or `macro_create_part`; they must be
+  aliases, stage hints, future candidates, or mappings to current seams until
+  separately shipped
+- make SAM, CLIP/SigLIP, Grounding DINO, OWL-ViT, or other heavy perception
+  adapters MVP dependencies or implicit runtime calls
+- let reference-understanding, classifier scores, segmentation masks, or VLM
+  prose mark quality gates passed
 - rewrite the full long-form Vision plan from scratch
 - change root `CHANGELOG.md`
 
@@ -180,13 +230,29 @@ Use these current contracts when deciding whether a term is canonical:
 | `_docs/_TASKS/TASK-135-03_Low_Poly_Form_Refinement_Mesh_Window_And_Profile_Macros.md` | Mesh refinement consumer contract | Make shape-profile/refinement gates rely on normalized verifier-backed evidence |
 | `_docs/_TASKS/TASK-140*.md` | Evidence boundary audit only | Confirm provider/profile evidence stays separate from quality-gate verifier evidence; patch wording only if drift exists |
 | `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md` | Cross-link only if needed | Add a pointer only if the long-form plan cleanup needs a normative bridge |
-| `_docs/_TASKS/README.md` | Board | Track this follow-on as a promoted docs-alignment task |
-| `_docs/_CHANGELOG/` | Historical tracking | Record the task creation and later completion when the docs are aligned |
+| `server/adapters/mcp/contracts/reference.py` | Existing reference-stage contracts | Extend or compose reference-understanding summaries without inventing a parallel public surface |
+| `server/adapters/mcp/contracts/quality_gates.py` | Post-TASK-157 gate contracts | Consume normalized gate/evidence refs after `TASK-157` introduces the substrate |
+| `server/adapters/mcp/areas/reference.py` | Existing reference/guided surface | Surface reference-understanding summaries and gate proposals through current reference flow when public-tool review does not promote a new tool |
+| `server/adapters/mcp/session_capabilities.py` | Guided state | Store bounded reference-understanding summary ids, proposal refs, and strategy hints scoped to the current session |
+| `server/adapters/mcp/vision/` | Reference-understanding parser/prompt and optional adapter readiness | Own bounded VLM/parser payloads and default-off optional adapter interfaces without making them verifier truth |
+| `server/adapters/mcp/transforms/visibility_policy.py` | Guided visibility | Use `TASK-157` unresolved gate state plus reference-understanding hints to expose bounded existing tools |
+| `tests/unit/adapters/mcp/` | Unit contract/parser/surface coverage | Verify schema, alias normalization, no public-tool drift, and no perception-owned pass/fail |
+| `tests/fixtures/reference_understanding/` | Golden fixtures | Keep reference-understanding eval cases deterministic and provider-independent by default |
+| `_docs/_TASKS/README.md` | Board | Track this follow-on as a promoted two-scope task after `TASK-157` |
+| `_docs/_CHANGELOG/` | Historical tracking | Record the task creation and later completion when docs and implementation scope are complete |
 
 ## Implementation Notes
 
-- Keep this as a documentation repair pass. Do not invent new runtime APIs to
-  make the old plan true.
+- Execute Scope A before Scope B so the docs no longer mislead implementers
+  before runtime work starts.
+- Scope B is implementation work, but it must consume `TASK-157` contracts
+  instead of re-implementing gate status or verifier truth.
+- Do not invent a public `router_apply_reference_strategy` tool to make the old
+  plan true. Strategy application is server-owned guided state, visibility, and
+  gate-policy work.
+- Prefer extending existing reference/guided surfaces for
+  reference-understanding output. Promote a public `reference_understand` tool
+  only through a separate public-tool review.
 - In the long-form Vision plan, prefer a short upfront note plus local
   annotations near stale examples instead of deleting useful historical
   analysis wholesale.
@@ -220,6 +286,8 @@ Use these current contracts when deciding whether a term is canonical:
   sidecar hit must stay explicitly future optional and must not trigger a
   sidecar, model download, provider call, or runtime activation under
   `TASK-158`.
+- Any optional adapter implementation must be default-off, bounded by config,
+  covered by fixtures, and represented as proposal/support evidence only.
 
 ## Rewrite Pattern
 
@@ -292,13 +360,21 @@ verifier-supported support refs, not standalone reference evidence.
 | Docs patch hygiene | `git diff --check` |
 | Long-form plan drift | Public-surface and noncanonical-family grep commands from `TASK-158-01` |
 | Creature task drift | Truth-boundary grep commands from `TASK-158-02` |
+| Unit contracts | Reference-understanding schema, alias normalization, proposal refs, and reject-unknown behavior from `TASK-158-04` |
+| Unit parser/prompt | Bounded parser repair, unsupported family rejection, redaction, and no pass/fail authority from `TASK-158-04` |
+| Unit guided/reference surface | Existing reference/checkpoint responses include summary/proposal refs without adding a router strategy tool |
+| Unit optional adapter readiness | Default-off SAM/CLIP/SigLIP adapter contracts and fixture loading from `TASK-158-05` |
+| Router/metadata | Existing metadata/search/visibility paths expose only bounded existing tools and keep schema validation green |
+| E2E / Blender | Add only after `TASK-157` verifier slices exist; prove reference-understanding can propose but not complete gates |
 | TASK-140 boundary | Canonical-anchor audit and contradiction grep from `TASK-158-03` |
 | Board / changelog | `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/README.md`, and the new TASK-158 completion changelog entry stay in sync |
 
 ## Tests / Validation
 
-This is a docs-only task. Validation should prove that the repaired docs no
-longer contradict the `TASK-157` boundary.
+Validation is scope-dependent. Scope A proves the repaired docs no longer
+contradict the `TASK-157` boundary. Scope B proves the implementation consumes
+`TASK-157` gate contracts, keeps reference/perception advisory, and does not
+introduce unreviewed public tools or implicit heavy-model side effects.
 
 | Layer | Validation |
 |-------|------------|
@@ -307,6 +383,10 @@ longer contradict the `TASK-157` boundary.
 | Noncanonical family/tool drift | `rg -n "mesh_edit|material_finish|mesh_shade_flat|macro_low_poly|macro_create_part" _docs/blender-ai-mcp-vision-reference-understanding-plan.md _docs/_TASKS/TASK-135*.md _docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md` and verify no hit presents the name as a current canonical family/tool |
 | Heavy perception adapter drift | `rg -n "SAM|CLIP|SigLIP|GroundingDINO|OWL-ViT" _docs/blender-ai-mcp-vision-reference-understanding-plan.md _docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md _docs/_TASKS/TASK-157*.md _docs/_TASKS/TASK-158*.md` and verify every hit is future optional, default-off, or explicitly out of MVP scope |
 | Truth-boundary drift | `rg -n "reference evidence|true attachment errors|true cleanup/intersection errors|decides whether the gate passed|quality-gate verifier evidence" _docs/_TASKS/TASK-135*.md _docs/_TASKS/TASK-140*.md _docs/blender-ai-mcp-vision-reference-understanding-plan.md` and verify authority remains with scene/spatial/mesh/assertion/verifier evidence |
+| Contract/parser unit tests | `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_understanding_contract.py tests/unit/adapters/mcp/test_reference_understanding_parser.py -v` after `TASK-158-04` |
+| Reference/guided integration tests | Focused unit tests for reference/checkpoint payloads and guided session state after `TASK-158-04` |
+| Optional adapter readiness tests | Focused unit tests for default-off adapter registry/config and golden fixtures after `TASK-158-05` |
+| Router metadata/schema | Run metadata/schema validation when new search hints, keywords, or optional `gate_families`-style metadata are added |
 | Board / changelog | Confirm `_docs/_TASKS/README.md` and `_docs/_CHANGELOG/README.md` stay in sync with added or completed task docs |
 
 ## Docs To Update
@@ -317,6 +397,11 @@ longer contradict the `TASK-157` boundary.
 - `_docs/_TASKS/TASK-140*.md` only if the audit finds concrete wording drift
 - `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md` only if a cross-link or
   normative note is needed
+- `_docs/_MCP_SERVER/README.md` when reference/checkpoint payloads or public
+  surface behavior change
+- `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md` only if the implementation
+  reveals a new boundary rule, not for wording churn
+- `_docs/_TESTS/README.md` if fixture/test architecture materially changes
 - `_docs/_TASKS/README.md`
 - `_docs/_CHANGELOG/`
 
@@ -324,17 +409,19 @@ longer contradict the `TASK-157` boundary.
 
 - Creation is already recorded in changelog 278.
 - On completion, add a new `_docs/_CHANGELOG/279-...task-158-...completion.md`
-  entry with final grep results and refresh `_docs/_CHANGELOG/README.md`.
-  Leave changelog 278 as the creation/plan entry.
+  entry with final grep results, implementation summary, focused test results,
+  and any intentionally deferred optional adapters. Refresh
+  `_docs/_CHANGELOG/README.md`. Leave changelog 278 as the creation/plan entry.
 
 ## Status / Board Update
 
 `TASK-158` is tracked as a promoted To Do row in the Vision & Hybrid Loop lane
-of `_docs/_TASKS/README.md`. When the docs cleanup is complete, update this
-file's status, move or close the board row according to board scope, refresh the
-board counts, and record validation commands in the completion summary. Child
-tasks `TASK-158-01`, `TASK-158-02`, and `TASK-158-03` should be closed with the
-parent or explicitly superseded if the implementation consolidates them.
+of `_docs/_TASKS/README.md`. When both scopes are complete, update this file's
+status, move or close the board row according to board scope, refresh the board
+counts, and record validation commands in the completion summary. Child tasks
+`TASK-158-01`, `TASK-158-02`, `TASK-158-03`, `TASK-158-04`, and `TASK-158-05`
+should be closed with the parent or explicitly superseded if the implementation
+consolidates them.
 
 ## Acceptance Criteria
 
@@ -354,7 +441,14 @@ parent or explicitly superseded if the implementation consolidates them.
   gate pass/fail and final completion.
 - `TASK-140` provider/profile evidence remains separate from quality-gate
   verifier evidence.
-- `_docs/_TASKS/README.md` tracks this task as a board-level docs companion to
+- `TASK-158-04` implements a bounded reference-understanding contract/parser
+  and current reference/guided handoff that can propose or support gates
+  without passing them.
+- `TASK-158-05` implements default-off optional adapter readiness and fixtures
+  without making SAM/CLIP/SigLIP or similar adapters MVP dependencies.
+- Existing reference/guided surfaces remain the default public path; any new
+  public MCP tool is gated by a separate public-tool review.
+- `_docs/_TASKS/README.md` tracks this task as a board-level follow-up after
   the open `TASK-157` substrate.
 - Validation commands from this task are run and recorded in the completion
   summary.
