@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [292](./292-2026-05-02-task-158-review-pass-decomposition-and-owner-lanes.md) | 2026-05-02 | **TASK-158 review pass decomposition and owner lanes** | - |
 | [291](./291-2026-05-02-task-158-doc-hardening-and-owner-seam-alignment.md) | 2026-05-02 | **TASK-158 doc hardening and owner-seam alignment** | - |
 | [290](./290-2026-05-02-task-157-closeout-and-board-sync.md) | 2026-05-02 | **TASK-157 closeout and board sync** | - |
 | [289](./289-2026-05-03-task-157-transport-parity-and-live-support-symmetry-e2e.md) | 2026-05-03 | **TASK-157 transport parity and live support/symmetry E2E** | - |

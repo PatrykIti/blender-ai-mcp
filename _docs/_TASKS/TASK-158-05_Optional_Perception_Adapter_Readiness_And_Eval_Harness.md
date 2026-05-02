@@ -22,13 +22,21 @@ records without becoming verifier truth.
 
 | Path / Module | Expected Change |
 |---------------|-----------------|
-| `server/adapters/mcp/vision/` | Optional adapter protocol/registry and no-op/default-off behavior |
+| `server/adapters/mcp/vision/config.py` | Extend typed optional sidecar/adapter config only through the existing vision runtime contract |
+| `server/adapters/mcp/vision/runtime.py` | Keep optional perception lazy, default-off, and aligned with the shipped segmentation-sidecar opt-in seam |
+| `server/adapters/mcp/vision/evaluation.py` | Extend fixture/eval scoring only if optional-evidence diagnostics become first-class scored output |
 | `server/adapters/mcp/contracts/quality_gates.py` | Reuse `TASK-157` proposal/support evidence refs; do not add new pass/fail authority |
-| `server/adapters/mcp/contracts/reference.py` | Preserve explicit disabled/unavailable support envelopes and extend them only through declared optional-evidence contracts |
-| `server/infrastructure/config.py` | Add explicit default-off config only if adapter readiness needs config flags |
+| `server/adapters/mcp/contracts/reference.py` | Preserve declared support envelopes and add any new client-facing optional-evidence contracts explicitly |
+| `server/adapters/mcp/areas/reference.py` | Keep top-level and compact-iterate `part_segmentation` envelope behavior aligned with the shipped compare/iterate surface |
+| `server/infrastructure/config.py` | Extend the current `VISION_SEGMENTATION_*` opt-in surface first; do not create a parallel flag family for the same readiness path |
 | `tests/fixtures/vision_eval/` | Reuse the existing golden fixture tree for reference-understanding and optional evidence scoring |
-| `tests/unit/adapters/mcp/` | Adapter registry, default-off, fixture parsing, and evidence-boundary tests |
+| `tests/unit/adapters/mcp/test_vision_runtime_config.py` | Validate default-off config and typed runtime opt-in behavior |
+| `tests/unit/adapters/mcp/test_reference_images.py` | Keep compare/iterate envelopes and compact-iterate behavior aligned |
+| `tests/unit/adapters/mcp/test_vision_evaluation.py` | Verify optional-evidence fixture scoring only if evaluation schema expands |
 | `scripts/vision_harness.py` | Add a providerless fixture/eval mode only as an explicit opt-in path; keep the current default backend-executing flow unchanged |
+| `tests/unit/scripts/test_script_tooling.py` | Keep harness CLI semantics and default backend-executing flow unchanged |
+| `tests/e2e/vision/test_reference_stage_silhouette_contract.py` | Preserve disabled/unavailable compare/iterate optional-evidence envelopes |
+| `tests/e2e/integration/test_guided_surface_contract_parity.py` | Run when optional evidence becomes client-facing on stdio or Streamable HTTP compare/iterate payloads |
 | `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md` | Document what is ready now vs deferred adapter implementation |
 
 ## Implementation Notes
@@ -41,8 +49,9 @@ records without becoming verifier truth.
   implicitly during verifier evaluation or reference checkpoint calls.
 - The current compare/iterate surface already returns explicit
   `part_segmentation` envelopes in `disabled` or `unavailable` states. Extend
-  that explicit support-only envelope pattern; do not switch the contract to
-  presence-only behavior.
+  that explicit support-only envelope pattern in
+  `server/adapters/mcp/areas/reference.py`; do not switch the contract to
+  presence-only behavior or break the compact-iterate reset path.
 - Optional adapter output may include:
   - `classification_scores`
   - `segmentation_artifacts`
@@ -54,6 +63,12 @@ records without becoming verifier truth.
 - Future concrete adapter implementation should be split into follow-on leaves
   if it requires new dependencies, model downloads, service startup, or external
   provider credentials.
+- Reuse the shipped segmentation-sidecar config/runtime seam first:
+  `VISION_SEGMENTATION_*` in `server/infrastructure/config.py`,
+  `VisionSegmentationSidecarConfig` in `server/adapters/mcp/vision/config.py`,
+  and `build_vision_runtime_config(...)` in `server/adapters/mcp/vision/runtime.py`.
+  Do not invent a second default-off registry/flag path for the same readiness
+  concern.
 - The current `scripts/vision_harness.py` default path is live-backend-capable
   and `--backend` defaults to `all`. Any providerless fixture mode introduced by
   this task must be an explicit opt-in path or helper; it must not silently
@@ -62,18 +77,27 @@ records without becoming verifier truth.
 ## Pseudocode
 
 ```python
-adapter = optional_perception_registry.get("clip_siglip")
-if not adapter.enabled:
-    return OptionalEvidence.unavailable(reason="default_off")
+runtime = build_vision_runtime_config(config)
+sidecar = runtime.active_segmentation_sidecar
+if sidecar is None or not sidecar.enabled:
+    return ReferencePartSegmentationContract(
+        status="disabled",
+        advisory_only=True,
+        notes=["Optional perception remains default-off on the current runtime."],
+    )
 
-scores = adapter.classify(reference_image, labels=allowed_labels)
-return OptionalEvidence(
-    evidence_type="classification_scores",
-    status="support_only",
-    scores=scores,
-    can_pass_gate=False,
+return ReferencePartSegmentationContract(
+    status="unavailable",
+    provider_name=sidecar.provider_name,
+    advisory_only=True,
+    notes=["Optional adapter readiness is support-only and cannot pass gates."],
 )
 ```
+
+If future classification or localization evidence becomes client-facing, declare
+it alongside the existing reference/quality-gate contracts and map it to
+support-only `GateEvidenceRefContract.authority` semantics rather than
+inventing a parallel ad hoc optional-evidence envelope.
 
 ## Runtime / Security Contract Notes
 
@@ -96,15 +120,21 @@ return OptionalEvidence(
   are non-fatal.
 - Unit tests that `classification_scores` and `segmentation_artifacts` cannot
   set gate status to `passed`.
+- Extend `tests/unit/adapters/mcp/test_vision_runtime_config.py` first for the
+  shipped default-off config/runtime seam.
 - Extend `tests/unit/adapters/mcp/test_vision_evaluation.py` and the existing
   `tests/fixtures/vision_eval/*/golden.json` tree for reference-understanding
-  and optional-evidence fixture scoring.
+  and optional-evidence fixture scoring only if `vision/evaluation.py` grows
+  declared optional-evidence fields.
 - Extend `tests/unit/adapters/mcp/test_reference_images.py` and
   `tests/e2e/vision/test_reference_stage_silhouette_contract.py` if optional
   evidence envelopes on compare/iterate responses change.
 - Extend `tests/unit/scripts/test_script_tooling.py` if `scripts/vision_harness.py`
   changes; the default harness path must stay backend-executing unless a new
   explicit fixture-only opt-in is selected.
+- Run `tests/e2e/integration/test_guided_surface_contract_parity.py` when
+  optional evidence becomes visible on stdio or Streamable HTTP
+  compare/iterate payloads.
 
 ## Docs To Update
 
@@ -121,11 +151,24 @@ return OptionalEvidence(
   `_docs/_CHANGELOG/<next-number>-...task-158-...completion.md` entry created
   during `TASK-158-03` closeout.
 
+## Status / Board Update
+
+- This leaf stays under the umbrella `TASK-158`; keep `_docs/_TASKS/README.md`
+  tracking on the parent row.
+- When this slice closes, record whether optional evidence stayed internal,
+  changed compare/iterate envelopes, or added transport-visible diagnostics so
+  the parent closeout names the exact validation lane that was run.
+
 ## Validation Commands
 
 - `git diff --check`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_optional_perception_adapter_registry.py tests/unit/adapters/mcp/test_optional_perception_evidence_boundary.py tests/unit/adapters/mcp/test_vision_evaluation.py tests/unit/adapters/mcp/test_reference_images.py -v`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_evaluation.py tests/unit/adapters/mcp/test_reference_images.py -v`
 - `PYTHONPATH=. poetry run pytest tests/unit/scripts/test_script_tooling.py -k vision_harness -v` if `scripts/vision_harness.py` changes.
+- `poetry run pytest tests/e2e/vision/test_reference_stage_silhouette_contract.py -q`
+  when compare/iterate optional-evidence envelopes change.
+- `poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py -q`
+  when optional evidence becomes transport-visible on stdio or Streamable HTTP
+  public surfaces.
 - `rg -n -P "can_pass_gate\\s*[:=]\\s*true|status\\s*[:=]\\s*[\"']passed[\"']|gate_status\\s*[:=]\\s*[\"']passed[\"']|SAM|CLIP|SigLIP|Grounding ?DINO|OWL-ViT|from_pretrained|mlx_vlm\\.load|httpx\\.AsyncClient|provider key|api_key" server/adapters/mcp/vision tests/unit/adapters/mcp tests/fixtures/vision_eval scripts/vision_harness.py`
   - classify every hit as default-off/support-only or an explicit
     live-provider opt-in.

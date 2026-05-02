@@ -104,6 +104,13 @@ verifier-supported support refs, not standalone reference evidence.
   `TASK-158-03` closeout; do not create a separate child changelog entry.
   Changelog 278 remains the creation/plan entry.
 
+## Status / Board Update
+
+- This leaf stays under `TASK-158`; do not add a separate promoted board row.
+- When this slice closes, record the repaired `TASK-135*` ranges in the parent
+  completion summary and leave `_docs/_TASKS/README.md` tracking on the
+  umbrella task only.
+
 ## Acceptance Criteria
 
 - TASK-135 no longer grants reference/perception evidence pass/fail authority.

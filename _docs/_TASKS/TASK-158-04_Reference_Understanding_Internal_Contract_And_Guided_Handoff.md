@@ -16,6 +16,17 @@ generic quality-gate substrate exists.
 This slice must let reference understanding propose gate inputs or support refs
 for `TASK-157` gates, but it must not own gate pass/fail truth.
 
+This file is the technical subtask for Scope B. Execute it through the narrower
+child leaves below rather than as one broad implementation pass.
+
+## Execution Structure
+
+| Order | Task | Purpose |
+|-------|------|---------|
+| 1 | [TASK-158-04-01](./TASK-158-04-01_Reference_Understanding_Contract_And_Parser_Normalization.md) | Add the typed reference-understanding contract, alias normalization, and shared prompt/parser/backend path without inventing a second runtime flow |
+| 2 | [TASK-158-04-02](./TASK-158-04-02_Reference_Understanding_Session_Linkage_And_Checkpoint_Contracts.md) | Persist accepted reference-understanding linkage in session state and thread declared fields through compare/iterate checkpoint contracts |
+| 3 | [TASK-158-04-03](./TASK-158-04-03_Reference_Understanding_Visibility_Diagnostics_And_Transport_Parity.md) | Expose bounded hints only through existing guided visibility, router diagnostics, and transport parity lanes |
+
 ## Repository Touchpoints
 
 | Path / Module | Expected Change |
@@ -85,7 +96,7 @@ session_state = get_session_capability_state(ctx)
 session_state = replace(
     session_state,
     reference_understanding_summary={
-        "summary_id": summary.summary_id,
+        "understanding_id": summary.understanding_id,
         "summary": summary.public_view(),
         "accepted_gate_ids": accepted_gate_ids,
     },  # new explicit session field/helper owned by this task
@@ -146,15 +157,21 @@ isolation.
 - Extend `tests/unit/adapters/mcp/test_reference_images.py` and
   `tests/unit/adapters/mcp/test_contract_payload_parity.py` for declared
   reference/checkpoint response fields and compact iterate payloads.
-- Extend `tests/unit/adapters/mcp/test_router_elicitation.py`,
-  `tests/unit/adapters/mcp/test_search_surface.py`, and any guided visibility
-  owner tests for bounded hint-driven exposure from unresolved gates and
-  summary hints.
+- Extend `tests/unit/adapters/mcp/test_quality_gate_intake.py`,
+  `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`,
+  `tests/unit/adapters/mcp/test_visibility_policy.py`,
+  `tests/unit/adapters/mcp/test_guided_mode.py`,
+  `tests/unit/adapters/mcp/test_router_elicitation.py`, and
+  `tests/unit/adapters/mcp/test_search_surface.py` for bounded hint-driven
+  exposure from unresolved gates, declared session linkage, and public guided
+  diagnostics.
 - Add focused guided-session tests around `session_capabilities.py` persistence
   helpers for summary ids and accepted gate ids.
 - Add or update one integration/transport lane under
-  `tests/e2e/integration/` when new summary fields or hint-driven visibility
-  become visible on stdio or Streamable HTTP public surfaces.
+  `tests/e2e/integration/test_guided_surface_contract_parity.py` or
+  `tests/e2e/integration/test_guided_gate_state_transport.py` when new summary
+  fields or hint-driven visibility become visible on stdio or Streamable HTTP
+  public surfaces.
 - Metadata/search tests only if this slice adds new search hints or schema
   fields.
 
@@ -173,12 +190,22 @@ isolation.
   `_docs/_CHANGELOG/<next-number>-...task-158-...completion.md` entry created
   during `TASK-158-03` closeout.
 
+## Status / Board Update
+
+- Keep `_docs/_TASKS/README.md` on the umbrella `TASK-158` row; this subtask
+  does not become its own promoted board item.
+- Close or supersede `TASK-158-04-01`, `TASK-158-04-02`, and `TASK-158-04-03`
+  in the same branch before closing this subtask, and summarize which response
+  fields, session helpers, and transport lanes changed in the parent closeout.
+
 ## Validation Commands
 
 - `git diff --check`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_parsing.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_router_elicitation.py tests/unit/adapters/mcp/test_search_surface.py -v`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_parsing.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_router_elicitation.py tests/unit/adapters/mcp/test_search_surface.py -v`
 - `poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py -q`
   when new summary fields or hint-driven visibility become transport-visible.
+- `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
+  when reference-understanding linkage changes transport-visible gate payloads.
 - `rg -n "reference_understand|router_apply_reference_strategy|status=\\\"passed\\\"|final_completion" server/adapters/mcp tests/unit/adapters/mcp server/router/infrastructure/tools_metadata`
 
 ## Acceptance Criteria

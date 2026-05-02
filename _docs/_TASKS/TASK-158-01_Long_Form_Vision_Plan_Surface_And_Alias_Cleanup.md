@@ -133,6 +133,14 @@ sketches. They must not become TASK-158 or MVP runtime requirements.
   `TASK-158-03` closeout; do not create a separate child changelog entry.
   Changelog 278 remains the creation/plan entry.
 
+## Status / Board Update
+
+- This leaf stays under `TASK-158`; do not create a separate board row in
+  `_docs/_TASKS/README.md`.
+- When this slice closes, record the repaired long-form-plan ranges in the
+  `TASK-158` parent completion summary and keep board status changes on the
+  parent task only.
+
 ## Acceptance Criteria
 
 - The long-form plan no longer instructs implementers to add a public
