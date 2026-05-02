@@ -10,8 +10,8 @@
 
 Implement the bounded reference-understanding follow-up that was intentionally
 kept out of `TASK-157`: a typed summary contract, parser/prompt path, alias
-normalization, and handoff into existing reference/guided surfaces after the
-generic quality-gate substrate exists.
+normalization, and handoff into existing reference/guided surfaces on top of
+the closed `TASK-157` generic quality-gate substrate.
 
 This slice must let reference understanding propose gate inputs or support refs
 for `TASK-157` gates, but it must not own gate pass/fail truth.
@@ -32,15 +32,18 @@ child leaves below rather than as one broad implementation pass.
 | Path / Module | Expected Change |
 |---------------|-----------------|
 | `server/adapters/mcp/contracts/reference.py` | Add or compose reference-understanding summary/result contracts without duplicating gate status contracts |
-| `server/adapters/mcp/contracts/quality_gates.py` | Consume `TASK-157` proposal/evidence refs after that file exists; do not re-create the substrate here |
+| `server/adapters/mcp/contracts/quality_gates.py` | Reuse the closed `TASK-157` proposal/evidence contracts; do not re-create the substrate here |
+| `server/adapters/mcp/contracts/guided_flow.py` | Keep any new guided family, step, or session-exposed hint vocabulary inside `GuidedFlowStateContract` / `GuidedFlowFamilyLiteral` instead of ad hoc strings |
+| `server/adapters/mcp/contracts/router.py` | Declare any public `router_get_status(...)` summary or hint fields before exposing them through the router surface |
 | `server/adapters/mcp/vision/prompting.py` | Extend the shared vision prompt contract first; add a reference-understanding wrapper only if the shared owner becomes too large |
 | `server/adapters/mcp/vision/parsing.py` | Extend the shared parsing/repair contract first; add a focused parser helper only if the shared owner becomes too large |
 | `server/adapters/mcp/vision/backends.py` | Keep any new payload normalization on the existing shared backend path rather than forking a second prompt/parser flow |
 | `server/adapters/mcp/areas/reference.py` | Surface summaries/proposal refs through existing reference/checkpoint flow unless a separate public-tool review promotes a new tool |
 | `server/adapters/mcp/session_capabilities.py` | Store summary ids, provenance, proposal refs, and guided handoff hints scoped to the current session |
-| `server/adapters/mcp/transforms/visibility_policy.py` | Use unresolved gate state plus reference-understanding hints to expose bounded existing tools |
-| `server/adapters/mcp/guided_mode.py` | Thread any new visibility/search hints through the current guided visibility assembly path |
-| `server/adapters/mcp/areas/router.py` | Keep `router_get_status(...)` and guided diagnostics aligned if new summary or hint fields become public there |
+| `server/adapters/mcp/transforms/visibility_policy.py` | React only to existing declared contracts (`gate_plan`, `guided_handoff`, or declared router/reference fields) when visibility really changes; do not add a summary-only side channel |
+| `server/adapters/mcp/discovery/search_surface.py` | Own public search exposure, visibility refresh, and discovery serialization when new reference-understanding hints affect `search_tools` / `call_tool` behavior |
+| `server/adapters/mcp/guided_mode.py` | Thread any new visibility/search diagnostics through the current guided visibility assembly path rather than a second handoff channel |
+| `server/adapters/mcp/areas/router.py` | Keep `router_get_status(...)` and guided diagnostics aligned with `RouterStatusContract` if new summary or hint fields become public there |
 | `tests/unit/adapters/mcp/` | Add or extend contract, parser, prompt-shape, reference-surface, guided-session, router, and search-owner tests |
 | `tests/e2e/integration/` | Add a focused transport/surface parity lane if new client-facing summary fields or hint-driven visibility become public on stdio or Streamable HTTP |
 
@@ -67,6 +70,10 @@ child leaves below rather than as one broad implementation pass.
   `vision/parsing.py`, and `vision/backends.py` path first. Introduce
   `reference_understanding*.py` helpers only if the shared modules become too
   large and the split preserves one backend contract.
+- `GuidedFlowFamilyLiteral`, `GuidedFlowStateContract`, and
+  `RouterStatusContract` are the declared vocabulary/transport owners for any
+  new family hints or router-visible diagnostics. Do not add free-form session
+  keys or router-only payload fields outside those contracts.
 - Gate proposals must enter through the live
   `ingest_quality_gate_proposal[_async](...)` seam in `session_capabilities.py`
   and then obey the current goal-time bounds path. Do not introduce a second
@@ -75,6 +82,11 @@ child leaves below rather than as one broad implementation pass.
   summary and the accepted gates, add declared session/reference payload fields
   in this slice. Do not assume `GatePlanContract` already exposes a built-in
   gate-to-summary linkage field.
+- If public search or call-tool discovery behavior changes, route it through
+  `apply_visibility_for_session_state(...)`,
+  `visible_tools_for_gate_plan(...)`, and
+  `server/adapters/mcp/discovery/search_surface.py`. Do not create a
+  router-only or reference-only parallel visibility/search channel.
 
 ## Pseudocode
 
@@ -128,10 +140,12 @@ Implementation must add any new response fields explicitly to
 `ReferenceIterateStageCheckpointResponseContract`; `MCPContract` payloads reject
 undeclared extras. Thread those fields through `_stage_compare_response(...)`,
 `_iterate_stage_response(...)`, and `_compact_compare_result_for_iterate(...)`.
-If hint-driven visibility or guided diagnostics change, thread the same data
-through `guided_mode.py`, `router_get_status(...)`, and the existing public
+If hint-driven visibility or guided diagnostics change, declare any router
+fields in `server/adapters/mcp/contracts/router.py`, then thread the same data
+through `guided_mode.py`, `server/adapters/mcp/areas/router.py`,
+`server/adapters/mcp/discovery/search_surface.py`, and the existing public
 surface diagnostics/tests rather than patching `visibility_policy.py` in
-isolation.
+isolation or creating a second discovery path.
 
 ## Runtime / Security Contract Notes
 
@@ -172,6 +186,8 @@ isolation.
   `tests/e2e/integration/test_guided_gate_state_transport.py` when new summary
   fields or hint-driven visibility become visible on stdio or Streamable HTTP
   public surfaces.
+- Add `tests/e2e/integration/test_guided_search_first_call_tool_boundary.py`
+  when new search hints change `search_tools` / `call_tool` discovery output.
 - Metadata/search tests only if this slice adds new search hints or schema
   fields.
 
@@ -186,9 +202,11 @@ isolation.
 
 ## Changelog Impact
 
-- Roll this slice into the single
-  `_docs/_CHANGELOG/<next-number>-...task-158-...completion.md` entry created
-  during `TASK-158-03` closeout.
+- If this subtask closes independently, add a scoped `_docs/_CHANGELOG/*`
+  entry in the same branch and update `_docs/_CHANGELOG/README.md`.
+- If multiple `TASK-158` slices land together in one wave, one shared
+  completion entry may cover them, but it must name this subtask explicitly and
+  record its validation in the summary.
 
 ## Status / Board Update
 
@@ -197,6 +215,10 @@ isolation.
 - Close or supersede `TASK-158-04-01`, `TASK-158-04-02`, and `TASK-158-04-03`
   in the same branch before closing this subtask, and summarize which response
   fields, session helpers, and transport lanes changed in the parent closeout.
+- Do not leave this subtask or any direct child open under a closed
+  `TASK-158-04` or `TASK-158`. If work is deferred, spin it into an explicit
+  `Follow-on After` task and close or supersede the stale child docs with a
+  reason in the same branch.
 
 ## Validation Commands
 
@@ -206,6 +228,8 @@ isolation.
   when new summary fields or hint-driven visibility become transport-visible.
 - `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
   when reference-understanding linkage changes transport-visible gate payloads.
+- `poetry run pytest tests/e2e/integration/test_guided_search_first_call_tool_boundary.py -q`
+  when new search hints change `search_tools` / `call_tool` discovery output.
 - `rg -n "reference_understand|router_apply_reference_strategy|status=\\\"passed\\\"|final_completion" server/adapters/mcp tests/unit/adapters/mcp server/router/infrastructure/tools_metadata`
 
 ## Acceptance Criteria
@@ -214,6 +238,14 @@ isolation.
 - Reference-understanding can seed `TASK-157` gate proposals/support refs but
   cannot pass gates.
 - Existing reference/guided surfaces are the default exposure path.
+- Any transport-visible summary or hint field is declared in
+  `ReferenceCompareStageCheckpointResponseContract`,
+  `ReferenceIterateStageCheckpointResponseContract`, or
+  `RouterStatusContract` before exposure.
+- Search and visibility changes stay on the existing
+  `apply_visibility_for_session_state(...)` plus
+  `server/adapters/mcp/discovery/search_surface.py` lane; no parallel
+  discovery/visibility channel is introduced.
 - No public `reference_understand` or `router_apply_reference_strategy` tool is
   introduced by this slice.
 - Alias normalization maps draft names to current seams or future candidates.

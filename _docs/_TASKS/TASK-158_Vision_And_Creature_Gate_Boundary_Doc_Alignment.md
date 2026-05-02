@@ -10,9 +10,9 @@
 
 ## Objective
 
-Carry the work that intentionally does not belong in `TASK-157` after the
-generic gate/verifier substrate lands, while preserving the boundary cleanup
-already planned for the Vision and creature docs.
+Carry the work that intentionally sits outside the closed `TASK-157` generic
+gate/verifier substrate, while preserving the boundary cleanup already planned
+for the Vision and creature docs.
 
 `TASK-158` has two explicit scopes:
 
@@ -22,7 +22,7 @@ already planned for the Vision and creature docs.
 - **Scope B - Post-TASK-157 implementation follow-up:** implement the bounded
   reference-understanding contract, parser/prompt, guided/reference handoff,
   alias normalization, and optional-perception readiness that were kept out of
-  `TASK-157`.
+  the closed `TASK-157` substrate.
 
 Both scopes must preserve these authority rules:
 
@@ -36,8 +36,8 @@ Both scopes must preserve these authority rules:
   current canonical families, public MCP tools, or shipped router surfaces.
 
 Scope A is documentation-only. Scope B may change runtime code, contracts,
-metadata, tests, and docs, but only after `TASK-157` supplies the generic
-quality-gate substrate and only through existing reference/guided surfaces
+metadata, tests, and docs, but it must consume the already-landed `TASK-157`
+quality-gate substrate and route through existing reference/guided surfaces
 unless a separate public-tool review promotes a new public MCP tool.
 
 ## Business Problem
@@ -65,11 +65,11 @@ will add a second router strategy flow, treat perception as truth, or introduce
 noncanonical tool families before the existing seams are extended.
 
 At the same time, treating `TASK-158` as documentation-only leaves important
-post-`TASK-157` product work without an execution home: bounded
-reference-understanding summaries, strategy normalization into guided state,
-optional default-off perception evidence, and eval fixtures that can make
-reference-guided reconstruction more reliable without expanding the core
-quality-gate substrate.
+follow-up product work outside the closed `TASK-157` substrate without an
+execution home: bounded reference-understanding summaries, strategy
+normalization into guided state, optional default-off perception evidence, and
+eval fixtures that can make reference-guided reconstruction more reliable
+without expanding the core quality-gate substrate.
 
 ## Business Outcome
 
@@ -108,7 +108,7 @@ generic gate/verifier core:
   `TASK-135`, `TASK-135-03`, and `TASK-140` implementation work does not
   contradict the generic gate/verifier contract
 - implementation of reference-understanding and optional-perception support
-  that consumes `TASK-157` gate contracts after they exist
+  that consumes the closed `TASK-157` gate contracts
 
 The task remains one board-level row. Its child files are execution slices for
 the docs cleanup and implementation follow-up and should not become separate
@@ -120,7 +120,7 @@ board rows unless this umbrella is later split.
 |-------|-------|------|---------|
 | 1 | A | [TASK-158-01](./TASK-158-01_Long_Form_Vision_Plan_Surface_And_Alias_Cleanup.md) | Mark or rewrite stale long-form Vision plan references to draft public surfaces, obsolete router paths, and noncanonical family/tool names |
 | 2 | A | [TASK-158-02](./TASK-158-02_Creature_Gate_Truth_Boundary_Alignment.md) | Align `TASK-135` and `TASK-135-03` with advisory Vision/perception and verifier-owned gate truth |
-| 3 | B | [TASK-158-04](./TASK-158-04_Reference_Understanding_Internal_Contract_And_Guided_Handoff.md) | Implement the bounded reference-understanding contract, parser/prompt path, alias normalization, and guided/reference handoff after `TASK-157` exists |
+| 3 | B | [TASK-158-04](./TASK-158-04_Reference_Understanding_Internal_Contract_And_Guided_Handoff.md) | Implement the bounded reference-understanding contract, parser/prompt path, alias normalization, and guided/reference handoff on top of the closed `TASK-157` substrate |
 | 4 | B | [TASK-158-05](./TASK-158-05_Optional_Perception_Adapter_Readiness_And_Eval_Harness.md) | Add default-off optional-perception adapter readiness and eval fixtures without making SAM/CLIP/SigLIP MVP dependencies |
 | 5 | A+B | [TASK-158-03](./TASK-158-03_TASK_140_Evidence_Boundary_Audit_And_Closeout.md) | Treat `TASK-140` as the provider/profile evidence boundary anchor, run final grep/runtime validation, and close board/changelog state |
 
@@ -159,49 +159,28 @@ This task deliberately does not:
 | `TASK-135-03` | `reference evidence requires them` for `shape_profile` child gates | Use normalized gate evidence and verifier-backed support refs; perception remains advisory |
 | `TASK-140` boundary references | Provider/profile support could be confused with quality-gate evidence if cross-linked loosely | Keep TASK-140 evidence scoped to provider capability, routing/provenance, and bounded support, not final gate verification |
 
-## Line-Level Repair Inventory
+## Anchor-Based Repair Inventory
 
-The first implementation pass should start from this inventory instead of
-rediscovering the same drift with broad grep.
+The earlier exact line snapshots have already drifted. Use these heading and
+grep anchors instead of frozen ranges when repairing the remaining doc drift.
 
-| File / Range | Disposition |
-|--------------|-------------|
-| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:25-45` | Add or update an upfront historical/draft note so `reference_understand(...)` and `router_apply_reference_strategy(...)` do not read as current public surfaces |
-| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:230-249` | Annotate architecture diagram references to `mesh_edit` as aliases for current `modeling_mesh` or historical strategy labels |
-| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:279-316` | Rewrite the `reference_understand(...)` example as a draft strategy sketch or map it to existing reference/guided-state seams |
-| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:430-466` | Annotate `mesh_edit`, `material_finish`, `mesh_shade_flat`, `macro_low_poly_finish`, and `macro_create_part` as aliases/future candidates or historical shorthand, not current canonical families/tools |
-| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:511-518` | Rewrite allowed-family examples so `mesh_edit` maps to `modeling_mesh` and `material_finish` is a stage/action hint or future family |
-| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:641-688` | Fix family allowlists so noncanonical names are not presented as runtime vocabulary |
-| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:744-815` | Rewrite `reference_understand(...)`, `router_apply_reference_strategy(...)`, `mesh_edit`, and `material_finish` as draft strategy names routed through current seams |
-| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:836-852` | Map `macro_create_part` to current `modeling_create_primitive(...)` with guided role/group auto-registration or `guided_register_part(...)` for existing objects |
-| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:912-919` | Same as above for remaining `macro_create_part` tool-list wording |
-| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:948-968` | Mark `mesh_shade_flat` and `macro_low_poly_*` examples as future candidates until shipped |
-| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:1006-1012` | Same as above for finish/low-poly macro examples |
-| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:1155-1161` | Annotate remaining `mesh_edit` / `material_finish` JSON examples as aliases or future stage hints |
-| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:1973-1989` | Classification-only row: concept-level `reference_understanding` hits are allowed when they do not imply a current public tool or verifier authority |
-| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2029-2043` | Classify CLIP/SigLIP and SAM sidecar phases as historical/future optional adapter sketches; no runtime activation is part of TASK-158 or the MVP |
-| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2098-2183` | Replace obsolete proposed paths such as `server/adapters/mcp/router/...` with current owner seams or historical notes |
-| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2186-2272` | Classification-only row: eval-pack test, fixture, and harness names may remain historical/future sketches when they do not imply current public tools or router surfaces |
-| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2306-2316` | Reframe `reference_understand(...)` success criteria as draft shorthand routed through current reference/guided-state seams |
-| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2438-2459` | Reframe `reference_understand` MCP surface task as historical/draft unless a future public-tool review promotes it |
-| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2468-2476` | Replace obsolete `server/adapters/mcp/router/...` implementation paths with current owner seams or historical notes |
-| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2518-2525` | Mark low-poly macro names as future optional candidates, not current tool names |
-| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2553-2581` | Classify CLIP/SigLIP and SAM task blocks as future optional adapter sketches requiring their own follow-on contract/runtime task |
-| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2588-2605` | Reframe final `reference_understand(...)` summary as draft shorthand and keep CLIP/SigLIP and SAM as optional later adapters, not MVP dependencies |
-| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md:2697-2700` | Classify CLIP/SigLIP, SAM, and related part-localization libraries as future optional adapters, not TASK-158 or MVP runtime scope |
-| `_docs/_TASKS/TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md:68-77` | Replace `scene/spatial/mesh/reference evidence` pass/fail authority with scene/spatial/mesh/assertion/verifier truth |
-| `_docs/_TASKS/TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md:162-183` | Make Vision Mode relation findings advisory until verifier/spatial/assertion policy binds them to gate status |
-| `_docs/_TASKS/TASK-135-03_Low_Poly_Form_Refinement_Mesh_Window_And_Profile_Macros.md:90-98` | Replace standalone `reference evidence requires them` with normalized gate evidence and verifier-supported support refs |
-| `_docs/_TASKS/TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md:66-72` | Canonical no-op anchor: do not rewrite unless a contradiction is introduced elsewhere |
-| `_docs/_TASKS/TASK-140-05-03_Evidence_Taxonomy_Promotion_Criteria_And_Operator_Reporting.md:14-18` | Canonical no-op anchor for provider/profile evidence reporting |
-| `_docs/_TASKS/TASK-140-05-03_Evidence_Taxonomy_Promotion_Criteria_And_Operator_Reporting.md:30-32` | Canonical no-op anchor for keeping support evidence separate from quality-gate verifier evidence |
-| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:73-76` | Canonical no-op anchor for advisory-only Vision/perception and verifier-owned truth |
-| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:100-108` | Canonical no-op anchor that leaves the first reference-understanding public surface undecided and forbids a public `router_apply_reference_strategy` tool |
-| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:176-188` | Canonical no-op anchor for alias/future-tool mapping of `mesh_edit`, `material_finish`, and low-poly macro names |
-| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:227-256` | Canonical no-op anchor that keeps SAM, CLIP/SigLIP, segmentation sidecars, and related heavy perception adapters as optional later work |
-| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:273-277` | Canonical no-op anchor that keeps low-poly macro names out of first implementation |
-| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:290-296` | Canonical no-op anchor that routes implementation through current reference/guided-state seams or real `server/router/` owners, not a non-existent MCP router package |
-| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:348-355` | Canonical no-op anchor for open public-surface decisions and deciding later whether `material_finish` becomes a canonical planner family |
+| File / Anchor | Disposition |
+|---------------|-------------|
+| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md` top-of-file draft note and early bullets containing `reference_understand(...)`, `router_apply_reference_strategy(...)`, `mesh_edit`, `material_finish`, and `macro_create_part` | Keep the historical/draft framing explicit before the detailed plan begins |
+| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md` section `## 5. Nowy moduł: reference_understanding` plus the first `reference_understand(...)` / `"action": "reference_understand"` examples | Reframe the draft surface through current reference/guided-state seams rather than a new public MCP tool |
+| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md` JSON arrays and allowlists containing `mesh_edit` or `material_finish` | Rewrite allowed-family examples so `mesh_edit` maps to `modeling_mesh` and `material_finish` stays a stage/action hint or future family |
+| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md` `macro_create_part` tool-list hits | Map historical shorthand to `modeling_create_primitive(...)` with guided role/group auto-registration or `guided_register_part(...)` for existing objects |
+| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md` `mesh_shade_flat` and `macro_low_poly_*` clusters | Keep low-poly macro names explicitly future/noncanonical until shipped |
+| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md` optional-adapter discussion around `SAM / Segment Anything`, `CLIP / OpenCLIP`, `SigLIP`, and `bez SAM/CLIP jako twardej zależności w MVP` | Keep heavy perception adapters explicitly optional, default-off, and outside MVP/runtime activation |
+| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md` task blocks `Add optional CLIP/SigLIP classifier`, `Add SAM sidecar`, and `Add GroundingDINO/OWL-ViT style part localization if needed` | Treat these as follow-on optional adapter sketches, not live TASK-158 runtime requirements |
+| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md` owner-path block containing `contracts/reference_understanding.py`, `vision/reference_understanding*.py`, `server/adapters/mcp/router/reference_strategy.py`, and `server/adapters/mcp/areas/reference_understanding.py` | Replace obsolete owner seams with current contract/reference/guided/router owners or mark the paths historical |
+| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md` draft public-surface block `TASK 2 — Add reference_understand MCP surface` | Keep this as historical draft material unless a later public-tool review promotes it |
+| `_docs/blender-ai-mcp-vision-reference-understanding-plan.md` final summary cluster around `reference_understand(...) prompt + parser`, `optional CLIP/SigLIP classifier`, and `optional SAM sidecar` | Align the summary with current seams and the deferred optional-adapter posture |
+| `_docs/_TASKS/TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md` phrases `scene/spatial/mesh/reference evidence`, `true attachment errors`, and `true cleanup/intersection errors` | Replace standalone perception truth claims with scene/spatial/mesh/assertion/verifier authority |
+| `_docs/_TASKS/TASK-135-03_Low_Poly_Form_Refinement_Mesh_Window_And_Profile_Macros.md` phrase `reference evidence requires them` | Repoint `shape_profile` child-gate wording to normalized gate evidence and verifier-backed support refs |
+| `_docs/_TASKS/TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md` phrase `It is not quality-gate verifier evidence by itself.` | Canonical no-op anchor unless a contradiction is introduced elsewhere |
+| `_docs/_TASKS/TASK-140-05-03_Evidence_Taxonomy_Promotion_Criteria_And_Operator_Reporting.md` phrases `vision_contract_profile can produce structured compare/iterate payloads` and `must remain distinct from deterministic quality-gate verifier evidence` | Canonical no-op anchors for provider/profile reporting and support-evidence separation |
+| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md` phrases `vision_contract_profile remains prompt/schema/parser routing metadata`, `the first reference-understanding public surface remains undecided`, `translate draft families into current GuidedFlowFamilyLiteral values`, and `current contract and owner map` | Canonical no-op anchors for advisory-only truth boundaries, alias mapping, optional adapters, and current owner seams |
 
 ## Source-Of-Truth Anchors
 
@@ -218,9 +197,10 @@ Use these current contracts when deciding whether a term is canonical:
 - `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md` is the normative bridge
   from the long-form plan to the current repo contract. Its alias/future-tool
   section should be treated as the policy baseline for this task.
-- `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md:237-263` is the repo-level
-  boundary for perception inputs, `vision_contract_profile`, spatial graph
-  truth products, and Inspection/Assertion truth ownership.
+- `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md` sections that state
+  `vision_contract_profile` remains routing metadata and that the
+  Inspection/Assertion layer owns truth are the repo-level boundary for
+  perception inputs, spatial graph truth products, and verifier authority.
 
 ## Repository Touchpoints
 
@@ -232,14 +212,14 @@ Use these current contracts when deciding whether a term is canonical:
 | `_docs/_TASKS/TASK-140*.md` | Evidence boundary audit only | Confirm provider/profile evidence stays separate from quality-gate verifier evidence; patch wording only if drift exists |
 | `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md` | Cross-link only if needed | Add a pointer only if the long-form plan cleanup needs a normative bridge |
 | `server/adapters/mcp/contracts/reference.py` | Existing reference-stage contracts | Extend or compose reference-understanding summaries without inventing a parallel public surface |
-| `server/adapters/mcp/contracts/quality_gates.py` | Post-TASK-157 gate contracts | Consume normalized gate/evidence refs after `TASK-157` introduces the substrate |
+| `server/adapters/mcp/contracts/quality_gates.py` | Post-TASK-157 gate contracts | Consume normalized gate/evidence refs from the closed `TASK-157` substrate |
 | `server/adapters/mcp/areas/reference.py` | Existing reference/guided surface | Surface reference-understanding summaries and gate proposals through current reference flow when public-tool review does not promote a new tool |
 | `server/adapters/mcp/session_capabilities.py` | Guided state | Store bounded reference-understanding summary ids, proposal refs, and strategy hints scoped to the current session |
 | `server/adapters/mcp/vision/` | Reference-understanding parser/prompt and optional adapter readiness | Own bounded VLM/parser payloads and default-off optional adapter interfaces without making them verifier truth |
 | `server/adapters/mcp/transforms/visibility_policy.py` | Guided visibility | Use `TASK-157` unresolved gate state plus reference-understanding hints to expose bounded existing tools |
 | `tests/unit/adapters/mcp/` | Unit contract/parser/surface coverage | Verify schema, alias normalization, no public-tool drift, and no perception-owned pass/fail |
 | `tests/fixtures/vision_eval/` | Golden fixtures | Reuse the existing eval fixture tree for reference-understanding and optional-evidence cases instead of creating a parallel fixture root |
-| `_docs/_TASKS/README.md` | Board | Track this follow-on as a promoted two-scope task after `TASK-157` |
+| `_docs/_TASKS/README.md` | Board | Track this follow-on as the promoted two-scope successor to the closed `TASK-157` substrate |
 | `_docs/_CHANGELOG/` | Historical tracking | Record the task creation and later completion when docs and implementation scope are complete |
 
 ## Implementation Notes
@@ -366,7 +346,7 @@ verifier-supported support refs, not standalone reference evidence.
 | Unit guided/reference surface | Existing reference/checkpoint responses include summary/proposal refs without adding a router strategy tool |
 | Unit optional adapter readiness | Default-off SAM/CLIP/SigLIP adapter contracts and fixture loading from `TASK-158-05` |
 | Router/metadata | Existing metadata/search/visibility paths expose only bounded existing tools and keep schema validation green |
-| E2E / Blender | Add only after `TASK-157` verifier slices exist; prove reference-understanding can propose but not complete gates |
+| E2E / Blender | Add when Scope B changes Blender-visible or transport-visible runtime behavior; prove reference-understanding can propose but not complete gates against the already-landed `TASK-157` verifier substrate |
 | TASK-140 boundary | Canonical-anchor audit and contradiction grep from `TASK-158-03` |
 | Board / changelog | `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/README.md`, and the new TASK-158 completion changelog entry stay in sync |
 
@@ -417,12 +397,17 @@ introduce unreviewed public tools or implicit heavy-model side effects.
 ## Status / Board Update
 
 `TASK-158` is tracked as a promoted To Do row in the Vision & Hybrid Loop lane
-of `_docs/_TASKS/README.md`. When both scopes are complete, update this file's
-status, move or close the board row according to board scope, refresh the board
-counts, and record validation commands in the completion summary. Child tasks
-`TASK-158-01`, `TASK-158-02`, `TASK-158-03`, `TASK-158-04`, and `TASK-158-05`
-should be closed with the parent or explicitly superseded if the implementation
-consolidates them.
+of `_docs/_TASKS/README.md`. Closeout must happen in one branch: update this
+umbrella file, every direct child file, `_docs/_TASKS/README.md`, and the
+completion changelog together. Meaningful child leaves may close before the
+umbrella closes, but each closed leaf still needs a status update, completion
+summary, and changelog coverage in the same branch. Do not leave a direct child
+open under a closed `TASK-158`. If any scope is intentionally deferred, create
+a standalone follow-on task marked `Follow-on After`, close the stale child
+docs administratively as `✅ Done`, `⏭️ Superseded`, or `❌ Cancelled` with an
+explicit reason, keep the board tracking the new follow-on instead of the
+closed parent, and record the exact validation commands and docs surfaces in
+the parent completion summary.
 
 ## Acceptance Criteria
 
@@ -442,6 +427,8 @@ consolidates them.
   gate pass/fail and final completion.
 - `TASK-140` provider/profile evidence remains separate from quality-gate
   verifier evidence.
+- By default, `TASK-158` closes only after `TASK-158-04` and `TASK-158-05`
+  are implemented and validated in this branch.
 - `TASK-158-04` implements a bounded reference-understanding contract/parser
   and current reference/guided handoff that can propose or support gates
   without passing them.
@@ -451,5 +438,10 @@ consolidates them.
   public MCP tool is gated by a separate public-tool review.
 - `_docs/_TASKS/README.md` tracks this task as a board-level follow-up after
   the closed `TASK-157` substrate.
+- No direct `TASK-158` child file remains open under a closed parent. The only
+  allowed alternate closeout path is to first convert any intentionally
+  unimplemented remaining scope into an explicit `Follow-on After` task,
+  update this umbrella and `_docs/_TASKS/README.md` to name that follow-on, and
+  then close or supersede the stale child docs in the same branch.
 - Validation commands from this task are run and recorded in the completion
   summary.

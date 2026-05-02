@@ -83,9 +83,11 @@ assert all(gate.status == "pending" for gate in proposal.gates)
 
 ## Changelog Impact
 
-- Roll this slice into the single
-  `_docs/_CHANGELOG/<next-number>-...task-158-...completion.md` entry created
-  during `TASK-158-03` closeout.
+- If this leaf closes independently, add a scoped `_docs/_CHANGELOG/*` entry in
+  the same branch and update `_docs/_CHANGELOG/README.md`.
+- If multiple `TASK-158` leaves land together in one wave, one shared
+  completion entry may cover them, but it must name this leaf explicitly and
+  record its validation in the summary.
 
 ## Status / Board Update
 

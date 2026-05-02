@@ -96,6 +96,11 @@ mesh tools entirely.
   `silhouette_analysis` or future segmentation masks may support active
   `shape_profile` gates. The refinement stage still opens bounded mesh/modeling
   tools only after gate prerequisites pass.
+- Keep `TASK-158` Scope B ownership explicit: `TASK-158-04` owns any bounded
+  reference-understanding summary/linkage fields, and `TASK-158-05` owns any
+  default-off optional support-evidence adapters. This refinement task only
+  consumes their declared support refs through the closed `TASK-157`
+  substrate.
 - Keep broad sculpt out of the default low-poly refinement path. Sculpt remains
   a planner-driven, preconditioned handoff from `TASK-145`, not the baseline
   answer for faceted low-poly profile work.
@@ -129,7 +134,7 @@ if current_step == "refine_low_poly_forms":
 | Unit search | "profile low-poly body/ears/limbs" returns bounded mesh/profile tools |
 | Unit safety | Sculpt remains hidden unless planner emits explicit sculpt handoff |
 | Unit checkpoint | Primitive-only creature reports refinement blockers |
-| Unit evidence refs | Perception/reference-derived shape-profile evidence opens only bounded profile tools after prerequisites |
+| Unit evidence refs | `TASK-157`/`TASK-158` support refs for shape-profile gates open only bounded profile tools after prerequisites |
 | E2E mesh | A selected part can be profiled through guided mesh tools without losing state |
 | E2E vision | Primitive-only squirrel cannot pass final completion before refinement gate |
 | E2E macro | Any new profile macro has Blender-backed geometry assertions |

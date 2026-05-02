@@ -31,8 +31,11 @@ tool.
 
 - Do not add a public `reference_understand` or
   `router_apply_reference_strategy` tool.
-- Route hint-driven behavior through existing guided family gating and
-  diagnostics. If no public surface changes, keep the work unit-test-only.
+- Route hint-driven behavior only through existing declared contracts such as
+  `gate_plan`, `guided_handoff`, `GuidedFlowStateContract`, and declared
+  router/reference payload fields. Do not invent a parallel summary-only
+  visibility or discovery input channel. If no public surface changes, keep the
+  work unit-test-only.
 - Only add transport parity tests when the hint/linkage fields become visible
   on stdio or Streamable HTTP public payloads.
 - Search/discovery changes are optional. If no search hints or keywords are
@@ -67,9 +70,11 @@ tool.
 
 ## Changelog Impact
 
-- Roll this slice into the single
-  `_docs/_CHANGELOG/<next-number>-...task-158-...completion.md` entry created
-  during `TASK-158-03` closeout.
+- If this leaf closes independently, add a scoped `_docs/_CHANGELOG/*` entry in
+  the same branch and update `_docs/_CHANGELOG/README.md`.
+- If multiple `TASK-158` leaves land together in one wave, one shared
+  completion entry may cover them, but it must name this leaf explicitly and
+  record its validation in the summary.
 
 ## Status / Board Update
 

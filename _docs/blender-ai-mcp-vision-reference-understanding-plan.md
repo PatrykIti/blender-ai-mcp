@@ -254,7 +254,7 @@ Proponowany podział odpowiedzialności:
                                ↓
 ┌─────────────────────────────────────────────────────────────┐
 │ Blender Tooling + Inspection + Compare                       │
-│ - macro / modeling_mesh / mesh_edit / sculpt_region           │
+│ - macro / modeling_mesh / sculpt_region                       │
 │ - reference_compare_stage_checkpoint                          │
 │ - reference_iterate_stage_checkpoint                          │
 │ - deterministic truth / silhouette / relation checks          │
@@ -290,7 +290,7 @@ LLM wykonuje.
 
 ### 5.2. Draft public-surface sketch, not the current MCP contract
 
-Historyczny skrót nazwy:
+Historyczny skrót planistyczny, nie domyślna dostarczona powierzchnia MCP:
 
 ```text
 reference_understand(...)
@@ -520,9 +520,7 @@ ConstructionPath = Literal[
 RefinementFamily = Literal[
     "macro",
     "modeling_mesh",
-    "mesh_edit",
     "sculpt_region",
-    "material_finish",
     "inspect_only",
 ]
 
@@ -649,46 +647,53 @@ Router: only then expose sculpt_region if policy allows.
 
 ### 7.1. Mapowanie `construction_path` → tool families
 
+Historyczna normalizacja aliasów dla poniższego szkicu:
+
+```text
+mesh_edit -> modeling_mesh
+material_finish -> finish/stage guidance, not a canonical refinement family
+```
+
 ```python
 CONSTRUCTION_PATH_ROUTING = {
     "low_poly_facet": {
         "domain": "assembly",
-        "allowed": ["macro", "modeling_mesh", "mesh_edit", "material_finish", "inspect_only"],
+        "allowed": ["macro", "modeling_mesh", "inspect_only"],
         "blocked": ["global_sculpt", "smooth_organic_refinement"],
         "sculpt_policy": "local_detail_only",
         "primary_family": "modeling_mesh",
     },
     "hard_surface": {
         "domain": "hard_surface",
-        "allowed": ["macro", "modeling_mesh", "mesh_edit", "material_finish", "inspect_only"],
+        "allowed": ["macro", "modeling_mesh", "inspect_only"],
         "blocked": ["global_sculpt"],
         "sculpt_policy": "forbidden",
         "primary_family": "modeling_mesh",
     },
     "organic_sculpt": {
         "domain": "organic_form",
-        "allowed": ["macro", "modeling_mesh", "sculpt_region", "material_finish", "inspect_only"],
+        "allowed": ["macro", "modeling_mesh", "sculpt_region", "inspect_only"],
         "blocked": ["global_sculpt_unbounded"],
         "sculpt_policy": "primary_method",
         "primary_family": "sculpt_region",
     },
     "creature_blockout": {
         "domain": "assembly",
-        "allowed": ["macro", "modeling_mesh", "sculpt_region", "material_finish", "inspect_only"],
+        "allowed": ["macro", "modeling_mesh", "sculpt_region", "inspect_only"],
         "blocked": ["global_sculpt_unbounded"],
         "sculpt_policy": "allowed_after_blockout",
         "primary_family": "macro",
     },
     "dental_surface": {
         "domain": "dental",
-        "allowed": ["inspect_only", "modeling_mesh", "material_finish"],
+        "allowed": ["inspect_only", "modeling_mesh"],
         "blocked": ["global_sculpt_unbounded", "medical_claims"],
         "sculpt_policy": "local_detail_only",
         "primary_family": "inspect_only",
     },
     "architectural_mass": {
         "domain": "architecture",
-        "allowed": ["macro", "modeling_mesh", "mesh_edit", "material_finish", "inspect_only"],
+        "allowed": ["macro", "modeling_mesh", "inspect_only"],
         "blocked": ["sculpt_region", "global_sculpt"],
         "sculpt_policy": "forbidden",
         "primary_family": "modeling_mesh",
@@ -1162,9 +1167,7 @@ Return only JSON.
   "refinement_family_values": [
     "macro",
     "modeling_mesh",
-    "mesh_edit",
     "sculpt_region",
-    "material_finish",
     "inspect_only"
   ],
   "sculpt_policy_values": [
@@ -1174,6 +1177,13 @@ Return only JSON.
     "primary_method"
   ]
 }
+```
+
+Historyczny alias note:
+
+```text
+mesh_edit -> modeling_mesh
+material_finish -> stage/finish guidance, not a current canonical family
 ```
 
 ---
@@ -2163,18 +2173,27 @@ server/adapters/mcp/vision/classification/prompt_labels.py
 
 ---
 
-### 13.5. Router integration
+### 13.5. Guided/router integration aligned to current seams
+
+Stary owner sketch z `server/adapters/mcp/router/...` i
+`server/application/router/...` jest dziś nieaktualny. W aktualnym checkoutcie
+ten follow-up powinien przechodzić przez istniejące guided/reference seams:
 
 ```text
-server/adapters/mcp/router/reference_strategy.py
-server/adapters/mcp/router/construction_path_policy.py
+server/adapters/mcp/areas/reference.py
+server/adapters/mcp/contracts/reference.py
+server/adapters/mcp/session_capabilities.py
+server/adapters/mcp/transforms/visibility_policy.py
+server/adapters/mcp/guided_mode.py
+server/adapters/mcp/areas/router.py
+server/router/application/session_phase_hints.py
+server/router/infrastructure/tools_metadata/reference/reference_compare_stage_checkpoint.json
+server/router/infrastructure/tools_metadata/reference/reference_iterate_stage_checkpoint.json
 ```
 
-Lub, jeśli router jest w innym module aplikacyjnym:
-
-```text
-server/application/router/reference_strategy.py
-```
+Jeśli kiedyś pojawi się osobny helper dla reference understanding, powinien
+wisieć na tych seamach zamiast przywracać nieistniejące ścieżki z tego
+historycznego szkicu.
 
 ---
 
@@ -2193,8 +2212,8 @@ server/adapters/mcp/areas/reference.py
 Rekomendacja:
 
 ```text
-Na start można dodać do areas/reference.py.
-Gdy urośnie, wydzielić reference_understanding.py.
+Domyślnie rozszerzać istniejące areas/reference.py.
+Oddzielne areas/reference_understanding.py dopiero po osobnym public-surface review.
 ```
 
 ---
@@ -2204,10 +2223,14 @@ Gdy urośnie, wydzielić reference_understanding.py.
 ### 14.1. Unit tests
 
 ```text
-tests/unit/adapters/mcp/test_reference_understanding_contract.py
-tests/unit/adapters/mcp/test_reference_understanding_parser.py
-tests/unit/adapters/mcp/test_construction_path_policy.py
-tests/unit/adapters/mcp/test_reference_strategy_router.py
+tests/unit/adapters/mcp/test_vision_prompting.py
+tests/unit/adapters/mcp/test_vision_parsing.py
+tests/unit/adapters/mcp/test_reference_images.py
+tests/unit/adapters/mcp/test_contract_payload_parity.py
+tests/unit/adapters/mcp/test_quality_gate_intake.py
+tests/unit/adapters/mcp/test_guided_flow_state_contract.py
+tests/unit/adapters/mcp/test_visibility_policy.py
+tests/unit/adapters/mcp/test_guided_mode.py
 tests/unit/adapters/mcp/test_cv_features.py
 ```
 
@@ -2317,8 +2340,10 @@ Przykładowe score output:
 MVP uznajemy za gotowe, gdy:
 
 ```text
-1. reference_understand(...) działa na attached references.
-2. Zwraca typed ReferenceUnderstandingContract.
+1. Reference understanding może działać na attached references przez istniejący
+   guided/reference seam; osobna publiczna akcja pozostaje opcjonalna.
+2. Zwraca typed ReferenceUnderstandingContract albo równoważny typed summary w
+   istniejącym response payloadzie.
 3. Router mapuje construction_path na allowed/blocked tool families.
 4. Low-poly squirrel scenario daje:
    - construction_path = low_poly_facet
@@ -2455,12 +2480,12 @@ Add typed contract for pre-build reference understanding.
 
 ---
 
-### TASK 2 — Add reference_understand MCP surface
+### TASK 2 — Add pre-build reference-understanding entry path
 
 ```markdown
 ## Goal
 Historical draft only. A public `reference_understand(...)` MCP surface requires
-separate public-tool review; the default implementation target remains an
+separate public-tool review; the default implementation target remains the
 existing reference/guided-state seam.
 
 ## Files
@@ -2483,8 +2508,10 @@ existing reference/guided-state seam.
 Normalize construction_path into allowed/blocked tool families.
 
 ## Files
-- server/adapters/mcp/router/construction_path_policy.py
-- tests/unit/adapters/mcp/test_construction_path_policy.py
+- server/adapters/mcp/session_capabilities.py
+- server/adapters/mcp/transforms/visibility_policy.py
+- server/adapters/mcp/guided_mode.py
+- server/router/application/session_phase_hints.py
 
 ## Done when
 - low_poly_facet → modeling_mesh/macro, sculpt local only
@@ -2500,6 +2527,13 @@ Normalize construction_path into allowed/blocked tool families.
 ```markdown
 ## Goal
 Expose active reference strategy to LLM orchestrator.
+
+## Files
+- server/adapters/mcp/contracts/reference.py
+- server/adapters/mcp/areas/reference.py
+- server/adapters/mcp/session_capabilities.py
+- server/adapters/mcp/areas/router.py
+- server/adapters/mcp/guided_mode.py
 
 ## Output fields
 - active_construction_path
@@ -2600,9 +2634,9 @@ Najkrótsza ścieżka z największym efektem:
 
 ```text
 1. ReferenceUnderstandingContract
-2. reference_understand(...) prompt + parser
-3. construction_path_policy router mapping
-4. orchestrator handoff payload
+2. reference-understanding prompt + parser on existing vision/reference owners
+3. construction-path mapping through current guided/session/visibility seams
+4. orchestrator handoff payload on existing reference/guided responses
 5. low_poly_facet stage name + stage guidance
 6. low-poly squirrel golden eval
 7. optional OpenCV feature extraction

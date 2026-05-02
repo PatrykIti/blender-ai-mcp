@@ -33,7 +33,7 @@ creating a second gate-intake path or violating the strict MCP payload shapes.
 - If the client needs explicit linkage, persist:
   - `understanding_id`
   - a bounded public summary view
-  - accepted gate ids or proposal refs
+  - accepted gate ids or another explicitly declared linkage field
 - `SessionCapabilityState` is frozen. Use an owning helper or `replace(...)`
   and `set_session_capability_state(...)`, not in-place mutation.
 - `ReferenceCompareStageCheckpointResponseContract` and
@@ -88,9 +88,11 @@ set_session_capability_state(ctx, state)
 
 ## Changelog Impact
 
-- Roll this slice into the single
-  `_docs/_CHANGELOG/<next-number>-...task-158-...completion.md` entry created
-  during `TASK-158-03` closeout.
+- If this leaf closes independently, add a scoped `_docs/_CHANGELOG/*` entry in
+  the same branch and update `_docs/_CHANGELOG/README.md`.
+- If multiple `TASK-158` leaves land together in one wave, one shared
+  completion entry may cover them, but it must name this leaf explicitly and
+  record its validation in the summary.
 
 ## Status / Board Update
 
@@ -103,7 +105,7 @@ set_session_capability_state(ctx, state)
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py -v`
-- `rg -n "reference_understanding_summary|understanding_id|accepted_gate_ids|proposal_refs" server/adapters/mcp/session_capabilities.py server/adapters/mcp/areas/reference.py server/adapters/mcp/contracts/reference.py tests/unit/adapters/mcp`
+- `rg -n "reference_understanding_summary|understanding_id|accepted_gate_ids|reference_understanding_gate_ids" server/adapters/mcp/session_capabilities.py server/adapters/mcp/areas/reference.py server/adapters/mcp/contracts/reference.py tests/unit/adapters/mcp`
 
 ## Acceptance Criteria
 

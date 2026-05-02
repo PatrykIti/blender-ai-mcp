@@ -44,13 +44,17 @@ and final completion truth.
   propose relation findings, but scene/spatial/mesh/assertion evidence,
   evaluated by the quality-gate verifier, owns pass/fail status.
 
-## Line-Level Targets
+## Anchor-Based Targets
 
-| Range | Required Work |
-|-------|---------------|
-| `_docs/_TASKS/TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md:68-77` | Replace pass/fail authority wording with scene/spatial/mesh/assertion/verifier truth |
-| `_docs/_TASKS/TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md:162-183` | Rewrite Vision Mode true-error wording as advisory relation findings bound by verifier/spatial/assertion policy |
-| `_docs/_TASKS/TASK-135-03_Low_Poly_Form_Refinement_Mesh_Window_And_Profile_Macros.md:90-98` | Replace `reference evidence requires them` with normalized gate evidence and verifier-supported support refs |
+Exact line numbers in the downstream creature docs may drift after each wording
+cleanup. Refresh exact locations against the current checkout before editing and
+start from these anchor groups:
+
+| Anchor | Required Work |
+|--------|---------------|
+| The first `TASK-157` authority bullet cluster in `TASK-135` | Replace pass/fail authority wording with scene/spatial/mesh/assertion/verifier truth |
+| The Vision Mode / relation-mismatch decision section in `TASK-135` | Rewrite true-error wording as advisory relation findings bound by verifier/spatial/assertion policy |
+| The `shape_profile` child-gate paragraph in `TASK-135-03` | Replace standalone `reference evidence requires them` wording with normalized gate evidence and verifier-supported support refs |
 
 ## Rewrite Pattern
 
@@ -99,10 +103,12 @@ verifier-supported support refs, not standalone reference evidence.
 
 ## Changelog Impact
 
-- Roll this slice into the single
-  `_docs/_CHANGELOG/<next-number>-...task-158-...completion.md` entry created during
-  `TASK-158-03` closeout; do not create a separate child changelog entry.
-  Changelog 278 remains the creation/plan entry.
+- If this leaf closes independently, add a scoped `_docs/_CHANGELOG/*` entry in
+  the same branch and update `_docs/_CHANGELOG/README.md`.
+- If multiple `TASK-158` leaves land together in one wave, one shared
+  completion entry may cover them, but it must name this leaf explicitly and
+  record its validation in the summary.
+- Changelog 278 remains the creation/plan entry.
 
 ## Status / Board Update
 

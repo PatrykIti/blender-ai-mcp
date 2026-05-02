@@ -161,22 +161,43 @@ Operational prerequisites still matter for reruns:
 
 `TASK-158` is still open, so the lanes below are planning targets rather than
 currently shipped owner proofs. When Scope B starts implementation, promote the
-focused lanes from the task docs onto these current owners first:
+focused lanes from `TASK-158-04` and `TASK-158-05` onto these current owners
+first:
 
-- prompt/parser owners:
+- shared prompt/parser/backend owners for `TASK-158-04`:
   `tests/unit/adapters/mcp/test_vision_prompting.py` and
   `tests/unit/adapters/mcp/test_vision_parsing.py`
-- reference/checkpoint/session/search owners:
+- reference/checkpoint/session/guided-diagnostics owners for `TASK-158-04`:
   `tests/unit/adapters/mcp/test_reference_images.py`,
   `tests/unit/adapters/mcp/test_contract_payload_parity.py`,
+  `tests/unit/adapters/mcp/test_quality_gate_intake.py`,
+  `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`,
+  `tests/unit/adapters/mcp/test_visibility_policy.py`,
+  `tests/unit/adapters/mcp/test_guided_mode.py`,
   `tests/unit/adapters/mcp/test_router_elicitation.py`, and
   `tests/unit/adapters/mcp/test_search_surface.py`
-- transport/public-surface parity when new summary fields or hint-driven
-  visibility become client-facing:
+- transport/public-surface parity for `TASK-158-04` when new summary fields or
+  hint-driven visibility become client-facing:
   `tests/e2e/integration/test_guided_surface_contract_parity.py`
-- optional evidence / fixture / harness owners:
-  `tests/unit/adapters/mcp/test_vision_evaluation.py` and
-  `tests/unit/scripts/test_script_tooling.py`
+  and `tests/e2e/integration/test_guided_gate_state_transport.py`
+- optional-evidence runtime, envelope, fixture, and harness owners for
+  `TASK-158-05`:
+  `tests/unit/adapters/mcp/test_vision_runtime_config.py`,
+  `tests/unit/adapters/mcp/test_vision_evaluation.py`,
+  `tests/unit/adapters/mcp/test_reference_images.py`,
+  `tests/unit/scripts/test_script_tooling.py`, and
+  `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
+
+Keep the current owner-lane rule explicit while Scope B stays open:
+
+- start from the shared `vision/prompting.py`, `vision/parsing.py`, and
+  `vision/backends.py` owners before creating dedicated
+  `reference_understanding*` modules or test roots
+- reference-understanding gate seeds must reuse the closed `TASK-157`
+  intake/state owners rather than introducing a second reference-specific
+  gate-normalization lane
+- providerless fixture/eval behavior for `scripts/vision_harness.py` must be an
+  explicit opt-in path; the default harness flow stays backend-executing
 
 ---
 

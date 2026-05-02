@@ -40,7 +40,9 @@ reference-driven reconstruction:
   first-pass body-part vocabulary
 - there is no explicit product contract for what counts as a successful
   low-poly anatomical reconstruction
-- there is no promoted runtime path that ties perception evidence to a
+- there is no promoted runtime path that ties bounded
+  perception/reference-understanding support evidence, through the closed
+  `TASK-157` substrate and current guided/reference seams, to a
   reconstruction-grade write-side build strategy
 
 ## Current Runtime Baseline
@@ -75,6 +77,9 @@ Instead:
 - creature-specific prompts and future perception outputs may seed gate
   proposals or shape-profile evidence, but this umbrella does not pull SAM,
   CLIP, or another heavy perception adapter into the baseline implementation
+- bounded reference-understanding summaries and default-off optional perception
+  adapters remain owned by `TASK-158` Scope B and should reach this umbrella
+  only through the closed `TASK-157` proposal/support seams when they land
 
 ## Current Capability Ceiling
 
@@ -138,9 +143,9 @@ If this umbrella is done correctly, the repo gains:
   of only broad silhouette likeness
 - a more useful path for realistic-reference-to-low-poly requests where the
   result should retain recognizable body-part segmentation
-- a stronger bridge between perception evidence, guided handoff, and future
-  write-side reconstruction surfaces aligned with the repo's broader
-  reconstruction direction
+- a stronger bridge between bounded perception/reference-understanding support
+  evidence, guided handoff, and future write-side reconstruction surfaces,
+  while keeping gate truth on the closed `TASK-157` verifier path
 - a clearer relation-aware story for when parts should attach, seat, remain
   separate, or be treated as erroneous overlaps during low-poly creature work
 
@@ -302,9 +307,9 @@ This umbrella does **not** cover:
 
 | Path / Module | Scope | Expected Work |
 |---------------|-------|---------------|
-| `server/adapters/mcp/contracts/reference.py` | Reference loop contracts | Add creature gate summaries and completion blockers using the closed `TASK-157` contracts |
+| `server/adapters/mcp/contracts/reference.py` | Reference loop contracts | Add creature gate summaries and completion blockers using the closed `TASK-157` contracts, and consume any bounded reference-understanding linkage that `TASK-158-04` later promotes into declared checkpoint fields |
 | `server/adapters/mcp/contracts/quality_gates.py` | Generic dependency | Consume normalized gate types for creature-specific templates |
-| `server/adapters/mcp/areas/reference.py` | Checkpoint assembly | Include creature gate status, missing visual roles, and seam/profile blockers in compare/iterate results |
+| `server/adapters/mcp/areas/reference.py` | Checkpoint assembly | Include creature gate status, missing visual roles, seam/profile blockers, and any `TASK-158-04` summary linkage only through the existing reference/checkpoint surface |
 | `server/adapters/mcp/session_capabilities.py` | Guided state | Persist creature gate plan, role cardinality, stale gate versions, and next gate actions |
 | `server/application/services/spatial_graph.py` | Truth mapping | Map creature seam relations to `attachment_seam` and `support_contact` gate evidence |
 | `server/adapters/mcp/areas/scene.py` | Bounded macros | Use attach/align/arc/profile macros as gate repair tools |

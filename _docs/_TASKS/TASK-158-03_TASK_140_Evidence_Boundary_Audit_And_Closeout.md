@@ -28,20 +28,19 @@ runtime validation, and docs validation state in sync.
 
 ## Canonical No-Op Anchors
 
-Do not rewrite these unless a later audit proves they contradict the boundary:
+Do not rewrite these unless a later audit proves they contradict the boundary.
+Use the phrase anchors below instead of brittle line snapshots.
 
-| File / Range | Why It Is Canonical |
-|--------------|---------------------|
-| `_docs/_TASKS/TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md:66-72` | States provider/profile evidence is not quality-gate verifier evidence by itself |
-| `_docs/_TASKS/TASK-140-05-03_Evidence_Taxonomy_Promotion_Criteria_And_Operator_Reporting.md:14-18` | Frames evidence taxonomy as provider/profile reporting |
-| `_docs/_TASKS/TASK-140-05-03_Evidence_Taxonomy_Promotion_Criteria_And_Operator_Reporting.md:30-32` | Keeps promoted support evidence separate from quality-gate verifier evidence |
-| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:73-76` | States perception can support/propose but not own verifier truth |
-| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:100-108` | Leaves the first reference-understanding public surface undecided and forbids a public `router_apply_reference_strategy` tool |
-| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:176-188` | Defines alias/future-tool mapping for `mesh_edit`, `material_finish`, and low-poly macro names |
-| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:227-256` | Keeps SAM, CLIP/SigLIP, segmentation sidecars, and related heavy perception adapters optional and later |
-| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:273-277` | Keeps low-poly macro names out of first implementation |
-| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:290-296` | Routes implementation through current reference/guided-state seams or real `server/router/` owners, not a non-existent MCP router package |
-| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md:348-355` | Leaves public-surface and `material_finish` canonical-family promotion decisions open for later review |
+| File / Anchor | Why It Is Canonical |
+|---------------|---------------------|
+| `_docs/_TASKS/TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md` phrase `It is not quality-gate verifier evidence by itself.` | States provider/profile evidence is not quality-gate verifier evidence by itself |
+| `_docs/_TASKS/TASK-140-05-03_Evidence_Taxonomy_Promotion_Criteria_And_Operator_Reporting.md` phrase `vision_contract_profile can produce structured compare/iterate payloads` | Frames evidence taxonomy as provider/profile reporting |
+| `_docs/_TASKS/TASK-140-05-03_Evidence_Taxonomy_Promotion_Criteria_And_Operator_Reporting.md` phrase `must remain distinct from deterministic quality-gate verifier evidence` | Keeps promoted support evidence separate from quality-gate verifier evidence |
+| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md` phrase `vision_contract_profile remains prompt/schema/parser routing metadata` | States provider/profile diagnostics remain routing metadata, not verifier truth |
+| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md` phrase `the first reference-understanding public surface remains undecided` | Forbids treating draft reference-understanding surfaces as already-promoted public tools |
+| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md` alias/future-tool mapping around `translate draft families into current GuidedFlowFamilyLiteral values` | Defines canonical alias/future-tool mapping for `mesh_edit`, `material_finish`, and low-poly macro names |
+| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md` optional later adapter section around `CLIP/SigLIP`, `SAM`, and `GroundingDINO/OWL-ViT` | Keeps heavy perception adapters optional and later |
+| `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md` owner-map section around `current contract and owner map` / `server/router/` owners | Routes implementation through current reference/guided-state seams and real owners, not a non-existent MCP router package |
 
 ## Implementation Notes
 
@@ -51,10 +50,15 @@ Do not rewrite these unless a later audit proves they contradict the boundary:
 - Classify remaining `TASK-140*` hits as canonical/no-op or contradictory.
 - Patch only contradictory wording that blurs provider/profile evidence with
   quality-gate verifier evidence.
+- If the audit concludes that `TASK-140*` stays untouched, record that explicit
+  no-op outcome in this leaf and in the `TASK-158` parent completion summary
+  instead of silently skipping the check.
 - Close all `TASK-158-*` child files in the same branch when the parent closes,
   or mark any intentionally skipped child as superseded with reason.
 - Update `_docs/_TASKS/README.md` counts and row placement when closing the
   promoted task.
+- Do not close `TASK-158` until this leaf, the parent, and any still-referenced
+  child docs all agree on status and follow-on handling.
 
 ## Runtime / Security Contract Notes
 
@@ -103,6 +107,20 @@ Do not rewrite these unless a later audit proves they contradict the boundary:
 - Refresh `_docs/_CHANGELOG/README.md`.
 - Leave changelog 278 as the creation/plan entry.
 
+## Status / Board Update
+
+- Closeout is same-branch work: update this leaf, the `TASK-158` parent,
+  any direct child statuses, `_docs/_TASKS/README.md`, and the completion
+  changelog together.
+- Do not leave a direct `TASK-158` child open under a closed parent. If
+  `TASK-158-04` or `TASK-158-05` is deferred, create a standalone
+  `Follow-on After` task, close or supersede the stale child docs
+  administratively with an explicit reason, and keep the board tracking the
+  follow-on instead of the closed parent.
+- If the `TASK-140*` audit remains a pure no-op, say that explicitly in this
+  leaf's completion summary so the canonical anchors remain an intentional
+  closeout result.
+
 ## Acceptance Criteria
 
 - `TASK-140` evidence remains clearly provider/profile support evidence.
@@ -112,4 +130,6 @@ Do not rewrite these unless a later audit proves they contradict the boundary:
   either slice is deferred, the deferred scope is converted into a standalone
   board-level follow-on marked `Follow-on After`, the parent acceptance
   criteria name that follow-on, and `_docs/_TASKS/README.md` tracks it as open.
+- `TASK-158` closeout records whether `TASK-140*` stayed canonical no-op or
+  required a wording patch; it does not leave the audit result implicit.
 - `TASK-158` parent, children, board, and changelog are synchronized at close.

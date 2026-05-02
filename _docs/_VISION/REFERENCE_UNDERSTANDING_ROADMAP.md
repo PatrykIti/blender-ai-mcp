@@ -286,18 +286,22 @@ Likely implementation touchpoints:
 
 | Area | Likely Files |
 |------|--------------|
-| Contracts | `server/adapters/mcp/contracts/reference_understanding.py` or `reference.py` |
-| Vision prompt/parser | `server/adapters/mcp/vision/reference_understanding.py`, `reference_understanding_prompt.py`, `reference_understanding_parser.py` |
+| Contracts | `server/adapters/mcp/contracts/reference.py` first; split into `reference_understanding.py` only if the shared owner grows too large |
+| Vision prompt/parser | `server/adapters/mcp/vision/prompting.py`, `server/adapters/mcp/vision/parsing.py`, and `server/adapters/mcp/vision/backends.py` first; add focused `reference_understanding*.py` helpers only if the shared owner becomes too large |
 | Reference surface | `server/adapters/mcp/areas/reference.py` first; split later only if needed |
-| Guided state | `server/adapters/mcp/session_capabilities.py`, guided flow contracts |
+| Guided state | `server/adapters/mcp/session_capabilities.py`, `server/adapters/mcp/guided_mode.py`, `server/adapters/mcp/areas/router.py`, and guided flow contracts when new summary/hint fields become transport-visible |
 | Visibility/search | `server/adapters/mcp/transforms/visibility_policy.py`, `server/adapters/mcp/discovery/search_documents.py` |
 | Gate integration | `server/adapters/mcp/contracts/quality_gates.py` and the closed `TASK-157` gate substrate |
-| Tests | focused unit tests under `tests/unit/adapters/mcp/`, transport/integration lanes when client-facing payloads change, plus golden fixtures under `tests/fixtures/vision_eval/` |
+| Tests | shared-owner unit tests under `tests/unit/adapters/mcp/` first (`test_vision_prompting.py`, `test_vision_parsing.py`, `test_reference_images.py`, `test_contract_payload_parity.py`, `test_quality_gate_intake.py`, `test_guided_flow_state_contract.py`, `test_guided_mode.py`, `test_visibility_policy.py`, `test_router_elicitation.py`, `test_search_surface.py`, `test_vision_runtime_config.py`, `test_vision_evaluation.py`), transport/integration lanes (`test_guided_surface_contract_parity.py`, `test_guided_gate_state_transport.py`) when client-facing payloads change, plus golden fixtures under `tests/fixtures/vision_eval/` |
 | Docs | `_docs/_VISION/README.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_PROMPTS/`, task closeout docs |
 
 Do not place router policy under a non-existent `server/adapters/mcp/router/`
 package. Use the current adapter/guided-state seams or the actual
 `server/router/` package when the policy belongs to the router layer.
+
+Reference-understanding gate proposals should reuse the closed `TASK-157`
+goal-time intake seam in `session_capabilities.py`; do not add a second
+reference-specific gate normalizer or a parallel proposal-ingest path.
 
 ## Test And Evaluation Plan
 
@@ -354,11 +358,12 @@ The roadmap is satisfied when:
 
 - Whether the first public surface is an action on `reference_images(...)`, a
   new `reference_understand(...)` tool, or an internal automatic pass surfaced
-  through `router_get_status()` and checkpoint payloads.
+  through `router_get_status()` and checkpoint payloads after a public-tool
+  review.
 - Whether `material_finish` deserves a new canonical planner family or should
   stay a stage/action-hint concept.
-- Whether `ReferenceUnderstandingContract` lives in a separate file immediately
-  or starts inside `reference.py` and is split later.
+- Whether `ReferenceUnderstandingContract` can start inside `reference.py` and
+  split later only if the shared contract owner grows too large.
 - Which existing VLM backend should be the first harness-ranked default for
   reference understanding, since compare-loop strength does not automatically
   prove pre-build understanding quality.
