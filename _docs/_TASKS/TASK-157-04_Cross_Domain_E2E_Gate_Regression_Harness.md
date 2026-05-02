@@ -13,6 +13,23 @@ one creature scenario and one building-style scenario.
 
 ## Progress Notes
 
+2026-05-03:
+
+- aligned staged `truth_bundle`, `truth_followup`, and `correction_candidates`
+  with the same guided pair-expansion owner path that feeds
+  `active_gate_plan`, so goal-sensitive `support_contact` /
+  `symmetry_pair` evidence no longer disappears from correction-truth surfaces
+- replaced creature-only attachment wording on generic/building follow-up
+  messages and macro reasons, which keeps `roof_wall` repair guidance aligned
+  with the structural seam contract instead of leaking organic-creature prose
+- added regressions that protect `goal_hint=goal` on the staged compare
+  relation-graph rebuild, preserve flattened iterate gate fields when
+  `compare_result` carries blockers without an `active_gate_plan`, and run the
+  transport lane through the real compare-stage owner seam instead of a stub
+- reran the transport plus live Blender-backed creature/building owner lane on
+  this machine and got `5 passed`, so the current open status is no longer
+  explained by missing operational proof
+
 2026-05-02:
 
 - widened the deterministic attachment-semantics owner path so

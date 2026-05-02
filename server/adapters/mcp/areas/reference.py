@@ -540,7 +540,15 @@ def _iterate_stage_response(
     resolved_gate_plan = active_gate_plan
     if resolved_gate_plan is None and compare_result.active_gate_plan is not None:
         resolved_gate_plan = compare_result.active_gate_plan.model_dump(mode="json")
-    gate_fields = _gate_checkpoint_fields(resolved_gate_plan)
+    if resolved_gate_plan is not None:
+        gate_fields = _gate_checkpoint_fields(resolved_gate_plan)
+    else:
+        gate_fields = {
+            "gate_statuses": list(compare_result.gate_statuses or []),
+            "completion_blockers": list(compare_result.completion_blockers or []),
+            "next_gate_actions": list(compare_result.next_gate_actions or []),
+            "recommended_bounded_tools": list(compare_result.recommended_bounded_tools or []),
+        }
     return ReferenceIterateStageCheckpointResponseContract(
         action="iterate_stage_checkpoint",
         session_id=session_id,
@@ -856,7 +864,7 @@ def _should_inspect_from_truth_signal(
         if truth_evidence is None:
             continue
         if any(
-            kind in {"contact_failure", "overlap", "attachment", "measurement_error"}
+            kind in {"contact_failure", "overlap", "attachment", "support", "symmetry", "measurement_error"}
             for kind in truth_evidence.item_kinds
         ):
             return True
@@ -897,7 +905,7 @@ def _classify_refinement_domain(
 
 
 _STRUCTURAL_RELATION_BLOCKER_KINDS: frozenset[str] = frozenset(
-    {"contact_failure", "gap", "overlap", "attachment", "measurement_error"}
+    {"contact_failure", "gap", "overlap", "attachment", "support", "symmetry", "measurement_error"}
 )
 _PROPORTION_BLOCKING_HINT_TYPES: frozenset[str] = frozenset({"rebalance_proportion"})
 
@@ -967,8 +975,8 @@ def _relation_planner_blockers(
             category="relation",
             severity="blocking",
             reason=(
-                "Unresolved attachment/contact/gap/overlap truth evidence still dominates, so sculpt-region "
-                "handoff is blocked until the structural relation is repaired or re-inspected."
+                "Unresolved attachment/contact/support/symmetry/gap/overlap truth evidence still dominates, "
+                "so sculpt-region handoff is blocked until the structural relation is repaired or re-inspected."
             ),
             candidate_ids=candidate_ids,
             recommended_tool="scene_relation_graph",
@@ -1494,6 +1502,8 @@ def _check_priority_score(check: SceneCorrectionTruthPairContract) -> tuple[int,
     alignment_score = 1 if check.alignment is not None and not bool(check.alignment.get("is_aligned")) else 0
     error_score = 4 if check.error else 0
     semantics = check.attachment_semantics
+    support_semantics = check.support_semantics
+    symmetry_semantics = check.symmetry_semantics
     required_score = 4 if semantics is not None and semantics.required_seam else 0
     verdict_score = 0
     seam_score = 0
@@ -1513,6 +1523,12 @@ def _check_priority_score(check: SceneCorrectionTruthPairContract) -> tuple[int,
             "face_head": 2,
             "nose_snout": 1,
         }.get(semantics.seam_kind, 0)
+    if support_semantics is not None and support_semantics.verdict != "supported":
+        verdict_score = max(verdict_score, 2)
+        seam_score = max(seam_score, 4)
+    if symmetry_semantics is not None and symmetry_semantics.verdict != "symmetric":
+        verdict_score = max(verdict_score, 2)
+        seam_score = max(seam_score, 4)
     pair_label = _pair_label(check.from_object, check.to_object)
     return (
         required_score + verdict_score + error_score + overlap_score + contact_score + gap_score + alignment_score,
@@ -1526,7 +1542,7 @@ def _check_priority_score(check: SceneCorrectionTruthPairContract) -> tuple[int,
 
 def _rebuild_truth_summary(
     *,
-    pairing_strategy: Literal["none", "primary_to_others", "required_creature_seams"],
+    pairing_strategy: Literal["none", "primary_to_others", "required_creature_seams", "guided_spatial_pairs"],
     checks: list[SceneCorrectionTruthPairContract],
 ) -> SceneCorrectionTruthSummaryContract:
     return SceneCorrectionTruthSummaryContract(
@@ -2639,18 +2655,40 @@ def _attachment_item_summary(
     if has_overlap:
         if relation_kind == "embedded_attachment":
             return (
-                f"{pair_label} is an organic attachment relation; generic overlap cleanup alone is not enough "
+                f"{pair_label} is an embedded attachment relation; generic overlap cleanup alone is not enough "
                 "to seat the part correctly into the anchor mass."
             )
         return (
-            f"{pair_label} is an organic attachment relation; the pair should stay seated/attached, not just be "
+            f"{pair_label} is an attachment relation; the pair should stay seated/attached, not just be "
             "pushed apart until overlap reaches zero."
         )
     if has_gap or has_contact_failure:
-        return f"{pair_label} is still floating or detached for this organic attachment relation."
+        return f"{pair_label} is still floating or detached for this attachment relation."
     if has_alignment_issue:
-        return f"{pair_label} is still seated on the wrong attachment line for this organic relation."
-    return f"{pair_label} still has wrong organic attachment semantics."
+        return f"{pair_label} is still seated on the wrong attachment line for this attachment relation."
+    return f"{pair_label} still has wrong attachment semantics."
+
+
+def _support_item_summary(
+    *,
+    pair_label: str,
+    support_semantics: SceneSupportSemanticsContract,
+) -> str:
+    return (
+        f"{pair_label} is not yet supported as expected on {support_semantics.axis}; "
+        "the supported object still needs a stable base/contact relation."
+    )
+
+
+def _symmetry_item_summary(
+    *,
+    pair_label: str,
+    symmetry_semantics: SceneSymmetrySemanticsContract,
+) -> str:
+    return (
+        f"{pair_label} is still asymmetric across {symmetry_semantics.axis}; "
+        "the mirrored pair needs another bounded symmetry correction."
+    )
 
 
 def _resolve_capture_scope(
@@ -2797,26 +2835,28 @@ def _truth_bundle_pairs(
 def _build_correction_truth_bundle(
     scene_handler,
     scope: SceneAssembledTargetScopeContract,
+    *,
+    goal_hint: str | None = None,
 ) -> tuple[SceneCorrectionTruthBundleContract, dict[str, Any]]:
     relation_graph = get_spatial_graph_service().build_relation_graph(
         reader=scene_handler,
         scope_graph=scope.model_dump(mode="json"),
-        goal_hint=None,
+        goal_hint=goal_hint,
         include_truth_payloads=True,
-        include_guided_pairs=False,
+        include_guided_pairs=True,
     )
     relation_pairs = list(relation_graph.get("pairs") or [])
-    truth_pairs = [
-        pair
-        for pair in relation_pairs
-        if str(pair.get("pair_source") or "") in {"required_creature_seam", "primary_to_other"}
-    ]
+    truth_pairs = relation_pairs
     if not truth_pairs:
-        pairing_strategy: Literal["none", "primary_to_others", "required_creature_seams"] = "none"
-    elif all(str(pair.get("pair_source") or "") == "required_creature_seam" for pair in truth_pairs):
+        pairing_strategy: Literal["none", "primary_to_others", "required_creature_seams", "guided_spatial_pairs"] = (
+            "none"
+        )
+    elif any(str(pair.get("pair_source") or "") == "required_creature_seam" for pair in truth_pairs):
         pairing_strategy = "required_creature_seams"
-    else:
+    elif all(str(pair.get("pair_source") or "") == "primary_to_other" for pair in truth_pairs):
         pairing_strategy = "primary_to_others"
+    else:
+        pairing_strategy = "guided_spatial_pairs"
     checks: list[SceneCorrectionTruthPairContract] = []
     contact_failures = 0
     overlap_pairs = 0
@@ -3034,6 +3074,8 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
     seen_pairs: set[str] = set()
     pair_issue_kinds: dict[str, set[str]] = {}
     pair_attachment_semantics: dict[str, SceneAttachmentSemanticsContract] = {}
+    pair_support_semantics: dict[str, SceneSupportSemanticsContract] = {}
+    pair_symmetry_semantics: dict[str, SceneSymmetrySemanticsContract] = {}
     pair_checks_by_label: dict[str, SceneCorrectionTruthPairContract] = {}
 
     for check in bundle.checks:
@@ -3102,6 +3144,42 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
                         from_object=check.from_object,
                         to_object=check.to_object,
                         tool_name="scene_assert_contact",
+                        relation_pair_id=check.relation_pair_id,
+                        relation_kinds=list(check.relation_kinds or []),
+                        relation_verdicts=list(check.relation_verdicts or []),
+                    )
+                )
+            if check.support_semantics is not None and check.support_semantics.verdict != "supported":
+                pair_support_semantics[pair_label] = check.support_semantics
+                pair_items.append(
+                    SceneTruthFollowupItemContract(
+                        kind="support",
+                        summary=_support_item_summary(
+                            pair_label=pair_label,
+                            support_semantics=check.support_semantics,
+                        ),
+                        priority="high",
+                        from_object=check.from_object,
+                        to_object=check.to_object,
+                        tool_name="scene_relation_graph",
+                        relation_pair_id=check.relation_pair_id,
+                        relation_kinds=list(check.relation_kinds or []),
+                        relation_verdicts=list(check.relation_verdicts or []),
+                    )
+                )
+            if check.symmetry_semantics is not None and check.symmetry_semantics.verdict != "symmetric":
+                pair_symmetry_semantics[pair_label] = check.symmetry_semantics
+                pair_items.append(
+                    SceneTruthFollowupItemContract(
+                        kind="symmetry",
+                        summary=_symmetry_item_summary(
+                            pair_label=pair_label,
+                            symmetry_semantics=check.symmetry_semantics,
+                        ),
+                        priority="high",
+                        from_object=check.from_object,
+                        to_object=check.to_object,
+                        tool_name="scene_assert_symmetry",
                         relation_pair_id=check.relation_pair_id,
                         relation_kinds=list(check.relation_kinds or []),
                         relation_verdicts=list(check.relation_verdicts or []),
@@ -3210,8 +3288,8 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
                     SceneRepairMacroCandidateContract(
                         macro_name="macro_attach_part_to_surface",
                         reason=(
-                            "Use a bounded surface-seating move for this organic creature seam instead of treating "
-                            "intersecting rounded parts as a generic side-push cleanup."
+                            "Use a bounded surface-seating move for this attachment seam instead of treating "
+                            "intersecting parts as a generic side-push cleanup."
                         ),
                         priority="high",
                         arguments_hint={
@@ -3229,7 +3307,7 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
                 SceneRepairMacroCandidateContract(
                     macro_name="macro_align_part_with_contact",
                     reason=(
-                        "Use a bounded attachment/contact repair for this creature seam instead of relying on generic "
+                        "Use a bounded attachment/contact repair for this seam instead of relying on generic "
                         "overlap cleanup alone."
                     ),
                     priority="high",
@@ -3239,6 +3317,43 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
                         "target_relation": "contact",
                         "align_mode": "none",
                         "preserve_side": True,
+                    },
+                )
+            )
+            continue
+        support_semantics = pair_support_semantics.get(pair_label)
+        if support_semantics is not None:
+            macro_candidates.append(
+                SceneRepairMacroCandidateContract(
+                    macro_name="macro_place_supported_pair",
+                    reason=(
+                        "Use a bounded support-placement move so the supported object rests on the intended base "
+                        "instead of relying on free-form transforms."
+                    ),
+                    priority="high",
+                    arguments_hint={
+                        "supported_object": support_semantics.supported_object,
+                        "support_object": support_semantics.support_object,
+                        "axis": support_semantics.axis,
+                        "gap": 0.0,
+                    },
+                )
+            )
+            continue
+        symmetry_semantics = pair_symmetry_semantics.get(pair_label)
+        if symmetry_semantics is not None:
+            macro_candidates.append(
+                SceneRepairMacroCandidateContract(
+                    macro_name="macro_place_symmetry_pair",
+                    reason=(
+                        "Use a bounded symmetry placement move so the pair is re-mirrored instead of relying on "
+                        "free-form manual offsets."
+                    ),
+                    priority="high",
+                    arguments_hint={
+                        "left_object": symmetry_semantics.left_object,
+                        "right_object": symmetry_semantics.right_object,
+                        "axis": symmetry_semantics.axis,
                     },
                 )
             )
@@ -3593,13 +3708,25 @@ async def _run_stage_checkpoint_compare(
 
     resolver = get_vision_backend_resolver()
     runtime_max_tokens, runtime_max_images, runtime_model_name = _resolve_hybrid_budget_runtime(resolver)
-    truth_bundle, _truth_relation_graph = _build_correction_truth_bundle(scene_handler, assembled_target_scope)
+    truth_bundle, _truth_relation_graph = _build_correction_truth_bundle(
+        scene_handler,
+        assembled_target_scope,
+        goal_hint=goal,
+    )
     pair_budget = _effective_pair_budget(
         max_tokens=runtime_max_tokens,
         model_name=runtime_model_name,
     )
     if truth_bundle.summary.pairing_strategy == "required_creature_seams":
-        pair_budget = max(pair_budget, min(truth_bundle.summary.pair_count, 6))
+        required_creature_pair_count = sum(
+            1
+            for check in truth_bundle.checks
+            if check.attachment_semantics is not None and check.attachment_semantics.required_seam
+        )
+        pair_budget = max(
+            pair_budget,
+            min(required_creature_pair_count or truth_bundle.summary.pair_count, 6),
+        )
         truth_char_share = 1.0
         truth_char_floor = 6000
     else:

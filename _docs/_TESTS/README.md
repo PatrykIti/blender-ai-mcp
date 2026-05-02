@@ -128,6 +128,8 @@ Current owner-lane validation for the shipped TASK-157 substrate is:
 
 - goal-time intake and policy bounds:
   `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_contracts.py tests/unit/adapters/mcp/test_quality_gate_intake.py -q`
+- scene/spatial owner seams for relation semantics and correction-truth contracts:
+  `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/scene/test_spatial_graph_service.py -q`
 - verifier/status, stale marking, gate-driven visibility/search, and staged
   checkpoint summaries:
   `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
@@ -136,13 +138,18 @@ Current owner-lane validation for the shipped TASK-157 substrate is:
 - Blender-backed gate-state regression:
   `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_goal_derived_gate_creature_completion.py tests/e2e/vision/test_goal_derived_gate_building_completion.py -q`
 
-Remaining environment-dependent proof for `TASK-157-04` is operational, not
-code-shape:
+Latest validated owner-lane results on this machine:
 
-- live Blender RPC must be available for the creature/building gate tests to
-  execute instead of `skip`
-- local socket binding must be available for the Streamable HTTP transport lane
-  to execute instead of `skip`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_contracts.py tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/scene/test_spatial_graph_service.py -q`
+  - result: `200 passed`
+- `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py tests/e2e/vision/test_goal_derived_gate_creature_completion.py tests/e2e/vision/test_goal_derived_gate_building_completion.py -q`
+  - result: `5 passed`
+
+Operational prerequisites still matter for reruns:
+
+- live Blender RPC/addon availability is required for the Blender-backed
+  creature/building gate tests
+- local socket binding is required for the Streamable HTTP transport lane
 
 ---
 

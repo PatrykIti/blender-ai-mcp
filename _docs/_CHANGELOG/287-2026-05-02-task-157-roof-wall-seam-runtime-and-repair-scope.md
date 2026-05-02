@@ -30,3 +30,5 @@ Date: 2026-05-02
   - result on this machine: `85 passed`
 - `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_goal_derived_gate_creature_completion.py tests/e2e/vision/test_goal_derived_gate_building_completion.py -q`
   - result on this machine: `3 skipped` because local Blender RPC/addon runtime was unavailable
+- follow-up live rerun on 2026-05-03: see changelog 288 for the later
+  Blender-backed / transport pass and the correction-truth alignment follow-up

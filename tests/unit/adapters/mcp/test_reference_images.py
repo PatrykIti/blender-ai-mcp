@@ -41,6 +41,8 @@ from server.adapters.mcp.contracts.scene import (
     SceneCorrectionTruthBundleContract,
     SceneCorrectionTruthPairContract,
     SceneCorrectionTruthSummaryContract,
+    SceneSupportSemanticsContract,
+    SceneSymmetrySemanticsContract,
 )
 from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
 from server.adapters.mcp.sampling.result_types import (
@@ -522,7 +524,7 @@ def test_truth_followup_prefers_surface_attach_macro_for_embedded_head_feature_o
 
     assert followup.items
     assert followup.items[0].kind == "attachment"
-    assert "organic attachment relation" in followup.items[0].summary
+    assert "attachment relation" in followup.items[0].summary
     assert followup.macro_candidates
     assert followup.macro_candidates[0].macro_name == "macro_attach_part_to_surface"
     assert followup.macro_candidates[0].arguments_hint == {
@@ -922,6 +924,295 @@ def test_build_correction_truth_bundle_treats_forel_hindr_as_limb_body_seams(mon
     assert seam_kinds_by_pair["ForeR -> Body"] == "limb_body"
     assert seam_kinds_by_pair["HindL -> Body"] == "limb_body"
     assert seam_kinds_by_pair["HindR -> Body"] == "limb_body"
+
+
+def test_build_correction_truth_bundle_preserves_support_semantics_with_goal_hint(monkeypatch):
+    class SceneHandler:
+        def get_bounding_box(self, object_name: str, world_space: bool = True):
+            dimensions = {
+                "Body": [2.0, 2.0, 2.0],
+                "Base": [4.0, 4.0, 0.5],
+            }[object_name]
+            return {"object_name": object_name, "dimensions": dimensions}
+
+        def measure_gap(self, from_object, to_object, tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "gap": 0.0,
+                "axis_gap": {"x": 0.0, "y": 0.0, "z": 0.0},
+                "relation": "contact",
+                "tolerance": tolerance,
+                "units": "blender_units",
+            }
+
+        def measure_alignment(self, from_object, to_object, axes=None, reference="CENTER", tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "reference": reference,
+                "axes": axes or ["X", "Y", "Z"],
+                "deltas": {"x": 0.0, "y": 0.0, "z": 0.0},
+                "is_aligned": True,
+                "tolerance": tolerance,
+                "units": "blender_units",
+            }
+
+        def measure_overlap(self, from_object, to_object, tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "overlaps": False,
+                "relation": "disjoint",
+                "tolerance": tolerance,
+                "units": "blender_units",
+            }
+
+        def assert_contact(self, from_object, to_object, max_gap=0.0001, allow_overlap=False):
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": True,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.0, "relation": "contact"},
+            }
+
+        def assert_symmetry(self, left_object, right_object, axis="X", mirror_coordinate=0.0, tolerance=0.0001):
+            return {"assertion": "scene_assert_symmetry", "passed": True}
+
+    scene_handler = SceneHandler()
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: scene_handler)
+
+    scope = _assembled_target_scope(
+        target_object=None,
+        target_objects=["Body", "Base"],
+        collection_name=None,
+    )
+
+    bundle, _relation_graph = _build_correction_truth_bundle(
+        scene_handler,
+        scope,
+        goal_hint="support the body on the base",
+    )
+
+    assert bundle.summary.pair_count == 1
+    assert bundle.summary.pairing_strategy == "primary_to_others"
+    assert bundle.checks[0].support_semantics is not None
+    assert bundle.checks[0].support_semantics.verdict == "supported"
+
+
+def test_build_correction_truth_bundle_preserves_symmetry_semantics_with_goal_hint(monkeypatch):
+    class SceneHandler:
+        def get_bounding_box(self, object_name: str, world_space: bool = True):
+            payload = {
+                "Wheel_L": {
+                    "min": [-2.5, -0.5, 0.0],
+                    "max": [-1.5, 0.5, 1.0],
+                    "center": [-2.0, 0.0, 0.5],
+                    "dimensions": [1.0, 1.0, 1.0],
+                },
+                "Wheel_R": {
+                    "min": [1.5, -0.5, 0.0],
+                    "max": [2.5, 0.5, 1.0],
+                    "center": [2.0, 0.0, 0.5],
+                    "dimensions": [1.0, 1.0, 1.0],
+                },
+            }[object_name]
+            return {"object_name": object_name, **payload}
+
+        def measure_gap(self, from_object, to_object, tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "gap": 0.0,
+                "axis_gap": {"x": 0.0, "y": 0.0, "z": 0.0},
+                "relation": "contact",
+                "tolerance": tolerance,
+                "units": "blender_units",
+            }
+
+        def measure_alignment(self, from_object, to_object, axes=None, reference="CENTER", tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "reference": reference,
+                "axes": axes or ["X", "Y", "Z"],
+                "deltas": {"x": -4.0, "y": 0.0, "z": 0.0},
+                "aligned_axes": ["Y", "Z"],
+                "misaligned_axes": ["X"],
+                "is_aligned": False,
+                "tolerance": tolerance,
+                "units": "blender_units",
+            }
+
+        def measure_overlap(self, from_object, to_object, tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "overlaps": False,
+                "relation": "disjoint",
+                "tolerance": tolerance,
+                "units": "blender_units",
+            }
+
+        def assert_contact(self, from_object, to_object, max_gap=0.0001, allow_overlap=False):
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": False,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.0, "relation": "contact"},
+            }
+
+        def assert_symmetry(self, left_object, right_object, axis="X", mirror_coordinate=0.0, tolerance=0.0001):
+            return {
+                "assertion": "scene_assert_symmetry",
+                "passed": False,
+                "subject_left": left_object,
+                "subject_right": right_object,
+                "axis": axis,
+                "mirror_coordinate": mirror_coordinate,
+                "tolerance": tolerance,
+            }
+
+    scene_handler = SceneHandler()
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: scene_handler)
+
+    scope = _assembled_target_scope(
+        target_object=None,
+        target_objects=["Wheel_L", "Wheel_R"],
+        collection_name=None,
+    )
+
+    bundle, _relation_graph = _build_correction_truth_bundle(
+        scene_handler,
+        scope,
+        goal_hint="keep the wheel pair symmetric",
+    )
+
+    assert bundle.summary.pair_count == 1
+    assert bundle.summary.pairing_strategy == "primary_to_others"
+    assert bundle.checks[0].symmetry_semantics is not None
+    assert bundle.checks[0].symmetry_semantics.verdict == "asymmetric"
+
+
+def test_truth_followup_uses_neutral_wording_for_roof_wall_attachment():
+    bundle = SceneCorrectionTruthBundleContract(
+        scope=SceneAssembledTargetScopeContract(
+            scope_kind="object_set",
+            primary_target="FacadeMainVolume",
+            object_names=["FacadeMainVolume", "FacadeRoofMass"],
+            object_count=2,
+        ),
+        summary=SceneCorrectionTruthSummaryContract(
+            pairing_strategy="primary_to_others",
+            pair_count=1,
+            evaluated_pairs=1,
+            contact_failures=1,
+            separated_pairs=1,
+        ),
+        checks=[
+            SceneCorrectionTruthPairContract(
+                from_object="FacadeRoofMass",
+                to_object="FacadeMainVolume",
+                relation_pair_id="facaderoofmass__facademainvolume",
+                relation_kinds=["contact", "gap", "alignment", "attachment"],
+                relation_verdicts=["separated", "floating_gap"],
+                gap={"relation": "separated", "gap": 0.25, "axis_gap": {"x": 0.0, "y": 0.0, "z": 0.25}},
+                alignment={"is_aligned": True, "deltas": {"x": 0.0, "y": 0.0, "z": 0.25}},
+                overlap={"overlaps": False, "relation": "disjoint"},
+                contact_assertion=SceneAssertionPayloadContract(
+                    assertion="scene_assert_contact",
+                    passed=False,
+                    subject="FacadeRoofMass",
+                    target="FacadeMainVolume",
+                    expected={"max_gap": 0.0001},
+                    actual={"gap": 0.25, "relation": "separated"},
+                ),
+                attachment_semantics=SceneAttachmentSemanticsContract(
+                    relation_kind="seated_attachment",
+                    seam_kind="roof_wall",
+                    part_object="FacadeRoofMass",
+                    anchor_object="FacadeMainVolume",
+                    required_seam=True,
+                    preferred_macro="macro_align_part_with_contact",
+                    attachment_verdict="floating_gap",
+                ),
+            )
+        ],
+    )
+
+    followup = _build_truth_followup(bundle)
+
+    assert "organic" not in followup.items[0].summary.lower()
+    assert "creature" not in followup.macro_candidates[0].reason.lower()
+
+
+def test_truth_followup_emits_support_and_symmetry_macro_candidates():
+    bundle = SceneCorrectionTruthBundleContract(
+        scope=SceneAssembledTargetScopeContract(
+            scope_kind="object_set",
+            primary_target="Body",
+            object_names=["Body", "Base", "Wheel_L", "Wheel_R"],
+            object_count=4,
+        ),
+        summary=SceneCorrectionTruthSummaryContract(
+            pairing_strategy="guided_spatial_pairs",
+            pair_count=2,
+            evaluated_pairs=2,
+        ),
+        checks=[
+            SceneCorrectionTruthPairContract(
+                from_object="Body",
+                to_object="Base",
+                relation_pair_id="body__base",
+                relation_kinds=["contact", "gap", "support"],
+                relation_verdicts=["separated", "unsupported"],
+                gap={"relation": "separated", "gap": 0.2, "axis_gap": {"x": 0.0, "y": 0.0, "z": 0.2}},
+                alignment={"is_aligned": True, "deltas": {"x": 0.0, "y": 0.0, "z": 0.2}},
+                overlap={"overlaps": False, "relation": "disjoint"},
+                contact_assertion=SceneAssertionPayloadContract(
+                    assertion="scene_assert_contact",
+                    passed=False,
+                    subject="Body",
+                    target="Base",
+                    expected={"max_gap": 0.0001},
+                    actual={"gap": 0.2, "relation": "separated"},
+                ),
+                support_semantics=SceneSupportSemanticsContract(
+                    supported_object="Body",
+                    support_object="Base",
+                    axis="Z",
+                    verdict="unsupported",
+                ),
+            ),
+            SceneCorrectionTruthPairContract(
+                from_object="Wheel_L",
+                to_object="Wheel_R",
+                relation_pair_id="wheel_l__wheel_r",
+                relation_kinds=["symmetry"],
+                relation_verdicts=["asymmetric"],
+                symmetry_semantics=SceneSymmetrySemanticsContract(
+                    left_object="Wheel_L",
+                    right_object="Wheel_R",
+                    axis="X",
+                    mirror_coordinate=0.0,
+                    verdict="asymmetric",
+                ),
+            ),
+        ],
+    )
+
+    followup = _build_truth_followup(bundle)
+    item_kinds = [item.kind for item in followup.items]
+    macro_names = [candidate.macro_name for candidate in followup.macro_candidates]
+
+    assert "support" in item_kinds
+    assert "symmetry" in item_kinds
+    assert "macro_place_supported_pair" in macro_names
+    assert "macro_place_symmetry_pair" in macro_names
 
 
 def test_truth_followup_keeps_multiple_required_creature_seams_and_macro_families_visible():
@@ -3246,6 +3537,7 @@ def test_reference_compare_stage_checkpoint_preserves_required_creature_seams_un
                 ("Tail", "Body"): ("overlapping", 0.0),
                 ("BackPawLeft", "Body"): ("separated", 0.18),
                 ("BackPawRight", "Body"): ("separated", 0.19),
+                ("BackPawLeft", "BackPawRight"): ("contact", 0.0),
             }
             relation, gap = relation_map[(from_object, to_object)]
             return {
@@ -3294,6 +3586,19 @@ def test_reference_compare_stage_checkpoint_preserves_required_creature_seams_un
                 "target": to_object,
                 "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
                 "actual": {"gap": actual_gap, "relation": actual_relation},
+            }
+
+        def assert_symmetry(
+            self, left_object: str, right_object: str, axis="X", mirror_coordinate=0.0, tolerance=0.0001
+        ):
+            return {
+                "assertion": "scene_assert_symmetry",
+                "passed": True,
+                "subject_left": left_object,
+                "subject_right": right_object,
+                "axis": axis,
+                "mirror_coordinate": mirror_coordinate,
+                "tolerance": tolerance,
             }
 
     captured = {}
@@ -3353,10 +3658,10 @@ def test_reference_compare_stage_checkpoint_preserves_required_creature_seams_un
 
     assert result.budget_control is not None
     assert result.budget_control.trimming_applied is True
-    assert result.budget_control.scope_trimmed is False
+    assert result.budget_control.scope_trimmed is True
     assert result.budget_control.detail_trimmed is True
     assert result.budget_control.model_name == "mlx-community/Qwen3-VL-4B-Instruct-4bit"
-    assert result.budget_control.original_pair_count == 4
+    assert result.budget_control.original_pair_count == 5
     assert result.budget_control.emitted_pair_count == 4
     assert result.capture_count == 1
     assert result.captures == []
@@ -3407,6 +3712,7 @@ def test_reference_compare_stage_checkpoint_marks_rich_planner_detail_as_trimmed
                 ("Tail", "Body"): ("overlapping", 0.0),
                 ("BackPawLeft", "Body"): ("separated", 0.18),
                 ("BackPawRight", "Body"): ("separated", 0.19),
+                ("BackPawLeft", "BackPawRight"): ("contact", 0.0),
             }
             relation, gap = relation_map[(from_object, to_object)]
             return {
@@ -3455,6 +3761,19 @@ def test_reference_compare_stage_checkpoint_marks_rich_planner_detail_as_trimmed
                 "target": to_object,
                 "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
                 "actual": {"gap": actual_gap, "relation": actual_relation},
+            }
+
+        def assert_symmetry(
+            self, left_object: str, right_object: str, axis="X", mirror_coordinate=0.0, tolerance=0.0001
+        ):
+            return {
+                "assertion": "scene_assert_symmetry",
+                "passed": True,
+                "subject_left": left_object,
+                "subject_right": right_object,
+                "axis": axis,
+                "mirror_coordinate": mirror_coordinate,
+                "tolerance": tolerance,
             }
 
     async def _fake_run_vision_assist(ctx, *, request, resolver):
@@ -3512,7 +3831,7 @@ def test_reference_compare_stage_checkpoint_marks_rich_planner_detail_as_trimmed
     assert result.error is None
     assert result.budget_control is not None
     assert result.budget_control.trimming_applied is True
-    assert result.budget_control.scope_trimmed is False
+    assert result.budget_control.scope_trimmed is True
     assert result.budget_control.detail_trimmed is True
     assert result.budget_control.trim_reason == "model_aware_budget_control"
     assert result.captures
@@ -3862,10 +4181,165 @@ def test_reference_compare_stage_checkpoint_projects_building_attachment_gate_st
     assert roof_gate.status == "failed"
     assert roof_gate.status_reason == "relation_floating_gap"
     assert opening_gate.status == "pending"
+    assert result.truth_followup is not None
+    assert result.truth_followup.items
+    assert "organic" not in result.truth_followup.items[0].summary.lower()
+    assert result.correction_candidates
+    assert all(
+        "creature" not in (candidate.summary or "").lower()
+        for candidate in result.correction_candidates
+        if candidate.candidate_kind == "truth_only"
+    )
     session = get_session_capability_state(ctx)
     assert session.gate_plan is not None
     stored_roof_gate = next(gate for gate in session.gate_plan["gates"] if gate["gate_id"] == "roof_wall_seam")
     assert stored_roof_gate["status"] == "failed"
+
+
+def test_reference_compare_stage_checkpoint_propagates_goal_hint_for_support_gate(
+    tmp_path,
+    monkeypatch,
+):
+    image_front = tmp_path / "front.png"
+    image_front.write_bytes(b"front")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(
+        ctx,
+        "support the body on the base",
+        {"status": "no_match"},
+        surface_profile="llm-guided",
+        gate_proposal={
+            "source": "llm_goal",
+            "gates": [
+                {
+                    "gate_id": "body_base_support",
+                    "gate_type": "support_contact",
+                    "label": "body supported by base",
+                    "target_kind": "object_pair",
+                    "target_objects": ["Body", "Base"],
+                }
+            ],
+        },
+    )
+    asyncio.run(reference_images(ctx, action="attach", source_path=str(image_front), label="front_ref"))
+
+    class SceneHandler:
+        def get_bounding_box(self, object_name: str, world_space: bool = True):
+            payload = {
+                "Body": {
+                    "min": [-1.0, -1.0, 0.0],
+                    "max": [1.0, 1.0, 2.0],
+                    "center": [0.0, 0.0, 1.0],
+                    "dimensions": [2.0, 2.0, 2.0],
+                },
+                "Base": {
+                    "min": [-2.0, -2.0, -0.5],
+                    "max": [2.0, 2.0, 0.0],
+                    "center": [0.0, 0.0, -0.25],
+                    "dimensions": [4.0, 4.0, 0.5],
+                },
+            }[object_name]
+            return {"object_name": object_name, **payload}
+
+        def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "gap": 0.0,
+                "axis_gap": {"x": 0.0, "y": 0.0, "z": 0.0},
+                "relation": "contact",
+                "tolerance": tolerance,
+                "units": "blender_units",
+            }
+
+        def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "is_aligned": True,
+                "aligned_axes": ["X", "Y", "Z"],
+            }
+
+        def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "overlaps": False, "relation": "disjoint"}
+
+        def assert_contact(self, from_object: str, to_object: str, max_gap=0.0001, allow_overlap=False):
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": True,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.0, "relation": "contact"},
+            }
+
+        def assert_symmetry(
+            self, left_object: str, right_object: str, axis="X", mirror_coordinate=0.0, tolerance=0.0001
+        ):
+            return {"assertion": "scene_assert_symmetry", "passed": True}
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="The body is supported by the base.",
+                visible_changes=["Body and base are visible in the staged capture."],
+                correction_focus=[],
+            ),
+        )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.get_vision_backend_resolver",
+        lambda: SimpleNamespace(
+            runtime_config=SimpleNamespace(
+                max_tokens=200,
+                max_images=8,
+                active_model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+            )
+        ),
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="context_wide_after",
+                image_path=str(tmp_path / "context.jpg"),
+                host_visible_path=str(tmp_path / "context.jpg"),
+                preset_name="context_wide",
+                media_type="image/jpeg",
+                view_kind="wide",
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            target_object="Body",
+            target_objects=["Base"],
+            checkpoint_label="stage_support_gate",
+            preset_profile="compact",
+        )
+    )
+
+    assert result.error is None
+    assert result.active_gate_plan is not None
+    support_gate = next(gate for gate in result.gate_statuses if gate.gate_id == "body_base_support")
+    assert support_gate.status == "passed"
+    assert result.truth_bundle is not None
+    assert result.truth_bundle.checks[0].support_semantics is not None
+    assert result.truth_bundle.checks[0].support_semantics.verdict == "supported"
 
 
 def test_reference_compare_stage_checkpoint_sanitizes_checkpoint_id_target_token(tmp_path, monkeypatch):
@@ -4412,6 +4886,11 @@ def test_reference_iterate_stage_checkpoint_escalates_when_required_gate_blocker
     assert result.loop_disposition == "inspect_validate"
     assert result.continue_recommended is True
     assert result.correction_focus == ["Tail seam is floating."]
+    assert result.active_gate_plan is None
+    assert result.completion_blockers
+    assert result.completion_blockers[0].gate_id == "tail_body_seam"
+    assert result.next_gate_actions == ["verify_or_repair_spatial_gate"]
+    assert "macro_attach_part_to_surface" in result.recommended_bounded_tools
     assert "Quality gate blockers remain unresolved" in (result.message or "")
 
 
