@@ -3,7 +3,7 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 6 tasks
+- **To Do:** 7 tasks
 - **In Progress:** 0 tasks
 - **Done:** 89
 - **Superseded:** 162
@@ -52,6 +52,11 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+
+### Internal Architecture & Maintainability
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| [TASK-159](./TASK-159_Modularize_Oversized_Guided_Runtime_And_Scene_Owner_Files.md) | **Modularize Oversized Guided Runtime And Scene Owner Files** | 🔴 High | Board-level internal follow-on after TASK-143 / TASK-145 / TASK-157 / TASK-158 for splitting `reference.py`, `scene.py`, addon `scene.py`, and `session_capabilities.py` into clearer owner modules without changing the public MCP/addon/session contract or inventing a second flow. |
 
 ### Mesh Introspection
 | ID | Title | Priority | Notes |
