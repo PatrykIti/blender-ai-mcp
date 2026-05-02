@@ -29,6 +29,15 @@ one creature scenario and one building-style scenario.
 - reran the transport plus live Blender-backed creature/building owner lane on
   this machine and got `5 passed`, so the current open status is no longer
   explained by missing operational proof
+- removed `final_completion` from the machine-readable blocker list so staged
+  focus and top-level blocker payloads now surface only concrete required gates
+  instead of the aggregate status duplicating those blockers
+- fixed support-pair macro propagation into `correction_candidates`, added a
+  public compare-stage symmetry regression, and extended the transport harness
+  beyond the creature seam lane so support and symmetry now have direct staged
+  or transport owner coverage too
+- reran the current TASK-157-specific transport plus Blender-backed gate lanes
+  on this machine and got `7 passed`
 
 2026-05-02:
 

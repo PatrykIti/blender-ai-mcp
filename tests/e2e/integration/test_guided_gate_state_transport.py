@@ -61,6 +61,10 @@ _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
             return [
                 {"name": "Squirrel_Body", "type": "MESH"},
                 {"name": "Squirrel_Tail", "type": "MESH"},
+                {"name": "Body", "type": "MESH"},
+                {"name": "Base", "type": "MESH"},
+                {"name": "Wheel_L", "type": "MESH"},
+                {"name": "Wheel_R", "type": "MESH"},
             ]
 
         def get_bounding_box(self, object_name, world_space=True):
@@ -76,6 +80,30 @@ _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
                     "max": [3.1, 0.2, 1.0],
                     "center": [2.7, 0.0, 0.875],
                     "dimensions": [0.8, 0.4, 0.25],
+                },
+                "Body": {
+                    "min": [-1.0, -1.0, 0.2],
+                    "max": [1.0, 1.0, 2.2],
+                    "center": [0.0, 0.0, 1.2],
+                    "dimensions": [2.0, 2.0, 2.0],
+                },
+                "Base": {
+                    "min": [-2.0, -2.0, -0.5],
+                    "max": [2.0, 2.0, 0.0],
+                    "center": [0.0, 0.0, -0.25],
+                    "dimensions": [4.0, 4.0, 0.5],
+                },
+                "Wheel_L": {
+                    "min": [-2.5, -0.5, 0.0],
+                    "max": [-1.5, 0.5, 1.0],
+                    "center": [-2.0, 0.0, 0.5],
+                    "dimensions": [1.0, 1.0, 1.0],
+                },
+                "Wheel_R": {
+                    "min": [1.5, -0.3, 0.0],
+                    "max": [2.5, 0.7, 1.0],
+                    "center": [2.0, 0.2, 0.5],
+                    "dimensions": [1.0, 1.0, 1.0],
                 },
             }[object_name]
             return {"object_name": object_name, **payload}
@@ -101,6 +129,90 @@ _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
         ):
             names = [name for name in [target_object, *(target_objects or [])] if name]
             primary = target_object or (names[0] if names else None)
+            name_set = set(names)
+            if name_set == {"Body", "Base"}:
+                return {
+                    "scope": {
+                        "scope_kind": "object_set",
+                        "primary_target": primary,
+                        "object_names": names,
+                        "object_count": len(names),
+                        "object_roles": [],
+                    },
+                    "summary": {
+                        "pairing_strategy": "guided_spatial_pairs",
+                        "pair_count": 1,
+                        "evaluated_pairs": 1,
+                        "failing_pairs": 1,
+                        "attachment_pairs": 0,
+                        "support_pairs": 1,
+                        "symmetry_pairs": 0,
+                    },
+                    "pairs": [
+                        {
+                            "pair_id": "body__base",
+                            "from_object": "Body",
+                            "to_object": "Base",
+                            "pair_source": "support_candidate",
+                            "relation_kinds": ["contact", "gap", "support"],
+                            "relation_verdicts": ["separated", "unsupported"],
+                            "gap_relation": "separated",
+                            "gap_distance": 0.2,
+                            "contact_passed": False,
+                            "alignment_status": "aligned",
+                            "aligned_axes": ["X", "Y", "Z"],
+                            "measurement_basis": "bounding_box",
+                            "support_semantics": {
+                                "supported_object": "Body",
+                                "support_object": "Base",
+                                "axis": "Z",
+                                "verdict": "unsupported",
+                            },
+                        }
+                    ],
+                }
+            if name_set == {"Wheel_L", "Wheel_R"}:
+                return {
+                    "scope": {
+                        "scope_kind": "object_set",
+                        "primary_target": primary,
+                        "object_names": names,
+                        "object_count": len(names),
+                        "object_roles": [],
+                    },
+                    "summary": {
+                        "pairing_strategy": "guided_spatial_pairs",
+                        "pair_count": 1,
+                        "evaluated_pairs": 1,
+                        "failing_pairs": 1,
+                        "attachment_pairs": 0,
+                        "support_pairs": 0,
+                        "symmetry_pairs": 1,
+                    },
+                    "pairs": [
+                        {
+                            "pair_id": "wheel_l__wheel_r",
+                            "from_object": "Wheel_L",
+                            "to_object": "Wheel_R",
+                            "pair_source": "symmetry_candidate",
+                            "relation_kinds": ["symmetry"],
+                            "relation_verdicts": ["asymmetric"],
+                            "gap_relation": "contact",
+                            "gap_distance": 0.0,
+                            "contact_passed": True,
+                            "alignment_status": "misaligned",
+                            "aligned_axes": ["Z"],
+                            "measurement_basis": "bounding_box",
+                            "symmetry_semantics": {
+                                "left_object": "Wheel_L",
+                                "right_object": "Wheel_R",
+                                "axis": "X",
+                                "mirror_coordinate": 0.0,
+                                "verdict": "asymmetric",
+                            },
+                        }
+                    ],
+                }
             return {
                 "scope": {
                     "scope_kind": "object_set" if len(names) > 1 else "single_object",
@@ -146,6 +258,26 @@ _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
             }
 
         def measure_gap(self, from_object, to_object, tolerance=0.0001):
+            if {from_object, to_object} == {"Body", "Base"}:
+                return {
+                    "from_object": from_object,
+                    "to_object": to_object,
+                    "gap": 0.2,
+                    "axis_gap": {"x": 0.0, "y": 0.0, "z": 0.2},
+                    "relation": "separated",
+                    "tolerance": tolerance,
+                    "units": "blender_units",
+                }
+            if {from_object, to_object} == {"Wheel_L", "Wheel_R"}:
+                return {
+                    "from_object": from_object,
+                    "to_object": to_object,
+                    "gap": 0.0,
+                    "axis_gap": {"x": 0.0, "y": 0.0, "z": 0.0},
+                    "relation": "contact",
+                    "tolerance": tolerance,
+                    "units": "blender_units",
+                }
             return {
                 "from_object": from_object,
                 "to_object": to_object,
@@ -157,6 +289,19 @@ _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
             }
 
         def measure_alignment(self, from_object, to_object, axes=None, reference="CENTER", tolerance=0.0001):
+            if {from_object, to_object} == {"Wheel_L", "Wheel_R"}:
+                return {
+                    "from_object": from_object,
+                    "to_object": to_object,
+                    "reference": reference,
+                    "axes": axes or ["X", "Y", "Z"],
+                    "deltas": {"x": -4.0, "y": -0.2, "z": 0.0},
+                    "aligned_axes": ["Z"],
+                    "misaligned_axes": ["X", "Y"],
+                    "is_aligned": False,
+                    "tolerance": tolerance,
+                    "units": "blender_units",
+                }
             return {
                 "from_object": from_object,
                 "to_object": to_object,
@@ -181,6 +326,24 @@ _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
             }
 
         def assert_contact(self, from_object, to_object, max_gap=0.0001, allow_overlap=False):
+            if {from_object, to_object} == {"Body", "Base"}:
+                return {
+                    "assertion": "scene_assert_contact",
+                    "passed": False,
+                    "subject": from_object,
+                    "target": to_object,
+                    "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                    "actual": {"gap": 0.2, "relation": "separated"},
+                }
+            if {from_object, to_object} == {"Wheel_L", "Wheel_R"}:
+                return {
+                    "assertion": "scene_assert_contact",
+                    "passed": True,
+                    "subject": from_object,
+                    "target": to_object,
+                    "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                    "actual": {"gap": 0.0, "relation": "contact"},
+                }
             return {
                 "assertion": "scene_assert_contact",
                 "passed": False,
@@ -191,6 +354,16 @@ _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
             }
 
         def assert_symmetry(self, left_object, right_object, axis="X", mirror_coordinate=0.0, tolerance=0.0001):
+            if {left_object, right_object} == {"Wheel_L", "Wheel_R"}:
+                return {
+                    "assertion": "scene_assert_symmetry",
+                    "passed": False,
+                    "subject_left": left_object,
+                    "subject_right": right_object,
+                    "axis": axis,
+                    "mirror_coordinate": mirror_coordinate,
+                    "tolerance": tolerance,
+                }
             return {
                 "assertion": "scene_assert_symmetry",
                 "passed": True,
@@ -294,6 +467,14 @@ _TRANSPORT_REFERENCE_PNG = base64.b64decode(
 
 def _tail_gate(gates: list[dict[str, object]]) -> dict[str, object]:
     return next(gate for gate in gates if gate["gate_id"] == "tail_body_seam")
+
+
+def _support_gate(gates: list[dict[str, object]]) -> dict[str, object]:
+    return next(gate for gate in gates if gate["gate_id"] == "body_base_support")
+
+
+def _symmetry_gate(gates: list[dict[str, object]]) -> dict[str, object]:
+    return next(gate for gate in gates if gate["gate_id"] == "wheel_pair_symmetry")
 
 
 async def _exercise_gate_state_roundtrip(client, reference_path: Path) -> None:
@@ -422,6 +603,192 @@ async def _exercise_gate_state_roundtrip(client, reference_path: Path) -> None:
     assert "macro_attach_part_to_surface" in iterate_result["recommended_bounded_tools"]
 
 
+async def _exercise_support_gate_state_roundtrip(client, reference_path: Path) -> None:
+    goal_result = result_payload(
+        await client.call_tool(
+            "router_set_goal",
+            {
+                "goal": "support the body on the base",
+                "gate_proposal": {
+                    "source": "llm_goal",
+                    "gates": [
+                        {
+                            "gate_id": "body_base_support",
+                            "gate_type": "support_contact",
+                            "label": "body supported by base",
+                            "target_kind": "object_pair",
+                            "target_objects": ["Body", "Base"],
+                        }
+                    ],
+                },
+            },
+        )
+    )
+
+    assert goal_result["active_gate_plan"] is not None
+    assert _support_gate(goal_result["active_gate_plan"]["gates"])["status"] == "pending"
+
+    attach_result = result_payload(
+        await client.call_tool(
+            "reference_images",
+            {
+                "action": "attach",
+                "source_path": str(reference_path),
+                "label": "front_ref",
+                "target_object": "Body",
+                "target_view": "front",
+            },
+        )
+    )
+    assert attach_result["reference_count"] == 1
+
+    relation_result = result_payload(
+        await client.call_tool(
+            "scene_relation_graph",
+            {
+                "target_object": "Body",
+                "target_objects": ["Base"],
+                "goal_hint": "support the body on the base",
+            },
+        )
+    )
+    assert relation_result["payload"]["pairs"][0]["support_semantics"]["verdict"] == "unsupported"
+
+    status_result = result_payload(await client.call_tool("router_get_status", {}))
+    active_gate_plan = status_result["active_gate_plan"]
+    assert active_gate_plan is not None
+    support_gate = _support_gate(active_gate_plan["gates"])
+    assert support_gate["status"] == "failed"
+
+    compare_result = result_payload(
+        await client.call_tool(
+            "reference_compare_stage_checkpoint",
+            {
+                "target_object": "Body",
+                "target_objects": ["Base"],
+                "checkpoint_label": "support_transport_compare",
+                "target_view": "front",
+                "preset_profile": "compact",
+            },
+        )
+    )
+    assert _support_gate(compare_result["active_gate_plan"]["gates"])["status"] == "failed"
+    assert compare_result["correction_candidates"]
+    assert any(
+        macro["macro_name"] == "macro_place_supported_pair"
+        for candidate in compare_result["correction_candidates"]
+        for macro in ((candidate.get("truth_evidence") or {}).get("macro_candidates") or [])
+    )
+
+    iterate_result = result_payload(
+        await client.call_tool(
+            "reference_iterate_stage_checkpoint",
+            {
+                "target_object": "Body",
+                "target_objects": ["Base"],
+                "checkpoint_label": "support_transport_iterate",
+            },
+        )
+    )
+    assert iterate_result["loop_disposition"] == "inspect_validate"
+    assert _support_gate(iterate_result["active_gate_plan"]["gates"])["status"] == "failed"
+    assert any(blocker["gate_id"] == "body_base_support" for blocker in iterate_result["completion_blockers"])
+    assert "verify_or_repair_spatial_gate" in iterate_result["next_gate_actions"]
+
+
+async def _exercise_symmetry_gate_state_roundtrip(client, reference_path: Path) -> None:
+    goal_result = result_payload(
+        await client.call_tool(
+            "router_set_goal",
+            {
+                "goal": "keep the wheel pair symmetric",
+                "gate_proposal": {
+                    "source": "llm_goal",
+                    "gates": [
+                        {
+                            "gate_id": "wheel_pair_symmetry",
+                            "gate_type": "symmetry_pair",
+                            "label": "wheel pair remains symmetric",
+                            "target_kind": "object_pair",
+                            "target_objects": ["Wheel_L", "Wheel_R"],
+                        }
+                    ],
+                },
+            },
+        )
+    )
+
+    assert goal_result["active_gate_plan"] is not None
+    assert _symmetry_gate(goal_result["active_gate_plan"]["gates"])["status"] == "pending"
+
+    attach_result = result_payload(
+        await client.call_tool(
+            "reference_images",
+            {
+                "action": "attach",
+                "source_path": str(reference_path),
+                "label": "front_ref",
+                "target_object": "Wheel_L",
+                "target_view": "front",
+            },
+        )
+    )
+    assert attach_result["reference_count"] == 1
+
+    relation_result = result_payload(
+        await client.call_tool(
+            "scene_relation_graph",
+            {
+                "target_object": "Wheel_L",
+                "target_objects": ["Wheel_R"],
+                "goal_hint": "keep the wheel pair symmetric",
+            },
+        )
+    )
+    assert relation_result["payload"]["pairs"][0]["symmetry_semantics"]["verdict"] == "asymmetric"
+
+    status_result = result_payload(await client.call_tool("router_get_status", {}))
+    active_gate_plan = status_result["active_gate_plan"]
+    assert active_gate_plan is not None
+    symmetry_gate = _symmetry_gate(active_gate_plan["gates"])
+    assert symmetry_gate["status"] == "failed"
+
+    compare_result = result_payload(
+        await client.call_tool(
+            "reference_compare_stage_checkpoint",
+            {
+                "target_object": "Wheel_L",
+                "target_objects": ["Wheel_R"],
+                "checkpoint_label": "symmetry_transport_compare",
+                "target_view": "front",
+                "preset_profile": "compact",
+            },
+        )
+    )
+    assert _symmetry_gate(compare_result["active_gate_plan"]["gates"])["status"] == "failed"
+    assert compare_result["correction_candidates"]
+    assert any(
+        macro["macro_name"] == "macro_place_symmetry_pair"
+        for candidate in compare_result["correction_candidates"]
+        for macro in ((candidate.get("truth_evidence") or {}).get("macro_candidates") or [])
+    )
+
+    iterate_result = result_payload(
+        await client.call_tool(
+            "reference_iterate_stage_checkpoint",
+            {
+                "target_object": "Wheel_L",
+                "target_objects": ["Wheel_R"],
+                "checkpoint_label": "symmetry_transport_iterate",
+            },
+        )
+    )
+    assert iterate_result["loop_disposition"] == "inspect_validate"
+    assert _symmetry_gate(iterate_result["active_gate_plan"]["gates"])["status"] == "failed"
+    assert any(blocker["gate_id"] == "wheel_pair_symmetry" for blocker in iterate_result["completion_blockers"])
+    assert "resolve_quality_gate_blockers" in iterate_result["next_gate_actions"]
+
+
 @pytest.mark.slow
 def test_guided_gate_state_roundtrip_over_stdio(tmp_path: Path):
     script_path = write_server_script(tmp_path, _PATCHED_GATE_STATE_SERVER)
@@ -447,3 +814,29 @@ def test_guided_gate_state_roundtrip_over_streamable(tmp_path: Path):
 
     with run_streamable_server(script_path) as url:
         asyncio.run(run(url))
+
+
+@pytest.mark.slow
+def test_guided_support_gate_state_roundtrip_over_stdio(tmp_path: Path):
+    script_path = write_server_script(tmp_path, _PATCHED_GATE_STATE_SERVER)
+    reference_path = tmp_path / "transport_front.png"
+    reference_path.write_bytes(_TRANSPORT_REFERENCE_PNG)
+
+    async def run() -> None:
+        async with stdio_client(script_path) as client:
+            await _exercise_support_gate_state_roundtrip(client, reference_path)
+
+    asyncio.run(run())
+
+
+@pytest.mark.slow
+def test_guided_symmetry_gate_state_roundtrip_over_stdio(tmp_path: Path):
+    script_path = write_server_script(tmp_path, _PATCHED_GATE_STATE_SERVER)
+    reference_path = tmp_path / "transport_front.png"
+    reference_path.write_bytes(_TRANSPORT_REFERENCE_PNG)
+
+    async def run() -> None:
+        async with stdio_client(script_path) as client:
+            await _exercise_symmetry_gate_state_roundtrip(client, reference_path)
+
+    asyncio.run(run())

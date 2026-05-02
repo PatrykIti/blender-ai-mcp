@@ -915,7 +915,7 @@ def _completion_blockers_for_gates(
 ) -> list[GateCompletionBlockerContract]:
     blockers: list[GateCompletionBlockerContract] = []
     for gate in gates:
-        if not gate.required or gate.status not in _BLOCKING_GATE_STATUSES:
+        if not gate.required or gate.gate_type == "final_completion" or gate.status not in _BLOCKING_GATE_STATUSES:
             continue
         reason_code = gate.status_reason or "required_gate_unresolved"
         blockers.append(
@@ -949,7 +949,11 @@ def _status_summary_for_gates(
     return GateStatusSummaryContract(
         required_total=sum(1 for gate in gates if gate.required),
         required_passed=sum(1 for gate in gates if gate.required and gate.status in {"passed", "waived"}),
-        required_blocking=sum(1 for gate in gates if gate.required and gate.status in _BLOCKING_GATE_STATUSES),
+        required_blocking=sum(
+            1
+            for gate in gates
+            if gate.required and gate.gate_type != "final_completion" and gate.status in _BLOCKING_GATE_STATUSES
+        ),
         optional_total=sum(1 for gate in gates if not gate.required),
         status_counts=cast(dict[GateStatusLiteral, int], status_counts),
     )

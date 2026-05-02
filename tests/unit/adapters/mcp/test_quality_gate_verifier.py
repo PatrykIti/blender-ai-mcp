@@ -165,7 +165,9 @@ def test_attachment_gate_fails_floating_gap_with_bounded_repair_tools():
     assert seam.evidence_refs[0].source == "spatial_relation"
     assert "macro_align_part_with_contact" in seam.recommended_bounded_tools
     assert final.status == "blocked"
-    assert any(blocker.gate_id == "tail_body_seam" for blocker in updated.completion_blockers)
+    assert updated.status_summary is not None
+    assert updated.status_summary.required_blocking == 1
+    assert [blocker.gate_id for blocker in updated.completion_blockers] == ["tail_body_seam"]
 
 
 def test_intersecting_attachment_passes_only_when_gate_policy_allows_embedded_seam():

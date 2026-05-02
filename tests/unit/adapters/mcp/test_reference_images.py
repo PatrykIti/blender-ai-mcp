@@ -4342,6 +4342,330 @@ def test_reference_compare_stage_checkpoint_propagates_goal_hint_for_support_gat
     assert result.truth_bundle.checks[0].support_semantics.verdict == "supported"
 
 
+def test_reference_compare_stage_checkpoint_preserves_support_macro_candidates(
+    tmp_path,
+    monkeypatch,
+):
+    image_front = tmp_path / "front.png"
+    image_front.write_bytes(b"front")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(
+        ctx,
+        "support the body on the base",
+        {"status": "no_match"},
+        surface_profile="llm-guided",
+        gate_proposal={
+            "source": "llm_goal",
+            "gates": [
+                {
+                    "gate_id": "body_base_support",
+                    "gate_type": "support_contact",
+                    "label": "body supported by base",
+                    "target_kind": "object_pair",
+                    "target_objects": ["Body", "Base"],
+                }
+            ],
+        },
+    )
+    asyncio.run(reference_images(ctx, action="attach", source_path=str(image_front), label="front_ref"))
+
+    class SceneHandler:
+        def get_bounding_box(self, object_name: str, world_space: bool = True):
+            payload = {
+                "Body": {
+                    "min": [-1.0, -1.0, 0.2],
+                    "max": [1.0, 1.0, 2.2],
+                    "center": [0.0, 0.0, 1.2],
+                    "dimensions": [2.0, 2.0, 2.0],
+                },
+                "Base": {
+                    "min": [-2.0, -2.0, -0.5],
+                    "max": [2.0, 2.0, 0.0],
+                    "center": [0.0, 0.0, -0.25],
+                    "dimensions": [4.0, 4.0, 0.5],
+                },
+            }[object_name]
+            return {"object_name": object_name, **payload}
+
+        def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "gap": 0.2,
+                "axis_gap": {"x": 0.0, "y": 0.0, "z": 0.2},
+                "relation": "separated",
+                "tolerance": tolerance,
+                "units": "blender_units",
+            }
+
+        def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "is_aligned": True,
+                "aligned_axes": ["X", "Y", "Z"],
+            }
+
+        def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "overlaps": False, "relation": "disjoint"}
+
+        def assert_contact(self, from_object: str, to_object: str, max_gap=0.0001, allow_overlap=False):
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": False,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.2, "relation": "separated"},
+            }
+
+        def assert_symmetry(
+            self, left_object: str, right_object: str, axis="X", mirror_coordinate=0.0, tolerance=0.0001
+        ):
+            return {"assertion": "scene_assert_symmetry", "passed": True}
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="The body is still floating above the base.",
+                visible_changes=["Body and base are visible in the staged capture."],
+                correction_focus=["Seat the body onto the base"],
+            ),
+        )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.get_vision_backend_resolver",
+        lambda: SimpleNamespace(
+            runtime_config=SimpleNamespace(
+                max_tokens=200,
+                max_images=8,
+                active_model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+            )
+        ),
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="context_wide_after",
+                image_path=str(tmp_path / "context.jpg"),
+                host_visible_path=str(tmp_path / "context.jpg"),
+                preset_name="context_wide",
+                media_type="image/jpeg",
+                view_kind="wide",
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            target_object="Body",
+            target_objects=["Base"],
+            checkpoint_label="stage_support_failure",
+            preset_profile="compact",
+        )
+    )
+
+    assert result.error is None
+    assert result.active_gate_plan is not None
+    support_gate = next(gate for gate in result.gate_statuses if gate.gate_id == "body_base_support")
+    assert support_gate.status == "failed"
+    assert result.truth_followup is not None
+    assert any(
+        candidate.macro_name == "macro_place_supported_pair" for candidate in result.truth_followup.macro_candidates
+    )
+    assert result.correction_candidates
+    assert any(
+        macro.macro_name == "macro_place_supported_pair"
+        for candidate in result.correction_candidates
+        for macro in (candidate.truth_evidence.macro_candidates if candidate.truth_evidence is not None else [])
+    )
+
+
+def test_reference_compare_stage_checkpoint_propagates_goal_hint_for_symmetry_gate(
+    tmp_path,
+    monkeypatch,
+):
+    image_front = tmp_path / "front.png"
+    image_front.write_bytes(b"front")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(
+        ctx,
+        "keep the wheel pair symmetric",
+        {"status": "no_match"},
+        surface_profile="llm-guided",
+        gate_proposal={
+            "source": "llm_goal",
+            "gates": [
+                {
+                    "gate_id": "wheel_pair_symmetry",
+                    "gate_type": "symmetry_pair",
+                    "label": "wheel pair remains symmetric",
+                    "target_kind": "object_pair",
+                    "target_objects": ["Wheel_L", "Wheel_R"],
+                }
+            ],
+        },
+    )
+    asyncio.run(reference_images(ctx, action="attach", source_path=str(image_front), label="front_ref"))
+
+    class SceneHandler:
+        def get_bounding_box(self, object_name: str, world_space: bool = True):
+            payload = {
+                "Wheel_L": {
+                    "min": [-2.5, -0.5, 0.0],
+                    "max": [-1.5, 0.5, 1.0],
+                    "center": [-2.0, 0.0, 0.5],
+                    "dimensions": [1.0, 1.0, 1.0],
+                },
+                "Wheel_R": {
+                    "min": [1.5, -0.3, 0.0],
+                    "max": [2.5, 0.7, 1.0],
+                    "center": [2.0, 0.2, 0.5],
+                    "dimensions": [1.0, 1.0, 1.0],
+                },
+            }[object_name]
+            return {"object_name": object_name, **payload}
+
+        def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "gap": 0.0,
+                "axis_gap": {"x": 0.0, "y": 0.0, "z": 0.0},
+                "relation": "contact",
+                "tolerance": tolerance,
+                "units": "blender_units",
+            }
+
+        def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "reference": reference,
+                "axes": axes or ["X", "Y", "Z"],
+                "deltas": {"x": -4.0, "y": -0.2, "z": 0.0},
+                "aligned_axes": ["Z"],
+                "misaligned_axes": ["X", "Y"],
+                "is_aligned": False,
+                "tolerance": tolerance,
+                "units": "blender_units",
+            }
+
+        def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "overlaps": False, "relation": "disjoint"}
+
+        def assert_contact(self, from_object: str, to_object: str, max_gap=0.0001, allow_overlap=False):
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": True,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.0, "relation": "contact"},
+            }
+
+        def assert_symmetry(
+            self, left_object: str, right_object: str, axis="X", mirror_coordinate=0.0, tolerance=0.0001
+        ):
+            return {
+                "assertion": "scene_assert_symmetry",
+                "passed": False,
+                "subject_left": left_object,
+                "subject_right": right_object,
+                "axis": axis,
+                "mirror_coordinate": mirror_coordinate,
+                "tolerance": tolerance,
+            }
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="The wheel pair is still asymmetric.",
+                visible_changes=["Both wheels are visible in the staged capture."],
+                correction_focus=["Re-mirror the wheel pair"],
+            ),
+        )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.get_vision_backend_resolver",
+        lambda: SimpleNamespace(
+            runtime_config=SimpleNamespace(
+                max_tokens=200,
+                max_images=8,
+                active_model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+            )
+        ),
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="context_wide_after",
+                image_path=str(tmp_path / "context.jpg"),
+                host_visible_path=str(tmp_path / "context.jpg"),
+                preset_name="context_wide",
+                media_type="image/jpeg",
+                view_kind="wide",
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            target_object="Wheel_L",
+            target_objects=["Wheel_R"],
+            checkpoint_label="stage_symmetry_gate",
+            preset_profile="compact",
+        )
+    )
+
+    assert result.error is None
+    assert result.active_gate_plan is not None
+    symmetry_gate = next(gate for gate in result.gate_statuses if gate.gate_id == "wheel_pair_symmetry")
+    assert symmetry_gate.status == "failed"
+    assert result.truth_bundle is not None
+    assert result.truth_bundle.checks[0].symmetry_semantics is not None
+    assert result.truth_bundle.checks[0].symmetry_semantics.verdict == "asymmetric"
+    assert result.truth_followup is not None
+    assert any(item.kind == "symmetry" for item in result.truth_followup.items)
+    assert any(
+        candidate.macro_name == "macro_place_symmetry_pair" for candidate in result.truth_followup.macro_candidates
+    )
+    assert result.correction_candidates
+    assert any(
+        macro.macro_name == "macro_place_symmetry_pair"
+        for candidate in result.correction_candidates
+        for macro in (candidate.truth_evidence.macro_candidates if candidate.truth_evidence is not None else [])
+    )
+
+
 def test_reference_compare_stage_checkpoint_sanitizes_checkpoint_id_target_token(tmp_path, monkeypatch):
     image_front = tmp_path / "front.png"
     image_front.write_bytes(b"front")

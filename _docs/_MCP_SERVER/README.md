@@ -574,6 +574,9 @@ Current guided-flow behavior:
 - staged reference compare/iterate checkpoint responses also expose top-level
   `gate_statuses`, `completion_blockers`, `next_gate_actions`, and
   `recommended_bounded_tools` derived from that same `active_gate_plan`
+- `completion_blockers` list only concrete unresolved required gates; the
+  aggregate `final_completion` gate may still report `blocked`, but it is not
+  duplicated into the blocker list that drives immediate repair focus
 - `active_gate_plan.gates[*].status` starts as `pending`; LLM or perception
   sources may propose gates and provenance, but they cannot mark gates
   `passed`, `failed`, `waived`, or `stale` without later server-owned verifier

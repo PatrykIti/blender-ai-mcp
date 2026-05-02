@@ -20,6 +20,12 @@ Date: 2026-05-03
 - upgraded the transport regression to execute the real staged compare path
   instead of a stub, including attached references, deterministic staged
   captures, and gate-plan verification through the transport surface
+- removed `final_completion` from the machine-readable blocker aggregation so
+  staged responses now surface only concrete required blockers instead of the
+  aggregate gate duplicating them
+- fixed support-pair macro propagation from `truth_followup` into
+  `correction_candidates` and added public compare-stage symmetry coverage plus
+  extra transport coverage beyond the creature attachment seam lane
 - refreshed task/test/changelog docs so the repo no longer describes live
   Blender proof as the last missing closeout item for the current TASK-157
   owner slice
@@ -28,6 +34,6 @@ Date: 2026-05-03
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_contracts.py tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/scene/test_spatial_graph_service.py -q`
-  - result on this machine: `200 passed`
+  - result on this machine: `202 passed`
 - `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py tests/e2e/vision/test_goal_derived_gate_creature_completion.py tests/e2e/vision/test_goal_derived_gate_building_completion.py -q`
-  - result on this machine: `5 passed`
+  - result on this machine: `7 passed`

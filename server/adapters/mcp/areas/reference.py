@@ -1711,7 +1711,12 @@ def _macro_candidate_matches_pair(
     to_object: str,
 ) -> bool:
     arguments = candidate.arguments_hint or {}
-    candidate_from = arguments.get("part_object") or arguments.get("left_object") or arguments.get("primary_object")
+    candidate_from = (
+        arguments.get("part_object")
+        or arguments.get("left_object")
+        or arguments.get("primary_object")
+        or arguments.get("supported_object")
+    )
     candidate_to = (
         arguments.get("reference_object")
         or arguments.get("surface_object")
