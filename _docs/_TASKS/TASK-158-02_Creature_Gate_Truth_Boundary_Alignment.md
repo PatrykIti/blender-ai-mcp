@@ -1,6 +1,6 @@
 # TASK-158-02: Creature Gate Truth Boundary Alignment
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md)
 **Category:** Documentation / Creature Gate Boundary
@@ -129,3 +129,18 @@ verifier-supported support refs, not standalone reference evidence.
   binds a finding to gate status.
 - TASK-135-03 uses normalized gate evidence and verifier-supported refs for
   shape-profile gates.
+
+## Completion Summary
+
+- completed on 2026-05-03 as a validated no-op docs closeout: the current
+  `TASK-135*` wording already matches the `TASK-157` authority split
+- confirmed there are no remaining hits for the drift phrases
+  `scene/spatial/mesh/reference evidence`, `true attachment errors`,
+  `true cleanup/intersection errors`, or `reference evidence requires`
+- kept this leaf as done because the intended boundary repair is now present in
+  the live task docs, even though no additional wording patch was required in
+  this wave
+- validated with:
+  `git diff --check`
+  and
+  `rg -n "scene/spatial/mesh/reference evidence|true attachment errors|true cleanup/intersection errors|reference evidence requires" _docs/_TASKS/TASK-135*.md`

@@ -856,7 +856,7 @@ Zbudować podstawową strukturę z oddzielnych brył, ale jeszcze nie traktować
 Narzędzia:
 
 ```text
-macro_create_part
+modeling_create_primitive(...) with guided role/group registration
 macro_align_part_with_contact
 primitive add tools
 basic transforms
@@ -924,7 +924,7 @@ Dla wiewiórki:
 Narzędzia:
 
 ```text
-macro_create_part
+modeling_create_primitive(...) with guided role/group registration
 macro_align_part_with_contact
 modeling_mesh transforms
 mesh primitive cones/wedges
@@ -966,11 +966,17 @@ mesh_mark_sharp
 mesh_bevel
 mesh_dissolve
 mesh_transform_selected
+```
+
+Historyczny szkic/future candidates, nie dzisiejsze kanoniczne narzędzia:
+
+```text
 mesh_shade_flat
 macro_low_poly_facet_refine
 ```
 
-Jeśli części tych narzędzi jeszcze nie ma, warto dodać przynajmniej makra:
+Jeśli części tych narzędzi jeszcze nie ma, to poniższe nazwy pozostają
+proponowanymi follow-on makrami, a nie aktualnym kontraktem surface:
 
 ```text
 macro_low_poly_facet_refine
@@ -2123,26 +2129,30 @@ Segmentation najlepiej jako sidecar, a nie dependency w głównym serwerze.
 ### 13.1. Kontrakty
 
 ```text
-server/adapters/mcp/contracts/reference_understanding.py
-```
-
-Albo jako rozszerzenie:
-
-```text
 server/adapters/mcp/contracts/reference.py
 ```
 
-Lepsze na czysto:
+Opcjonalny przyszły split dopiero jeśli shared owner urośnie za bardzo:
 
 ```text
 contracts/reference_understanding.py
 ```
 
-Bo `reference.py` już jest duży.
+Na dziś bieżący owner pozostaje w `reference.py`.
 
 ---
 
 ### 13.2. Vision prompt/schema/parser
+
+Aktualny owner lane najpierw:
+
+```text
+server/adapters/mcp/vision/prompting.py
+server/adapters/mcp/vision/parsing.py
+server/adapters/mcp/vision/backends.py
+```
+
+Opcjonalny przyszły split helperów dopiero gdy shared owner stanie się za duży:
 
 ```text
 server/adapters/mcp/vision/reference_understanding.py
@@ -2469,8 +2479,9 @@ Guardrail:
 Add typed contract for pre-build reference understanding.
 
 ## Files
-- server/adapters/mcp/contracts/reference_understanding.py
-- tests/unit/adapters/mcp/test_reference_understanding_contract.py
+- server/adapters/mcp/contracts/reference.py first
+- tests/unit/adapters/mcp/test_vision_parsing.py
+- tests/unit/adapters/mcp/test_vision_prompting.py
 
 ## Done when
 - contract validates JSON output
@@ -2492,6 +2503,7 @@ existing reference/guided-state seam.
 - server/adapters/mcp/areas/reference.py
 - server/adapters/mcp/vision/prompting.py
 - server/adapters/mcp/vision/parsing.py
+- server/adapters/mcp/vision/backends.py
 
 ## Done when
 - attached references can be analyzed before build
@@ -2643,6 +2655,12 @@ Najkrótsza ścieżka z największym efektem:
 8. optional CLIP/SigLIP classifier
 9. optional SAM sidecar
 ```
+
+Status 2026-05-03:
+
+- kroki 1-4 są już zaimplementowane na shared owner seams
+- kroki 5-9 pozostają roadmap/follow-on zakresem i nie są dowodem, że te
+  przyszłe surface’y istnieją dziś w MCP
 
 Nie zaczynać od:
 

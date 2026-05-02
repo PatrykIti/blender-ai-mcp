@@ -73,7 +73,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) | **Expand External Vision Contract Profiles Across Qwen, Anthropic, OpenAI, and NVIDIA** | 🔴 High | Board-level follow-on after TASK-139 for extending the external `vision_contract_profile` architecture across additional multimodal families on the existing provider surface, including OpenRouter model capability resolution and no new provider branches under this umbrella. |
-| [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md) | **Reference Understanding Follow-Up And Boundary Alignment** | 🔴 High | Two-scope follow-up after TASK-157: Scope B runtime work is now implemented on the shared reference/vision/session seams, while Scope A docs alignment and the final umbrella closeout remain open. |
+| [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md) | **Reference Understanding Follow-Up And Boundary Alignment** | 🔴 High | Two-scope follow-up after TASK-157: Scope A docs alignment and Scope B runtime work are now done; the remaining open work is the explicit umbrella closeout/audit lane in TASK-158-03. |
 ---
 
 ## 🚧 In Progress

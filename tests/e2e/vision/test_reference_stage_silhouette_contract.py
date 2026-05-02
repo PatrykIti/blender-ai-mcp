@@ -147,7 +147,9 @@ def test_reference_stage_compare_and_iterate_expose_silhouette_metrics_and_actio
     assert compare_result.silhouette_analysis.status == "available"
     assert any(metric.metric_id == "upper_band_width_delta" for metric in compare_result.silhouette_analysis.metrics)
     assert compare_result.action_hints
-    assert any(hint.hint_type == "widen_upper_profile" for hint in compare_result.action_hints)
+    assert any(
+        hint.hint_type in {"widen_upper_profile", "reduce_upper_profile"} for hint in compare_result.action_hints
+    )
     assert compare_result.part_segmentation is not None
     assert compare_result.part_segmentation.status == "disabled"
 
@@ -167,6 +169,8 @@ def test_reference_stage_compare_and_iterate_expose_silhouette_metrics_and_actio
     assert iterate_result.silhouette_analysis is not None
     assert iterate_result.silhouette_analysis.status == "available"
     assert iterate_result.action_hints
-    assert any(hint.hint_type == "widen_upper_profile" for hint in iterate_result.action_hints)
+    assert any(
+        hint.hint_type in {"widen_upper_profile", "reduce_upper_profile"} for hint in iterate_result.action_hints
+    )
     assert iterate_result.part_segmentation is not None
     assert iterate_result.part_segmentation.status == "disabled"

@@ -19,7 +19,11 @@ from fastmcp import Context
 
 from server.adapters.mcp.context_utils import ctx_info, ctx_session_id, ctx_transport_type
 from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract
-from server.adapters.mcp.contracts.quality_gates import GatePlanContract, GateProposalContract
+from server.adapters.mcp.contracts.quality_gates import (
+    GatePlanContract,
+    GateProposalContract,
+    refresh_gate_plan_status,
+)
 from server.adapters.mcp.contracts.reference import (
     GuidedReferenceReadinessContract,
     ReferenceActionHintContract,
@@ -1959,6 +1963,7 @@ async def refresh_reference_understanding_summary_async(
     """Refresh session-scoped reference understanding from active references when possible."""
 
     current = session or await get_session_capability_state_async(ctx)
+    existing_gate_plan = GatePlanContract.model_validate(current.gate_plan) if current.gate_plan is not None else None
     if not current.goal:
         cleared = replace(current, reference_understanding_summary=None, reference_understanding_gate_ids=None)
         await set_session_capability_state_async(ctx, cleared)
@@ -2038,6 +2043,27 @@ async def refresh_reference_understanding_summary_async(
         )
         updated_session = await get_session_capability_state_async(ctx)
         if intake_result.status == "accepted" and intake_result.gate_plan is not None:
+            if existing_gate_plan is not None:
+                existing_gate_ids = {gate.gate_id for gate in existing_gate_plan.gates}
+                merged_gates = list(existing_gate_plan.gates)
+                for gate in intake_result.gate_plan.gates:
+                    if gate.gate_id not in existing_gate_ids:
+                        merged_gates.append(gate)
+                merged_plan = refresh_gate_plan_status(
+                    existing_gate_plan.model_copy(
+                        update={
+                            "gates": merged_gates,
+                            "policy_warnings": [
+                                *list(existing_gate_plan.policy_warnings),
+                                *list(intake_result.gate_plan.policy_warnings),
+                            ],
+                        }
+                    )
+                )
+                updated_session = replace(
+                    updated_session,
+                    gate_plan=merged_plan.model_dump(mode="json", exclude_none=True),
+                )
             accepted_gate_ids = [gate.gate_id for gate in intake_result.gate_plan.gates]
     else:
         updated_session = current

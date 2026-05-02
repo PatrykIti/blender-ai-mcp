@@ -47,8 +47,13 @@ unless a separate public-tool review promotes a new public MCP tool.
     seams
   - `TASK-158-05` is now implemented on the existing default-off optional
     perception/runtime/harness seams
-- Scope A doc alignment (`TASK-158-01`, `TASK-158-02`) and the umbrella
-  closeout/audit lane (`TASK-158-03`) remain open before this parent can close.
+- Scope A doc alignment landed on 2026-05-03:
+  - `TASK-158-01` closed after the long-form plan was re-anchored to current
+    shared owners and draft/future vocabulary
+  - `TASK-158-02` closed after validating that the live `TASK-135*` wording
+    already matches the `TASK-157` verifier/truth boundary
+- The remaining open lane before this parent can close is the explicit
+  closeout/audit task `TASK-158-03`.
 
 ## Business Problem
 

@@ -431,6 +431,95 @@ _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
         )
 
 
+    class ReferenceUnderstandingBackend:
+        async def analyze(self, request):
+            return {
+                "status": "available",
+                "understanding_id": "understanding_transport_seed",
+                "goal": request.goal,
+                "reference_ids": list(request.metadata.get("reference_ids") or []),
+                "subject": {
+                    "label": "low poly squirrel",
+                    "category": "creature",
+                    "confidence": 0.9,
+                    "uncertainty_notes": [],
+                },
+                "style": {
+                    "style_label": "low_poly_faceted",
+                    "confidence": 0.9,
+                    "notes": ["faceted silhouette"],
+                },
+                "required_parts": [
+                    {
+                        "part_label": "visible eye pair",
+                        "target_label": "eye_pair",
+                        "construction_hint": "Keep both eyes readable in the blockout.",
+                        "priority": "high",
+                        "source_reference_ids": list(request.metadata.get("reference_ids") or []),
+                    }
+                ],
+                "non_goals": ["Do not smooth the build into an organic sculpt pass."],
+                "construction_strategy": {
+                    "construction_path": "low_poly_facet",
+                    "primary_family": "modeling_mesh",
+                    "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+                    "stage_sequence": ["primary_masses", "secondary_parts", "inspect_validate"],
+                    "finish_policy": "preserve_facets",
+                },
+                "router_handoff_hints": {
+                    "preferred_family": "modeling_mesh",
+                    "allowed_guided_families": ["reference_context", "primary_masses", "secondary_parts", "inspect_validate"],
+                    "sculpt_policy": "hidden",
+                },
+                "gate_proposals": [
+                    {
+                        "gate_type": "required_part",
+                        "label": "visible eye pair",
+                        "target_kind": "reference_part",
+                        "target_label": "eye_pair",
+                    }
+                ],
+                "visual_evidence_refs": [
+                    {
+                        "evidence_id": "ref_front_subject",
+                        "source_class": "reference_image",
+                        "summary": "The reference depicts a faceted squirrel blockout.",
+                        "reference_id": (request.metadata.get("reference_ids") or ["ref_front"])[0],
+                    }
+                ],
+                "verification_requirements": [
+                    {
+                        "tool_name": "scene_view_diagnostics",
+                        "reason": "Confirm the front silhouette framing before detail edits.",
+                        "priority": "high",
+                    }
+                ],
+                "classification_scores": [],
+                "segmentation_artifacts": [],
+                "source_provenance": [{"source": "reference_understanding"}],
+                "boundary_policy": {
+                    "advisory_only": True,
+                    "not_truth_source": True,
+                    "may_unlock_tools": False,
+                    "may_pass_gates": False,
+                    "may_propose_gates": True,
+                },
+            }
+
+
+    class Resolver:
+        def __init__(self):
+            self.runtime_config = SimpleNamespace(
+                max_tokens=200,
+                max_images=8,
+                active_model_name="transport-reference-understanding-model",
+                active_segmentation_sidecar=None,
+            )
+
+        def resolve_default(self):
+            return ReferenceUnderstandingBackend()
+
+
     _transport_capture = Path("/tmp/transport_gate_capture.png")
     _transport_capture.write_bytes(b"transport-capture")
 
@@ -442,9 +531,7 @@ _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
     modeling_area.get_modeling_handler = lambda: ModelingHandler()
     reference_area.get_scene_handler = lambda: SceneHandler()
     reference_area.run_vision_assist = _fake_run_vision_assist
-    reference_area.get_vision_backend_resolver = lambda: SimpleNamespace(
-        runtime_config=SimpleNamespace(max_tokens=200, max_images=8, active_model_name="transport-gate-model")
-    )
+    reference_area.get_vision_backend_resolver = lambda: Resolver()
     reference_area.capture_stage_images = lambda *args, **kwargs: [
         VisionCaptureImageContract(
             label="context_wide_after",
@@ -475,6 +562,76 @@ def _support_gate(gates: list[dict[str, object]]) -> dict[str, object]:
 
 def _symmetry_gate(gates: list[dict[str, object]]) -> dict[str, object]:
     return next(gate for gate in gates if gate["gate_id"] == "wheel_pair_symmetry")
+
+
+async def _exercise_reference_understanding_transport_roundtrip(client, reference_path: Path) -> None:
+    staged_attach = result_payload(
+        await client.call_tool(
+            "reference_images",
+            {
+                "action": "attach",
+                "source_path": str(reference_path),
+                "label": "front_ref",
+                "target_object": "Squirrel_Body",
+                "target_view": "front",
+            },
+        )
+    )
+    assert staged_attach["reference_count"] == 1
+    assert "pending" in str(staged_attach["message"]).lower()
+
+    goal_result = result_payload(
+        await client.call_tool(
+            "router_set_goal",
+            {"goal": "create a low-poly squirrel matching front and side reference images"},
+        )
+    )
+
+    summary = goal_result["reference_understanding_summary"]
+    assert summary is not None
+    assert summary["status"] == "available"
+    assert summary["understanding_id"] == "understanding_transport_seed"
+    assert summary["construction_strategy"]["primary_family"] == "modeling_mesh"
+    assert summary["router_handoff_hints"]["sculpt_policy"] == "hidden"
+    assert goal_result["reference_understanding_gate_ids"]
+    assert any(
+        "reference_understanding" in gate["proposal_sources"]
+        for gate in (goal_result["active_gate_plan"] or {}).get("gates", [])
+    )
+
+    status_result = result_payload(await client.call_tool("router_get_status", {}))
+    assert status_result["reference_understanding_summary"]["understanding_id"] == "understanding_transport_seed"
+    assert status_result["reference_understanding_gate_ids"] == goal_result["reference_understanding_gate_ids"]
+
+    compare_result = result_payload(
+        await client.call_tool(
+            "reference_compare_stage_checkpoint",
+            {
+                "target_object": "Squirrel_Body",
+                "target_objects": ["Squirrel_Tail"],
+                "checkpoint_label": "reference_understanding_transport_compare",
+                "target_view": "front",
+                "preset_profile": "compact",
+            },
+        )
+    )
+    assert compare_result["reference_understanding_summary"]["understanding_id"] == "understanding_transport_seed"
+    assert compare_result["reference_understanding_gate_ids"] == goal_result["reference_understanding_gate_ids"]
+    assert compare_result["part_segmentation"]["status"] == "disabled"
+
+    iterate_result = result_payload(
+        await client.call_tool(
+            "reference_iterate_stage_checkpoint",
+            {
+                "target_object": "Squirrel_Body",
+                "target_objects": ["Squirrel_Tail"],
+                "checkpoint_label": "reference_understanding_transport_iterate",
+            },
+        )
+    )
+    assert iterate_result["reference_understanding_summary"]["understanding_id"] == "understanding_transport_seed"
+    assert iterate_result["reference_understanding_gate_ids"] == goal_result["reference_understanding_gate_ids"]
+    assert iterate_result["part_segmentation"]["status"] == "disabled"
 
 
 async def _exercise_gate_state_roundtrip(client, reference_path: Path) -> None:
@@ -811,6 +968,33 @@ def test_guided_gate_state_roundtrip_over_streamable(tmp_path: Path):
     async def run(url: str) -> None:
         async with streamable_client(url) as client:
             await _exercise_gate_state_roundtrip(client, reference_path)
+
+    with run_streamable_server(script_path) as url:
+        asyncio.run(run(url))
+
+
+@pytest.mark.slow
+def test_reference_understanding_transport_roundtrip_over_stdio(tmp_path: Path):
+    script_path = write_server_script(tmp_path, _PATCHED_GATE_STATE_SERVER)
+    reference_path = tmp_path / "transport_front.png"
+    reference_path.write_bytes(_TRANSPORT_REFERENCE_PNG)
+
+    async def run() -> None:
+        async with stdio_client(script_path) as client:
+            await _exercise_reference_understanding_transport_roundtrip(client, reference_path)
+
+    asyncio.run(run())
+
+
+@pytest.mark.slow
+def test_reference_understanding_transport_roundtrip_over_streamable(tmp_path: Path):
+    script_path = write_server_script(tmp_path, _PATCHED_GATE_STATE_SERVER)
+    reference_path = tmp_path / "transport_front.png"
+    reference_path.write_bytes(_TRANSPORT_REFERENCE_PNG)
+
+    async def run(url: str) -> None:
+        async with streamable_client(url) as client:
+            await _exercise_reference_understanding_transport_roundtrip(client, reference_path)
 
     with run_streamable_server(script_path) as url:
         asyncio.run(run(url))

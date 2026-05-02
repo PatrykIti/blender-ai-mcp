@@ -1,6 +1,6 @@
 # TASK-158-01: Long-Form Vision Plan Surface And Alias Cleanup
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md)
 **Category:** Documentation / Vision Plan Alignment
@@ -147,3 +147,21 @@ sketches. They must not become TASK-158 or MVP runtime requirements.
 - Noncanonical family/tool names are clearly aliases or future candidates.
 - Heavy perception adapter names are clearly future optional and outside
   TASK-158/MVP runtime activation.
+
+## Completion Summary
+
+- completed on 2026-05-03 by finishing the long-form plan cleanup on
+  `_docs/blender-ai-mcp-vision-reference-understanding-plan.md`
+- the plan now keeps `reference_understand(...)` and
+  `router_apply_reference_strategy(...)` as historical/draft language rather
+  than current public runtime contract
+- `macro_create_part` was remapped to current create/register seams, while
+  `mesh_shade_flat` and `macro_low_poly_*` remain explicitly future candidates
+- the owner map and task sketch sections now point to current shared owners
+  first (`reference.py`, `vision/prompting.py`, `vision/parsing.py`,
+  `vision/backends.py`) and treat dedicated `reference_understanding*` modules
+  as optional future splits only
+- validated with:
+  `git diff --check`
+  and
+  `rg -n "reference_understand|router_apply_reference_strategy|server/adapters/mcp/router|mesh_edit|material_finish|mesh_shade_flat|macro_low_poly|macro_create_part|SAM|CLIP|SigLIP|GroundingDINO|OWL-ViT" _docs/blender-ai-mcp-vision-reference-understanding-plan.md`
