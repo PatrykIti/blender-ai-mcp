@@ -3733,6 +3733,141 @@ def test_reference_compare_stage_checkpoint_projects_gate_state_from_checkpoint_
     assert stored_tail_gate["status"] == "failed"
 
 
+def test_reference_compare_stage_checkpoint_projects_building_attachment_gate_state(
+    tmp_path,
+    monkeypatch,
+):
+    image_front = tmp_path / "front.png"
+    image_front.write_bytes(b"front")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(
+        ctx,
+        "small building facade",
+        {"status": "no_match"},
+        surface_profile="llm-guided",
+        gate_proposal={
+            "source": "llm_goal",
+            "gates": [
+                {
+                    "gate_id": "roof_wall_seam",
+                    "gate_type": "attachment_seam",
+                    "label": "roof seated on wall volume",
+                    "target_kind": "object_pair",
+                    "target_objects": ["FacadeRoofMass", "FacadeMainVolume"],
+                },
+                {
+                    "gate_id": "front_window_opening",
+                    "gate_type": "opening_or_cut",
+                    "label": "front window opening is cut into the facade",
+                    "target_kind": "object",
+                    "target_label": "FacadeMainVolume",
+                    "target_objects": ["FacadeMainVolume"],
+                },
+            ],
+        },
+    )
+    asyncio.run(reference_images(ctx, action="attach", source_path=str(image_front), label="front_ref"))
+
+    class SceneHandler:
+        def get_bounding_box(self, object_name: str, world_space: bool = True):
+            dimensions = {
+                "FacadeMainVolume": [3.6, 2.0, 2.8],
+                "FacadeRoofMass": [4.0, 2.4, 0.25],
+            }[object_name]
+            return {"object_name": object_name, "dimensions": dimensions}
+
+        def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "gap": 0.25, "relation": "separated"}
+
+        def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "is_aligned": True,
+                "aligned_axes": ["X", "Y", "Z"],
+            }
+
+        def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "overlaps": False, "relation": "disjoint"}
+
+        def assert_contact(self, from_object: str, to_object: str, max_gap=0.0001, allow_overlap=False):
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": False,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.25, "relation": "separated"},
+            }
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="The facade shell is still structurally incomplete.",
+                visible_changes=["Main volume and roof are visible in the staged capture."],
+                correction_focus=["Roof/wall seam"],
+            ),
+        )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.get_vision_backend_resolver",
+        lambda: SimpleNamespace(
+            runtime_config=SimpleNamespace(
+                max_tokens=200,
+                max_images=8,
+                active_model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+            )
+        ),
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="context_wide_after",
+                image_path=str(tmp_path / "context.jpg"),
+                host_visible_path=str(tmp_path / "context.jpg"),
+                preset_name="context_wide",
+                media_type="image/jpeg",
+                view_kind="wide",
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            target_object="FacadeMainVolume",
+            target_objects=["FacadeRoofMass"],
+            checkpoint_label="stage_building_gate",
+            preset_profile="compact",
+        )
+    )
+
+    assert result.error is None
+    assert result.active_gate_plan is not None
+    roof_gate = next(gate for gate in result.gate_statuses if gate.gate_id == "roof_wall_seam")
+    opening_gate = next(gate for gate in result.gate_statuses if gate.gate_id == "front_window_opening")
+    assert roof_gate.status == "failed"
+    assert roof_gate.status_reason == "relation_floating_gap"
+    assert opening_gate.status == "pending"
+    session = get_session_capability_state(ctx)
+    assert session.gate_plan is not None
+    stored_roof_gate = next(gate for gate in session.gate_plan["gates"] if gate["gate_id"] == "roof_wall_seam")
+    assert stored_roof_gate["status"] == "failed"
+
+
 def test_reference_compare_stage_checkpoint_sanitizes_checkpoint_id_target_token(tmp_path, monkeypatch):
     image_front = tmp_path / "front.png"
     image_front.write_bytes(b"front")

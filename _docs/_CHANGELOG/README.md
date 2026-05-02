@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [287](./287-2026-05-02-task-157-roof-wall-seam-runtime-and-repair-scope.md) | 2026-05-02 | **TASK-157 roof-wall seam runtime and repair scope** | - |
 | [286](./286-2026-05-01-task-157-cross-domain-gate-regression-lanes.md) | 2026-05-01 | **TASK-157 cross-domain gate regression lanes** | - |
 | [285](./285-2026-05-01-task-157-runtime-drift-alignment.md) | 2026-05-01 | **TASK-157 runtime drift alignment** | - |
 | [284](./284-2026-05-01-task-145-validation-and-regression-hardening.md) | 2026-05-01 | **TASK-145 validation and regression hardening** | - |

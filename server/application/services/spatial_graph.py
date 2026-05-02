@@ -69,6 +69,8 @@ _DISTAL_LIMB_HINTS: tuple[str, ...] = (
 )
 _PROXIMAL_LIMB_HINTS: tuple[str, ...] = ("upperarm", "upperleg", "thigh", "arm", "leg", "forelimb", "hindlimb")
 _SUPPORT_ROLE_HINTS: tuple[str, ...] = ("base", "floor", "ground", "pedestal", "stand", "platform", "support")
+_ROOF_ROLE_HINTS: tuple[str, ...] = ("roof",)
+_BUILDING_MASS_HINTS: tuple[str, ...] = ("wall", "facade", "volume", "shell")
 _SYMMETRY_GOAL_HINTS: tuple[str, ...] = ("symmetry", "symmetric", "mirror", "mirrored", "bilateral", "left", "right")
 _SUPPORT_GOAL_HINTS: tuple[str, ...] = ("support", "supported", "ground", "floor", "feet", "legs", "seat", "rest")
 
@@ -85,7 +87,9 @@ _ObjectRole = Literal[
 _PairSource = Literal["required_creature_seam", "primary_to_other", "support_candidate", "symmetry_candidate"]
 _PairingStrategy = Literal["none", "primary_to_others", "required_creature_seams", "guided_spatial_pairs"]
 _CreatureRelationKind = Literal["embedded_attachment", "seated_attachment", "segment_attachment"]
-_CreatureSeamKind = Literal["face_head", "nose_snout", "head_body", "tail_body", "limb_body", "limb_segment"]
+_CreatureSeamKind = Literal[
+    "face_head", "nose_snout", "head_body", "tail_body", "limb_body", "limb_segment", "roof_wall"
+]
 
 
 class _SceneSpatialReader(Protocol):
@@ -219,6 +223,14 @@ def _is_face_attachment(object_name: str) -> bool:
 
 def _is_tail_like(object_name: str) -> bool:
     return _has_name_hint(object_name, _TAIL_ROLE_HINTS)
+
+
+def _is_roof_like(object_name: str) -> bool:
+    return _has_name_hint(object_name, _ROOF_ROLE_HINTS)
+
+
+def _is_building_mass_like(object_name: str) -> bool:
+    return _has_name_hint(object_name, _BUILDING_MASS_HINTS)
 
 
 def _is_limb_like(object_name: str) -> bool:
@@ -561,6 +573,10 @@ def _attachment_relation(from_object: str, to_object: str) -> tuple[_CreatureRel
         return "segment_attachment", from_object, to_object
     if _is_tail_like(to_object) and _is_body_like(from_object):
         return "segment_attachment", to_object, from_object
+    if _is_roof_like(from_object) and _is_building_mass_like(to_object):
+        return "seated_attachment", from_object, to_object
+    if _is_roof_like(to_object) and _is_building_mass_like(from_object):
+        return "seated_attachment", to_object, from_object
     if _is_limb_like(from_object) and (_is_body_like(to_object) or _is_limb_like(to_object)):
         return "segment_attachment", from_object, to_object
     if _is_limb_like(to_object) and (_is_body_like(from_object) or _is_limb_like(from_object)):
@@ -577,6 +593,8 @@ def _attachment_seam_kind(part_object: str, anchor_object: str) -> _CreatureSeam
         return "head_body"
     if _is_tail_like(part_object) and _is_body_like(anchor_object):
         return "tail_body"
+    if _is_roof_like(part_object) and _is_building_mass_like(anchor_object):
+        return "roof_wall"
     if _is_limb_like(part_object) and _is_limb_like(anchor_object):
         return "limb_segment"
     if _is_limb_like(part_object) and _is_body_like(anchor_object):

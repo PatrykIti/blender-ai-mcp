@@ -303,6 +303,7 @@ def test_creature_gate_repair_macro_clears_tail_seam_blocker(
     monkeypatch,
 ):
     body_name = "RepairCreatureBody"
+    head_name = "RepairCreatureHead"
     tail_name = "RepairCreatureTail"
     reference_path = tmp_path / "creature_reference_repair.png"
     capture_path = tmp_path / "creature_capture_repair.png"
@@ -313,6 +314,7 @@ def test_creature_gate_repair_macro_clears_tail_seam_blocker(
 
     try:
         modeling_handler.create_primitive(primitive_type="CUBE", name=body_name, size=2.0, location=[0.0, 0.0, 0.0])
+        modeling_handler.create_primitive(primitive_type="CUBE", name=head_name, size=1.2, location=[-2.2, 0.0, 0.0])
         modeling_handler.create_primitive(primitive_type="CUBE", name=tail_name, size=1.0, location=[4.2, 0.0, 0.0])
         modeling_handler.transform_object(name=tail_name, scale=[0.8, 0.25, 0.25])
 
@@ -383,7 +385,7 @@ def test_creature_gate_repair_macro_clears_tail_seam_blocker(
         first_relation = scene_relation_graph(
             ctx,
             target_object=body_name,
-            target_objects=[tail_name],
+            target_objects=[head_name, tail_name],
             goal_hint="assembled creature",
         )
         _skip_if_blender_error_payload(first_relation.error)
@@ -393,7 +395,7 @@ def test_creature_gate_repair_macro_clears_tail_seam_blocker(
             reference_iterate_stage_checkpoint(
                 ctx,
                 target_object=body_name,
-                target_objects=[tail_name],
+                target_objects=[head_name, tail_name],
                 checkpoint_label="creature_repair_before",
                 target_view="front",
                 preset_profile="compact",
@@ -415,7 +417,7 @@ def test_creature_gate_repair_macro_clears_tail_seam_blocker(
         second_relation = scene_relation_graph(
             ctx,
             target_object=body_name,
-            target_objects=[tail_name],
+            target_objects=[head_name, tail_name],
             goal_hint="assembled creature",
         )
         _skip_if_blender_error_payload(second_relation.error)
@@ -425,7 +427,7 @@ def test_creature_gate_repair_macro_clears_tail_seam_blocker(
             reference_iterate_stage_checkpoint(
                 ctx,
                 target_object=body_name,
-                target_objects=[tail_name],
+                target_objects=[head_name, tail_name],
                 checkpoint_label="creature_repair_after",
                 target_view="front",
                 preset_profile="compact",

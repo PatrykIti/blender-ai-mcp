@@ -583,6 +583,10 @@ Current guided-flow behavior:
   `attachment_seam`, `support_contact`, and `symmetry_pair`; verifier output
   persists evidence refs, `status_reason`, `completion_blockers`, status
   summaries, and bounded repair-tool hints on `active_gate_plan`
+- the attachment-semantics slice now covers both creature seams and the first
+  building structural seam `roof_wall`, so a floating roof over a wall/main
+  volume can degrade to `failed / relation_floating_gap` instead of stopping at
+  `blocked / missing_relation_pair`
 - guided scene mutations reuse the existing spatial dirtying path to mark
   the affected evidence-backed gate statuses `stale`; final completion remains
   blocked by required gates in `pending`, `blocked`, `failed`, or `stale`

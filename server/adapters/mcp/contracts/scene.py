@@ -208,6 +208,7 @@ class SceneAttachmentSemanticsContract(MCPContract):
         "tail_body",
         "limb_body",
         "limb_segment",
+        "roof_wall",
     ]
     part_object: str
     anchor_object: str

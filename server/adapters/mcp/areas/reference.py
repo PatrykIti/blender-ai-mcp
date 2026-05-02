@@ -135,6 +135,8 @@ _NOSE_ROLE_HINTS: tuple[str, ...] = ("nose", "nostril")
 _EYE_ROLE_HINTS: tuple[str, ...] = ("eye",)
 _FACE_ATTACHMENT_HINTS: tuple[str, ...] = ("ear", "eye", "nose", "snout", "whisker")
 _TAIL_ROLE_HINTS: tuple[str, ...] = ("tail",)
+_ROOF_ROLE_HINTS: tuple[str, ...] = ("roof",)
+_BUILDING_MASS_HINTS: tuple[str, ...] = ("wall", "facade", "volume", "shell")
 _LIMB_ROLE_HINTS: tuple[str, ...] = (
     "limb",
     "leg",
@@ -229,7 +231,9 @@ _SCULPT_RECOMMENDED_TOOLS: tuple[str, ...] = (
 )
 
 _CreatureRelationKind = Literal["embedded_attachment", "seated_attachment", "segment_attachment"]
-_CreatureSeamKind = Literal["face_head", "nose_snout", "head_body", "tail_body", "limb_body", "limb_segment"]
+_CreatureSeamKind = Literal[
+    "face_head", "nose_snout", "head_body", "tail_body", "limb_body", "limb_segment", "roof_wall"
+]
 
 
 @dataclass(frozen=True)
@@ -1503,6 +1507,7 @@ def _check_priority_score(check: SceneCorrectionTruthPairContract) -> tuple[int,
         seam_score = {
             "head_body": 6,
             "tail_body": 5,
+            "roof_wall": 5,
             "limb_segment": 4,
             "limb_body": 3,
             "face_head": 2,
@@ -2311,6 +2316,14 @@ def _is_tail_like(object_name: str) -> bool:
     return _has_name_hint(object_name, _TAIL_ROLE_HINTS)
 
 
+def _is_roof_like(object_name: str) -> bool:
+    return _has_name_hint(object_name, _ROOF_ROLE_HINTS)
+
+
+def _is_building_mass_like(object_name: str) -> bool:
+    return _has_name_hint(object_name, _BUILDING_MASS_HINTS)
+
+
 def _is_limb_like(object_name: str) -> bool:
     if _has_name_hint(object_name, _LIMB_ROLE_HINTS):
         return True
@@ -2585,6 +2598,10 @@ def _attachment_relation(
         return "segment_attachment", from_object, to_object
     if _is_tail_like(to_object) and _is_body_like(from_object):
         return "segment_attachment", to_object, from_object
+    if _is_roof_like(from_object) and _is_building_mass_like(to_object):
+        return "seated_attachment", from_object, to_object
+    if _is_roof_like(to_object) and _is_building_mass_like(from_object):
+        return "seated_attachment", to_object, from_object
     if _is_limb_like(from_object) and (_is_body_like(to_object) or _is_limb_like(to_object)):
         return "segment_attachment", from_object, to_object
     if _is_limb_like(to_object) and (_is_body_like(from_object) or _is_limb_like(from_object)):
@@ -2601,6 +2618,8 @@ def _attachment_seam_kind(part_object: str, anchor_object: str) -> _CreatureSeam
         return "head_body"
     if _is_tail_like(part_object) and _is_body_like(anchor_object):
         return "tail_body"
+    if _is_roof_like(part_object) and _is_building_mass_like(anchor_object):
+        return "roof_wall"
     if _is_limb_like(part_object) and _is_limb_like(anchor_object):
         return "limb_segment"
     if _is_limb_like(part_object) and _is_body_like(anchor_object):
@@ -3761,7 +3780,7 @@ async def _run_stage_checkpoint_compare(
         gate_relation_graph = get_spatial_graph_service().build_relation_graph(
             reader=scene_handler,
             scope_graph=assembled_target_scope.model_dump(mode="json"),
-            goal_hint=None,
+            goal_hint=goal,
             include_truth_payloads=False,
             include_guided_pairs=True,
         )

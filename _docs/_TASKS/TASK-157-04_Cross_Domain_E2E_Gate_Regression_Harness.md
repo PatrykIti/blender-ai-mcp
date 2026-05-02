@@ -13,6 +13,21 @@ one creature scenario and one building-style scenario.
 
 ## Progress Notes
 
+2026-05-02:
+
+- widened the deterministic attachment-semantics owner path so
+  `FacadeRoofMass -> FacadeMainVolume` now resolves to a structural
+  `roof_wall` seam instead of stopping at `missing_relation_pair`, which lets
+  `roof_wall_seam` degrade to `failed / relation_floating_gap` on the same
+  gate-state surface that `TASK-157-04` expects
+- aligned the creature repair regression with the full `creature` domain
+  contract by keeping a head mass inside the active relation/checkpoint scope
+  before asserting `final_completion == passed`; the lane now proves that seam
+  repair can close the final blocker only when the creature-required template
+  gates are also satisfied
+- added unit owner-lane coverage for both fixes because local Blender RPC was
+  unavailable on this machine during the patch pass
+
 2026-05-01:
 
 - added `tests/e2e/vision/test_goal_derived_gate_creature_completion.py` for a
