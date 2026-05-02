@@ -99,7 +99,7 @@ reference-understanding follow-up path:
 
 ## Relationship To Existing Board Items
 
-`TASK-158` is a promoted follow-up after the open `TASK-157` substrate. It does
+`TASK-158` is a promoted follow-up after the closed `TASK-157` substrate. It does
 not widen `TASK-157`; instead, it holds two pieces of work that sit outside the
 generic gate/verifier core:
 
@@ -449,6 +449,6 @@ consolidates them.
 - Existing reference/guided surfaces remain the default public path; any new
   public MCP tool is gated by a separate public-tool review.
 - `_docs/_TASKS/README.md` tracks this task as a board-level follow-up after
-  the open `TASK-157` substrate.
+  the closed `TASK-157` substrate.
 - Validation commands from this task are run and recorded in the completion
   summary.

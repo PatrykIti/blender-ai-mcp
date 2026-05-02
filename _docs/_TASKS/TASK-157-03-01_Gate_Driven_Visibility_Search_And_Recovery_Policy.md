@@ -34,9 +34,9 @@ Completed on 2026-05-01.
   `scene_relation_graph`, `scene_assert_symmetry`, and
   `macro_place_symmetry_pair` without widening the catalog.
 - Evidence-sensitive narrowing from future `reference_understanding`,
-  segmentation, or classification payloads remains follow-on work under the
-  open TASK-157 umbrella; the shipped slice stops at blocker-driven overlays
-  and gate-recovery search shortcuts.
+  segmentation, or classification payloads remains follow-on work under
+  `TASK-158` and downstream domain consumers; the shipped slice stops at
+  blocker-driven overlays and gate-recovery search shortcuts.
 
 ## Validation
 

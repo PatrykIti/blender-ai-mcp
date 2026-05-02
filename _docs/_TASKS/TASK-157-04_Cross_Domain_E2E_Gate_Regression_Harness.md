@@ -1,6 +1,6 @@
 # TASK-157-04: Cross-Domain E2E Gate Regression Harness
 
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md)
 **Category:** Tests / Guided Runtime Regression
@@ -219,8 +219,29 @@ def test_building_gate_completion_blocks_floating_roof(blender_scene):
 
 ## Changelog Impact
 
-- Add a `_docs/_CHANGELOG/*` entry when the first cross-domain gate regression
-  harness or transport/runtime gate-state lane ships.
+- added [_docs/_CHANGELOG/290-2026-05-02-task-157-closeout-and-board-sync.md](../_CHANGELOG/290-2026-05-02-task-157-closeout-and-board-sync.md)
+
+## Completion Summary
+
+- completed on 2026-05-02 after rerunning the current `TASK-157` owner-lane
+  pack against the live Blender RPC session and the transport surface
+- the harness now closes the cross-domain proof for
+  `tests/e2e/integration/test_guided_gate_state_transport.py`,
+  `tests/e2e/vision/test_goal_derived_gate_creature_completion.py`,
+  `tests/e2e/vision/test_goal_derived_gate_building_completion.py`, and
+  `tests/e2e/vision/test_goal_derived_gate_support_symmetry_surfaces.py`
+- latest validation on this machine recorded `202 passed` for the targeted unit
+  owner lanes and `11 passed` for the transport plus Blender-backed E2E owner
+  lanes
+- this child no longer owns any outstanding closeout proof; post-substrate
+  follow-on work stays promoted separately under `TASK-158` and the downstream
+  domain umbrellas
+
+## Status / Board Update
+
+- closed in the same branch as the parent `TASK-157` umbrella
+- `_docs/_TASKS/README.md` now reflects `TASK-157` as a completed milestone
+- no open direct child remains under the closed `TASK-157` parent
 
 ## Validation Commands
 

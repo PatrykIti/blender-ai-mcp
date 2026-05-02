@@ -4,8 +4,8 @@ Curated task board for promoted active work, promoted follow-on work, and select
 
 ## 📊 Statistics
 - **To Do:** 7 tasks
-- **In Progress:** 1 task
-- **Done:** 87
+- **In Progress:** 0 tasks
+- **Done:** 88
 - **Superseded:** 162
 
 ## 📐 Board Scope
@@ -78,9 +78,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 ## 🚧 In Progress
 
-| ID | Title | Priority | Notes |
-|----|-------|----------|-------|
-| [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md) | **Goal-Derived Quality Gates And Deterministic Verification** | 🔴 High | Contract/intake, deterministic relation-graph verifier/status, gate-driven visibility/search, checkpoint gate summaries, correction-truth alignment, and the current cross-domain E2E/transport owner lanes for attachment/support/symmetry are green across stdio plus Streamable HTTP transport and dedicated Blender-backed public surfaces; the umbrella remains open only for broader follow-on planning, not for a known drift in the shipped slice. |
+No promoted task is currently in progress.
 
 ---
 
@@ -88,6 +86,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md) | **Goal-Derived Quality Gates And Deterministic Verification** | 🔴 High | 2026-05-02 |
 | [TASK-145](./TASK-145_Spatial_Repair_Planner_And_Sculpt_Handoff_Context.md) | **Spatial Repair Planner and Sculpt Handoff Context** | 🔴 High | 2026-05-01 |
 | [TASK-156](./TASK-156_Guided_Pair_Role_Cardinality_And_Sibling_Part_Registration.md) | **Guided Pair Role Cardinality And Sibling Part Registration** | 🔴 High | 2026-04-14 |
 | [TASK-155](./TASK-155_Guided_Post_Run_Reliability_Followups.md) | **Guided Post-Run Reliability Follow-Ups** | 🔴 High | 2026-04-11 |

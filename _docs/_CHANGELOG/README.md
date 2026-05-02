@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [290](./290-2026-05-02-task-157-closeout-and-board-sync.md) | 2026-05-02 | **TASK-157 closeout and board sync** | - |
 | [289](./289-2026-05-03-task-157-transport-parity-and-live-support-symmetry-e2e.md) | 2026-05-03 | **TASK-157 transport parity and live support/symmetry E2E** | - |
 | [288](./288-2026-05-03-task-157-correction-truth-alignment-and-transport-regression.md) | 2026-05-03 | **TASK-157 correction-truth alignment and transport regression** | - |
 | [287](./287-2026-05-02-task-157-roof-wall-seam-runtime-and-repair-scope.md) | 2026-05-02 | **TASK-157 roof-wall seam runtime and repair scope** | - |
