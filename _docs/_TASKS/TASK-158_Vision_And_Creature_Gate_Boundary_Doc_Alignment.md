@@ -1,6 +1,6 @@
 # TASK-158: Reference Understanding Follow-Up And Boundary Alignment
 
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md)
 **Category:** Guided Runtime / Reference Understanding Follow-Up
@@ -52,8 +52,8 @@ unless a separate public-tool review promotes a new public MCP tool.
     shared owners and draft/future vocabulary
   - `TASK-158-02` closed after validating that the live `TASK-135*` wording
     already matches the `TASK-157` verifier/truth boundary
-- The remaining open lane before this parent can close is the explicit
-  closeout/audit task `TASK-158-03`.
+- The remaining open lane before this parent could close was the explicit
+  closeout/audit task `TASK-158-03`; it is now complete.
 
 ## Business Problem
 
@@ -460,3 +460,23 @@ the parent completion summary.
   then close or supersede the stale child docs in the same branch.
 - Validation commands from this task are run and recorded in the completion
   summary.
+
+## Completion Summary
+
+- completed on 2026-05-03 after finishing both planned scopes:
+  - Scope A docs/boundary alignment
+  - Scope B bounded reference-understanding plus default-off optional
+    perception runtime work
+- the repo now exposes bounded `reference_understanding` through existing
+  reference/guided seams, persists declared session linkage, and keeps
+  optional perception default-off on the existing runtime/config path
+- the long-form Vision plan is now clearly framed as strategic/historical where
+  it uses draft public-surface names, obsolete owner sketches, or future tool
+  candidates
+- the downstream creature docs remain aligned with verifier-owned truth, and
+  the `TASK-140*` audit closed as an explicit canonical no-op for this wave
+- validated by the combined runtime and docs lanes recorded in:
+  - `TASK-158-04*`
+  - `TASK-158-05`
+  - changelog entries `293` and `294`
+  - `TASK-158-03`

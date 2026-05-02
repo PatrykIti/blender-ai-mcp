@@ -1,6 +1,6 @@
 # TASK-158-03: TASK-140 Evidence Boundary Audit And TASK-158 Closeout
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md)
 **Category:** Guided Runtime / Evidence Boundary Closeout
@@ -133,3 +133,32 @@ Use the phrase anchors below instead of brittle line snapshots.
 - `TASK-158` closeout records whether `TASK-140*` stayed canonical no-op or
   required a wording patch; it does not leave the audit result implicit.
 - `TASK-158` parent, children, board, and changelog are synchronized at close.
+
+## Completion Summary
+
+- completed on 2026-05-03 after confirming that the `TASK-140*` boundary
+  anchors remain a canonical no-op for this wave: no wording patch was needed
+  in `TASK-140` or `TASK-140-05-03`
+- closed the remaining `TASK-158` umbrella work by synchronizing:
+  - `TASK-158` parent status
+  - `TASK-158-01` / `TASK-158-02` / `TASK-158-04` / `TASK-158-05`
+  - `_docs/_TASKS/README.md`
+  - `_docs/_CHANGELOG/README.md`
+  - the final `TASK-158` completion changelog entry
+- final drift classification is explicit:
+  - `TASK-140*` hits are canonical provider/profile evidence anchors
+  - long-form plan hits for `reference_understand(...)`,
+    `router_apply_reference_strategy(...)`, `mesh_edit`,
+    `material_finish`, `mesh_shade_flat`, `macro_low_poly_*`,
+    `macro_create_part`, `SAM`, `CLIP`, `SigLIP`, `GroundingDINO`, and
+    `OWL-ViT` remain in historical sketch / future-optional sections only
+  - `TASK-135*` no longer contain the targeted truth-boundary drift phrases
+- runtime validation for the implemented Scope B slices was already recorded in
+  the `TASK-158-04*`, `TASK-158-05`, and changelog closeout entries; this leaf
+  adds the final board/docs audit on top of those runtime proofs
+- validated with:
+  `git diff --check`
+  and
+  `rg -n "quality-gate verifier evidence|provider/profile support evidence|vision_contract_profile" _docs/_TASKS/TASK-140*.md _docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md`
+  and
+  `rg -n "reference_understand|router_apply_reference_strategy|server/adapters/mcp/router|mesh_edit|material_finish|mesh_shade_flat|macro_low_poly|macro_create_part|SAM|CLIP|SigLIP|GroundingDINO|OWL-ViT|scene/spatial/mesh/reference evidence|true attachment errors|true cleanup/intersection errors|reference evidence requires" _docs/blender-ai-mcp-vision-reference-understanding-plan.md _docs/_TASKS/TASK-135*.md _docs/_TASKS/TASK-140*.md _docs/_TASKS/TASK-157*.md _docs/_TASKS/TASK-158*.md _docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md`

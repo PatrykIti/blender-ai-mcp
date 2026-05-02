@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [295](./295-2026-05-03-task-158-final-closeout.md) | 2026-05-03 | **TASK-158 final closeout** | - |
 | [294](./294-2026-05-03-task-158-scope-a-doc-alignment-and-e2e-drift-hardening.md) | 2026-05-03 | **TASK-158 Scope A doc alignment and E2E drift hardening** | - |
 | [293](./293-2026-05-02-task-158-reference-understanding-runtime-and-harness.md) | 2026-05-02 | **TASK-158 reference-understanding runtime and harness path** | - |
 | [292](./292-2026-05-02-task-158-review-pass-decomposition-and-owner-lanes.md) | 2026-05-02 | **TASK-158 review pass decomposition and owner lanes** | - |
