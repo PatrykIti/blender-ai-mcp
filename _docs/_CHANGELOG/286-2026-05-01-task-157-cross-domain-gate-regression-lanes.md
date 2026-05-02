@@ -31,6 +31,8 @@ Date: 2026-05-01
 - `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
   - result on this machine: `1 passed, 1 skipped`
 - `poetry run pytest tests/e2e/vision/test_goal_derived_gate_creature_completion.py tests/e2e/vision/test_goal_derived_gate_building_completion.py -q`
-  - result on this machine after the final test fixes: `2 passed`
+  - result depends on local Blender RPC/addon availability; the lane is expected
+    to `skip` when Blender is unreachable and to exercise the new creature /
+    building gate-state checks when RPC is healthy
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_contracts.py tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/adapters/mcp/test_contract_docs.py tests/unit/adapters/mcp/test_sampling_assistant_docs.py tests/unit/adapters/mcp/test_router_elicitation.py tests/unit/adapters/mcp/test_context_bridge.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/scene/test_spatial_graph_service.py -q`
   - result on this machine: `321 passed`
