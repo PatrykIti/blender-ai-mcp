@@ -198,6 +198,7 @@ def _maybe_mark_guided_spatial_state_stale_from_report(report: MCPExecutionRepor
             tool_name=dirty_step.tool_name,
             family=dirty_family,
             reason=dirty_step.tool_name,
+            affected_objects=_affected_object_names_from_step(dirty_step),
         )
     except Exception:
         return
@@ -238,9 +239,66 @@ async def _maybe_mark_guided_spatial_state_stale_from_report_async(
             tool_name=dirty_step.tool_name,
             family=dirty_family,
             reason=dirty_step.tool_name,
+            affected_objects=_affected_object_names_from_step(dirty_step),
         )
     except Exception:
         return
+
+
+def _append_affected_object_names(names: list[str], seen: set[str], value: Any) -> None:
+    if isinstance(value, str):
+        normalized = value.strip()
+        if normalized and normalized not in seen:
+            seen.add(normalized)
+            names.append(normalized)
+        return
+    if isinstance(value, dict):
+        for key in (
+            "object_name",
+            "target_object",
+            "reference_object",
+            "surface_object",
+            "part_object",
+            "from_object",
+            "to_object",
+            "left_object",
+            "right_object",
+        ):
+            _append_affected_object_names(names, seen, value.get(key))
+        for key in ("objects_modified", "objects_created", "object_names", "target_objects"):
+            _append_affected_object_names(names, seen, value.get(key))
+        return
+    if isinstance(value, (list, tuple, set)):
+        for item in value:
+            _append_affected_object_names(names, seen, item)
+
+
+def _affected_object_names_from_step(step: ExecutionStep) -> list[str] | None:
+    names: list[str] = []
+    seen: set[str] = set()
+    for key in (
+        "name",
+        "object_name",
+        "target_object",
+        "part_object",
+        "surface_object",
+        "reference_object",
+        "from_object",
+        "to_object",
+        "left_object",
+        "right_object",
+        "old_name",
+        "new_name",
+    ):
+        _append_affected_object_names(names, seen, step.params.get(key))
+    for key in ("object_names", "target_objects"):
+        _append_affected_object_names(names, seen, step.params.get(key))
+    if not isinstance(step.result, str):
+        _append_affected_object_names(names, seen, step.result)
+    renamed_object = _renamed_object_name_from_result(step.result)
+    if renamed_object is not None:
+        _append_affected_object_names(names, seen, renamed_object)
+    return names or None
 
 
 def _renamed_object_name_from_result(result: Any) -> str | None:

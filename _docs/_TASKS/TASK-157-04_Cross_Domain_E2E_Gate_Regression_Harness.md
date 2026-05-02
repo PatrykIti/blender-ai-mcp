@@ -1,6 +1,6 @@
 # TASK-157-04: Cross-Domain E2E Gate Regression Harness
 
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
 **Priority:** 🔴 High
 **Parent:** [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md)
 **Category:** Tests / Guided Runtime Regression
@@ -10,6 +10,32 @@
 
 Add E2E and regression coverage proving the gate system works across at least
 one creature scenario and one building-style scenario.
+
+## Progress Notes
+
+2026-05-01:
+
+- added `tests/e2e/vision/test_goal_derived_gate_creature_completion.py` for a
+  real Blender-scene creature checkpoint lane that asserts
+  `active_gate_plan`, `gate_statuses`, `completion_blockers`,
+  `next_gate_actions`, `recommended_bounded_tools`, and
+  `loop_disposition="inspect_validate"` after `scene_relation_graph(...)`
+  updates the gate plan
+- extended that same creature file with a repair regression lane proving a
+  bounded attachment macro can clear the active seam gate and let
+  `final_completion` pass on the same gate-state surface
+- added `tests/e2e/vision/test_goal_derived_gate_building_completion.py` for a
+  building/facade checkpoint lane that keeps structural blockers visible on the
+  same gate-state payload surface
+- added `tests/e2e/integration/test_guided_gate_state_transport.py` to verify
+  `router_set_goal(..., gate_proposal=...)` -> mutation ->
+  `scene_relation_graph(...)` -> `router_get_status(...)` /
+  `reference_iterate_stage_checkpoint(...)` round-tripping across the shaped
+  transport surface
+- the test files are now present in the repo and the transport lane runs
+  without Blender RPC; live Blender-backed execution still depends on the local
+  RPC environment and remains the last closeout proof for this task on machines
+  where Blender is unavailable
 
 ## Repository Touchpoints
 
@@ -44,8 +70,9 @@ Use a small building/facade-style fixture:
 - required parts include base/walls/roof/openings
 - required seams include roof/wall seating and support/base contact where
   relevant
-- opening gates fail when windows/doors are missing or not cut/placed into the
-  wall surface
+- opening gates remain unresolved on the gate-state payload when windows/doors
+  are still missing or not cut into the wall surface; a later opening verifier
+  slice may strengthen that from `pending` to a deterministic failure
 - proportion/alignment gates fail on obvious roof/wall or facade rhythm drift
 
 ## Perception Adapter Boundary
@@ -57,8 +84,9 @@ reference/perception payloads to prove:
 - proposal/evidence provenance is preserved
 - perception-derived proposals normalize to `pending`
 - unavailable optional perception evidence does not crash the guided loop
-- unavailable required perception evidence returns a `blocked` gate with a
-  machine-readable reason
+- unavailable required perception evidence on the current goal-time intake
+  surface is dropped with a typed policy warning instead of creating a false
+  verifier-backed gate status
 - final completion still depends on authoritative scene/spatial/mesh/assertion
   evidence for the gates that require it
 
@@ -130,7 +158,7 @@ def test_building_gate_completion_blocks_floating_roof(blender_scene):
 - `tests/e2e/vision/test_goal_derived_gate_creature_completion.py`
 - `tests/e2e/vision/test_goal_derived_gate_building_completion.py`
 - `tests/e2e/integration/test_guided_gate_state_transport.py`
-- Macro E2E updates for seam repair satisfying gates.
+- Macro-backed repair-to-pass coverage inside the creature gate lane.
 - Fixture-backed regression for perception-derived gate proposals that does not
   require external model calls or local segmentation/classification sidecars.
 
@@ -149,6 +177,8 @@ def test_building_gate_completion_blocks_floating_roof(blender_scene):
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/adapters/mcp/test_reference_images.py -v`
+- `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_goal_derived_gate_creature_completion.py tests/e2e/vision/test_goal_derived_gate_building_completion.py -q`
 - `python3 scripts/run_e2e_tests.py` for the Blender-backed creature/building
   gate scenarios introduced by this task.
 

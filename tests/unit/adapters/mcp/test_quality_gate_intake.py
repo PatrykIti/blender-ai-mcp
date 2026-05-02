@@ -126,6 +126,43 @@ def test_gate_proposal_intake_rejects_unknown_payload_fields():
     assert get_session_capability_state(ctx).gate_plan is None
 
 
+def test_gate_proposal_intake_drops_gates_that_require_unavailable_goal_time_evidence():
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel",
+            surface_profile="llm-guided",
+            guided_flow_state=_guided_flow_state(),
+        ),
+    )
+
+    result = ingest_quality_gate_proposal(
+        ctx,
+        {
+            "source": "llm_goal",
+            "gates": [
+                {
+                    "gate_id": "tail_profile",
+                    "gate_type": "shape_profile",
+                    "label": "tail follows the segmented reference profile",
+                    "target_kind": "reference_part",
+                    "target_label": "tail_profile",
+                    "evidence_requirements": [
+                        {"evidence_kind": "part_segmentation", "required": True},
+                    ],
+                }
+            ],
+        },
+    )
+
+    assert result.status == "accepted"
+    assert result.gate_plan is not None
+    assert all(gate.gate_id != "tail_profile" for gate in result.gate_plan.gates)
+    assert any(warning.code == "unavailable_required_evidence" for warning in result.policy_warnings)
+
+
 def test_relation_graph_verification_persists_gate_status_and_blockers():
     ctx = FakeContext()
     set_session_capability_state(
@@ -272,3 +309,94 @@ def test_mutating_tool_marks_evidence_backed_gate_status_stale():
     assert gate["status"] == "stale"
     assert gate["status_reason"] == "scene_mutation_after_verification"
     assert gate["stale_since_spatial_version"] == 4
+
+
+def test_mutating_tool_only_stales_gates_touching_affected_objects():
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel",
+            surface_profile="llm-guided",
+            guided_flow_state={
+                **_guided_flow_state(),
+                "active_target_scope": {
+                    "scope_kind": "object_set",
+                    "primary_target": "Body",
+                    "object_names": ["Body", "Tail", "Head", "Ear_L", "Ear_R"],
+                    "object_count": 5,
+                },
+                "spatial_scope_fingerprint": "scope:creature",
+                "spatial_state_version": 5,
+            },
+            gate_plan={
+                "plan_id": "creature_quality_gate_plan",
+                "domain_profile": "creature",
+                "required_gate_count": 2,
+                "optional_gate_count": 0,
+                "gates": [
+                    {
+                        "gate_id": "tail_body_seam",
+                        "gate_type": "attachment_seam",
+                        "label": "tail seated on body",
+                        "target_kind": "object_pair",
+                        "target_objects": ["Tail", "Body"],
+                        "required": True,
+                        "priority": "high",
+                        "status": "passed",
+                        "verification_strategy": "spatial_contact",
+                        "allowed_correction_families": ["spatial_context", "attachment_alignment"],
+                        "recommended_bounded_tools": ["scene_relation_graph"],
+                        "proposal_sources": ["llm_goal"],
+                        "evidence_requirements": [{"evidence_kind": "spatial_relation", "required": True}],
+                        "evidence_refs": [
+                            {
+                                "evidence_id": "tail",
+                                "evidence_kind": "spatial_relation",
+                                "source": "spatial_relation",
+                                "authority": "authoritative",
+                            }
+                        ],
+                    },
+                    {
+                        "gate_id": "ear_pair_symmetry",
+                        "gate_type": "symmetry_pair",
+                        "label": "ear pair stays symmetric",
+                        "target_kind": "reference_part",
+                        "target_label": "ear_pair",
+                        "required": True,
+                        "priority": "high",
+                        "status": "passed",
+                        "verification_strategy": "symmetry_pair",
+                        "allowed_correction_families": ["secondary_parts", "inspect_validate"],
+                        "recommended_bounded_tools": ["scene_assert_symmetry"],
+                        "proposal_sources": ["llm_goal"],
+                        "evidence_requirements": [{"evidence_kind": "scene_truth", "required": True}],
+                        "evidence_refs": [
+                            {
+                                "evidence_id": "ears",
+                                "evidence_kind": "scene_truth",
+                                "source": "scene_truth",
+                                "authority": "authoritative",
+                            }
+                        ],
+                    },
+                ],
+            },
+        ),
+    )
+
+    mark_guided_spatial_state_stale(
+        ctx,
+        tool_name="modeling_transform_object",
+        affected_objects=["Tail"],
+    )
+
+    restored = get_session_capability_state(ctx)
+
+    assert restored.gate_plan is not None
+    tail_gate = next(gate for gate in restored.gate_plan["gates"] if gate["gate_id"] == "tail_body_seam")
+    ear_gate = next(gate for gate in restored.gate_plan["gates"] if gate["gate_id"] == "ear_pair_symmetry")
+    assert tail_gate["status"] == "stale"
+    assert ear_gate["status"] == "passed"

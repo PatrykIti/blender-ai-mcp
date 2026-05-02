@@ -174,6 +174,7 @@ def test_guided_spatial_dirty_tracking_scans_all_successful_routed_steps(monkeyp
             "tool_name": "modeling_create_primitive",
             "family": "primary_masses",
             "reason": "modeling_create_primitive",
+            "affected_objects": ["Body"],
         }
     ]
 
@@ -226,6 +227,7 @@ def test_guided_spatial_dirty_tracking_treats_partial_mutating_macro_reports_as_
             "tool_name": "macro_attach_part_to_surface",
             "family": "attachment_alignment",
             "reason": "macro_attach_part_to_surface",
+            "affected_objects": ["Ear", "Head"],
         }
     ]
 

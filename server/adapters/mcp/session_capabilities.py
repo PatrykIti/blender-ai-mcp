@@ -10,7 +10,7 @@ import hashlib
 import json
 import re
 from dataclasses import asdict, dataclass, replace
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, Mapping, cast
 
 from fastmcp import Context
 
@@ -24,8 +24,10 @@ from server.adapters.mcp.contracts.guided_flow import (
 from server.adapters.mcp.contracts.quality_gates import (
     GateIntakeResultContract,
     GatePlanContract,
+    GatePolicyWarningContract,
     mark_gate_plan_stale,
     normalize_gate_plan,
+    refresh_gate_plan_status,
 )
 from server.adapters.mcp.session_phase import SessionPhase, coerce_session_phase
 from server.adapters.mcp.session_state import (
@@ -145,6 +147,14 @@ _SPATIAL_STATE_DIRTY_FAMILIES: set[GuidedFlowFamilyLiteral] = {
     "secondary_parts",
     "attachment_alignment",
 }
+_GOAL_TIME_UNAVAILABLE_GATE_EVIDENCE_KINDS: frozenset[str] = frozenset(
+    {
+        "reference_understanding",
+        "silhouette_analysis",
+        "part_segmentation",
+        "classification_scores",
+    }
+)
 _GUIDED_FLOW_ITERATION_TOOLS = {
     "reference_compare_stage_checkpoint",
     "reference_iterate_stage_checkpoint",
@@ -1272,6 +1282,7 @@ def _ingest_quality_gate_proposal_for_state(
             gate_proposal,
             domain_profile=flow_state.domain_profile,
         )
+        gate_plan = _apply_goal_time_gate_input_bounds(gate_plan)
     except Exception as exc:
         return current, GateIntakeResultContract(status="rejected", reason=str(exc))
 
@@ -1309,6 +1320,40 @@ async def ingest_quality_gate_proposal_async(
     return result
 
 
+def _apply_goal_time_gate_input_bounds(gate_plan: GatePlanContract) -> GatePlanContract:
+    """Drop gates that require unavailable reference/perception evidence at goal intake time."""
+
+    warnings = list(gate_plan.policy_warnings)
+    retained_gates = []
+    for gate in gate_plan.gates:
+        unavailable_required = sorted(
+            requirement.evidence_kind
+            for requirement in gate.evidence_requirements
+            if requirement.required and requirement.evidence_kind in _GOAL_TIME_UNAVAILABLE_GATE_EVIDENCE_KINDS
+        )
+        if not unavailable_required:
+            retained_gates.append(gate)
+            continue
+        warnings.append(
+            GatePolicyWarningContract(
+                code="unavailable_required_evidence",
+                message=(
+                    "Goal-time gate intake cannot require unavailable reference/perception evidence "
+                    f"({', '.join(unavailable_required)}); drop or relax the gate until the runtime source exists."
+                ),
+                action="dropped",
+                gate_id=gate.gate_id,
+                gate_label=gate.label,
+                field="evidence_requirements",
+            )
+        )
+
+    if len(retained_gates) == len(gate_plan.gates):
+        return gate_plan
+
+    return refresh_gate_plan_status(gate_plan.model_copy(update={"gates": retained_gates, "policy_warnings": warnings}))
+
+
 def _spatial_state_version_from_flow_state(flow_state: dict[str, Any] | None) -> int | None:
     if flow_state is None:
         return None
@@ -1344,6 +1389,7 @@ def update_quality_gate_plan_from_relation_graph(
         relation_graph_payload,
         spatial_state_version=_spatial_state_version_from_flow_state(current.guided_flow_state),
         scope_fingerprint=_scope_fingerprint_from_flow_state(current.guided_flow_state),
+        guided_part_registry=cast(list[Mapping[str, Any]] | None, current.guided_part_registry),
     )
     state = replace(current, gate_plan=updated_gate_plan.model_dump(mode="json", exclude_none=True))
     set_session_capability_state(ctx, state)
@@ -1366,6 +1412,7 @@ async def update_quality_gate_plan_from_relation_graph_async(
         relation_graph_payload,
         spatial_state_version=_spatial_state_version_from_flow_state(current.guided_flow_state),
         scope_fingerprint=_scope_fingerprint_from_flow_state(current.guided_flow_state),
+        guided_part_registry=cast(list[Mapping[str, Any]] | None, current.guided_part_registry),
     )
     state = replace(current, gate_plan=updated_gate_plan.model_dump(mode="json", exclude_none=True))
     await set_session_capability_state_async(ctx, state)
@@ -2050,6 +2097,7 @@ def mark_guided_spatial_state_stale(
     tool_name: str,
     family: str | None = None,
     reason: str | None = None,
+    affected_objects: list[str] | None = None,
 ) -> SessionCapabilityState:
     """Mark the active guided flow's spatial facts stale after one scene mutation."""
 
@@ -2072,6 +2120,7 @@ def mark_guided_spatial_state_stale(
             current.gate_plan,
             reason=reason or tool_name,
             spatial_state_version=_spatial_state_version_from_flow_state(updated_flow_state),
+            affected_objects=affected_objects,
         ).model_dump(mode="json", exclude_none=True)
         if current.gate_plan is not None
         else None
@@ -2109,6 +2158,7 @@ async def mark_guided_spatial_state_stale_async(
     tool_name: str,
     family: str | None = None,
     reason: str | None = None,
+    affected_objects: list[str] | None = None,
 ) -> SessionCapabilityState:
     """Async variant of guided spatial dirty-state recording for native FastMCP requests."""
 
@@ -2131,6 +2181,7 @@ async def mark_guided_spatial_state_stale_async(
             current.gate_plan,
             reason=reason or tool_name,
             spatial_state_version=_spatial_state_version_from_flow_state(updated_flow_state),
+            affected_objects=affected_objects,
         ).model_dump(mode="json", exclude_none=True)
         if current.gate_plan is not None
         else None

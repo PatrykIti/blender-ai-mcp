@@ -8,14 +8,16 @@
 
 ## Objective
 
-Build the status model and verifier layer that evaluates normalized gates using
-deterministic scene, spatial, mesh, and assertion evidence. Bounded reference or
-perception payloads may provide proposal/support refs, but they are not the
-truth authority for gate pass/fail status.
+Build the status model and the first deterministic verifier slice that
+evaluates normalized gates using deterministic scene, spatial, and assertion
+evidence. Bounded reference or perception payloads may provide proposal/support
+refs, but they are not the truth authority for gate pass/fail status.
 
 This layer must make evidence authority explicit. Perception outputs can
 support a verifier only when the gate type allows that evidence class; they do
-not become a generic substitute for Blender truth.
+not become a generic substitute for Blender truth. The current shipped slice is
+`scene_relation_graph(...)`-backed; later gate-specific verifiers should extend
+the same status model instead of creating parallel gate flows.
 
 ## Completion Summary
 
@@ -24,8 +26,11 @@ Completed on 2026-05-01.
 - Added evidence-backed gate status contracts, status summaries,
   `completion_blockers`, verifier results, evidence authority, and bounded
   repair-tool hints in `server/adapters/mcp/contracts/quality_gates.py`.
-- Added the deterministic relation-graph verifier in
+- Added the first deterministic relation-graph verifier in
   `server/adapters/mcp/transforms/quality_gate_verifier.py`.
+- The shipped verifier slice now covers `required_part`, `attachment_seam`,
+  `support_contact`, and `symmetry_pair` while preserving the shared gate
+  contract for later gate-type-specific verifiers.
 - Persisted verifier results into session `active_gate_plan` whenever
   `scene_relation_graph(...)` returns authoritative payloads.
 - Marked evidence-backed gates `stale` after guided scene mutations, using the
@@ -170,7 +175,10 @@ def verify_gate(gate, scene_context):
 
 ## E2E Tests
 
-- Add in TASK-157-04 after first concrete verifier slices exist.
+- Cross-domain E2E ownership now lives under
+  [TASK-157-04](./TASK-157-04_Cross_Domain_E2E_Gate_Regression_Harness.md),
+  which carries the creature/building checkpoint lanes plus the transport
+  roundtrip for gate-state persistence.
 
 ## Docs To Update
 

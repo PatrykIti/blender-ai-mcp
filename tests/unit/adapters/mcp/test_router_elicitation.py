@@ -562,7 +562,7 @@ def test_router_get_status_exposes_session_id_and_transport(monkeypatch):
     monkeypatch.setattr(
         router_area,
         "build_visibility_diagnostics",
-        lambda surface_profile, phase, guided_handoff=None, guided_flow_state=None: SimpleNamespace(
+        lambda surface_profile, phase, guided_handoff=None, guided_flow_state=None, gate_plan=None: SimpleNamespace(
             rules=(),
             visible_capability_ids=("router",),
             visible_entry_capability_ids=("router",),
@@ -595,7 +595,7 @@ def test_router_get_status_returns_guided_flow_state(monkeypatch):
     monkeypatch.setattr(
         router_area,
         "build_visibility_diagnostics",
-        lambda surface_profile, phase, guided_handoff=None, guided_flow_state=None: SimpleNamespace(
+        lambda surface_profile, phase, guided_handoff=None, guided_flow_state=None, gate_plan=None: SimpleNamespace(
             rules=(),
             visible_capability_ids=("router",),
             visible_entry_capability_ids=("router",),
@@ -625,6 +625,69 @@ def test_router_get_status_returns_guided_flow_state(monkeypatch):
     assert result.guided_flow_state.current_step == "establish_spatial_context"
 
 
+def test_router_get_status_passes_gate_plan_into_visibility_diagnostics(monkeypatch):
+    """router_get_status should build diagnostics from the same active gate plan that was applied to the session."""
+
+    captured_gate_plan = None
+
+    monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
+    monkeypatch.setattr(router_area, "get_router_status", lambda: {"enabled": True})
+    monkeypatch.setattr(router_area, "_build_background_job_diagnostics", lambda: (0, {}, []))
+    monkeypatch.setattr(router_area, "_build_timeout_policy_diagnostics", lambda _ctx: None)
+    monkeypatch.setattr(router_area, "_build_task_runtime_diagnostics", lambda _ctx: None)
+    monkeypatch.setattr(router_area, "_build_telemetry_diagnostics", lambda: None)
+    monkeypatch.setattr(router_area, "_get_list_page_size", lambda _ctx: 50)
+    monkeypatch.setattr(router_area, "run_repair_suggestion_assistant", lambda *args, **kwargs: None)
+    monkeypatch.setattr(router_area, "to_repair_assistant_contract", lambda *args, **kwargs: None)
+    monkeypatch.setattr(router_area, "_should_attach_repair_suggestion", lambda _payload: False)
+
+    def _build_visibility_diagnostics(
+        surface_profile, phase, guided_handoff=None, guided_flow_state=None, gate_plan=None
+    ):
+        nonlocal captured_gate_plan
+        captured_gate_plan = gate_plan
+        return SimpleNamespace(
+            rules=(),
+            visible_capability_ids=("router",),
+            visible_entry_capability_ids=("router",),
+            hidden_capability_ids=(),
+            hidden_category_counts={},
+        )
+
+    monkeypatch.setattr(router_area, "build_visibility_diagnostics", _build_visibility_diagnostics)
+
+    ctx = FakeContext(response=object())
+    ctx.state["gate_plan"] = {
+        "plan_id": "creature_quality_gate_plan",
+        "domain_profile": "creature",
+        "required_gate_count": 1,
+        "optional_gate_count": 0,
+        "gates": [
+            {
+                "gate_id": "tail_body_seam",
+                "gate_type": "attachment_seam",
+                "label": "tail seated on body",
+                "target_kind": "object_pair",
+                "target_objects": ["Tail", "Body"],
+                "required": True,
+                "priority": "high",
+                "status": "failed",
+                "verification_strategy": "spatial_contact",
+                "allowed_correction_families": ["spatial_context", "attachment_alignment"],
+                "recommended_bounded_tools": ["scene_relation_graph"],
+                "proposal_sources": ["llm_goal"],
+                "evidence_requirements": [{"evidence_kind": "spatial_relation", "required": True}],
+                "evidence_refs": [],
+            }
+        ],
+    }
+
+    asyncio.run(router_area.router_get_status(ctx))
+
+    assert captured_gate_plan is not None
+    assert captured_gate_plan["plan_id"] == "creature_quality_gate_plan"
+
+
 def test_guided_register_part_updates_session_role_summary(monkeypatch):
     """guided_register_part should update the internal role registry and return refreshed guided status."""
 
@@ -642,7 +705,7 @@ def test_guided_register_part_updates_session_role_summary(monkeypatch):
     monkeypatch.setattr(
         router_area,
         "build_visibility_diagnostics",
-        lambda surface_profile, phase, guided_handoff=None, guided_flow_state=None: SimpleNamespace(
+        lambda surface_profile, phase, guided_handoff=None, guided_flow_state=None, gate_plan=None: SimpleNamespace(
             rules=(),
             visible_capability_ids=("router",),
             visible_entry_capability_ids=("router",),
@@ -708,7 +771,7 @@ def test_guided_register_part_returns_naming_warning_for_weak_abbreviation(monke
     monkeypatch.setattr(
         router_area,
         "build_visibility_diagnostics",
-        lambda surface_profile, phase, guided_handoff=None, guided_flow_state=None: SimpleNamespace(
+        lambda surface_profile, phase, guided_handoff=None, guided_flow_state=None, gate_plan=None: SimpleNamespace(
             rules=(),
             visible_capability_ids=("router",),
             visible_entry_capability_ids=("router",),
@@ -770,7 +833,7 @@ def test_guided_register_part_blocks_placeholder_name_without_mutating_registry(
     monkeypatch.setattr(
         router_area,
         "build_visibility_diagnostics",
-        lambda surface_profile, phase, guided_handoff=None, guided_flow_state=None: SimpleNamespace(
+        lambda surface_profile, phase, guided_handoff=None, guided_flow_state=None, gate_plan=None: SimpleNamespace(
             rules=(),
             visible_capability_ids=("router",),
             visible_entry_capability_ids=("router",),

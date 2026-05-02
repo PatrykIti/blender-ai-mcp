@@ -25,6 +25,7 @@ def verify_gate_plan_with_relation_graph(
     *,
     spatial_state_version: int | None = None,
     scope_fingerprint: str | None = None,
+    guided_part_registry: list[Mapping[str, Any]] | None = None,
 ) -> GatePlanContract:
     """Update gate statuses using authoritative ``scene_relation_graph`` evidence."""
 
@@ -38,6 +39,7 @@ def verify_gate_plan_with_relation_graph(
             payload=payload,
             spatial_state_version=spatial_state_version,
             scope_fingerprint=scope_fingerprint,
+            guided_part_registry=guided_part_registry,
         )
         if result is None:
             updated_gates.append(gate)
@@ -68,6 +70,7 @@ def _verify_gate_with_relation_graph(
     payload: SceneRelationGraphPayloadContract,
     spatial_state_version: int | None,
     scope_fingerprint: str | None,
+    guided_part_registry: list[Mapping[str, Any]] | None,
 ) -> GateVerifierResultContract | None:
     if gate.status == "waived":
         return None
@@ -77,6 +80,7 @@ def _verify_gate_with_relation_graph(
             payload=payload,
             spatial_state_version=spatial_state_version,
             scope_fingerprint=scope_fingerprint,
+            guided_part_registry=guided_part_registry,
         )
     if gate.gate_type == "attachment_seam":
         return _verify_attachment_gate(
@@ -92,6 +96,13 @@ def _verify_gate_with_relation_graph(
             spatial_state_version=spatial_state_version,
             scope_fingerprint=scope_fingerprint,
         )
+    if gate.gate_type == "symmetry_pair":
+        return _verify_symmetry_gate(
+            gate,
+            payload=payload,
+            spatial_state_version=spatial_state_version,
+            scope_fingerprint=scope_fingerprint,
+        )
     return None
 
 
@@ -101,12 +112,17 @@ def _verify_required_part_gate(
     payload: SceneRelationGraphPayloadContract,
     spatial_state_version: int | None,
     scope_fingerprint: str | None,
+    guided_part_registry: list[Mapping[str, Any]] | None,
 ) -> GateVerifierResultContract:
     object_names = list(payload.scope.object_names)
     if not object_names:
         return _blocked_result(gate, "missing_scope", tool_name="scene_relation_graph")
 
-    matched_objects = _matched_scope_objects(gate, object_names)
+    matched_objects = _matched_scope_objects(
+        gate,
+        object_names,
+        guided_part_registry=guided_part_registry,
+    )
     expected_count = 2 if _target_implies_pair(gate) else 1
     status = "passed" if len(matched_objects) >= expected_count else "failed"
     reason_code: GateStatusReasonCodeLiteral | None = None if status == "passed" else "missing_required_part"
@@ -259,6 +275,86 @@ def _verify_support_gate(
     )
 
 
+def _verify_symmetry_gate(
+    gate: NormalizedQualityGateContract,
+    *,
+    payload: SceneRelationGraphPayloadContract,
+    spatial_state_version: int | None,
+    scope_fingerprint: str | None,
+) -> GateVerifierResultContract:
+    object_names = list(payload.scope.object_names)
+    if not object_names:
+        return _blocked_result(gate, "missing_scope", tool_name="scene_relation_graph")
+
+    matched_objects = _matched_scope_objects(gate, object_names)
+    if len(matched_objects) < 2:
+        evidence = GateEvidenceRefContract(
+            evidence_id=f"scene_relation_graph:{gate.gate_id}:symmetry_scope",
+            evidence_kind="scene_truth",
+            source="scene_truth",
+            authority="authoritative",
+            status="available",
+            tool_name="scene_relation_graph",
+            scope_fingerprint=scope_fingerprint,
+            reason_code="missing_required_part",
+            summary=f"Matched symmetry pair scope objects: {', '.join(matched_objects) or 'none'}.",
+            metadata={
+                "object_names": object_names,
+                "matched_objects": matched_objects,
+                "expected_count": 2,
+                "spatial_state_version": spatial_state_version,
+            },
+        )
+        return GateVerifierResultContract(
+            gate_id=gate.gate_id,
+            status="failed",
+            reason_code="missing_required_part",
+            evidence_refs=[evidence],
+            recommended_bounded_tools=gate.recommended_bounded_tools,
+        )
+
+    pair = _find_relation_pair(gate, payload.pairs, relation_kind="symmetry")
+    if pair is None:
+        return _blocked_result(gate, "missing_relation_pair", tool_name="scene_relation_graph")
+    if pair.error:
+        return _blocked_result(
+            gate,
+            "relation_error",
+            tool_name="scene_relation_graph",
+            pair=pair,
+            summary=pair.error,
+            scope_fingerprint=scope_fingerprint,
+        )
+    semantics = pair.symmetry_semantics
+    if semantics is None:
+        return _blocked_result(
+            gate,
+            "missing_authoritative_evidence",
+            tool_name="scene_relation_graph",
+            pair=pair,
+            scope_fingerprint=scope_fingerprint,
+        )
+
+    status = "passed" if semantics.verdict == "symmetric" else "failed"
+    reason_code: GateStatusReasonCodeLiteral | None = None if status == "passed" else "relation_asymmetric"
+    return GateVerifierResultContract(
+        gate_id=gate.gate_id,
+        status=cast(Any, status),
+        reason_code=reason_code,
+        evidence_refs=[
+            _symmetry_evidence_ref(
+                gate,
+                pair,
+                reason_code=reason_code,
+                scope_fingerprint=scope_fingerprint,
+                spatial_state_version=spatial_state_version,
+                verdict=semantics.verdict,
+            )
+        ],
+        recommended_bounded_tools=_repair_tools_for_pair(gate, pair),
+    )
+
+
 def _apply_final_completion_status(
     gates: list[NormalizedQualityGateContract],
     *,
@@ -398,6 +494,41 @@ def _relation_evidence_ref(
     )
 
 
+def _symmetry_evidence_ref(
+    gate: NormalizedQualityGateContract,
+    pair: SceneRelationGraphPairContract,
+    *,
+    reason_code: GateStatusReasonCodeLiteral | None,
+    scope_fingerprint: str | None,
+    spatial_state_version: int | None,
+    verdict: str,
+) -> GateEvidenceRefContract:
+    return GateEvidenceRefContract(
+        evidence_id=f"scene_relation_graph:{pair.pair_id}:{gate.gate_id}:symmetry",
+        evidence_kind="scene_truth",
+        source="assertion_tool",
+        authority="authoritative",
+        status="available",
+        tool_name="scene_relation_graph",
+        scope_fingerprint=scope_fingerprint,
+        relation_pair_id=pair.pair_id,
+        from_object=pair.from_object,
+        to_object=pair.to_object,
+        verdict=verdict,
+        reason_code=reason_code,
+        summary=f"{pair.from_object} <-> {pair.to_object}: {verdict}.",
+        metadata={
+            "relation_kinds": pair.relation_kinds,
+            "relation_verdicts": pair.relation_verdicts,
+            "symmetry_left_object": None if pair.symmetry_semantics is None else pair.symmetry_semantics.left_object,
+            "symmetry_right_object": None if pair.symmetry_semantics is None else pair.symmetry_semantics.right_object,
+            "mirror_axis": None if pair.symmetry_semantics is None else pair.symmetry_semantics.axis,
+            "mirror_coordinate": None if pair.symmetry_semantics is None else pair.symmetry_semantics.mirror_coordinate,
+            "spatial_state_version": spatial_state_version,
+        },
+    )
+
+
 def _find_relation_pair(
     gate: NormalizedQualityGateContract,
     pairs: list[SceneRelationGraphPairContract],
@@ -409,6 +540,7 @@ def _find_relation_pair(
         for pair in pairs
         if (relation_kind == "attachment" and pair.attachment_semantics is not None)
         or (relation_kind == "support" and pair.support_semantics is not None)
+        or (relation_kind == "symmetry" and pair.symmetry_semantics is not None)
     ]
     if not candidates:
         return None
@@ -435,7 +567,23 @@ def _find_relation_pair(
     return None
 
 
-def _matched_scope_objects(gate: NormalizedQualityGateContract, object_names: list[str]) -> list[str]:
+def _matched_scope_objects(
+    gate: NormalizedQualityGateContract,
+    object_names: list[str],
+    *,
+    guided_part_registry: list[Mapping[str, Any]] | None = None,
+) -> list[str]:
+    if gate.target_kind == "object_role" and gate.target_label:
+        target_role = _normalize_name(gate.target_label)
+        role_matches = [
+            str(item.get("object_name") or "").strip()
+            for item in list(guided_part_registry or [])
+            if _normalize_name(str(item.get("role") or "")) == target_role
+        ]
+        if role_matches:
+            normalized_scope = {_normalize_name(name) for name in object_names}
+            return [name for name in role_matches if _normalize_name(name) in normalized_scope]
+
     target_names = {_normalize_name(item) for item in gate.target_objects if item}
     if gate.target_kind == "object" and gate.target_label:
         target_names.add(_normalize_name(gate.target_label))
@@ -476,6 +624,9 @@ def _semantic_object_names(pair: SceneRelationGraphPairContract) -> set[str]:
     if pair.support_semantics is not None:
         names.add(_normalize_name(pair.support_semantics.supported_object))
         names.add(_normalize_name(pair.support_semantics.support_object))
+    if pair.symmetry_semantics is not None:
+        names.add(_normalize_name(pair.symmetry_semantics.left_object))
+        names.add(_normalize_name(pair.symmetry_semantics.right_object))
     return names
 
 

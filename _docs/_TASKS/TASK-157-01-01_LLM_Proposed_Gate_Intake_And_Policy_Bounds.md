@@ -115,7 +115,10 @@ def ingest_reference_gate_proposal(ctx, reference_summary):
 
 ## E2E Tests
 
-- Covered by later TASK-157-04 cross-domain E2E harness.
+- The current E2E ownership now lives under
+  [TASK-157-04](./TASK-157-04_Cross_Domain_E2E_Gate_Regression_Harness.md),
+  including the transport roundtrip that asserts typed policy warnings for
+  unavailable required perception evidence on the goal-time intake surface.
 
 ## Docs To Update
 

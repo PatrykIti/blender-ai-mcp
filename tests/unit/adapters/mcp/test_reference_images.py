@@ -816,7 +816,7 @@ def test_build_correction_truth_bundle_expands_required_creature_seams(monkeypat
         collection_name=None,
     )
 
-    bundle = _build_correction_truth_bundle(scene_handler, scope)
+    bundle, _relation_graph = _build_correction_truth_bundle(scene_handler, scope)
 
     assert bundle.summary.pairing_strategy == "required_creature_seams"
     assert bundle.summary.pair_count == 6
@@ -911,7 +911,7 @@ def test_build_correction_truth_bundle_treats_forel_hindr_as_limb_body_seams(mon
         collection_name=None,
     )
 
-    bundle = _build_correction_truth_bundle(scene_handler, scope)
+    bundle, _relation_graph = _build_correction_truth_bundle(scene_handler, scope)
     seam_kinds_by_pair = {
         f"{item.from_object} -> {item.to_object}": item.attachment_semantics.seam_kind
         for item in bundle.checks
@@ -3610,6 +3610,129 @@ def test_reference_compare_stage_checkpoint_reports_enabled_segmentation_sidecar
     assert result.part_segmentation.provider_name == "generic_sidecar"
 
 
+def test_reference_compare_stage_checkpoint_projects_gate_state_from_checkpoint_truth_without_prior_relation_call(
+    tmp_path,
+    monkeypatch,
+):
+    image_front = tmp_path / "front.png"
+    image_front.write_bytes(b"front")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(
+        ctx,
+        "low poly creature",
+        {"status": "no_match"},
+        surface_profile="llm-guided",
+        gate_proposal={
+            "source": "llm_goal",
+            "gates": [
+                {
+                    "gate_id": "tail_body_seam",
+                    "gate_type": "attachment_seam",
+                    "label": "tail seated on body",
+                    "target_kind": "object_pair",
+                    "target_objects": ["Tail", "Body"],
+                }
+            ],
+        },
+    )
+    asyncio.run(reference_images(ctx, action="attach", source_path=str(image_front), label="front_ref"))
+
+    class SceneHandler:
+        def get_bounding_box(self, object_name: str, world_space: bool = True):
+            dimensions = {"Body": [2.0, 2.0, 2.0], "Tail": [0.8, 0.25, 0.25]}[object_name]
+            return {"object_name": object_name, "dimensions": dimensions}
+
+        def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "gap": 0.2, "relation": "separated"}
+
+        def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "is_aligned": True,
+                "aligned_axes": ["X", "Y", "Z"],
+            }
+
+        def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "overlaps": False, "relation": "disjoint"}
+
+        def assert_contact(self, from_object: str, to_object: str, max_gap=0.0001, allow_overlap=False):
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": False,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.2, "relation": "separated"},
+            }
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="The squirrel collection is closer to the references.",
+                visible_changes=["The full squirrel silhouette is visible."],
+                correction_focus=["Tail/body seam"],
+            ),
+        )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.get_vision_backend_resolver",
+        lambda: SimpleNamespace(
+            runtime_config=SimpleNamespace(
+                max_tokens=200,
+                max_images=8,
+                active_model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+            )
+        ),
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="context_wide_after",
+                image_path=str(tmp_path / "context.jpg"),
+                host_visible_path=str(tmp_path / "context.jpg"),
+                preset_name="context_wide",
+                media_type="image/jpeg",
+                view_kind="wide",
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            target_object="Body",
+            target_objects=["Tail"],
+            checkpoint_label="stage_tail_gate",
+            preset_profile="compact",
+        )
+    )
+
+    assert result.error is None
+    assert result.active_gate_plan is not None
+    assert result.gate_statuses
+    tail_gate = next(gate for gate in result.gate_statuses if gate.gate_id == "tail_body_seam")
+    assert tail_gate.status == "failed"
+    assert tail_gate.status_reason == "relation_floating_gap"
+    session = get_session_capability_state(ctx)
+    assert session.gate_plan is not None
+    stored_tail_gate = next(gate for gate in session.gate_plan["gates"] if gate["gate_id"] == "tail_body_seam")
+    assert stored_tail_gate["status"] == "failed"
+
+
 def test_reference_compare_stage_checkpoint_sanitizes_checkpoint_id_target_token(tmp_path, monkeypatch):
     image_front = tmp_path / "front.png"
     image_front.write_bytes(b"front")
@@ -4085,6 +4208,76 @@ def test_reference_iterate_stage_checkpoint_escalates_when_truth_signal_is_high_
     assert result.loop_disposition == "inspect_validate"
     assert result.correction_focus == ["TruthHead -> TruthBody failed the contact assertion."]
     assert "Deterministic truth findings remain high-priority" in (result.message or "")
+
+
+def test_reference_iterate_stage_checkpoint_escalates_when_required_gate_blockers_remain(monkeypatch):
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly creature", {"status": "no_match"})
+
+    compare = ReferenceCompareStageCheckpointResponseContract.model_validate(
+        {
+            "action": "compare_stage_checkpoint",
+            "goal": "low poly creature",
+            "target_object": "Creature",
+            "target_objects": ["Creature"],
+            "checkpoint_id": "checkpoint_gate_blocker",
+            "checkpoint_label": "stage_gate_blocker",
+            "preset_profile": "compact",
+            "preset_names": ["context_wide"],
+            "capture_count": 1,
+            "captures": [],
+            "reference_count": 0,
+            "reference_ids": [],
+            "reference_labels": [],
+            "completion_blockers": [
+                {
+                    "gate_id": "tail_body_seam",
+                    "gate_type": "attachment_seam",
+                    "label": "tail seated on body",
+                    "status": "failed",
+                    "reason_code": "relation_floating_gap",
+                    "target_kind": "object_pair",
+                    "target_objects": ["Tail", "Body"],
+                    "required_evidence_kinds": ["spatial_relation"],
+                    "allowed_correction_families": ["attachment_alignment"],
+                    "recommended_bounded_tools": [
+                        "scene_relation_graph",
+                        "scene_measure_gap",
+                        "macro_attach_part_to_surface",
+                    ],
+                    "message": "Tail seam is floating.",
+                }
+            ],
+            "next_gate_actions": ["verify_or_repair_spatial_gate"],
+            "recommended_bounded_tools": [
+                "scene_relation_graph",
+                "scene_measure_gap",
+                "macro_attach_part_to_surface",
+            ],
+        }
+    )
+
+    async def _fake_reference_compare_stage_checkpoint(*args, **kwargs):
+        return compare
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.reference_compare_stage_checkpoint",
+        _fake_reference_compare_stage_checkpoint,
+    )
+
+    result = asyncio.run(
+        reference_iterate_stage_checkpoint(
+            ctx,
+            target_object="Creature",
+            target_objects=["Creature"],
+            checkpoint_label="stage_gate_blocker",
+        )
+    )
+
+    assert result.loop_disposition == "inspect_validate"
+    assert result.continue_recommended is True
+    assert result.correction_focus == ["Tail seam is floating."]
+    assert "Quality gate blockers remain unresolved" in (result.message or "")
 
 
 def _guided_incomplete_secondary_flow_state() -> dict[str, object]:

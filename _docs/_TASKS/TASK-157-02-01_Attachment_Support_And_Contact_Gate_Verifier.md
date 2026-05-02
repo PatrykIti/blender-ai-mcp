@@ -117,10 +117,11 @@ def verify_attachment_gate(gate, relation_pair):
 
 ## E2E Tests
 
-- Blender-backed tail/body gap repaired by `macro_attach_part_to_surface` or
-  `macro_align_part_with_contact`, then verifier passes.
-- Blender-backed cleanup-only scenario remains failed when residual floating
-  gap persists.
+- Existing macro tool E2E lanes such as
+  `tests/e2e/tools/macro/test_macro_attach_part_to_surface.py` validate the
+  underlying bounded repair primitive.
+- Cross-domain checkpoint gate-state proof remains owned by
+  [TASK-157-04](./TASK-157-04_Cross_Domain_E2E_Gate_Regression_Harness.md).
 
 ## Docs To Update
 
@@ -137,8 +138,9 @@ def verify_attachment_gate(gate, relation_pair):
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/macro/test_macro_attach_part_to_surface.py -v`
-- `python3 scripts/run_e2e_tests.py` for the Blender-backed seam/contact repair
-  scenarios introduced by this slice.
+- `python3 scripts/run_e2e_tests.py` when extending the macro-backed repair
+  lane itself; checkpoint gate-state regression remains tracked by
+  `TASK-157-04`.
 
 ## Acceptance Criteria
 

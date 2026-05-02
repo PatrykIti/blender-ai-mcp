@@ -90,6 +90,53 @@ def test_required_part_gate_passes_from_scene_scope_name_evidence():
     assert updated.completion_blockers == []
 
 
+def test_required_part_object_role_gate_uses_guided_part_registry_when_names_are_non_lexical():
+    plan = normalize_gate_plan(
+        {
+            "source": "llm_goal",
+            "gates": [
+                {
+                    "gate_id": "body_core_required",
+                    "gate_type": "required_part",
+                    "label": "body core is present",
+                    "target_kind": "object_role",
+                    "target_label": "body_core",
+                }
+            ],
+        },
+        domain_profile="generic",
+        templates=[],
+    )
+
+    updated = verify_gate_plan_with_relation_graph(
+        plan,
+        {
+            "scope": {
+                "scope_kind": "object_set",
+                "primary_target": "Obj_001",
+                "object_names": ["Obj_001"],
+                "object_count": 1,
+            },
+            "summary": {
+                "pairing_strategy": "guided_spatial_pairs",
+                "pair_count": 0,
+                "evaluated_pairs": 0,
+                "failing_pairs": 0,
+                "attachment_pairs": 0,
+                "support_pairs": 0,
+                "symmetry_pairs": 0,
+            },
+            "pairs": [],
+        },
+        guided_part_registry=[
+            {"object_name": "Obj_001", "role": "body_core", "role_group": "primary_masses"},
+        ],
+    )
+
+    gate = _gate(updated, "body_core_required")
+    assert gate.status == "passed"
+
+
 def test_attachment_gate_fails_floating_gap_with_bounded_repair_tools():
     plan = normalize_gate_plan(
         {
@@ -230,3 +277,70 @@ def test_support_contact_gate_uses_support_semantics_as_authoritative_truth():
     assert support.status == "passed"
     assert support.evidence_refs[0].verdict == "supported"
     assert updated.completion_blockers == []
+
+
+def test_symmetry_pair_gate_uses_relation_graph_symmetry_semantics():
+    plan = normalize_gate_plan(
+        {
+            "source": "llm_goal",
+            "gates": [
+                {
+                    "gate_id": "ear_pair_symmetry",
+                    "gate_type": "symmetry_pair",
+                    "label": "ear pair stays symmetric",
+                    "target_kind": "reference_part",
+                    "target_label": "ear_pair",
+                }
+            ],
+        },
+        domain_profile="generic",
+        templates=[],
+    )
+    relation_graph = {
+        "scope": {
+            "scope_kind": "object_set",
+            "primary_target": "Ear_L",
+            "object_names": ["Ear_L", "Ear_R"],
+            "object_count": 2,
+        },
+        "summary": {
+            "pairing_strategy": "guided_spatial_pairs",
+            "pair_count": 1,
+            "evaluated_pairs": 1,
+            "failing_pairs": 1,
+            "attachment_pairs": 0,
+            "support_pairs": 0,
+            "symmetry_pairs": 1,
+        },
+        "pairs": [
+            {
+                "pair_id": "ear_l__ear_r",
+                "from_object": "Ear_L",
+                "to_object": "Ear_R",
+                "pair_source": "symmetry_candidate",
+                "relation_kinds": ["symmetry"],
+                "relation_verdicts": ["asymmetric"],
+                "gap_relation": "contact",
+                "gap_distance": 0.0,
+                "contact_passed": True,
+                "alignment_status": "aligned",
+                "aligned_axes": ["X", "Y", "Z"],
+                "measurement_basis": "bounding_box",
+                "symmetry_semantics": {
+                    "left_object": "Ear_L",
+                    "right_object": "Ear_R",
+                    "axis": "X",
+                    "mirror_coordinate": 0.0,
+                    "verdict": "asymmetric",
+                },
+            }
+        ],
+    }
+
+    updated = verify_gate_plan_with_relation_graph(plan, relation_graph)
+
+    symmetry = _gate(updated, "ear_pair_symmetry")
+    assert symmetry.status == "failed"
+    assert symmetry.status_reason == "relation_asymmetric"
+    assert symmetry.evidence_refs[0].source == "assertion_tool"
+    assert "macro_place_symmetry_pair" in symmetry.recommended_bounded_tools

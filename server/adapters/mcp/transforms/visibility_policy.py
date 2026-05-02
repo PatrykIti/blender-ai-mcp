@@ -60,9 +60,15 @@ GUIDED_REQUIRED_PART_GATE_TOOLS: tuple[str, ...] = (
     "scene_create",
     "modeling_create_primitive",
 )
+GUIDED_SYMMETRY_GATE_TOOLS: tuple[str, ...] = (
+    "scene_relation_graph",
+    "scene_assert_symmetry",
+    "macro_place_symmetry_pair",
+)
 GUIDED_SHAPE_PROFILE_GATE_TOOLS: tuple[str, ...] = (
     "scene_view_diagnostics",
     "mesh_inspect",
+    "macro_adjust_relative_proportion",
     "macro_adjust_segment_chain_arc",
     "macro_finish_form",
 )
@@ -654,9 +660,12 @@ def build_visibility_rules(
     current_flow_step = str((guided_flow_state or {}).get("current_step") or "").strip().lower()
     spatial_refresh_required = bool((guided_flow_state or {}).get("spatial_refresh_required"))
     gate_visible_tools = visible_tools_for_gate_plan(gate_plan)
+    refresh_barrier_active = current_flow_step == "establish_spatial_context" or spatial_refresh_required
+    if refresh_barrier_active:
+        gate_visible_tools = gate_visible_tools.intersection(set(GUIDED_SPATIAL_CONTEXT_DIRECT_TOOLS))
 
     if resolved_phase == SessionPhase.BUILD:
-        if current_flow_step == "establish_spatial_context" or spatial_refresh_required:
+        if refresh_barrier_active:
             build_tools = set(GUIDED_SPATIAL_CONTEXT_DIRECT_TOOLS)
         else:
             build_tools = (
@@ -709,6 +718,8 @@ def visible_tools_for_gate_plan(gate_plan: dict[str, Any] | None) -> set[str]:
             visible_tools.update(GUIDED_SUPPORT_GATE_TOOLS)
         elif gate_type == "required_part":
             visible_tools.update(GUIDED_REQUIRED_PART_GATE_TOOLS)
+        elif gate_type == "symmetry_pair":
+            visible_tools.update(GUIDED_SYMMETRY_GATE_TOOLS)
         elif gate_type in {"shape_profile", "proportion_ratio", "refinement_stage"}:
             if not has_unresolved_seam_or_support:
                 visible_tools.update(GUIDED_SHAPE_PROFILE_GATE_TOOLS)

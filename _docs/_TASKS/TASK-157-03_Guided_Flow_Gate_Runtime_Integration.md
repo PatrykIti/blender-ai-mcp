@@ -43,6 +43,9 @@ Completed on 2026-05-01.
   updates, evidence-backed stale marking, and required-gate blockers.
 - Integrated unresolved gate blockers with the existing guided visibility and
   search recovery path without creating a parallel catalog.
+- `reference_iterate_stage_checkpoint(...)` now escalates to
+  `inspect_validate` when unresolved `completion_blockers` remain, even before
+  repeated vision-only focus would have forced the same handoff.
 - Projected active gate state into strict staged reference checkpoint response
   fields: `gate_statuses`, `completion_blockers`, `next_gate_actions`, and
   `recommended_bounded_tools`.

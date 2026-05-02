@@ -564,7 +564,9 @@ Current guided-flow behavior:
   client/model quality-gate proposal for the active guided goal; the server
   normalizes it into the session-scoped `active_gate_plan` and returns
   `gate_intake_result` with machine-readable policy warnings when it rewrites
-  or drops unsafe declarations, including unsupported gate types
+  or drops unsafe declarations, including unsupported gate types and required
+  reference/perception evidence that is unavailable on the goal-time intake
+  surface
 - `router_get_status()`, `router_set_goal()`,
   `reference_compare_stage_checkpoint()`, and
   `reference_iterate_stage_checkpoint()` can expose `active_gate_plan` beside
@@ -576,14 +578,14 @@ Current guided-flow behavior:
   sources may propose gates and provenance, but they cannot mark gates
   `passed`, `failed`, `waived`, or `stale` without later server-owned verifier
   evidence
-- `scene_relation_graph(...)` now feeds authoritative spatial evidence into
-  the active gate plan for `required_part`, `attachment_seam`, and
-  `support_contact` verifier strategies; verifier output persists
-  evidence refs, `status_reason`, `completion_blockers`, status summaries,
-  and bounded repair-tool hints on `active_gate_plan`
+- `scene_relation_graph(...)` now feeds the first deterministic gate slice with
+  authoritative scope/spatial/assertion evidence for `required_part`,
+  `attachment_seam`, `support_contact`, and `symmetry_pair`; verifier output
+  persists evidence refs, `status_reason`, `completion_blockers`, status
+  summaries, and bounded repair-tool hints on `active_gate_plan`
 - guided scene mutations reuse the existing spatial dirtying path to mark
-  evidence-backed gate statuses `stale`; final completion remains blocked by
-  required gates in `pending`, `blocked`, `failed`, or `stale`
+  the affected evidence-backed gate statuses `stale`; final completion remains
+  blocked by required gates in `pending`, `blocked`, `failed`, or `stale`
 - active gate blockers now shape the existing guided visibility/search layer:
   failed seam/support gates expose bounded relation, measure/assert, and macro
   repair tools; refinement/profile gates wait behind unresolved required
@@ -1215,7 +1217,7 @@ Managing objects at the scene level.
 Invalid target-scope inputs such as an unavailable `collection_name` now return
 structured error payloads on the stage-compare path instead of failing again
 while building the error response.
-Stage compare/iterate responses now also expose `guided_reference_readiness`, `active_gate_plan`, top-level gate summaries (`gate_statuses`, `completion_blockers`, `next_gate_actions`, `recommended_bounded_tools`), `assembled_target_scope`, `truth_bundle`, `truth_followup`, `correction_candidates`, `budget_control`, `refinement_route`, `refinement_handoff`, `planner_summary`, optional rich-profile `planner_detail`, `silhouette_analysis`, `action_hints`, and `part_segmentation`, so assembled-model correction flows can consume explicit session readiness, the normalized gate plan and immediate gate repair path, a structured target scope, correction-oriented truth findings, loop-ready follow-up items, an explicitly ranked merged correction list, explicit trimming metadata, a deterministic refinement-family decision, compact planner provenance/blockers, typed perception metrics/tool hints, and an optional advisory-only sidecar placeholder instead of inferring everything from loose `target_object` / `target_objects` / `collection_name` fields. On `reference_iterate_stage_checkpoint(...)`, the loop-facing `correction_focus` now prefers ranked `correction_candidates` summaries when they are present, and high-priority deterministic truth findings can also move `loop_disposition` to `inspect_validate` instead of waiting only for repeated vision focus. `planner_summary` is the first planner-facing read target: it reports the selected family, target scope, source-class provenance, typed blockers, and required support tools such as `scene_view_diagnostics(...)` when staged view evidence is missing before sculpt handoff. `action_hints` complement that loop by exposing deterministic silhouette-driven tool suggestions, while `part_segmentation` stays disabled unless an operator explicitly enables the separate sidecar path. Collection/object-set targeting now also avoids obviously accessory-first primary anchors when a more structural target is present, expands supported creature scopes into deterministic `required_creature_seams`, keeps multiple failing required seams live together in `truth_followup` / `correction_candidates`, normalizes vision-side `recommended_checks` to canonical MCP tool ids or drops them, applies model-aware budget control when the active runtime profile is too small for the full payload, and exposes `refinement_route` for bounded family choices such as `macro`, `modeling_mesh`, `sculpt_region`, or `inspect_only`. Sculpt stays hidden on the normal guided surface; `refinement_handoff` is recommendation-only, can be `ready`, `blocked`, or `suppressed`, and its bounded deterministic subset is `sculpt_deform_region`, `sculpt_smooth_region`, `sculpt_inflate_region`, `sculpt_pinch_region`, and `sculpt_crease_region`.
+Stage compare/iterate responses now also expose `guided_reference_readiness`, `active_gate_plan`, top-level gate summaries (`gate_statuses`, `completion_blockers`, `next_gate_actions`, `recommended_bounded_tools`), `assembled_target_scope`, `truth_bundle`, `truth_followup`, `correction_candidates`, `budget_control`, `refinement_route`, `refinement_handoff`, `planner_summary`, optional rich-profile `planner_detail`, `silhouette_analysis`, `action_hints`, and `part_segmentation`, so assembled-model correction flows can consume explicit session readiness, the normalized gate plan and immediate gate repair path, a structured target scope, correction-oriented truth findings, loop-ready follow-up items, an explicitly ranked merged correction list, explicit trimming metadata, a deterministic refinement-family decision, compact planner provenance/blockers, typed perception metrics/tool hints, and an optional advisory-only sidecar placeholder instead of inferring everything from loose `target_object` / `target_objects` / `collection_name` fields. On `reference_iterate_stage_checkpoint(...)`, the loop-facing `correction_focus` now prefers ranked `correction_candidates` summaries when they are present, unresolved `completion_blockers` can also move `loop_disposition` to `inspect_validate`, and high-priority deterministic truth findings still escalate the same way instead of waiting only for repeated vision focus. `planner_summary` is the first planner-facing read target: it reports the selected family, target scope, source-class provenance, typed blockers, and required support tools such as `scene_view_diagnostics(...)` when staged view evidence is missing before sculpt handoff. `action_hints` complement that loop by exposing deterministic silhouette-driven tool suggestions, while `part_segmentation` stays disabled unless an operator explicitly enables the separate sidecar path. Collection/object-set targeting now also avoids obviously accessory-first primary anchors when a more structural target is present, expands supported creature scopes into deterministic `required_creature_seams`, keeps multiple failing required seams live together in `truth_followup` / `correction_candidates`, normalizes vision-side `recommended_checks` to canonical MCP tool ids or drops them, applies model-aware budget control when the active runtime profile is too small for the full payload, and exposes `refinement_route` for bounded family choices such as `macro`, `modeling_mesh`, `sculpt_region`, or `inspect_only`. Sculpt stays hidden on the normal guided surface; `refinement_handoff` is recommendation-only, can be `ready`, `blocked`, or `suppressed`, and its bounded deterministic subset is `sculpt_deform_region`, `sculpt_smooth_region`, `sculpt_inflate_region`, `sculpt_pinch_region`, and `sculpt_crease_region`.
 Silhouette metrics use a target-view or focus capture when one is available;
 the broad `context_wide` capture is only a fallback. A staged iterate result
 that is held in `continue_build` because required roles are still missing does

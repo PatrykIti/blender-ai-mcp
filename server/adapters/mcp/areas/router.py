@@ -486,6 +486,7 @@ async def router_get_status(ctx: Context) -> RouterStatusContract:
         session.phase,
         guided_handoff=session.guided_handoff,
         guided_flow_state=session.guided_flow_state,
+        gate_plan=session.gate_plan,
     )
     status_payload = get_router_status()
     background_job_count, background_job_counts_by_status, background_jobs = _build_background_job_diagnostics()

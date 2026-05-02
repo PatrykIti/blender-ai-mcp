@@ -9,10 +9,10 @@ import base64
 import mimetypes
 import re
 import shutil
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Literal, cast
+from typing import Any, Literal, Mapping, cast
 from uuid import uuid4
 
 from fastmcp import Context
@@ -73,8 +73,10 @@ from server.adapters.mcp.session_capabilities import (
     replace_session_pending_reference_images_async,
     replace_session_reference_images_async,
     session_has_ready_guided_reference_goal,
+    set_session_capability_state_async,
 )
 from server.adapters.mcp.session_state import get_session_value_async, set_session_value_async
+from server.adapters.mcp.transforms.quality_gate_verifier import verify_gate_plan_with_relation_graph
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.vision import (
     CapturePresetProfile,
@@ -812,6 +814,23 @@ def _resolve_actionable_focus(compare_result: ReferenceCompareStageCheckpointRes
     deduped: list[str] = []
     seen: set[str] = set()
     for item in ordered:
+        normalized = _normalized_focus_key(item)
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        deduped.append(item)
+    return deduped[:3]
+
+
+def _resolve_gate_blocker_focus(compare_result: ReferenceCompareStageCheckpointResponseContract) -> list[str]:
+    blockers = list(compare_result.completion_blockers or [])
+    if not blockers:
+        return []
+
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for blocker in blockers:
+        item = (blocker.message or blocker.label or blocker.target_label or blocker.gate_id).strip()
         normalized = _normalized_focus_key(item)
         if not normalized or normalized in seen:
             continue
@@ -2759,7 +2778,7 @@ def _truth_bundle_pairs(
 def _build_correction_truth_bundle(
     scene_handler,
     scope: SceneAssembledTargetScopeContract,
-) -> SceneCorrectionTruthBundleContract:
+) -> tuple[SceneCorrectionTruthBundleContract, dict[str, Any]]:
     relation_graph = get_spatial_graph_service().build_relation_graph(
         reader=scene_handler,
         scope_graph=scope.model_dump(mode="json"),
@@ -2851,18 +2870,21 @@ def _build_correction_truth_bundle(
             )
         )
 
-    return SceneCorrectionTruthBundleContract(
-        scope=scope,
-        summary=SceneCorrectionTruthSummaryContract(
-            pairing_strategy=pairing_strategy,
-            pair_count=len(truth_pairs),
-            evaluated_pairs=sum(1 for item in checks if item.error is None),
-            contact_failures=contact_failures,
-            overlap_pairs=overlap_pairs,
-            separated_pairs=separated_pairs,
-            misaligned_pairs=misaligned_pairs,
+    return (
+        SceneCorrectionTruthBundleContract(
+            scope=scope,
+            summary=SceneCorrectionTruthSummaryContract(
+                pairing_strategy=pairing_strategy,
+                pair_count=len(truth_pairs),
+                evaluated_pairs=sum(1 for item in checks if item.error is None),
+                contact_failures=contact_failures,
+                overlap_pairs=overlap_pairs,
+                separated_pairs=separated_pairs,
+                misaligned_pairs=misaligned_pairs,
+            ),
+            checks=checks,
         ),
-        checks=checks,
+        relation_graph,
     )
 
 
@@ -3552,7 +3574,7 @@ async def _run_stage_checkpoint_compare(
 
     resolver = get_vision_backend_resolver()
     runtime_max_tokens, runtime_max_images, runtime_model_name = _resolve_hybrid_budget_runtime(resolver)
-    truth_bundle = _build_correction_truth_bundle(scene_handler, assembled_target_scope)
+    truth_bundle, _truth_relation_graph = _build_correction_truth_bundle(scene_handler, assembled_target_scope)
     pair_budget = _effective_pair_budget(
         max_tokens=runtime_max_tokens,
         model_name=runtime_model_name,
@@ -3734,11 +3756,36 @@ async def _run_stage_checkpoint_compare(
         if preset_profile == "rich"
         else None
     )
+    active_gate_plan = session.gate_plan
+    if session.gate_plan is not None:
+        gate_relation_graph = get_spatial_graph_service().build_relation_graph(
+            reader=scene_handler,
+            scope_graph=assembled_target_scope.model_dump(mode="json"),
+            goal_hint=None,
+            include_truth_payloads=False,
+            include_guided_pairs=True,
+        )
+        flow_state = (
+            GuidedFlowStateContract.model_validate(session.guided_flow_state)
+            if session.guided_flow_state is not None
+            else None
+        )
+        updated_gate_plan = verify_gate_plan_with_relation_graph(
+            session.gate_plan,
+            gate_relation_graph,
+            spatial_state_version=None if flow_state is None else flow_state.spatial_state_version,
+            scope_fingerprint=None if flow_state is None else flow_state.spatial_scope_fingerprint,
+            guided_part_registry=cast(list[Mapping[str, Any]] | None, session.guided_part_registry),
+        )
+        session = replace(session, gate_plan=updated_gate_plan.model_dump(mode="json", exclude_none=True))
+        await set_session_capability_state_async(ctx, session)
+        active_gate_plan = session.gate_plan
+
     return _stage_compare_response(
         session_id=session_id,
         transport=transport,
         guided_flow_state=session.guided_flow_state,
-        active_gate_plan=session.gate_plan,
+        active_gate_plan=active_gate_plan,
         checkpoint_id=checkpoint_id,
         checkpoint_label=checkpoint_label,
         goal=goal,
@@ -4197,11 +4244,17 @@ async def reference_iterate_stage_checkpoint(
     readiness = compare_result.guided_reference_readiness
     goal = compare_result.goal
     correction_focus = _resolve_actionable_focus(compare_result)
+    if not correction_focus:
+        correction_focus = _resolve_gate_blocker_focus(compare_result)
     action_hints = list(compare_result.action_hints or [])
-    continue_recommended = bool(correction_focus or action_hints)
+    gate_blockers_present = bool(compare_result.completion_blockers)
+    continue_recommended = bool(correction_focus or action_hints or gate_blockers_present)
     inspect_from_truth_signal = _should_inspect_from_truth_signal(compare_result.correction_candidates)
+    inspect_from_gate_blockers = gate_blockers_present
     loop_disposition: Literal["continue_build", "inspect_validate", "stop"] = (
-        "inspect_validate" if inspect_from_truth_signal else ("continue_build" if continue_recommended else "stop")
+        "inspect_validate"
+        if inspect_from_truth_signal or inspect_from_gate_blockers
+        else ("continue_build" if continue_recommended else "stop")
     )
     stop_reason = (
         None if continue_recommended else "No actionable correction guidance was returned for this checkpoint."
@@ -4315,6 +4368,11 @@ async def reference_iterate_stage_checkpoint(
             message = (
                 "Deterministic truth findings remain high-priority. "
                 "Stop free-form modeling and switch to inspect/measure/assert now."
+            )
+        elif inspect_from_gate_blockers:
+            message = (
+                "Quality gate blockers remain unresolved. "
+                "Stop free-form modeling and switch to inspect/measure/assert or bounded repair tools now."
             )
         else:
             message = (

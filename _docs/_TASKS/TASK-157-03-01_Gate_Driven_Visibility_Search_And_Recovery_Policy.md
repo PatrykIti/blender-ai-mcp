@@ -30,6 +30,13 @@ Completed on 2026-05-01.
 - Static build-step visibility still respects existing guided cadence:
   spatial refresh gates remain bounded to spatial-context tools, and gate tools
   are added as a narrow overlay.
+- `symmetry_pair` blockers now reuse that same overlay to expose
+  `scene_relation_graph`, `scene_assert_symmetry`, and
+  `macro_place_symmetry_pair` without widening the catalog.
+- Evidence-sensitive narrowing from future `reference_understanding`,
+  segmentation, or classification payloads remains follow-on work under the
+  open TASK-157 umbrella; the shipped slice stops at blocker-driven overlays
+  and gate-recovery search shortcuts.
 
 ## Validation
 
@@ -211,11 +218,10 @@ def refine_visibility_from_evidence(gate, evidence_refs, visible_families):
 
 ## E2E Tests
 
-- Add a guided Streamable/stdio scenario where a failed seam gate opens repair
-  tools and the client can proceed without `router_set_goal` reset.
-- Add a guided creature scenario proving primary-mass or secondary-detail batch
-  creation does not require the full spatial triad after each individual
-  object, but does require it at the stage boundary.
+- Blender-backed guided visibility/regression proof remains owned by
+  [TASK-157-04](./TASK-157-04_Cross_Domain_E2E_Gate_Regression_Harness.md).
+- This closed slice keeps unit/runtime-policy proof on the existing visibility,
+  search, and guided-iterate surfaces.
 
 ## Docs To Update
 

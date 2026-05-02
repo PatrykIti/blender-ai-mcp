@@ -80,7 +80,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md) | **Goal-Derived Quality Gates And Deterministic Verification** | 🔴 High | Contract/intake, deterministic relation-graph verifier/status, gate-driven visibility/search, and checkpoint gate-summary slices are complete; cross-domain E2E remains open under TASK-157-04. |
+| [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md) | **Goal-Derived Quality Gates And Deterministic Verification** | 🔴 High | Contract/intake, deterministic relation-graph verifier/status, gate-driven visibility/search, checkpoint gate summaries, and the first cross-domain E2E/transport harness files are complete; live Blender RPC proof remains the final closeout item under TASK-157-04. |
 
 ---
 

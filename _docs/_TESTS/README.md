@@ -122,6 +122,28 @@ Source-of-truth pointers:
 - OpenRouter/Gemini runtime examples: [`_docs/_VISION/README.md`](../_VISION/README.md)
 - MCP client/container examples: [`_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`](../_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md)
 
+## TASK-157 Quality-Gate Lanes
+
+Current owner-lane validation for the shipped TASK-157 substrate is:
+
+- goal-time intake and policy bounds:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_contracts.py tests/unit/adapters/mcp/test_quality_gate_intake.py -q`
+- verifier/status, stale marking, gate-driven visibility/search, and staged
+  checkpoint summaries:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
+- guided gate/runtime transport:
+  `poetry run pytest tests/e2e/integration/test_guided_inspect_validate_handoff.py tests/e2e/integration/test_guided_gate_state_transport.py -q`
+- Blender-backed gate-state regression:
+  `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_goal_derived_gate_creature_completion.py tests/e2e/vision/test_goal_derived_gate_building_completion.py -q`
+
+Remaining environment-dependent proof for `TASK-157-04` is operational, not
+code-shape:
+
+- live Blender RPC must be available for the creature/building gate tests to
+  execute instead of `skip`
+- local socket binding must be available for the Streamable HTTP transport lane
+  to execute instead of `skip`
+
 ---
 
 ## Test Statistics
