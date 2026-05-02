@@ -47,16 +47,19 @@ creating a second gate-intake path or violating the strict MCP payload shapes.
 ## Pseudocode
 
 ```python
-intake_result = ingest_quality_gate_proposal(ctx, gate_proposal)
+intake_result = ingest_quality_gate_proposal(
+    ctx,
+    gate_proposal.model_dump(mode="json", exclude_none=True),
+)
 accepted_gate_plan = intake_result.gate_plan if intake_result.status == "accepted" else None
 
 state = get_session_capability_state(ctx)
 state = replace(
     state,
     reference_understanding_summary={
-        "understanding_id": summary.understanding_id,
+        "understanding_id": summary_contract.understanding_id,
         "accepted_gate_ids": accepted_gate_ids,
-        "summary": summary.public_view(),
+        "summary": summary_contract.model_dump(mode="json", exclude_none=True),
     },
 )
 set_session_capability_state(ctx, state)

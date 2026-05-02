@@ -91,14 +91,29 @@ child leaves below rather than as one broad implementation pass.
 ## Pseudocode
 
 ```python
-summary = parse_reference_understanding_payload(
-    provider_payload,
+parsed_payload = parse_vision_output_text(
+    provider_text,
+    request,
     vision_contract_profile=runtime.active_vision_contract_profile,
+    provider_name=provider_name,
 )
-summary = normalize_reference_aliases(summary)
+summary_contract = ReferenceUnderstandingSummaryContract.model_validate(
+    _coerce_reference_understanding_payload(parsed_payload)
+)  # new contract/helper introduced by this task, backed by reference.py
 
-gate_proposal = build_quality_gate_proposal_from_reference_understanding(summary)
-intake_result = ingest_quality_gate_proposal(ctx, gate_proposal)
+gate_proposal = GateProposalContract.model_validate(
+    {
+        "proposal_id": summary_contract.understanding_id,
+        "source": "reference_understanding",
+        "goal": request.goal,
+        "gates": summary_contract.gate_proposals,
+        "source_provenance": summary_contract.source_provenance,
+    }
+)
+intake_result = ingest_quality_gate_proposal(
+    ctx,
+    gate_proposal.model_dump(mode="json", exclude_none=True),
+)
 accepted_gate_plan = intake_result.gate_plan if intake_result.status == "accepted" else None
 accepted_gate_ids = [
     gate.gate_id for gate in (accepted_gate_plan.gates if accepted_gate_plan is not None else [])
@@ -108,8 +123,8 @@ session_state = get_session_capability_state(ctx)
 session_state = replace(
     session_state,
     reference_understanding_summary={
-        "understanding_id": summary.understanding_id,
-        "summary": summary.public_view(),
+        "understanding_id": summary_contract.understanding_id,
+        "summary": summary_contract.model_dump(mode="json", exclude_none=True),
         "accepted_gate_ids": accepted_gate_ids,
     },  # new explicit session field/helper owned by this task
 )
@@ -122,7 +137,7 @@ return _stage_compare_response(
         if accepted_gate_plan is not None
         else session_state.gate_plan
     ),
-    reference_understanding_summary=summary.public_view(),
+    reference_understanding_summary=summary_contract.model_dump(mode="json", exclude_none=True),
     reference_understanding_gate_ids=accepted_gate_ids,  # new declared response field only if linkage is needed
 )
 ```
@@ -130,7 +145,10 @@ return _stage_compare_response(
 `session_capabilities.py` owns `ingest_quality_gate_proposal[_async](ctx, ...)`
 and the current `_apply_goal_time_gate_input_bounds(...)` path. This task
 should feed that seam and consume the accepted result; it should not add a
-second reference-specific gate normalizer. `SessionCapabilityState` is
+second reference-specific gate normalizer. Use the live
+`parse_vision_output_text(...)` shared backend parser first, then add only the
+minimum new coercion/summary contract helper needed in this task instead of
+inventing a second standalone parser path. `SessionCapabilityState` is
 currently frozen and its helpers accept the FastMCP `Context`, so new
 summary/linkage persistence should use an owning helper or `replace(...)`
 pattern instead of mutating fields in place or using a bare `session_id`.

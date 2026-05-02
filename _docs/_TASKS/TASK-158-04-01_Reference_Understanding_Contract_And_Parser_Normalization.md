@@ -18,11 +18,13 @@ runtime flow.
 | Path / Module | Expected Change |
 |---------------|-----------------|
 | `server/adapters/mcp/contracts/reference.py` | Add or compose the typed reference-understanding result contract and use `understanding_id` consistently with the roadmap |
+| `server/adapters/mcp/contracts/quality_gates.py` | Reuse `GateProposalContract` and normalized advisory gate semantics for any reference-derived gate seeds |
 | `server/adapters/mcp/vision/prompting.py` | Extend the shared prompt contract for bounded reference-understanding output |
 | `server/adapters/mcp/vision/parsing.py` | Extend the shared parsing/repair contract and alias normalization path |
 | `server/adapters/mcp/vision/backends.py` | Keep provider payload normalization on the existing backend path |
 | `tests/unit/adapters/mcp/test_vision_prompting.py` | Cover schema/prompt shape and prompt redaction rules |
 | `tests/unit/adapters/mcp/test_vision_parsing.py` | Cover bounded parsing, alias normalization, and reject-unknown behavior |
+| `tests/unit/adapters/mcp/test_quality_gate_contracts.py` | Verify `reference_understanding` proposals remain advisory and normalize to pending gates |
 
 ## Implementation Notes
 
@@ -44,16 +46,29 @@ runtime flow.
 ## Pseudocode
 
 ```python
-summary = parse_reference_understanding_payload(
-    provider_payload,
+parsed_payload = parse_vision_output_text(
+    provider_text,
+    request,
     vision_contract_profile=runtime.active_vision_contract_profile,
+    provider_name=provider_name,
 )
-summary = normalize_reference_aliases(summary)
-proposal = build_quality_gate_proposal_from_reference_understanding(summary)
+summary_contract = ReferenceUnderstandingSummaryContract.model_validate(
+    _coerce_reference_understanding_payload(parsed_payload)
+)  # new contract/helper added in this leaf
+proposal = GateProposalContract.model_validate(
+    {
+        "proposal_id": summary_contract.understanding_id,
+        "source": "reference_understanding",
+        "goal": request.goal,
+        "gates": summary_contract.gate_proposals,
+        "source_provenance": summary_contract.source_provenance,
+    }
+)
+normalized = normalize_gate_plan(proposal, domain_profile="creature", templates=[])
 
-assert summary.understanding_id
+assert summary_contract.understanding_id
 assert proposal.source == "reference_understanding"
-assert all(gate.status == "pending" for gate in proposal.gates)
+assert all(gate.status == "pending" for gate in normalized.gates)
 ```
 
 ## Runtime / Security Contract Notes
@@ -72,6 +87,9 @@ assert all(gate.status == "pending" for gate in proposal.gates)
   shape, redaction, and no-public-tool wording.
 - Extend `tests/unit/adapters/mcp/test_vision_parsing.py` for alias
   normalization, reject-unknown behavior, and no pass/fail authority.
+- Extend `tests/unit/adapters/mcp/test_quality_gate_contracts.py` for
+  `reference_understanding` proposal source normalization and pending-only gate
+  semantics.
 - Add focused `test_reference_understanding_*` files only if the shared vision
   owners become too large.
 
@@ -98,7 +116,7 @@ assert all(gate.status == "pending" for gate in proposal.gates)
 ## Validation Commands
 
 - `git diff --check`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_parsing.py -v`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_parsing.py tests/unit/adapters/mcp/test_quality_gate_contracts.py -v`
 - `rg -n "reference_understand|router_apply_reference_strategy|status=\\\"passed\\\"|final_completion" server/adapters/mcp/vision server/adapters/mcp/contracts/reference.py tests/unit/adapters/mcp`
 
 ## Acceptance Criteria

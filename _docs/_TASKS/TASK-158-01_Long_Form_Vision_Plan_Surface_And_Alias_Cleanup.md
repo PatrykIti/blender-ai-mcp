@@ -133,8 +133,10 @@ sketches. They must not become TASK-158 or MVP runtime requirements.
   classifications in the `TASK-158` parent completion summary, not frozen line
   ranges.
 - Do not leave this leaf open if the `TASK-158` parent closes. Either close it
-  with the parent or mark it administratively superseded with an explicit
-  reason in the same branch.
+  with the parent or convert any deferred remaining scope into a standalone
+  `Follow-on After` task tracked on `_docs/_TASKS/README.md`, then close or
+  mark this leaf administratively superseded with an explicit reason in the
+  same branch.
 
 ## Acceptance Criteria
 

@@ -19,10 +19,13 @@ tool.
 |---------------|-----------------|
 | `server/adapters/mcp/transforms/visibility_policy.py` | Consume unresolved gate state plus bounded reference-understanding hints when visibility really changes |
 | `server/adapters/mcp/guided_mode.py` | Keep guided visibility assembly aligned with any new hint fields |
+| `server/adapters/mcp/discovery/search_surface.py` | Own search hint behavior and discovery serialization when hint-driven visibility changes reach `search_tools` / `call_tool` |
+| `server/adapters/mcp/contracts/router.py` | Declare any public `router_get_status(...)` hint or diagnostic field before transport exposure |
 | `server/adapters/mcp/areas/router.py` | Keep `router_get_status(...)` diagnostics aligned when hint fields become public there |
 | `tests/unit/adapters/mcp/test_visibility_policy.py` | Verify bounded tool exposure still resolves through existing guided families |
 | `tests/unit/adapters/mcp/test_guided_mode.py` | Verify guided visibility assembly remains deterministic |
 | `tests/unit/adapters/mcp/test_router_elicitation.py` | Verify diagnostics and public router status stay aligned |
+| `tests/unit/router/application/test_router_contracts.py` | Keep the typed `router_get_status(...)` contract lane aligned when new diagnostics become public |
 | `tests/unit/adapters/mcp/test_search_surface.py` | Verify search/discovery lanes do not drift into a parallel surface |
 | `tests/e2e/integration/test_guided_surface_contract_parity.py` | Verify stdio/Streamable HTTP parity when hint fields become public |
 | `tests/e2e/integration/test_guided_gate_state_transport.py` | Verify transport-visible gate payloads stay aligned if linkage reaches public status surfaces |
@@ -55,8 +58,11 @@ tool.
   `tests/unit/adapters/mcp/test_guided_mode.py` when bounded hint-driven
   visibility changes.
 - Extend `tests/unit/adapters/mcp/test_router_elicitation.py` and
-  `tests/unit/adapters/mcp/test_search_surface.py` only if diagnostics/search
-  output becomes aware of the new hints.
+  `tests/unit/router/application/test_router_contracts.py` when public
+  diagnostics or `router_get_status(...)` fields become aware of the new
+  hints.
+- Extend `tests/unit/adapters/mcp/test_search_surface.py` only if
+  search/discovery output becomes aware of the new hints.
 - Run `tests/e2e/integration/test_guided_surface_contract_parity.py` and
   `tests/e2e/integration/test_guided_gate_state_transport.py` when public
   stdio/Streamable HTTP payloads change.
@@ -86,7 +92,7 @@ tool.
 ## Validation Commands
 
 - `git diff --check`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_router_elicitation.py tests/unit/adapters/mcp/test_search_surface.py -v`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_router_elicitation.py tests/unit/router/application/test_router_contracts.py tests/unit/adapters/mcp/test_search_surface.py -v`
 - `poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py -q`
   when public stdio/Streamable HTTP payloads change
 - `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`

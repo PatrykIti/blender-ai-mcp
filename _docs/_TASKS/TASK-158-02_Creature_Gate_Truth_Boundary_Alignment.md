@@ -116,6 +116,11 @@ verifier-supported support refs, not standalone reference evidence.
 - When this slice closes, record the repaired `TASK-135*` ranges in the parent
   completion summary and leave `_docs/_TASKS/README.md` tracking on the
   umbrella task only.
+- Do not leave this leaf open under a closed `TASK-158`. If any creature-scope
+  boundary repair is intentionally deferred, convert that remainder into a
+  standalone `Follow-on After` task, update `_docs/_TASKS/README.md` to track
+  it, and close or supersede this leaf with an explicit reason in the same
+  branch.
 
 ## Acceptance Criteria
 
