@@ -80,7 +80,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md) | **Goal-Derived Quality Gates And Deterministic Verification** | 🔴 High | Contract/intake, deterministic relation-graph verifier/status, gate-driven visibility/search, checkpoint gate summaries, correction-truth alignment, and the current cross-domain E2E/transport owner lanes for attachment/support/symmetry are green; the umbrella remains open only for broader follow-on planning, not for a known drift in the shipped slice. |
+| [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md) | **Goal-Derived Quality Gates And Deterministic Verification** | 🔴 High | Contract/intake, deterministic relation-graph verifier/status, gate-driven visibility/search, checkpoint gate summaries, correction-truth alignment, and the current cross-domain E2E/transport owner lanes for attachment/support/symmetry are green across stdio plus Streamable HTTP transport and dedicated Blender-backed public surfaces; the umbrella remains open only for broader follow-on planning, not for a known drift in the shipped slice. |
 
 ---
 

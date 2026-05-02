@@ -830,6 +830,20 @@ def test_guided_support_gate_state_roundtrip_over_stdio(tmp_path: Path):
 
 
 @pytest.mark.slow
+def test_guided_support_gate_state_roundtrip_over_streamable(tmp_path: Path):
+    script_path = write_server_script(tmp_path, _PATCHED_GATE_STATE_SERVER)
+    reference_path = tmp_path / "transport_front.png"
+    reference_path.write_bytes(_TRANSPORT_REFERENCE_PNG)
+
+    async def run(url: str) -> None:
+        async with streamable_client(url) as client:
+            await _exercise_support_gate_state_roundtrip(client, reference_path)
+
+    with run_streamable_server(script_path) as url:
+        asyncio.run(run(url))
+
+
+@pytest.mark.slow
 def test_guided_symmetry_gate_state_roundtrip_over_stdio(tmp_path: Path):
     script_path = write_server_script(tmp_path, _PATCHED_GATE_STATE_SERVER)
     reference_path = tmp_path / "transport_front.png"
@@ -840,3 +854,17 @@ def test_guided_symmetry_gate_state_roundtrip_over_stdio(tmp_path: Path):
             await _exercise_symmetry_gate_state_roundtrip(client, reference_path)
 
     asyncio.run(run())
+
+
+@pytest.mark.slow
+def test_guided_symmetry_gate_state_roundtrip_over_streamable(tmp_path: Path):
+    script_path = write_server_script(tmp_path, _PATCHED_GATE_STATE_SERVER)
+    reference_path = tmp_path / "transport_front.png"
+    reference_path.write_bytes(_TRANSPORT_REFERENCE_PNG)
+
+    async def run(url: str) -> None:
+        async with streamable_client(url) as client:
+            await _exercise_symmetry_gate_state_roundtrip(client, reference_path)
+
+    with run_streamable_server(script_path) as url:
+        asyncio.run(run(url))

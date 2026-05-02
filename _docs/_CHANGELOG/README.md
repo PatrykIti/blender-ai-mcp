@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [289](./289-2026-05-03-task-157-transport-parity-and-live-support-symmetry-e2e.md) | 2026-05-03 | **TASK-157 transport parity and live support/symmetry E2E** | - |
 | [288](./288-2026-05-03-task-157-correction-truth-alignment-and-transport-regression.md) | 2026-05-03 | **TASK-157 correction-truth alignment and transport regression** | - |
 | [287](./287-2026-05-02-task-157-roof-wall-seam-runtime-and-repair-scope.md) | 2026-05-02 | **TASK-157 roof-wall seam runtime and repair scope** | - |
 | [286](./286-2026-05-01-task-157-cross-domain-gate-regression-lanes.md) | 2026-05-01 | **TASK-157 cross-domain gate regression lanes** | - |

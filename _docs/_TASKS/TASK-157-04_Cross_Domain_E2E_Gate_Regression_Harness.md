@@ -38,6 +38,13 @@ one creature scenario and one building-style scenario.
   or transport owner coverage too
 - reran the current TASK-157-specific transport plus Blender-backed gate lanes
   on this machine and got `7 passed`
+- closed the remaining transport parity gap by adding Streamable HTTP support
+  and symmetry lanes on the real compare-stage runtime path, not only stdio
+- added dedicated Blender-backed public-surface E2E for `support_contact` and
+  `symmetry_pair`, so those families now have live compare-stage coverage in
+  addition to the existing unit and transport regressions
+- reran the updated TASK-157-specific transport plus Blender-backed gate lanes
+  on this machine and got `11 passed`
 
 2026-05-02:
 
@@ -198,6 +205,7 @@ def test_building_gate_completion_blocks_floating_roof(blender_scene):
 
 - `tests/e2e/vision/test_goal_derived_gate_creature_completion.py`
 - `tests/e2e/vision/test_goal_derived_gate_building_completion.py`
+- `tests/e2e/vision/test_goal_derived_gate_support_symmetry_surfaces.py`
 - `tests/e2e/integration/test_guided_gate_state_transport.py`
 - Macro-backed repair-to-pass coverage inside the creature gate lane.
 - Fixture-backed regression for perception-derived gate proposals that does not
@@ -219,7 +227,7 @@ def test_building_gate_completion_blocks_floating_roof(blender_scene):
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/adapters/mcp/test_reference_images.py -v`
 - `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_goal_derived_gate_creature_completion.py tests/e2e/vision/test_goal_derived_gate_building_completion.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_goal_derived_gate_creature_completion.py tests/e2e/vision/test_goal_derived_gate_building_completion.py tests/e2e/vision/test_goal_derived_gate_support_symmetry_surfaces.py -q`
 - `python3 scripts/run_e2e_tests.py` for the Blender-backed creature/building
   gate scenarios introduced by this task.
 
