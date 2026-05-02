@@ -29,6 +29,7 @@ from server.adapters.mcp.areas.reference import (
     reference_compare_stage_checkpoint,
     reference_images,
     reference_iterate_stage_checkpoint,
+    refresh_reference_understanding_summary_async,
 )
 from server.adapters.mcp.contracts.reference import (
     ReferenceCompareStageCheckpointResponseContract,
@@ -106,6 +107,24 @@ def _write_upper_profile_silhouette(path: Path, *, upper_width: int) -> None:
     half_width = upper_width // 2
     draw.rectangle((100 - half_width, 45, 100 + half_width, 90), fill=(0, 0, 0, 255))
     image.save(path)
+
+
+def _guided_reference_flow_state() -> dict[str, object]:
+    return {
+        "flow_id": "guided_creature_flow",
+        "domain_profile": "creature",
+        "current_step": "create_primary_masses",
+        "completed_steps": [],
+        "required_checks": [],
+        "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+        "preferred_prompts": ["workflow_router_first"],
+        "next_actions": ["create_primary_workset"],
+        "blocked_families": [],
+        "allowed_families": ["primary_masses", "reference_context"],
+        "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+        "missing_roles": ["body_core", "head_mass"],
+        "required_role_groups": ["primary_masses"],
+    }
 
 
 def test_silhouette_analysis_produces_metrics_and_upper_profile_action_hint(tmp_path: Path):
@@ -359,6 +378,140 @@ def test_iterate_stage_response_carries_silhouette_analysis_and_action_hints():
     assert result.compare_result.part_segmentation.status == "disabled"
     assert result.compare_result.silhouette_analysis is None
     assert result.compare_result.action_hints == []
+
+
+def test_refresh_reference_understanding_summary_persists_summary_and_gate_ids(tmp_path, monkeypatch):
+    ctx = FakeContext()
+    reference_path = tmp_path / "front.png"
+    reference_path.write_bytes(b"front")
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel",
+            surface_profile="llm-guided",
+            guided_flow_state=_guided_reference_flow_state(),
+            reference_images=[
+                {
+                    "reference_id": "ref_front",
+                    "goal": "create a low-poly squirrel",
+                    "label": "front_ref",
+                    "media_type": "image/png",
+                    "source_kind": "local_path",
+                    "original_path": str(reference_path),
+                    "stored_path": str(reference_path),
+                    "added_at": "2026-05-02T00:00:00Z",
+                }
+            ],
+        ),
+    )
+
+    class Backend:
+        async def analyze(self, request):
+            assert request.metadata["mode"] == "reference_understanding"
+            return {
+                "status": "available",
+                "understanding_id": "understanding_1234567890",
+                "goal": request.goal,
+                "reference_ids": ["ref_front"],
+                "subject": {
+                    "label": "low poly squirrel",
+                    "category": "creature",
+                    "confidence": 0.8,
+                    "uncertainty_notes": [],
+                },
+                "style": {
+                    "style_label": "low_poly_faceted",
+                    "confidence": 0.8,
+                    "notes": [],
+                },
+                "required_parts": [],
+                "non_goals": [],
+                "construction_strategy": {
+                    "construction_path": "low_poly_facet",
+                    "primary_family": "modeling_mesh",
+                    "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+                    "stage_sequence": ["primary_masses"],
+                    "finish_policy": "preserve_facets",
+                },
+                "router_handoff_hints": {
+                    "preferred_family": "modeling_mesh",
+                    "allowed_guided_families": [
+                        "reference_context",
+                        "primary_masses",
+                        "secondary_parts",
+                        "inspect_validate",
+                    ],
+                    "sculpt_policy": "hidden",
+                },
+                "gate_proposals": [
+                    {
+                        "gate_type": "required_part",
+                        "label": "visible eye pair",
+                        "target_kind": "reference_part",
+                        "target_label": "eye_pair",
+                    }
+                ],
+                "visual_evidence_refs": [],
+                "verification_requirements": [],
+                "classification_scores": [],
+                "segmentation_artifacts": [],
+                "source_provenance": [{"source": "reference_understanding"}],
+                "boundary_policy": {
+                    "advisory_only": True,
+                    "not_truth_source": True,
+                    "may_unlock_tools": False,
+                    "may_pass_gates": False,
+                    "may_propose_gates": True,
+                },
+            }
+
+    class Resolver:
+        def resolve_default(self):
+            return Backend()
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: Resolver())
+
+    updated = asyncio.run(refresh_reference_understanding_summary_async(ctx))
+
+    assert updated.reference_understanding_summary is not None
+    assert updated.reference_understanding_summary["understanding_id"] == "understanding_1234567890"
+    assert updated.reference_understanding_gate_ids is not None
+    assert any(gate_id.endswith("eye_pair") for gate_id in updated.reference_understanding_gate_ids)
+
+
+def test_reference_compare_stage_checkpoint_threads_reference_understanding_from_session():
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel",
+            surface_profile="llm-guided",
+            guided_flow_state=_guided_reference_flow_state(),
+            reference_understanding_summary={
+                "status": "blocked",
+                "goal": "create a low-poly squirrel",
+                "reference_ids": [],
+                "reason": "reference_images_required",
+                "message": "Attach references first.",
+            },
+            reference_understanding_gate_ids=["creature_eye_pair"],
+        ),
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            target_object="Squirrel",
+            checkpoint_label="stage_squirrel",
+            preset_profile="compact",
+        )
+    )
+
+    assert result.reference_understanding_summary is not None
+    assert result.reference_understanding_summary.reason == "reference_images_required"
+    assert result.reference_understanding_gate_ids == ["creature_eye_pair"]
 
 
 def test_stage_checkpoint_responses_project_gate_plan_summary_fields():

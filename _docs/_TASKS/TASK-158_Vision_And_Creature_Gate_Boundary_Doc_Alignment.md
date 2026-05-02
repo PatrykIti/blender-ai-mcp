@@ -1,6 +1,6 @@
 # TASK-158: Reference Understanding Follow-Up And Boundary Alignment
 
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md)
 **Category:** Guided Runtime / Reference Understanding Follow-Up
@@ -39,6 +39,16 @@ Scope A is documentation-only. Scope B may change runtime code, contracts,
 metadata, tests, and docs, but it must consume the already-landed `TASK-157`
 quality-gate substrate and route through existing reference/guided surfaces
 unless a separate public-tool review promotes a new public MCP tool.
+
+## Progress Notes
+
+- Scope B runtime work landed on 2026-05-02:
+  - `TASK-158-04` is now implemented on the shared reference/vision/session
+    seams
+  - `TASK-158-05` is now implemented on the existing default-off optional
+    perception/runtime/harness seams
+- Scope A doc alignment (`TASK-158-01`, `TASK-158-02`) and the umbrella
+  closeout/audit lane (`TASK-158-03`) remain open before this parent can close.
 
 ## Business Problem
 

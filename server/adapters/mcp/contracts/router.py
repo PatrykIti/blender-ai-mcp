@@ -11,7 +11,11 @@ from server.adapters.mcp.contracts.base import MCPContract
 from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract
 from server.adapters.mcp.contracts.guided_naming import GuidedNamingDecisionContract
 from server.adapters.mcp.contracts.quality_gates import GateIntakeResultContract, GatePlanContract
-from server.adapters.mcp.contracts.reference import GuidedReferenceReadinessContract, ReferenceImageRecordContract
+from server.adapters.mcp.contracts.reference import (
+    GuidedReferenceReadinessContract,
+    ReferenceImageRecordContract,
+    ReferenceUnderstandingSummaryContract,
+)
 from server.adapters.mcp.elicitation_contracts import ClarificationFallbackPayload
 from server.adapters.mcp.sampling.result_types import RepairSuggestionAssistantContract
 
@@ -75,6 +79,8 @@ class RouterGoalResponseContract(MCPContract):
     gate_intake_result: GateIntakeResultContract | None = None
     guided_naming: GuidedNamingDecisionContract | None = None
     guided_reference_readiness: GuidedReferenceReadinessContract | None = None
+    reference_understanding_summary: ReferenceUnderstandingSummaryContract | None = None
+    reference_understanding_gate_ids: list[str] = []
     repair_suggestion: RepairSuggestionAssistantContract | None = None
 
 
@@ -124,3 +130,9 @@ class RouterStatusContract(MCPContract):
     guided_reference_readiness: GuidedReferenceReadinessContract | None = None
     reference_image_count: int | None = None
     reference_images: list[ReferenceImageRecordContract] | None = None
+    reference_understanding_summary: ReferenceUnderstandingSummaryContract | None = None
+    reference_understanding_gate_ids: list[str] | None = None
+
+
+RouterGoalResponseContract.model_rebuild()
+RouterStatusContract.model_rebuild()

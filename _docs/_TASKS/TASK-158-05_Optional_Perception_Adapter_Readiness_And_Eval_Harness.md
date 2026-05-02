@@ -1,6 +1,6 @@
 # TASK-158-05: Optional Perception Adapter Readiness And Eval Harness
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟠 High
 **Parent:** [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md)
 **Category:** Vision / Optional Perception Readiness
@@ -258,6 +258,22 @@ public in router status, declare them in `RouterStatusContract` first.
 - Runtime opt-in remains owned by the existing `VISION_SEGMENTATION_*` ->
   `VisionSegmentationSidecarConfig` / `VisionRuntimeConfig` ->
   `build_vision_runtime_config(...)` / shared DI wiring path.
+
+## Completion Summary
+
+- completed on 2026-05-02 by keeping optional perception on the shipped
+  default-off segmentation/runtime seam and by adding an explicit
+  providerless-only `--fixture-only reference-understanding` harness mode to
+  `scripts/vision_harness.py`
+- compare/iterate surfaces continue to expose explicit
+  `part_segmentation.status="disabled"` / `"unavailable"` envelopes instead of
+  silently pretending support exists
+- goal-time intake continues to treat `part_segmentation` and
+  `classification_scores` as unavailable-by-default evidence kinds
+- no operator-visible adapter-status tool or implicit SAM/CLIP/SigLIP runtime
+  activation was introduced in this wave
+- validated with:
+  `PYTHONPATH=. poetry run pytest tests/unit/scripts/test_script_tooling.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py -q`
 - CLIP/SigLIP-style classification and localization adapters remain follow-on
   contract/runtime work unless this task explicitly introduces and validates a
   dedicated typed owner for them.

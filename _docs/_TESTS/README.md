@@ -197,7 +197,8 @@ Keep the current owner-lane rule explicit while Scope B stays open:
   intake/state owners rather than introducing a second reference-specific
   gate-normalization lane
 - providerless fixture/eval behavior for `scripts/vision_harness.py` must be an
-  explicit opt-in path; the default harness flow stays backend-executing
+  explicit opt-in path; the default harness flow stays backend-executing.
+  The current CLI entrypoint is `--fixture-only reference-understanding`.
 
 ---
 

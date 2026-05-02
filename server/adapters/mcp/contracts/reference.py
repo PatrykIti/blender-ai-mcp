@@ -20,8 +20,14 @@ from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
 from server.adapters.mcp.sampling.result_types import VisionAssistantContract
 
 from .base import MCPContract
-from .guided_flow import GuidedFlowStateContract
-from .quality_gates import GateCompletionBlockerContract, GatePlanContract, NormalizedQualityGateContract
+from .guided_flow import GuidedFlowFamilyLiteral, GuidedFlowStateContract
+from .quality_gates import (
+    GateCompletionBlockerContract,
+    GatePlanContract,
+    GateProposalGateContract,
+    GateSourceProvenanceContract,
+    NormalizedQualityGateContract,
+)
 
 ReferencePlannerFamilyLiteral = Literal["macro", "modeling_mesh", "sculpt_region", "inspect_only"]
 ReferencePlannerSourceLiteral = Literal[
@@ -35,6 +41,151 @@ ReferencePlannerSourceLiteral = Literal[
     "budget",
     "naming",
 ]
+ReferenceUnderstandingStatusLiteral = Literal["available", "blocked", "unavailable"]
+ReferenceUnderstandingSubjectCategoryLiteral = Literal[
+    "creature",
+    "hard_surface",
+    "architectural_mass",
+    "dental_surface",
+    "organic_form",
+    "unknown",
+]
+ReferenceUnderstandingStyleLiteral = Literal[
+    "low_poly_faceted",
+    "hard_surface",
+    "smooth_organic",
+    "architectural_mass",
+    "dental_surface",
+    "unknown",
+]
+ReferenceUnderstandingConstructionPathLiteral = Literal[
+    "low_poly_facet",
+    "hard_surface",
+    "organic_sculpt",
+    "creature_blockout",
+    "dental_surface",
+    "architectural_mass",
+    "unknown",
+]
+ReferenceUnderstandingFinishPolicyLiteral = Literal[
+    "preserve_facets",
+    "inspect_first",
+    "bounded_local_detail",
+    "unknown",
+]
+ReferenceUnderstandingSculptPolicyLiteral = Literal["hidden", "local_detail_only", "allowed_or_primary"]
+
+
+class ReferenceUnderstandingSubjectContract(MCPContract):
+    """Bounded subject classification derived from attached references."""
+
+    label: str
+    category: ReferenceUnderstandingSubjectCategoryLiteral = "unknown"
+    confidence: float | None = None
+    uncertainty_notes: list[str] = []
+
+
+class ReferenceUnderstandingStyleContract(MCPContract):
+    """Controlled style classification for pre-build reference understanding."""
+
+    style_label: ReferenceUnderstandingStyleLiteral = "unknown"
+    confidence: float | None = None
+    notes: list[str] = []
+
+
+class ReferenceUnderstandingPartContract(MCPContract):
+    """One candidate required part or detail derived from references."""
+
+    part_label: str
+    target_label: str | None = None
+    construction_hint: str | None = None
+    priority: Literal["high", "normal"] = "normal"
+    source_reference_ids: list[str] = []
+
+
+class ReferenceUnderstandingConstructionStrategyContract(MCPContract):
+    """Controlled construction-path summary normalized for guided policy."""
+
+    construction_path: ReferenceUnderstandingConstructionPathLiteral = "unknown"
+    primary_family: ReferencePlannerFamilyLiteral = "inspect_only"
+    allowed_families: list[ReferencePlannerFamilyLiteral] = []
+    stage_sequence: list[str] = []
+    finish_policy: ReferenceUnderstandingFinishPolicyLiteral = "unknown"
+
+
+class ReferenceUnderstandingHandoffHintsContract(MCPContract):
+    """Advisory family/visibility hints for guided policy normalization."""
+
+    preferred_family: ReferencePlannerFamilyLiteral = "inspect_only"
+    allowed_guided_families: list[GuidedFlowFamilyLiteral] = []
+    sculpt_policy: ReferenceUnderstandingSculptPolicyLiteral = "hidden"
+
+
+class ReferenceUnderstandingVisualEvidenceRefContract(MCPContract):
+    """One compact provenance/evidence item extracted from references."""
+
+    evidence_id: str
+    source_class: Literal["reference_image", "style_cue", "part_cue", "construction_hint", "gate_seed"]
+    summary: str
+    reference_id: str | None = None
+
+
+class ReferenceUnderstandingVerificationRequirementContract(MCPContract):
+    """One suggested deterministic follow-up check derived from references."""
+
+    tool_name: str
+    reason: str
+    priority: Literal["high", "normal"] = "normal"
+
+
+class ReferenceUnderstandingClassificationScoreContract(MCPContract):
+    """Optional later classification score preserved as bounded support evidence."""
+
+    label: str
+    score: float
+
+
+class ReferenceUnderstandingSegmentationArtifactContract(MCPContract):
+    """Optional later segmentation/localization artifact reference."""
+
+    artifact_id: str
+    artifact_kind: Literal["mask", "crop", "box"] = "mask"
+    reference_id: str | None = None
+    summary: str | None = None
+
+
+class ReferenceUnderstandingBoundaryPolicyContract(MCPContract):
+    """Explicit authority limits for reference-understanding output."""
+
+    advisory_only: bool = True
+    not_truth_source: bool = True
+    may_unlock_tools: bool = False
+    may_pass_gates: bool = False
+    may_propose_gates: bool = True
+
+
+class ReferenceUnderstandingSummaryContract(MCPContract):
+    """Typed reference-understanding result surfaced through existing guided/reference seams."""
+
+    status: ReferenceUnderstandingStatusLiteral
+    understanding_id: str | None = None
+    goal: str | None = None
+    reference_ids: list[str] = []
+    subject: ReferenceUnderstandingSubjectContract | None = None
+    style: ReferenceUnderstandingStyleContract | None = None
+    required_parts: list[ReferenceUnderstandingPartContract] = []
+    non_goals: list[str] = []
+    construction_strategy: ReferenceUnderstandingConstructionStrategyContract | None = None
+    router_handoff_hints: ReferenceUnderstandingHandoffHintsContract | None = None
+    gate_proposals: list[GateProposalGateContract] = []
+    visual_evidence_refs: list[ReferenceUnderstandingVisualEvidenceRefContract] = []
+    classification_scores: list[ReferenceUnderstandingClassificationScoreContract] = []
+    segmentation_artifacts: list[ReferenceUnderstandingSegmentationArtifactContract] = []
+    verification_requirements: list[ReferenceUnderstandingVerificationRequirementContract] = []
+    source_provenance: list[GateSourceProvenanceContract] = []
+    boundary_policy: ReferenceUnderstandingBoundaryPolicyContract = ReferenceUnderstandingBoundaryPolicyContract()
+    reason: Literal["goal_required", "reference_images_required", "vision_backend_unavailable"] | None = None
+    message: str | None = None
 
 
 class ReferenceImageRecordContract(MCPContract):
@@ -386,6 +537,8 @@ class ReferenceCompareStageCheckpointResponseContract(MCPContract):
     next_gate_actions: list[str] = []
     recommended_bounded_tools: list[str] = []
     guided_reference_readiness: GuidedReferenceReadinessContract | None = None
+    reference_understanding_summary: ReferenceUnderstandingSummaryContract | None = None
+    reference_understanding_gate_ids: list[str] = []
     target_object: str | None = None
     target_objects: list[str] = []
     collection_name: str | None = None
@@ -431,6 +584,8 @@ class ReferenceIterateStageCheckpointResponseContract(MCPContract):
     next_gate_actions: list[str] = []
     recommended_bounded_tools: list[str] = []
     guided_reference_readiness: GuidedReferenceReadinessContract | None = None
+    reference_understanding_summary: ReferenceUnderstandingSummaryContract | None = None
+    reference_understanding_gate_ids: list[str] = []
     target_object: str | None = None
     target_objects: list[str] = []
     collection_name: str | None = None
@@ -463,3 +618,8 @@ class ReferenceIterateStageCheckpointResponseContract(MCPContract):
     debug_payload_omitted: bool = False
     message: str | None = None
     error: str | None = None
+
+
+ReferenceUnderstandingSummaryContract.model_rebuild()
+ReferenceCompareStageCheckpointResponseContract.model_rebuild()
+ReferenceIterateStageCheckpointResponseContract.model_rebuild()

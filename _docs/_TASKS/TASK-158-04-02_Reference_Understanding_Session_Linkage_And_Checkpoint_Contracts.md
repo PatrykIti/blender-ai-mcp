@@ -1,6 +1,6 @@
 # TASK-158-04-02: Reference Understanding Session Linkage And Checkpoint Contracts
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-158-04](./TASK-158-04_Reference_Understanding_Internal_Contract_And_Guided_Handoff.md)
 **Category:** Guided Runtime / Reference Understanding Session State
@@ -115,3 +115,16 @@ set_session_capability_state(ctx, state)
 - Reference-derived proposals normalize through the live `TASK-157` intake seam.
 - Session linkage stays bounded, session-scoped, and explicitly declared.
 - Compare/iterate payloads remain strict and compact-mode-safe.
+
+## Completion Summary
+
+- completed on 2026-05-02 by persisting
+  `reference_understanding_summary` and
+  `reference_understanding_gate_ids` in `SessionCapabilityState`
+- `reference_understanding` gate proposals now reuse the live
+  `ingest_quality_gate_proposal[_async](...)` seam instead of introducing a
+  second reference-specific normalizer
+- compare/iterate contracts now thread the declared linkage fields through
+  `_stage_compare_response(...)` and `_iterate_stage_response(...)`
+- validated with:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_contract_payload_parity.py -q`

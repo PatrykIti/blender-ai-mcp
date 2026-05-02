@@ -19,7 +19,7 @@ from fastmcp import Context
 
 from server.adapters.mcp.context_utils import ctx_info, ctx_session_id, ctx_transport_type
 from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract
-from server.adapters.mcp.contracts.quality_gates import GatePlanContract
+from server.adapters.mcp.contracts.quality_gates import GatePlanContract, GateProposalContract
 from server.adapters.mcp.contracts.reference import (
     GuidedReferenceReadinessContract,
     ReferenceActionHintContract,
@@ -43,6 +43,7 @@ from server.adapters.mcp.contracts.reference import (
     ReferenceRepairPlannerDetailContract,
     ReferenceRepairPlannerSummaryContract,
     ReferenceSilhouetteAnalysisContract,
+    ReferenceUnderstandingSummaryContract,
     ReferenceViewDiagnosticsHintContract,
 )
 from server.adapters.mcp.contracts.scene import (
@@ -65,11 +66,13 @@ from server.adapters.mcp.guided_contract import canonicalize_reference_images_ar
 from server.adapters.mcp.sampling.result_types import to_vision_assistant_contract
 from server.adapters.mcp.session_capabilities import (
     GuidedReferenceReadinessState,
+    SessionCapabilityState,
     advance_guided_flow_from_iteration_async,
     apply_visibility_for_session_state,
     build_guided_reference_readiness,
     build_guided_reference_readiness_payload,
     get_session_capability_state_async,
+    ingest_quality_gate_proposal_async,
     replace_session_pending_reference_images_async,
     replace_session_reference_images_async,
     session_has_ready_guided_reference_goal,
@@ -81,6 +84,7 @@ from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.vision import (
     CapturePresetProfile,
     CapturePresetSpec,
+    VisionBackendUnavailableError,
     VisionImageInput,
     VisionRequest,
     build_reference_capture_images,
@@ -433,6 +437,8 @@ def _stage_compare_response(
     reference_ids: list[str],
     reference_labels: list[str],
     guided_reference_readiness: GuidedReferenceReadinessContract | None = None,
+    reference_understanding_summary: ReferenceUnderstandingSummaryContract | None = None,
+    reference_understanding_gate_ids: list[str] | None = None,
     vision_assistant=None,
     truth_bundle: SceneCorrectionTruthBundleContract | None = None,
     truth_followup: SceneTruthFollowupContract | None = None,
@@ -466,6 +472,8 @@ def _stage_compare_response(
         next_gate_actions=gate_fields["next_gate_actions"],
         recommended_bounded_tools=gate_fields["recommended_bounded_tools"],
         guided_reference_readiness=guided_reference_readiness,
+        reference_understanding_summary=reference_understanding_summary,
+        reference_understanding_gate_ids=list(reference_understanding_gate_ids or []),
         target_object=target_object,
         target_objects=target_objects,
         collection_name=collection_name,
@@ -521,6 +529,8 @@ def _iterate_stage_response(
     stagnation_count: int,
     compare_result: ReferenceCompareStageCheckpointResponseContract,
     guided_reference_readiness: GuidedReferenceReadinessContract | None = None,
+    reference_understanding_summary: ReferenceUnderstandingSummaryContract | None = None,
+    reference_understanding_gate_ids: list[str] | None = None,
     correction_candidates: list[ReferenceCorrectionCandidateContract] | None = None,
     budget_control: ReferenceHybridBudgetControlContract | None = None,
     refinement_route: ReferenceRefinementRouteContract | None = None,
@@ -565,6 +575,13 @@ def _iterate_stage_response(
         next_gate_actions=gate_fields["next_gate_actions"],
         recommended_bounded_tools=gate_fields["recommended_bounded_tools"],
         guided_reference_readiness=guided_reference_readiness or compare_result.guided_reference_readiness,
+        reference_understanding_summary=reference_understanding_summary
+        or compare_result.reference_understanding_summary,
+        reference_understanding_gate_ids=(
+            list(reference_understanding_gate_ids or [])
+            if reference_understanding_gate_ids is not None
+            else list(compare_result.reference_understanding_gate_ids or [])
+        ),
         target_object=target_object,
         target_objects=target_objects,
         collection_name=collection_name,
@@ -1882,6 +1899,156 @@ def _configured_part_segmentation() -> ReferencePartSegmentationContract:
             "The sidecar path is advisory-only and separate from vision_contract_profile routing.",
         ],
     )
+
+
+def _blocked_reference_understanding_summary(
+    *,
+    goal: str | None,
+    reason: Literal["goal_required", "reference_images_required", "vision_backend_unavailable"],
+    message: str,
+    reference_ids: list[str] | None = None,
+) -> ReferenceUnderstandingSummaryContract:
+    status: Literal["blocked", "unavailable"] = "blocked"
+    if reason == "vision_backend_unavailable":
+        status = "unavailable"
+    return ReferenceUnderstandingSummaryContract(
+        status=status,
+        goal=goal,
+        reference_ids=list(reference_ids or []),
+        reason=reason,
+        message=message,
+    )
+
+
+def _active_reference_records(session: SessionCapabilityState) -> tuple[ReferenceImageRecordContract, ...]:
+    return tuple(ReferenceImageRecordContract.model_validate(item) for item in list(session.reference_images or []))
+
+
+def _reference_understanding_request(
+    *,
+    goal: str,
+    reference_records: tuple[ReferenceImageRecordContract, ...],
+) -> VisionRequest:
+    reference_images = build_reference_capture_images(reference_records)
+    return VisionRequest(
+        goal=goal,
+        images=tuple(
+            VisionImageInput(
+                path=image.image_path,
+                role="reference",
+                label=image.label,
+                media_type=image.media_type,
+            )
+            for image in reference_images
+        ),
+        prompt_hint="reference_understanding",
+        metadata={
+            "mode": "reference_understanding",
+            "reference_ids": [record.reference_id for record in reference_records],
+            "reference_labels": [record.label or record.reference_id for record in reference_records],
+            "source": "reference_images",
+        },
+    )
+
+
+async def refresh_reference_understanding_summary_async(
+    ctx: Context,
+    *,
+    session: SessionCapabilityState | None = None,
+) -> SessionCapabilityState:
+    """Refresh session-scoped reference understanding from active references when possible."""
+
+    current = session or await get_session_capability_state_async(ctx)
+    if not current.goal:
+        cleared = replace(current, reference_understanding_summary=None, reference_understanding_gate_ids=None)
+        await set_session_capability_state_async(ctx, cleared)
+        return cleared
+
+    reference_records = _active_reference_records(current)
+    reference_ids = [record.reference_id for record in reference_records]
+    if not reference_records:
+        blocked = _blocked_reference_understanding_summary(
+            goal=current.goal,
+            reason="reference_images_required",
+            message="Attach at least one active reference image before reference understanding can run.",
+        )
+        updated = replace(
+            current,
+            reference_understanding_summary=blocked.model_dump(mode="json", exclude_none=True),
+            reference_understanding_gate_ids=None,
+        )
+        await set_session_capability_state_async(ctx, updated)
+        return updated
+
+    existing_summary = current.reference_understanding_summary or {}
+    if (
+        existing_summary.get("status") == "available"
+        and existing_summary.get("goal") == current.goal
+        and list(existing_summary.get("reference_ids") or []) == reference_ids
+    ):
+        return current
+
+    request = _reference_understanding_request(goal=current.goal, reference_records=reference_records)
+    resolver = get_vision_backend_resolver()
+    try:
+        backend = resolver.resolve_default()
+        payload = await backend.analyze(request)
+        summary = ReferenceUnderstandingSummaryContract.model_validate(payload)
+    except VisionBackendUnavailableError as exc:
+        unavailable = _blocked_reference_understanding_summary(
+            goal=current.goal,
+            reason="vision_backend_unavailable",
+            message=str(exc),
+            reference_ids=reference_ids,
+        )
+        updated = replace(
+            current,
+            reference_understanding_summary=unavailable.model_dump(mode="json", exclude_none=True),
+            reference_understanding_gate_ids=None,
+        )
+        await set_session_capability_state_async(ctx, updated)
+        return updated
+    except Exception as exc:
+        unavailable = _blocked_reference_understanding_summary(
+            goal=current.goal,
+            reason="vision_backend_unavailable",
+            message=f"Reference understanding could not complete: {exc}",
+            reference_ids=reference_ids,
+        )
+        updated = replace(
+            current,
+            reference_understanding_summary=unavailable.model_dump(mode="json", exclude_none=True),
+            reference_understanding_gate_ids=None,
+        )
+        await set_session_capability_state_async(ctx, updated)
+        return updated
+
+    accepted_gate_ids: list[str] | None = None
+    if summary.gate_proposals:
+        gate_proposal = GateProposalContract(
+            proposal_id=summary.understanding_id,
+            source="reference_understanding",
+            goal=current.goal,
+            gates=summary.gate_proposals,
+            source_provenance=summary.source_provenance,
+        )
+        intake_result = await ingest_quality_gate_proposal_async(
+            ctx,
+            gate_proposal.model_dump(mode="json", exclude_none=True),
+        )
+        updated_session = await get_session_capability_state_async(ctx)
+        if intake_result.status == "accepted" and intake_result.gate_plan is not None:
+            accepted_gate_ids = [gate.gate_id for gate in intake_result.gate_plan.gates]
+    else:
+        updated_session = current
+
+    final_state = replace(
+        updated_session,
+        reference_understanding_summary=summary.model_dump(mode="json", exclude_none=True),
+        reference_understanding_gate_ids=accepted_gate_ids or None,
+    )
+    await set_session_capability_state_async(ctx, final_state)
+    return final_state
 
 
 def _build_silhouette_analysis_payload(
@@ -3556,6 +3723,12 @@ async def _run_stage_checkpoint_compare(
     readiness_contract = GuidedReferenceReadinessContract.model_validate(
         build_guided_reference_readiness_payload(session)
     )
+    reference_understanding_summary = (
+        ReferenceUnderstandingSummaryContract.model_validate(session.reference_understanding_summary)
+        if session.reference_understanding_summary is not None
+        else None
+    )
+    reference_understanding_gate_ids = list(session.reference_understanding_gate_ids or [])
     goal = session.goal
     if not readiness.compare_ready or goal is None:
         return _stage_compare_response(
@@ -3576,6 +3749,8 @@ async def _run_stage_checkpoint_compare(
             reference_ids=[],
             reference_labels=[],
             guided_reference_readiness=readiness_contract,
+            reference_understanding_summary=reference_understanding_summary,
+            reference_understanding_gate_ids=reference_understanding_gate_ids,
             error=_guided_stage_reference_recovery_error(
                 readiness,
                 target_object=target_object,
@@ -3609,6 +3784,8 @@ async def _run_stage_checkpoint_compare(
             reference_ids=[],
             reference_labels=[],
             guided_reference_readiness=readiness_contract,
+            reference_understanding_summary=reference_understanding_summary,
+            reference_understanding_gate_ids=reference_understanding_gate_ids,
             error=str(exc),
         )
     assembled_target_scope = _assembled_target_scope(
@@ -3637,6 +3814,8 @@ async def _run_stage_checkpoint_compare(
             reference_ids=[],
             reference_labels=[],
             guided_reference_readiness=readiness_contract,
+            reference_understanding_summary=reference_understanding_summary,
+            reference_understanding_gate_ids=reference_understanding_gate_ids,
             error=scope_error,
         )
 
@@ -3665,6 +3844,8 @@ async def _run_stage_checkpoint_compare(
             reference_ids=[],
             reference_labels=[],
             guided_reference_readiness=readiness_contract,
+            reference_understanding_summary=reference_understanding_summary,
+            reference_understanding_gate_ids=reference_understanding_gate_ids,
             error="No matching reference images are attached for the requested target_object/target_view.",
         )
 
@@ -3698,6 +3879,8 @@ async def _run_stage_checkpoint_compare(
             reference_ids=[item.reference_id for item in selected_reference_records],
             reference_labels=[item.label or item.reference_id for item in selected_reference_records],
             guided_reference_readiness=readiness_contract,
+            reference_understanding_summary=reference_understanding_summary,
+            reference_understanding_gate_ids=reference_understanding_gate_ids,
             error=str(exc),
         )
 
@@ -3805,6 +3988,8 @@ async def _run_stage_checkpoint_compare(
             action="compare_stage_checkpoint",
             goal=goal,
             guided_reference_readiness=readiness_contract,
+            reference_understanding_summary=reference_understanding_summary,
+            reference_understanding_gate_ids=reference_understanding_gate_ids,
             target_object=resolved_target_object,
             target_objects=resolved_target_objects,
             collection_name=resolved_collection_name,
@@ -3865,6 +4050,8 @@ async def _run_stage_checkpoint_compare(
         action="compare_stage_checkpoint",
         goal=goal,
         guided_reference_readiness=readiness_contract,
+        reference_understanding_summary=reference_understanding_summary,
+        reference_understanding_gate_ids=reference_understanding_gate_ids,
         target_object=resolved_target_object,
         target_objects=resolved_target_objects,
         collection_name=resolved_collection_name,
@@ -3951,6 +4138,8 @@ async def _run_stage_checkpoint_compare(
         reference_ids=[item.reference_id for item in selected_reference_records],
         reference_labels=[item.label or item.reference_id for item in selected_reference_records],
         guided_reference_readiness=readiness_contract,
+        reference_understanding_summary=reference_understanding_summary,
+        reference_understanding_gate_ids=reference_understanding_gate_ids,
         vision_assistant=vision_assistant,
         truth_bundle=budgeted_truth_bundle,
         truth_followup=truth_followup,
@@ -4010,7 +4199,9 @@ async def reference_images(
     if normalized_action == "clear":
         _delete_reference_files(visible_references)
         if active_references:
-            await replace_session_reference_images_async(ctx, [])
+            session = await replace_session_reference_images_async(ctx, [])
+            if session.goal is not None:
+                await refresh_reference_understanding_summary_async(ctx, session=session)
         if pending_references:
             await replace_session_pending_reference_images_async(ctx, [])
 
@@ -4057,7 +4248,9 @@ async def reference_images(
             )
         _delete_reference_files(removed_records)
         if len(remaining) != len(active_references):
-            await replace_session_reference_images_async(ctx, remaining)
+            session = await replace_session_reference_images_async(ctx, remaining)
+            if session.goal is not None:
+                await refresh_reference_understanding_summary_async(ctx, session=session)
         if len(remaining_pending) != len(pending_references):
             await replace_session_pending_reference_images_async(ctx, remaining_pending)
         remaining_visible = (
@@ -4150,7 +4343,8 @@ async def reference_images(
         )
 
     updated_active = [*active_references, reference]
-    await replace_session_reference_images_async(ctx, updated_active)
+    session = await replace_session_reference_images_async(ctx, updated_active)
+    session = await refresh_reference_understanding_summary_async(ctx, session=session)
     ctx_info(ctx, f"[REFERENCE] Attached reference image {reference['reference_id']} for goal '{session.goal}'")
     return _as_response(
         action="attach",

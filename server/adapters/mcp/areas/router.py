@@ -432,6 +432,10 @@ async def router_set_goal(
     )
     if surface_profile == "llm-guided" and state.guided_flow_state and not _scene_has_meaningful_guided_objects():
         state = await bootstrap_guided_empty_scene_primary_workset_async(ctx)
+    if state.last_router_status in {"ready", "no_match"}:
+        from server.adapters.mcp.areas.reference import refresh_reference_understanding_summary_async
+
+        state = await refresh_reference_understanding_summary_async(ctx, session=state)
     gate_intake_result = None
     if gate_proposal is not None:
         gate_intake_result = await ingest_quality_gate_proposal_async(ctx, gate_proposal)
@@ -443,6 +447,8 @@ async def router_set_goal(
     if gate_intake_result is not None:
         result["gate_intake_result"] = gate_intake_result.model_dump(mode="json", exclude_none=True)
     result["guided_reference_readiness"] = build_guided_reference_readiness_payload(state)
+    result["reference_understanding_summary"] = state.reference_understanding_summary
+    result["reference_understanding_gate_ids"] = list(state.reference_understanding_gate_ids or [])
     await apply_visibility_for_session_state(ctx, state)
 
     # Log to context
@@ -525,6 +531,8 @@ async def router_get_status(ctx: Context) -> RouterStatusContract:
             "guided_reference_readiness": build_guided_reference_readiness_payload(session),
             "reference_image_count": len(session.reference_images or []),
             "reference_images": list(session.reference_images or []),
+            "reference_understanding_summary": session.reference_understanding_summary,
+            "reference_understanding_gate_ids": list(session.reference_understanding_gate_ids or []),
         }
     )
     if _should_attach_repair_suggestion(status_payload):

@@ -29,6 +29,7 @@ from server.adapters.mcp.contracts.quality_gates import (
     normalize_gate_plan,
     refresh_gate_plan_status,
 )
+from server.adapters.mcp.contracts.reference import ReferenceUnderstandingSummaryContract
 from server.adapters.mcp.session_phase import SessionPhase, coerce_session_phase
 from server.adapters.mcp.session_state import (
     get_session_value,
@@ -60,6 +61,8 @@ SESSION_REFERENCE_IMAGES_KEY = "reference_images"
 SESSION_GUIDED_HANDOFF_KEY = "guided_handoff"
 SESSION_GUIDED_FLOW_STATE_KEY = "guided_flow_state"
 SESSION_GATE_PLAN_KEY = "gate_plan"
+SESSION_REFERENCE_UNDERSTANDING_SUMMARY_KEY = "reference_understanding_summary"
+SESSION_REFERENCE_UNDERSTANDING_GATE_IDS_KEY = "reference_understanding_gate_ids"
 SESSION_PENDING_REFERENCE_IMAGES_KEY = "pending_reference_images"
 _GENERIC_PENDING_GOAL = "__pending_goal__"
 
@@ -329,6 +332,8 @@ class SessionCapabilityState:
     guided_handoff: dict[str, Any] | None = None
     guided_flow_state: dict[str, Any] | None = None
     gate_plan: dict[str, Any] | None = None
+    reference_understanding_summary: dict[str, Any] | None = None
+    reference_understanding_gate_ids: list[str] | None = None
     guided_part_registry: list[dict[str, Any]] | None = None
     pending_reference_images: list[dict[str, Any]] | None = None
 
@@ -410,6 +415,24 @@ def _normalize_gate_plan(value: Any) -> dict[str, Any] | None:
         return GatePlanContract.model_validate(value).model_dump(mode="json", exclude_none=True)
     except Exception:
         return None
+
+
+def _normalize_reference_understanding_summary(value: Any) -> dict[str, Any] | None:
+    if value is None:
+        return None
+    try:
+        return ReferenceUnderstandingSummaryContract.model_validate(value).model_dump(mode="json", exclude_none=True)
+    except Exception:
+        return None
+
+
+def _normalize_reference_understanding_gate_ids(value: Any) -> list[str] | None:
+    if value is None:
+        return None
+    if not isinstance(value, list):
+        return None
+    normalized = [str(item).strip() for item in value if str(item).strip()]
+    return normalized or None
 
 
 def _normalize_guided_part_registry(value: Any) -> list[dict[str, Any]] | None:
@@ -1134,6 +1157,12 @@ def get_session_capability_state(ctx: Context) -> SessionCapabilityState:
         guided_handoff=get_session_value(ctx, SESSION_GUIDED_HANDOFF_KEY),
         guided_flow_state=_normalize_guided_flow_state(get_session_value(ctx, SESSION_GUIDED_FLOW_STATE_KEY)),
         gate_plan=_normalize_gate_plan(get_session_value(ctx, SESSION_GATE_PLAN_KEY)),
+        reference_understanding_summary=_normalize_reference_understanding_summary(
+            get_session_value(ctx, SESSION_REFERENCE_UNDERSTANDING_SUMMARY_KEY)
+        ),
+        reference_understanding_gate_ids=_normalize_reference_understanding_gate_ids(
+            get_session_value(ctx, SESSION_REFERENCE_UNDERSTANDING_GATE_IDS_KEY)
+        ),
         guided_part_registry=_normalize_guided_part_registry(get_session_value(ctx, SESSION_GUIDED_PART_REGISTRY_KEY)),
         pending_reference_images=get_session_value(ctx, SESSION_PENDING_REFERENCE_IMAGES_KEY),
     )
@@ -1163,6 +1192,12 @@ async def get_session_capability_state_async(ctx: Context) -> SessionCapabilityS
             await get_session_value_async(ctx, SESSION_GUIDED_FLOW_STATE_KEY)
         ),
         gate_plan=_normalize_gate_plan(await get_session_value_async(ctx, SESSION_GATE_PLAN_KEY)),
+        reference_understanding_summary=_normalize_reference_understanding_summary(
+            await get_session_value_async(ctx, SESSION_REFERENCE_UNDERSTANDING_SUMMARY_KEY)
+        ),
+        reference_understanding_gate_ids=_normalize_reference_understanding_gate_ids(
+            await get_session_value_async(ctx, SESSION_REFERENCE_UNDERSTANDING_GATE_IDS_KEY)
+        ),
         guided_part_registry=_normalize_guided_part_registry(
             await get_session_value_async(ctx, SESSION_GUIDED_PART_REGISTRY_KEY)
         ),
@@ -1210,6 +1245,8 @@ async def bootstrap_guided_empty_scene_primary_workset_async(ctx: Context) -> Se
         guided_handoff=current.guided_handoff,
         guided_flow_state=contract.model_dump(mode="json"),
         gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=current.guided_part_registry,
         pending_reference_images=current.pending_reference_images,
     )
@@ -1238,6 +1275,8 @@ def set_session_capability_state(ctx: Context, state: SessionCapabilityState) ->
     set_session_value(ctx, SESSION_GUIDED_HANDOFF_KEY, state.guided_handoff)
     set_session_value(ctx, SESSION_GUIDED_FLOW_STATE_KEY, state.guided_flow_state)
     set_session_value(ctx, SESSION_GATE_PLAN_KEY, state.gate_plan)
+    set_session_value(ctx, SESSION_REFERENCE_UNDERSTANDING_SUMMARY_KEY, state.reference_understanding_summary)
+    set_session_value(ctx, SESSION_REFERENCE_UNDERSTANDING_GATE_IDS_KEY, state.reference_understanding_gate_ids)
     set_session_value(ctx, SESSION_GUIDED_PART_REGISTRY_KEY, state.guided_part_registry)
     set_session_value(ctx, SESSION_PENDING_REFERENCE_IMAGES_KEY, state.pending_reference_images)
 
@@ -1263,6 +1302,12 @@ async def set_session_capability_state_async(ctx: Context, state: SessionCapabil
     await set_session_value_async(ctx, SESSION_GUIDED_HANDOFF_KEY, state.guided_handoff)
     await set_session_value_async(ctx, SESSION_GUIDED_FLOW_STATE_KEY, state.guided_flow_state)
     await set_session_value_async(ctx, SESSION_GATE_PLAN_KEY, state.gate_plan)
+    await set_session_value_async(
+        ctx, SESSION_REFERENCE_UNDERSTANDING_SUMMARY_KEY, state.reference_understanding_summary
+    )
+    await set_session_value_async(
+        ctx, SESSION_REFERENCE_UNDERSTANDING_GATE_IDS_KEY, state.reference_understanding_gate_ids
+    )
     await set_session_value_async(ctx, SESSION_GUIDED_PART_REGISTRY_KEY, state.guided_part_registry)
     await set_session_value_async(ctx, SESSION_PENDING_REFERENCE_IMAGES_KEY, state.pending_reference_images)
 
@@ -1620,6 +1665,8 @@ def update_session_from_router_goal(
         guided_handoff=router_result.get("guided_handoff"),
         guided_flow_state=guided_flow_state,
         gate_plan=current.gate_plan if same_goal else None,
+        reference_understanding_summary=current.reference_understanding_summary if same_goal else None,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids if same_goal else None,
         guided_part_registry=retained_guided_part_registry,
         pending_reference_images=pending_reference_images,
     )
@@ -1712,6 +1759,8 @@ async def update_session_from_router_goal_async(
         guided_handoff=router_result.get("guided_handoff"),
         guided_flow_state=guided_flow_state,
         gate_plan=current.gate_plan if same_goal else None,
+        reference_understanding_summary=current.reference_understanding_summary if same_goal else None,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids if same_goal else None,
         guided_part_registry=retained_guided_part_registry,
         pending_reference_images=pending_reference_images,
     )
@@ -1749,6 +1798,8 @@ def clear_session_goal_state(
         guided_handoff=None,
         guided_flow_state=None,
         gate_plan=None,
+        reference_understanding_summary=None,
+        reference_understanding_gate_ids=None,
         guided_part_registry=None,
         pending_reference_images=None,
     )
@@ -1784,6 +1835,8 @@ async def clear_session_goal_state_async(
         guided_handoff=None,
         guided_flow_state=None,
         gate_plan=None,
+        reference_understanding_summary=None,
+        reference_understanding_gate_ids=None,
         guided_part_registry=None,
         pending_reference_images=None,
     )
@@ -1888,6 +1941,8 @@ def replace_session_reference_images(
         guided_handoff=current.guided_handoff,
         guided_flow_state=current.guided_flow_state,
         gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=current.guided_part_registry,
         pending_reference_images=current.pending_reference_images,
     )
@@ -1921,6 +1976,8 @@ async def replace_session_reference_images_async(
         guided_handoff=current.guided_handoff,
         guided_flow_state=current.guided_flow_state,
         gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=current.guided_part_registry,
         pending_reference_images=current.pending_reference_images,
     )
@@ -1968,6 +2025,8 @@ def record_router_execution_outcome(
         guided_handoff=current.guided_handoff,
         guided_flow_state=current.guided_flow_state,
         gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=current.guided_part_registry,
         pending_reference_images=current.pending_reference_images,
     )
@@ -1999,6 +2058,8 @@ def replace_session_pending_reference_images(
         guided_handoff=current.guided_handoff,
         guided_flow_state=current.guided_flow_state,
         gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=current.guided_part_registry,
         pending_reference_images=pending_reference_images or None,
     )
@@ -2032,6 +2093,8 @@ async def replace_session_pending_reference_images_async(
         guided_handoff=current.guided_handoff,
         guided_flow_state=current.guided_flow_state,
         gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=current.guided_part_registry,
         pending_reference_images=pending_reference_images or None,
     )
@@ -2144,6 +2207,8 @@ def mark_guided_spatial_state_stale(
         guided_handoff=current.guided_handoff,
         guided_flow_state=updated_flow_state,
         gate_plan=updated_gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=updated_registry,
         pending_reference_images=current.pending_reference_images,
     )
@@ -2205,6 +2270,8 @@ async def mark_guided_spatial_state_stale_async(
         guided_handoff=current.guided_handoff,
         guided_flow_state=updated_flow_state,
         gate_plan=updated_gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=updated_registry,
         pending_reference_images=current.pending_reference_images,
     )
@@ -2280,6 +2347,8 @@ async def register_guided_part_role_async(
         guided_handoff=current.guided_handoff,
         guided_flow_state=updated_flow_state,
         gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=updated_registry,
         pending_reference_images=current.pending_reference_images,
     )
@@ -2366,6 +2435,8 @@ def register_guided_part_role(
         guided_handoff=current.guided_handoff,
         guided_flow_state=updated_flow_state,
         gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=updated_registry,
         pending_reference_images=current.pending_reference_images,
     )
@@ -2429,6 +2500,8 @@ def rename_guided_part_registration(
         guided_handoff=current.guided_handoff,
         guided_flow_state=updated_flow_state,
         gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=updated_registry,
         pending_reference_images=current.pending_reference_images,
     )
@@ -2491,6 +2564,8 @@ async def rename_guided_part_registration_async(
         guided_handoff=current.guided_handoff,
         guided_flow_state=updated_flow_state,
         gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=updated_registry,
         pending_reference_images=current.pending_reference_images,
     )
@@ -2551,6 +2626,8 @@ def remove_guided_part_registrations(
         guided_handoff=current.guided_handoff,
         guided_flow_state=updated_flow_state,
         gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=updated_registry or None,
         pending_reference_images=current.pending_reference_images,
     )
@@ -2611,6 +2688,8 @@ async def remove_guided_part_registrations_async(
         guided_handoff=current.guided_handoff,
         guided_flow_state=updated_flow_state,
         gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=updated_registry or None,
         pending_reference_images=current.pending_reference_images,
     )
@@ -2737,6 +2816,8 @@ def record_guided_flow_spatial_check_completion(
         guided_handoff=current.guided_handoff,
         guided_flow_state=updated_flow_state,
         gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=current.guided_part_registry,
         pending_reference_images=current.pending_reference_images,
     )
@@ -2785,6 +2866,8 @@ async def record_guided_flow_spatial_check_completion_async(
         guided_handoff=current.guided_handoff,
         guided_flow_state=updated_flow_state,
         gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=current.guided_part_registry,
         pending_reference_images=current.pending_reference_images,
     )
@@ -2876,6 +2959,8 @@ async def advance_guided_flow_from_iteration_async(
         guided_handoff=current.guided_handoff,
         guided_flow_state=updated_flow_state,
         gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=current.guided_part_registry,
         pending_reference_images=current.pending_reference_images,
     )

@@ -1,6 +1,6 @@
 # TASK-158-04: Reference Understanding Internal Contract And Guided Handoff
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md)
 **Category:** Guided Runtime / Reference Understanding
@@ -267,3 +267,22 @@ isolation or creating a second discovery path.
 - No public `reference_understand` or `router_apply_reference_strategy` tool is
   introduced by this slice.
 - Alias normalization maps draft names to current seams or future candidates.
+
+## Completion Summary
+
+- completed on 2026-05-02 by implementing a bounded internal
+  `reference_understanding` contract on the shared vision owner path and by
+  surfacing the resulting summary through existing guided/reference session
+  seams
+- active references now refresh a session-scoped
+  `reference_understanding_summary`; accepted gate linkage is preserved through
+  `reference_understanding_gate_ids`
+- `router_get_status(...)`, `reference_compare_stage_checkpoint(...)`, and
+  `reference_iterate_stage_checkpoint(...)` now expose the declared linkage
+  fields without adding a new public MCP tool
+- no parallel search/discovery lane was introduced; router/search visibility
+  policy remains on the existing guided/session infrastructure
+- validated with:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_parsing.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/router/application/test_router_contracts.py tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
+  and
+  `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/integration/test_guided_gate_state_transport.py tests/e2e/integration/test_mcp_transport_modes.py -q`

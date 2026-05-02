@@ -1,6 +1,6 @@
 # TASK-158-04-03: Reference Understanding Visibility Diagnostics And Transport Parity
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟠 High
 **Parent:** [TASK-158-04](./TASK-158-04_Reference_Understanding_Internal_Contract_And_Guided_Handoff.md)
 **Category:** Guided Runtime / Reference Understanding Visibility
@@ -106,3 +106,16 @@ tool.
   tool is introduced.
 - Public parity tests are run whenever the hint/linkage fields become
   transport-visible.
+
+## Completion Summary
+
+- completed on 2026-05-02 without adding a new discovery/search surface or a
+  public `reference_understand` / `router_apply_reference_strategy` tool
+- the implemented transport-visible delta stays on existing seams:
+  `router_get_status(...)`, `reference_compare_stage_checkpoint(...)`, and
+  `reference_iterate_stage_checkpoint(...)`
+- no new search hints or visibility families were introduced in this wave; the
+  change stayed on declared router/checkpoint payload fields plus transport
+  parity coverage
+- validated with:
+  `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/integration/test_guided_gate_state_transport.py tests/e2e/integration/test_mcp_transport_modes.py -q`

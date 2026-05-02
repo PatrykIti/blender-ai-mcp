@@ -111,6 +111,35 @@ justifies it. It must not introduce a public `router_apply_reference_strategy`
 tool. Applying the strategy is server-owned guided state, visibility, and gate
 policy work.
 
+## Current Implemented Surface
+
+The current shipped implementation stays on existing shared owners and existing
+guided/reference surfaces:
+
+- `server/adapters/mcp/contracts/reference.py` now owns the typed
+  `ReferenceUnderstandingSummaryContract`
+- `server/adapters/mcp/vision/prompting.py`,
+  `server/adapters/mcp/vision/parsing.py`, and
+  `server/adapters/mcp/vision/backends.py` now carry the strict internal
+  `reference_understanding` prompt/parser/backend contract path
+- `server/adapters/mcp/areas/reference.py` refreshes session-scoped
+  reference-understanding from active references and reuses the closed
+  `TASK-157` intake seam for advisory gate proposals
+- `server/adapters/mcp/areas/router.py` surfaces the resulting
+  `reference_understanding_summary` and `reference_understanding_gate_ids`
+  through `router_get_status(...)`
+- `reference_compare_stage_checkpoint(...)` and
+  `reference_iterate_stage_checkpoint(...)` mirror the same typed linkage so
+  later checkpoint loops can reuse the current pre-build understanding without a
+  second discovery surface
+- `scripts/vision_harness.py` now keeps the default live-backend flow, but also
+  exposes an explicit providerless `--fixture-only reference-understanding`
+  path for bounded fixture/eval work
+
+This wave does not add a public `reference_understand(...)` MCP tool, a public
+`router_apply_reference_strategy(...)` tool, or a parallel search/discovery
+surface.
+
 ## Reference Understanding Contract
 
 The first contract should be typed, bounded, and source-aware. It may live in a

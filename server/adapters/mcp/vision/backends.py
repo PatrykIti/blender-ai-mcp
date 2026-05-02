@@ -20,6 +20,7 @@ from .backend import VisionBackend, VisionBackendUnavailableError, VisionRequest
 from .config import VisionContractProfile, VisionRuntimeConfig
 from .parsing import diagnose_vision_output_text, parse_vision_output_text
 from .prompting import (
+    _is_reference_understanding_request,
     build_local_vision_payload_text,
     build_vision_payload_text,
     build_vision_response_json_schema,
@@ -143,6 +144,35 @@ def _normalize_assist_payload(
             "confidence_is_non_authoritative": True,
         },
     }
+
+
+def _normalize_reference_understanding_payload(
+    *,
+    backend_kind: str,
+    model_name: str,
+    request: VisionRequest,
+    parsed: dict[str, Any],
+    vision_contract_profile: VisionContractProfile | None = None,
+    provider_name: str | None = None,
+) -> dict[str, Any]:
+    payload = dict(parsed)
+    payload["source_provenance"] = [
+        {
+            "source": "reference_understanding",
+            "provider": provider_name or backend_kind,
+            "model_id": model_name,
+            "vision_contract_profile": vision_contract_profile,
+            "reference_ids": [
+                str(item).strip() for item in request.metadata.get("reference_ids") or [] if str(item).strip()
+            ],
+            "summary": str(parsed.get("subject", {}).get("label") or request.goal).strip(),
+        }
+    ]
+    payload.setdefault(
+        "message",
+        "Reference-understanding completed on the configured vision runtime.",
+    )
+    return payload
 
 
 def _diagnostics_suffix(diagnostics: dict[str, Any] | None) -> str:
@@ -374,7 +404,12 @@ class TransformersLocalVisionBackend(VisionBackend):
         return [
             {
                 "role": "system",
-                "content": [{"type": "text", "text": build_vision_system_prompt(backend_kind=self.backend_kind)}],
+                "content": [
+                    {
+                        "type": "text",
+                        "text": build_vision_system_prompt(backend_kind=self.backend_kind, request=request),
+                    }
+                ],
             },
             {
                 "role": "user",
@@ -440,6 +475,15 @@ class TransformersLocalVisionBackend(VisionBackend):
             raise VisionBackendUnavailableError("Local vision runtime did not return valid JSON content.") from exc
         except Exception as exc:
             raise VisionBackendUnavailableError(f"Local vision inference failed: {exc}") from exc
+
+        if _is_reference_understanding_request(request):
+            return _normalize_reference_understanding_payload(
+                backend_kind=self.backend_kind,
+                model_name=self.model_name,
+                request=request,
+                parsed=parsed_content,
+                vision_contract_profile=None,
+            )
 
         return _normalize_assist_payload(
             backend_kind=self.backend_kind,
@@ -559,6 +603,15 @@ class MLXLocalVisionBackend(VisionBackend):
             raise VisionBackendUnavailableError("MLX local vision runtime did not return valid JSON content.") from exc
         except Exception as exc:
             raise VisionBackendUnavailableError(f"MLX local vision inference failed: {exc}") from exc
+
+        if _is_reference_understanding_request(request):
+            return _normalize_reference_understanding_payload(
+                backend_kind=self.backend_kind,
+                model_name=self.model_name,
+                request=request,
+                parsed=parsed_content,
+                vision_contract_profile=None,
+            )
 
         return _normalize_assist_payload(
             backend_kind=self.backend_kind,
@@ -822,6 +875,16 @@ class OpenAICompatibleVisionBackend(VisionBackend):
                 "Vision endpoint did not return valid JSON content."
                 f"{_diagnostics_suffix(self._last_output_diagnostics)}"
             ) from exc
+
+        if _is_reference_understanding_request(request):
+            return _normalize_reference_understanding_payload(
+                backend_kind=self.backend_kind,
+                model_name=self.model_name,
+                request=request,
+                parsed=parsed_content,
+                vision_contract_profile=self._external_config.vision_contract_profile,
+                provider_name=self._external_config.provider_name,
+            )
 
         return _normalize_assist_payload(
             backend_kind=self.backend_kind,

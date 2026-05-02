@@ -155,6 +155,70 @@ def test_session_state_round_trips_guided_part_registry():
     assert restored.guided_part_registry[0]["role"] == "body_core"
 
 
+def test_session_state_round_trips_reference_understanding_linkage():
+    ctx = FakeContext()
+    state = SessionCapabilityState(
+        phase=SessionPhase.BUILD,
+        reference_understanding_summary={
+            "status": "available",
+            "understanding_id": "understanding_1234567890",
+            "goal": "create a low-poly squirrel",
+            "reference_ids": ["ref_front", "ref_side"],
+            "subject": {
+                "label": "low poly squirrel",
+                "category": "creature",
+                "confidence": 0.8,
+                "uncertainty_notes": [],
+            },
+            "style": {
+                "style_label": "low_poly_faceted",
+                "confidence": 0.8,
+                "notes": [],
+            },
+            "required_parts": [],
+            "non_goals": [],
+            "construction_strategy": {
+                "construction_path": "low_poly_facet",
+                "primary_family": "modeling_mesh",
+                "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+                "stage_sequence": ["primary_masses"],
+                "finish_policy": "preserve_facets",
+            },
+            "router_handoff_hints": {
+                "preferred_family": "modeling_mesh",
+                "allowed_guided_families": [
+                    "reference_context",
+                    "primary_masses",
+                    "secondary_parts",
+                    "inspect_validate",
+                ],
+                "sculpt_policy": "hidden",
+            },
+            "gate_proposals": [],
+            "visual_evidence_refs": [],
+            "classification_scores": [],
+            "segmentation_artifacts": [],
+            "verification_requirements": [],
+            "source_provenance": [{"source": "reference_understanding"}],
+            "boundary_policy": {
+                "advisory_only": True,
+                "not_truth_source": True,
+                "may_unlock_tools": False,
+                "may_pass_gates": False,
+                "may_propose_gates": True,
+            },
+        },
+        reference_understanding_gate_ids=["creature_eye_pair", "creature_tail_core"],
+    )
+
+    set_session_capability_state(ctx, state)
+    restored = get_session_capability_state(ctx)
+
+    assert restored.reference_understanding_summary is not None
+    assert restored.reference_understanding_summary["understanding_id"] == "understanding_1234567890"
+    assert restored.reference_understanding_gate_ids == ["creature_eye_pair", "creature_tail_core"]
+
+
 def test_guided_flow_contract_accepts_allowed_families():
     contract = GuidedFlowStateContract(
         flow_id="guided_generic_flow",

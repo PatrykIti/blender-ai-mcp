@@ -1,6 +1,6 @@
 # TASK-158-04-01: Reference Understanding Contract And Parser Normalization
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-158-04](./TASK-158-04_Reference_Understanding_Internal_Contract_And_Guided_Handoff.md)
 **Category:** Guided Runtime / Reference Understanding Contract
@@ -126,3 +126,19 @@ assert all(gate.status == "pending" for gate in normalized.gates)
 - Draft family names are normalized to current seams or future candidates.
 - No parser/prompt/backend path grants pass/fail authority to reference or
   perception output.
+
+## Completion Summary
+
+- completed on 2026-05-02 by adding the first shared-owner
+  `ReferenceUnderstandingSummaryContract` in
+  `server/adapters/mcp/contracts/reference.py`
+- extended `server/adapters/mcp/vision/prompting.py`,
+  `server/adapters/mcp/vision/parsing.py`, and
+  `server/adapters/mcp/vision/backends.py` with a strict internal
+  `reference_understanding` contract path instead of creating a second public
+  tool surface
+- normalized draft family aliases such as `mesh_edit` inside the parser and
+  kept `material_finish` / `macro_create_part` / `macro_low_poly_*` out of the
+  current canonical family set
+- validated with:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_parsing.py tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_contract_payload_parity.py -q`

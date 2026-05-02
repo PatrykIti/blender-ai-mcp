@@ -157,12 +157,26 @@ def _build_request_from_args(args: Any, golden: ResolvedVisionGoldenScenario | N
                 else []
             )
         )
-        return build_vision_request_from_capture_bundle(
+        request = build_vision_request_from_capture_bundle(
             bundle,
             goal=goal,
             reference_images=build_reference_capture_images(reference_records),
             prompt_hint=prompt_hint,
         )
+        if getattr(args, "fixture_only", None) == "reference-understanding":
+            return VisionRequest(
+                goal=request.goal,
+                images=request.images,
+                target_object=request.target_object,
+                prompt_hint="reference_understanding",
+                truth_summary=request.truth_summary,
+                metadata={
+                    **request.metadata,
+                    "mode": "reference_understanding",
+                    "reference_ids": [record.reference_id for record in reference_records],
+                },
+            )
+        return request
 
     before = [
         _capture_image(path, label=f"before_{index}", view_kind="wide")
@@ -194,7 +208,7 @@ def _build_request_from_args(args: Any, golden: ResolvedVisionGoldenScenario | N
             *reference_images,
         ]
     )
-    return VisionRequest(
+    request = VisionRequest(
         goal=goal,
         images=images,
         target_object=target_object,
@@ -202,6 +216,24 @@ def _build_request_from_args(args: Any, golden: ResolvedVisionGoldenScenario | N
         truth_summary=_read_json(Path(args.truth_json)) if args.truth_json else None,
         metadata={"source": "vision_harness"},
     )
+    if getattr(args, "fixture_only", None) == "reference-understanding":
+        return VisionRequest(
+            goal=request.goal,
+            images=request.images,
+            target_object=request.target_object,
+            prompt_hint="reference_understanding",
+            truth_summary=request.truth_summary,
+            metadata={
+                **request.metadata,
+                "mode": "reference_understanding",
+                "reference_ids": [
+                    f"fixture_ref_{index}"
+                    for index, image in enumerate(request.images, start=1)
+                    if image.role == "reference"
+                ],
+            },
+        )
+    return request
 
 
 def _config_for_backend(args: Any, backend: str) -> Config:
@@ -289,6 +321,23 @@ async def _run_backend(
 async def _run(args: Any) -> list[dict[str, Any]]:
     golden = _resolve_golden(args)
     request = _build_request_from_args(args, golden=golden)
+    if args.fixture_only:
+        return [
+            {
+                "backend": "fixture_only",
+                "model_name": None,
+                "vision_contract_profile": None,
+                "status": "fixture_only",
+                "fixture_only_mode": args.fixture_only,
+                "result": {
+                    "goal": request.goal,
+                    "target_object": request.target_object,
+                    "image_count": len(request.images),
+                    "image_roles": [image.role for image in request.images],
+                    "metadata": request.metadata,
+                },
+            }
+        ]
     results: list[dict[str, Any]] = []
     for backend_name in _backend_list(args):
         try:
@@ -355,6 +404,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--gemini-api-key-env", default=os.getenv("VISION_GEMINI_API_KEY_ENV"))
     parser.add_argument("--local-device", default=os.getenv("VISION_LOCAL_DEVICE", "cpu"))
     parser.add_argument("--local-dtype", default=os.getenv("VISION_LOCAL_DTYPE", "auto"))
+    parser.add_argument("--fixture-only", choices=["reference-understanding"])
     return parser
 
 
@@ -371,7 +421,7 @@ def main(argv: list[str] | None = None) -> int:
     results = asyncio.run(_run(args))
     print(json.dumps(results, ensure_ascii=False, indent=2))
 
-    return 0 if all(item.get("status") == "success" for item in results) else 1
+    return 0 if all(item.get("status") in {"success", "fixture_only"} for item in results) else 1
 
 
 if __name__ == "__main__":
