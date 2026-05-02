@@ -65,11 +65,11 @@ instead of broadening provider scope inside `TASK-140`.
 
 `TASK-140` evidence is provider/profile support evidence: it proves whether a
 model family can satisfy this repo's bounded compare/iterate output contract.
-It is not quality-gate verifier evidence by itself. When `TASK-157` later
-consumes external vision output, it should reference the resulting
-`vision_contract_profile`, diagnostics, and parsed payload as proposal or
-bounded perception evidence, while gate pass/fail authority remains with the
-server-owned verifier model.
+It is not quality-gate verifier evidence by itself. When follow-on tasks consume
+external vision output through the closed `TASK-157` substrate, they should
+reference the resulting `vision_contract_profile`, diagnostics, and parsed
+payload as proposal or bounded perception evidence, while gate pass/fail
+authority remains with the server-owned verifier model.
 
 ## Current Code Baseline
 

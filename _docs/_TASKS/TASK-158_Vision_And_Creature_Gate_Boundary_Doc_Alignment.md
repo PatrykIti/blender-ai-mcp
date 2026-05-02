@@ -2,9 +2,10 @@
 
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
+**Follow-on After:** [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md)
 **Category:** Guided Runtime / Reference Understanding Follow-Up
 **Estimated Effort:** Large
-**Depends On:** [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-157 docs refresh / changelog 277](../_CHANGELOG/277-2026-04-30-task-157-perception-evidence-contract-refresh.md)
+**Context Anchor:** [TASK-157 docs refresh / changelog 277](../_CHANGELOG/277-2026-04-30-task-157-perception-evidence-contract-refresh.md)
 **Related:** [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-135](./TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md), [TASK-135-03](./TASK-135-03_Low_Poly_Form_Refinement_Mesh_Window_And_Profile_Macros.md), [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md)
 
 ## Objective
@@ -237,7 +238,7 @@ Use these current contracts when deciding whether a term is canonical:
 | `server/adapters/mcp/vision/` | Reference-understanding parser/prompt and optional adapter readiness | Own bounded VLM/parser payloads and default-off optional adapter interfaces without making them verifier truth |
 | `server/adapters/mcp/transforms/visibility_policy.py` | Guided visibility | Use `TASK-157` unresolved gate state plus reference-understanding hints to expose bounded existing tools |
 | `tests/unit/adapters/mcp/` | Unit contract/parser/surface coverage | Verify schema, alias normalization, no public-tool drift, and no perception-owned pass/fail |
-| `tests/fixtures/reference_understanding/` | Golden fixtures | Keep reference-understanding eval cases deterministic and provider-independent by default |
+| `tests/fixtures/vision_eval/` | Golden fixtures | Reuse the existing eval fixture tree for reference-understanding and optional-evidence cases instead of creating a parallel fixture root |
 | `_docs/_TASKS/README.md` | Board | Track this follow-on as a promoted two-scope task after `TASK-157` |
 | `_docs/_CHANGELOG/` | Historical tracking | Record the task creation and later completion when docs and implementation scope are complete |
 
@@ -383,9 +384,9 @@ introduce unreviewed public tools or implicit heavy-model side effects.
 | Noncanonical family/tool drift | `rg -n "mesh_edit|material_finish|mesh_shade_flat|macro_low_poly|macro_create_part" _docs/blender-ai-mcp-vision-reference-understanding-plan.md _docs/_TASKS/TASK-135*.md _docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md` and verify no hit presents the name as a current canonical family/tool |
 | Heavy perception adapter drift | `rg -n "SAM|CLIP|SigLIP|GroundingDINO|OWL-ViT" _docs/blender-ai-mcp-vision-reference-understanding-plan.md _docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md _docs/_TASKS/TASK-157*.md _docs/_TASKS/TASK-158*.md` and verify every hit is future optional, default-off, or explicitly out of MVP scope |
 | Truth-boundary drift | `rg -n "reference evidence|true attachment errors|true cleanup/intersection errors|decides whether the gate passed|quality-gate verifier evidence" _docs/_TASKS/TASK-135*.md _docs/_TASKS/TASK-140*.md _docs/blender-ai-mcp-vision-reference-understanding-plan.md` and verify authority remains with scene/spatial/mesh/assertion/verifier evidence |
-| Contract/parser unit tests | `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_understanding_contract.py tests/unit/adapters/mcp/test_reference_understanding_parser.py -v` after `TASK-158-04` |
-| Reference/guided integration tests | Focused unit tests for reference/checkpoint payloads and guided session state after `TASK-158-04` |
-| Optional adapter readiness tests | Focused unit tests for default-off adapter registry/config and golden fixtures after `TASK-158-05` |
+| Contract/parser unit tests | Extend current vision prompt/parser owners first: `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_parsing.py -v`, or split focused `test_reference_understanding_*` files only if the shared owners become too large |
+| Reference/guided integration tests | Update current reference/checkpoint, session, search, and router owner tests after `TASK-158-04`, then add a transport/integration lane when new summary fields or hint-driven visibility become client-facing |
+| Optional adapter readiness tests | Focused unit tests for default-off adapter registry/config, explicit disabled/unavailable support envelopes, existing `vision_eval` fixtures, and any explicit opt-in harness mode after `TASK-158-05` |
 | Router metadata/schema | Run metadata/schema validation when new search hints, keywords, or optional `gate_families`-style metadata are added |
 | Board / changelog | Confirm `_docs/_TASKS/README.md` and `_docs/_CHANGELOG/README.md` stay in sync with added or completed task docs |
 
@@ -408,7 +409,7 @@ introduce unreviewed public tools or implicit heavy-model side effects.
 ## Changelog Impact
 
 - Creation is already recorded in changelog 278.
-- On completion, add a new `_docs/_CHANGELOG/279-...task-158-...completion.md`
+- On completion, add a new `_docs/_CHANGELOG/<next-number>-...task-158-...completion.md`
   entry with final grep results, implementation summary, focused test results,
   and any intentionally deferred optional adapters. Refresh
   `_docs/_CHANGELOG/README.md`. Leave changelog 278 as the creation/plan entry.

@@ -66,18 +66,22 @@ Hard rules:
 | Task | Role |
 |------|------|
 | `TASK-157` | Generic gate substrate: proposal sources, evidence refs, verifier authority, status model, guided cadence |
+| `TASK-158` | Post-`TASK-157` follow-on for docs alignment plus bounded reference-understanding and optional-perception readiness work |
 | `TASK-135` | First creature consumer of the gate substrate |
 | `TASK-135-03` | First low-poly form-refinement consumer; owns the faceted refinement stage and any creature profile macros |
 | `TASK-140` | External VLM model-family profile reliability; owns `vision_contract_profile` expansion, not quality-gate authority |
 
-When `TASK-140` payloads are later consumed by `TASK-157`, treat
-`vision_contract_profile` as routing/provenance context only. Parsed diagnostic
-or compare payload fields may become proposal/support refs, but the quality
-gate verifier still owns pass/fail status.
+When follow-on tasks consume `TASK-140` payloads through the closed
+`TASK-157` substrate, treat `vision_contract_profile` as
+routing/provenance context only. Parsed diagnostic or compare payload fields
+may become proposal/support refs, but the quality-gate verifier still owns
+pass/fail status.
 
-Do not create a second task family that duplicates these owners. New work should
-land as leaves under the nearest existing task unless a separate future adapter
-really needs its own task family.
+Do not create a third parallel task family that duplicates these owners.
+`TASK-158` is the current promoted follow-on for post-`TASK-157` docs alignment
+and bounded implementation work. New work should land as leaves under the
+nearest existing task unless a separate future adapter really needs its own
+task family.
 
 ## Target Flow
 
@@ -287,8 +291,8 @@ Likely implementation touchpoints:
 | Reference surface | `server/adapters/mcp/areas/reference.py` first; split later only if needed |
 | Guided state | `server/adapters/mcp/session_capabilities.py`, guided flow contracts |
 | Visibility/search | `server/adapters/mcp/transforms/visibility_policy.py`, `server/adapters/mcp/discovery/search_documents.py` |
-| Gate integration | `server/adapters/mcp/contracts/quality_gates.py` once `TASK-157` introduces it |
-| Tests | focused unit tests under `tests/unit/adapters/mcp/` plus golden fixtures |
+| Gate integration | `server/adapters/mcp/contracts/quality_gates.py` and the closed `TASK-157` gate substrate |
+| Tests | focused unit tests under `tests/unit/adapters/mcp/`, transport/integration lanes when client-facing payloads change, plus golden fixtures under `tests/fixtures/vision_eval/` |
 | Docs | `_docs/_VISION/README.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_PROMPTS/`, task closeout docs |
 
 Do not place router policy under a non-existent `server/adapters/mcp/router/`

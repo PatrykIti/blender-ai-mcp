@@ -157,6 +157,27 @@ Operational prerequisites still matter for reruns:
   creature/building gate tests
 - local socket binding is required for the Streamable HTTP transport lane
 
+## Planned TASK-158 Scope B Lanes
+
+`TASK-158` is still open, so the lanes below are planning targets rather than
+currently shipped owner proofs. When Scope B starts implementation, promote the
+focused lanes from the task docs onto these current owners first:
+
+- prompt/parser owners:
+  `tests/unit/adapters/mcp/test_vision_prompting.py` and
+  `tests/unit/adapters/mcp/test_vision_parsing.py`
+- reference/checkpoint/session/search owners:
+  `tests/unit/adapters/mcp/test_reference_images.py`,
+  `tests/unit/adapters/mcp/test_contract_payload_parity.py`,
+  `tests/unit/adapters/mcp/test_router_elicitation.py`, and
+  `tests/unit/adapters/mcp/test_search_surface.py`
+- transport/public-surface parity when new summary fields or hint-driven
+  visibility become client-facing:
+  `tests/e2e/integration/test_guided_surface_contract_parity.py`
+- optional evidence / fixture / harness owners:
+  `tests/unit/adapters/mcp/test_vision_evaluation.py` and
+  `tests/unit/scripts/test_script_tooling.py`
+
 ---
 
 ## Test Statistics

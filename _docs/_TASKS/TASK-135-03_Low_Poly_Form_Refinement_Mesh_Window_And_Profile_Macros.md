@@ -85,11 +85,11 @@ mesh tools entirely.
   first slice.
 - Add relation-aware preconditions:
   - do not refine final form while required seams still float
-  - do not use mesh edits to hide unresolved attachment failures
-  - do not call the model complete immediately after primitive creation
+- do not use mesh edits to hide unresolved attachment failures
+- do not call the model complete immediately after primitive creation
 - Model refinement as a generic `refinement_stage` gate with creature-specific
   `shape_profile` child gates for body, ears, limbs, snout, and tail where
-  reference evidence requires them.
+  normalized gate evidence and verifier-supported support refs require them.
 - Consume `TASK-157` evidence refs rather than calling perception directly:
   `reference_understanding` may explain that the target is a faceted
   squirrel-like creature with wedge ears and a curled tail, while

@@ -129,7 +129,7 @@ sketches. They must not become TASK-158 or MVP runtime requirements.
 ## Changelog Impact
 
 - Roll this slice into the single
-  `_docs/_CHANGELOG/279-...task-158-...completion.md` entry created during
+  `_docs/_CHANGELOG/<next-number>-...task-158-...completion.md` entry created during
   `TASK-158-03` closeout; do not create a separate child changelog entry.
   Changelog 278 remains the creation/plan entry.
 

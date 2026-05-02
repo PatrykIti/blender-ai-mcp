@@ -68,8 +68,8 @@ Instead:
 - the LLM may propose creature-specific gates from the prompt and references
 - the server normalizes those gates into the generic gate vocabulary from
   `TASK-157`
-- deterministic scene/spatial/mesh/reference evidence decides whether the gate
-  passed
+- scene/spatial/mesh/assertion evidence, evaluated by the quality-gate
+  verifier, decides whether the gate passed
 - the creature domain supplies templates, defaults, relation semantics, and
   target-specific policy for common quadruped mammals
 - creature-specific prompts and future perception outputs may seed gate
@@ -176,10 +176,9 @@ creature assembled from grounded references, not merely as named primitives.
   - snout disconnected from head mass
   - tail detached from body root
   - limb attached to the wrong band or floating away from the torso
-- Define which relation mismatches should count as:
-  - acceptable low-poly anatomical transitions
-  - true attachment errors
-  - true cleanup/intersection errors
+- Define which relation mismatches should count as acceptable low-poly
+  anatomical transitions, and which ones the verifier/spatial/assertion policy
+  should later bind to attachment or cleanup gate status.
 
 ### Loop System
 
@@ -303,7 +302,7 @@ This umbrella does **not** cover:
 
 | Path / Module | Scope | Expected Work |
 |---------------|-------|---------------|
-| `server/adapters/mcp/contracts/reference.py` | Reference loop contracts | Add creature gate summaries and completion blockers once `TASK-157` contracts exist |
+| `server/adapters/mcp/contracts/reference.py` | Reference loop contracts | Add creature gate summaries and completion blockers using the closed `TASK-157` contracts |
 | `server/adapters/mcp/contracts/quality_gates.py` | Generic dependency | Consume normalized gate types for creature-specific templates |
 | `server/adapters/mcp/areas/reference.py` | Checkpoint assembly | Include creature gate status, missing visual roles, and seam/profile blockers in compare/iterate results |
 | `server/adapters/mcp/session_capabilities.py` | Guided state | Persist creature gate plan, role cardinality, stale gate versions, and next gate actions |

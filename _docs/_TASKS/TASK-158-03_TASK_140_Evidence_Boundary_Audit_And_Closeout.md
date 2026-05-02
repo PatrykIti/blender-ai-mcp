@@ -97,8 +97,9 @@ Do not rewrite these unless a later audit proves they contradict the boundary:
 
 ## Changelog Impact
 
-- Add a new `_docs/_CHANGELOG/279-...task-158-...completion.md` entry with the
-  final grep results, implementation summary, and focused validation commands.
+- Add a new `_docs/_CHANGELOG/<next-number>-...task-158-...completion.md` entry
+  with the final grep results, implementation summary, and focused validation
+  commands.
 - Refresh `_docs/_CHANGELOG/README.md`.
 - Leave changelog 278 as the creation/plan entry.
 

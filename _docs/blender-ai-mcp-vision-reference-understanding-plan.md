@@ -27,9 +27,9 @@ Docelowy przepływ:
 ```text
 reference_images(...)
   ↓
-reference_understand(...)
+reference understanding pass through the existing reference/guided-state seam
   ↓
-router_apply_reference_strategy(...)
+server-owned strategy apply through guided state, visibility, and gate policy
   ↓
 LLM dostaje aktywną ścieżkę konstrukcyjną i ograniczoną widoczność narzędzi
   ↓
@@ -43,6 +43,18 @@ router wybiera refinement_handoff
   ↓
 LLM robi tylko dozwolony typ poprawki
 ```
+
+Uwaga 2026-05-02:
+
+- Ten dokument pozostaje długim szkicem strategicznym, nie bieżącym kontraktem
+  publicznej powierzchni MCP.
+- `reference_understand(...)` i `router_apply_reference_strategy(...)` są tutaj
+  historycznym skrótem planistycznym. Aktualny normatywny kierunek jest opisany
+  w `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md` i `TASK-158`.
+- `mesh_edit` oznacza bieżące `modeling_mesh`; `material_finish` pozostaje
+  hintem/stage concept albo przyszłą rodziną; `macro_create_part`,
+  `mesh_shade_flat`, i `macro_low_poly_*` nie są dziś kanonicznymi publicznymi
+  narzędziami.
 
 Największa luka obecnie:
 
@@ -276,9 +288,9 @@ LLM wykonuje.
 7. Co trzeba sprawdzić po kolejnych etapach?
 ```
 
-### 5.2. Nowa powierzchnia MCP
+### 5.2. Draft public-surface sketch, not the current MCP contract
 
-Proponowana nazwa:
+Historyczny skrót nazwy:
 
 ```text
 reference_understand(...)
@@ -443,8 +455,6 @@ Proponowany output:
     "allowed_tool_families": [
       "macro",
       "modeling_mesh",
-      "mesh_edit",
-      "material_finish",
       "inspect_only"
     ],
     "blocked_tool_families": [
@@ -452,15 +462,14 @@ Proponowany output:
       "smooth_organic_refinement"
     ],
     "recommended_first_tools": [
-      "macro_create_part",
+      "modeling_create_primitive",
+      "guided_register_part",
       "macro_align_part_with_contact",
       "mesh_flatten",
       "mesh_triangulate",
       "mesh_mark_sharp"
     ],
     "recommended_later_tools": [
-      "macro_low_poly_finish",
-      "mesh_shade_flat",
       "sculpt_pinch_region"
     ]
   },
@@ -744,8 +753,8 @@ Exit criteria:
 ### 8.2. Stage 1 — Reference understanding before build
 
 ```text
-Tool:
-reference_understand(...)
+Draft shorthand:
+reference understanding pass through the existing reference/guided surface
 ```
 
 Cel:
@@ -785,17 +794,17 @@ Exit criteria:
 ```text
 - construction_path != unknown
 - required_parts nie jest puste
-- router_handoff istnieje
+- bounded guided/reference handoff exists
 - verification_requirements istnieje
 ```
 
 ---
 
-### 8.3. Stage 2 — Router strategy apply
+### 8.3. Stage 2 — Server-owned strategy apply, not a public MCP tool
 
 ```text
-Tool:
-router_apply_reference_strategy(...)
+No public tool by default:
+server applies strategy through guided state, visibility, and gate policy
 ```
 
 Cel:
@@ -810,8 +819,6 @@ Dla low-poly:
 Allowed:
 - macro
 - modeling_mesh
-- mesh_edit
-- material_finish
 - inspect_only
 
 Blocked/default-hidden:
@@ -2222,11 +2229,11 @@ Testy powinny sprawdzać:
 Proponowane fixtures:
 
 ```text
-tests/fixtures/reference_understanding/low_poly_squirrel_front_side/
-tests/fixtures/reference_understanding/smooth_organic_creature/
-tests/fixtures/reference_understanding/hard_surface_phone/
-tests/fixtures/reference_understanding/architectural_facade/
-tests/fixtures/reference_understanding/dental_crown_mockup/
+tests/fixtures/vision_eval/reference_understanding_low_poly_squirrel_front_side/
+tests/fixtures/vision_eval/reference_understanding_smooth_organic_creature/
+tests/fixtures/vision_eval/reference_understanding_hard_surface_phone/
+tests/fixtures/vision_eval/reference_understanding_architectural_facade/
+tests/fixtures/vision_eval/reference_understanding_dental_crown_mockup/
 ```
 
 Każdy folder:
@@ -2262,13 +2269,15 @@ Przykładowy `golden.json` dla low-poly squirrel:
 
 ### 14.3. Harness scoring
 
-Dodać do `scripts/vision_harness.py` tryb:
+Jeżeli kiedyś do `scripts/vision_harness.py` dojdzie providerless fixture mode,
+powinien być jawnie opt-in i korzystać z istniejącego drzewa `vision_eval`,
+zamiast zmieniać domyślną ścieżkę backend-executing. Historyczny szkic CLI:
 
 ```bash
 poetry run python scripts/vision_harness.py \
-  --mode reference-understanding \
+  --fixture-only reference-understanding \
   --backend openai_compatible_external \
-  --golden-json tests/fixtures/reference_understanding/low_poly_squirrel_front_side/golden.json
+  --golden-json tests/fixtures/vision_eval/reference_understanding_low_poly_squirrel_front_side/golden.json
 ```
 
 Scoring:
@@ -2450,12 +2459,14 @@ Add typed contract for pre-build reference understanding.
 
 ```markdown
 ## Goal
-Expose `reference_understand(...)` as a bounded MCP surface using active goal references.
+Historical draft only. A public `reference_understand(...)` MCP surface requires
+separate public-tool review; the default implementation target remains an
+existing reference/guided-state seam.
 
 ## Files
 - server/adapters/mcp/areas/reference.py
-- server/adapters/mcp/vision/reference_understanding.py
-- server/adapters/mcp/vision/reference_understanding_prompt.py
+- server/adapters/mcp/vision/prompting.py
+- server/adapters/mcp/vision/parsing.py
 
 ## Done when
 - attached references can be analyzed before build
