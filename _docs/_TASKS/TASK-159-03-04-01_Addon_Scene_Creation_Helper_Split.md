@@ -16,6 +16,8 @@ leaf.
 - `tests/unit/tools/scene/test_scene_construction.py`
 - `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
 - `tests/e2e/tools/scene/test_scene_utility_workflow.py`
+- `tests/e2e/tools/scene/test_scene_get_viewport_camera.py`
+- `tests/e2e/tools/scene/test_scene_view_diagnostics.py`
 
 ## Current Code Anchors
 
@@ -40,10 +42,12 @@ class SceneHandler(SceneCreationUtilityMixin, ...):
 - `tests/unit/tools/scene/test_scene_construction.py`
 - `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
 - `tests/e2e/tools/scene/test_scene_utility_workflow.py`
+- `tests/e2e/tools/scene/test_scene_get_viewport_camera.py`
+- `tests/e2e/tools/scene/test_scene_view_diagnostics.py`
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_construction.py tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/e2e/tools/scene/test_scene_utility_workflow.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_construction.py tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/e2e/tools/scene/test_scene_utility_workflow.py tests/e2e/tools/scene/test_scene_get_viewport_camera.py tests/e2e/tools/scene/test_scene_view_diagnostics.py -q`
 
 ## Docs To Update
 

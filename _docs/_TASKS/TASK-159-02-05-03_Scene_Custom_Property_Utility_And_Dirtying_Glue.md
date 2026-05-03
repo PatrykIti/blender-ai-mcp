@@ -35,6 +35,9 @@ from .scene_object_utils import execute_scene_custom_property_utility
 
 - keep structured custom-property delivery and read/write payload shapes stable
 - preserve guided dirtying/runtime glue for the mutating custom-property wrapper
+- current proof for this slice is the exact unit/contract lane because the repo
+  does not yet have a dedicated Blender-backed custom-property workflow test;
+  add a follow-on E2E only when such a workflow exists
 
 ## Tests To Add/Update
 
@@ -59,7 +62,8 @@ from .scene_object_utils import execute_scene_custom_property_utility
 ## Acceptance Criteria
 
 - custom-property wrappers have a focused home
-- structured delivery and guided dirtying/runtime glue remain unchanged
+- structured delivery and guided dirtying/runtime glue remain unchanged under
+  the current unit/contract proof lane
 
 ## Status / Board Update
 

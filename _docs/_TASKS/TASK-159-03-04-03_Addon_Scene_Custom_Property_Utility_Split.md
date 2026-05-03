@@ -15,7 +15,6 @@ Separate custom-property read/write helpers into one focused addon utility leaf.
 - `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
 - `tests/unit/adapters/mcp/test_structured_contract_delivery.py`
-- `tests/e2e/tools/scene/test_scene_utility_workflow.py`
 
 ## Current Code Anchors
 
@@ -32,17 +31,19 @@ class SceneHandler(SceneCustomPropertyUtilityMixin, ...):
 ## Runtime / Security Contract Notes
 
 - keep custom-property read/write payloads and structured delivery stable
+- no dedicated Blender-backed custom-property workflow test exists today, so
+  this leaf closes on the exact unit/RPC/structured-contract lanes until such a
+  runtime workflow exists
 
 ## Tests To Add/Update
 
 - `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
 - `tests/unit/adapters/mcp/test_structured_contract_delivery.py`
-- `tests/e2e/tools/scene/test_scene_utility_workflow.py`
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/test_handler_rpc_alignment.py tests/unit/adapters/mcp/test_structured_contract_delivery.py tests/e2e/tools/scene/test_scene_utility_workflow.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/test_handler_rpc_alignment.py tests/unit/adapters/mcp/test_structured_contract_delivery.py -q`
 
 ## Docs To Update
 
@@ -55,7 +56,8 @@ class SceneHandler(SceneCustomPropertyUtilityMixin, ...):
 ## Acceptance Criteria
 
 - custom-property helpers have a focused home
-- structured delivery and payload semantics remain unchanged
+- structured delivery and payload semantics remain unchanged under the current
+  unit/RPC/structured-contract proof lane
 
 ## Status / Board Update
 
