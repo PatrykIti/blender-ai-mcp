@@ -15,6 +15,7 @@ runtime glue into one focused scene-utility leaf.
 - likely helper module such as `server/adapters/mcp/areas/scene_object_utils.py`
 - `server/adapters/mcp/session_capabilities.py`
 - `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
+- `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
 - `tests/unit/adapters/mcp/test_structured_contract_delivery.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_provider_inventory.py`
@@ -38,13 +39,14 @@ from .scene_object_utils import execute_scene_custom_property_utility
 ## Tests To Add/Update
 
 - `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
+- `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
 - `tests/unit/adapters/mcp/test_structured_contract_delivery.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_provider_inventory.py`
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/adapters/mcp/test_structured_contract_delivery.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_provider_inventory.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_structured_contract_delivery.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_provider_inventory.py -q`
 
 ## Docs To Update
 

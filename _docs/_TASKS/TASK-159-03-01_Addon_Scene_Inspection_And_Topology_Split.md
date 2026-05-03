@@ -24,6 +24,8 @@ Creation, visibility, and custom-property utilities move under
   - `blender_addon/application/handlers/scene_inspection_mixin.py`
 - `tests/unit/tools/scene/test_scene_mode.py`
 - `tests/unit/tools/scene/test_scene_get_mode_handler.py`
+- `tests/unit/tools/scene/test_scene_tools.py`
+- `tests/unit/tools/scene/test_scene_tools_extended.py`
 - `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
 - `tests/unit/tools/scene/test_scene_inspect_modifiers.py`
 - `tests/unit/tools/scene/test_get_constraints.py`
@@ -129,6 +131,8 @@ preserve_existing_rpc_payloads()
 
 - `tests/unit/tools/scene/test_scene_mode.py`
 - `tests/unit/tools/scene/test_scene_get_mode_handler.py`
+- `tests/unit/tools/scene/test_scene_tools.py`
+- `tests/unit/tools/scene/test_scene_tools_extended.py`
 - `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
 - `tests/unit/tools/scene/test_scene_inspect_modifiers.py`
 - `tests/unit/tools/scene/test_get_constraints.py`
@@ -140,7 +144,7 @@ preserve_existing_rpc_payloads()
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mode.py tests/unit/tools/scene/test_scene_get_mode_handler.py tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_scene_inspect_modifiers.py tests/unit/tools/scene/test_get_constraints.py tests/unit/tools/scene/test_scene_inspect_mesh_topology.py tests/unit/tools/test_handler_rpc_alignment.py tests/e2e/tools/scene/test_scene_inspect_material_slots.py tests/e2e/tools/scene/test_scene_clean_scene.py tests/e2e/tools/scene/test_snapshot_tools.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mode.py tests/unit/tools/scene/test_scene_get_mode_handler.py tests/unit/tools/scene/test_scene_tools.py tests/unit/tools/scene/test_scene_tools_extended.py tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_scene_inspect_modifiers.py tests/unit/tools/scene/test_get_constraints.py tests/unit/tools/scene/test_scene_inspect_mesh_topology.py tests/unit/tools/test_handler_rpc_alignment.py tests/e2e/tools/scene/test_scene_inspect_material_slots.py tests/e2e/tools/scene/test_scene_clean_scene.py tests/e2e/tools/scene/test_snapshot_tools.py -q`
 
 ## Docs To Update
 

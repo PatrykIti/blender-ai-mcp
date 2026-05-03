@@ -6,8 +6,8 @@
 
 ## Objective
 
-Separate cleanup, duplicate, active-object, and mode wrappers into one focused
-scene-utility leaf.
+Separate object listing/deletion, cleanup, duplicate, active-object, and mode
+wrappers into one focused scene-utility leaf.
 
 ## Repository Touchpoints
 
@@ -61,7 +61,8 @@ from .scene_object_utils import execute_scene_cleanup_and_mode_utility
 
 ## Acceptance Criteria
 
-- cleanup, duplicate, active-object, and mode wrappers have a focused home
+- object listing/deletion, cleanup, duplicate, active-object, and mode
+  wrappers have a focused home
 - cleanup canonicalization and guided dirtying behavior remain unchanged
 
 ## Status / Board Update

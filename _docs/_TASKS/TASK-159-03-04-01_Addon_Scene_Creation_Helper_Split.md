@@ -15,6 +15,7 @@ leaf.
 - likely helper module such as `blender_addon/application/handlers/scene_utility_mixin.py`
 - `tests/unit/tools/scene/test_scene_construction.py`
 - `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
+- `tests/e2e/tools/scene/test_scene_utility_workflow.py`
 
 ## Current Code Anchors
 
@@ -38,10 +39,11 @@ class SceneHandler(SceneCreationUtilityMixin, ...):
 
 - `tests/unit/tools/scene/test_scene_construction.py`
 - `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
+- `tests/e2e/tools/scene/test_scene_utility_workflow.py`
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_construction.py tests/unit/tools/scene/test_scene_mcp_tools_batch.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_construction.py tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/e2e/tools/scene/test_scene_utility_workflow.py -q`
 
 ## Docs To Update
 

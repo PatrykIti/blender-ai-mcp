@@ -14,6 +14,8 @@ one focused addon leaf.
 - `blender_addon/application/handlers/scene.py`
 - likely helper module such as `blender_addon/application/handlers/scene_lifecycle_context_mixin.py`
 - `tests/unit/tools/scene/test_scene_get_mode_handler.py`
+- `tests/unit/tools/scene/test_scene_tools.py`
+- `tests/unit/tools/scene/test_scene_tools_extended.py`
 - `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
 - `tests/e2e/tools/scene/test_scene_clean_scene.py`
@@ -44,13 +46,15 @@ class SceneHandler(SceneLifecycleContextMixin, ...):
 ## Tests To Add/Update
 
 - `tests/unit/tools/scene/test_scene_get_mode_handler.py`
+- `tests/unit/tools/scene/test_scene_tools.py`
+- `tests/unit/tools/scene/test_scene_tools_extended.py`
 - `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
 - `tests/e2e/tools/scene/test_scene_clean_scene.py`
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_get_mode_handler.py tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/test_handler_rpc_alignment.py tests/e2e/tools/scene/test_scene_clean_scene.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_get_mode_handler.py tests/unit/tools/scene/test_scene_tools.py tests/unit/tools/scene/test_scene_tools_extended.py tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/test_handler_rpc_alignment.py tests/e2e/tools/scene/test_scene_clean_scene.py -q`
 
 ## Docs To Update
 
