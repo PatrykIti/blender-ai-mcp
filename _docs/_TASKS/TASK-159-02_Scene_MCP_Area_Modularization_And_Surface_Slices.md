@@ -19,7 +19,9 @@ router/visibility metadata behavior.
 
 This subtask is intentionally scoped to the named scene concern clusters. The
 goal is not to repartition every remaining `scene.py` responsibility in one pass
-or invent a second public surface.
+or invent a second public surface. Macro wrappers plus the request-path/session
+bridge remain explicitly in the stable facade during this pass unless a
+dedicated follow-on leaf is opened for them.
 
 ## Business Problem
 
@@ -79,6 +81,11 @@ which makes future edits slower and more fragile.
 - Keep the macro wrappers, registration helpers, and provider/manifest-facing
   imports anchored in the stable facade unless a child leaf explicitly extracts
   only their private helper logic.
+- Keep `_hydrate_sync_route_session(...)`,
+  `_route_tool_call_report_for_context(...)`,
+  `_finalize_macro_execution_result(...)`, and the public `macro_*` wrappers as
+  explicit facade seams for this subtask; do not silently fold them into one of
+  the named scene slices.
 - Keep scene spatial-support tools visible through the same metadata and guided
   visibility seams; this task should not silently change discovery behavior.
 - Preserve the distinction between:
@@ -157,7 +164,10 @@ def scene_measure_gap(ctx, ...):
 
 ## Acceptance Criteria
 
-- `scene.py` is reduced to a bounded public registration/facade role
+- `scene.py` is reduced to a bounded public registration/facade role for the
+  named inspect, create/manage, spatial-graph, measure/assert, and view slices,
+  while any remaining macro/request-path bridge seams stay explicitly retained
+  in the facade for this pass
 - inspect, create/manage, spatial-graph, measure/assert, and view concerns have
   clear internal homes
 - public scene MCP names, metadata, and guided/discovery behavior remain stable
@@ -170,5 +180,8 @@ def scene_measure_gap(ctx, ...):
 - keep promoted tracking on the parent `TASK-159`
 - execute this subtask through the leaves below instead of widening it into a
   whole-file repartition of every remaining `scene.py` responsibility
+- if macro wrappers or the request-path/session bridge remain the last oversized
+  seam after these leaves land, track that as explicit follow-on work instead of
+  silently stretching one of the current leaves
 - do not promote this slice independently unless it becomes the only remaining
   open branch in the family

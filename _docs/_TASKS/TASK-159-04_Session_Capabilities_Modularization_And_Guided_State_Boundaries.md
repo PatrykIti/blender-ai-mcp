@@ -75,7 +75,7 @@ Leaving it monolithic increases the chance that:
 - Preserve existing sync/async paired behavior where both paths exist today.
 - Preserve current public state vocabulary:
   - `guided_flow_state`
-  - `active_gate_plan`
+  - `gate_plan`
   - required / preferred prompt bundles
   - spatial freshness / scope fingerprints
 - Keep router bootstrap, search/discovery refresh, prompt-provider consumption,
@@ -88,16 +88,28 @@ Leaving it monolithic increases the chance that:
 
 ```python
 # stable facade module
-from .session_capabilities_guided_state import build_initial_guided_flow_state
-from .session_capabilities_visibility_refresh import refresh_visibility_for_state
-from .session_capabilities_quality_gates import update_quality_gate_plan_from_relation_graph
-from .session_capabilities_prompt_bundles import build_required_prompt_bundle
+from .session_capabilities_state import (
+    SessionCapabilityState,
+    get_session_capability_state,
+    set_session_capability_state,
+)
+from .session_capabilities_bootstrap import (
+    _build_initial_guided_flow_state,
+    _build_required_prompt_bundle,
+)
+from .session_capabilities_registry import register_guided_part_role
+from .session_capabilities_runtime_glue import (
+    refresh_visibility_for_session_state,
+    update_quality_gate_plan_from_relation_graph,
+)
 
 __all__ = [
-    "build_initial_guided_flow_state",
-    "refresh_visibility_for_state",
+    "SessionCapabilityState",
+    "get_session_capability_state",
+    "set_session_capability_state",
     "update_quality_gate_plan_from_relation_graph",
-    "build_required_prompt_bundle",
+    "refresh_visibility_for_session_state",
+    "register_guided_part_role",
 ]
 ```
 
