@@ -375,6 +375,73 @@ class GuidedReferenceReadinessState:
     next_action: GuidedReferenceNextAction | None = None
 
 
+def describe_guided_flow_feedback(
+    before: SessionCapabilityState | None,
+    after: SessionCapabilityState | None,
+) -> str | None:
+    """Return one concise client-facing note when guided flow state changed materially."""
+
+    after_flow = after.guided_flow_state if after is not None else None
+    if not isinstance(after_flow, dict):
+        return None
+
+    before_flow = before.guided_flow_state if before is not None else None
+
+    before_step = str((before_flow or {}).get("current_step") or "").strip()
+    after_step = str(after_flow.get("current_step") or "").strip()
+    before_refresh = bool((before_flow or {}).get("spatial_refresh_required"))
+    after_refresh = bool(after_flow.get("spatial_refresh_required"))
+    before_actions = [str(item) for item in (before_flow or {}).get("next_actions") or [] if str(item).strip()]
+    after_actions = [str(item) for item in after_flow.get("next_actions") or [] if str(item).strip()]
+    before_families = [str(item) for item in (before_flow or {}).get("allowed_families") or [] if str(item).strip()]
+    after_families = [str(item) for item in after_flow.get("allowed_families") or [] if str(item).strip()]
+    before_required = [
+        str(item.get("tool_name"))
+        for item in (before_flow or {}).get("required_checks") or []
+        if isinstance(item, dict)
+        and str(item.get("status") or "").strip() != "completed"
+        and str(item.get("tool_name") or "").strip()
+    ]
+    after_required = [
+        str(item.get("tool_name"))
+        for item in after_flow.get("required_checks") or []
+        if isinstance(item, dict)
+        and str(item.get("status") or "").strip() != "completed"
+        and str(item.get("tool_name") or "").strip()
+    ]
+    scope_names = [
+        str(name)
+        for name in ((after_flow.get("active_target_scope") or {}).get("object_names") or [])
+        if str(name).strip()
+    ]
+
+    if (
+        before_step == after_step
+        and before_refresh == after_refresh
+        and before_actions == after_actions
+        and before_families == after_families
+        and before_required == after_required
+    ):
+        return None
+
+    parts: list[str] = ["Guided flow updated."]
+    if after_step and after_step != before_step:
+        parts.append(f"Current step: {after_step}.")
+    if after_refresh:
+        parts.append("Spatial context refresh required before continuing build tools.")
+        if after_required:
+            parts.append(f"Run: {', '.join(after_required)}.")
+        if scope_names:
+            parts.append(f"Active scope: {', '.join(scope_names)}.")
+    elif before_refresh and not after_refresh:
+        parts.append("Spatial context refresh cleared.")
+    if after_actions and after_actions != before_actions:
+        parts.append(f"Next action: {', '.join(after_actions)}.")
+    if after_families and after_families != before_families:
+        parts.append(f"Allowed families now: {', '.join(after_families)}.")
+    return " ".join(parts)
+
+
 def infer_phase_from_router_status(
     status: str | None,
     *,

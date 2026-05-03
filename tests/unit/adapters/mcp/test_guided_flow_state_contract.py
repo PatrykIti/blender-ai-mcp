@@ -15,6 +15,7 @@ from server.adapters.mcp.session_capabilities import (
     SessionCapabilityState,
     advance_guided_flow_from_iteration_async,
     bootstrap_guided_empty_scene_primary_workset_async,
+    describe_guided_flow_feedback,
     get_session_capability_state,
     mark_guided_spatial_state_stale,
     record_guided_flow_spatial_check_completion,
@@ -702,6 +703,48 @@ def test_scene_view_diagnostics_unavailable_does_not_complete_guided_spatial_che
     assert result.payload.view_query.available is False
     assert checks_by_tool["scene_view_diagnostics"] == "pending"
     assert state.guided_flow_state["current_step"] == "establish_spatial_context"
+
+
+def test_describe_guided_flow_feedback_reports_spatial_refresh_requirements():
+    before = SessionCapabilityState(
+        phase=SessionPhase.BUILD,
+        guided_flow_state={
+            "current_step": "create_primary_masses",
+            "spatial_refresh_required": False,
+            "next_actions": ["begin_primary_masses"],
+            "allowed_families": ["primary_masses", "reference_context"],
+            "required_checks": [],
+        },
+    )
+    after = SessionCapabilityState(
+        phase=SessionPhase.BUILD,
+        guided_flow_state={
+            "current_step": "place_secondary_parts",
+            "spatial_refresh_required": True,
+            "next_actions": ["refresh_spatial_context"],
+            "allowed_families": ["spatial_context", "reference_context"],
+            "required_checks": [
+                {"tool_name": "scene_scope_graph", "status": "pending"},
+                {"tool_name": "scene_relation_graph", "status": "pending"},
+                {"tool_name": "scene_view_diagnostics", "status": "pending"},
+            ],
+            "active_target_scope": {
+                "scope_kind": "object_set",
+                "primary_target": "Body",
+                "object_names": ["Body", "Head"],
+                "object_count": 2,
+            },
+        },
+    )
+
+    feedback = describe_guided_flow_feedback(before, after)
+
+    assert feedback is not None
+    assert "Current step: place_secondary_parts." in feedback
+    assert "Spatial context refresh required before continuing build tools." in feedback
+    assert "scene_scope_graph, scene_relation_graph, scene_view_diagnostics" in feedback
+    assert "Active scope: Body, Head." in feedback
+    assert "Allowed families now: spatial_context, reference_context." in feedback
 
 
 def test_scene_scope_graph_binds_active_target_scope_and_blocks_unrelated_spoofed_view_check():
