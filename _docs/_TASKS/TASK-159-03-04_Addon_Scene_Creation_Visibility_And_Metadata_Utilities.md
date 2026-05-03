@@ -28,6 +28,8 @@ assumptions.
 - `tests/e2e/tools/scene/test_show_all_objects.py`
 - `tests/e2e/tools/scene/test_rename_object.py`
 - `tests/e2e/tools/scene/test_isolate_object.py`
+- `tests/e2e/tools/scene/test_scene_get_viewport_camera.py`
+- `tests/e2e/tools/scene/test_scene_view_diagnostics.py`
 - `tests/e2e/tools/scene/test_scene_utility_workflow.py`
 
 ## Current Code Anchors
@@ -110,7 +112,7 @@ preserve_existing_rpc_payloads()
 ## Validation Commands
 
 - `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mode.py tests/unit/tools/scene/test_scene_construction.py tests/unit/tools/scene/test_hide_object.py tests/unit/tools/scene/test_show_all_objects.py tests/unit/tools/scene/test_rename_object.py tests/unit/tools/scene/test_isolate_object.py tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/test_handler_rpc_alignment.py tests/unit/adapters/mcp/test_structured_contract_delivery.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/tools/scene/test_hide_object.py tests/e2e/tools/scene/test_show_all_objects.py tests/e2e/tools/scene/test_rename_object.py tests/e2e/tools/scene/test_isolate_object.py tests/e2e/tools/scene/test_scene_utility_workflow.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/tools/scene/test_hide_object.py tests/e2e/tools/scene/test_show_all_objects.py tests/e2e/tools/scene/test_rename_object.py tests/e2e/tools/scene/test_isolate_object.py tests/e2e/tools/scene/test_scene_get_viewport_camera.py tests/e2e/tools/scene/test_scene_view_diagnostics.py tests/e2e/tools/scene/test_scene_utility_workflow.py -q`
 
 ## Docs To Update
 
@@ -125,8 +127,10 @@ preserve_existing_rpc_payloads()
 - this branch is decomposed into focused creation, mode/visibility, and
   custom-property leaves instead of one broad utility pass
 - RPC method names, payloads, and mode-validation errors remain stable
-- structured custom-property delivery keeps the same contract
-- focused unit/e2e lanes still prove the same utility behavior
+- structured custom-property delivery keeps the same contract under the
+  dedicated unit/RPC/structured-contract proof lane of `TASK-159-03-04-03`
+- focused unit/e2e lanes still prove the same creation and mode/visibility
+  behavior
 
 ## Status / Board Update
 

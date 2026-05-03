@@ -148,8 +148,10 @@ for wrapper in cleanup_mode_leaf + visibility_camera_leaf + custom_property_leaf
   custom-property leaves instead of one oversized utility pass
 - cleanup canonicalization and guided dirtying semantics remain stable
 - public utility names and structured custom-property delivery stay unchanged
-- focused unit/integration/e2e lanes still prove the same cleanup and utility
-  behavior
+- focused unit/integration/e2e lanes still prove cleanup plus
+  visibility/camera behavior, while `TASK-159-02-05-03` closes its
+  custom-property contract on the current unit/contract proof lane until a
+  dedicated runtime workflow exists
 
 ## Status / Board Update
 
