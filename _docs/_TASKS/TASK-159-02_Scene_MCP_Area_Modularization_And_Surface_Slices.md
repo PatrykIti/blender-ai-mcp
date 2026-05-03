@@ -64,12 +64,16 @@ which makes future edits slower and more fragile.
 - `tests/unit/tools/scene/test_scene_contracts.py`
 - `tests/unit/tools/scene/test_macro_place_supported_pair_mcp.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
+- `tests/unit/tools/scene/test_mcp_viewport_output.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
+- `tests/unit/adapters/mcp/test_task_mode_tools.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/unit/adapters/mcp/test_provider_inventory.py`
 - `tests/unit/adapters/mcp/test_provider_versions.py`
 - `tests/unit/adapters/mcp/test_surface_manifest.py`
+- `tests/e2e/tools/scene/test_scene_get_viewport.py`
+- `tests/e2e/tools/scene/test_scene_get_viewport_camera.py`
 - `tests/e2e/tools/scene/test_scene_measure_tools.py`
 - `tests/e2e/tools/scene/test_scene_assert_tools.py`
 - `tests/e2e/tools/scene/test_scene_view_diagnostics.py`
@@ -93,6 +97,9 @@ which makes future edits slower and more fragile.
   undocumented remainder under the generic `create/manage` label.
 - Keep scene spatial-support tools visible through the same metadata and guided
   visibility seams; this task should not silently change discovery behavior.
+- Keep `scene_get_viewport(...)`, its output formatting, and its task/background
+  bridge explicitly assigned to a dedicated leaf; do not leave viewport capture
+  as an implicit remainder under the generic `view` label.
 - Preserve the distinction between:
   - public MCP wrapper
   - adapter-side orchestration
@@ -136,6 +143,7 @@ def scene_measure_gap(ctx, ...):
 | 3 | [TASK-159-02-03](./TASK-159-02-03_Scene_Spatial_Graph_And_View_Diagnostics_Slices.md) | Separate spatial-graph and view-diagnostics helpers without drifting guided visibility semantics |
 | 4 | [TASK-159-02-04](./TASK-159-02-04_Scene_Measure_Assert_And_Guided_Side_Effects.md) | Extract measure/assert helpers and preserve guided stale-state / completion side effects |
 | 5 | [TASK-159-02-05](./TASK-159-02-05_Scene_Object_Utility_Manage_And_Guided_Dirtying_Slices.md) | Separate object-utility wrappers such as cleanup, rename, visibility, camera utility, and custom-property operations while preserving guided dirtying/runtime semantics |
+| 6 | [TASK-159-02-06](./TASK-159-02-06_Scene_Viewport_Background_Bridge_And_Output_Surface.md) | Separate the public viewport capture/output path so `scene_get_viewport(...)` has an explicit owner for output modes, task-mode background execution, and viewport/camera capture semantics |
 
 ## Tests To Add/Update
 
@@ -146,7 +154,9 @@ def scene_measure_gap(ctx, ...):
 - `tests/unit/tools/scene/test_macro_place_supported_pair_mcp.py`
 - `tests/unit/tools/test_mcp_area_main_paths.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
+- `tests/unit/tools/scene/test_mcp_viewport_output.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
+- `tests/unit/adapters/mcp/test_task_mode_tools.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
@@ -154,6 +164,8 @@ def scene_measure_gap(ctx, ...):
 - `tests/unit/adapters/mcp/test_provider_versions.py`
 - `tests/unit/adapters/mcp/test_surface_manifest.py`
 - `tests/unit/adapters/mcp/test_structured_contract_delivery.py`
+- `tests/e2e/tools/scene/test_scene_get_viewport.py`
+- `tests/e2e/tools/scene/test_scene_get_viewport_camera.py`
 - `tests/e2e/tools/scene/test_scene_clean_scene.py`
 - `tests/e2e/tools/scene/test_scene_utility_workflow.py`
 - `tests/e2e/tools/scene/test_scene_measure_tools.py`
@@ -162,8 +174,8 @@ def scene_measure_gap(ctx, ...):
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_scene_context_mega.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/scene/test_scene_state_assistants.py tests/unit/tools/scene/test_macro_place_supported_pair_mcp.py tests/unit/tools/test_mcp_area_main_paths.py tests/unit/tools/test_handler_rpc_alignment.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/adapters/mcp/test_provider_inventory.py tests/unit/adapters/mcp/test_provider_versions.py tests/unit/adapters/mcp/test_surface_manifest.py tests/unit/adapters/mcp/test_structured_contract_delivery.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/tools/scene/test_scene_clean_scene.py tests/e2e/tools/scene/test_scene_utility_workflow.py tests/e2e/tools/scene/test_scene_measure_tools.py tests/e2e/tools/scene/test_scene_assert_tools.py tests/e2e/tools/scene/test_scene_view_diagnostics.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_scene_context_mega.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/scene/test_scene_state_assistants.py tests/unit/tools/scene/test_macro_place_supported_pair_mcp.py tests/unit/tools/test_mcp_area_main_paths.py tests/unit/tools/test_handler_rpc_alignment.py tests/unit/tools/scene/test_mcp_viewport_output.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_task_mode_tools.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/adapters/mcp/test_provider_inventory.py tests/unit/adapters/mcp/test_provider_versions.py tests/unit/adapters/mcp/test_surface_manifest.py tests/unit/adapters/mcp/test_structured_contract_delivery.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/tools/scene/test_scene_get_viewport.py tests/e2e/tools/scene/test_scene_get_viewport_camera.py tests/e2e/tools/scene/test_scene_clean_scene.py tests/e2e/tools/scene/test_scene_utility_workflow.py tests/e2e/tools/scene/test_scene_measure_tools.py tests/e2e/tools/scene/test_scene_assert_tools.py tests/e2e/tools/scene/test_scene_view_diagnostics.py -q`
 
 ## Docs To Update
 
@@ -184,6 +196,9 @@ def scene_measure_gap(ctx, ...):
   this pass
 - context/structural-read, create/manage, object-utility, spatial-graph,
   measure/assert, and view concerns have clear internal homes
+- `scene_get_viewport(...)` no longer survives as an undocumented facade
+  remainder and has an explicit owner for output modes plus task/background
+  execution semantics
 - public scene MCP names, metadata, and guided/discovery behavior remain stable
 - provider registration, version-policy delivery, and manifest-backed scene
   discovery remain stable

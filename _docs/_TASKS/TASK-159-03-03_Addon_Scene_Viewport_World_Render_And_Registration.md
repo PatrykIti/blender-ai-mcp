@@ -10,6 +10,11 @@ Extract viewport, camera utility, and world/render/color-management helpers from
 addon `SceneHandler` and prove that addon registration plus server roundtrip
 wiring remain unchanged.
 
+MCP output-mode formatting and task-mode background bridging are tracked on the
+server-side scene facade under
+[TASK-159-02-06](./TASK-159-02-06_Scene_Viewport_Background_Bridge_And_Output_Surface.md).
+This leaf owns the Blender/runtime viewport behavior itself.
+
 ## Repository Touchpoints
 
 - `blender_addon/application/handlers/scene.py`
@@ -24,6 +29,8 @@ wiring remain unchanged.
 - `tests/unit/tools/scene/test_camera_focus.py`
 - `tests/unit/tools/scene/test_viewport_control.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
+- `tests/e2e/tools/scene/test_scene_get_viewport.py`
+- `tests/e2e/tools/scene/test_scene_get_viewport_camera.py`
 - `tests/e2e/tools/scene/test_scene_configure_roundtrip.py`
 - `tests/e2e/tools/scene/test_camera_orbit.py`
 - `tests/e2e/tools/scene/test_camera_focus.py`
@@ -57,6 +64,8 @@ class SceneHandler(SceneViewportMixin, SceneWorldRenderMixin, ...):
 
 - preserve main-thread-safe viewport capture, camera utility behavior, and
   temporary view restoration
+- preserve `USER_PERSPECTIVE` vs named-camera behavior and the current
+  restore-default-view semantics after temporary user-view adjustments
 - preserve current world/render/color-management payloads, including
   `node_graph_handoff` boundaries
 - keep addon registration and RPC background-handler wiring unchanged
@@ -69,6 +78,8 @@ class SceneHandler(SceneViewportMixin, SceneWorldRenderMixin, ...):
 - `tests/unit/tools/scene/test_camera_focus.py`
 - `tests/unit/tools/scene/test_viewport_control.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
+- `tests/e2e/tools/scene/test_scene_get_viewport.py`
+- `tests/e2e/tools/scene/test_scene_get_viewport_camera.py`
 - `tests/e2e/tools/scene/test_scene_configure_roundtrip.py`
 - `tests/e2e/tools/scene/test_camera_orbit.py`
 - `tests/e2e/tools/scene/test_camera_focus.py`
@@ -76,7 +87,7 @@ class SceneHandler(SceneViewportMixin, SceneWorldRenderMixin, ...):
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/addon/test_addon_registration.py tests/unit/tools/scene/test_scene_configure_handler.py tests/unit/tools/scene/test_camera_orbit.py tests/unit/tools/scene/test_camera_focus.py tests/unit/tools/scene/test_viewport_control.py tests/unit/tools/test_handler_rpc_alignment.py tests/e2e/tools/scene/test_scene_configure_roundtrip.py tests/e2e/tools/scene/test_camera_orbit.py tests/e2e/tools/scene/test_camera_focus.py tests/e2e/tools/scene/test_scene_view_diagnostics.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/addon/test_addon_registration.py tests/unit/tools/scene/test_scene_configure_handler.py tests/unit/tools/scene/test_camera_orbit.py tests/unit/tools/scene/test_camera_focus.py tests/unit/tools/scene/test_viewport_control.py tests/unit/tools/test_handler_rpc_alignment.py tests/e2e/tools/scene/test_scene_get_viewport.py tests/e2e/tools/scene/test_scene_get_viewport_camera.py tests/e2e/tools/scene/test_scene_configure_roundtrip.py tests/e2e/tools/scene/test_camera_orbit.py tests/e2e/tools/scene/test_camera_focus.py tests/e2e/tools/scene/test_scene_view_diagnostics.py -q`
 
 ## Docs To Update
 
@@ -91,7 +102,8 @@ class SceneHandler(SceneViewportMixin, SceneWorldRenderMixin, ...):
 - viewport/camera and world/render/color-management helpers are isolated from
   unrelated scene concerns
 - addon registration continues to expose the same scene RPC handlers
-- roundtrip world/render/color-management and viewport regressions stay green
+- roundtrip world/render/color-management plus Blender-backed viewport
+  regressions for `USER_PERSPECTIVE` restore and named-camera capture stay green
 
 ## Status / Board Update
 

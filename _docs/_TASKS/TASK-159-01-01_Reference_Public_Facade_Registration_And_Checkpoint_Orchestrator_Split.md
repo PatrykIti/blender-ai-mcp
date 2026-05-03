@@ -10,6 +10,10 @@ Stabilize the public `reference.py` facade by isolating registration and
 checkpoint orchestration helpers before moving deeper truth/planner/perception
 logic out of the file.
 
+`reference_compare_current_view(...)` is tracked separately under
+[TASK-159-01-05](./TASK-159-01-05_Reference_Current_View_Capture_And_Compare_Orchestration.md)
+so this leaf can stay focused on checkpoint/stage facade seams.
+
 ## Repository Touchpoints
 
 - `server/adapters/mcp/areas/reference.py`

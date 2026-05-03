@@ -57,6 +57,7 @@ That makes future work riskier than it needs to be:
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/unit/adapters/mcp/test_provider_inventory.py`
+- `tests/unit/adapters/mcp/test_tool_inventory.py`
 - `tests/unit/adapters/mcp/test_surface_manifest.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 - `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
@@ -76,6 +77,9 @@ That makes future work riskier than it needs to be:
   provider/manifest import seam stable while helpers move behind the facade.
 - Do not widen staged payloads during the extraction. This task is about module
   boundaries, not feature growth.
+- Do not leave `reference_compare_current_view(...)` as an implicit remainder
+  under the checkpoint or image-lifecycle leaves. Track its viewport-backed
+  compare orchestration explicitly.
 - Preserve current public tool names:
   - `reference_images`
   - `reference_compare_checkpoint`
@@ -122,6 +126,7 @@ async def reference_compare_stage_checkpoint(...):
 | 2 | [TASK-159-01-02](./TASK-159-01-02_Reference_Truth_Planner_And_Service_Promotion_Split.md) | Extract truth/planner helper clusters and identify framework-free logic that should move into application services |
 | 3 | [TASK-159-01-03](./TASK-159-01-03_Reference_Silhouette_View_Diagnostics_And_Understanding_Sidecars.md) | Separate silhouette, view-diagnostics, and reference-understanding sidecars without changing advisory-vs-truth boundaries |
 | 4 | [TASK-159-01-04](./TASK-159-01-04_Reference_Image_Lifecycle_And_Staged_Session_Integration.md) | Isolate reference image lifecycle and staged session integration helpers while preserving session/update semantics |
+| 5 | [TASK-159-01-05](./TASK-159-01-05_Reference_Current_View_Capture_And_Compare_Orchestration.md) | Separate the live current-view capture/compare orchestration so the viewport-backed public compare path is not left implicit under the checkpoint leaves |
 
 ## Tests To Add/Update
 
@@ -129,6 +134,7 @@ async def reference_compare_stage_checkpoint(...):
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/unit/adapters/mcp/test_provider_inventory.py`
+- `tests/unit/adapters/mcp/test_tool_inventory.py`
 - `tests/unit/adapters/mcp/test_surface_manifest.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 - `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
@@ -138,7 +144,7 @@ async def reference_compare_stage_checkpoint(...):
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/adapters/mcp/test_provider_inventory.py tests/unit/adapters/mcp/test_surface_manifest.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/adapters/mcp/test_provider_inventory.py tests/unit/adapters/mcp/test_tool_inventory.py tests/unit/adapters/mcp/test_surface_manifest.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_truth_handoff.py tests/e2e/vision/test_reference_stage_silhouette_contract.py tests/e2e/vision/test_goal_derived_gate_support_symmetry_surfaces.py tests/e2e/vision/test_reference_understanding_runtime_surface.py tests/e2e/integration/test_guided_gate_state_transport.py -q`
 
 ## Docs To Update

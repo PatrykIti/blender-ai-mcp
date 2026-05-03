@@ -9,6 +9,11 @@
 Separate spatial-graph and view-diagnostics helpers from `scene.py` while
 preserving the guided spatial-support surface and its current visibility rules.
 
+`scene_get_viewport(...)` and its output/task-bridge path are handled
+separately under
+[TASK-159-02-06](./TASK-159-02-06_Scene_Viewport_Background_Bridge_And_Output_Surface.md)
+so this leaf can stay focused on read-only spatial support plus view diagnostics.
+
 ## Repository Touchpoints
 
 - `server/adapters/mcp/areas/scene.py`

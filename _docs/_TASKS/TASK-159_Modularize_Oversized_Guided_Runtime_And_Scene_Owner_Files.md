@@ -165,6 +165,7 @@ This umbrella deliberately does not:
 | `server/adapters/mcp/contracts/` | Contract stability | Public response shapes must remain stable while internal ownership changes |
 | `tests/unit/adapters/mcp/` | MCP regressions | Protect public surface and adapter behavior during extraction |
 | `tests/unit/tools/scene/` | Scene truth / RPC alignment | Protect scene and addon behavior while splitting handlers |
+| `tests/e2e/tools/scene/` | Blender-backed scene regressions | Protect viewport, utility, and scene-runtime behavior while splitting MCP/addon scene owners |
 | `tests/e2e/vision/` | Hybrid loop regressions | Protect staged compare / iterate behavior during `reference.py` extraction |
 | `tests/e2e/integration/` | Guided transport/state regressions | Protect session-state and guided transport semantics during session-capabilities extraction |
 | `_docs/_TASKS/README.md` | Board sync | Promote and track the internal architecture umbrella coherently |

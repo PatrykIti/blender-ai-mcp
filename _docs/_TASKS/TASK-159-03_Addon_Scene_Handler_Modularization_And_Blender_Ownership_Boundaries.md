@@ -64,6 +64,8 @@ That increases the chance that:
 - `tests/unit/tools/scene/test_scene_inspect_mesh_topology.py`
 - `tests/unit/tools/scene/test_viewport_control.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
+- `tests/e2e/tools/scene/test_scene_get_viewport.py`
+- `tests/e2e/tools/scene/test_scene_get_viewport_camera.py`
 - `tests/e2e/tools/scene/test_scene_measure_tools.py`
 - `tests/e2e/tools/scene/test_scene_assert_tools.py`
 - `tests/e2e/tools/scene/test_scene_configure_roundtrip.py`
@@ -140,6 +142,8 @@ class SceneHandler(
 - `tests/unit/tools/scene/test_viewport_control.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
 - `tests/unit/adapters/mcp/test_structured_contract_delivery.py`
+- `tests/e2e/tools/scene/test_scene_get_viewport.py`
+- `tests/e2e/tools/scene/test_scene_get_viewport_camera.py`
 - `tests/e2e/tools/scene/test_scene_measure_tools.py`
 - `tests/e2e/tools/scene/test_scene_assert_tools.py`
 - `tests/e2e/tools/scene/test_scene_clean_scene.py`
@@ -156,7 +160,7 @@ class SceneHandler(
 ## Validation Commands
 
 - `PYTHONPATH=. poetry run pytest tests/unit/addon/test_addon_registration.py tests/unit/tools/scene/test_scene_mode.py tests/unit/tools/scene/test_scene_get_mode_handler.py tests/unit/tools/scene/test_scene_measure_tools.py tests/unit/tools/scene/test_scene_assert_tools.py tests/unit/tools/scene/test_scene_construction.py tests/unit/tools/scene/test_scene_configure_handler.py tests/unit/tools/scene/test_scene_inspect_mesh_topology.py tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_camera_orbit.py tests/unit/tools/scene/test_camera_focus.py tests/unit/tools/scene/test_hide_object.py tests/unit/tools/scene/test_show_all_objects.py tests/unit/tools/scene/test_rename_object.py tests/unit/tools/scene/test_isolate_object.py tests/unit/tools/scene/test_viewport_control.py tests/unit/tools/test_handler_rpc_alignment.py tests/unit/adapters/mcp/test_structured_contract_delivery.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/tools/scene/test_scene_measure_tools.py tests/e2e/tools/scene/test_scene_assert_tools.py tests/e2e/tools/scene/test_scene_clean_scene.py tests/e2e/tools/scene/test_scene_utility_workflow.py tests/e2e/tools/scene/test_scene_configure_roundtrip.py tests/e2e/tools/scene/test_camera_orbit.py tests/e2e/tools/scene/test_camera_focus.py tests/e2e/tools/scene/test_hide_object.py tests/e2e/tools/scene/test_show_all_objects.py tests/e2e/tools/scene/test_rename_object.py tests/e2e/tools/scene/test_isolate_object.py tests/e2e/tools/scene/test_scene_view_diagnostics.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/tools/scene/test_scene_get_viewport.py tests/e2e/tools/scene/test_scene_get_viewport_camera.py tests/e2e/tools/scene/test_scene_measure_tools.py tests/e2e/tools/scene/test_scene_assert_tools.py tests/e2e/tools/scene/test_scene_clean_scene.py tests/e2e/tools/scene/test_scene_utility_workflow.py tests/e2e/tools/scene/test_scene_configure_roundtrip.py tests/e2e/tools/scene/test_camera_orbit.py tests/e2e/tools/scene/test_camera_focus.py tests/e2e/tools/scene/test_hide_object.py tests/e2e/tools/scene/test_show_all_objects.py tests/e2e/tools/scene/test_rename_object.py tests/e2e/tools/scene/test_isolate_object.py tests/e2e/tools/scene/test_scene_view_diagnostics.py -q`
 
 ## Docs To Update
 
