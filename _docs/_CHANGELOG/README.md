@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [299](./299-2026-05-03-task-157-scope-dedupe-and-compare-visibility-regressions.md) | 2026-05-03 | **TASK-157 scope, dedupe, and compare-visibility regressions** | - |
 | [298](./298-2026-05-03-task-157-goal-time-bounds-and-verifier-followups.md) | 2026-05-03 | **TASK-157 goal-time bounds and verifier follow-ups** | - |
 | [297](./297-2026-05-03-task-157-gate-intake-and-reference-visibility-regressions.md) | 2026-05-03 | **TASK-157 gate intake and reference visibility regressions** | - |
 | [296](./296-2026-05-03-task-157-quality-gate-scope-and-reference-refresh-regressions.md) | 2026-05-03 | **TASK-157 quality-gate scope and reference-refresh regressions** | - |

@@ -10,7 +10,7 @@ import hashlib
 import json
 import re
 from dataclasses import asdict, dataclass, replace
-from typing import TYPE_CHECKING, Any, Literal, Mapping, cast
+from typing import TYPE_CHECKING, Any, Literal, Mapping, Sequence, cast
 
 from fastmcp import Context
 
@@ -22,13 +22,18 @@ from server.adapters.mcp.contracts.guided_flow import (
     GuidedTargetScopeContract,
 )
 from server.adapters.mcp.contracts.quality_gates import (
+    GateEvidenceRequirementContract,
     GateIntakeResultContract,
     GatePlanContract,
     GatePolicyWarningContract,
     GateProposalContract,
+    GateSourceProvenanceContract,
+    NormalizedQualityGateContract,
+    gate_equivalence_key,
     mark_gate_plan_stale,
     normalize_gate_plan,
     refresh_gate_plan_status,
+    without_proposal_source,
 )
 from server.adapters.mcp.contracts.reference import ReferenceUnderstandingSummaryContract
 from server.adapters.mcp.session_phase import SessionPhase, coerce_session_phase
@@ -1359,17 +1364,37 @@ def _merge_gate_plan_for_proposal_source(
         return incoming_gate_plan
 
     existing_plan = GatePlanContract.model_validate(existing_gate_plan)
-    replaced_gate_ids = {gate.gate_id for gate in existing_plan.gates if proposal_source in gate.proposal_sources}
-    retained_gates = [gate for gate in existing_plan.gates if proposal_source not in gate.proposal_sources]
+    retained_gates: list[NormalizedQualityGateContract] = []
+    removed_gate_ids: set[str] = set()
+    for gate in existing_plan.gates:
+        if proposal_source not in gate.proposal_sources:
+            retained_gates.append(gate)
+            continue
+        retained_gate = without_proposal_source(gate, proposal_source)
+        if retained_gate is None:
+            removed_gate_ids.add(gate.gate_id)
+            continue
+        retained_gates.append(retained_gate)
     incoming_source_gates = [gate for gate in incoming_gate_plan.gates if proposal_source in gate.proposal_sources]
     incoming_source_gate_ids = {gate.gate_id for gate in incoming_source_gates}
+    merged_gates = list(retained_gates)
+    incoming_gate_id_map: dict[str, str] = {}
+    for incoming_gate in incoming_source_gates:
+        equivalent_index = _find_equivalent_gate_index(merged_gates, incoming_gate)
+        if equivalent_index is None:
+            merged_gates.append(incoming_gate)
+            incoming_gate_id_map[incoming_gate.gate_id] = incoming_gate.gate_id
+            continue
+        merged_gate = _merge_equivalent_gates(merged_gates[equivalent_index], incoming_gate)
+        merged_gates[equivalent_index] = merged_gate
+        incoming_gate_id_map[incoming_gate.gate_id] = merged_gate.gate_id
     retained_warnings = [
         warning
         for warning in existing_plan.policy_warnings
-        if warning.gate_id is None or warning.gate_id not in replaced_gate_ids
+        if warning.gate_id is None or warning.gate_id not in removed_gate_ids
     ]
     incoming_source_warnings = [
-        warning
+        _remap_gate_policy_warning(warning, gate_id_map=incoming_gate_id_map)
         for warning in incoming_gate_plan.policy_warnings
         if warning.gate_id is None or warning.gate_id in incoming_source_gate_ids
     ]
@@ -1379,11 +1404,123 @@ def _merge_gate_plan_for_proposal_source(
             update={
                 "plan_id": incoming_gate_plan.plan_id,
                 "proposal_id": incoming_gate_plan.proposal_id,
-                "gates": [*retained_gates, *incoming_source_gates],
+                "gates": merged_gates,
                 "policy_warnings": [*retained_warnings, *incoming_source_warnings],
             }
         )
     )
+
+
+def _find_equivalent_gate_index(
+    gates: list[NormalizedQualityGateContract],
+    candidate: NormalizedQualityGateContract,
+) -> int | None:
+    candidate_key = gate_equivalence_key(candidate)
+    for index, gate in enumerate(gates):
+        if gate_equivalence_key(gate) == candidate_key:
+            return index
+    return None
+
+
+def _merge_equivalent_gates(
+    existing: NormalizedQualityGateContract,
+    incoming: NormalizedQualityGateContract,
+) -> NormalizedQualityGateContract:
+    return existing.model_copy(
+        update={
+            "target_label": existing.target_label or incoming.target_label,
+            "target_objects": _merge_unique_strings(existing.target_objects, incoming.target_objects),
+            "required": existing.required or incoming.required,
+            "priority": _higher_gate_priority(existing.priority, incoming.priority),
+            "allowed_correction_families": cast(
+                Any,
+                _merge_unique_strings(existing.allowed_correction_families, incoming.allowed_correction_families),
+            ),
+            "recommended_bounded_tools": _merge_unique_strings(
+                existing.recommended_bounded_tools,
+                incoming.recommended_bounded_tools,
+            ),
+            "proposal_sources": cast(Any, _merge_unique_strings(existing.proposal_sources, incoming.proposal_sources)),
+            "source_provenance": _merge_source_provenance(existing, incoming),
+            "evidence_requirements": _merge_evidence_requirements(existing, incoming),
+            "allow_embedded_intersection": existing.allow_embedded_intersection or incoming.allow_embedded_intersection,
+            "allow_alignment_drift": existing.allow_alignment_drift or incoming.allow_alignment_drift,
+            "rationale": existing.rationale or incoming.rationale,
+        }
+    )
+
+
+def _merge_source_provenance(
+    existing: NormalizedQualityGateContract,
+    incoming: NormalizedQualityGateContract,
+) -> list[GateSourceProvenanceContract]:
+    merged: list[GateSourceProvenanceContract] = []
+    seen: set[str] = set()
+    for provenance in [*existing.source_provenance, *incoming.source_provenance]:
+        payload = provenance.model_dump(mode="json", exclude_none=True)
+        dedupe_key = json.dumps(payload, sort_keys=True)
+        if dedupe_key in seen:
+            continue
+        seen.add(dedupe_key)
+        merged.append(provenance)
+    return merged
+
+
+def _merge_evidence_requirements(
+    existing: NormalizedQualityGateContract,
+    incoming: NormalizedQualityGateContract,
+) -> list[GateEvidenceRequirementContract]:
+    merged: list[GateEvidenceRequirementContract] = []
+    by_kind: dict[str, int] = {}
+    for requirement in [*existing.evidence_requirements, *incoming.evidence_requirements]:
+        evidence_kind = str(requirement.evidence_kind)
+        if evidence_kind not in by_kind:
+            by_kind[evidence_kind] = len(merged)
+            merged.append(requirement)
+            continue
+        current = merged[by_kind[evidence_kind]]
+        merged[by_kind[evidence_kind]] = current.model_copy(
+            update={
+                "required": current.required or requirement.required,
+                "reason": current.reason or requirement.reason,
+            }
+        )
+    return merged
+
+
+def _merge_unique_strings(existing: Sequence[str], incoming: Sequence[str]) -> list[str]:
+    merged: list[str] = []
+    seen: set[str] = set()
+    for item in [*existing, *incoming]:
+        normalized = str(item).strip()
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        merged.append(normalized)
+    return merged
+
+
+def _higher_gate_priority(
+    existing: str,
+    incoming: str,
+) -> str:
+    priority_rank = {"high": 0, "normal": 1, "low": 2}
+    existing_rank = priority_rank.get(existing, 1)
+    incoming_rank = priority_rank.get(incoming, 1)
+    return existing if existing_rank <= incoming_rank else incoming
+
+
+def _remap_gate_policy_warning(
+    warning: GatePolicyWarningContract,
+    *,
+    gate_id_map: dict[str, str],
+) -> GatePolicyWarningContract:
+    if warning.gate_id is None:
+        return warning
+    remapped_gate_id = gate_id_map.get(warning.gate_id, warning.gate_id)
+    if remapped_gate_id == warning.gate_id:
+        return warning
+    return warning.model_copy(update={"gate_id": remapped_gate_id})
 
 
 def ingest_quality_gate_proposal(

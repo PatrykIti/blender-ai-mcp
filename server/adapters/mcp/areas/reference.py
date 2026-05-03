@@ -23,6 +23,7 @@ from server.adapters.mcp.contracts.quality_gates import (
     GatePlanContract,
     GateProposalContract,
     refresh_gate_plan_status,
+    without_proposal_source,
 )
 from server.adapters.mcp.contracts.reference import (
     GuidedReferenceReadinessContract,
@@ -1964,15 +1965,21 @@ def _without_reference_understanding_gates(
         return None
 
     tracked_ids = {str(item).strip() for item in tracked_gate_ids or [] if str(item).strip()}
-    retained_gates = [
-        gate
-        for gate in gate_plan.gates
-        if gate.gate_id not in tracked_ids and "reference_understanding" not in gate.proposal_sources
-    ]
+    retained_gates = []
+    removed_gate_ids: set[str] = set()
+    for gate in gate_plan.gates:
+        if gate.gate_id not in tracked_ids and "reference_understanding" not in gate.proposal_sources:
+            retained_gates.append(gate)
+            continue
+        retained_gate = without_proposal_source(gate, "reference_understanding")
+        if retained_gate is None:
+            removed_gate_ids.add(gate.gate_id)
+            continue
+        retained_gates.append(retained_gate)
     retained_warnings = [
         warning
         for warning in gate_plan.policy_warnings
-        if warning.gate_id is None or warning.gate_id not in tracked_ids
+        if warning.gate_id is None or warning.gate_id not in removed_gate_ids
     ]
     return refresh_gate_plan_status(
         gate_plan.model_copy(
@@ -4199,6 +4206,7 @@ async def _run_stage_checkpoint_compare(
         )
         session = replace(session, gate_plan=updated_gate_plan.model_dump(mode="json", exclude_none=True))
         await set_session_capability_state_async(ctx, session)
+        await apply_visibility_for_session_state(ctx, session)
         active_gate_plan = session.gate_plan
 
     return _stage_compare_response(

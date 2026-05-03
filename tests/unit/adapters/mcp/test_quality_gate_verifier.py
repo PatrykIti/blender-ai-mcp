@@ -229,6 +229,69 @@ def test_local_scope_verification_keeps_unrelated_attachment_gate_unchanged():
     assert _gate(updated, "final_completion").status == "blocked"
 
 
+@pytest.mark.parametrize(
+    ("gate_payload", "gate_id"),
+    [
+        (
+            {
+                "gate_id": "tail_body_seam",
+                "gate_type": "attachment_seam",
+                "label": "tail seated on body",
+                "target_kind": "object_pair",
+            },
+            "tail_body_seam",
+        ),
+        (
+            {
+                "gate_id": "body_base_support",
+                "gate_type": "support_contact",
+                "label": "body supported by base",
+                "target_kind": "object_pair",
+            },
+            "body_base_support",
+        ),
+    ],
+)
+def test_local_scope_verification_keeps_label_only_pair_gate_outside_scope_unchanged(gate_payload, gate_id):
+    plan = normalize_gate_plan(
+        {"source": "llm_goal", "gates": [gate_payload]},
+        domain_profile="generic",
+    )
+    seeded = plan.model_copy(
+        update={
+            "gates": [
+                gate.model_copy(update={"status": "passed"}) if gate.gate_id in {gate_id, "final_completion"} else gate
+                for gate in plan.gates
+            ]
+        }
+    )
+
+    updated = verify_gate_plan_with_relation_graph(
+        seeded,
+        {
+            "scope": {
+                "scope_kind": "object_set",
+                "primary_target": "Wing",
+                "object_names": ["Wing", "Head"],
+                "object_count": 2,
+            },
+            "summary": {
+                "pairing_strategy": "guided_spatial_pairs",
+                "pair_count": 0,
+                "evaluated_pairs": 0,
+                "failing_pairs": 0,
+                "attachment_pairs": 0,
+                "support_pairs": 0,
+                "symmetry_pairs": 0,
+            },
+            "pairs": [],
+        },
+    )
+
+    assert _gate(updated, gate_id).status == "passed"
+    assert _gate(updated, "final_completion").status == "passed"
+
+
 def test_attachment_gate_without_matching_targets_stays_blocked_even_with_one_candidate_pair():
     plan = normalize_gate_plan(
         {

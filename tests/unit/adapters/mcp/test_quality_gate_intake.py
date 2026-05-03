@@ -281,6 +281,73 @@ def test_gate_proposal_intake_preserves_existing_reference_understanding_gates()
     assert merged_tail_gate["status"] == "pending"
 
 
+def test_gate_proposal_intake_deduplicates_equivalent_gates_across_sources():
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel",
+            surface_profile="llm-guided",
+            guided_flow_state=_guided_flow_state(),
+        ),
+    )
+
+    seed = ingest_quality_gate_proposal(
+        ctx,
+        {
+            "source": "llm_goal",
+            "gates": [
+                {
+                    "gate_id": "goal_eye_pair_gate",
+                    "gate_type": "required_part",
+                    "label": "visible eye pair",
+                    "target_kind": "reference_part",
+                    "target_label": "eye_pair",
+                }
+            ],
+        },
+    )
+    assert seed.status == "accepted"
+
+    seeded_state = get_session_capability_state(ctx)
+    assert seeded_state.gate_plan is not None
+    seeded_gate_plan = {
+        **seeded_state.gate_plan,
+        "gates": [dict(gate) for gate in seeded_state.gate_plan["gates"]],
+    }
+    eye_gate = next(gate for gate in seeded_gate_plan["gates"] if gate.get("target_label") == "eye_pair")
+    eye_gate["status"] = "failed"
+    eye_gate["status_reason"] = "missing_required_part"
+    set_session_capability_state(ctx, replace(seeded_state, gate_plan=seeded_gate_plan))
+
+    result = ingest_quality_gate_proposal(
+        ctx,
+        {
+            "source": "reference_understanding",
+            "gates": [
+                {
+                    "gate_id": "ru_eye_pair_gate",
+                    "gate_type": "required_part",
+                    "label": "dual-view eye pair",
+                    "target_kind": "reference_part",
+                    "target_label": "eye_pair",
+                }
+            ],
+        },
+    )
+
+    final_state = get_session_capability_state(ctx)
+
+    assert result.status == "accepted"
+    assert final_state.gate_plan is not None
+    eye_gates = [gate for gate in final_state.gate_plan["gates"] if gate.get("target_label") == "eye_pair"]
+    assert len(eye_gates) == 1
+    assert eye_gates[0]["status"] == "failed"
+    assert eye_gates[0]["status_reason"] == "missing_required_part"
+    assert set(eye_gates[0]["proposal_sources"]) == {"llm_goal", "reference_understanding"}
+
+
 def test_relation_graph_verification_persists_gate_status_and_blockers():
     ctx = FakeContext()
     set_session_capability_state(
@@ -593,3 +660,70 @@ def test_mutating_tool_stales_object_role_gate_when_registered_object_is_affecte
     body_gate = restored.gate_plan["gates"][0]
     assert body_gate["status"] == "stale"
     assert body_gate["status_reason"] == "scene_mutation_after_verification"
+
+
+def test_mutating_tool_stales_label_matched_gate_when_affected_object_name_contains_target_token():
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel",
+            surface_profile="llm-guided",
+            guided_flow_state={
+                **_guided_flow_state(),
+                "active_target_scope": {
+                    "scope_kind": "object_set",
+                    "primary_target": "SquirrelBody",
+                    "object_names": ["SquirrelBody", "SquirrelTail"],
+                    "object_count": 2,
+                },
+                "spatial_scope_fingerprint": "scope:squirrel",
+                "spatial_state_version": 5,
+            },
+            gate_plan={
+                "plan_id": "creature_quality_gate_plan",
+                "domain_profile": "creature",
+                "required_gate_count": 1,
+                "optional_gate_count": 0,
+                "gates": [
+                    {
+                        "gate_id": "tail_core_required",
+                        "gate_type": "required_part",
+                        "label": "Tail core is present",
+                        "target_kind": "reference_part",
+                        "target_label": "tail_core",
+                        "required": True,
+                        "priority": "high",
+                        "status": "passed",
+                        "verification_strategy": "object_existence",
+                        "allowed_correction_families": ["secondary_parts", "inspect_validate"],
+                        "recommended_bounded_tools": ["scene_scope_graph"],
+                        "proposal_sources": ["llm_goal"],
+                        "evidence_requirements": [{"evidence_kind": "scene_truth", "required": True}],
+                        "evidence_refs": [
+                            {
+                                "evidence_id": "tail-core",
+                                "evidence_kind": "scene_truth",
+                                "source": "scene_truth",
+                                "authority": "authoritative",
+                            }
+                        ],
+                    }
+                ],
+            },
+        ),
+    )
+
+    mark_guided_spatial_state_stale(
+        ctx,
+        tool_name="modeling_transform_object",
+        affected_objects=["SquirrelTail"],
+    )
+
+    restored = get_session_capability_state(ctx)
+
+    assert restored.gate_plan is not None
+    tail_gate = restored.gate_plan["gates"][0]
+    assert tail_gate["status"] == "stale"
+    assert tail_gate["status_reason"] == "scene_mutation_after_verification"

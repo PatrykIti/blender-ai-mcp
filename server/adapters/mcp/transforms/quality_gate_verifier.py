@@ -721,6 +721,13 @@ def _skip_local_scope_verification(
         return len(matched_objects) < 2
 
     if gate.gate_type in {"attachment_seam", "support_contact"}:
+        if not gate.target_objects:
+            matched_objects = _matched_scope_objects(
+                gate,
+                object_names,
+                guided_part_registry=guided_part_registry,
+            )
+            return len(matched_objects) < 2
         return not _scope_contains_all_target_objects(gate, object_names)
 
     if gate.gate_type in {"proportion_ratio", "shape_profile", "opening_or_cut", "refinement_stage"}:

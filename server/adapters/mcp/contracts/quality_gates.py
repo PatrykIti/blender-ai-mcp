@@ -565,7 +565,7 @@ def mark_gate_plan_stale(
     """Mark evidence-backed gate statuses stale after a scene mutation."""
 
     contract = GatePlanContract.model_validate(plan)
-    affected = {_normalize_token(item) for item in affected_objects or [] if item}
+    affected = _expanded_object_match_tokens(affected_objects or [])
     updated_gates: list[NormalizedQualityGateContract] = []
     for gate in contract.gates:
         if gate.status not in {"passed", "failed", "blocked"}:
@@ -900,6 +900,42 @@ def _with_unique_gate_id(
     return gate.model_copy(update={"gate_id": candidate})
 
 
+def gate_equivalence_key(
+    gate: NormalizedQualityGateContract,
+) -> tuple[str, str, str, tuple[str, ...], bool, bool]:
+    """Return a stable logical identity for one normalized gate."""
+
+    return (
+        gate.gate_type,
+        gate.target_kind,
+        _gate_equivalence_descriptor(gate),
+        tuple(sorted(_normalize_token(item) for item in gate.target_objects if item)),
+        gate.allow_embedded_intersection,
+        gate.allow_alignment_drift,
+    )
+
+
+def without_proposal_source(
+    gate: NormalizedQualityGateContract,
+    proposal_source: GateProposalSourceLiteral | str,
+) -> NormalizedQualityGateContract | None:
+    """Return the gate without one proposal source, or ``None`` when no sources remain."""
+
+    normalized_source = _normalize_token(proposal_source)
+    remaining_sources = [source for source in gate.proposal_sources if source != normalized_source]
+    if not remaining_sources:
+        return None
+    remaining_provenance = [
+        provenance for provenance in gate.source_provenance if _normalize_token(provenance.source) != normalized_source
+    ]
+    return gate.model_copy(
+        update={
+            "proposal_sources": remaining_sources,
+            "source_provenance": remaining_provenance,
+        }
+    )
+
+
 def _gate_match_key(
     *,
     gate_type: GateTypeLiteral,
@@ -995,7 +1031,8 @@ def _gate_targets_any_object(
             object_name = _normalize_token(item.get("object_name"))
             if object_name and object_name in affected_objects:
                 return True
-    return any(token and token in target_label for token in affected_objects)
+    target_label_tokens = _match_tokens(gate.target_label or gate.label)
+    return bool(target_label_tokens & affected_objects)
 
 
 def _warning(
@@ -1038,6 +1075,33 @@ def _clean_text(value: object) -> str | None:
 
 def _normalize_token(value: object) -> str:
     return str(value or "").strip().lower().replace("-", "_").replace(" ", "_")
+
+
+def _match_tokens(value: object) -> set[str]:
+    normalized = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", str(value or "").strip())
+    return {token for token in re.split(r"[^a-zA-Z0-9]+", normalized.lower()) if token}
+
+
+def _expanded_object_match_tokens(values: list[str]) -> set[str]:
+    expanded: set[str] = set()
+    for value in values:
+        normalized = _normalize_token(value)
+        if normalized:
+            expanded.add(normalized)
+        expanded.update(_match_tokens(value))
+    return expanded
+
+
+def _gate_equivalence_descriptor(gate: NormalizedQualityGateContract) -> str:
+    target_label = _normalize_token(gate.target_label or "")
+    label = _normalize_token(gate.label)
+    if gate.gate_type in {"opening_or_cut", "shape_profile", "proportion_ratio", "refinement_stage"}:
+        return f"{target_label}|{label}"
+    if target_label:
+        return target_label
+    if gate.target_objects:
+        return ""
+    return label
 
 
 def _slug(value: str) -> str:
