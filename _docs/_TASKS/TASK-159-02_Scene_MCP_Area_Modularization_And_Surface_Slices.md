@@ -146,10 +146,10 @@ def scene_measure_gap(ctx, ...):
 
 ## Execution Structure
 
-| Order | Leaf | Purpose |
-|------|------|---------|
+| Order | Branch | Purpose |
+|------|--------|---------|
 | 1 | [TASK-159-02-01](./TASK-159-02-01_Scene_Public_Facade_Registration_And_Version_Guards.md) | Stabilize public registration, provider/manifest wiring, and version-policy guards before internal extraction |
-| 2 | [TASK-159-02-02](./TASK-159-02-02_Scene_Context_Inspect_Snapshot_And_Structural_Read_Slices.md) | Extract scene context, inspect, snapshot/compare, and structural-read helpers while keeping the read-heavy facade readable |
+| 2 | [TASK-159-02-02](./TASK-159-02-02_Scene_Context_Inspect_Snapshot_And_Structural_Read_Slices.md) | Split the read-heavy scene branch into focused context, snapshot/structural-read, and inspect-action leaves instead of one monolithic pass |
 | 3 | [TASK-159-02-07](./TASK-159-02-07_Scene_Grouped_Create_And_Configure_Mega_Tool_Split.md) | Separate grouped `scene_create(...)` / `scene_configure(...)` routing and private write-side executors from the read-heavy state branch |
 | 4 | [TASK-159-02-03](./TASK-159-02-03_Scene_Spatial_Graph_And_View_Diagnostics_Slices.md) | Separate spatial-graph and view-diagnostics helpers without drifting guided visibility semantics |
 | 5 | [TASK-159-02-04](./TASK-159-02-04_Scene_Measure_Assert_And_Guided_Side_Effects.md) | Extract measure/assert helpers and preserve guided stale-state / completion side effects |
@@ -160,6 +160,9 @@ def scene_measure_gap(ctx, ...):
 
 - `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
 - `tests/unit/tools/scene/test_scene_context_mega.py`
+- `tests/unit/tools/scene/test_scene_inspect_mega.py`
+- `tests/unit/tools/scene/test_scene_inspect_modifiers.py`
+- `tests/unit/tools/scene/test_get_constraints.py`
 - `tests/unit/tools/scene/test_scene_create_mega.py`
 - `tests/unit/tools/scene/test_scene_configure_mega.py`
 - `tests/unit/tools/scene/test_scene_contracts.py`
@@ -169,6 +172,7 @@ def scene_measure_gap(ctx, ...):
 - `tests/unit/tools/test_handler_rpc_alignment.py`
 - `tests/unit/tools/scene/test_mcp_viewport_output.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
+- `tests/unit/adapters/mcp/test_scene_guided_scope_requirements.py`
 - `tests/unit/adapters/mcp/test_task_mode_tools.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
@@ -178,6 +182,7 @@ def scene_measure_gap(ctx, ...):
 - `tests/unit/adapters/mcp/test_surface_manifest.py`
 - `tests/unit/adapters/mcp/test_structured_contract_delivery.py`
 - `tests/e2e/tools/scene/test_snapshot_tools.py`
+- `tests/e2e/tools/scene/test_scene_inspect_material_slots.py`
 - `tests/e2e/tools/scene/test_scene_get_viewport.py`
 - `tests/e2e/tools/scene/test_scene_get_viewport_camera.py`
 - `tests/e2e/tools/scene/test_scene_configure_roundtrip.py`
@@ -189,8 +194,8 @@ def scene_measure_gap(ctx, ...):
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_scene_context_mega.py tests/unit/tools/scene/test_scene_create_mega.py tests/unit/tools/scene/test_scene_configure_mega.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/scene/test_scene_state_assistants.py tests/unit/tools/scene/test_macro_place_supported_pair_mcp.py tests/unit/tools/test_mcp_area_main_paths.py tests/unit/tools/test_handler_rpc_alignment.py tests/unit/tools/scene/test_mcp_viewport_output.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_task_mode_tools.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/adapters/mcp/test_provider_inventory.py tests/unit/adapters/mcp/test_provider_versions.py tests/unit/adapters/mcp/test_surface_manifest.py tests/unit/adapters/mcp/test_structured_contract_delivery.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/tools/scene/test_snapshot_tools.py tests/e2e/tools/scene/test_scene_get_viewport.py tests/e2e/tools/scene/test_scene_get_viewport_camera.py tests/e2e/tools/scene/test_scene_configure_roundtrip.py tests/e2e/tools/scene/test_scene_clean_scene.py tests/e2e/tools/scene/test_scene_utility_workflow.py tests/e2e/tools/scene/test_scene_measure_tools.py tests/e2e/tools/scene/test_scene_assert_tools.py tests/e2e/tools/scene/test_scene_view_diagnostics.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_scene_context_mega.py tests/unit/tools/scene/test_scene_inspect_mega.py tests/unit/tools/scene/test_scene_inspect_modifiers.py tests/unit/tools/scene/test_get_constraints.py tests/unit/tools/scene/test_scene_create_mega.py tests/unit/tools/scene/test_scene_configure_mega.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/scene/test_scene_state_assistants.py tests/unit/tools/scene/test_macro_place_supported_pair_mcp.py tests/unit/tools/test_mcp_area_main_paths.py tests/unit/tools/test_handler_rpc_alignment.py tests/unit/tools/scene/test_mcp_viewport_output.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_scene_guided_scope_requirements.py tests/unit/adapters/mcp/test_task_mode_tools.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/adapters/mcp/test_provider_inventory.py tests/unit/adapters/mcp/test_provider_versions.py tests/unit/adapters/mcp/test_surface_manifest.py tests/unit/adapters/mcp/test_structured_contract_delivery.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/tools/scene/test_snapshot_tools.py tests/e2e/tools/scene/test_scene_inspect_material_slots.py tests/e2e/tools/scene/test_scene_get_viewport.py tests/e2e/tools/scene/test_scene_get_viewport_camera.py tests/e2e/tools/scene/test_scene_configure_roundtrip.py tests/e2e/tools/scene/test_scene_clean_scene.py tests/e2e/tools/scene/test_scene_utility_workflow.py tests/e2e/tools/scene/test_scene_measure_tools.py tests/e2e/tools/scene/test_scene_assert_tools.py tests/e2e/tools/scene/test_scene_view_diagnostics.py -q`
 
 ## Docs To Update
 

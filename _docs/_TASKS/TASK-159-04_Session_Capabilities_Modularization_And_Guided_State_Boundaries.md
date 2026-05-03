@@ -141,7 +141,10 @@ __all__ = [
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
 - `tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py`
 - `tests/unit/adapters/mcp/test_session_phase.py`
+- `tests/unit/router/application/test_session_phase_hints.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
+- `tests/unit/adapters/mcp/test_quality_gate_verifier.py`
+- `tests/unit/adapters/mcp/test_quality_gate_intake.py`
 - `tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py`
 - `tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py`
 - `tests/unit/adapters/mcp/test_context_bridge.py`
@@ -153,7 +156,7 @@ __all__ = [
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py tests/unit/adapters/mcp/test_session_phase.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py tests/unit/adapters/mcp/test_context_bridge.py tests/unit/adapters/mcp/test_router_elicitation.py tests/unit/adapters/mcp/test_search_surface.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py tests/unit/adapters/mcp/test_session_phase.py tests/unit/router/application/test_session_phase_hints.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py tests/unit/adapters/mcp/test_context_bridge.py tests/unit/adapters/mcp/test_router_elicitation.py tests/unit/adapters/mcp/test_search_surface.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/integration/test_guided_gate_state_transport.py tests/e2e/router/test_guided_manual_handoff.py -q`
 
 ## Docs To Update

@@ -6,11 +6,13 @@
 
 ## Objective
 
-Extract scene context, structured inspect, snapshot/compare, and
-structural-read helper clusters so the public wrappers stay readable without
-changing the current read-heavy scene behavior.
+Split the read-heavy scene branch into focused leaves for context/selection
+reads, snapshot/structural reads, and the `scene_inspect(...)` action matrix so
+the branch stays execution-ready under the leaf-size rule without changing
+runtime behavior.
 
-This leaf owns the read-heavy scene surface:
+This subtask still owns the same read-heavy scene surface, but it should no
+longer execute as one monolithic pass:
 
 - `scene_context(...)`
 - `scene_inspect(...)`
@@ -77,6 +79,28 @@ from .scene_state_reads import (
 )
 ```
 
+## Implementation Notes
+
+- Keep the read-heavy branch split by runtime concern, not alphabetically:
+  - context/selection reads
+  - snapshot/compare plus structural reads
+  - `scene_inspect(...)` action-matrix helpers
+- Keep grouped create/configure routing out of scope for this subtask so the
+  read-heavy branch stays isolated from write-side mega-tool work.
+- Treat the full inspect action matrix as owned scope for this branch:
+  object, materials, modifiers, constraints, modifier_data, render,
+  color_management, and world.
+- Preserve current request validation, assistant-summary plumbing, and
+  structured scene contracts across all child leaves.
+
+## Execution Structure
+
+| Order | Leaf | Purpose |
+|------|------|---------|
+| 1 | [TASK-159-02-02-01](./TASK-159-02-02-01_Scene_Context_And_Selection_Read_Slices.md) | Separate `scene_context(...)` plus mode/selection reads into one focused adapter-state leaf |
+| 2 | [TASK-159-02-02-02](./TASK-159-02-02-02_Scene_Snapshot_Compare_And_Structural_Read_Slices.md) | Separate snapshot/compare, hierarchy, bbox, and origin helpers into one structural-read leaf |
+| 3 | [TASK-159-02-02-03](./TASK-159-02-02-03_Scene_Inspect_Action_Matrix_And_Contract_Slices.md) | Separate the full `scene_inspect(...)` action matrix and its typed contract helpers from the rest of the read-heavy branch |
+
 ## Runtime / Security Contract Notes
 
 - keep current request validation, assistant-summary plumbing, and structured
@@ -115,10 +139,10 @@ from .scene_state_reads import (
 
 ## Acceptance Criteria
 
-- scene context, inspect, snapshot/compare, and structural-read helpers no
-  longer live as one inline cluster inside `scene.py`
+- this branch is decomposed into focused child leaves instead of one oversized
+  read-heavy implementation pass
 - current scene contracts, assistant-summary hooks, and read-heavy wrappers
-  remain stable
+  remain stable across context, snapshot/structural, and inspect-action leaves
 - unit plus focused inspect and snapshot E2E lanes still prove the same
   context/inspect/snapshot behavior across object, materials, modifiers,
   constraints, render/color/world, and structural-read branches
@@ -126,5 +150,7 @@ from .scene_state_reads import (
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
-- keep grouped create/configure work on `TASK-159-02-07` instead of stretching
-  this leaf beyond one read-heavy implementation pass
+- execute this branch through the focused leaves below instead of stretching it
+  into one read-heavy implementation pass
+- keep grouped create/configure work on `TASK-159-02-07` instead of widening
+  this subtask back into write-side routing work

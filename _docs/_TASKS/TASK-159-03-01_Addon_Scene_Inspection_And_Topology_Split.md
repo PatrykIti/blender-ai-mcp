@@ -6,19 +6,22 @@
 
 ## Objective
 
-Extract scene lifecycle/context, snapshot/structural-read, inspection, and
-topology helpers from addon `SceneHandler` while preserving Blender-owned truth
-reads.
+Split the addon truth-read branch into focused lifecycle/context, structural
+read, and inspection/topology leaves so the Blender owner path stays
+execution-ready under the leaf-size rule.
 
-This leaf owns the truth-read surface plus the early object-lifecycle helpers
-that currently sit next to it in `SceneHandler`. Creation, visibility, and
-custom-property utilities move under
+This subtask still owns the same truth-read surface plus the early
+object-lifecycle helpers that currently sit next to it in `SceneHandler`.
+Creation, visibility, and custom-property utilities move under
 [TASK-159-03-04](./TASK-159-03-04_Addon_Scene_Creation_Visibility_And_Metadata_Utilities.md).
 
 ## Repository Touchpoints
 
 - `blender_addon/application/handlers/scene.py`
-- likely new helper module such as `blender_addon/application/handlers/scene_inspection_mixin.py`
+- likely new helper modules such as:
+  - `blender_addon/application/handlers/scene_lifecycle_context_mixin.py`
+  - `blender_addon/application/handlers/scene_structural_read_mixin.py`
+  - `blender_addon/application/handlers/scene_inspection_mixin.py`
 - `tests/unit/tools/scene/test_scene_mode.py`
 - `tests/unit/tools/scene/test_scene_get_mode_handler.py`
 - `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
@@ -52,9 +55,35 @@ custom-property utilities move under
 ## Planned Code Shape
 
 ```python
-class SceneHandler(SceneInspectionMixin, ...):
+class SceneHandler(
+    SceneLifecycleContextMixin,
+    SceneStructuralReadMixin,
+    SceneInspectionMixin,
+    ...,
+):
     pass
 ```
+
+## Implementation Notes
+
+- Keep lifecycle/context helpers separate from structural-read helpers even if
+  they land in adjacent addon mixins; they have different validation and RPC
+  coupling.
+- Keep the inspection action matrix plus topology together only where the same
+  Blender-owned truth helpers already share mesh/material/constraint state.
+- Leave creation/visibility/custom-property utilities on `TASK-159-03-04` and
+  world/render/color-management on `TASK-159-03-05`; do not let this branch
+  absorb those responsibilities again.
+- Preserve Blender main-thread and evaluated-mesh safety patterns across every
+  child leaf.
+
+## Execution Structure
+
+| Order | Leaf | Purpose |
+|------|------|---------|
+| 1 | [TASK-159-03-01-01](./TASK-159-03-01-01_Addon_Scene_Lifecycle_And_Context_Read_Split.md) | Separate early object lifecycle helpers plus mode/selection/context reads into one focused addon leaf |
+| 2 | [TASK-159-03-01-02](./TASK-159-03-01-02_Addon_Scene_Snapshot_And_Structural_Read_Split.md) | Separate snapshot, hierarchy, bbox, and origin helpers into one structural-read addon leaf |
+| 3 | [TASK-159-03-01-03](./TASK-159-03-01-03_Addon_Scene_Inspection_Action_Matrix_And_Topology_Split.md) | Separate the inspection action matrix plus topology helpers into one focused truth-read addon leaf |
 
 ## Runtime / Security Contract Notes
 
@@ -93,16 +122,16 @@ class SceneHandler(SceneInspectionMixin, ...):
 
 ## Acceptance Criteria
 
-- inspection/topology helpers are no longer inline with unrelated viewport or
-  measure/assert code
-- lifecycle/context helpers no longer share one anonymous edit zone with later
-  create/visibility/viewport code
+- this branch is decomposed into focused lifecycle/context, structural-read,
+  and inspection/topology leaves instead of one oversized truth-read pass
 - Blender truth-read payloads stay unchanged for list/clean/duplicate/mode,
   inspect, material-slot, modifier, constraint, snapshot, hierarchy,
-  bbox/origin, and topology paths
-- RPC alignment tests still pass for the extracted lifecycle/context/inspection
-  methods
+  bbox/origin, and topology paths across the child leaves
+- RPC alignment tests still pass for the extracted lifecycle/context,
+  structural-read, and inspection methods
 
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
+- execute this branch through the focused leaves below instead of landing all
+  truth-read work in one oversized pass

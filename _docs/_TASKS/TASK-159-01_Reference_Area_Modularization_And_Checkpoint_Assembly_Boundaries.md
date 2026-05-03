@@ -59,6 +59,8 @@ That makes future work riskier than it needs to be:
 - `tests/unit/adapters/mcp/test_provider_inventory.py`
 - `tests/unit/adapters/mcp/test_tool_inventory.py`
 - `tests/unit/adapters/mcp/test_surface_manifest.py`
+- `tests/e2e/tools/scene/test_scene_get_viewport.py`
+- `tests/e2e/tools/scene/test_scene_get_viewport_camera.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 - `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
 - `tests/e2e/vision/test_goal_derived_gate_support_symmetry_surfaces.py`
@@ -145,7 +147,7 @@ async def reference_compare_stage_checkpoint(...):
 ## Validation Commands
 
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/adapters/mcp/test_provider_inventory.py tests/unit/adapters/mcp/test_tool_inventory.py tests/unit/adapters/mcp/test_surface_manifest.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_truth_handoff.py tests/e2e/vision/test_reference_stage_silhouette_contract.py tests/e2e/vision/test_goal_derived_gate_support_symmetry_surfaces.py tests/e2e/vision/test_reference_understanding_runtime_surface.py tests/e2e/integration/test_guided_gate_state_transport.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/tools/scene/test_scene_get_viewport.py tests/e2e/tools/scene/test_scene_get_viewport_camera.py tests/e2e/vision/test_reference_stage_truth_handoff.py tests/e2e/vision/test_reference_stage_silhouette_contract.py tests/e2e/vision/test_goal_derived_gate_support_symmetry_surfaces.py tests/e2e/vision/test_reference_understanding_runtime_surface.py tests/e2e/integration/test_guided_gate_state_transport.py -q`
 
 ## Docs To Update
 
