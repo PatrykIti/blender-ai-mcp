@@ -12,6 +12,7 @@ Separate snapshot and structural-read helpers into one focused addon leaf.
 
 - `blender_addon/application/handlers/scene.py`
 - likely helper module such as `blender_addon/application/handlers/scene_structural_read_mixin.py`
+- `tests/unit/tools/scene/test_snapshot_state_visibility.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
 - `tests/e2e/tools/scene/test_snapshot_tools.py`
 
@@ -37,11 +38,12 @@ class SceneHandler(SceneStructuralReadMixin, ...):
 ## Tests To Add/Update
 
 - `tests/unit/tools/test_handler_rpc_alignment.py`
+- `tests/unit/tools/scene/test_snapshot_state_visibility.py`
 - `tests/e2e/tools/scene/test_snapshot_tools.py`
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/tools/test_handler_rpc_alignment.py tests/e2e/tools/scene/test_snapshot_tools.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_snapshot_state_visibility.py tests/unit/tools/test_handler_rpc_alignment.py tests/e2e/tools/scene/test_snapshot_tools.py -q`
 
 ## Docs To Update
 

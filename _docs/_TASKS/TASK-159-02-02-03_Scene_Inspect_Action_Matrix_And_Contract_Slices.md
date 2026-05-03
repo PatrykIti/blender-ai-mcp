@@ -46,8 +46,8 @@ from .scene_inspect import execute_scene_inspect
 ## Runtime / Security Contract Notes
 
 - preserve the current typed inspect action vocabulary and response envelopes
-- keep object, materials, modifiers, constraints, modifier_data, render,
-  color_management, and world branches on the same inspect owner seam
+- keep object, topology, materials, modifiers, constraints, modifier_data,
+  render, color_management, and world branches on the same inspect owner seam
 
 ## Tests To Add/Update
 

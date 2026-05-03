@@ -23,7 +23,9 @@ server-addon RPC parity and deterministic truth semantics.
 ## Current Code Anchors
 
 - `SceneHandler.measure_distance(...)`
+- `SceneHandler.measure_dimensions(...)`
 - `SceneHandler.measure_gap(...)`
+- `SceneHandler.measure_alignment(...)`
 - `SceneHandler.measure_overlap(...)`
 - `SceneHandler.assert_contact(...)`
 - `SceneHandler.assert_dimensions(...)`
@@ -69,7 +71,8 @@ class SceneHandler(SceneMeasureAssertMixin, ...):
 
 - measure/assert helpers no longer share one edit zone with unrelated scene code
 - RPC parity remains stable across unit and Blender-backed tests
-- truth-layer payloads and error strings stay unchanged
+- truth-layer payloads and error strings stay unchanged across distance,
+  dimensions, gap, alignment, overlap, and assertion helpers
 
 ## Status / Board Update
 

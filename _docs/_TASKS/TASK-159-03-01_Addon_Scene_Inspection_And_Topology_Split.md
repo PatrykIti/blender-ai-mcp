@@ -6,9 +6,9 @@
 
 ## Objective
 
-Split the addon truth-read branch into focused lifecycle/context, structural
-read, and inspection/topology leaves so the Blender owner path stays
-execution-ready under the leaf-size rule.
+Split the addon lifecycle/context, structural-read, and inspection/topology
+branch into focused leaves so the Blender owner path stays execution-ready
+under the leaf-size rule.
 
 This subtask still owns the same truth-read surface plus the early
 object-lifecycle helpers that currently sit next to it in `SceneHandler`.
