@@ -101,6 +101,10 @@ preserve_existing_rpc_payloads()
 - `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
 - `tests/unit/adapters/mcp/test_structured_contract_delivery.py`
+- `tests/e2e/tools/scene/test_hide_object.py`
+- `tests/e2e/tools/scene/test_show_all_objects.py`
+- `tests/e2e/tools/scene/test_rename_object.py`
+- `tests/e2e/tools/scene/test_isolate_object.py`
 - `tests/e2e/tools/scene/test_scene_utility_workflow.py`
 
 ## Validation Commands

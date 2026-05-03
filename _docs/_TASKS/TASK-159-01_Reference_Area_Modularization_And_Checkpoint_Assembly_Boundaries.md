@@ -138,6 +138,8 @@ async def reference_compare_stage_checkpoint(...):
 - `tests/unit/adapters/mcp/test_provider_inventory.py`
 - `tests/unit/adapters/mcp/test_tool_inventory.py`
 - `tests/unit/adapters/mcp/test_surface_manifest.py`
+- `tests/e2e/tools/scene/test_scene_get_viewport.py`
+- `tests/e2e/tools/scene/test_scene_get_viewport_camera.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 - `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
 - `tests/e2e/vision/test_goal_derived_gate_support_symmetry_surfaces.py`

@@ -122,6 +122,10 @@ for wrapper in cleanup_mode_leaf + visibility_camera_leaf + custom_property_leaf
 - `tests/unit/adapters/mcp/test_provider_inventory.py`
 - `tests/unit/adapters/mcp/test_structured_contract_delivery.py`
 - `tests/e2e/tools/scene/test_scene_clean_scene.py`
+- `tests/e2e/tools/scene/test_hide_object.py`
+- `tests/e2e/tools/scene/test_show_all_objects.py`
+- `tests/e2e/tools/scene/test_rename_object.py`
+- `tests/e2e/tools/scene/test_isolate_object.py`
 - `tests/e2e/tools/scene/test_scene_utility_workflow.py`
 
 ## Validation Commands

@@ -19,6 +19,10 @@ focused addon utility leaf.
 - `tests/unit/tools/scene/test_rename_object.py`
 - `tests/unit/tools/scene/test_isolate_object.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
+- `tests/e2e/tools/scene/test_hide_object.py`
+- `tests/e2e/tools/scene/test_show_all_objects.py`
+- `tests/e2e/tools/scene/test_rename_object.py`
+- `tests/e2e/tools/scene/test_isolate_object.py`
 - `tests/e2e/tools/scene/test_scene_utility_workflow.py`
 
 ## Current Code Anchors
@@ -49,11 +53,15 @@ class SceneHandler(SceneModeVisibilityUtilityMixin, ...):
 - `tests/unit/tools/scene/test_rename_object.py`
 - `tests/unit/tools/scene/test_isolate_object.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
+- `tests/e2e/tools/scene/test_hide_object.py`
+- `tests/e2e/tools/scene/test_show_all_objects.py`
+- `tests/e2e/tools/scene/test_rename_object.py`
+- `tests/e2e/tools/scene/test_isolate_object.py`
 - `tests/e2e/tools/scene/test_scene_utility_workflow.py`
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mode.py tests/unit/tools/scene/test_hide_object.py tests/unit/tools/scene/test_show_all_objects.py tests/unit/tools/scene/test_rename_object.py tests/unit/tools/scene/test_isolate_object.py tests/unit/tools/test_handler_rpc_alignment.py tests/e2e/tools/scene/test_scene_utility_workflow.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mode.py tests/unit/tools/scene/test_hide_object.py tests/unit/tools/scene/test_show_all_objects.py tests/unit/tools/scene/test_rename_object.py tests/unit/tools/scene/test_isolate_object.py tests/unit/tools/test_handler_rpc_alignment.py tests/e2e/tools/scene/test_hide_object.py tests/e2e/tools/scene/test_show_all_objects.py tests/e2e/tools/scene/test_rename_object.py tests/e2e/tools/scene/test_isolate_object.py tests/e2e/tools/scene/test_scene_utility_workflow.py -q`
 
 ## Docs To Update
 
