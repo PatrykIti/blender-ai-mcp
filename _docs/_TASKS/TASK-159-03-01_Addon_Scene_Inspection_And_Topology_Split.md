@@ -13,8 +13,12 @@ Extract inspection, hierarchy, bbox/origin, and topology helpers from addon
 
 - `blender_addon/application/handlers/scene.py`
 - likely new helper module such as `blender_addon/application/handlers/scene_inspection_mixin.py`
+- `tests/unit/tools/scene/test_scene_mode.py`
+- `tests/unit/tools/scene/test_scene_get_mode_handler.py`
+- `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
 - `tests/unit/tools/scene/test_scene_inspect_mesh_topology.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
+- `tests/e2e/tools/scene/test_snapshot_tools.py`
 
 ## Current Code Anchors
 
@@ -35,17 +39,22 @@ class SceneHandler(SceneInspectionMixin, ...):
 ## Runtime / Security Contract Notes
 
 - keep Blender state reads on the main-thread-safe addon path
-- preserve current topology payload shapes and bbox/origin conventions
+- preserve current topology payload shapes plus snapshot/hierarchy/bbox/origin
+  conventions
 - do not move truth reads into server-side services during this leaf
 
 ## Tests To Add/Update
 
+- `tests/unit/tools/scene/test_scene_mode.py`
+- `tests/unit/tools/scene/test_scene_get_mode_handler.py`
+- `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
 - `tests/unit/tools/scene/test_scene_inspect_mesh_topology.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
+- `tests/e2e/tools/scene/test_snapshot_tools.py`
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_inspect_mesh_topology.py tests/unit/tools/test_handler_rpc_alignment.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mode.py tests/unit/tools/scene/test_scene_get_mode_handler.py tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_scene_inspect_mesh_topology.py tests/unit/tools/test_handler_rpc_alignment.py tests/e2e/tools/scene/test_snapshot_tools.py -q`
 
 ## Docs To Update
 
@@ -59,7 +68,8 @@ class SceneHandler(SceneInspectionMixin, ...):
 
 - inspection/topology helpers are no longer inline with unrelated viewport or
   measure/assert code
-- Blender truth-read payloads stay unchanged
+- Blender truth-read payloads stay unchanged for inspect, snapshot, hierarchy,
+  bbox/origin, and topology paths
 - RPC alignment tests still pass for the extracted inspection methods
 
 ## Status / Board Update

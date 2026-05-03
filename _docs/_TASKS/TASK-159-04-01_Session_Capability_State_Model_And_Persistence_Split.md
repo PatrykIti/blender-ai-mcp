@@ -8,7 +8,9 @@
 
 Separate the session-capability dataclasses, normalization helpers, and sync/async
 persistence seam from the rest of `session_capabilities.py` while keeping the
-module import facade stable.
+module import facade stable, including the already-shipped `guided_handoff`,
+`guided_flow_state`, `gate_plan`, `reference_understanding_summary`, and
+`reference_understanding_gate_ids` state envelope.
 
 ## Repository Touchpoints
 
@@ -18,13 +20,17 @@ module import facade stable.
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
 - `tests/unit/adapters/mcp/test_context_bridge.py`
 - `tests/unit/adapters/mcp/test_session_phase.py`
+- `tests/unit/router/application/test_router_contracts.py`
 
 ## Current Code Anchors
 
 - `SessionCapabilityState`
 - `GuidedReferenceReadinessState`
+- `SESSION_GUIDED_HANDOFF_KEY`
 - `_normalize_guided_flow_state(...)`
 - `_normalize_gate_plan(...)`
+- `_normalize_reference_understanding_summary(...)`
+- `_normalize_reference_understanding_gate_ids(...)`
 - `get_session_capability_state(...)`
 - `get_session_capability_state_async(...)`
 - `set_session_capability_state(...)`
@@ -38,6 +44,14 @@ from .session_capabilities_state import (
     get_session_capability_state,
     set_session_capability_state,
 )
+
+state = SessionCapabilityState(
+    guided_handoff=...,
+    guided_flow_state=...,
+    gate_plan=...,
+    reference_understanding_summary=...,
+    reference_understanding_gate_ids=...,
+)
 ```
 
 ## Runtime / Security Contract Notes
@@ -47,16 +61,20 @@ from .session_capabilities_state import (
 - preserve paired sync/async persistence behavior
 - do not change which session keys are written or how typed contracts are rebuilt
   from raw session storage
+- do not drop, rename, or silently stop normalizing `guided_handoff`,
+  `reference_understanding_summary`, or
+  `reference_understanding_gate_ids` while extracting the persistence seam
 
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
 - `tests/unit/adapters/mcp/test_context_bridge.py`
 - `tests/unit/adapters/mcp/test_session_phase.py`
+- `tests/unit/router/application/test_router_contracts.py`
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_context_bridge.py tests/unit/adapters/mcp/test_session_phase.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_context_bridge.py tests/unit/adapters/mcp/test_session_phase.py tests/unit/router/application/test_router_contracts.py -q`
 
 ## Docs To Update
 
@@ -70,6 +88,9 @@ from .session_capabilities_state import (
 
 - state model and persistence helpers have a bounded home outside the monolith
 - session serialization/deserialization semantics remain unchanged
+- the extracted state seam still owns `guided_handoff`,
+  `reference_understanding_summary`, and `reference_understanding_gate_ids` as
+  part of the same canonical persisted envelope
 - the facade still exports the same state access functions used elsewhere in the
   repo
 
