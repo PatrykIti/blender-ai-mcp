@@ -5,7 +5,8 @@
 **Category:** Architecture / Maintainability
 **Estimated Effort:** Large
 **Dependencies:** TASK-143, TASK-144, TASK-145, TASK-150, TASK-157, TASK-158
-**Follow-on After:** [TASK-143](./TASK-143_Guided_Spatial_Scope_And_Relation_Graphs.md), [TASK-145](./TASK-145_Spatial_Repair_Planner_And_Sculpt_Handoff_Context.md), [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md)
+**Dependency Meaning:** These dependencies are architecture-provenance predecessors, not new runtime blockers for the refactor. Each listed task family already shipped product/runtime seams that now live inside the oversized owner files, so `TASK-159` depends on their outcomes as the scope being modularized rather than as separate unfinished implementation gates.
+**Follow-on After:** [TASK-143](./TASK-143_Guided_Spatial_Scope_And_Relation_Graphs.md), [TASK-144](./TASK-144_Camera_Aware_View_Graph_And_Visibility_Diagnostics.md), [TASK-145](./TASK-145_Spatial_Repair_Planner_And_Sculpt_Handoff_Context.md), [TASK-150](./TASK-150_Server_Driven_Guided_Flow_State_Step_Gating_And_Domain_Profiles.md), [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md)
 
 ## Objective
 
