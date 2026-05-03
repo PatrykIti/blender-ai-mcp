@@ -2184,6 +2184,7 @@ def mark_guided_spatial_state_stale(
             reason=reason or tool_name,
             spatial_state_version=_spatial_state_version_from_flow_state(updated_flow_state),
             affected_objects=affected_objects,
+            guided_part_registry=cast(list[Mapping[str, Any]] | None, current.guided_part_registry),
         ).model_dump(mode="json", exclude_none=True)
         if current.gate_plan is not None
         else None
@@ -2247,6 +2248,7 @@ async def mark_guided_spatial_state_stale_async(
             reason=reason or tool_name,
             spatial_state_version=_spatial_state_version_from_flow_state(updated_flow_state),
             affected_objects=affected_objects,
+            guided_part_registry=cast(list[Mapping[str, Any]] | None, current.guided_part_registry),
         ).model_dump(mode="json", exclude_none=True)
         if current.gate_plan is not None
         else None

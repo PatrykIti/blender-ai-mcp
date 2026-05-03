@@ -400,3 +400,78 @@ def test_mutating_tool_only_stales_gates_touching_affected_objects():
     ear_gate = next(gate for gate in restored.gate_plan["gates"] if gate["gate_id"] == "ear_pair_symmetry")
     assert tail_gate["status"] == "stale"
     assert ear_gate["status"] == "passed"
+
+
+def test_mutating_tool_stales_object_role_gate_when_registered_object_is_affected():
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel",
+            surface_profile="llm-guided",
+            guided_flow_state={
+                **_guided_flow_state(),
+                "active_target_scope": {
+                    "scope_kind": "object_set",
+                    "primary_target": "Body",
+                    "object_names": ["Body", "Head"],
+                    "object_count": 2,
+                },
+                "spatial_scope_fingerprint": "scope:creature",
+                "spatial_state_version": 5,
+            },
+            gate_plan={
+                "plan_id": "creature_quality_gate_plan",
+                "domain_profile": "creature",
+                "required_gate_count": 1,
+                "optional_gate_count": 0,
+                "gates": [
+                    {
+                        "gate_id": "creature_body_core_required",
+                        "gate_type": "required_part",
+                        "label": "Body core is present",
+                        "target_kind": "object_role",
+                        "target_label": "body_core",
+                        "required": True,
+                        "priority": "high",
+                        "status": "passed",
+                        "verification_strategy": "object_existence",
+                        "allowed_correction_families": ["primary_masses", "secondary_parts", "inspect_validate"],
+                        "recommended_bounded_tools": ["scene_scope_graph"],
+                        "proposal_sources": ["domain_template"],
+                        "evidence_requirements": [{"evidence_kind": "scene_truth", "required": True}],
+                        "evidence_refs": [
+                            {
+                                "evidence_id": "body-core",
+                                "evidence_kind": "scene_truth",
+                                "source": "scene_truth",
+                                "authority": "authoritative",
+                            }
+                        ],
+                    }
+                ],
+            },
+            guided_part_registry=[
+                {
+                    "object_name": "Body",
+                    "role": "body_core",
+                    "role_group": "primary_masses",
+                    "status": "registered",
+                }
+            ],
+        ),
+    )
+
+    mark_guided_spatial_state_stale(
+        ctx,
+        tool_name="modeling_transform_object",
+        affected_objects=["Body"],
+    )
+
+    restored = get_session_capability_state(ctx)
+
+    assert restored.gate_plan is not None
+    body_gate = restored.gate_plan["gates"][0]
+    assert body_gate["status"] == "stale"
+    assert body_gate["status_reason"] == "scene_mutation_after_verification"

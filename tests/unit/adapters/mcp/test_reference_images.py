@@ -514,6 +514,138 @@ def test_reference_compare_stage_checkpoint_threads_reference_understanding_from
     assert result.reference_understanding_gate_ids == ["creature_eye_pair"]
 
 
+def test_reference_understanding_refresh_replaces_previous_reference_gate_slice(tmp_path, monkeypatch):
+    image_front = tmp_path / "front.png"
+    image_side = tmp_path / "side.png"
+    image_front.write_bytes(b"front")
+    image_side.write_bytes(b"side")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    class Backend:
+        async def analyze(self, request):
+            reference_ids = list(request.metadata.get("reference_ids") or [])
+            if len(reference_ids) == 1:
+                understanding_id = "understanding_front_only"
+                gate_proposals = [
+                    {
+                        "gate_type": "required_part",
+                        "label": "front-view eye pair",
+                        "target_kind": "reference_part",
+                        "target_label": "eye_pair",
+                    },
+                    {
+                        "gate_type": "required_part",
+                        "label": "tail tip silhouette",
+                        "target_kind": "reference_part",
+                        "target_label": "tail_tip",
+                    },
+                ]
+            else:
+                understanding_id = "understanding_dual_view"
+                gate_proposals = [
+                    {
+                        "gate_type": "required_part",
+                        "label": "dual-view eye pair",
+                        "target_kind": "reference_part",
+                        "target_label": "eye_pair",
+                    },
+                    {
+                        "gate_type": "required_part",
+                        "label": "visible ear pair",
+                        "target_kind": "reference_part",
+                        "target_label": "ear_pair",
+                    },
+                ]
+            return {
+                "status": "available",
+                "understanding_id": understanding_id,
+                "goal": request.goal,
+                "reference_ids": reference_ids,
+                "subject": {
+                    "label": "low poly squirrel",
+                    "category": "creature",
+                    "confidence": 0.9,
+                    "uncertainty_notes": [],
+                },
+                "style": {
+                    "style_label": "low_poly_faceted",
+                    "confidence": 0.9,
+                    "notes": [],
+                },
+                "required_parts": [],
+                "non_goals": [],
+                "construction_strategy": {
+                    "construction_path": "low_poly_facet",
+                    "primary_family": "modeling_mesh",
+                    "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+                    "stage_sequence": ["primary_masses"],
+                    "finish_policy": "preserve_facets",
+                },
+                "router_handoff_hints": {
+                    "preferred_family": "modeling_mesh",
+                    "allowed_guided_families": [
+                        "reference_context",
+                        "primary_masses",
+                        "secondary_parts",
+                        "inspect_validate",
+                    ],
+                    "sculpt_policy": "hidden",
+                },
+                "gate_proposals": gate_proposals,
+                "visual_evidence_refs": [],
+                "verification_requirements": [],
+                "classification_scores": [],
+                "segmentation_artifacts": [],
+                "source_provenance": [{"source": "reference_understanding"}],
+                "boundary_policy": {
+                    "advisory_only": True,
+                    "not_truth_source": True,
+                    "may_unlock_tools": False,
+                    "may_pass_gates": False,
+                    "may_propose_gates": True,
+                },
+            }
+
+    class Resolver:
+        def resolve_default(self):
+            return Backend()
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: Resolver())
+
+    ctx = FakeContext()
+    update_session_from_router_goal(
+        ctx,
+        "create a low-poly squirrel",
+        {"status": "no_match"},
+        surface_profile="llm-guided",
+    )
+
+    asyncio.run(reference_images(ctx, action="attach", source_path=str(image_front), label="front_ref"))
+
+    first_state = get_session_capability_state(ctx)
+    assert first_state.gate_plan is not None
+    first_reference_gates = [
+        gate for gate in first_state.gate_plan["gates"] if "reference_understanding" in gate["proposal_sources"]
+    ]
+    assert {gate["target_label"] for gate in first_reference_gates} == {"eye_pair", "tail_tip"}
+
+    asyncio.run(reference_images(ctx, action="attach", source_path=str(image_side), label="side_ref"))
+
+    second_state = get_session_capability_state(ctx)
+    assert second_state.reference_understanding_summary is not None
+    assert second_state.reference_understanding_summary["understanding_id"] == "understanding_dual_view"
+    assert second_state.reference_understanding_gate_ids == ["required_part_ear_pair", "required_part_eye_pair"]
+    assert second_state.gate_plan is not None
+
+    refreshed_reference_gates = [
+        gate for gate in second_state.gate_plan["gates"] if "reference_understanding" in gate["proposal_sources"]
+    ]
+    assert {gate["target_label"] for gate in refreshed_reference_gates} == {"ear_pair", "eye_pair"}
+    eye_gate = next(gate for gate in refreshed_reference_gates if gate["target_label"] == "eye_pair")
+    assert eye_gate["label"] == "dual-view eye pair"
+
+
 def test_stage_checkpoint_responses_project_gate_plan_summary_fields():
     gate_plan = {
         "plan_id": "creature_quality_gate_plan",

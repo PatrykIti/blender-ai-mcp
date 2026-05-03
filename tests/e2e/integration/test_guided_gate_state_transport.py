@@ -433,11 +433,38 @@ _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
 
     class ReferenceUnderstandingBackend:
         async def analyze(self, request):
+            reference_ids = list(request.metadata.get("reference_ids") or [])
+            if len(reference_ids) == 1:
+                understanding_id = "understanding_transport_seed"
+                gate_proposals = [
+                    {
+                        "gate_type": "required_part",
+                        "label": "visible eye pair",
+                        "target_kind": "reference_part",
+                        "target_label": "eye_pair",
+                    }
+                ]
+            else:
+                understanding_id = "understanding_transport_refresh"
+                gate_proposals = [
+                    {
+                        "gate_type": "required_part",
+                        "label": "dual-view eye pair",
+                        "target_kind": "reference_part",
+                        "target_label": "eye_pair",
+                    },
+                    {
+                        "gate_type": "required_part",
+                        "label": "visible ear pair",
+                        "target_kind": "reference_part",
+                        "target_label": "ear_pair",
+                    },
+                ]
             return {
                 "status": "available",
-                "understanding_id": "understanding_transport_seed",
+                "understanding_id": understanding_id,
                 "goal": request.goal,
-                "reference_ids": list(request.metadata.get("reference_ids") or []),
+                "reference_ids": reference_ids,
                 "subject": {
                     "label": "low poly squirrel",
                     "category": "creature",
@@ -472,19 +499,14 @@ _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
                     "sculpt_policy": "hidden",
                 },
                 "gate_proposals": [
-                    {
-                        "gate_type": "required_part",
-                        "label": "visible eye pair",
-                        "target_kind": "reference_part",
-                        "target_label": "eye_pair",
-                    }
+                    *gate_proposals,
                 ],
                 "visual_evidence_refs": [
                     {
                         "evidence_id": "ref_front_subject",
                         "source_class": "reference_image",
                         "summary": "The reference depicts a faceted squirrel blockout.",
-                        "reference_id": (request.metadata.get("reference_ids") or ["ref_front"])[0],
+                        "reference_id": (reference_ids or ["ref_front"])[0],
                     }
                 ],
                 "verification_requirements": [
@@ -632,6 +654,77 @@ async def _exercise_reference_understanding_transport_roundtrip(client, referenc
     assert iterate_result["reference_understanding_summary"]["understanding_id"] == "understanding_transport_seed"
     assert iterate_result["reference_understanding_gate_ids"] == goal_result["reference_understanding_gate_ids"]
     assert iterate_result["part_segmentation"]["status"] == "disabled"
+
+
+async def _exercise_reference_understanding_refresh_replaces_gate_slice(
+    client,
+    front_reference_path: Path,
+    side_reference_path: Path,
+) -> None:
+    first_attach = result_payload(
+        await client.call_tool(
+            "reference_images",
+            {
+                "action": "attach",
+                "source_path": str(front_reference_path),
+                "label": "front_ref",
+                "target_object": "Squirrel_Body",
+                "target_view": "front",
+            },
+        )
+    )
+    assert first_attach["reference_count"] == 1
+
+    goal_result = result_payload(
+        await client.call_tool(
+            "router_set_goal",
+            {"goal": "create a low-poly squirrel matching front and side reference images"},
+        )
+    )
+    assert goal_result["reference_understanding_summary"]["understanding_id"] == "understanding_transport_seed"
+    assert goal_result["reference_understanding_gate_ids"] == ["required_part_eye_pair"]
+
+    second_attach = result_payload(
+        await client.call_tool(
+            "reference_images",
+            {
+                "action": "attach",
+                "source_path": str(side_reference_path),
+                "label": "side_ref",
+                "target_object": "Squirrel_Body",
+                "target_view": "side",
+            },
+        )
+    )
+    assert second_attach["reference_count"] == 2
+
+    status_result = result_payload(await client.call_tool("router_get_status", {}))
+    assert status_result["reference_understanding_summary"]["understanding_id"] == "understanding_transport_refresh"
+    assert status_result["reference_understanding_gate_ids"] == ["required_part_ear_pair", "required_part_eye_pair"]
+
+    refreshed_reference_gates = [
+        gate
+        for gate in (status_result["active_gate_plan"] or {}).get("gates", [])
+        if "reference_understanding" in gate.get("proposal_sources", [])
+    ]
+    assert {gate["target_label"] for gate in refreshed_reference_gates} == {"ear_pair", "eye_pair"}
+    eye_gate = next(gate for gate in refreshed_reference_gates if gate["target_label"] == "eye_pair")
+    assert eye_gate["label"] == "dual-view eye pair"
+
+    compare_result = result_payload(
+        await client.call_tool(
+            "reference_compare_stage_checkpoint",
+            {
+                "target_object": "Squirrel_Body",
+                "target_objects": ["Squirrel_Tail"],
+                "checkpoint_label": "reference_understanding_transport_refresh_compare",
+                "target_view": "front",
+                "preset_profile": "compact",
+            },
+        )
+    )
+    assert compare_result["reference_understanding_summary"]["understanding_id"] == "understanding_transport_refresh"
+    assert compare_result["reference_understanding_gate_ids"] == ["required_part_ear_pair", "required_part_eye_pair"]
 
 
 async def _exercise_gate_state_roundtrip(client, reference_path: Path) -> None:
@@ -995,6 +1088,45 @@ def test_reference_understanding_transport_roundtrip_over_streamable(tmp_path: P
     async def run(url: str) -> None:
         async with streamable_client(url) as client:
             await _exercise_reference_understanding_transport_roundtrip(client, reference_path)
+
+    with run_streamable_server(script_path) as url:
+        asyncio.run(run(url))
+
+
+@pytest.mark.slow
+def test_reference_understanding_refresh_replaces_gate_slice_over_stdio(tmp_path: Path):
+    script_path = write_server_script(tmp_path, _PATCHED_GATE_STATE_SERVER)
+    front_reference_path = tmp_path / "transport_front.png"
+    side_reference_path = tmp_path / "transport_side.png"
+    front_reference_path.write_bytes(_TRANSPORT_REFERENCE_PNG)
+    side_reference_path.write_bytes(_TRANSPORT_REFERENCE_PNG)
+
+    async def run() -> None:
+        async with stdio_client(script_path) as client:
+            await _exercise_reference_understanding_refresh_replaces_gate_slice(
+                client,
+                front_reference_path,
+                side_reference_path,
+            )
+
+    asyncio.run(run())
+
+
+@pytest.mark.slow
+def test_reference_understanding_refresh_replaces_gate_slice_over_streamable(tmp_path: Path):
+    script_path = write_server_script(tmp_path, _PATCHED_GATE_STATE_SERVER)
+    front_reference_path = tmp_path / "transport_front.png"
+    side_reference_path = tmp_path / "transport_side.png"
+    front_reference_path.write_bytes(_TRANSPORT_REFERENCE_PNG)
+    side_reference_path.write_bytes(_TRANSPORT_REFERENCE_PNG)
+
+    async def run(url: str) -> None:
+        async with streamable_client(url) as client:
+            await _exercise_reference_understanding_refresh_replaces_gate_slice(
+                client,
+                front_reference_path,
+                side_reference_path,
+            )
 
     with run_streamable_server(script_path) as url:
         asyncio.run(run(url))

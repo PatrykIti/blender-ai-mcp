@@ -74,6 +74,12 @@ def _verify_gate_with_relation_graph(
 ) -> GateVerifierResultContract | None:
     if gate.status == "waived":
         return None
+    if _skip_local_scope_verification(
+        gate,
+        payload=payload,
+        guided_part_registry=guided_part_registry,
+    ):
+        return None
     if gate.gate_type == "required_part":
         return _verify_required_part_gate(
             gate,
@@ -567,6 +573,39 @@ def _find_relation_pair(
     return None
 
 
+def _skip_local_scope_verification(
+    gate: NormalizedQualityGateContract,
+    *,
+    payload: SceneRelationGraphPayloadContract,
+    guided_part_registry: list[Mapping[str, Any]] | None,
+) -> bool:
+    if payload.scope.scope_kind == "scene":
+        return False
+
+    object_names = list(payload.scope.object_names)
+    if gate.gate_type == "required_part":
+        expected_count = 2 if _target_implies_pair(gate) else 1
+        matched_objects = _matched_scope_objects(
+            gate,
+            object_names,
+            guided_part_registry=guided_part_registry,
+        )
+        return len(matched_objects) < expected_count
+
+    if gate.gate_type == "symmetry_pair":
+        matched_objects = _matched_scope_objects(
+            gate,
+            object_names,
+            guided_part_registry=guided_part_registry,
+        )
+        return len(matched_objects) < 2
+
+    if gate.gate_type in {"attachment_seam", "support_contact"}:
+        return not _scope_contains_all_target_objects(gate, object_names)
+
+    return False
+
+
 def _matched_scope_objects(
     gate: NormalizedQualityGateContract,
     object_names: list[str],
@@ -601,6 +640,17 @@ def _matched_scope_objects(
 def _target_implies_pair(gate: NormalizedQualityGateContract) -> bool:
     target = _normalize_name(gate.target_label or gate.label)
     return gate.gate_type == "symmetry_pair" or target.endswith("_pair") or "_pair_" in target
+
+
+def _scope_contains_all_target_objects(
+    gate: NormalizedQualityGateContract,
+    object_names: list[str],
+) -> bool:
+    target_names = {_normalize_name(item) for item in gate.target_objects if item}
+    if not target_names:
+        return True
+    scope_names = {_normalize_name(item) for item in object_names if item}
+    return target_names.issubset(scope_names)
 
 
 def _repair_tools_for_pair(

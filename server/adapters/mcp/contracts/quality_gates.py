@@ -560,6 +560,7 @@ def mark_gate_plan_stale(
     reason: str,
     spatial_state_version: int | None = None,
     affected_objects: list[str] | None = None,
+    guided_part_registry: list[Mapping[str, Any]] | None = None,
 ) -> GatePlanContract:
     """Mark evidence-backed gate statuses stale after a scene mutation."""
 
@@ -570,7 +571,11 @@ def mark_gate_plan_stale(
         if gate.status not in {"passed", "failed", "blocked"}:
             updated_gates.append(gate)
             continue
-        if affected and not _gate_targets_any_object(gate, affected):
+        if affected and not _gate_targets_any_object(
+            gate,
+            affected,
+            guided_part_registry=guided_part_registry,
+        ):
             updated_gates.append(gate)
             continue
         updated_gates.append(
@@ -974,6 +979,8 @@ def _recommended_tools_for_gate_type(gate_type: GateTypeLiteral) -> list[str]:
 def _gate_targets_any_object(
     gate: NormalizedQualityGateContract,
     affected_objects: set[str],
+    *,
+    guided_part_registry: list[Mapping[str, Any]] | None = None,
 ) -> bool:
     if not affected_objects:
         return True
@@ -981,6 +988,13 @@ def _gate_targets_any_object(
     target_label = _normalize_token(gate.target_label or "")
     if target_names & affected_objects:
         return True
+    if gate.target_kind == "object_role" and target_label:
+        for item in list(guided_part_registry or []):
+            if _normalize_token(item.get("role")) != target_label:
+                continue
+            object_name = _normalize_token(item.get("object_name"))
+            if object_name and object_name in affected_objects:
+                return True
     return any(token and token in target_label for token in affected_objects)
 
 

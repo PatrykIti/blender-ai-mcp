@@ -1955,6 +1955,78 @@ def _reference_understanding_request(
     )
 
 
+def _without_reference_understanding_gates(
+    gate_plan: GatePlanContract | None,
+    *,
+    tracked_gate_ids: list[str] | None,
+) -> GatePlanContract | None:
+    if gate_plan is None:
+        return None
+
+    tracked_ids = {str(item).strip() for item in tracked_gate_ids or [] if str(item).strip()}
+    retained_gates = [
+        gate
+        for gate in gate_plan.gates
+        if gate.gate_id not in tracked_ids and "reference_understanding" not in gate.proposal_sources
+    ]
+    retained_warnings = [
+        warning
+        for warning in gate_plan.policy_warnings
+        if warning.gate_id is None or warning.gate_id not in tracked_ids
+    ]
+    return refresh_gate_plan_status(
+        gate_plan.model_copy(
+            update={
+                "gates": retained_gates,
+                "policy_warnings": retained_warnings,
+            }
+        )
+    )
+
+
+def _merge_reference_understanding_gate_slice(
+    base_gate_plan: GatePlanContract | None,
+    replacement_gate_plan: GatePlanContract | None,
+) -> GatePlanContract | None:
+    if replacement_gate_plan is None:
+        return base_gate_plan
+    if base_gate_plan is None:
+        return replacement_gate_plan
+    return refresh_gate_plan_status(
+        base_gate_plan.model_copy(
+            update={
+                "gates": [*list(base_gate_plan.gates), *list(replacement_gate_plan.gates)],
+                "policy_warnings": [
+                    *list(base_gate_plan.policy_warnings),
+                    *list(replacement_gate_plan.policy_warnings),
+                ],
+            }
+        )
+    )
+
+
+def _reference_understanding_gate_slice(gate_plan: GatePlanContract | None) -> GatePlanContract | None:
+    if gate_plan is None:
+        return None
+
+    slice_gates = [gate for gate in gate_plan.gates if "reference_understanding" in gate.proposal_sources]
+    if not slice_gates:
+        return None
+
+    slice_gate_ids = {gate.gate_id for gate in slice_gates}
+    slice_warnings = [
+        warning for warning in gate_plan.policy_warnings if warning.gate_id is None or warning.gate_id in slice_gate_ids
+    ]
+    return refresh_gate_plan_status(
+        gate_plan.model_copy(
+            update={
+                "gates": slice_gates,
+                "policy_warnings": slice_warnings,
+            }
+        )
+    )
+
+
 async def refresh_reference_understanding_summary_async(
     ctx: Context,
     *,
@@ -1964,8 +2036,17 @@ async def refresh_reference_understanding_summary_async(
 
     current = session or await get_session_capability_state_async(ctx)
     existing_gate_plan = GatePlanContract.model_validate(current.gate_plan) if current.gate_plan is not None else None
+    base_gate_plan = _without_reference_understanding_gates(
+        existing_gate_plan,
+        tracked_gate_ids=current.reference_understanding_gate_ids,
+    )
     if not current.goal:
-        cleared = replace(current, reference_understanding_summary=None, reference_understanding_gate_ids=None)
+        cleared = replace(
+            current,
+            gate_plan=None if base_gate_plan is None else base_gate_plan.model_dump(mode="json", exclude_none=True),
+            reference_understanding_summary=None,
+            reference_understanding_gate_ids=None,
+        )
         await set_session_capability_state_async(ctx, cleared)
         return cleared
 
@@ -1979,6 +2060,7 @@ async def refresh_reference_understanding_summary_async(
         )
         updated = replace(
             current,
+            gate_plan=None if base_gate_plan is None else base_gate_plan.model_dump(mode="json", exclude_none=True),
             reference_understanding_summary=blocked.model_dump(mode="json", exclude_none=True),
             reference_understanding_gate_ids=None,
         )
@@ -2008,6 +2090,7 @@ async def refresh_reference_understanding_summary_async(
         )
         updated = replace(
             current,
+            gate_plan=None if base_gate_plan is None else base_gate_plan.model_dump(mode="json", exclude_none=True),
             reference_understanding_summary=unavailable.model_dump(mode="json", exclude_none=True),
             reference_understanding_gate_ids=None,
         )
@@ -2022,6 +2105,7 @@ async def refresh_reference_understanding_summary_async(
         )
         updated = replace(
             current,
+            gate_plan=None if base_gate_plan is None else base_gate_plan.model_dump(mode="json", exclude_none=True),
             reference_understanding_summary=unavailable.model_dump(mode="json", exclude_none=True),
             reference_understanding_gate_ids=None,
         )
@@ -2029,6 +2113,10 @@ async def refresh_reference_understanding_summary_async(
         return updated
 
     accepted_gate_ids: list[str] | None = None
+    updated_session = replace(
+        current,
+        gate_plan=None if base_gate_plan is None else base_gate_plan.model_dump(mode="json", exclude_none=True),
+    )
     if summary.gate_proposals:
         gate_proposal = GateProposalContract(
             proposal_id=summary.understanding_id,
@@ -2041,32 +2129,23 @@ async def refresh_reference_understanding_summary_async(
             ctx,
             gate_proposal.model_dump(mode="json", exclude_none=True),
         )
-        updated_session = await get_session_capability_state_async(ctx)
         if intake_result.status == "accepted" and intake_result.gate_plan is not None:
-            if existing_gate_plan is not None:
-                existing_gate_ids = {gate.gate_id for gate in existing_gate_plan.gates}
-                merged_gates = list(existing_gate_plan.gates)
-                for gate in intake_result.gate_plan.gates:
-                    if gate.gate_id not in existing_gate_ids:
-                        merged_gates.append(gate)
-                merged_plan = refresh_gate_plan_status(
-                    existing_gate_plan.model_copy(
-                        update={
-                            "gates": merged_gates,
-                            "policy_warnings": [
-                                *list(existing_gate_plan.policy_warnings),
-                                *list(intake_result.gate_plan.policy_warnings),
-                            ],
-                        }
-                    )
+            replacement_slice = _reference_understanding_gate_slice(intake_result.gate_plan)
+            merged_plan = (
+                intake_result.gate_plan
+                if existing_gate_plan is None
+                else _merge_reference_understanding_gate_slice(
+                    base_gate_plan,
+                    replacement_slice,
                 )
-                updated_session = replace(
-                    updated_session,
-                    gate_plan=merged_plan.model_dump(mode="json", exclude_none=True),
-                )
-            accepted_gate_ids = [gate.gate_id for gate in intake_result.gate_plan.gates]
-    else:
-        updated_session = current
+            )
+            updated_session = replace(
+                updated_session,
+                gate_plan=None if merged_plan is None else merged_plan.model_dump(mode="json", exclude_none=True),
+            )
+            accepted_gate_ids = (
+                None if replacement_slice is None else [gate.gate_id for gate in replacement_slice.gates]
+            )
 
     final_state = replace(
         updated_session,

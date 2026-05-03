@@ -137,6 +137,97 @@ def test_required_part_object_role_gate_uses_guided_part_registry_when_names_are
     assert gate.status == "passed"
 
 
+def test_local_scope_verification_keeps_required_part_gate_outside_scope_unchanged():
+    plan = normalize_gate_plan(
+        {"source": "llm_goal", "gates": []},
+        domain_profile="creature",
+    )
+    seeded = plan.model_copy(
+        update={
+            "gates": [
+                gate.model_copy(update={"status": "passed"})
+                if gate.gate_id in {"creature_body_core_required", "creature_head_mass_required", "final_completion"}
+                else gate
+                for gate in plan.gates
+            ]
+        }
+    )
+
+    updated = verify_gate_plan_with_relation_graph(
+        seeded,
+        {
+            "scope": {
+                "scope_kind": "object_set",
+                "primary_target": "Body",
+                "object_names": ["Body", "Tail"],
+                "object_count": 2,
+            },
+            "summary": {
+                "pairing_strategy": "guided_spatial_pairs",
+                "pair_count": 0,
+                "evaluated_pairs": 0,
+                "failing_pairs": 0,
+                "attachment_pairs": 0,
+                "support_pairs": 0,
+                "symmetry_pairs": 0,
+            },
+            "pairs": [],
+        },
+        guided_part_registry=[
+            {"object_name": "Body", "role": "body_core", "role_group": "primary_masses"},
+            {"object_name": "Head", "role": "head_mass", "role_group": "primary_masses"},
+        ],
+    )
+
+    assert _gate(updated, "creature_body_core_required").status == "passed"
+    assert _gate(updated, "creature_head_mass_required").status == "passed"
+    assert _gate(updated, "final_completion").status == "passed"
+
+
+def test_local_scope_verification_keeps_unrelated_attachment_gate_unchanged():
+    plan = normalize_gate_plan(
+        {
+            "source": "llm_goal",
+            "gates": [
+                {
+                    "gate_id": "tail_body_seam",
+                    "gate_type": "attachment_seam",
+                    "label": "tail seated on body",
+                    "target_kind": "object_pair",
+                    "target_objects": ["Tail", "Body"],
+                },
+                {
+                    "gate_id": "head_body_seam",
+                    "gate_type": "attachment_seam",
+                    "label": "head seated on body",
+                    "target_kind": "object_pair",
+                    "target_objects": ["Head", "Body"],
+                },
+            ],
+        },
+        domain_profile="generic",
+    )
+    seeded = plan.model_copy(
+        update={
+            "gates": [
+                gate.model_copy(update={"status": "passed"})
+                if gate.gate_id in {"tail_body_seam", "head_body_seam", "final_completion"}
+                else gate
+                for gate in plan.gates
+            ]
+        }
+    )
+
+    updated = verify_gate_plan_with_relation_graph(
+        seeded,
+        _relation_graph([_relation_graph_pair(verdict="floating_gap")]),
+    )
+
+    assert _gate(updated, "tail_body_seam").status == "failed"
+    assert _gate(updated, "head_body_seam").status == "passed"
+    assert _gate(updated, "final_completion").status == "blocked"
+
+
 def test_attachment_gate_fails_floating_gap_with_bounded_repair_tools():
     plan = normalize_gate_plan(
         {
