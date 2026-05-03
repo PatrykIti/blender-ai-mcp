@@ -7,6 +7,7 @@ import textwrap
 from pathlib import Path
 
 import pytest
+from fastmcp.exceptions import ToolError
 
 from ._guided_surface_harness import result_payload, run_streamable_server, streamable_client, write_server_script
 
@@ -438,8 +439,8 @@ def test_streamable_guided_view_diagnostics_requires_bound_scope_before_refresh_
 
 
 @pytest.mark.slow
-def test_streamable_guided_transform_object_keeps_session_alive_after_primary_masses(tmp_path: Path):
-    """Transforming a guided primary/secondary part over Streamable HTTP should return and leave the session readable."""
+def test_streamable_guided_transform_object_fails_cleanly_during_spatial_refresh_gate(tmp_path: Path):
+    """A stale direct transform attempt should fail cleanly without dropping the Streamable HTTP session."""
 
     script_path = write_server_script(tmp_path, _PATCHED_GUIDED_STREAMABLE_SERVER)
 
@@ -478,13 +479,11 @@ def test_streamable_guided_transform_object_keeps_session_alive_after_primary_ma
             )
             assert head_result == "Created Sphere named 'Squirrel_Head'"
 
-            transform_result = result_payload(
+            with pytest.raises(ToolError, match="Unknown tool: 'modeling_transform_object'"):
                 await client.call_tool(
                     "modeling_transform_object",
                     {"name": "Squirrel_Head", "scale": [1.0, 0.92, 0.95]},
                 )
-            )
-            assert transform_result == "Transformed object 'Squirrel_Head'"
 
             status_result = result_payload(await client.call_tool("router_get_status", {}))
             assert status_result["current_phase"] == "build"
