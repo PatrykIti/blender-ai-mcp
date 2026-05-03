@@ -4580,7 +4580,8 @@ def test_reference_compare_stage_checkpoint_projects_building_attachment_gate_st
     opening_gate = next(gate for gate in result.gate_statuses if gate.gate_id == "front_window_opening")
     assert roof_gate.status == "failed"
     assert roof_gate.status_reason == "relation_floating_gap"
-    assert opening_gate.status == "pending"
+    assert opening_gate.status == "blocked"
+    assert opening_gate.status_reason == "missing_required_evidence"
     assert result.truth_followup is not None
     assert result.truth_followup.items
     assert "organic" not in result.truth_followup.items[0].summary.lower()

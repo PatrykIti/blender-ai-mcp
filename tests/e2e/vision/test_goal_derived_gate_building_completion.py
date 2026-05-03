@@ -261,7 +261,8 @@ def test_reference_iterate_stage_checkpoint_blocks_building_gate_completion(
 
         assert roof_seam.status == "failed"
         assert roof_seam.status_reason == "relation_floating_gap"
-        assert opening.status == "pending"
+        assert opening.status == "blocked"
+        assert opening.status_reason == "missing_required_evidence"
         assert final_completion.status == "blocked"
         assert any(blocker.gate_id == "roof_wall_seam" for blocker in result.completion_blockers)
         assert any(blocker.gate_id == "front_window_opening" for blocker in result.completion_blockers)

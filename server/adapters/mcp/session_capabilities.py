@@ -1313,7 +1313,7 @@ async def set_session_capability_state_async(ctx: Context, state: SessionCapabil
     await set_session_value_async(ctx, SESSION_PENDING_REFERENCE_IMAGES_KEY, state.pending_reference_images)
 
 
-def _ingest_quality_gate_proposal_for_state(
+def ingest_quality_gate_proposal_for_state(
     current: SessionCapabilityState,
     gate_proposal: dict[str, Any] | None,
 ) -> tuple[SessionCapabilityState, GateIntakeResultContract]:
@@ -1329,7 +1329,8 @@ def _ingest_quality_gate_proposal_for_state(
             proposal,
             domain_profile=flow_state.domain_profile,
         )
-        gate_plan = _apply_goal_time_gate_input_bounds(gate_plan)
+        if proposal.source == "llm_goal":
+            gate_plan = _apply_goal_time_gate_input_bounds(gate_plan)
         merged_gate_plan = _merge_gate_plan_for_proposal_source(
             current.gate_plan,
             gate_plan,
@@ -1392,7 +1393,7 @@ def ingest_quality_gate_proposal(
     """Normalize and persist one optional guided quality-gate proposal."""
 
     current = get_session_capability_state(ctx)
-    updated, result = _ingest_quality_gate_proposal_for_state(current, gate_proposal)
+    updated, result = ingest_quality_gate_proposal_for_state(current, gate_proposal)
     if result.status == "accepted":
         set_session_capability_state(ctx, updated)
     return result
@@ -1405,7 +1406,7 @@ async def ingest_quality_gate_proposal_async(
     """Async variant of guided quality-gate proposal intake."""
 
     current = await get_session_capability_state_async(ctx)
-    updated, result = _ingest_quality_gate_proposal_for_state(current, gate_proposal)
+    updated, result = ingest_quality_gate_proposal_for_state(current, gate_proposal)
     if result.status == "accepted":
         await set_session_capability_state_async(ctx, updated)
     return result
@@ -1717,7 +1718,7 @@ def update_session_from_router_goal(
         pending_reference_images=pending_reference_images,
     )
     if gate_proposal is not None:
-        state, _intake_result = _ingest_quality_gate_proposal_for_state(state, gate_proposal)
+        state, _intake_result = ingest_quality_gate_proposal_for_state(state, gate_proposal)
     set_session_capability_state(ctx, state)
     return state
 
@@ -1811,7 +1812,7 @@ async def update_session_from_router_goal_async(
         pending_reference_images=pending_reference_images,
     )
     if gate_proposal is not None:
-        state, _intake_result = _ingest_quality_gate_proposal_for_state(state, gate_proposal)
+        state, _intake_result = ingest_quality_gate_proposal_for_state(state, gate_proposal)
     await set_session_capability_state_async(ctx, state)
     return state
 

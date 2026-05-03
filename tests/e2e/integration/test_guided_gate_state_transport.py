@@ -787,6 +787,59 @@ async def _exercise_later_goal_gate_proposal_preserves_reference_understanding_g
     assert {gate["gate_id"] for gate in reference_gates} == set(reference_gate_ids)
 
 
+async def _exercise_same_call_goal_gate_proposal_preserves_reference_understanding_gates(
+    client,
+    reference_path: Path,
+) -> None:
+    staged_attach = result_payload(
+        await client.call_tool(
+            "reference_images",
+            {
+                "action": "attach",
+                "source_path": str(reference_path),
+                "label": "front_ref",
+                "target_object": "Squirrel_Body",
+                "target_view": "front",
+            },
+        )
+    )
+    assert staged_attach["reference_count"] == 1
+
+    goal_result = result_payload(
+        await client.call_tool(
+            "router_set_goal",
+            {
+                "goal": "create a low-poly squirrel matching front and side reference images",
+                "gate_proposal": {
+                    "source": "llm_goal",
+                    "gates": [
+                        {
+                            "gate_id": "tail_body_seam",
+                            "gate_type": "attachment_seam",
+                            "label": "tail seated on body",
+                            "target_kind": "object_pair",
+                            "target_objects": ["Squirrel_Tail", "Squirrel_Body"],
+                        }
+                    ],
+                },
+            },
+        )
+    )
+
+    reference_gate_ids = list(goal_result["reference_understanding_gate_ids"] or [])
+    assert reference_gate_ids
+    assert goal_result["active_gate_plan"] is not None
+    assert _tail_gate(goal_result["active_gate_plan"]["gates"])["status"] == "pending"
+
+    reference_gates = [
+        gate
+        for gate in goal_result["active_gate_plan"]["gates"]
+        if "reference_understanding" in gate.get("proposal_sources", [])
+    ]
+    assert {gate["gate_id"] for gate in reference_gates} == set(reference_gate_ids)
+    assert goal_result["gate_intake_result"]["status"] == "accepted"
+
+
 async def _exercise_gate_state_roundtrip(client, reference_path: Path) -> None:
     gate_proposal = {
         "source": "llm_goal",
@@ -1214,6 +1267,39 @@ def test_later_goal_gate_proposal_preserves_reference_understanding_gates_over_s
     async def run(url: str) -> None:
         async with streamable_client(url) as client:
             await _exercise_later_goal_gate_proposal_preserves_reference_understanding_gates(client, reference_path)
+
+    with run_streamable_server(script_path) as url:
+        asyncio.run(run(url))
+
+
+@pytest.mark.slow
+def test_same_call_goal_gate_proposal_preserves_reference_understanding_gates_over_stdio(tmp_path: Path):
+    script_path = write_server_script(tmp_path, _PATCHED_GATE_STATE_SERVER)
+    reference_path = tmp_path / "transport_front.png"
+    reference_path.write_bytes(_TRANSPORT_REFERENCE_PNG)
+
+    async def run() -> None:
+        async with stdio_client(script_path) as client:
+            await _exercise_same_call_goal_gate_proposal_preserves_reference_understanding_gates(
+                client,
+                reference_path,
+            )
+
+    asyncio.run(run())
+
+
+@pytest.mark.slow
+def test_same_call_goal_gate_proposal_preserves_reference_understanding_gates_over_streamable(tmp_path: Path):
+    script_path = write_server_script(tmp_path, _PATCHED_GATE_STATE_SERVER)
+    reference_path = tmp_path / "transport_front.png"
+    reference_path.write_bytes(_TRANSPORT_REFERENCE_PNG)
+
+    async def run(url: str) -> None:
+        async with streamable_client(url) as client:
+            await _exercise_same_call_goal_gate_proposal_preserves_reference_understanding_gates(
+                client,
+                reference_path,
+            )
 
     with run_streamable_server(script_path) as url:
         asyncio.run(run(url))

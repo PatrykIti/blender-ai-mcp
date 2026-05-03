@@ -163,6 +163,43 @@ def test_gate_proposal_intake_drops_gates_that_require_unavailable_goal_time_evi
     assert any(warning.code == "unavailable_required_evidence" for warning in result.policy_warnings)
 
 
+def test_reference_understanding_gate_intake_keeps_runtime_evidence_requirements():
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel",
+            surface_profile="llm-guided",
+            guided_flow_state=_guided_flow_state(),
+        ),
+    )
+
+    result = ingest_quality_gate_proposal(
+        ctx,
+        {
+            "source": "reference_understanding",
+            "gates": [
+                {
+                    "gate_id": "tail_profile",
+                    "gate_type": "shape_profile",
+                    "label": "tail follows the segmented reference profile",
+                    "target_kind": "reference_part",
+                    "target_label": "tail_profile",
+                    "evidence_requirements": [
+                        {"evidence_kind": "part_segmentation", "required": True},
+                    ],
+                }
+            ],
+        },
+    )
+
+    assert result.status == "accepted"
+    assert result.gate_plan is not None
+    assert any(gate.gate_id == "tail_profile" for gate in result.gate_plan.gates)
+    assert not any(warning.code == "unavailable_required_evidence" for warning in result.policy_warnings)
+
+
 def test_gate_proposal_intake_preserves_existing_reference_understanding_gates():
     ctx = FakeContext()
     set_session_capability_state(

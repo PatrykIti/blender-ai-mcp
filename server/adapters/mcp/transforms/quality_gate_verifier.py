@@ -109,6 +109,22 @@ def _verify_gate_with_relation_graph(
             spatial_state_version=spatial_state_version,
             scope_fingerprint=scope_fingerprint,
         )
+    if gate.gate_type in {"proportion_ratio", "shape_profile", "opening_or_cut"}:
+        return _verify_mesh_metric_followup_gate(
+            gate,
+            payload=payload,
+            spatial_state_version=spatial_state_version,
+            scope_fingerprint=scope_fingerprint,
+            guided_part_registry=guided_part_registry,
+        )
+    if gate.gate_type == "refinement_stage":
+        return _verify_refinement_stage_gate(
+            gate,
+            payload=payload,
+            spatial_state_version=spatial_state_version,
+            scope_fingerprint=scope_fingerprint,
+            guided_part_registry=guided_part_registry,
+        )
     return None
 
 
@@ -129,7 +145,7 @@ def _verify_required_part_gate(
         object_names,
         guided_part_registry=guided_part_registry,
     )
-    expected_count = 2 if _target_implies_pair(gate) else 1
+    expected_count = _expected_scope_match_count(gate)
     status = "passed" if len(matched_objects) >= expected_count else "failed"
     reason_code: GateStatusReasonCodeLiteral | None = None if status == "passed" else "missing_required_part"
     evidence = GateEvidenceRefContract(
@@ -428,6 +444,101 @@ def _apply_final_completion_status(
     return updated
 
 
+def _verify_mesh_metric_followup_gate(
+    gate: NormalizedQualityGateContract,
+    *,
+    payload: SceneRelationGraphPayloadContract,
+    spatial_state_version: int | None,
+    scope_fingerprint: str | None,
+    guided_part_registry: list[Mapping[str, Any]] | None,
+) -> GateVerifierResultContract:
+    object_names = list(payload.scope.object_names)
+    if not object_names:
+        return _blocked_result(gate, "missing_scope", tool_name="scene_relation_graph")
+
+    matched_objects = _matched_scope_objects(
+        gate,
+        object_names,
+        guided_part_registry=guided_part_registry,
+    )
+    expected_count = _expected_scope_match_count(gate)
+    if len(matched_objects) < expected_count:
+        return _blocked_result(
+            gate,
+            "missing_required_part",
+            tool_name="scene_relation_graph",
+            scope_fingerprint=scope_fingerprint,
+            summary=f"Matched scope objects: {', '.join(matched_objects) or 'none'}.",
+            metadata={
+                "object_names": object_names,
+                "matched_objects": matched_objects,
+                "expected_count": expected_count,
+                "spatial_state_version": spatial_state_version,
+            },
+        )
+
+    return _blocked_result(
+        gate,
+        "missing_required_evidence",
+        tool_name="scene_relation_graph",
+        scope_fingerprint=scope_fingerprint,
+        summary=f"{gate.gate_type} needs mesh-metric verification before it can pass.",
+        metadata={
+            "matched_objects": matched_objects,
+            "required_evidence_kinds": [requirement.evidence_kind for requirement in gate.evidence_requirements],
+            "recommended_bounded_tools": gate.recommended_bounded_tools,
+            "spatial_state_version": spatial_state_version,
+        },
+    )
+
+
+def _verify_refinement_stage_gate(
+    gate: NormalizedQualityGateContract,
+    *,
+    payload: SceneRelationGraphPayloadContract,
+    spatial_state_version: int | None,
+    scope_fingerprint: str | None,
+    guided_part_registry: list[Mapping[str, Any]] | None,
+) -> GateVerifierResultContract:
+    object_names = list(payload.scope.object_names)
+    if not object_names:
+        return _blocked_result(gate, "missing_scope", tool_name="scene_relation_graph")
+
+    matched_objects = _matched_scope_objects(
+        gate,
+        object_names,
+        guided_part_registry=guided_part_registry,
+    )
+    expected_count = _expected_scope_match_count(gate)
+    if len(matched_objects) < expected_count:
+        return _blocked_result(
+            gate,
+            "missing_required_part",
+            tool_name="scene_relation_graph",
+            scope_fingerprint=scope_fingerprint,
+            summary=f"Matched scope objects: {', '.join(matched_objects) or 'none'}.",
+            metadata={
+                "object_names": object_names,
+                "matched_objects": matched_objects,
+                "expected_count": expected_count,
+                "spatial_state_version": spatial_state_version,
+            },
+        )
+
+    return _blocked_result(
+        gate,
+        "verifier_needs_followup",
+        tool_name="scene_relation_graph",
+        scope_fingerprint=scope_fingerprint,
+        summary="refinement_stage requires a dedicated scene or mesh inspection before it can pass.",
+        metadata={
+            "matched_objects": matched_objects,
+            "recommended_bounded_tools": gate.recommended_bounded_tools,
+            "spatial_state_version": spatial_state_version,
+        },
+    )
+
+
 def _blocked_result(
     gate: NormalizedQualityGateContract,
     reason_code: GateStatusReasonCodeLiteral,
@@ -436,14 +547,16 @@ def _blocked_result(
     pair: SceneRelationGraphPairContract | None = None,
     summary: str | None = None,
     scope_fingerprint: str | None = None,
+    metadata: dict[str, Any] | None = None,
 ) -> GateVerifierResultContract:
     evidence_id = f"{tool_name}:{gate.gate_id}:blocked"
     if pair is not None:
         evidence_id = f"{tool_name}:{pair.pair_id}:{gate.gate_id}"
+    evidence_kind, source = _blocked_evidence_profile_for_gate(gate)
     evidence = GateEvidenceRefContract(
         evidence_id=evidence_id,
-        evidence_kind="spatial_relation" if gate.gate_type in {"attachment_seam", "support_contact"} else "scene_truth",
-        source="spatial_relation" if gate.gate_type in {"attachment_seam", "support_contact"} else "scene_truth",
+        evidence_kind=cast(Any, evidence_kind),
+        source=cast(Any, source),
         authority="authoritative",
         status="unavailable",
         tool_name=tool_name,
@@ -453,6 +566,7 @@ def _blocked_result(
         to_object=None if pair is None else pair.to_object,
         reason_code=reason_code,
         summary=summary or reason_code,
+        metadata=metadata or {},
     )
     return GateVerifierResultContract(
         gate_id=gate.gate_id,
@@ -563,18 +677,19 @@ def _find_relation_pair(
 
     label_tokens = _target_tokens(gate.target_label or gate.label)
     if label_tokens:
+        scored_candidates = []
         for pair in candidates:
-            pair_tokens = _target_tokens(" ".join([pair.from_object, pair.to_object]))
-            semantics_tokens = _target_tokens(" ".join(_semantic_object_names(pair)))
-            if label_tokens.issubset(pair_tokens | semantics_tokens):
-                return pair
-    meaningful_label_tokens = _meaningful_target_tokens(gate.target_label or gate.label)
-    if len(candidates) == 1 and meaningful_label_tokens:
-        pair = candidates[0]
-        pair_tokens = _target_tokens(" ".join([pair.from_object, pair.to_object]))
-        semantics_tokens = _target_tokens(" ".join(_semantic_object_names(pair)))
-        if meaningful_label_tokens.issubset(pair_tokens | semantics_tokens):
-            return pair
+            object_hits, token_overlap = _pair_object_label_match_score(pair, label_tokens)
+            if object_hits < 2:
+                continue
+            scored_candidates.append((object_hits, token_overlap, pair))
+        if scored_candidates:
+            scored_candidates.sort(key=lambda item: (item[0], item[1]), reverse=True)
+            if len(scored_candidates) == 1 or (scored_candidates[0][0], scored_candidates[0][1]) > (
+                scored_candidates[1][0],
+                scored_candidates[1][1],
+            ):
+                return scored_candidates[0][2]
     return None
 
 
@@ -589,7 +704,7 @@ def _skip_local_scope_verification(
 
     object_names = list(payload.scope.object_names)
     if gate.gate_type == "required_part":
-        expected_count = 2 if _target_implies_pair(gate) else 1
+        expected_count = _expected_scope_match_count(gate)
         matched_objects = _matched_scope_objects(
             gate,
             object_names,
@@ -607,6 +722,15 @@ def _skip_local_scope_verification(
 
     if gate.gate_type in {"attachment_seam", "support_contact"}:
         return not _scope_contains_all_target_objects(gate, object_names)
+
+    if gate.gate_type in {"proportion_ratio", "shape_profile", "opening_or_cut", "refinement_stage"}:
+        expected_count = _expected_scope_match_count(gate)
+        matched_objects = _matched_scope_objects(
+            gate,
+            object_names,
+            guided_part_registry=guided_part_registry,
+        )
+        return len(matched_objects) < expected_count
 
     return False
 
@@ -668,6 +792,10 @@ def _target_implies_pair(gate: NormalizedQualityGateContract) -> bool:
     return gate.gate_type == "symmetry_pair" or target.endswith("_pair") or "_pair_" in target
 
 
+def _expected_scope_match_count(gate: NormalizedQualityGateContract) -> int:
+    return 2 if gate.target_kind == "object_pair" or _target_implies_pair(gate) else 1
+
+
 def _scope_contains_all_target_objects(
     gate: NormalizedQualityGateContract,
     object_names: list[str],
@@ -704,6 +832,56 @@ def _semantic_object_names(pair: SceneRelationGraphPairContract) -> set[str]:
         names.add(_normalize_name(pair.symmetry_semantics.left_object))
         names.add(_normalize_name(pair.symmetry_semantics.right_object))
     return names
+
+
+def _pair_object_label_match_score(
+    pair: SceneRelationGraphPairContract,
+    label_tokens: set[str],
+) -> tuple[int, int]:
+    object_hits = 0
+    token_overlap = 0
+    for token_set in _pair_object_name_token_sets(pair):
+        overlap = token_set & label_tokens
+        if not overlap:
+            continue
+        object_hits += 1
+        token_overlap += len(overlap)
+    return object_hits, token_overlap
+
+
+def _pair_object_name_token_sets(pair: SceneRelationGraphPairContract) -> list[set[str]]:
+    names: list[str] = []
+    seen: set[str] = set()
+    for raw_name in _pair_object_names(pair):
+        normalized_name = _normalize_name(raw_name)
+        if not normalized_name or normalized_name in seen:
+            continue
+        seen.add(normalized_name)
+        token_set = _target_tokens(raw_name)
+        if token_set:
+            names.append(raw_name)
+    return [_target_tokens(name) for name in names]
+
+
+def _pair_object_names(pair: SceneRelationGraphPairContract) -> list[str]:
+    names = [pair.from_object, pair.to_object]
+    if pair.attachment_semantics is not None:
+        names.extend([pair.attachment_semantics.part_object, pair.attachment_semantics.anchor_object])
+    if pair.support_semantics is not None:
+        names.extend([pair.support_semantics.supported_object, pair.support_semantics.support_object])
+    if pair.symmetry_semantics is not None:
+        names.extend([pair.symmetry_semantics.left_object, pair.symmetry_semantics.right_object])
+    return [name for name in names if name]
+
+
+def _blocked_evidence_profile_for_gate(
+    gate: NormalizedQualityGateContract,
+) -> tuple[str, str]:
+    if gate.gate_type in {"attachment_seam", "support_contact"}:
+        return "spatial_relation", "spatial_relation"
+    if gate.gate_type in {"proportion_ratio", "shape_profile", "opening_or_cut"}:
+        return "mesh_metric", "mesh_metric"
+    return "scene_truth", "scene_truth"
 
 
 def _target_tokens(value: str) -> set[str]:

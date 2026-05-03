@@ -232,6 +232,49 @@ def test_guided_spatial_dirty_tracking_treats_partial_mutating_macro_reports_as_
     ]
 
 
+def test_guided_spatial_dirty_tracking_accumulates_objects_from_all_dirty_steps(monkeypatch):
+    """Multi-step routed mutations should stale every gate tied to later dirty objects too."""
+
+    ctx = FakeContext()
+    calls: list[dict[str, object]] = []
+    monkeypatch.setattr(router_helper, "_get_active_context", lambda: ctx)
+    monkeypatch.setattr(
+        router_helper,
+        "mark_guided_spatial_state_stale",
+        lambda current_ctx, **kwargs: calls.append({"ctx": current_ctx, **kwargs}),
+    )
+    report = MCPExecutionReport(
+        context=MCPExecutionContext(tool_name="macro_relative_layout", params={"target_objects": ["Body", "Tail"]}),
+        router_enabled=True,
+        router_applied=True,
+        router_disposition="corrected",
+        steps=(
+            ExecutionStep(
+                tool_name="modeling_transform_object",
+                params={"object_name": "Body"},
+                result="Transformed object 'Body'",
+            ),
+            ExecutionStep(
+                tool_name="modeling_transform_object",
+                params={"object_name": "Tail"},
+                result="Transformed object 'Tail'",
+            ),
+        ),
+    )
+
+    router_helper._maybe_mark_guided_spatial_state_stale_from_report(report)
+
+    assert calls == [
+        {
+            "ctx": ctx,
+            "tool_name": "modeling_transform_object",
+            "family": "primary_masses",
+            "reason": "modeling_transform_object",
+            "affected_objects": ["Body", "Tail"],
+        }
+    ]
+
+
 def test_async_guided_finalizer_wrapper_offloads_sync_tool_and_finalizes_report(monkeypatch):
     """Async Streamable wrappers should keep blocking sync tool execution off the event loop."""
 

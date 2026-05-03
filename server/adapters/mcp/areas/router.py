@@ -37,11 +37,12 @@ from server.adapters.mcp.session_capabilities import (
     build_guided_reference_readiness_payload,
     clear_session_goal_state_async,
     get_session_capability_state_async,
-    ingest_quality_gate_proposal_async,
+    ingest_quality_gate_proposal_for_state,
     merge_resolved_params_with_session_answers_async,
     register_guided_part_role_async,
     require_existing_scene_object_name,
     resolve_guided_role_group_for_domain,
+    set_session_capability_state_async,
     update_session_from_router_goal_async,
 )
 from server.adapters.mcp.tasks.job_registry import get_background_job_registry
@@ -438,8 +439,9 @@ async def router_set_goal(
         state = await refresh_reference_understanding_summary_async(ctx, session=state)
     gate_intake_result = None
     if gate_proposal is not None:
-        gate_intake_result = await ingest_quality_gate_proposal_async(ctx, gate_proposal)
-        state = await get_session_capability_state_async(ctx)
+        state, gate_intake_result = ingest_quality_gate_proposal_for_state(state, gate_proposal)
+        if gate_intake_result.status == "accepted":
+            await set_session_capability_state_async(ctx, state)
     result["session_id"] = ctx_session_id(ctx)
     result["transport"] = ctx_transport_type(ctx)
     result["guided_flow_state"] = state.guided_flow_state

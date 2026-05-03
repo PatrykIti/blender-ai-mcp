@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from server.adapters.mcp.contracts.quality_gates import GatePlanContract, normalize_gate_plan
 from server.adapters.mcp.transforms.quality_gate_verifier import verify_gate_plan_with_relation_graph
 
@@ -270,6 +271,118 @@ def test_attachment_gate_without_matching_targets_stays_blocked_even_with_one_ca
     assert seam.status == "blocked"
     assert seam.status_reason == "missing_relation_pair"
     assert seam.evidence_refs[0].reason_code == "missing_relation_pair"
+    assert _gate(updated, "final_completion").status == "blocked"
+
+
+def test_attachment_gate_without_target_objects_matches_pair_object_names_from_prose_label():
+    plan = normalize_gate_plan(
+        {
+            "source": "llm_goal",
+            "gates": [
+                {
+                    "gate_id": "tail_body_seam",
+                    "gate_type": "attachment_seam",
+                    "label": "tail seated on body",
+                    "target_kind": "object_pair",
+                }
+            ],
+        },
+        domain_profile="generic",
+    )
+
+    updated = verify_gate_plan_with_relation_graph(
+        plan,
+        _relation_graph([_relation_graph_pair(verdict="floating_gap")]),
+    )
+
+    seam = _gate(updated, "tail_body_seam")
+    assert seam.status == "failed"
+    assert seam.status_reason == "relation_floating_gap"
+    assert seam.evidence_refs[0].from_object == "Tail"
+    assert seam.evidence_refs[0].to_object == "Body"
+
+
+@pytest.mark.parametrize(
+    ("gate_payload", "expected_gate_id"),
+    [
+        (
+            {
+                "gate_id": "tail_profile",
+                "gate_type": "shape_profile",
+                "label": "tail profile matches the target silhouette",
+                "target_kind": "object",
+                "target_label": "Tail",
+                "target_objects": ["Tail"],
+            },
+            "tail_profile",
+        ),
+        (
+            {
+                "gate_id": "tail_body_ratio",
+                "gate_type": "proportion_ratio",
+                "label": "tail remains proportional to body",
+                "target_kind": "object_pair",
+                "target_objects": ["Tail", "Body"],
+            },
+            "tail_body_ratio",
+        ),
+        (
+            {
+                "gate_id": "front_window_opening",
+                "gate_type": "opening_or_cut",
+                "label": "front window opening is cut into the body shell",
+                "target_kind": "object",
+                "target_label": "Body",
+                "target_objects": ["Body"],
+            },
+            "front_window_opening",
+        ),
+    ],
+)
+def test_mesh_metric_gate_types_block_until_authoritative_metric_exists(gate_payload, expected_gate_id):
+    plan = normalize_gate_plan(
+        {"source": "llm_goal", "gates": [gate_payload]},
+        domain_profile="generic",
+    )
+
+    updated = verify_gate_plan_with_relation_graph(plan, _relation_graph([]))
+
+    gate = _gate(updated, expected_gate_id)
+    assert gate.status == "blocked"
+    assert gate.status_reason == "missing_required_evidence"
+    assert gate.evidence_refs[0].evidence_kind == "mesh_metric"
+    assert gate.evidence_refs[0].reason_code == "missing_required_evidence"
+    assert gate.evidence_refs[0].tool_name == "scene_relation_graph"
+    assert _gate(updated, "final_completion").status == "blocked"
+
+
+def test_refinement_stage_gate_requires_dedicated_followup_verifier():
+    plan = normalize_gate_plan(
+        {
+            "source": "llm_goal",
+            "gates": [
+                {
+                    "gate_id": "facade_refinement_stage",
+                    "gate_type": "refinement_stage",
+                    "label": "facade detail refinement pass is complete",
+                    "target_kind": "object",
+                    "target_label": "Body",
+                    "target_objects": ["Body"],
+                }
+            ],
+        },
+        domain_profile="generic",
+    )
+
+    updated = verify_gate_plan_with_relation_graph(plan, _relation_graph([]))
+
+    gate = _gate(updated, "facade_refinement_stage")
+    assert gate.status == "blocked"
+    assert gate.status_reason == "verifier_needs_followup"
+    assert gate.evidence_refs[0].evidence_kind == "scene_truth"
+    assert gate.evidence_refs[0].reason_code == "verifier_needs_followup"
+    assert "scene_inspect" in gate.recommended_bounded_tools
+    assert "mesh_inspect" in gate.recommended_bounded_tools
     assert _gate(updated, "final_completion").status == "blocked"
 
 
