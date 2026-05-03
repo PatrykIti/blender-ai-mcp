@@ -153,7 +153,7 @@ def scene_measure_gap(ctx, ...):
 | 3 | [TASK-159-02-07](./TASK-159-02-07_Scene_Grouped_Create_And_Configure_Mega_Tool_Split.md) | Separate grouped `scene_create(...)` / `scene_configure(...)` routing and private write-side executors from the read-heavy state branch |
 | 4 | [TASK-159-02-03](./TASK-159-02-03_Scene_Spatial_Graph_And_View_Diagnostics_Slices.md) | Separate spatial-graph and view-diagnostics helpers without drifting guided visibility semantics |
 | 5 | [TASK-159-02-04](./TASK-159-02-04_Scene_Measure_Assert_And_Guided_Side_Effects.md) | Extract measure/assert helpers and preserve guided stale-state / completion side effects |
-| 6 | [TASK-159-02-05](./TASK-159-02-05_Scene_Object_Utility_Manage_And_Guided_Dirtying_Slices.md) | Separate object-utility wrappers such as cleanup, rename, visibility, camera utility, and custom-property operations while preserving guided dirtying/runtime semantics |
+| 6 | [TASK-159-02-05](./TASK-159-02-05_Scene_Object_Utility_Manage_And_Guided_Dirtying_Slices.md) | Split the object-utility branch into focused cleanup/mode, visibility/camera, and custom-property leaves while preserving guided dirtying/runtime semantics |
 | 7 | [TASK-159-02-06](./TASK-159-02-06_Scene_Viewport_Background_Bridge_And_Output_Surface.md) | Separate the public viewport capture/output path so `scene_get_viewport(...)` has an explicit owner for output modes, task-mode background execution, and viewport/camera capture semantics |
 
 ## Tests To Add/Update

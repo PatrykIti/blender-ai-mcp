@@ -77,7 +77,7 @@ from .scene_inspect import execute_scene_inspect
 - the full `scene_inspect(...)` action matrix has one focused home outside the
   monolith
 - typed inspect contracts remain unchanged across object/topology/material/
-  modifier/constraint/modifier_data/render/color/world branches
+  modifier/constraint/modifier_data/render/color_management/world branches
 
 ## Status / Board Update
 

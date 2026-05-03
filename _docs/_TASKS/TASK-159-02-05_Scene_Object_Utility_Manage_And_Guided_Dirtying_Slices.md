@@ -6,11 +6,12 @@
 
 ## Objective
 
-Extract standalone object-utility wrappers from `scene.py` while preserving the
-current public utility surface, cleanup canonicalization, and guided dirtying
-semantics.
+Split the standalone object-utility branch from `scene.py` into focused
+cleanup/mode, visibility/camera, and custom-property leaves while preserving
+the current public utility surface, cleanup canonicalization, and guided
+dirtying semantics.
 
-This leaf owns the non-mega utility wrappers that currently sit between the
+This subtask owns the non-mega utility wrappers that currently sit between the
 grouped scene tools and the spatial-support slices:
 
 - object listing and cleanup
@@ -51,16 +52,52 @@ grouped scene tools and the spatial-support slices:
 - `scene_get_custom_properties(...)`
 - `scene_set_custom_property(...)`
 
-## Planned Code Shape
+## Pseudocode
 
 ```python
-from .scene_object_utils import (
-    execute_scene_clean_scene,
-    execute_scene_object_utility,
-    execute_scene_camera_utility,
-    execute_scene_custom_property_utility,
-)
+cleanup_mode_leaf = [
+    "scene_list_objects",
+    "scene_delete_object",
+    "scene_clean_scene",
+    "scene_duplicate_object",
+    "scene_set_active_object",
+    "scene_set_mode",
+]
+visibility_camera_leaf = [
+    "scene_rename_object",
+    "scene_hide_object",
+    "scene_show_all_objects",
+    "scene_isolate_object",
+    "scene_camera_orbit",
+    "scene_camera_focus",
+]
+custom_property_leaf = [
+    "scene_get_custom_properties",
+    "scene_set_custom_property",
+]
+
+for wrapper in cleanup_mode_leaf + visibility_camera_leaf + custom_property_leaf:
+    keep_public_scene_wrapper_name(wrapper)
+    delegate_to_focused_object_utility_leaf(wrapper)
+    preserve_guided_dirtying_side_effects(wrapper)
 ```
+
+## Implementation Notes
+
+- Keep cleanup/mode helpers separate from visibility/camera helpers so
+  state-reset semantics do not blur with framing/navigation utilities.
+- Keep custom-property read/write flows on their own focused leaf; they are the
+  only object-utility wrappers with structured metadata payload ownership.
+- Preserve guided dirtying, registry-reset, and visibility-refresh behavior
+  across every child leaf instead of centralizing new bypass helpers here.
+
+## Execution Structure
+
+| Order | Leaf | Purpose |
+|------|------|---------|
+| 1 | [TASK-159-02-05-01](./TASK-159-02-05-01_Scene_Cleanup_Mode_And_Active_Object_Utility_Slices.md) | Separate cleanup, duplicate, active-object, and mode wrappers into one focused utility leaf |
+| 2 | [TASK-159-02-05-02](./TASK-159-02-05-02_Scene_Visibility_Isolation_And_Camera_Utility_Slices.md) | Separate rename, visibility, isolation, and camera helpers into one focused utility leaf |
+| 3 | [TASK-159-02-05-03](./TASK-159-02-05-03_Scene_Custom_Property_Utility_And_Dirtying_Glue.md) | Separate custom-property read/write wrappers and their structured delivery/runtime glue into one focused leaf |
 
 ## Runtime / Security Contract Notes
 
@@ -99,8 +136,8 @@ from .scene_object_utils import (
 
 ## Acceptance Criteria
 
-- object-utility wrappers no longer sit inline between grouped scene tools and
-  the spatial-support / measure / view-diagnostics / viewport-surface slices
+- this branch is decomposed into focused cleanup/mode, visibility/camera, and
+  custom-property leaves instead of one oversized utility pass
 - cleanup canonicalization and guided dirtying semantics remain stable
 - public utility names and structured custom-property delivery stay unchanged
 - focused unit/integration/e2e lanes still prove the same cleanup and utility
@@ -109,3 +146,5 @@ from .scene_object_utils import (
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
+- execute this branch through the focused leaves below instead of landing all
+  object utilities in one oversized pass

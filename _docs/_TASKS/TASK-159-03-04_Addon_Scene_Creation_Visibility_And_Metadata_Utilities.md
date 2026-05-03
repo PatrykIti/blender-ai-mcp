@@ -6,8 +6,8 @@
 
 ## Objective
 
-Separate creation, mode-switch, visibility, and custom-property utility helpers
-from addon `SceneHandler` while preserving RPC behavior and Blender object-mode
+Split addon creation, mode/visibility, and custom-property utilities into
+focused leaves while preserving RPC behavior and Blender object-mode
 assumptions.
 
 ## Repository Touchpoints
@@ -39,12 +39,43 @@ assumptions.
 - `SceneHandler.get_custom_properties(...)`
 - `SceneHandler.set_custom_property(...)`
 
-## Planned Code Shape
+## Pseudocode
 
 ```python
-class SceneHandler(SceneUtilityMixin, ...):
-    pass
+creation_leaf = ["create_light", "create_camera", "create_empty"]
+mode_visibility_leaf = [
+    "set_mode",
+    "rename_object",
+    "hide_object",
+    "show_all_objects",
+    "isolate_object",
+]
+custom_property_leaf = ["get_custom_properties", "set_custom_property"]
+
+for rpc_method in creation_leaf + mode_visibility_leaf + custom_property_leaf:
+    keep_public_scene_handler_name(rpc_method)
+    move_implementation_to_focused_utility_leaf(rpc_method)
+
+preserve_object_mode_assumptions()
+preserve_existing_rpc_payloads()
 ```
+
+## Implementation Notes
+
+- Keep creation helpers separate from mode/visibility helpers so object-spawn
+  defaults do not blur with mutating view-state/runtime behavior.
+- Keep custom-property read/write flows on their own leaf because they are the
+  only utility slice with structured metadata payload ownership.
+- Preserve current object-mode assumptions and RPC payload shapes across every
+  child leaf.
+
+## Execution Structure
+
+| Order | Leaf | Purpose |
+|------|------|---------|
+| 1 | [TASK-159-03-04-01](./TASK-159-03-04-01_Addon_Scene_Creation_Helper_Split.md) | Separate light/camera/empty creation helpers into one focused addon utility leaf |
+| 2 | [TASK-159-03-04-02](./TASK-159-03-04-02_Addon_Scene_Mode_And_Visibility_Utility_Split.md) | Separate mode-switch, rename, visibility, and isolation helpers into one focused addon utility leaf |
+| 3 | [TASK-159-03-04-03](./TASK-159-03-04-03_Addon_Scene_Custom_Property_Utility_Split.md) | Separate custom-property read/write helpers into one focused addon utility leaf |
 
 ## Runtime / Security Contract Notes
 
@@ -83,8 +114,8 @@ class SceneHandler(SceneUtilityMixin, ...):
 
 ## Acceptance Criteria
 
-- creation, mode-switch, visibility, and custom-property helpers no longer
-  share one edit zone with inspection, viewport, or world/render internals
+- this branch is decomposed into focused creation, mode/visibility, and
+  custom-property leaves instead of one broad utility pass
 - RPC method names, payloads, and mode-validation errors remain stable
 - structured custom-property delivery keeps the same contract
 - focused unit/e2e lanes still prove the same utility behavior
@@ -92,3 +123,5 @@ class SceneHandler(SceneUtilityMixin, ...):
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
+- execute this branch through the focused leaves below instead of landing all
+  addon utilities in one broad pass

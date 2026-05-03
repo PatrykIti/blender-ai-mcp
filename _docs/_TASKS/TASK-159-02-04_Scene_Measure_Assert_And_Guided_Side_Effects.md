@@ -14,6 +14,7 @@ guided stale-state and spatial-check side effects.
 - `server/adapters/mcp/areas/scene.py`
 - likely new helper module such as `server/adapters/mcp/areas/scene_measure_assert.py`
 - `server/adapters/mcp/session_capabilities.py`
+- `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
 - `tests/unit/tools/scene/test_macro_place_supported_pair_mcp.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
 - `tests/e2e/tools/scene/test_scene_measure_tools.py`
@@ -47,6 +48,7 @@ from .scene_measure_assert import execute_scene_measure_gap, execute_scene_asser
 
 ## Tests To Add/Update
 
+- `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
 - `tests/unit/tools/scene/test_macro_place_supported_pair_mcp.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
 - `tests/e2e/tools/scene/test_scene_measure_tools.py`
@@ -54,7 +56,7 @@ from .scene_measure_assert import execute_scene_measure_gap, execute_scene_asser
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_macro_place_supported_pair_mcp.py tests/unit/tools/test_handler_rpc_alignment.py tests/e2e/tools/scene/test_scene_measure_tools.py tests/e2e/tools/scene/test_scene_assert_tools.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_macro_place_supported_pair_mcp.py tests/unit/tools/test_handler_rpc_alignment.py tests/e2e/tools/scene/test_scene_measure_tools.py tests/e2e/tools/scene/test_scene_assert_tools.py -q`
 
 ## Docs To Update
 

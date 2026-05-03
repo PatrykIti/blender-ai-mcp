@@ -128,7 +128,7 @@ class SceneHandler(
 | 1 | [TASK-159-03-01](./TASK-159-03-01_Addon_Scene_Inspection_And_Topology_Split.md) | Split lifecycle/context, snapshot/structural, and inspection/topology truth reads into focused addon leaves instead of one oversized branch |
 | 2 | [TASK-159-03-02](./TASK-159-03-02_Addon_Scene_Measure_Assert_And_RPC_Parity.md) | Separate measure/assert helpers and keep server-addon RPC contracts aligned |
 | 3 | [TASK-159-03-03](./TASK-159-03-03_Addon_Scene_Viewport_Camera_And_Registration.md) | Extract viewport/camera helpers and prove registration plus viewport/runtime parity stay intact |
-| 4 | [TASK-159-03-04](./TASK-159-03-04_Addon_Scene_Creation_Visibility_And_Metadata_Utilities.md) | Separate scene creation, mode-switch, visibility, and custom-property utilities without drifting RPC behavior or object-mode assumptions |
+| 4 | [TASK-159-03-04](./TASK-159-03-04_Addon_Scene_Creation_Visibility_And_Metadata_Utilities.md) | Split scene creation, mode/visibility, and custom-property utilities through focused addon leaves without drifting RPC behavior or object-mode assumptions |
 | 5 | [TASK-159-03-05](./TASK-159-03-05_Addon_Scene_World_Render_And_Color_Management_Split.md) | Separate world/render/color-management helpers so read/apply/read scene appearance contracts keep an explicit Blender-side owner |
 
 ## Tests To Add/Update

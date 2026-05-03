@@ -165,8 +165,8 @@ for public_wrapper in read_heavy_scene_wrappers:
   remain stable across context, snapshot/structural, and inspect-action leaves
 - unit plus focused inspect and snapshot E2E lanes still prove the same
   context/inspect/snapshot behavior across object, materials, modifiers,
-  constraints, topology, modifier_data, render/color/world, and structural-read
-  branches
+  constraints, topology, modifier_data, render/color_management/world, and
+  structural-read branches
 
 ## Status / Board Update
 

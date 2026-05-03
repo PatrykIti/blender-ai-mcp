@@ -13,8 +13,8 @@ addon truth-read leaf.
 
 - `blender_addon/application/handlers/scene.py`
 - likely helper module such as `blender_addon/application/handlers/scene_inspection_mixin.py`
-- `tests/unit/tools/scene/test_scene_mode.py`
 - `tests/unit/tools/scene/test_scene_get_mode_handler.py`
+- `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
 - `tests/unit/tools/scene/test_scene_inspect_modifiers.py`
 - `tests/unit/tools/scene/test_get_constraints.py`
 - `tests/unit/tools/scene/test_scene_inspect_mesh_topology.py`
@@ -45,8 +45,8 @@ class SceneHandler(SceneInspectionMixin, ...):
 ## Tests To Add/Update
 
 - `tests/unit/tools/scene/test_scene_inspect_modifiers.py`
-- `tests/unit/tools/scene/test_scene_mode.py`
 - `tests/unit/tools/scene/test_scene_get_mode_handler.py`
+- `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
 - `tests/unit/tools/scene/test_get_constraints.py`
 - `tests/unit/tools/scene/test_scene_inspect_mesh_topology.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
@@ -54,7 +54,7 @@ class SceneHandler(SceneInspectionMixin, ...):
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mode.py tests/unit/tools/scene/test_scene_get_mode_handler.py tests/unit/tools/scene/test_scene_inspect_modifiers.py tests/unit/tools/scene/test_get_constraints.py tests/unit/tools/scene/test_scene_inspect_mesh_topology.py tests/unit/tools/test_handler_rpc_alignment.py tests/e2e/tools/scene/test_scene_inspect_material_slots.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_get_mode_handler.py tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_scene_inspect_modifiers.py tests/unit/tools/scene/test_get_constraints.py tests/unit/tools/scene/test_scene_inspect_mesh_topology.py tests/unit/tools/test_handler_rpc_alignment.py tests/e2e/tools/scene/test_scene_inspect_material_slots.py -q`
 
 ## Docs To Update
 
