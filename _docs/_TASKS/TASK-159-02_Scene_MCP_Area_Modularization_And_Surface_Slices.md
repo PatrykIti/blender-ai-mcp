@@ -14,7 +14,8 @@ Split `server/adapters/mcp/areas/scene.py` into bounded internal slices for:
 - object_utilities
 - spatial_graph
 - measure_assert
-- view
+- view_diagnostics
+- viewport_surface
 
 while preserving the current public scene MCP tool names, tool versions, and
 router/visibility metadata behavior.
@@ -55,6 +56,7 @@ which makes future edits slower and more fragile.
   - `scene_spatial_graph.py`
   - `scene_measure_assert.py`
   - `scene_view.py`
+  - `scene_viewport.py`
 - `server/adapters/mcp/contracts/scene.py`
 - `server/adapters/mcp/providers/core_tools.py`
 - `server/adapters/mcp/platform/capability_manifest.py`
@@ -122,7 +124,8 @@ from server.adapters.mcp.areas.scene_create_configure import execute_scene_creat
 from server.adapters.mcp.areas.scene_object_utils import execute_scene_clean_scene, execute_scene_object_utility
 from server.adapters.mcp.areas.scene_spatial_graph import execute_scope_graph, execute_relation_graph
 from server.adapters.mcp.areas.scene_measure_assert import execute_measure_gap, execute_assert_contact
-from server.adapters.mcp.areas.scene_view import execute_viewport, execute_view_diagnostics
+from server.adapters.mcp.areas.scene_view import execute_view_diagnostics
+from server.adapters.mcp.areas.scene_viewport import execute_scene_get_viewport
 
 def scene_measure_gap(ctx, ...):
     return route_tool_call(tool_name="scene_measure_gap", direct_executor=lambda: execute_measure_gap(ctx, ...))
@@ -146,7 +149,7 @@ def scene_measure_gap(ctx, ...):
 | Order | Leaf | Purpose |
 |------|------|---------|
 | 1 | [TASK-159-02-01](./TASK-159-02-01_Scene_Public_Facade_Registration_And_Version_Guards.md) | Stabilize public registration, provider/manifest wiring, and version-policy guards before internal extraction |
-| 2 | [TASK-159-02-02](./TASK-159-02-02_Scene_Inspect_And_Create_Manage_Slices.md) | Extract scene context, inspect, snapshot/compare, and structural-read helpers while keeping the read-heavy facade readable |
+| 2 | [TASK-159-02-02](./TASK-159-02-02_Scene_Context_Inspect_Snapshot_And_Structural_Read_Slices.md) | Extract scene context, inspect, snapshot/compare, and structural-read helpers while keeping the read-heavy facade readable |
 | 3 | [TASK-159-02-07](./TASK-159-02-07_Scene_Grouped_Create_And_Configure_Mega_Tool_Split.md) | Separate grouped `scene_create(...)` / `scene_configure(...)` routing and private write-side executors from the read-heavy state branch |
 | 4 | [TASK-159-02-03](./TASK-159-02-03_Scene_Spatial_Graph_And_View_Diagnostics_Slices.md) | Separate spatial-graph and view-diagnostics helpers without drifting guided visibility semantics |
 | 5 | [TASK-159-02-04](./TASK-159-02-04_Scene_Measure_Assert_And_Guided_Side_Effects.md) | Extract measure/assert helpers and preserve guided stale-state / completion side effects |
@@ -203,11 +206,12 @@ def scene_measure_gap(ctx, ...):
 
 - `scene.py` is reduced to a bounded public registration/facade role for the
   named context/state-read, grouped create/configure, object-utility,
-  spatial-graph, measure/assert, and view slices, while any remaining
-  macro/request-path bridge seams stay explicitly retained in the facade for
-  this pass
+  spatial-graph, measure/assert, view-diagnostics, and viewport-surface slices,
+  while any remaining macro/request-path bridge seams stay explicitly retained
+  in the facade for this pass
 - context/state-read, grouped create/configure, object-utility, spatial-graph,
-  measure/assert, and view concerns have clear internal homes
+  measure/assert, view-diagnostics, and viewport-surface concerns have clear
+  internal homes
 - `scene_get_viewport(...)` no longer survives as an undocumented facade
   remainder and has an explicit owner for output modes plus task/background
   execution semantics

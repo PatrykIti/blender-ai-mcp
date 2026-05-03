@@ -12,7 +12,7 @@ task-mode/addon background execution, and viewport-vs-camera capture semantics.
 
 This leaf owns the MCP-facing viewport surface. Blender/runtime viewport
 behavior inside addon `SceneHandler` stays owned by
-[TASK-159-03-03](./TASK-159-03-03_Addon_Scene_Viewport_World_Render_And_Registration.md).
+[TASK-159-03-03](./TASK-159-03-03_Addon_Scene_Viewport_Camera_And_Registration.md).
 
 ## Repository Touchpoints
 
