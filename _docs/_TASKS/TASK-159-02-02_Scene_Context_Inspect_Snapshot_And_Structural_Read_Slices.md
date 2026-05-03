@@ -62,21 +62,39 @@ utility, and custom-property operations stay under
 - `_scene_inspect_material_slots(...)`
 - `_scene_inspect_modifiers(...)`
 - `_scene_get_constraints(...)`
+- `_scene_inspect_mesh_topology(...)`
 - `_scene_inspect_modifier_data(...)`
 - `_scene_inspect_render_settings(...)`
 - `_scene_inspect_color_management(...)`
 - `_scene_inspect_world(...)`
 
-## Planned Code Shape
+## Pseudocode
 
 ```python
-from .scene_inspect import execute_scene_inspect
-from .scene_state_reads import (
-    execute_scene_context,
-    execute_scene_snapshot_state,
-    execute_scene_compare_snapshot,
-    execute_scene_structural_read,
-)
+state_read_leaf = {
+    "scene_context": ["_scene_get_mode", "_scene_list_selection"],
+}
+snapshot_structural_leaf = {
+    "scene_snapshot_state": ["scene_compare_snapshot", "scene_get_hierarchy", "scene_get_bounding_box", "scene_get_origin_info"],
+}
+inspect_leaf = {
+    "scene_inspect": [
+        "object",
+        "topology",
+        "materials",
+        "modifiers",
+        "constraints",
+        "modifier_data",
+        "render",
+        "color_management",
+        "world",
+    ],
+}
+
+for public_wrapper in read_heavy_scene_wrappers:
+    keep_wrapper_in_scene_py(public_wrapper)
+    delegate_to_leaf_executor(public_wrapper)
+    preserve_structured_contracts_and_assistant_summary(public_wrapper)
 ```
 
 ## Implementation Notes
@@ -88,7 +106,7 @@ from .scene_state_reads import (
 - Keep grouped create/configure routing out of scope for this subtask so the
   read-heavy branch stays isolated from write-side mega-tool work.
 - Treat the full inspect action matrix as owned scope for this branch:
-  object, materials, modifiers, constraints, modifier_data, render,
+  object, topology, materials, modifiers, constraints, modifier_data, render,
   color_management, and world.
 - Preserve current request validation, assistant-summary plumbing, and
   structured scene contracts across all child leaves.
@@ -106,7 +124,8 @@ from .scene_state_reads import (
 - keep current request validation, assistant-summary plumbing, and structured
   scene contracts intact
 - preserve current read-only semantics and `assistant_summary` behavior for
-  context/inspect/snapshot/hierarchy/bbox/origin flows
+  context/inspect/snapshot/hierarchy/bbox/origin flows, including topology and
+  modifier_data inspect branches
 - keep grouped create/configure routing out of scope for this leaf so the
   read-heavy branch remains one focused extraction pass
 
@@ -115,6 +134,7 @@ from .scene_state_reads import (
 - `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
 - `tests/unit/tools/scene/test_scene_context_mega.py`
 - `tests/unit/tools/scene/test_scene_inspect_mega.py`
+- `tests/unit/tools/scene/test_scene_inspect_mesh_topology.py`
 - `tests/unit/tools/scene/test_scene_inspect_modifiers.py`
 - `tests/unit/tools/scene/test_get_constraints.py`
 - `tests/unit/tools/scene/test_scene_state_assistants.py`
@@ -126,7 +146,7 @@ from .scene_state_reads import (
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_scene_context_mega.py tests/unit/tools/scene/test_scene_inspect_mega.py tests/unit/tools/scene/test_scene_inspect_modifiers.py tests/unit/tools/scene/test_get_constraints.py tests/unit/tools/scene/test_scene_state_assistants.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/test_handler_rpc_alignment.py tests/unit/adapters/mcp/test_structured_contract_delivery.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_scene_context_mega.py tests/unit/tools/scene/test_scene_inspect_mega.py tests/unit/tools/scene/test_scene_inspect_mesh_topology.py tests/unit/tools/scene/test_scene_inspect_modifiers.py tests/unit/tools/scene/test_get_constraints.py tests/unit/tools/scene/test_scene_state_assistants.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/test_handler_rpc_alignment.py tests/unit/adapters/mcp/test_structured_contract_delivery.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/tools/scene/test_scene_inspect_material_slots.py tests/e2e/tools/scene/test_snapshot_tools.py -q`
 
 ## Docs To Update
@@ -145,7 +165,8 @@ from .scene_state_reads import (
   remain stable across context, snapshot/structural, and inspect-action leaves
 - unit plus focused inspect and snapshot E2E lanes still prove the same
   context/inspect/snapshot behavior across object, materials, modifiers,
-  constraints, render/color/world, and structural-read branches
+  constraints, topology, modifier_data, render/color/world, and structural-read
+  branches
 
 ## Status / Board Update
 

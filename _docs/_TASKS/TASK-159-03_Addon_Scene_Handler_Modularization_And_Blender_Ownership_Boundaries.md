@@ -49,6 +49,8 @@ That increases the chance that:
 
 - `blender_addon/application/handlers/scene.py`
 - likely new sibling modules such as:
+  - `scene_lifecycle_context_mixin.py`
+  - `scene_structural_read_mixin.py`
   - `scene_inspection_mixin.py`
   - `scene_measure_assert_mixin.py`
   - `scene_viewport_mixin.py`
@@ -88,6 +90,8 @@ That increases the chance that:
 ## Pseudocode
 
 ```python
+from .scene_lifecycle_context_mixin import SceneLifecycleContextMixin
+from .scene_structural_read_mixin import SceneStructuralReadMixin
 from .scene_inspection_mixin import SceneInspectionMixin
 from .scene_measure_assert_mixin import SceneMeasureAssertMixin
 from .scene_utility_mixin import SceneUtilityMixin
@@ -95,6 +99,8 @@ from .scene_viewport_mixin import SceneViewportMixin
 from .scene_world_render_mixin import SceneWorldRenderMixin
 
 class SceneHandler(
+    SceneLifecycleContextMixin,
+    SceneStructuralReadMixin,
     SceneInspectionMixin,
     SceneMeasureAssertMixin,
     SceneUtilityMixin,

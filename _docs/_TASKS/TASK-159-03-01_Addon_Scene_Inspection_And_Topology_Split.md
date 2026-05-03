@@ -52,16 +52,46 @@ Creation, visibility, and custom-property utilities move under
 - `SceneHandler.get_origin_info(...)`
 - `SceneHandler.inspect_mesh_topology(...)`
 
-## Planned Code Shape
+## Pseudocode
 
 ```python
-class SceneHandler(
-    SceneLifecycleContextMixin,
-    SceneStructuralReadMixin,
-    SceneInspectionMixin,
-    ...,
-):
-    pass
+lifecycle_context_leaf = [
+    "list_objects",
+    "delete_object",
+    "clean_scene",
+    "duplicate_object",
+    "set_active_object",
+    "get_mode",
+    "list_selection",
+]
+structural_read_leaf = [
+    "snapshot_state",
+    "get_hierarchy",
+    "get_bounding_box",
+    "get_origin_info",
+]
+inspection_topology_leaf = [
+    "inspect_object",
+    "inspect_material_slots",
+    "inspect_modifiers",
+    "get_constraints",
+    "inspect_mesh_topology",
+]
+
+for rpc_method in lifecycle_context_leaf:
+    keep_public_scene_handler_name(rpc_method)
+    move_implementation_to_lifecycle_context_mixin(rpc_method)
+
+for rpc_method in structural_read_leaf:
+    keep_public_scene_handler_name(rpc_method)
+    move_implementation_to_structural_read_mixin(rpc_method)
+
+for rpc_method in inspection_topology_leaf:
+    keep_public_scene_handler_name(rpc_method)
+    move_implementation_to_inspection_mixin(rpc_method)
+
+preserve_main_thread_safety()
+preserve_existing_rpc_payloads()
 ```
 
 ## Implementation Notes

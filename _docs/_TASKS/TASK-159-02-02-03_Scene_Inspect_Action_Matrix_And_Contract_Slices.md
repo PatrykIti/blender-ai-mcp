@@ -7,8 +7,8 @@
 ## Objective
 
 Separate the full `scene_inspect(...)` action matrix into one focused leaf so
-the object/material/modifier/constraint/render/color/world branches keep one
-explicit owner.
+the object/topology/material/modifier/constraint/modifier_data/render/color/
+world branches keep one explicit owner.
 
 ## Repository Touchpoints
 
@@ -16,6 +16,7 @@ explicit owner.
 - likely helper module such as `server/adapters/mcp/areas/scene_inspect.py`
 - `server/adapters/mcp/contracts/scene.py`
 - `tests/unit/tools/scene/test_scene_inspect_mega.py`
+- `tests/unit/tools/scene/test_scene_inspect_mesh_topology.py`
 - `tests/unit/tools/scene/test_scene_inspect_modifiers.py`
 - `tests/unit/tools/scene/test_get_constraints.py`
 - `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
@@ -27,6 +28,7 @@ explicit owner.
 
 - `scene_inspect(...)`
 - `_scene_inspect_object(...)`
+- `_scene_inspect_mesh_topology(...)`
 - `_scene_inspect_material_slots(...)`
 - `_scene_inspect_modifiers(...)`
 - `_scene_get_constraints(...)`
@@ -50,6 +52,7 @@ from .scene_inspect import execute_scene_inspect
 ## Tests To Add/Update
 
 - `tests/unit/tools/scene/test_scene_inspect_mega.py`
+- `tests/unit/tools/scene/test_scene_inspect_mesh_topology.py`
 - `tests/unit/tools/scene/test_scene_inspect_modifiers.py`
 - `tests/unit/tools/scene/test_get_constraints.py`
 - `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
@@ -59,7 +62,7 @@ from .scene_inspect import execute_scene_inspect
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_inspect_mega.py tests/unit/tools/scene/test_scene_inspect_modifiers.py tests/unit/tools/scene/test_get_constraints.py tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/adapters/mcp/test_structured_contract_delivery.py tests/e2e/tools/scene/test_scene_inspect_material_slots.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_inspect_mega.py tests/unit/tools/scene/test_scene_inspect_mesh_topology.py tests/unit/tools/scene/test_scene_inspect_modifiers.py tests/unit/tools/scene/test_get_constraints.py tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/adapters/mcp/test_structured_contract_delivery.py tests/e2e/tools/scene/test_scene_inspect_material_slots.py -q`
 
 ## Docs To Update
 
@@ -73,8 +76,8 @@ from .scene_inspect import execute_scene_inspect
 
 - the full `scene_inspect(...)` action matrix has one focused home outside the
   monolith
-- typed inspect contracts remain unchanged across object/material/modifier/
-  constraint/render/color/world branches
+- typed inspect contracts remain unchanged across object/topology/material/
+  modifier/constraint/modifier_data/render/color/world branches
 
 ## Status / Board Update
 
