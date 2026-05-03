@@ -32,10 +32,14 @@ grouped scene tools and the spatial-support slices:
 - `tests/unit/adapters/mcp/test_provider_inventory.py`
 - `tests/unit/adapters/mcp/test_structured_contract_delivery.py`
 - `tests/e2e/tools/scene/test_scene_clean_scene.py`
+- `tests/unit/tools/scene/test_camera_orbit.py`
+- `tests/unit/tools/scene/test_camera_focus.py`
 - `tests/e2e/tools/scene/test_hide_object.py`
 - `tests/e2e/tools/scene/test_show_all_objects.py`
 - `tests/e2e/tools/scene/test_rename_object.py`
 - `tests/e2e/tools/scene/test_isolate_object.py`
+- `tests/e2e/tools/scene/test_camera_orbit.py`
+- `tests/e2e/tools/scene/test_camera_focus.py`
 - `tests/e2e/tools/scene/test_scene_utility_workflow.py`
 
 ## Current Code Anchors
@@ -131,7 +135,7 @@ for wrapper in cleanup_mode_leaf + visibility_camera_leaf + custom_property_leaf
 ## Validation Commands
 
 - `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/test_mcp_area_main_paths.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_provider_inventory.py tests/unit/adapters/mcp/test_structured_contract_delivery.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/tools/scene/test_scene_clean_scene.py tests/e2e/tools/scene/test_hide_object.py tests/e2e/tools/scene/test_show_all_objects.py tests/e2e/tools/scene/test_rename_object.py tests/e2e/tools/scene/test_isolate_object.py tests/e2e/tools/scene/test_scene_utility_workflow.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/tools/scene/test_scene_clean_scene.py tests/unit/tools/scene/test_camera_orbit.py tests/unit/tools/scene/test_camera_focus.py tests/e2e/tools/scene/test_hide_object.py tests/e2e/tools/scene/test_show_all_objects.py tests/e2e/tools/scene/test_rename_object.py tests/e2e/tools/scene/test_isolate_object.py tests/e2e/tools/scene/test_camera_orbit.py tests/e2e/tools/scene/test_camera_focus.py tests/e2e/tools/scene/test_scene_utility_workflow.py -q`
 
 ## Docs To Update
 

@@ -107,6 +107,8 @@ preserve_existing_rpc_payloads()
 - `tests/e2e/tools/scene/test_show_all_objects.py`
 - `tests/e2e/tools/scene/test_rename_object.py`
 - `tests/e2e/tools/scene/test_isolate_object.py`
+- `tests/e2e/tools/scene/test_scene_get_viewport_camera.py`
+- `tests/e2e/tools/scene/test_scene_view_diagnostics.py`
 - `tests/e2e/tools/scene/test_scene_utility_workflow.py`
 
 ## Validation Commands
