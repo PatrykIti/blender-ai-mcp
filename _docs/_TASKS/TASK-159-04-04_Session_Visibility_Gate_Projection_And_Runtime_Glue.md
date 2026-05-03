@@ -18,6 +18,9 @@ behavior on stdio and Streamable HTTP.
 - `server/adapters/mcp/discovery/search_surface.py`
 - `server/adapters/mcp/router_helper.py`
 - `server/adapters/mcp/prompts/provider.py`
+- `server/adapters/mcp/transforms/quality_gate_verifier.py`
+- `tests/unit/adapters/mcp/test_quality_gate_verifier.py`
+- `tests/unit/adapters/mcp/test_quality_gate_intake.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_router_elicitation.py`
@@ -28,6 +31,7 @@ behavior on stdio and Streamable HTTP.
 ## Current Code Anchors
 
 - `update_quality_gate_plan_from_relation_graph(...)`
+- `verify_gate_plan_with_relation_graph(...)`
 - `record_router_execution_outcome(...)`
 - `refresh_visibility_for_session_state(...)`
 - `apply_visibility_for_session_state(...)`
@@ -47,6 +51,8 @@ from .session_capabilities_runtime_glue import (
 
 - preserve the active-request-path visibility rules documented in
   `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md`
+- preserve deterministic relation-graph gate verification on the existing
+  verifier seam rather than turning semantic/runtime glue into the authority
 - do not reintroduce detached session writes or background visibility refreshes
   for paths that currently rely on awaited completion
 - keep search/router/prompt consumers behaviorally identical for the same guided
@@ -54,6 +60,8 @@ from .session_capabilities_runtime_glue import (
 
 ## Tests To Add/Update
 
+- `tests/unit/adapters/mcp/test_quality_gate_verifier.py`
+- `tests/unit/adapters/mcp/test_quality_gate_intake.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_router_elicitation.py`
@@ -63,7 +71,7 @@ from .session_capabilities_runtime_glue import (
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_router_elicitation.py tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/integration/test_guided_gate_state_transport.py tests/e2e/router/test_guided_manual_handoff.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_router_elicitation.py tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/integration/test_guided_gate_state_transport.py tests/e2e/router/test_guided_manual_handoff.py -q`
 
 ## Docs To Update
 
@@ -80,6 +88,8 @@ from .session_capabilities_runtime_glue import (
   state and registry logic
 - search/router/prompt/runtime consumers continue to observe the same guided
   behavior
+- gate projection continues to use the same deterministic verifier-backed
+  relation-graph semantics
 - transport-backed tests still prove no request-path visibility regression
 
 ## Status / Board Update

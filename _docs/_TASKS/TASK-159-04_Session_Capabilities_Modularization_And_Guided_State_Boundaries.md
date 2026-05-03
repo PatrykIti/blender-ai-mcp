@@ -49,6 +49,7 @@ Leaving it monolithic increases the chance that:
 - `server/adapters/mcp/session_state.py`
 - `server/adapters/mcp/guided_mode.py`
 - `server/adapters/mcp/transforms/visibility_policy.py`
+- `server/router/application/session_phase_hints.py`
 - `server/adapters/mcp/discovery/search_surface.py`
 - `server/adapters/mcp/router_helper.py`
 - `server/adapters/mcp/areas/scene.py`
@@ -58,6 +59,7 @@ Leaving it monolithic increases the chance that:
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
 - `tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py`
 - `tests/unit/adapters/mcp/test_session_phase.py`
+- `tests/unit/router/application/test_session_phase_hints.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py`
 - `tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py`

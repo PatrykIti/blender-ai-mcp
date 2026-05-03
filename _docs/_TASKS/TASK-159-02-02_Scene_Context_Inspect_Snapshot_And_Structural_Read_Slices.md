@@ -35,10 +35,14 @@ utility, and custom-property operations stay under
 - `server/adapters/mcp/contracts/scene.py`
 - `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
 - `tests/unit/tools/scene/test_scene_context_mega.py`
+- `tests/unit/tools/scene/test_scene_inspect_mega.py`
+- `tests/unit/tools/scene/test_scene_inspect_modifiers.py`
+- `tests/unit/tools/scene/test_get_constraints.py`
 - `tests/unit/tools/scene/test_scene_state_assistants.py`
 - `tests/unit/tools/scene/test_scene_contracts.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
 - `tests/unit/adapters/mcp/test_structured_contract_delivery.py`
+- `tests/e2e/tools/scene/test_scene_inspect_material_slots.py`
 - `tests/e2e/tools/scene/test_snapshot_tools.py`
 
 ## Current Code Anchors
@@ -53,6 +57,13 @@ utility, and custom-property operations stay under
 - `scene_get_bounding_box(...)`
 - `scene_get_origin_info(...)`
 - `_scene_inspect_object(...)`
+- `_scene_inspect_material_slots(...)`
+- `_scene_inspect_modifiers(...)`
+- `_scene_get_constraints(...)`
+- `_scene_inspect_modifier_data(...)`
+- `_scene_inspect_render_settings(...)`
+- `_scene_inspect_color_management(...)`
+- `_scene_inspect_world(...)`
 
 ## Planned Code Shape
 
@@ -79,16 +90,20 @@ from .scene_state_reads import (
 
 - `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
 - `tests/unit/tools/scene/test_scene_context_mega.py`
+- `tests/unit/tools/scene/test_scene_inspect_mega.py`
+- `tests/unit/tools/scene/test_scene_inspect_modifiers.py`
+- `tests/unit/tools/scene/test_get_constraints.py`
 - `tests/unit/tools/scene/test_scene_state_assistants.py`
 - `tests/unit/tools/scene/test_scene_contracts.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
 - `tests/unit/adapters/mcp/test_structured_contract_delivery.py`
+- `tests/e2e/tools/scene/test_scene_inspect_material_slots.py`
 - `tests/e2e/tools/scene/test_snapshot_tools.py`
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_scene_context_mega.py tests/unit/tools/scene/test_scene_state_assistants.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/test_handler_rpc_alignment.py tests/unit/adapters/mcp/test_structured_contract_delivery.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/tools/scene/test_snapshot_tools.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_scene_context_mega.py tests/unit/tools/scene/test_scene_inspect_mega.py tests/unit/tools/scene/test_scene_inspect_modifiers.py tests/unit/tools/scene/test_get_constraints.py tests/unit/tools/scene/test_scene_state_assistants.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/test_handler_rpc_alignment.py tests/unit/adapters/mcp/test_structured_contract_delivery.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/tools/scene/test_scene_inspect_material_slots.py tests/e2e/tools/scene/test_snapshot_tools.py -q`
 
 ## Docs To Update
 
@@ -104,8 +119,9 @@ from .scene_state_reads import (
   longer live as one inline cluster inside `scene.py`
 - current scene contracts, assistant-summary hooks, and read-heavy wrappers
   remain stable
-- unit plus snapshot E2E lanes still prove the same context/inspect/snapshot
-  behavior
+- unit plus focused inspect and snapshot E2E lanes still prove the same
+  context/inspect/snapshot behavior across object, materials, modifiers,
+  constraints, render/color/world, and structural-read branches
 
 ## Status / Board Update
 

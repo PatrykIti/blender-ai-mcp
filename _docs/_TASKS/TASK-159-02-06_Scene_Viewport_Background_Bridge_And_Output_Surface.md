@@ -51,6 +51,9 @@ async def scene_get_viewport(ctx, ...):
   and manifest/provider exposure
 - preserve `USER_PERSPECTIVE` vs named-camera semantics, output-mode behavior,
   and task-mode timeout/cancellation handling
+- keep viewport artifact writes bounded to helper-managed temp paths and the
+  existing host-visible output contract; do not add caller-controlled file
+  destinations or leak internal-only temp paths
 - do not bypass the current addon background bridge for task-mode captures
 - keep viewport output delivery behavior identical for `IMAGE`, `BASE64`,
   `FILE`, and `MARKDOWN`

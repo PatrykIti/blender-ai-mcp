@@ -17,8 +17,10 @@ prompt-provider semantics.
 - likely new helper module such as `server/adapters/mcp/session_capabilities_bootstrap.py`
 - `server/adapters/mcp/areas/router.py`
 - `server/adapters/mcp/prompts/provider.py`
+- `server/router/application/session_phase_hints.py`
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
 - `tests/unit/adapters/mcp/test_session_phase.py`
+- `tests/unit/router/application/test_session_phase_hints.py`
 - `tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py`
 - `tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py`
 - `tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py`
@@ -27,6 +29,7 @@ prompt-provider semantics.
 ## Current Code Anchors
 
 - `infer_phase_from_router_status(...)`
+- `derive_phase_hint_from_router_result(...)`
 - `_select_guided_flow_domain_profile(...)`
 - `clear_session_goal_state(...)`
 - `clear_session_goal_state_async(...)`
@@ -61,6 +64,7 @@ from .session_capabilities_bootstrap import (
 
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
 - `tests/unit/adapters/mcp/test_session_phase.py`
+- `tests/unit/router/application/test_session_phase_hints.py`
 - `tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py`
 - `tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py`
 - `tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py`
@@ -68,7 +72,7 @@ from .session_capabilities_bootstrap import (
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_session_phase.py tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py tests/e2e/router/test_guided_manual_handoff.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_session_phase.py tests/unit/router/application/test_session_phase_hints.py tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py tests/e2e/router/test_guided_manual_handoff.py -q`
 
 ## Docs To Update
 

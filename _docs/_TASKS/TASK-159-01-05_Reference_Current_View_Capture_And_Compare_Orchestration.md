@@ -25,6 +25,8 @@ through the same compare response contract used by the staged reference loop.
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/unit/adapters/mcp/test_provider_inventory.py`
 - `tests/unit/adapters/mcp/test_tool_inventory.py`
+- `tests/e2e/tools/scene/test_scene_get_viewport.py`
+- `tests/e2e/tools/scene/test_scene_get_viewport_camera.py`
 
 ## Current Code Anchors
 
@@ -49,6 +51,8 @@ async def reference_compare_current_view(...):
   `goal_override` is still required before capture/compare proceeds
 - preserve checkpoint filename uniqueness, current-view prompt-hint semantics,
   and compact off-frame diagnostics hints
+- keep checkpoint artifact writes bounded to helper-managed temp paths; do not
+  introduce caller-controlled destinations or leak internal-only temp paths
 - do not double-apply persisted viewport adjustments or silently widen capture
   authority beyond the active request/session
 - keep the public `reference_compare_current_view(...)` tool name, response
@@ -60,10 +64,12 @@ async def reference_compare_current_view(...):
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/unit/adapters/mcp/test_provider_inventory.py`
 - `tests/unit/adapters/mcp/test_tool_inventory.py`
+- `tests/e2e/tools/scene/test_scene_get_viewport.py`
+- `tests/e2e/tools/scene/test_scene_get_viewport_camera.py`
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/adapters/mcp/test_provider_inventory.py tests/unit/adapters/mcp/test_tool_inventory.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/adapters/mcp/test_provider_inventory.py tests/unit/adapters/mcp/test_tool_inventory.py tests/e2e/tools/scene/test_scene_get_viewport.py tests/e2e/tools/scene/test_scene_get_viewport_camera.py -q`
 
 ## Docs To Update
 
@@ -83,8 +89,8 @@ async def reference_compare_current_view(...):
   clusters
 - current-view compare keeps the same public tool name, inventory/discovery
   surface, and response contract
-- targeted unit/docs/inventory lanes still prove the same current-view compare
-  behavior
+- targeted unit/docs/inventory plus Blender-backed viewport lanes still prove
+  the same current-view compare behavior
 
 ## Status / Board Update
 

@@ -22,8 +22,11 @@ custom-property utilities move under
 - `tests/unit/tools/scene/test_scene_mode.py`
 - `tests/unit/tools/scene/test_scene_get_mode_handler.py`
 - `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
+- `tests/unit/tools/scene/test_scene_inspect_modifiers.py`
+- `tests/unit/tools/scene/test_get_constraints.py`
 - `tests/unit/tools/scene/test_scene_inspect_mesh_topology.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
+- `tests/e2e/tools/scene/test_scene_inspect_material_slots.py`
 - `tests/e2e/tools/scene/test_scene_clean_scene.py`
 - `tests/e2e/tools/scene/test_snapshot_tools.py`
 
@@ -37,6 +40,9 @@ custom-property utilities move under
 - `SceneHandler.get_mode(...)`
 - `SceneHandler.list_selection(...)`
 - `SceneHandler.inspect_object(...)`
+- `SceneHandler.inspect_material_slots(...)`
+- `SceneHandler.inspect_modifiers(...)`
+- `SceneHandler.get_constraints(...)`
 - `SceneHandler.snapshot_state(...)`
 - `SceneHandler.get_hierarchy(...)`
 - `SceneHandler.get_bounding_box(...)`
@@ -65,14 +71,17 @@ class SceneHandler(SceneInspectionMixin, ...):
 - `tests/unit/tools/scene/test_scene_mode.py`
 - `tests/unit/tools/scene/test_scene_get_mode_handler.py`
 - `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
+- `tests/unit/tools/scene/test_scene_inspect_modifiers.py`
+- `tests/unit/tools/scene/test_get_constraints.py`
 - `tests/unit/tools/scene/test_scene_inspect_mesh_topology.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
+- `tests/e2e/tools/scene/test_scene_inspect_material_slots.py`
 - `tests/e2e/tools/scene/test_scene_clean_scene.py`
 - `tests/e2e/tools/scene/test_snapshot_tools.py`
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mode.py tests/unit/tools/scene/test_scene_get_mode_handler.py tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_scene_inspect_mesh_topology.py tests/unit/tools/test_handler_rpc_alignment.py tests/e2e/tools/scene/test_scene_clean_scene.py tests/e2e/tools/scene/test_snapshot_tools.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mode.py tests/unit/tools/scene/test_scene_get_mode_handler.py tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_scene_inspect_modifiers.py tests/unit/tools/scene/test_get_constraints.py tests/unit/tools/scene/test_scene_inspect_mesh_topology.py tests/unit/tools/test_handler_rpc_alignment.py tests/e2e/tools/scene/test_scene_inspect_material_slots.py tests/e2e/tools/scene/test_scene_clean_scene.py tests/e2e/tools/scene/test_snapshot_tools.py -q`
 
 ## Docs To Update
 
@@ -89,7 +98,8 @@ class SceneHandler(SceneInspectionMixin, ...):
 - lifecycle/context helpers no longer share one anonymous edit zone with later
   create/visibility/viewport code
 - Blender truth-read payloads stay unchanged for list/clean/duplicate/mode,
-  inspect, snapshot, hierarchy, bbox/origin, and topology paths
+  inspect, material-slot, modifier, constraint, snapshot, hierarchy,
+  bbox/origin, and topology paths
 - RPC alignment tests still pass for the extracted lifecycle/context/inspection
   methods
 

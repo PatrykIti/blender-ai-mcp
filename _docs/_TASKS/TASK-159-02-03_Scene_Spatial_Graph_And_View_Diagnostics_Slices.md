@@ -25,6 +25,7 @@ so this leaf can stay focused on read-only spatial support plus view diagnostics
 - `tests/unit/tools/test_handler_rpc_alignment.py`
 - `tests/unit/tools/scene/test_scene_contracts.py`
 - `tests/unit/adapters/mcp/test_structured_contract_delivery.py`
+- `tests/unit/adapters/mcp/test_scene_guided_scope_requirements.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/e2e/tools/scene/test_scene_view_diagnostics.py`
@@ -58,13 +59,14 @@ from .scene_view import execute_view_diagnostics
 - `tests/unit/tools/test_handler_rpc_alignment.py`
 - `tests/unit/tools/scene/test_scene_contracts.py`
 - `tests/unit/adapters/mcp/test_structured_contract_delivery.py`
+- `tests/unit/adapters/mcp/test_scene_guided_scope_requirements.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/e2e/tools/scene/test_scene_view_diagnostics.py`
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/tools/test_handler_rpc_alignment.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/adapters/mcp/test_structured_contract_delivery.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/e2e/tools/scene/test_scene_view_diagnostics.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/test_handler_rpc_alignment.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/adapters/mcp/test_structured_contract_delivery.py tests/unit/adapters/mcp/test_scene_guided_scope_requirements.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/e2e/tools/scene/test_scene_view_diagnostics.py -q`
 
 ## Docs To Update
 
