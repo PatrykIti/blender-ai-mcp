@@ -15,7 +15,11 @@ scene-utility leaf.
 - likely helper module such as `server/adapters/mcp/areas/scene_object_utils.py`
 - `server/adapters/mcp/session_capabilities.py`
 - `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
+- `tests/unit/tools/scene/test_camera_orbit.py`
+- `tests/unit/tools/scene/test_camera_focus.py`
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
+- `tests/e2e/tools/scene/test_camera_orbit.py`
+- `tests/e2e/tools/scene/test_camera_focus.py`
 - `tests/e2e/tools/scene/test_scene_utility_workflow.py`
 
 ## Current Code Anchors
@@ -41,12 +45,16 @@ from .scene_object_utils import execute_scene_visibility_and_camera_utility
 ## Tests To Add/Update
 
 - `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
+- `tests/unit/tools/scene/test_camera_orbit.py`
+- `tests/unit/tools/scene/test_camera_focus.py`
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
+- `tests/e2e/tools/scene/test_camera_orbit.py`
+- `tests/e2e/tools/scene/test_camera_focus.py`
 - `tests/e2e/tools/scene/test_scene_utility_workflow.py`
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/e2e/tools/scene/test_scene_utility_workflow.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_camera_orbit.py tests/unit/tools/scene/test_camera_focus.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/e2e/tools/scene/test_camera_orbit.py tests/e2e/tools/scene/test_camera_focus.py tests/e2e/tools/scene/test_scene_utility_workflow.py -q`
 
 ## Docs To Update
 

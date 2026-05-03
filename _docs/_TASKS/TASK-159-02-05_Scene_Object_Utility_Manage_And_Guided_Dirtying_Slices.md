@@ -95,7 +95,7 @@ for wrapper in cleanup_mode_leaf + visibility_camera_leaf + custom_property_leaf
 
 | Order | Leaf | Purpose |
 |------|------|---------|
-| 1 | [TASK-159-02-05-01](./TASK-159-02-05-01_Scene_Cleanup_Mode_And_Active_Object_Utility_Slices.md) | Separate cleanup, duplicate, active-object, and mode wrappers into one focused utility leaf |
+| 1 | [TASK-159-02-05-01](./TASK-159-02-05-01_Scene_Cleanup_Mode_And_Active_Object_Utility_Slices.md) | Separate object listing/deletion, cleanup, duplicate, active-object, and mode wrappers into one focused utility leaf |
 | 2 | [TASK-159-02-05-02](./TASK-159-02-05-02_Scene_Visibility_Isolation_And_Camera_Utility_Slices.md) | Separate rename, visibility, isolation, and camera helpers into one focused utility leaf |
 | 3 | [TASK-159-02-05-03](./TASK-159-02-05-03_Scene_Custom_Property_Utility_And_Dirtying_Glue.md) | Separate custom-property read/write wrappers and their structured delivery/runtime glue into one focused leaf |
 
