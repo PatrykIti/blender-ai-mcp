@@ -47,13 +47,17 @@ class FakeContext:
         return None
 
     async def reset_visibility(self) -> None:
-        return None
+        self.state["_visibility_calls"] = [("reset_visibility", {})]
 
     async def enable_components(self, **kwargs) -> None:
-        return None
+        calls = self.state.setdefault("_visibility_calls", [])
+        assert isinstance(calls, list)
+        calls.append(("enable_components", kwargs))
 
     async def disable_components(self, **kwargs) -> None:
-        return None
+        calls = self.state.setdefault("_visibility_calls", [])
+        assert isinstance(calls, list)
+        calls.append(("disable_components", kwargs))
 
 
 def _skip_if_blender_unavailable(error: RuntimeError) -> None:
@@ -322,3 +326,153 @@ def test_router_status_and_stage_checkpoint_surface_reference_understanding_with
     assert iterate_result.reference_understanding_gate_ids == goal_result.reference_understanding_gate_ids
     assert iterate_result.part_segmentation is not None
     assert iterate_result.part_segmentation.status == "disabled"
+
+
+def test_reference_understanding_refresh_clear_reapplies_visibility_immediately(tmp_path, monkeypatch):
+    reference_path = tmp_path / "creature_reference_front.png"
+    _write_creature_reference(reference_path)
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    class Handler:
+        def set_goal(self, goal, resolved_params=None):
+            return {
+                "status": "no_match",
+                "continuation_mode": "guided_manual_build",
+                "workflow": None,
+                "resolved": {},
+                "unresolved": [],
+                "resolution_sources": {},
+                "phase_hint": "build",
+                "message": "Continue on the guided build surface.",
+            }
+
+        def clear_goal(self):
+            return "cleared"
+
+    class VisibilityBackend:
+        async def analyze(self, request):
+            return {
+                "status": "available",
+                "understanding_id": "understanding_visibility_refresh",
+                "goal": request.goal,
+                "reference_ids": list(request.metadata.get("reference_ids") or []),
+                "subject": {
+                    "label": "low poly squirrel",
+                    "category": "creature",
+                    "confidence": 0.9,
+                    "uncertainty_notes": [],
+                },
+                "style": {
+                    "style_label": "low_poly_faceted",
+                    "confidence": 0.9,
+                    "notes": [],
+                },
+                "required_parts": [],
+                "non_goals": [],
+                "construction_strategy": {
+                    "construction_path": "low_poly_facet",
+                    "primary_family": "modeling_mesh",
+                    "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+                    "stage_sequence": ["primary_masses"],
+                    "finish_policy": "preserve_facets",
+                },
+                "router_handoff_hints": {
+                    "preferred_family": "modeling_mesh",
+                    "allowed_guided_families": [
+                        "reference_context",
+                        "primary_masses",
+                        "secondary_parts",
+                        "inspect_validate",
+                    ],
+                    "sculpt_policy": "hidden",
+                },
+                "gate_proposals": [
+                    {
+                        "gate_type": "support_contact",
+                        "label": "body supported by base",
+                        "target_kind": "object_pair",
+                        "target_objects": ["Body", "Base"],
+                    }
+                ],
+                "visual_evidence_refs": [],
+                "verification_requirements": [],
+                "classification_scores": [],
+                "segmentation_artifacts": [],
+                "source_provenance": [{"source": "reference_understanding"}],
+                "boundary_policy": {
+                    "advisory_only": True,
+                    "not_truth_source": True,
+                    "may_unlock_tools": False,
+                    "may_pass_gates": False,
+                    "may_propose_gates": True,
+                },
+            }
+
+    class VisibilityResolver:
+        def __init__(self):
+            self.runtime_config = type(
+                "RuntimeCfg",
+                (),
+                {
+                    "max_tokens": 400,
+                    "max_images": 8,
+                    "active_model_name": "blender-reference-understanding-model",
+                    "active_segmentation_sidecar": None,
+                },
+            )()
+
+        def resolve_default(self):
+            return VisibilityBackend()
+
+    monkeypatch.setattr("server.adapters.mcp.areas.router.get_router_handler", lambda: Handler())
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.router.get_config",
+        lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})(),
+    )
+    monkeypatch.setattr("server.adapters.mcp.areas.router._should_attach_repair_suggestion", lambda payload: False)
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: VisibilityResolver())
+    monkeypatch.setattr("server.infrastructure.di.get_vision_backend_resolver", lambda: VisibilityResolver())
+
+    ctx = FakeContext()
+
+    attach_result = asyncio.run(
+        reference_images(
+            cast(Context, ctx),
+            action="attach",
+            source_path=str(reference_path),
+            label="front_ref",
+            target_object="Squirrel_Body",
+            target_view="front",
+        )
+    )
+    assert attach_result.reference_count == 1
+
+    goal_result = asyncio.run(
+        router_set_goal(
+            cast(Context, ctx),
+            goal="create a low-poly squirrel matching front and side reference images",
+        )
+    )
+    assert goal_result.reference_understanding_gate_ids
+    visibility_after_goal = list(cast(list[tuple[str, dict[str, object]]], ctx.state.get("_visibility_calls") or []))
+    assert visibility_after_goal
+    assert visibility_after_goal[0] == ("reset_visibility", {})
+    assert any(
+        name == "enable_components" and "macro_place_supported_pair" in set(call.get("names") or ())
+        for name, call in visibility_after_goal[1:]
+    )
+
+    clear_result = asyncio.run(reference_images(cast(Context, ctx), action="clear"))
+    assert clear_result.reference_count == 0
+
+    visibility_after_clear = list(cast(list[tuple[str, dict[str, object]]], ctx.state.get("_visibility_calls") or []))
+    assert visibility_after_clear
+    assert visibility_after_clear[0] == ("reset_visibility", {})
+    assert all(
+        not (name == "enable_components" and "macro_place_supported_pair" in set(call.get("names") or ()))
+        for name, call in visibility_after_clear[1:]
+    )
+
+    status_after_clear = asyncio.run(router_get_status(cast(Context, ctx)))
+    assert status_after_clear.reference_understanding_gate_ids is None

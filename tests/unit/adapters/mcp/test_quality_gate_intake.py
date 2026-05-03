@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from server.adapters.mcp.session_capabilities import (
     SessionCapabilityState,
@@ -161,6 +161,87 @@ def test_gate_proposal_intake_drops_gates_that_require_unavailable_goal_time_evi
     assert result.gate_plan is not None
     assert all(gate.gate_id != "tail_profile" for gate in result.gate_plan.gates)
     assert any(warning.code == "unavailable_required_evidence" for warning in result.policy_warnings)
+
+
+def test_gate_proposal_intake_preserves_existing_reference_understanding_gates():
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel",
+            surface_profile="llm-guided",
+            guided_flow_state=_guided_flow_state(),
+        ),
+    )
+
+    seed = ingest_quality_gate_proposal(
+        ctx,
+        {
+            "source": "reference_understanding",
+            "gates": [
+                {
+                    "gate_type": "required_part",
+                    "label": "visible eye pair",
+                    "target_kind": "reference_part",
+                    "target_label": "eye_pair",
+                }
+            ],
+        },
+    )
+    assert seed.status == "accepted"
+
+    restored = get_session_capability_state(ctx)
+    assert restored.gate_plan is not None
+    seeded_gate_plan = {
+        **restored.gate_plan,
+        "gates": [dict(gate) for gate in restored.gate_plan["gates"]],
+    }
+    reference_gate = next(
+        gate for gate in seeded_gate_plan["gates"] if "reference_understanding" in gate["proposal_sources"]
+    )
+    reference_gate["status"] = "failed"
+    reference_gate["status_reason"] = "missing_required_part"
+    set_session_capability_state(
+        ctx,
+        replace(
+            restored,
+            gate_plan=seeded_gate_plan,
+            reference_understanding_gate_ids=[str(reference_gate["gate_id"])],
+        ),
+    )
+
+    result = ingest_quality_gate_proposal(
+        ctx,
+        {
+            "source": "llm_goal",
+            "gates": [
+                {
+                    "gate_id": "tail_body_seam",
+                    "gate_type": "attachment_seam",
+                    "label": "tail seated on body",
+                    "target_kind": "object_pair",
+                    "target_objects": ["Tail", "Body"],
+                }
+            ],
+        },
+    )
+
+    final_state = get_session_capability_state(ctx)
+
+    assert result.status == "accepted"
+    assert final_state.reference_understanding_gate_ids == [str(reference_gate["gate_id"])]
+    assert final_state.gate_plan is not None
+    assert {"tail_body_seam", str(reference_gate["gate_id"])}.issubset(
+        {str(gate["gate_id"]) for gate in final_state.gate_plan["gates"]}
+    )
+    merged_reference_gate = next(
+        gate for gate in final_state.gate_plan["gates"] if gate["gate_id"] == reference_gate["gate_id"]
+    )
+    merged_tail_gate = next(gate for gate in final_state.gate_plan["gates"] if gate["gate_id"] == "tail_body_seam")
+    assert merged_reference_gate["status"] == "failed"
+    assert merged_reference_gate["status_reason"] == "missing_required_part"
+    assert merged_tail_gate["status"] == "pending"
 
 
 def test_relation_graph_verification_persists_gate_status_and_blockers():

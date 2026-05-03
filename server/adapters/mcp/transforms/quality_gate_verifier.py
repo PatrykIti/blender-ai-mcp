@@ -568,8 +568,13 @@ def _find_relation_pair(
             semantics_tokens = _target_tokens(" ".join(_semantic_object_names(pair)))
             if label_tokens.issubset(pair_tokens | semantics_tokens):
                 return pair
-    if len(candidates) == 1:
-        return candidates[0]
+    meaningful_label_tokens = _meaningful_target_tokens(gate.target_label or gate.label)
+    if len(candidates) == 1 and meaningful_label_tokens:
+        pair = candidates[0]
+        pair_tokens = _target_tokens(" ".join([pair.from_object, pair.to_object]))
+        semantics_tokens = _target_tokens(" ".join(_semantic_object_names(pair)))
+        if meaningful_label_tokens.issubset(pair_tokens | semantics_tokens):
+            return pair
     return None
 
 
@@ -632,9 +637,30 @@ def _matched_scope_objects(
     target_tokens = _target_tokens(gate.target_label or gate.label)
     if not target_tokens:
         return []
-    weak_tokens = {"core", "mass", "part", "pair", "required", "visible", "main"}
-    meaningful_tokens = {token for token in target_tokens if token not in weak_tokens}
+    meaningful_tokens = _meaningful_target_tokens(gate.target_label or gate.label)
     return [name for name in object_names if meaningful_tokens and meaningful_tokens & _target_tokens(name)]
+
+
+def _meaningful_target_tokens(value: str | None) -> set[str]:
+    weak_tokens = {
+        "aligned",
+        "alignment",
+        "attachment",
+        "contact",
+        "core",
+        "main",
+        "mass",
+        "pair",
+        "part",
+        "required",
+        "seam",
+        "support",
+        "supported",
+        "symmetry",
+        "symmetric",
+        "visible",
+    }
+    return {token for token in _target_tokens(value or "") if token not in weak_tokens}
 
 
 def _target_implies_pair(gate: NormalizedQualityGateContract) -> bool:

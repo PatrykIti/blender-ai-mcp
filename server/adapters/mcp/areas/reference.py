@@ -1984,27 +1984,6 @@ def _without_reference_understanding_gates(
     )
 
 
-def _merge_reference_understanding_gate_slice(
-    base_gate_plan: GatePlanContract | None,
-    replacement_gate_plan: GatePlanContract | None,
-) -> GatePlanContract | None:
-    if replacement_gate_plan is None:
-        return base_gate_plan
-    if base_gate_plan is None:
-        return replacement_gate_plan
-    return refresh_gate_plan_status(
-        base_gate_plan.model_copy(
-            update={
-                "gates": [*list(base_gate_plan.gates), *list(replacement_gate_plan.gates)],
-                "policy_warnings": [
-                    *list(base_gate_plan.policy_warnings),
-                    *list(replacement_gate_plan.policy_warnings),
-                ],
-            }
-        )
-    )
-
-
 def _reference_understanding_gate_slice(gate_plan: GatePlanContract | None) -> GatePlanContract | None:
     if gate_plan is None:
         return None
@@ -2027,6 +2006,17 @@ def _reference_understanding_gate_slice(gate_plan: GatePlanContract | None) -> G
     )
 
 
+async def _persist_reference_understanding_state_async(
+    ctx: Context,
+    state: SessionCapabilityState,
+) -> SessionCapabilityState:
+    """Persist one RU-driven session state update and immediately reapply visibility."""
+
+    await set_session_capability_state_async(ctx, state)
+    await apply_visibility_for_session_state(ctx, state)
+    return state
+
+
 async def refresh_reference_understanding_summary_async(
     ctx: Context,
     *,
@@ -2047,8 +2037,7 @@ async def refresh_reference_understanding_summary_async(
             reference_understanding_summary=None,
             reference_understanding_gate_ids=None,
         )
-        await set_session_capability_state_async(ctx, cleared)
-        return cleared
+        return await _persist_reference_understanding_state_async(ctx, cleared)
 
     reference_records = _active_reference_records(current)
     reference_ids = [record.reference_id for record in reference_records]
@@ -2064,8 +2053,7 @@ async def refresh_reference_understanding_summary_async(
             reference_understanding_summary=blocked.model_dump(mode="json", exclude_none=True),
             reference_understanding_gate_ids=None,
         )
-        await set_session_capability_state_async(ctx, updated)
-        return updated
+        return await _persist_reference_understanding_state_async(ctx, updated)
 
     existing_summary = current.reference_understanding_summary or {}
     if (
@@ -2094,8 +2082,7 @@ async def refresh_reference_understanding_summary_async(
             reference_understanding_summary=unavailable.model_dump(mode="json", exclude_none=True),
             reference_understanding_gate_ids=None,
         )
-        await set_session_capability_state_async(ctx, updated)
-        return updated
+        return await _persist_reference_understanding_state_async(ctx, updated)
     except Exception as exc:
         unavailable = _blocked_reference_understanding_summary(
             goal=current.goal,
@@ -2109,8 +2096,7 @@ async def refresh_reference_understanding_summary_async(
             reference_understanding_summary=unavailable.model_dump(mode="json", exclude_none=True),
             reference_understanding_gate_ids=None,
         )
-        await set_session_capability_state_async(ctx, updated)
-        return updated
+        return await _persist_reference_understanding_state_async(ctx, updated)
 
     accepted_gate_ids: list[str] | None = None
     updated_session = replace(
@@ -2131,17 +2117,9 @@ async def refresh_reference_understanding_summary_async(
         )
         if intake_result.status == "accepted" and intake_result.gate_plan is not None:
             replacement_slice = _reference_understanding_gate_slice(intake_result.gate_plan)
-            merged_plan = (
-                intake_result.gate_plan
-                if existing_gate_plan is None
-                else _merge_reference_understanding_gate_slice(
-                    base_gate_plan,
-                    replacement_slice,
-                )
-            )
             updated_session = replace(
                 updated_session,
-                gate_plan=None if merged_plan is None else merged_plan.model_dump(mode="json", exclude_none=True),
+                gate_plan=intake_result.gate_plan.model_dump(mode="json", exclude_none=True),
             )
             accepted_gate_ids = (
                 None if replacement_slice is None else [gate.gate_id for gate in replacement_slice.gates]
@@ -2152,8 +2130,7 @@ async def refresh_reference_understanding_summary_async(
         reference_understanding_summary=summary.model_dump(mode="json", exclude_none=True),
         reference_understanding_gate_ids=accepted_gate_ids or None,
     )
-    await set_session_capability_state_async(ctx, final_state)
-    return final_state
+    return await _persist_reference_understanding_state_async(ctx, final_state)
 
 
 def _build_silhouette_analysis_payload(

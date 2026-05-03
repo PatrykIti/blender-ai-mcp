@@ -25,6 +25,7 @@ from server.adapters.mcp.contracts.quality_gates import (
     GateIntakeResultContract,
     GatePlanContract,
     GatePolicyWarningContract,
+    GateProposalContract,
     mark_gate_plan_stale,
     normalize_gate_plan,
     refresh_gate_plan_status,
@@ -1323,19 +1324,64 @@ def _ingest_quality_gate_proposal_for_state(
 
     try:
         flow_state = GuidedFlowStateContract.model_validate(current.guided_flow_state)
+        proposal = GateProposalContract.model_validate(gate_proposal)
         gate_plan = normalize_gate_plan(
-            gate_proposal,
+            proposal,
             domain_profile=flow_state.domain_profile,
         )
         gate_plan = _apply_goal_time_gate_input_bounds(gate_plan)
+        merged_gate_plan = _merge_gate_plan_for_proposal_source(
+            current.gate_plan,
+            gate_plan,
+            proposal_source=proposal.source,
+        )
     except Exception as exc:
         return current, GateIntakeResultContract(status="rejected", reason=str(exc))
 
-    updated = replace(current, gate_plan=gate_plan.model_dump(mode="json", exclude_none=True))
+    updated = replace(current, gate_plan=merged_gate_plan.model_dump(mode="json", exclude_none=True))
     return updated, GateIntakeResultContract(
         status="accepted",
-        gate_plan=gate_plan,
+        gate_plan=merged_gate_plan,
         policy_warnings=gate_plan.policy_warnings,
+    )
+
+
+def _merge_gate_plan_for_proposal_source(
+    existing_gate_plan: dict[str, Any] | None,
+    incoming_gate_plan: GatePlanContract,
+    *,
+    proposal_source: str,
+) -> GatePlanContract:
+    """Replace only the active source slice while preserving the rest of the session gate plan."""
+
+    if existing_gate_plan is None:
+        return incoming_gate_plan
+
+    existing_plan = GatePlanContract.model_validate(existing_gate_plan)
+    replaced_gate_ids = {gate.gate_id for gate in existing_plan.gates if proposal_source in gate.proposal_sources}
+    retained_gates = [gate for gate in existing_plan.gates if proposal_source not in gate.proposal_sources]
+    incoming_source_gates = [gate for gate in incoming_gate_plan.gates if proposal_source in gate.proposal_sources]
+    incoming_source_gate_ids = {gate.gate_id for gate in incoming_source_gates}
+    retained_warnings = [
+        warning
+        for warning in existing_plan.policy_warnings
+        if warning.gate_id is None or warning.gate_id not in replaced_gate_ids
+    ]
+    incoming_source_warnings = [
+        warning
+        for warning in incoming_gate_plan.policy_warnings
+        if warning.gate_id is None or warning.gate_id in incoming_source_gate_ids
+    ]
+
+    return refresh_gate_plan_status(
+        existing_plan.model_copy(
+            update={
+                "plan_id": incoming_gate_plan.plan_id,
+                "proposal_id": incoming_gate_plan.proposal_id,
+                "gates": [*retained_gates, *incoming_source_gates],
+                "policy_warnings": [*retained_warnings, *incoming_source_warnings],
+            }
+        )
     )
 
 

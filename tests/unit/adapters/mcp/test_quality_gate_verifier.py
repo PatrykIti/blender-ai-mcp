@@ -228,6 +228,51 @@ def test_local_scope_verification_keeps_unrelated_attachment_gate_unchanged():
     assert _gate(updated, "final_completion").status == "blocked"
 
 
+def test_attachment_gate_without_matching_targets_stays_blocked_even_with_one_candidate_pair():
+    plan = normalize_gate_plan(
+        {
+            "source": "llm_goal",
+            "gates": [
+                {
+                    "gate_id": "tail_body_seam",
+                    "gate_type": "attachment_seam",
+                    "label": "tail seated on body",
+                    "target_kind": "object_pair",
+                }
+            ],
+        },
+        domain_profile="generic",
+    )
+
+    updated = verify_gate_plan_with_relation_graph(
+        plan,
+        _relation_graph(
+            [
+                {
+                    **_relation_graph_pair(verdict="floating_gap", pair_id="head__body"),
+                    "from_object": "Head",
+                    "to_object": "Body",
+                    "attachment_semantics": {
+                        "relation_kind": "segment_attachment",
+                        "seam_kind": "head_body",
+                        "part_object": "Head",
+                        "anchor_object": "Body",
+                        "required_seam": True,
+                        "preferred_macro": "macro_attach_part_to_surface",
+                        "attachment_verdict": "floating_gap",
+                    },
+                }
+            ]
+        ),
+    )
+
+    seam = _gate(updated, "tail_body_seam")
+    assert seam.status == "blocked"
+    assert seam.status_reason == "missing_relation_pair"
+    assert seam.evidence_refs[0].reason_code == "missing_relation_pair"
+    assert _gate(updated, "final_completion").status == "blocked"
+
+
 def test_attachment_gate_fails_floating_gap_with_bounded_repair_tools():
     plan = normalize_gate_plan(
         {

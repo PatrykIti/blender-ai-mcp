@@ -646,6 +646,121 @@ def test_reference_understanding_refresh_replaces_previous_reference_gate_slice(
     assert eye_gate["label"] == "dual-view eye pair"
 
 
+def test_reference_images_ready_goal_refresh_reapplies_visibility_on_attach_and_clear(tmp_path, monkeypatch):
+    image_front = tmp_path / "front.png"
+    image_front.write_bytes(b"front")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    class Backend:
+        async def analyze(self, request):
+            return {
+                "status": "available",
+                "understanding_id": "understanding_visibility_refresh",
+                "goal": request.goal,
+                "reference_ids": list(request.metadata.get("reference_ids") or []),
+                "subject": {
+                    "label": "low poly squirrel",
+                    "category": "creature",
+                    "confidence": 0.9,
+                    "uncertainty_notes": [],
+                },
+                "style": {
+                    "style_label": "low_poly_faceted",
+                    "confidence": 0.9,
+                    "notes": [],
+                },
+                "required_parts": [],
+                "non_goals": [],
+                "construction_strategy": {
+                    "construction_path": "low_poly_facet",
+                    "primary_family": "modeling_mesh",
+                    "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+                    "stage_sequence": ["primary_masses"],
+                    "finish_policy": "preserve_facets",
+                },
+                "router_handoff_hints": {
+                    "preferred_family": "modeling_mesh",
+                    "allowed_guided_families": [
+                        "reference_context",
+                        "primary_masses",
+                        "secondary_parts",
+                        "inspect_validate",
+                    ],
+                    "sculpt_policy": "hidden",
+                },
+                "gate_proposals": [
+                    {
+                        "gate_type": "required_part",
+                        "label": "visible eye pair",
+                        "target_kind": "reference_part",
+                        "target_label": "eye_pair",
+                    }
+                ],
+                "visual_evidence_refs": [],
+                "verification_requirements": [],
+                "classification_scores": [],
+                "segmentation_artifacts": [],
+                "source_provenance": [{"source": "reference_understanding"}],
+                "boundary_policy": {
+                    "advisory_only": True,
+                    "not_truth_source": True,
+                    "may_unlock_tools": False,
+                    "may_pass_gates": False,
+                    "may_propose_gates": True,
+                },
+            }
+
+    class Resolver:
+        def resolve_default(self):
+            return Backend()
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: Resolver())
+
+    visibility_snapshots: list[dict[str, object]] = []
+
+    async def _fake_apply_visibility_for_session_state(_ctx, state):
+        visibility_snapshots.append(
+            {
+                "gate_ids": list(state.reference_understanding_gate_ids or []),
+                "gate_plan_gate_ids": [
+                    str(gate.get("gate_id"))
+                    for gate in ((state.gate_plan or {}).get("gates") or [])
+                    if isinstance(gate, dict)
+                ],
+            }
+        )
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.apply_visibility_for_session_state",
+        _fake_apply_visibility_for_session_state,
+    )
+
+    ctx = FakeContext()
+    update_session_from_router_goal(
+        ctx,
+        "create a low-poly squirrel",
+        {"status": "no_match"},
+        surface_profile="llm-guided",
+    )
+
+    asyncio.run(reference_images(ctx, action="attach", source_path=str(image_front), label="front_ref"))
+
+    attached_state = get_session_capability_state(ctx)
+    assert attached_state.reference_understanding_gate_ids is not None
+    attached_gate_id = attached_state.reference_understanding_gate_ids[0]
+
+    asyncio.run(reference_images(ctx, action="clear"))
+
+    cleared_state = get_session_capability_state(ctx)
+    assert cleared_state.reference_understanding_gate_ids is None
+    assert len(visibility_snapshots) == 2
+    assert visibility_snapshots[0]["gate_ids"] == [attached_gate_id]
+    assert attached_gate_id in visibility_snapshots[0]["gate_plan_gate_ids"]
+    assert visibility_snapshots[1]["gate_ids"] == []
+    assert attached_gate_id not in visibility_snapshots[1]["gate_plan_gate_ids"]
+
+
 def test_stage_checkpoint_responses_project_gate_plan_summary_fields():
     gate_plan = {
         "plan_id": "creature_quality_gate_plan",
