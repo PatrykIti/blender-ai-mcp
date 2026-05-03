@@ -176,6 +176,7 @@ This umbrella deliberately does not:
 | `scene.py` split | unit + scene tool integration/e2e | public tool surface and scene behavior must stay identical |
 | addon `scene.py` split | unit + Blender-backed scene tests | Blender truth path and viewport behavior are runtime-sensitive |
 | `session_capabilities.py` split | unit + guided transport/integration | visibility, stale-state, and prompt-bundle regressions can hide until session-level flows run |
+| docs/task closeout | `git diff --check` + task hierarchy / board consistency audit | this umbrella changes planning structure and must not leave task/board/doc drift behind |
 
 ## Pseudocode
 
@@ -209,19 +210,24 @@ for owner_file in oversized_owner_files:
 
 ## Acceptance Criteria
 
-- the repo has one active modularization umbrella covering the four oversized
-  owner files
-- each branch names the target ownership split clearly enough for one focused
-  implementation pass
-- the planned refactor preserves the current public MCP/addon/session surface
+- each oversized owner file is covered by an execution-ready subtask plus
+  concrete leaf stack that maps one focused implementation pass to one bounded
+  concern cluster
+- the planned modularization preserves the current public MCP/addon/session
+  surface, provider registration, and guided discovery/visibility semantics
   rather than opening a second architecture
-- the board tracks this as a promoted internal follow-on before the next deeper
-  spatial/runtime expansion wave
+- each branch names the exact contract-sensitive tests, docs surfaces, and
+  collaborator modules needed to prove no MCP/addon/guided-runtime drift
+- the family leaves implementers with enough concrete owner/test/doc guidance to
+  execute the refactor without rediscovering the runtime boundaries from
+  conversation history
 
 ## Status / Board Update
 
 - promote as a board-level open task because the work spans MCP adapters,
   addon handlers, guided runtime state, and regression ownership
+- keep promoted tracking on the parent board item while the child subtasks are
+  refined into execution-ready leaves
 - treat this as an internal follow-on that prepares the repo for the next
   spatial-intelligence and domain-expansion waves without changing product
   direction

@@ -9,10 +9,10 @@
 Split `server/adapters/mcp/session_capabilities.py` into clearer responsibility
 modules for:
 
-- guided_state
-- visibility_refresh
-- quality_gate_projection
-- prompt_bundle_selection
+- session_state_model_and_persistence
+- goal_bootstrap_and_prompt_bundle_selection
+- guided_part_registry_and_flow_transitions
+- visibility_refresh_and_gate_projection_runtime_glue
 
 while keeping `server.adapters.mcp.session_capabilities` as the stable facade
 import surface for the rest of the repo.
@@ -42,21 +42,31 @@ Leaving it monolithic increases the chance that:
 
 - `server/adapters/mcp/session_capabilities.py`
 - likely new sibling modules such as:
-  - `session_capabilities_guided_state.py`
-  - `session_capabilities_visibility_refresh.py`
-  - `session_capabilities_quality_gates.py`
-  - `session_capabilities_prompt_bundles.py`
+  - `session_capabilities_state.py`
+  - `session_capabilities_bootstrap.py`
+  - `session_capabilities_registry.py`
+  - `session_capabilities_runtime_glue.py`
+- `server/adapters/mcp/session_state.py`
+- `server/adapters/mcp/guided_mode.py`
 - `server/adapters/mcp/transforms/visibility_policy.py`
+- `server/adapters/mcp/discovery/search_surface.py`
+- `server/adapters/mcp/router_helper.py`
 - `server/adapters/mcp/areas/scene.py`
 - `server/adapters/mcp/areas/reference.py`
 - `server/adapters/mcp/prompts/`
+- `server/adapters/mcp/prompts/provider.py`
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
+- `tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py`
+- `tests/unit/adapters/mcp/test_session_phase.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py`
 - `tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py`
 - `tests/unit/adapters/mcp/test_context_bridge.py`
+- `tests/unit/adapters/mcp/test_router_elicitation.py`
+- `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/e2e/integration/test_guided_surface_contract_parity.py`
 - `tests/e2e/integration/test_guided_gate_state_transport.py`
+- `tests/e2e/router/test_guided_manual_handoff.py`
 
 ## Implementation Notes
 
@@ -68,6 +78,9 @@ Leaving it monolithic increases the chance that:
   - `active_gate_plan`
   - required / preferred prompt bundles
   - spatial freshness / scope fingerprints
+- Keep router bootstrap, search/discovery refresh, prompt-provider consumption,
+  reference-readiness adoption, and session persistence seams explicit in the
+  plan rather than treating them as incidental callers.
 - Do not quietly change when visibility refreshes, when gates become stale, or
   when prompt bundles are emitted; those are runtime behaviors, not formatting.
 
@@ -93,24 +106,41 @@ __all__ = [
 - Preserve current session isolation and no-cross-session leakage guarantees.
 - Preserve current guided-state and visibility-refresh behavior on both stdio
   and Streamable HTTP paths.
+- Preserve the current request-path visibility application rules for native MCP
+  requests; do not reintroduce detached or background visibility writes where
+  the runtime currently relies on awaited completion.
 - Do not let refactor work become an excuse to detach session writes from the
   active request path where the runtime currently relies on synchronous or
   awaited completion.
 
+## Execution Structure
+
+| Order | Leaf | Purpose |
+|------|------|---------|
+| 1 | [TASK-159-04-01](./TASK-159-04-01_Session_Capability_State_Model_And_Persistence_Split.md) | Separate the state dataclasses, normalization, and sync/async persistence seam behind the stable facade |
+| 2 | [TASK-159-04-02](./TASK-159-04-02_Session_Goal_Bootstrap_Prompt_Bundles_And_Reference_Readiness.md) | Extract goal bootstrap, domain-profile, prompt-bundle, and reference-readiness helpers without drifting router/bootstrap semantics |
+| 3 | [TASK-159-04-03](./TASK-159-04-03_Session_Guided_Part_Registry_And_Flow_Transitions.md) | Separate guided part registry, role summaries, and flow-transition helpers into a bounded runtime slice |
+| 4 | [TASK-159-04-04](./TASK-159-04-04_Session_Visibility_Gate_Projection_And_Runtime_Glue.md) | Isolate visibility refresh, gate projection, and router/search/prompt glue while preserving request-path runtime behavior |
+
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
+- `tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py`
+- `tests/unit/adapters/mcp/test_session_phase.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py`
 - `tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py`
 - `tests/unit/adapters/mcp/test_context_bridge.py`
+- `tests/unit/adapters/mcp/test_router_elicitation.py`
+- `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/e2e/integration/test_guided_surface_contract_parity.py`
 - `tests/e2e/integration/test_guided_gate_state_transport.py`
+- `tests/e2e/router/test_guided_manual_handoff.py`
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py tests/unit/adapters/mcp/test_context_bridge.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/integration/test_guided_gate_state_transport.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py tests/unit/adapters/mcp/test_session_phase.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py tests/unit/adapters/mcp/test_context_bridge.py tests/unit/adapters/mcp/test_router_elicitation.py tests/unit/adapters/mcp/test_search_surface.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/integration/test_guided_gate_state_transport.py tests/e2e/router/test_guided_manual_handoff.py -q`
 
 ## Docs To Update
 
@@ -126,15 +156,20 @@ __all__ = [
 
 - `session_capabilities.py` is reduced to a stable facade/re-export role plus
   any truly central glue that still needs one entry module
-- guided-state, visibility-refresh, gate-projection, and prompt-bundle logic
-  have clearer internal ownership seams
+- state persistence, goal bootstrap/prompt selection, guided part registry/flow
+  transitions, and visibility/gate runtime glue have clearer internal ownership
+  seams
 - guided runtime behavior remains stable across unit and transport/integration
   lanes
+- router/status, search/discovery, and prompt-provider consumers continue to see
+  the same guided runtime semantics
 - future guided-runtime work no longer has to land by default in one monolithic
   file
 
 ## Status / Board Update
 
 - keep promoted tracking on the parent `TASK-159`
+- execute this subtask through the leaves below so state/persistence, registry,
+  and request-path visibility glue can be verified independently
 - do not promote this slice independently unless it becomes the only remaining
   open branch in the family

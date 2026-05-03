@@ -52,12 +52,16 @@ That increases the chance that:
 - `blender_addon/__init__.py` if registration wiring needs import-path updates
 - `blender_addon/infrastructure/rpc_server.py`
 - `server/application/tool_handlers/scene_handler.py`
+- `tests/unit/addon/test_addon_registration.py`
 - `tests/unit/tools/scene/test_scene_measure_tools.py`
 - `tests/unit/tools/scene/test_scene_assert_tools.py`
+- `tests/unit/tools/scene/test_scene_configure_handler.py`
 - `tests/unit/tools/scene/test_scene_inspect_mesh_topology.py`
 - `tests/unit/tools/scene/test_viewport_control.py`
+- `tests/unit/tools/test_handler_rpc_alignment.py`
 - `tests/e2e/tools/scene/test_scene_measure_tools.py`
 - `tests/e2e/tools/scene/test_scene_assert_tools.py`
+- `tests/e2e/tools/scene/test_scene_configure_roundtrip.py`
 - `tests/e2e/tools/scene/test_scene_view_diagnostics.py`
 
 ## Implementation Notes
@@ -71,6 +75,8 @@ That increases the chance that:
 - Preserve current shared helper behavior for bbox, rounding, assertion payload
   shaping, and viewport-state restoration unless a separate bugfix requires
   change.
+- Treat world/render and `node_graph_handoff` shaping as contract-sensitive
+  internals even if the public class name stays the same.
 
 ## Pseudocode
 
@@ -94,23 +100,38 @@ class SceneHandler(
 - Preserve current RPC method names and payload shapes.
 - Preserve current safe use of Blender state, evaluated meshes, and temporary
   view/camera mutations.
+- Preserve addon registration wiring and current scene-tool handler alignment
+  across `blender_addon/__init__.py`, RPC registration, and the server-side
+  `SceneToolHandler`.
 - Do not move blocking or Blender-context-sensitive work into background
   patterns that violate the addon's current main-thread model.
 
+## Execution Structure
+
+| Order | Leaf | Purpose |
+|------|------|---------|
+| 1 | [TASK-159-03-01](./TASK-159-03-01_Addon_Scene_Inspection_And_Topology_Split.md) | Extract inspection/topology helpers while preserving Blender-truth reads and object lifecycle helpers |
+| 2 | [TASK-159-03-02](./TASK-159-03-02_Addon_Scene_Measure_Assert_And_RPC_Parity.md) | Separate measure/assert helpers and keep server-addon RPC contracts aligned |
+| 3 | [TASK-159-03-03](./TASK-159-03-03_Addon_Scene_Viewport_World_Render_And_Registration.md) | Extract viewport/world/render helpers and prove registration plus roundtrip parity stay intact |
+
 ## Tests To Add/Update
 
+- `tests/unit/addon/test_addon_registration.py`
 - `tests/unit/tools/scene/test_scene_measure_tools.py`
 - `tests/unit/tools/scene/test_scene_assert_tools.py`
+- `tests/unit/tools/scene/test_scene_configure_handler.py`
 - `tests/unit/tools/scene/test_scene_inspect_mesh_topology.py`
 - `tests/unit/tools/scene/test_viewport_control.py`
+- `tests/unit/tools/test_handler_rpc_alignment.py`
 - `tests/e2e/tools/scene/test_scene_measure_tools.py`
 - `tests/e2e/tools/scene/test_scene_assert_tools.py`
+- `tests/e2e/tools/scene/test_scene_configure_roundtrip.py`
 - `tests/e2e/tools/scene/test_scene_view_diagnostics.py`
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_measure_tools.py tests/unit/tools/scene/test_scene_assert_tools.py tests/unit/tools/scene/test_scene_inspect_mesh_topology.py tests/unit/tools/scene/test_viewport_control.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/tools/scene/test_scene_measure_tools.py tests/e2e/tools/scene/test_scene_assert_tools.py tests/e2e/tools/scene/test_scene_view_diagnostics.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/addon/test_addon_registration.py tests/unit/tools/scene/test_scene_measure_tools.py tests/unit/tools/scene/test_scene_assert_tools.py tests/unit/tools/scene/test_scene_configure_handler.py tests/unit/tools/scene/test_scene_inspect_mesh_topology.py tests/unit/tools/scene/test_viewport_control.py tests/unit/tools/test_handler_rpc_alignment.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/tools/scene/test_scene_measure_tools.py tests/e2e/tools/scene/test_scene_assert_tools.py tests/e2e/tools/scene/test_scene_configure_roundtrip.py tests/e2e/tools/scene/test_scene_view_diagnostics.py -q`
 
 ## Docs To Update
 
@@ -126,11 +147,15 @@ class SceneHandler(
 - addon `SceneHandler` no longer directly owns all inspection, measure/assert,
   viewport, and world/render logic in one file
 - the public RPC-backed addon surface remains stable
+- addon registration wiring and server-side scene handler alignment remain
+  stable
 - Blender truth behavior and viewport behavior keep their current safety model
 - targeted unit and Blender-backed e2e lanes prove no addon-scene regression
 
 ## Status / Board Update
 
 - keep promoted tracking on the parent `TASK-159`
+- execute this subtask through the leaves below so registration/RPC/world-render
+  boundaries can be verified independently
 - do not promote this slice independently unless it becomes the only remaining
   open branch in the family

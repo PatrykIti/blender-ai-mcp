@@ -17,6 +17,10 @@ Split `server/adapters/mcp/areas/scene.py` into bounded internal slices for:
 while preserving the current public scene MCP tool names, tool versions, and
 router/visibility metadata behavior.
 
+This subtask is intentionally scoped to the named scene concern clusters. The
+goal is not to repartition every remaining `scene.py` responsibility in one pass
+or invent a second public surface.
+
 ## Business Problem
 
 `scene.py` currently acts as:
@@ -45,15 +49,23 @@ which makes future edits slower and more fragile.
   - `scene_measure_assert.py`
   - `scene_view.py`
 - `server/adapters/mcp/contracts/scene.py`
+- `server/adapters/mcp/providers/core_tools.py`
+- `server/adapters/mcp/platform/capability_manifest.py`
 - `server/adapters/mcp/router_helper.py`
 - `server/adapters/mcp/session_capabilities.py`
 - `server/adapters/mcp/transforms/visibility_policy.py`
 - `server/router/infrastructure/tools_metadata/scene/`
 - `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
+- `tests/unit/tools/scene/test_scene_context_mega.py`
 - `tests/unit/tools/scene/test_scene_contracts.py`
+- `tests/unit/tools/scene/test_macro_place_supported_pair_mcp.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
+- `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
+- `tests/unit/adapters/mcp/test_provider_inventory.py`
+- `tests/unit/adapters/mcp/test_provider_versions.py`
+- `tests/unit/adapters/mcp/test_surface_manifest.py`
 - `tests/e2e/tools/scene/test_scene_measure_tools.py`
 - `tests/e2e/tools/scene/test_scene_assert_tools.py`
 - `tests/e2e/tools/scene/test_scene_view_diagnostics.py`
@@ -64,6 +76,9 @@ which makes future edits slower and more fragile.
 - Extract private executors, contract builders, and helper clusters into
   sibling modules grouped by concern.
 - Keep tool names, docstrings, and version-policy wiring stable.
+- Keep the macro wrappers, registration helpers, and provider/manifest-facing
+  imports anchored in the stable facade unless a child leaf explicitly extracts
+  only their private helper logic.
 - Keep scene spatial-support tools visible through the same metadata and guided
   visibility seams; this task should not silently change discovery behavior.
 - Preserve the distinction between:
@@ -90,6 +105,8 @@ def scene_measure_gap(ctx, ...):
 
 - Preserve the current public `scene_*` contract surface exactly unless a
   separate contract task says otherwise.
+- Preserve provider registration, manifest exposure, and versioned public-surface
+  delivery for the scene family while internal helpers move.
 - Preserve guided/session side effects for:
   - stale spatial state
   - spatial-check completion
@@ -97,20 +114,35 @@ def scene_measure_gap(ctx, ...):
 - Do not move long-running or task-aware behavior into files that bypass the
   current background/task bridge.
 
+## Execution Structure
+
+| Order | Leaf | Purpose |
+|------|------|---------|
+| 1 | [TASK-159-02-01](./TASK-159-02-01_Scene_Public_Facade_Registration_And_Version_Guards.md) | Stabilize public registration, provider/manifest wiring, and version-policy guards before internal extraction |
+| 2 | [TASK-159-02-02](./TASK-159-02-02_Scene_Inspect_And_Create_Manage_Slices.md) | Extract inspect and create/manage helper clusters while keeping the shared facade readable |
+| 3 | [TASK-159-02-03](./TASK-159-02-03_Scene_Spatial_Graph_And_View_Diagnostics_Slices.md) | Separate spatial-graph and view-diagnostics helpers without drifting guided visibility semantics |
+| 4 | [TASK-159-02-04](./TASK-159-02-04_Scene_Measure_Assert_And_Guided_Side_Effects.md) | Extract measure/assert helpers and preserve guided stale-state / completion side effects |
+
 ## Tests To Add/Update
 
 - `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
+- `tests/unit/tools/scene/test_scene_context_mega.py`
 - `tests/unit/tools/scene/test_scene_contracts.py`
+- `tests/unit/tools/scene/test_macro_place_supported_pair_mcp.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
+- `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
+- `tests/unit/adapters/mcp/test_provider_inventory.py`
+- `tests/unit/adapters/mcp/test_provider_versions.py`
+- `tests/unit/adapters/mcp/test_surface_manifest.py`
 - `tests/e2e/tools/scene/test_scene_measure_tools.py`
 - `tests/e2e/tools/scene/test_scene_assert_tools.py`
 - `tests/e2e/tools/scene/test_scene_view_diagnostics.py`
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/test_handler_rpc_alignment.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_scene_context_mega.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/scene/test_macro_place_supported_pair_mcp.py tests/unit/tools/test_handler_rpc_alignment.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/adapters/mcp/test_provider_inventory.py tests/unit/adapters/mcp/test_provider_versions.py tests/unit/adapters/mcp/test_surface_manifest.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/tools/scene/test_scene_measure_tools.py tests/e2e/tools/scene/test_scene_assert_tools.py tests/e2e/tools/scene/test_scene_view_diagnostics.py -q`
 
 ## Docs To Update
@@ -129,10 +161,14 @@ def scene_measure_gap(ctx, ...):
 - inspect, create/manage, spatial-graph, measure/assert, and view concerns have
   clear internal homes
 - public scene MCP names, metadata, and guided/discovery behavior remain stable
+- provider registration, version-policy delivery, and manifest-backed scene
+  discovery remain stable
 - targeted unit and e2e lanes prove no public scene-surface regression
 
 ## Status / Board Update
 
 - keep promoted tracking on the parent `TASK-159`
+- execute this subtask through the leaves below instead of widening it into a
+  whole-file repartition of every remaining `scene.py` responsibility
 - do not promote this slice independently unless it becomes the only remaining
   open branch in the family

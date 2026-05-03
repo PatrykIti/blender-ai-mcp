@@ -50,12 +50,18 @@ That makes future work riskier than it needs to be:
 - `server/application/services/` when a helper can be made framework-free
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/contracts/scene.py`
+- `server/adapters/mcp/providers/core_tools.py`
+- `server/adapters/mcp/platform/capability_manifest.py`
 - `server/adapters/mcp/vision/`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
+- `tests/unit/adapters/mcp/test_provider_inventory.py`
+- `tests/unit/adapters/mcp/test_surface_manifest.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
+- `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
 - `tests/e2e/vision/test_goal_derived_gate_support_symmetry_surfaces.py`
+- `tests/e2e/vision/test_reference_understanding_runtime_surface.py`
 - `tests/e2e/integration/test_guided_gate_state_transport.py`
 
 ## Implementation Notes
@@ -66,6 +72,8 @@ That makes future work riskier than it needs to be:
   evaluate promoting it into `server/application/services/`.
 - Keep compare / iterate response assembly in one visible place so future
   implementers can still trace the response contract end to end.
+- Keep `REFERENCE_PUBLIC_TOOL_NAMES`, `register_reference_tools(...)`, and the
+  provider/manifest import seam stable while helpers move behind the facade.
 - Do not widen staged payloads during the extraction. This task is about module
   boundaries, not feature growth.
 - Preserve current public tool names:
@@ -99,23 +107,39 @@ async def reference_compare_stage_checkpoint(...):
 - Keep current reference/vision authority boundaries intact:
   - vision/perception remains advisory
   - truth bundle remains authoritative for deterministic checks
+- Preserve the current registration/discovery contract for the reference family:
+  tool-name inventory, manifest exposure, and provider wiring are part of the
+  public surface even when payloads stay unchanged.
 - Do not leak provider keys, local paths, or oversized debug payloads while
   moving helpers.
 - Preserve current budget-control behavior and trim semantics.
+
+## Execution Structure
+
+| Order | Leaf | Purpose |
+|------|------|---------|
+| 1 | [TASK-159-01-01](./TASK-159-01-01_Reference_Public_Facade_Registration_And_Checkpoint_Orchestrator_Split.md) | Stabilize the public facade, registration seam, and checkpoint orchestration before deeper helper extraction |
+| 2 | [TASK-159-01-02](./TASK-159-01-02_Reference_Truth_Planner_And_Service_Promotion_Split.md) | Extract truth/planner helper clusters and identify framework-free logic that should move into application services |
+| 3 | [TASK-159-01-03](./TASK-159-01-03_Reference_Silhouette_View_Diagnostics_And_Understanding_Sidecars.md) | Separate silhouette, view-diagnostics, and reference-understanding sidecars without changing advisory-vs-truth boundaries |
+| 4 | [TASK-159-01-04](./TASK-159-01-04_Reference_Image_Lifecycle_And_Staged_Session_Integration.md) | Isolate reference image lifecycle and staged session integration helpers while preserving session/update semantics |
 
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
+- `tests/unit/adapters/mcp/test_provider_inventory.py`
+- `tests/unit/adapters/mcp/test_surface_manifest.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
+- `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
 - `tests/e2e/vision/test_goal_derived_gate_support_symmetry_surfaces.py`
+- `tests/e2e/vision/test_reference_understanding_runtime_surface.py`
 - `tests/e2e/integration/test_guided_gate_state_transport.py`
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_truth_handoff.py tests/e2e/vision/test_goal_derived_gate_support_symmetry_surfaces.py tests/e2e/integration/test_guided_gate_state_transport.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/adapters/mcp/test_provider_inventory.py tests/unit/adapters/mcp/test_surface_manifest.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_truth_handoff.py tests/e2e/vision/test_reference_stage_silhouette_contract.py tests/e2e/vision/test_goal_derived_gate_support_symmetry_surfaces.py tests/e2e/vision/test_reference_understanding_runtime_surface.py tests/e2e/integration/test_guided_gate_state_transport.py -q`
 
 ## Docs To Update
 
@@ -132,6 +156,8 @@ async def reference_compare_stage_checkpoint(...):
 - `reference.py` no longer owns all planner/truth/silhouette/view/checkpoint
   helper logic directly
 - the public staged MCP surface and response contracts remain stable
+- provider registration and manifest-backed discovery for the reference family
+  remain unchanged
 - pure planner/truth helper logic has a clear home instead of remaining trapped
   in one adapter file by default
 - targeted unit/integration/e2e lanes prove no staged-loop regression
@@ -139,5 +165,7 @@ async def reference_compare_stage_checkpoint(...):
 ## Status / Board Update
 
 - keep promoted tracking on the parent `TASK-159`
+- execute this subtask through the leaves below rather than as one monolithic
+  refactor pass
 - do not promote this slice independently unless it becomes the only remaining
   open branch in the family
