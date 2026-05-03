@@ -56,7 +56,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Internal Architecture & Maintainability
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-159](./TASK-159_Modularize_Oversized_Guided_Runtime_And_Scene_Owner_Files.md) | **Modularize Oversized Guided Runtime And Scene Owner Files** | 🔴 High | Board-level internal follow-on after TASK-143 / TASK-144 / TASK-145 / TASK-150 / TASK-157 / TASK-158, covering modularization of the runtime seams those closed families introduced into `reference.py`, `scene.py`, addon `scene.py`, and `session_capabilities.py` without changing the public MCP/addon/session contract, provider registration/discovery seams, or inventing a second flow. |
+| [TASK-159](./TASK-159_Modularize_Oversized_Guided_Runtime_And_Scene_Owner_Files.md) | **Modularize Oversized Guided Runtime And Scene Owner Files** | 🔴 High | Board-level internal follow-on after TASK-143 / TASK-144 / TASK-145 / TASK-150 / TASK-157 / TASK-158, covering modularization of the runtime seams those closed families introduced into `reference.py`, `scene.py`, addon `scene.py`, and `session_capabilities.py`, including the remaining scene/addon object-utility surfaces, without changing the public MCP/addon/session contract, provider registration/discovery seams, or inventing a second flow. |
 
 ### Mesh Introspection
 | ID | Title | Priority | Notes |

@@ -6,8 +6,9 @@
 
 ## Objective
 
-Extract viewport and world/render helpers from addon `SceneHandler` and prove
-that addon registration plus server roundtrip wiring remain unchanged.
+Extract viewport, camera utility, and world/render/color-management helpers from
+addon `SceneHandler` and prove that addon registration plus server roundtrip
+wiring remain unchanged.
 
 ## Repository Touchpoints
 
@@ -19,19 +20,30 @@ that addon registration plus server roundtrip wiring remain unchanged.
 - `blender_addon/infrastructure/rpc_server.py`
 - `tests/unit/addon/test_addon_registration.py`
 - `tests/unit/tools/scene/test_scene_configure_handler.py`
+- `tests/unit/tools/scene/test_camera_orbit.py`
+- `tests/unit/tools/scene/test_camera_focus.py`
 - `tests/unit/tools/scene/test_viewport_control.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
 - `tests/e2e/tools/scene/test_scene_configure_roundtrip.py`
+- `tests/e2e/tools/scene/test_camera_orbit.py`
+- `tests/e2e/tools/scene/test_camera_focus.py`
 - `tests/e2e/tools/scene/test_scene_view_diagnostics.py`
 
 ## Current Code Anchors
 
 - `SceneHandler.get_viewport(...)`
 - `SceneHandler.get_view_diagnostics(...)`
+- `SceneHandler.camera_orbit(...)`
+- `SceneHandler.camera_focus(...)`
+- `SceneHandler.inspect_color_management(...)`
 - `SceneHandler.inspect_world(...)`
+- `SceneHandler.configure_color_management(...)`
 - `SceneHandler.configure_world(...)`
 - `SceneHandler.inspect_render_settings(...)`
 - `SceneHandler.configure_render_settings(...)`
+- `SceneHandler.get_view_state(...)`
+- `SceneHandler.restore_view_state(...)`
+- `SceneHandler.set_standard_view(...)`
 - addon `register()` scene handler wiring
 
 ## Planned Code Shape
@@ -43,23 +55,28 @@ class SceneHandler(SceneViewportMixin, SceneWorldRenderMixin, ...):
 
 ## Runtime / Security Contract Notes
 
-- preserve main-thread-safe viewport capture and temporary view restoration
-- preserve current world/render payloads, including `node_graph_handoff`
-  boundaries
+- preserve main-thread-safe viewport capture, camera utility behavior, and
+  temporary view restoration
+- preserve current world/render/color-management payloads, including
+  `node_graph_handoff` boundaries
 - keep addon registration and RPC background-handler wiring unchanged
 
 ## Tests To Add/Update
 
 - `tests/unit/addon/test_addon_registration.py`
 - `tests/unit/tools/scene/test_scene_configure_handler.py`
+- `tests/unit/tools/scene/test_camera_orbit.py`
+- `tests/unit/tools/scene/test_camera_focus.py`
 - `tests/unit/tools/scene/test_viewport_control.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
 - `tests/e2e/tools/scene/test_scene_configure_roundtrip.py`
+- `tests/e2e/tools/scene/test_camera_orbit.py`
+- `tests/e2e/tools/scene/test_camera_focus.py`
 - `tests/e2e/tools/scene/test_scene_view_diagnostics.py`
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/addon/test_addon_registration.py tests/unit/tools/scene/test_scene_configure_handler.py tests/unit/tools/scene/test_viewport_control.py tests/unit/tools/test_handler_rpc_alignment.py tests/e2e/tools/scene/test_scene_configure_roundtrip.py tests/e2e/tools/scene/test_scene_view_diagnostics.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/addon/test_addon_registration.py tests/unit/tools/scene/test_scene_configure_handler.py tests/unit/tools/scene/test_camera_orbit.py tests/unit/tools/scene/test_camera_focus.py tests/unit/tools/scene/test_viewport_control.py tests/unit/tools/test_handler_rpc_alignment.py tests/e2e/tools/scene/test_scene_configure_roundtrip.py tests/e2e/tools/scene/test_camera_orbit.py tests/e2e/tools/scene/test_camera_focus.py tests/e2e/tools/scene/test_scene_view_diagnostics.py -q`
 
 ## Docs To Update
 
@@ -71,9 +88,10 @@ class SceneHandler(SceneViewportMixin, SceneWorldRenderMixin, ...):
 
 ## Acceptance Criteria
 
-- viewport and world/render helpers are isolated from unrelated scene concerns
+- viewport/camera and world/render/color-management helpers are isolated from
+  unrelated scene concerns
 - addon registration continues to expose the same scene RPC handlers
-- roundtrip world/render and viewport regressions stay green
+- roundtrip world/render/color-management and viewport regressions stay green
 
 ## Status / Board Update
 

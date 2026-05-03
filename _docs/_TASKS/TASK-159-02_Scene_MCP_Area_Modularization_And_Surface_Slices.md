@@ -31,8 +31,9 @@ dedicated follow-on leaf is opened for them.
 - adapter translation layer
 - sync/async wrapper host
 - task/background bridge entrypoint
+- scene context / snapshot / structural-read owner
 - scene inspect owner
-- scene create/manage owner
+- scene create / manage / utility owner
 - scene spatial-graph owner
 - scene measure/assert owner
 - viewport/view-diagnostics owner
@@ -47,6 +48,7 @@ which makes future edits slower and more fragile.
 - likely new sibling helper modules such as:
   - `scene_inspect.py`
   - `scene_manage.py`
+  - `scene_object_utils.py`
   - `scene_spatial_graph.py`
   - `scene_measure_assert.py`
   - `scene_view.py`
@@ -86,6 +88,9 @@ which makes future edits slower and more fragile.
   `_finalize_macro_execution_result(...)`, and the public `macro_*` wrappers as
   explicit facade seams for this subtask; do not silently fold them into one of
   the named scene slices.
+- Keep context/snapshot/structural-read helpers and object-utility wrappers
+  explicitly assigned to leaves in this family; do not leave them as an
+  undocumented remainder under the generic `create/manage` label.
 - Keep scene spatial-support tools visible through the same metadata and guided
   visibility seams; this task should not silently change discovery behavior.
 - Preserve the distinction between:
@@ -100,6 +105,7 @@ which makes future edits slower and more fragile.
 # scene.py keeps public tool defs
 from server.adapters.mcp.areas.scene_inspect import execute_scene_inspect
 from server.adapters.mcp.areas.scene_manage import execute_scene_create, execute_scene_manage
+from server.adapters.mcp.areas.scene_object_utils import execute_scene_clean_scene, execute_scene_object_utility
 from server.adapters.mcp.areas.scene_spatial_graph import execute_scope_graph, execute_relation_graph
 from server.adapters.mcp.areas.scene_measure_assert import execute_measure_gap, execute_assert_contact
 from server.adapters.mcp.areas.scene_view import execute_viewport, execute_view_diagnostics
@@ -126,31 +132,38 @@ def scene_measure_gap(ctx, ...):
 | Order | Leaf | Purpose |
 |------|------|---------|
 | 1 | [TASK-159-02-01](./TASK-159-02-01_Scene_Public_Facade_Registration_And_Version_Guards.md) | Stabilize public registration, provider/manifest wiring, and version-policy guards before internal extraction |
-| 2 | [TASK-159-02-02](./TASK-159-02-02_Scene_Inspect_And_Create_Manage_Slices.md) | Extract inspect and create/manage helper clusters while keeping the shared facade readable |
+| 2 | [TASK-159-02-02](./TASK-159-02-02_Scene_Inspect_And_Create_Manage_Slices.md) | Extract scene context, inspect, snapshot/structural-read, and grouped create/configure helpers while keeping the shared facade readable |
 | 3 | [TASK-159-02-03](./TASK-159-02-03_Scene_Spatial_Graph_And_View_Diagnostics_Slices.md) | Separate spatial-graph and view-diagnostics helpers without drifting guided visibility semantics |
 | 4 | [TASK-159-02-04](./TASK-159-02-04_Scene_Measure_Assert_And_Guided_Side_Effects.md) | Extract measure/assert helpers and preserve guided stale-state / completion side effects |
+| 5 | [TASK-159-02-05](./TASK-159-02-05_Scene_Object_Utility_Manage_And_Guided_Dirtying_Slices.md) | Separate object-utility wrappers such as cleanup, rename, visibility, camera utility, and custom-property operations while preserving guided dirtying/runtime semantics |
 
 ## Tests To Add/Update
 
 - `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
 - `tests/unit/tools/scene/test_scene_context_mega.py`
 - `tests/unit/tools/scene/test_scene_contracts.py`
+- `tests/unit/tools/scene/test_scene_state_assistants.py`
 - `tests/unit/tools/scene/test_macro_place_supported_pair_mcp.py`
+- `tests/unit/tools/test_mcp_area_main_paths.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
+- `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/unit/adapters/mcp/test_provider_inventory.py`
 - `tests/unit/adapters/mcp/test_provider_versions.py`
 - `tests/unit/adapters/mcp/test_surface_manifest.py`
+- `tests/unit/adapters/mcp/test_structured_contract_delivery.py`
+- `tests/e2e/tools/scene/test_scene_clean_scene.py`
+- `tests/e2e/tools/scene/test_scene_utility_workflow.py`
 - `tests/e2e/tools/scene/test_scene_measure_tools.py`
 - `tests/e2e/tools/scene/test_scene_assert_tools.py`
 - `tests/e2e/tools/scene/test_scene_view_diagnostics.py`
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_scene_context_mega.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/scene/test_macro_place_supported_pair_mcp.py tests/unit/tools/test_handler_rpc_alignment.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/adapters/mcp/test_provider_inventory.py tests/unit/adapters/mcp/test_provider_versions.py tests/unit/adapters/mcp/test_surface_manifest.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/tools/scene/test_scene_measure_tools.py tests/e2e/tools/scene/test_scene_assert_tools.py tests/e2e/tools/scene/test_scene_view_diagnostics.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_scene_context_mega.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/scene/test_scene_state_assistants.py tests/unit/tools/scene/test_macro_place_supported_pair_mcp.py tests/unit/tools/test_mcp_area_main_paths.py tests/unit/tools/test_handler_rpc_alignment.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/adapters/mcp/test_provider_inventory.py tests/unit/adapters/mcp/test_provider_versions.py tests/unit/adapters/mcp/test_surface_manifest.py tests/unit/adapters/mcp/test_structured_contract_delivery.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/tools/scene/test_scene_clean_scene.py tests/e2e/tools/scene/test_scene_utility_workflow.py tests/e2e/tools/scene/test_scene_measure_tools.py tests/e2e/tools/scene/test_scene_assert_tools.py tests/e2e/tools/scene/test_scene_view_diagnostics.py -q`
 
 ## Docs To Update
 
@@ -165,11 +178,12 @@ def scene_measure_gap(ctx, ...):
 ## Acceptance Criteria
 
 - `scene.py` is reduced to a bounded public registration/facade role for the
-  named inspect, create/manage, spatial-graph, measure/assert, and view slices,
-  while any remaining macro/request-path bridge seams stay explicitly retained
-  in the facade for this pass
-- inspect, create/manage, spatial-graph, measure/assert, and view concerns have
-  clear internal homes
+  named context/structural-read, create/manage, object-utility,
+  spatial-graph, measure/assert, and view slices, while any remaining
+  macro/request-path bridge seams stay explicitly retained in the facade for
+  this pass
+- context/structural-read, create/manage, object-utility, spatial-graph,
+  measure/assert, and view concerns have clear internal homes
 - public scene MCP names, metadata, and guided/discovery behavior remain stable
 - provider registration, version-policy delivery, and manifest-backed scene
   discovery remain stable

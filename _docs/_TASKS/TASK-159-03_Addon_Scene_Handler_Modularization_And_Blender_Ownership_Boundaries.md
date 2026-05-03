@@ -9,10 +9,11 @@
 Split `blender_addon/application/handlers/scene.py` into clearer Blender-owned
 responsibility slices for:
 
-- inspection
+- scene lifecycle / context / structural reads
 - measure_assert
-- viewport
-- world/render
+- viewport / camera
+- world / render / color management
+- creation / visibility / metadata utilities
 
 while preserving the current `SceneHandler` RPC method surface and main-thread
 Blender safety model.
@@ -24,9 +25,12 @@ behaviors:
 
 - hierarchy / bbox / origin reads
 - scene object lifecycle helpers
+- scene creation and mode/context helpers
 - viewport capture and diagnostics
+- camera utility helpers
 - measure/assert semantics
-- world/render configuration
+- world/render/color-management configuration
+- object metadata / custom-property helpers
 - topology inspection helpers
 
 The public server depends on this handler as one stable RPC-backed truth owner,
@@ -49,6 +53,7 @@ That increases the chance that:
   - `scene_measure_assert_mixin.py`
   - `scene_viewport_mixin.py`
   - `scene_world_render_mixin.py`
+  - `scene_utility_mixin.py`
 - `blender_addon/__init__.py` if registration wiring needs import-path updates
 - `blender_addon/infrastructure/rpc_server.py`
 - `server/application/tool_handlers/scene_handler.py`
@@ -110,28 +115,48 @@ class SceneHandler(
 
 | Order | Leaf | Purpose |
 |------|------|---------|
-| 1 | [TASK-159-03-01](./TASK-159-03-01_Addon_Scene_Inspection_And_Topology_Split.md) | Extract inspection/topology helpers while preserving Blender-truth reads and object lifecycle helpers |
+| 1 | [TASK-159-03-01](./TASK-159-03-01_Addon_Scene_Inspection_And_Topology_Split.md) | Extract scene lifecycle/context/structural-read helpers together with inspection/topology ownership while preserving Blender-truth reads |
 | 2 | [TASK-159-03-02](./TASK-159-03-02_Addon_Scene_Measure_Assert_And_RPC_Parity.md) | Separate measure/assert helpers and keep server-addon RPC contracts aligned |
-| 3 | [TASK-159-03-03](./TASK-159-03-03_Addon_Scene_Viewport_World_Render_And_Registration.md) | Extract viewport/world/render helpers and prove registration plus roundtrip parity stay intact |
+| 3 | [TASK-159-03-03](./TASK-159-03-03_Addon_Scene_Viewport_World_Render_And_Registration.md) | Extract viewport/camera/world/render/color-management helpers and prove registration plus roundtrip parity stay intact |
+| 4 | [TASK-159-03-04](./TASK-159-03-04_Addon_Scene_Creation_Visibility_And_Metadata_Utilities.md) | Separate scene creation, mode-switch, visibility, and custom-property utilities without drifting RPC behavior or object-mode assumptions |
 
 ## Tests To Add/Update
 
 - `tests/unit/addon/test_addon_registration.py`
+- `tests/unit/tools/scene/test_scene_mode.py`
+- `tests/unit/tools/scene/test_scene_get_mode_handler.py`
 - `tests/unit/tools/scene/test_scene_measure_tools.py`
 - `tests/unit/tools/scene/test_scene_assert_tools.py`
+- `tests/unit/tools/scene/test_scene_construction.py`
 - `tests/unit/tools/scene/test_scene_configure_handler.py`
 - `tests/unit/tools/scene/test_scene_inspect_mesh_topology.py`
+- `tests/unit/tools/scene/test_scene_mcp_tools_batch.py`
+- `tests/unit/tools/scene/test_camera_orbit.py`
+- `tests/unit/tools/scene/test_camera_focus.py`
+- `tests/unit/tools/scene/test_hide_object.py`
+- `tests/unit/tools/scene/test_show_all_objects.py`
+- `tests/unit/tools/scene/test_rename_object.py`
+- `tests/unit/tools/scene/test_isolate_object.py`
 - `tests/unit/tools/scene/test_viewport_control.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
+- `tests/unit/adapters/mcp/test_structured_contract_delivery.py`
 - `tests/e2e/tools/scene/test_scene_measure_tools.py`
 - `tests/e2e/tools/scene/test_scene_assert_tools.py`
+- `tests/e2e/tools/scene/test_scene_clean_scene.py`
+- `tests/e2e/tools/scene/test_scene_utility_workflow.py`
 - `tests/e2e/tools/scene/test_scene_configure_roundtrip.py`
+- `tests/e2e/tools/scene/test_camera_orbit.py`
+- `tests/e2e/tools/scene/test_camera_focus.py`
+- `tests/e2e/tools/scene/test_hide_object.py`
+- `tests/e2e/tools/scene/test_show_all_objects.py`
+- `tests/e2e/tools/scene/test_rename_object.py`
+- `tests/e2e/tools/scene/test_isolate_object.py`
 - `tests/e2e/tools/scene/test_scene_view_diagnostics.py`
 
 ## Validation Commands
 
-- `PYTHONPATH=. poetry run pytest tests/unit/addon/test_addon_registration.py tests/unit/tools/scene/test_scene_measure_tools.py tests/unit/tools/scene/test_scene_assert_tools.py tests/unit/tools/scene/test_scene_configure_handler.py tests/unit/tools/scene/test_scene_inspect_mesh_topology.py tests/unit/tools/scene/test_viewport_control.py tests/unit/tools/test_handler_rpc_alignment.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/tools/scene/test_scene_measure_tools.py tests/e2e/tools/scene/test_scene_assert_tools.py tests/e2e/tools/scene/test_scene_configure_roundtrip.py tests/e2e/tools/scene/test_scene_view_diagnostics.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/addon/test_addon_registration.py tests/unit/tools/scene/test_scene_mode.py tests/unit/tools/scene/test_scene_get_mode_handler.py tests/unit/tools/scene/test_scene_measure_tools.py tests/unit/tools/scene/test_scene_assert_tools.py tests/unit/tools/scene/test_scene_construction.py tests/unit/tools/scene/test_scene_configure_handler.py tests/unit/tools/scene/test_scene_inspect_mesh_topology.py tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_camera_orbit.py tests/unit/tools/scene/test_camera_focus.py tests/unit/tools/scene/test_hide_object.py tests/unit/tools/scene/test_show_all_objects.py tests/unit/tools/scene/test_rename_object.py tests/unit/tools/scene/test_isolate_object.py tests/unit/tools/scene/test_viewport_control.py tests/unit/tools/test_handler_rpc_alignment.py tests/unit/adapters/mcp/test_structured_contract_delivery.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/tools/scene/test_scene_measure_tools.py tests/e2e/tools/scene/test_scene_assert_tools.py tests/e2e/tools/scene/test_scene_clean_scene.py tests/e2e/tools/scene/test_scene_utility_workflow.py tests/e2e/tools/scene/test_scene_configure_roundtrip.py tests/e2e/tools/scene/test_camera_orbit.py tests/e2e/tools/scene/test_camera_focus.py tests/e2e/tools/scene/test_hide_object.py tests/e2e/tools/scene/test_show_all_objects.py tests/e2e/tools/scene/test_rename_object.py tests/e2e/tools/scene/test_isolate_object.py tests/e2e/tools/scene/test_scene_view_diagnostics.py -q`
 
 ## Docs To Update
 
@@ -144,8 +169,9 @@ class SceneHandler(
 
 ## Acceptance Criteria
 
-- addon `SceneHandler` no longer directly owns all inspection, measure/assert,
-  viewport, and world/render logic in one file
+- addon `SceneHandler` no longer directly owns all lifecycle/context,
+  inspection, measure/assert, viewport/camera, world/render/color-management,
+  and creation/utility logic in one file
 - the public RPC-backed addon surface remains stable
 - addon registration wiring and server-side scene handler alignment remain
   stable
