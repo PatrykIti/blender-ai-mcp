@@ -20,6 +20,7 @@ through the same compare response contract used by the staged reference loop.
 - likely new helper module such as `server/adapters/mcp/areas/reference_current_view.py`
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/session_capabilities.py`
+- `server/infrastructure/tmp_paths.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/unit/adapters/mcp/test_provider_inventory.py`
@@ -30,6 +31,7 @@ through the same compare response contract used by the staged reference loop.
 - `reference_compare_current_view(...)`
 - `_compare_response(...)`
 - current-view capture call through `get_scene_handler().get_viewport(...)`
+- `get_viewport_output_paths(...)`
 - `comparison_mode=current_view_checkpoint` prompt-hint shaping
 
 ## Planned Code Shape

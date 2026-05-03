@@ -99,7 +99,7 @@ which makes future edits slower and more fragile.
   the named scene slices.
 - Keep context/snapshot/structural-read helpers and object-utility wrappers
   explicitly assigned to leaves in this family; do not leave them as an
-  undocumented remainder under the generic `create/manage` label.
+  undocumented remainder under the grouped create/configure branch.
 - Keep grouped `scene_create(...)` / `scene_configure(...)` extraction on its
   own dedicated leaf so the read-heavy state/snapshot branch does not quietly
   absorb write-side mega-tool routing.
@@ -107,7 +107,7 @@ which makes future edits slower and more fragile.
   visibility seams; this task should not silently change discovery behavior.
 - Keep `scene_get_viewport(...)`, its output formatting, and its task/background
   bridge explicitly assigned to a dedicated leaf; do not leave viewport capture
-  as an implicit remainder under the generic `view` label.
+  as an implicit remainder under the view-diagnostics branch.
 - Preserve the distinction between:
   - public MCP wrapper
   - adapter-side orchestration

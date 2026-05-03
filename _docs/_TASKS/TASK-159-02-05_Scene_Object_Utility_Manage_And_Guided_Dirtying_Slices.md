@@ -100,7 +100,7 @@ from .scene_object_utils import (
 ## Acceptance Criteria
 
 - object-utility wrappers no longer sit inline between grouped scene tools and
-  the spatial-support / measure / view slices
+  the spatial-support / measure / view-diagnostics / viewport-surface slices
 - cleanup canonicalization and guided dirtying semantics remain stable
 - public utility names and structured custom-property delivery stay unchanged
 - focused unit/integration/e2e lanes still prove the same cleanup and utility

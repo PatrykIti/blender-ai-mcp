@@ -130,7 +130,7 @@ __all__ = [
 | Order | Leaf | Purpose |
 |------|------|---------|
 | 1 | [TASK-159-04-01](./TASK-159-04-01_Session_Capability_State_Model_And_Persistence_Split.md) | Separate the state dataclasses, normalization, and sync/async persistence seam behind the stable facade |
-| 2 | [TASK-159-04-02](./TASK-159-04-02_Session_Goal_Bootstrap_Prompt_Bundles_And_Reference_Readiness.md) | Extract goal bootstrap, domain-profile, prompt-bundle, and reference-readiness helpers without drifting router/bootstrap semantics |
+| 2 | [TASK-159-04-02](./TASK-159-04-02_Session_Goal_Bootstrap_Prompt_Bundles_And_Reference_Readiness.md) | Extract goal bootstrap, goal reset, partial-answer merge, domain-profile, prompt-bundle, and reference-readiness helpers without drifting router/bootstrap semantics |
 | 3 | [TASK-159-04-03](./TASK-159-04-03_Session_Guided_Part_Registry_And_Flow_Transitions.md) | Separate guided part registry, role summaries, and flow-transition helpers into a bounded runtime slice |
 | 4 | [TASK-159-04-04](./TASK-159-04-04_Session_Visibility_Gate_Projection_And_Runtime_Glue.md) | Isolate visibility refresh, gate projection, and router/search/prompt glue while preserving request-path runtime behavior |
 

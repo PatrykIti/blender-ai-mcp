@@ -18,6 +18,8 @@ behavior inside addon `SceneHandler` stays owned by
 
 - `server/adapters/mcp/areas/scene.py`
 - likely new helper module such as `server/adapters/mcp/areas/scene_viewport.py`
+- `server/adapters/mcp/tasks/task_bridge.py`
+- `server/infrastructure/tmp_paths.py`
 - `tests/unit/tools/scene/test_mcp_viewport_output.py`
 - `tests/unit/adapters/mcp/test_task_mode_tools.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
@@ -30,6 +32,8 @@ behavior inside addon `SceneHandler` stays owned by
 
 - `_format_viewport_output(...)`
 - `scene_get_viewport(...)`
+- `get_viewport_output_paths(...)`
+- `is_background_task_context(ctx)`
 - task-mode viewport path covered by `tests/unit/adapters/mcp/test_task_mode_tools.py`
 
 ## Planned Code Shape

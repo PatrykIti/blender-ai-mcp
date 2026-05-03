@@ -149,7 +149,7 @@ This umbrella deliberately does not:
 | Order | Subtask | Purpose |
 |------|---------|---------|
 | 1 | [TASK-159-01](./TASK-159-01_Reference_Area_Modularization_And_Checkpoint_Assembly_Boundaries.md) | Split `reference.py` into planner, truth, silhouette, view-diagnostics, and checkpoint ownership slices while keeping the staged public surface stable |
-| 2 | [TASK-159-02](./TASK-159-02_Scene_MCP_Area_Modularization_And_Surface_Slices.md) | Split `scene.py` into inspect, create/manage, spatial-graph, measure/assert, and view slices while preserving MCP tool names and surface behavior |
+| 2 | [TASK-159-02](./TASK-159-02_Scene_MCP_Area_Modularization_And_Surface_Slices.md) | Split `scene.py` into context/state-read, grouped create/configure, object-utility, spatial-graph, measure/assert, view-diagnostics, and viewport-surface slices while preserving MCP tool names and surface behavior |
 | 3 | [TASK-159-03](./TASK-159-03_Addon_Scene_Handler_Modularization_And_Blender_Ownership_Boundaries.md) | Split addon `SceneHandler` by inspection, measure/assert, viewport, and world/render responsibility without changing RPC behavior |
 | 4 | [TASK-159-04](./TASK-159-04_Session_Capabilities_Modularization_And_Guided_State_Boundaries.md) | Split `session_capabilities.py` into guided-state, visibility-refresh, quality-gate projection, and prompt-bundle ownership slices while preserving the current facade |
 
