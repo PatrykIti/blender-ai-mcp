@@ -1,7 +1,7 @@
 # TASK-159-03-05: Addon Scene World, Render, And Color Management Split
 
 **Parent:** [TASK-159-03](./TASK-159-03_Addon_Scene_Handler_Modularization_And_Blender_Ownership_Boundaries.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -78,3 +78,16 @@ class SceneHandler(SceneWorldRenderMixin, ...):
 - keep promoted tracking on parent `TASK-159`
 - treat this as the scene-appearance companion to `TASK-159-03-03` so viewport
   runtime extraction does not also absorb grouped render/world work
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- moved the render/color-management/world ownership cluster from
+  `blender_addon/application/handlers/scene.py` into
+  `blender_addon/application/handlers/scene_world_render_mixin.py`
+- kept `SceneHandler` as the stable addon RPC facade by composing the new mixin
+  instead of changing any handler method names or payloads
+- preserved grouped render/color-management/world read/apply/read roundtrip
+  behavior, including the current `node_graph_reference` and
+  `node_graph_handoff` boundaries
