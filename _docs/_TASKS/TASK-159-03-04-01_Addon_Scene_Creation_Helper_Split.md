@@ -1,7 +1,7 @@
 # TASK-159-03-04-01: Addon Scene Creation Helper Split
 
 **Parent:** [TASK-159-03-04](./TASK-159-03-04_Addon_Scene_Creation_Visibility_And_Metadata_Utilities.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -65,3 +65,13 @@ class SceneHandler(SceneCreationUtilityMixin, ...):
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- moved `create_light(...)`, `create_camera(...)`, and `create_empty(...)` into
+  `blender_addon/application/handlers/scene_creation_utility_mixin.py`
+- kept the exact creation defaults, collection-linking behavior, and returned
+  object-name payloads unchanged under the existing construction and utility
+  workflow tests

@@ -1,7 +1,7 @@
 # TASK-159-03-04-03: Addon Scene Custom Property Utility Split
 
 **Parent:** [TASK-159-03-04](./TASK-159-03-04_Addon_Scene_Creation_Visibility_And_Metadata_Utilities.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -62,3 +62,12 @@ class SceneHandler(SceneCustomPropertyUtilityMixin, ...):
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- moved `get_custom_properties(...)` and `set_custom_property(...)` into
+  `blender_addon/application/handlers/scene_custom_property_utility_mixin.py`
+- preserved structured custom-property serialization and delete/set behavior
+  without changing the current RPC or structured-contract proof lane

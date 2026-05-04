@@ -1,7 +1,7 @@
 # TASK-159-03-04: Addon Scene Creation, Visibility, And Metadata Utilities
 
 **Parent:** [TASK-159-03](./TASK-159-03_Addon_Scene_Handler_Modularization_And_Blender_Ownership_Boundaries.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -139,3 +139,18 @@ preserve_existing_rpc_payloads()
 - keep promoted tracking on parent `TASK-159`
 - execute this branch through the focused leaves below instead of landing all
   addon utilities in one broad pass
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- split the addon utility cluster out of
+  `blender_addon/application/handlers/scene.py` into focused mixins:
+  `scene_creation_utility_mixin.py`,
+  `scene_mode_visibility_utility_mixin.py`, and
+  `scene_custom_property_utility_mixin.py`
+- kept `SceneHandler` as the stable RPC facade by composing the new mixins
+  instead of changing any public handler method names or payloads
+- preserved object-mode validation, rename/visibility/isolation behavior, and
+  structured custom-property delivery under the existing unit and Blender-backed
+  E2E lanes

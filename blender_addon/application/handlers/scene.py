@@ -7,9 +7,16 @@ from typing import Callable
 import bpy
 
 from .job_utils import raise_if_cancelled
+from .scene_creation_utility_mixin import SceneCreationUtilityMixin
+from .scene_custom_property_utility_mixin import SceneCustomPropertyUtilityMixin
+from .scene_mode_visibility_utility_mixin import SceneModeVisibilityUtilityMixin
 
 
-class SceneHandler:
+class SceneHandler(
+    SceneCreationUtilityMixin,
+    SceneModeVisibilityUtilityMixin,
+    SceneCustomPropertyUtilityMixin,
+):
     """Application service for scene operations."""
 
     def list_objects(self):
@@ -563,102 +570,6 @@ class SceneHandler:
                         bpy.ops.object.mode_set(mode=original_mode)
                     except Exception:
                         pass
-
-    def create_light(self, type="POINT", energy=1000.0, color=(1.0, 1.0, 1.0), location=(0.0, 0.0, 0.0), name=None):
-        """Creates a light source."""
-        # Create light data
-        light_data = bpy.data.lights.new(name=name if name else "Light", type=type)
-        light_data.energy = energy
-        light_data.color = color
-
-        # Create object
-        light_obj = bpy.data.objects.new(name=name if name else "Light", object_data=light_data)
-        light_obj.location = location
-
-        # Link to collection
-        bpy.context.collection.objects.link(light_obj)
-
-        return light_obj.name
-
-    def create_camera(
-        self,
-        location=(0.0, -10.0, 0.0),
-        rotation=(1.57, 0.0, 0.0),
-        lens=50.0,
-        clip_start=0.1,
-        clip_end=100.0,
-        name=None,
-    ):
-        """Creates a camera."""
-        # Create camera data
-        cam_data = bpy.data.cameras.new(name=name if name else "Camera")
-        cam_data.lens = lens
-        if clip_start is not None:
-            cam_data.clip_start = clip_start
-        if clip_end is not None:
-            cam_data.clip_end = clip_end
-
-        # Create object
-        cam_obj = bpy.data.objects.new(name=name if name else "Camera", object_data=cam_data)
-        cam_obj.location = location
-        cam_obj.rotation_euler = rotation
-
-        # Link to collection
-        bpy.context.collection.objects.link(cam_obj)
-
-        return cam_obj.name
-
-    def create_empty(self, type="PLAIN_AXES", size=1.0, location=(0.0, 0.0, 0.0), name=None):
-        """Creates an empty object."""
-        empty_obj = bpy.data.objects.new(name if name else "Empty", None)
-        empty_obj.empty_display_type = type
-        empty_obj.empty_display_size = size
-        empty_obj.location = location
-
-        # Link to collection
-        bpy.context.collection.objects.link(empty_obj)
-
-        return empty_obj.name
-
-    def set_mode(self, mode="OBJECT"):
-        """Switch Blender context mode."""
-        mode = mode.upper()
-        valid_modes = ["OBJECT", "EDIT", "SCULPT", "VERTEX_PAINT", "WEIGHT_PAINT", "TEXTURE_PAINT", "POSE"]
-
-        if mode not in valid_modes:
-            raise ValueError(f"Invalid mode '{mode}'. Valid: {valid_modes}")
-
-        current_mode = bpy.context.mode
-
-        if current_mode == mode or current_mode.startswith(mode):
-            return f"Already in {mode} mode"
-
-        active_obj = bpy.context.active_object
-
-        if mode != "OBJECT" and not active_obj:
-            raise ValueError(f"Cannot enter {mode} mode: no active object")
-
-        # Validate object type for specific modes
-        if mode == "EDIT":
-            valid_types = ["MESH", "CURVE", "SURFACE", "META", "FONT", "LATTICE", "ARMATURE"]
-            if active_obj.type not in valid_types:
-                raise ValueError(
-                    f"Cannot enter {mode} mode: active object '{active_obj.name}' "
-                    f"is type '{active_obj.type}'. Supported types: {', '.join(valid_types)}"
-                )
-        elif mode == "SCULPT":
-            if active_obj.type != "MESH":
-                raise ValueError(
-                    f"Cannot enter SCULPT mode: active object '{active_obj.name}' is type '{active_obj.type}'. Only MESH supported."
-                )
-        elif mode == "POSE":
-            if active_obj.type != "ARMATURE":
-                raise ValueError(
-                    f"Cannot enter POSE mode: active object '{active_obj.name}' is type '{active_obj.type}'. Only ARMATURE supported."
-                )
-
-        bpy.ops.object.mode_set(mode=mode)
-        return f"Switched to {mode} mode"
 
     def snapshot_state(self, include_mesh_stats=False, include_materials=False):
         """Captures a lightweight JSON snapshot of the scene state."""
@@ -1272,82 +1183,6 @@ class SceneHandler:
         return str(value)
 
     # TASK-043: Scene Utility Tools
-    def rename_object(self, old_name, new_name):
-        """Renames an object in the scene."""
-        obj = bpy.data.objects.get(old_name)
-        if obj is None:
-            raise ValueError(f"Object '{old_name}' not found")
-
-        obj.name = new_name
-        # Note: Blender may add suffix if name already exists
-        actual_name = obj.name
-
-        if actual_name != new_name:
-            return f"Renamed '{old_name}' to '{actual_name}' (suffix added due to name collision)"
-        return f"Renamed '{old_name}' to '{actual_name}'"
-
-    def hide_object(self, object_name, hide=True, hide_render=False):
-        """Hides or shows an object in the viewport and/or render."""
-        obj = bpy.data.objects.get(object_name)
-        if obj is None:
-            raise ValueError(f"Object '{object_name}' not found")
-
-        obj.hide_viewport = hide
-        if hide:
-            if hide_render:
-                obj.hide_render = True
-        else:
-            obj.hide_render = False
-
-        state = "hidden" if hide else "visible"
-        render_state = ""
-        if hide and hide_render:
-            render_state = " (also in render)"
-        elif not hide:
-            render_state = " (including render visibility)"
-        return f"Object '{object_name}' is now {state}{render_state}"
-
-    def show_all_objects(self, include_render=False):
-        """Shows all hidden objects in the scene."""
-        viewport_count = 0
-        render_count = 0
-        for obj in bpy.data.objects:
-            if obj.hide_viewport:
-                obj.hide_viewport = False
-                viewport_count += 1
-            if include_render and obj.hide_render:
-                obj.hide_render = False
-                render_count += 1
-
-        if include_render:
-            return (
-                f"Made {viewport_count} object(s) visible in viewport and restored "
-                f"render visibility for {render_count} object(s)"
-            )
-        return f"Made {viewport_count} object(s) visible"
-
-    def isolate_object(self, object_names):
-        """Isolates object(s) by hiding all others in viewport and render."""
-        # Validate all requested objects exist
-        keep_visible = set(object_names)
-        for name in keep_visible:
-            if name not in bpy.data.objects:
-                raise ValueError(f"Object '{name}' not found")
-
-        hidden_count = 0
-        for obj in bpy.data.objects:
-            if obj.name not in keep_visible:
-                if not obj.hide_viewport:
-                    obj.hide_viewport = True
-                    hidden_count += 1
-                obj.hide_render = True
-            else:
-                # Ensure isolated objects are visible
-                obj.hide_viewport = False
-                obj.hide_render = False
-
-        return f"Isolated {len(keep_visible)} object(s), hid {hidden_count} others in viewport and render"
-
     def camera_orbit(self, angle_horizontal=0.0, angle_vertical=0.0, target_object=None, target_point=None):
         """Orbits viewport camera around target."""
         from mathutils import Matrix, Vector
@@ -2160,52 +1995,6 @@ class SceneHandler:
         return f"Set 3D viewport to {resolved} view"
 
     # TASK-045: Object Inspection Tools
-    def get_custom_properties(self, object_name):
-        """Gets custom properties (metadata) from an object."""
-        obj = bpy.data.objects.get(object_name)
-        if obj is None:
-            raise ValueError(f"Object '{object_name}' not found")
-
-        properties = {}
-        try:
-            for key in obj.keys():
-                # Skip internal properties (start with underscore)
-                if key.startswith("_"):
-                    continue
-                value = obj.get(key)
-                # Convert to JSON-serializable types
-                if isinstance(value, (int, float, str, bool)):
-                    properties[key] = value
-                elif hasattr(value, "__iter__") and not isinstance(value, str):
-                    # Convert vectors/arrays to lists
-                    try:
-                        properties[key] = list(value)
-                    except Exception:
-                        properties[key] = str(value)
-                else:
-                    properties[key] = str(value)
-        except Exception as e:
-            raise ValueError(f"Failed to read custom properties: {e}")
-
-        return {"object_name": object_name, "property_count": len(properties), "properties": properties}
-
-    def set_custom_property(self, object_name, property_name, property_value, delete=False):
-        """Sets or deletes a custom property on an object."""
-        obj = bpy.data.objects.get(object_name)
-        if obj is None:
-            raise ValueError(f"Object '{object_name}' not found")
-
-        if delete:
-            if property_name in obj.keys():
-                del obj[property_name]
-                return f"Deleted property '{property_name}' from '{object_name}'"
-            else:
-                return f"Property '{property_name}' not found on '{object_name}'"
-
-        # Set the property
-        obj[property_name] = property_value
-        return f"Set property '{property_name}' = {property_value} on '{object_name}'"
-
     def get_hierarchy(self, object_name=None, include_transforms=False):
         """Gets parent-child hierarchy for objects."""
 

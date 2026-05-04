@@ -1,7 +1,7 @@
 # TASK-159-03-04-02: Addon Scene Mode And Visibility Utility Split
 
 **Parent:** [TASK-159-03-04](./TASK-159-03-04_Addon_Scene_Creation_Visibility_And_Metadata_Utilities.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -79,3 +79,14 @@ class SceneHandler(SceneModeVisibilityUtilityMixin, ...):
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- moved `set_mode(...)`, `rename_object(...)`, `hide_object(...)`,
+  `show_all_objects(...)`, and `isolate_object(...)` into
+  `blender_addon/application/handlers/scene_mode_visibility_utility_mixin.py`
+- preserved the existing object-mode validation errors plus viewport/render
+  visibility and isolation side effects under the current unit and Blender E2E
+  proof lanes

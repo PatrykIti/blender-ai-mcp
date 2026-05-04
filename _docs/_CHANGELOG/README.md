@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [302](./302-2026-05-04-task-159-addon-scene-utility-mixins.md) | 2026-05-04 | **TASK-159 addon scene utility mixins** | - |
 | [301](./301-2026-05-04-task-159-session-capabilities-modularization.md) | 2026-05-04 | **TASK-159 session capabilities modularization** | - |
 | [300](./300-2026-05-04-task-160-guided-client-feedback-and-streamable-followup.md) | 2026-05-04 | **TASK-160 guided client feedback and Streamable follow-up** | - |
 | [299](./299-2026-05-03-task-157-scope-dedupe-and-compare-visibility-regressions.md) | 2026-05-03 | **TASK-157 scope, dedupe, and compare-visibility regressions** | - |
