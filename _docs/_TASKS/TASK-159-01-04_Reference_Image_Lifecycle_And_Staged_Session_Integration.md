@@ -1,7 +1,7 @@
 # TASK-159-01-04: Reference Image Lifecycle And Staged Session Integration
 
 **Parent:** [TASK-159-01](./TASK-159-01_Reference_Area_Modularization_And_Checkpoint_Assembly_Boundaries.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -71,3 +71,17 @@ session = await replace_session_reference_images_async(ctx, updated_images)
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- moved the `reference_images(...)` file-lifecycle and session adoption/removal
+  branch out of `server/adapters/mcp/areas/reference.py` into
+  `server/adapters/mcp/areas/reference_images_runtime.py`
+- kept `reference.py` as the stable public MCP facade while preserving active
+  versus pending reference semantics and reusing the same local-path validation
+  rules on the extracted seam
+- preserved attach/remove/clear behavior, bounded file copy/delete handling,
+  and staged adoption visibility/session updates under the current unit and
+  guided transport lanes

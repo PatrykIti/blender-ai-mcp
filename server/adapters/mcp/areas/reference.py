@@ -5,11 +5,9 @@
 
 from __future__ import annotations
 
-import mimetypes
 import re
-import shutil
 from dataclasses import dataclass, replace
-from datetime import UTC, datetime
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Literal, Mapping, cast
 from uuid import uuid4
@@ -25,7 +23,13 @@ from server.adapters.mcp.areas.reference_checkpoint_compare import (
 from server.adapters.mcp.areas.reference_current_view import (
     run_current_view_compare as _run_current_view_compare_impl,
 )
-from server.adapters.mcp.context_utils import ctx_info, ctx_session_id, ctx_transport_type
+from server.adapters.mcp.areas.reference_images_runtime import (
+    _validate_local_reference_path,
+)
+from server.adapters.mcp.areas.reference_images_runtime import (
+    handle_reference_images as _handle_reference_images,
+)
+from server.adapters.mcp.context_utils import ctx_session_id, ctx_transport_type
 from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract
 from server.adapters.mcp.contracts.quality_gates import (
     GatePlanContract,
@@ -75,7 +79,6 @@ from server.adapters.mcp.contracts.scene import (
     SceneTruthFollowupItemContract,
 )
 from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
-from server.adapters.mcp.guided_contract import canonicalize_reference_images_arguments
 from server.adapters.mcp.sampling.result_types import to_vision_assistant_contract
 from server.adapters.mcp.session_capabilities import (
     GuidedReferenceReadinessState,
@@ -86,9 +89,6 @@ from server.adapters.mcp.session_capabilities import (
     build_guided_reference_readiness_payload,
     get_session_capability_state_async,
     ingest_quality_gate_proposal_async,
-    replace_session_pending_reference_images_async,
-    replace_session_reference_images_async,
-    session_has_ready_guided_reference_goal,
     set_session_capability_state_async,
 )
 from server.adapters.mcp.session_state import get_session_value_async, set_session_value_async
@@ -111,7 +111,7 @@ from server.adapters.mcp.vision.runner import VISION_ASSIST_POLICY
 from server.adapters.mcp.vision.silhouette import build_silhouette_analysis
 from server.application.services.spatial_graph import get_spatial_graph_service
 from server.infrastructure.di import get_collection_handler, get_scene_handler, get_vision_backend_resolver
-from server.infrastructure.tmp_paths import get_reference_image_storage_path, get_viewport_output_paths
+from server.infrastructure.tmp_paths import get_viewport_output_paths
 
 REFERENCE_PUBLIC_TOOL_NAMES = (
     "reference_images",
@@ -120,7 +120,6 @@ REFERENCE_PUBLIC_TOOL_NAMES = (
     "reference_compare_stage_checkpoint",
     "reference_iterate_stage_checkpoint",
 )
-_ALLOWED_IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}
 _REFERENCE_CORRECTION_LOOP_STATE_KEY = "reference_correction_loop"
 _REFERENCE_CORRECTION_STAGNATION_THRESHOLD = 2
 _ANCHOR_ROLE_HINTS: tuple[tuple[str, int], ...] = (
@@ -276,79 +275,6 @@ def _register_existing_tool(target, tool_name: str):
 
 def register_reference_tools(target):
     return {tool_name: _register_existing_tool(target, tool_name) for tool_name in REFERENCE_PUBLIC_TOOL_NAMES}
-
-
-def _sorted_references(references: list[dict]) -> list[dict]:
-    return sorted(references, key=lambda item: str(item.get("added_at") or ""))
-
-
-def _merge_visible_references(*reference_groups: list[dict]) -> list[dict]:
-    """Return one stable visible view across active and staged reference stores."""
-
-    merged: list[dict] = []
-    seen_reference_ids: set[str] = set()
-
-    for group in reference_groups:
-        for item in group:
-            reference_id = item.get("reference_id")
-            if isinstance(reference_id, str) and reference_id:
-                if reference_id in seen_reference_ids:
-                    continue
-                seen_reference_ids.add(reference_id)
-            merged.append(item)
-
-    return merged
-
-
-def _delete_reference_files(references: list[dict]) -> None:
-    """Best-effort cleanup for stored reference files without double-unlinking."""
-
-    deleted_paths: set[str] = set()
-    for item in references:
-        stored_path = item.get("stored_path")
-        if not isinstance(stored_path, str) or stored_path in deleted_paths:
-            continue
-        deleted_paths.add(stored_path)
-        try:
-            Path(stored_path).unlink(missing_ok=True)
-        except Exception:
-            pass
-
-
-def _as_response(
-    *,
-    action: Literal["attach", "list", "remove", "clear"],
-    goal: str | None,
-    references: list[dict],
-    removed_reference_id: str | None = None,
-    message: str | None = None,
-    error: str | None = None,
-) -> ReferenceImagesResponseContract:
-    return ReferenceImagesResponseContract(
-        action=action,
-        goal=goal,
-        reference_count=len(references),
-        references=[ReferenceImageRecordContract.model_validate(item) for item in references],
-        removed_reference_id=removed_reference_id,
-        message=message,
-        error=error,
-    )
-
-
-def _validate_local_reference_path(source_path: str) -> Path:
-    path = Path(source_path).expanduser().resolve()
-    if not path.exists() or not path.is_file():
-        raise ValueError(f"Reference image path does not exist: {source_path}")
-    if path.suffix.lower() not in _ALLOWED_IMAGE_SUFFIXES:
-        raise ValueError("Reference image must be one of: .png, .jpg, .jpeg, .webp")
-    return path
-
-
-def _copy_reference_image(source_path: Path) -> tuple[str, str]:
-    filename = f"ref_{uuid4().hex[:10]}{source_path.suffix.lower()}"
-    internal_path, host_visible_path = get_reference_image_storage_path(filename)
-    shutil.copy2(source_path, internal_path)
-    return str(internal_path), host_visible_path
 
 
 def _safe_checkpoint_token(value: str | None) -> str:
@@ -4191,180 +4117,21 @@ async def reference_images(
 ) -> ReferenceImagesResponseContract:
     """Manage goal-scoped reference images for later vision/capture interpretation."""
 
-    normalized_action = str(action).lower()
-    if normalized_action not in {"attach", "list", "remove", "clear"}:
-        return _as_response(
-            action="list", goal=None, references=[], error="action must be attach, list, remove, or clear"
-        )
-
-    session = await get_session_capability_state_async(ctx)
-    stage_for_later_adoption = not session_has_ready_guided_reference_goal(session)
-    active_references = list(session.reference_images or [])
-    pending_references = list(session.pending_reference_images or [])
-    visible_references = (
-        _merge_visible_references(active_references, pending_references)
-        if session.goal is not None
-        else list(pending_references)
-    )
-
-    if normalized_action == "list":
-        return _as_response(action="list", goal=session.goal, references=_sorted_references(visible_references))
-
-    if normalized_action == "clear":
-        _delete_reference_files(visible_references)
-        if active_references:
-            session = await replace_session_reference_images_async(ctx, [])
-            if session.goal is not None:
-                await refresh_reference_understanding_summary_async(ctx, session=session)
-        if pending_references:
-            await replace_session_pending_reference_images_async(ctx, [])
-
-        if active_references and pending_references:
-            message = "Cleared active and pending reference images."
-        elif pending_references or session.goal is None:
-            message = "Cleared pending reference images."
-        else:
-            message = "Cleared session reference images."
-
-        if stage_for_later_adoption or pending_references:
-            ctx_info(ctx, "[REFERENCE] Cleared visible session reference images")
-        else:
-            ctx_info(ctx, "[REFERENCE] Cleared session reference images")
-        return _as_response(action="clear", goal=session.goal, references=[], message=message)
-
-    if normalized_action == "remove":
-        if not reference_id:
-            return _as_response(
-                action="remove",
-                goal=session.goal,
-                references=_sorted_references(visible_references),
-                error="reference_id is required for remove",
-            )
-        remaining: list[dict] = []
-        remaining_pending: list[dict] = []
-        removed_records: list[dict] = []
-        for item in active_references:
-            if item.get("reference_id") == reference_id:
-                removed_records.append(item)
-                continue
-            remaining.append(item)
-        for item in pending_references:
-            if item.get("reference_id") == reference_id:
-                removed_records.append(item)
-                continue
-            remaining_pending.append(item)
-        if not removed_records:
-            return _as_response(
-                action="remove",
-                goal=session.goal,
-                references=_sorted_references(visible_references),
-                error=f"Reference image not found: {reference_id}",
-            )
-        _delete_reference_files(removed_records)
-        if len(remaining) != len(active_references):
-            session = await replace_session_reference_images_async(ctx, remaining)
-            if session.goal is not None:
-                await refresh_reference_understanding_summary_async(ctx, session=session)
-        if len(remaining_pending) != len(pending_references):
-            await replace_session_pending_reference_images_async(ctx, remaining_pending)
-        remaining_visible = (
-            _merge_visible_references(remaining, remaining_pending) if session.goal is not None else remaining_pending
-        )
-        if stage_for_later_adoption or len(remaining_pending) != len(pending_references):
-            ctx_info(ctx, f"[REFERENCE] Removed visible session reference image {reference_id}")
-        else:
-            ctx_info(ctx, f"[REFERENCE] Removed reference image {reference_id}")
-        return _as_response(
-            action="remove",
-            goal=session.goal,
-            references=_sorted_references(remaining_visible),
-            removed_reference_id=reference_id,
-            message=f"Removed reference image '{reference_id}'.",
-        )
-
-    try:
-        canonical_arguments = canonicalize_reference_images_arguments(
-            {
-                key: value
-                for key, value in {
-                    "action": normalized_action,
-                    "source_path": source_path,
-                    "images": images,
-                    "source_paths": source_paths,
-                }.items()
-                if value is not None
-            }
-        )
-    except ValueError as exc:
-        return _as_response(
-            action="attach",
-            goal=session.goal,
-            references=_sorted_references(visible_references),
-            error=str(exc),
-        )
-    source_path = cast(str | None, canonical_arguments.get("source_path"))
-
-    if not source_path:
-        return _as_response(
-            action="attach",
-            goal=session.goal,
-            references=_sorted_references(visible_references),
-            error="source_path is required for attach",
-        )
-
-    try:
-        source = _validate_local_reference_path(source_path)
-        stored_path, host_visible_path = _copy_reference_image(source)
-    except ValueError as exc:
-        return _as_response(
-            action="attach",
-            goal=session.goal,
-            references=_sorted_references(visible_references),
-            error=str(exc),
-        )
-
-    reference = {
-        "reference_id": f"ref_{uuid4().hex[:8]}",
-        "goal": session.goal or "__pending_goal__",
-        "label": label,
-        "notes": notes,
-        "target_object": target_object,
-        "target_view": target_view,
-        "media_type": mimetypes.guess_type(str(source))[0] or "image/png",
-        "source_kind": "local_path",
-        "original_path": str(source),
-        "stored_path": stored_path,
-        "host_visible_path": host_visible_path,
-        "added_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
-    }
-    if stage_for_later_adoption:
-        pending_updated = [*pending_references, reference]
-        await replace_session_pending_reference_images_async(ctx, pending_updated)
-        visible_updated = (
-            _merge_visible_references(active_references, pending_updated)
-            if session.goal is not None
-            else pending_updated
-        )
-        ctx_info(ctx, f"[REFERENCE] Attached pending reference image {reference['reference_id']}")
-        return _as_response(
-            action="attach",
-            goal=session.goal,
-            references=_sorted_references(visible_updated),
-            message=(
-                f"Attached pending reference image '{reference['reference_id']}'. "
-                "It will be adopted automatically when the guided goal session becomes ready."
-            ),
-        )
-
-    updated_active = [*active_references, reference]
-    session = await replace_session_reference_images_async(ctx, updated_active)
-    session = await refresh_reference_understanding_summary_async(ctx, session=session)
-    ctx_info(ctx, f"[REFERENCE] Attached reference image {reference['reference_id']} for goal '{session.goal}'")
-    return _as_response(
-        action="attach",
-        goal=session.goal,
-        references=_sorted_references(updated_active),
-        message=f"Attached reference image '{reference['reference_id']}'.",
+    return await _handle_reference_images(
+        ctx,
+        action=action,
+        source_path=source_path,
+        images=images,
+        source_paths=source_paths,
+        reference_id=reference_id,
+        label=label,
+        notes=notes,
+        target_object=target_object,
+        target_view=target_view,
+        refresh_reference_understanding=lambda context, session: refresh_reference_understanding_summary_async(
+            context,
+            session=session,
+        ),
     )
 
 
