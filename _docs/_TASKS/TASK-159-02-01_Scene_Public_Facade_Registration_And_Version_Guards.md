@@ -1,7 +1,7 @@
 # TASK-159-02-01: Scene Public Facade, Registration, And Version Guards
 
 **Parent:** [TASK-159-02](./TASK-159-02_Scene_MCP_Area_Modularization_And_Surface_Slices.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -76,3 +76,16 @@ def register_scene_tools(target):
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- preserved `server/adapters/mcp/areas/scene.py` as the stable public
+  registration facade while the internal scene concern clusters moved into
+  sibling modules
+- kept `SCENE_PUBLIC_TOOL_NAMES`, `register_scene_tools(...)`,
+  `_register_existing_tool(...)`, and the shared version-policy delegation in
+  place while closing multiple internal extraction leaves
+- validated that provider inventory, manifest exposure, versioned delivery, and
+  public docs still match the scene facade after the refactor wave
