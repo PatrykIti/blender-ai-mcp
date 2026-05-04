@@ -9,7 +9,12 @@ from fastmcp.utilities.types import Image
 from pydantic import ValidationError
 
 from server.adapters.mcp.areas.scene_state_reads import (
+    execute_scene_compare_snapshot,
     execute_scene_context,
+    execute_scene_get_bounding_box,
+    execute_scene_get_hierarchy,
+    execute_scene_get_origin_info,
+    execute_scene_snapshot_state,
 )
 from server.adapters.mcp.areas.scene_state_reads import (
     get_scene_mode as _scene_get_mode_impl,
@@ -1701,18 +1706,13 @@ async def scene_snapshot_state(
     """
 
     def execute():
-        handler = get_scene_handler()
-        try:
-            contract = SceneSnapshotStateContract.model_validate(
-                handler.snapshot_state(include_mesh_stats=include_mesh_stats, include_materials=include_materials)
-            )
-            snapshot = contract.snapshot
-            snapshot_hash = contract.hash
-            object_count = snapshot.get("object_count", 0)
-            ctx_info(ctx, f"Snapshot captured: {object_count} objects, hash={snapshot_hash[:8]}")
-            return contract
-        except RuntimeError as e:
-            return SceneSnapshotStateContract(error=str(e))
+        return execute_scene_snapshot_state(
+            ctx=ctx,
+            include_mesh_stats=include_mesh_stats,
+            include_materials=include_materials,
+            get_scene_handler=get_scene_handler,
+            info=ctx_info,
+        )
 
     result = route_tool_call(
         tool_name="scene_snapshot_state",
@@ -1754,23 +1754,14 @@ async def scene_compare_snapshot(
     """
 
     def execute():
-        diff_service = get_snapshot_diff_service()
-
-        try:
-            result = SceneSnapshotDiffContract.model_validate(
-                diff_service.compare_snapshots(
-                    baseline_snapshot=baseline_snapshot,
-                    target_snapshot=target_snapshot,
-                    ignore_minor_transforms=ignore_minor_transforms,
-                )
-            )
-        except ValueError as e:
-            return SceneSnapshotDiffContract(error=str(e))
-        ctx_info(
-            ctx,
-            f"Snapshot diff: +{len(result.objects_added)} -{len(result.objects_removed)} ~{len(result.objects_modified)}",
+        return execute_scene_compare_snapshot(
+            ctx=ctx,
+            baseline_snapshot=baseline_snapshot,
+            target_snapshot=target_snapshot,
+            ignore_minor_transforms=ignore_minor_transforms,
+            get_snapshot_diff_service=get_snapshot_diff_service,
+            info=ctx_info,
         )
-        return result
 
     result = route_tool_call(
         tool_name="scene_compare_snapshot",
@@ -2438,13 +2429,13 @@ async def scene_get_hierarchy(
     """
 
     def execute():
-        handler = get_scene_handler()
-        try:
-            result = SceneHierarchyContract(payload=handler.get_hierarchy(object_name, include_transforms))
-            ctx_info(ctx, f"Retrieved hierarchy for {object_name or 'full scene'}")
-            return result
-        except RuntimeError as e:
-            return SceneHierarchyContract(error=str(e))
+        return execute_scene_get_hierarchy(
+            ctx=ctx,
+            object_name=object_name,
+            include_transforms=include_transforms,
+            get_scene_handler=get_scene_handler,
+            info=ctx_info,
+        )
 
     result = route_tool_call(
         tool_name="scene_get_hierarchy",
@@ -2490,13 +2481,13 @@ async def scene_get_bounding_box(
     """
 
     def execute():
-        handler = get_scene_handler()
-        try:
-            result = SceneBoundingBoxContract(payload=handler.get_bounding_box(object_name, world_space))
-            ctx_info(ctx, f"Retrieved bounding box for '{object_name}'")
-            return result
-        except RuntimeError as e:
-            return SceneBoundingBoxContract(error=str(e))
+        return execute_scene_get_bounding_box(
+            ctx=ctx,
+            object_name=object_name,
+            world_space=world_space,
+            get_scene_handler=get_scene_handler,
+            info=ctx_info,
+        )
 
     result = route_tool_call(
         tool_name="scene_get_bounding_box",
@@ -2541,13 +2532,12 @@ async def scene_get_origin_info(
     """
 
     def execute():
-        handler = get_scene_handler()
-        try:
-            result = SceneOriginInfoContract(payload=handler.get_origin_info(object_name))
-            ctx_info(ctx, f"Retrieved origin info for '{object_name}'")
-            return result
-        except RuntimeError as e:
-            return SceneOriginInfoContract(error=str(e))
+        return execute_scene_get_origin_info(
+            ctx=ctx,
+            object_name=object_name,
+            get_scene_handler=get_scene_handler,
+            info=ctx_info,
+        )
 
     result = route_tool_call(
         tool_name="scene_get_origin_info",

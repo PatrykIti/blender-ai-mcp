@@ -1,7 +1,7 @@
 # TASK-159-02-02-02: Scene Snapshot, Compare, And Structural Read Slices
 
 **Parent:** [TASK-159-02-02](./TASK-159-02-02_Scene_Context_Inspect_Snapshot_And_Structural_Read_Slices.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -74,3 +74,20 @@ from .scene_state_reads import (
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- extended `server/adapters/mcp/areas/scene_state_reads.py` to own the
+  snapshot/compare and structural-read execution logic for:
+  `scene_snapshot_state(...)`,
+  `scene_compare_snapshot(...)`,
+  `scene_get_hierarchy(...)`,
+  `scene_get_bounding_box(...)`, and
+  `scene_get_origin_info(...)`
+- kept the public async wrappers and assistant-summary seam in
+  `server/adapters/mcp/areas/scene.py` so tool registration, structured
+  delivery, and bounded summary behavior remain stable
+- preserved snapshot payloads, diff contracts, hierarchy/bbox/origin payloads,
+  and read-only behavior under the existing unit and Blender-backed E2E lanes
