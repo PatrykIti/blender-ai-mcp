@@ -1,7 +1,7 @@
 # TASK-159-03-01: Addon Scene Context, Lifecycle, Inspection, And Topology Split
 
 **Parent:** [TASK-159-03](./TASK-159-03_Addon_Scene_Handler_Modularization_And_Blender_Ownership_Boundaries.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -170,3 +170,17 @@ preserve_existing_rpc_payloads()
 - keep promoted tracking on parent `TASK-159`
 - execute this branch through the focused leaves below instead of landing all
   truth-read work in one oversized pass
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- closed the full addon truth-read branch by landing:
+  - `TASK-159-03-01-01` lifecycle/context mixin split
+  - `TASK-159-03-01-02` structural-read mixin split
+  - `TASK-159-03-01-03` inspection/topology mixin split
+- `blender_addon/application/handlers/scene.py` now delegates those concerns to
+  focused mixins instead of keeping one mixed truth-read block inline
+- preserved addon RPC method names, payloads, and Blender main-thread truth
+  behavior across lifecycle, structural-read, inspection, constraint, and
+  topology surfaces

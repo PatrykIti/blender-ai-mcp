@@ -1,7 +1,7 @@
 # TASK-159-03-01-03: Addon Scene Inspection Action Matrix And Topology Split
 
 **Parent:** [TASK-159-03-01](./TASK-159-03-01_Addon_Scene_Inspection_And_Topology_Split.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -73,3 +73,16 @@ class SceneHandler(SceneInspectionMixin, ...):
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- moved the inspection/topology truth-read cluster out of
+  `blender_addon/application/handlers/scene.py` into
+  `blender_addon/application/handlers/scene_inspection_mixin.py`
+- kept `SceneHandler` as the stable addon RPC facade while preserving
+  `inspect_object(...)`, `inspect_material_slots(...)`, `inspect_modifiers(...)`,
+  `get_constraints(...)`, and `inspect_mesh_topology(...)`
+- moved the supporting inspection serialization helpers with the same owner seam
+  so object/material/modifier/constraint/topology behavior stays self-contained

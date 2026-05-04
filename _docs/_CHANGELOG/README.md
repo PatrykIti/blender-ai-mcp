@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [310](./310-2026-05-04-task-159-addon-scene-inspection-mixin.md) | 2026-05-04 | **TASK-159 addon scene inspection mixin** | - |
 | [309](./309-2026-05-04-task-159-addon-scene-structural-read-mixin.md) | 2026-05-04 | **TASK-159 addon scene structural-read mixin** | - |
 | [308](./308-2026-05-04-task-159-scene-create-configure-slice.md) | 2026-05-04 | **TASK-159 scene create/configure slice** | - |
 | [307](./307-2026-05-04-task-159-scene-structural-read-slice.md) | 2026-05-04 | **TASK-159 scene structural-read slice** | - |
