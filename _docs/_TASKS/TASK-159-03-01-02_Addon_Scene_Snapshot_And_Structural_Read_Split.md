@@ -1,7 +1,7 @@
 # TASK-159-03-01-02: Addon Scene Snapshot And Structural Read Split
 
 **Parent:** [TASK-159-03-01](./TASK-159-03-01_Addon_Scene_Inspection_And_Topology_Split.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -62,3 +62,16 @@ class SceneHandler(SceneStructuralReadMixin, ...):
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- moved snapshot and structural-read helpers out of
+  `blender_addon/application/handlers/scene.py` into
+  `blender_addon/application/handlers/scene_structural_read_mixin.py`
+- kept `SceneHandler` as the stable addon RPC facade while preserving
+  `snapshot_state(...)`, `get_hierarchy(...)`, `get_bounding_box(...)`, and
+  `get_origin_info(...)` result contracts
+- moved the supporting vector/bbox/rounding helpers with the structural-read
+  branch so the owner seam is explicit rather than split across the file
