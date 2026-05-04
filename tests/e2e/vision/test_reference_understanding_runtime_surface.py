@@ -431,6 +431,7 @@ def test_reference_understanding_refresh_clear_reapplies_visibility_immediately(
         lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})(),
     )
     monkeypatch.setattr("server.adapters.mcp.areas.router._should_attach_repair_suggestion", lambda payload: False)
+    monkeypatch.setattr("server.adapters.mcp.areas.router._scene_has_meaningful_guided_objects", lambda: False)
     monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: VisibilityResolver())
     monkeypatch.setattr("server.infrastructure.di.get_vision_backend_resolver", lambda: VisibilityResolver())
 

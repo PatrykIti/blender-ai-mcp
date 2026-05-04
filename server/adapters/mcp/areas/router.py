@@ -534,7 +534,11 @@ async def router_get_status(ctx: Context) -> RouterStatusContract:
             "reference_image_count": len(session.reference_images or []),
             "reference_images": list(session.reference_images or []),
             "reference_understanding_summary": session.reference_understanding_summary,
-            "reference_understanding_gate_ids": list(session.reference_understanding_gate_ids or []),
+            "reference_understanding_gate_ids": (
+                list(session.reference_understanding_gate_ids)
+                if session.reference_understanding_gate_ids is not None
+                else None
+            ),
         }
     )
     if _should_attach_repair_suggestion(status_payload):

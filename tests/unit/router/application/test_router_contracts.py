@@ -324,6 +324,51 @@ def test_router_get_status_exposes_reference_understanding_summary(monkeypatch):
     assert result.reference_understanding_gate_ids == ["generic_seat_presence"]
 
 
+def test_router_get_status_preserves_absent_reference_understanding_gate_ids(monkeypatch):
+    class Handler:
+        def set_goal(self, goal, resolved_params=None):
+            return {
+                "status": "ready",
+                "workflow": "chair_workflow",
+                "resolved": {},
+                "unresolved": [],
+                "resolution_sources": {},
+                "message": "ok",
+            }
+
+    monkeypatch.setattr("server.adapters.mcp.areas.router.get_router_handler", lambda: Handler())
+
+    ctx = DummyContext()
+    ctx.state["reference_understanding_summary"] = {
+        "status": "blocked",
+        "goal": "chair",
+        "reference_ids": [],
+        "required_parts": [],
+        "non_goals": [],
+        "gate_proposals": [],
+        "visual_evidence_refs": [],
+        "classification_scores": [],
+        "segmentation_artifacts": [],
+        "verification_requirements": [],
+        "source_provenance": [],
+        "boundary_policy": {
+            "advisory_only": True,
+            "not_truth_source": True,
+            "may_unlock_tools": False,
+            "may_pass_gates": False,
+            "may_propose_gates": True,
+        },
+        "reason": "reference_images_required",
+        "message": "Attach at least one active reference image before reference understanding can run.",
+    }
+    ctx.state["reference_understanding_gate_ids"] = None
+
+    result = asyncio.run(router_get_status(ctx))
+
+    assert isinstance(result, RouterStatusContract)
+    assert result.reference_understanding_gate_ids is None
+
+
 def test_router_get_status_exposes_guided_handoff_from_session(monkeypatch):
     """router_get_status should surface the active guided handoff contract from session state."""
 
