@@ -1,7 +1,7 @@
 # TASK-159-04-03: Session Guided Part Registry And Flow Transitions
 
 **Parent:** [TASK-159-04](./TASK-159-04_Session_Capabilities_Modularization_And_Guided_State_Boundaries.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -72,3 +72,17 @@ from .session_capabilities_registry import (
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- moved guided part registration, rename/removal synchronization, spatial-check
+  completion, and iterate-driven flow transitions into
+  `server/adapters/mcp/session_capabilities_registry.py`
+- moved shared role-summary and guided-flow transition helpers into
+  `server/adapters/mcp/session_capabilities_flow.py` so registry logic no
+  longer shares one edit zone with session persistence or runtime glue
+- kept the facade-level object-validation and visibility callback seams so
+  existing tests and sync/async guided runtime hooks still observe the same
+  ordering

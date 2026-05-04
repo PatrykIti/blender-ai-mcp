@@ -1,7 +1,7 @@
 # TASK-159-04-04: Session Visibility, Gate Projection, And Runtime Glue
 
 **Parent:** [TASK-159-04](./TASK-159-04_Session_Capabilities_Modularization_And_Guided_State_Boundaries.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -95,3 +95,17 @@ from .session_capabilities_runtime_glue import (
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- moved guided gate intake/merge helpers, relation-graph gate projection,
+  spatial stale-state handling, router execution diagnostics, and async
+  visibility application into
+  `server/adapters/mcp/session_capabilities_runtime_glue.py`
+- kept the facade-level sync `refresh_visibility_for_session_state(...)` guard
+  so live request loops still avoid detached background visibility writes
+- preserved deterministic gate verification through
+  `verify_gate_plan_with_relation_graph(...)` and kept runtime glue separate
+  from semantic or discovery authority

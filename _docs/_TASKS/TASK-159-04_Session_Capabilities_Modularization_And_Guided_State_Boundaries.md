@@ -1,7 +1,7 @@
 # TASK-159-04: Session Capabilities Modularization And Guided State Boundaries
 
 **Parent:** [TASK-159](./TASK-159_Modularize_Oversized_Guided_Runtime_And_Scene_Owner_Files.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -190,3 +190,22 @@ __all__ = [
   and request-path visibility glue can be verified independently
 - do not promote this slice independently unless it becomes the only remaining
   open branch in the family
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- split `server/adapters/mcp/session_capabilities.py` into a stable facade plus
+  focused owner modules:
+  `session_capabilities_state.py`,
+  `session_capabilities_flow.py`,
+  `session_capabilities_bootstrap.py`,
+  `session_capabilities_registry.py`, and
+  `session_capabilities_runtime_glue.py`
+- kept the public import surface stable for router, reference, scene, modeling,
+  prompt-provider, and search consumers while preserving sync/async state
+  persistence plus request-path visibility behavior
+- validated the refactor with targeted unit coverage for guided flow state,
+  domain profiles, prompt bundles, gate intake/verifier, router handoff,
+  context bridge, search surface, and reference-image session behavior, plus
+  guided transport/integration E2E coverage outside the sandbox

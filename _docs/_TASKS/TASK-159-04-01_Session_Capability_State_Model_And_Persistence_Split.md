@@ -1,7 +1,7 @@
 # TASK-159-04-01: Session Capability State Model And Persistence Split
 
 **Parent:** [TASK-159-04](./TASK-159-04_Session_Capabilities_Modularization_And_Guided_State_Boundaries.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -97,3 +97,18 @@ state = SessionCapabilityState(
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- moved the canonical session envelope, session-key constants, normalization
+  helpers, and sync/async persistence functions into
+  `server/adapters/mcp/session_capabilities_state.py`
+- kept `guided_handoff`, `guided_flow_state`, `gate_plan`,
+  `reference_understanding_summary`, `reference_understanding_gate_ids`, and
+  `guided_part_registry` inside the same persisted session contract
+- preserved the facade exports for `get_session_capability_state(...)`,
+  `get_session_capability_state_async(...)`,
+  `set_session_capability_state(...)`, and
+  `set_session_capability_state_async(...)`

@@ -1,7 +1,7 @@
 # TASK-159-04-02: Session Goal Bootstrap, Prompt Bundles, And Reference Readiness
 
 **Parent:** [TASK-159-04](./TASK-159-04_Session_Capabilities_Modularization_And_Guided_State_Boundaries.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -95,3 +95,16 @@ from .session_capabilities_bootstrap import (
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- moved guided goal bootstrap, domain-profile selection, initial flow assembly,
+  prompt-bundle shaping, goal reset, partial-answer merge, and
+  reference-readiness helpers into
+  `server/adapters/mcp/session_capabilities_bootstrap.py`
+- kept router-set-goal/manual-handoff semantics stable, including pending
+  clarification state, prompt bundle selection, and staged reference adoption
+- preserved the goal-scoped reference image and pending-reference replacement
+  helpers on the same bootstrap/reference-readiness owner seam
