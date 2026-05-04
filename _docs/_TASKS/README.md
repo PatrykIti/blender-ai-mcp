@@ -80,19 +80,11 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) | **Expand External Vision Contract Profiles Across Qwen, Anthropic, OpenAI, and NVIDIA** | 🔴 High | Board-level follow-on after TASK-139 for extending the external `vision_contract_profile` architecture across additional multimodal families on the existing provider surface, including OpenRouter model capability resolution and no new provider branches under this umbrella. |
 ---
 
-## 🚧 In Progress
-
-### Internal Architecture & Maintainability
-| ID | Title | Priority | Notes |
-|----|-------|----------|-------|
-| [TASK-159](./TASK-159_Modularize_Oversized_Guided_Runtime_And_Scene_Owner_Files.md) | **Modularize Oversized Guided Runtime And Scene Owner Files** | 🔴 High | Active execution: guided runtime, large parts of the scene MCP surface, and most addon `scene.py` branches are already split; the remaining work is concentrated in the heavier spatial/view, measure/assert, object-utility, viewport, and reference planner/truth seams. |
-
----
-
 ## ✅ Done
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-159](./TASK-159_Modularize_Oversized_Guided_Runtime_And_Scene_Owner_Files.md) | **Modularize Oversized Guided Runtime And Scene Owner Files** | 🔴 High | 2026-05-04 |
 | [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md) | **Goal-Derived Quality Gates And Deterministic Verification** | 🔴 High | 2026-05-02 |
 | [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md) | **Reference Understanding Follow-Up And Boundary Alignment** | 🔴 High | 2026-05-03 |
 | [TASK-145](./TASK-145_Spatial_Repair_Planner_And_Sculpt_Handoff_Context.md) | **Spatial Repair Planner and Sculpt Handoff Context** | 🔴 High | 2026-05-01 |

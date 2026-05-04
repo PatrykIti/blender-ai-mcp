@@ -4,6 +4,7 @@ from typing import Any, Callable
 
 from fastmcp import Context
 
+from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.contracts.scene import (
     SceneAssertContactContract,
     SceneAssertContainmentContract,
@@ -17,6 +18,9 @@ from server.adapters.mcp.contracts.scene import (
     SceneMeasureGapContract,
     SceneMeasureOverlapContract,
 )
+from server.adapters.mcp.router_helper import route_tool_call
+from server.adapters.mcp.utils import parse_coordinate
+from server.infrastructure.di import get_scene_handler
 
 
 def execute_scene_measure_distance(
@@ -233,3 +237,383 @@ def execute_scene_assert_proportion(
         return SceneAssertProportionContract(payload=payload)
     except (RuntimeError, ValueError) as exc:
         return SceneAssertProportionContract(error=str(exc))
+
+
+def route_scene_measure_distance(
+    ctx: Context,
+    *,
+    from_object: str,
+    to_object: str,
+    reference: str,
+    get_scene_handler_fn=get_scene_handler,
+    route_tool_call_fn=route_tool_call,
+    ctx_info_fn=ctx_info,
+) -> SceneMeasureDistanceContract:
+    def execute():
+        return execute_scene_measure_distance(
+            ctx=ctx,
+            from_object=from_object,
+            to_object=to_object,
+            reference=reference,
+            get_scene_handler=get_scene_handler_fn,
+            info=ctx_info_fn,
+        )
+
+    result = route_tool_call_fn(
+        tool_name="scene_measure_distance",
+        params={"from_object": from_object, "to_object": to_object, "reference": reference},
+        direct_executor=execute,
+    )
+    if isinstance(result, SceneMeasureDistanceContract):
+        return result
+    if isinstance(result, dict):
+        return SceneMeasureDistanceContract(payload=result)
+    return SceneMeasureDistanceContract(error=str(result))
+
+
+def route_scene_measure_dimensions(
+    ctx: Context,
+    *,
+    object_name: str,
+    world_space: bool,
+    get_scene_handler_fn=get_scene_handler,
+    route_tool_call_fn=route_tool_call,
+    ctx_info_fn=ctx_info,
+) -> SceneMeasureDimensionsContract:
+    def execute():
+        return execute_scene_measure_dimensions(
+            ctx=ctx,
+            object_name=object_name,
+            world_space=world_space,
+            get_scene_handler=get_scene_handler_fn,
+            info=ctx_info_fn,
+        )
+
+    result = route_tool_call_fn(
+        tool_name="scene_measure_dimensions",
+        params={"object_name": object_name, "world_space": world_space},
+        direct_executor=execute,
+    )
+    if isinstance(result, SceneMeasureDimensionsContract):
+        return result
+    if isinstance(result, dict):
+        return SceneMeasureDimensionsContract(payload=result)
+    return SceneMeasureDimensionsContract(error=str(result))
+
+
+def route_scene_measure_gap(
+    ctx: Context,
+    *,
+    from_object: str,
+    to_object: str,
+    tolerance: float,
+    get_scene_handler_fn=get_scene_handler,
+    route_tool_call_fn=route_tool_call,
+    ctx_info_fn=ctx_info,
+) -> SceneMeasureGapContract:
+    def execute():
+        return execute_scene_measure_gap(
+            ctx=ctx,
+            from_object=from_object,
+            to_object=to_object,
+            tolerance=tolerance,
+            get_scene_handler=get_scene_handler_fn,
+            info=ctx_info_fn,
+        )
+
+    result = route_tool_call_fn(
+        tool_name="scene_measure_gap",
+        params={"from_object": from_object, "to_object": to_object, "tolerance": tolerance},
+        direct_executor=execute,
+    )
+    if isinstance(result, SceneMeasureGapContract):
+        return result
+    if isinstance(result, dict):
+        return SceneMeasureGapContract(payload=result)
+    return SceneMeasureGapContract(error=str(result))
+
+
+def route_scene_measure_alignment(
+    ctx: Context,
+    *,
+    from_object: str,
+    to_object: str,
+    axes: list[str] | None,
+    reference: str,
+    tolerance: float,
+    get_scene_handler_fn=get_scene_handler,
+    route_tool_call_fn=route_tool_call,
+    ctx_info_fn=ctx_info,
+) -> SceneMeasureAlignmentContract:
+    def execute():
+        return execute_scene_measure_alignment(
+            ctx=ctx,
+            from_object=from_object,
+            to_object=to_object,
+            axes=axes,
+            reference=reference,
+            tolerance=tolerance,
+            get_scene_handler=get_scene_handler_fn,
+            info=ctx_info_fn,
+        )
+
+    result = route_tool_call_fn(
+        tool_name="scene_measure_alignment",
+        params={
+            "from_object": from_object,
+            "to_object": to_object,
+            "axes": axes,
+            "reference": reference,
+            "tolerance": tolerance,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, SceneMeasureAlignmentContract):
+        return result
+    if isinstance(result, dict):
+        return SceneMeasureAlignmentContract(payload=result)
+    return SceneMeasureAlignmentContract(error=str(result))
+
+
+def route_scene_measure_overlap(
+    ctx: Context,
+    *,
+    from_object: str,
+    to_object: str,
+    tolerance: float,
+    get_scene_handler_fn=get_scene_handler,
+    route_tool_call_fn=route_tool_call,
+    ctx_info_fn=ctx_info,
+) -> SceneMeasureOverlapContract:
+    def execute():
+        return execute_scene_measure_overlap(
+            ctx=ctx,
+            from_object=from_object,
+            to_object=to_object,
+            tolerance=tolerance,
+            get_scene_handler=get_scene_handler_fn,
+            info=ctx_info_fn,
+        )
+
+    result = route_tool_call_fn(
+        tool_name="scene_measure_overlap",
+        params={"from_object": from_object, "to_object": to_object, "tolerance": tolerance},
+        direct_executor=execute,
+    )
+    if isinstance(result, SceneMeasureOverlapContract):
+        return result
+    if isinstance(result, dict):
+        return SceneMeasureOverlapContract(payload=result)
+    return SceneMeasureOverlapContract(error=str(result))
+
+
+def route_scene_assert_contact(
+    ctx: Context,
+    *,
+    from_object: str,
+    to_object: str,
+    max_gap: float,
+    allow_overlap: bool,
+    get_scene_handler_fn=get_scene_handler,
+    route_tool_call_fn=route_tool_call,
+    ctx_info_fn=ctx_info,
+) -> SceneAssertContactContract:
+    def execute():
+        return execute_scene_assert_contact(
+            ctx=ctx,
+            from_object=from_object,
+            to_object=to_object,
+            max_gap=max_gap,
+            allow_overlap=allow_overlap,
+            get_scene_handler=get_scene_handler_fn,
+            info=ctx_info_fn,
+        )
+
+    result = route_tool_call_fn(
+        tool_name="scene_assert_contact",
+        params={
+            "from_object": from_object,
+            "to_object": to_object,
+            "max_gap": max_gap,
+            "allow_overlap": allow_overlap,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, SceneAssertContactContract):
+        return result
+    if isinstance(result, dict):
+        return SceneAssertContactContract(payload=SceneAssertionPayloadContract.model_validate(result))
+    return SceneAssertContactContract(error=str(result))
+
+
+def route_scene_assert_dimensions(
+    ctx: Context,
+    *,
+    object_name: str,
+    expected_dimensions: Any,
+    tolerance: float,
+    world_space: bool,
+    get_scene_handler_fn=get_scene_handler,
+    route_tool_call_fn=route_tool_call,
+    ctx_info_fn=ctx_info,
+    parse_coordinate_fn=parse_coordinate,
+) -> SceneAssertDimensionsContract:
+    def execute():
+        return execute_scene_assert_dimensions(
+            ctx=ctx,
+            object_name=object_name,
+            expected_dimensions=expected_dimensions,
+            tolerance=tolerance,
+            world_space=world_space,
+            parse_coordinate=parse_coordinate_fn,
+            get_scene_handler=get_scene_handler_fn,
+            info=ctx_info_fn,
+        )
+
+    result = route_tool_call_fn(
+        tool_name="scene_assert_dimensions",
+        params={
+            "object_name": object_name,
+            "expected_dimensions": expected_dimensions,
+            "tolerance": tolerance,
+            "world_space": world_space,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, SceneAssertDimensionsContract):
+        return result
+    if isinstance(result, dict):
+        return SceneAssertDimensionsContract(payload=SceneAssertionPayloadContract.model_validate(result))
+    return SceneAssertDimensionsContract(error=str(result))
+
+
+def route_scene_assert_containment(
+    ctx: Context,
+    *,
+    inner_object: str,
+    outer_object: str,
+    min_clearance: float,
+    tolerance: float,
+    get_scene_handler_fn=get_scene_handler,
+    route_tool_call_fn=route_tool_call,
+    ctx_info_fn=ctx_info,
+) -> SceneAssertContainmentContract:
+    def execute():
+        return execute_scene_assert_containment(
+            ctx=ctx,
+            inner_object=inner_object,
+            outer_object=outer_object,
+            min_clearance=min_clearance,
+            tolerance=tolerance,
+            get_scene_handler=get_scene_handler_fn,
+            info=ctx_info_fn,
+        )
+
+    result = route_tool_call_fn(
+        tool_name="scene_assert_containment",
+        params={
+            "inner_object": inner_object,
+            "outer_object": outer_object,
+            "min_clearance": min_clearance,
+            "tolerance": tolerance,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, SceneAssertContainmentContract):
+        return result
+    if isinstance(result, dict):
+        return SceneAssertContainmentContract(payload=SceneAssertionPayloadContract.model_validate(result))
+    return SceneAssertContainmentContract(error=str(result))
+
+
+def route_scene_assert_symmetry(
+    ctx: Context,
+    *,
+    left_object: str,
+    right_object: str,
+    axis: str,
+    mirror_coordinate: float,
+    tolerance: float,
+    get_scene_handler_fn=get_scene_handler,
+    route_tool_call_fn=route_tool_call,
+    ctx_info_fn=ctx_info,
+) -> SceneAssertSymmetryContract:
+    def execute():
+        return execute_scene_assert_symmetry(
+            ctx=ctx,
+            left_object=left_object,
+            right_object=right_object,
+            axis=axis,
+            mirror_coordinate=mirror_coordinate,
+            tolerance=tolerance,
+            get_scene_handler=get_scene_handler_fn,
+            info=ctx_info_fn,
+        )
+
+    result = route_tool_call_fn(
+        tool_name="scene_assert_symmetry",
+        params={
+            "left_object": left_object,
+            "right_object": right_object,
+            "axis": axis,
+            "mirror_coordinate": mirror_coordinate,
+            "tolerance": tolerance,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, SceneAssertSymmetryContract):
+        return result
+    if isinstance(result, dict):
+        return SceneAssertSymmetryContract(payload=SceneAssertionPayloadContract.model_validate(result))
+    return SceneAssertSymmetryContract(error=str(result))
+
+
+def route_scene_assert_proportion(
+    ctx: Context,
+    *,
+    object_name: str,
+    axis_a: str,
+    expected_ratio: float,
+    axis_b: str | None,
+    reference_object: str | None,
+    reference_axis: str | None,
+    tolerance: float,
+    world_space: bool,
+    get_scene_handler_fn=get_scene_handler,
+    route_tool_call_fn=route_tool_call,
+    ctx_info_fn=ctx_info,
+) -> SceneAssertProportionContract:
+    def execute():
+        return execute_scene_assert_proportion(
+            ctx=ctx,
+            object_name=object_name,
+            axis_a=axis_a,
+            expected_ratio=expected_ratio,
+            axis_b=axis_b,
+            reference_object=reference_object,
+            reference_axis=reference_axis,
+            tolerance=tolerance,
+            world_space=world_space,
+            get_scene_handler=get_scene_handler_fn,
+            info=ctx_info_fn,
+        )
+
+    result = route_tool_call_fn(
+        tool_name="scene_assert_proportion",
+        params={
+            "object_name": object_name,
+            "axis_a": axis_a,
+            "expected_ratio": expected_ratio,
+            "axis_b": axis_b,
+            "reference_object": reference_object,
+            "reference_axis": reference_axis,
+            "tolerance": tolerance,
+            "world_space": world_space,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, SceneAssertProportionContract):
+        return result
+    if isinstance(result, dict):
+        return SceneAssertProportionContract(payload=SceneAssertionPayloadContract.model_validate(result))
+    return SceneAssertProportionContract(error=str(result))

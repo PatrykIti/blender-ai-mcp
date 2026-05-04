@@ -1,7 +1,7 @@
 # TASK-159-01: Reference Area Modularization And Checkpoint Assembly Boundaries
 
 **Parent:** [TASK-159](./TASK-159_Modularize_Oversized_Guided_Runtime_And_Scene_Owner_Files.md)
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -180,13 +180,16 @@ async def reference_compare_stage_checkpoint(...):
 - do not promote this slice independently unless it becomes the only remaining
   open branch in the family
 
-## Progress Summary
+## Completion Summary
 
-As of 2026-05-04:
+Completed on 2026-05-04.
 
-- `TASK-159-01-01` is closed
-- `TASK-159-01-04` is closed
-- `TASK-159-01-05` is closed
-- code for `TASK-159-01-03` has landed, but the branch still needs a fully
-  green Blender-backed closeout lane before moving to `Done`
-- the remaining major open reference branch is `TASK-159-01-02`
+- closed the remaining reference branches `TASK-159-01-02` and
+  `TASK-159-01-03`, leaving the whole `reference.py` family split across the
+  dedicated truth, planner, silhouette, view-diagnostics, current-view, image
+  lifecycle, and reference-understanding seams
+- kept the public staged reference surface stable while preserving the
+  truth-vs-advisory boundary and leaving the remaining adapter-owned checkpoint
+  orchestration intentionally inside the facade
+- validated the family with the full repo unit lane and the full Blender-backed
+  E2E runner, including the late-stage creature truth/planner/reference tests

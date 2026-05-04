@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [315](./315-2026-05-04-task-159-final-closeout.md) | 2026-05-04 | **TASK-159 final closeout** | - |
 | [314](./314-2026-05-04-task-159-reference-facade-guards.md) | 2026-05-04 | **TASK-159 reference facade guards** | - |
 | [313](./313-2026-05-04-task-159-scene-inspect-slice.md) | 2026-05-04 | **TASK-159 scene inspect slice** | - |
 | [312](./312-2026-05-04-task-159-scene-facade-guards.md) | 2026-05-04 | **TASK-159 scene facade guards** | - |

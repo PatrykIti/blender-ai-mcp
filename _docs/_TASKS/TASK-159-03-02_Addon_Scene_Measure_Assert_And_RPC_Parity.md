@@ -1,7 +1,7 @@
 # TASK-159-03-02: Addon Scene Measure Assert And RPC Parity
 
 **Parent:** [TASK-159-03](./TASK-159-03_Addon_Scene_Handler_Modularization_And_Blender_Ownership_Boundaries.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -77,3 +77,13 @@ class SceneHandler(SceneMeasureAssertMixin, ...):
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- moved the addon measurement/assertion cluster into
+  `blender_addon/application/handlers/scene_measure_assert_mixin.py`
+- kept `SceneHandler` as the stable RPC owner while preserving existing result
+  envelopes, rounding semantics, and handler/RPC alignment under the full repo
+  validation lanes

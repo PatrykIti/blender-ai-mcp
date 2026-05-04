@@ -1,7 +1,7 @@
 # TASK-159-02-06: Scene Viewport Background Bridge And Output Surface
 
 **Parent:** [TASK-159-02](./TASK-159-02_Scene_MCP_Area_Modularization_And_Surface_Slices.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -95,3 +95,13 @@ async def scene_get_viewport(ctx, ...):
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- moved viewport output formatting plus the task-mode/addon background bridge
+  into `server/adapters/mcp/areas/scene_viewport.py`
+- kept `scene.py` as the public facade and preserved local patch points by
+  forwarding the current handler/route/task-bridge seams into the extracted
+  viewport helper

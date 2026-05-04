@@ -1,7 +1,7 @@
 # TASK-159-01-02: Reference Truth, Planner, And Service Promotion Split
 
 **Parent:** [TASK-159-01](./TASK-159-01_Reference_Area_Modularization_And_Checkpoint_Assembly_Boundaries.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -79,3 +79,17 @@ planner = build_refinement_handoff(...)
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- confirmed the truth/planner seams now live outside `reference.py` in
+  `server/adapters/mcp/areas/reference_truth.py` and
+  `server/adapters/mcp/areas/reference_planner.py`, with the public facade
+  staying responsible only for adapter-owned staging/orchestration policy
+- kept application-service promotion explicitly out of scope for the remaining
+  adapter-native contract shaping instead of forcing MCP contracts upward into
+  `server/application/services/`
+- validated the reference stage truth/planner handoff under the full repo unit
+  lane plus the Blender-backed `tests/e2e/vision` closeout run

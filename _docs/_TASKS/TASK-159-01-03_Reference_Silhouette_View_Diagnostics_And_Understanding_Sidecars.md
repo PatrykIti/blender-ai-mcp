@@ -1,7 +1,7 @@
 # TASK-159-01-03: Reference Silhouette, View Diagnostics, And Understanding Sidecars
 
 **Parent:** [TASK-159-01](./TASK-159-01_Reference_Area_Modularization_And_Checkpoint_Assembly_Boundaries.md)
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -76,15 +76,15 @@ understanding = refresh_reference_understanding(...)
 
 - keep promoted tracking on parent `TASK-159`
 
-## Progress Summary
+## Completion Summary
 
-As of 2026-05-04, the code split for this leaf has landed:
+Completed on 2026-05-04.
 
-- `reference.py` now delegates advisory sidecars to:
-  - `reference_silhouette.py`
-  - `reference_view_diagnostics.py`
-  - `reference_understanding.py`
-- targeted unit lanes and contract payload checks are green
-- one Blender-backed reference-understanding runtime E2E case still skipped
-  because Blender RPC was unavailable at runtime, so this leaf stays
-  `In Progress` until the closeout lane is fully green
+- kept `reference.py` as the public facade while delegating advisory sidecars to
+  `reference_silhouette.py`, `reference_view_diagnostics.py`, and
+  `reference_understanding.py`
+- refreshed the reference-understanding E2E fixture contract so the guided
+  visibility hooks still run under the current runtime glue without fake-context
+  drift
+- closed the leaf with the full repo unit lane and full Blender-backed E2E
+  runner green, including the reference-understanding/runtime surfaces

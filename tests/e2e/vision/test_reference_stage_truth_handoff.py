@@ -33,6 +33,15 @@ class FakeContext:
     def info(self, message, logger_name=None, extra=None):
         return None
 
+    async def reset_visibility(self) -> None:
+        return None
+
+    async def enable_components(self, **kwargs) -> None:
+        return None
+
+    async def disable_components(self, **kwargs) -> None:
+        return None
+
 
 def _skip_if_blender_unavailable(error: RuntimeError) -> None:
     error_msg = str(error).lower()

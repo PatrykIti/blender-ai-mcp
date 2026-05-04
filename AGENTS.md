@@ -70,6 +70,9 @@ Do not let these roles blur together:
 - Unit test collection count: `poetry run pytest tests/unit --collect-only`
 - E2E tests: `python3 scripts/run_e2e_tests.py`
 - E2E collection count: `poetry run pytest tests/e2e --collect-only`
+- For repo-wide unit validation, prefer the full pass: `poetry run pytest ./tests/unit`
+- For repo-wide E2E validation, prefer the full Blender runner:
+  `poetry run python scripts/run_e2e_tests.py`
 
 ## Coding Standards
 
@@ -161,6 +164,16 @@ Use `_docs/_ROUTER/TOOLS/README.md` as the checklist for router-facing tools.
   changes need metadata/schema tests; Blender scene state, real geometry,
   transport behavior, guided visibility, and client-facing runtime behavior need
   E2E or integration coverage.
+- When running unit validation for implementation work in this repo, run the
+  full pass `poetry run pytest ./tests/unit` rather than only a narrow unit
+  subset, because unrelated MCP/router/runtime regressions have repeatedly
+  surfaced outside the touched folder.
+- When running E2E validation for implementation work in this repo, use
+  `poetry run python scripts/run_e2e_tests.py` so the addon build,
+  reinstall/enable cycle, Blender launch, RPC readiness check, and full
+  `tests/e2e` run stay aligned with the repo-supported path.
+- Run repo-wide unit and E2E validation outside the sandbox. Do not rely on the
+  sandbox for full `pytest ./tests/unit` or the Blender-backed E2E runner.
 - When a task changes a public/tool/runtime contract, run the exact focused
   tests for that contract and record the command in the task closeout. Broad
   suites are useful only after the owner lane is covered.

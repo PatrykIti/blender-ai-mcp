@@ -1,7 +1,7 @@
 # TASK-159-02-05-02: Scene Visibility, Isolation, And Camera Utility Slices
 
 **Parent:** [TASK-159-02-05](./TASK-159-02-05_Scene_Object_Utility_Manage_And_Guided_Dirtying_Slices.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -80,3 +80,13 @@ from .scene_object_utils import execute_scene_visibility_and_camera_utility
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- moved rename, hide/show, isolate, camera orbit, and camera focus wrapper
+  routing into `server/adapters/mcp/areas/scene_object_utils.py`
+- preserved the existing object-mode validation, argument parsing, and
+  named-camera/user-view behavior by keeping `scene.py` as the facade seam that
+  supplies the current route/handler hooks

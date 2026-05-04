@@ -1,7 +1,4 @@
 import asyncio
-import base64
-from collections.abc import Callable
-from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional, Union
 
 from fastmcp import Context
@@ -17,6 +14,30 @@ from server.adapters.mcp.areas.scene_create_configure import (
     execute_scene_create_camera,
     execute_scene_create_empty,
     execute_scene_create_light,
+)
+from server.adapters.mcp.areas.scene_guided_runtime import (
+    guided_scope_mismatch_message as _guided_scope_mismatch_message,
+)
+from server.adapters.mcp.areas.scene_guided_runtime import (
+    guided_scope_requirement_error as _guided_scope_requirement_error,
+)
+from server.adapters.mcp.areas.scene_guided_runtime import (
+    hydrate_sync_route_session as _hydrate_sync_route_session,
+)
+from server.adapters.mcp.areas.scene_guided_runtime import (
+    legacy_route_report_result as _legacy_route_report_result,
+)
+from server.adapters.mcp.areas.scene_guided_runtime import (
+    report_has_successful_scene_clean_step as _report_has_successful_scene_clean_step,
+)
+from server.adapters.mcp.areas.scene_guided_runtime import (
+    route_tool_call_report_for_context as _route_tool_call_report_for_context,
+)
+from server.adapters.mcp.areas.scene_guided_runtime import (
+    should_require_explicit_guided_scope as _should_require_explicit_guided_scope,
+)
+from server.adapters.mcp.areas.scene_guided_runtime import (
+    view_diagnostics_can_complete_guided_check as _view_diagnostics_can_complete_guided_check,
 )
 from server.adapters.mcp.areas.scene_inspect import (
     execute_scene_inspect,
@@ -49,16 +70,39 @@ from server.adapters.mcp.areas.scene_inspect import (
     inspect_scene_world as _scene_inspect_world_impl,
 )
 from server.adapters.mcp.areas.scene_measure_assert import (
-    execute_scene_assert_contact,
-    execute_scene_assert_containment,
-    execute_scene_assert_dimensions,
-    execute_scene_assert_proportion,
-    execute_scene_assert_symmetry,
-    execute_scene_measure_alignment,
-    execute_scene_measure_dimensions,
-    execute_scene_measure_distance,
-    execute_scene_measure_gap,
-    execute_scene_measure_overlap,
+    route_scene_assert_contact,
+    route_scene_assert_containment,
+    route_scene_assert_dimensions,
+    route_scene_assert_proportion,
+    route_scene_assert_symmetry,
+    route_scene_measure_alignment,
+    route_scene_measure_dimensions,
+    route_scene_measure_distance,
+    route_scene_measure_gap,
+    route_scene_measure_overlap,
+)
+from server.adapters.mcp.areas.scene_object_utils import (
+    route_scene_camera_focus,
+    route_scene_camera_orbit,
+    route_scene_clean_scene,
+    route_scene_clean_scene_async,
+    route_scene_delete_object,
+    route_scene_duplicate_object,
+    route_scene_get_custom_properties,
+    route_scene_hide_object,
+    route_scene_isolate_object,
+    route_scene_list_objects,
+    route_scene_rename_object,
+    route_scene_set_active_object,
+    route_scene_set_custom_property,
+    route_scene_set_mode,
+    route_scene_show_all_objects,
+)
+from server.adapters.mcp.areas.scene_spatial_graph import (
+    route_scene_relation_graph,
+    route_scene_relation_graph_async,
+    route_scene_scope_graph,
+    route_scene_scope_graph_async,
 )
 from server.adapters.mcp.areas.scene_state_reads import (
     execute_scene_compare_snapshot,
@@ -74,14 +118,22 @@ from server.adapters.mcp.areas.scene_state_reads import (
 from server.adapters.mcp.areas.scene_state_reads import (
     list_scene_selection as _scene_list_selection_impl,
 )
+from server.adapters.mcp.areas.scene_view_diagnostics import (
+    route_scene_view_diagnostics,
+    route_scene_view_diagnostics_async,
+)
+from server.adapters.mcp.areas.scene_viewport import (
+    format_viewport_output as _format_viewport_output_impl,
+)
+from server.adapters.mcp.areas.scene_viewport import (
+    route_scene_get_viewport as _route_scene_get_viewport,
+)
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
 from server.adapters.mcp.contracts.scene import (
-    SceneAssembledTargetScopeContract,
     SceneAssertContactContract,
     SceneAssertContainmentContract,
     SceneAssertDimensionsContract,
-    SceneAssertionPayloadContract,
     SceneAssertProportionContract,
     SceneAssertSymmetryContract,
     SceneBoundingBoxContract,
@@ -97,37 +149,25 @@ from server.adapters.mcp.contracts.scene import (
     SceneMeasureGapContract,
     SceneMeasureOverlapContract,
     SceneOriginInfoContract,
-    SceneRelationGraphPayloadContract,
     SceneRelationGraphResponseContract,
-    SceneScopeGraphPayloadContract,
     SceneScopeGraphResponseContract,
     SceneSnapshotDiffContract,
     SceneSnapshotStateContract,
-    SceneViewDiagnosticsPayloadContract,
     SceneViewDiagnosticsResponseContract,
-    SceneViewDiagnosticsSummaryContract,
-    SceneViewDiagnosticsTargetContract,
-    SceneViewProjectionEvidenceContract,
-    SceneViewQueryContract,
 )
-from server.adapters.mcp.guided_contract import canonicalize_scene_clean_scene_arguments
 from server.adapters.mcp.router_helper import (
     route_tool_call,
     route_tool_call_async,
-    route_tool_call_report,
     wrap_sync_tool_for_async_guided_finalizers,
 )
 from server.adapters.mcp.sampling.assistant_runner import run_inspection_summary_assistant
 from server.adapters.mcp.sampling.result_types import to_inspection_assistant_contract
 from server.adapters.mcp.session_capabilities import (
     describe_guided_flow_feedback,
-    describe_guided_scope_mismatch,
-    get_session_capability_state,
     get_session_capability_state_async,
     mark_guided_spatial_state_stale_async,
     record_guided_flow_spatial_check_completion,
     record_guided_flow_spatial_check_completion_async,
-    set_session_capability_state_async,
     update_quality_gate_plan_from_relation_graph,
     update_quality_gate_plan_from_relation_graph_async,
 )
@@ -143,7 +183,6 @@ from server.adapters.mcp.vision.integration import maybe_attach_macro_vision
 from server.adapters.mcp.vision.policy import choose_capture_preset_profile
 from server.application.services.snapshot_diff import get_snapshot_diff_service
 from server.infrastructure.di import get_macro_handler, get_scene_handler, get_vision_backend_resolver
-from server.infrastructure.tmp_paths import get_viewport_output_paths
 
 SCENE_PUBLIC_TOOL_NAMES = (
     "scene_list_objects",
@@ -192,54 +231,6 @@ SCENE_PUBLIC_TOOL_NAMES = (
     "scene_assert_symmetry",
     "scene_assert_proportion",
 )
-
-
-def _guided_scope_requirement_error(tool_name: str) -> str:
-    return (
-        f"Provide target_object, target_objects, or collection_name for {tool_name}. "
-        "On llm-guided, the active spatial gate requires explicit scope instead of an implicit whole-scene check."
-    )
-
-
-def _should_require_explicit_guided_scope(ctx: Context) -> bool:
-    try:
-        session = get_session_capability_state(ctx)
-    except Exception:
-        return False
-
-    flow_state = session.guided_flow_state or {}
-    if not flow_state:
-        return False
-    current_step = str(flow_state.get("current_step") or "").strip().lower()
-    spatial_refresh_required = bool(flow_state.get("spatial_refresh_required"))
-    return current_step == "establish_spatial_context" or spatial_refresh_required
-
-
-def _guided_scope_mismatch_message(
-    ctx: Context,
-    *,
-    tool_name: str,
-    resolved_scope: dict[str, Any] | None,
-) -> str | None:
-    try:
-        session = get_session_capability_state(ctx)
-    except Exception:
-        return None
-    return describe_guided_scope_mismatch(
-        session.guided_flow_state,
-        tool_name=tool_name,
-        resolved_scope=resolved_scope,
-    )
-
-
-def _view_diagnostics_can_complete_guided_check(
-    payload: SceneViewDiagnosticsPayloadContract,
-) -> bool:
-    if not payload.view_query.available:
-        return False
-    if any(target.projection_status != "unavailable" for target in payload.targets):
-        return True
-    return payload.summary.target_count > 0 and payload.summary.unavailable_count == 0
 
 
 MacroErrorStatus = Literal["blocked", "failed"]
@@ -326,64 +317,6 @@ def register_scene_tools(target: Any) -> Dict[str, Any]:
     """Register public scene tools on a FastMCP server or LocalProvider."""
 
     return {tool_name: _register_existing_tool(target, tool_name) for tool_name in SCENE_PUBLIC_TOOL_NAMES}
-
-
-def _legacy_route_report_result(report: Any) -> Any:
-    if report.error is None and len(report.steps) == 1:
-        result = report.steps[0].result
-        if not isinstance(result, str):
-            return result
-    return report.to_legacy_text()
-
-
-def _report_has_successful_scene_clean_step(report: Any) -> bool:
-    """Return whether a routed report contains a successful scene cleanup mutation."""
-
-    if getattr(report, "error", None) is not None:
-        return False
-
-    for step in getattr(report, "steps", ()) or ():
-        if getattr(step, "tool_name", None) != "scene_clean_scene":
-            continue
-        if getattr(step, "error", None) is not None:
-            continue
-        result = getattr(step, "result", None)
-        if isinstance(result, str) and result.strip().lower().startswith("scene cleaned"):
-            return True
-    return False
-
-
-async def _hydrate_sync_route_session(ctx: Context) -> None:
-    """Mirror async FastMCP session state into request state for sync router-policy helpers."""
-
-    state = await get_session_capability_state_async(ctx)
-    await set_session_capability_state_async(ctx, state)
-
-
-def _route_tool_call_report_for_context(
-    ctx: Context,
-    *,
-    tool_name: str,
-    params: Dict[str, Any],
-    direct_executor: Callable[[], Any],
-) -> Any:
-    """Run sync router policy with the explicit async FastMCP context in scope."""
-
-    token = None
-    current_context = None
-    try:
-        from fastmcp.server.context import _current_context  # type: ignore
-
-        current_context = _current_context
-        token = current_context.set(ctx)
-    except Exception:
-        current_context = None
-        token = None
-    try:
-        return route_tool_call_report(tool_name=tool_name, params=params, direct_executor=direct_executor)
-    finally:
-        if current_context is not None and token is not None:
-            current_context.reset(token)
 
 
 async def _resolve_macro_capture_profile(ctx: Context) -> str | None:
@@ -1055,16 +988,12 @@ def scene_list_objects(ctx: Context) -> str:
     Workflow: READ-ONLY | START → understand scene
     """
 
-    def execute():
-        handler = get_scene_handler()
-        try:
-            result = handler.list_objects()
-            ctx_info(ctx, f"Listed {len(result)} objects")
-            return str(result)
-        except RuntimeError as e:
-            return str(e)
-
-    return route_tool_call(tool_name="scene_list_objects", params={}, direct_executor=execute)
+    return route_scene_list_objects(
+        ctx,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_fn=route_tool_call,
+        ctx_info_fn=ctx_info,
+    )
 
 
 def scene_delete_object(name: str, ctx: Context) -> str:
@@ -1077,10 +1006,11 @@ def scene_delete_object(name: str, ctx: Context) -> str:
     Args:
         name: Name of the object to delete.
     """
-    return route_tool_call(
-        tool_name="scene_delete_object",
-        params={"name": name},
-        direct_executor=lambda: get_scene_handler().delete_object(name),
+    return route_scene_delete_object(
+        name,
+        ctx,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_fn=route_tool_call,
     )
 
 
@@ -1104,22 +1034,13 @@ def scene_clean_scene(
         keep_cameras: Legacy compatibility-only split flag. Use only when it
             matches `keep_lights`.
     """
-    canonical_arguments = canonicalize_scene_clean_scene_arguments(
-        {
-            key: value
-            for key, value in {
-                "keep_lights_and_cameras": keep_lights_and_cameras,
-                "keep_lights": keep_lights,
-                "keep_cameras": keep_cameras,
-            }.items()
-            if value is not None
-        }
-    )
-    keep_lights_and_cameras_value = bool(canonical_arguments.get("keep_lights_and_cameras", True))
-    return route_tool_call(
-        tool_name="scene_clean_scene",
-        params={"keep_lights_and_cameras": keep_lights_and_cameras_value},
-        direct_executor=lambda: get_scene_handler().clean_scene(keep_lights_and_cameras_value),
+    return route_scene_clean_scene(
+        ctx,
+        keep_lights_and_cameras=keep_lights_and_cameras,
+        keep_lights=keep_lights,
+        keep_cameras=keep_cameras,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_fn=route_tool_call,
     )
 
 
@@ -1131,34 +1052,19 @@ async def _scene_clean_scene_async(
 ) -> str:
     """Async registered variant that awaits guided session updates on Streamable HTTP."""
 
-    await _hydrate_sync_route_session(ctx)
-    canonical_arguments = canonicalize_scene_clean_scene_arguments(
-        {
-            key: value
-            for key, value in {
-                "keep_lights_and_cameras": keep_lights_and_cameras,
-                "keep_lights": keep_lights,
-                "keep_cameras": keep_cameras,
-            }.items()
-            if value is not None
-        }
-    )
-    keep_lights_and_cameras_value = bool(canonical_arguments.get("keep_lights_and_cameras", True))
-    report = await asyncio.to_thread(
-        _route_tool_call_report_for_context,
+    return await route_scene_clean_scene_async(
         ctx,
-        tool_name="scene_clean_scene",
-        params={"keep_lights_and_cameras": keep_lights_and_cameras_value},
-        direct_executor=lambda: get_scene_handler().clean_scene(keep_lights_and_cameras_value),
+        keep_lights_and_cameras=keep_lights_and_cameras,
+        keep_lights=keep_lights,
+        keep_cameras=keep_cameras,
+        get_scene_handler_fn=get_scene_handler,
+        hydrate_sync_route_session_fn=_hydrate_sync_route_session,
+        route_tool_call_report_for_context_fn=_route_tool_call_report_for_context,
+        legacy_route_report_result_fn=_legacy_route_report_result,
+        report_has_successful_scene_clean_step_fn=_report_has_successful_scene_clean_step,
+        mark_guided_spatial_state_stale_async_fn=mark_guided_spatial_state_stale_async,
+        to_thread_fn=asyncio.to_thread,
     )
-    result = _legacy_route_report_result(report)
-    if _report_has_successful_scene_clean_step(report):
-        await mark_guided_spatial_state_stale_async(
-            ctx,
-            tool_name="scene_clean_scene",
-            reason="scene_clean_scene",
-        )
-    return str(result)
 
 
 def scene_duplicate_object(ctx: Context, name: str, translation: Union[str, List[float], None] = None) -> str:
@@ -1172,16 +1078,13 @@ def scene_duplicate_object(ctx: Context, name: str, translation: Union[str, List
         translation: Optional [x, y, z] vector to move the copy. Can be a list or string '[1.0, 2.0, 3.0]'.
     """
 
-    def execute():
-        handler = get_scene_handler()
-        try:
-            parsed_translation = parse_coordinate(translation)
-            return str(handler.duplicate_object(name, parsed_translation))
-        except (RuntimeError, ValueError) as e:
-            return str(e)
-
-    return route_tool_call(
-        tool_name="scene_duplicate_object", params={"name": name, "translation": translation}, direct_executor=execute
+    return route_scene_duplicate_object(
+        ctx,
+        name=name,
+        translation=translation,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_fn=route_tool_call,
+        parse_coordinate_fn=parse_coordinate,
     )
 
 
@@ -1195,10 +1098,11 @@ def scene_set_active_object(ctx: Context, name: str) -> str:
     Args:
         name: Name of the object to set as active.
     """
-    return route_tool_call(
-        tool_name="scene_set_active_object",
-        params={"name": name},
-        direct_executor=lambda: get_scene_handler().set_active_object(name),
+    return route_scene_set_active_object(
+        ctx,
+        name=name,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_fn=route_tool_call,
     )
 
 
@@ -1476,43 +1380,13 @@ def _format_viewport_output(
     output_mode: str | None,
 ) -> Union[Image, str]:
     """Format a base64 viewport payload into the requested MCP delivery shape."""
-
-    mode_val = (output_mode or "IMAGE").upper()
-
-    if mode_val == "IMAGE":
-        image_bytes = base64.b64decode(b64_data)
-        return Image(data=image_bytes, format="jpeg")
-
-    if mode_val == "BASE64":
-        return b64_data
-
-    if mode_val in {"FILE", "MARKDOWN"}:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"viewport_{timestamp}.jpg"
-        internal_file, internal_latest, external_file, external_latest = get_viewport_output_paths(filename)
-        image_bytes = base64.b64decode(b64_data)
-        internal_file.write_bytes(image_bytes)
-        internal_latest.write_bytes(image_bytes)
-
-        header = (
-            f"Viewport render saved.\n\n"
-            f"Timestamped file: {external_file}\n"
-            f"Latest file: {external_latest}\n\n"
-            f"Resolution: {width}x{height}, shading: {shading}."
-        )
-
-        if mode_val == "FILE":
-            return header
-
-        data_url = f"data:image/jpeg;base64,{b64_data}"
-        return (
-            f"Viewport render saved to: {external_latest}\n\n"
-            f"**Preview ({width}x{height}, {shading} mode):**\n\n"
-            f"![Viewport]({data_url})\n\n"
-            f"*Note: If you cannot see the image above, open the file at: {external_latest}*"
-        )
-
-    return f"Invalid output_mode '{mode_val}'. Allowed values are: IMAGE, BASE64, FILE, MARKDOWN."
+    return _format_viewport_output_impl(
+        b64_data,
+        width=width,
+        height=height,
+        shading=shading,
+        output_mode=output_mode,
+    )
 
 
 async def scene_get_viewport(
@@ -1561,97 +1435,24 @@ async def scene_get_viewport(
         persist_view: If True, keeps the adjusted USER_PERSPECTIVE after capture. Defaults to False.
         output_mode: Output format selector: "IMAGE", "BASE64", "FILE", or "MARKDOWN".
     """
-    if is_background_task_context(ctx):
-
-        def _foreground_rpc() -> str:
-            handler = get_scene_handler()
-            return handler.get_viewport(
-                width,
-                height,
-                shading,
-                camera_name,
-                focus_target,
-                view_name,
-                orbit_horizontal,
-                orbit_vertical,
-                zoom_factor,
-                persist_view,
-            )
-
-        def _format_result(payload: Any) -> Union[Image, str]:
-            if not isinstance(payload, str):
-                raise RuntimeError("Background viewport job returned an invalid payload")
-            return _format_viewport_output(
-                payload,
-                width=width,
-                height=height,
-                shading=shading,
-                output_mode=output_mode,
-            )
-
-        return await run_rpc_background_job(
-            ctx,
-            tool_name="scene_get_viewport",
-            rpc_cmd="scene.get_viewport",
-            rpc_args={
-                "width": width,
-                "height": height,
-                "shading": shading,
-                "camera_name": camera_name,
-                "focus_target": focus_target,
-                "view_name": view_name,
-                "orbit_horizontal": orbit_horizontal,
-                "orbit_vertical": orbit_vertical,
-                "zoom_factor": zoom_factor,
-                "persist_view": persist_view,
-            },
-            foreground_executor=_foreground_rpc,
-            result_formatter=_format_result,
-            start_message="Launching viewport capture in Blender",
-            completion_message="Viewport capture completed",
-        )
-
-    def execute():
-        handler = get_scene_handler()
-        try:
-            b64_data = handler.get_viewport(
-                width,
-                height,
-                shading,
-                camera_name,
-                focus_target,
-                view_name,
-                orbit_horizontal,
-                orbit_vertical,
-                zoom_factor,
-                persist_view,
-            )
-        except RuntimeError as e:
-            return str(e)
-        return _format_viewport_output(
-            b64_data,
-            width=width,
-            height=height,
-            shading=shading,
-            output_mode=output_mode,
-        )
-
-    return route_tool_call(
-        tool_name="scene_get_viewport",
-        params={
-            "width": width,
-            "height": height,
-            "shading": shading,
-            "camera_name": camera_name,
-            "focus_target": focus_target,
-            "view_name": view_name,
-            "orbit_horizontal": orbit_horizontal,
-            "orbit_vertical": orbit_vertical,
-            "zoom_factor": zoom_factor,
-            "persist_view": persist_view,
-            "output_mode": output_mode,
-        },
-        direct_executor=execute,
+    return await _route_scene_get_viewport(
+        ctx,
+        width=width,
+        height=height,
+        shading=shading,
+        camera_name=camera_name,
+        focus_target=focus_target,
+        view_name=view_name,
+        orbit_horizontal=orbit_horizontal,
+        orbit_vertical=orbit_vertical,
+        zoom_factor=zoom_factor,
+        persist_view=persist_view,
+        output_mode=output_mode,
+        get_scene_handler_fn=get_scene_handler,
+        is_background_task_context_fn=is_background_task_context,
+        run_rpc_background_job_fn=run_rpc_background_job,
+        route_tool_call_fn=route_tool_call,
+        format_viewport_output_fn=_format_viewport_output,
     )
 
 
@@ -2065,16 +1866,12 @@ def scene_set_mode(ctx: Context, mode: str) -> str:
         mode: The target mode (case-insensitive).
     """
 
-    def execute():
-        handler = get_scene_handler()
-        try:
-            return handler.set_mode(mode)
-        except ValueError as e:
-            return f"Validation error: {str(e)}"
-        except RuntimeError as e:
-            return str(e)
-
-    return route_tool_call(tool_name="scene_set_mode", params={"mode": mode}, direct_executor=execute)
+    return route_scene_set_mode(
+        ctx,
+        mode=mode,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_fn=route_tool_call,
+    )
 
 
 # TASK-043: Scene Utility Tools
@@ -2094,15 +1891,12 @@ def scene_rename_object(ctx: Context, old_name: str, new_name: str) -> str:
         Success message with old and new name, or error if object not found
     """
 
-    def execute():
-        handler = get_scene_handler()
-        try:
-            return handler.rename_object(old_name, new_name)
-        except RuntimeError as e:
-            return str(e)
-
-    return route_tool_call(
-        tool_name="scene_rename_object", params={"old_name": old_name, "new_name": new_name}, direct_executor=execute
+    return route_scene_rename_object(
+        ctx,
+        old_name=old_name,
+        new_name=new_name,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_fn=route_tool_call,
     )
 
 
@@ -2122,17 +1916,13 @@ def scene_hide_object(ctx: Context, object_name: str, hide: bool = True, hide_re
         Success message with visibility state
     """
 
-    def execute():
-        handler = get_scene_handler()
-        try:
-            return handler.hide_object(object_name, hide, hide_render)
-        except RuntimeError as e:
-            return str(e)
-
-    return route_tool_call(
-        tool_name="scene_hide_object",
-        params={"object_name": object_name, "hide": hide, "hide_render": hide_render},
-        direct_executor=execute,
+    return route_scene_hide_object(
+        ctx,
+        object_name=object_name,
+        hide=hide,
+        hide_render=hide_render,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_fn=route_tool_call,
     )
 
 
@@ -2149,15 +1939,11 @@ def scene_show_all_objects(ctx: Context, include_render: bool = False) -> str:
         Count of objects made visible
     """
 
-    def execute():
-        handler = get_scene_handler()
-        try:
-            return handler.show_all_objects(include_render)
-        except RuntimeError as e:
-            return str(e)
-
-    return route_tool_call(
-        tool_name="scene_show_all_objects", params={"include_render": include_render}, direct_executor=execute
+    return route_scene_show_all_objects(
+        ctx,
+        include_render=include_render,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_fn=route_tool_call,
     )
 
 
@@ -2175,20 +1961,11 @@ def scene_isolate_object(ctx: Context, object_name: Union[str, List[str]]) -> st
         Count of objects hidden
     """
 
-    def execute():
-        handler = get_scene_handler()
-        try:
-            # Normalize to list
-            if isinstance(object_name, str):
-                names = [object_name]
-            else:
-                names = list(object_name)
-            return handler.isolate_object(names)
-        except RuntimeError as e:
-            return str(e)
-
-    return route_tool_call(
-        tool_name="scene_isolate_object", params={"object_name": object_name}, direct_executor=execute
+    return route_scene_isolate_object(
+        ctx,
+        object_name=object_name,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_fn=route_tool_call,
     )
 
 
@@ -2214,23 +1991,15 @@ def scene_camera_orbit(
         New camera position and angles
     """
 
-    def execute():
-        handler = get_scene_handler()
-        try:
-            parsed_point = parse_coordinate(target_point)
-            return handler.camera_orbit(angle_horizontal, angle_vertical, target_object, parsed_point)
-        except RuntimeError as e:
-            return str(e)
-
-    return route_tool_call(
-        tool_name="scene_camera_orbit",
-        params={
-            "angle_horizontal": angle_horizontal,
-            "angle_vertical": angle_vertical,
-            "target_object": target_object,
-            "target_point": target_point,
-        },
-        direct_executor=execute,
+    return route_scene_camera_orbit(
+        ctx,
+        angle_horizontal=angle_horizontal,
+        angle_vertical=angle_vertical,
+        target_object=target_object,
+        target_point=target_point,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_fn=route_tool_call,
+        parse_coordinate_fn=parse_coordinate,
     )
 
 
@@ -2250,17 +2019,12 @@ def scene_camera_focus(ctx: Context, object_name: str, zoom_factor: float = 1.0)
         Success message
     """
 
-    def execute():
-        handler = get_scene_handler()
-        try:
-            return handler.camera_focus(object_name, zoom_factor)
-        except RuntimeError as e:
-            return str(e)
-
-    return route_tool_call(
-        tool_name="scene_camera_focus",
-        params={"object_name": object_name, "zoom_factor": zoom_factor},
-        direct_executor=execute,
+    return route_scene_camera_focus(
+        ctx,
+        object_name=object_name,
+        zoom_factor=zoom_factor,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_fn=route_tool_call,
     )
 
 
@@ -2284,19 +2048,12 @@ def scene_get_custom_properties(ctx: Context, object_name: str) -> SceneCustomPr
         JSON with custom properties including property names, values, and count.
     """
 
-    def execute():
-        handler = get_scene_handler()
-        try:
-            result = SceneCustomPropertiesContract.model_validate(handler.get_custom_properties(object_name))
-            count = result.property_count
-
-            ctx_info(ctx, f"Retrieved {count} custom properties from '{object_name}'")
-            return result
-        except RuntimeError as e:
-            return SceneCustomPropertiesContract(error=str(e), object_name=object_name)
-
-    return route_tool_call(
-        tool_name="scene_get_custom_properties", params={"object_name": object_name}, direct_executor=execute
+    return route_scene_get_custom_properties(
+        ctx,
+        object_name=object_name,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_fn=route_tool_call,
+        ctx_info_fn=ctx_info,
     )
 
 
@@ -2325,22 +2082,14 @@ def scene_set_custom_property(
         Success message with property details
     """
 
-    def execute():
-        handler = get_scene_handler()
-        try:
-            return handler.set_custom_property(object_name, property_name, property_value, delete)
-        except RuntimeError as e:
-            return str(e)
-
-    return route_tool_call(
-        tool_name="scene_set_custom_property",
-        params={
-            "object_name": object_name,
-            "property_name": property_name,
-            "property_value": property_value,
-            "delete": delete,
-        },
-        direct_executor=execute,
+    return route_scene_set_custom_property(
+        ctx,
+        object_name=object_name,
+        property_name=property_name,
+        property_value=property_value,
+        delete=delete,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_fn=route_tool_call,
     )
 
 
@@ -2519,52 +2268,18 @@ def scene_scope_graph(
         collection_name: Optional collection to expand into the scope artifact.
     """
 
-    def execute() -> SceneScopeGraphResponseContract:
-        if not any([target_object, target_objects, collection_name]) and _should_require_explicit_guided_scope(ctx):
-            return SceneScopeGraphResponseContract(error=_guided_scope_requirement_error("scene_scope_graph"))
-
-        handler = get_scene_handler()
-        try:
-            payload = SceneScopeGraphPayloadContract(
-                scope=SceneAssembledTargetScopeContract.model_validate(
-                    handler.get_scope_graph(
-                        target_object=target_object,
-                        target_objects=target_objects,
-                        collection_name=collection_name,
-                    )
-                ),
-                message="Scope graph derived from explicit targets plus deterministic role/anchor heuristics.",
-            )
-            mismatch_message = _guided_scope_mismatch_message(
-                ctx,
-                tool_name="scene_scope_graph",
-                resolved_scope=payload.scope.model_dump(mode="json"),
-            )
-            if mismatch_message:
-                payload.message = mismatch_message
-            record_guided_flow_spatial_check_completion(
-                ctx,
-                tool_name="scene_scope_graph",
-                resolved_scope=payload.scope.model_dump(mode="json"),
-            )
-            return SceneScopeGraphResponseContract(payload=payload)
-        except (RuntimeError, ValueError) as e:
-            return SceneScopeGraphResponseContract(error=str(e))
-
-    result = route_tool_call(
-        tool_name="scene_scope_graph",
-        params={
-            "target_object": target_object,
-            "target_objects": target_objects,
-            "collection_name": collection_name,
-        },
-        direct_executor=execute,
+    return route_scene_scope_graph(
+        ctx,
+        target_object=target_object,
+        target_objects=target_objects,
+        collection_name=collection_name,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_fn=route_tool_call,
+        guided_scope_requirement_error_fn=_guided_scope_requirement_error,
+        should_require_explicit_guided_scope_fn=_should_require_explicit_guided_scope,
+        guided_scope_mismatch_message_fn=_guided_scope_mismatch_message,
+        record_guided_flow_spatial_check_completion_fn=record_guided_flow_spatial_check_completion,
     )
-    if isinstance(result, SceneScopeGraphResponseContract):
-        return result
-    if isinstance(result, dict):
-        return SceneScopeGraphResponseContract.model_validate(result)
-    return SceneScopeGraphResponseContract(error=str(result))
 
 
 async def _scene_scope_graph_async(
@@ -2575,66 +2290,22 @@ async def _scene_scope_graph_async(
 ) -> SceneScopeGraphResponseContract:
     """Async registered variant that awaits guided spatial-check state updates."""
 
-    await _hydrate_sync_route_session(ctx)
-
-    def execute() -> SceneScopeGraphResponseContract:
-        if not any([target_object, target_objects, collection_name]) and _should_require_explicit_guided_scope(ctx):
-            return SceneScopeGraphResponseContract(error=_guided_scope_requirement_error("scene_scope_graph"))
-
-        handler = get_scene_handler()
-        try:
-            payload = SceneScopeGraphPayloadContract(
-                scope=SceneAssembledTargetScopeContract.model_validate(
-                    handler.get_scope_graph(
-                        target_object=target_object,
-                        target_objects=target_objects,
-                        collection_name=collection_name,
-                    )
-                ),
-                message="Scope graph derived from explicit targets plus deterministic role/anchor heuristics.",
-            )
-            mismatch_message = _guided_scope_mismatch_message(
-                ctx,
-                tool_name="scene_scope_graph",
-                resolved_scope=payload.scope.model_dump(mode="json"),
-            )
-            if mismatch_message:
-                payload.message = mismatch_message
-            return SceneScopeGraphResponseContract(payload=payload)
-        except (RuntimeError, ValueError) as e:
-            return SceneScopeGraphResponseContract(error=str(e))
-
-    result = await route_tool_call_async(
+    return await route_scene_scope_graph_async(
         ctx,
-        tool_name="scene_scope_graph",
-        params={
-            "target_object": target_object,
-            "target_objects": target_objects,
-            "collection_name": collection_name,
-        },
-        direct_executor=execute,
+        target_object=target_object,
+        target_objects=target_objects,
+        collection_name=collection_name,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_async_fn=route_tool_call_async,
+        hydrate_sync_route_session_fn=_hydrate_sync_route_session,
+        guided_scope_requirement_error_fn=_guided_scope_requirement_error,
+        should_require_explicit_guided_scope_fn=_should_require_explicit_guided_scope,
+        guided_scope_mismatch_message_fn=_guided_scope_mismatch_message,
+        get_session_capability_state_async_fn=get_session_capability_state_async,
+        record_guided_flow_spatial_check_completion_async_fn=record_guided_flow_spatial_check_completion_async,
+        describe_guided_flow_feedback_fn=describe_guided_flow_feedback,
+        ctx_info_fn=ctx_info,
     )
-    if isinstance(result, SceneScopeGraphResponseContract):
-        contract = result
-    elif isinstance(result, dict):
-        contract = SceneScopeGraphResponseContract.model_validate(result)
-    else:
-        contract = SceneScopeGraphResponseContract(error=str(result))
-
-    if contract.payload is not None:
-        previous_state = await get_session_capability_state_async(ctx)
-        await record_guided_flow_spatial_check_completion_async(
-            ctx,
-            tool_name="scene_scope_graph",
-            resolved_scope=contract.payload.scope.model_dump(mode="json"),
-        )
-        feedback = describe_guided_flow_feedback(previous_state, await get_session_capability_state_async(ctx))
-        if feedback:
-            contract.payload.message = (
-                f"{contract.payload.message} {feedback}" if contract.payload.message else feedback
-            )
-            ctx_info(ctx, feedback)
-    return contract
 
 
 def scene_relation_graph(
@@ -2658,57 +2329,20 @@ def scene_relation_graph(
         goal_hint: Optional goal text used only for bounded pair expansion such as symmetry/support candidates.
     """
 
-    def execute() -> SceneRelationGraphResponseContract:
-        if not any([target_object, target_objects, collection_name]) and _should_require_explicit_guided_scope(ctx):
-            return SceneRelationGraphResponseContract(error=_guided_scope_requirement_error("scene_relation_graph"))
-
-        handler = get_scene_handler()
-        try:
-            payload = SceneRelationGraphPayloadContract.model_validate(
-                handler.get_relation_graph(
-                    target_object=target_object,
-                    target_objects=target_objects,
-                    collection_name=collection_name,
-                    goal_hint=goal_hint,
-                    include_truth_payloads=False,
-                )
-            )
-            mismatch_message = _guided_scope_mismatch_message(
-                ctx,
-                tool_name="scene_relation_graph",
-                resolved_scope=payload.scope.model_dump(mode="json"),
-            )
-            if mismatch_message:
-                payload.message = mismatch_message
-            record_guided_flow_spatial_check_completion(
-                ctx,
-                tool_name="scene_relation_graph",
-                resolved_scope=payload.scope.model_dump(mode="json"),
-            )
-            return SceneRelationGraphResponseContract(payload=payload)
-        except (RuntimeError, ValueError) as e:
-            return SceneRelationGraphResponseContract(error=str(e))
-
-    result = route_tool_call(
-        tool_name="scene_relation_graph",
-        params={
-            "target_object": target_object,
-            "target_objects": target_objects,
-            "collection_name": collection_name,
-            "goal_hint": goal_hint,
-        },
-        direct_executor=execute,
+    return route_scene_relation_graph(
+        ctx,
+        target_object=target_object,
+        target_objects=target_objects,
+        collection_name=collection_name,
+        goal_hint=goal_hint,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_fn=route_tool_call,
+        guided_scope_requirement_error_fn=_guided_scope_requirement_error,
+        should_require_explicit_guided_scope_fn=_should_require_explicit_guided_scope,
+        guided_scope_mismatch_message_fn=_guided_scope_mismatch_message,
+        record_guided_flow_spatial_check_completion_fn=record_guided_flow_spatial_check_completion,
+        update_quality_gate_plan_from_relation_graph_fn=update_quality_gate_plan_from_relation_graph,
     )
-    if isinstance(result, SceneRelationGraphResponseContract):
-        contract = result
-    elif isinstance(result, dict):
-        contract = SceneRelationGraphResponseContract.model_validate(result)
-    else:
-        contract = SceneRelationGraphResponseContract(error=str(result))
-
-    if contract.payload is not None:
-        update_quality_gate_plan_from_relation_graph(ctx, contract.payload.model_dump(mode="json"))
-    return contract
 
 
 async def _scene_relation_graph_async(
@@ -2720,67 +2354,24 @@ async def _scene_relation_graph_async(
 ) -> SceneRelationGraphResponseContract:
     """Async registered variant that awaits guided spatial-check state updates."""
 
-    await _hydrate_sync_route_session(ctx)
-
-    def execute() -> SceneRelationGraphResponseContract:
-        if not any([target_object, target_objects, collection_name]) and _should_require_explicit_guided_scope(ctx):
-            return SceneRelationGraphResponseContract(error=_guided_scope_requirement_error("scene_relation_graph"))
-
-        handler = get_scene_handler()
-        try:
-            payload = SceneRelationGraphPayloadContract.model_validate(
-                handler.get_relation_graph(
-                    target_object=target_object,
-                    target_objects=target_objects,
-                    collection_name=collection_name,
-                    goal_hint=goal_hint,
-                    include_truth_payloads=False,
-                )
-            )
-            mismatch_message = _guided_scope_mismatch_message(
-                ctx,
-                tool_name="scene_relation_graph",
-                resolved_scope=payload.scope.model_dump(mode="json"),
-            )
-            if mismatch_message:
-                payload.message = mismatch_message
-            return SceneRelationGraphResponseContract(payload=payload)
-        except (RuntimeError, ValueError) as e:
-            return SceneRelationGraphResponseContract(error=str(e))
-
-    result = await route_tool_call_async(
+    return await route_scene_relation_graph_async(
         ctx,
-        tool_name="scene_relation_graph",
-        params={
-            "target_object": target_object,
-            "target_objects": target_objects,
-            "collection_name": collection_name,
-            "goal_hint": goal_hint,
-        },
-        direct_executor=execute,
+        target_object=target_object,
+        target_objects=target_objects,
+        collection_name=collection_name,
+        goal_hint=goal_hint,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_async_fn=route_tool_call_async,
+        hydrate_sync_route_session_fn=_hydrate_sync_route_session,
+        guided_scope_requirement_error_fn=_guided_scope_requirement_error,
+        should_require_explicit_guided_scope_fn=_should_require_explicit_guided_scope,
+        guided_scope_mismatch_message_fn=_guided_scope_mismatch_message,
+        get_session_capability_state_async_fn=get_session_capability_state_async,
+        record_guided_flow_spatial_check_completion_async_fn=record_guided_flow_spatial_check_completion_async,
+        update_quality_gate_plan_from_relation_graph_async_fn=update_quality_gate_plan_from_relation_graph_async,
+        describe_guided_flow_feedback_fn=describe_guided_flow_feedback,
+        ctx_info_fn=ctx_info,
     )
-    if isinstance(result, SceneRelationGraphResponseContract):
-        contract = result
-    elif isinstance(result, dict):
-        contract = SceneRelationGraphResponseContract.model_validate(result)
-    else:
-        contract = SceneRelationGraphResponseContract(error=str(result))
-
-    if contract.payload is not None:
-        previous_state = await get_session_capability_state_async(ctx)
-        await record_guided_flow_spatial_check_completion_async(
-            ctx,
-            tool_name="scene_relation_graph",
-            resolved_scope=contract.payload.scope.model_dump(mode="json"),
-        )
-        await update_quality_gate_plan_from_relation_graph_async(ctx, contract.payload.model_dump(mode="json"))
-        feedback = describe_guided_flow_feedback(previous_state, await get_session_capability_state_async(ctx))
-        if feedback:
-            contract.payload.message = (
-                f"{contract.payload.message} {feedback}" if contract.payload.message else feedback
-            )
-            ctx_info(ctx, feedback)
-    return contract
 
 
 def scene_view_diagnostics(
@@ -2821,96 +2412,25 @@ def scene_view_diagnostics(
         persist_view: If True, keeps any USER_PERSPECTIVE adjustment after diagnostics. Defaults to False.
     """
 
-    def execute() -> SceneViewDiagnosticsResponseContract:
-        if not any([target_object, target_objects, collection_name]):
-            return SceneViewDiagnosticsResponseContract(
-                error=_guided_scope_requirement_error("scene_view_diagnostics"),
-            )
-
-        handler = get_scene_handler()
-        try:
-            scope = SceneAssembledTargetScopeContract.model_validate(
-                handler.get_scope_graph(
-                    target_object=target_object,
-                    target_objects=target_objects,
-                    collection_name=collection_name,
-                )
-            )
-            raw_payload = handler.get_view_diagnostics(
-                target_object=scope.primary_target or target_object,
-                target_objects=list(scope.object_names or []),
-                camera_name=camera_name,
-                focus_target=focus_target,
-                view_name=view_name,
-                orbit_horizontal=orbit_horizontal,
-                orbit_vertical=orbit_vertical,
-                zoom_factor=zoom_factor,
-                persist_view=persist_view,
-            )
-            target_contracts = [
-                SceneViewDiagnosticsTargetContract.model_validate(
-                    {
-                        **item,
-                        "projection": (
-                            SceneViewProjectionEvidenceContract.model_validate(item["projection"])
-                            if isinstance(item, dict) and isinstance(item.get("projection"), dict)
-                            else item.get("projection")
-                            if isinstance(item, dict)
-                            else None
-                        ),
-                    }
-                )
-                for item in list(raw_payload.get("targets") or [])
-                if isinstance(item, dict)
-            ]
-            payload = SceneViewDiagnosticsPayloadContract(
-                view_query=SceneViewQueryContract.model_validate(raw_payload.get("view_query") or {}),
-                scope=scope,
-                summary=SceneViewDiagnosticsSummaryContract.model_validate(raw_payload.get("summary") or {}),
-                targets=target_contracts,
-                message=(
-                    "View diagnostics report projection/framing/occlusion state for the requested scope only; "
-                    "use measure/assert tools for truth-space verification."
-                ),
-            )
-            mismatch_message = _guided_scope_mismatch_message(
-                ctx,
-                tool_name="scene_view_diagnostics",
-                resolved_scope=payload.scope.model_dump(mode="json"),
-            )
-            if mismatch_message:
-                payload.message = f"{payload.message} {mismatch_message}" if payload.message else mismatch_message
-            if _view_diagnostics_can_complete_guided_check(payload):
-                record_guided_flow_spatial_check_completion(
-                    ctx,
-                    tool_name="scene_view_diagnostics",
-                    resolved_scope=payload.scope.model_dump(mode="json"),
-                )
-            return SceneViewDiagnosticsResponseContract(payload=payload)
-        except (RuntimeError, ValueError) as e:
-            return SceneViewDiagnosticsResponseContract(error=str(e))
-
-    result = route_tool_call(
-        tool_name="scene_view_diagnostics",
-        params={
-            "target_object": target_object,
-            "target_objects": target_objects,
-            "collection_name": collection_name,
-            "camera_name": camera_name,
-            "focus_target": focus_target,
-            "view_name": view_name,
-            "orbit_horizontal": orbit_horizontal,
-            "orbit_vertical": orbit_vertical,
-            "zoom_factor": zoom_factor,
-            "persist_view": persist_view,
-        },
-        direct_executor=execute,
+    return route_scene_view_diagnostics(
+        ctx,
+        target_object=target_object,
+        target_objects=target_objects,
+        collection_name=collection_name,
+        camera_name=camera_name,
+        focus_target=focus_target,
+        view_name=view_name,
+        orbit_horizontal=orbit_horizontal,
+        orbit_vertical=orbit_vertical,
+        zoom_factor=zoom_factor,
+        persist_view=persist_view,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_fn=route_tool_call,
+        guided_scope_requirement_error_fn=_guided_scope_requirement_error,
+        guided_scope_mismatch_message_fn=_guided_scope_mismatch_message,
+        view_diagnostics_can_complete_guided_check_fn=_view_diagnostics_can_complete_guided_check,
+        record_guided_flow_spatial_check_completion_fn=record_guided_flow_spatial_check_completion,
     )
-    if isinstance(result, SceneViewDiagnosticsResponseContract):
-        return result
-    if isinstance(result, dict):
-        return SceneViewDiagnosticsResponseContract.model_validate(result)
-    return SceneViewDiagnosticsResponseContract(error=str(result))
 
 
 async def _scene_view_diagnostics_async(
@@ -2928,109 +2448,29 @@ async def _scene_view_diagnostics_async(
 ) -> SceneViewDiagnosticsResponseContract:
     """Async registered variant that awaits guided spatial-check state updates."""
 
-    await _hydrate_sync_route_session(ctx)
-
-    def execute() -> SceneViewDiagnosticsResponseContract:
-        if not any([target_object, target_objects, collection_name]):
-            return SceneViewDiagnosticsResponseContract(
-                error=_guided_scope_requirement_error("scene_view_diagnostics"),
-            )
-
-        handler = get_scene_handler()
-        try:
-            scope = SceneAssembledTargetScopeContract.model_validate(
-                handler.get_scope_graph(
-                    target_object=target_object,
-                    target_objects=target_objects,
-                    collection_name=collection_name,
-                )
-            )
-            raw_payload = handler.get_view_diagnostics(
-                target_object=scope.primary_target or target_object,
-                target_objects=list(scope.object_names or []),
-                camera_name=camera_name,
-                focus_target=focus_target,
-                view_name=view_name,
-                orbit_horizontal=orbit_horizontal,
-                orbit_vertical=orbit_vertical,
-                zoom_factor=zoom_factor,
-                persist_view=persist_view,
-            )
-            target_contracts = [
-                SceneViewDiagnosticsTargetContract.model_validate(
-                    {
-                        **item,
-                        "projection": (
-                            SceneViewProjectionEvidenceContract.model_validate(item["projection"])
-                            if isinstance(item, dict) and isinstance(item.get("projection"), dict)
-                            else item.get("projection")
-                            if isinstance(item, dict)
-                            else None
-                        ),
-                    }
-                )
-                for item in list(raw_payload.get("targets") or [])
-                if isinstance(item, dict)
-            ]
-            payload = SceneViewDiagnosticsPayloadContract(
-                view_query=SceneViewQueryContract.model_validate(raw_payload.get("view_query") or {}),
-                scope=scope,
-                summary=SceneViewDiagnosticsSummaryContract.model_validate(raw_payload.get("summary") or {}),
-                targets=target_contracts,
-                message=(
-                    "View diagnostics report projection/framing/occlusion state for the requested scope only; "
-                    "use measure/assert tools for truth-space verification."
-                ),
-            )
-            mismatch_message = _guided_scope_mismatch_message(
-                ctx,
-                tool_name="scene_view_diagnostics",
-                resolved_scope=payload.scope.model_dump(mode="json"),
-            )
-            if mismatch_message:
-                payload.message = f"{payload.message} {mismatch_message}" if payload.message else mismatch_message
-            return SceneViewDiagnosticsResponseContract(payload=payload)
-        except (RuntimeError, ValueError) as e:
-            return SceneViewDiagnosticsResponseContract(error=str(e))
-
-    result = await route_tool_call_async(
+    return await route_scene_view_diagnostics_async(
         ctx,
-        tool_name="scene_view_diagnostics",
-        params={
-            "target_object": target_object,
-            "target_objects": target_objects,
-            "collection_name": collection_name,
-            "camera_name": camera_name,
-            "focus_target": focus_target,
-            "view_name": view_name,
-            "orbit_horizontal": orbit_horizontal,
-            "orbit_vertical": orbit_vertical,
-            "zoom_factor": zoom_factor,
-            "persist_view": persist_view,
-        },
-        direct_executor=execute,
+        target_object=target_object,
+        target_objects=target_objects,
+        collection_name=collection_name,
+        camera_name=camera_name,
+        focus_target=focus_target,
+        view_name=view_name,
+        orbit_horizontal=orbit_horizontal,
+        orbit_vertical=orbit_vertical,
+        zoom_factor=zoom_factor,
+        persist_view=persist_view,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_async_fn=route_tool_call_async,
+        hydrate_sync_route_session_fn=_hydrate_sync_route_session,
+        guided_scope_requirement_error_fn=_guided_scope_requirement_error,
+        guided_scope_mismatch_message_fn=_guided_scope_mismatch_message,
+        view_diagnostics_can_complete_guided_check_fn=_view_diagnostics_can_complete_guided_check,
+        get_session_capability_state_async_fn=get_session_capability_state_async,
+        record_guided_flow_spatial_check_completion_async_fn=record_guided_flow_spatial_check_completion_async,
+        describe_guided_flow_feedback_fn=describe_guided_flow_feedback,
+        ctx_info_fn=ctx_info,
     )
-    if isinstance(result, SceneViewDiagnosticsResponseContract):
-        contract = result
-    elif isinstance(result, dict):
-        contract = SceneViewDiagnosticsResponseContract.model_validate(result)
-    else:
-        contract = SceneViewDiagnosticsResponseContract(error=str(result))
-
-    if contract.payload is not None and _view_diagnostics_can_complete_guided_check(contract.payload):
-        previous_state = await get_session_capability_state_async(ctx)
-        await record_guided_flow_spatial_check_completion_async(
-            ctx,
-            tool_name="scene_view_diagnostics",
-            resolved_scope=contract.payload.scope.model_dump(mode="json"),
-        )
-        feedback = describe_guided_flow_feedback(previous_state, await get_session_capability_state_async(ctx))
-        if feedback:
-            contract.payload.message = (
-                f"{contract.payload.message} {feedback}" if contract.payload.message else feedback
-            )
-            ctx_info(ctx, feedback)
-    return contract
 
 
 def scene_measure_distance(
@@ -3055,26 +2495,15 @@ def scene_measure_distance(
         Structured distance payload with reference points, axis delta, and units.
     """
 
-    def execute():
-        return execute_scene_measure_distance(
-            ctx=ctx,
-            from_object=from_object,
-            to_object=to_object,
-            reference=reference,
-            get_scene_handler=get_scene_handler,
-            info=ctx_info,
-        )
-
-    result = route_tool_call(
-        tool_name="scene_measure_distance",
-        params={"from_object": from_object, "to_object": to_object, "reference": reference},
-        direct_executor=execute,
+    return route_scene_measure_distance(
+        ctx,
+        from_object=from_object,
+        to_object=to_object,
+        reference=reference,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_fn=route_tool_call,
+        ctx_info_fn=ctx_info,
     )
-    if isinstance(result, SceneMeasureDistanceContract):
-        return result
-    if isinstance(result, dict):
-        return SceneMeasureDistanceContract(payload=result)
-    return SceneMeasureDistanceContract(error=str(result))
 
 
 def scene_measure_dimensions(
@@ -3095,25 +2524,14 @@ def scene_measure_dimensions(
         Structured dimensions payload with units and volume estimate.
     """
 
-    def execute():
-        return execute_scene_measure_dimensions(
-            ctx=ctx,
-            object_name=object_name,
-            world_space=world_space,
-            get_scene_handler=get_scene_handler,
-            info=ctx_info,
-        )
-
-    result = route_tool_call(
-        tool_name="scene_measure_dimensions",
-        params={"object_name": object_name, "world_space": world_space},
-        direct_executor=execute,
+    return route_scene_measure_dimensions(
+        ctx,
+        object_name=object_name,
+        world_space=world_space,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_fn=route_tool_call,
+        ctx_info_fn=ctx_info,
     )
-    if isinstance(result, SceneMeasureDimensionsContract):
-        return result
-    if isinstance(result, dict):
-        return SceneMeasureDimensionsContract(payload=result)
-    return SceneMeasureDimensionsContract(error=str(result))
 
 
 def scene_measure_gap(
@@ -3144,26 +2562,15 @@ def scene_measure_gap(
         and bbox fallback diagnostics when available.
     """
 
-    def execute():
-        return execute_scene_measure_gap(
-            ctx=ctx,
-            from_object=from_object,
-            to_object=to_object,
-            tolerance=tolerance,
-            get_scene_handler=get_scene_handler,
-            info=ctx_info,
-        )
-
-    result = route_tool_call(
-        tool_name="scene_measure_gap",
-        params={"from_object": from_object, "to_object": to_object, "tolerance": tolerance},
-        direct_executor=execute,
+    return route_scene_measure_gap(
+        ctx,
+        from_object=from_object,
+        to_object=to_object,
+        tolerance=tolerance,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_fn=route_tool_call,
+        ctx_info_fn=ctx_info,
     )
-    if isinstance(result, SceneMeasureGapContract):
-        return result
-    if isinstance(result, dict):
-        return SceneMeasureGapContract(payload=result)
-    return SceneMeasureGapContract(error=str(result))
 
 
 def scene_measure_alignment(
@@ -3192,34 +2599,17 @@ def scene_measure_alignment(
         Structured alignment payload with per-axis deltas and aligned/misaligned axes.
     """
 
-    def execute():
-        return execute_scene_measure_alignment(
-            ctx=ctx,
-            from_object=from_object,
-            to_object=to_object,
-            axes=axes,
-            reference=reference,
-            tolerance=tolerance,
-            get_scene_handler=get_scene_handler,
-            info=ctx_info,
-        )
-
-    result = route_tool_call(
-        tool_name="scene_measure_alignment",
-        params={
-            "from_object": from_object,
-            "to_object": to_object,
-            "axes": axes,
-            "reference": reference,
-            "tolerance": tolerance,
-        },
-        direct_executor=execute,
+    return route_scene_measure_alignment(
+        ctx,
+        from_object=from_object,
+        to_object=to_object,
+        axes=axes,
+        reference=reference,
+        tolerance=tolerance,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_fn=route_tool_call,
+        ctx_info_fn=ctx_info,
     )
-    if isinstance(result, SceneMeasureAlignmentContract):
-        return result
-    if isinstance(result, dict):
-        return SceneMeasureAlignmentContract(payload=result)
-    return SceneMeasureAlignmentContract(error=str(result))
 
 
 def scene_measure_overlap(
@@ -3248,26 +2638,15 @@ def scene_measure_overlap(
         and bbox fallback diagnostics when available.
     """
 
-    def execute():
-        return execute_scene_measure_overlap(
-            ctx=ctx,
-            from_object=from_object,
-            to_object=to_object,
-            tolerance=tolerance,
-            get_scene_handler=get_scene_handler,
-            info=ctx_info,
-        )
-
-    result = route_tool_call(
-        tool_name="scene_measure_overlap",
-        params={"from_object": from_object, "to_object": to_object, "tolerance": tolerance},
-        direct_executor=execute,
+    return route_scene_measure_overlap(
+        ctx,
+        from_object=from_object,
+        to_object=to_object,
+        tolerance=tolerance,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_fn=route_tool_call,
+        ctx_info_fn=ctx_info,
     )
-    if isinstance(result, SceneMeasureOverlapContract):
-        return result
-    if isinstance(result, dict):
-        return SceneMeasureOverlapContract(payload=result)
-    return SceneMeasureOverlapContract(error=str(result))
 
 
 def scene_assert_contact(
@@ -3299,32 +2678,16 @@ def scene_assert_contact(
         relation, and `measurement_basis` / bbox diagnostics in `details`.
     """
 
-    def execute():
-        return execute_scene_assert_contact(
-            ctx=ctx,
-            from_object=from_object,
-            to_object=to_object,
-            max_gap=max_gap,
-            allow_overlap=allow_overlap,
-            get_scene_handler=get_scene_handler,
-            info=ctx_info,
-        )
-
-    result = route_tool_call(
-        tool_name="scene_assert_contact",
-        params={
-            "from_object": from_object,
-            "to_object": to_object,
-            "max_gap": max_gap,
-            "allow_overlap": allow_overlap,
-        },
-        direct_executor=execute,
+    return route_scene_assert_contact(
+        ctx,
+        from_object=from_object,
+        to_object=to_object,
+        max_gap=max_gap,
+        allow_overlap=allow_overlap,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_fn=route_tool_call,
+        ctx_info_fn=ctx_info,
     )
-    if isinstance(result, SceneAssertContactContract):
-        return result
-    if isinstance(result, dict):
-        return SceneAssertContactContract(payload=SceneAssertionPayloadContract.model_validate(result))
-    return SceneAssertContactContract(error=str(result))
 
 
 def scene_assert_dimensions(
@@ -3349,33 +2712,17 @@ def scene_assert_dimensions(
         Structured assertion payload with expected dimensions, actual dimensions, and per-axis delta.
     """
 
-    def execute():
-        return execute_scene_assert_dimensions(
-            ctx=ctx,
-            object_name=object_name,
-            expected_dimensions=expected_dimensions,
-            tolerance=tolerance,
-            world_space=world_space,
-            parse_coordinate=parse_coordinate,
-            get_scene_handler=get_scene_handler,
-            info=ctx_info,
-        )
-
-    result = route_tool_call(
-        tool_name="scene_assert_dimensions",
-        params={
-            "object_name": object_name,
-            "expected_dimensions": expected_dimensions,
-            "tolerance": tolerance,
-            "world_space": world_space,
-        },
-        direct_executor=execute,
+    return route_scene_assert_dimensions(
+        ctx,
+        object_name=object_name,
+        expected_dimensions=expected_dimensions,
+        tolerance=tolerance,
+        world_space=world_space,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_fn=route_tool_call,
+        ctx_info_fn=ctx_info,
+        parse_coordinate_fn=parse_coordinate,
     )
-    if isinstance(result, SceneAssertDimensionsContract):
-        return result
-    if isinstance(result, dict):
-        return SceneAssertDimensionsContract(payload=SceneAssertionPayloadContract.model_validate(result))
-    return SceneAssertDimensionsContract(error=str(result))
 
 
 def scene_assert_containment(
@@ -3400,32 +2747,16 @@ def scene_assert_containment(
         Structured assertion payload with containment pass/fail result and measured clearance/protrusion details.
     """
 
-    def execute():
-        return execute_scene_assert_containment(
-            ctx=ctx,
-            inner_object=inner_object,
-            outer_object=outer_object,
-            min_clearance=min_clearance,
-            tolerance=tolerance,
-            get_scene_handler=get_scene_handler,
-            info=ctx_info,
-        )
-
-    result = route_tool_call(
-        tool_name="scene_assert_containment",
-        params={
-            "inner_object": inner_object,
-            "outer_object": outer_object,
-            "min_clearance": min_clearance,
-            "tolerance": tolerance,
-        },
-        direct_executor=execute,
+    return route_scene_assert_containment(
+        ctx,
+        inner_object=inner_object,
+        outer_object=outer_object,
+        min_clearance=min_clearance,
+        tolerance=tolerance,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_fn=route_tool_call,
+        ctx_info_fn=ctx_info,
     )
-    if isinstance(result, SceneAssertContainmentContract):
-        return result
-    if isinstance(result, dict):
-        return SceneAssertContainmentContract(payload=SceneAssertionPayloadContract.model_validate(result))
-    return SceneAssertContainmentContract(error=str(result))
 
 
 def scene_assert_symmetry(
@@ -3452,34 +2783,17 @@ def scene_assert_symmetry(
         Structured assertion payload with center/dimension deltas and pass/fail symmetry result.
     """
 
-    def execute():
-        return execute_scene_assert_symmetry(
-            ctx=ctx,
-            left_object=left_object,
-            right_object=right_object,
-            axis=axis,
-            mirror_coordinate=mirror_coordinate,
-            tolerance=tolerance,
-            get_scene_handler=get_scene_handler,
-            info=ctx_info,
-        )
-
-    result = route_tool_call(
-        tool_name="scene_assert_symmetry",
-        params={
-            "left_object": left_object,
-            "right_object": right_object,
-            "axis": axis,
-            "mirror_coordinate": mirror_coordinate,
-            "tolerance": tolerance,
-        },
-        direct_executor=execute,
+    return route_scene_assert_symmetry(
+        ctx,
+        left_object=left_object,
+        right_object=right_object,
+        axis=axis,
+        mirror_coordinate=mirror_coordinate,
+        tolerance=tolerance,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_fn=route_tool_call,
+        ctx_info_fn=ctx_info,
     )
-    if isinstance(result, SceneAssertSymmetryContract):
-        return result
-    if isinstance(result, dict):
-        return SceneAssertSymmetryContract(payload=SceneAssertionPayloadContract.model_validate(result))
-    return SceneAssertSymmetryContract(error=str(result))
 
 
 def scene_assert_proportion(
@@ -3512,37 +2826,17 @@ def scene_assert_proportion(
         Structured assertion payload with expected ratio, actual ratio, and pass/fail result.
     """
 
-    def execute():
-        return execute_scene_assert_proportion(
-            ctx=ctx,
-            object_name=object_name,
-            axis_a=axis_a,
-            expected_ratio=expected_ratio,
-            axis_b=axis_b,
-            reference_object=reference_object,
-            reference_axis=reference_axis,
-            tolerance=tolerance,
-            world_space=world_space,
-            get_scene_handler=get_scene_handler,
-            info=ctx_info,
-        )
-
-    result = route_tool_call(
-        tool_name="scene_assert_proportion",
-        params={
-            "object_name": object_name,
-            "axis_a": axis_a,
-            "expected_ratio": expected_ratio,
-            "axis_b": axis_b,
-            "reference_object": reference_object,
-            "reference_axis": reference_axis,
-            "tolerance": tolerance,
-            "world_space": world_space,
-        },
-        direct_executor=execute,
+    return route_scene_assert_proportion(
+        ctx,
+        object_name=object_name,
+        axis_a=axis_a,
+        expected_ratio=expected_ratio,
+        axis_b=axis_b,
+        reference_object=reference_object,
+        reference_axis=reference_axis,
+        tolerance=tolerance,
+        world_space=world_space,
+        get_scene_handler_fn=get_scene_handler,
+        route_tool_call_fn=route_tool_call,
+        ctx_info_fn=ctx_info,
     )
-    if isinstance(result, SceneAssertProportionContract):
-        return result
-    if isinstance(result, dict):
-        return SceneAssertProportionContract(payload=SceneAssertionPayloadContract.model_validate(result))
-    return SceneAssertProportionContract(error=str(result))

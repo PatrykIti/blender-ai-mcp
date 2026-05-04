@@ -1,6 +1,6 @@
 # TASK-159: Modularize Oversized Guided Runtime And Scene Owner Files
 
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** Architecture / Maintainability
 **Estimated Effort:** Large
@@ -234,31 +234,19 @@ for owner_file in oversized_owner_files:
   spatial-intelligence and domain-expansion waves without changing product
   direction
 
-## Progress Summary
+## Completion Summary
 
-As of 2026-05-04:
+Completed on 2026-05-04.
 
-- `TASK-159-04` is closed
-- the reference family has closed:
-  - `TASK-159-01-01`
-  - `TASK-159-01-04`
-  - `TASK-159-01-05`
-- the MCP scene family has closed:
-  - `TASK-159-02-01`
-  - `TASK-159-02-02`
-  - `TASK-159-02-07`
-- the addon scene family has closed:
-  - `TASK-159-03-01`
-  - `TASK-159-03-04`
-  - `TASK-159-03-05`
-- code has landed for two additional leaves that still need final Blender-backed
-  closeout before they can move to `Done`:
-  - `TASK-159-01-03`
-  - `TASK-159-03-03`
-- the largest remaining open execution branches are:
-  - `TASK-159-01-02`
-  - `TASK-159-02-03`
-  - `TASK-159-02-04`
-  - `TASK-159-02-05`
-  - `TASK-159-02-06`
-  - `TASK-159-03-02`
+- closed the remaining reference, scene MCP, and addon scene branches so the
+  oversized owner files are now split across explicit helper/mixin seams while
+  preserving the public MCP/addon/session contracts
+- finished the remaining `scene.py` extraction wave for spatial/view,
+  measure/assert, object-utility, and viewport ownership while keeping the file
+  as a stable, patchable MCP facade
+- finished the remaining addon measure/assert split, refreshed the runtime
+  inventory baseline for helper-module facades, and closed the late reference
+  gate/truth E2E drift uncovered during the final full-suite run
+- validated the umbrella with `poetry run pytest ./tests/unit` and the full
+  Blender-backed `poetry run python scripts/run_e2e_tests.py` runner outside
+  the sandbox

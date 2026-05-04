@@ -710,7 +710,7 @@ def _skip_local_scope_verification(
             object_names,
             guided_part_registry=guided_part_registry,
         )
-        return len(matched_objects) < expected_count
+        return gate.status != "pending" and len(matched_objects) < expected_count
 
     if gate.gate_type == "symmetry_pair":
         matched_objects = _matched_scope_objects(
@@ -718,7 +718,7 @@ def _skip_local_scope_verification(
             object_names,
             guided_part_registry=guided_part_registry,
         )
-        return len(matched_objects) < 2
+        return gate.status != "pending" and len(matched_objects) < 2
 
     if gate.gate_type in {"attachment_seam", "support_contact"}:
         if not gate.target_objects:

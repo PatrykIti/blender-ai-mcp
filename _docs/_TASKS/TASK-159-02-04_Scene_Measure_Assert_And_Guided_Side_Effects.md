@@ -1,7 +1,7 @@
 # TASK-159-02-04: Scene Measure Assert And Guided Side Effects
 
 **Parent:** [TASK-159-02](./TASK-159-02_Scene_MCP_Area_Modularization_And_Surface_Slices.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -77,3 +77,16 @@ from .scene_measure_assert import execute_scene_measure_gap, execute_scene_asser
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- finished the measure/assert split by moving the MCP wrapper routing and
+  structured result coercion into
+  `server/adapters/mcp/areas/scene_measure_assert.py`
+- preserved the existing contract envelopes, parsing/error semantics, and test
+  patch points by keeping `scene.py` as a thin facade that forwards its local
+  dependencies into the extracted helper module
+- validated the full measure/assert surface under the repo-wide unit and E2E
+  lanes

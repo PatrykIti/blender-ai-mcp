@@ -1,7 +1,7 @@
 # TASK-159-03: Addon Scene Handler Modularization And Blender Ownership Boundaries
 
 **Parent:** [TASK-159](./TASK-159_Modularize_Oversized_Guided_Runtime_And_Scene_Owner_Files.md)
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -206,13 +206,13 @@ class SceneHandler(
 - do not promote this slice independently unless it becomes the only remaining
   open branch in the family
 
-## Progress Summary
+## Completion Summary
 
-As of 2026-05-04:
+Completed on 2026-05-04.
 
-- `TASK-159-03-01` is closed
-- `TASK-159-03-04` is closed
-- `TASK-159-03-05` is closed
-- code for `TASK-159-03-03` has landed, but the branch still needs a fully
-  green Blender-backed closeout lane before moving to `Done`
-- the remaining major open addon scene branch is `TASK-159-03-02`
+- closed the remaining addon scene branches `TASK-159-03-02` and
+  `TASK-159-03-03`, leaving the addon `SceneHandler` split across lifecycle,
+  structural-read, inspection, measure/assert, viewport, utility, and
+  world/render owner mixins
+- preserved the addon registration and RPC surface while validating the whole
+  family through the full repo unit lane and full Blender-backed E2E runner

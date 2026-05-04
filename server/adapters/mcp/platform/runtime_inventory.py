@@ -190,7 +190,7 @@ MCP_SURFACE_MODULES: Final[tuple[SurfaceModule, ...]] = (
         bootstrapped_by_side_effect=False,
         uses_global_mcp_singleton=False,
         context_import_style="fastmcp",
-        uses_ctx_info_bridge=True,
+        uses_ctx_info_bridge=False,
         router_metadata_directory=True,
         metadata_loader_covered=True,
         notes=("Goal-scoped reference image surface for TASK-121.",),
@@ -216,7 +216,7 @@ MCP_SURFACE_MODULES: Final[tuple[SurfaceModule, ...]] = (
         bootstrapped_by_side_effect=False,
         uses_global_mcp_singleton=False,
         context_import_style="fastmcp",
-        uses_ctx_info_bridge=True,
+        uses_ctx_info_bridge=False,
         router_metadata_directory=True,
         metadata_loader_covered=True,
     ),
@@ -328,13 +328,24 @@ def build_runtime_couplings() -> tuple[RuntimeCoupling, ...]:
 
 
 def get_filesystem_area_modules(base_dir: Path = AREAS_DIR) -> tuple[str, ...]:
-    """Return all MCP area modules currently present on disk."""
+    """Return public MCP area modules currently present on disk.
 
-    return tuple(
-        sorted(
-            path.stem for path in base_dir.glob("*.py") if path.name != "__init__.py" and not path.stem.startswith("_")
-        )
-    )
+    Helper sibling modules created by TASK-159-style facade extraction live in
+    ``areas/`` too, but they do not expose a public ``register_<area>_tools``
+    registrar and should not count as top-level MCP area surfaces.
+    """
+
+    modules: list[str] = []
+    for path in sorted(base_dir.glob("*.py")):
+        if path.name == "__init__.py" or path.stem.startswith("_"):
+            continue
+
+        source = path.read_text(encoding="utf-8")
+        if "def register_" not in source or "_tools" not in source:
+            continue
+        modules.append(path.stem)
+
+    return tuple(modules)
 
 
 def get_bootstrap_side_effect_modules(init_path: Path = AREAS_INIT_PATH) -> tuple[str, ...]:

@@ -1,7 +1,7 @@
 # TASK-159-02-03: Scene Spatial Graph And View Diagnostics Slices
 
 **Parent:** [TASK-159-02](./TASK-159-02_Scene_MCP_Area_Modularization_And_Surface_Slices.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -87,3 +87,14 @@ from .scene_view import execute_view_diagnostics
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- moved the spatial-graph execution and guided state/update logic into
+  `server/adapters/mcp/areas/scene_spatial_graph.py`
+- moved the view-diagnostics payload normalization and guided completion logic
+  into `server/adapters/mcp/areas/scene_view_diagnostics.py`
+- kept `server/adapters/mcp/areas/scene.py` as the patchable MCP facade by
+  forwarding its local route/session seams into the extracted helpers

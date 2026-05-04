@@ -1,7 +1,7 @@
 # TASK-159-02-05: Scene Object Utility Manage And Guided Dirtying Slices
 
 **Parent:** [TASK-159-02](./TASK-159-02_Scene_MCP_Area_Modularization_And_Surface_Slices.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -160,5 +160,16 @@ for wrapper in cleanup_mode_leaf + visibility_camera_leaf + custom_property_leaf
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- closed the utility leaves `TASK-159-02-05-01` through `TASK-159-02-05-03`
+  by extracting the shared object-utility wrapper logic into
+  `server/adapters/mcp/areas/scene_object_utils.py`
+- kept `scene.py` as the stable MCP facade while preserving direct test patch
+  seams for `route_tool_call`, `get_scene_handler`, `parse_coordinate`, and the
+  async guided cleanup/report helpers
 - execute this branch through the focused leaves below instead of landing all
   object utilities in one oversized pass

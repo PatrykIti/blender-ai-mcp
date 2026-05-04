@@ -1,7 +1,7 @@
 # TASK-159-02-05-03: Scene Custom Property Utility And Dirtying Glue
 
 **Parent:** [TASK-159-02-05](./TASK-159-02-05_Scene_Object_Utility_Manage_And_Guided_Dirtying_Slices.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -68,3 +68,13 @@ from .scene_object_utils import execute_scene_custom_property_utility
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- moved custom-property get/set wrapper routing into
+  `server/adapters/mcp/areas/scene_object_utils.py`
+- preserved the existing structured custom-property contract and facade-local
+  `ctx_info(...)` seam so structured delivery and unit patch points remain
+  unchanged

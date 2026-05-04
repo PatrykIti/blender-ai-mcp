@@ -1,7 +1,7 @@
 # TASK-159-02-05-01: Scene Cleanup, Mode, And Active Object Utility Slices
 
 **Parent:** [TASK-159-02-05](./TASK-159-02-05_Scene_Object_Utility_Manage_And_Guided_Dirtying_Slices.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -68,3 +68,14 @@ from .scene_object_utils import execute_scene_cleanup_and_mode_utility
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- moved scene cleanup, duplicate, set-active-object, and mode wrapper logic
+  behind the dedicated utility seam in
+  `server/adapters/mcp/areas/scene_object_utils.py`
+- preserved the async `scene_clean_scene` guided stale-state/update path by
+  forwarding the existing facade-local route/session helpers into the extracted
+  utility module
