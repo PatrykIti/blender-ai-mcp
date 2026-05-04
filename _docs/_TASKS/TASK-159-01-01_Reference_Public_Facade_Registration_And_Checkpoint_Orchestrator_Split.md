@@ -1,7 +1,7 @@
 # TASK-159-01-01: Reference Public Facade, Registration, And Checkpoint Orchestrator Split
 
 **Parent:** [TASK-159-01](./TASK-159-01_Reference_Area_Modularization_And_Checkpoint_Assembly_Boundaries.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -84,3 +84,16 @@ def register_reference_tools(target):
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- preserved `REFERENCE_PUBLIC_TOOL_NAMES`, `register_reference_tools(...)`,
+  and the provider/manifest-facing public facade in `reference.py` while the
+  bounded checkpoint/current-view/image-lifecycle side branches moved into
+  sibling modules
+- kept checkpoint/stage public wrappers and manifest-backed discovery stable
+  across the refactor wave instead of forking a second registration path
+- validated provider inventory, manifest exposure, tool inventory, and public
+  docs against the current reference facade state

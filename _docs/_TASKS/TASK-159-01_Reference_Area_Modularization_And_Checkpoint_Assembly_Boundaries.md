@@ -1,7 +1,7 @@
 # TASK-159-01: Reference Area Modularization And Checkpoint Assembly Boundaries
 
 **Parent:** [TASK-159](./TASK-159_Modularize_Oversized_Guided_Runtime_And_Scene_Owner_Files.md)
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
 **Priority:** 🔴 High
 
 ## Objective
@@ -179,3 +179,14 @@ async def reference_compare_stage_checkpoint(...):
   refactor pass
 - do not promote this slice independently unless it becomes the only remaining
   open branch in the family
+
+## Progress Summary
+
+As of 2026-05-04:
+
+- `TASK-159-01-01` is closed
+- `TASK-159-01-04` is closed
+- `TASK-159-01-05` is closed
+- code for `TASK-159-01-03` has landed, but the branch still needs a fully
+  green Blender-backed closeout lane before moving to `Done`
+- the remaining major open reference branch is `TASK-159-01-02`

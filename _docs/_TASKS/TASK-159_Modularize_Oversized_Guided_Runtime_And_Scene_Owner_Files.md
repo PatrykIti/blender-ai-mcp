@@ -1,6 +1,6 @@
 # TASK-159: Modularize Oversized Guided Runtime And Scene Owner Files
 
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
 **Priority:** 🔴 High
 **Category:** Architecture / Maintainability
 **Estimated Effort:** Large
@@ -233,3 +233,32 @@ for owner_file in oversized_owner_files:
 - treat this as an internal follow-on that prepares the repo for the next
   spatial-intelligence and domain-expansion waves without changing product
   direction
+
+## Progress Summary
+
+As of 2026-05-04:
+
+- `TASK-159-04` is closed
+- the reference family has closed:
+  - `TASK-159-01-01`
+  - `TASK-159-01-04`
+  - `TASK-159-01-05`
+- the MCP scene family has closed:
+  - `TASK-159-02-01`
+  - `TASK-159-02-02`
+  - `TASK-159-02-07`
+- the addon scene family has closed:
+  - `TASK-159-03-01`
+  - `TASK-159-03-04`
+  - `TASK-159-03-05`
+- code has landed for two additional leaves that still need final Blender-backed
+  closeout before they can move to `Done`:
+  - `TASK-159-01-03`
+  - `TASK-159-03-03`
+- the largest remaining open execution branches are:
+  - `TASK-159-01-02`
+  - `TASK-159-02-03`
+  - `TASK-159-02-04`
+  - `TASK-159-02-05`
+  - `TASK-159-02-06`
+  - `TASK-159-03-02`
