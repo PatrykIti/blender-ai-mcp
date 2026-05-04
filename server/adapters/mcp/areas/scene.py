@@ -8,6 +8,15 @@ from fastmcp import Context
 from fastmcp.utilities.types import Image
 from pydantic import ValidationError
 
+from server.adapters.mcp.areas.scene_state_reads import (
+    execute_scene_context,
+)
+from server.adapters.mcp.areas.scene_state_reads import (
+    get_scene_mode as _scene_get_mode_impl,
+)
+from server.adapters.mcp.areas.scene_state_reads import (
+    list_scene_selection as _scene_list_selection_impl,
+)
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
 from server.adapters.mcp.contracts.scene import (
@@ -30,13 +39,11 @@ from server.adapters.mcp.contracts.scene import (
     SceneMeasureDistanceContract,
     SceneMeasureGapContract,
     SceneMeasureOverlapContract,
-    SceneModeContract,
     SceneOriginInfoContract,
     SceneRelationGraphPayloadContract,
     SceneRelationGraphResponseContract,
     SceneScopeGraphPayloadContract,
     SceneScopeGraphResponseContract,
-    SceneSelectionContract,
     SceneSnapshotDiffContract,
     SceneSnapshotStateContract,
     SceneViewDiagnosticsPayloadContract,
@@ -1154,21 +1161,12 @@ def scene_context(ctx: Context, action: Literal["mode", "selection"]) -> SceneCo
     """
 
     def execute():
-        if action == "mode":
-            return SceneContextResponseContract(
-                action="mode",
-                payload=SceneModeContract.model_validate(_scene_get_mode(ctx)),
-            )
-        elif action == "selection":
-            return SceneContextResponseContract(
-                action="selection",
-                payload=SceneSelectionContract.model_validate(_scene_list_selection(ctx)),
-            )
-        else:
-            return SceneContextResponseContract(
-                action="mode",
-                error=f"Unknown action '{action}'. Valid actions: mode, selection",
-            )
+        return execute_scene_context(
+            ctx=ctx,
+            action=action,
+            read_mode=_scene_get_mode,
+            read_selection=_scene_list_selection,
+        )
 
     return route_tool_call(tool_name="scene_context", params={"action": action}, direct_executor=execute)
 
@@ -1183,13 +1181,7 @@ def _scene_get_mode(ctx: Context) -> Dict[str, Any]:
     Returns a multi-line description with mode, active object, and selected objects to help
     AI agents branch logic without guessing the context.
     """
-    handler = get_scene_handler()
-    try:
-        response = handler.get_mode()
-    except RuntimeError as e:
-        return {"error": str(e)}
-
-    return response
+    return _scene_get_mode_impl(ctx=ctx, get_scene_handler=get_scene_handler)
 
 
 # Internal function - exposed via scene_context mega tool
@@ -1202,13 +1194,7 @@ def _scene_list_selection(ctx: Context) -> Dict[str, Any]:
     Provides counts for selected objects and, when in Edit Mode, counts of selected
     vertices/edges/faces. Useful for verifying assumptions before destructive edits.
     """
-    handler = get_scene_handler()
-    try:
-        summary = handler.list_selection()
-    except RuntimeError as e:
-        return {"error": str(e)}
-
-    return summary
+    return _scene_list_selection_impl(ctx=ctx, get_scene_handler=get_scene_handler)
 
 
 async def scene_inspect(

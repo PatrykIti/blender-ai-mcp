@@ -1,7 +1,7 @@
 # TASK-159-02-02-01: Scene Context And Selection Read Slices
 
 **Parent:** [TASK-159-02-02](./TASK-159-02-02_Scene_Context_Inspect_Snapshot_And_Structural_Read_Slices.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -61,3 +61,16 @@ from .scene_state_reads import execute_scene_context
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- moved the `scene_context(...)` contract-building logic plus the mode/selection
+  read implementations into
+  `server/adapters/mcp/areas/scene_state_reads.py`
+- kept `scene_context(...)` as the stable public wrapper in
+  `server/adapters/mcp/areas/scene.py`
+- preserved the existing `_scene_get_mode(...)` and `_scene_list_selection(...)`
+  seam names in `scene.py` as thin wrappers so current unit patch points and
+  structured-delivery behavior remain unchanged

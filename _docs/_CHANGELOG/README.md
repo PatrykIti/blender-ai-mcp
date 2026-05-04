@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [304](./304-2026-05-04-task-159-scene-context-state-read-slice.md) | 2026-05-04 | **TASK-159 scene context state-read slice** | - |
 | [303](./303-2026-05-04-task-159-addon-scene-world-render-mixin.md) | 2026-05-04 | **TASK-159 addon scene world/render mixin** | - |
 | [302](./302-2026-05-04-task-159-addon-scene-utility-mixins.md) | 2026-05-04 | **TASK-159 addon scene utility mixins** | - |
 | [301](./301-2026-05-04-task-159-session-capabilities-modularization.md) | 2026-05-04 | **TASK-159 session capabilities modularization** | - |
