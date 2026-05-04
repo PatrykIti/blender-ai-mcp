@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v3.2.0 (2026-05-04)
+
+### Features
+
+- **guided-runtime**: Add repair planner, quality gates, and reference understanding
+  ([#35](https://github.com/PatrykIti/blender-ai-mcp/pull/35),
+  [`3c7450f`](https://github.com/PatrykIti/blender-ai-mcp/commit/3c7450f5e13899c11d325fb30d57bd0edec61eed))
+
+
 ## v3.1.1 (2026-04-30)
 
 ### Bug Fixes
