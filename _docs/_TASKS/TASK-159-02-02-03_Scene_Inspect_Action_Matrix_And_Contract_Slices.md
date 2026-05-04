@@ -1,7 +1,7 @@
 # TASK-159-02-02-03: Scene Inspect Action Matrix And Contract Slices
 
 **Parent:** [TASK-159-02-02](./TASK-159-02-02_Scene_Context_Inspect_Snapshot_And_Structural_Read_Slices.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -82,3 +82,17 @@ from .scene_inspect import execute_scene_inspect
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- moved the full `scene_inspect(...)` action-matrix execution and its helper
+  logic from `server/adapters/mcp/areas/scene.py` into
+  `server/adapters/mcp/areas/scene_inspect.py`
+- kept `scene.py` as the stable MCP facade and preserved the existing
+  `_scene_inspect_*` / `_scene_get_constraints(...)` seam names as thin wrappers
+  so current unit patch points and structured-delivery behavior stay stable
+- preserved typed inspect action vocabulary and payload behavior across object,
+  topology, modifiers, materials, constraints, modifier_data, render,
+  color_management, and world branches

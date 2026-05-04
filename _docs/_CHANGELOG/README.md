@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [313](./313-2026-05-04-task-159-scene-inspect-slice.md) | 2026-05-04 | **TASK-159 scene inspect slice** | - |
 | [312](./312-2026-05-04-task-159-scene-facade-guards.md) | 2026-05-04 | **TASK-159 scene facade guards** | - |
 | [311](./311-2026-05-04-task-159-reference-image-lifecycle-split.md) | 2026-05-04 | **TASK-159 reference image lifecycle split** | - |
 | [310](./310-2026-05-04-task-159-addon-scene-inspection-mixin.md) | 2026-05-04 | **TASK-159 addon scene inspection mixin** | - |

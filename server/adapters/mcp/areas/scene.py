@@ -18,6 +18,36 @@ from server.adapters.mcp.areas.scene_create_configure import (
     execute_scene_create_empty,
     execute_scene_create_light,
 )
+from server.adapters.mcp.areas.scene_inspect import (
+    execute_scene_inspect,
+)
+from server.adapters.mcp.areas.scene_inspect import (
+    inspect_scene_color_management as _scene_inspect_color_management_impl,
+)
+from server.adapters.mcp.areas.scene_inspect import (
+    inspect_scene_constraints as _scene_get_constraints_impl,
+)
+from server.adapters.mcp.areas.scene_inspect import (
+    inspect_scene_material_slots as _scene_inspect_material_slots_impl,
+)
+from server.adapters.mcp.areas.scene_inspect import (
+    inspect_scene_mesh_topology as _scene_inspect_mesh_topology_impl,
+)
+from server.adapters.mcp.areas.scene_inspect import (
+    inspect_scene_modifier_data as _scene_inspect_modifier_data_impl,
+)
+from server.adapters.mcp.areas.scene_inspect import (
+    inspect_scene_modifiers as _scene_inspect_modifiers_impl,
+)
+from server.adapters.mcp.areas.scene_inspect import (
+    inspect_scene_object as _scene_inspect_object_impl,
+)
+from server.adapters.mcp.areas.scene_inspect import (
+    inspect_scene_render_settings as _scene_inspect_render_settings_impl,
+)
+from server.adapters.mcp.areas.scene_inspect import (
+    inspect_scene_world as _scene_inspect_world_impl,
+)
 from server.adapters.mcp.areas.scene_state_reads import (
     execute_scene_compare_snapshot,
     execute_scene_context,
@@ -1266,70 +1296,27 @@ async def scene_inspect(
     """
 
     def execute():
-        if action == "object":
-            if object_name is None:
-                return SceneInspectResponseContract(
-                    action="object",
-                    error="Error: 'object' action requires 'object_name' parameter.",
-                )
-            return SceneInspectResponseContract(action="object", payload=_scene_inspect_object(ctx, object_name))
-        elif action == "topology":
-            if object_name is None:
-                return SceneInspectResponseContract(
-                    action="topology",
-                    error="Error: 'topology' action requires 'object_name' parameter.",
-                )
-            return SceneInspectResponseContract(
-                action="topology",
-                payload=_scene_inspect_mesh_topology(ctx, object_name, detailed),
-            )
-        elif action == "modifiers":
-            return SceneInspectResponseContract(
-                action="modifiers",
-                payload=_scene_inspect_modifiers(ctx, object_name, include_disabled),
-            )
-        elif action == "materials":
-            return SceneInspectResponseContract(
-                action="materials",
-                payload=_scene_inspect_material_slots(ctx, material_filter, include_empty_slots),
-            )
-        elif action == "constraints":
-            if object_name is None:
-                return SceneInspectResponseContract(
-                    action="constraints",
-                    error="Error: 'constraints' action requires 'object_name' parameter.",
-                )
-            return SceneInspectResponseContract(
-                action="constraints",
-                payload=_scene_get_constraints(ctx, object_name, include_bones),
-            )
-        elif action == "modifier_data":
-            if object_name is None:
-                return SceneInspectResponseContract(
-                    action="modifier_data",
-                    error="Error: 'modifier_data' action requires 'object_name' parameter.",
-                )
-            return SceneInspectResponseContract(
-                action="modifier_data",
-                payload=_scene_inspect_modifier_data(ctx, object_name, modifier_name, include_node_tree),
-            )
-        elif action == "render":
-            return SceneInspectResponseContract(action="render", payload=_scene_inspect_render_settings(ctx))
-        elif action == "color_management":
-            return SceneInspectResponseContract(
-                action="color_management",
-                payload=_scene_inspect_color_management(ctx),
-            )
-        elif action == "world":
-            return SceneInspectResponseContract(action="world", payload=_scene_inspect_world(ctx))
-        else:
-            return SceneInspectResponseContract(
-                action="object",
-                error=(
-                    f"Unknown action '{action}'. Valid actions: object, topology, modifiers, "
-                    "materials, constraints, modifier_data, render, color_management, world"
-                ),
-            )
+        return execute_scene_inspect(
+            ctx=ctx,
+            action=action,
+            object_name=object_name,
+            detailed=detailed,
+            include_disabled=include_disabled,
+            material_filter=material_filter,
+            include_empty_slots=include_empty_slots,
+            include_bones=include_bones,
+            modifier_name=modifier_name,
+            include_node_tree=include_node_tree,
+            inspect_object=_scene_inspect_object,
+            inspect_topology=_scene_inspect_mesh_topology,
+            inspect_modifiers=_scene_inspect_modifiers,
+            inspect_materials=_scene_inspect_material_slots,
+            inspect_constraints=_scene_get_constraints,
+            inspect_modifier_data=_scene_inspect_modifier_data,
+            inspect_render=_scene_inspect_render_settings,
+            inspect_color_management=_scene_inspect_color_management,
+            inspect_world=_scene_inspect_world,
+        )
 
     result = route_tool_call(
         tool_name="scene_inspect",
@@ -1414,13 +1401,7 @@ def _scene_inspect_object(ctx: Context, name: str) -> Dict[str, Any]:
 
     Workflow: READ-ONLY | USE → detailed object audit
     """
-    handler = get_scene_handler()
-    try:
-        report = handler.inspect_object(name)
-    except RuntimeError as e:
-        return {"error": str(e)}
-
-    return report
+    return _scene_inspect_object_impl(ctx=ctx, name=name, get_scene_handler=get_scene_handler)
 
 
 # Internal function - exposed via scene_inspect mega tool
@@ -1430,11 +1411,7 @@ def _scene_inspect_render_settings(ctx: Context) -> Dict[str, Any]:
 
     Workflow: READ-ONLY | USE → capture scene-level render configuration
     """
-    handler = get_scene_handler()
-    try:
-        return handler.inspect_render_settings()
-    except RuntimeError as e:
-        return {"error": str(e)}
+    return _scene_inspect_render_settings_impl(ctx=ctx, get_scene_handler=get_scene_handler)
 
 
 # Internal function - exposed via scene_inspect mega tool
@@ -1444,11 +1421,7 @@ def _scene_inspect_color_management(ctx: Context) -> Dict[str, Any]:
 
     Workflow: READ-ONLY | USE → capture scene appearance/display configuration
     """
-    handler = get_scene_handler()
-    try:
-        return handler.inspect_color_management()
-    except RuntimeError as e:
-        return {"error": str(e)}
+    return _scene_inspect_color_management_impl(ctx=ctx, get_scene_handler=get_scene_handler)
 
 
 # Internal function - exposed via scene_inspect mega tool
@@ -1458,11 +1431,7 @@ def _scene_inspect_world(ctx: Context) -> Dict[str, Any]:
 
     Workflow: READ-ONLY | USE → inspect scene background and world configuration
     """
-    handler = get_scene_handler()
-    try:
-        return handler.inspect_world()
-    except RuntimeError as e:
-        return {"error": str(e)}
+    return _scene_inspect_world_impl(ctx=ctx, get_scene_handler=get_scene_handler)
 
 
 def _scene_configure_render_settings(ctx: Context, settings: Dict[str, Any]) -> Dict[str, Any]:
@@ -1787,19 +1756,13 @@ def _scene_inspect_material_slots(
         material_filter: Optional material name to filter results
         include_empty_slots: If True, includes slots with no material assigned
     """
-    handler = get_scene_handler()
-    try:
-        result = handler.inspect_material_slots(
-            material_filter=material_filter, include_empty_slots=include_empty_slots
-        )
-        ctx_info(
-            ctx,
-            f"Material slot audit: {result.get('total_slots', 0)} slots "
-            f"({result.get('assigned_slots', 0)} assigned, {result.get('empty_slots', 0)} empty)",
-        )
-        return result
-    except RuntimeError as e:
-        return {"error": str(e)}
+    return _scene_inspect_material_slots_impl(
+        ctx=ctx,
+        material_filter=material_filter,
+        include_empty_slots=include_empty_slots,
+        get_scene_handler=get_scene_handler,
+        info=ctx_info,
+    )
 
 
 # Internal function - exposed via scene_inspect mega tool
@@ -1816,12 +1779,12 @@ def _scene_inspect_mesh_topology(ctx: Context, object_name: str, detailed: bool 
         object_name: Name of the mesh object.
         detailed: If True, performs expensive checks (non-manifold, loose geometry).
     """
-    handler = get_scene_handler()
-    try:
-        stats = handler.inspect_mesh_topology(object_name, detailed)
-        return stats
-    except RuntimeError as e:
-        return {"error": str(e)}
+    return _scene_inspect_mesh_topology_impl(
+        ctx=ctx,
+        object_name=object_name,
+        detailed=detailed,
+        get_scene_handler=get_scene_handler,
+    )
 
 
 # Internal function - exposed via scene_inspect mega tool
@@ -1839,16 +1802,13 @@ def _scene_inspect_modifiers(
         object_name: Optional name of the object to inspect. If None, scans all objects.
         include_disabled: If True, includes modifiers disabled in viewport/render.
     """
-    handler = get_scene_handler()
-    try:
-        result = handler.inspect_modifiers(object_name, include_disabled)
-        ctx_info(
-            ctx,
-            f"Inspected modifiers: {result.get('modifier_count', 0)} on {result.get('object_count', 0)} objects",
-        )
-        return result
-    except RuntimeError as e:
-        return {"error": str(e)}
+    return _scene_inspect_modifiers_impl(
+        ctx=ctx,
+        object_name=object_name,
+        include_disabled=include_disabled,
+        get_scene_handler=get_scene_handler,
+        info=ctx_info,
+    )
 
 
 # Internal function - exposed via scene_inspect mega tool
@@ -1856,11 +1816,12 @@ def _scene_get_constraints(ctx: Context, object_name: str, include_bones: bool =
     """
     [OBJECT MODE][READ-ONLY][SAFE] Returns object (and optional bone) constraints.
     """
-    handler = get_scene_handler()
-    try:
-        return handler.get_constraints(object_name, include_bones)
-    except RuntimeError as e:
-        return {"error": str(e)}
+    return _scene_get_constraints_impl(
+        ctx=ctx,
+        object_name=object_name,
+        include_bones=include_bones,
+        get_scene_handler=get_scene_handler,
+    )
 
 
 # Internal function - exposed via scene_inspect mega tool
@@ -1872,7 +1833,13 @@ def _scene_inspect_modifier_data(
     """
     from server.adapters.mcp.areas.modeling import _modeling_get_modifier_data
 
-    return _modeling_get_modifier_data(ctx, object_name, modifier_name, include_node_tree)
+    return _scene_inspect_modifier_data_impl(
+        ctx=ctx,
+        object_name=object_name,
+        modifier_name=modifier_name,
+        include_node_tree=include_node_tree,
+        modeling_get_modifier_data=_modeling_get_modifier_data,
+    )
 
 
 def scene_create(

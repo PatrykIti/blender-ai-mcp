@@ -1,7 +1,7 @@
 # TASK-159-02-02: Scene Context, Inspect, Snapshot, And Structural Read Slices
 
 **Parent:** [TASK-159-02](./TASK-159-02_Scene_MCP_Area_Modularization_And_Surface_Slices.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -175,3 +175,17 @@ for public_wrapper in read_heavy_scene_wrappers:
   into one read-heavy implementation pass
 - keep grouped create/configure work on `TASK-159-02-07` instead of widening
   this subtask back into write-side routing work
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- closed the full read-heavy `TASK-159-02-02` branch by landing:
+  - `TASK-159-02-02-01` scene context and selection reads
+  - `TASK-159-02-02-02` snapshot/compare plus structural reads
+  - `TASK-159-02-02-03` full `scene_inspect(...)` action matrix
+- `server/adapters/mcp/areas/scene.py` now keeps the public wrappers and
+  assistant-summary seams while the read-heavy execution logic lives in focused
+  sibling modules
+- public contracts stayed stable across scene context, snapshot/diff,
+  hierarchy/bbox/origin, and inspect action branches
