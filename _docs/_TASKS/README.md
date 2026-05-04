@@ -3,7 +3,7 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 7 tasks
+- **To Do:** 8 tasks
 - **In Progress:** 0 tasks
 - **Done:** 89
 - **Superseded:** 162
@@ -48,6 +48,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-148](./TASK-148_No_Auth_HTTP_MCP_Client_Compatibility_And_Auth_Misclassification_Recovery.md) | **No-Auth HTTP MCP Client Compatibility And Auth Misclassification Recovery** | 🔴 High | Board-level follow-on after TASK-125 for hardening the no-auth Streamable HTTP path across Claude, Codex, Gemini, and similar MCP clients without falsely advertising OAuth support. |
+| [TASK-160](./TASK-160_Guided_Client_Feedback_And_Streamable_HTTP_Recovery_UX.md) | **Guided Client Feedback And Streamable HTTP Recovery UX** | 🔴 High | Board-level follow-on after TASK-145 / TASK-157 / TASK-158 for clarifying guided-flow transitions to MCP clients, separating harness disconnects from repo runtime behavior, and evaluating whether the long-term fix should stay in existing tool contracts, move into a structured guided-flow delta, or add optional FastMCP app-surface UX without inventing a second flow. |
 
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
