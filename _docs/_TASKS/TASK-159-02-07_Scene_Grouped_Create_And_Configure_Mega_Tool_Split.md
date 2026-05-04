@@ -1,7 +1,7 @@
 # TASK-159-02-07: Scene Grouped Create And Configure Mega Tool Split
 
 **Parent:** [TASK-159-02](./TASK-159-02_Scene_MCP_Area_Modularization_And_Surface_Slices.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -108,3 +108,16 @@ from .scene_create_configure import (
 - keep promoted tracking on parent `TASK-159`
 - treat this as the write-side companion to `TASK-159-02-02` so the former
   mixed read/write leaf stays split into focused implementation passes
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- moved the grouped `scene_create(...)` / `scene_configure(...)` execution logic
+  out of `server/adapters/mcp/areas/scene.py` into
+  `server/adapters/mcp/areas/scene_create_configure.py`
+- kept `scene.py` as the stable MCP facade and preserved the existing
+  `_scene_create_*` / `_scene_configure_*` seam names as thin wrappers so
+  current unit patch points and structured delivery behavior remain unchanged
+- preserved action vocabularies, coordinate parsing behavior, explicit invalid
+  payload errors, and grouped render/color/world write roundtrip behavior

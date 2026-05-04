@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [308](./308-2026-05-04-task-159-scene-create-configure-slice.md) | 2026-05-04 | **TASK-159 scene create/configure slice** | - |
 | [307](./307-2026-05-04-task-159-scene-structural-read-slice.md) | 2026-05-04 | **TASK-159 scene structural-read slice** | - |
 | [306](./306-2026-05-04-task-159-reference-current-view-compare-split.md) | 2026-05-04 | **TASK-159 reference current-view compare split** | - |
 | [305](./305-2026-05-04-task-159-addon-scene-lifecycle-context-mixin.md) | 2026-05-04 | **TASK-159 addon scene lifecycle/context mixin** | - |

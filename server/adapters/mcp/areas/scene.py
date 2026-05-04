@@ -8,6 +8,16 @@ from fastmcp import Context
 from fastmcp.utilities.types import Image
 from pydantic import ValidationError
 
+from server.adapters.mcp.areas.scene_create_configure import (
+    execute_scene_configure,
+    execute_scene_configure_color_management,
+    execute_scene_configure_render_settings,
+    execute_scene_configure_world,
+    execute_scene_create,
+    execute_scene_create_camera,
+    execute_scene_create_empty,
+    execute_scene_create_light,
+)
 from server.adapters.mcp.areas.scene_state_reads import (
     execute_scene_compare_snapshot,
     execute_scene_context,
@@ -1374,31 +1384,14 @@ def scene_configure(
     """
 
     def execute() -> SceneConfigureResponseContract:
-        if not isinstance(settings, dict):
-            return SceneConfigureResponseContract(action=action, error="'settings' must be an object/dict.")
-
-        try:
-            if action == "render":
-                return SceneConfigureResponseContract(
-                    action="render",
-                    payload=_scene_configure_render_settings(ctx, settings),
-                )
-            if action == "color_management":
-                return SceneConfigureResponseContract(
-                    action="color_management",
-                    payload=_scene_configure_color_management(ctx, settings),
-                )
-            if action == "world":
-                return SceneConfigureResponseContract(
-                    action="world",
-                    payload=_scene_configure_world(ctx, settings),
-                )
-            return SceneConfigureResponseContract(
-                action="render",
-                error=f"Unknown action '{action}'. Valid actions: render, color_management, world",
-            )
-        except (RuntimeError, ValueError) as e:
-            return SceneConfigureResponseContract(action=action, error=str(e))
+        return execute_scene_configure(
+            ctx=ctx,
+            action=action,
+            settings=settings,
+            configure_render=_scene_configure_render_settings,
+            configure_color_management=_scene_configure_color_management,
+            configure_world=_scene_configure_world,
+        )
 
     result = route_tool_call(
         tool_name="scene_configure",
@@ -1476,24 +1469,21 @@ def _scene_configure_render_settings(ctx: Context, settings: Dict[str, Any]) -> 
     """
     [SCENE][NON-DESTRUCTIVE] Applies grouped render settings and returns the resulting render snapshot.
     """
-    handler = get_scene_handler()
-    return handler.configure_render_settings(settings)
+    return execute_scene_configure_render_settings(ctx=ctx, settings=settings, handler_getter=get_scene_handler)
 
 
 def _scene_configure_color_management(ctx: Context, settings: Dict[str, Any]) -> Dict[str, Any]:
     """
     [SCENE][NON-DESTRUCTIVE] Applies grouped color-management settings and returns the resulting snapshot.
     """
-    handler = get_scene_handler()
-    return handler.configure_color_management(settings)
+    return execute_scene_configure_color_management(ctx=ctx, settings=settings, handler_getter=get_scene_handler)
 
 
 def _scene_configure_world(ctx: Context, settings: Dict[str, Any]) -> Dict[str, Any]:
     """
     [SCENE][NON-DESTRUCTIVE] Applies grouped world/background settings and returns the resulting world snapshot.
     """
-    handler = get_scene_handler()
-    return handler.configure_world(settings)
+    return execute_scene_configure_world(ctx=ctx, settings=settings, handler_getter=get_scene_handler)
 
 
 def _format_viewport_output(
@@ -1927,75 +1917,24 @@ def scene_create(
     """
 
     def execute() -> SceneCreateResponseContract:
-        if action == "light":
-            try:
-                parsed_color = parse_coordinate(color) or [1.0, 1.0, 1.0]
-                parsed_location = parse_coordinate(location) or [0.0, 0.0, 5.0]
-                created_name = _scene_create_light(ctx, light_type, energy, parsed_color, parsed_location, name)
-                return SceneCreateResponseContract(
-                    action="light",
-                    payload={
-                        "object_name": created_name,
-                        "object_type": "LIGHT",
-                        "light_type": light_type,
-                        "energy": energy,
-                        "color": parsed_color,
-                        "location": parsed_location,
-                    },
-                )
-            except (RuntimeError, ValueError) as e:
-                return SceneCreateResponseContract(action="light", error=str(e))
-        if action == "camera":
-            try:
-                parsed_camera_location = parse_coordinate(location) or None
-                parsed_camera_rotation = parse_coordinate(rotation) or None
-                if parsed_camera_location is None or parsed_camera_rotation is None:
-                    return SceneCreateResponseContract(
-                        action="camera",
-                        error="Invalid location or rotation coordinate payload.",
-                    )
-                created_name = _scene_create_camera(
-                    ctx,
-                    parsed_camera_location,
-                    parsed_camera_rotation,
-                    lens,
-                    clip_start,
-                    clip_end,
-                    name,
-                )
-                return SceneCreateResponseContract(
-                    action="camera",
-                    payload={
-                        "object_name": created_name,
-                        "object_type": "CAMERA",
-                        "location": parsed_camera_location,
-                        "rotation": parsed_camera_rotation,
-                        "lens": lens,
-                        "clip_start": clip_start,
-                        "clip_end": clip_end,
-                    },
-                )
-            except (RuntimeError, ValueError) as e:
-                return SceneCreateResponseContract(action="camera", error=str(e))
-        if action == "empty":
-            try:
-                parsed_location = parse_coordinate(location) or [0.0, 0.0, 0.0]
-                created_name = _scene_create_empty(ctx, empty_type, size, parsed_location, name)
-                return SceneCreateResponseContract(
-                    action="empty",
-                    payload={
-                        "object_name": created_name,
-                        "object_type": "EMPTY",
-                        "empty_type": empty_type,
-                        "size": size,
-                        "location": parsed_location,
-                    },
-                )
-            except (RuntimeError, ValueError) as e:
-                return SceneCreateResponseContract(action="empty", error=str(e))
-        return SceneCreateResponseContract(
-            action="light",
-            error=f"Unknown action '{action}'. Valid actions: light, camera, empty",
+        return execute_scene_create(
+            ctx=ctx,
+            action=action,
+            location=location,
+            rotation=rotation,
+            name=name,
+            light_type=light_type,
+            energy=energy,
+            color=color,
+            lens=lens,
+            clip_start=clip_start,
+            clip_end=clip_end,
+            empty_type=empty_type,
+            size=size,
+            parse_coordinate=parse_coordinate,
+            create_light=_scene_create_light,
+            create_camera=_scene_create_camera,
+            create_empty=_scene_create_empty,
         )
 
     result = route_tool_call(
@@ -2046,11 +1985,18 @@ def _scene_create_light(
         location: [x, y, z]. Can be a list or string.
         name: Optional custom name.
     """
-    handler = get_scene_handler()
     try:
         parsed_color = parse_coordinate(color) or [1.0, 1.0, 1.0]
         parsed_location = parse_coordinate(location) or [0.0, 0.0, 5.0]
-        return handler.create_light(type, energy, parsed_color, parsed_location, name)
+        return execute_scene_create_light(
+            ctx=ctx,
+            handler_getter=get_scene_handler,
+            type=type,
+            energy=energy,
+            color=parsed_color,
+            location=parsed_location,
+            name=name,
+        )
     except (RuntimeError, ValueError) as e:
         return str(e)
 
@@ -2078,13 +2024,21 @@ def _scene_create_camera(
         clip_end: Far clipping distance.
         name: Optional custom name.
     """
-    handler = get_scene_handler()
     try:
         parsed_location = parse_coordinate(location)
         parsed_rotation = parse_coordinate(rotation)
         if parsed_location is None or parsed_rotation is None:
             return "Invalid location or rotation coordinate payload."
-        return handler.create_camera(parsed_location, parsed_rotation, lens, clip_start, clip_end, name)
+        return execute_scene_create_camera(
+            ctx=ctx,
+            handler_getter=get_scene_handler,
+            location=parsed_location,
+            rotation=parsed_rotation,
+            lens=lens,
+            clip_start=clip_start,
+            clip_end=clip_end,
+            name=name,
+        )
     except (RuntimeError, ValueError) as e:
         return str(e)
 
@@ -2108,10 +2062,16 @@ def _scene_create_empty(
         location: [x, y, z]. Can be a list or string '[0.0, 0.0, 0.0]'.
         name: Optional custom name.
     """
-    handler = get_scene_handler()
     try:
         parsed_location = parse_coordinate(location) or [0.0, 0.0, 0.0]
-        return handler.create_empty(type, size, parsed_location, name)
+        return execute_scene_create_empty(
+            ctx=ctx,
+            handler_getter=get_scene_handler,
+            type=type,
+            size=size,
+            location=parsed_location,
+            name=name,
+        )
     except (RuntimeError, ValueError) as e:
         return str(e)
 
