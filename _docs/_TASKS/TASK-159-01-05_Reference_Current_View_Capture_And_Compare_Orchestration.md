@@ -1,7 +1,7 @@
 # TASK-159-01-05: Reference Current-View Capture And Compare Orchestration
 
 **Parent:** [TASK-159-01](./TASK-159-01_Reference_Area_Modularization_And_Checkpoint_Assembly_Boundaries.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -95,3 +95,17 @@ async def reference_compare_current_view(...):
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- moved the current-view capture/compare orchestration out of
+  `server/adapters/mcp/areas/reference.py` into:
+  - `server/adapters/mcp/areas/reference_current_view.py`
+  - `server/adapters/mcp/areas/reference_checkpoint_compare.py`
+- kept `reference_compare_current_view(...)` and the checkpoint compare public
+  wrappers in `reference.py` as the stable MCP facade
+- preserved goal preconditions, bounded checkpoint artifact writes,
+  current-view prompt-hint semantics, and compare response envelopes while
+  reducing the anonymous shared edit zone around current-view compare

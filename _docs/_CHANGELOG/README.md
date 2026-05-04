@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [306](./306-2026-05-04-task-159-reference-current-view-compare-split.md) | 2026-05-04 | **TASK-159 reference current-view compare split** | - |
 | [305](./305-2026-05-04-task-159-addon-scene-lifecycle-context-mixin.md) | 2026-05-04 | **TASK-159 addon scene lifecycle/context mixin** | - |
 | [304](./304-2026-05-04-task-159-scene-context-state-read-slice.md) | 2026-05-04 | **TASK-159 scene context state-read slice** | - |
 | [303](./303-2026-05-04-task-159-addon-scene-world-render-mixin.md) | 2026-05-04 | **TASK-159 addon scene world/render mixin** | - |
