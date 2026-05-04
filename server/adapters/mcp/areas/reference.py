@@ -29,14 +29,24 @@ from server.adapters.mcp.areas.reference_images_runtime import (
 from server.adapters.mcp.areas.reference_images_runtime import (
     handle_reference_images as _handle_reference_images,
 )
+from server.adapters.mcp.areas.reference_silhouette import (
+    build_action_hints_from_silhouette as _build_action_hints_from_silhouette,
+)
+from server.adapters.mcp.areas.reference_silhouette import (
+    build_silhouette_analysis_payload as _build_silhouette_analysis_payload,
+)
+from server.adapters.mcp.areas.reference_understanding import (
+    refresh_reference_understanding_summary as _refresh_reference_understanding_summary_impl,
+)
+from server.adapters.mcp.areas.reference_view_diagnostics import (
+    build_stage_view_diagnostics_hints as _build_stage_view_diagnostics_hints,
+)
+from server.adapters.mcp.areas.reference_view_diagnostics import (
+    build_view_diagnostics_hints as _build_view_diagnostics_hints,
+)
 from server.adapters.mcp.context_utils import ctx_session_id, ctx_transport_type
 from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract
-from server.adapters.mcp.contracts.quality_gates import (
-    GatePlanContract,
-    GateProposalContract,
-    refresh_gate_plan_status,
-    without_proposal_source,
-)
+from server.adapters.mcp.contracts.quality_gates import GatePlanContract
 from server.adapters.mcp.contracts.reference import (
     GuidedReferenceReadinessContract,
     ReferenceActionHintContract,
@@ -46,7 +56,6 @@ from server.adapters.mcp.contracts.reference import (
     ReferenceCorrectionTruthEvidenceContract,
     ReferenceCorrectionVisionEvidenceContract,
     ReferenceHybridBudgetControlContract,
-    ReferenceImageRecordContract,
     ReferenceImagesResponseContract,
     ReferenceIterateStageCheckpointResponseContract,
     ReferencePartSegmentationContract,
@@ -78,7 +87,6 @@ from server.adapters.mcp.contracts.scene import (
     SceneTruthFollowupContract,
     SceneTruthFollowupItemContract,
 )
-from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
 from server.adapters.mcp.sampling.result_types import to_vision_assistant_contract
 from server.adapters.mcp.session_capabilities import (
     GuidedReferenceReadinessState,
@@ -96,19 +104,13 @@ from server.adapters.mcp.transforms.quality_gate_verifier import verify_gate_pla
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.vision import (
     CapturePresetProfile,
-    CapturePresetSpec,
-    VisionBackendUnavailableError,
-    VisionImageInput,
-    VisionRequest,
     build_reference_capture_images,
     build_vision_request_from_stage_captures,
     capture_stage_images,
-    resolve_capture_preset_specs,
     run_vision_assist,
     select_reference_records_for_target,
 )
 from server.adapters.mcp.vision.runner import VISION_ASSIST_POLICY
-from server.adapters.mcp.vision.silhouette import build_silhouette_analysis
 from server.application.services.spatial_graph import get_spatial_graph_service
 from server.infrastructure.di import get_collection_handler, get_scene_handler, get_vision_backend_resolver
 from server.infrastructure.tmp_paths import get_viewport_output_paths
@@ -1839,124 +1841,6 @@ def _configured_part_segmentation() -> ReferencePartSegmentationContract:
     )
 
 
-def _blocked_reference_understanding_summary(
-    *,
-    goal: str | None,
-    reason: Literal["goal_required", "reference_images_required", "vision_backend_unavailable"],
-    message: str,
-    reference_ids: list[str] | None = None,
-) -> ReferenceUnderstandingSummaryContract:
-    status: Literal["blocked", "unavailable"] = "blocked"
-    if reason == "vision_backend_unavailable":
-        status = "unavailable"
-    return ReferenceUnderstandingSummaryContract(
-        status=status,
-        goal=goal,
-        reference_ids=list(reference_ids or []),
-        reason=reason,
-        message=message,
-    )
-
-
-def _active_reference_records(session: SessionCapabilityState) -> tuple[ReferenceImageRecordContract, ...]:
-    return tuple(ReferenceImageRecordContract.model_validate(item) for item in list(session.reference_images or []))
-
-
-def _reference_understanding_request(
-    *,
-    goal: str,
-    reference_records: tuple[ReferenceImageRecordContract, ...],
-) -> VisionRequest:
-    reference_images = build_reference_capture_images(reference_records)
-    return VisionRequest(
-        goal=goal,
-        images=tuple(
-            VisionImageInput(
-                path=image.image_path,
-                role="reference",
-                label=image.label,
-                media_type=image.media_type,
-            )
-            for image in reference_images
-        ),
-        prompt_hint="reference_understanding",
-        metadata={
-            "mode": "reference_understanding",
-            "reference_ids": [record.reference_id for record in reference_records],
-            "reference_labels": [record.label or record.reference_id for record in reference_records],
-            "source": "reference_images",
-        },
-    )
-
-
-def _without_reference_understanding_gates(
-    gate_plan: GatePlanContract | None,
-    *,
-    tracked_gate_ids: list[str] | None,
-) -> GatePlanContract | None:
-    if gate_plan is None:
-        return None
-
-    tracked_ids = {str(item).strip() for item in tracked_gate_ids or [] if str(item).strip()}
-    retained_gates = []
-    removed_gate_ids: set[str] = set()
-    for gate in gate_plan.gates:
-        if gate.gate_id not in tracked_ids and "reference_understanding" not in gate.proposal_sources:
-            retained_gates.append(gate)
-            continue
-        retained_gate = without_proposal_source(gate, "reference_understanding")
-        if retained_gate is None:
-            removed_gate_ids.add(gate.gate_id)
-            continue
-        retained_gates.append(retained_gate)
-    retained_warnings = [
-        warning
-        for warning in gate_plan.policy_warnings
-        if warning.gate_id is None or warning.gate_id not in removed_gate_ids
-    ]
-    return refresh_gate_plan_status(
-        gate_plan.model_copy(
-            update={
-                "gates": retained_gates,
-                "policy_warnings": retained_warnings,
-            }
-        )
-    )
-
-
-def _reference_understanding_gate_slice(gate_plan: GatePlanContract | None) -> GatePlanContract | None:
-    if gate_plan is None:
-        return None
-
-    slice_gates = [gate for gate in gate_plan.gates if "reference_understanding" in gate.proposal_sources]
-    if not slice_gates:
-        return None
-
-    slice_gate_ids = {gate.gate_id for gate in slice_gates}
-    slice_warnings = [
-        warning for warning in gate_plan.policy_warnings if warning.gate_id is None or warning.gate_id in slice_gate_ids
-    ]
-    return refresh_gate_plan_status(
-        gate_plan.model_copy(
-            update={
-                "gates": slice_gates,
-                "policy_warnings": slice_warnings,
-            }
-        )
-    )
-
-
-async def _persist_reference_understanding_state_async(
-    ctx: Context,
-    state: SessionCapabilityState,
-) -> SessionCapabilityState:
-    """Persist one RU-driven session state update and immediately reapply visibility."""
-
-    await set_session_capability_state_async(ctx, state)
-    await apply_visibility_for_session_state(ctx, state)
-    return state
-
-
 async def refresh_reference_understanding_summary_async(
     ctx: Context,
     *,
@@ -1964,515 +1848,16 @@ async def refresh_reference_understanding_summary_async(
 ) -> SessionCapabilityState:
     """Refresh session-scoped reference understanding from active references when possible."""
 
-    current = session or await get_session_capability_state_async(ctx)
-    existing_gate_plan = GatePlanContract.model_validate(current.gate_plan) if current.gate_plan is not None else None
-    base_gate_plan = _without_reference_understanding_gates(
-        existing_gate_plan,
-        tracked_gate_ids=current.reference_understanding_gate_ids,
+    return await _refresh_reference_understanding_summary_impl(
+        ctx,
+        session=session,
+        get_session_capability_state_async=get_session_capability_state_async,
+        set_session_capability_state_async=set_session_capability_state_async,
+        apply_visibility_for_session_state=apply_visibility_for_session_state,
+        build_reference_capture_images=build_reference_capture_images,
+        get_vision_backend_resolver=get_vision_backend_resolver,
+        ingest_quality_gate_proposal_async=ingest_quality_gate_proposal_async,
     )
-    if not current.goal:
-        cleared = replace(
-            current,
-            gate_plan=None if base_gate_plan is None else base_gate_plan.model_dump(mode="json", exclude_none=True),
-            reference_understanding_summary=None,
-            reference_understanding_gate_ids=None,
-        )
-        return await _persist_reference_understanding_state_async(ctx, cleared)
-
-    reference_records = _active_reference_records(current)
-    reference_ids = [record.reference_id for record in reference_records]
-    if not reference_records:
-        blocked = _blocked_reference_understanding_summary(
-            goal=current.goal,
-            reason="reference_images_required",
-            message="Attach at least one active reference image before reference understanding can run.",
-        )
-        updated = replace(
-            current,
-            gate_plan=None if base_gate_plan is None else base_gate_plan.model_dump(mode="json", exclude_none=True),
-            reference_understanding_summary=blocked.model_dump(mode="json", exclude_none=True),
-            reference_understanding_gate_ids=None,
-        )
-        return await _persist_reference_understanding_state_async(ctx, updated)
-
-    existing_summary = current.reference_understanding_summary or {}
-    if (
-        existing_summary.get("status") == "available"
-        and existing_summary.get("goal") == current.goal
-        and list(existing_summary.get("reference_ids") or []) == reference_ids
-    ):
-        return current
-
-    request = _reference_understanding_request(goal=current.goal, reference_records=reference_records)
-    resolver = get_vision_backend_resolver()
-    try:
-        backend = resolver.resolve_default()
-        payload = await backend.analyze(request)
-        summary = ReferenceUnderstandingSummaryContract.model_validate(payload)
-    except VisionBackendUnavailableError as exc:
-        unavailable = _blocked_reference_understanding_summary(
-            goal=current.goal,
-            reason="vision_backend_unavailable",
-            message=str(exc),
-            reference_ids=reference_ids,
-        )
-        updated = replace(
-            current,
-            gate_plan=None if base_gate_plan is None else base_gate_plan.model_dump(mode="json", exclude_none=True),
-            reference_understanding_summary=unavailable.model_dump(mode="json", exclude_none=True),
-            reference_understanding_gate_ids=None,
-        )
-        return await _persist_reference_understanding_state_async(ctx, updated)
-    except Exception as exc:
-        unavailable = _blocked_reference_understanding_summary(
-            goal=current.goal,
-            reason="vision_backend_unavailable",
-            message=f"Reference understanding could not complete: {exc}",
-            reference_ids=reference_ids,
-        )
-        updated = replace(
-            current,
-            gate_plan=None if base_gate_plan is None else base_gate_plan.model_dump(mode="json", exclude_none=True),
-            reference_understanding_summary=unavailable.model_dump(mode="json", exclude_none=True),
-            reference_understanding_gate_ids=None,
-        )
-        return await _persist_reference_understanding_state_async(ctx, updated)
-
-    accepted_gate_ids: list[str] | None = None
-    updated_session = replace(
-        current,
-        gate_plan=None if base_gate_plan is None else base_gate_plan.model_dump(mode="json", exclude_none=True),
-    )
-    if summary.gate_proposals:
-        gate_proposal = GateProposalContract(
-            proposal_id=summary.understanding_id,
-            source="reference_understanding",
-            goal=current.goal,
-            gates=summary.gate_proposals,
-            source_provenance=summary.source_provenance,
-        )
-        intake_result = await ingest_quality_gate_proposal_async(
-            ctx,
-            gate_proposal.model_dump(mode="json", exclude_none=True),
-        )
-        if intake_result.status == "accepted" and intake_result.gate_plan is not None:
-            replacement_slice = _reference_understanding_gate_slice(intake_result.gate_plan)
-            updated_session = replace(
-                updated_session,
-                gate_plan=intake_result.gate_plan.model_dump(mode="json", exclude_none=True),
-            )
-            accepted_gate_ids = (
-                None if replacement_slice is None else [gate.gate_id for gate in replacement_slice.gates]
-            )
-
-    final_state = replace(
-        updated_session,
-        reference_understanding_summary=summary.model_dump(mode="json", exclude_none=True),
-        reference_understanding_gate_ids=accepted_gate_ids or None,
-    )
-    return await _persist_reference_understanding_state_async(ctx, final_state)
-
-
-def _build_silhouette_analysis_payload(
-    *,
-    selected_reference_records: list[ReferenceImageRecordContract] | tuple[ReferenceImageRecordContract, ...],
-    captures: list[VisionCaptureImageContract] | tuple[VisionCaptureImageContract, ...],
-    target_view: str | None,
-) -> ReferenceSilhouetteAnalysisContract | None:
-    if not selected_reference_records or not captures:
-        return None
-
-    reference_record = selected_reference_records[0]
-    capture = _select_silhouette_analysis_capture(captures=captures, target_view=target_view)
-    payload = build_silhouette_analysis(
-        reference_path=reference_record.stored_path,
-        capture_path=capture.image_path,
-        reference_label=reference_record.label or reference_record.reference_id,
-        capture_label=capture.label,
-        target_view=target_view,
-    )
-    return ReferenceSilhouetteAnalysisContract.model_validate(payload)
-
-
-def _capture_matches_target_view(capture: VisionCaptureImageContract, target_view: str) -> bool:
-    normalized_target = target_view.strip().lower()
-    if not normalized_target:
-        return False
-
-    for value in (capture.preset_name, capture.label):
-        normalized_value = str(value or "").strip().lower()
-        if not normalized_value:
-            continue
-        if normalized_value == normalized_target or normalized_value.endswith(f"_{normalized_target}"):
-            return True
-        tokens = [token for token in re.split(r"[^a-z0-9]+", normalized_value) if token]
-        if normalized_target in tokens:
-            return True
-    return False
-
-
-def _select_silhouette_analysis_capture(
-    *,
-    captures: list[VisionCaptureImageContract] | tuple[VisionCaptureImageContract, ...],
-    target_view: str | None,
-) -> VisionCaptureImageContract:
-    if target_view:
-        for capture in captures:
-            if capture.view_kind == "focus" and _capture_matches_target_view(capture, target_view):
-                return capture
-        for capture in captures:
-            if _capture_matches_target_view(capture, target_view):
-                return capture
-
-    for capture in captures:
-        if capture.view_kind == "focus":
-            return capture
-    return captures[0]
-
-
-def _resolve_stage_view_diagnostics_preset(
-    *,
-    captures: list[VisionCaptureImageContract] | tuple[VisionCaptureImageContract, ...],
-    preset_profile: CapturePresetProfile,
-    target_view: str | None,
-) -> tuple[VisionCaptureImageContract, CapturePresetSpec | None]:
-    capture = _select_silhouette_analysis_capture(captures=captures, target_view=target_view)
-    preset_name = str(capture.preset_name or "").strip()
-    if not preset_name:
-        return capture, None
-
-    for preset in resolve_capture_preset_specs(preset_profile):
-        if preset.name == preset_name:
-            return capture, preset
-    return capture, None
-
-
-def _build_stage_view_diagnostics_hints(
-    *,
-    scene_handler: Any,
-    captures: list[VisionCaptureImageContract] | tuple[VisionCaptureImageContract, ...],
-    preset_profile: CapturePresetProfile,
-    target_object: str | None,
-    target_objects: list[str] | tuple[str, ...],
-    collection_name: str | None,
-    target_view: str | None,
-) -> list[ReferenceViewDiagnosticsHintContract] | None:
-    diagnostic_target = target_object or next((name for name in target_objects if str(name or "").strip()), None)
-    if not diagnostic_target or not captures or not hasattr(scene_handler, "get_view_diagnostics"):
-        return None
-
-    capture, preset = _resolve_stage_view_diagnostics_preset(
-        captures=captures,
-        preset_profile=preset_profile,
-        target_view=target_view,
-    )
-    focus_target = (
-        diagnostic_target if (preset.focus_target if preset is not None else capture.view_kind == "focus") else None
-    )
-    view_name = preset.standard_view if preset is not None else None
-    orbit_horizontal = float(preset.orbit_horizontal or 0.0) if preset is not None else 0.0
-    orbit_vertical = float(preset.orbit_vertical or 0.0) if preset is not None else 0.0
-    zoom_factor = None
-    if preset is not None and preset.focus_zoom_factor != 1.0:
-        zoom_factor = float(preset.focus_zoom_factor)
-
-    try:
-        diagnostics_payload = scene_handler.get_view_diagnostics(
-            target_object=diagnostic_target,
-            target_objects=list(target_objects or []),
-            collection_name=collection_name,
-            camera_name=None,
-            focus_target=focus_target,
-            view_name=view_name,
-            orbit_horizontal=orbit_horizontal,
-            orbit_vertical=orbit_vertical,
-            zoom_factor=zoom_factor,
-            persist_view=False,
-        )
-    except Exception:
-        return None
-
-    return _build_view_diagnostics_hints(
-        diagnostics_payload=diagnostics_payload,
-        target_object=diagnostic_target,
-        camera_name=None,
-        focus_target=focus_target,
-        view_name=view_name,
-        orbit_horizontal=orbit_horizontal,
-        orbit_vertical=orbit_vertical,
-        zoom_factor=zoom_factor,
-    )
-
-
-def _build_action_hints_from_silhouette(
-    silhouette_analysis: ReferenceSilhouetteAnalysisContract | None,
-    *,
-    target_object: str | None,
-) -> list[ReferenceActionHintContract]:
-    if silhouette_analysis is None or silhouette_analysis.status != "available":
-        return []
-
-    metrics = {metric.metric_id: metric for metric in silhouette_analysis.metrics}
-    hints: list[ReferenceActionHintContract] = []
-
-    def add_hint(
-        *,
-        hint_id: str,
-        hint_type: str,
-        summary: str,
-        metric_ids: list[str],
-        recommended_tools: list[ReferenceRefinementToolCandidateContract],
-        priority: Literal["high", "normal"] = "normal",
-    ) -> None:
-        hints.append(
-            ReferenceActionHintContract(
-                hint_id=hint_id,
-                hint_type=hint_type,  # type: ignore[arg-type]
-                summary=summary,
-                priority=priority,
-                target_object=target_object,
-                metric_ids=metric_ids,
-                recommended_tools=recommended_tools,
-            )
-        )
-
-    upper_band = metrics.get("upper_band_width_delta")
-    if upper_band is not None and upper_band.delta <= -0.03:
-        add_hint(
-            hint_id="silhouette_upper_expand",
-            hint_type="widen_upper_profile",
-            summary="Upper silhouette band is narrower than the reference; build the upper profile mass before another broad pass.",
-            metric_ids=["upper_band_width_delta"],
-            recommended_tools=[
-                ReferenceRefinementToolCandidateContract(
-                    tool_name="mesh_extrude_region",
-                    reason="Extrude the upper silhouette mass to widen the creature profile in a bounded way.",
-                    priority="high",
-                ),
-                ReferenceRefinementToolCandidateContract(
-                    tool_name="mesh_loop_cut",
-                    reason="Add support loops so the widened upper silhouette stays controllable.",
-                    priority="normal",
-                ),
-            ],
-            priority="high",
-        )
-    if upper_band is not None and upper_band.delta >= 0.03:
-        add_hint(
-            hint_id="silhouette_upper_reduce",
-            hint_type="reduce_upper_profile",
-            summary="Upper silhouette band is broader than the reference; simplify or tighten the upper profile before adding detail.",
-            metric_ids=["upper_band_width_delta"],
-            recommended_tools=[
-                ReferenceRefinementToolCandidateContract(
-                    tool_name="mesh_dissolve",
-                    reason="Dissolve or simplify support edges while preserving the overall low-poly form.",
-                    priority="normal",
-                ),
-                ReferenceRefinementToolCandidateContract(
-                    tool_name="mesh_merge_by_distance",
-                    reason="Clean up doubled or noisy vertices after reducing the upper profile.",
-                    priority="normal",
-                ),
-            ],
-        )
-
-    left_projection_metric = metrics.get("left_projection_delta")
-    if left_projection_metric is not None and left_projection_metric.delta < -0.05:
-        add_hint(
-            hint_id="silhouette_left_extend",
-            hint_type="extend_left_profile",
-            summary="Left-side silhouette projection is shorter than the reference; extend that profile mass before smoothing.",
-            metric_ids=["left_projection_delta"],
-            recommended_tools=[
-                ReferenceRefinementToolCandidateContract(
-                    tool_name="mesh_extrude_region",
-                    reason="Extend the silhouette profile with a bounded extrusion in the underbuilt direction.",
-                    priority="high",
-                ),
-                ReferenceRefinementToolCandidateContract(
-                    tool_name="modeling_transform_object",
-                    reason="If the profile is object-level, nudge the blocker object instead of overediting mesh topology.",
-                    priority="normal",
-                ),
-            ],
-            priority="high",
-        )
-
-    right_projection_metric = metrics.get("right_projection_delta")
-    if right_projection_metric is not None and right_projection_metric.delta < -0.05:
-        add_hint(
-            hint_id="silhouette_right_extend",
-            hint_type="extend_right_profile",
-            summary="Right-side silhouette projection is shorter than the reference; extend that profile mass before smoothing.",
-            metric_ids=["right_projection_delta"],
-            recommended_tools=[
-                ReferenceRefinementToolCandidateContract(
-                    tool_name="mesh_extrude_region",
-                    reason="Extend the silhouette profile with a bounded extrusion in the underbuilt direction.",
-                    priority="high",
-                ),
-                ReferenceRefinementToolCandidateContract(
-                    tool_name="modeling_transform_object",
-                    reason="If the profile is object-level, nudge the blocker object instead of overediting mesh topology.",
-                    priority="normal",
-                ),
-            ],
-            priority="high",
-        )
-
-    aspect_ratio = metrics.get("aspect_ratio_delta")
-    if aspect_ratio is not None and abs(aspect_ratio.delta) >= 0.18:
-        add_hint(
-            hint_id="silhouette_rebalance_proportion",
-            hint_type="rebalance_proportion",
-            summary="Overall silhouette aspect ratio drift is still significant; re-check proportions before continuing free-form edits.",
-            metric_ids=["aspect_ratio_delta"],
-            recommended_tools=[
-                ReferenceRefinementToolCandidateContract(
-                    tool_name="scene_measure_dimensions",
-                    reason="Measure the current object dimensions before scaling a major mass.",
-                    priority="high",
-                ),
-                ReferenceRefinementToolCandidateContract(
-                    tool_name="scene_assert_proportion",
-                    reason="Verify the repaired ratio against an explicit expected proportion.",
-                    priority="high",
-                ),
-                ReferenceRefinementToolCandidateContract(
-                    tool_name="macro_adjust_relative_proportion",
-                    reason="Use a bounded ratio repair instead of ad hoc free-form scaling when major proportions drift.",
-                    priority="high",
-                ),
-            ],
-            priority="high",
-        )
-
-    mask_iou = metrics.get("mask_iou")
-    contour_drift = metrics.get("contour_drift")
-    if (mask_iou is not None and mask_iou.observed_value <= 0.55) or (
-        contour_drift is not None and contour_drift.observed_value >= 0.14
-    ):
-        metric_ids: list[str] = []
-        if mask_iou is not None and mask_iou.observed_value <= 0.55:
-            metric_ids.append("mask_iou")
-        if contour_drift is not None and contour_drift.observed_value >= 0.14:
-            metric_ids.append("contour_drift")
-        add_hint(
-            hint_id="silhouette_inspect_before_edit",
-            hint_type="inspect_before_edit",
-            summary="Global silhouette mismatch is still high; inspect the current object state before applying another free-form correction.",
-            metric_ids=metric_ids,
-            recommended_tools=[
-                ReferenceRefinementToolCandidateContract(
-                    tool_name="inspect_scene",
-                    reason="Inspect the object state before another silhouette correction when deterministic drift remains high.",
-                    priority="high",
-                ),
-                ReferenceRefinementToolCandidateContract(
-                    tool_name="reference_iterate_stage_checkpoint",
-                    reason="Re-run a bounded iterate checkpoint after a targeted correction instead of making a large uncontrolled edit.",
-                    priority="normal",
-                ),
-            ],
-            priority="high",
-        )
-
-    return hints
-
-
-def _build_view_diagnostics_hints(
-    *,
-    diagnostics_payload: dict[str, Any] | None,
-    target_object: str | None,
-    camera_name: str | None,
-    focus_target: str | None,
-    view_name: str | None,
-    orbit_horizontal: float,
-    orbit_vertical: float,
-    zoom_factor: float | None,
-) -> list[ReferenceViewDiagnosticsHintContract]:
-    if not isinstance(diagnostics_payload, dict):
-        return []
-
-    hints: list[ReferenceViewDiagnosticsHintContract] = []
-    for item in list(diagnostics_payload.get("targets") or []):
-        if not isinstance(item, dict):
-            continue
-        object_name = str(item.get("object_name") or "").strip()
-        verdict = str(item.get("visibility_verdict") or "").strip()
-        projection = item.get("projection") if isinstance(item.get("projection"), dict) else {}
-        centered = bool(projection.get("centered")) if isinstance(projection, dict) else False
-        raw_frame_coverage_ratio = projection.get("frame_coverage_ratio") if isinstance(projection, dict) else None
-        frame_coverage_ratio: float | None
-        if isinstance(raw_frame_coverage_ratio, (int, float)):
-            frame_coverage_ratio = float(raw_frame_coverage_ratio)
-        else:
-            frame_coverage_ratio = None
-
-        trigger: Literal["framing_ambiguity", "visibility_ambiguity", "occlusion_detected", "target_off_frame"] | None
-        priority: Literal["high", "normal"] = "normal"
-        reason: str | None = None
-
-        if verdict == "fully_occluded":
-            trigger = "occlusion_detected"
-            priority = "high"
-            reason = (
-                f"'{object_name or target_object or focus_target or 'target'}' is currently fully occluded from this view. "
-                "Call scene_view_diagnostics(...) before another compare/correction step so framing and occlusion are explicit."
-            )
-        elif verdict == "outside_frame":
-            trigger = "target_off_frame"
-            priority = "high"
-            reason = (
-                f"'{object_name or target_object or focus_target or 'target'}' is currently outside the frame. "
-                "Call scene_view_diagnostics(...) before another compare/correction step so reframing is driven by typed view facts."
-            )
-        elif verdict == "partially_visible":
-            trigger = "visibility_ambiguity"
-            reason = (
-                f"'{object_name or target_object or focus_target or 'target'}' is only partially visible from this view. "
-                "Call scene_view_diagnostics(...) to inspect frame coverage and occlusion before another correction pass."
-            )
-        elif frame_coverage_ratio is not None and (frame_coverage_ratio < 0.999 or not centered):
-            trigger = "framing_ambiguity"
-            reason = (
-                f"'{object_name or target_object or focus_target or 'target'}' is not cleanly centered/framed in the current view. "
-                "Call scene_view_diagnostics(...) if the next decision depends on precise framing facts."
-            )
-        else:
-            trigger = None
-
-        if trigger is None or reason is None:
-            continue
-
-        arguments_hint: dict[str, object] = {
-            "target_object": object_name or target_object or focus_target,
-        }
-        if camera_name:
-            arguments_hint["camera_name"] = camera_name
-        if focus_target:
-            arguments_hint["focus_target"] = focus_target
-        if view_name:
-            arguments_hint["view_name"] = view_name
-        if orbit_horizontal:
-            arguments_hint["orbit_horizontal"] = orbit_horizontal
-        if orbit_vertical:
-            arguments_hint["orbit_vertical"] = orbit_vertical
-        if zoom_factor is not None:
-            arguments_hint["zoom_factor"] = zoom_factor
-
-        hints.append(
-            ReferenceViewDiagnosticsHintContract(
-                hint_id=f"view_diag_{trigger}_{(object_name or 'target').lower()}",
-                trigger=trigger,
-                reason=reason,
-                priority=priority,
-                arguments_hint=arguments_hint,
-            )
-        )
-
-    return hints
 
 
 def _dedupe_names(values: list[str]) -> list[str]:
