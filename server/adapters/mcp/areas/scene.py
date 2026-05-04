@@ -56,6 +56,7 @@ from server.adapters.mcp.router_helper import (
 from server.adapters.mcp.sampling.assistant_runner import run_inspection_summary_assistant
 from server.adapters.mcp.sampling.result_types import to_inspection_assistant_contract
 from server.adapters.mcp.session_capabilities import (
+    describe_guided_flow_feedback,
     describe_guided_scope_mismatch,
     get_session_capability_state,
     get_session_capability_state_async,
@@ -63,6 +64,8 @@ from server.adapters.mcp.session_capabilities import (
     record_guided_flow_spatial_check_completion,
     record_guided_flow_spatial_check_completion_async,
     set_session_capability_state_async,
+    update_quality_gate_plan_from_relation_graph,
+    update_quality_gate_plan_from_relation_graph_async,
 )
 from server.adapters.mcp.tasks.candidacy import get_tool_task_config
 from server.adapters.mcp.tasks.task_bridge import (
@@ -2704,11 +2707,18 @@ async def _scene_scope_graph_async(
         contract = SceneScopeGraphResponseContract(error=str(result))
 
     if contract.payload is not None:
+        previous_state = await get_session_capability_state_async(ctx)
         await record_guided_flow_spatial_check_completion_async(
             ctx,
             tool_name="scene_scope_graph",
             resolved_scope=contract.payload.scope.model_dump(mode="json"),
         )
+        feedback = describe_guided_flow_feedback(previous_state, await get_session_capability_state_async(ctx))
+        if feedback:
+            contract.payload.message = (
+                f"{contract.payload.message} {feedback}" if contract.payload.message else feedback
+            )
+            ctx_info(ctx, feedback)
     return contract
 
 
@@ -2775,10 +2785,15 @@ def scene_relation_graph(
         direct_executor=execute,
     )
     if isinstance(result, SceneRelationGraphResponseContract):
-        return result
-    if isinstance(result, dict):
-        return SceneRelationGraphResponseContract.model_validate(result)
-    return SceneRelationGraphResponseContract(error=str(result))
+        contract = result
+    elif isinstance(result, dict):
+        contract = SceneRelationGraphResponseContract.model_validate(result)
+    else:
+        contract = SceneRelationGraphResponseContract(error=str(result))
+
+    if contract.payload is not None:
+        update_quality_gate_plan_from_relation_graph(ctx, contract.payload.model_dump(mode="json"))
+    return contract
 
 
 async def _scene_relation_graph_async(
@@ -2837,11 +2852,19 @@ async def _scene_relation_graph_async(
         contract = SceneRelationGraphResponseContract(error=str(result))
 
     if contract.payload is not None:
+        previous_state = await get_session_capability_state_async(ctx)
         await record_guided_flow_spatial_check_completion_async(
             ctx,
             tool_name="scene_relation_graph",
             resolved_scope=contract.payload.scope.model_dump(mode="json"),
         )
+        await update_quality_gate_plan_from_relation_graph_async(ctx, contract.payload.model_dump(mode="json"))
+        feedback = describe_guided_flow_feedback(previous_state, await get_session_capability_state_async(ctx))
+        if feedback:
+            contract.payload.message = (
+                f"{contract.payload.message} {feedback}" if contract.payload.message else feedback
+            )
+            ctx_info(ctx, feedback)
     return contract
 
 
@@ -3080,11 +3103,18 @@ async def _scene_view_diagnostics_async(
         contract = SceneViewDiagnosticsResponseContract(error=str(result))
 
     if contract.payload is not None and _view_diagnostics_can_complete_guided_check(contract.payload):
+        previous_state = await get_session_capability_state_async(ctx)
         await record_guided_flow_spatial_check_completion_async(
             ctx,
             tool_name="scene_view_diagnostics",
             resolved_scope=contract.payload.scope.model_dump(mode="json"),
         )
+        feedback = describe_guided_flow_feedback(previous_state, await get_session_capability_state_async(ctx))
+        if feedback:
+            contract.payload.message = (
+                f"{contract.payload.message} {feedback}" if contract.payload.message else feedback
+            )
+            ctx_info(ctx, feedback)
     return contract
 
 

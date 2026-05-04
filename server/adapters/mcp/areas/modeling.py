@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from fastmcp import Context
 
-from server.adapters.mcp.context_utils import ctx_warning
+from server.adapters.mcp.context_utils import ctx_info, ctx_warning
 from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
 from server.adapters.mcp.guided_contract import canonicalize_modeling_create_primitive_arguments
 from server.adapters.mcp.guided_naming_policy import evaluate_guided_object_name
@@ -16,6 +16,7 @@ from server.adapters.mcp.router_helper import (
     wrap_sync_tool_for_async_guided_finalizers,
 )
 from server.adapters.mcp.session_capabilities import (
+    describe_guided_flow_feedback,
     get_session_capability_state,
     get_session_capability_state_async,
     mark_guided_spatial_state_stale_async,
@@ -666,6 +667,7 @@ async def _modeling_create_primitive_impl_async(
     """Async registered variant that awaits guided session updates."""
 
     await _hydrate_sync_route_session(ctx)
+    previous_state = await get_session_capability_state_async(ctx)
     canonical_arguments = canonicalize_modeling_create_primitive_arguments(
         {
             key: value
@@ -742,6 +744,7 @@ async def _modeling_create_primitive_impl_async(
             tool_name="modeling_create_primitive",
             family="primary_masses" if guided_role in {"body_core", "head_mass", "tail_mass"} else None,
             reason="modeling_create_primitive",
+            affected_objects=[created_object_name],
         )
     if created_object_name is not None:
         await _maybe_register_guided_role_async(
@@ -750,6 +753,9 @@ async def _modeling_create_primitive_impl_async(
             guided_role=guided_role,
             role_group=role_group,
         )
+    feedback = describe_guided_flow_feedback(previous_state, await get_session_capability_state_async(ctx))
+    if feedback:
+        ctx_info(ctx, feedback)
     return str(result)
 
 
@@ -869,6 +875,7 @@ async def _modeling_transform_object_impl_async(
     """Async registered variant that awaits guided session updates."""
 
     await _hydrate_sync_route_session(ctx)
+    previous_state = await get_session_capability_state_async(ctx)
 
     def execute():
         handler = get_modeling_handler()
@@ -902,6 +909,7 @@ async def _modeling_transform_object_impl_async(
             ctx,
             tool_name="modeling_transform_object",
             reason="modeling_transform_object",
+            affected_objects=[transformed_object_name],
         )
     if transformed_object_name is not None:
         await _maybe_register_guided_role_async(
@@ -910,6 +918,9 @@ async def _modeling_transform_object_impl_async(
             guided_role=guided_role,
             role_group=role_group,
         )
+    feedback = describe_guided_flow_feedback(previous_state, await get_session_capability_state_async(ctx))
+    if feedback:
+        ctx_info(ctx, feedback)
     return str(result)
 
 

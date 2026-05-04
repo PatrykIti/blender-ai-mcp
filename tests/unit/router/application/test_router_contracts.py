@@ -255,6 +255,75 @@ def test_router_get_status_exposes_reference_image_diagnostics(monkeypatch):
     assert result.reference_images[0].reference_id == "ref_1"
 
 
+def test_router_get_status_exposes_reference_understanding_summary(monkeypatch):
+    class Handler:
+        def set_goal(self, goal, resolved_params=None):
+            return {
+                "status": "ready",
+                "workflow": "chair_workflow",
+                "resolved": {},
+                "unresolved": [],
+                "resolution_sources": {},
+                "message": "ok",
+            }
+
+    monkeypatch.setattr("server.adapters.mcp.areas.router.get_router_handler", lambda: Handler())
+
+    ctx = DummyContext()
+    ctx.state["reference_understanding_summary"] = {
+        "status": "available",
+        "understanding_id": "understanding_1234567890",
+        "goal": "chair",
+        "reference_ids": ["ref_1"],
+        "subject": {
+            "label": "wooden chair",
+            "category": "hard_surface",
+            "confidence": 0.8,
+            "uncertainty_notes": [],
+        },
+        "style": {
+            "style_label": "hard_surface",
+            "confidence": 0.8,
+            "notes": [],
+        },
+        "required_parts": [],
+        "non_goals": [],
+        "construction_strategy": {
+            "construction_path": "hard_surface",
+            "primary_family": "modeling_mesh",
+            "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+            "stage_sequence": ["primary_masses"],
+            "finish_policy": "inspect_first",
+        },
+        "router_handoff_hints": {
+            "preferred_family": "modeling_mesh",
+            "allowed_guided_families": ["reference_context", "primary_masses", "secondary_parts", "inspect_validate"],
+            "sculpt_policy": "hidden",
+        },
+        "gate_proposals": [],
+        "visual_evidence_refs": [],
+        "classification_scores": [],
+        "segmentation_artifacts": [],
+        "verification_requirements": [],
+        "source_provenance": [{"source": "reference_understanding"}],
+        "boundary_policy": {
+            "advisory_only": True,
+            "not_truth_source": True,
+            "may_unlock_tools": False,
+            "may_pass_gates": False,
+            "may_propose_gates": True,
+        },
+    }
+    ctx.state["reference_understanding_gate_ids"] = ["generic_seat_presence"]
+
+    result = asyncio.run(router_get_status(ctx))
+
+    assert isinstance(result, RouterStatusContract)
+    assert result.reference_understanding_summary is not None
+    assert result.reference_understanding_summary.understanding_id == "understanding_1234567890"
+    assert result.reference_understanding_gate_ids == ["generic_seat_presence"]
+
+
 def test_router_get_status_exposes_guided_handoff_from_session(monkeypatch):
     """router_get_status should surface the active guided handoff contract from session state."""
 

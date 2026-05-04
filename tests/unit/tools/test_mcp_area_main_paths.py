@@ -699,6 +699,125 @@ def test_async_modeling_create_offloads_routed_sync_execution(monkeypatch):
     assert recorded_roles == [("Body", "body_core", None)]
 
 
+def test_async_modeling_create_emits_guided_flow_feedback_when_refresh_rearms(monkeypatch):
+    infos: list[str] = []
+
+    before_state = SessionCapabilityState(
+        phase=SessionPhase.BUILD,
+        guided_flow_state={
+            "current_step": "create_primary_masses",
+            "completed_steps": ["understand_goal", "establish_spatial_context"],
+            "spatial_refresh_required": False,
+            "next_actions": ["begin_primary_masses"],
+            "allowed_families": ["primary_masses", "reference_context"],
+            "required_checks": [],
+            "completed_roles": ["body_core"],
+            "missing_roles": ["head_mass", "tail_mass"],
+            "required_role_groups": ["primary_masses"],
+        },
+    )
+    after_state = SessionCapabilityState(
+        phase=SessionPhase.BUILD,
+        guided_flow_state={
+            "current_step": "place_secondary_parts",
+            "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+            "spatial_refresh_required": True,
+            "next_actions": ["refresh_spatial_context"],
+            "allowed_families": ["spatial_context", "reference_context"],
+            "required_checks": [
+                {"tool_name": "scene_scope_graph", "status": "pending"},
+                {"tool_name": "scene_relation_graph", "status": "pending"},
+                {"tool_name": "scene_view_diagnostics", "status": "pending"},
+            ],
+            "completed_roles": ["body_core", "head_mass"],
+            "missing_roles": ["tail_mass", "snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+            "required_role_groups": ["secondary_parts"],
+            "active_target_scope": {
+                "scope_kind": "object_set",
+                "primary_target": "Body",
+                "object_names": ["Body", "Head"],
+                "object_count": 2,
+            },
+        },
+    )
+    current_state = before_state
+
+    async def hydrate(ctx):
+        return None
+
+    async def get_session_capability_state_async(ctx):
+        return current_state
+
+    async def mark_guided_spatial_state_stale_async(ctx, **kwargs):
+        return current_state
+
+    async def register_guided_part_role_async(ctx, **kwargs):
+        nonlocal current_state
+        current_state = after_state
+        return current_state
+
+    report = MCPExecutionReport(
+        context=MCPExecutionContext(
+            tool_name="modeling_create_primitive",
+            params={"primitive_type": "Sphere", "name": "Head", "guided_role": "head_mass"},
+            session_phase="build",
+            surface_profile="llm-guided",
+            guided_tool_family="primary_masses",
+            guided_role="head_mass",
+        ),
+        router_enabled=False,
+        router_applied=False,
+        router_disposition="direct",
+        steps=(
+            ExecutionStep(
+                tool_name="modeling_create_primitive",
+                params={"primitive_type": "Sphere", "name": "Head"},
+                result="Created Sphere named 'Head'",
+            ),
+        ),
+    )
+
+    async def to_thread(fn, /, *args, **kwargs):
+        return fn(*args, **kwargs)
+
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling._hydrate_sync_route_session", hydrate)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling._route_tool_call_report_for_context",
+        lambda *args, **kwargs: report,
+    )
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.asyncio.to_thread", to_thread)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.get_session_capability_state_async",
+        get_session_capability_state_async,
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.mark_guided_spatial_state_stale_async",
+        mark_guided_spatial_state_stale_async,
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.register_guided_part_role_async",
+        register_guided_part_role_async,
+    )
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.ctx_info", lambda ctx, message: infos.append(message))
+
+    from server.adapters.mcp.areas.modeling import _modeling_create_primitive_impl_async
+
+    result = asyncio.run(
+        _modeling_create_primitive_impl_async(
+            MagicMock(),
+            primitive_type="Sphere",
+            radius=0.35,
+            name="Head",
+            guided_role="head_mass",
+        )
+    )
+
+    assert result == "Created Sphere named 'Head'"
+    assert infos
+    assert "Spatial context refresh required before continuing build tools." in infos[0]
+    assert "scene_scope_graph, scene_relation_graph, scene_view_diagnostics" in infos[0]
+
+
 def test_async_modeling_create_finalizes_from_report_steps_when_legacy_text_is_not_parseable(monkeypatch):
     recorded_roles: list[tuple[str, str, str | None]] = []
     stale_calls: list[tuple[str, str | None, str | None]] = []

@@ -8,9 +8,17 @@ This folder is the canonical place to describe:
 - request-bound runtime behavior
 - deterministic capture-bundle inputs
 - goal-scoped reference image context
+- pre-build reference understanding and construction-path strategy
 - macro/workflow integration of `capture_bundle` and `vision_assistant`
 - evaluation constraints and model-comparison notes
 - real hybrid-loop creature regression guidance
+
+## Roadmap Docs
+
+- [Reference Understanding Roadmap](./REFERENCE_UNDERSTANDING_ROADMAP.md)
+  defines the contract-first plan for pre-build reference understanding,
+  construction-path normalization, `TASK-157` gate proposal/evidence refs, and
+  optional later CLIP/SAM-style adapters.
 
 ## Related Spatial Docs
 
@@ -99,6 +107,12 @@ The repo now has the first implementation scaffolding for the vision layer:
   `view_diagnostics_hints` when the active framing/occlusion state makes the
   current checkpoint a weak basis for the next correction step; the full
   view-space report still stays separate from the default compare payload
+- `reference_compare_stage_checkpoint(...)` /
+  `reference_iterate_stage_checkpoint(...)` now reuse the selected
+  deterministic stage focus preset to compute the same compact
+  `view_diagnostics_hints` for planner/sculpt readiness, so staged local-form
+  cases can either reach `sculpt_region` with real staged view evidence or fail
+  closed with an explicit `scene_view_diagnostics(...)` support requirement
 - when current-view compare persists user-view adjustments, compact diagnostics
   read the already-persisted view instead of replaying the same view/orbit/zoom
   change a second time
@@ -160,14 +174,24 @@ The repo now has the first implementation scaffolding for the vision layer:
   - selector rationale and source signals
 - hybrid-loop compare/iterate responses now also expose `refinement_handoff`
   as an explicit recommendation-only next-tool-family handoff
+- hybrid-loop compare/iterate responses now expose `planner_summary` in both
+  compact and rich profiles, plus `planner_detail` only on the rich profile:
+  - `planner_summary` carries compact family selection, target scope,
+    source-class provenance, typed blockers, and required support tools
+  - missing staged view evidence blocks sculpt readiness through a
+    `scene_view_diagnostics(...)` precondition instead of treating screenshots
+    or vision prose as proof that a local target is framed
+  - `planner_detail` repeats the same policy result with richer route/handoff
+    context and does not create a second planner session or catalog state
 - current first-pass refinement families are:
   - `macro`
   - `modeling_mesh`
   - `sculpt_region`
   - `inspect_only`
 - current product rule: `sculpt_region` can be recommended through
-  `refinement_handoff`, but deterministic sculpt tools are still not part of
-  the normal `llm-guided` build visibility by default
+  `refinement_handoff` only when preconditions are ready; deterministic sculpt
+  tools are still not part of the normal `llm-guided` build visibility by
+  default
 - request-bound attachment of `vision_assistant` to macro MCP reports when a
   `capture_bundle` exists
 - macro report integration now also folds bounded vision-driven follow-ups back

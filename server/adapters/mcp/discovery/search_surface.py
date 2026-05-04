@@ -23,12 +23,27 @@ from server.adapters.mcp.session_capabilities import (
     get_session_capability_state_async,
 )
 from server.adapters.mcp.settings import SurfaceProfileSettings
+from server.adapters.mcp.transforms.visibility_policy import visible_tools_for_gate_plan
 from server.adapters.mcp.version_policy import CONTRACT_LINE_LLM_GUIDED_V2
 
 from .search_documents import build_search_documents
 from .tool_inventory import build_discovery_entry_map, get_pinned_public_tools
 
 logger = logging.getLogger(__name__)
+
+_GATE_RECOVERY_QUERY_HINTS = (
+    "attach",
+    "contact",
+    "deadlock",
+    "floating",
+    "gap",
+    "gate",
+    "repair",
+    "reset goal",
+    "seam",
+    "stuck",
+    "support",
+)
 
 
 def _catalog_hash(search_documents: dict[str, str]) -> str:
@@ -125,6 +140,45 @@ class BlenderDiscoverySearchTransform(BM25SearchTransform):
         except Exception:
             return
 
+    async def _active_gate_recovery_tools(
+        self,
+        ctx: Context,
+        tools: Sequence[Tool],
+        query: str,
+    ) -> Sequence[Tool]:
+        normalized_query = query.strip().lower()
+        if not normalized_query or not any(hint in normalized_query for hint in _GATE_RECOVERY_QUERY_HINTS):
+            return ()
+
+        try:
+            session_state = await get_session_capability_state_async(ctx)
+        except Exception:
+            return ()
+        gate_tools = visible_tools_for_gate_plan(session_state.gate_plan)
+        if not gate_tools:
+            return ()
+
+        tools_by_name = {tool.name: tool for tool in tools}
+        preferred_order = [
+            "scene_relation_graph",
+            "scene_measure_gap",
+            "scene_assert_contact",
+            "macro_attach_part_to_surface",
+            "macro_align_part_with_contact",
+            "macro_place_supported_pair",
+            "macro_place_symmetry_pair",
+            "macro_adjust_relative_proportion",
+            "mesh_inspect",
+            "macro_adjust_segment_chain_arc",
+            "scene_view_diagnostics",
+        ]
+        selected = [tools_by_name[name] for name in preferred_order if name in gate_tools and name in tools_by_name]
+        if selected:
+            return tuple(selected[: self._max_results])
+        return tuple(
+            tools_by_name[name] for name in sorted(gate_tools.intersection(tools_by_name))[: self._max_results]
+        )
+
     async def _render_results(self, tools: Sequence[Tool]) -> list[dict[str, Any]]:
         return self._serialize_results(tools)
 
@@ -141,6 +195,9 @@ class BlenderDiscoverySearchTransform(BM25SearchTransform):
                 raise RuntimeError("search_tools requires an active FastMCP context")
             await transform._sync_visibility_if_needed(ctx)
             hidden = await transform._get_visible_tools(ctx)
+            gate_override = await transform._active_gate_recovery_tools(ctx, hidden, query)
+            if gate_override:
+                return await transform._render_results(gate_override)
             results = await transform._search(hidden, query)
             return await transform._render_results(results)
 

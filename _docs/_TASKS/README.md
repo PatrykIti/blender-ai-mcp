@@ -5,14 +5,24 @@ Curated task board for promoted active work, promoted follow-on work, and select
 ## 📊 Statistics
 - **To Do:** 8 tasks
 - **In Progress:** 0 tasks
-- **Done:** 224
-- **Superseded:** 10
+- **Done:** 89
+- **Superseded:** 162
 
 ## 📐 Board Scope
 
 - The counts above refer to the rows tracked on this board, not every nested task file under `_docs/_TASKS/`.
 - Use the board for currently promoted work and promoted follow-ons.
 - Keep nested task files in sync with the board when their promoted state changes.
+
+## 🧭 Strategic Working Docs
+
+These documents are not task rows, but they are active reference material for
+the promoted work below and should stay visible while the related tasks are in
+flight.
+
+| Area | Document | Owner Tasks |
+|------|----------|-------------|
+| Vision / Reference Understanding | [Reference Understanding Roadmap](../_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md) | [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md), [TASK-135](./TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md), [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) |
 
 ## 🧱 Hierarchy Rules
 
@@ -38,11 +48,16 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-148](./TASK-148_No_Auth_HTTP_MCP_Client_Compatibility_And_Auth_Misclassification_Recovery.md) | **No-Auth HTTP MCP Client Compatibility And Auth Misclassification Recovery** | 🔴 High | Board-level follow-on after TASK-125 for hardening the no-auth Streamable HTTP path across Claude, Codex, Gemini, and similar MCP clients without falsely advertising OAuth support. |
+| [TASK-160](./TASK-160_Guided_Client_Feedback_And_Streamable_HTTP_Recovery_UX.md) | **Guided Client Feedback And Streamable HTTP Recovery UX** | 🔴 High | Board-level follow-on after TASK-145 / TASK-157 / TASK-158 for clarifying guided-flow transitions to MCP clients, separating harness disconnects from repo runtime behavior, and evaluating whether the long-term fix should stay in existing tool contracts, move into a structured guided-flow delta, or add optional FastMCP app-surface UX without inventing a second flow. |
 
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md) | **Goal-Derived Quality Gates And Deterministic Verification** | 🔴 High | Generic cross-domain substrate where LLMs may propose flexible gates, while the server normalizes and verifies completion deterministically. |
+
+### Internal Architecture & Maintainability
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| [TASK-159](./TASK-159_Modularize_Oversized_Guided_Runtime_And_Scene_Owner_Files.md) | **Modularize Oversized Guided Runtime And Scene Owner Files** | 🔴 High | Board-level internal follow-on after TASK-143 / TASK-144 / TASK-145 / TASK-150 / TASK-157 / TASK-158, covering modularization of the runtime seams those closed families introduced into `reference.py`, `scene.py`, addon `scene.py`, and `session_capabilities.py`, including the remaining scene/addon object-utility surfaces, without changing the public MCP/addon/session contract, provider registration/discovery seams, or inventing a second flow. |
 
 ### Mesh Introspection
 | ID | Title | Priority | Notes |
@@ -64,13 +79,11 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) | **Expand External Vision Contract Profiles Across Qwen, Anthropic, OpenAI, and NVIDIA** | 🔴 High | Board-level follow-on after TASK-139 for extending the external `vision_contract_profile` architecture across additional multimodal families on the existing provider surface, including OpenRouter model capability resolution and no new provider branches under this umbrella. |
-| [TASK-145](./TASK-145_Spatial_Repair_Planner_And_Sculpt_Handoff_Context.md) | **Spatial Repair Planner and Sculpt Handoff Context** | 🔴 High | Board-level umbrella for turning current scope/relation/view facts into stronger bounded repair-family selection and safer sculpt handoff context on the guided loop. |
 ---
 
 ## 🚧 In Progress
 
-| ID | Title | Priority | Notes |
-|----|-------|----------|-------|
+No promoted task is currently in progress.
 
 ---
 
@@ -78,6 +91,9 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md) | **Goal-Derived Quality Gates And Deterministic Verification** | 🔴 High | 2026-05-02 |
+| [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md) | **Reference Understanding Follow-Up And Boundary Alignment** | 🔴 High | 2026-05-03 |
+| [TASK-145](./TASK-145_Spatial_Repair_Planner_And_Sculpt_Handoff_Context.md) | **Spatial Repair Planner and Sculpt Handoff Context** | 🔴 High | 2026-05-01 |
 | [TASK-156](./TASK-156_Guided_Pair_Role_Cardinality_And_Sibling_Part_Registration.md) | **Guided Pair Role Cardinality And Sibling Part Registration** | 🔴 High | 2026-04-14 |
 | [TASK-155](./TASK-155_Guided_Post_Run_Reliability_Followups.md) | **Guided Post-Run Reliability Follow-Ups** | 🔴 High | 2026-04-11 |
 | [TASK-130](./TASK-130_Default_Guided_Surface_Bootstrap_Consistency.md) | **Default Guided Bootstrap And Generic Governor Reliability** | 🔴 High | 2026-04-10 |

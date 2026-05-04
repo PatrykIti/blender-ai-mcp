@@ -7,6 +7,7 @@ import textwrap
 from pathlib import Path
 
 import pytest
+from fastmcp.exceptions import ToolError
 
 from ._guided_surface_harness import result_payload, run_streamable_server, streamable_client, write_server_script
 
@@ -365,6 +366,130 @@ def test_streamable_guided_dirty_mesh_tool_returns_and_rearms_spatial_context(tm
             assert after_status["guided_flow_state"]["current_step"] == "place_secondary_parts"
             assert after_status["guided_flow_state"]["spatial_refresh_required"] is True
             assert after_status["guided_flow_state"]["next_actions"] == ["refresh_spatial_context"]
+
+    with run_streamable_server(script_path) as url:
+        asyncio.run(run(url))
+
+
+@pytest.mark.slow
+def test_streamable_guided_view_diagnostics_requires_bound_scope_before_refresh_clears(tmp_path: Path):
+    """A successful view-diagnostics payload should not clear the gate until scope/relation checks bind the same scope."""
+
+    script_path = write_server_script(tmp_path, _PATCHED_GUIDED_STREAMABLE_SERVER)
+
+    async def run(url: str) -> None:
+        async with streamable_client(url) as client:
+            await client.call_tool(
+                "router_set_goal",
+                {"goal": "create a low-poly squirrel matching front and side reference images"},
+            )
+            await client.call_tool(
+                "guided_register_part",
+                {"object_name": "Squirrel_Body", "role": "body_core"},
+            )
+            await client.call_tool(
+                "guided_register_part",
+                {"object_name": "Squirrel_Head", "role": "head_mass"},
+            )
+
+            first_view = result_payload(
+                await client.call_tool(
+                    "scene_view_diagnostics",
+                    {"target_objects": ["Squirrel_Body", "Squirrel_Head"], "view_name": "FRONT"},
+                )
+            )
+            assert first_view["payload"]["view_query"]["available"] is True
+
+            stale_status = result_payload(await client.call_tool("router_get_status", {}))
+            checks_by_tool = {
+                item["tool_name"]: item["status"] for item in stale_status["guided_flow_state"]["required_checks"]
+            }
+            assert stale_status["guided_flow_state"]["spatial_refresh_required"] is True
+            assert checks_by_tool["scene_view_diagnostics"] == "pending"
+
+            refresh_scope = {"target_object": "Squirrel_Body", "target_objects": ["Squirrel_Head"]}
+            await client.call_tool("scene_scope_graph", refresh_scope)
+            await client.call_tool(
+                "scene_relation_graph",
+                {**refresh_scope, "goal_hint": "assembled creature"},
+            )
+
+            still_pending_status = result_payload(await client.call_tool("router_get_status", {}))
+            checks_by_tool = {
+                item["tool_name"]: item["status"]
+                for item in still_pending_status["guided_flow_state"]["required_checks"]
+            }
+            assert checks_by_tool["scene_scope_graph"] == "completed"
+            assert checks_by_tool["scene_relation_graph"] == "completed"
+            assert checks_by_tool["scene_view_diagnostics"] == "pending"
+
+            second_view = result_payload(
+                await client.call_tool(
+                    "scene_view_diagnostics",
+                    {**refresh_scope, "view_name": "FRONT"},
+                )
+            )
+            assert second_view["payload"]["view_query"]["available"] is True
+
+            refreshed_status = result_payload(await client.call_tool("router_get_status", {}))
+            assert refreshed_status["guided_flow_state"]["spatial_refresh_required"] is False
+
+    with run_streamable_server(script_path) as url:
+        asyncio.run(run(url))
+
+
+@pytest.mark.slow
+def test_streamable_guided_transform_object_fails_cleanly_during_spatial_refresh_gate(tmp_path: Path):
+    """A stale direct transform attempt should fail cleanly without dropping the Streamable HTTP session."""
+
+    script_path = write_server_script(tmp_path, _PATCHED_GUIDED_STREAMABLE_SERVER)
+
+    async def run(url: str) -> None:
+        async with streamable_client(url) as client:
+            await client.call_tool(
+                "router_set_goal",
+                {"goal": "create a low-poly squirrel matching front and side reference images"},
+            )
+
+            body_result = result_payload(
+                await client.call_tool(
+                    "modeling_create_primitive",
+                    {
+                        "primitive_type": "Sphere",
+                        "name": "Squirrel_Body",
+                        "location": [0.0, 0.0, 0.6],
+                        "radius": 0.5,
+                        "guided_role": "body_core",
+                    },
+                )
+            )
+            assert body_result == "Created Sphere named 'Squirrel_Body'"
+
+            head_result = result_payload(
+                await client.call_tool(
+                    "modeling_create_primitive",
+                    {
+                        "primitive_type": "Sphere",
+                        "name": "Squirrel_Head",
+                        "location": [0.0, -0.4, 1.45],
+                        "radius": 0.35,
+                        "guided_role": "head_mass",
+                    },
+                )
+            )
+            assert head_result == "Created Sphere named 'Squirrel_Head'"
+
+            with pytest.raises(ToolError, match="Unknown tool: 'modeling_transform_object'"):
+                await client.call_tool(
+                    "modeling_transform_object",
+                    {"name": "Squirrel_Head", "scale": [1.0, 0.92, 0.95]},
+                )
+
+            status_result = result_payload(await client.call_tool("router_get_status", {}))
+            assert status_result["current_phase"] == "build"
+            assert status_result["guided_flow_state"]["current_step"] == "place_secondary_parts"
+            assert status_result["guided_flow_state"]["spatial_refresh_required"] is True
+            assert status_result["guided_flow_state"]["next_actions"] == ["refresh_spatial_context"]
 
     with run_streamable_server(script_path) as url:
         asyncio.run(run(url))

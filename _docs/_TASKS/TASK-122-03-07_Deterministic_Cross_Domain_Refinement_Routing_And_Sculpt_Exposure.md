@@ -1,9 +1,9 @@
 # TASK-122-03-07: Deterministic Cross-Domain Refinement Routing and Sculpt Exposure
 
 **Follow-on After:** [TASK-122-03](./TASK-122-03_Hybrid_Vision_Truth_Correction_Loop.md)  
-**Board Tracking:** Standalone hybrid-loop follow-on kept open after
+**Board Tracking:** Standalone hybrid-loop follow-on completed after
 `TASK-122-03` and `TASK-122` were closed. `_docs/_TASKS/README.md` tracks it
-as its own open item while the historical numbering is preserved for
+as a completed milestone while the historical numbering is preserved for
 continuity.  
 **Status:** ✅ Done  
 **Priority:** 🔴 High
@@ -170,10 +170,11 @@ This follow-on does **not** mean:
 
 ## Status / Board Update
 
-- keep this task open as a standalone follow-on after the closed `TASK-122-03`
-  subtree
-- if it is completed, update `_docs/_TASKS/README.md` and refresh the closed
-  parent follow-on notes
+- this task is administratively closed as a standalone follow-on after the
+  closed `TASK-122-03` subtree
+- `_docs/_TASKS/README.md` tracks it under completed milestones; future work
+  that builds on this baseline should use explicit follow-on tasks such as
+  `TASK-145`, not reopen this completed task
 
 ## Execution Structure
 

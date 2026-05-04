@@ -1,6 +1,6 @@
 # TASK-157: Goal-Derived Quality Gates And Deterministic Verification
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** Guided Runtime / Cross-Domain Quality Gates
 **Estimated Effort:** Large
@@ -11,7 +11,9 @@
 Introduce a generic quality-gate system where an LLM can propose flexible
 domain-specific gates from the active goal and references, while the server
 normalizes those gates into typed contracts and verifies completion with
-deterministic inspection, assertion, spatial truth, or bounded vision evidence.
+server-owned scene, spatial, mesh, inspection, and assertion evidence. Bounded
+vision/perception payloads may seed proposals or support a verifier strategy,
+but they do not own gate pass/fail truth.
 
 This is the cross-domain substrate for:
 
@@ -54,10 +56,29 @@ plans without turning every domain into a hardcoded workflow:
   "window grid aligned", or "eye pair present"
 - the server maps those proposals into a small generic vocabulary
 - deterministic checks decide whether each gate is `pending`, `blocked`,
-  `passed`, or `failed`
+  `passed`, `failed`, `waived`, or `stale`
 - guided visibility and search can open the right bounded tools for the next
   unresolved gate
-- final completion is blocked by failed required gates, not by prose summaries
+- final completion is blocked by required gates in `pending`, `blocked`,
+  `failed`, or `stale`, not by prose summaries
+
+## Non-Goals
+
+This umbrella deliberately does not:
+
+- make VLM prose, `reference_understanding`, SAM, CLIP/SigLIP,
+  Grounding DINO, or provider-profile confidence authoritative for gate
+  pass/fail status
+- ship SAM, CLIP/SigLIP, Grounding DINO, or any similar heavy perception
+  adapter as part of the first `TASK-157` implementation
+- create a creature-only, building-only, or other domain-hardcoded completion
+  flow; domain tasks consume this generic gate substrate
+- replace `TASK-140`; external model-family evidence remains provider/profile
+  diagnostics and proposal/support provenance, while gate pass/fail must cite
+  server-owned scene/spatial/mesh/assertion evidence
+- introduce a parallel discovery, visibility, or public router-strategy flow
+  when existing FastMCP visibility, guided state, router metadata, and
+  reference-stage contracts can be extended
 
 ## Generic Gate Vocabulary
 
@@ -81,23 +102,64 @@ The first vocabulary should be deliberately small and cross-domain:
   visible tool state.
 - The server normalizes proposals into typed gate records and rejects unsupported
   or unsafe gate shapes.
-- The server verifies gate status through scene/spatial/mesh/reference truth.
+- The server verifies gate status through scene/spatial/mesh/assertion truth.
+  Bounded reference/perception evidence can be attached only as
+  verifier-supported proposal or supporting evidence and cannot replace the
+  authoritative truth layer.
 - LaBSE/search may help find candidate tools, but cannot mark gates complete.
 - Vision output may recommend gates or provide bounded evidence, but scene truth
   and assertion tools remain authoritative for object existence, contacts,
   measurements, and final completion.
 
+## Perception Evidence Extension Points
+
+`TASK-145` gives the reference loop a typed repair-planner handoff, but it does
+not make visual feedback a gate-status authority. This umbrella is where that
+handoff becomes usable for quality gates.
+
+The gate contract should accept proposal and evidence provenance from existing
+and planned reference/perception surfaces without making those surfaces
+responsible for completion:
+
+| Input / Evidence Source | Contract Role | Authority Boundary |
+|-------------------------|---------------|--------------------|
+| `reference_understanding` | Planned/undecided model-readable summary of what attached references depict, expected style, likely parts, and construction path | May propose gates and default correction families; cannot pass gates |
+| `silhouette_analysis` | Deterministic reference/viewport shape metrics from the existing perception layer | May inform `shape_profile` and `proportion_ratio` verifier context when scoped and fresh; cannot pass gates by itself |
+| `part_segmentation` | Optional default-off segmentation sidecar output when configured later | May provide target masks or part-region hints; cannot prove Blender object existence or attachment |
+| `classification_scores` | Future CLIP/SigLIP-style classification payload scores | May select a domain profile or construction strategy; cannot prove gate completion |
+| VLM compare/iterate findings | Bounded visual mismatch or action-hint payloads from the active vision contract profile | May recommend gates, blockers, or tool families and may be linked as bounded provenance/support context; cannot pass gates without separate scene/spatial/mesh/assertion evidence |
+| scene/spatial/mesh/assertion tools | Blender truth evidence | Own object existence, contact, measurement, spatial relation, and final completion decisions |
+
+The first implementation should reserve explicit fields for:
+
+- `proposal_sources`: ordered provenance for why a gate exists, such as
+  `llm_goal`, `reference_understanding`, `domain_template`,
+  `silhouette_analysis`, `part_segmentation`, `reference_checkpoint`, or
+  `operator_override`
+- `evidence_requirements`: the verifier-supported evidence types needed before
+  the gate may pass
+- `evidence_refs`: concrete verifier outputs used for the current status
+- `verification_strategy`: repo-owned enum, not free prose
+- `allowed_correction_families`: bounded tool families that may address the
+  unresolved gate
+- `source_provenance`: provider/model/profile metadata where a proposal came
+  from a VLM or future perception classifier
+
+SAM, CLIP, Grounding DINO, or similar heavier perception modules are not part of
+the first `TASK-157` implementation. They should plug in later by producing the
+same bounded evidence/proposal records through the vision/perception layer.
+
 ## Execution Structure
 
 | Order | Task | Purpose |
 |-------|------|---------|
-| 1 | [TASK-157-01](./TASK-157-01_Gate_Declaration_Schema_Normalization_And_Policy_Bounds.md) | Define the gate schema, LLM proposal intake, normalization, policy bounds, and domain template merge rules |
-| 2 | [TASK-157-01-01](./TASK-157-01-01_LLM_Proposed_Gate_Intake_And_Policy_Bounds.md) | Implement the first narrow intake contract for model-proposed gates without trusting model completion claims |
-| 3 | [TASK-157-02](./TASK-157-02_Deterministic_Gate_Verifier_And_Status_Model.md) | Build the verifier/status model that binds gates to spatial, assertion, object, and bounded vision evidence |
-| 4 | [TASK-157-02-01](./TASK-157-02-01_Attachment_Support_And_Contact_Gate_Verifier.md) | Ship the first seam/contact verifier for `attachment_seam` and `support_contact` gates |
-| 5 | [TASK-157-03](./TASK-157-03_Guided_Flow_Gate_Runtime_Integration.md) | Integrate gate state into guided flow, visibility, search, checkpoints, and completion blocking |
-| 6 | [TASK-157-03-01](./TASK-157-03-01_Gate_Driven_Visibility_Search_And_Recovery_Policy.md) | Make unresolved gates open the right bounded tool families without broad catalog exposure |
-| 7 | [TASK-157-04](./TASK-157-04_Cross_Domain_E2E_Gate_Regression_Harness.md) | Add cross-domain E2E/regression coverage for creature and building-style gate behavior |
+| 1 | [TASK-157-01](./TASK-157-01_Gate_Declaration_Schema_Normalization_And_Policy_Bounds.md) | ✅ Done - define the gate schema, LLM proposal intake, normalization, policy bounds, and domain template merge rules |
+| 2 | [TASK-157-01-01](./TASK-157-01-01_LLM_Proposed_Gate_Intake_And_Policy_Bounds.md) | ✅ Done - implement the first narrow intake contract for model-proposed gates without trusting model completion claims |
+| 3 | [TASK-157-02](./TASK-157-02_Deterministic_Gate_Verifier_And_Status_Model.md) | ✅ Done - build the verifier/status model and the first deterministic verifier slice for scope-backed, seam, support, and symmetry gates |
+| 4 | [TASK-157-02-01](./TASK-157-02-01_Attachment_Support_And_Contact_Gate_Verifier.md) | ✅ Done - ship the first seam/contact verifier for `attachment_seam` and `support_contact` gates |
+| 5 | [TASK-157-03](./TASK-157-03_Guided_Flow_Gate_Runtime_Integration.md) | ✅ Done - integrate gate state into guided flow, visibility, search, checkpoints, and completion blocking |
+| 6 | [TASK-157-03-01](./TASK-157-03-01_Gate_Driven_Visibility_Search_And_Recovery_Policy.md) | ✅ Done - make unresolved gates open the right bounded tool families without broad catalog exposure |
+| 7 | [TASK-157-04](./TASK-157-04_Cross_Domain_E2E_Gate_Regression_Harness.md) | ✅ Done - add cross-domain E2E/regression coverage for creature and building-style gate behavior |
 
 ## Repository Touchpoint Table
 
@@ -105,16 +167,39 @@ The first vocabulary should be deliberately small and cross-domain:
 |---------------|-------|--------------------|
 | `server/adapters/mcp/contracts/` | New gate contracts | Typed MCP-facing models for proposed gates, normalized gates, verifier status, and completion blockers |
 | `server/adapters/mcp/session_capabilities.py` | Guided state | Store active gate plan, statuses, required gates, waivers, and next gate actions |
-| `server/adapters/mcp/areas/reference.py` | Checkpoint loop | Include gate status in compare/iterate outputs and block final completion on failed required gates |
+| `server/adapters/mcp/areas/reference.py` | Checkpoint loop | Include gate status in compare/iterate outputs and block final completion on unresolved required gates |
+| `server/adapters/mcp/contracts/reference.py` | Perception handoff | Reference gate proposals and evidence refs must point at existing reference/vision payload fields instead of duplicating them |
+| `server/adapters/mcp/vision/` | Perception evidence | Existing silhouette/action-hint and optional segmentation outputs may feed gate proposals/evidence through typed refs only |
 | `server/adapters/mcp/areas/scene.py` | Spatial and macro tools | Feed seam/contact/support verification and macro follow-up hints |
 | `server/application/services/spatial_graph.py` | Truth evidence | Reuse relation graph verdicts for seam/support gate status |
-| `server/router/infrastructure/tools_metadata/` | Discovery metadata | Add gate-oriented search hints and tool family metadata |
-| `server/adapters/mcp/discovery/search_documents.py` | Search shaping | Bias search toward tools that satisfy unresolved gate families |
+| `server/router/infrastructure/tools_metadata/` | Discovery metadata | Add gate-oriented search hints through existing metadata fields first (`keywords`, `sample_prompts`, `related_tools`, `patterns`); adding a new `gate_families` field requires schema, loader, dataclass, and search tests |
+| `server/adapters/mcp/discovery/search_documents.py` | Search shaping | Bias search toward tools that satisfy unresolved gate families using existing metadata fields first |
 | `server/adapters/mcp/transforms/visibility_policy.py` | Visibility | Expose bounded tools for the active unresolved gate, not the whole catalog |
 | `server/adapters/mcp/prompts/` | Prompt assets | Teach clients how to propose gates and consume server-verified gate state |
 | `_docs/_ROUTER/` | Runtime design docs | Document the LLM-proposes/server-verifies boundary |
 | `_docs/_MCP_SERVER/README.md` | MCP contract docs | Document gate payloads, status model, and client guidance |
 | `_docs/_TASKS/README.md` | Board | Track this umbrella as the generic substrate for domain reconstruction |
+
+## Runtime / Security Contract Notes
+
+- Visibility level: the first implementation should extend existing guided and
+  reference-stage surfaces; any new public MCP tool needs the full public-tool
+  review from `AGENTS.md`.
+- Read-only vs mutating behavior: proposal intake and verifier status reporting
+  are server/session state operations; only existing Blender mutating tools or
+  macros may change scene state, and those mutations must mark affected gates
+  stale before completion can pass.
+- Session/auth assumptions: gate plans are scoped to the current stdio or
+  Streamable HTTP MCP session state and must not leak across sessions.
+- Parameter validation: normalized gate contracts must reject unknown gate
+  types, hidden/internal tool names, unsupported statuses, raw Blender code, and
+  completion claims without verifier evidence.
+- Side-effect limits: optional perception sources and external providers remain
+  bounded by existing vision runtime limits, timeouts, and disabled/unavailable
+  statuses.
+- Secret handling: provider keys, sidecar keys, local paths, and debug payloads
+  must not be copied into gate evidence refs or client-facing logs; carry stable
+  ids and redacted provider/model metadata instead.
 
 ## Test Matrix
 
@@ -123,6 +208,7 @@ The first vocabulary should be deliberately small and cross-domain:
 | Unit contracts | Gate schema validation, unsupported gate rejection, required/optional/waived status behavior |
 | Unit guided state | Session gate plan persistence, status transitions, required gate completion blockers |
 | Unit reference loop | Compare/iterate payload includes gate state and does not mark completion while required gates fail |
+| Unit perception refs | Perception-derived proposals stay advisory and carry source provenance without marking gates passed |
 | Unit spatial truth | `attachment_seam` and `support_contact` gates map relation graph verdicts correctly |
 | Unit visibility/search | Active unresolved gates expose only bounded relevant tool families |
 | Router/integration | `router_set_goal` and checkpoint flows preserve gate state across guided phases |
@@ -142,17 +228,19 @@ proposal = GateProposal.from_llm(
 normalized = gate_normalizer.normalize(
     proposal,
     domain_profile=session.domain_profile,
-    templates=domain_gate_templates.for_profile(session.domain_profile),
+    templates=quality_gate_templates_for_domain_profile(session.domain_profile),
 )
 
-session.gate_plan = gate_policy.apply_bounds(normalized)
+# `gate_plan` is added by TASK-157-01; update the frozen session state
+# immutably through the owning session_capabilities helper or replace(...).
+session = replace(session, gate_plan=gate_policy.apply_bounds(normalized))
 
 for gate in session.gate_plan.required_open_gates():
     evidence = gate_verifier.collect_evidence(gate, scene_scope=session.active_target_scope)
     status = gate_verifier.evaluate(gate, evidence)
-    session.gate_plan.update(gate.gate_id, status)
+    session = replace(session, gate_plan=session.gate_plan.with_status(gate.gate_id, status))
 
-if session.gate_plan.has_failed_required_gates():
+if session.gate_plan.has_unresolved_required_gates():
     return GuidedLoopResult(
         loop_disposition="inspect_validate",
         completion_blockers=session.gate_plan.blockers(),
@@ -172,10 +260,46 @@ return maybe_advance_or_complete()
 - `_docs/_TESTS/README.md`
 - `_docs/_TASKS/README.md`
 
+## Status / Board Update
+
+- `_docs/_TASKS/README.md` now tracks `TASK-157` under completed milestones.
+- Direct children `TASK-157-01`, `TASK-157-01-01`, `TASK-157-02`,
+  `TASK-157-02-01`, `TASK-157-03`, `TASK-157-03-01`, and `TASK-157-04` are all
+  closed in the same branch.
+- `TASK-158` remains the promoted follow-on for reference-understanding and
+  optional-perception work that intentionally sits outside the closed generic
+  gate/verifier substrate.
+
 ## Changelog Impact
 
-- Add a dedicated `_docs/_CHANGELOG/*` entry when the first gate contract or
-  runtime integration slice ships.
+- added [_docs/_CHANGELOG/290-2026-05-02-task-157-closeout-and-board-sync.md](../_CHANGELOG/290-2026-05-02-task-157-closeout-and-board-sync.md)
+
+## Completion Summary
+
+Completed the generic quality-gate substrate and its owner-lane proof:
+
+- shipped the typed gate intake and normalization contracts, deterministic
+  scene-relation verifier/status model, gate-driven visibility/search policy,
+  and compare/iterate checkpoint gate summaries on the existing
+  guided/reference surfaces
+- validated the current owner-lane pack on this machine with `202 passed`
+  across the targeted unit contracts/truth/search/reference suites and
+  `11 passed` across the transport plus Blender-backed
+  creature/building/support/symmetry E2E pack
+- confirmed the shipped slice is green across stdio, Streamable HTTP, and
+  dedicated Blender-backed public surfaces without introducing a parallel tool
+  or router flow
+- left broader post-substrate work explicitly tracked under `TASK-158`,
+  `TASK-135`, `TASK-136`, and `TASK-140` instead of keeping this umbrella open
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_contracts.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py -v`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_reference_images.py -v`
+- `python3 scripts/run_e2e_tests.py` for implementation slices that change real
+  Blender scene state, geometry, transport behavior, or final completion
+  semantics.
 
 ## Acceptance Criteria
 
@@ -185,6 +309,7 @@ return maybe_advance_or_complete()
 - Deterministic verification, not LLM prose, owns gate pass/fail status.
 - Guided checkpoints expose active gates, blockers, next actions, and required
   verification evidence.
-- Final completion is blocked while required gates fail.
+- Final completion is blocked while required gates are `pending`, `blocked`,
+  `failed`, or `stale`.
 - Creature and architecture tasks can consume the same substrate with
   domain-specific templates rather than separate hardcoded flows.

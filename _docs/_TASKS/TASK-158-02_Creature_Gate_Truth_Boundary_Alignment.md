@@ -1,0 +1,146 @@
+# TASK-158-02: Creature Gate Truth Boundary Alignment
+
+**Status:** ✅ Done
+**Priority:** 🔴 High
+**Parent:** [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md)
+**Category:** Documentation / Creature Gate Boundary
+**Estimated Effort:** Small
+
+## Objective
+
+Align the creature reconstruction task docs with the `TASK-157` rule that
+Vision, reference, and perception outputs are advisory proposal/support context,
+while scene, spatial, mesh, assertion, and verifier evidence owns gate status
+and final completion truth.
+
+## Repository Touchpoints
+
+| Path / Module | Expected Change |
+|---------------|-----------------|
+| `_docs/_TASKS/TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md` | Replace reference/perception truth wording with verifier-owned truth |
+| `_docs/_TASKS/TASK-135-03_Low_Poly_Form_Refinement_Mesh_Window_And_Profile_Macros.md` | Replace standalone reference-evidence wording with normalized gate evidence and verifier-supported support refs |
+| `_docs/_TASKS/TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md` | Read-only source of the generic gate/verifier boundary |
+
+## Implementation Notes
+
+- `TASK-135` should remain the domain consumer. Do not move creature-specific
+  relation policy into `TASK-157`.
+- Vision Mode may define labels, relation vocabulary, and candidate findings,
+  but it must not decide true attachment or cleanup status by itself.
+- Shape-profile child gates in `TASK-135-03` should come from normalized gate
+  evidence and verifier-supported support refs.
+- Preserve the low-poly creature product goal; only tighten authority wording.
+
+## Runtime / Security Contract Notes
+
+- This is a docs-only cleanup. It must not change guided runtime behavior,
+  public MCP parameters, router metadata, visibility policy, or verifier code.
+- Stdio and Streamable HTTP behavior must remain unchanged.
+- No provider call, perception sidecar activation, SAM/CLIP/SigLIP adapter, or
+  model download is part of this task.
+- Documentation examples must not include raw provider payloads, secrets, local
+  private paths, or unredacted debug transcripts.
+- The cleanup must preserve verifier-owned gate truth: creature Vision Mode may
+  propose relation findings, but scene/spatial/mesh/assertion evidence,
+  evaluated by the quality-gate verifier, owns pass/fail status.
+
+## Anchor-Based Targets
+
+Exact line numbers in the downstream creature docs may drift after each wording
+cleanup. Refresh exact locations against the current checkout before editing and
+start from these anchor groups:
+
+| Anchor | Required Work |
+|--------|---------------|
+| The first `TASK-157` authority bullet cluster in `TASK-135` | Replace pass/fail authority wording with scene/spatial/mesh/assertion/verifier truth |
+| The Vision Mode / relation-mismatch decision section in `TASK-135` | Rewrite true-error wording as advisory relation findings bound by verifier/spatial/assertion policy |
+| The `shape_profile` child-gate paragraph in `TASK-135-03` | Replace standalone `reference evidence requires them` wording with normalized gate evidence and verifier-supported support refs |
+
+## Rewrite Pattern
+
+```text
+Before:
+deterministic scene/spatial/mesh/reference evidence decides whether the gate passed
+
+After:
+scene/spatial/mesh/assertion evidence, evaluated by the quality-gate verifier,
+decides whether the gate passed; reference and perception outputs may seed
+proposals or attach bounded support refs when the verifier strategy accepts
+them.
+```
+
+```text
+Before:
+Vision defines true attachment errors and true cleanup/intersection errors.
+
+After:
+Vision records advisory relation-mismatch candidates; verifier, spatial, and
+assertion policy bind those findings to attachment or cleanup gate status.
+```
+
+```text
+Before:
+shape-profile child gates apply where reference evidence requires them.
+
+After:
+shape-profile child gates come from normalized gate evidence and
+verifier-supported support refs, not standalone reference evidence.
+```
+
+## Tests / Validation
+
+- `git diff --check`
+- `rg -n "scene/spatial/mesh/reference evidence|true attachment errors|true cleanup/intersection errors|reference evidence requires" _docs/_TASKS/TASK-135*.md`
+  - expected result after completion: no hits, unless explicitly quoted as a
+    before/after pattern in completed task notes
+- `rg -n "scene/spatial/mesh/assertion|verifier-supported|advisory relation" _docs/_TASKS/TASK-135*.md`
+  - expected result after completion: confirms replacement wording is present
+
+## Docs To Update
+
+- `_docs/_TASKS/TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md`
+- `_docs/_TASKS/TASK-135-03_Low_Poly_Form_Refinement_Mesh_Window_And_Profile_Macros.md`
+
+## Changelog Impact
+
+- If this leaf closes independently, add a scoped `_docs/_CHANGELOG/*` entry in
+  the same branch and update `_docs/_CHANGELOG/README.md`.
+- If multiple `TASK-158` leaves land together in one wave, one shared
+  completion entry may cover them, but it must name this leaf explicitly and
+  record its validation in the summary.
+- Changelog 278 remains the creation/plan entry.
+
+## Status / Board Update
+
+- This leaf stays under `TASK-158`; do not add a separate promoted board row.
+- When this slice closes, record the repaired `TASK-135*` ranges in the parent
+  completion summary and leave `_docs/_TASKS/README.md` tracking on the
+  umbrella task only.
+- Do not leave this leaf open under a closed `TASK-158`. If any creature-scope
+  boundary repair is intentionally deferred, convert that remainder into a
+  standalone `Follow-on After` task, update `_docs/_TASKS/README.md` to track
+  it, and close or supersede this leaf with an explicit reason in the same
+  branch.
+
+## Acceptance Criteria
+
+- TASK-135 no longer grants reference/perception evidence pass/fail authority.
+- TASK-135 Vision Mode is advisory until verifier/spatial/assertion policy
+  binds a finding to gate status.
+- TASK-135-03 uses normalized gate evidence and verifier-supported refs for
+  shape-profile gates.
+
+## Completion Summary
+
+- completed on 2026-05-03 as a validated no-op docs closeout: the current
+  `TASK-135*` wording already matches the `TASK-157` authority split
+- confirmed there are no remaining hits for the drift phrases
+  `scene/spatial/mesh/reference evidence`, `true attachment errors`,
+  `true cleanup/intersection errors`, or `reference evidence requires`
+- kept this leaf as done because the intended boundary repair is now present in
+  the live task docs, even though no additional wording patch was required in
+  this wave
+- validated with:
+  `git diff --check`
+  and
+  `rg -n "scene/spatial/mesh/reference evidence|true attachment errors|true cleanup/intersection errors|reference evidence requires" _docs/_TASKS/TASK-135*.md`

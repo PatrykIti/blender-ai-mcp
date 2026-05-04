@@ -39,6 +39,20 @@ def _request() -> VisionRequest:
     )
 
 
+def _reference_understanding_request() -> VisionRequest:
+    return VisionRequest(
+        goal="create a low-poly squirrel matching front and side references",
+        images=(
+            VisionImageInput(path="/tmp/ref_front.png", role="reference", label="ref_front"),
+            VisionImageInput(path="/tmp/ref_side.png", role="reference", label="ref_side"),
+        ),
+        metadata={
+            "mode": "reference_understanding",
+            "reference_ids": ["ref_front", "ref_side"],
+        },
+    )
+
+
 def test_local_prompt_payload_is_more_compact_and_task_focused():
     text = build_local_vision_payload_text(_request())
 
@@ -176,4 +190,32 @@ def test_google_family_compare_profile_keeps_full_contract_for_non_checkpoint_re
     assert "visible_changes" in system_prompt
     assert '"goal": "rounded housing"' in payload_text
     assert "visible_changes" in schema["properties"]
+    _assert_strict_required_matches_properties(schema)
+
+
+def test_reference_understanding_prompt_and_schema_use_internal_contract():
+    request = _reference_understanding_request()
+
+    system_prompt = build_vision_system_prompt(backend_kind="openai_compatible_external", request=request)
+    payload_text = build_vision_payload_text(request)
+    schema = build_vision_response_json_schema(request=request)
+
+    assert "bounded reference-understanding assistant" in system_prompt
+    assert "mesh_edit -> modeling_mesh" in system_prompt
+    assert "Return exactly one JSON object with only these keys:" in payload_text
+    assert "- construction_strategy" in payload_text
+    assert "- router_handoff_hints" in payload_text
+    assert set(schema["properties"]) == {
+        "subject",
+        "style",
+        "required_parts",
+        "non_goals",
+        "construction_strategy",
+        "router_handoff_hints",
+        "gate_proposals",
+        "visual_evidence_refs",
+        "verification_requirements",
+        "classification_scores",
+        "segmentation_artifacts",
+    }
     _assert_strict_required_matches_properties(schema)

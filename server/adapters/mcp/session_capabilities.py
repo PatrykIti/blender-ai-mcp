@@ -9,8 +9,8 @@ import asyncio
 import hashlib
 import json
 import re
-from dataclasses import asdict, dataclass
-from typing import TYPE_CHECKING, Any, Literal
+from dataclasses import asdict, dataclass, replace
+from typing import TYPE_CHECKING, Any, Literal, Mapping, Sequence, cast
 
 from fastmcp import Context
 
@@ -21,6 +21,21 @@ from server.adapters.mcp.contracts.guided_flow import (
     GuidedFlowStepLiteral,
     GuidedTargetScopeContract,
 )
+from server.adapters.mcp.contracts.quality_gates import (
+    GateEvidenceRequirementContract,
+    GateIntakeResultContract,
+    GatePlanContract,
+    GatePolicyWarningContract,
+    GateProposalContract,
+    GateSourceProvenanceContract,
+    NormalizedQualityGateContract,
+    gate_equivalence_key,
+    mark_gate_plan_stale,
+    normalize_gate_plan,
+    refresh_gate_plan_status,
+    without_proposal_source,
+)
+from server.adapters.mcp.contracts.reference import ReferenceUnderstandingSummaryContract
 from server.adapters.mcp.session_phase import SessionPhase, coerce_session_phase
 from server.adapters.mcp.session_state import (
     get_session_value,
@@ -28,6 +43,7 @@ from server.adapters.mcp.session_state import (
     set_session_value,
     set_session_value_async,
 )
+from server.adapters.mcp.transforms.quality_gate_verifier import verify_gate_plan_with_relation_graph
 from server.adapters.mcp.transforms.visibility_policy import get_guided_overlay_family_order
 from server.router.application.session_phase_hints import derive_phase_hint_from_router_result
 
@@ -50,6 +66,9 @@ SESSION_LAST_ROUTER_ERROR_KEY = "last_router_error"
 SESSION_REFERENCE_IMAGES_KEY = "reference_images"
 SESSION_GUIDED_HANDOFF_KEY = "guided_handoff"
 SESSION_GUIDED_FLOW_STATE_KEY = "guided_flow_state"
+SESSION_GATE_PLAN_KEY = "gate_plan"
+SESSION_REFERENCE_UNDERSTANDING_SUMMARY_KEY = "reference_understanding_summary"
+SESSION_REFERENCE_UNDERSTANDING_GATE_IDS_KEY = "reference_understanding_gate_ids"
 SESSION_PENDING_REFERENCE_IMAGES_KEY = "pending_reference_images"
 _GENERIC_PENDING_GOAL = "__pending_goal__"
 
@@ -137,6 +156,14 @@ _SPATIAL_STATE_DIRTY_FAMILIES: set[GuidedFlowFamilyLiteral] = {
     "secondary_parts",
     "attachment_alignment",
 }
+_GOAL_TIME_UNAVAILABLE_GATE_EVIDENCE_KINDS: frozenset[str] = frozenset(
+    {
+        "reference_understanding",
+        "silhouette_analysis",
+        "part_segmentation",
+        "classification_scores",
+    }
+)
 _GUIDED_FLOW_ITERATION_TOOLS = {
     "reference_compare_stage_checkpoint",
     "reference_iterate_stage_checkpoint",
@@ -310,6 +337,9 @@ class SessionCapabilityState:
     reference_images: list[dict[str, Any]] | None = None
     guided_handoff: dict[str, Any] | None = None
     guided_flow_state: dict[str, Any] | None = None
+    gate_plan: dict[str, Any] | None = None
+    reference_understanding_summary: dict[str, Any] | None = None
+    reference_understanding_gate_ids: list[str] | None = None
     guided_part_registry: list[dict[str, Any]] | None = None
     pending_reference_images: list[dict[str, Any]] | None = None
 
@@ -343,6 +373,73 @@ class GuidedReferenceReadinessState:
     iterate_ready: bool = False
     blocking_reason: GuidedReferenceBlockingReason | None = None
     next_action: GuidedReferenceNextAction | None = None
+
+
+def describe_guided_flow_feedback(
+    before: SessionCapabilityState | None,
+    after: SessionCapabilityState | None,
+) -> str | None:
+    """Return one concise client-facing note when guided flow state changed materially."""
+
+    after_flow = after.guided_flow_state if after is not None else None
+    if not isinstance(after_flow, dict):
+        return None
+
+    before_flow = before.guided_flow_state if before is not None else None
+
+    before_step = str((before_flow or {}).get("current_step") or "").strip()
+    after_step = str(after_flow.get("current_step") or "").strip()
+    before_refresh = bool((before_flow or {}).get("spatial_refresh_required"))
+    after_refresh = bool(after_flow.get("spatial_refresh_required"))
+    before_actions = [str(item) for item in (before_flow or {}).get("next_actions") or [] if str(item).strip()]
+    after_actions = [str(item) for item in after_flow.get("next_actions") or [] if str(item).strip()]
+    before_families = [str(item) for item in (before_flow or {}).get("allowed_families") or [] if str(item).strip()]
+    after_families = [str(item) for item in after_flow.get("allowed_families") or [] if str(item).strip()]
+    before_required = [
+        str(item.get("tool_name"))
+        for item in (before_flow or {}).get("required_checks") or []
+        if isinstance(item, dict)
+        and str(item.get("status") or "").strip() != "completed"
+        and str(item.get("tool_name") or "").strip()
+    ]
+    after_required = [
+        str(item.get("tool_name"))
+        for item in after_flow.get("required_checks") or []
+        if isinstance(item, dict)
+        and str(item.get("status") or "").strip() != "completed"
+        and str(item.get("tool_name") or "").strip()
+    ]
+    scope_names = [
+        str(name)
+        for name in ((after_flow.get("active_target_scope") or {}).get("object_names") or [])
+        if str(name).strip()
+    ]
+
+    if (
+        before_step == after_step
+        and before_refresh == after_refresh
+        and before_actions == after_actions
+        and before_families == after_families
+        and before_required == after_required
+    ):
+        return None
+
+    parts: list[str] = ["Guided flow updated."]
+    if after_step and after_step != before_step:
+        parts.append(f"Current step: {after_step}.")
+    if after_refresh:
+        parts.append("Spatial context refresh required before continuing build tools.")
+        if after_required:
+            parts.append(f"Run: {', '.join(after_required)}.")
+        if scope_names:
+            parts.append(f"Active scope: {', '.join(scope_names)}.")
+    elif before_refresh and not after_refresh:
+        parts.append("Spatial context refresh cleared.")
+    if after_actions and after_actions != before_actions:
+        parts.append(f"Next action: {', '.join(after_actions)}.")
+    if after_families and after_families != before_families:
+        parts.append(f"Allowed families now: {', '.join(after_families)}.")
+    return " ".join(parts)
 
 
 def infer_phase_from_router_status(
@@ -382,6 +479,33 @@ def _normalize_guided_flow_state(value: Any) -> dict[str, Any] | None:
         return GuidedFlowStateContract.model_validate(value).model_dump(mode="json", exclude_none=True)
     except Exception:
         return None
+
+
+def _normalize_gate_plan(value: Any) -> dict[str, Any] | None:
+    if value is None:
+        return None
+    try:
+        return GatePlanContract.model_validate(value).model_dump(mode="json", exclude_none=True)
+    except Exception:
+        return None
+
+
+def _normalize_reference_understanding_summary(value: Any) -> dict[str, Any] | None:
+    if value is None:
+        return None
+    try:
+        return ReferenceUnderstandingSummaryContract.model_validate(value).model_dump(mode="json", exclude_none=True)
+    except Exception:
+        return None
+
+
+def _normalize_reference_understanding_gate_ids(value: Any) -> list[str] | None:
+    if value is None:
+        return None
+    if not isinstance(value, list):
+        return None
+    normalized = [str(item).strip() for item in value if str(item).strip()]
+    return normalized or None
 
 
 def _normalize_guided_part_registry(value: Any) -> list[dict[str, Any]] | None:
@@ -1105,6 +1229,13 @@ def get_session_capability_state(ctx: Context) -> SessionCapabilityState:
         reference_images=get_session_value(ctx, SESSION_REFERENCE_IMAGES_KEY),
         guided_handoff=get_session_value(ctx, SESSION_GUIDED_HANDOFF_KEY),
         guided_flow_state=_normalize_guided_flow_state(get_session_value(ctx, SESSION_GUIDED_FLOW_STATE_KEY)),
+        gate_plan=_normalize_gate_plan(get_session_value(ctx, SESSION_GATE_PLAN_KEY)),
+        reference_understanding_summary=_normalize_reference_understanding_summary(
+            get_session_value(ctx, SESSION_REFERENCE_UNDERSTANDING_SUMMARY_KEY)
+        ),
+        reference_understanding_gate_ids=_normalize_reference_understanding_gate_ids(
+            get_session_value(ctx, SESSION_REFERENCE_UNDERSTANDING_GATE_IDS_KEY)
+        ),
         guided_part_registry=_normalize_guided_part_registry(get_session_value(ctx, SESSION_GUIDED_PART_REGISTRY_KEY)),
         pending_reference_images=get_session_value(ctx, SESSION_PENDING_REFERENCE_IMAGES_KEY),
     )
@@ -1132,6 +1263,13 @@ async def get_session_capability_state_async(ctx: Context) -> SessionCapabilityS
         guided_handoff=await get_session_value_async(ctx, SESSION_GUIDED_HANDOFF_KEY),
         guided_flow_state=_normalize_guided_flow_state(
             await get_session_value_async(ctx, SESSION_GUIDED_FLOW_STATE_KEY)
+        ),
+        gate_plan=_normalize_gate_plan(await get_session_value_async(ctx, SESSION_GATE_PLAN_KEY)),
+        reference_understanding_summary=_normalize_reference_understanding_summary(
+            await get_session_value_async(ctx, SESSION_REFERENCE_UNDERSTANDING_SUMMARY_KEY)
+        ),
+        reference_understanding_gate_ids=_normalize_reference_understanding_gate_ids(
+            await get_session_value_async(ctx, SESSION_REFERENCE_UNDERSTANDING_GATE_IDS_KEY)
         ),
         guided_part_registry=_normalize_guided_part_registry(
             await get_session_value_async(ctx, SESSION_GUIDED_PART_REGISTRY_KEY)
@@ -1179,6 +1317,9 @@ async def bootstrap_guided_empty_scene_primary_workset_async(ctx: Context) -> Se
         reference_images=current.reference_images,
         guided_handoff=current.guided_handoff,
         guided_flow_state=contract.model_dump(mode="json"),
+        gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=current.guided_part_registry,
         pending_reference_images=current.pending_reference_images,
     )
@@ -1206,6 +1347,9 @@ def set_session_capability_state(ctx: Context, state: SessionCapabilityState) ->
     set_session_value(ctx, SESSION_REFERENCE_IMAGES_KEY, state.reference_images)
     set_session_value(ctx, SESSION_GUIDED_HANDOFF_KEY, state.guided_handoff)
     set_session_value(ctx, SESSION_GUIDED_FLOW_STATE_KEY, state.guided_flow_state)
+    set_session_value(ctx, SESSION_GATE_PLAN_KEY, state.gate_plan)
+    set_session_value(ctx, SESSION_REFERENCE_UNDERSTANDING_SUMMARY_KEY, state.reference_understanding_summary)
+    set_session_value(ctx, SESSION_REFERENCE_UNDERSTANDING_GATE_IDS_KEY, state.reference_understanding_gate_ids)
     set_session_value(ctx, SESSION_GUIDED_PART_REGISTRY_KEY, state.guided_part_registry)
     set_session_value(ctx, SESSION_PENDING_REFERENCE_IMAGES_KEY, state.pending_reference_images)
 
@@ -1230,8 +1374,346 @@ async def set_session_capability_state_async(ctx: Context, state: SessionCapabil
     await set_session_value_async(ctx, SESSION_REFERENCE_IMAGES_KEY, state.reference_images)
     await set_session_value_async(ctx, SESSION_GUIDED_HANDOFF_KEY, state.guided_handoff)
     await set_session_value_async(ctx, SESSION_GUIDED_FLOW_STATE_KEY, state.guided_flow_state)
+    await set_session_value_async(ctx, SESSION_GATE_PLAN_KEY, state.gate_plan)
+    await set_session_value_async(
+        ctx, SESSION_REFERENCE_UNDERSTANDING_SUMMARY_KEY, state.reference_understanding_summary
+    )
+    await set_session_value_async(
+        ctx, SESSION_REFERENCE_UNDERSTANDING_GATE_IDS_KEY, state.reference_understanding_gate_ids
+    )
     await set_session_value_async(ctx, SESSION_GUIDED_PART_REGISTRY_KEY, state.guided_part_registry)
     await set_session_value_async(ctx, SESSION_PENDING_REFERENCE_IMAGES_KEY, state.pending_reference_images)
+
+
+def ingest_quality_gate_proposal_for_state(
+    current: SessionCapabilityState,
+    gate_proposal: dict[str, Any] | None,
+) -> tuple[SessionCapabilityState, GateIntakeResultContract]:
+    if gate_proposal is None:
+        return current, GateIntakeResultContract(status="ignored", reason="no_gate_proposal")
+    if not current.goal or current.guided_flow_state is None:
+        return current, GateIntakeResultContract(status="ignored", reason="no_active_guided_goal")
+
+    try:
+        flow_state = GuidedFlowStateContract.model_validate(current.guided_flow_state)
+        proposal = GateProposalContract.model_validate(gate_proposal)
+        gate_plan = normalize_gate_plan(
+            proposal,
+            domain_profile=flow_state.domain_profile,
+        )
+        if proposal.source == "llm_goal":
+            gate_plan = _apply_goal_time_gate_input_bounds(gate_plan)
+        merged_gate_plan = _merge_gate_plan_for_proposal_source(
+            current.gate_plan,
+            gate_plan,
+            proposal_source=proposal.source,
+        )
+    except Exception as exc:
+        return current, GateIntakeResultContract(status="rejected", reason=str(exc))
+
+    updated = replace(current, gate_plan=merged_gate_plan.model_dump(mode="json", exclude_none=True))
+    return updated, GateIntakeResultContract(
+        status="accepted",
+        gate_plan=merged_gate_plan,
+        policy_warnings=gate_plan.policy_warnings,
+    )
+
+
+def _merge_gate_plan_for_proposal_source(
+    existing_gate_plan: dict[str, Any] | None,
+    incoming_gate_plan: GatePlanContract,
+    *,
+    proposal_source: str,
+) -> GatePlanContract:
+    """Replace only the active source slice while preserving the rest of the session gate plan."""
+
+    if existing_gate_plan is None:
+        return incoming_gate_plan
+
+    existing_plan = GatePlanContract.model_validate(existing_gate_plan)
+    retained_gates: list[NormalizedQualityGateContract] = []
+    removed_gate_ids: set[str] = set()
+    for gate in existing_plan.gates:
+        if proposal_source not in gate.proposal_sources:
+            retained_gates.append(gate)
+            continue
+        retained_gate = without_proposal_source(gate, proposal_source)
+        if retained_gate is None:
+            removed_gate_ids.add(gate.gate_id)
+            continue
+        retained_gates.append(retained_gate)
+    incoming_source_gates = [gate for gate in incoming_gate_plan.gates if proposal_source in gate.proposal_sources]
+    incoming_source_gate_ids = {gate.gate_id for gate in incoming_source_gates}
+    merged_gates = list(retained_gates)
+    incoming_gate_id_map: dict[str, str] = {}
+    for incoming_gate in incoming_source_gates:
+        equivalent_index = _find_equivalent_gate_index(merged_gates, incoming_gate)
+        if equivalent_index is None:
+            merged_gates.append(incoming_gate)
+            incoming_gate_id_map[incoming_gate.gate_id] = incoming_gate.gate_id
+            continue
+        merged_gate = _merge_equivalent_gates(merged_gates[equivalent_index], incoming_gate)
+        merged_gates[equivalent_index] = merged_gate
+        incoming_gate_id_map[incoming_gate.gate_id] = merged_gate.gate_id
+    retained_warnings = [
+        warning
+        for warning in existing_plan.policy_warnings
+        if warning.gate_id is None or warning.gate_id not in removed_gate_ids
+    ]
+    incoming_source_warnings = [
+        _remap_gate_policy_warning(warning, gate_id_map=incoming_gate_id_map)
+        for warning in incoming_gate_plan.policy_warnings
+        if warning.gate_id is None or warning.gate_id in incoming_source_gate_ids
+    ]
+
+    return refresh_gate_plan_status(
+        existing_plan.model_copy(
+            update={
+                "plan_id": incoming_gate_plan.plan_id,
+                "proposal_id": incoming_gate_plan.proposal_id,
+                "gates": merged_gates,
+                "policy_warnings": [*retained_warnings, *incoming_source_warnings],
+            }
+        )
+    )
+
+
+def _find_equivalent_gate_index(
+    gates: list[NormalizedQualityGateContract],
+    candidate: NormalizedQualityGateContract,
+) -> int | None:
+    candidate_key = gate_equivalence_key(candidate)
+    for index, gate in enumerate(gates):
+        if gate_equivalence_key(gate) == candidate_key:
+            return index
+    return None
+
+
+def _merge_equivalent_gates(
+    existing: NormalizedQualityGateContract,
+    incoming: NormalizedQualityGateContract,
+) -> NormalizedQualityGateContract:
+    return existing.model_copy(
+        update={
+            "target_label": existing.target_label or incoming.target_label,
+            "target_objects": _merge_unique_strings(existing.target_objects, incoming.target_objects),
+            "required": existing.required or incoming.required,
+            "priority": _higher_gate_priority(existing.priority, incoming.priority),
+            "allowed_correction_families": cast(
+                Any,
+                _merge_unique_strings(existing.allowed_correction_families, incoming.allowed_correction_families),
+            ),
+            "recommended_bounded_tools": _merge_unique_strings(
+                existing.recommended_bounded_tools,
+                incoming.recommended_bounded_tools,
+            ),
+            "proposal_sources": cast(Any, _merge_unique_strings(existing.proposal_sources, incoming.proposal_sources)),
+            "source_provenance": _merge_source_provenance(existing, incoming),
+            "evidence_requirements": _merge_evidence_requirements(existing, incoming),
+            "allow_embedded_intersection": existing.allow_embedded_intersection or incoming.allow_embedded_intersection,
+            "allow_alignment_drift": existing.allow_alignment_drift or incoming.allow_alignment_drift,
+            "rationale": existing.rationale or incoming.rationale,
+        }
+    )
+
+
+def _merge_source_provenance(
+    existing: NormalizedQualityGateContract,
+    incoming: NormalizedQualityGateContract,
+) -> list[GateSourceProvenanceContract]:
+    merged: list[GateSourceProvenanceContract] = []
+    seen: set[str] = set()
+    for provenance in [*existing.source_provenance, *incoming.source_provenance]:
+        payload = provenance.model_dump(mode="json", exclude_none=True)
+        dedupe_key = json.dumps(payload, sort_keys=True)
+        if dedupe_key in seen:
+            continue
+        seen.add(dedupe_key)
+        merged.append(provenance)
+    return merged
+
+
+def _merge_evidence_requirements(
+    existing: NormalizedQualityGateContract,
+    incoming: NormalizedQualityGateContract,
+) -> list[GateEvidenceRequirementContract]:
+    merged: list[GateEvidenceRequirementContract] = []
+    by_kind: dict[str, int] = {}
+    for requirement in [*existing.evidence_requirements, *incoming.evidence_requirements]:
+        evidence_kind = str(requirement.evidence_kind)
+        if evidence_kind not in by_kind:
+            by_kind[evidence_kind] = len(merged)
+            merged.append(requirement)
+            continue
+        current = merged[by_kind[evidence_kind]]
+        merged[by_kind[evidence_kind]] = current.model_copy(
+            update={
+                "required": current.required or requirement.required,
+                "reason": current.reason or requirement.reason,
+            }
+        )
+    return merged
+
+
+def _merge_unique_strings(existing: Sequence[str], incoming: Sequence[str]) -> list[str]:
+    merged: list[str] = []
+    seen: set[str] = set()
+    for item in [*existing, *incoming]:
+        normalized = str(item).strip()
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        merged.append(normalized)
+    return merged
+
+
+def _higher_gate_priority(
+    existing: str,
+    incoming: str,
+) -> str:
+    priority_rank = {"high": 0, "normal": 1, "low": 2}
+    existing_rank = priority_rank.get(existing, 1)
+    incoming_rank = priority_rank.get(incoming, 1)
+    return existing if existing_rank <= incoming_rank else incoming
+
+
+def _remap_gate_policy_warning(
+    warning: GatePolicyWarningContract,
+    *,
+    gate_id_map: dict[str, str],
+) -> GatePolicyWarningContract:
+    if warning.gate_id is None:
+        return warning
+    remapped_gate_id = gate_id_map.get(warning.gate_id, warning.gate_id)
+    if remapped_gate_id == warning.gate_id:
+        return warning
+    return warning.model_copy(update={"gate_id": remapped_gate_id})
+
+
+def ingest_quality_gate_proposal(
+    ctx: Context,
+    gate_proposal: dict[str, Any] | None,
+) -> GateIntakeResultContract:
+    """Normalize and persist one optional guided quality-gate proposal."""
+
+    current = get_session_capability_state(ctx)
+    updated, result = ingest_quality_gate_proposal_for_state(current, gate_proposal)
+    if result.status == "accepted":
+        set_session_capability_state(ctx, updated)
+    return result
+
+
+async def ingest_quality_gate_proposal_async(
+    ctx: Context,
+    gate_proposal: dict[str, Any] | None,
+) -> GateIntakeResultContract:
+    """Async variant of guided quality-gate proposal intake."""
+
+    current = await get_session_capability_state_async(ctx)
+    updated, result = ingest_quality_gate_proposal_for_state(current, gate_proposal)
+    if result.status == "accepted":
+        await set_session_capability_state_async(ctx, updated)
+    return result
+
+
+def _apply_goal_time_gate_input_bounds(gate_plan: GatePlanContract) -> GatePlanContract:
+    """Drop gates that require unavailable reference/perception evidence at goal intake time."""
+
+    warnings = list(gate_plan.policy_warnings)
+    retained_gates = []
+    for gate in gate_plan.gates:
+        unavailable_required = sorted(
+            requirement.evidence_kind
+            for requirement in gate.evidence_requirements
+            if requirement.required and requirement.evidence_kind in _GOAL_TIME_UNAVAILABLE_GATE_EVIDENCE_KINDS
+        )
+        if not unavailable_required:
+            retained_gates.append(gate)
+            continue
+        warnings.append(
+            GatePolicyWarningContract(
+                code="unavailable_required_evidence",
+                message=(
+                    "Goal-time gate intake cannot require unavailable reference/perception evidence "
+                    f"({', '.join(unavailable_required)}); drop or relax the gate until the runtime source exists."
+                ),
+                action="dropped",
+                gate_id=gate.gate_id,
+                gate_label=gate.label,
+                field="evidence_requirements",
+            )
+        )
+
+    if len(retained_gates) == len(gate_plan.gates):
+        return gate_plan
+
+    return refresh_gate_plan_status(gate_plan.model_copy(update={"gates": retained_gates, "policy_warnings": warnings}))
+
+
+def _spatial_state_version_from_flow_state(flow_state: dict[str, Any] | None) -> int | None:
+    if flow_state is None:
+        return None
+    try:
+        contract = GuidedFlowStateContract.model_validate(flow_state)
+    except Exception:
+        return None
+    return contract.spatial_state_version
+
+
+def _scope_fingerprint_from_flow_state(flow_state: dict[str, Any] | None) -> str | None:
+    if flow_state is None:
+        return None
+    try:
+        contract = GuidedFlowStateContract.model_validate(flow_state)
+    except Exception:
+        return None
+    return contract.spatial_scope_fingerprint
+
+
+def update_quality_gate_plan_from_relation_graph(
+    ctx: Context,
+    relation_graph_payload: dict[str, Any],
+) -> SessionCapabilityState:
+    """Apply scene relation graph truth to the active session gate plan."""
+
+    current = get_session_capability_state(ctx)
+    if current.gate_plan is None:
+        return current
+
+    updated_gate_plan = verify_gate_plan_with_relation_graph(
+        current.gate_plan,
+        relation_graph_payload,
+        spatial_state_version=_spatial_state_version_from_flow_state(current.guided_flow_state),
+        scope_fingerprint=_scope_fingerprint_from_flow_state(current.guided_flow_state),
+        guided_part_registry=cast(list[Mapping[str, Any]] | None, current.guided_part_registry),
+    )
+    state = replace(current, gate_plan=updated_gate_plan.model_dump(mode="json", exclude_none=True))
+    set_session_capability_state(ctx, state)
+    refresh_visibility_for_session_state(ctx, state)
+    return state
+
+
+async def update_quality_gate_plan_from_relation_graph_async(
+    ctx: Context,
+    relation_graph_payload: dict[str, Any],
+) -> SessionCapabilityState:
+    """Async variant of quality-gate relation graph verification."""
+
+    current = await get_session_capability_state_async(ctx)
+    if current.gate_plan is None:
+        return current
+
+    updated_gate_plan = verify_gate_plan_with_relation_graph(
+        current.gate_plan,
+        relation_graph_payload,
+        spatial_state_version=_spatial_state_version_from_flow_state(current.guided_flow_state),
+        scope_fingerprint=_scope_fingerprint_from_flow_state(current.guided_flow_state),
+        guided_part_registry=cast(list[Mapping[str, Any]] | None, current.guided_part_registry),
+    )
+    state = replace(current, gate_plan=updated_gate_plan.model_dump(mode="json", exclude_none=True))
+    await set_session_capability_state_async(ctx, state)
+    await apply_visibility_for_session_state(ctx, state)
+    return state
 
 
 def _split_pending_reference_images_for_goal(
@@ -1357,6 +1839,7 @@ def update_session_from_router_goal(
     router_result: dict[str, Any],
     *,
     provided_answers: dict[str, Any] | None = None,
+    gate_proposal: dict[str, Any] | None = None,
     surface_profile: str | None = None,
     contract_version: str | None = None,
 ) -> SessionCapabilityState:
@@ -1432,9 +1915,14 @@ def update_session_from_router_goal(
         reference_images=reference_images,
         guided_handoff=router_result.get("guided_handoff"),
         guided_flow_state=guided_flow_state,
+        gate_plan=current.gate_plan if same_goal else None,
+        reference_understanding_summary=current.reference_understanding_summary if same_goal else None,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids if same_goal else None,
         guided_part_registry=retained_guided_part_registry,
         pending_reference_images=pending_reference_images,
     )
+    if gate_proposal is not None:
+        state, _intake_result = ingest_quality_gate_proposal_for_state(state, gate_proposal)
     set_session_capability_state(ctx, state)
     return state
 
@@ -1445,6 +1933,7 @@ async def update_session_from_router_goal_async(
     router_result: dict[str, Any],
     *,
     provided_answers: dict[str, Any] | None = None,
+    gate_proposal: dict[str, Any] | None = None,
     surface_profile: str | None = None,
     contract_version: str | None = None,
 ) -> SessionCapabilityState:
@@ -1520,9 +2009,14 @@ async def update_session_from_router_goal_async(
         reference_images=reference_images,
         guided_handoff=router_result.get("guided_handoff"),
         guided_flow_state=guided_flow_state,
+        gate_plan=current.gate_plan if same_goal else None,
+        reference_understanding_summary=current.reference_understanding_summary if same_goal else None,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids if same_goal else None,
         guided_part_registry=retained_guided_part_registry,
         pending_reference_images=pending_reference_images,
     )
+    if gate_proposal is not None:
+        state, _intake_result = ingest_quality_gate_proposal_for_state(state, gate_proposal)
     await set_session_capability_state_async(ctx, state)
     return state
 
@@ -1554,6 +2048,9 @@ def clear_session_goal_state(
         reference_images=None,
         guided_handoff=None,
         guided_flow_state=None,
+        gate_plan=None,
+        reference_understanding_summary=None,
+        reference_understanding_gate_ids=None,
         guided_part_registry=None,
         pending_reference_images=None,
     )
@@ -1588,6 +2085,9 @@ async def clear_session_goal_state_async(
         reference_images=None,
         guided_handoff=None,
         guided_flow_state=None,
+        gate_plan=None,
+        reference_understanding_summary=None,
+        reference_understanding_gate_ids=None,
         guided_part_registry=None,
         pending_reference_images=None,
     )
@@ -1634,6 +2134,7 @@ async def apply_visibility_for_session_state(
         phase=state.phase,
         guided_handoff=state.guided_handoff,
         guided_flow_state=state.guided_flow_state,
+        gate_plan=state.gate_plan,
     )
 
 
@@ -1690,6 +2191,9 @@ def replace_session_reference_images(
         reference_images=reference_images or None,
         guided_handoff=current.guided_handoff,
         guided_flow_state=current.guided_flow_state,
+        gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=current.guided_part_registry,
         pending_reference_images=current.pending_reference_images,
     )
@@ -1722,6 +2226,9 @@ async def replace_session_reference_images_async(
         reference_images=reference_images or None,
         guided_handoff=current.guided_handoff,
         guided_flow_state=current.guided_flow_state,
+        gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=current.guided_part_registry,
         pending_reference_images=current.pending_reference_images,
     )
@@ -1768,6 +2275,9 @@ def record_router_execution_outcome(
         reference_images=current.reference_images,
         guided_handoff=current.guided_handoff,
         guided_flow_state=current.guided_flow_state,
+        gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=current.guided_part_registry,
         pending_reference_images=current.pending_reference_images,
     )
@@ -1798,6 +2308,9 @@ def replace_session_pending_reference_images(
         reference_images=current.reference_images,
         guided_handoff=current.guided_handoff,
         guided_flow_state=current.guided_flow_state,
+        gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=current.guided_part_registry,
         pending_reference_images=pending_reference_images or None,
     )
@@ -1830,6 +2343,9 @@ async def replace_session_pending_reference_images_async(
         reference_images=current.reference_images,
         guided_handoff=current.guided_handoff,
         guided_flow_state=current.guided_flow_state,
+        gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=current.guided_part_registry,
         pending_reference_images=pending_reference_images or None,
     )
@@ -1895,6 +2411,7 @@ def mark_guided_spatial_state_stale(
     tool_name: str,
     family: str | None = None,
     reason: str | None = None,
+    affected_objects: list[str] | None = None,
 ) -> SessionCapabilityState:
     """Mark the active guided flow's spatial facts stale after one scene mutation."""
 
@@ -1912,6 +2429,17 @@ def mark_guided_spatial_state_stale(
         reason=reason or tool_name,
         part_registry=updated_registry,
     )
+    updated_gate_plan = (
+        mark_gate_plan_stale(
+            current.gate_plan,
+            reason=reason or tool_name,
+            spatial_state_version=_spatial_state_version_from_flow_state(updated_flow_state),
+            affected_objects=affected_objects,
+            guided_part_registry=cast(list[Mapping[str, Any]] | None, current.guided_part_registry),
+        ).model_dump(mode="json", exclude_none=True)
+        if current.gate_plan is not None
+        else None
+    )
     state = SessionCapabilityState(
         phase=current.phase,
         goal=current.goal,
@@ -1930,6 +2458,9 @@ def mark_guided_spatial_state_stale(
         reference_images=current.reference_images,
         guided_handoff=current.guided_handoff,
         guided_flow_state=updated_flow_state,
+        gate_plan=updated_gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=updated_registry,
         pending_reference_images=current.pending_reference_images,
     )
@@ -1944,6 +2475,7 @@ async def mark_guided_spatial_state_stale_async(
     tool_name: str,
     family: str | None = None,
     reason: str | None = None,
+    affected_objects: list[str] | None = None,
 ) -> SessionCapabilityState:
     """Async variant of guided spatial dirty-state recording for native FastMCP requests."""
 
@@ -1961,6 +2493,17 @@ async def mark_guided_spatial_state_stale_async(
         reason=reason or tool_name,
         part_registry=updated_registry,
     )
+    updated_gate_plan = (
+        mark_gate_plan_stale(
+            current.gate_plan,
+            reason=reason or tool_name,
+            spatial_state_version=_spatial_state_version_from_flow_state(updated_flow_state),
+            affected_objects=affected_objects,
+            guided_part_registry=cast(list[Mapping[str, Any]] | None, current.guided_part_registry),
+        ).model_dump(mode="json", exclude_none=True)
+        if current.gate_plan is not None
+        else None
+    )
     state = SessionCapabilityState(
         phase=current.phase,
         goal=current.goal,
@@ -1979,6 +2522,9 @@ async def mark_guided_spatial_state_stale_async(
         reference_images=current.reference_images,
         guided_handoff=current.guided_handoff,
         guided_flow_state=updated_flow_state,
+        gate_plan=updated_gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=updated_registry,
         pending_reference_images=current.pending_reference_images,
     )
@@ -2053,6 +2599,9 @@ async def register_guided_part_role_async(
         reference_images=current.reference_images,
         guided_handoff=current.guided_handoff,
         guided_flow_state=updated_flow_state,
+        gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=updated_registry,
         pending_reference_images=current.pending_reference_images,
     )
@@ -2138,6 +2687,9 @@ def register_guided_part_role(
         reference_images=current.reference_images,
         guided_handoff=current.guided_handoff,
         guided_flow_state=updated_flow_state,
+        gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=updated_registry,
         pending_reference_images=current.pending_reference_images,
     )
@@ -2200,6 +2752,9 @@ def rename_guided_part_registration(
         reference_images=current.reference_images,
         guided_handoff=current.guided_handoff,
         guided_flow_state=updated_flow_state,
+        gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=updated_registry,
         pending_reference_images=current.pending_reference_images,
     )
@@ -2261,6 +2816,9 @@ async def rename_guided_part_registration_async(
         reference_images=current.reference_images,
         guided_handoff=current.guided_handoff,
         guided_flow_state=updated_flow_state,
+        gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=updated_registry,
         pending_reference_images=current.pending_reference_images,
     )
@@ -2320,6 +2878,9 @@ def remove_guided_part_registrations(
         reference_images=current.reference_images,
         guided_handoff=current.guided_handoff,
         guided_flow_state=updated_flow_state,
+        gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=updated_registry or None,
         pending_reference_images=current.pending_reference_images,
     )
@@ -2379,6 +2940,9 @@ async def remove_guided_part_registrations_async(
         reference_images=current.reference_images,
         guided_handoff=current.guided_handoff,
         guided_flow_state=updated_flow_state,
+        gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=updated_registry or None,
         pending_reference_images=current.pending_reference_images,
     )
@@ -2504,6 +3068,9 @@ def record_guided_flow_spatial_check_completion(
         reference_images=current.reference_images,
         guided_handoff=current.guided_handoff,
         guided_flow_state=updated_flow_state,
+        gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=current.guided_part_registry,
         pending_reference_images=current.pending_reference_images,
     )
@@ -2551,6 +3118,9 @@ async def record_guided_flow_spatial_check_completion_async(
         reference_images=current.reference_images,
         guided_handoff=current.guided_handoff,
         guided_flow_state=updated_flow_state,
+        gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=current.guided_part_registry,
         pending_reference_images=current.pending_reference_images,
     )
@@ -2641,6 +3211,9 @@ async def advance_guided_flow_from_iteration_async(
         reference_images=current.reference_images,
         guided_handoff=current.guided_handoff,
         guided_flow_state=updated_flow_state,
+        gate_plan=current.gate_plan,
+        reference_understanding_summary=current.reference_understanding_summary,
+        reference_understanding_gate_ids=current.reference_understanding_gate_ids,
         guided_part_registry=current.guided_part_registry,
         pending_reference_images=current.pending_reference_images,
     )

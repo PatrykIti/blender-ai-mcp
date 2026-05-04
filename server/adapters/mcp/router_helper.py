@@ -60,6 +60,7 @@ _GUIDED_UNMAPPED_MUTATING_PREFIXES: tuple[str, ...] = (
     "modeling_",
     "mesh_",
     "macro_",
+    "sculpt_",
     "material_",
     "uv_",
 )
@@ -183,7 +184,10 @@ def _result_represents_success(tool_name: str, result: Any) -> bool:
 def _maybe_mark_guided_spatial_state_stale_from_report(report: MCPExecutionReport) -> None:
     """Mark guided spatial state stale after one successful scene mutation."""
 
-    dirty_step, dirty_family = _first_guided_dirty_step(report)
+    dirty_steps = _guided_dirty_steps(report)
+    if not dirty_steps:
+        return
+    dirty_step, dirty_family = dirty_steps[0]
     if dirty_step is None:
         return
 
@@ -197,17 +201,19 @@ def _maybe_mark_guided_spatial_state_stale_from_report(report: MCPExecutionRepor
             tool_name=dirty_step.tool_name,
             family=dirty_family,
             reason=dirty_step.tool_name,
+            affected_objects=_affected_object_names_from_dirty_steps(dirty_steps),
         )
     except Exception:
         return
 
 
-def _first_guided_dirty_step(report: MCPExecutionReport) -> tuple[ExecutionStep | None, str | None]:
-    """Return the first successful step that invalidates guided spatial facts."""
+def _guided_dirty_steps(report: MCPExecutionReport) -> list[tuple[ExecutionStep, str | None]]:
+    """Return every successful step that invalidates guided spatial facts."""
 
     if report.error is not None or not report.steps:
-        return None, None
+        return []
 
+    dirty_steps: list[tuple[ExecutionStep, str | None]] = []
     for step in report.steps:
         if step.error is not None:
             continue
@@ -216,9 +222,17 @@ def _first_guided_dirty_step(report: MCPExecutionReport) -> tuple[ExecutionStep 
         step_family = resolve_guided_tool_family(step.tool_name)
         if not is_guided_spatial_state_dirtying_operation(tool_name=step.tool_name, family=step_family):
             continue
-        return step, step_family
+        dirty_steps.append((step, step_family))
+    return dirty_steps
 
-    return None, None
+
+def _first_guided_dirty_step(report: MCPExecutionReport) -> tuple[ExecutionStep | None, str | None]:
+    """Return the first successful step that invalidates guided spatial facts."""
+
+    dirty_steps = _guided_dirty_steps(report)
+    if not dirty_steps:
+        return None, None
+    return dirty_steps[0]
 
 
 async def _maybe_mark_guided_spatial_state_stale_from_report_async(
@@ -227,7 +241,10 @@ async def _maybe_mark_guided_spatial_state_stale_from_report_async(
 ) -> None:
     """Async variant of guided spatial dirty-state recording."""
 
-    dirty_step, dirty_family = _first_guided_dirty_step(report)
+    dirty_steps = _guided_dirty_steps(report)
+    if not dirty_steps:
+        return
+    dirty_step, dirty_family = dirty_steps[0]
     if dirty_step is None:
         return
 
@@ -237,9 +254,75 @@ async def _maybe_mark_guided_spatial_state_stale_from_report_async(
             tool_name=dirty_step.tool_name,
             family=dirty_family,
             reason=dirty_step.tool_name,
+            affected_objects=_affected_object_names_from_dirty_steps(dirty_steps),
         )
     except Exception:
         return
+
+
+def _append_affected_object_names(names: list[str], seen: set[str], value: Any) -> None:
+    if isinstance(value, str):
+        normalized = value.strip()
+        if normalized and normalized not in seen:
+            seen.add(normalized)
+            names.append(normalized)
+        return
+    if isinstance(value, dict):
+        for key in (
+            "object_name",
+            "target_object",
+            "reference_object",
+            "surface_object",
+            "part_object",
+            "from_object",
+            "to_object",
+            "left_object",
+            "right_object",
+        ):
+            _append_affected_object_names(names, seen, value.get(key))
+        for key in ("objects_modified", "objects_created", "object_names", "target_objects"):
+            _append_affected_object_names(names, seen, value.get(key))
+        return
+    if isinstance(value, (list, tuple, set)):
+        for item in value:
+            _append_affected_object_names(names, seen, item)
+
+
+def _affected_object_names_from_step(step: ExecutionStep) -> list[str] | None:
+    names: list[str] = []
+    seen: set[str] = set()
+    for key in (
+        "name",
+        "object_name",
+        "target_object",
+        "part_object",
+        "surface_object",
+        "reference_object",
+        "from_object",
+        "to_object",
+        "left_object",
+        "right_object",
+        "old_name",
+        "new_name",
+    ):
+        _append_affected_object_names(names, seen, step.params.get(key))
+    for key in ("object_names", "target_objects"):
+        _append_affected_object_names(names, seen, step.params.get(key))
+    if not isinstance(step.result, str):
+        _append_affected_object_names(names, seen, step.result)
+    renamed_object = _renamed_object_name_from_result(step.result)
+    if renamed_object is not None:
+        _append_affected_object_names(names, seen, renamed_object)
+    return names or None
+
+
+def _affected_object_names_from_dirty_steps(dirty_steps: list[tuple[ExecutionStep, str | None]]) -> list[str] | None:
+    names: list[str] = []
+    seen: set[str] = set()
+    for step, _family in dirty_steps:
+        for object_name in _affected_object_names_from_step(step) or []:
+            _append_affected_object_names(names, seen, object_name)
+    return names or None
 
 
 def _renamed_object_name_from_result(result: Any) -> str | None:

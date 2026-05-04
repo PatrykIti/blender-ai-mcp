@@ -10,10 +10,12 @@ import pytest
 import server.adapters.mcp.session_capabilities as session_capabilities
 from fastmcp import Context
 from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract
+from server.adapters.mcp.contracts.quality_gates import normalize_gate_plan
 from server.adapters.mcp.session_capabilities import (
     SessionCapabilityState,
     advance_guided_flow_from_iteration_async,
     bootstrap_guided_empty_scene_primary_workset_async,
+    describe_guided_flow_feedback,
     get_session_capability_state,
     mark_guided_spatial_state_stale,
     record_guided_flow_spatial_check_completion,
@@ -92,6 +94,37 @@ def test_session_state_round_trips_guided_flow_state():
     assert restored.guided_flow_state["allowed_families"] == ["spatial_context", "reference_context"]
 
 
+def test_session_state_round_trips_gate_plan_state():
+    ctx = FakeContext()
+    gate_plan = normalize_gate_plan(
+        {
+            "proposal_id": "squirrel-gates",
+            "source": "llm_goal",
+            "gates": [
+                {
+                    "gate_type": "required_part",
+                    "label": "visible eye pair",
+                    "target_kind": "reference_part",
+                    "target_label": "eye_pair",
+                }
+            ],
+        },
+        domain_profile="creature",
+        templates=[],
+    ).model_dump(mode="json")
+    state = SessionCapabilityState(
+        phase=SessionPhase.BUILD,
+        gate_plan=gate_plan,
+    )
+    set_session_capability_state(ctx, state)
+
+    restored = get_session_capability_state(ctx)
+
+    assert restored.gate_plan is not None
+    assert restored.gate_plan["plan_id"] == "creature_squirrel_gates"
+    assert restored.gate_plan["gates"][0]["target_label"] == "eye_pair"
+
+
 def test_default_session_state_has_no_guided_part_registry():
     ctx = FakeContext()
 
@@ -121,6 +154,70 @@ def test_session_state_round_trips_guided_part_registry():
     assert restored.guided_part_registry is not None
     assert restored.guided_part_registry[0]["object_name"] == "Squirrel_Body"
     assert restored.guided_part_registry[0]["role"] == "body_core"
+
+
+def test_session_state_round_trips_reference_understanding_linkage():
+    ctx = FakeContext()
+    state = SessionCapabilityState(
+        phase=SessionPhase.BUILD,
+        reference_understanding_summary={
+            "status": "available",
+            "understanding_id": "understanding_1234567890",
+            "goal": "create a low-poly squirrel",
+            "reference_ids": ["ref_front", "ref_side"],
+            "subject": {
+                "label": "low poly squirrel",
+                "category": "creature",
+                "confidence": 0.8,
+                "uncertainty_notes": [],
+            },
+            "style": {
+                "style_label": "low_poly_faceted",
+                "confidence": 0.8,
+                "notes": [],
+            },
+            "required_parts": [],
+            "non_goals": [],
+            "construction_strategy": {
+                "construction_path": "low_poly_facet",
+                "primary_family": "modeling_mesh",
+                "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+                "stage_sequence": ["primary_masses"],
+                "finish_policy": "preserve_facets",
+            },
+            "router_handoff_hints": {
+                "preferred_family": "modeling_mesh",
+                "allowed_guided_families": [
+                    "reference_context",
+                    "primary_masses",
+                    "secondary_parts",
+                    "inspect_validate",
+                ],
+                "sculpt_policy": "hidden",
+            },
+            "gate_proposals": [],
+            "visual_evidence_refs": [],
+            "classification_scores": [],
+            "segmentation_artifacts": [],
+            "verification_requirements": [],
+            "source_provenance": [{"source": "reference_understanding"}],
+            "boundary_policy": {
+                "advisory_only": True,
+                "not_truth_source": True,
+                "may_unlock_tools": False,
+                "may_pass_gates": False,
+                "may_propose_gates": True,
+            },
+        },
+        reference_understanding_gate_ids=["creature_eye_pair", "creature_tail_core"],
+    )
+
+    set_session_capability_state(ctx, state)
+    restored = get_session_capability_state(ctx)
+
+    assert restored.reference_understanding_summary is not None
+    assert restored.reference_understanding_summary["understanding_id"] == "understanding_1234567890"
+    assert restored.reference_understanding_gate_ids == ["creature_eye_pair", "creature_tail_core"]
 
 
 def test_guided_flow_contract_accepts_allowed_families():
@@ -606,6 +703,48 @@ def test_scene_view_diagnostics_unavailable_does_not_complete_guided_spatial_che
     assert result.payload.view_query.available is False
     assert checks_by_tool["scene_view_diagnostics"] == "pending"
     assert state.guided_flow_state["current_step"] == "establish_spatial_context"
+
+
+def test_describe_guided_flow_feedback_reports_spatial_refresh_requirements():
+    before = SessionCapabilityState(
+        phase=SessionPhase.BUILD,
+        guided_flow_state={
+            "current_step": "create_primary_masses",
+            "spatial_refresh_required": False,
+            "next_actions": ["begin_primary_masses"],
+            "allowed_families": ["primary_masses", "reference_context"],
+            "required_checks": [],
+        },
+    )
+    after = SessionCapabilityState(
+        phase=SessionPhase.BUILD,
+        guided_flow_state={
+            "current_step": "place_secondary_parts",
+            "spatial_refresh_required": True,
+            "next_actions": ["refresh_spatial_context"],
+            "allowed_families": ["spatial_context", "reference_context"],
+            "required_checks": [
+                {"tool_name": "scene_scope_graph", "status": "pending"},
+                {"tool_name": "scene_relation_graph", "status": "pending"},
+                {"tool_name": "scene_view_diagnostics", "status": "pending"},
+            ],
+            "active_target_scope": {
+                "scope_kind": "object_set",
+                "primary_target": "Body",
+                "object_names": ["Body", "Head"],
+                "object_count": 2,
+            },
+        },
+    )
+
+    feedback = describe_guided_flow_feedback(before, after)
+
+    assert feedback is not None
+    assert "Current step: place_secondary_parts." in feedback
+    assert "Spatial context refresh required before continuing build tools." in feedback
+    assert "scene_scope_graph, scene_relation_graph, scene_view_diagnostics" in feedback
+    assert "Active scope: Body, Head." in feedback
+    assert "Allowed families now: spatial_context, reference_context." in feedback
 
 
 def test_scene_scope_graph_binds_active_target_scope_and_blocks_unrelated_spoofed_view_check():

@@ -111,6 +111,7 @@ def _build_flow_search_server(
     guided_flow_state: dict[str, object],
     *,
     guided_handoff: dict[str, object] | None = None,
+    gate_plan: dict[str, object] | None = None,
 ) -> FastMCP:
     surface = replace(get_surface_profile("llm-guided"), search_enabled=True)
     base_pipeline = build_surface_transform_pipeline(surface)
@@ -124,6 +125,7 @@ def _build_flow_search_server(
                         phase,
                         guided_handoff=guided_handoff,
                         guided_flow_state=guided_flow_state,
+                        gate_plan=gate_plan,
                     )
                 )
             )
@@ -186,6 +188,7 @@ def _build_flow_visible_server(
     guided_flow_state: dict[str, object],
     *,
     guided_handoff: dict[str, object] | None = None,
+    gate_plan: dict[str, object] | None = None,
 ) -> FastMCP:
     surface = replace(get_surface_profile("llm-guided"), search_enabled=False)
     base_pipeline = build_surface_transform_pipeline(surface)
@@ -199,6 +202,7 @@ def _build_flow_visible_server(
                         phase,
                         guided_handoff=guided_handoff,
                         guided_flow_state=guided_flow_state,
+                        gate_plan=gate_plan,
                     )
                 )
             )
@@ -697,6 +701,123 @@ def test_spatial_refresh_required_search_stays_bounded_to_spatial_context_tools(
     assert "modeling_create_primitive" not in names
     assert "macro_finish_form" not in names
     assert "guided_register_part" not in names
+
+
+def test_failed_attachment_gate_search_surfaces_bounded_repair_tools():
+    """Search should resolve active seam blockers through existing guided visibility."""
+
+    server = _build_flow_search_server(
+        SessionPhase.BUILD,
+        {
+            "flow_id": "guided_creature_flow",
+            "domain_profile": "creature",
+            "current_step": "place_secondary_parts",
+        },
+        guided_handoff={
+            "kind": "guided_manual_build",
+            "recipe_id": "low_poly_creature_blockout",
+            "direct_tools": ["modeling_create_primitive"],
+            "supporting_tools": ["reference_iterate_stage_checkpoint", "router_get_status"],
+        },
+        gate_plan={
+            "plan_id": "creature_quality_gate_plan",
+            "domain_profile": "creature",
+            "completion_blockers": [
+                {
+                    "gate_id": "tail_body_seam",
+                    "gate_type": "attachment_seam",
+                    "label": "tail seated on body",
+                    "status": "failed",
+                    "reason_code": "relation_floating_gap",
+                    "recommended_bounded_tools": [
+                        "scene_relation_graph",
+                        "scene_measure_gap",
+                        "scene_assert_contact",
+                        "macro_attach_part_to_surface",
+                    ],
+                    "message": "Tail seam is floating.",
+                }
+            ],
+            "gates": [],
+        },
+    )
+
+    async def run():
+        result = await server.call_tool(
+            "search_tools",
+            {"query": "fix floating tail body gap attach contact seam"},
+        )
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+    names = {tool["name"] for tool in payload}
+
+    assert {"scene_measure_gap", "scene_assert_contact"}.intersection(names)
+    assert "macro_attach_part_to_surface" in names or "macro_align_part_with_contact" in names
+    assert "macro_finish_form" not in names
+
+
+def test_active_gate_recovery_search_does_not_recommend_goal_reset(monkeypatch):
+    """Reset-style recovery queries should prefer active gate repair tools."""
+
+    gate_plan = {
+        "plan_id": "creature_quality_gate_plan",
+        "domain_profile": "creature",
+        "completion_blockers": [
+            {
+                "gate_id": "tail_body_seam",
+                "gate_type": "attachment_seam",
+                "label": "tail seated on body",
+                "status": "failed",
+                "reason_code": "relation_floating_gap",
+                "recommended_bounded_tools": [
+                    "scene_relation_graph",
+                    "scene_measure_gap",
+                    "scene_assert_contact",
+                    "macro_attach_part_to_surface",
+                ],
+                "message": "Tail seam is floating.",
+            }
+        ],
+        "gates": [],
+    }
+
+    async def get_session_capability_state_async(ctx):
+        return SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            surface_profile="llm-guided",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+            },
+            gate_plan=gate_plan,
+        )
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.discovery.search_surface.get_session_capability_state_async",
+        get_session_capability_state_async,
+    )
+    server = _build_flow_search_server(
+        SessionPhase.BUILD,
+        {
+            "flow_id": "guided_creature_flow",
+            "domain_profile": "creature",
+            "current_step": "place_secondary_parts",
+        },
+        gate_plan=gate_plan,
+    )
+
+    async def run():
+        result = await server.call_tool("search_tools", {"query": "stuck reset goal because tail seam failed"})
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+    names = {tool["name"] for tool in payload}
+
+    assert "router_set_goal" not in names
+    assert {"scene_relation_graph", "scene_measure_gap", "scene_assert_contact"}.intersection(names)
+    assert "macro_attach_part_to_surface" in names
 
 
 @pytest.mark.parametrize(

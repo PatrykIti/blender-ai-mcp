@@ -18,6 +18,20 @@ def _request() -> VisionRequest:
     )
 
 
+def _reference_understanding_request() -> VisionRequest:
+    return VisionRequest(
+        goal="create a low-poly squirrel matching front and side references",
+        images=(
+            VisionImageInput(path="/tmp/ref_front.png", role="reference", label="ref_front"),
+            VisionImageInput(path="/tmp/ref_side.png", role="reference", label="ref_side"),
+        ),
+        metadata={
+            "mode": "reference_understanding",
+            "reference_ids": ["ref_front", "ref_side"],
+        },
+    )
+
+
 def test_parse_vision_output_accepts_fenced_json():
     text = """```json
 {
@@ -256,6 +270,84 @@ def test_diagnose_vision_output_classifies_label_map_json():
     diagnostics = diagnose_vision_output_text('{"before":"b","after":"a","reference":"r"}')
 
     assert diagnostics["payload_shape"] == "label_map"
+
+
+def test_parse_reference_understanding_payload_normalizes_aliases_and_derives_defaults():
+    text = json.dumps(
+        {
+            "subject": {
+                "label": "Low poly squirrel",
+                "category": "creature",
+                "confidence": 0.9,
+                "uncertainty_notes": [],
+            },
+            "style": {"style_label": "low_poly_faceted", "confidence": 0.8, "notes": ["faceted planes"]},
+            "required_parts": [
+                {
+                    "part_label": "tail",
+                    "target_label": "tail_core",
+                    "construction_hint": "Use a segmented low-poly chain.",
+                    "priority": "high",
+                    "source_reference_ids": ["ref_side"],
+                }
+            ],
+            "non_goals": ["Do not smooth the silhouette into an organic sculpt pass."],
+            "construction_strategy": {
+                "construction_path": "low_poly_facet",
+                "primary_family": "mesh_edit",
+                "allowed_families": ["mesh_edit", "material_finish", "inspect_only"],
+                "stage_sequence": ["primary_masses", "secondary_parts"],
+                "finish_policy": "preserve_facets",
+            },
+            "router_handoff_hints": {
+                "preferred_family": "mesh_edit",
+                "allowed_guided_families": ["reference_context", "material_finish", "secondary_parts"],
+                "sculpt_policy": "hidden",
+            },
+            "gate_proposals": [
+                {
+                    "gate_type": "required_part",
+                    "label": "tail is represented",
+                    "target_kind": "reference_part",
+                    "target_label": "tail_core",
+                    "allowed_correction_families": ["mesh_edit", "inspect_validate"],
+                }
+            ],
+            "visual_evidence_refs": [
+                {
+                    "evidence_id": "tail_curve",
+                    "source_class": "style_cue",
+                    "summary": "The side reference shows a visible curled tail arc.",
+                    "reference_id": "ref_side",
+                }
+            ],
+            "verification_requirements": [
+                {
+                    "tool_name": "check_alignment",
+                    "reason": "Confirm symmetry before local detail edits.",
+                    "priority": "high",
+                }
+            ],
+            "classification_scores": [{"label": "low_poly_facet", "score": 0.92}],
+            "segmentation_artifacts": [],
+        }
+    )
+
+    parsed = parse_vision_output_text(text, _reference_understanding_request())
+
+    assert parsed["status"] == "available"
+    assert parsed["understanding_id"].startswith("understanding_")
+    assert parsed["reference_ids"] == ["ref_front", "ref_side"]
+    assert parsed["construction_strategy"]["primary_family"] == "modeling_mesh"
+    assert parsed["construction_strategy"]["allowed_families"] == ["modeling_mesh", "inspect_only"]
+    assert parsed["router_handoff_hints"]["preferred_family"] == "modeling_mesh"
+    assert parsed["router_handoff_hints"]["allowed_guided_families"] == [
+        "reference_context",
+        "finish",
+        "secondary_parts",
+    ]
+    assert parsed["gate_proposals"][0]["allowed_correction_families"] == ["secondary_parts", "inspect_validate"]
+    assert parsed["verification_requirements"][0]["tool_name"] == "scene_measure_alignment"
 
 
 def test_diagnose_vision_output_classifies_prose_without_json():

@@ -9,16 +9,22 @@ import base64
 import mimetypes
 import re
 import shutil
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Literal, cast
+from typing import Any, Literal, Mapping, cast
 from uuid import uuid4
 
 from fastmcp import Context
 
 from server.adapters.mcp.context_utils import ctx_info, ctx_session_id, ctx_transport_type
 from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract
+from server.adapters.mcp.contracts.quality_gates import (
+    GatePlanContract,
+    GateProposalContract,
+    refresh_gate_plan_status,
+    without_proposal_source,
+)
 from server.adapters.mcp.contracts.reference import (
     GuidedReferenceReadinessContract,
     ReferenceActionHintContract,
@@ -32,10 +38,17 @@ from server.adapters.mcp.contracts.reference import (
     ReferenceImagesResponseContract,
     ReferenceIterateStageCheckpointResponseContract,
     ReferencePartSegmentationContract,
+    ReferencePlannerBlockerContract,
+    ReferencePlannerEvidenceSourceContract,
+    ReferencePlannerSourceLiteral,
+    ReferencePlannerTargetScopeContract,
     ReferenceRefinementHandoffContract,
     ReferenceRefinementRouteContract,
     ReferenceRefinementToolCandidateContract,
+    ReferenceRepairPlannerDetailContract,
+    ReferenceRepairPlannerSummaryContract,
     ReferenceSilhouetteAnalysisContract,
+    ReferenceUnderstandingSummaryContract,
     ReferenceViewDiagnosticsHintContract,
 )
 from server.adapters.mcp.contracts.scene import (
@@ -58,24 +71,31 @@ from server.adapters.mcp.guided_contract import canonicalize_reference_images_ar
 from server.adapters.mcp.sampling.result_types import to_vision_assistant_contract
 from server.adapters.mcp.session_capabilities import (
     GuidedReferenceReadinessState,
+    SessionCapabilityState,
     advance_guided_flow_from_iteration_async,
     apply_visibility_for_session_state,
     build_guided_reference_readiness,
     build_guided_reference_readiness_payload,
     get_session_capability_state_async,
+    ingest_quality_gate_proposal_async,
     replace_session_pending_reference_images_async,
     replace_session_reference_images_async,
     session_has_ready_guided_reference_goal,
+    set_session_capability_state_async,
 )
 from server.adapters.mcp.session_state import get_session_value_async, set_session_value_async
+from server.adapters.mcp.transforms.quality_gate_verifier import verify_gate_plan_with_relation_graph
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.vision import (
     CapturePresetProfile,
+    CapturePresetSpec,
+    VisionBackendUnavailableError,
     VisionImageInput,
     VisionRequest,
     build_reference_capture_images,
     build_vision_request_from_stage_captures,
     capture_stage_images,
+    resolve_capture_preset_specs,
     run_vision_assist,
     select_reference_records_for_target,
 )
@@ -124,6 +144,8 @@ _NOSE_ROLE_HINTS: tuple[str, ...] = ("nose", "nostril")
 _EYE_ROLE_HINTS: tuple[str, ...] = ("eye",)
 _FACE_ATTACHMENT_HINTS: tuple[str, ...] = ("ear", "eye", "nose", "snout", "whisker")
 _TAIL_ROLE_HINTS: tuple[str, ...] = ("tail",)
+_ROOF_ROLE_HINTS: tuple[str, ...] = ("roof",)
+_BUILDING_MASS_HINTS: tuple[str, ...] = ("wall", "facade", "volume", "shell")
 _LIMB_ROLE_HINTS: tuple[str, ...] = (
     "limb",
     "leg",
@@ -214,10 +236,13 @@ _SCULPT_RECOMMENDED_TOOLS: tuple[str, ...] = (
     "sculpt_smooth_region",
     "sculpt_inflate_region",
     "sculpt_pinch_region",
+    "sculpt_crease_region",
 )
 
 _CreatureRelationKind = Literal["embedded_attachment", "seated_attachment", "segment_attachment"]
-_CreatureSeamKind = Literal["face_head", "nose_snout", "head_body", "tail_body", "limb_body", "limb_segment"]
+_CreatureSeamKind = Literal[
+    "face_head", "nose_snout", "head_body", "tail_body", "limb_body", "limb_segment", "roof_wall"
+]
 
 
 @dataclass(frozen=True)
@@ -358,11 +383,51 @@ def _compare_response(
     )
 
 
+def _gate_checkpoint_fields(active_gate_plan: dict[str, Any] | None) -> dict[str, Any]:
+    """Project active gate plan details into strict checkpoint response fields."""
+
+    if active_gate_plan is None:
+        return {
+            "gate_statuses": [],
+            "completion_blockers": [],
+            "next_gate_actions": [],
+            "recommended_bounded_tools": [],
+        }
+
+    gate_plan = GatePlanContract.model_validate(active_gate_plan)
+    recommended_tools: list[str] = []
+    seen_tools: set[str] = set()
+    for blocker in gate_plan.completion_blockers:
+        for tool_name in blocker.recommended_bounded_tools:
+            if tool_name in seen_tools:
+                continue
+            seen_tools.add(tool_name)
+            recommended_tools.append(tool_name)
+
+    next_actions: list[str] = []
+    if gate_plan.completion_blockers:
+        next_actions.append("resolve_quality_gate_blockers")
+        if any(blocker.status == "stale" for blocker in gate_plan.completion_blockers):
+            next_actions.append("refresh_gate_evidence")
+        if any(
+            blocker.gate_type in {"attachment_seam", "support_contact"} for blocker in gate_plan.completion_blockers
+        ):
+            next_actions.append("verify_or_repair_spatial_gate")
+
+    return {
+        "gate_statuses": gate_plan.gates,
+        "completion_blockers": gate_plan.completion_blockers,
+        "next_gate_actions": next_actions,
+        "recommended_bounded_tools": recommended_tools,
+    }
+
+
 def _stage_compare_response(
     *,
     session_id: str | None = None,
     transport: str | None = None,
     guided_flow_state: dict[str, Any] | None = None,
+    active_gate_plan: dict[str, Any] | None = None,
     checkpoint_id: str,
     checkpoint_label: str | None,
     goal: str | None,
@@ -377,6 +442,8 @@ def _stage_compare_response(
     reference_ids: list[str],
     reference_labels: list[str],
     guided_reference_readiness: GuidedReferenceReadinessContract | None = None,
+    reference_understanding_summary: ReferenceUnderstandingSummaryContract | None = None,
+    reference_understanding_gate_ids: list[str] | None = None,
     vision_assistant=None,
     truth_bundle: SceneCorrectionTruthBundleContract | None = None,
     truth_followup: SceneTruthFollowupContract | None = None,
@@ -384,6 +451,8 @@ def _stage_compare_response(
     budget_control: ReferenceHybridBudgetControlContract | None = None,
     refinement_route: ReferenceRefinementRouteContract | None = None,
     refinement_handoff: ReferenceRefinementHandoffContract | None = None,
+    planner_summary: ReferenceRepairPlannerSummaryContract | None = None,
+    planner_detail: ReferenceRepairPlannerDetailContract | None = None,
     silhouette_analysis: ReferenceSilhouetteAnalysisContract | None = None,
     action_hints: list[ReferenceActionHintContract] | None = None,
     part_segmentation: ReferencePartSegmentationContract | None = None,
@@ -393,6 +462,7 @@ def _stage_compare_response(
     error: str | None = None,
 ) -> ReferenceCompareStageCheckpointResponseContract:
     emitted_captures = list(captures) if include_captures else []
+    gate_fields = _gate_checkpoint_fields(active_gate_plan)
     return ReferenceCompareStageCheckpointResponseContract(
         action="compare_stage_checkpoint",
         session_id=session_id,
@@ -401,7 +471,14 @@ def _stage_compare_response(
         guided_flow_state=(
             GuidedFlowStateContract.model_validate(guided_flow_state) if guided_flow_state is not None else None
         ),
+        active_gate_plan=GatePlanContract.model_validate(active_gate_plan) if active_gate_plan is not None else None,
+        gate_statuses=gate_fields["gate_statuses"],
+        completion_blockers=gate_fields["completion_blockers"],
+        next_gate_actions=gate_fields["next_gate_actions"],
+        recommended_bounded_tools=gate_fields["recommended_bounded_tools"],
         guided_reference_readiness=guided_reference_readiness,
+        reference_understanding_summary=reference_understanding_summary,
+        reference_understanding_gate_ids=list(reference_understanding_gate_ids or []),
         target_object=target_object,
         target_objects=target_objects,
         collection_name=collection_name,
@@ -412,6 +489,8 @@ def _stage_compare_response(
         budget_control=budget_control,
         refinement_route=refinement_route,
         refinement_handoff=refinement_handoff,
+        planner_summary=planner_summary,
+        planner_detail=planner_detail,
         silhouette_analysis=silhouette_analysis,
         action_hints=list(action_hints or []),
         part_segmentation=part_segmentation or _disabled_part_segmentation(),
@@ -438,6 +517,7 @@ def _iterate_stage_response(
     transport: str | None = None,
     goal: str | None,
     guided_flow_state: dict[str, Any] | None = None,
+    active_gate_plan: dict[str, Any] | None = None,
     target_object: str | None,
     target_objects: list[str],
     collection_name: str | None,
@@ -454,10 +534,14 @@ def _iterate_stage_response(
     stagnation_count: int,
     compare_result: ReferenceCompareStageCheckpointResponseContract,
     guided_reference_readiness: GuidedReferenceReadinessContract | None = None,
+    reference_understanding_summary: ReferenceUnderstandingSummaryContract | None = None,
+    reference_understanding_gate_ids: list[str] | None = None,
     correction_candidates: list[ReferenceCorrectionCandidateContract] | None = None,
     budget_control: ReferenceHybridBudgetControlContract | None = None,
     refinement_route: ReferenceRefinementRouteContract | None = None,
     refinement_handoff: ReferenceRefinementHandoffContract | None = None,
+    planner_summary: ReferenceRepairPlannerSummaryContract | None = None,
+    planner_detail: ReferenceRepairPlannerDetailContract | None = None,
     silhouette_analysis: ReferenceSilhouetteAnalysisContract | None = None,
     action_hints: list[ReferenceActionHintContract] | None = None,
     part_segmentation: ReferencePartSegmentationContract | None = None,
@@ -468,6 +552,18 @@ def _iterate_stage_response(
 ) -> ReferenceIterateStageCheckpointResponseContract:
     compact_compare_result = _compact_compare_result_for_iterate(compare_result)
     debug_payload_omitted = compact_compare_result is not compare_result
+    resolved_gate_plan = active_gate_plan
+    if resolved_gate_plan is None and compare_result.active_gate_plan is not None:
+        resolved_gate_plan = compare_result.active_gate_plan.model_dump(mode="json")
+    if resolved_gate_plan is not None:
+        gate_fields = _gate_checkpoint_fields(resolved_gate_plan)
+    else:
+        gate_fields = {
+            "gate_statuses": list(compare_result.gate_statuses or []),
+            "completion_blockers": list(compare_result.completion_blockers or []),
+            "next_gate_actions": list(compare_result.next_gate_actions or []),
+            "recommended_bounded_tools": list(compare_result.recommended_bounded_tools or []),
+        }
     return ReferenceIterateStageCheckpointResponseContract(
         action="iterate_stage_checkpoint",
         session_id=session_id,
@@ -476,7 +572,21 @@ def _iterate_stage_response(
         guided_flow_state=(
             GuidedFlowStateContract.model_validate(guided_flow_state) if guided_flow_state is not None else None
         ),
+        active_gate_plan=GatePlanContract.model_validate(resolved_gate_plan)
+        if resolved_gate_plan is not None
+        else None,
+        gate_statuses=gate_fields["gate_statuses"],
+        completion_blockers=gate_fields["completion_blockers"],
+        next_gate_actions=gate_fields["next_gate_actions"],
+        recommended_bounded_tools=gate_fields["recommended_bounded_tools"],
         guided_reference_readiness=guided_reference_readiness or compare_result.guided_reference_readiness,
+        reference_understanding_summary=reference_understanding_summary
+        or compare_result.reference_understanding_summary,
+        reference_understanding_gate_ids=(
+            list(reference_understanding_gate_ids or [])
+            if reference_understanding_gate_ids is not None
+            else list(compare_result.reference_understanding_gate_ids or [])
+        ),
         target_object=target_object,
         target_objects=target_objects,
         collection_name=collection_name,
@@ -487,6 +597,8 @@ def _iterate_stage_response(
         budget_control=budget_control or compare_result.budget_control,
         refinement_route=refinement_route or compare_result.refinement_route,
         refinement_handoff=refinement_handoff or compare_result.refinement_handoff,
+        planner_summary=planner_summary or compare_result.planner_summary,
+        planner_detail=planner_detail or compare_result.planner_detail,
         silhouette_analysis=silhouette_analysis or compare_result.silhouette_analysis,
         action_hints=list(action_hints or compare_result.action_hints or []),
         part_segmentation=part_segmentation or compare_result.part_segmentation or _disabled_part_segmentation(),
@@ -524,6 +636,7 @@ def _compact_compare_result_for_iterate(
             "correction_candidates": [],
             "silhouette_analysis": None,
             "action_hints": [],
+            "planner_detail": None,
             "part_segmentation": _disabled_part_segmentation(),
             "captures": [],
             "message": (
@@ -743,6 +856,23 @@ def _resolve_actionable_focus(compare_result: ReferenceCompareStageCheckpointRes
     return deduped[:3]
 
 
+def _resolve_gate_blocker_focus(compare_result: ReferenceCompareStageCheckpointResponseContract) -> list[str]:
+    blockers = list(compare_result.completion_blockers or [])
+    if not blockers:
+        return []
+
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for blocker in blockers:
+        item = (blocker.message or blocker.label or blocker.target_label or blocker.gate_id).strip()
+        normalized = _normalized_focus_key(item)
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        deduped.append(item)
+    return deduped[:3]
+
+
 def _should_inspect_from_truth_signal(
     correction_candidates: list[ReferenceCorrectionCandidateContract],
 ) -> bool:
@@ -756,7 +886,7 @@ def _should_inspect_from_truth_signal(
         if truth_evidence is None:
             continue
         if any(
-            kind in {"contact_failure", "overlap", "attachment", "measurement_error"}
+            kind in {"contact_failure", "overlap", "attachment", "support", "symmetry", "measurement_error"}
             for kind in truth_evidence.item_kinds
         ):
             return True
@@ -796,53 +926,420 @@ def _classify_refinement_domain(
     return "generic_form"
 
 
+_STRUCTURAL_RELATION_BLOCKER_KINDS: frozenset[str] = frozenset(
+    {"contact_failure", "gap", "overlap", "attachment", "support", "symmetry", "measurement_error"}
+)
+_PROPORTION_BLOCKING_HINT_TYPES: frozenset[str] = frozenset({"rebalance_proportion"})
+
+
+def _planner_target_scope(
+    compare_result: ReferenceCompareStageCheckpointResponseContract,
+    *,
+    local_region_hint: str | None = None,
+) -> ReferencePlannerTargetScopeContract | None:
+    assembled_scope = compare_result.assembled_target_scope
+    if assembled_scope is not None:
+        return ReferencePlannerTargetScopeContract(
+            scope_kind=assembled_scope.scope_kind,
+            target_object=compare_result.target_object or assembled_scope.primary_target,
+            target_objects=list(assembled_scope.object_names or []),
+            collection_name=assembled_scope.collection_name,
+            local_region_hint=local_region_hint,
+        )
+
+    target_objects = _dedupe_names(
+        [
+            *(compare_result.target_objects or []),
+            *([compare_result.target_object] if compare_result.target_object else []),
+        ]
+    )
+    if target_objects or compare_result.collection_name:
+        scope_kind: Literal["single_object", "object_set", "collection", "scene", "unknown"]
+        if compare_result.collection_name:
+            scope_kind = "collection"
+        elif len(target_objects) == 1:
+            scope_kind = "single_object"
+        else:
+            scope_kind = "object_set"
+        return ReferencePlannerTargetScopeContract(
+            scope_kind=scope_kind,
+            target_object=compare_result.target_object or (target_objects[0] if len(target_objects) == 1 else None),
+            target_objects=target_objects,
+            collection_name=compare_result.collection_name,
+            local_region_hint=local_region_hint,
+        )
+
+    return None
+
+
+def _candidate_ids_with_structural_relation_blockers(
+    candidates: list[ReferenceCorrectionCandidateContract],
+) -> list[str]:
+    candidate_ids: list[str] = []
+    for candidate in candidates:
+        truth_evidence = candidate.truth_evidence
+        if truth_evidence is None:
+            continue
+        if any(kind in _STRUCTURAL_RELATION_BLOCKER_KINDS for kind in truth_evidence.item_kinds):
+            candidate_ids.append(candidate.candidate_id)
+    return candidate_ids
+
+
+def _relation_planner_blockers(
+    candidates: list[ReferenceCorrectionCandidateContract],
+) -> list[ReferencePlannerBlockerContract]:
+    candidate_ids = _candidate_ids_with_structural_relation_blockers(candidates)
+    if not candidate_ids:
+        return []
+    return [
+        ReferencePlannerBlockerContract(
+            blocker_id="relation_structural_failure",
+            category="relation",
+            severity="blocking",
+            reason=(
+                "Unresolved attachment/contact/support/symmetry/gap/overlap truth evidence still dominates, "
+                "so sculpt-region handoff is blocked until the structural relation is repaired or re-inspected."
+            ),
+            candidate_ids=candidate_ids,
+            recommended_tool="scene_relation_graph",
+        )
+    ]
+
+
+def _view_planner_blockers(
+    compare_result: ReferenceCompareStageCheckpointResponseContract,
+    *,
+    require_view_evidence: bool,
+) -> list[ReferencePlannerBlockerContract]:
+    hints = compare_result.view_diagnostics_hints
+    if hints is None:
+        if not require_view_evidence:
+            return []
+        target_scope = _planner_target_scope(compare_result)
+        target_object = (
+            target_scope.target_object
+            if target_scope is not None and target_scope.target_object
+            else compare_result.target_object
+        )
+        arguments_hint: dict[str, object] = {}
+        if target_object:
+            arguments_hint["target_object"] = target_object
+        return [
+            ReferencePlannerBlockerContract(
+                blocker_id="view_diagnostics_required",
+                category="view",
+                severity="blocking",
+                reason=(
+                    "Staged compare did not carry typed view-diagnostics evidence. Run scene_view_diagnostics(...) "
+                    "for the intended local target before treating sculpt-region handoff as ready."
+                ),
+                recommended_tool="scene_view_diagnostics",
+                arguments_hint=arguments_hint or None,
+            )
+        ]
+
+    blockers: list[ReferencePlannerBlockerContract] = []
+    for index, hint in enumerate(hints, start=1):
+        blockers.append(
+            ReferencePlannerBlockerContract(
+                blocker_id=f"view_{hint.trigger}_{index}",
+                category="view",
+                severity="blocking",
+                reason=hint.reason,
+                recommended_tool=hint.recommended_tool,
+                arguments_hint=hint.arguments_hint,
+            )
+        )
+    return blockers
+
+
+def _proportion_planner_blockers(
+    compare_result: ReferenceCompareStageCheckpointResponseContract,
+    *,
+    low_poly_intent: bool,
+) -> list[ReferencePlannerBlockerContract]:
+    blockers: list[ReferencePlannerBlockerContract] = []
+    proportion_hint_ids = [
+        hint.hint_id
+        for hint in list(compare_result.action_hints or [])
+        if hint.hint_type in _PROPORTION_BLOCKING_HINT_TYPES
+    ]
+    if proportion_hint_ids:
+        blockers.append(
+            ReferencePlannerBlockerContract(
+                blocker_id="proportion_nonlocal_drift",
+                category="proportion",
+                severity="blocking",
+                reason=(
+                    "Deterministic silhouette/proportion metrics still indicate a non-local proportion issue, "
+                    "so macro or mesh/modeling correction is safer than local sculpt."
+                ),
+                candidate_ids=proportion_hint_ids,
+                recommended_tool="scene_assert_proportion",
+            )
+        )
+    if low_poly_intent:
+        blockers.append(
+            ReferencePlannerBlockerContract(
+                blocker_id="low_poly_blockout_not_local_sculpt",
+                category="proportion",
+                severity="warning",
+                reason=(
+                    "The active goal is a low-poly/blockout refinement. Preserve plane and silhouette control with "
+                    "mesh/modeling edits before using local sculpt smoothing."
+                ),
+            )
+        )
+    return blockers
+
+
+def _local_form_reason(compare_result: ReferenceCompareStageCheckpointResponseContract) -> str | None:
+    for candidate in list(compare_result.correction_candidates or []):
+        vision_evidence = candidate.vision_evidence
+        if vision_evidence is None:
+            continue
+        for item in [
+            *list(vision_evidence.correction_focus or []),
+            *list(vision_evidence.shape_mismatches or []),
+            *list(vision_evidence.next_corrections or []),
+        ]:
+            text = str(item or "").strip()
+            if text:
+                return text
+    if compare_result.silhouette_analysis is not None and compare_result.silhouette_analysis.status == "available":
+        return "Silhouette metrics point to bounded local-form refinement."
+    return None
+
+
+def _planner_source_signals(
+    *,
+    candidates: list[ReferenceCorrectionCandidateContract],
+    compare_result: ReferenceCompareStageCheckpointResponseContract,
+) -> list[ReferencePlannerSourceLiteral]:
+    signals: list[ReferencePlannerSourceLiteral] = ["scope", "naming"]
+    if any(candidate.truth_evidence is not None for candidate in candidates):
+        signals.extend(["truth", "relation"])
+    if any(
+        candidate.truth_evidence is not None and bool(candidate.truth_evidence.macro_candidates)
+        for candidate in candidates
+    ):
+        signals.append("macro")
+    if any(candidate.vision_evidence is not None for candidate in candidates):
+        signals.append("vision")
+    if compare_result.view_diagnostics_hints is not None:
+        signals.append("view")
+    if compare_result.silhouette_analysis is not None:
+        signals.append("silhouette")
+    if compare_result.budget_control is not None:
+        signals.append("budget")
+    return list(dict.fromkeys(signals))
+
+
+def _planner_provenance(
+    compare_result: ReferenceCompareStageCheckpointResponseContract,
+    *,
+    candidates: list[ReferenceCorrectionCandidateContract],
+    source_signals: list[ReferencePlannerSourceLiteral],
+) -> list[ReferencePlannerEvidenceSourceContract]:
+    candidate_ids = [candidate.candidate_id for candidate in candidates]
+    provenance: list[ReferencePlannerEvidenceSourceContract] = []
+    if "scope" in source_signals:
+        target_scope = _planner_target_scope(compare_result)
+        scope_summary = (
+            f"{target_scope.scope_kind} scope with {len(target_scope.target_objects)} object(s)"
+            if target_scope is not None
+            else "No explicit target scope was available."
+        )
+        provenance.append(
+            ReferencePlannerEvidenceSourceContract(
+                source_id="scope",
+                source_class="scope",
+                summary=scope_summary,
+                tool_name="scene_scope_graph",
+            )
+        )
+    if "truth" in source_signals or "relation" in source_signals:
+        provenance.append(
+            ReferencePlannerEvidenceSourceContract(
+                source_id="truth_followup",
+                source_class="truth",
+                summary="Truth follow-up and relation evidence were used before vision-only correction hints.",
+                candidate_ids=[
+                    candidate.candidate_id for candidate in candidates if candidate.truth_evidence is not None
+                ],
+                tool_name="scene_relation_graph",
+            )
+        )
+    if "macro" in source_signals:
+        provenance.append(
+            ReferencePlannerEvidenceSourceContract(
+                source_id="macro_candidates",
+                source_class="macro",
+                summary="Macro repair candidates are available for unresolved structural relations.",
+                candidate_ids=[
+                    candidate.candidate_id
+                    for candidate in candidates
+                    if candidate.truth_evidence is not None and candidate.truth_evidence.macro_candidates
+                ],
+            )
+        )
+    if "vision" in source_signals:
+        provenance.append(
+            ReferencePlannerEvidenceSourceContract(
+                source_id="vision_candidates",
+                source_class="vision",
+                summary="Vision mismatch text is advisory and can prioritize local-form attention.",
+                candidate_ids=[
+                    candidate.candidate_id for candidate in candidates if candidate.vision_evidence is not None
+                ],
+            )
+        )
+    if "view" in source_signals:
+        provenance.append(
+            ReferencePlannerEvidenceSourceContract(
+                source_id="view_diagnostics_hints",
+                source_class="view",
+                summary="View diagnostics hints constrain whether a local target is visible and framed enough.",
+                tool_name="scene_view_diagnostics",
+            )
+        )
+    if "silhouette" in source_signals:
+        provenance.append(
+            ReferencePlannerEvidenceSourceContract(
+                source_id="silhouette_analysis",
+                source_class="silhouette",
+                summary="Deterministic silhouette metrics can recommend inspection, proportion, or local-form work.",
+                candidate_ids=candidate_ids,
+            )
+        )
+    if "budget" in source_signals:
+        provenance.append(
+            ReferencePlannerEvidenceSourceContract(
+                source_id="budget_control",
+                source_class="budget",
+                summary="Model-aware budget control bounded the emitted evidence and planner detail.",
+            )
+        )
+    return provenance
+
+
+def _support_tools_from_blockers(
+    blockers: list[ReferencePlannerBlockerContract],
+) -> list[ReferenceRefinementToolCandidateContract]:
+    tools: list[ReferenceRefinementToolCandidateContract] = []
+    seen: set[str] = set()
+    for blocker in blockers:
+        tool_name = blocker.recommended_tool
+        if not tool_name or tool_name in seen:
+            continue
+        seen.add(tool_name)
+        tools.append(
+            ReferenceRefinementToolCandidateContract(
+                tool_name=tool_name,
+                reason=blocker.reason,
+                priority="high" if blocker.severity == "blocking" else "normal",
+                arguments_hint=blocker.arguments_hint,
+            )
+        )
+    return tools
+
+
 def _select_refinement_route(
     compare_result: ReferenceCompareStageCheckpointResponseContract,
 ) -> ReferenceRefinementRouteContract:
     candidates = list(compare_result.correction_candidates or [])
+    domain = _classify_refinement_domain(compare_result)
+    target_scope = _planner_target_scope(compare_result)
     if not candidates:
         return ReferenceRefinementRouteContract(
-            domain_classification=_classify_refinement_domain(compare_result),
+            domain_classification=domain,
             selected_family="inspect_only",
             reason="No ranked correction candidates are available for deterministic refinement routing.",
             source_signals=[],
             candidate_ids=[],
+            target_scope=target_scope,
+            detail_available=False,
         )
 
-    domain = _classify_refinement_domain(compare_result)
     candidate_ids = [candidate.candidate_id for candidate in candidates]
     has_macro = any(
         candidate.truth_evidence is not None and bool(candidate.truth_evidence.macro_candidates)
         for candidate in candidates
     )
-    has_truth = any(candidate.truth_evidence is not None for candidate in candidates)
     has_vision_only = any(candidate.candidate_kind == "vision_only" for candidate in candidates)
     low_poly_intent = _contains_any(_refinement_context_text(compare_result), _LOW_POLY_HINTS)
-    source_signals: list[Literal["vision", "truth", "macro", "scope", "naming"]] = ["scope", "naming"]
+    source_signals = _planner_source_signals(candidates=candidates, compare_result=compare_result)
+    relation_blockers = _relation_planner_blockers(candidates)
+    proportion_blockers = _proportion_planner_blockers(compare_result, low_poly_intent=low_poly_intent)
 
-    if has_truth:
-        source_signals.append("truth")
-    if has_macro:
-        source_signals.append("macro")
-    if has_vision_only:
-        source_signals.append("vision")
-
-    if has_macro or domain == "assembly":
+    if relation_blockers or has_macro or domain == "assembly":
         return ReferenceRefinementRouteContract(
             domain_classification=domain,
             selected_family="macro",
             reason="Assembly-oriented truth/macro signals dominate, so bounded macro repair remains the primary refinement family.",
             source_signals=source_signals,
             candidate_ids=candidate_ids,
+            target_scope=target_scope,
+            blockers=relation_blockers,
+            detail_available=True,
+        )
+
+    view_hint_blockers = _view_planner_blockers(compare_result, require_view_evidence=False)
+    if view_hint_blockers:
+        return ReferenceRefinementRouteContract(
+            domain_classification=domain,
+            selected_family="inspect_only",
+            reason=(
+                "Typed view diagnostics reported visibility or framing blockers, so inspect/view correction must "
+                "happen before local-form or sculpt-region refinement."
+            ),
+            source_signals=source_signals,
+            candidate_ids=candidate_ids,
+            target_scope=target_scope,
+            blockers=view_hint_blockers,
+            detail_available=True,
+        )
+
+    blocking_proportion = [blocker for blocker in proportion_blockers if blocker.severity == "blocking"]
+    if blocking_proportion:
+        return ReferenceRefinementRouteContract(
+            domain_classification=domain,
+            selected_family="modeling_mesh",
+            reason=(
+                "Non-local proportion drift remains, so bounded modeling/mesh or macro correction is safer than "
+                "a local sculpt-region handoff."
+            ),
+            source_signals=source_signals,
+            candidate_ids=candidate_ids,
+            target_scope=target_scope,
+            blockers=proportion_blockers,
+            detail_available=True,
         )
 
     if domain in {"garment", "anatomy", "organic_form"} and has_vision_only and not low_poly_intent:
+        view_evidence_blockers = _view_planner_blockers(compare_result, require_view_evidence=True)
+        if view_evidence_blockers:
+            return ReferenceRefinementRouteContract(
+                domain_classification=domain,
+                selected_family="inspect_only",
+                reason=(
+                    "Organic/local-form evidence is present, but staged view evidence is missing or blocking; "
+                    "run view diagnostics before recommending sculpt-region tools."
+                ),
+                source_signals=source_signals,
+                candidate_ids=candidate_ids,
+                target_scope=target_scope,
+                blockers=view_evidence_blockers,
+                detail_available=True,
+            )
         return ReferenceRefinementRouteContract(
             domain_classification=domain,
             selected_family="sculpt_region",
             reason="Local soft/organic-form refinement dominates without strong assembly signals, so deterministic sculpt-region tools are the preferred family.",
             source_signals=source_signals,
             candidate_ids=candidate_ids,
+            target_scope=_planner_target_scope(compare_result, local_region_hint=_local_form_reason(compare_result)),
+            detail_available=True,
         )
 
     if domain in {"hard_surface", "generic_form", "soft_surface"} or low_poly_intent:
@@ -852,6 +1349,9 @@ def _select_refinement_route(
             reason="Current signals do not justify sculpt; bounded modeling/mesh refinement remains the safer default family.",
             source_signals=source_signals,
             candidate_ids=candidate_ids,
+            target_scope=target_scope,
+            blockers=proportion_blockers,
+            detail_available=True,
         )
 
     return ReferenceRefinementRouteContract(
@@ -860,6 +1360,8 @@ def _select_refinement_route(
         reason="Falling back to bounded modeling/mesh refinement because no stronger deterministic family gate was met.",
         source_signals=source_signals,
         candidate_ids=candidate_ids,
+        target_scope=target_scope,
+        detail_available=True,
     )
 
 
@@ -867,33 +1369,102 @@ def _build_refinement_handoff(
     compare_result: ReferenceCompareStageCheckpointResponseContract,
     route: ReferenceRefinementRouteContract,
 ) -> ReferenceRefinementHandoffContract:
+    blockers = list(route.blockers or [])
+    target_scope = route.target_scope or _planner_target_scope(compare_result)
     if route.selected_family != "sculpt_region":
+        state: Literal["ready", "blocked", "suppressed"] = "blocked" if blockers else "suppressed"
+        message = (
+            "Sculpt-region handoff is blocked by the listed preconditions; follow the support tools before sculpting."
+            if blockers
+            else "Continue with the selected bounded refinement family; no sculpt handoff is recommended."
+        )
         return ReferenceRefinementHandoffContract(
             selected_family=route.selected_family,
-            message="Continue with the selected bounded refinement family; no sculpt handoff is recommended.",
+            state=state,
+            message=message,
+            target_object=target_scope.target_object if target_scope is not None else compare_result.target_object,
+            target_scope=target_scope,
+            local_reason=target_scope.local_region_hint if target_scope is not None else None,
+            blockers=blockers,
+            eligible_tool_names=list(_SCULPT_RECOMMENDED_TOOLS),
             recommended_tools=[],
         )
 
-    assembled_scope = compare_result.assembled_target_scope
-    target_object = compare_result.target_object or (
-        assembled_scope.primary_target if assembled_scope is not None else None
-    )
+    target_object = target_scope.target_object if target_scope is not None else compare_result.target_object
     arguments_hint = cast(dict[str, object] | None, {"object_name": target_object} if target_object else None)
     return ReferenceRefinementHandoffContract(
         selected_family="sculpt_region",
+        state="ready",
         message=(
             "A deterministic sculpt-region path is recommended for the next refinement step. "
             "Keep the scope narrow and use only bounded sculpt-region tools."
         ),
+        target_object=target_object,
+        target_scope=target_scope,
+        local_reason=target_scope.local_region_hint if target_scope is not None else _local_form_reason(compare_result),
+        blockers=[],
+        eligible_tool_names=list(_SCULPT_RECOMMENDED_TOOLS),
+        visibility_unlock_recommended=False,
         recommended_tools=[
             ReferenceRefinementToolCandidateContract(
                 tool_name=tool_name,
                 reason="Deterministic local-form refinement is a better fit than more assembly-oriented mesh/modeling edits.",
-                priority="high" if tool_name in {"sculpt_deform_region", "sculpt_smooth_region"} else "normal",
+                priority=(
+                    "high"
+                    if tool_name in {"sculpt_deform_region", "sculpt_smooth_region", "sculpt_crease_region"}
+                    else "normal"
+                ),
                 arguments_hint=arguments_hint,
             )
             for tool_name in _SCULPT_RECOMMENDED_TOOLS
         ],
+    )
+
+
+def _build_repair_planner_summary(
+    compare_result: ReferenceCompareStageCheckpointResponseContract,
+    *,
+    route: ReferenceRefinementRouteContract,
+    handoff: ReferenceRefinementHandoffContract,
+) -> ReferenceRepairPlannerSummaryContract:
+    candidates = list(compare_result.correction_candidates or [])
+    provenance = _planner_provenance(
+        compare_result,
+        candidates=candidates,
+        source_signals=list(route.source_signals or []),
+    )
+    blockers = list(route.blockers or handoff.blockers or [])
+    return ReferenceRepairPlannerSummaryContract(
+        selected_family=route.selected_family,
+        target_scope=route.target_scope or handoff.target_scope,
+        rationale=route.reason,
+        provenance=provenance,
+        blockers=blockers,
+        detail_available=route.detail_available,
+        required_support_tools=_support_tools_from_blockers(blockers),
+    )
+
+
+def _build_repair_planner_detail(
+    compare_result: ReferenceCompareStageCheckpointResponseContract,
+    *,
+    summary: ReferenceRepairPlannerSummaryContract,
+    route: ReferenceRefinementRouteContract,
+    handoff: ReferenceRefinementHandoffContract,
+    detail_trimmed: bool,
+) -> ReferenceRepairPlannerDetailContract:
+    notes: list[str] = []
+    if detail_trimmed:
+        notes.append("Planner detail reflects trimmed staged compare evidence after budget control was applied.")
+    if handoff.selected_family == "sculpt_region" and handoff.visibility_unlock_recommended is False:
+        notes.append("Sculpt handoff is recommendation-only and does not unlock guided sculpt visibility by itself.")
+    return ReferenceRepairPlannerDetailContract(
+        summary=summary,
+        route=route,
+        handoff=handoff,
+        candidate_ids=list(route.candidate_ids or []),
+        notes=notes,
+        detail_trimmed=detail_trimmed,
     )
 
 
@@ -953,6 +1524,8 @@ def _check_priority_score(check: SceneCorrectionTruthPairContract) -> tuple[int,
     alignment_score = 1 if check.alignment is not None and not bool(check.alignment.get("is_aligned")) else 0
     error_score = 4 if check.error else 0
     semantics = check.attachment_semantics
+    support_semantics = check.support_semantics
+    symmetry_semantics = check.symmetry_semantics
     required_score = 4 if semantics is not None and semantics.required_seam else 0
     verdict_score = 0
     seam_score = 0
@@ -966,11 +1539,18 @@ def _check_priority_score(check: SceneCorrectionTruthPairContract) -> tuple[int,
         seam_score = {
             "head_body": 6,
             "tail_body": 5,
+            "roof_wall": 5,
             "limb_segment": 4,
             "limb_body": 3,
             "face_head": 2,
             "nose_snout": 1,
         }.get(semantics.seam_kind, 0)
+    if support_semantics is not None and support_semantics.verdict != "supported":
+        verdict_score = max(verdict_score, 2)
+        seam_score = max(seam_score, 4)
+    if symmetry_semantics is not None and symmetry_semantics.verdict != "symmetric":
+        verdict_score = max(verdict_score, 2)
+        seam_score = max(seam_score, 4)
     pair_label = _pair_label(check.from_object, check.to_object)
     return (
         required_score + verdict_score + error_score + overlap_score + contact_score + gap_score + alignment_score,
@@ -984,7 +1564,7 @@ def _check_priority_score(check: SceneCorrectionTruthPairContract) -> tuple[int,
 
 def _rebuild_truth_summary(
     *,
-    pairing_strategy: Literal["none", "primary_to_others", "required_creature_seams"],
+    pairing_strategy: Literal["none", "primary_to_others", "required_creature_seams", "guided_spatial_pairs"],
     checks: list[SceneCorrectionTruthPairContract],
 ) -> SceneCorrectionTruthSummaryContract:
     return SceneCorrectionTruthSummaryContract(
@@ -1153,7 +1733,12 @@ def _macro_candidate_matches_pair(
     to_object: str,
 ) -> bool:
     arguments = candidate.arguments_hint or {}
-    candidate_from = arguments.get("part_object") or arguments.get("left_object") or arguments.get("primary_object")
+    candidate_from = (
+        arguments.get("part_object")
+        or arguments.get("left_object")
+        or arguments.get("primary_object")
+        or arguments.get("supported_object")
+    )
     candidate_to = (
         arguments.get("reference_object")
         or arguments.get("surface_object")
@@ -1321,6 +1906,240 @@ def _configured_part_segmentation() -> ReferencePartSegmentationContract:
     )
 
 
+def _blocked_reference_understanding_summary(
+    *,
+    goal: str | None,
+    reason: Literal["goal_required", "reference_images_required", "vision_backend_unavailable"],
+    message: str,
+    reference_ids: list[str] | None = None,
+) -> ReferenceUnderstandingSummaryContract:
+    status: Literal["blocked", "unavailable"] = "blocked"
+    if reason == "vision_backend_unavailable":
+        status = "unavailable"
+    return ReferenceUnderstandingSummaryContract(
+        status=status,
+        goal=goal,
+        reference_ids=list(reference_ids or []),
+        reason=reason,
+        message=message,
+    )
+
+
+def _active_reference_records(session: SessionCapabilityState) -> tuple[ReferenceImageRecordContract, ...]:
+    return tuple(ReferenceImageRecordContract.model_validate(item) for item in list(session.reference_images or []))
+
+
+def _reference_understanding_request(
+    *,
+    goal: str,
+    reference_records: tuple[ReferenceImageRecordContract, ...],
+) -> VisionRequest:
+    reference_images = build_reference_capture_images(reference_records)
+    return VisionRequest(
+        goal=goal,
+        images=tuple(
+            VisionImageInput(
+                path=image.image_path,
+                role="reference",
+                label=image.label,
+                media_type=image.media_type,
+            )
+            for image in reference_images
+        ),
+        prompt_hint="reference_understanding",
+        metadata={
+            "mode": "reference_understanding",
+            "reference_ids": [record.reference_id for record in reference_records],
+            "reference_labels": [record.label or record.reference_id for record in reference_records],
+            "source": "reference_images",
+        },
+    )
+
+
+def _without_reference_understanding_gates(
+    gate_plan: GatePlanContract | None,
+    *,
+    tracked_gate_ids: list[str] | None,
+) -> GatePlanContract | None:
+    if gate_plan is None:
+        return None
+
+    tracked_ids = {str(item).strip() for item in tracked_gate_ids or [] if str(item).strip()}
+    retained_gates = []
+    removed_gate_ids: set[str] = set()
+    for gate in gate_plan.gates:
+        if gate.gate_id not in tracked_ids and "reference_understanding" not in gate.proposal_sources:
+            retained_gates.append(gate)
+            continue
+        retained_gate = without_proposal_source(gate, "reference_understanding")
+        if retained_gate is None:
+            removed_gate_ids.add(gate.gate_id)
+            continue
+        retained_gates.append(retained_gate)
+    retained_warnings = [
+        warning
+        for warning in gate_plan.policy_warnings
+        if warning.gate_id is None or warning.gate_id not in removed_gate_ids
+    ]
+    return refresh_gate_plan_status(
+        gate_plan.model_copy(
+            update={
+                "gates": retained_gates,
+                "policy_warnings": retained_warnings,
+            }
+        )
+    )
+
+
+def _reference_understanding_gate_slice(gate_plan: GatePlanContract | None) -> GatePlanContract | None:
+    if gate_plan is None:
+        return None
+
+    slice_gates = [gate for gate in gate_plan.gates if "reference_understanding" in gate.proposal_sources]
+    if not slice_gates:
+        return None
+
+    slice_gate_ids = {gate.gate_id for gate in slice_gates}
+    slice_warnings = [
+        warning for warning in gate_plan.policy_warnings if warning.gate_id is None or warning.gate_id in slice_gate_ids
+    ]
+    return refresh_gate_plan_status(
+        gate_plan.model_copy(
+            update={
+                "gates": slice_gates,
+                "policy_warnings": slice_warnings,
+            }
+        )
+    )
+
+
+async def _persist_reference_understanding_state_async(
+    ctx: Context,
+    state: SessionCapabilityState,
+) -> SessionCapabilityState:
+    """Persist one RU-driven session state update and immediately reapply visibility."""
+
+    await set_session_capability_state_async(ctx, state)
+    await apply_visibility_for_session_state(ctx, state)
+    return state
+
+
+async def refresh_reference_understanding_summary_async(
+    ctx: Context,
+    *,
+    session: SessionCapabilityState | None = None,
+) -> SessionCapabilityState:
+    """Refresh session-scoped reference understanding from active references when possible."""
+
+    current = session or await get_session_capability_state_async(ctx)
+    existing_gate_plan = GatePlanContract.model_validate(current.gate_plan) if current.gate_plan is not None else None
+    base_gate_plan = _without_reference_understanding_gates(
+        existing_gate_plan,
+        tracked_gate_ids=current.reference_understanding_gate_ids,
+    )
+    if not current.goal:
+        cleared = replace(
+            current,
+            gate_plan=None if base_gate_plan is None else base_gate_plan.model_dump(mode="json", exclude_none=True),
+            reference_understanding_summary=None,
+            reference_understanding_gate_ids=None,
+        )
+        return await _persist_reference_understanding_state_async(ctx, cleared)
+
+    reference_records = _active_reference_records(current)
+    reference_ids = [record.reference_id for record in reference_records]
+    if not reference_records:
+        blocked = _blocked_reference_understanding_summary(
+            goal=current.goal,
+            reason="reference_images_required",
+            message="Attach at least one active reference image before reference understanding can run.",
+        )
+        updated = replace(
+            current,
+            gate_plan=None if base_gate_plan is None else base_gate_plan.model_dump(mode="json", exclude_none=True),
+            reference_understanding_summary=blocked.model_dump(mode="json", exclude_none=True),
+            reference_understanding_gate_ids=None,
+        )
+        return await _persist_reference_understanding_state_async(ctx, updated)
+
+    existing_summary = current.reference_understanding_summary or {}
+    if (
+        existing_summary.get("status") == "available"
+        and existing_summary.get("goal") == current.goal
+        and list(existing_summary.get("reference_ids") or []) == reference_ids
+    ):
+        return current
+
+    request = _reference_understanding_request(goal=current.goal, reference_records=reference_records)
+    resolver = get_vision_backend_resolver()
+    try:
+        backend = resolver.resolve_default()
+        payload = await backend.analyze(request)
+        summary = ReferenceUnderstandingSummaryContract.model_validate(payload)
+    except VisionBackendUnavailableError as exc:
+        unavailable = _blocked_reference_understanding_summary(
+            goal=current.goal,
+            reason="vision_backend_unavailable",
+            message=str(exc),
+            reference_ids=reference_ids,
+        )
+        updated = replace(
+            current,
+            gate_plan=None if base_gate_plan is None else base_gate_plan.model_dump(mode="json", exclude_none=True),
+            reference_understanding_summary=unavailable.model_dump(mode="json", exclude_none=True),
+            reference_understanding_gate_ids=None,
+        )
+        return await _persist_reference_understanding_state_async(ctx, updated)
+    except Exception as exc:
+        unavailable = _blocked_reference_understanding_summary(
+            goal=current.goal,
+            reason="vision_backend_unavailable",
+            message=f"Reference understanding could not complete: {exc}",
+            reference_ids=reference_ids,
+        )
+        updated = replace(
+            current,
+            gate_plan=None if base_gate_plan is None else base_gate_plan.model_dump(mode="json", exclude_none=True),
+            reference_understanding_summary=unavailable.model_dump(mode="json", exclude_none=True),
+            reference_understanding_gate_ids=None,
+        )
+        return await _persist_reference_understanding_state_async(ctx, updated)
+
+    accepted_gate_ids: list[str] | None = None
+    updated_session = replace(
+        current,
+        gate_plan=None if base_gate_plan is None else base_gate_plan.model_dump(mode="json", exclude_none=True),
+    )
+    if summary.gate_proposals:
+        gate_proposal = GateProposalContract(
+            proposal_id=summary.understanding_id,
+            source="reference_understanding",
+            goal=current.goal,
+            gates=summary.gate_proposals,
+            source_provenance=summary.source_provenance,
+        )
+        intake_result = await ingest_quality_gate_proposal_async(
+            ctx,
+            gate_proposal.model_dump(mode="json", exclude_none=True),
+        )
+        if intake_result.status == "accepted" and intake_result.gate_plan is not None:
+            replacement_slice = _reference_understanding_gate_slice(intake_result.gate_plan)
+            updated_session = replace(
+                updated_session,
+                gate_plan=intake_result.gate_plan.model_dump(mode="json", exclude_none=True),
+            )
+            accepted_gate_ids = (
+                None if replacement_slice is None else [gate.gate_id for gate in replacement_slice.gates]
+            )
+
+    final_state = replace(
+        updated_session,
+        reference_understanding_summary=summary.model_dump(mode="json", exclude_none=True),
+        reference_understanding_gate_ids=accepted_gate_ids or None,
+    )
+    return await _persist_reference_understanding_state_async(ctx, final_state)
+
+
 def _build_silhouette_analysis_payload(
     *,
     selected_reference_records: list[ReferenceImageRecordContract] | tuple[ReferenceImageRecordContract, ...],
@@ -1376,6 +2195,80 @@ def _select_silhouette_analysis_capture(
         if capture.view_kind == "focus":
             return capture
     return captures[0]
+
+
+def _resolve_stage_view_diagnostics_preset(
+    *,
+    captures: list[VisionCaptureImageContract] | tuple[VisionCaptureImageContract, ...],
+    preset_profile: CapturePresetProfile,
+    target_view: str | None,
+) -> tuple[VisionCaptureImageContract, CapturePresetSpec | None]:
+    capture = _select_silhouette_analysis_capture(captures=captures, target_view=target_view)
+    preset_name = str(capture.preset_name or "").strip()
+    if not preset_name:
+        return capture, None
+
+    for preset in resolve_capture_preset_specs(preset_profile):
+        if preset.name == preset_name:
+            return capture, preset
+    return capture, None
+
+
+def _build_stage_view_diagnostics_hints(
+    *,
+    scene_handler: Any,
+    captures: list[VisionCaptureImageContract] | tuple[VisionCaptureImageContract, ...],
+    preset_profile: CapturePresetProfile,
+    target_object: str | None,
+    target_objects: list[str] | tuple[str, ...],
+    collection_name: str | None,
+    target_view: str | None,
+) -> list[ReferenceViewDiagnosticsHintContract] | None:
+    diagnostic_target = target_object or next((name for name in target_objects if str(name or "").strip()), None)
+    if not diagnostic_target or not captures or not hasattr(scene_handler, "get_view_diagnostics"):
+        return None
+
+    capture, preset = _resolve_stage_view_diagnostics_preset(
+        captures=captures,
+        preset_profile=preset_profile,
+        target_view=target_view,
+    )
+    focus_target = (
+        diagnostic_target if (preset.focus_target if preset is not None else capture.view_kind == "focus") else None
+    )
+    view_name = preset.standard_view if preset is not None else None
+    orbit_horizontal = float(preset.orbit_horizontal or 0.0) if preset is not None else 0.0
+    orbit_vertical = float(preset.orbit_vertical or 0.0) if preset is not None else 0.0
+    zoom_factor = None
+    if preset is not None and preset.focus_zoom_factor != 1.0:
+        zoom_factor = float(preset.focus_zoom_factor)
+
+    try:
+        diagnostics_payload = scene_handler.get_view_diagnostics(
+            target_object=diagnostic_target,
+            target_objects=list(target_objects or []),
+            collection_name=collection_name,
+            camera_name=None,
+            focus_target=focus_target,
+            view_name=view_name,
+            orbit_horizontal=orbit_horizontal,
+            orbit_vertical=orbit_vertical,
+            zoom_factor=zoom_factor,
+            persist_view=False,
+        )
+    except Exception:
+        return None
+
+    return _build_view_diagnostics_hints(
+        diagnostics_payload=diagnostics_payload,
+        target_object=diagnostic_target,
+        camera_name=None,
+        focus_target=focus_target,
+        view_name=view_name,
+        orbit_horizontal=orbit_horizontal,
+        orbit_vertical=orbit_vertical,
+        zoom_factor=zoom_factor,
+    )
 
 
 def _build_action_hints_from_silhouette(
@@ -1700,6 +2593,14 @@ def _is_tail_like(object_name: str) -> bool:
     return _has_name_hint(object_name, _TAIL_ROLE_HINTS)
 
 
+def _is_roof_like(object_name: str) -> bool:
+    return _has_name_hint(object_name, _ROOF_ROLE_HINTS)
+
+
+def _is_building_mass_like(object_name: str) -> bool:
+    return _has_name_hint(object_name, _BUILDING_MASS_HINTS)
+
+
 def _is_limb_like(object_name: str) -> bool:
     if _has_name_hint(object_name, _LIMB_ROLE_HINTS):
         return True
@@ -1974,6 +2875,10 @@ def _attachment_relation(
         return "segment_attachment", from_object, to_object
     if _is_tail_like(to_object) and _is_body_like(from_object):
         return "segment_attachment", to_object, from_object
+    if _is_roof_like(from_object) and _is_building_mass_like(to_object):
+        return "seated_attachment", from_object, to_object
+    if _is_roof_like(to_object) and _is_building_mass_like(from_object):
+        return "seated_attachment", to_object, from_object
     if _is_limb_like(from_object) and (_is_body_like(to_object) or _is_limb_like(to_object)):
         return "segment_attachment", from_object, to_object
     if _is_limb_like(to_object) and (_is_body_like(from_object) or _is_limb_like(from_object)):
@@ -1990,6 +2895,8 @@ def _attachment_seam_kind(part_object: str, anchor_object: str) -> _CreatureSeam
         return "head_body"
     if _is_tail_like(part_object) and _is_body_like(anchor_object):
         return "tail_body"
+    if _is_roof_like(part_object) and _is_building_mass_like(anchor_object):
+        return "roof_wall"
     if _is_limb_like(part_object) and _is_limb_like(anchor_object):
         return "limb_segment"
     if _is_limb_like(part_object) and _is_body_like(anchor_object):
@@ -2009,18 +2916,40 @@ def _attachment_item_summary(
     if has_overlap:
         if relation_kind == "embedded_attachment":
             return (
-                f"{pair_label} is an organic attachment relation; generic overlap cleanup alone is not enough "
+                f"{pair_label} is an embedded attachment relation; generic overlap cleanup alone is not enough "
                 "to seat the part correctly into the anchor mass."
             )
         return (
-            f"{pair_label} is an organic attachment relation; the pair should stay seated/attached, not just be "
+            f"{pair_label} is an attachment relation; the pair should stay seated/attached, not just be "
             "pushed apart until overlap reaches zero."
         )
     if has_gap or has_contact_failure:
-        return f"{pair_label} is still floating or detached for this organic attachment relation."
+        return f"{pair_label} is still floating or detached for this attachment relation."
     if has_alignment_issue:
-        return f"{pair_label} is still seated on the wrong attachment line for this organic relation."
-    return f"{pair_label} still has wrong organic attachment semantics."
+        return f"{pair_label} is still seated on the wrong attachment line for this attachment relation."
+    return f"{pair_label} still has wrong attachment semantics."
+
+
+def _support_item_summary(
+    *,
+    pair_label: str,
+    support_semantics: SceneSupportSemanticsContract,
+) -> str:
+    return (
+        f"{pair_label} is not yet supported as expected on {support_semantics.axis}; "
+        "the supported object still needs a stable base/contact relation."
+    )
+
+
+def _symmetry_item_summary(
+    *,
+    pair_label: str,
+    symmetry_semantics: SceneSymmetrySemanticsContract,
+) -> str:
+    return (
+        f"{pair_label} is still asymmetric across {symmetry_semantics.axis}; "
+        "the mirrored pair needs another bounded symmetry correction."
+    )
 
 
 def _resolve_capture_scope(
@@ -2167,26 +3096,28 @@ def _truth_bundle_pairs(
 def _build_correction_truth_bundle(
     scene_handler,
     scope: SceneAssembledTargetScopeContract,
-) -> SceneCorrectionTruthBundleContract:
+    *,
+    goal_hint: str | None = None,
+) -> tuple[SceneCorrectionTruthBundleContract, dict[str, Any]]:
     relation_graph = get_spatial_graph_service().build_relation_graph(
         reader=scene_handler,
         scope_graph=scope.model_dump(mode="json"),
-        goal_hint=None,
+        goal_hint=goal_hint,
         include_truth_payloads=True,
-        include_guided_pairs=False,
+        include_guided_pairs=True,
     )
     relation_pairs = list(relation_graph.get("pairs") or [])
-    truth_pairs = [
-        pair
-        for pair in relation_pairs
-        if str(pair.get("pair_source") or "") in {"required_creature_seam", "primary_to_other"}
-    ]
+    truth_pairs = relation_pairs
     if not truth_pairs:
-        pairing_strategy: Literal["none", "primary_to_others", "required_creature_seams"] = "none"
-    elif all(str(pair.get("pair_source") or "") == "required_creature_seam" for pair in truth_pairs):
+        pairing_strategy: Literal["none", "primary_to_others", "required_creature_seams", "guided_spatial_pairs"] = (
+            "none"
+        )
+    elif any(str(pair.get("pair_source") or "") == "required_creature_seam" for pair in truth_pairs):
         pairing_strategy = "required_creature_seams"
-    else:
+    elif all(str(pair.get("pair_source") or "") == "primary_to_other" for pair in truth_pairs):
         pairing_strategy = "primary_to_others"
+    else:
+        pairing_strategy = "guided_spatial_pairs"
     checks: list[SceneCorrectionTruthPairContract] = []
     contact_failures = 0
     overlap_pairs = 0
@@ -2259,18 +3190,21 @@ def _build_correction_truth_bundle(
             )
         )
 
-    return SceneCorrectionTruthBundleContract(
-        scope=scope,
-        summary=SceneCorrectionTruthSummaryContract(
-            pairing_strategy=pairing_strategy,
-            pair_count=len(truth_pairs),
-            evaluated_pairs=sum(1 for item in checks if item.error is None),
-            contact_failures=contact_failures,
-            overlap_pairs=overlap_pairs,
-            separated_pairs=separated_pairs,
-            misaligned_pairs=misaligned_pairs,
+    return (
+        SceneCorrectionTruthBundleContract(
+            scope=scope,
+            summary=SceneCorrectionTruthSummaryContract(
+                pairing_strategy=pairing_strategy,
+                pair_count=len(truth_pairs),
+                evaluated_pairs=sum(1 for item in checks if item.error is None),
+                contact_failures=contact_failures,
+                overlap_pairs=overlap_pairs,
+                separated_pairs=separated_pairs,
+                misaligned_pairs=misaligned_pairs,
+            ),
+            checks=checks,
         ),
-        checks=checks,
+        relation_graph,
     )
 
 
@@ -2401,6 +3335,8 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
     seen_pairs: set[str] = set()
     pair_issue_kinds: dict[str, set[str]] = {}
     pair_attachment_semantics: dict[str, SceneAttachmentSemanticsContract] = {}
+    pair_support_semantics: dict[str, SceneSupportSemanticsContract] = {}
+    pair_symmetry_semantics: dict[str, SceneSymmetrySemanticsContract] = {}
     pair_checks_by_label: dict[str, SceneCorrectionTruthPairContract] = {}
 
     for check in bundle.checks:
@@ -2469,6 +3405,42 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
                         from_object=check.from_object,
                         to_object=check.to_object,
                         tool_name="scene_assert_contact",
+                        relation_pair_id=check.relation_pair_id,
+                        relation_kinds=list(check.relation_kinds or []),
+                        relation_verdicts=list(check.relation_verdicts or []),
+                    )
+                )
+            if check.support_semantics is not None and check.support_semantics.verdict != "supported":
+                pair_support_semantics[pair_label] = check.support_semantics
+                pair_items.append(
+                    SceneTruthFollowupItemContract(
+                        kind="support",
+                        summary=_support_item_summary(
+                            pair_label=pair_label,
+                            support_semantics=check.support_semantics,
+                        ),
+                        priority="high",
+                        from_object=check.from_object,
+                        to_object=check.to_object,
+                        tool_name="scene_relation_graph",
+                        relation_pair_id=check.relation_pair_id,
+                        relation_kinds=list(check.relation_kinds or []),
+                        relation_verdicts=list(check.relation_verdicts or []),
+                    )
+                )
+            if check.symmetry_semantics is not None and check.symmetry_semantics.verdict != "symmetric":
+                pair_symmetry_semantics[pair_label] = check.symmetry_semantics
+                pair_items.append(
+                    SceneTruthFollowupItemContract(
+                        kind="symmetry",
+                        summary=_symmetry_item_summary(
+                            pair_label=pair_label,
+                            symmetry_semantics=check.symmetry_semantics,
+                        ),
+                        priority="high",
+                        from_object=check.from_object,
+                        to_object=check.to_object,
+                        tool_name="scene_assert_symmetry",
                         relation_pair_id=check.relation_pair_id,
                         relation_kinds=list(check.relation_kinds or []),
                         relation_verdicts=list(check.relation_verdicts or []),
@@ -2577,8 +3549,8 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
                     SceneRepairMacroCandidateContract(
                         macro_name="macro_attach_part_to_surface",
                         reason=(
-                            "Use a bounded surface-seating move for this organic creature seam instead of treating "
-                            "intersecting rounded parts as a generic side-push cleanup."
+                            "Use a bounded surface-seating move for this attachment seam instead of treating "
+                            "intersecting parts as a generic side-push cleanup."
                         ),
                         priority="high",
                         arguments_hint={
@@ -2596,7 +3568,7 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
                 SceneRepairMacroCandidateContract(
                     macro_name="macro_align_part_with_contact",
                     reason=(
-                        "Use a bounded attachment/contact repair for this creature seam instead of relying on generic "
+                        "Use a bounded attachment/contact repair for this seam instead of relying on generic "
                         "overlap cleanup alone."
                     ),
                     priority="high",
@@ -2606,6 +3578,43 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
                         "target_relation": "contact",
                         "align_mode": "none",
                         "preserve_side": True,
+                    },
+                )
+            )
+            continue
+        support_semantics = pair_support_semantics.get(pair_label)
+        if support_semantics is not None:
+            macro_candidates.append(
+                SceneRepairMacroCandidateContract(
+                    macro_name="macro_place_supported_pair",
+                    reason=(
+                        "Use a bounded support-placement move so the supported object rests on the intended base "
+                        "instead of relying on free-form transforms."
+                    ),
+                    priority="high",
+                    arguments_hint={
+                        "supported_object": support_semantics.supported_object,
+                        "support_object": support_semantics.support_object,
+                        "axis": support_semantics.axis,
+                        "gap": 0.0,
+                    },
+                )
+            )
+            continue
+        symmetry_semantics = pair_symmetry_semantics.get(pair_label)
+        if symmetry_semantics is not None:
+            macro_candidates.append(
+                SceneRepairMacroCandidateContract(
+                    macro_name="macro_place_symmetry_pair",
+                    reason=(
+                        "Use a bounded symmetry placement move so the pair is re-mirrored instead of relying on "
+                        "free-form manual offsets."
+                    ),
+                    priority="high",
+                    arguments_hint={
+                        "left_object": symmetry_semantics.left_object,
+                        "right_object": symmetry_semantics.right_object,
+                        "axis": symmetry_semantics.axis,
                     },
                 )
             )
@@ -2803,12 +3812,19 @@ async def _run_stage_checkpoint_compare(
     readiness_contract = GuidedReferenceReadinessContract.model_validate(
         build_guided_reference_readiness_payload(session)
     )
+    reference_understanding_summary = (
+        ReferenceUnderstandingSummaryContract.model_validate(session.reference_understanding_summary)
+        if session.reference_understanding_summary is not None
+        else None
+    )
+    reference_understanding_gate_ids = list(session.reference_understanding_gate_ids or [])
     goal = session.goal
     if not readiness.compare_ready or goal is None:
         return _stage_compare_response(
             session_id=session_id,
             transport=transport,
             guided_flow_state=session.guided_flow_state,
+            active_gate_plan=session.gate_plan,
             checkpoint_id=checkpoint_id,
             checkpoint_label=checkpoint_label,
             goal=goal,
@@ -2822,6 +3838,8 @@ async def _run_stage_checkpoint_compare(
             reference_ids=[],
             reference_labels=[],
             guided_reference_readiness=readiness_contract,
+            reference_understanding_summary=reference_understanding_summary,
+            reference_understanding_gate_ids=reference_understanding_gate_ids,
             error=_guided_stage_reference_recovery_error(
                 readiness,
                 target_object=target_object,
@@ -2841,6 +3859,7 @@ async def _run_stage_checkpoint_compare(
             session_id=session_id,
             transport=transport,
             guided_flow_state=session.guided_flow_state,
+            active_gate_plan=session.gate_plan,
             checkpoint_id=checkpoint_id,
             checkpoint_label=checkpoint_label,
             goal=goal,
@@ -2854,6 +3873,8 @@ async def _run_stage_checkpoint_compare(
             reference_ids=[],
             reference_labels=[],
             guided_reference_readiness=readiness_contract,
+            reference_understanding_summary=reference_understanding_summary,
+            reference_understanding_gate_ids=reference_understanding_gate_ids,
             error=str(exc),
         )
     assembled_target_scope = _assembled_target_scope(
@@ -2868,6 +3889,7 @@ async def _run_stage_checkpoint_compare(
             session_id=session_id,
             transport=transport,
             guided_flow_state=session.guided_flow_state,
+            active_gate_plan=session.gate_plan,
             checkpoint_id=checkpoint_id,
             checkpoint_label=checkpoint_label,
             goal=goal,
@@ -2881,6 +3903,8 @@ async def _run_stage_checkpoint_compare(
             reference_ids=[],
             reference_labels=[],
             guided_reference_readiness=readiness_contract,
+            reference_understanding_summary=reference_understanding_summary,
+            reference_understanding_gate_ids=reference_understanding_gate_ids,
             error=scope_error,
         )
 
@@ -2895,6 +3919,7 @@ async def _run_stage_checkpoint_compare(
             session_id=session_id,
             transport=transport,
             guided_flow_state=session.guided_flow_state,
+            active_gate_plan=session.gate_plan,
             checkpoint_id=checkpoint_id,
             checkpoint_label=checkpoint_label,
             goal=goal,
@@ -2908,12 +3933,16 @@ async def _run_stage_checkpoint_compare(
             reference_ids=[],
             reference_labels=[],
             guided_reference_readiness=readiness_contract,
+            reference_understanding_summary=reference_understanding_summary,
+            reference_understanding_gate_ids=reference_understanding_gate_ids,
             error="No matching reference images are attached for the requested target_object/target_view.",
         )
 
+    scene_handler = get_scene_handler()
+
     try:
         captures = capture_stage_images(
-            get_scene_handler(),
+            scene_handler,
             bundle_id=checkpoint_id,
             stage="after",
             target_object=capture_target_object,
@@ -2925,6 +3954,7 @@ async def _run_stage_checkpoint_compare(
             session_id=session_id,
             transport=transport,
             guided_flow_state=session.guided_flow_state,
+            active_gate_plan=session.gate_plan,
             checkpoint_id=checkpoint_id,
             checkpoint_label=checkpoint_label,
             goal=goal,
@@ -2938,19 +3968,42 @@ async def _run_stage_checkpoint_compare(
             reference_ids=[item.reference_id for item in selected_reference_records],
             reference_labels=[item.label or item.reference_id for item in selected_reference_records],
             guided_reference_readiness=readiness_contract,
+            reference_understanding_summary=reference_understanding_summary,
+            reference_understanding_gate_ids=reference_understanding_gate_ids,
             error=str(exc),
         )
 
+    view_diagnostics_hints = _build_stage_view_diagnostics_hints(
+        scene_handler=scene_handler,
+        captures=captures,
+        preset_profile=preset_profile,
+        target_object=capture_target_object,
+        target_objects=resolved_target_objects,
+        collection_name=resolved_collection_name,
+        target_view=target_view,
+    )
+
     resolver = get_vision_backend_resolver()
     runtime_max_tokens, runtime_max_images, runtime_model_name = _resolve_hybrid_budget_runtime(resolver)
-    scene_handler = get_scene_handler()
-    truth_bundle = _build_correction_truth_bundle(scene_handler, assembled_target_scope)
+    truth_bundle, _truth_relation_graph = _build_correction_truth_bundle(
+        scene_handler,
+        assembled_target_scope,
+        goal_hint=goal,
+    )
     pair_budget = _effective_pair_budget(
         max_tokens=runtime_max_tokens,
         model_name=runtime_model_name,
     )
     if truth_bundle.summary.pairing_strategy == "required_creature_seams":
-        pair_budget = max(pair_budget, min(truth_bundle.summary.pair_count, 6))
+        required_creature_pair_count = sum(
+            1
+            for check in truth_bundle.checks
+            if check.attachment_semantics is not None and check.attachment_semantics.required_seam
+        )
+        pair_budget = max(
+            pair_budget,
+            min(required_creature_pair_count or truth_bundle.summary.pair_count, 6),
+        )
         truth_char_share = 1.0
         truth_char_floor = 6000
     else:
@@ -3024,6 +4077,8 @@ async def _run_stage_checkpoint_compare(
             action="compare_stage_checkpoint",
             goal=goal,
             guided_reference_readiness=readiness_contract,
+            reference_understanding_summary=reference_understanding_summary,
+            reference_understanding_gate_ids=reference_understanding_gate_ids,
             target_object=resolved_target_object,
             target_objects=resolved_target_objects,
             collection_name=resolved_collection_name,
@@ -3031,6 +4086,7 @@ async def _run_stage_checkpoint_compare(
             truth_bundle=budgeted_truth_bundle,
             truth_followup=truth_followup,
             target_view=target_view,
+            view_diagnostics_hints=view_diagnostics_hints,
             checkpoint_id=checkpoint_id,
             checkpoint_label=checkpoint_label,
             preset_profile=preset_profile,
@@ -3051,14 +4107,40 @@ async def _run_stage_checkpoint_compare(
         max_tokens=runtime_max_tokens,
         model_name=runtime_model_name,
     )
-    correction_candidates, detail_trimmed = _trim_correction_candidates(
+    correction_candidates, candidate_detail_trimmed = _trim_correction_candidates(
         full_correction_candidates,
         candidate_budget=candidate_budget,
+    )
+    compact_capture_trimmed = preset_profile == "compact" and bool(captures)
+    planner_detail_trimmed = preset_profile == "compact"
+    compact_detail_trimmed = candidate_detail_trimmed or compact_capture_trimmed or planner_detail_trimmed
+    budget_control = ReferenceHybridBudgetControlContract(
+        model_name=runtime_model_name,
+        max_input_chars=VISION_ASSIST_POLICY.max_input_chars,
+        max_output_tokens=runtime_max_tokens,
+        max_images=runtime_max_images,
+        original_pair_count=truth_bundle.summary.pair_count,
+        emitted_pair_count=budgeted_truth_bundle.summary.pair_count,
+        original_candidate_count=len(full_correction_candidates),
+        emitted_candidate_count=len(correction_candidates),
+        trimming_applied=scope_trimmed or compact_detail_trimmed,
+        scope_trimmed=scope_trimmed,
+        detail_trimmed=compact_detail_trimmed,
+        trim_reason=(
+            "model_aware_budget_control"
+            if scope_trimmed or candidate_detail_trimmed
+            else "compact_checkpoint_payload"
+            if compact_capture_trimmed or planner_detail_trimmed
+            else None
+        ),
+        selected_focus_pairs=list(truth_followup.focus_pairs or []),
     )
     staged_compare_contract = ReferenceCompareStageCheckpointResponseContract(
         action="compare_stage_checkpoint",
         goal=goal,
         guided_reference_readiness=readiness_contract,
+        reference_understanding_summary=reference_understanding_summary,
+        reference_understanding_gate_ids=reference_understanding_gate_ids,
         target_object=resolved_target_object,
         target_objects=resolved_target_objects,
         collection_name=resolved_collection_name,
@@ -3066,6 +4148,8 @@ async def _run_stage_checkpoint_compare(
         truth_bundle=budgeted_truth_bundle,
         truth_followup=truth_followup,
         correction_candidates=correction_candidates,
+        budget_control=budget_control,
+        view_diagnostics_hints=view_diagnostics_hints,
         target_view=target_view,
         checkpoint_id=checkpoint_id,
         checkpoint_label=checkpoint_label,
@@ -3083,32 +4167,53 @@ async def _run_stage_checkpoint_compare(
     )
     refinement_route = _select_refinement_route(staged_compare_contract)
     refinement_handoff = _build_refinement_handoff(staged_compare_contract, refinement_route)
-    compact_capture_trimmed = preset_profile == "compact" and bool(captures)
-    budget_control = ReferenceHybridBudgetControlContract(
-        model_name=runtime_model_name,
-        max_input_chars=VISION_ASSIST_POLICY.max_input_chars,
-        max_output_tokens=runtime_max_tokens,
-        max_images=runtime_max_images,
-        original_pair_count=truth_bundle.summary.pair_count,
-        emitted_pair_count=budgeted_truth_bundle.summary.pair_count,
-        original_candidate_count=len(full_correction_candidates),
-        emitted_candidate_count=len(correction_candidates),
-        trimming_applied=scope_trimmed or detail_trimmed or compact_capture_trimmed,
-        scope_trimmed=scope_trimmed,
-        detail_trimmed=detail_trimmed or compact_capture_trimmed,
-        trim_reason=(
-            "model_aware_budget_control"
-            if scope_trimmed or detail_trimmed
-            else "compact_checkpoint_payload"
-            if compact_capture_trimmed
-            else None
-        ),
-        selected_focus_pairs=list(truth_followup.focus_pairs or []),
+    planner_summary = _build_repair_planner_summary(
+        staged_compare_contract,
+        route=refinement_route,
+        handoff=refinement_handoff,
     )
+    planner_detail = (
+        _build_repair_planner_detail(
+            staged_compare_contract,
+            summary=planner_summary,
+            route=refinement_route,
+            handoff=refinement_handoff,
+            detail_trimmed=scope_trimmed or candidate_detail_trimmed,
+        )
+        if preset_profile == "rich"
+        else None
+    )
+    active_gate_plan = session.gate_plan
+    if session.gate_plan is not None:
+        gate_relation_graph = get_spatial_graph_service().build_relation_graph(
+            reader=scene_handler,
+            scope_graph=assembled_target_scope.model_dump(mode="json"),
+            goal_hint=goal,
+            include_truth_payloads=False,
+            include_guided_pairs=True,
+        )
+        flow_state = (
+            GuidedFlowStateContract.model_validate(session.guided_flow_state)
+            if session.guided_flow_state is not None
+            else None
+        )
+        updated_gate_plan = verify_gate_plan_with_relation_graph(
+            session.gate_plan,
+            gate_relation_graph,
+            spatial_state_version=None if flow_state is None else flow_state.spatial_state_version,
+            scope_fingerprint=None if flow_state is None else flow_state.spatial_scope_fingerprint,
+            guided_part_registry=cast(list[Mapping[str, Any]] | None, session.guided_part_registry),
+        )
+        session = replace(session, gate_plan=updated_gate_plan.model_dump(mode="json", exclude_none=True))
+        await set_session_capability_state_async(ctx, session)
+        await apply_visibility_for_session_state(ctx, session)
+        active_gate_plan = session.gate_plan
+
     return _stage_compare_response(
         session_id=session_id,
         transport=transport,
         guided_flow_state=session.guided_flow_state,
+        active_gate_plan=active_gate_plan,
         checkpoint_id=checkpoint_id,
         checkpoint_label=checkpoint_label,
         goal=goal,
@@ -3123,6 +4228,8 @@ async def _run_stage_checkpoint_compare(
         reference_ids=[item.reference_id for item in selected_reference_records],
         reference_labels=[item.label or item.reference_id for item in selected_reference_records],
         guided_reference_readiness=readiness_contract,
+        reference_understanding_summary=reference_understanding_summary,
+        reference_understanding_gate_ids=reference_understanding_gate_ids,
         vision_assistant=vision_assistant,
         truth_bundle=budgeted_truth_bundle,
         truth_followup=truth_followup,
@@ -3130,9 +4237,12 @@ async def _run_stage_checkpoint_compare(
         budget_control=budget_control,
         refinement_route=refinement_route,
         refinement_handoff=refinement_handoff,
+        planner_summary=planner_summary,
+        planner_detail=planner_detail,
         silhouette_analysis=silhouette_analysis,
         action_hints=action_hints,
         part_segmentation=part_segmentation,
+        view_diagnostics_hints=view_diagnostics_hints,
         include_captures=preset_profile != "compact",
         message=(
             f"Captured and compared stage checkpoint '{checkpoint_label or checkpoint_id}' using {len(captures)} deterministic view(s)."
@@ -3179,7 +4289,9 @@ async def reference_images(
     if normalized_action == "clear":
         _delete_reference_files(visible_references)
         if active_references:
-            await replace_session_reference_images_async(ctx, [])
+            session = await replace_session_reference_images_async(ctx, [])
+            if session.goal is not None:
+                await refresh_reference_understanding_summary_async(ctx, session=session)
         if pending_references:
             await replace_session_pending_reference_images_async(ctx, [])
 
@@ -3226,7 +4338,9 @@ async def reference_images(
             )
         _delete_reference_files(removed_records)
         if len(remaining) != len(active_references):
-            await replace_session_reference_images_async(ctx, remaining)
+            session = await replace_session_reference_images_async(ctx, remaining)
+            if session.goal is not None:
+                await refresh_reference_understanding_summary_async(ctx, session=session)
         if len(remaining_pending) != len(pending_references):
             await replace_session_pending_reference_images_async(ctx, remaining_pending)
         remaining_visible = (
@@ -3319,7 +4433,8 @@ async def reference_images(
         )
 
     updated_active = [*active_references, reference]
-    await replace_session_reference_images_async(ctx, updated_active)
+    session = await replace_session_reference_images_async(ctx, updated_active)
+    session = await refresh_reference_understanding_summary_async(ctx, session=session)
     ctx_info(ctx, f"[REFERENCE] Attached reference image {reference['reference_id']} for goal '{session.goal}'")
     return _as_response(
         action="attach",
@@ -3564,11 +4679,17 @@ async def reference_iterate_stage_checkpoint(
     readiness = compare_result.guided_reference_readiness
     goal = compare_result.goal
     correction_focus = _resolve_actionable_focus(compare_result)
+    if not correction_focus:
+        correction_focus = _resolve_gate_blocker_focus(compare_result)
     action_hints = list(compare_result.action_hints or [])
-    continue_recommended = bool(correction_focus or action_hints)
+    gate_blockers_present = bool(compare_result.completion_blockers)
+    continue_recommended = bool(correction_focus or action_hints or gate_blockers_present)
     inspect_from_truth_signal = _should_inspect_from_truth_signal(compare_result.correction_candidates)
+    inspect_from_gate_blockers = gate_blockers_present
     loop_disposition: Literal["continue_build", "inspect_validate", "stop"] = (
-        "inspect_validate" if inspect_from_truth_signal else ("continue_build" if continue_recommended else "stop")
+        "inspect_validate"
+        if inspect_from_truth_signal or inspect_from_gate_blockers
+        else ("continue_build" if continue_recommended else "stop")
     )
     stop_reason = (
         None if continue_recommended else "No actionable correction guidance was returned for this checkpoint."
@@ -3595,6 +4716,7 @@ async def reference_iterate_stage_checkpoint(
             transport=compare_result.transport,
             goal=goal,
             guided_flow_state=advanced_state.guided_flow_state,
+            active_gate_plan=advanced_state.gate_plan,
             target_object=target_object,
             target_objects=list(target_objects or []),
             collection_name=collection_name,
@@ -3682,6 +4804,11 @@ async def reference_iterate_stage_checkpoint(
                 "Deterministic truth findings remain high-priority. "
                 "Stop free-form modeling and switch to inspect/measure/assert now."
             )
+        elif inspect_from_gate_blockers:
+            message = (
+                "Quality gate blockers remain unresolved. "
+                "Stop free-form modeling and switch to inspect/measure/assert or bounded repair tools now."
+            )
         else:
             message = (
                 "Repeated correction focus persists across stage iterations. "
@@ -3712,6 +4839,7 @@ async def reference_iterate_stage_checkpoint(
         transport=compare_result.transport,
         goal=goal,
         guided_flow_state=advanced_state.guided_flow_state,
+        active_gate_plan=advanced_state.gate_plan,
         target_object=target_object,
         target_objects=list(compare_result.target_objects or []),
         collection_name=collection_name,

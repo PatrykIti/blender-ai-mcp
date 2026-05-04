@@ -40,6 +40,38 @@ GUIDED_SPATIAL_SUPPORT_TOOLS: tuple[str, ...] = (
     *GUIDED_SPATIAL_GRAPH_TOOLS,
     *GUIDED_VIEW_DIAGNOSTIC_TOOLS,
 )
+GUIDED_ATTACHMENT_GATE_TOOLS: tuple[str, ...] = (
+    "scene_relation_graph",
+    "scene_measure_gap",
+    "scene_assert_contact",
+    "macro_attach_part_to_surface",
+    "macro_align_part_with_contact",
+)
+GUIDED_SUPPORT_GATE_TOOLS: tuple[str, ...] = (
+    "scene_relation_graph",
+    "scene_measure_gap",
+    "scene_assert_contact",
+    "macro_place_supported_pair",
+    "macro_attach_part_to_surface",
+    "macro_align_part_with_contact",
+)
+GUIDED_REQUIRED_PART_GATE_TOOLS: tuple[str, ...] = (
+    "guided_register_part",
+    "scene_create",
+    "modeling_create_primitive",
+)
+GUIDED_SYMMETRY_GATE_TOOLS: tuple[str, ...] = (
+    "scene_relation_graph",
+    "scene_assert_symmetry",
+    "macro_place_symmetry_pair",
+)
+GUIDED_SHAPE_PROFILE_GATE_TOOLS: tuple[str, ...] = (
+    "scene_view_diagnostics",
+    "mesh_inspect",
+    "macro_adjust_relative_proportion",
+    "macro_adjust_segment_chain_arc",
+    "macro_finish_form",
+)
 GUIDED_SPATIAL_CONTEXT_DIRECT_TOOLS: tuple[str, ...] = (
     *GUIDED_SPATIAL_SUPPORT_TOOLS,
     "check_scene",
@@ -552,6 +584,7 @@ def build_visibility_rules(
     phase: SessionPhase | str = SessionPhase.BOOTSTRAP,
     guided_handoff: dict[str, Any] | None = None,
     guided_flow_state: dict[str, Any] | None = None,
+    gate_plan: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     """Build deterministic visibility rules for a profile/phase combination."""
 
@@ -626,9 +659,13 @@ def build_visibility_rules(
 
     current_flow_step = str((guided_flow_state or {}).get("current_step") or "").strip().lower()
     spatial_refresh_required = bool((guided_flow_state or {}).get("spatial_refresh_required"))
+    gate_visible_tools = visible_tools_for_gate_plan(gate_plan)
+    refresh_barrier_active = current_flow_step == "establish_spatial_context" or spatial_refresh_required
+    if refresh_barrier_active:
+        gate_visible_tools = gate_visible_tools.intersection(set(GUIDED_SPATIAL_CONTEXT_DIRECT_TOOLS))
 
     if resolved_phase == SessionPhase.BUILD:
-        if current_flow_step == "establish_spatial_context" or spatial_refresh_required:
+        if refresh_barrier_active:
             build_tools = set(GUIDED_SPATIAL_CONTEXT_DIRECT_TOOLS)
         else:
             build_tools = (
@@ -636,11 +673,63 @@ def build_visibility_rules(
                 if _is_creature_blockout_handoff(guided_handoff)
                 else set(GUIDED_BUILD_ESCAPE_HATCH_TOOLS)
             )
+        build_tools = set(build_tools) | gate_visible_tools
         rules.append({"enabled": True, "components": {"tool"}, "names": build_tools})
     elif resolved_phase == SessionPhase.INSPECT_VALIDATE:
-        rules.append({"enabled": True, "components": {"tool"}, "names": set(GUIDED_INSPECT_ESCAPE_HATCH_TOOLS)})
+        rules.append(
+            {
+                "enabled": True,
+                "components": {"tool"},
+                "names": set(GUIDED_INSPECT_ESCAPE_HATCH_TOOLS) | gate_visible_tools,
+            }
+        )
 
     return rules
+
+
+def visible_tools_for_gate_plan(gate_plan: dict[str, Any] | None) -> set[str]:
+    """Return bounded tool names implied by active quality-gate blockers."""
+
+    if not isinstance(gate_plan, dict):
+        return set()
+
+    gates = [gate for gate in gate_plan.get("gates") or [] if isinstance(gate, dict)]
+    blockers = [blocker for blocker in gate_plan.get("completion_blockers") or [] if isinstance(blocker, dict)]
+    if not blockers:
+        blockers = [
+            gate
+            for gate in gates
+            if gate.get("required") is not False
+            and str(gate.get("status") or "") in {"pending", "blocked", "failed", "stale"}
+        ]
+
+    non_final_blockers = [blocker for blocker in blockers if blocker.get("gate_type") != "final_completion"]
+    selected_blockers = non_final_blockers or blockers
+    blocker_types = {str(blocker.get("gate_type") or "") for blocker in selected_blockers}
+    has_unresolved_seam_or_support = bool(blocker_types.intersection({"attachment_seam", "support_contact"}))
+
+    visible_tools: set[str] = set()
+    for blocker in selected_blockers:
+        gate_type = str(blocker.get("gate_type") or "")
+        visible_tools.update(str(name) for name in blocker.get("recommended_bounded_tools") or [] if str(name).strip())
+        if gate_type == "attachment_seam":
+            visible_tools.update(GUIDED_ATTACHMENT_GATE_TOOLS)
+        elif gate_type == "support_contact":
+            visible_tools.update(GUIDED_SUPPORT_GATE_TOOLS)
+        elif gate_type == "required_part":
+            visible_tools.update(GUIDED_REQUIRED_PART_GATE_TOOLS)
+        elif gate_type == "symmetry_pair":
+            visible_tools.update(GUIDED_SYMMETRY_GATE_TOOLS)
+        elif gate_type in {"shape_profile", "proportion_ratio", "refinement_stage"}:
+            if not has_unresolved_seam_or_support:
+                visible_tools.update(GUIDED_SHAPE_PROFILE_GATE_TOOLS)
+        elif gate_type == "opening_or_cut":
+            if not has_unresolved_seam_or_support:
+                visible_tools.update({"scene_view_diagnostics", "mesh_inspect", "macro_cutout_recess"})
+        elif gate_type == "final_completion":
+            visible_tools.update(GUIDED_SPATIAL_SUPPORT_TOOLS)
+            visible_tools.update({"reference_compare_stage_checkpoint", "reference_iterate_stage_checkpoint"})
+    return visible_tools
 
 
 def materialize_visible_tool_names(

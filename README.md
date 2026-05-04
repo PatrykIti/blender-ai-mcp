@@ -607,6 +607,33 @@ hidden ordering assumptions.
   role slice; the server intentionally keeps the guided step in place instead
   of advancing to the next stage, even when the compare result itself produced
   no actionable correction hints
+- `router_set_goal(..., gate_proposal={...})` may accept an optional model- or
+  reference-derived gate proposal for the active guided goal. The server
+  normalizes it into `active_gate_plan`, starts every gate as `pending`, and
+  returns `gate_intake_result.policy_warnings` for dropped hidden tool names,
+  unsupported gate types, raw Blender/Python instructions, unavailable required
+  reference/perception evidence on the goal-time intake surface, or
+  client-supplied completion claims such as `passed`.
+- `router_get_status(...)`, `router_set_goal(...)`, and staged
+  reference compare/iterate payloads can expose `active_gate_plan`; LLM,
+  `reference_understanding`, silhouette, segmentation, classification, and VLM
+  checkpoint sources may propose or support gates, but scene/spatial/mesh and
+  assertion evidence remain the truth authority for pass/fail status.
+- staged reference compare/iterate payloads also project the active gate plan
+  into top-level `gate_statuses`, `completion_blockers`,
+  `next_gate_actions`, and `recommended_bounded_tools`, so clients do not need
+  to infer the immediate repair path from the nested plan shape.
+- `scene_relation_graph(...)` updates the first deterministic gate slice for
+  `required_part`, `attachment_seam`, `support_contact`, and `symmetry_pair`
+  with authoritative evidence refs, status reasons, completion blockers, and
+  bounded repair-tool hints; later guided scene mutations mark the affected
+  verifier-backed statuses `stale` through the existing spatial dirtying path.
+- active gate blockers narrow guided visibility/search toward existing
+  verifier and repair tools; a failed seam gate should lead to relation
+  graph/measure/assert/macro repair tools, not a broad catalog or goal reset.
+- unresolved `completion_blockers` on staged iterate responses now also push
+  `loop_disposition="inspect_validate"` even when the compare loop did not
+  repeat the same vision-only correction focus.
 - if staged compare degrades but strong deterministic truth findings still
   exist, use the same inspect/measure/assert handoff instead of improvising
   another large free-form correction

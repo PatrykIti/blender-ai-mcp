@@ -6,6 +6,32 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [300](./300-2026-05-04-task-160-guided-client-feedback-and-streamable-followup.md) | 2026-05-04 | **TASK-160 guided client feedback and Streamable follow-up** | - |
+| [299](./299-2026-05-03-task-157-scope-dedupe-and-compare-visibility-regressions.md) | 2026-05-03 | **TASK-157 scope, dedupe, and compare-visibility regressions** | - |
+| [298](./298-2026-05-03-task-157-goal-time-bounds-and-verifier-followups.md) | 2026-05-03 | **TASK-157 goal-time bounds and verifier follow-ups** | - |
+| [297](./297-2026-05-03-task-157-gate-intake-and-reference-visibility-regressions.md) | 2026-05-03 | **TASK-157 gate intake and reference visibility regressions** | - |
+| [296](./296-2026-05-03-task-157-quality-gate-scope-and-reference-refresh-regressions.md) | 2026-05-03 | **TASK-157 quality-gate scope and reference-refresh regressions** | - |
+| [295](./295-2026-05-03-task-158-final-closeout.md) | 2026-05-03 | **TASK-158 final closeout** | - |
+| [294](./294-2026-05-03-task-158-scope-a-doc-alignment-and-e2e-drift-hardening.md) | 2026-05-03 | **TASK-158 Scope A doc alignment and E2E drift hardening** | - |
+| [293](./293-2026-05-02-task-158-reference-understanding-runtime-and-harness.md) | 2026-05-02 | **TASK-158 reference-understanding runtime and harness path** | - |
+| [292](./292-2026-05-02-task-158-review-pass-decomposition-and-owner-lanes.md) | 2026-05-02 | **TASK-158 review pass decomposition and owner lanes** | - |
+| [291](./291-2026-05-02-task-158-doc-hardening-and-owner-seam-alignment.md) | 2026-05-02 | **TASK-158 doc hardening and owner-seam alignment** | - |
+| [290](./290-2026-05-02-task-157-closeout-and-board-sync.md) | 2026-05-02 | **TASK-157 closeout and board sync** | - |
+| [289](./289-2026-05-03-task-157-transport-parity-and-live-support-symmetry-e2e.md) | 2026-05-03 | **TASK-157 transport parity and live support/symmetry E2E** | - |
+| [288](./288-2026-05-03-task-157-correction-truth-alignment-and-transport-regression.md) | 2026-05-03 | **TASK-157 correction-truth alignment and transport regression** | - |
+| [287](./287-2026-05-02-task-157-roof-wall-seam-runtime-and-repair-scope.md) | 2026-05-02 | **TASK-157 roof-wall seam runtime and repair scope** | - |
+| [286](./286-2026-05-01-task-157-cross-domain-gate-regression-lanes.md) | 2026-05-01 | **TASK-157 cross-domain gate regression lanes** | - |
+| [285](./285-2026-05-01-task-157-runtime-drift-alignment.md) | 2026-05-01 | **TASK-157 runtime drift alignment** | - |
+| [284](./284-2026-05-01-task-145-validation-and-regression-hardening.md) | 2026-05-01 | **TASK-145 validation and regression hardening** | - |
+| [283](./283-2026-05-01-stage-checkpoint-planner-view-diagnostics-wiring.md) | 2026-05-01 | **Stage checkpoint planner view-diagnostics wiring** | - |
+| [282](./282-2026-05-01-task-157-gate-checkpoint-summaries.md) | 2026-05-01 | **TASK-157 gate checkpoint summaries** | - |
+| [281](./281-2026-05-01-task-157-gate-driven-visibility-search.md) | 2026-05-01 | **TASK-157 gate-driven visibility and search** | - |
+| [280](./280-2026-05-01-task-157-deterministic-gate-verifier.md) | 2026-05-01 | **TASK-157 deterministic quality-gate verifier** | - |
+| [279](./279-2026-05-01-task-157-quality-gate-contract-intake.md) | 2026-05-01 | **TASK-157 quality-gate contract and intake** | - |
+| [278](./278-2026-05-01-task-158-vision-creature-boundary-alignment-plan.md) | 2026-05-01 | **TASK-158 reference understanding follow-up and boundary alignment plan** | - |
+| [277](./277-2026-04-30-task-157-perception-evidence-contract-refresh.md) | 2026-04-30 | **TASK-157 perception evidence contract refresh** | - |
+| [276](./276-2026-04-30-task-145-repair-planner-handoff.md) | 2026-04-30 | **TASK-145 repair planner and sculpt handoff** | - |
+| [275](./275-2026-04-30-agent-guidelines-task-workflow-hardening.md) | 2026-04-30 | **Agent guidelines task workflow hardening** | - |
 | [274](./274-2026-04-29-routed-report-step-finalizers.md) | 2026-04-29 | **Routed report step finalizers** | - |
 | [273](./273-2026-04-29-async-rename-validation-offload.md) | 2026-04-29 | **Async rename validation offload** | - |
 | [272](./272-2026-04-29-async-guided-route-finalizer-coverage.md) | 2026-04-29 | **Async guided route finalizer coverage** | - |

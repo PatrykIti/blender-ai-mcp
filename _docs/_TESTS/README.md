@@ -122,14 +122,92 @@ Source-of-truth pointers:
 - OpenRouter/Gemini runtime examples: [`_docs/_VISION/README.md`](../_VISION/README.md)
 - MCP client/container examples: [`_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`](../_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md)
 
+## TASK-157 Quality-Gate Lanes
+
+Current owner-lane validation for the shipped TASK-157 substrate is:
+
+- goal-time intake and policy bounds:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_contracts.py tests/unit/adapters/mcp/test_quality_gate_intake.py -q`
+- scene/spatial owner seams for relation semantics and correction-truth contracts:
+  `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/scene/test_spatial_graph_service.py -q`
+- verifier/status, stale marking, gate-driven visibility/search, and staged
+  checkpoint summaries:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
+- guided gate/runtime transport:
+  `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
+- Blender-backed gate-state regression:
+  `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_goal_derived_gate_creature_completion.py tests/e2e/vision/test_goal_derived_gate_building_completion.py tests/e2e/vision/test_goal_derived_gate_support_symmetry_surfaces.py -q`
+
+Adjacent but separate regression:
+
+- `tests/e2e/integration/test_guided_inspect_validate_handoff.py` remains a
+  TASK-141 handoff/regression lane; it is useful nearby coverage, but it is not
+  the primary TASK-157 compare-stage transport proof.
+
+Latest validated owner-lane results on this machine:
+
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_contracts.py tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/scene/test_spatial_graph_service.py -q`
+  - result: `202 passed`
+- `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py tests/e2e/vision/test_goal_derived_gate_creature_completion.py tests/e2e/vision/test_goal_derived_gate_building_completion.py tests/e2e/vision/test_goal_derived_gate_support_symmetry_surfaces.py -q`
+  - result: `11 passed`
+
+Operational prerequisites still matter for reruns:
+
+- live Blender RPC/addon availability is required for the Blender-backed
+  creature/building gate tests
+- local socket binding is required for the Streamable HTTP transport lane
+
+## Planned TASK-158 Scope B Lanes
+
+`TASK-158` is still open, so the lanes below are planning targets rather than
+currently shipped owner proofs. When Scope B starts implementation, promote the
+focused lanes from `TASK-158-04` and `TASK-158-05` onto these current owners
+first:
+
+- shared prompt/parser/backend owners for `TASK-158-04`:
+  `tests/unit/adapters/mcp/test_vision_prompting.py` and
+  `tests/unit/adapters/mcp/test_vision_parsing.py`
+- reference/checkpoint/session/guided-diagnostics owners for `TASK-158-04`:
+  `tests/unit/adapters/mcp/test_reference_images.py`,
+  `tests/unit/adapters/mcp/test_contract_payload_parity.py`,
+  `tests/unit/adapters/mcp/test_quality_gate_intake.py`,
+  `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`,
+  `tests/unit/adapters/mcp/test_visibility_policy.py`,
+  `tests/unit/adapters/mcp/test_guided_mode.py`,
+  `tests/unit/adapters/mcp/test_router_elicitation.py`, and
+  `tests/unit/adapters/mcp/test_search_surface.py`
+- transport/public-surface parity for `TASK-158-04` when new summary fields or
+  hint-driven visibility become client-facing:
+  `tests/e2e/integration/test_guided_surface_contract_parity.py`
+  and `tests/e2e/integration/test_guided_gate_state_transport.py`
+- optional-evidence runtime, envelope, fixture, and harness owners for
+  `TASK-158-05`:
+  `tests/unit/adapters/mcp/test_vision_runtime_config.py`,
+  `tests/unit/adapters/mcp/test_vision_evaluation.py`,
+  `tests/unit/adapters/mcp/test_reference_images.py`,
+  `tests/unit/scripts/test_script_tooling.py`, and
+  `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
+
+Keep the current owner-lane rule explicit while Scope B stays open:
+
+- start from the shared `vision/prompting.py`, `vision/parsing.py`, and
+  `vision/backends.py` owners before creating dedicated
+  `reference_understanding*` modules or test roots
+- reference-understanding gate seeds must reuse the closed `TASK-157`
+  intake/state owners rather than introducing a second reference-specific
+  gate-normalization lane
+- providerless fixture/eval behavior for `scripts/vision_harness.py` must be an
+  explicit opt-in path; the default harness flow stays backend-executing.
+  The current CLI entrypoint is `--fixture-only reference-understanding`.
+
 ---
 
 ## Test Statistics
 
 | Type | Count | Execution Time |
 |------|-------|----------------|
-| Unit Tests | 3114 collected | collect-only ~11 seconds; full runtime depends on selected lanes |
-| E2E Tests | 428 collected | collect-only ~17 seconds; Blender-backed runtime depends on active RPC/Blender state |
+| Unit Tests | 3158 collected | collect-only ~9 seconds; full runtime depends on selected lanes |
+| E2E Tests | 429 collected | collect-only ~15 seconds; Blender-backed runtime depends on active RPC/Blender state |
 
 Current repo-wide unit coverage (`server + blender_addon + scripts`):
 
@@ -377,12 +455,16 @@ Hybrid-loop assembled-creature regression pack:
 - `_docs/_VISION/CROSS_DOMAIN_REFINEMENT_ROUTING_EVAL.md`
 - combines:
   - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
+  - `tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py`
   - `tests/e2e/vision/test_reference_guided_creature_comparison.py`
+  - `tests/e2e/tools/sculpt/test_sculpt_tools.py`
 - review staged hybrid-loop output in this order:
   - `loop_disposition`
-  - `correction_candidates`
+  - `planner_summary`
+  - `planner_detail` on rich profile only
   - `refinement_route`
   - `refinement_handoff`
+  - `correction_candidates`
   - `truth_followup`
   - `action_hints`
   - `correction_focus`
@@ -393,6 +475,16 @@ Focused unit coverage now also protects:
   `tests/unit/adapters/mcp/test_reference_images.py`
 - optional segmentation-sidecar config defaults and opt-in validation on
   `tests/unit/adapters/mcp/test_vision_runtime_config.py`
+- goal-derived quality-gate contract and intake coverage on:
+  - `tests/unit/adapters/mcp/test_quality_gate_contracts.py`
+  - `tests/unit/adapters/mcp/test_quality_gate_verifier.py`
+  - `tests/unit/adapters/mcp/test_quality_gate_intake.py`
+  - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
+- gate-driven guided visibility/search coverage on:
+  - `tests/unit/adapters/mcp/test_visibility_policy.py`
+  - `tests/unit/adapters/mcp/test_search_surface.py`
+- reference checkpoint gate summary projection coverage on:
+  - `tests/unit/adapters/mcp/test_reference_images.py`
 - compact view-space contracts, search/discovery shaping, and reference-loop
   adoption hints on:
   - `tests/unit/tools/scene/test_scene_contracts.py`

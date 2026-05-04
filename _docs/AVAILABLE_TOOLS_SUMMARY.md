@@ -66,6 +66,17 @@ Default `llm-guided` entry surface:
 - `search_tools`
 - `call_tool`
 
+When `active_gate_plan.completion_blockers` exist, `search_tools(...)` stays on
+the same guided discovery path but biases recovery queries toward the bounded
+verification/repair tools named by the blocker instead of recommending a goal
+reset or broad catalog exploration.
+
+Reference stage compare/iterate responses expose both the nested
+`active_gate_plan` and top-level gate summary fields (`gate_statuses`,
+`completion_blockers`, `next_gate_actions`, `recommended_bounded_tools`) so
+clients can consume the active repair path without duplicating gate-plan
+projection logic.
+
 Task-capable heavy-operation rollout on task-enabled surfaces:
 
 - `scene_get_viewport`
@@ -254,8 +265,8 @@ None.
 | `reference_images` | `action`, `source_path`, `reference_id`, `label`, `notes`, `target_object`, `target_view` | Goal-scoped reference image lifecycle surface. `attach` can now also stage pending references before the goal exists or while the goal is blocked; staged refs stay separate from already-active goal refs until the next ready/no-match `router_set_goal(...)` adopts them automatically, and merged visible refs now stay consistent across list/remove/clear even when explicit pending refs for another goal still exist. | ✅ Done |
 | `reference_compare_checkpoint` | `checkpoint_path`, `checkpoint_label`, `target_object`, `target_view`, `goal_override`, `prompt_hint` | Compares one current checkpoint image against the active goal plus attached references and returns bounded vision interpretation for the next correction step. | ✅ Done |
 | `reference_compare_current_view` | `checkpoint_label`, `target_object`, `target_view`, `goal_override`, `prompt_hint`, viewport/camera args | Captures one current viewport/camera checkpoint using bounded `scene_get_viewport` semantics, then compares it against the active goal plus attached references. | ✅ Done |
-| `reference_compare_stage_checkpoint` | `target_object`, `target_objects`, `collection_name`, `checkpoint_label`, `target_view`, `goal_override`, `prompt_hint`, `preset_profile` | Captures one deterministic multi-view stage checkpoint for a target object, object set, collection, or full assembled scene using the `compact` or `rich` preset profile, then compares that checkpoint set against the active goal plus attached references. | ✅ Done |
-| `reference_iterate_stage_checkpoint` | `target_object`, `target_objects`, `collection_name`, `checkpoint_label`, `target_view`, `goal_override`, `prompt_hint`, `preset_profile` | Runs one session-aware correction-loop step: capture a deterministic stage checkpoint for one object, many objects, a collection, or the full assembled scene, compare it to attached references, remember the previous correction focus, and return whether to continue building, inspect/validate, or stop. | ✅ Done |
+| `reference_compare_stage_checkpoint` | `target_object`, `target_objects`, `collection_name`, `checkpoint_label`, `target_view`, `goal_override`, `prompt_hint`, `preset_profile` | Captures one deterministic multi-view stage checkpoint for a target object, object set, collection, or full assembled scene using the `compact` or `rich` preset profile, then compares that checkpoint set against the active goal plus attached references and echoes any normalized `active_gate_plan` plus top-level gate statuses, blockers, next actions, and bounded tool hints. | ✅ Done |
+| `reference_iterate_stage_checkpoint` | `target_object`, `target_objects`, `collection_name`, `checkpoint_label`, `target_view`, `goal_override`, `prompt_hint`, `preset_profile` | Runs one session-aware correction-loop step: capture a deterministic stage checkpoint for one object, many objects, a collection, or the full assembled scene, compare it to attached references, remember the previous correction focus, echo any normalized `active_gate_plan` plus top-level gate summaries, and return whether to continue building, inspect/validate, or stop. | ✅ Done |
 | `scene_snapshot_state` | `include_mesh_stats`, `include_materials` | Captures a JSON snapshot of scene state with SHA256 hash. | ✅ Done |
 | `scene_compare_snapshot` | `baseline_snapshot`, `target_snapshot`, `ignore_minor_transforms` | Compares two snapshots and returns diff summary. | ✅ Done |
 | `scene_set_mode` | `mode` | Sets interaction mode (OBJECT, EDIT, SCULPT, etc.). | ✅ Done |
@@ -264,9 +275,9 @@ None.
 | `scene_get_hierarchy` | `object_name` (optional), `include_transforms` | Gets parent-child hierarchy for object or full scene tree. | ✅ Done |
 | `scene_get_bounding_box` | `object_name`, `world_space` | Gets bounding box corners, min/max, center, dimensions, volume. | ✅ Done |
 | `scene_get_origin_info` | `object_name` | Gets origin (pivot point) information relative to geometry. | ✅ Done |
-| `scene_scope_graph` | `target_object` (optional), `target_objects` (optional), `collection_name` (optional) | Returns one compact read-only scope graph for a target object/object-set/collection, including the inferred structural anchor and deterministic object-role hints. Kept off guided bootstrap by default and intended for on-demand spatial reasoning. | ✅ Done |
-| `scene_relation_graph` | `target_object` (optional), `target_objects` (optional), `collection_name` (optional), `goal_hint` (optional) | Returns one compact read-only relation graph derived from the current measure/assert truth layer, including bounded attachment/support/symmetry interpretations when justified. Kept off guided bootstrap by default and intended for on-demand spatial reasoning. | ✅ Done |
-| `scene_view_diagnostics` | `target_object` (optional), `target_objects` (optional), `collection_name` (optional), `camera_name` (optional), `focus_target` (optional), `view_name` (optional), `orbit_horizontal` (optional), `orbit_vertical` (optional), `zoom_factor` (optional), `persist_view` (optional) | Returns one compact read-only view-space diagnostics report with projected extent, frame coverage, centering, and visible/partial/occluded/off-frame verdicts for a named camera or the live `USER_PERSPECTIVE` path. Kept off guided bootstrap by default and intentionally separate from truth-space measure/assert semantics. | ✅ Done |
+| `scene_scope_graph` | `target_object` (optional), `target_objects` (optional), `collection_name` (optional) | Returns one compact read-only scope graph for a target object/object-set/collection, including the inferred structural anchor and deterministic object-role hints. Visible as bounded spatial support on `llm-guided`; still intended for target-specific, on-demand spatial reasoning rather than broad planner payload expansion. | ✅ Done |
+| `scene_relation_graph` | `target_object` (optional), `target_objects` (optional), `collection_name` (optional), `goal_hint` (optional) | Returns one compact read-only relation graph derived from the current measure/assert truth layer, including bounded attachment/support/symmetry interpretations when justified. On `llm-guided`, the same authoritative payload can update `active_gate_plan` statuses, evidence refs, completion blockers, stale markers, and bounded repair-tool hints for relation-backed quality gates. | ✅ Done |
+| `scene_view_diagnostics` | `target_object` (optional), `target_objects` (optional), `collection_name` (optional), `camera_name` (optional), `focus_target` (optional), `view_name` (optional), `orbit_horizontal` (optional), `orbit_vertical` (optional), `zoom_factor` (optional), `persist_view` (optional) | Returns one compact read-only view-space diagnostics report with projected extent, frame coverage, centering, and visible/partial/occluded/off-frame verdicts for a named camera or the live `USER_PERSPECTIVE` path. Visible as bounded spatial support on `llm-guided` and intentionally separate from truth-space measure/assert semantics. | ✅ Done |
 | `scene_measure_distance` | `from_object`, `to_object`, `reference` | Measures origin or bbox-center distance between two objects. | ✅ Done |
 | `scene_measure_dimensions` | `object_name`, `world_space` | Measures object dimensions and volume from its bounding box. | ✅ Done |
 | `scene_measure_gap` | `from_object`, `to_object`, `tolerance` | Measures bbox gap/contact state between two objects. | ✅ Done |
@@ -520,6 +531,12 @@ None.
 ## 🎨 Sculpt Tools (`sculpt_`)
 *Tools for Sculpt Mode operations (organic shape manipulation).*
 
+Planner-driven guided handoff treats only the deterministic local-region tools
+(`sculpt_deform_region`, `sculpt_smooth_region`, `sculpt_inflate_region`,
+`sculpt_pinch_region`, and `sculpt_crease_region`) as the bounded recommended
+subset. Sculpt tools remain mutating and hidden on default `llm-guided`
+bootstrap unless a future guided state explicitly unlocks and gates them.
+
 ### Implemented
 
 | Tool Name | Arguments | Description | Status |
@@ -641,7 +658,7 @@ On guided surfaces, `router_set_goal` is the default production starting point a
 |-----------|-----------|-------------|--------|
 | `workflow_catalog` | `action` (list/get/search/import/import_init/import_append/import_finalize/import_abort), `workflow_name`, `query`, `top_k`, `threshold`, `filepath`, `overwrite`, `content`, `content_type`, `source_name`, `session_id`, `chunk_data`, `chunk_index`, `total_chunks` | Lists/searches/inspects workflow definitions and imports YAML/JSON via file path, inline content, or chunked sessions. Returns `needs_input` when a name conflict requires overwrite confirmation. | ✅ Done |
 | `reference_images` | `action` (attach/list/remove/clear), `source_path`, `reference_id`, `label`, `notes`, `target_object`, `target_view` | Goal-scoped reference image intake and lifecycle surface. Copies local image paths into session temp storage, exposes one visible session view across active and staged refs, and updates the correct active/pending store during remove/clear without aliasing staged refs onto active records or leaving explicit pending refs behind with deleted files. | ✅ Done |
-| `router_set_goal` | `goal` (str), `resolved_params` (dict, optional) | Sets the active build goal for the router session. Returns status (ready/needs_input/no_match/disabled/error), matched workflow info, resolved params with sources, unresolved inputs for follow-up calls, and explicit `guided_handoff` metadata when the intended continuation is guided manual build/utility instead of workflow execution. | ✅ Done |
+| `router_set_goal` | `goal` (str), `resolved_params` (dict, optional), `gate_proposal` (dict, optional) | Sets the active build goal for the router session. Returns status (ready/needs_input/no_match/disabled/error), matched workflow info, resolved params with sources, unresolved inputs for follow-up calls, explicit `guided_handoff` metadata when the intended continuation is guided manual build/utility instead of workflow execution, and optional `active_gate_plan` / `gate_intake_result` when a model proposes guided quality gates. | ✅ Done |
 | `router_get_status` | *none* | Returns current router session state, visibility diagnostics, pending clarification info, and router/component stats. | ✅ Done |
 | `router_clear_goal` | *none* | Clears the current modeling goal. | ✅ Done |
 

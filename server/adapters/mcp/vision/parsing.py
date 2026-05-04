@@ -5,13 +5,18 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from typing import Any
 
 from .backend import VisionRequest
 from .config import VisionContractProfile
-from .prompting import expected_json_keys, resolve_vision_contract_profile
+from .prompting import (
+    _is_reference_understanding_request,
+    expected_json_keys,
+    resolve_vision_contract_profile,
+)
 
 _SUMMARY_ALIASES = ("comparison", "summary", "analysis", "description", "result")
 _VISIBLE_CHANGES_ALIASES = ("changes", "visible_differences", "differences")
@@ -69,6 +74,66 @@ _UNHELPFUL_CORRECTION_SNIPPETS = (
     "volume unchanged",
     "bounding box unchanged",
 )
+_REFERENCE_UNDERSTANDING_STYLE_VALUES = {
+    "low_poly_faceted",
+    "hard_surface",
+    "smooth_organic",
+    "architectural_mass",
+    "dental_surface",
+    "unknown",
+}
+_REFERENCE_UNDERSTANDING_CATEGORY_VALUES = {
+    "creature",
+    "hard_surface",
+    "architectural_mass",
+    "dental_surface",
+    "organic_form",
+    "unknown",
+}
+_REFERENCE_UNDERSTANDING_CONSTRUCTION_PATH_VALUES = {
+    "low_poly_facet",
+    "hard_surface",
+    "organic_sculpt",
+    "creature_blockout",
+    "dental_surface",
+    "architectural_mass",
+    "unknown",
+}
+_REFERENCE_UNDERSTANDING_FINISH_POLICY_VALUES = {
+    "preserve_facets",
+    "inspect_first",
+    "bounded_local_detail",
+    "unknown",
+}
+_REFERENCE_UNDERSTANDING_FAMILY_VALUES = {"macro", "modeling_mesh", "sculpt_region", "inspect_only"}
+_REFERENCE_UNDERSTANDING_GUIDED_FAMILY_VALUES = {
+    "spatial_context",
+    "reference_context",
+    "primary_masses",
+    "secondary_parts",
+    "attachment_alignment",
+    "checkpoint_iterate",
+    "inspect_validate",
+    "finish",
+    "utility",
+}
+_REFERENCE_UNDERSTANDING_FAMILY_ALIASES = {
+    "mesh_edit": "modeling_mesh",
+    "material_finish": "inspect_only",
+}
+_REFERENCE_UNDERSTANDING_GUIDED_FAMILY_ALIASES = {
+    "mesh_edit": "secondary_parts",
+    "material_finish": "finish",
+}
+_REFERENCE_UNDERSTANDING_SOURCE_CLASS_VALUES = {
+    "reference_image",
+    "style_cue",
+    "part_cue",
+    "construction_hint",
+    "gate_seed",
+}
+_REFERENCE_UNDERSTANDING_SEGMENTATION_ARTIFACT_VALUES = {"mask", "crop", "box"}
+_REFERENCE_UNDERSTANDING_SCULPT_POLICY_VALUES = {"hidden", "local_detail_only", "allowed_or_primary"}
 
 
 def _labels_for(request: VisionRequest) -> list[str]:
@@ -364,6 +429,410 @@ def _dedupe_check_list(checks: list[dict[str, Any]]) -> list[dict[str, Any]]:
         seen.add(key)
         deduped.append(item)
     return deduped
+
+
+def _reference_understanding_defaults_for_path(path: str) -> tuple[str, list[str], list[str], str]:
+    if path == "low_poly_facet":
+        return (
+            "modeling_mesh",
+            ["macro", "modeling_mesh", "inspect_only"],
+            ["reference_context", "primary_masses", "secondary_parts", "inspect_validate"],
+            "preserve_facets",
+        )
+    if path == "hard_surface":
+        return (
+            "modeling_mesh",
+            ["macro", "modeling_mesh", "inspect_only"],
+            ["reference_context", "primary_masses", "secondary_parts", "inspect_validate"],
+            "inspect_first",
+        )
+    if path == "organic_sculpt":
+        return (
+            "sculpt_region",
+            ["macro", "modeling_mesh", "sculpt_region", "inspect_only"],
+            ["reference_context", "primary_masses", "secondary_parts", "inspect_validate", "finish"],
+            "bounded_local_detail",
+        )
+    if path == "creature_blockout":
+        return (
+            "macro",
+            ["macro", "modeling_mesh", "inspect_only"],
+            ["reference_context", "primary_masses", "secondary_parts", "inspect_validate"],
+            "inspect_first",
+        )
+    if path == "dental_surface":
+        return (
+            "inspect_only",
+            ["inspect_only", "modeling_mesh"],
+            ["reference_context", "inspect_validate"],
+            "inspect_first",
+        )
+    if path == "architectural_mass":
+        return (
+            "modeling_mesh",
+            ["macro", "modeling_mesh", "inspect_only"],
+            ["reference_context", "primary_masses", "secondary_parts", "inspect_validate"],
+            "inspect_first",
+        )
+    return ("inspect_only", ["inspect_only"], ["reference_context", "inspect_validate"], "unknown")
+
+
+def _normalize_reference_family(value: Any, *, fallback: str) -> str:
+    normalized = str(value or "").strip().lower()
+    if normalized in _REFERENCE_UNDERSTANDING_FAMILY_ALIASES:
+        normalized = _REFERENCE_UNDERSTANDING_FAMILY_ALIASES[normalized]
+    if normalized in _REFERENCE_UNDERSTANDING_FAMILY_VALUES:
+        return normalized
+    return fallback
+
+
+def _normalize_reference_family_list(value: Any, *, fallback: list[str]) -> list[str]:
+    if not isinstance(value, list):
+        return list(fallback)
+    families: list[str] = []
+    for item in value:
+        normalized = _normalize_reference_family(item, fallback="")
+        if normalized and normalized not in families:
+            families.append(normalized)
+    return families or list(fallback)
+
+
+def _normalize_reference_guided_family_list(value: Any, *, fallback: list[str]) -> list[str]:
+    if not isinstance(value, list):
+        return list(fallback)
+    guided_families: list[str] = []
+    for item in value:
+        normalized = str(item or "").strip().lower()
+        if normalized in _REFERENCE_UNDERSTANDING_GUIDED_FAMILY_ALIASES:
+            normalized = _REFERENCE_UNDERSTANDING_GUIDED_FAMILY_ALIASES[normalized]
+        if normalized in _REFERENCE_UNDERSTANDING_GUIDED_FAMILY_VALUES and normalized not in guided_families:
+            guided_families.append(normalized)
+    return guided_families or list(fallback)
+
+
+def _normalize_reference_understanding_subject(parsed: dict[str, Any]) -> dict[str, Any]:
+    subject = parsed.get("subject")
+    if not isinstance(subject, dict):
+        subject = {"label": str(parsed.get("subject_label") or parsed.get("goal_summary") or "").strip()}
+    label = str(subject.get("label") or parsed.get("subject_label") or "").strip() or "unknown subject"
+    category = str(subject.get("category") or "unknown").strip().lower()
+    if category not in _REFERENCE_UNDERSTANDING_CATEGORY_VALUES:
+        category = "unknown"
+    confidence = subject.get("confidence")
+    if not isinstance(confidence, (int, float)):
+        confidence = None
+    uncertainty_notes = _coerce_string_list(subject.get("uncertainty_notes"))
+    return {
+        "label": label,
+        "category": category,
+        "confidence": confidence,
+        "uncertainty_notes": uncertainty_notes,
+    }
+
+
+def _normalize_reference_understanding_style(parsed: dict[str, Any]) -> dict[str, Any]:
+    raw_style = parsed.get("style")
+    if isinstance(raw_style, dict):
+        style_label = str(raw_style.get("style_label") or raw_style.get("label") or "unknown").strip().lower()
+        confidence = raw_style.get("confidence")
+        notes = _coerce_string_list(raw_style.get("notes"))
+    else:
+        style_label = str(raw_style or parsed.get("style_label") or "unknown").strip().lower()
+        confidence = parsed.get("style_confidence")
+        notes = _coerce_string_list(parsed.get("style_notes"))
+    if style_label not in _REFERENCE_UNDERSTANDING_STYLE_VALUES:
+        style_label = "unknown"
+    if not isinstance(confidence, (int, float)):
+        confidence = None
+    return {
+        "style_label": style_label,
+        "confidence": confidence,
+        "notes": notes,
+    }
+
+
+def _normalize_reference_understanding_parts(parsed: dict[str, Any]) -> list[dict[str, Any]]:
+    value = parsed.get("required_parts")
+    if not isinstance(value, list):
+        return []
+    items: list[dict[str, Any]] = []
+    for index, raw_item in enumerate(value, start=1):
+        if isinstance(raw_item, str) and raw_item.strip():
+            label = raw_item.strip()
+            items.append(
+                {
+                    "part_label": label,
+                    "target_label": label.lower().replace(" ", "_"),
+                    "construction_hint": None,
+                    "priority": "normal",
+                    "source_reference_ids": [],
+                }
+            )
+            continue
+        if not isinstance(raw_item, dict):
+            continue
+        label = str(raw_item.get("part_label") or raw_item.get("label") or "").strip()
+        if not label:
+            continue
+        priority = str(raw_item.get("priority") or "normal").strip().lower()
+        if priority not in {"high", "normal"}:
+            priority = "normal"
+        target_label = str(raw_item.get("target_label") or "").strip() or label.lower().replace(" ", "_")
+        items.append(
+            {
+                "part_label": label,
+                "target_label": target_label,
+                "construction_hint": _truncate_text_value(raw_item.get("construction_hint")),
+                "priority": priority,
+                "source_reference_ids": _coerce_string_list(raw_item.get("source_reference_ids")),
+            }
+        )
+    return items[:8]
+
+
+def _truncate_text_value(value: Any, *, limit: int = 240) -> str | None:
+    if not isinstance(value, str):
+        return None
+    text = value.strip().replace("\n", " ")
+    if not text:
+        return None
+    return text[:limit]
+
+
+def _normalize_reference_understanding_strategy(parsed: dict[str, Any]) -> dict[str, Any]:
+    strategy = parsed.get("construction_strategy")
+    if not isinstance(strategy, dict):
+        strategy = {}
+    raw_path = str(strategy.get("construction_path") or parsed.get("construction_path") or "unknown").strip().lower()
+    if raw_path not in _REFERENCE_UNDERSTANDING_CONSTRUCTION_PATH_VALUES:
+        raw_path = "unknown"
+    fallback_primary, fallback_allowed, fallback_guided, fallback_finish = _reference_understanding_defaults_for_path(
+        raw_path
+    )
+    primary_family = _normalize_reference_family(strategy.get("primary_family"), fallback=fallback_primary)
+    allowed_families = _normalize_reference_family_list(
+        strategy.get("allowed_families"),
+        fallback=fallback_allowed,
+    )
+    finish_policy = str(strategy.get("finish_policy") or fallback_finish).strip().lower()
+    if finish_policy not in _REFERENCE_UNDERSTANDING_FINISH_POLICY_VALUES:
+        finish_policy = fallback_finish
+    return {
+        "construction_path": raw_path,
+        "primary_family": primary_family,
+        "allowed_families": allowed_families,
+        "stage_sequence": _coerce_string_list(strategy.get("stage_sequence")),
+        "finish_policy": finish_policy,
+        "_fallback_guided_families": fallback_guided,
+    }
+
+
+def _normalize_reference_understanding_hints(parsed: dict[str, Any], *, strategy: dict[str, Any]) -> dict[str, Any]:
+    hints = parsed.get("router_handoff_hints")
+    if not isinstance(hints, dict):
+        hints = {}
+    fallback_guided = list(strategy.get("_fallback_guided_families") or ["reference_context", "inspect_validate"])
+    preferred_family = _normalize_reference_family(hints.get("preferred_family"), fallback=strategy["primary_family"])
+    allowed_guided_families = _normalize_reference_guided_family_list(
+        hints.get("allowed_guided_families"),
+        fallback=fallback_guided,
+    )
+    sculpt_policy = str(hints.get("sculpt_policy") or "").strip().lower()
+    if sculpt_policy not in _REFERENCE_UNDERSTANDING_SCULPT_POLICY_VALUES:
+        construction_path = strategy["construction_path"]
+        if construction_path == "organic_sculpt":
+            sculpt_policy = "allowed_or_primary"
+        elif construction_path == "creature_blockout":
+            sculpt_policy = "local_detail_only"
+        else:
+            sculpt_policy = "hidden"
+    return {
+        "preferred_family": preferred_family,
+        "allowed_guided_families": allowed_guided_families,
+        "sculpt_policy": sculpt_policy,
+    }
+
+
+def _normalize_reference_gate_proposals(parsed: dict[str, Any], *, parts: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    value = parsed.get("gate_proposals")
+    proposals: list[dict[str, Any]] = []
+    if isinstance(value, list):
+        for raw_item in value:
+            if not isinstance(raw_item, dict):
+                continue
+            normalized: dict[str, Any] = {}
+            for key in (
+                "gate_id",
+                "gate_type",
+                "label",
+                "target_kind",
+                "target_label",
+                "target_object",
+                "required",
+                "priority",
+                "status",
+                "rationale",
+                "allow_embedded_intersection",
+                "allow_alignment_drift",
+            ):
+                if key in raw_item:
+                    normalized[key] = raw_item.get(key)
+            if "target_objects" in raw_item and isinstance(raw_item.get("target_objects"), list):
+                normalized["target_objects"] = [
+                    str(item).strip() for item in raw_item["target_objects"] if str(item).strip()
+                ]
+            families = _normalize_reference_guided_family_list(
+                raw_item.get("allowed_correction_families"),
+                fallback=[],
+            )
+            if families:
+                normalized["allowed_correction_families"] = families
+            evidence_requirements = raw_item.get("evidence_requirements")
+            if isinstance(evidence_requirements, list):
+                normalized["evidence_requirements"] = [
+                    {"evidence_kind": item, "required": True} if isinstance(item, str) else item
+                    for item in evidence_requirements
+                ]
+            if normalized.get("gate_type"):
+                proposals.append(normalized)
+    if proposals:
+        return proposals[:8]
+
+    derived: list[dict[str, Any]] = []
+    for item in parts[:6]:
+        derived.append(
+            {
+                "gate_type": "required_part",
+                "label": f"{item['part_label']} is represented",
+                "target_kind": "reference_part",
+                "target_label": item["target_label"],
+                "priority": item["priority"],
+                "rationale": item.get("construction_hint"),
+            }
+        )
+    return derived
+
+
+def _normalize_reference_visual_evidence_refs(parsed: dict[str, Any]) -> list[dict[str, Any]]:
+    value = parsed.get("visual_evidence_refs")
+    if not isinstance(value, list):
+        return []
+    items: list[dict[str, Any]] = []
+    for index, raw_item in enumerate(value, start=1):
+        if not isinstance(raw_item, dict):
+            continue
+        source_class = str(raw_item.get("source_class") or "reference_image").strip().lower()
+        if source_class not in _REFERENCE_UNDERSTANDING_SOURCE_CLASS_VALUES:
+            source_class = "reference_image"
+        summary = str(raw_item.get("summary") or "").strip()
+        if not summary:
+            continue
+        items.append(
+            {
+                "evidence_id": str(raw_item.get("evidence_id") or f"evidence_{index}").strip(),
+                "source_class": source_class,
+                "summary": summary,
+                "reference_id": str(raw_item.get("reference_id") or "").strip() or None,
+            }
+        )
+    return items[:12]
+
+
+def _normalize_reference_verification_requirements(parsed: dict[str, Any]) -> list[dict[str, Any]]:
+    value = parsed.get("verification_requirements")
+    if not isinstance(value, list):
+        return []
+    items: list[dict[str, Any]] = []
+    for raw_item in value:
+        if isinstance(raw_item, str):
+            continue
+        if not isinstance(raw_item, dict):
+            continue
+        tool_name = _canonicalize_check_tool_name(str(raw_item.get("tool_name") or "").strip())
+        reason = str(raw_item.get("reason") or "").strip()
+        if tool_name is None or not reason:
+            continue
+        priority = str(raw_item.get("priority") or "normal").strip().lower()
+        if priority not in {"high", "normal"}:
+            priority = "normal"
+        items.append({"tool_name": tool_name, "reason": reason, "priority": priority})
+    return items[:8]
+
+
+def _normalize_reference_classification_scores(parsed: dict[str, Any]) -> list[dict[str, Any]]:
+    value = parsed.get("classification_scores")
+    if not isinstance(value, list):
+        return []
+    items: list[dict[str, Any]] = []
+    for raw_item in value:
+        if not isinstance(raw_item, dict):
+            continue
+        label = str(raw_item.get("label") or "").strip()
+        score = raw_item.get("score")
+        if not label or not isinstance(score, (int, float)):
+            continue
+        items.append({"label": label, "score": float(score)})
+    return items[:8]
+
+
+def _normalize_reference_segmentation_artifacts(parsed: dict[str, Any]) -> list[dict[str, Any]]:
+    value = parsed.get("segmentation_artifacts")
+    if not isinstance(value, list):
+        return []
+    items: list[dict[str, Any]] = []
+    for index, raw_item in enumerate(value, start=1):
+        if not isinstance(raw_item, dict):
+            continue
+        artifact_kind = str(raw_item.get("artifact_kind") or "mask").strip().lower()
+        if artifact_kind not in _REFERENCE_UNDERSTANDING_SEGMENTATION_ARTIFACT_VALUES:
+            artifact_kind = "mask"
+        items.append(
+            {
+                "artifact_id": str(raw_item.get("artifact_id") or f"artifact_{index}").strip(),
+                "artifact_kind": artifact_kind,
+                "reference_id": str(raw_item.get("reference_id") or "").strip() or None,
+                "summary": _truncate_text_value(raw_item.get("summary")),
+            }
+        )
+    return items[:8]
+
+
+def _build_reference_understanding_id(request: VisionRequest) -> str:
+    reference_ids = [str(item).strip() for item in request.metadata.get("reference_ids") or [] if str(item).strip()]
+    basis = "|".join([request.goal.strip().lower(), *reference_ids]) or request.goal.strip().lower()
+    digest = hashlib.sha1(basis.encode("utf-8")).hexdigest()[:10]
+    return f"understanding_{digest}"
+
+
+def _normalize_reference_understanding_payload(parsed: dict[str, Any], request: VisionRequest) -> dict[str, Any]:
+    strategy = _normalize_reference_understanding_strategy(parsed)
+    parts = _normalize_reference_understanding_parts(parsed)
+    return {
+        "status": "available",
+        "understanding_id": _build_reference_understanding_id(request),
+        "goal": request.goal,
+        "reference_ids": [
+            str(item).strip() for item in request.metadata.get("reference_ids") or [] if str(item).strip()
+        ],
+        "subject": _normalize_reference_understanding_subject(parsed),
+        "style": _normalize_reference_understanding_style(parsed),
+        "required_parts": parts,
+        "non_goals": _bounded_string_list(_coerce_string_list(parsed.get("non_goals")), max_items=8),
+        "construction_strategy": {key: value for key, value in strategy.items() if not key.startswith("_")},
+        "router_handoff_hints": _normalize_reference_understanding_hints(parsed, strategy=strategy),
+        "gate_proposals": _normalize_reference_gate_proposals(parsed, parts=parts),
+        "visual_evidence_refs": _normalize_reference_visual_evidence_refs(parsed),
+        "verification_requirements": _normalize_reference_verification_requirements(parsed),
+        "classification_scores": _normalize_reference_classification_scores(parsed),
+        "segmentation_artifacts": _normalize_reference_segmentation_artifacts(parsed),
+        "boundary_policy": {
+            "advisory_only": True,
+            "not_truth_source": True,
+            "may_unlock_tools": False,
+            "may_pass_gates": False,
+            "may_propose_gates": True,
+        },
+    }
 
 
 def _normalize_payload(parsed: dict[str, Any], request: VisionRequest) -> dict[str, Any]:
@@ -685,6 +1154,20 @@ def parse_vision_output_text(
 
     if parsed is None:
         raise json.JSONDecodeError("No JSON object found", text, 0)
+
+    if _is_reference_understanding_request(request):
+        if _looks_like_input_echo(parsed) or _looks_like_label_map(parsed):
+            raise ValueError(
+                "Reference-understanding output echoed the input instead of returning the required contract."
+            )
+        if not _has_contract_signal_for(
+            parsed,
+            vision_contract_profile=resolved_contract_profile,
+            request=request,
+            provider_name=provider_name,
+        ):
+            raise ValueError("Reference-understanding output did not match the required contract shape.")
+        return _normalize_reference_understanding_payload(parsed, request)
 
     if _looks_like_input_echo(parsed):
         return _repair_echo_payload(parsed, request)

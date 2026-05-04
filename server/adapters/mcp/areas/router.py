@@ -37,10 +37,12 @@ from server.adapters.mcp.session_capabilities import (
     build_guided_reference_readiness_payload,
     clear_session_goal_state_async,
     get_session_capability_state_async,
+    ingest_quality_gate_proposal_for_state,
     merge_resolved_params_with_session_answers_async,
     register_guided_part_role_async,
     require_existing_scene_object_name,
     resolve_guided_role_group_for_domain,
+    set_session_capability_state_async,
     update_session_from_router_goal_async,
 )
 from server.adapters.mcp.tasks.job_registry import get_background_job_registry
@@ -331,6 +333,7 @@ async def router_set_goal(
     ctx: Context,
     goal: str,
     resolved_params: Optional[Dict[str, Any]] = None,
+    gate_proposal: Optional[Dict[str, Any]] = None,
 ) -> RouterGoalResponseContract:
     """
     [SYSTEM][CRITICAL] Set the active build goal for the current router session.
@@ -357,6 +360,9 @@ async def router_set_goal(
         resolved_params: Optional dict of parameter values when answering Router questions.
                         Use this on second call after receiving "needs_input" status.
                         Example: {"leg_angle_left": 0, "leg_angle_right": 0}
+        gate_proposal: Optional quality-gate proposal envelope. The server may
+                       normalize it into the active guided session gate plan,
+                       but client/model completion claims remain advisory only.
 
     Returns:
         JSON with:
@@ -427,10 +433,24 @@ async def router_set_goal(
     )
     if surface_profile == "llm-guided" and state.guided_flow_state and not _scene_has_meaningful_guided_objects():
         state = await bootstrap_guided_empty_scene_primary_workset_async(ctx)
+    if state.last_router_status in {"ready", "no_match"}:
+        from server.adapters.mcp.areas.reference import refresh_reference_understanding_summary_async
+
+        state = await refresh_reference_understanding_summary_async(ctx, session=state)
+    gate_intake_result = None
+    if gate_proposal is not None:
+        state, gate_intake_result = ingest_quality_gate_proposal_for_state(state, gate_proposal)
+        if gate_intake_result.status == "accepted":
+            await set_session_capability_state_async(ctx, state)
     result["session_id"] = ctx_session_id(ctx)
     result["transport"] = ctx_transport_type(ctx)
     result["guided_flow_state"] = state.guided_flow_state
+    result["active_gate_plan"] = state.gate_plan
+    if gate_intake_result is not None:
+        result["gate_intake_result"] = gate_intake_result.model_dump(mode="json", exclude_none=True)
     result["guided_reference_readiness"] = build_guided_reference_readiness_payload(state)
+    result["reference_understanding_summary"] = state.reference_understanding_summary
+    result["reference_understanding_gate_ids"] = list(state.reference_understanding_gate_ids or [])
     await apply_visibility_for_session_state(ctx, state)
 
     # Log to context
@@ -474,6 +494,7 @@ async def router_get_status(ctx: Context) -> RouterStatusContract:
         session.phase,
         guided_handoff=session.guided_handoff,
         guided_flow_state=session.guided_flow_state,
+        gate_plan=session.gate_plan,
     )
     status_payload = get_router_status()
     background_job_count, background_job_counts_by_status, background_jobs = _build_background_job_diagnostics()
@@ -495,6 +516,7 @@ async def router_get_status(ctx: Context) -> RouterStatusContract:
             "policy_context": session.policy_context,
             "guided_handoff": session.guided_handoff,
             "guided_flow_state": session.guided_flow_state,
+            "active_gate_plan": session.gate_plan,
             "visibility_rules": [dict(rule) for rule in diagnostics.rules],
             "visible_capabilities": list(diagnostics.visible_capability_ids),
             "visible_entry_capabilities": list(diagnostics.visible_entry_capability_ids),
@@ -511,6 +533,8 @@ async def router_get_status(ctx: Context) -> RouterStatusContract:
             "guided_reference_readiness": build_guided_reference_readiness_payload(session),
             "reference_image_count": len(session.reference_images or []),
             "reference_images": list(session.reference_images or []),
+            "reference_understanding_summary": session.reference_understanding_summary,
+            "reference_understanding_gate_ids": list(session.reference_understanding_gate_ids or []),
         }
     )
     if _should_attach_repair_suggestion(status_payload):

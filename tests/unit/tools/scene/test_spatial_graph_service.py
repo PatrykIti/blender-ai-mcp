@@ -43,6 +43,18 @@ class FakeReader:
                 "center": [2.0, 0.0, 0.5],
                 "dimensions": [1.0, 1.0, 1.0],
             },
+            "FacadeMainVolume": {
+                "min": [-1.8, -1.0, 0.0],
+                "max": [1.8, 1.0, 2.8],
+                "center": [0.0, 0.0, 1.4],
+                "dimensions": [3.6, 2.0, 2.8],
+            },
+            "FacadeRoofMass": {
+                "min": [-2.0, -1.2, 3.0],
+                "max": [2.0, 1.2, 3.25],
+                "center": [0.0, 0.0, 3.125],
+                "dimensions": [4.0, 2.4, 0.25],
+            },
         }
 
     def get_bounding_box(self, object_name: str, world_space: bool = True) -> dict:
@@ -302,6 +314,36 @@ def test_relation_graph_does_not_treat_positional_window_name_as_limb():
     assert relation_graph["summary"]["attachment_pairs"] == 0
     assert relation_graph["pairs"][0]["pair_source"] == "primary_to_other"
     assert relation_graph["pairs"][0]["attachment_semantics"] is None
+
+
+def test_relation_graph_infers_building_roof_wall_attachment_semantics():
+    service = SpatialGraphService()
+    reader = FakeReader()
+
+    relation_graph = service.build_relation_graph(
+        reader=reader,
+        scope_graph={
+            "scope_kind": "object_set",
+            "primary_target": "FacadeMainVolume",
+            "object_names": ["FacadeMainVolume", "FacadeRoofMass"],
+            "object_count": 2,
+            "object_roles": [
+                {"object_name": "FacadeMainVolume", "role": "anchor_core"},
+                {"object_name": "FacadeRoofMass", "role": "structural_peer"},
+            ],
+        },
+        goal_hint=None,
+        include_truth_payloads=False,
+        include_guided_pairs=True,
+    )
+
+    assert relation_graph["summary"]["attachment_pairs"] == 1
+    assert relation_graph["pairs"][0]["pair_source"] == "primary_to_other"
+    assert relation_graph["pairs"][0]["attachment_semantics"] is not None
+    assert relation_graph["pairs"][0]["attachment_semantics"]["seam_kind"] == "roof_wall"
+    assert relation_graph["pairs"][0]["attachment_semantics"]["part_object"] == "FacadeRoofMass"
+    assert relation_graph["pairs"][0]["attachment_semantics"]["anchor_object"] == "FacadeMainVolume"
+    assert relation_graph["pairs"][0]["attachment_semantics"]["attachment_verdict"] == "floating_gap"
 
 
 def test_relation_graph_still_treats_bare_fore_side_name_as_limb():

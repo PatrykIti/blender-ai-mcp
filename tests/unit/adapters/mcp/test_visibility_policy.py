@@ -258,6 +258,244 @@ def test_guided_handoff_payloads_stay_explicit_and_bounded():
     assert utility["workflow_import_recommended"] is False
 
 
+def test_gate_blocker_visibility_exposes_bounded_attachment_repair_tools():
+    """Failed seam gates should open the bounded verification/repair lane."""
+
+    rules = build_visibility_rules(
+        "llm-guided",
+        SessionPhase.BUILD,
+        guided_handoff={
+            "kind": "guided_manual_build",
+            "recipe_id": "low_poly_creature_blockout",
+            "direct_tools": ["modeling_create_primitive", "macro_finish_form"],
+            "supporting_tools": ["reference_iterate_stage_checkpoint", "router_get_status"],
+        },
+        guided_flow_state={
+            "flow_id": "guided_creature_flow",
+            "domain_profile": "creature",
+            "current_step": "place_secondary_parts",
+        },
+        gate_plan={
+            "plan_id": "creature_quality_gate_plan",
+            "domain_profile": "creature",
+            "completion_blockers": [
+                {
+                    "gate_id": "tail_body_seam",
+                    "gate_type": "attachment_seam",
+                    "label": "tail seated on body",
+                    "status": "failed",
+                    "reason_code": "relation_floating_gap",
+                    "recommended_bounded_tools": ["scene_relation_graph", "macro_attach_part_to_surface"],
+                    "message": "Tail seam is floating.",
+                }
+            ],
+            "gates": [],
+        },
+    )
+    visible = set(
+        materialize_visible_tool_names(
+            {
+                "scene_relation_graph",
+                "scene_measure_gap",
+                "scene_assert_contact",
+                "macro_attach_part_to_surface",
+                "macro_align_part_with_contact",
+                "modeling_create_primitive",
+                "macro_finish_form",
+            },
+            rules,
+        )
+    )
+
+    assert "scene_relation_graph" in visible
+    assert "scene_measure_gap" in visible
+    assert "scene_assert_contact" in visible
+    assert "macro_attach_part_to_surface" in visible
+    assert "macro_align_part_with_contact" in visible
+    assert "modeling_create_primitive" in visible
+    assert "macro_finish_form" in visible
+
+
+def test_shape_profile_gate_waits_behind_unresolved_seam_gate():
+    """Profile/refinement tools should not open while required seam gates are failing."""
+
+    rule_inputs = {
+        "surface_profile": "llm-guided",
+        "phase": SessionPhase.BUILD,
+        "guided_handoff": {
+            "kind": "guided_manual_build",
+            "recipe_id": "low_poly_creature_blockout",
+            "direct_tools": [],
+            "supporting_tools": [],
+        },
+        "guided_flow_state": {
+            "flow_id": "guided_creature_flow",
+            "domain_profile": "creature",
+            "current_step": "place_secondary_parts",
+        },
+    }
+    blocked_rules = build_visibility_rules(
+        **rule_inputs,
+        gate_plan={
+            "plan_id": "creature_quality_gate_plan",
+            "domain_profile": "creature",
+            "completion_blockers": [
+                {
+                    "gate_id": "tail_body_seam",
+                    "gate_type": "attachment_seam",
+                    "label": "tail seated on body",
+                    "status": "failed",
+                    "reason_code": "relation_floating_gap",
+                    "message": "Tail seam is floating.",
+                },
+                {
+                    "gate_id": "tail_profile",
+                    "gate_type": "shape_profile",
+                    "label": "tail arc profile",
+                    "status": "failed",
+                    "reason_code": "missing_authoritative_evidence",
+                    "message": "Tail profile is not verified.",
+                },
+            ],
+            "gates": [],
+        },
+    )
+    profile_rules = build_visibility_rules(
+        **rule_inputs,
+        gate_plan={
+            "plan_id": "creature_quality_gate_plan",
+            "domain_profile": "creature",
+            "completion_blockers": [
+                {
+                    "gate_id": "tail_profile",
+                    "gate_type": "shape_profile",
+                    "label": "tail arc profile",
+                    "status": "failed",
+                    "reason_code": "missing_authoritative_evidence",
+                    "message": "Tail profile is not verified.",
+                }
+            ],
+            "gates": [],
+        },
+    )
+    tool_names = {"mesh_inspect", "macro_adjust_segment_chain_arc", "scene_view_diagnostics"}
+
+    blocked_visible = set(materialize_visible_tool_names(tool_names, blocked_rules))
+    profile_visible = set(materialize_visible_tool_names(tool_names, profile_rules))
+
+    assert "mesh_inspect" not in blocked_visible
+    assert "macro_adjust_segment_chain_arc" not in blocked_visible
+    assert "mesh_inspect" in profile_visible
+    assert "macro_adjust_segment_chain_arc" in profile_visible
+
+
+def test_symmetry_gate_visibility_exposes_bounded_symmetry_tools():
+    rules = build_visibility_rules(
+        "llm-guided",
+        SessionPhase.BUILD,
+        guided_handoff={
+            "kind": "guided_manual_build",
+            "recipe_id": "low_poly_creature_blockout",
+            "direct_tools": ["modeling_create_primitive"],
+            "supporting_tools": ["reference_iterate_stage_checkpoint", "router_get_status"],
+        },
+        guided_flow_state={
+            "flow_id": "guided_creature_flow",
+            "domain_profile": "creature",
+            "current_step": "place_secondary_parts",
+        },
+        gate_plan={
+            "plan_id": "creature_quality_gate_plan",
+            "domain_profile": "creature",
+            "completion_blockers": [
+                {
+                    "gate_id": "ear_pair_symmetry",
+                    "gate_type": "symmetry_pair",
+                    "label": "ear pair stays symmetric",
+                    "status": "failed",
+                    "reason_code": "relation_asymmetric",
+                    "recommended_bounded_tools": [
+                        "scene_relation_graph",
+                        "scene_assert_symmetry",
+                        "macro_place_symmetry_pair",
+                    ],
+                    "message": "Ear pair is asymmetric.",
+                }
+            ],
+            "gates": [],
+        },
+    )
+
+    names = set(
+        materialize_visible_tool_names(
+            {
+                "modeling_create_primitive",
+                "reference_iterate_stage_checkpoint",
+                "router_get_status",
+                "scene_relation_graph",
+                "scene_assert_symmetry",
+                "macro_place_symmetry_pair",
+            },
+            rules,
+        )
+    )
+
+    assert {"scene_relation_graph", "scene_assert_symmetry", "macro_place_symmetry_pair"} <= names
+
+
+def test_required_part_gate_does_not_reopen_mutating_tools_while_spatial_refresh_is_required():
+    rules = build_visibility_rules(
+        "llm-guided",
+        SessionPhase.BUILD,
+        guided_handoff={
+            "kind": "guided_manual_build",
+            "recipe_id": "low_poly_creature_blockout",
+            "direct_tools": ["modeling_create_primitive"],
+            "supporting_tools": ["guided_register_part", "router_get_status"],
+        },
+        guided_flow_state={
+            "flow_id": "guided_creature_flow",
+            "domain_profile": "creature",
+            "current_step": "place_secondary_parts",
+            "spatial_refresh_required": True,
+        },
+        gate_plan={
+            "plan_id": "creature_quality_gate_plan",
+            "domain_profile": "creature",
+            "completion_blockers": [
+                {
+                    "gate_id": "eye_pair_required",
+                    "gate_type": "required_part",
+                    "label": "visible eye pair",
+                    "status": "failed",
+                    "reason_code": "missing_required_part",
+                    "recommended_bounded_tools": ["guided_register_part", "modeling_create_primitive"],
+                    "message": "Visible eye pair is missing.",
+                }
+            ],
+            "gates": [],
+        },
+    )
+
+    names = set(
+        materialize_visible_tool_names(
+            {
+                "guided_register_part",
+                "modeling_create_primitive",
+                "scene_scope_graph",
+                "scene_relation_graph",
+                "scene_view_diagnostics",
+                "reference_iterate_stage_checkpoint",
+            },
+            rules,
+        )
+    )
+
+    assert "guided_register_part" not in names
+    assert "modeling_create_primitive" not in names
+    assert {"scene_scope_graph", "scene_relation_graph", "scene_view_diagnostics"} <= names
+
+
 def test_visibility_rules_can_shape_build_phase_for_creature_handoff():
     """Creature handoff should narrow build visibility without changing the generic build baseline."""
 

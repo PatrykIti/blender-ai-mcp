@@ -13,6 +13,7 @@ from server.adapters.mcp.areas.reference import (
     _build_action_hints_from_silhouette,
     _build_correction_candidates,
     _build_correction_truth_bundle,
+    _build_refinement_handoff,
     _build_silhouette_analysis_payload,
     _build_truth_followup,
     _effective_candidate_budget,
@@ -21,12 +22,14 @@ from server.adapters.mcp.areas.reference import (
     _iterate_stage_response,
     _model_budget_bias,
     _select_refinement_route,
+    _stage_compare_response,
     _trim_truth_bundle_to_budget,
     reference_compare_checkpoint,
     reference_compare_current_view,
     reference_compare_stage_checkpoint,
     reference_images,
     reference_iterate_stage_checkpoint,
+    refresh_reference_understanding_summary_async,
 )
 from server.adapters.mcp.contracts.reference import (
     ReferenceCompareStageCheckpointResponseContract,
@@ -39,6 +42,8 @@ from server.adapters.mcp.contracts.scene import (
     SceneCorrectionTruthBundleContract,
     SceneCorrectionTruthPairContract,
     SceneCorrectionTruthSummaryContract,
+    SceneSupportSemanticsContract,
+    SceneSymmetrySemanticsContract,
 )
 from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
 from server.adapters.mcp.sampling.result_types import (
@@ -102,6 +107,24 @@ def _write_upper_profile_silhouette(path: Path, *, upper_width: int) -> None:
     half_width = upper_width // 2
     draw.rectangle((100 - half_width, 45, 100 + half_width, 90), fill=(0, 0, 0, 255))
     image.save(path)
+
+
+def _guided_reference_flow_state() -> dict[str, object]:
+    return {
+        "flow_id": "guided_creature_flow",
+        "domain_profile": "creature",
+        "current_step": "create_primary_masses",
+        "completed_steps": [],
+        "required_checks": [],
+        "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+        "preferred_prompts": ["workflow_router_first"],
+        "next_actions": ["create_primary_workset"],
+        "blocked_families": [],
+        "allowed_families": ["primary_masses", "reference_context"],
+        "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+        "missing_roles": ["body_core", "head_mass"],
+        "required_role_groups": ["primary_masses"],
+    }
 
 
 def test_silhouette_analysis_produces_metrics_and_upper_profile_action_hint(tmp_path: Path):
@@ -193,15 +216,96 @@ def test_iterate_stage_response_carries_silhouette_analysis_and_action_hints():
         {
             "action": "compare_stage_checkpoint",
             "goal": "low poly creature",
+            "target_object": "Creature",
+            "target_objects": ["Creature"],
             "checkpoint_id": "checkpoint_iterate",
             "checkpoint_label": "stage_iterate",
             "preset_profile": "compact",
             "preset_names": ["focus"],
-            "capture_count": 0,
-            "captures": [],
+            "capture_count": 1,
+            "captures": [
+                {
+                    "label": "focus_after",
+                    "image_path": "/tmp/focus_after.png",
+                    "host_visible_path": "/tmp/focus_after.png",
+                    "preset_name": "focus",
+                    "media_type": "image/png",
+                    "view_kind": "focus",
+                }
+            ],
             "reference_count": 1,
             "reference_ids": ["ref_1"],
             "reference_labels": ["front_ref"],
+            "truth_bundle": {
+                "scope": {
+                    "scope_kind": "single_object",
+                    "primary_target": "Creature",
+                    "object_names": ["Creature"],
+                    "object_count": 1,
+                },
+                "summary": {
+                    "pairing_strategy": "none",
+                    "pair_count": 1,
+                    "evaluated_pairs": 1,
+                    "contact_failures": 1,
+                },
+                "checks": [{"from_object": "Creature", "to_object": "Ground"}],
+            },
+            "truth_followup": {
+                "scope": {
+                    "scope_kind": "single_object",
+                    "primary_target": "Creature",
+                    "object_names": ["Creature"],
+                    "object_count": 1,
+                },
+                "continue_recommended": True,
+                "message": "truth",
+                "focus_pairs": ["Creature -> Ground"],
+                "items": [
+                    {
+                        "kind": "gap",
+                        "summary": "Creature -> Ground still has measurable separation.",
+                        "priority": "normal",
+                        "from_object": "Creature",
+                        "to_object": "Ground",
+                        "tool_name": "scene_measure_gap",
+                    }
+                ],
+            },
+            "correction_candidates": [
+                {
+                    "candidate_id": "pair:creature_ground",
+                    "summary": "Creature -> Ground still has measurable separation.",
+                    "priority_rank": 1,
+                    "priority": "high",
+                    "candidate_kind": "truth_only",
+                    "target_object": "Creature",
+                    "target_objects": ["Creature"],
+                    "focus_pairs": ["Creature -> Ground"],
+                    "source_signals": ["truth"],
+                    "truth_evidence": {
+                        "focus_pairs": ["Creature -> Ground"],
+                        "item_kinds": ["gap"],
+                        "items": [
+                            {
+                                "kind": "gap",
+                                "summary": "Creature -> Ground still has measurable separation.",
+                                "priority": "normal",
+                                "from_object": "Creature",
+                                "to_object": "Ground",
+                                "tool_name": "scene_measure_gap",
+                            }
+                        ],
+                    },
+                }
+            ],
+            "part_segmentation": {
+                "status": "available",
+                "provider_name": "synthetic",
+                "advisory_only": True,
+                "parts": [{"part_label": "ear", "confidence": 0.9}],
+                "notes": ["synthetic"],
+            },
             "silhouette_analysis": {
                 "status": "available",
                 "reference_label": "front_ref",
@@ -262,9 +366,592 @@ def test_iterate_stage_response_carries_silhouette_analysis_and_action_hints():
     assert result.silhouette_analysis.status == "available"
     assert result.action_hints
     assert result.action_hints[0].hint_type == "inspect_before_edit"
+    assert result.truth_bundle is not None
+    assert result.truth_followup is not None
+    assert result.correction_candidates
     assert result.debug_payload_omitted is True
+    assert result.compare_result.truth_bundle is None
+    assert result.compare_result.truth_followup is None
+    assert result.compare_result.correction_candidates == []
+    assert result.compare_result.captures == []
+    assert result.compare_result.part_segmentation is not None
+    assert result.compare_result.part_segmentation.status == "disabled"
     assert result.compare_result.silhouette_analysis is None
     assert result.compare_result.action_hints == []
+
+
+def test_refresh_reference_understanding_summary_persists_summary_and_gate_ids(tmp_path, monkeypatch):
+    ctx = FakeContext()
+    reference_path = tmp_path / "front.png"
+    reference_path.write_bytes(b"front")
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel",
+            surface_profile="llm-guided",
+            guided_flow_state=_guided_reference_flow_state(),
+            reference_images=[
+                {
+                    "reference_id": "ref_front",
+                    "goal": "create a low-poly squirrel",
+                    "label": "front_ref",
+                    "media_type": "image/png",
+                    "source_kind": "local_path",
+                    "original_path": str(reference_path),
+                    "stored_path": str(reference_path),
+                    "added_at": "2026-05-02T00:00:00Z",
+                }
+            ],
+        ),
+    )
+
+    class Backend:
+        async def analyze(self, request):
+            assert request.metadata["mode"] == "reference_understanding"
+            return {
+                "status": "available",
+                "understanding_id": "understanding_1234567890",
+                "goal": request.goal,
+                "reference_ids": ["ref_front"],
+                "subject": {
+                    "label": "low poly squirrel",
+                    "category": "creature",
+                    "confidence": 0.8,
+                    "uncertainty_notes": [],
+                },
+                "style": {
+                    "style_label": "low_poly_faceted",
+                    "confidence": 0.8,
+                    "notes": [],
+                },
+                "required_parts": [],
+                "non_goals": [],
+                "construction_strategy": {
+                    "construction_path": "low_poly_facet",
+                    "primary_family": "modeling_mesh",
+                    "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+                    "stage_sequence": ["primary_masses"],
+                    "finish_policy": "preserve_facets",
+                },
+                "router_handoff_hints": {
+                    "preferred_family": "modeling_mesh",
+                    "allowed_guided_families": [
+                        "reference_context",
+                        "primary_masses",
+                        "secondary_parts",
+                        "inspect_validate",
+                    ],
+                    "sculpt_policy": "hidden",
+                },
+                "gate_proposals": [
+                    {
+                        "gate_type": "required_part",
+                        "label": "visible eye pair",
+                        "target_kind": "reference_part",
+                        "target_label": "eye_pair",
+                    }
+                ],
+                "visual_evidence_refs": [],
+                "verification_requirements": [],
+                "classification_scores": [],
+                "segmentation_artifacts": [],
+                "source_provenance": [{"source": "reference_understanding"}],
+                "boundary_policy": {
+                    "advisory_only": True,
+                    "not_truth_source": True,
+                    "may_unlock_tools": False,
+                    "may_pass_gates": False,
+                    "may_propose_gates": True,
+                },
+            }
+
+    class Resolver:
+        def resolve_default(self):
+            return Backend()
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: Resolver())
+
+    updated = asyncio.run(refresh_reference_understanding_summary_async(ctx))
+
+    assert updated.reference_understanding_summary is not None
+    assert updated.reference_understanding_summary["understanding_id"] == "understanding_1234567890"
+    assert updated.reference_understanding_gate_ids is not None
+    assert any(gate_id.endswith("eye_pair") for gate_id in updated.reference_understanding_gate_ids)
+
+
+def test_reference_compare_stage_checkpoint_threads_reference_understanding_from_session():
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel",
+            surface_profile="llm-guided",
+            guided_flow_state=_guided_reference_flow_state(),
+            reference_understanding_summary={
+                "status": "blocked",
+                "goal": "create a low-poly squirrel",
+                "reference_ids": [],
+                "reason": "reference_images_required",
+                "message": "Attach references first.",
+            },
+            reference_understanding_gate_ids=["creature_eye_pair"],
+        ),
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            target_object="Squirrel",
+            checkpoint_label="stage_squirrel",
+            preset_profile="compact",
+        )
+    )
+
+    assert result.reference_understanding_summary is not None
+    assert result.reference_understanding_summary.reason == "reference_images_required"
+    assert result.reference_understanding_gate_ids == ["creature_eye_pair"]
+
+
+def test_reference_understanding_refresh_replaces_previous_reference_gate_slice(tmp_path, monkeypatch):
+    image_front = tmp_path / "front.png"
+    image_side = tmp_path / "side.png"
+    image_front.write_bytes(b"front")
+    image_side.write_bytes(b"side")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    class Backend:
+        async def analyze(self, request):
+            reference_ids = list(request.metadata.get("reference_ids") or [])
+            if len(reference_ids) == 1:
+                understanding_id = "understanding_front_only"
+                gate_proposals = [
+                    {
+                        "gate_type": "required_part",
+                        "label": "front-view eye pair",
+                        "target_kind": "reference_part",
+                        "target_label": "eye_pair",
+                    },
+                    {
+                        "gate_type": "required_part",
+                        "label": "tail tip silhouette",
+                        "target_kind": "reference_part",
+                        "target_label": "tail_tip",
+                    },
+                ]
+            else:
+                understanding_id = "understanding_dual_view"
+                gate_proposals = [
+                    {
+                        "gate_type": "required_part",
+                        "label": "dual-view eye pair",
+                        "target_kind": "reference_part",
+                        "target_label": "eye_pair",
+                    },
+                    {
+                        "gate_type": "required_part",
+                        "label": "visible ear pair",
+                        "target_kind": "reference_part",
+                        "target_label": "ear_pair",
+                    },
+                ]
+            return {
+                "status": "available",
+                "understanding_id": understanding_id,
+                "goal": request.goal,
+                "reference_ids": reference_ids,
+                "subject": {
+                    "label": "low poly squirrel",
+                    "category": "creature",
+                    "confidence": 0.9,
+                    "uncertainty_notes": [],
+                },
+                "style": {
+                    "style_label": "low_poly_faceted",
+                    "confidence": 0.9,
+                    "notes": [],
+                },
+                "required_parts": [],
+                "non_goals": [],
+                "construction_strategy": {
+                    "construction_path": "low_poly_facet",
+                    "primary_family": "modeling_mesh",
+                    "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+                    "stage_sequence": ["primary_masses"],
+                    "finish_policy": "preserve_facets",
+                },
+                "router_handoff_hints": {
+                    "preferred_family": "modeling_mesh",
+                    "allowed_guided_families": [
+                        "reference_context",
+                        "primary_masses",
+                        "secondary_parts",
+                        "inspect_validate",
+                    ],
+                    "sculpt_policy": "hidden",
+                },
+                "gate_proposals": gate_proposals,
+                "visual_evidence_refs": [],
+                "verification_requirements": [],
+                "classification_scores": [],
+                "segmentation_artifacts": [],
+                "source_provenance": [{"source": "reference_understanding"}],
+                "boundary_policy": {
+                    "advisory_only": True,
+                    "not_truth_source": True,
+                    "may_unlock_tools": False,
+                    "may_pass_gates": False,
+                    "may_propose_gates": True,
+                },
+            }
+
+    class Resolver:
+        def resolve_default(self):
+            return Backend()
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: Resolver())
+
+    ctx = FakeContext()
+    update_session_from_router_goal(
+        ctx,
+        "create a low-poly squirrel",
+        {"status": "no_match"},
+        surface_profile="llm-guided",
+    )
+
+    asyncio.run(reference_images(ctx, action="attach", source_path=str(image_front), label="front_ref"))
+
+    first_state = get_session_capability_state(ctx)
+    assert first_state.gate_plan is not None
+    first_reference_gates = [
+        gate for gate in first_state.gate_plan["gates"] if "reference_understanding" in gate["proposal_sources"]
+    ]
+    assert {gate["target_label"] for gate in first_reference_gates} == {"eye_pair", "tail_tip"}
+
+    asyncio.run(reference_images(ctx, action="attach", source_path=str(image_side), label="side_ref"))
+
+    second_state = get_session_capability_state(ctx)
+    assert second_state.reference_understanding_summary is not None
+    assert second_state.reference_understanding_summary["understanding_id"] == "understanding_dual_view"
+    assert second_state.reference_understanding_gate_ids == ["required_part_ear_pair", "required_part_eye_pair"]
+    assert second_state.gate_plan is not None
+
+    refreshed_reference_gates = [
+        gate for gate in second_state.gate_plan["gates"] if "reference_understanding" in gate["proposal_sources"]
+    ]
+    assert {gate["target_label"] for gate in refreshed_reference_gates} == {"ear_pair", "eye_pair"}
+    eye_gate = next(gate for gate in refreshed_reference_gates if gate["target_label"] == "eye_pair")
+    assert eye_gate["label"] == "dual-view eye pair"
+
+
+def test_reference_images_ready_goal_refresh_reapplies_visibility_on_attach_and_clear(tmp_path, monkeypatch):
+    image_front = tmp_path / "front.png"
+    image_front.write_bytes(b"front")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    class Backend:
+        async def analyze(self, request):
+            return {
+                "status": "available",
+                "understanding_id": "understanding_visibility_refresh",
+                "goal": request.goal,
+                "reference_ids": list(request.metadata.get("reference_ids") or []),
+                "subject": {
+                    "label": "low poly squirrel",
+                    "category": "creature",
+                    "confidence": 0.9,
+                    "uncertainty_notes": [],
+                },
+                "style": {
+                    "style_label": "low_poly_faceted",
+                    "confidence": 0.9,
+                    "notes": [],
+                },
+                "required_parts": [],
+                "non_goals": [],
+                "construction_strategy": {
+                    "construction_path": "low_poly_facet",
+                    "primary_family": "modeling_mesh",
+                    "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+                    "stage_sequence": ["primary_masses"],
+                    "finish_policy": "preserve_facets",
+                },
+                "router_handoff_hints": {
+                    "preferred_family": "modeling_mesh",
+                    "allowed_guided_families": [
+                        "reference_context",
+                        "primary_masses",
+                        "secondary_parts",
+                        "inspect_validate",
+                    ],
+                    "sculpt_policy": "hidden",
+                },
+                "gate_proposals": [
+                    {
+                        "gate_type": "required_part",
+                        "label": "visible eye pair",
+                        "target_kind": "reference_part",
+                        "target_label": "eye_pair",
+                    }
+                ],
+                "visual_evidence_refs": [],
+                "verification_requirements": [],
+                "classification_scores": [],
+                "segmentation_artifacts": [],
+                "source_provenance": [{"source": "reference_understanding"}],
+                "boundary_policy": {
+                    "advisory_only": True,
+                    "not_truth_source": True,
+                    "may_unlock_tools": False,
+                    "may_pass_gates": False,
+                    "may_propose_gates": True,
+                },
+            }
+
+    class Resolver:
+        def resolve_default(self):
+            return Backend()
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: Resolver())
+
+    visibility_snapshots: list[dict[str, object]] = []
+
+    async def _fake_apply_visibility_for_session_state(_ctx, state):
+        visibility_snapshots.append(
+            {
+                "gate_ids": list(state.reference_understanding_gate_ids or []),
+                "gate_plan_gate_ids": [
+                    str(gate.get("gate_id"))
+                    for gate in ((state.gate_plan or {}).get("gates") or [])
+                    if isinstance(gate, dict)
+                ],
+            }
+        )
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.apply_visibility_for_session_state",
+        _fake_apply_visibility_for_session_state,
+    )
+
+    ctx = FakeContext()
+    update_session_from_router_goal(
+        ctx,
+        "create a low-poly squirrel",
+        {"status": "no_match"},
+        surface_profile="llm-guided",
+    )
+
+    asyncio.run(reference_images(ctx, action="attach", source_path=str(image_front), label="front_ref"))
+
+    attached_state = get_session_capability_state(ctx)
+    assert attached_state.reference_understanding_gate_ids is not None
+    attached_gate_id = attached_state.reference_understanding_gate_ids[0]
+
+    asyncio.run(reference_images(ctx, action="clear"))
+
+    cleared_state = get_session_capability_state(ctx)
+    assert cleared_state.reference_understanding_gate_ids is None
+    assert len(visibility_snapshots) == 2
+    assert visibility_snapshots[0]["gate_ids"] == [attached_gate_id]
+    assert attached_gate_id in visibility_snapshots[0]["gate_plan_gate_ids"]
+    assert visibility_snapshots[1]["gate_ids"] == []
+    assert attached_gate_id not in visibility_snapshots[1]["gate_plan_gate_ids"]
+
+
+def test_reference_images_clear_preserves_shared_llm_gate_when_reference_source_is_removed(tmp_path, monkeypatch):
+    image_front = tmp_path / "front.png"
+    image_front.write_bytes(b"front")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    class Backend:
+        async def analyze(self, request):
+            return {
+                "status": "available",
+                "understanding_id": "understanding_shared_gate",
+                "goal": request.goal,
+                "reference_ids": list(request.metadata.get("reference_ids") or []),
+                "subject": {
+                    "label": "low poly squirrel",
+                    "category": "creature",
+                    "confidence": 0.9,
+                    "uncertainty_notes": [],
+                },
+                "style": {
+                    "style_label": "low_poly_faceted",
+                    "confidence": 0.9,
+                    "notes": [],
+                },
+                "required_parts": [],
+                "non_goals": [],
+                "construction_strategy": {
+                    "construction_path": "low_poly_facet",
+                    "primary_family": "modeling_mesh",
+                    "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+                    "stage_sequence": ["primary_masses"],
+                    "finish_policy": "preserve_facets",
+                },
+                "router_handoff_hints": {
+                    "preferred_family": "modeling_mesh",
+                    "allowed_guided_families": [
+                        "reference_context",
+                        "primary_masses",
+                        "secondary_parts",
+                        "inspect_validate",
+                    ],
+                    "sculpt_policy": "hidden",
+                },
+                "gate_proposals": [
+                    {
+                        "gate_id": "ru_eye_pair_gate",
+                        "gate_type": "required_part",
+                        "label": "dual-view eye pair",
+                        "target_kind": "reference_part",
+                        "target_label": "eye_pair",
+                    }
+                ],
+                "visual_evidence_refs": [],
+                "verification_requirements": [],
+                "classification_scores": [],
+                "segmentation_artifacts": [],
+                "source_provenance": [{"source": "reference_understanding"}],
+                "boundary_policy": {
+                    "advisory_only": True,
+                    "not_truth_source": True,
+                    "may_unlock_tools": False,
+                    "may_pass_gates": False,
+                    "may_propose_gates": True,
+                },
+            }
+
+    class Resolver:
+        def resolve_default(self):
+            return Backend()
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: Resolver())
+
+    ctx = FakeContext()
+    update_session_from_router_goal(
+        ctx,
+        "create a low-poly squirrel",
+        {"status": "no_match"},
+        surface_profile="llm-guided",
+        gate_proposal={
+            "source": "llm_goal",
+            "gates": [
+                {
+                    "gate_id": "goal_eye_pair_gate",
+                    "gate_type": "required_part",
+                    "label": "visible eye pair",
+                    "target_kind": "reference_part",
+                    "target_label": "eye_pair",
+                }
+            ],
+        },
+    )
+
+    asyncio.run(reference_images(ctx, action="attach", source_path=str(image_front), label="front_ref"))
+
+    attached_state = get_session_capability_state(ctx)
+    assert attached_state.gate_plan is not None
+    attached_eye_gates = [gate for gate in attached_state.gate_plan["gates"] if gate.get("target_label") == "eye_pair"]
+    assert len(attached_eye_gates) == 1
+    assert set(attached_eye_gates[0]["proposal_sources"]) == {"llm_goal", "reference_understanding"}
+
+    asyncio.run(reference_images(ctx, action="clear"))
+
+    cleared_state = get_session_capability_state(ctx)
+    assert cleared_state.reference_understanding_gate_ids is None
+    assert cleared_state.gate_plan is not None
+    cleared_eye_gates = [gate for gate in cleared_state.gate_plan["gates"] if gate.get("target_label") == "eye_pair"]
+    assert len(cleared_eye_gates) == 1
+    assert cleared_eye_gates[0]["proposal_sources"] == ["llm_goal"]
+
+
+def test_stage_checkpoint_responses_project_gate_plan_summary_fields():
+    gate_plan = {
+        "plan_id": "creature_quality_gate_plan",
+        "domain_profile": "creature",
+        "required_gate_count": 1,
+        "optional_gate_count": 0,
+        "gates": [
+            {
+                "gate_id": "tail_body_seam",
+                "gate_type": "attachment_seam",
+                "label": "tail seated on body",
+                "target_kind": "object_pair",
+                "target_objects": ["Tail", "Body"],
+                "required": True,
+                "priority": "high",
+                "status": "failed",
+                "status_reason": "relation_floating_gap",
+                "verification_strategy": "spatial_contact",
+                "allowed_correction_families": ["spatial_context", "attachment_alignment"],
+                "recommended_bounded_tools": ["scene_relation_graph", "macro_attach_part_to_surface"],
+                "proposal_sources": ["llm_goal"],
+                "evidence_requirements": [{"evidence_kind": "spatial_relation", "required": True}],
+                "evidence_refs": [],
+            }
+        ],
+        "completion_blockers": [
+            {
+                "gate_id": "tail_body_seam",
+                "gate_type": "attachment_seam",
+                "label": "tail seated on body",
+                "status": "failed",
+                "reason_code": "relation_floating_gap",
+                "target_kind": "object_pair",
+                "target_objects": ["Tail", "Body"],
+                "required_evidence_kinds": ["spatial_relation"],
+                "allowed_correction_families": ["spatial_context", "attachment_alignment"],
+                "recommended_bounded_tools": ["scene_relation_graph", "macro_attach_part_to_surface"],
+                "message": "Tail seam is floating.",
+            }
+        ],
+    }
+
+    compare = _stage_compare_response(
+        goal="low poly creature",
+        active_gate_plan=gate_plan,
+        checkpoint_id="checkpoint_gate",
+        checkpoint_label="gate",
+        target_object="Creature",
+        target_objects=["Creature"],
+        collection_name=None,
+        target_view="front",
+        preset_profile="compact",
+        preset_names=[],
+        reference_ids=[],
+        reference_labels=[],
+    )
+    iterate = _iterate_stage_response(
+        goal="low poly creature",
+        target_object="Creature",
+        target_objects=["Creature"],
+        collection_name=None,
+        target_view="front",
+        checkpoint_id="checkpoint_gate_iterate",
+        checkpoint_label="gate_iterate",
+        iteration_index=2,
+        loop_disposition="inspect_validate",
+        continue_recommended=False,
+        prior_checkpoint_id="checkpoint_gate",
+        prior_correction_focus=[],
+        correction_focus=[],
+        repeated_correction_focus=[],
+        stagnation_count=0,
+        compare_result=compare,
+    )
+
+    assert compare.gate_statuses[0].gate_id == "tail_body_seam"
+    assert compare.completion_blockers[0].reason_code == "relation_floating_gap"
+    assert compare.next_gate_actions == ["resolve_quality_gate_blockers", "verify_or_repair_spatial_gate"]
+    assert compare.recommended_bounded_tools == ["scene_relation_graph", "macro_attach_part_to_surface"]
+    assert iterate.gate_statuses[0].gate_id == "tail_body_seam"
+    assert iterate.completion_blockers[0].gate_id == "tail_body_seam"
 
 
 def test_truth_followup_emits_cleanup_macro_candidate_for_overlap_pairs():
@@ -347,7 +1034,7 @@ def test_truth_followup_prefers_surface_attach_macro_for_embedded_head_feature_o
 
     assert followup.items
     assert followup.items[0].kind == "attachment"
-    assert "organic attachment relation" in followup.items[0].summary
+    assert "attachment relation" in followup.items[0].summary
     assert followup.macro_candidates
     assert followup.macro_candidates[0].macro_name == "macro_attach_part_to_surface"
     assert followup.macro_candidates[0].arguments_hint == {
@@ -641,7 +1328,7 @@ def test_build_correction_truth_bundle_expands_required_creature_seams(monkeypat
         collection_name=None,
     )
 
-    bundle = _build_correction_truth_bundle(scene_handler, scope)
+    bundle, _relation_graph = _build_correction_truth_bundle(scene_handler, scope)
 
     assert bundle.summary.pairing_strategy == "required_creature_seams"
     assert bundle.summary.pair_count == 6
@@ -736,7 +1423,7 @@ def test_build_correction_truth_bundle_treats_forel_hindr_as_limb_body_seams(mon
         collection_name=None,
     )
 
-    bundle = _build_correction_truth_bundle(scene_handler, scope)
+    bundle, _relation_graph = _build_correction_truth_bundle(scene_handler, scope)
     seam_kinds_by_pair = {
         f"{item.from_object} -> {item.to_object}": item.attachment_semantics.seam_kind
         for item in bundle.checks
@@ -747,6 +1434,295 @@ def test_build_correction_truth_bundle_treats_forel_hindr_as_limb_body_seams(mon
     assert seam_kinds_by_pair["ForeR -> Body"] == "limb_body"
     assert seam_kinds_by_pair["HindL -> Body"] == "limb_body"
     assert seam_kinds_by_pair["HindR -> Body"] == "limb_body"
+
+
+def test_build_correction_truth_bundle_preserves_support_semantics_with_goal_hint(monkeypatch):
+    class SceneHandler:
+        def get_bounding_box(self, object_name: str, world_space: bool = True):
+            dimensions = {
+                "Body": [2.0, 2.0, 2.0],
+                "Base": [4.0, 4.0, 0.5],
+            }[object_name]
+            return {"object_name": object_name, "dimensions": dimensions}
+
+        def measure_gap(self, from_object, to_object, tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "gap": 0.0,
+                "axis_gap": {"x": 0.0, "y": 0.0, "z": 0.0},
+                "relation": "contact",
+                "tolerance": tolerance,
+                "units": "blender_units",
+            }
+
+        def measure_alignment(self, from_object, to_object, axes=None, reference="CENTER", tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "reference": reference,
+                "axes": axes or ["X", "Y", "Z"],
+                "deltas": {"x": 0.0, "y": 0.0, "z": 0.0},
+                "is_aligned": True,
+                "tolerance": tolerance,
+                "units": "blender_units",
+            }
+
+        def measure_overlap(self, from_object, to_object, tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "overlaps": False,
+                "relation": "disjoint",
+                "tolerance": tolerance,
+                "units": "blender_units",
+            }
+
+        def assert_contact(self, from_object, to_object, max_gap=0.0001, allow_overlap=False):
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": True,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.0, "relation": "contact"},
+            }
+
+        def assert_symmetry(self, left_object, right_object, axis="X", mirror_coordinate=0.0, tolerance=0.0001):
+            return {"assertion": "scene_assert_symmetry", "passed": True}
+
+    scene_handler = SceneHandler()
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: scene_handler)
+
+    scope = _assembled_target_scope(
+        target_object=None,
+        target_objects=["Body", "Base"],
+        collection_name=None,
+    )
+
+    bundle, _relation_graph = _build_correction_truth_bundle(
+        scene_handler,
+        scope,
+        goal_hint="support the body on the base",
+    )
+
+    assert bundle.summary.pair_count == 1
+    assert bundle.summary.pairing_strategy == "primary_to_others"
+    assert bundle.checks[0].support_semantics is not None
+    assert bundle.checks[0].support_semantics.verdict == "supported"
+
+
+def test_build_correction_truth_bundle_preserves_symmetry_semantics_with_goal_hint(monkeypatch):
+    class SceneHandler:
+        def get_bounding_box(self, object_name: str, world_space: bool = True):
+            payload = {
+                "Wheel_L": {
+                    "min": [-2.5, -0.5, 0.0],
+                    "max": [-1.5, 0.5, 1.0],
+                    "center": [-2.0, 0.0, 0.5],
+                    "dimensions": [1.0, 1.0, 1.0],
+                },
+                "Wheel_R": {
+                    "min": [1.5, -0.5, 0.0],
+                    "max": [2.5, 0.5, 1.0],
+                    "center": [2.0, 0.0, 0.5],
+                    "dimensions": [1.0, 1.0, 1.0],
+                },
+            }[object_name]
+            return {"object_name": object_name, **payload}
+
+        def measure_gap(self, from_object, to_object, tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "gap": 0.0,
+                "axis_gap": {"x": 0.0, "y": 0.0, "z": 0.0},
+                "relation": "contact",
+                "tolerance": tolerance,
+                "units": "blender_units",
+            }
+
+        def measure_alignment(self, from_object, to_object, axes=None, reference="CENTER", tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "reference": reference,
+                "axes": axes or ["X", "Y", "Z"],
+                "deltas": {"x": -4.0, "y": 0.0, "z": 0.0},
+                "aligned_axes": ["Y", "Z"],
+                "misaligned_axes": ["X"],
+                "is_aligned": False,
+                "tolerance": tolerance,
+                "units": "blender_units",
+            }
+
+        def measure_overlap(self, from_object, to_object, tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "overlaps": False,
+                "relation": "disjoint",
+                "tolerance": tolerance,
+                "units": "blender_units",
+            }
+
+        def assert_contact(self, from_object, to_object, max_gap=0.0001, allow_overlap=False):
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": False,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.0, "relation": "contact"},
+            }
+
+        def assert_symmetry(self, left_object, right_object, axis="X", mirror_coordinate=0.0, tolerance=0.0001):
+            return {
+                "assertion": "scene_assert_symmetry",
+                "passed": False,
+                "subject_left": left_object,
+                "subject_right": right_object,
+                "axis": axis,
+                "mirror_coordinate": mirror_coordinate,
+                "tolerance": tolerance,
+            }
+
+    scene_handler = SceneHandler()
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: scene_handler)
+
+    scope = _assembled_target_scope(
+        target_object=None,
+        target_objects=["Wheel_L", "Wheel_R"],
+        collection_name=None,
+    )
+
+    bundle, _relation_graph = _build_correction_truth_bundle(
+        scene_handler,
+        scope,
+        goal_hint="keep the wheel pair symmetric",
+    )
+
+    assert bundle.summary.pair_count == 1
+    assert bundle.summary.pairing_strategy == "primary_to_others"
+    assert bundle.checks[0].symmetry_semantics is not None
+    assert bundle.checks[0].symmetry_semantics.verdict == "asymmetric"
+
+
+def test_truth_followup_uses_neutral_wording_for_roof_wall_attachment():
+    bundle = SceneCorrectionTruthBundleContract(
+        scope=SceneAssembledTargetScopeContract(
+            scope_kind="object_set",
+            primary_target="FacadeMainVolume",
+            object_names=["FacadeMainVolume", "FacadeRoofMass"],
+            object_count=2,
+        ),
+        summary=SceneCorrectionTruthSummaryContract(
+            pairing_strategy="primary_to_others",
+            pair_count=1,
+            evaluated_pairs=1,
+            contact_failures=1,
+            separated_pairs=1,
+        ),
+        checks=[
+            SceneCorrectionTruthPairContract(
+                from_object="FacadeRoofMass",
+                to_object="FacadeMainVolume",
+                relation_pair_id="facaderoofmass__facademainvolume",
+                relation_kinds=["contact", "gap", "alignment", "attachment"],
+                relation_verdicts=["separated", "floating_gap"],
+                gap={"relation": "separated", "gap": 0.25, "axis_gap": {"x": 0.0, "y": 0.0, "z": 0.25}},
+                alignment={"is_aligned": True, "deltas": {"x": 0.0, "y": 0.0, "z": 0.25}},
+                overlap={"overlaps": False, "relation": "disjoint"},
+                contact_assertion=SceneAssertionPayloadContract(
+                    assertion="scene_assert_contact",
+                    passed=False,
+                    subject="FacadeRoofMass",
+                    target="FacadeMainVolume",
+                    expected={"max_gap": 0.0001},
+                    actual={"gap": 0.25, "relation": "separated"},
+                ),
+                attachment_semantics=SceneAttachmentSemanticsContract(
+                    relation_kind="seated_attachment",
+                    seam_kind="roof_wall",
+                    part_object="FacadeRoofMass",
+                    anchor_object="FacadeMainVolume",
+                    required_seam=True,
+                    preferred_macro="macro_align_part_with_contact",
+                    attachment_verdict="floating_gap",
+                ),
+            )
+        ],
+    )
+
+    followup = _build_truth_followup(bundle)
+
+    assert "organic" not in followup.items[0].summary.lower()
+    assert "creature" not in followup.macro_candidates[0].reason.lower()
+
+
+def test_truth_followup_emits_support_and_symmetry_macro_candidates():
+    bundle = SceneCorrectionTruthBundleContract(
+        scope=SceneAssembledTargetScopeContract(
+            scope_kind="object_set",
+            primary_target="Body",
+            object_names=["Body", "Base", "Wheel_L", "Wheel_R"],
+            object_count=4,
+        ),
+        summary=SceneCorrectionTruthSummaryContract(
+            pairing_strategy="guided_spatial_pairs",
+            pair_count=2,
+            evaluated_pairs=2,
+        ),
+        checks=[
+            SceneCorrectionTruthPairContract(
+                from_object="Body",
+                to_object="Base",
+                relation_pair_id="body__base",
+                relation_kinds=["contact", "gap", "support"],
+                relation_verdicts=["separated", "unsupported"],
+                gap={"relation": "separated", "gap": 0.2, "axis_gap": {"x": 0.0, "y": 0.0, "z": 0.2}},
+                alignment={"is_aligned": True, "deltas": {"x": 0.0, "y": 0.0, "z": 0.2}},
+                overlap={"overlaps": False, "relation": "disjoint"},
+                contact_assertion=SceneAssertionPayloadContract(
+                    assertion="scene_assert_contact",
+                    passed=False,
+                    subject="Body",
+                    target="Base",
+                    expected={"max_gap": 0.0001},
+                    actual={"gap": 0.2, "relation": "separated"},
+                ),
+                support_semantics=SceneSupportSemanticsContract(
+                    supported_object="Body",
+                    support_object="Base",
+                    axis="Z",
+                    verdict="unsupported",
+                ),
+            ),
+            SceneCorrectionTruthPairContract(
+                from_object="Wheel_L",
+                to_object="Wheel_R",
+                relation_pair_id="wheel_l__wheel_r",
+                relation_kinds=["symmetry"],
+                relation_verdicts=["asymmetric"],
+                symmetry_semantics=SceneSymmetrySemanticsContract(
+                    left_object="Wheel_L",
+                    right_object="Wheel_R",
+                    axis="X",
+                    mirror_coordinate=0.0,
+                    verdict="asymmetric",
+                ),
+            ),
+        ],
+    )
+
+    followup = _build_truth_followup(bundle)
+    item_kinds = [item.kind for item in followup.items]
+    macro_names = [candidate.macro_name for candidate in followup.macro_candidates]
+
+    assert "support" in item_kinds
+    assert "symmetry" in item_kinds
+    assert "macro_place_supported_pair" in macro_names
+    assert "macro_place_symmetry_pair" in macro_names
 
 
 def test_truth_followup_keeps_multiple_required_creature_seams_and_macro_families_visible():
@@ -1285,6 +2261,7 @@ def test_select_refinement_route_prefers_sculpt_for_non_low_poly_organic_refinem
             "reference_count": 0,
             "reference_ids": [],
             "reference_labels": [],
+            "view_diagnostics_hints": [],
             "correction_candidates": [
                 {
                     "candidate_id": "vision:heart_surface",
@@ -1311,6 +2288,7 @@ def test_select_refinement_route_prefers_sculpt_for_non_low_poly_organic_refinem
 
     assert route.domain_classification == "anatomy"
     assert route.selected_family == "sculpt_region"
+    assert route.blockers == []
 
 
 def test_select_refinement_route_keeps_low_poly_creature_on_modeling_mesh():
@@ -1425,15 +2403,229 @@ def test_reference_compare_stage_checkpoint_exposes_sculpt_handoff_without_visib
     )
 
     assert result.refinement_route is not None
+    assert result.refinement_route.selected_family == "inspect_only"
+    assert result.refinement_route.blockers
+    assert result.refinement_route.blockers[0].blocker_id == "view_diagnostics_required"
+    assert result.refinement_handoff is not None
+    assert result.refinement_handoff.selected_family == "inspect_only"
+    assert result.refinement_handoff.state == "blocked"
+    assert result.refinement_handoff.recommended_tools == []
+    assert result.view_diagnostics_hints is None
+    assert result.planner_summary is not None
+    assert result.planner_summary.selected_family == "inspect_only"
+    assert result.planner_summary.required_support_tools[0].tool_name == "scene_view_diagnostics"
+
+
+def test_reference_compare_stage_checkpoint_marks_sculpt_ready_when_staged_view_diagnostics_are_clear(
+    tmp_path, monkeypatch
+):
+    image_side = tmp_path / "side.png"
+    image_side.write_bytes(b"side")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "refine the organic heart surface", {"status": "no_match"})
+    asyncio.run(
+        reference_images(
+            ctx,
+            action="attach",
+            source_path=str(image_side),
+            label="side_ref",
+            target_object="Heart",
+            target_view="side",
+        )
+    )
+
+    class SceneHandler:
+        def __init__(self) -> None:
+            self.diagnostics_kwargs: dict[str, object] | None = None
+
+        def get_bounding_box(self, object_name: str, world_space: bool = True):
+            return {"object_name": object_name, "dimensions": [1.0, 1.0, 1.0]}
+
+        def get_view_diagnostics(self, **kwargs):
+            self.diagnostics_kwargs = kwargs
+            return {
+                "view_query": {
+                    "requested_view_source": "user_perspective",
+                    "resolved_view_source": "user_perspective",
+                    "analysis_backend": "mirrored_user_perspective",
+                    "available": True,
+                    "state_restored": True,
+                },
+                "targets": [
+                    {
+                        "object_name": "Heart",
+                        "visibility_verdict": "fully_visible",
+                        "projection_status": "inside_frame",
+                        "projection": {
+                            "frame_coverage_ratio": 1.0,
+                            "frame_occupancy_ratio": 0.42,
+                            "centered": True,
+                        },
+                    }
+                ],
+                "summary": {
+                    "target_count": 1,
+                    "visible_count": 1,
+                    "partially_visible_count": 0,
+                    "fully_occluded_count": 0,
+                    "outside_frame_count": 0,
+                    "unavailable_count": 0,
+                    "centered_target_count": 1,
+                    "framing_issue_count": 0,
+                },
+            }
+
+    scene_handler = SceneHandler()
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="Heart silhouette is still too lumpy.",
+                visible_changes=["The intended side target is fully visible."],
+                shape_mismatches=["Heart surface is still too lumpy."],
+                correction_focus=["Heart surface smoothing"],
+                next_corrections=["Smooth and slightly crease the chamber area."],
+            ),
+        )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: scene_handler)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.get_vision_backend_resolver",
+        lambda: SimpleNamespace(
+            runtime_config=SimpleNamespace(
+                max_tokens=400,
+                max_images=8,
+                active_model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+            )
+        ),
+    )
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="context_wide_after",
+                image_path=str(tmp_path / "context.jpg"),
+                host_visible_path=str(tmp_path / "context.jpg"),
+                preset_name="context_wide",
+                media_type="image/jpeg",
+                view_kind="wide",
+            ),
+            VisionCaptureImageContract(
+                label="target_front_after",
+                image_path=str(tmp_path / "front.jpg"),
+                host_visible_path=str(tmp_path / "front.jpg"),
+                preset_name="target_front",
+                media_type="image/jpeg",
+                view_kind="focus",
+            ),
+            VisionCaptureImageContract(
+                label="target_side_after",
+                image_path=str(tmp_path / "side.jpg"),
+                host_visible_path=str(tmp_path / "side.jpg"),
+                preset_name="target_side",
+                media_type="image/jpeg",
+                view_kind="focus",
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            target_object="Heart",
+            target_view="side",
+            checkpoint_label="stage_organic",
+            preset_profile="compact",
+        )
+    )
+
+    assert scene_handler.diagnostics_kwargs is not None
+    assert scene_handler.diagnostics_kwargs["target_object"] == "Heart"
+    assert scene_handler.diagnostics_kwargs["focus_target"] == "Heart"
+    assert scene_handler.diagnostics_kwargs["view_name"] == "RIGHT"
+    assert result.view_diagnostics_hints == []
+    assert result.refinement_route is not None
     assert result.refinement_route.selected_family == "sculpt_region"
+    assert result.refinement_route.blockers == []
     assert result.refinement_handoff is not None
     assert result.refinement_handoff.selected_family == "sculpt_region"
+    assert result.refinement_handoff.state == "ready"
     assert [tool.tool_name for tool in result.refinement_handoff.recommended_tools] == [
         "sculpt_deform_region",
         "sculpt_smooth_region",
         "sculpt_inflate_region",
         "sculpt_pinch_region",
+        "sculpt_crease_region",
     ]
+    assert result.planner_summary is not None
+    assert result.planner_summary.required_support_tools == []
+
+
+def test_refinement_handoff_recommends_bounded_deterministic_sculpt_subset():
+    compare = ReferenceCompareStageCheckpointResponseContract.model_validate(
+        {
+            "action": "compare_stage_checkpoint",
+            "goal": "refine the organic heart surface to look softer and more anatomical",
+            "target_object": "Heart",
+            "target_objects": ["Heart"],
+            "checkpoint_id": "checkpoint_sculpt",
+            "checkpoint_label": "stage_sculpt",
+            "preset_profile": "compact",
+            "preset_names": [],
+            "capture_count": 0,
+            "captures": [],
+            "reference_count": 0,
+            "reference_ids": [],
+            "reference_labels": [],
+            "view_diagnostics_hints": [],
+            "correction_candidates": [
+                {
+                    "candidate_id": "vision:heart_surface",
+                    "summary": "Heart surface still looks too lumpy.",
+                    "priority_rank": 1,
+                    "priority": "normal",
+                    "candidate_kind": "vision_only",
+                    "target_object": "Heart",
+                    "target_objects": ["Heart"],
+                    "focus_pairs": [],
+                    "source_signals": ["vision"],
+                    "vision_evidence": {
+                        "correction_focus": ["Heart surface smoothing"],
+                        "shape_mismatches": ["Heart surface still looks too lumpy."],
+                        "proportion_mismatches": [],
+                        "next_corrections": ["Smooth and slightly crease the chamber area."],
+                    },
+                }
+            ],
+        }
+    )
+
+    route = _select_refinement_route(compare)
+    handoff = _build_refinement_handoff(compare, route)
+
+    assert route.selected_family == "sculpt_region"
+    assert handoff.state == "ready"
+    assert handoff.visibility_unlock_recommended is False
+    assert [tool.tool_name for tool in handoff.recommended_tools] == [
+        "sculpt_deform_region",
+        "sculpt_smooth_region",
+        "sculpt_inflate_region",
+        "sculpt_pinch_region",
+        "sculpt_crease_region",
+    ]
+    assert handoff.target_object == "Heart"
+    assert handoff.local_reason == "Heart surface smoothing"
 
 
 def test_reference_images_attach_without_active_goal_is_staged_for_next_goal(tmp_path, monkeypatch):
@@ -2855,6 +4047,7 @@ def test_reference_compare_stage_checkpoint_preserves_required_creature_seams_un
                 ("Tail", "Body"): ("overlapping", 0.0),
                 ("BackPawLeft", "Body"): ("separated", 0.18),
                 ("BackPawRight", "Body"): ("separated", 0.19),
+                ("BackPawLeft", "BackPawRight"): ("contact", 0.0),
             }
             relation, gap = relation_map[(from_object, to_object)]
             return {
@@ -2903,6 +4096,19 @@ def test_reference_compare_stage_checkpoint_preserves_required_creature_seams_un
                 "target": to_object,
                 "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
                 "actual": {"gap": actual_gap, "relation": actual_relation},
+            }
+
+        def assert_symmetry(
+            self, left_object: str, right_object: str, axis="X", mirror_coordinate=0.0, tolerance=0.0001
+        ):
+            return {
+                "assertion": "scene_assert_symmetry",
+                "passed": True,
+                "subject_left": left_object,
+                "subject_right": right_object,
+                "axis": axis,
+                "mirror_coordinate": mirror_coordinate,
+                "tolerance": tolerance,
             }
 
     captured = {}
@@ -2962,16 +4168,186 @@ def test_reference_compare_stage_checkpoint_preserves_required_creature_seams_un
 
     assert result.budget_control is not None
     assert result.budget_control.trimming_applied is True
-    assert result.budget_control.scope_trimmed is False
+    assert result.budget_control.scope_trimmed is True
     assert result.budget_control.detail_trimmed is True
     assert result.budget_control.model_name == "mlx-community/Qwen3-VL-4B-Instruct-4bit"
-    assert result.budget_control.original_pair_count == 4
+    assert result.budget_control.original_pair_count == 5
     assert result.budget_control.emitted_pair_count == 4
     assert result.capture_count == 1
     assert result.captures == []
     assert result.budget_control.detail_trimmed is True
     assert result.truth_bundle is not None
     assert result.truth_bundle.summary.pair_count == 4
+
+
+def test_reference_compare_stage_checkpoint_marks_rich_planner_detail_as_trimmed_when_budget_limited(
+    tmp_path, monkeypatch
+):
+    image_front = tmp_path / "front.png"
+    image_front.write_bytes(b"front")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly squirrel", {"status": "no_match"})
+    asyncio.run(reference_images(ctx, action="attach", source_path=str(image_front), label="front_ref"))
+
+    class CollectionHandler:
+        def list_objects(self, collection_name: str, recursive: bool = True, include_hidden: bool = False):
+            assert collection_name == "Squirrel"
+            return {
+                "objects": [
+                    {"name": "Body"},
+                    {"name": "Head"},
+                    {"name": "Tail"},
+                    {"name": "BackPawLeft"},
+                    {"name": "BackPawRight"},
+                ]
+            }
+
+    class SceneHandler:
+        def get_bounding_box(self, object_name: str, world_space: bool = True):
+            dimensions = {
+                "Body": [1.2, 0.9, 1.0],
+                "Head": [0.7, 0.7, 0.8],
+                "Tail": [0.5, 0.3, 1.1],
+                "BackPawLeft": [0.2, 0.2, 0.25],
+                "BackPawRight": [0.2, 0.2, 0.25],
+            }[object_name]
+            return {"object_name": object_name, "dimensions": dimensions}
+
+        def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            relation_map = {
+                ("Head", "Body"): ("contact", 0.0),
+                ("Tail", "Body"): ("overlapping", 0.0),
+                ("BackPawLeft", "Body"): ("separated", 0.18),
+                ("BackPawRight", "Body"): ("separated", 0.19),
+                ("BackPawLeft", "BackPawRight"): ("contact", 0.0),
+            }
+            relation, gap = relation_map[(from_object, to_object)]
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "relation": relation,
+                "gap": gap,
+                "axis_gap": {"x": gap, "y": 0.0, "z": 0.0},
+            }
+
+        def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
+            misaligned = (from_object, to_object) in {
+                ("BackPawLeft", "Body"),
+                ("BackPawRight", "Body"),
+            }
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "is_aligned": not misaligned,
+                "axes": axes or ["X", "Y", "Z"],
+            }
+
+        def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            overlaps = (from_object, to_object) == ("Tail", "Body")
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "overlaps": overlaps,
+                "relation": "overlap" if overlaps else "disjoint",
+            }
+
+        def assert_contact(
+            self, from_object: str, to_object: str, max_gap: float = 0.0001, allow_overlap: bool = False
+        ):
+            passed = (from_object, to_object) == ("Head", "Body")
+            actual_relation = (
+                "contact"
+                if passed
+                else ("overlapping" if (from_object, to_object) == ("Tail", "Body") else "separated")
+            )
+            actual_gap = 0.0 if actual_relation in {"contact", "overlapping"} else 0.18
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": passed,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": actual_gap, "relation": actual_relation},
+            }
+
+        def assert_symmetry(
+            self, left_object: str, right_object: str, axis="X", mirror_coordinate=0.0, tolerance=0.0001
+        ):
+            return {
+                "assertion": "scene_assert_symmetry",
+                "passed": True,
+                "subject_left": left_object,
+                "subject_right": right_object,
+                "axis": axis,
+                "mirror_coordinate": mirror_coordinate,
+                "tolerance": tolerance,
+            }
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="The body still needs contact fixes.",
+                visible_changes=["Rear paws are visible."],
+                correction_focus=["Connect rear paws to body"],
+            ),
+        )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_collection_handler", lambda: CollectionHandler())
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.get_vision_backend_resolver",
+        lambda: SimpleNamespace(
+            runtime_config=SimpleNamespace(
+                max_tokens=200,
+                max_images=8,
+                active_model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+            )
+        ),
+    )
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="context_wide_after",
+                image_path=str(tmp_path / "context.jpg"),
+                host_visible_path=str(tmp_path / "context.jpg"),
+                preset_name="context_wide",
+                media_type="image/jpeg",
+                view_kind="wide",
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            collection_name="Squirrel",
+            checkpoint_label="stage_budgeted",
+            preset_profile="rich",
+        )
+    )
+
+    assert result.error is None
+    assert result.budget_control is not None
+    assert result.budget_control.trimming_applied is True
+    assert result.budget_control.scope_trimmed is True
+    assert result.budget_control.detail_trimmed is True
+    assert result.budget_control.trim_reason == "model_aware_budget_control"
+    assert result.captures
+    assert result.planner_detail is not None
+    assert result.planner_detail.detail_trimmed is True
+    assert any("trimmed staged compare evidence" in note for note in result.planner_detail.notes)
 
 
 def test_reference_compare_stage_checkpoint_reports_enabled_segmentation_sidecar_as_unavailable(tmp_path, monkeypatch):
@@ -3061,6 +4437,757 @@ def test_reference_compare_stage_checkpoint_reports_enabled_segmentation_sidecar
     assert result.part_segmentation is not None
     assert result.part_segmentation.status == "unavailable"
     assert result.part_segmentation.provider_name == "generic_sidecar"
+
+
+def test_reference_compare_stage_checkpoint_projects_gate_state_from_checkpoint_truth_without_prior_relation_call(
+    tmp_path,
+    monkeypatch,
+):
+    image_front = tmp_path / "front.png"
+    image_front.write_bytes(b"front")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(
+        ctx,
+        "low poly creature",
+        {"status": "no_match"},
+        surface_profile="llm-guided",
+        gate_proposal={
+            "source": "llm_goal",
+            "gates": [
+                {
+                    "gate_id": "tail_body_seam",
+                    "gate_type": "attachment_seam",
+                    "label": "tail seated on body",
+                    "target_kind": "object_pair",
+                    "target_objects": ["Tail", "Body"],
+                }
+            ],
+        },
+    )
+    asyncio.run(reference_images(ctx, action="attach", source_path=str(image_front), label="front_ref"))
+
+    class SceneHandler:
+        def get_bounding_box(self, object_name: str, world_space: bool = True):
+            dimensions = {"Body": [2.0, 2.0, 2.0], "Tail": [0.8, 0.25, 0.25]}[object_name]
+            return {"object_name": object_name, "dimensions": dimensions}
+
+        def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "gap": 0.2, "relation": "separated"}
+
+        def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "is_aligned": True,
+                "aligned_axes": ["X", "Y", "Z"],
+            }
+
+        def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "overlaps": False, "relation": "disjoint"}
+
+        def assert_contact(self, from_object: str, to_object: str, max_gap=0.0001, allow_overlap=False):
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": False,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.2, "relation": "separated"},
+            }
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="The squirrel collection is closer to the references.",
+                visible_changes=["The full squirrel silhouette is visible."],
+                correction_focus=["Tail/body seam"],
+            ),
+        )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.get_vision_backend_resolver",
+        lambda: SimpleNamespace(
+            runtime_config=SimpleNamespace(
+                max_tokens=200,
+                max_images=8,
+                active_model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+            )
+        ),
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="context_wide_after",
+                image_path=str(tmp_path / "context.jpg"),
+                host_visible_path=str(tmp_path / "context.jpg"),
+                preset_name="context_wide",
+                media_type="image/jpeg",
+                view_kind="wide",
+            ),
+        ],
+    )
+    visibility_gate_statuses: list[str] = []
+
+    async def _fake_apply_visibility_for_session_state(_ctx, state):
+        gate_plan = state.gate_plan or {}
+        gates = gate_plan.get("gates") or []
+        tail_gate = next(gate for gate in gates if gate.get("gate_id") == "tail_body_seam")
+        visibility_gate_statuses.append(str(tail_gate.get("status")))
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.apply_visibility_for_session_state",
+        _fake_apply_visibility_for_session_state,
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            target_object="Body",
+            target_objects=["Tail"],
+            checkpoint_label="stage_tail_gate",
+            preset_profile="compact",
+        )
+    )
+
+    assert result.error is None
+    assert result.active_gate_plan is not None
+    assert result.gate_statuses
+    tail_gate = next(gate for gate in result.gate_statuses if gate.gate_id == "tail_body_seam")
+    assert tail_gate.status == "failed"
+    assert tail_gate.status_reason == "relation_floating_gap"
+    session = get_session_capability_state(ctx)
+    assert session.gate_plan is not None
+    stored_tail_gate = next(gate for gate in session.gate_plan["gates"] if gate["gate_id"] == "tail_body_seam")
+    assert stored_tail_gate["status"] == "failed"
+    assert visibility_gate_statuses == ["failed"]
+
+
+def test_reference_compare_stage_checkpoint_projects_building_attachment_gate_state(
+    tmp_path,
+    monkeypatch,
+):
+    image_front = tmp_path / "front.png"
+    image_front.write_bytes(b"front")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(
+        ctx,
+        "small building facade",
+        {"status": "no_match"},
+        surface_profile="llm-guided",
+        gate_proposal={
+            "source": "llm_goal",
+            "gates": [
+                {
+                    "gate_id": "roof_wall_seam",
+                    "gate_type": "attachment_seam",
+                    "label": "roof seated on wall volume",
+                    "target_kind": "object_pair",
+                    "target_objects": ["FacadeRoofMass", "FacadeMainVolume"],
+                },
+                {
+                    "gate_id": "front_window_opening",
+                    "gate_type": "opening_or_cut",
+                    "label": "front window opening is cut into the facade",
+                    "target_kind": "object",
+                    "target_label": "FacadeMainVolume",
+                    "target_objects": ["FacadeMainVolume"],
+                },
+            ],
+        },
+    )
+    asyncio.run(reference_images(ctx, action="attach", source_path=str(image_front), label="front_ref"))
+
+    class SceneHandler:
+        def get_bounding_box(self, object_name: str, world_space: bool = True):
+            dimensions = {
+                "FacadeMainVolume": [3.6, 2.0, 2.8],
+                "FacadeRoofMass": [4.0, 2.4, 0.25],
+            }[object_name]
+            return {"object_name": object_name, "dimensions": dimensions}
+
+        def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "gap": 0.25, "relation": "separated"}
+
+        def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "is_aligned": True,
+                "aligned_axes": ["X", "Y", "Z"],
+            }
+
+        def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "overlaps": False, "relation": "disjoint"}
+
+        def assert_contact(self, from_object: str, to_object: str, max_gap=0.0001, allow_overlap=False):
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": False,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.25, "relation": "separated"},
+            }
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="The facade shell is still structurally incomplete.",
+                visible_changes=["Main volume and roof are visible in the staged capture."],
+                correction_focus=["Roof/wall seam"],
+            ),
+        )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.get_vision_backend_resolver",
+        lambda: SimpleNamespace(
+            runtime_config=SimpleNamespace(
+                max_tokens=200,
+                max_images=8,
+                active_model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+            )
+        ),
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="context_wide_after",
+                image_path=str(tmp_path / "context.jpg"),
+                host_visible_path=str(tmp_path / "context.jpg"),
+                preset_name="context_wide",
+                media_type="image/jpeg",
+                view_kind="wide",
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            target_object="FacadeMainVolume",
+            target_objects=["FacadeRoofMass"],
+            checkpoint_label="stage_building_gate",
+            preset_profile="compact",
+        )
+    )
+
+    assert result.error is None
+    assert result.active_gate_plan is not None
+    roof_gate = next(gate for gate in result.gate_statuses if gate.gate_id == "roof_wall_seam")
+    opening_gate = next(gate for gate in result.gate_statuses if gate.gate_id == "front_window_opening")
+    assert roof_gate.status == "failed"
+    assert roof_gate.status_reason == "relation_floating_gap"
+    assert opening_gate.status == "blocked"
+    assert opening_gate.status_reason == "missing_required_evidence"
+    assert result.truth_followup is not None
+    assert result.truth_followup.items
+    assert "organic" not in result.truth_followup.items[0].summary.lower()
+    assert result.correction_candidates
+    assert all(
+        "creature" not in (candidate.summary or "").lower()
+        for candidate in result.correction_candidates
+        if candidate.candidate_kind == "truth_only"
+    )
+    session = get_session_capability_state(ctx)
+    assert session.gate_plan is not None
+    stored_roof_gate = next(gate for gate in session.gate_plan["gates"] if gate["gate_id"] == "roof_wall_seam")
+    assert stored_roof_gate["status"] == "failed"
+
+
+def test_reference_compare_stage_checkpoint_propagates_goal_hint_for_support_gate(
+    tmp_path,
+    monkeypatch,
+):
+    image_front = tmp_path / "front.png"
+    image_front.write_bytes(b"front")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(
+        ctx,
+        "support the body on the base",
+        {"status": "no_match"},
+        surface_profile="llm-guided",
+        gate_proposal={
+            "source": "llm_goal",
+            "gates": [
+                {
+                    "gate_id": "body_base_support",
+                    "gate_type": "support_contact",
+                    "label": "body supported by base",
+                    "target_kind": "object_pair",
+                    "target_objects": ["Body", "Base"],
+                }
+            ],
+        },
+    )
+    asyncio.run(reference_images(ctx, action="attach", source_path=str(image_front), label="front_ref"))
+
+    class SceneHandler:
+        def get_bounding_box(self, object_name: str, world_space: bool = True):
+            payload = {
+                "Body": {
+                    "min": [-1.0, -1.0, 0.0],
+                    "max": [1.0, 1.0, 2.0],
+                    "center": [0.0, 0.0, 1.0],
+                    "dimensions": [2.0, 2.0, 2.0],
+                },
+                "Base": {
+                    "min": [-2.0, -2.0, -0.5],
+                    "max": [2.0, 2.0, 0.0],
+                    "center": [0.0, 0.0, -0.25],
+                    "dimensions": [4.0, 4.0, 0.5],
+                },
+            }[object_name]
+            return {"object_name": object_name, **payload}
+
+        def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "gap": 0.0,
+                "axis_gap": {"x": 0.0, "y": 0.0, "z": 0.0},
+                "relation": "contact",
+                "tolerance": tolerance,
+                "units": "blender_units",
+            }
+
+        def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "is_aligned": True,
+                "aligned_axes": ["X", "Y", "Z"],
+            }
+
+        def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "overlaps": False, "relation": "disjoint"}
+
+        def assert_contact(self, from_object: str, to_object: str, max_gap=0.0001, allow_overlap=False):
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": True,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.0, "relation": "contact"},
+            }
+
+        def assert_symmetry(
+            self, left_object: str, right_object: str, axis="X", mirror_coordinate=0.0, tolerance=0.0001
+        ):
+            return {"assertion": "scene_assert_symmetry", "passed": True}
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="The body is supported by the base.",
+                visible_changes=["Body and base are visible in the staged capture."],
+                correction_focus=[],
+            ),
+        )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.get_vision_backend_resolver",
+        lambda: SimpleNamespace(
+            runtime_config=SimpleNamespace(
+                max_tokens=200,
+                max_images=8,
+                active_model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+            )
+        ),
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="context_wide_after",
+                image_path=str(tmp_path / "context.jpg"),
+                host_visible_path=str(tmp_path / "context.jpg"),
+                preset_name="context_wide",
+                media_type="image/jpeg",
+                view_kind="wide",
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            target_object="Body",
+            target_objects=["Base"],
+            checkpoint_label="stage_support_gate",
+            preset_profile="compact",
+        )
+    )
+
+    assert result.error is None
+    assert result.active_gate_plan is not None
+    support_gate = next(gate for gate in result.gate_statuses if gate.gate_id == "body_base_support")
+    assert support_gate.status == "passed"
+    assert result.truth_bundle is not None
+    assert result.truth_bundle.checks[0].support_semantics is not None
+    assert result.truth_bundle.checks[0].support_semantics.verdict == "supported"
+
+
+def test_reference_compare_stage_checkpoint_preserves_support_macro_candidates(
+    tmp_path,
+    monkeypatch,
+):
+    image_front = tmp_path / "front.png"
+    image_front.write_bytes(b"front")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(
+        ctx,
+        "support the body on the base",
+        {"status": "no_match"},
+        surface_profile="llm-guided",
+        gate_proposal={
+            "source": "llm_goal",
+            "gates": [
+                {
+                    "gate_id": "body_base_support",
+                    "gate_type": "support_contact",
+                    "label": "body supported by base",
+                    "target_kind": "object_pair",
+                    "target_objects": ["Body", "Base"],
+                }
+            ],
+        },
+    )
+    asyncio.run(reference_images(ctx, action="attach", source_path=str(image_front), label="front_ref"))
+
+    class SceneHandler:
+        def get_bounding_box(self, object_name: str, world_space: bool = True):
+            payload = {
+                "Body": {
+                    "min": [-1.0, -1.0, 0.2],
+                    "max": [1.0, 1.0, 2.2],
+                    "center": [0.0, 0.0, 1.2],
+                    "dimensions": [2.0, 2.0, 2.0],
+                },
+                "Base": {
+                    "min": [-2.0, -2.0, -0.5],
+                    "max": [2.0, 2.0, 0.0],
+                    "center": [0.0, 0.0, -0.25],
+                    "dimensions": [4.0, 4.0, 0.5],
+                },
+            }[object_name]
+            return {"object_name": object_name, **payload}
+
+        def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "gap": 0.2,
+                "axis_gap": {"x": 0.0, "y": 0.0, "z": 0.2},
+                "relation": "separated",
+                "tolerance": tolerance,
+                "units": "blender_units",
+            }
+
+        def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "is_aligned": True,
+                "aligned_axes": ["X", "Y", "Z"],
+            }
+
+        def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "overlaps": False, "relation": "disjoint"}
+
+        def assert_contact(self, from_object: str, to_object: str, max_gap=0.0001, allow_overlap=False):
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": False,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.2, "relation": "separated"},
+            }
+
+        def assert_symmetry(
+            self, left_object: str, right_object: str, axis="X", mirror_coordinate=0.0, tolerance=0.0001
+        ):
+            return {"assertion": "scene_assert_symmetry", "passed": True}
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="The body is still floating above the base.",
+                visible_changes=["Body and base are visible in the staged capture."],
+                correction_focus=["Seat the body onto the base"],
+            ),
+        )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.get_vision_backend_resolver",
+        lambda: SimpleNamespace(
+            runtime_config=SimpleNamespace(
+                max_tokens=200,
+                max_images=8,
+                active_model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+            )
+        ),
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="context_wide_after",
+                image_path=str(tmp_path / "context.jpg"),
+                host_visible_path=str(tmp_path / "context.jpg"),
+                preset_name="context_wide",
+                media_type="image/jpeg",
+                view_kind="wide",
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            target_object="Body",
+            target_objects=["Base"],
+            checkpoint_label="stage_support_failure",
+            preset_profile="compact",
+        )
+    )
+
+    assert result.error is None
+    assert result.active_gate_plan is not None
+    support_gate = next(gate for gate in result.gate_statuses if gate.gate_id == "body_base_support")
+    assert support_gate.status == "failed"
+    assert result.truth_followup is not None
+    assert any(
+        candidate.macro_name == "macro_place_supported_pair" for candidate in result.truth_followup.macro_candidates
+    )
+    assert result.correction_candidates
+    assert any(
+        macro.macro_name == "macro_place_supported_pair"
+        for candidate in result.correction_candidates
+        for macro in (candidate.truth_evidence.macro_candidates if candidate.truth_evidence is not None else [])
+    )
+
+
+def test_reference_compare_stage_checkpoint_propagates_goal_hint_for_symmetry_gate(
+    tmp_path,
+    monkeypatch,
+):
+    image_front = tmp_path / "front.png"
+    image_front.write_bytes(b"front")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(
+        ctx,
+        "keep the wheel pair symmetric",
+        {"status": "no_match"},
+        surface_profile="llm-guided",
+        gate_proposal={
+            "source": "llm_goal",
+            "gates": [
+                {
+                    "gate_id": "wheel_pair_symmetry",
+                    "gate_type": "symmetry_pair",
+                    "label": "wheel pair remains symmetric",
+                    "target_kind": "object_pair",
+                    "target_objects": ["Wheel_L", "Wheel_R"],
+                }
+            ],
+        },
+    )
+    asyncio.run(reference_images(ctx, action="attach", source_path=str(image_front), label="front_ref"))
+
+    class SceneHandler:
+        def get_bounding_box(self, object_name: str, world_space: bool = True):
+            payload = {
+                "Wheel_L": {
+                    "min": [-2.5, -0.5, 0.0],
+                    "max": [-1.5, 0.5, 1.0],
+                    "center": [-2.0, 0.0, 0.5],
+                    "dimensions": [1.0, 1.0, 1.0],
+                },
+                "Wheel_R": {
+                    "min": [1.5, -0.3, 0.0],
+                    "max": [2.5, 0.7, 1.0],
+                    "center": [2.0, 0.2, 0.5],
+                    "dimensions": [1.0, 1.0, 1.0],
+                },
+            }[object_name]
+            return {"object_name": object_name, **payload}
+
+        def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "gap": 0.0,
+                "axis_gap": {"x": 0.0, "y": 0.0, "z": 0.0},
+                "relation": "contact",
+                "tolerance": tolerance,
+                "units": "blender_units",
+            }
+
+        def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "reference": reference,
+                "axes": axes or ["X", "Y", "Z"],
+                "deltas": {"x": -4.0, "y": -0.2, "z": 0.0},
+                "aligned_axes": ["Z"],
+                "misaligned_axes": ["X", "Y"],
+                "is_aligned": False,
+                "tolerance": tolerance,
+                "units": "blender_units",
+            }
+
+        def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "overlaps": False, "relation": "disjoint"}
+
+        def assert_contact(self, from_object: str, to_object: str, max_gap=0.0001, allow_overlap=False):
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": True,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.0, "relation": "contact"},
+            }
+
+        def assert_symmetry(
+            self, left_object: str, right_object: str, axis="X", mirror_coordinate=0.0, tolerance=0.0001
+        ):
+            return {
+                "assertion": "scene_assert_symmetry",
+                "passed": False,
+                "subject_left": left_object,
+                "subject_right": right_object,
+                "axis": axis,
+                "mirror_coordinate": mirror_coordinate,
+                "tolerance": tolerance,
+            }
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="The wheel pair is still asymmetric.",
+                visible_changes=["Both wheels are visible in the staged capture."],
+                correction_focus=["Re-mirror the wheel pair"],
+            ),
+        )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.get_vision_backend_resolver",
+        lambda: SimpleNamespace(
+            runtime_config=SimpleNamespace(
+                max_tokens=200,
+                max_images=8,
+                active_model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+            )
+        ),
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="context_wide_after",
+                image_path=str(tmp_path / "context.jpg"),
+                host_visible_path=str(tmp_path / "context.jpg"),
+                preset_name="context_wide",
+                media_type="image/jpeg",
+                view_kind="wide",
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            target_object="Wheel_L",
+            target_objects=["Wheel_R"],
+            checkpoint_label="stage_symmetry_gate",
+            preset_profile="compact",
+        )
+    )
+
+    assert result.error is None
+    assert result.active_gate_plan is not None
+    symmetry_gate = next(gate for gate in result.gate_statuses if gate.gate_id == "wheel_pair_symmetry")
+    assert symmetry_gate.status == "failed"
+    assert result.truth_bundle is not None
+    assert result.truth_bundle.checks[0].symmetry_semantics is not None
+    assert result.truth_bundle.checks[0].symmetry_semantics.verdict == "asymmetric"
+    assert result.truth_followup is not None
+    assert any(item.kind == "symmetry" for item in result.truth_followup.items)
+    assert any(
+        candidate.macro_name == "macro_place_symmetry_pair" for candidate in result.truth_followup.macro_candidates
+    )
+    assert result.correction_candidates
+    assert any(
+        macro.macro_name == "macro_place_symmetry_pair"
+        for candidate in result.correction_candidates
+        for macro in (candidate.truth_evidence.macro_candidates if candidate.truth_evidence is not None else [])
+    )
 
 
 def test_reference_compare_stage_checkpoint_sanitizes_checkpoint_id_target_token(tmp_path, monkeypatch):
@@ -3538,6 +5665,81 @@ def test_reference_iterate_stage_checkpoint_escalates_when_truth_signal_is_high_
     assert result.loop_disposition == "inspect_validate"
     assert result.correction_focus == ["TruthHead -> TruthBody failed the contact assertion."]
     assert "Deterministic truth findings remain high-priority" in (result.message or "")
+
+
+def test_reference_iterate_stage_checkpoint_escalates_when_required_gate_blockers_remain(monkeypatch):
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly creature", {"status": "no_match"})
+
+    compare = ReferenceCompareStageCheckpointResponseContract.model_validate(
+        {
+            "action": "compare_stage_checkpoint",
+            "goal": "low poly creature",
+            "target_object": "Creature",
+            "target_objects": ["Creature"],
+            "checkpoint_id": "checkpoint_gate_blocker",
+            "checkpoint_label": "stage_gate_blocker",
+            "preset_profile": "compact",
+            "preset_names": ["context_wide"],
+            "capture_count": 1,
+            "captures": [],
+            "reference_count": 0,
+            "reference_ids": [],
+            "reference_labels": [],
+            "completion_blockers": [
+                {
+                    "gate_id": "tail_body_seam",
+                    "gate_type": "attachment_seam",
+                    "label": "tail seated on body",
+                    "status": "failed",
+                    "reason_code": "relation_floating_gap",
+                    "target_kind": "object_pair",
+                    "target_objects": ["Tail", "Body"],
+                    "required_evidence_kinds": ["spatial_relation"],
+                    "allowed_correction_families": ["attachment_alignment"],
+                    "recommended_bounded_tools": [
+                        "scene_relation_graph",
+                        "scene_measure_gap",
+                        "macro_attach_part_to_surface",
+                    ],
+                    "message": "Tail seam is floating.",
+                }
+            ],
+            "next_gate_actions": ["verify_or_repair_spatial_gate"],
+            "recommended_bounded_tools": [
+                "scene_relation_graph",
+                "scene_measure_gap",
+                "macro_attach_part_to_surface",
+            ],
+        }
+    )
+
+    async def _fake_reference_compare_stage_checkpoint(*args, **kwargs):
+        return compare
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.reference_compare_stage_checkpoint",
+        _fake_reference_compare_stage_checkpoint,
+    )
+
+    result = asyncio.run(
+        reference_iterate_stage_checkpoint(
+            ctx,
+            target_object="Creature",
+            target_objects=["Creature"],
+            checkpoint_label="stage_gate_blocker",
+        )
+    )
+
+    assert result.loop_disposition == "inspect_validate"
+    assert result.continue_recommended is True
+    assert result.correction_focus == ["Tail seam is floating."]
+    assert result.active_gate_plan is None
+    assert result.completion_blockers
+    assert result.completion_blockers[0].gate_id == "tail_body_seam"
+    assert result.next_gate_actions == ["verify_or_repair_spatial_gate"]
+    assert "macro_attach_part_to_surface" in result.recommended_bounded_tools
+    assert "Quality gate blockers remain unresolved" in (result.message or "")
 
 
 def _guided_incomplete_secondary_flow_state() -> dict[str, object]:

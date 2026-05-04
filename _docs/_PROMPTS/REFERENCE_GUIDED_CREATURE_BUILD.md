@@ -52,6 +52,9 @@ asset as the generic search-first operating baseline.
 10. use the response in this order:
    - `loop_disposition`
    - `guided_reference_readiness`
+   - `planner_summary`
+   - `refinement_route`
+   - `refinement_handoff`
    - `correction_candidates`
    - `truth_followup`
    - `action_hints`
@@ -98,6 +101,27 @@ Rules:
 - attached reference images are the primary grounding input for how the first
   masses should look and sit; do not start from generic animal priors when the
   active guided session already has references
+- if you can identify creature-specific quality gates from the goal or
+  references, provide them through `router_set_goal(..., gate_proposal={...})`
+  using gate types such as `required_part`, `attachment_seam`,
+  `symmetry_pair`, `proportion_ratio`, or `shape_profile`
+- a gate proposal may name expected parts such as `eye_pair`, `ear_pair`, or a
+  `tail_body` seam, but it must use declaration statuses like `proposed` or
+  `requested`; never claim `passed`, `failed`, `waived`, or `stale`
+- after goal setup, read `active_gate_plan` and
+  `gate_intake_result.policy_warnings`; hidden tool names, raw Blender/Python
+  instructions, and perception-only completion claims are dropped or rewritten
+  by server policy
+- after spatial checks, treat `active_gate_plan.completion_blockers`,
+  `status_reason`, evidence refs, and `recommended_bounded_tools` as the
+  authoritative repair/completion guide; do not reset the goal just because a
+  seam gate is failed or stale
+- after staged compare/iterate, consume top-level `completion_blockers`,
+  `next_gate_actions`, and `recommended_bounded_tools` first; they are the
+  checkpoint-facing projection of the same active gate plan
+- for failed seam/support blockers, expect guided visibility/search to return
+  bounded relation, measure/assert, and macro repair tools before refinement or
+  finish tools
 - attach references one at a time with
   `reference_images(action="attach", source_path=..., ...)`; do not pass
   batch shapes such as `images=[...]`
@@ -196,6 +220,9 @@ Workflow:
 11. on the next iteration prioritize:
    - `loop_disposition`
    - `guided_reference_readiness`
+   - `planner_summary`
+   - `refinement_route`
+   - `refinement_handoff`
    - `correction_candidates`
    - `truth_followup.focus_pairs`
    - `truth_followup.macro_candidates`
@@ -220,7 +247,10 @@ Workflow:
 15. if `part_segmentation.status == "disabled"`, stay on the silhouette-first
     path; the segmentation sidecar is optional and not part of the default
     guided baseline
-16. if a build call is blocked because the family or role is wrong for the
+16. if `planner_summary.blockers` or `refinement_handoff.state == "blocked"`
+    names `scene_view_diagnostics(...)`, run that read-only support tool before
+    attempting any local sculpt correction
+17. if a build call is blocked because the family or role is wrong for the
     current step, do not try another guessed build tool name
     - inspect `guided_flow_state.allowed_families`
     - inspect `guided_flow_state.allowed_roles`
@@ -262,9 +292,10 @@ At the end of each stage, return only:
   compare path is using the narrow Google-family compare contract or the full
   generic contract; use that field for diagnosis instead of inferring behavior
   from provider name alone
-- `correction_focus` should be treated as the first action list, but only
-  after checking whether `correction_candidates`, `truth_followup`, or typed
-  `action_hints` carry a stronger bounded signal
+- `correction_focus` should be treated as an action list only after checking
+  whether `planner_summary`, `refinement_route`, `refinement_handoff`,
+  `correction_candidates`, `truth_followup`, or typed `action_hints` carry a
+  stronger bounded signal
 - `silhouette_analysis` is deterministic perception evidence:
   - use it for contour/ratio drift, not for scene truth
   - read it as target/focus-view evidence when a matching focus capture exists;

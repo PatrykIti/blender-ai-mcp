@@ -1,7 +1,7 @@
 # TASK-145-01-02: Deterministic Family Selection From Scope, Relation, and View Signals
 
 **Parent:** [TASK-145-01](./TASK-145-01_Repair_Planner_Payload_And_Family_Selection_Policy.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Depends On:** [TASK-145-01-01](./TASK-145-01-01_Planner_Envelope_And_Provenance_Contract.md), [TASK-143](./TASK-143_Guided_Spatial_Scope_And_Relation_Graphs.md), [TASK-144](./TASK-144_Camera_Aware_View_Graph_And_Visibility_Diagnostics.md)
 
@@ -14,13 +14,67 @@ policy that evaluates:
 - scope / anchor interpretation
 - view visibility and framing constraints
 - proportion stability and silhouette signals
-- goal/domain context as a bias, not as the authority
+- goal/domain context as a bias, not as evidence authority
+
+## Implementation Notes
+
+- Treat truth/relation/view outputs as evidence and constraints. The planner
+  policy chooses the next bounded family; evidence contracts do not themselves
+  become an autonomous workflow.
+- View/framing evidence should come from the current
+  `SceneToolHandler.get_view_diagnostics(...)` ->
+  `scene_view_diagnostics(...)` path and existing reference-loop view hints.
+  Do not recompute camera or visibility truth inside the planner policy helper.
+- The staged compare / iterate path must explicitly wire or consume
+  `view_diagnostics_hints` before treating view evidence as a planner input.
+  Current view-compare hints are not enough by themselves for staged planner
+  policy.
+- Macro remains the default owner for unresolved structural relation failures
+  such as attachment, support, contact, and overlap.
+- Sculpt can be selected only when structural blockers are absent or explicitly
+  downgraded, the local target is known, and visibility/framing is adequate for
+  a bounded local-form edit.
+- Vision/silhouette signals may recommend inspection, local-form attention, or
+  downranking/upgrading priority, but they cannot override deterministic
+  relation truth or mark sculpt ready on their own.
+- Keep policy deterministic and testable. Avoid prompt-only classifiers,
+  LaBSE matching, or free-form planner text as the source of family selection.
+- `RepairPlannerEvidence` and `RepairPlannerDecision` in the pseudocode are
+  proposed framework-free helper shapes. If implementation keeps this logic in
+  private `reference.py` helpers for the first pass, it must still preserve the
+  same deterministic precedence and avoid treating those pseudocode names as
+  already existing API.
+
+## Pseudocode
+
+```python
+def select_next_family(evidence: RepairPlannerEvidence) -> RepairPlannerDecision:
+    if evidence.has_unresolved_relation_failure(
+        kinds={"attachment", "support", "contact", "overlap"}
+    ):
+        return macro_decision(reason="relation_failure_blocks_sculpt")
+
+    if evidence.view_is_missing_or_unstable():
+        return inspect_decision(reason="view_precondition_missing")
+
+    if evidence.proportion_drift_requires_mesh_or_macro():
+        return modeling_decision(reason="proportion_not_local_sculpt")
+
+    if evidence.local_organic_form_signal() and evidence.has_local_target():
+        return sculpt_region_decision(reason="bounded_local_form_refinement")
+
+    return modeling_decision(reason="safe_default_family")
+```
 
 ## Repository Touchpoints
 
 - `server/adapters/mcp/areas/reference.py`
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/contracts/scene.py`
+- `server/application/tool_handlers/scene_handler.py`
+- `server/adapters/mcp/areas/scene.py`
+- `server/application/services/repair_planner.py` or equivalent policy helper
+- `server/application/services/spatial_graph.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 - `_docs/_VISION/CROSS_DOMAIN_REFINEMENT_ROUTING_EVAL.md`
@@ -30,8 +84,13 @@ policy that evaluates:
 - macro remains the deterministic owner for unresolved attachment, support,
   contact, overlap, and similar relation failures
 - sculpt is not selected while high-value structural blockers still dominate
-- goal/domain tags can shape disclosure, but truth / relation / visibility
-  signals remain the authority for family selection
+- goal/domain tags can shape disclosure, but deterministic evidence and
+  planner policy remain the source of the family-selection decision
+- vision/silhouette signals stay advisory and cannot override unresolved
+  relation blockers
+- staged compare / iterate either carries typed view-diagnostics evidence or
+  emits an explicit `scene_view_diagnostics(...)` precondition before using view
+  facts for family selection
 - the selected family is explainable from typed planner sources and does not
   rely on a prompt-only classifier
 - planner policy stays bounded to family selection / block reasons and does not
@@ -46,13 +105,33 @@ policy that evaluates:
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 - `tests/e2e/vision/test_reference_guided_creature_comparison.py`
 
+## Validation Category
+
+- Unit policy coverage should assert at least:
+  - unresolved relation failure selects `macro`
+  - poor view/framing selects `inspect_only` or blocks sculpt
+  - low-poly/proportion drift stays on `modeling_mesh`
+  - organic local-form signal selects `sculpt_region` only after blockers clear
+- Targeted command:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+
 ## Changelog Impact
 
-- include in the parent TASK-145 changelog entry when shipped
+- covered by the parent TASK-145 changelog entry:
+  [_docs/_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md](../_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md)
+
+## Completion Summary
+
+Closed by hardening deterministic family selection: structural relation
+blockers keep the next family on macro, view blockers route to inspect-only
+support, non-local proportion drift stays on modeling/mesh, and sculpt-region
+selection requires an organic/local-form signal plus explicit non-blocking view
+evidence.
 
 ## Status / Board Update
 
-- no board change in this planning-only branch
+- closed under TASK-145-01

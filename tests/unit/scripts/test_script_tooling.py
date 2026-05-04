@@ -526,3 +526,26 @@ def test_vision_harness_can_build_gemini_backend_config():
     assert config.VISION_EXTERNAL_CONTRACT_PROFILE == "generic_full"
     assert config.VISION_GEMINI_MODEL == "gemini-2.5-flash"
     assert config.VISION_GEMINI_API_KEY_ENV == "GEMINI_API_KEY"
+
+
+def test_vision_harness_fixture_only_reference_understanding_keeps_backend_path_opt_in(capsys):
+    module = _load_script("vision_harness")
+
+    result = module.main(
+        [
+            "--backend",
+            "mlx_local",
+            "--goal",
+            "low poly squirrel",
+            "--reference",
+            "/tmp/ref.png",
+            "--fixture-only",
+            "reference-understanding",
+        ]
+    )
+
+    assert result == 0
+    output = capsys.readouterr().out
+    assert '"status": "fixture_only"' in output
+    assert '"fixture_only_mode": "reference-understanding"' in output
+    assert '"mode": "reference_understanding"' in output

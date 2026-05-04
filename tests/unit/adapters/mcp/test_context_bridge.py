@@ -174,6 +174,7 @@ def test_guided_spatial_dirty_tracking_scans_all_successful_routed_steps(monkeyp
             "tool_name": "modeling_create_primitive",
             "family": "primary_masses",
             "reason": "modeling_create_primitive",
+            "affected_objects": ["Body"],
         }
     ]
 
@@ -226,6 +227,50 @@ def test_guided_spatial_dirty_tracking_treats_partial_mutating_macro_reports_as_
             "tool_name": "macro_attach_part_to_surface",
             "family": "attachment_alignment",
             "reason": "macro_attach_part_to_surface",
+            "affected_objects": ["Ear", "Head"],
+        }
+    ]
+
+
+def test_guided_spatial_dirty_tracking_accumulates_objects_from_all_dirty_steps(monkeypatch):
+    """Multi-step routed mutations should stale every gate tied to later dirty objects too."""
+
+    ctx = FakeContext()
+    calls: list[dict[str, object]] = []
+    monkeypatch.setattr(router_helper, "_get_active_context", lambda: ctx)
+    monkeypatch.setattr(
+        router_helper,
+        "mark_guided_spatial_state_stale",
+        lambda current_ctx, **kwargs: calls.append({"ctx": current_ctx, **kwargs}),
+    )
+    report = MCPExecutionReport(
+        context=MCPExecutionContext(tool_name="macro_relative_layout", params={"target_objects": ["Body", "Tail"]}),
+        router_enabled=True,
+        router_applied=True,
+        router_disposition="corrected",
+        steps=(
+            ExecutionStep(
+                tool_name="modeling_transform_object",
+                params={"object_name": "Body"},
+                result="Transformed object 'Body'",
+            ),
+            ExecutionStep(
+                tool_name="modeling_transform_object",
+                params={"object_name": "Tail"},
+                result="Transformed object 'Tail'",
+            ),
+        ),
+    )
+
+    router_helper._maybe_mark_guided_spatial_state_stale_from_report(report)
+
+    assert calls == [
+        {
+            "ctx": ctx,
+            "tool_name": "modeling_transform_object",
+            "family": "primary_masses",
+            "reason": "modeling_transform_object",
+            "affected_objects": ["Body", "Tail"],
         }
     ]
 
@@ -743,15 +788,69 @@ def test_route_tool_call_report_fail_closes_unmapped_guided_mutating_tools(monke
         ),
     )
 
+    executed = {"called": False}
+
+    def _should_not_run():
+        executed["called"] = True
+        return "should not run"
+
     report = route_tool_call_report(
         tool_name="material_assign",
         params={"object_name": "Squirrel_Body", "material_name": "BrownFur"},
-        direct_executor=lambda: "should not run",
+        direct_executor=_should_not_run,
     )
 
     assert report.router_disposition == "failed_closed_error"
     assert "unmapped mutating tool 'material_assign'" in str(report.error)
     assert report.context.guided_tool_family is None
+    assert executed["called"] is False
+
+
+def test_route_tool_call_report_fail_closes_unmapped_guided_sculpt_mutators(monkeypatch):
+    """Sculpt mutators should fail closed unless a bounded guided family mapping exists."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "checkpoint_iterate",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["run_checkpoint"],
+                "blocked_families": [],
+                "allowed_families": ["checkpoint_iterate", "inspect_validate"],
+                "allowed_roles": [],
+                "completed_roles": [],
+                "missing_roles": [],
+                "required_role_groups": ["checkpoint_iterate"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    executed = {"called": False}
+
+    def _should_not_run():
+        executed["called"] = True
+        return "should not run"
+
+    report = route_tool_call_report(
+        tool_name="sculpt_deform_region",
+        params={"object_name": "Heart", "center": [0.0, 0.0, 0.0], "delta": [0.0, 0.0, 0.1]},
+        direct_executor=_should_not_run,
+    )
+
+    assert report.router_disposition == "failed_closed_error"
+    assert "unmapped mutating tool 'sculpt_deform_region'" in str(report.error)
+    assert report.context.guided_tool_family is None
+    assert executed["called"] is False
 
 
 def test_route_tool_call_report_validates_every_corrected_step_before_dispatch(monkeypatch):

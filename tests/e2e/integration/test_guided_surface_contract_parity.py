@@ -18,6 +18,9 @@ _PATCHED_GUIDED_CONTRACT_SERVER = textwrap.dedent(
     import server.adapters.mcp.areas.modeling as modeling_area
     import server.adapters.mcp.areas.scene as scene_area
     import server.adapters.mcp.router_helper as router_helper
+    import server.infrastructure.di as di
+
+    _SCENE_OBJECTS = []
 
 
     class RouterHandler:
@@ -39,7 +42,11 @@ _PATCHED_GUIDED_CONTRACT_SERVER = textwrap.dedent(
 
     class SceneHandler:
         def clean_scene(self, keep_lights_and_cameras):
+            _SCENE_OBJECTS.clear()
             return "Scene cleaned."
+
+        def list_objects(self):
+            return [{"name": name} for name in _SCENE_OBJECTS]
 
         def get_scope_graph(self, target_object=None, target_objects=None, collection_name=None):
             names = [name for name in [target_object, *(target_objects or [])] if name]
@@ -116,7 +123,10 @@ _PATCHED_GUIDED_CONTRACT_SERVER = textwrap.dedent(
 
     class ModelingHandler:
         def create_primitive(self, primitive_type, radius=1.0, size=2.0, location=None, rotation=None, name=None):
-            return f"Created {primitive_type} named '{name or primitive_type}'"
+            created_name = name or primitive_type
+            if created_name not in _SCENE_OBJECTS:
+                _SCENE_OBJECTS.append(created_name)
+            return f"Created {primitive_type} named '{created_name}'"
 
         def transform_object(self, name, location=None, rotation=None, scale=None):
             return f"Transformed object '{name}'"
@@ -128,6 +138,7 @@ _PATCHED_GUIDED_CONTRACT_SERVER = textwrap.dedent(
     scene_area.get_scene_handler = lambda: SceneHandler()
     collection_area.get_collection_handler = lambda: CollectionHandler()
     modeling_area.get_modeling_handler = lambda: ModelingHandler()
+    di.get_scene_handler = lambda: SceneHandler()
     router_helper.is_router_enabled = lambda: False
     """
 )
@@ -326,6 +337,20 @@ def test_guided_surface_contract_parity_over_stdio(tmp_path: Path):
                 "foreleg_pair",
                 "hindleg_pair",
             ]
+
+            weak_foreleg = result_payload(
+                await client.call_tool(
+                    "modeling_create_primitive",
+                    {
+                        "primitive_type": "Cylinder",
+                        "name": "ForeL",
+                        "location": [0.28, -0.18, 0.22],
+                        "radius": 0.08,
+                        "guided_role": "foreleg_pair",
+                    },
+                )
+            )
+            assert weak_foreleg == "Created Cylinder named 'ForeL'"
 
             weak_name_warning = result_payload(
                 await client.call_tool(

@@ -208,6 +208,7 @@ class SceneAttachmentSemanticsContract(MCPContract):
         "tail_body",
         "limb_body",
         "limb_segment",
+        "roof_wall",
     ]
     part_object: str
     anchor_object: str
@@ -375,7 +376,7 @@ class SceneCorrectionTruthPairContract(MCPContract):
 
 
 class SceneCorrectionTruthSummaryContract(MCPContract):
-    pairing_strategy: Literal["none", "primary_to_others", "required_creature_seams"] = "none"
+    pairing_strategy: Literal["none", "primary_to_others", "required_creature_seams", "guided_spatial_pairs"] = "none"
     pair_count: int = 0
     evaluated_pairs: int = 0
     contact_failures: int = 0
@@ -393,7 +394,15 @@ class SceneCorrectionTruthBundleContract(MCPContract):
 
 class SceneTruthFollowupItemContract(MCPContract):
     kind: Literal[
-        "contact_failure", "gap", "overlap", "alignment", "attachment", "measurement_error", "insufficient_scope"
+        "contact_failure",
+        "gap",
+        "overlap",
+        "alignment",
+        "attachment",
+        "support",
+        "symmetry",
+        "measurement_error",
+        "insufficient_scope",
     ]
     summary: str
     priority: Literal["high", "normal"] = "normal"

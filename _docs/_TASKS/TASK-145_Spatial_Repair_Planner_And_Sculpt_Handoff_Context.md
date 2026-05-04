@@ -1,6 +1,6 @@
 # TASK-145: Spatial Repair Planner and Sculpt Handoff Context
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** Guided Runtime UX / Spatial Repair Planning
 **Estimated Effort:** Large
@@ -63,6 +63,9 @@ The repo already has the key ingredients this umbrella should refine:
 - bounded `refinement_handoff`
 - current `macro` / `modeling_mesh` / `sculpt_region` family vocabulary
 - typed `correction_candidates` and truth evidence
+- typed `scene_scope_graph`, `scene_relation_graph`, and
+  `scene_view_diagnostics` artifacts from the completed TASK-143 / TASK-144
+  work
 - current staged compare/iterate loop
 
 This follow-on should therefore strengthen the planner and sculpt handoff
@@ -126,8 +129,8 @@ The intended posture is:
   - `refinement_route`
   - `refinement_handoff`
   - current visibility shaping and guided prompts
-- use the new spatial-state/view-state modules from `TASK-143` and `TASK-144`
-  as inputs to better planner outputs
+- use the existing spatial-state/view-state modules from `TASK-143` and
+  `TASK-144` as inputs to better planner outputs
 - keep the first version focused on:
   - typed planner payloads
   - better family selection
@@ -145,6 +148,43 @@ For the first wave, the implementation should therefore be framed as:
 
 This umbrella should not be blocked on adding new heavy geometry libraries.
 
+## Architecture Ownership Boundary
+
+TASK-145 should extend the existing staged reference loop, but it should not
+make `server/adapters/mcp/areas/reference.py` the permanent owner of growing
+planner policy.
+
+The intended ownership split is:
+
+- `server/adapters/mcp/contracts/reference.py` owns the response contracts and
+  typed planner/handoff shapes exposed through MCP.
+- `server/adapters/mcp/areas/reference.py` remains the stage-checkpoint
+  assembler: it gathers the current evidence, calls the planner policy, and
+  attaches the bounded result.
+- `server/application/services/repair_planner.py` or an equivalent
+  framework-free policy helper should own non-trivial family-selection,
+  blocker, and sculpt-suppression rules once the rules outgrow the current
+  private helper shape.
+- Any application-layer planner helper must preserve Clean Architecture
+  direction. It should expose framework-free DTOs or typed policy results; it
+  must not import MCP adapter contracts. `server/adapters/mcp/areas/reference.py`
+  remains responsible for translating planner results into `Reference*Contract`
+  payloads.
+- `server/application/services/spatial_graph.py` and scene graph contracts
+  remain the owners of spatial truth facts; TASK-145 consumes their evidence
+  instead of recomputing scene truth.
+- View/framing truth should continue to come from the existing
+  `SceneToolHandler.get_view_diagnostics(...)` and `scene_view_diagnostics(...)`
+  path. The planner consumes those typed results; it does not create a new
+  camera or visibility truth pass.
+- FastMCP visibility/search layers expose or hide bounded artifacts; they do
+  not become the planner's reasoning authority.
+
+Do not introduce a second autonomous routing loop, a LaBSE-backed planner, or
+an independent state machine. Any separately retrievable planner detail must
+be a read-only derivative of the current compare/iterate state and the same
+policy result that the compact stage response uses.
+
 ## Dependency Policy
 
 - if a new tool, grouped surface, or bounded macro is needed to make the
@@ -155,6 +195,19 @@ This umbrella should not be blocked on adding new heavy geometry libraries.
   automatically become bootstrap-visible on `llm-guided`
 - `LLM_GUIDE_V2.md` is the supporting design document for these choices; this
   umbrella remains the canonical delivery direction
+
+## Coordination With TASK-157
+
+TASK-145 feeds TASK-157 but does not implement quality-gate ownership.
+
+- TASK-145 may emit local planner blockers, sculpt suppression reasons, and
+  bounded next-family recommendations.
+- TASK-157 owns gate-plan declaration, gate status, completion blocking, and
+  guided runtime cadence for required quality gates.
+- TASK-145 wording should avoid treating planner preconditions as final gate
+  pass/fail status. The planner can say "sculpt is blocked by unresolved
+  relation evidence"; TASK-157 decides whether an active required gate blocks
+  final completion.
 
 ## Product Design Requirements
 
@@ -184,14 +237,13 @@ This umbrella should not be blocked on adding new heavy geometry libraries.
 
 ### Delivery Model
 
-- the planner and sculpt-handoff context should be retrievable as explicit
-  bounded products instead of being hidden as another large default payload
-- the guided loop may reference or call planner artifacts when needed, but the
-  planner module itself should remain conceptually separate from the baseline
-  compare/iterate contract
-- if a lightweight planner summary is later added inline to loop responses, it
-  should be a compact derivative of the planner module rather than the full
-  planner context
+- the planner and sculpt-handoff context should be exposed as explicit bounded
+  products of the existing stage-checkpoint state instead of hidden inside a
+  large default payload
+- the guided loop may attach a compact planner summary inline, but the summary
+  must be derived from the same planner policy used for any richer detail path
+- any richer planner detail must be opt-in/read-only and must not start a
+  detached secondary workflow, routing loop, or persistence model
 
 ### Repair Planner
 
@@ -265,36 +317,43 @@ This umbrella does **not** cover:
 - guided docs teach planner-first interpretation before broader free-form edits
 - focused regression coverage protects the planner and sculpt handoff contract
 
-## Repository Touchpoints
+## Repository Touchpoint Table
 
-- `server/adapters/mcp/areas/reference.py`
-- `server/adapters/mcp/contracts/reference.py`
-- `server/adapters/mcp/contracts/scene.py`
-- `server/adapters/mcp/areas/scene.py`
-- `server/adapters/mcp/areas/sculpt.py`
-- `server/adapters/mcp/transforms/visibility_policy.py`
-- `server/adapters/mcp/guided_mode.py`
-- `server/adapters/mcp/platform/capability_manifest.py`
-- `server/adapters/mcp/prompts/prompt_catalog.py`
-- `server/router/infrastructure/tools_metadata/scene/`
-- `server/router/infrastructure/tools_metadata/sculpt/`
-- `server/router/infrastructure/tools_metadata/reference/`
-- `tests/unit/adapters/mcp/test_reference_images.py`
-- `tests/unit/adapters/mcp/test_contract_payload_parity.py`
-- `tests/unit/adapters/mcp/test_public_surface_docs.py`
-- `tests/unit/adapters/mcp/test_prompt_catalog.py`
-- `tests/unit/adapters/mcp/test_guided_mode.py`
-- `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
-- `tests/unit/adapters/mcp/test_search_surface.py`
-- `tests/unit/adapters/mcp/test_visibility_policy.py`
-- `tests/e2e/vision/test_reference_stage_truth_handoff.py`
-- `tests/e2e/vision/test_reference_guided_creature_comparison.py`
-- `tests/e2e/tools/sculpt/test_sculpt_tools.py`
-- `_docs/LLM_GUIDE_V2.md`
-- `_docs/_PROMPTS/README.md`
-- `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
-- `_docs/_VISION/CROSS_DOMAIN_REFINEMENT_ROUTING_EVAL.md`
-- `_docs/_VISION/README.md`
+| Path / Module | Expected Ownership | Why In Scope |
+|---------------|--------------------|--------------|
+| `server/adapters/mcp/contracts/reference.py` | Response contract owner | Add bounded planner / handoff fields without inventing a second response family. |
+| `server/application/services/repair_planner.py` or equivalent helper | Planner policy owner | Keep non-trivial family-selection and blocker rules outside thin MCP adapters while returning framework-free DTOs/results, not MCP adapter contracts. |
+| `server/adapters/mcp/areas/reference.py` | Stage response assembler | Reuse `truth_followup`, `correction_candidates`, `budget_control`, `refinement_route`, and `refinement_handoff` in compare / iterate. |
+| `server/adapters/mcp/contracts/scene.py` | Spatial evidence contract owner | Consume existing scope, relation, and view contracts as evidence instead of duplicating truth. |
+| `server/adapters/mcp/areas/scene.py` | Spatial read-tool adapter | Preserve current `scene_scope_graph`, `scene_relation_graph`, and `scene_view_diagnostics` behavior. |
+| `server/application/services/spatial_graph.py` | Spatial truth service | Remains the source for scope/relation facts used by planner policy. |
+| `server/application/tool_handlers/scene_handler.py` | View diagnostics application owner | Preserve the RPC-backed `get_view_diagnostics(...)` path as the runtime source for view/framing facts. |
+| `server/adapters/mcp/areas/sculpt.py` | Sculpt tool surface owner | Keep recommended sculpt tools aligned with real deterministic region tool signatures. |
+| `server/adapters/mcp/transforms/visibility_policy.py` | Runtime visibility owner | Keep planner/sculpt exposure phase-aware and prevent broad bootstrap visibility. |
+| `server/adapters/mcp/guided_mode.py` | Guided profile owner | Keep `llm-guided` small while allowing bounded handoff-driven discovery. |
+| `server/adapters/mcp/router_helper.py` | Guided execution policy owner | Ensure any guided-visible sculpt mutator maps to an allowed family or fails closed before execution. |
+| `server/adapters/mcp/platform/capability_manifest.py` | Public capability inventory | Keep public metadata aligned with any bounded planner/sculpt capability exposure. |
+| `server/adapters/mcp/prompts/prompt_catalog.py` | Prompt ordering owner | Teach planner-first interpretation without exposing hidden tools. |
+| `server/router/infrastructure/tools_metadata/scene/` | Search metadata for evidence tools | Keep scope/relation/view discovery aligned with planner evidence needs. |
+| `server/router/infrastructure/tools_metadata/sculpt/` | Search metadata for sculpt tools | Limit guided sculpt discovery to the bounded deterministic subset. |
+| `server/router/infrastructure/tools_metadata/reference/` | Search metadata for reference loop | Surface planner semantics through existing reference-stage discovery. |
+| `tests/unit/adapters/mcp/test_reference_images.py` | Reference-loop unit coverage | Assert candidates, route, handoff, budget, and planner policy behavior. |
+| `tests/unit/adapters/mcp/test_contract_payload_parity.py` | Contract shape coverage | Lock compact/rich planner payload parity. |
+| `tests/unit/adapters/mcp/test_visibility_policy.py` | Visibility policy coverage | Guard against broad planner/sculpt overexposure. |
+| `tests/unit/adapters/mcp/test_guided_mode.py` | Guided profile coverage | Prove planner/sculpt handoff does not bloat default guided profile. |
+| `tests/unit/adapters/mcp/test_context_bridge.py` | Guided execution coverage | Lock role-group spoofing and unmapped mutator fail-closed behavior when sculpt visibility changes. |
+| `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py` | Catalog-size regression coverage | Keep guided build/inspect footprints bounded. |
+| `tests/unit/adapters/mcp/test_search_surface.py` | Search/discovery coverage | Prove bounded artifacts are discoverable only when appropriate. |
+| `tests/unit/adapters/mcp/test_prompt_catalog.py` | Prompt catalog coverage | Prove planner-first prompt ordering. |
+| `tests/unit/adapters/mcp/test_public_surface_docs.py` | Docs/public contract coverage | Keep public docs aligned with shipped surface. |
+| `tests/e2e/vision/test_reference_stage_truth_handoff.py` | Stage-loop E2E coverage | Exercise truth-driven assembly handoff and compact planner payload behavior. |
+| `tests/e2e/vision/test_reference_guided_creature_comparison.py` | Guided creature E2E coverage | Prove planner behavior in a realistic guided reconstruction scenario. |
+| `tests/e2e/tools/sculpt/test_sculpt_tools.py` | Blender sculpt E2E coverage | Prove recommended sculpt subset matches real Blender-side behavior. |
+| `_docs/LLM_GUIDE_V2.md` | Operator design guide | Keep planner-first operating model documented. |
+| `_docs/_PROMPTS/README.md` | Prompt surface docs | Keep client prompt guidance aligned with planner adoption. |
+| `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md` | Creature prompt docs | Show planner/sculpt handoff order for creature runs. |
+| `_docs/_VISION/CROSS_DOMAIN_REFINEMENT_ROUTING_EVAL.md` | Regression/eval docs | Track family-selection evidence and scenarios. |
+| `_docs/_VISION/README.md` | Vision loop docs | Keep vision as advisory evidence, not planner truth authority. |
 
 ## Execution Structure
 
@@ -313,26 +372,51 @@ This umbrella does **not** cover:
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md`
 
-## Tests To Add/Update
+## Test Matrix
 
-- `tests/unit/adapters/mcp/test_reference_images.py`
-- `tests/unit/adapters/mcp/test_contract_payload_parity.py`
-- `tests/unit/adapters/mcp/test_public_surface_docs.py`
-- `tests/unit/adapters/mcp/test_prompt_catalog.py`
-- `tests/unit/adapters/mcp/test_guided_mode.py`
-- `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
-- `tests/unit/adapters/mcp/test_search_surface.py`
-- `tests/unit/adapters/mcp/test_visibility_policy.py`
-- `tests/e2e/vision/test_reference_stage_truth_handoff.py`
-- `tests/e2e/vision/test_reference_guided_creature_comparison.py`
-- focused sculpt-handoff regression coverage in `tests/e2e/tools/sculpt/`
+| Layer | Tests To Add / Update |
+|-------|------------------------|
+| Unit contracts | `tests/unit/adapters/mcp/test_contract_payload_parity.py` for compact/rich planner and handoff shapes. |
+| Unit reference loop | `tests/unit/adapters/mcp/test_reference_images.py` for correction candidates, route policy, planner summary, budget trimming, and sculpt blockers. |
+| Unit visibility/search | `tests/unit/adapters/mcp/test_visibility_policy.py`, `test_guided_mode.py`, `test_context_bridge.py`, `test_guided_surface_benchmarks.py`, and `test_search_surface.py` for phase-aware bounded exposure plus guided execution fail-closed coverage. |
+| Unit prompt/docs | `tests/unit/adapters/mcp/test_prompt_catalog.py` and `test_public_surface_docs.py` for planner-first wording and public contract alignment. |
+| Integration/router | Existing router metadata/search validation plus focused guided visibility refresh coverage when planner/handoff state changes native MCP visibility. |
+| E2E / Blender | `tests/e2e/vision/test_reference_stage_truth_handoff.py`, `tests/e2e/vision/test_reference_guided_creature_comparison.py`, and focused sculpt-handoff coverage in `tests/e2e/tools/sculpt/`. |
+| Docs / regression fixtures | `_docs/_VISION/CROSS_DOMAIN_REFINEMENT_ROUTING_EVAL.md`, `_docs/_VISION/README.md`, `_docs/_PROMPTS/*`, and `_docs/_TESTS/README.md` when test architecture changes. |
+
+## Validation Commands
+
+- Unit reference loop: `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
+- Visibility/search/prompt lane: `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_context_bridge.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_prompt_catalog.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- E2E/Blender lane when runtime behavior changes: `poetry run pytest tests/e2e/vision/test_reference_stage_truth_handoff.py tests/e2e/vision/test_reference_guided_creature_comparison.py tests/e2e/tools/sculpt/test_sculpt_tools.py -q`
+- Preflight docs/code hygiene: `git diff --check`
 
 ## Changelog Impact
 
-- add a dedicated `_docs/_CHANGELOG/*` entry when this umbrella ships
+- added [_docs/_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md](../_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md)
+
+## Completion Summary
+
+Completed the v1 planner/handoff delivery on top of the existing staged
+reference loop:
+
+- added compact `planner_summary` and rich-profile `planner_detail` contracts
+  derived from the same route/handoff policy result, with rich detail trim
+  state kept aligned with `budget_control`
+- extended `refinement_route` and `refinement_handoff` with target scope,
+  provenance, typed blockers, handoff state, and bounded sculpt eligibility
+- kept sculpt recommendation-only on default `llm-guided` and fail-closed
+  unmapped `sculpt_*` mutators under active guided execution policy
+- updated MCP, prompt, vision, router, tool-inventory, changelog, and task-board
+  docs for the planner-first read order
+- validation recorded for the unit contract/reference/guided execution lane,
+  the broader TASK-145 unit regression pack, targeted lint, targeted mypy, and
+  host-side Blender-backed/stdio E2E lanes covering truth-driven assembly,
+  sculpt-ready local-form handoff, guided surface parity, macro attachment
+  proofs, and deterministic sculpt tools
 
 ## Status / Board Update
 
-- do not touch `_docs/_TASKS/README.md` in this execution-tree planning branch
-- if this umbrella later changes promoted board state or closes, update the
-  board in the same allowed branch as the implementation/status change
+- `_docs/_TASKS/README.md` now tracks TASK-145 under completed milestones.
+- Direct children TASK-145-01, TASK-145-02, and TASK-145-03 are closed in the
+  same branch.

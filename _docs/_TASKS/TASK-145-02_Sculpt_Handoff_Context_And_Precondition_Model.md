@@ -1,7 +1,7 @@
 # TASK-145-02: Sculpt Handoff Context and Precondition Model
 
 **Parent:** [TASK-145](./TASK-145_Spatial_Repair_Planner_And_Sculpt_Handoff_Context.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Depends On:** [TASK-145-01](./TASK-145-01_Repair_Planner_Payload_And_Family_Selection_Policy.md), [TASK-143](./TASK-143_Guided_Spatial_Scope_And_Relation_Graphs.md), [TASK-144](./TASK-144_Camera_Aware_View_Graph_And_Visibility_Diagnostics.md)
 
@@ -42,13 +42,48 @@ Keep the first product posture conservative:
 - brush/setup flows and broad whole-mesh sculpt paths do not become the normal
   guided handoff
 
-This subtask should consume planner outputs from TASK-145-01 and the future
+This subtask should consume planner outputs from TASK-145-01 and the existing
 scope / relation / visibility artifacts from TASK-143 / TASK-144 without
 duplicating their responsibilities.
+
+## Implementation Notes
+
+- `ReferenceRefinementHandoffContract`, `_SCULPT_RECOMMENDED_TOOLS`, and
+  `_build_refinement_handoff(...)` are the current recommendation owners and
+  must move together with sculpt metadata/search wording.
+- Sculpt handoff state is not a TASK-157 quality-gate status. It may report
+  local readiness, blockers, and suppressions, but final gate pass/fail and
+  completion blocking remain TASK-157 responsibilities.
+- The handoff should consume deterministic relation/view evidence before
+  recommending sculpt. Vision/silhouette evidence may support a local-form
+  recommendation, but cannot clear structural blockers.
+- Broad brush/setup flows and whole-mesh sculpting should stay out of the
+  normal guided handoff unless a later task explicitly promotes them.
+- `build_sculpt_handoff(...)`, `planner_result.target_scope`, and
+  `safe_fallback_family` in the pseudocode are proposed helper/result fields.
+  They must be implemented explicitly or mapped onto the current
+  `ReferenceRefinementHandoffContract` / planner-policy result without creating
+  a standalone sculpt planner state.
+
+## Pseudocode
+
+```python
+handoff = build_sculpt_handoff(
+    route=planner_result.route,
+    target_scope=planner_result.target_scope,
+    blockers=planner_result.blockers,
+    recommended_tools=bounded_sculpt_region_tools,
+)
+
+if handoff.has_blockers:
+    handoff.selected_family = planner_result.safe_fallback_family
+    handoff.recommended_tools = []
+```
 
 ## Repository Touchpoints
 
 - `server/adapters/mcp/contracts/reference.py`
+- `server/application/services/repair_planner.py` or equivalent policy helper
 - `server/adapters/mcp/areas/reference.py`
 - `server/adapters/mcp/areas/sculpt.py`
 - `server/adapters/mcp/transforms/visibility_policy.py`
@@ -57,6 +92,19 @@ duplicating their responsibilities.
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/e2e/tools/sculpt/test_sculpt_tools.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
+
+## Validation Category
+
+- Unit reference tests must cover both ready and blocked sculpt handoff.
+- Visibility tests must prove `llm-guided` does not expose the full sculpt
+  family by default.
+- Targeted unit lane:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_visibility_policy.py -q`
+- Blender E2E is required when tool arguments or real sculpt behavior change.
+- Targeted E2E lane when runtime sculpt behavior changes:
+  `poetry run pytest tests/e2e/vision/test_reference_stage_truth_handoff.py tests/e2e/tools/sculpt/test_sculpt_tools.py -q`
+- Docs/preflight:
+  `git diff --check`
 
 ## Acceptance Criteria
 
@@ -87,15 +135,21 @@ duplicating their responsibilities.
 
 ## Changelog Impact
 
-- add a `_docs/_CHANGELOG/*.md` entry when sculpt handoff contract or sculpt
-  recommendation policy ships
+- covered by [_docs/_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md](../_CHANGELOG/276-2026-04-30-task-145-repair-planner-handoff.md)
+
+## Completion Summary
+
+Closed by making `ReferenceRefinementHandoffContract` carry bounded local
+target semantics, `ready` / `blocked` / `suppressed` state, typed blockers,
+eligible sculpt tools, and recommendation-only visibility metadata. Missing or
+blocking staged view evidence now suppresses sculpt and asks for
+`scene_view_diagnostics(...)`; `sculpt_crease_region` is consciously included in
+the deterministic region subset.
 
 ## Status / Board Update
 
-- planning-only execution-tree split: keep `_docs/_TASKS/README.md` unchanged
-  in this branch
-- when this subtask is implemented and closed later, update parent/child
-  statuses and the task board in the same allowed branch
+- closed under the completed TASK-145 umbrella
+- no separate board row is needed because TASK-145 remains the promoted item
 
 ## Execution Structure
 

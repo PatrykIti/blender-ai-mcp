@@ -5,6 +5,10 @@ from __future__ import annotations
 import pytest
 from server.adapters.mcp.contracts.correction_audit import CorrectionAuditEventContract
 from server.adapters.mcp.contracts.mesh import MeshInspectResponseContract
+from server.adapters.mcp.contracts.reference import (
+    ReferenceCompareStageCheckpointResponseContract,
+    ReferenceIterateStageCheckpointResponseContract,
+)
 from server.adapters.mcp.contracts.router import RouterGoalResponseContract, RouterStatusContract
 from server.adapters.mcp.contracts.scene import SceneContextResponseContract, SceneInspectResponseContract
 from server.adapters.mcp.contracts.workflow_catalog import WorkflowCatalogResponseContract
@@ -13,6 +17,379 @@ from server.adapters.mcp.contracts.workflow_catalog import WorkflowCatalogRespon
 @pytest.mark.parametrize(
     ("contract_cls", "payload", "field_name", "expected"),
     [
+        (
+            ReferenceCompareStageCheckpointResponseContract,
+            {
+                "action": "compare_stage_checkpoint",
+                "goal": "refine organic surface",
+                "target_object": "Heart",
+                "target_objects": ["Heart"],
+                "checkpoint_id": "stage_1",
+                "checkpoint_label": "stage",
+                "preset_profile": "rich",
+                "preset_names": [],
+                "capture_count": 0,
+                "captures": [],
+                "reference_count": 1,
+                "reference_ids": ["ref_1"],
+                "reference_labels": ["front"],
+                "gate_statuses": [
+                    {
+                        "gate_id": "heart_surface_gate",
+                        "gate_type": "shape_profile",
+                        "label": "heart surface profile",
+                        "target_kind": "object",
+                        "target_label": "Heart",
+                        "required": True,
+                        "priority": "high",
+                        "status": "stale",
+                        "status_reason": "scene_mutation_after_verification",
+                        "verification_strategy": "shape_profile",
+                        "allowed_correction_families": ["secondary_parts", "inspect_validate"],
+                        "recommended_bounded_tools": ["scene_view_diagnostics", "mesh_inspect"],
+                        "proposal_sources": ["llm_goal"],
+                        "source_provenance": [{"source": "llm_goal"}],
+                        "evidence_requirements": [{"evidence_kind": "mesh_metric", "required": True}],
+                        "evidence_refs": [],
+                    }
+                ],
+                "completion_blockers": [
+                    {
+                        "gate_id": "heart_surface_gate",
+                        "gate_type": "shape_profile",
+                        "label": "heart surface profile",
+                        "status": "stale",
+                        "reason_code": "scene_mutation_after_verification",
+                        "target_kind": "object",
+                        "target_label": "Heart",
+                        "target_objects": ["Heart"],
+                        "required_evidence_kinds": ["mesh_metric"],
+                        "allowed_correction_families": ["secondary_parts", "inspect_validate"],
+                        "recommended_bounded_tools": ["scene_view_diagnostics", "mesh_inspect"],
+                        "message": "Heart profile needs fresh verification.",
+                    }
+                ],
+                "next_gate_actions": ["refresh_gate_evidence"],
+                "recommended_bounded_tools": ["scene_view_diagnostics", "mesh_inspect"],
+                "refinement_route": {
+                    "domain_classification": "organic_form",
+                    "selected_family": "inspect_only",
+                    "reason": "View diagnostics required before sculpt-region handoff.",
+                    "source_signals": ["scope", "vision", "view"],
+                    "candidate_ids": ["vision:heart_surface"],
+                    "target_scope": {
+                        "scope_kind": "single_object",
+                        "target_object": "Heart",
+                        "target_objects": ["Heart"],
+                    },
+                    "blockers": [
+                        {
+                            "blocker_id": "view_diagnostics_required",
+                            "category": "view",
+                            "severity": "blocking",
+                            "reason": "Run scene_view_diagnostics before sculpting.",
+                            "recommended_tool": "scene_view_diagnostics",
+                            "arguments_hint": {"target_object": "Heart"},
+                        }
+                    ],
+                    "detail_available": True,
+                },
+                "refinement_handoff": {
+                    "selected_family": "inspect_only",
+                    "state": "blocked",
+                    "message": "Sculpt-region handoff is blocked by view diagnostics.",
+                    "target_object": "Heart",
+                    "target_scope": {
+                        "scope_kind": "single_object",
+                        "target_object": "Heart",
+                        "target_objects": ["Heart"],
+                    },
+                    "blockers": [
+                        {
+                            "blocker_id": "view_diagnostics_required",
+                            "category": "view",
+                            "severity": "blocking",
+                            "reason": "Run scene_view_diagnostics before sculpting.",
+                            "recommended_tool": "scene_view_diagnostics",
+                            "arguments_hint": {"target_object": "Heart"},
+                        }
+                    ],
+                    "eligible_tool_names": [
+                        "sculpt_deform_region",
+                        "sculpt_smooth_region",
+                        "sculpt_inflate_region",
+                        "sculpt_pinch_region",
+                        "sculpt_crease_region",
+                    ],
+                    "visibility_unlock_recommended": False,
+                    "recommended_tools": [],
+                },
+                "planner_summary": {
+                    "selected_family": "inspect_only",
+                    "target_scope": {
+                        "scope_kind": "single_object",
+                        "target_object": "Heart",
+                        "target_objects": ["Heart"],
+                    },
+                    "rationale": "View diagnostics required before sculpt-region handoff.",
+                    "provenance": [
+                        {
+                            "source_id": "vision_candidates",
+                            "source_class": "vision",
+                            "summary": "Vision mismatch text is advisory and can prioritize local-form attention.",
+                            "candidate_ids": ["vision:heart_surface"],
+                        }
+                    ],
+                    "blockers": [
+                        {
+                            "blocker_id": "view_diagnostics_required",
+                            "category": "view",
+                            "severity": "blocking",
+                            "reason": "Run scene_view_diagnostics before sculpting.",
+                            "recommended_tool": "scene_view_diagnostics",
+                            "arguments_hint": {"target_object": "Heart"},
+                        }
+                    ],
+                    "detail_available": True,
+                    "required_support_tools": [
+                        {
+                            "tool_name": "scene_view_diagnostics",
+                            "reason": "Run scene_view_diagnostics before sculpting.",
+                            "priority": "high",
+                            "arguments_hint": {"target_object": "Heart"},
+                        }
+                    ],
+                },
+                "planner_detail": {
+                    "summary": {
+                        "selected_family": "inspect_only",
+                        "target_scope": {
+                            "scope_kind": "single_object",
+                            "target_object": "Heart",
+                            "target_objects": ["Heart"],
+                        },
+                        "rationale": "View diagnostics required before sculpt-region handoff.",
+                        "provenance": [
+                            {
+                                "source_id": "vision_candidates",
+                                "source_class": "vision",
+                                "summary": "Vision mismatch text is advisory and can prioritize local-form attention.",
+                                "candidate_ids": ["vision:heart_surface"],
+                            }
+                        ],
+                        "blockers": [
+                            {
+                                "blocker_id": "view_diagnostics_required",
+                                "category": "view",
+                                "severity": "blocking",
+                                "reason": "Run scene_view_diagnostics before sculpting.",
+                                "recommended_tool": "scene_view_diagnostics",
+                                "arguments_hint": {"target_object": "Heart"},
+                            }
+                        ],
+                        "detail_available": True,
+                        "required_support_tools": [
+                            {
+                                "tool_name": "scene_view_diagnostics",
+                                "reason": "Run scene_view_diagnostics before sculpting.",
+                                "priority": "high",
+                                "arguments_hint": {"target_object": "Heart"},
+                            }
+                        ],
+                    },
+                    "route": {
+                        "domain_classification": "organic_form",
+                        "selected_family": "inspect_only",
+                        "reason": "View diagnostics required before sculpt-region handoff.",
+                        "source_signals": ["scope", "vision", "view"],
+                        "candidate_ids": ["vision:heart_surface"],
+                        "target_scope": {
+                            "scope_kind": "single_object",
+                            "target_object": "Heart",
+                            "target_objects": ["Heart"],
+                        },
+                        "blockers": [
+                            {
+                                "blocker_id": "view_diagnostics_required",
+                                "category": "view",
+                                "severity": "blocking",
+                                "reason": "Run scene_view_diagnostics before sculpting.",
+                                "recommended_tool": "scene_view_diagnostics",
+                                "arguments_hint": {"target_object": "Heart"},
+                            }
+                        ],
+                        "detail_available": True,
+                    },
+                    "handoff": {
+                        "selected_family": "inspect_only",
+                        "state": "blocked",
+                        "message": "Sculpt-region handoff is blocked by view diagnostics.",
+                        "target_object": "Heart",
+                        "target_scope": {
+                            "scope_kind": "single_object",
+                            "target_object": "Heart",
+                            "target_objects": ["Heart"],
+                        },
+                        "blockers": [
+                            {
+                                "blocker_id": "view_diagnostics_required",
+                                "category": "view",
+                                "severity": "blocking",
+                                "reason": "Run scene_view_diagnostics before sculpting.",
+                                "recommended_tool": "scene_view_diagnostics",
+                                "arguments_hint": {"target_object": "Heart"},
+                            }
+                        ],
+                        "eligible_tool_names": [
+                            "sculpt_deform_region",
+                            "sculpt_smooth_region",
+                            "sculpt_inflate_region",
+                            "sculpt_pinch_region",
+                            "sculpt_crease_region",
+                        ],
+                        "visibility_unlock_recommended": False,
+                        "recommended_tools": [],
+                    },
+                    "candidate_ids": ["vision:heart_surface"],
+                    "notes": [],
+                    "detail_trimmed": False,
+                },
+            },
+            "completion_blockers.0.gate_id",
+            "heart_surface_gate",
+        ),
+        (
+            ReferenceIterateStageCheckpointResponseContract,
+            {
+                "action": "iterate_stage_checkpoint",
+                "goal": "refine organic surface",
+                "target_object": "Heart",
+                "target_objects": ["Heart"],
+                "checkpoint_id": "stage_1",
+                "checkpoint_label": "stage",
+                "iteration_index": 1,
+                "loop_disposition": "continue_build",
+                "continue_recommended": True,
+                "prior_checkpoint_id": None,
+                "prior_correction_focus": [],
+                "correction_focus": ["Heart surface smoothing"],
+                "repeated_correction_focus": [],
+                "stagnation_count": 0,
+                "gate_statuses": [
+                    {
+                        "gate_id": "heart_surface_gate",
+                        "gate_type": "shape_profile",
+                        "label": "heart surface profile",
+                        "target_kind": "object",
+                        "target_label": "Heart",
+                        "required": True,
+                        "priority": "high",
+                        "status": "stale",
+                        "status_reason": "scene_mutation_after_verification",
+                        "verification_strategy": "shape_profile",
+                        "allowed_correction_families": ["secondary_parts", "inspect_validate"],
+                        "recommended_bounded_tools": ["scene_view_diagnostics", "mesh_inspect"],
+                        "proposal_sources": ["llm_goal"],
+                        "source_provenance": [{"source": "llm_goal"}],
+                        "evidence_requirements": [{"evidence_kind": "mesh_metric", "required": True}],
+                        "evidence_refs": [],
+                    }
+                ],
+                "completion_blockers": [
+                    {
+                        "gate_id": "heart_surface_gate",
+                        "gate_type": "shape_profile",
+                        "label": "heart surface profile",
+                        "status": "stale",
+                        "reason_code": "scene_mutation_after_verification",
+                        "target_kind": "object",
+                        "target_label": "Heart",
+                        "target_objects": ["Heart"],
+                        "required_evidence_kinds": ["mesh_metric"],
+                        "allowed_correction_families": ["secondary_parts", "inspect_validate"],
+                        "recommended_bounded_tools": ["scene_view_diagnostics", "mesh_inspect"],
+                        "message": "Heart profile needs fresh verification.",
+                    }
+                ],
+                "next_gate_actions": ["refresh_gate_evidence"],
+                "recommended_bounded_tools": ["scene_view_diagnostics", "mesh_inspect"],
+                "compare_result": {
+                    "action": "compare_stage_checkpoint",
+                    "goal": "refine organic surface",
+                    "target_object": "Heart",
+                    "target_objects": ["Heart"],
+                    "checkpoint_id": "stage_1",
+                    "checkpoint_label": "stage",
+                    "preset_profile": "rich",
+                    "preset_names": [],
+                    "capture_count": 0,
+                    "captures": [],
+                    "reference_count": 1,
+                    "reference_ids": ["ref_1"],
+                    "reference_labels": ["front"],
+                    "planner_summary": {
+                        "selected_family": "inspect_only",
+                        "rationale": "View diagnostics required before sculpt-region handoff.",
+                        "detail_available": True,
+                    },
+                    "planner_detail": {
+                        "summary": {
+                            "selected_family": "inspect_only",
+                            "rationale": "View diagnostics required before sculpt-region handoff.",
+                            "detail_available": True,
+                        },
+                        "route": {
+                            "domain_classification": "organic_form",
+                            "selected_family": "inspect_only",
+                            "reason": "View diagnostics required before sculpt-region handoff.",
+                            "source_signals": ["scope", "vision", "view"],
+                            "candidate_ids": ["vision:heart_surface"],
+                            "detail_available": True,
+                        },
+                        "handoff": {
+                            "selected_family": "inspect_only",
+                            "state": "blocked",
+                            "message": "Sculpt-region handoff is blocked by view diagnostics.",
+                            "recommended_tools": [],
+                        },
+                        "candidate_ids": ["vision:heart_surface"],
+                        "notes": [],
+                        "detail_trimmed": False,
+                    },
+                },
+                "planner_summary": {
+                    "selected_family": "inspect_only",
+                    "rationale": "View diagnostics required before sculpt-region handoff.",
+                    "detail_available": True,
+                },
+                "planner_detail": {
+                    "summary": {
+                        "selected_family": "inspect_only",
+                        "rationale": "View diagnostics required before sculpt-region handoff.",
+                        "detail_available": True,
+                    },
+                    "route": {
+                        "domain_classification": "organic_form",
+                        "selected_family": "inspect_only",
+                        "reason": "View diagnostics required before sculpt-region handoff.",
+                        "source_signals": ["scope", "vision", "view"],
+                        "candidate_ids": ["vision:heart_surface"],
+                        "detail_available": True,
+                    },
+                    "handoff": {
+                        "selected_family": "inspect_only",
+                        "state": "blocked",
+                        "message": "Sculpt-region handoff is blocked by view diagnostics.",
+                        "recommended_tools": [],
+                    },
+                    "candidate_ids": ["vision:heart_surface"],
+                    "notes": [],
+                    "detail_trimmed": False,
+                },
+            },
+            "next_gate_actions.0",
+            "refresh_gate_evidence",
+        ),
         (
             SceneContextResponseContract,
             {
@@ -119,9 +496,34 @@ from server.adapters.mcp.contracts.workflow_catalog import WorkflowCatalogRespon
                     "required_role_groups": ["spatial_context"],
                     "step_status": "blocked",
                 },
+                "active_gate_plan": {
+                    "plan_id": "creature_squirrel_gates",
+                    "domain_profile": "creature",
+                    "required_gate_count": 1,
+                    "optional_gate_count": 0,
+                    "gates": [
+                        {
+                            "gate_id": "required_part_eye_pair",
+                            "gate_type": "required_part",
+                            "label": "visible eye pair",
+                            "target_kind": "reference_part",
+                            "target_label": "eye_pair",
+                            "required": True,
+                            "priority": "high",
+                            "status": "pending",
+                            "verification_strategy": "object_existence",
+                            "allowed_correction_families": ["secondary_parts", "inspect_validate"],
+                            "proposal_sources": ["llm_goal"],
+                            "source_provenance": [{"source": "llm_goal"}],
+                            "evidence_requirements": [{"evidence_kind": "scene_truth", "required": True}],
+                            "evidence_refs": [],
+                        }
+                    ],
+                    "policy_warnings": [],
+                },
             },
-            "guided_flow_state.domain_profile",
-            "creature",
+            "active_gate_plan.gates.0.status",
+            "pending",
         ),
         (
             RouterStatusContract,
@@ -229,7 +631,10 @@ def test_contracts_accept_representative_handler_shaped_payloads(contract_cls, p
 
     current = contract
     for part in field_name.split("."):
-        current = getattr(current, part) if hasattr(current, part) else current[part]
+        if isinstance(current, list) and part.isdigit():
+            current = current[int(part)]
+        else:
+            current = getattr(current, part) if hasattr(current, part) else current[part]
 
     assert current == expected
 

@@ -560,6 +560,46 @@ Current guided-flow behavior:
   `guided_register_part()`,
   `reference_compare_stage_checkpoint()`, and
   `reference_iterate_stage_checkpoint()` can expose `guided_flow_state`
+- `router_set_goal(..., gate_proposal={...})` can ingest an optional
+  client/model quality-gate proposal for the active guided goal; the server
+  normalizes it into the session-scoped `active_gate_plan` and returns
+  `gate_intake_result` with machine-readable policy warnings when it rewrites
+  or drops unsafe declarations, including unsupported gate types and required
+  reference/perception evidence that is unavailable on the goal-time intake
+  surface
+- `router_get_status()`, `router_set_goal()`,
+  `reference_compare_stage_checkpoint()`, and
+  `reference_iterate_stage_checkpoint()` can expose `active_gate_plan` beside
+  `guided_flow_state`
+- staged reference compare/iterate checkpoint responses also expose top-level
+  `gate_statuses`, `completion_blockers`, `next_gate_actions`, and
+  `recommended_bounded_tools` derived from that same `active_gate_plan`
+- `completion_blockers` list only concrete unresolved required gates; the
+  aggregate `final_completion` gate may still report `blocked`, but it is not
+  duplicated into the blocker list that drives immediate repair focus
+- `active_gate_plan.gates[*].status` starts as `pending`; LLM or perception
+  sources may propose gates and provenance, but they cannot mark gates
+  `passed`, `failed`, `waived`, or `stale` without later server-owned verifier
+  evidence
+- `scene_relation_graph(...)` now feeds the first deterministic gate slice with
+  authoritative scope/spatial/assertion evidence for `required_part`,
+  `attachment_seam`, `support_contact`, and `symmetry_pair`; verifier output
+  persists evidence refs, `status_reason`, `completion_blockers`, status
+  summaries, and bounded repair-tool hints on `active_gate_plan`
+- the attachment-semantics slice now covers both creature seams and the first
+  building structural seam `roof_wall`, so a floating roof over a wall/main
+  volume can degrade to `failed / relation_floating_gap` instead of stopping at
+  `blocked / missing_relation_pair`
+- guided scene mutations reuse the existing spatial dirtying path to mark
+  the affected evidence-backed gate statuses `stale`; final completion remains
+  blocked by required gates in `pending`, `blocked`, `failed`, or `stale`
+- active gate blockers now shape the existing guided visibility/search layer:
+  failed seam/support gates expose bounded relation, measure/assert, and macro
+  repair tools; refinement/profile gates wait behind unresolved required
+  seam/support blockers
+- supported first-pass gate types are `required_part`, `attachment_seam`,
+  `support_contact`, `symmetry_pair`, `proportion_ratio`, `shape_profile`,
+  `opening_or_cut`, `refinement_stage`, and `final_completion`
 - domain overlays are deterministic and currently include:
   - `generic`
   - `creature`
@@ -1184,7 +1224,12 @@ Managing objects at the scene level.
 Invalid target-scope inputs such as an unavailable `collection_name` now return
 structured error payloads on the stage-compare path instead of failing again
 while building the error response.
-Stage compare/iterate responses now also expose `guided_reference_readiness`, `assembled_target_scope`, `truth_bundle`, `truth_followup`, `correction_candidates`, `budget_control`, `refinement_route`, `refinement_handoff`, `silhouette_analysis`, `action_hints`, and `part_segmentation`, so assembled-model correction flows can consume explicit session readiness, a structured target scope, correction-oriented truth findings, loop-ready follow-up items, an explicitly ranked merged correction list, explicit trimming metadata, a deterministic refinement-family decision, typed perception metrics/tool hints, and an optional advisory-only sidecar placeholder instead of inferring everything from loose `target_object` / `target_objects` / `collection_name` fields. On `reference_iterate_stage_checkpoint(...)`, the loop-facing `correction_focus` now prefers ranked `correction_candidates` summaries when they are present, and high-priority deterministic truth findings can also move `loop_disposition` to `inspect_validate` instead of waiting only for repeated vision focus. `action_hints` complement that loop by exposing deterministic silhouette-driven tool suggestions, while `part_segmentation` stays disabled unless an operator explicitly enables the separate sidecar path. Collection/object-set targeting now also avoids obviously accessory-first primary anchors when a more structural target is present, expands supported creature scopes into deterministic `required_creature_seams`, keeps multiple failing required seams live together in `truth_followup` / `correction_candidates`, normalizes vision-side `recommended_checks` to canonical MCP tool ids or drops them, applies model-aware budget control when the active runtime profile is too small for the full payload, and exposes `refinement_route` for bounded family choices such as `macro`, `modeling_mesh`, `sculpt_region`, or `inspect_only`. At this stage sculpt stays hidden on the normal guided surface; `refinement_handoff` is recommendation-only.
+Stage compare/iterate responses now also expose `guided_reference_readiness`, `reference_understanding_summary`, `reference_understanding_gate_ids`, `active_gate_plan`, top-level gate summaries (`gate_statuses`, `completion_blockers`, `next_gate_actions`, `recommended_bounded_tools`), `assembled_target_scope`, `truth_bundle`, `truth_followup`, `correction_candidates`, `budget_control`, `refinement_route`, `refinement_handoff`, `planner_summary`, optional rich-profile `planner_detail`, `silhouette_analysis`, `action_hints`, and `part_segmentation`, so assembled-model correction flows can consume explicit session readiness, the current pre-build reference-understanding contract/linkage, the normalized gate plan and immediate gate repair path, a structured target scope, correction-oriented truth findings, loop-ready follow-up items, an explicitly ranked merged correction list, explicit trimming metadata, a deterministic refinement-family decision, compact planner provenance/blockers, typed perception metrics/tool hints, and an optional advisory-only sidecar placeholder instead of inferring everything from loose `target_object` / `target_objects` / `collection_name` fields. On `reference_iterate_stage_checkpoint(...)`, the loop-facing `correction_focus` now prefers ranked `correction_candidates` summaries when they are present, unresolved `completion_blockers` can also move `loop_disposition` to `inspect_validate`, and high-priority deterministic truth findings still escalate the same way instead of waiting only for repeated vision focus. `planner_summary` is the first planner-facing read target: it reports the selected family, target scope, source-class provenance, typed blockers, and required support tools such as `scene_view_diagnostics(...)` when staged view evidence is missing before sculpt handoff. `action_hints` complement that loop by exposing deterministic silhouette-driven tool suggestions, while `part_segmentation` stays disabled unless an operator explicitly enables the separate sidecar path. Collection/object-set targeting now also avoids obviously accessory-first primary anchors when a more structural target is present, expands supported creature scopes into deterministic `required_creature_seams`, keeps multiple failing required seams live together in `truth_followup` / `correction_candidates`, normalizes vision-side `recommended_checks` to canonical MCP tool ids or drops them, applies model-aware budget control when the active runtime profile is too small for the full payload, and exposes `refinement_route` for bounded family choices such as `macro`, `modeling_mesh`, `sculpt_region`, or `inspect_only`. Sculpt stays hidden on the normal guided surface; `refinement_handoff` is recommendation-only, can be `ready`, `blocked`, or `suppressed`, and its bounded deterministic subset is `sculpt_deform_region`, `sculpt_smooth_region`, `sculpt_inflate_region`, `sculpt_pinch_region`, and `sculpt_crease_region`.
+When an active goal and attached references are present, the server may now run
+an internal reference-understanding pass on the shared vision backend and
+surface the typed result through `router_get_status(...)` plus the staged
+checkpoint payloads instead of creating a separate public
+`reference_understand(...)` tool.
 Silhouette metrics use a target-view or focus capture when one is available;
 the broad `context_wide` capture is only a fallback. A staged iterate result
 that is held in `continue_build` because required roles are still missing does
@@ -1217,13 +1262,16 @@ checkpoint handoff, call the explicit read-only artifacts:
 
 `reference_compare_current_view(...)` may also emit compact
 `view_diagnostics_hints` when the current framing or occlusion state makes the
-captured checkpoint a weak basis for the next correction step. That hint is
-recommendation-only and does not embed a heavyweight view graph into the
-default compare payload. When `persist_view=True` is used with user-view
-adjustments such as `view_name`, `orbit_horizontal`, or `zoom_factor`, the
-checkpoint capture applies and keeps those adjustments; the follow-up compact
-diagnostics read the already-persisted view instead of applying the same
-adjustments again.
+captured checkpoint a weak basis for the next correction step. The same compact
+hint surface is now available on `reference_compare_stage_checkpoint(...)` and
+`reference_iterate_stage_checkpoint(...)` when the selected deterministic stage
+focus preset still yields typed framing or occlusion issues for the intended
+local target. These hints are recommendation-only and do not embed a
+heavyweight view graph into the default compare payload. When
+`persist_view=True` is used with user-view adjustments such as `view_name`,
+`orbit_horizontal`, or `zoom_factor`, the checkpoint capture applies and keeps
+those adjustments; the follow-up compact diagnostics read the already-persisted
+view instead of applying the same adjustments again.
 
 For the guided creature path specifically, pair truth now carries one explicit
 attachment verdict for each required seam:
@@ -1243,9 +1291,9 @@ attachment verdict for each required seam:
 | `scene_get_hierarchy` | `object_name` (str, optional), `include_transforms` (bool) | Gets parent-child hierarchy for specific object or full scene tree. |
 | `scene_get_bounding_box` | `object_name` (str), `world_space` (bool) | Gets bounding box corners, min/max, center, dimensions, and volume. |
 | `scene_get_origin_info` | `object_name` (str) | Gets origin (pivot point) information relative to geometry and bounding box. |
-| `scene_scope_graph` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional) | Returns one compact read-only structural scope artifact for a target object/object set/collection, including the inferred anchor plus bounded object-role hints. Intended for on-demand guided spatial reasoning rather than bootstrap exposure. |
-| `scene_relation_graph` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional), `goal_hint` (str, optional) | Returns one compact read-only pair-relation graph derived from current gap/alignment/overlap/contact truth, including bounded attachment/support/symmetry interpretations where justified. Intended for on-demand guided spatial reasoning rather than bootstrap exposure. |
-| `scene_view_diagnostics` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional), `camera_name` (str, optional), `focus_target` (str, optional), `view_name` (str, optional), `orbit_horizontal` (float, optional), `orbit_vertical` (float, optional), `zoom_factor` (float, optional), `persist_view` (bool, optional) | Returns one compact read-only view-space diagnostics artifact with projected extent, frame coverage, centering, and visible/partial/occluded/off-frame verdicts for a named camera or the live `USER_PERSPECTIVE` path. This is view-space only and does not replace truth-space measure/assert semantics. |
+| `scene_scope_graph` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional) | Returns one compact read-only structural scope artifact for a target object/object set/collection, including the inferred anchor plus bounded object-role hints. Visible as bounded spatial support on `llm-guided` for target-specific, on-demand reasoning without expanding the planner payload. |
+| `scene_relation_graph` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional), `goal_hint` (str, optional) | Returns one compact read-only pair-relation graph derived from current gap/alignment/overlap/contact truth, including bounded attachment/support/symmetry interpretations where justified. Visible as bounded spatial support on `llm-guided` for target-specific, on-demand reasoning without expanding the planner payload. |
+| `scene_view_diagnostics` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional), `camera_name` (str, optional), `focus_target` (str, optional), `view_name` (str, optional), `orbit_horizontal` (float, optional), `orbit_vertical` (float, optional), `zoom_factor` (float, optional), `persist_view` (bool, optional) | Returns one compact read-only view-space diagnostics artifact with projected extent, frame coverage, centering, and visible/partial/occluded/off-frame verdicts for a named camera or the live `USER_PERSPECTIVE` path. Visible as bounded spatial support on `llm-guided`; this is view-space only and does not replace truth-space measure/assert semantics. |
 | `scene_measure_distance` | `from_object` (str), `to_object` (str), `reference` (str) | Measures origin-to-origin or bbox-center distance between two objects. |
 | `scene_measure_dimensions` | `object_name` (str), `world_space` (bool) | Measures object dimensions and volume from its bounding box. |
 | `scene_measure_gap` | `from_object` (str), `to_object` (str), `tolerance` (float) | Measures nearest gap/contact state between two objects. For mesh pairs it now prefers a mesh-surface path and exposes `measurement_basis` plus bbox fallback diagnostics. |
@@ -1572,7 +1620,7 @@ Tools for managing the Router Supervisor and executing matched workflows.
 
 | Tool Name | Arguments | Description |
 |-----------|-----------|-------------|
-| `router_set_goal` | `goal` (str), `resolved_params` (dict, optional) | Sets the active build goal for the router session. Returns status (ready/needs_input/no_match/disabled/error), matched workflow info, resolved params with sources, any unresolved inputs for follow-up calls, explicit `guided_handoff` metadata when the intended path is guided manual build/utility continuation instead of workflow execution, machine-readable `guided_flow_state` for the current guided step/domain/required checks, and `guided_reference_readiness` for staged reference work. |
+| `router_set_goal` | `goal` (str), `resolved_params` (dict, optional), `gate_proposal` (dict, optional) | Sets the active build goal for the router session. Returns status (ready/needs_input/no_match/disabled/error), matched workflow info, resolved params with sources, any unresolved inputs for follow-up calls, explicit `guided_handoff` metadata when the intended path is guided manual build/utility continuation instead of workflow execution, machine-readable `guided_flow_state` for the current guided step/domain/required checks, optional `active_gate_plan` / `gate_intake_result` for normalized quality gates, and `guided_reference_readiness` for staged reference work. |
 | `router_get_status` | *none* | Returns current router session state, visibility diagnostics, pending clarification info, active `guided_handoff` when present, `guided_flow_state`, `guided_reference_readiness`, and router/component stats. |
 | `router_clear_goal` | *none* | Clears the current modeling goal. |
 
