@@ -178,7 +178,7 @@ MCP_SURFACE_MODULES: Final[tuple[SurfaceModule, ...]] = (
         bootstrapped_by_side_effect=False,
         uses_global_mcp_singleton=False,
         context_import_style="fastmcp",
-        uses_ctx_info_bridge=False,
+        uses_ctx_info_bridge=True,
         router_metadata_directory=True,
         metadata_loader_covered=True,
     ),
