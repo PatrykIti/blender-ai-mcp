@@ -48,6 +48,18 @@ from server.adapters.mcp.areas.scene_inspect import (
 from server.adapters.mcp.areas.scene_inspect import (
     inspect_scene_world as _scene_inspect_world_impl,
 )
+from server.adapters.mcp.areas.scene_measure_assert import (
+    execute_scene_assert_contact,
+    execute_scene_assert_containment,
+    execute_scene_assert_dimensions,
+    execute_scene_assert_proportion,
+    execute_scene_assert_symmetry,
+    execute_scene_measure_alignment,
+    execute_scene_measure_dimensions,
+    execute_scene_measure_distance,
+    execute_scene_measure_gap,
+    execute_scene_measure_overlap,
+)
 from server.adapters.mcp.areas.scene_state_reads import (
     execute_scene_compare_snapshot,
     execute_scene_context,
@@ -3044,13 +3056,14 @@ def scene_measure_distance(
     """
 
     def execute():
-        handler = get_scene_handler()
-        try:
-            result = SceneMeasureDistanceContract(payload=handler.measure_distance(from_object, to_object, reference))
-            ctx_info(ctx, f"Measured {reference.lower()} distance between '{from_object}' and '{to_object}'")
-            return result
-        except RuntimeError as e:
-            return SceneMeasureDistanceContract(error=str(e))
+        return execute_scene_measure_distance(
+            ctx=ctx,
+            from_object=from_object,
+            to_object=to_object,
+            reference=reference,
+            get_scene_handler=get_scene_handler,
+            info=ctx_info,
+        )
 
     result = route_tool_call(
         tool_name="scene_measure_distance",
@@ -3083,13 +3096,13 @@ def scene_measure_dimensions(
     """
 
     def execute():
-        handler = get_scene_handler()
-        try:
-            result = SceneMeasureDimensionsContract(payload=handler.measure_dimensions(object_name, world_space))
-            ctx_info(ctx, f"Measured dimensions for '{object_name}'")
-            return result
-        except RuntimeError as e:
-            return SceneMeasureDimensionsContract(error=str(e))
+        return execute_scene_measure_dimensions(
+            ctx=ctx,
+            object_name=object_name,
+            world_space=world_space,
+            get_scene_handler=get_scene_handler,
+            info=ctx_info,
+        )
 
     result = route_tool_call(
         tool_name="scene_measure_dimensions",
@@ -3132,13 +3145,14 @@ def scene_measure_gap(
     """
 
     def execute():
-        handler = get_scene_handler()
-        try:
-            result = SceneMeasureGapContract(payload=handler.measure_gap(from_object, to_object, tolerance))
-            ctx_info(ctx, f"Measured gap between '{from_object}' and '{to_object}'")
-            return result
-        except RuntimeError as e:
-            return SceneMeasureGapContract(error=str(e))
+        return execute_scene_measure_gap(
+            ctx=ctx,
+            from_object=from_object,
+            to_object=to_object,
+            tolerance=tolerance,
+            get_scene_handler=get_scene_handler,
+            info=ctx_info,
+        )
 
     result = route_tool_call(
         tool_name="scene_measure_gap",
@@ -3179,15 +3193,16 @@ def scene_measure_alignment(
     """
 
     def execute():
-        handler = get_scene_handler()
-        try:
-            result = SceneMeasureAlignmentContract(
-                payload=handler.measure_alignment(from_object, to_object, axes, reference, tolerance)
-            )
-            ctx_info(ctx, f"Measured alignment between '{from_object}' and '{to_object}'")
-            return result
-        except RuntimeError as e:
-            return SceneMeasureAlignmentContract(error=str(e))
+        return execute_scene_measure_alignment(
+            ctx=ctx,
+            from_object=from_object,
+            to_object=to_object,
+            axes=axes,
+            reference=reference,
+            tolerance=tolerance,
+            get_scene_handler=get_scene_handler,
+            info=ctx_info,
+        )
 
     result = route_tool_call(
         tool_name="scene_measure_alignment",
@@ -3234,13 +3249,14 @@ def scene_measure_overlap(
     """
 
     def execute():
-        handler = get_scene_handler()
-        try:
-            result = SceneMeasureOverlapContract(payload=handler.measure_overlap(from_object, to_object, tolerance))
-            ctx_info(ctx, f"Measured overlap between '{from_object}' and '{to_object}'")
-            return result
-        except RuntimeError as e:
-            return SceneMeasureOverlapContract(error=str(e))
+        return execute_scene_measure_overlap(
+            ctx=ctx,
+            from_object=from_object,
+            to_object=to_object,
+            tolerance=tolerance,
+            get_scene_handler=get_scene_handler,
+            info=ctx_info,
+        )
 
     result = route_tool_call(
         tool_name="scene_measure_overlap",
@@ -3284,15 +3300,15 @@ def scene_assert_contact(
     """
 
     def execute():
-        handler = get_scene_handler()
-        try:
-            payload = SceneAssertionPayloadContract.model_validate(
-                handler.assert_contact(from_object, to_object, max_gap, allow_overlap)
-            )
-            ctx_info(ctx, f"Asserted contact between '{from_object}' and '{to_object}'")
-            return SceneAssertContactContract(payload=payload)
-        except (RuntimeError, ValueError) as e:
-            return SceneAssertContactContract(error=str(e))
+        return execute_scene_assert_contact(
+            ctx=ctx,
+            from_object=from_object,
+            to_object=to_object,
+            max_gap=max_gap,
+            allow_overlap=allow_overlap,
+            get_scene_handler=get_scene_handler,
+            info=ctx_info,
+        )
 
     result = route_tool_call(
         tool_name="scene_assert_contact",
@@ -3334,18 +3350,16 @@ def scene_assert_dimensions(
     """
 
     def execute():
-        handler = get_scene_handler()
-        try:
-            parsed_dimensions = parse_coordinate(expected_dimensions)
-            if parsed_dimensions is None:
-                raise ValueError("expected_dimensions must contain exactly 3 numeric values")
-            payload = SceneAssertionPayloadContract.model_validate(
-                handler.assert_dimensions(object_name, parsed_dimensions, tolerance, world_space)
-            )
-            ctx_info(ctx, f"Asserted dimensions for '{object_name}'")
-            return SceneAssertDimensionsContract(payload=payload)
-        except (RuntimeError, ValueError) as e:
-            return SceneAssertDimensionsContract(error=str(e))
+        return execute_scene_assert_dimensions(
+            ctx=ctx,
+            object_name=object_name,
+            expected_dimensions=expected_dimensions,
+            tolerance=tolerance,
+            world_space=world_space,
+            parse_coordinate=parse_coordinate,
+            get_scene_handler=get_scene_handler,
+            info=ctx_info,
+        )
 
     result = route_tool_call(
         tool_name="scene_assert_dimensions",
@@ -3387,15 +3401,15 @@ def scene_assert_containment(
     """
 
     def execute():
-        handler = get_scene_handler()
-        try:
-            payload = SceneAssertionPayloadContract.model_validate(
-                handler.assert_containment(inner_object, outer_object, min_clearance, tolerance)
-            )
-            ctx_info(ctx, f"Asserted containment of '{inner_object}' inside '{outer_object}'")
-            return SceneAssertContainmentContract(payload=payload)
-        except (RuntimeError, ValueError) as e:
-            return SceneAssertContainmentContract(error=str(e))
+        return execute_scene_assert_containment(
+            ctx=ctx,
+            inner_object=inner_object,
+            outer_object=outer_object,
+            min_clearance=min_clearance,
+            tolerance=tolerance,
+            get_scene_handler=get_scene_handler,
+            info=ctx_info,
+        )
 
     result = route_tool_call(
         tool_name="scene_assert_containment",
@@ -3439,15 +3453,16 @@ def scene_assert_symmetry(
     """
 
     def execute():
-        handler = get_scene_handler()
-        try:
-            payload = SceneAssertionPayloadContract.model_validate(
-                handler.assert_symmetry(left_object, right_object, axis, mirror_coordinate, tolerance)
-            )
-            ctx_info(ctx, f"Asserted symmetry between '{left_object}' and '{right_object}'")
-            return SceneAssertSymmetryContract(payload=payload)
-        except (RuntimeError, ValueError) as e:
-            return SceneAssertSymmetryContract(error=str(e))
+        return execute_scene_assert_symmetry(
+            ctx=ctx,
+            left_object=left_object,
+            right_object=right_object,
+            axis=axis,
+            mirror_coordinate=mirror_coordinate,
+            tolerance=tolerance,
+            get_scene_handler=get_scene_handler,
+            info=ctx_info,
+        )
 
     result = route_tool_call(
         tool_name="scene_assert_symmetry",
@@ -3498,24 +3513,19 @@ def scene_assert_proportion(
     """
 
     def execute():
-        handler = get_scene_handler()
-        try:
-            payload = SceneAssertionPayloadContract.model_validate(
-                handler.assert_proportion(
-                    object_name,
-                    axis_a,
-                    expected_ratio,
-                    axis_b,
-                    reference_object,
-                    reference_axis,
-                    tolerance,
-                    world_space,
-                )
-            )
-            ctx_info(ctx, f"Asserted proportion for '{object_name}'")
-            return SceneAssertProportionContract(payload=payload)
-        except (RuntimeError, ValueError) as e:
-            return SceneAssertProportionContract(error=str(e))
+        return execute_scene_assert_proportion(
+            ctx=ctx,
+            object_name=object_name,
+            axis_a=axis_a,
+            expected_ratio=expected_ratio,
+            axis_b=axis_b,
+            reference_object=reference_object,
+            reference_axis=reference_axis,
+            tolerance=tolerance,
+            world_space=world_space,
+            get_scene_handler=get_scene_handler,
+            info=ctx_info,
+        )
 
     result = route_tool_call(
         tool_name="scene_assert_proportion",
