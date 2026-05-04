@@ -1,7 +1,7 @@
 # TASK-159-02: Scene MCP Area Modularization And Surface Slices
 
 **Parent:** [TASK-159](./TASK-159_Modularize_Oversized_Guided_Runtime_And_Scene_Owner_Files.md)
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
 **Priority:** 🔴 High
 
 ## Objective
@@ -237,3 +237,16 @@ def scene_measure_gap(ctx, ...):
   silently stretching one of the current leaves
 - do not promote this slice independently unless it becomes the only remaining
   open branch in the family
+
+## Progress Summary
+
+As of 2026-05-04:
+
+- `TASK-159-02-01` is closed
+- `TASK-159-02-02` is closed
+- `TASK-159-02-07` is closed
+- the remaining major open scene MCP branches are:
+  - `TASK-159-02-03`
+  - `TASK-159-02-04`
+  - `TASK-159-02-05`
+  - `TASK-159-02-06`
