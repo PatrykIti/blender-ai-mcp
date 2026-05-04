@@ -1,7 +1,7 @@
 # TASK-159-03-01-01: Addon Scene Lifecycle And Context Read Split
 
 **Parent:** [TASK-159-03-01](./TASK-159-03-01_Addon_Scene_Inspection_And_Topology_Split.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 
 ## Objective
@@ -75,3 +75,16 @@ class SceneHandler(SceneLifecycleContextMixin, ...):
 ## Status / Board Update
 
 - keep promoted tracking on parent `TASK-159`
+
+## Completion Summary
+
+Completed on 2026-05-04.
+
+- moved lifecycle helpers plus mode/selection context reads out of
+  `blender_addon/application/handlers/scene.py` into
+  `blender_addon/application/handlers/scene_lifecycle_context_mixin.py`
+- kept `SceneHandler` as the stable addon RPC facade by composing the new mixin
+  instead of changing method names or payload shapes
+- preserved object-mode safety for cleanup/duplicate/set-active operations and
+  the current mode/selection result envelopes under the existing unit and
+  Blender-backed E2E lane
