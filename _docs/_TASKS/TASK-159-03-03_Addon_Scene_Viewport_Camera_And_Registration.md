@@ -94,9 +94,10 @@ class SceneHandler(SceneViewportMixin, ...):
 
 ## Status / Board Update
 
-- keep promoted tracking on parent `TASK-159`
-- keep world/render/color-management extraction on `TASK-159-03-05` so this
-  leaf stays one focused viewport/runtime pass
+- historical promoted tracking stayed on parent `TASK-159` while this slice was
+  in flight
+- this file now remains a closed historical planning slice; no separate board
+  action remains open here
 
 ## Completion Summary
 

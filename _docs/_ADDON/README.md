@@ -91,7 +91,10 @@ The main entry point. Responsible for:
 
 ### 2. Application (`application/handlers/`)
 Business Logic ("How to do it in Blender").
-- `scene.py`: `SceneHandler` (List objects, delete).
+- `scene.py`: thin `SceneHandler` RPC facade composed from focused scene mixins:
+  lifecycle/context, creation, mode/visibility, custom-property utilities,
+  structural reads, inspection, measure/assert, viewport/camera, and
+  world/render ownership.
 - `modeling.py`: `ModelingHandler` (Create primitives, transforms, modifiers).
 - Direct usage of `bpy`.
 

@@ -229,14 +229,10 @@ def scene_measure_gap(ctx, ...):
 
 ## Status / Board Update
 
-- keep promoted tracking on the parent `TASK-159`
-- execute this subtask through the leaves below instead of widening it into a
-  whole-file repartition of every remaining `scene.py` responsibility
-- if macro wrappers or the request-path/session bridge remain the last oversized
-  seam after these leaves land, track that as explicit follow-on work instead of
-  silently stretching one of the current leaves
-- do not promote this slice independently unless it becomes the only remaining
-  open branch in the family
+- historical promoted tracking stayed on parent `TASK-159` while this branch
+  was in flight
+- this file now remains a closed historical planning slice; no separate board
+  action remains open here
 
 ## Completion Summary
 

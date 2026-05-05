@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import asyncio
+from types import SimpleNamespace
 
+from blender_addon.application.handlers import scene_custom_property_utility_mixin as custom_property_mixin_module
 from server.adapters.mcp.factory import build_server
 
 
@@ -45,28 +47,37 @@ class SceneHandler:
         }
 
     def get_hierarchy(self, object_name=None, include_transforms=False):
-        return {
-            "roots": [{"name": "Cube"}],
-            "total_objects": 1,
-            "max_depth": 0,
-        }
+        if object_name:
+            return {"root": {"name": object_name, "type": "MESH", "children": []}, "parent_chain": []}
+        return {"root_count": 1, "hierarchy": [{"name": "Cube", "type": "MESH", "children": []}]}
 
     def get_bounding_box(self, object_name, world_space=True):
         return {
             "object_name": object_name,
-            "space": "world" if world_space else "local",
+            "world_space": world_space,
             "min": [0, 0, 0],
             "max": [1, 1, 1],
             "center": [0.5, 0.5, 0.5],
             "dimensions": [1, 1, 1],
-            "volume": 1.0,
+            "corners": [
+                [0, 0, 0],
+                [0, 0, 1],
+                [0, 1, 0],
+                [0, 1, 1],
+                [1, 0, 0],
+                [1, 0, 1],
+                [1, 1, 0],
+                [1, 1, 1],
+            ],
         }
 
     def get_origin_info(self, object_name):
         return {
+            "object_name": object_name,
             "origin_world": [0, 0, 0],
-            "relative_to_bbox": {"x": 0.5, "y": 0.5, "z": 0.5},
-            "suggestions": [],
+            "bbox_center": [0.5, 0.5, 0.5],
+            "offset_from_center": [-0.5, -0.5, -0.5],
+            "estimated_type": "CUSTOM",
         }
 
     def get_scope_graph(self, target_object=None, target_objects=None, collection_name=None):
@@ -756,9 +767,34 @@ def test_scene_read_contract_tools_deliver_structured_content(monkeypatch):
     props, hierarchy, bbox, origin = asyncio.run(run())
 
     assert _unwrap_structured(props)["properties"]["tag"] == "hero"
-    assert _unwrap_structured(hierarchy)["payload"]["total_objects"] == 1
-    assert _unwrap_structured(bbox)["payload"]["volume"] == 1.0
-    assert _unwrap_structured(origin)["payload"]["origin_world"] == [0, 0, 0]
+    assert _unwrap_structured(hierarchy)["payload"]["root_count"] == 1
+    assert _unwrap_structured(bbox)["payload"]["world_space"] is True
+    assert _unwrap_structured(origin)["payload"]["estimated_type"] == "CUSTOM"
+
+
+def test_addon_custom_property_mixin_preserves_structured_contract_shape(monkeypatch):
+    """Addon custom-property mixin should still match the MCP structured contract after TASK-159."""
+
+    mixin = custom_property_mixin_module.SceneCustomPropertyUtilityMixin()
+    fake_object = {"tag": "hero", "weights": (1, 2, 3), "_internal": "skip"}
+    fake_bpy = SimpleNamespace(data=SimpleNamespace(objects={"Cube": fake_object}))
+    monkeypatch.setattr(custom_property_mixin_module, "bpy", fake_bpy)
+
+    initial = mixin.get_custom_properties("Cube")
+    assert initial == {
+        "object_name": "Cube",
+        "property_count": 2,
+        "properties": {"tag": "hero", "weights": [1, 2, 3]},
+    }
+
+    assert mixin.set_custom_property("Cube", "tag", "lead") == "Set property 'tag' = lead on 'Cube'"
+    updated = mixin.get_custom_properties("Cube")
+    assert updated["properties"]["tag"] == "lead"
+
+    assert mixin.set_custom_property("Cube", "weights", "", delete=True) == "Deleted property 'weights' from 'Cube'"
+    after_delete = mixin.get_custom_properties("Cube")
+    assert after_delete["property_count"] == 1
+    assert after_delete["properties"] == {"tag": "lead"}
 
 
 def test_scene_inspect_scene_state_actions_deliver_structured_content(monkeypatch):

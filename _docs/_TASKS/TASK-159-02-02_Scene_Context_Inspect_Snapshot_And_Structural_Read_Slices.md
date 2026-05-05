@@ -170,11 +170,10 @@ for public_wrapper in read_heavy_scene_wrappers:
 
 ## Status / Board Update
 
-- keep promoted tracking on parent `TASK-159`
-- execute this branch through the focused leaves below instead of stretching it
-  into one read-heavy implementation pass
-- keep grouped create/configure work on `TASK-159-02-07` instead of widening
-  this subtask back into write-side routing work
+- historical promoted tracking stayed on parent `TASK-159` while this branch
+  was in flight
+- this file now remains a closed historical planning slice; no separate board
+  action remains open here
 
 ## Completion Summary
 

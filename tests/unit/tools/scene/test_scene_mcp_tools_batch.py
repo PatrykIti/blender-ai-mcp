@@ -145,9 +145,35 @@ def test_scene_state_and_utility_wrappers(monkeypatch):
     handler.camera_focus.return_value = "focus ok"
     handler.get_custom_properties.return_value = {"properties": {"tag": "hero"}}
     handler.set_custom_property.return_value = "set property ok"
-    handler.get_hierarchy.return_value = {"roots": [{"name": "Cube"}]}
-    handler.get_bounding_box.return_value = {"min": [0, 0, 0], "max": [1, 1, 1]}
-    handler.get_origin_info.return_value = {"origin_world": [0, 0, 0]}
+    handler.get_hierarchy.return_value = {
+        "root_count": 1,
+        "hierarchy": [{"name": "Cube", "type": "MESH", "children": []}],
+    }
+    handler.get_bounding_box.return_value = {
+        "object_name": "Cube",
+        "world_space": True,
+        "min": [0, 0, 0],
+        "max": [1, 1, 1],
+        "center": [0.5, 0.5, 0.5],
+        "dimensions": [1, 1, 1],
+        "corners": [
+            [0, 0, 0],
+            [0, 0, 1],
+            [0, 1, 0],
+            [0, 1, 1],
+            [1, 0, 0],
+            [1, 0, 1],
+            [1, 1, 0],
+            [1, 1, 1],
+        ],
+    }
+    handler.get_origin_info.return_value = {
+        "object_name": "Cube",
+        "origin_world": [0, 0, 0],
+        "bbox_center": [0.5, 0.5, 0.5],
+        "offset_from_center": [-0.5, -0.5, -0.5],
+        "estimated_type": "CUSTOM",
+    }
     handler.get_scope_graph.return_value = {
         "scope_kind": "object_set",
         "primary_target": "Cube",
@@ -259,13 +285,17 @@ def test_scene_state_and_utility_wrappers(monkeypatch):
     props = scene_area.scene_get_custom_properties(MagicMock(), object_name="Cube")
     assert props.properties["tag"] == "hero"
     assert scene_area.scene_set_custom_property(MagicMock(), "Cube", "tag", "hero") == "set property ok"
-    assert asyncio.run(scene_area.scene_get_hierarchy(MagicMock())).payload["roots"][0]["name"] == "Cube"
-    assert asyncio.run(scene_area.scene_get_bounding_box(MagicMock(), object_name="Cube")).payload["max"] == [1, 1, 1]
-    assert asyncio.run(scene_area.scene_get_origin_info(MagicMock(), object_name="Cube")).payload["origin_world"] == [
-        0,
-        0,
-        0,
+    assert asyncio.run(scene_area.scene_get_hierarchy(MagicMock())).payload["root_count"] == 1
+    assert asyncio.run(scene_area.scene_get_hierarchy(MagicMock())).payload["hierarchy"][0]["name"] == "Cube"
+    assert asyncio.run(scene_area.scene_get_bounding_box(MagicMock(), object_name="Cube")).payload["dimensions"] == [
+        1,
+        1,
+        1,
     ]
+    assert (
+        asyncio.run(scene_area.scene_get_origin_info(MagicMock(), object_name="Cube")).payload["estimated_type"]
+        == "CUSTOM"
+    )
     diagnostics = scene_area.scene_view_diagnostics(
         MagicMock(),
         target_object="Cube",

@@ -136,9 +136,10 @@ preserve_existing_rpc_payloads()
 
 ## Status / Board Update
 
-- keep promoted tracking on parent `TASK-159`
-- execute this branch through the focused leaves below instead of landing all
-  addon utilities in one broad pass
+- historical promoted tracking stayed on parent `TASK-159` while this branch
+  was in flight
+- this file now remains a closed historical planning slice; no separate board
+  action remains open here
 
 ## Completion Summary
 

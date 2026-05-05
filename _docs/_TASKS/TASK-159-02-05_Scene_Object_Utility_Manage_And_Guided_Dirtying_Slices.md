@@ -159,7 +159,10 @@ for wrapper in cleanup_mode_leaf + visibility_camera_leaf + custom_property_leaf
 
 ## Status / Board Update
 
-- keep promoted tracking on parent `TASK-159`
+- historical promoted tracking stayed on parent `TASK-159` while this branch
+  was in flight
+- this file now remains a closed historical planning slice; no separate board
+  action remains open here
 
 ## Completion Summary
 

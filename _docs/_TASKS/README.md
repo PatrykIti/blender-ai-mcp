@@ -5,7 +5,7 @@ Curated task board for promoted active work, promoted follow-on work, and select
 ## 📊 Statistics
 - **To Do:** 7 tasks
 - **In Progress:** 1 task
-- **Done:** 89
+- **Done:** 90
 - **Superseded:** 162
 
 ## 📐 Board Scope
@@ -84,6 +84,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-161](./TASK-161_TASK-159_Closeout_Seam_And_Proof_Lane_Alignment.md) | **TASK-159 Closeout Seam And Proof-Lane Alignment** | 🔴 High | 2026-05-05 |
 | [TASK-159](./TASK-159_Modularize_Oversized_Guided_Runtime_And_Scene_Owner_Files.md) | **Modularize Oversized Guided Runtime And Scene Owner Files** | 🔴 High | 2026-05-04 |
 | [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md) | **Goal-Derived Quality Gates And Deterministic Verification** | 🔴 High | 2026-05-02 |
 | [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md) | **Reference Understanding Follow-Up And Boundary Alignment** | 🔴 High | 2026-05-03 |

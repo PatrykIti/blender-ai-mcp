@@ -11,25 +11,37 @@ from types import SimpleNamespace
 from server.adapters.mcp.areas.reference import (
     _assembled_target_scope,
     _build_action_hints_from_silhouette,
-    _build_correction_candidates,
     _build_correction_truth_bundle,
-    _build_refinement_handoff,
     _build_silhouette_analysis_payload,
-    _build_truth_followup,
-    _effective_candidate_budget,
-    _effective_pair_budget,
     _guided_checkpoint_scope_error,
     _iterate_stage_response,
-    _model_budget_bias,
-    _select_refinement_route,
     _stage_compare_response,
-    _trim_truth_bundle_to_budget,
     reference_compare_checkpoint,
     reference_compare_current_view,
     reference_compare_stage_checkpoint,
     reference_images,
     reference_iterate_stage_checkpoint,
     refresh_reference_understanding_summary_async,
+)
+from server.adapters.mcp.areas.reference_planner import (
+    build_correction_candidates as _build_correction_candidates,
+)
+from server.adapters.mcp.areas.reference_planner import (
+    build_refinement_handoff as _build_refinement_handoff,
+)
+from server.adapters.mcp.areas.reference_planner import (
+    effective_candidate_budget as _effective_candidate_budget,
+)
+from server.adapters.mcp.areas.reference_planner import (
+    effective_pair_budget as _effective_pair_budget,
+)
+from server.adapters.mcp.areas.reference_planner import model_budget_bias as _model_budget_bias
+from server.adapters.mcp.areas.reference_planner import (
+    select_refinement_route as _select_refinement_route,
+)
+from server.adapters.mcp.areas.reference_truth import build_truth_followup as _build_truth_followup
+from server.adapters.mcp.areas.reference_truth import (
+    trim_truth_bundle_to_budget as _trim_truth_bundle_to_budget,
 )
 from server.adapters.mcp.contracts.reference import (
     ReferenceCompareStageCheckpointResponseContract,

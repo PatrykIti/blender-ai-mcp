@@ -106,7 +106,10 @@ def test_scene_get_hierarchy_can_attach_assistant_summary(
 
     class Handler:
         def get_hierarchy(self, object_name=None, include_transforms=False):
-            return {"roots": [{"name": object_name or "Cube"}], "total_objects": 1}
+            return {
+                "root": {"name": object_name or "Cube", "type": "MESH", "children": []},
+                "parent_chain": [],
+            }
 
     monkeypatch.setattr("server.adapters.mcp.areas.scene.get_scene_handler", lambda: Handler())
     monkeypatch.setattr("server.adapters.mcp.areas.scene.ctx_info", lambda ctx, message: None)
@@ -116,6 +119,7 @@ def test_scene_get_hierarchy_can_attach_assistant_summary(
 
     assert result.assistant is not None
     assert result.assistant.result.overview == "Hierarchy summary"
+    assert result.payload["root"]["name"] == "Cube"
 
 
 @patch("server.adapters.mcp.areas.scene.run_inspection_summary_assistant")
@@ -129,7 +133,24 @@ def test_scene_get_bounding_box_can_attach_assistant_summary(
 
     class Handler:
         def get_bounding_box(self, object_name, world_space=True):
-            return {"min": [0, 0, 0], "max": [1, 1, 1], "volume": 1.0}
+            return {
+                "object_name": object_name,
+                "world_space": world_space,
+                "min": [0, 0, 0],
+                "max": [1, 1, 1],
+                "center": [0.5, 0.5, 0.5],
+                "dimensions": [1, 1, 1],
+                "corners": [
+                    [0, 0, 0],
+                    [0, 0, 1],
+                    [0, 1, 0],
+                    [0, 1, 1],
+                    [1, 0, 0],
+                    [1, 0, 1],
+                    [1, 1, 0],
+                    [1, 1, 1],
+                ],
+            }
 
     monkeypatch.setattr("server.adapters.mcp.areas.scene.get_scene_handler", lambda: Handler())
     monkeypatch.setattr("server.adapters.mcp.areas.scene.ctx_info", lambda ctx, message: None)
@@ -139,6 +160,7 @@ def test_scene_get_bounding_box_can_attach_assistant_summary(
 
     assert result.assistant is not None
     assert result.assistant.result.overview == "Bounding box summary"
+    assert result.payload["dimensions"] == [1, 1, 1]
 
 
 @patch("server.adapters.mcp.areas.scene.run_inspection_summary_assistant")
@@ -152,7 +174,13 @@ def test_scene_get_origin_info_can_attach_assistant_summary(
 
     class Handler:
         def get_origin_info(self, object_name):
-            return {"origin_world": [0, 0, 0], "suggestions": ["center"]}
+            return {
+                "object_name": object_name,
+                "origin_world": [0, 0, 0],
+                "bbox_center": [0.5, 0.5, 0.5],
+                "offset_from_center": [-0.5, -0.5, -0.5],
+                "estimated_type": "CUSTOM",
+            }
 
     monkeypatch.setattr("server.adapters.mcp.areas.scene.get_scene_handler", lambda: Handler())
     monkeypatch.setattr("server.adapters.mcp.areas.scene.ctx_info", lambda ctx, message: None)
@@ -162,3 +190,4 @@ def test_scene_get_origin_info_can_attach_assistant_summary(
 
     assert result.assistant is not None
     assert result.assistant.result.overview == "Origin summary"
+    assert result.payload["estimated_type"] == "CUSTOM"

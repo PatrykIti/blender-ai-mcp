@@ -2113,7 +2113,8 @@ async def scene_get_hierarchy(
         assistant_summary: If True, attaches a bounded assistant summary for the hierarchy payload.
 
     Returns:
-        JSON with hierarchy information including parent, children, depth, and path.
+        JSON with `root` plus `parent_chain` for one object, or `root_count` plus
+        `hierarchy` for the full-scene tree.
     """
 
     def execute():
@@ -2165,7 +2166,8 @@ async def scene_get_bounding_box(
         assistant_summary: If True, attaches a bounded assistant summary for the bounding-box payload.
 
     Returns:
-        JSON with bounding box data including min, max, center, dimensions, corners, and volume.
+        JSON with `object_name`, `world_space`, `min`, `max`, `center`,
+        `dimensions`, and the eight `corners`.
     """
 
     def execute():
@@ -2216,7 +2218,8 @@ async def scene_get_origin_info(
         assistant_summary: If True, attaches a bounded assistant summary for the origin payload.
 
     Returns:
-        JSON with origin information including world/local position, relative bbox position, and suggestions.
+        JSON with `object_name`, `origin_world`, `bbox_center`,
+        `offset_from_center`, and `estimated_type`.
     """
 
     def execute():

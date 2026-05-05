@@ -185,11 +185,10 @@ __all__ = [
 
 ## Status / Board Update
 
-- keep promoted tracking on the parent `TASK-159`
-- execute this subtask through the leaves below so state/persistence, registry,
-  and request-path visibility glue can be verified independently
-- do not promote this slice independently unless it becomes the only remaining
-  open branch in the family
+- historical promoted tracking stayed on parent `TASK-159` while this branch
+  was in flight
+- this file now remains a closed historical planning slice; no separate board
+  action remains open here
 
 ## Completion Summary
 

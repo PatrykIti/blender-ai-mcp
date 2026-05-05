@@ -94,7 +94,10 @@ async def reference_compare_current_view(...):
 
 ## Status / Board Update
 
-- keep promoted tracking on parent `TASK-159`
+- historical promoted tracking stayed on parent `TASK-159` while this slice was
+  in flight
+- this file now remains a closed historical planning slice; no separate board
+  action remains open here
 
 ## Completion Summary
 

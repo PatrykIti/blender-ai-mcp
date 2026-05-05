@@ -105,9 +105,10 @@ from .scene_create_configure import (
 
 ## Status / Board Update
 
-- keep promoted tracking on parent `TASK-159`
-- treat this as the write-side companion to `TASK-159-02-02` so the former
-  mixed read/write leaf stays split into focused implementation passes
+- historical promoted tracking stayed on parent `TASK-159` while this slice was
+  in flight
+- this file now remains a closed historical planning slice; no separate board
+  action remains open here
 
 ## Completion Summary
 

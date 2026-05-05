@@ -525,17 +525,46 @@ def test_scene_snapshot_and_related_read_contracts_validate_structured_payloads(
         property_count=1,
         properties={"tag": "hero"},
     )
-    hierarchy = SceneHierarchyContract(payload={"roots": [{"name": "Cube"}], "total_objects": 1})
-    bbox = SceneBoundingBoxContract(payload={"min": [0, 0, 0], "max": [1, 1, 1]})
-    origin = SceneOriginInfoContract(payload={"origin_world": [0, 0, 0], "suggestions": []})
+    hierarchy = SceneHierarchyContract(
+        payload={"root_count": 1, "hierarchy": [{"name": "Cube", "type": "MESH", "children": []}]}
+    )
+    bbox = SceneBoundingBoxContract(
+        payload={
+            "object_name": "Cube",
+            "world_space": True,
+            "min": [0, 0, 0],
+            "max": [1, 1, 1],
+            "center": [0.5, 0.5, 0.5],
+            "dimensions": [1, 1, 1],
+            "corners": [
+                [0, 0, 0],
+                [0, 0, 1],
+                [0, 1, 0],
+                [0, 1, 1],
+                [1, 0, 0],
+                [1, 0, 1],
+                [1, 1, 0],
+                [1, 1, 1],
+            ],
+        }
+    )
+    origin = SceneOriginInfoContract(
+        payload={
+            "object_name": "Cube",
+            "origin_world": [0, 0, 0],
+            "bbox_center": [0.5, 0.5, 0.5],
+            "offset_from_center": [-0.5, -0.5, -0.5],
+            "estimated_type": "CUSTOM",
+        }
+    )
 
     assert snapshot.hash == "abc123"
     assert snapshot.assistant.result.overview == "Snapshot overview"
     assert diff.objects_added == ["Cube"]
     assert props.properties["tag"] == "hero"
-    assert hierarchy.payload["total_objects"] == 1
-    assert bbox.payload["max"] == [1, 1, 1]
-    assert origin.payload["origin_world"] == [0, 0, 0]
+    assert hierarchy.payload["root_count"] == 1
+    assert bbox.payload["corners"][0] == [0, 0, 0]
+    assert origin.payload["estimated_type"] == "CUSTOM"
 
 
 def test_scene_measure_contracts_validate_machine_readable_truth_payloads():

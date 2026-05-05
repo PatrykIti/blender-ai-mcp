@@ -8,10 +8,12 @@ from __future__ import annotations
 import re
 from typing import Any, Literal, cast
 
-from server.adapters.mcp.areas.reference_truth import dedupe_names
+from server.adapters.mcp.areas.reference_truth import dedupe_names, pair_label
 from server.adapters.mcp.contracts.reference import (
     ReferenceCompareStageCheckpointResponseContract,
     ReferenceCorrectionCandidateContract,
+    ReferenceCorrectionTruthEvidenceContract,
+    ReferenceCorrectionVisionEvidenceContract,
     ReferencePlannerBlockerContract,
     ReferencePlannerEvidenceSourceContract,
     ReferencePlannerSourceLiteral,
@@ -22,6 +24,7 @@ from server.adapters.mcp.contracts.reference import (
     ReferenceRepairPlannerDetailContract,
     ReferenceRepairPlannerSummaryContract,
 )
+from server.adapters.mcp.contracts.scene import SceneRepairMacroCandidateContract, SceneTruthFollowupItemContract
 from server.adapters.mcp.vision.runner import VISION_ASSIST_POLICY
 
 LOW_POLY_HINTS: tuple[str, ...] = ("low poly", "low-poly", "blockout")
@@ -715,6 +718,16 @@ def effective_candidate_budget(*, pair_budget: int, max_tokens: int, model_name:
     return max(2, base)
 
 
+def trim_correction_candidates(
+    candidates: list[ReferenceCorrectionCandidateContract],
+    *,
+    candidate_budget: int,
+) -> tuple[list[ReferenceCorrectionCandidateContract], bool]:
+    if len(candidates) <= candidate_budget:
+        return candidates, False
+    return list(candidates[:candidate_budget]), True
+
+
 def resolve_hybrid_budget_runtime(resolver: Any) -> tuple[int, int, str | None]:
     runtime_config = getattr(resolver, "runtime_config", None)
     if runtime_config is None:
@@ -724,3 +737,236 @@ def resolve_hybrid_budget_runtime(resolver: Any) -> tuple[int, int, str | None]:
         int(getattr(runtime_config, "max_images", 8)),
         cast(str | None, getattr(runtime_config, "active_model_name", None)),
     )
+
+
+def normalize_focus_key(value: str) -> str:
+    return " ".join(value.strip().lower().split())
+
+
+def resolve_actionable_focus(compare_result: ReferenceCompareStageCheckpointResponseContract) -> list[str]:
+    candidate_summaries = list(compare_result.correction_candidates or [])
+    if candidate_summaries:
+        deduped_candidates: list[str] = []
+        seen_candidates: set[str] = set()
+        for candidate in candidate_summaries:
+            normalized = normalize_focus_key(candidate.summary)
+            if not normalized or normalized in seen_candidates:
+                continue
+            seen_candidates.add(normalized)
+            deduped_candidates.append(candidate.summary)
+        if deduped_candidates:
+            return deduped_candidates[:3]
+
+    vision_result = compare_result.vision_assistant.result if compare_result.vision_assistant else None
+    if vision_result is None:
+        return []
+
+    ordered = list(vision_result.correction_focus or [])
+    if not ordered:
+        ordered.extend(vision_result.shape_mismatches or [])
+        ordered.extend(vision_result.proportion_mismatches or [])
+        ordered.extend(vision_result.next_corrections or [])
+
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for item in ordered:
+        normalized = normalize_focus_key(item)
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        deduped.append(item)
+    return deduped[:3]
+
+
+def resolve_gate_blocker_focus(compare_result: ReferenceCompareStageCheckpointResponseContract) -> list[str]:
+    blockers = list(compare_result.completion_blockers or [])
+    if not blockers:
+        return []
+
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for blocker in blockers:
+        item = (blocker.message or blocker.label or blocker.target_label or blocker.gate_id).strip()
+        normalized = normalize_focus_key(item)
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        deduped.append(item)
+    return deduped[:3]
+
+
+def should_inspect_from_truth_signal(
+    correction_candidates: list[ReferenceCorrectionCandidateContract],
+) -> bool:
+    if not correction_candidates:
+        return False
+
+    for candidate in correction_candidates:
+        if candidate.priority != "high":
+            continue
+        truth_evidence = candidate.truth_evidence
+        if truth_evidence is None:
+            continue
+        if any(
+            kind in {"contact_failure", "overlap", "attachment", "support", "symmetry", "measurement_error"}
+            for kind in truth_evidence.item_kinds
+        ):
+            return True
+    return False
+
+
+def _candidate_matches_pair_label(focus_item: str, current_pair_label: str) -> bool:
+    normalized_focus = normalize_focus_key(focus_item)
+    normalized_pair = normalize_focus_key(current_pair_label)
+    if not normalized_focus or not normalized_pair:
+        return False
+    if normalized_pair in normalized_focus:
+        return True
+    from_object, to_object = current_pair_label.split(" -> ", 1)
+    return normalize_focus_key(from_object) in normalized_focus and normalize_focus_key(to_object) in normalized_focus
+
+
+def _macro_candidate_matches_pair(
+    candidate: SceneRepairMacroCandidateContract,
+    *,
+    from_object: str,
+    to_object: str,
+) -> bool:
+    arguments = candidate.arguments_hint or {}
+    candidate_from = (
+        arguments.get("part_object")
+        or arguments.get("left_object")
+        or arguments.get("primary_object")
+        or arguments.get("supported_object")
+    )
+    candidate_to = (
+        arguments.get("reference_object")
+        or arguments.get("surface_object")
+        or arguments.get("right_object")
+        or arguments.get("support_object")
+    )
+    return (candidate_from == from_object and candidate_to == to_object) or (
+        candidate_from == to_object and candidate_to == from_object
+    )
+
+
+def _build_vision_candidate_evidence(
+    *,
+    vision_result,
+    focus_items: list[str],
+) -> ReferenceCorrectionVisionEvidenceContract | None:
+    if vision_result is None or not focus_items:
+        return None
+    return ReferenceCorrectionVisionEvidenceContract(
+        correction_focus=focus_items,
+        shape_mismatches=list(vision_result.shape_mismatches or []),
+        proportion_mismatches=list(vision_result.proportion_mismatches or []),
+        next_corrections=list(vision_result.next_corrections or []),
+    )
+
+
+def build_correction_candidates(
+    compare_result: ReferenceCompareStageCheckpointResponseContract,
+) -> list[ReferenceCorrectionCandidateContract]:
+    truth_followup = compare_result.truth_followup
+    vision_result = compare_result.vision_assistant.result if compare_result.vision_assistant else None
+    correction_focus = resolve_actionable_focus(compare_result)
+    candidates: list[ReferenceCorrectionCandidateContract] = []
+    used_focus_items: set[str] = set()
+    rank = 1
+    focus_pairs = list(truth_followup.focus_pairs or []) if truth_followup is not None else []
+
+    truth_items_by_pair: dict[str, list[SceneTruthFollowupItemContract]] = {}
+    for item in list(truth_followup.items or []) if truth_followup is not None else []:
+        if item.from_object is None or item.to_object is None:
+            continue
+        current_pair_label = pair_label(item.from_object, item.to_object)
+        truth_items_by_pair.setdefault(current_pair_label, []).append(item)
+
+    truth_macros_by_pair: dict[str, list[SceneRepairMacroCandidateContract]] = {}
+    for macro_candidate in list(truth_followup.macro_candidates or []) if truth_followup is not None else []:
+        for current_pair_label in focus_pairs:
+            from_object, to_object = current_pair_label.split(" -> ", 1)
+            if _macro_candidate_matches_pair(macro_candidate, from_object=from_object, to_object=to_object):
+                truth_macros_by_pair.setdefault(current_pair_label, []).append(macro_candidate)
+
+    for current_pair_label in focus_pairs:
+        pair_items = truth_items_by_pair.get(current_pair_label, [])
+        pair_macros = truth_macros_by_pair.get(current_pair_label, [])
+        matched_focus = [item for item in correction_focus if _candidate_matches_pair_label(item, current_pair_label)]
+        used_focus_items.update(normalize_focus_key(item) for item in matched_focus)
+        item_priorities = {item.priority for item in pair_items}
+        macro_priorities = {item.priority for item in pair_macros}
+        priority: Literal["high", "normal"] = (
+            "high" if "high" in item_priorities or "high" in macro_priorities else "normal"
+        )
+        signals: list[Literal["vision", "truth", "macro"]] = ["truth"]
+        if pair_macros:
+            signals.append("macro")
+        if matched_focus:
+            signals.append("vision")
+        summary = (
+            pair_items[0].summary
+            if pair_items
+            else (matched_focus[0] if matched_focus else f"Review pair {current_pair_label}")
+        )
+        from_object, to_object = current_pair_label.split(" -> ", 1)
+        candidates.append(
+            ReferenceCorrectionCandidateContract(
+                candidate_id=f"pair:{normalize_focus_key(current_pair_label).replace(' ', '_')}",
+                summary=summary,
+                priority_rank=rank,
+                priority=priority,
+                candidate_kind="hybrid" if matched_focus else "truth_only",
+                target_object=compare_result.target_object,
+                target_objects=[from_object, to_object],
+                focus_pairs=[current_pair_label],
+                source_signals=signals,
+                vision_evidence=_build_vision_candidate_evidence(
+                    vision_result=vision_result,
+                    focus_items=matched_focus,
+                ),
+                truth_evidence=ReferenceCorrectionTruthEvidenceContract(
+                    focus_pairs=[current_pair_label],
+                    relation_kinds=list(
+                        dict.fromkeys(kind for item in pair_items for kind in list(item.relation_kinds or []))
+                    ),
+                    relation_verdicts=list(
+                        dict.fromkeys(verdict for item in pair_items for verdict in list(item.relation_verdicts or []))
+                    ),
+                    item_kinds=[item.kind for item in pair_items],
+                    items=pair_items,
+                    macro_candidates=pair_macros,
+                ),
+            )
+        )
+        rank += 1
+
+    for focus_item in correction_focus:
+        normalized_focus = normalize_focus_key(focus_item)
+        if not normalized_focus or normalized_focus in used_focus_items:
+            continue
+        target_objects = list(compare_result.target_objects or [])
+        if compare_result.target_object and compare_result.target_object not in target_objects:
+            target_objects = [compare_result.target_object, *target_objects]
+        candidates.append(
+            ReferenceCorrectionCandidateContract(
+                candidate_id=f"vision:{normalized_focus.replace(' ', '_')}",
+                summary=focus_item,
+                priority_rank=rank,
+                priority="normal",
+                candidate_kind="vision_only",
+                target_object=compare_result.target_object,
+                target_objects=target_objects,
+                focus_pairs=[],
+                source_signals=["vision"],
+                vision_evidence=_build_vision_candidate_evidence(
+                    vision_result=vision_result,
+                    focus_items=[focus_item],
+                ),
+                truth_evidence=None,
+            )
+        )
+        rank += 1
+
+    return candidates

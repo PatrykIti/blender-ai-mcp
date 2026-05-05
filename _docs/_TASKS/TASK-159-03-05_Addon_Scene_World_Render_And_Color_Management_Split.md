@@ -75,9 +75,10 @@ class SceneHandler(SceneWorldRenderMixin, ...):
 
 ## Status / Board Update
 
-- keep promoted tracking on parent `TASK-159`
-- treat this as the scene-appearance companion to `TASK-159-03-03` so viewport
-  runtime extraction does not also absorb grouped render/world work
+- historical promoted tracking stayed on parent `TASK-159` while this slice was
+  in flight
+- this file now remains a closed historical planning slice; no separate board
+  action remains open here
 
 ## Completion Summary
 

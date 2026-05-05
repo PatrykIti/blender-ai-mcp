@@ -7,6 +7,7 @@
 **Dependencies:** TASK-143, TASK-144, TASK-145, TASK-150, TASK-157, TASK-158
 **Dependency Meaning:** These dependencies are architecture-provenance predecessors, not new runtime blockers for the refactor. Each listed task family already shipped product/runtime seams that now live inside the oversized owner files, so `TASK-159` depends on their outcomes as the scope being modularized rather than as separate unfinished implementation gates.
 **Follow-on After:** [TASK-143](./TASK-143_Guided_Spatial_Scope_And_Relation_Graphs.md), [TASK-144](./TASK-144_Camera_Aware_View_Graph_And_Visibility_Diagnostics.md), [TASK-145](./TASK-145_Spatial_Repair_Planner_And_Sculpt_Handoff_Context.md), [TASK-150](./TASK-150_Server_Driven_Guided_Flow_State_Step_Gating_And_Domain_Profiles.md), [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md)
+**Follow-on Closure:** [TASK-161](./TASK-161_TASK-159_Closeout_Seam_And_Proof_Lane_Alignment.md)
 
 ## Objective
 
@@ -226,13 +227,12 @@ for owner_file in oversized_owner_files:
 
 ## Status / Board Update
 
-- promote as a board-level open task because the work spans MCP adapters,
-  addon handlers, guided runtime state, and regression ownership
-- keep promoted tracking on the parent board item while the child subtasks are
-  refined into execution-ready leaves
-- treat this as an internal follow-on that prepares the repo for the next
-  spatial-intelligence and domain-expansion waves without changing product
-  direction
+- this umbrella was promoted on `_docs/_TASKS/README.md` while the
+  modularization wave was active
+- the board row moved to `Done` on 2026-05-04, and the post-closeout
+  governance cleanup was tracked separately under `TASK-161`
+- this file now remains the historical umbrella record for the shipped
+  modularization wave
 
 ## Completion Summary
 
@@ -247,6 +247,9 @@ Completed on 2026-05-04.
 - finished the remaining addon measure/assert split, refreshed the runtime
   inventory baseline for helper-module facades, and closed the late reference
   gate/truth E2E drift uncovered during the final full-suite run
+- documented the post-closeout task-governance cleanup separately under
+  `TASK-161` so the family-wide board/changelog wording drift was resolved
+  without reopening closed `TASK-159` children
 - validated the umbrella with `poetry run pytest ./tests/unit` and the full
   Blender-backed `poetry run python scripts/run_e2e_tests.py` runner outside
   the sandbox
