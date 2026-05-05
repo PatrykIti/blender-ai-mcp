@@ -15,6 +15,8 @@ documentation.
 
 - `server/adapters/mcp/discovery/search_surface.py`
 - `server/adapters/mcp/transforms/visibility_policy.py`
+- `server/adapters/mcp/areas/router.py`
+- `server/adapters/mcp/router_helper.py`
 - `server/adapters/mcp/session_capabilities_state.py`
 - `tests/e2e/integration/test_guided_search_first_call_tool_boundary.py`
 - `tests/e2e/integration/test_guided_surface_contract_parity.py`
@@ -42,7 +44,8 @@ documentation.
   `attachment_alignment` would be fail-closed anyway
 - add one regression where `router_get_status(...)` no longer looks like a live
   source of stale `guided_handoff.direct_tools` after the shaped surface has
-  already narrowed
+  already narrowed; persisted handoff stays historical intent while live
+  `visibility_rules` remain authoritative
 - add one regression for stale/legacy argument shapes on a visible macro so the
   failure is clearly a contract error rather than a transport symptom
 - keep at least one stdio lane and one Streamable HTTP lane in scope
@@ -87,12 +90,17 @@ assert status["guided_flow_state"]["spatial_refresh_required"] is True
 - `tests/e2e/integration/test_guided_surface_contract_parity.py`
 - `tests/e2e/integration/test_guided_inspect_validate_handoff.py`
 - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
+- `tests/e2e/router/test_guided_manual_handoff.py`
+- `tests/unit/adapters/mcp/test_router_elicitation.py`
+- `tests/unit/adapters/mcp/test_session_phase.py`
+- `tests/unit/adapters/mcp/test_public_surface_docs.py`
 
 ## Docs To Update
 
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
 - `_docs/_PROMPTS/README.md`
+- `_docs/_PROMPTS/GUIDED_SESSION_START.md`
 - `_docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 - `README.md`
@@ -107,8 +115,9 @@ assert status["guided_flow_state"]["spatial_refresh_required"] is True
 ## Validation Commands
 
 - `git diff --check`
-- `rg -n "search_tools\\(\\.\\.\\.\\)|call_tool\\(\\.\\.\\.\\)|Unknown tool|required_checks|guided_handoff" README.md _docs/_MCP_SERVER/README.md _docs/AVAILABLE_TOOLS_SUMMARY.md _docs/_PROMPTS/README.md _docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md _docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md _docs/_TASKS/README.md _docs/_TASKS/TASK-162*.md`
-- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_search_first_call_tool_boundary.py tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/integration/test_guided_inspect_validate_handoff.py tests/e2e/integration/test_guided_streamable_spatial_support.py -q`
+- `rg -n "search_tools\\(\\.\\.\\.\\)|call_tool\\(\\.\\.\\.\\)|Unknown tool|required_checks|guided_handoff" README.md _docs/_MCP_SERVER/README.md _docs/AVAILABLE_TOOLS_SUMMARY.md _docs/_PROMPTS/README.md _docs/_PROMPTS/GUIDED_SESSION_START.md _docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md _docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md _docs/_TASKS/README.md _docs/_TASKS/TASK-162*.md`
+- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_search_first_call_tool_boundary.py tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/integration/test_guided_inspect_validate_handoff.py tests/e2e/integration/test_guided_streamable_spatial_support.py tests/e2e/router/test_guided_manual_handoff.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_router_elicitation.py tests/unit/adapters/mcp/test_session_phase.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
 - `poetry run python scripts/run_e2e_tests.py`
 
 ## Acceptance Criteria
@@ -122,8 +131,9 @@ assert status["guided_flow_state"]["spatial_refresh_required"] is True
   shown during `inspect_validate` refresh barriers when they would be blocked
   by `attachment_alignment` family gating
 - after visibility narrows, `router_get_status(...)` no longer misleads the
-  client with stale `guided_handoff` tool guidance that contradicts the current
-  shaped surface
+  client by presenting persisted `guided_handoff` guidance as if it were the
+  current live surface; the split between historical handoff intent and current
+  `visibility_rules` is explicit in regression coverage
 - a stale-argument failure on the same seam is provably distinguishable from a
   disconnect in integration coverage, and the proof is attached to an explicit
   `call_tool(...)` regression rather than only a direct tool call

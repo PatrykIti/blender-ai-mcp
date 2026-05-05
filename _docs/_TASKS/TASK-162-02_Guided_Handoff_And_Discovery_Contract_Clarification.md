@@ -28,9 +28,9 @@
 - update the adapter-owned handoff builder in `visibility_policy.py` and the
   MCP-facing router response assembly, not only the coarse no-match shell in
   `router_handler.py`
-- keep the persisted session `guided_handoff` aligned with the live product
-  contract exposed by `router_get_status(...)`; stale direct/supporting tool
-  lists must not continue to look like the current visible surface after a
+- keep `router_get_status(...)` semantics aligned with the live product
+  contract: the persisted `guided_handoff` remains historical intent, while
+  live `visibility_rules` stay the authoritative current surface after a
   refresh barrier narrows visibility
 - call out the live split explicitly:
   - generic `guided_manual_build` always emits a handoff payload
@@ -43,6 +43,9 @@
   `macro_attach_part_to_surface`, `macro_align_part_with_contact`, and
   `macro_cleanup_part_intersections` from the directly visible shaped surface
   for that moment instead of leaving them visible as bait
+  - this remaining visible-but-blocked drift is specifically on the
+    `inspect_validate` surface; build-phase refresh already collapses to
+    spatial-context tools
 - ensure the handoff message explicitly says that `direct_tools` are only valid
   while visible, and stale names must not be guessed through `call_tool(...)`
 - keep `discovery_tools=["search_tools","call_tool"]`, but update examples so
@@ -95,6 +98,7 @@ docs.example = [
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
 - `_docs/_PROMPTS/README.md`
+- `_docs/_PROMPTS/GUIDED_SESSION_START.md`
 - `_docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 - `README.md`
@@ -121,11 +125,13 @@ docs.example = [
   recovery
 - the task docs explicitly distinguish the generic `guided_manual_build`
   handoff payload from the recipe-specific creature blockout visibility coupling
-- persisted `guided_handoff` exposure through `router_get_status(...)` no longer
-  contradicts the currently shaped surface after visibility narrows
+- `router_get_status(...)` semantics clearly distinguish persisted
+  `guided_handoff` intent from the currently authoritative live `visibility_rules`
 - the inspect/build surfaces keep bounded repair tools visible only when the
   guided family policy actually allows them; during refresh barriers they are
-  hidden instead of remaining visible-but-blocked
+  hidden instead of remaining visible-but-blocked, with the remaining fix scoped
+  to the `inspect_validate` surface rather than the already-collapsed build
+  refresh surface
 
 ## Status / Board Update
 
