@@ -29,8 +29,8 @@
 
 ## Implementation Notes
 
-- keep `guided_handoff.direct_tools` limited to tools intended for direct use on
-  the current shaped surface
+- keep `guided_handoff.direct_tools` as the persisted continuation/historical
+  tool set; do not collapse it into “current visible tools only”
 - update the adapter-owned handoff builder in `visibility_policy.py` and the
   MCP-facing router response assembly, not only the coarse no-match shell in
   `router_handler.py`
@@ -60,8 +60,10 @@
     inspect visibility check is not sufficient on its own
   - the implementation must cover the source that currently keeps those macros
     visible on `inspect_validate`: the explicit inspect escape-hatch list
-- ensure the handoff message explicitly says that `direct_tools` are only valid
-  while visible, and stale names must not be guessed through `call_tool(...)`
+- ensure the handoff/status semantics explicitly distinguish:
+  - persisted `guided_handoff.direct_tools` as historical continuation intent
+  - live `visibility_rules` as the authoritative current surface
+  - the existing search-first guidance as the operator path when those diverge
 - keep `discovery_tools=["search_tools","call_tool"]`, but update examples so
   they describe search-first recovery rather than speculative retries
 - keep the live `surfaces.py` instructions aligned with the same discovery-first
@@ -79,15 +81,14 @@
 ```python
 handoff = build_guided_handoff_payload(...)
 handoff["message"] = (
-    "Use directly visible tools first. "
-    "If a needed tool is no longer visible, do not guess it into call_tool(...); "
-    "refresh with search_tools(...) or the current guided_flow_state.required_checks first."
+    "Treat guided_handoff as continuation context. "
+    "When current visibility narrows, trust live visibility_rules and the existing search-first guidance."
 )
 
 docs.example = [
-    "... read guided_flow_state.required_checks ...",
-    "... run the currently pending spatial checks ...",
-    "... only after the barrier clears, search for attachment repair tools if still needed ...",
+    "... read router_get_status().guided_handoff as historical intent ...",
+    "... read router_get_status().visibility_rules as the current surface ...",
+    "... if those differ, follow search-first recovery and required_checks from the live status surface ...",
 ]
 ```
 
@@ -107,6 +108,7 @@ docs.example = [
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_session_phase.py`
 - `tests/unit/adapters/mcp/test_router_elicitation.py`
+- `tests/unit/adapters/mcp/test_server_factory.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 
 ## Docs To Update

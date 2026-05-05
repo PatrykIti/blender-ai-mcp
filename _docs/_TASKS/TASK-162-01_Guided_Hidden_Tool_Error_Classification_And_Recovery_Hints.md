@@ -22,7 +22,7 @@
 - before raising the final proxy error, inspect the active guided state and the
   visible-tool set for the current request
 - distinguish at least:
-  - truly unknown tool name
+  - truly unknown canonical public tool name
   - known tool hidden by current guided visibility
   - known tool hidden because `spatial_refresh_required` narrowed the allowed
     families
@@ -83,6 +83,9 @@ return await ctx.fastmcp.call_tool(resolved_name, canonical_arguments)
 The named tests should explicitly prove all three classifications:
 
 - a truly unknown tool name stays an unknown-tool/discovery error
+- internal names, guessed aliases, or non-canonical names that are not valid
+  public tool ids remain ordinary unknown-tool cases; the hidden-tool
+  classifier applies only after canonical public-name lookup succeeds
 - a known tool hidden by guided visibility is surfaced as hidden, not guessed as
   missing
 - a known tool hidden because `spatial_refresh_required` is active points to the
