@@ -395,10 +395,6 @@ The roadmap is satisfied when:
 
 ## Open Decisions
 
-- Whether the first public surface is an action on `reference_images(...)`, a
-  new `reference_understand(...)` tool, or an internal automatic pass surfaced
-  through `router_get_status()` and checkpoint payloads after a public-tool
-  review.
 - Whether `material_finish` deserves a new canonical planner family or should
   stay a stage/action-hint concept.
 - Whether `ReferenceUnderstandingContract` can start inside `reference.py` and

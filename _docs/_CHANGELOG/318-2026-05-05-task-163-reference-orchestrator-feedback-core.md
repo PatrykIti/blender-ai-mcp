@@ -30,8 +30,7 @@ reference/router/checkpoint seams.
 ## Validation
 
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_parsing.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/router/application/test_router_contracts.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -k "reference_understanding_transport_roundtrip or reference_understanding_refresh_replaces_gate_slice" -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -k "reference_orchestrator_feedback_transport_surface or reference_understanding_transport_roundtrip or reference_understanding_refresh_replaces_gate_slice" -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -k "reference_orchestrator_feedback_transport_surface or reference_understanding_transport_roundtrip or reference_understanding_refresh_replaces_gate_slice or guided_gate_state_roundtrip or guided_support_gate_state_roundtrip or guided_symmetry_gate_state_roundtrip" -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_understanding_runtime_surface.py -k "reference_orchestrator_feedback_surface_with_real_blender_capture" -q`
 - `PYTHONPATH=. poetry run pytest ./tests/unit -q`
 - `poetry run python scripts/run_e2e_tests.py`

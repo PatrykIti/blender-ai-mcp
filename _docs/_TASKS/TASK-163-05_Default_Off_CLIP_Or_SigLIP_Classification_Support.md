@@ -74,6 +74,6 @@ return [
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_reference_images.py -q`
-- exact harness command pair to record when this leaf is implemented:
-  - local: `poetry run python scripts/vision_harness.py --fixture-only reference-understanding --backend mlx_local`
-  - external: `poetry run python scripts/vision_harness.py --fixture-only reference-understanding --backend openai_compatible_external`
+- exact backend-executing harness command pair to record when this leaf is implemented:
+  - local: `poetry run python scripts/vision_harness.py --backend mlx_local --golden-json tests/fixtures/vision_eval/squirrel_head_to_face_camera_perspective/golden.json --mlx-model mlx-community/Qwen3-VL-4B-Instruct-4bit`
+  - external: `poetry run python scripts/vision_harness.py --backend openai_compatible_external --external-provider openrouter --external-contract-profile google_family_compare --openrouter-model "google/gemma-3-27b-it:free" --openrouter-api-key-env OPENROUTER_API_KEY --golden-json tests/fixtures/vision_eval/squirrel_head_to_face_camera_perspective/golden.json`

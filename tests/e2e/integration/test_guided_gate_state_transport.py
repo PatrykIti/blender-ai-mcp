@@ -759,6 +759,33 @@ async def _exercise_reference_orchestrator_feedback_transport_surface(client, re
     assert status_result["reference_orchestrator_feedback"] is not None
     assert status_result["reference_understanding_summary"]["visual_metrics"]
 
+    listed_result = result_payload(await client.call_tool("reference_images", {"action": "list"}))
+    assert listed_result["reference_orchestrator_feedback"] is not None
+    assert (
+        listed_result["reference_orchestrator_feedback"]["next_checkpoint_tool"] == "reference_compare_stage_checkpoint"
+    )
+    listed_reference_id = listed_result["references"][0]["reference_id"]
+
+    removed_result = result_payload(
+        await client.call_tool("reference_images", {"action": "remove", "reference_id": listed_reference_id})
+    )
+    assert removed_result["reference_orchestrator_feedback"] is not None
+    assert removed_result["reference_orchestrator_feedback"]["next_checkpoint_tool"] == "reference_images"
+
+    reattached_result = result_payload(
+        await client.call_tool(
+            "reference_images",
+            {
+                "action": "attach",
+                "source_path": str(reference_path),
+                "label": "front_ref",
+                "target_object": "Squirrel_Body",
+                "target_view": "front",
+            },
+        )
+    )
+    assert reattached_result["reference_orchestrator_feedback"] is not None
+
     compare_result = result_payload(
         await client.call_tool(
             "reference_compare_stage_checkpoint",
@@ -776,6 +803,10 @@ async def _exercise_reference_orchestrator_feedback_transport_surface(client, re
         compare_result["reference_orchestrator_feedback"]["next_checkpoint_tool"]
         == "reference_iterate_stage_checkpoint"
     )
+
+    cleared_result = result_payload(await client.call_tool("reference_images", {"action": "clear"}))
+    assert cleared_result["reference_orchestrator_feedback"] is not None
+    assert cleared_result["reference_orchestrator_feedback"]["next_checkpoint_tool"] == "reference_images"
 
 
 async def _exercise_later_goal_gate_proposal_preserves_reference_understanding_gates(
