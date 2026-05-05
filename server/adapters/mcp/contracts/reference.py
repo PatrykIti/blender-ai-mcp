@@ -74,6 +74,15 @@ ReferenceUnderstandingFinishPolicyLiteral = Literal[
     "unknown",
 ]
 ReferenceUnderstandingSculptPolicyLiteral = Literal["hidden", "local_detail_only", "allowed_or_primary"]
+ReferenceUnderstandingViewLiteral = Literal["front", "side", "top", "back", "three_quarter", "detail", "unknown"]
+ReferenceUnderstandingVisualMetricLiteral = Literal[
+    "edge_density",
+    "contour_count",
+    "polygonal_contour_ratio",
+    "dominant_color_count",
+    "silhouette_aspect_ratio",
+    "facet_likelihood",
+]
 
 
 class ReferenceUnderstandingSubjectContract(MCPContract):
@@ -103,6 +112,16 @@ class ReferenceUnderstandingPartContract(MCPContract):
     source_reference_ids: list[str] = []
 
 
+class ReferenceUnderstandingViewContract(MCPContract):
+    """One normalized reference-view observation derived from active references."""
+
+    view_id: ReferenceUnderstandingViewLiteral = "unknown"
+    detected: bool = False
+    confidence: float | None = None
+    reference_ids: list[str] = []
+    key_features: list[str] = []
+
+
 class ReferenceUnderstandingConstructionStrategyContract(MCPContract):
     """Controlled construction-path summary normalized for guided policy."""
 
@@ -128,6 +147,16 @@ class ReferenceUnderstandingVisualEvidenceRefContract(MCPContract):
     source_class: Literal["reference_image", "style_cue", "part_cue", "construction_hint", "gate_seed"]
     summary: str
     reference_id: str | None = None
+
+
+class ReferenceUnderstandingVisualMetricContract(MCPContract):
+    """One deterministic image-derived support metric for reference understanding."""
+
+    metric_id: ReferenceUnderstandingVisualMetricLiteral
+    reference_id: str | None = None
+    observed_value: float
+    computation_mode: Literal["heuristic_image_metrics"] = "heuristic_image_metrics"
+    summary: str | None = None
 
 
 class ReferenceUnderstandingVerificationRequirementContract(MCPContract):
@@ -173,18 +202,75 @@ class ReferenceUnderstandingSummaryContract(MCPContract):
     reference_ids: list[str] = []
     subject: ReferenceUnderstandingSubjectContract | None = None
     style: ReferenceUnderstandingStyleContract | None = None
+    views: list[ReferenceUnderstandingViewContract] = []
     required_parts: list[ReferenceUnderstandingPartContract] = []
     non_goals: list[str] = []
     construction_strategy: ReferenceUnderstandingConstructionStrategyContract | None = None
     router_handoff_hints: ReferenceUnderstandingHandoffHintsContract | None = None
     gate_proposals: list[GateProposalGateContract] = []
     visual_evidence_refs: list[ReferenceUnderstandingVisualEvidenceRefContract] = []
+    visual_metrics: list[ReferenceUnderstandingVisualMetricContract] = []
     classification_scores: list[ReferenceUnderstandingClassificationScoreContract] = []
     segmentation_artifacts: list[ReferenceUnderstandingSegmentationArtifactContract] = []
     verification_requirements: list[ReferenceUnderstandingVerificationRequirementContract] = []
     source_provenance: list[GateSourceProvenanceContract] = []
     boundary_policy: ReferenceUnderstandingBoundaryPolicyContract = ReferenceUnderstandingBoundaryPolicyContract()
     reason: Literal["goal_required", "reference_images_required", "vision_backend_unavailable"] | None = None
+    message: str | None = None
+
+
+class ReferenceStrategyStateContract(MCPContract):
+    """Server-owned normalized strategy state derived from reference understanding."""
+
+    status: ReferenceUnderstandingStatusLiteral = "blocked"
+    understanding_id: str | None = None
+    construction_path: ReferenceUnderstandingConstructionPathLiteral = "unknown"
+    primary_family: ReferencePlannerFamilyLiteral = "inspect_only"
+    allowed_families: list[ReferencePlannerFamilyLiteral] = []
+    blocked_families: list[ReferencePlannerFamilyLiteral] = []
+    sculpt_policy: ReferenceUnderstandingSculptPolicyLiteral = "hidden"
+    finish_policy: ReferenceUnderstandingFinishPolicyLiteral = "unknown"
+    recommended_next_checkpoint: (
+        Literal[
+            "reference_images",
+            "router_get_status",
+            "reference_compare_stage_checkpoint",
+            "reference_iterate_stage_checkpoint",
+        ]
+        | None
+    ) = None
+    message: str | None = None
+
+
+class ReferenceOrchestratorFeedbackContract(MCPContract):
+    """Compact orchestrator-facing read model for guided reference sessions."""
+
+    status: ReferenceUnderstandingStatusLiteral = "blocked"
+    goal: str | None = None
+    understanding_id: str | None = None
+    construction_path: ReferenceUnderstandingConstructionPathLiteral = "unknown"
+    current_guided_step: str | None = None
+    selected_family: ReferencePlannerFamilyLiteral = "inspect_only"
+    allowed_families: list[ReferencePlannerFamilyLiteral] = []
+    blocked_families: list[ReferencePlannerFamilyLiteral] = []
+    required_parts_pending: list[str] = []
+    active_gate_ids: list[str] = []
+    blocking_reasons: list[str] = []
+    next_actions: list[str] = []
+    next_checkpoint_tool: (
+        Literal[
+            "reference_images",
+            "router_get_status",
+            "reference_compare_stage_checkpoint",
+            "reference_iterate_stage_checkpoint",
+        ]
+        | None
+    ) = None
+    recommended_support_tools: list[str] = []
+    evidence_summary: list[str] = []
+    uncertainty_notes: list[str] = []
+    correction_focus: list[str] = []
+    loop_disposition: Literal["continue_build", "inspect_validate", "stop"] | None = None
     message: str | None = None
 
 
@@ -244,6 +330,10 @@ class ReferenceImagesResponseContract(MCPContract):
     goal: str | None = None
     reference_count: int = 0
     references: list[ReferenceImageRecordContract] = []
+    guided_reference_readiness: GuidedReferenceReadinessContract | None = None
+    reference_understanding_summary: ReferenceUnderstandingSummaryContract | None = None
+    reference_understanding_gate_ids: list[str] = []
+    reference_orchestrator_feedback: ReferenceOrchestratorFeedbackContract | None = None
     removed_reference_id: str | None = None
     message: str | None = None
     error: str | None = None
@@ -539,6 +629,7 @@ class ReferenceCompareStageCheckpointResponseContract(MCPContract):
     guided_reference_readiness: GuidedReferenceReadinessContract | None = None
     reference_understanding_summary: ReferenceUnderstandingSummaryContract | None = None
     reference_understanding_gate_ids: list[str] = []
+    reference_orchestrator_feedback: ReferenceOrchestratorFeedbackContract | None = None
     target_object: str | None = None
     target_objects: list[str] = []
     collection_name: str | None = None
@@ -586,6 +677,7 @@ class ReferenceIterateStageCheckpointResponseContract(MCPContract):
     guided_reference_readiness: GuidedReferenceReadinessContract | None = None
     reference_understanding_summary: ReferenceUnderstandingSummaryContract | None = None
     reference_understanding_gate_ids: list[str] = []
+    reference_orchestrator_feedback: ReferenceOrchestratorFeedbackContract | None = None
     target_object: str | None = None
     target_objects: list[str] = []
     collection_name: str | None = None

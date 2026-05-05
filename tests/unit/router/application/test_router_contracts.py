@@ -315,6 +315,17 @@ def test_router_get_status_exposes_reference_understanding_summary(monkeypatch):
         },
     }
     ctx.state["reference_understanding_gate_ids"] = ["generic_seat_presence"]
+    ctx.state["reference_strategy_state"] = {
+        "status": "available",
+        "understanding_id": "understanding_1234567890",
+        "construction_path": "hard_surface",
+        "primary_family": "modeling_mesh",
+        "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+        "blocked_families": ["sculpt_region"],
+        "sculpt_policy": "hidden",
+        "finish_policy": "inspect_first",
+        "recommended_next_checkpoint": "reference_compare_stage_checkpoint",
+    }
 
     result = asyncio.run(router_get_status(ctx))
 
@@ -322,6 +333,8 @@ def test_router_get_status_exposes_reference_understanding_summary(monkeypatch):
     assert result.reference_understanding_summary is not None
     assert result.reference_understanding_summary.understanding_id == "understanding_1234567890"
     assert result.reference_understanding_gate_ids == ["generic_seat_presence"]
+    assert result.reference_orchestrator_feedback is not None
+    assert result.reference_orchestrator_feedback.selected_family == "modeling_mesh"
 
 
 def test_router_get_status_preserves_absent_reference_understanding_gate_ids(monkeypatch):

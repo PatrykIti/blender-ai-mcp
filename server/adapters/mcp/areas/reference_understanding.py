@@ -11,6 +11,10 @@ from typing import Any, Literal
 
 from fastmcp import Context
 
+from server.adapters.mcp.areas.reference_feedback import (
+    augment_reference_understanding_summary,
+    build_reference_strategy_state,
+)
 from server.adapters.mcp.contracts.quality_gates import (
     GatePlanContract,
     GateProposalContract,
@@ -172,6 +176,7 @@ async def refresh_reference_understanding_summary(
             gate_plan=None if base_gate_plan is None else base_gate_plan.model_dump(mode="json", exclude_none=True),
             reference_understanding_summary=None,
             reference_understanding_gate_ids=None,
+            reference_strategy_state=None,
         )
         return await _persist_reference_understanding_state_async(
             ctx,
@@ -188,11 +193,15 @@ async def refresh_reference_understanding_summary(
             reason="reference_images_required",
             message="Attach at least one active reference image before reference understanding can run.",
         )
+        blocked_strategy = build_reference_strategy_state(blocked)
         updated = replace(
             current,
             gate_plan=None if base_gate_plan is None else base_gate_plan.model_dump(mode="json", exclude_none=True),
             reference_understanding_summary=blocked.model_dump(mode="json", exclude_none=True),
             reference_understanding_gate_ids=None,
+            reference_strategy_state=(
+                None if blocked_strategy is None else blocked_strategy.model_dump(mode="json", exclude_none=True)
+            ),
         )
         return await _persist_reference_understanding_state_async(
             ctx,
@@ -219,6 +228,7 @@ async def refresh_reference_understanding_summary(
         backend = resolver.resolve_default()
         payload = await backend.analyze(request)
         summary = ReferenceUnderstandingSummaryContract.model_validate(payload)
+        summary = augment_reference_understanding_summary(summary, reference_records=reference_records)
     except VisionBackendUnavailableError as exc:
         unavailable = blocked_reference_understanding_summary(
             goal=current.goal,
@@ -226,11 +236,17 @@ async def refresh_reference_understanding_summary(
             message=str(exc),
             reference_ids=reference_ids,
         )
+        unavailable_strategy = build_reference_strategy_state(unavailable)
         updated = replace(
             current,
             gate_plan=None if base_gate_plan is None else base_gate_plan.model_dump(mode="json", exclude_none=True),
             reference_understanding_summary=unavailable.model_dump(mode="json", exclude_none=True),
             reference_understanding_gate_ids=None,
+            reference_strategy_state=(
+                None
+                if unavailable_strategy is None
+                else unavailable_strategy.model_dump(mode="json", exclude_none=True)
+            ),
         )
         return await _persist_reference_understanding_state_async(
             ctx,
@@ -245,11 +261,17 @@ async def refresh_reference_understanding_summary(
             message=f"Reference understanding could not complete: {exc}",
             reference_ids=reference_ids,
         )
+        unavailable_strategy = build_reference_strategy_state(unavailable)
         updated = replace(
             current,
             gate_plan=None if base_gate_plan is None else base_gate_plan.model_dump(mode="json", exclude_none=True),
             reference_understanding_summary=unavailable.model_dump(mode="json", exclude_none=True),
             reference_understanding_gate_ids=None,
+            reference_strategy_state=(
+                None
+                if unavailable_strategy is None
+                else unavailable_strategy.model_dump(mode="json", exclude_none=True)
+            ),
         )
         return await _persist_reference_understanding_state_async(
             ctx,
@@ -285,10 +307,14 @@ async def refresh_reference_understanding_summary(
                 None if replacement_slice is None else [gate.gate_id for gate in replacement_slice.gates]
             )
 
+    final_strategy = build_reference_strategy_state(summary)
     final_state = replace(
         updated_session,
         reference_understanding_summary=summary.model_dump(mode="json", exclude_none=True),
         reference_understanding_gate_ids=accepted_gate_ids or None,
+        reference_strategy_state=None
+        if final_strategy is None
+        else final_strategy.model_dump(mode="json", exclude_none=True),
     )
     return await _persist_reference_understanding_state_async(
         ctx,

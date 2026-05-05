@@ -34,6 +34,7 @@ _GEMINI_COMPARE_EXPECTED_KEYS = (
 _REFERENCE_UNDERSTANDING_EXPECTED_KEYS = (
     "subject",
     "style",
+    "views",
     "required_parts",
     "non_goals",
     "construction_strategy",
@@ -138,6 +139,15 @@ def _reference_understanding_output_template() -> str:
             "confidence": 0.8,
             "notes": [],
         },
+        "views": [
+            {
+                "view_id": "front",
+                "detected": True,
+                "confidence": 0.9,
+                "reference_ids": [],
+                "key_features": [],
+            }
+        ],
         "required_parts": [
             {
                 "part_label": "body core",
@@ -190,6 +200,7 @@ def build_vision_system_prompt(
             "Return exactly one JSON object with only these keys:\n"
             "- subject\n"
             "- style\n"
+            "- views\n"
             "- required_parts\n"
             "- non_goals\n"
             "- construction_strategy\n"
@@ -519,6 +530,24 @@ def build_vision_response_json_schema(
                         "notes": {"type": "array", "items": {"type": "string"}},
                     },
                     "required": ["style_label", "confidence", "notes"],
+                },
+                "views": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            "view_id": {
+                                "type": "string",
+                                "enum": ["front", "side", "top", "back", "three_quarter", "detail", "unknown"],
+                            },
+                            "detected": {"type": "boolean"},
+                            "confidence": {"type": ["number", "null"]},
+                            "reference_ids": {"type": "array", "items": {"type": "string"}},
+                            "key_features": {"type": "array", "items": {"type": "string"}},
+                        },
+                        "required": ["view_id", "detected", "confidence", "reference_ids", "key_features"],
+                    },
                 },
                 "required_parts": {
                     "type": "array",

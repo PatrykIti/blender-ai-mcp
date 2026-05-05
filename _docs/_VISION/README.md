@@ -65,6 +65,11 @@ The repo now has the first implementation scaffolding for the vision layer:
 - explicit `guided_reference_readiness` payload on `router_set_goal(...)`,
   `router_get_status()`, `reference_compare_stage_checkpoint(...)`, and
   `reference_iterate_stage_checkpoint(...)`
+- session-scoped `reference_strategy_state` derived from the active
+  `reference_understanding_summary`
+- compact `reference_orchestrator_feedback` on `reference_images(...)`,
+  `router_*`, and staged checkpoint surfaces so clients can read one bounded
+  next-step contract without rebuilding it from several payload fragments
 - bounded `reference_compare_checkpoint(...)` surface for comparing one current
   stage/checkpoint image against the active goal plus attached references
 - bounded `reference_compare_current_view(...)` surface for capture-then-compare
@@ -89,6 +94,7 @@ The repo now has the first implementation scaffolding for the vision layer:
   - `iterate_ready`
 - stage compare/iterate responses now also carry:
   - `guided_reference_readiness` for explicit goal/reference readiness
+  - `reference_orchestrator_feedback` for one compact next-step read model
   - `assembled_target_scope` for explicit assembled-model targeting semantics
   - `truth_bundle` for correction-oriented contact/gap/alignment/overlap findings
   - `truth_followup` for loop-ready truth handoff items and focus pairs
@@ -629,8 +635,11 @@ and `reference_iterate_stage_checkpoint(...)`:
 - `action_hints`
   - typed, bounded tool suggestions derived from those silhouette metrics
 - `part_segmentation`
-  - optional sidecar placeholder; defaults to `status="disabled"` on the
-    normal runtime
+- optional sidecar placeholder; defaults to `status="disabled"` on the
+  normal runtime
+- RU summaries now also expose typed `views` and lightweight
+  server-owned `visual_metrics`; those heuristics stay advisory-only and do not
+  become verifier truth
 
 Interpretation rules:
 

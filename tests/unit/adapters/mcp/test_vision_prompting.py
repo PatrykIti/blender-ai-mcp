@@ -208,6 +208,7 @@ def test_reference_understanding_prompt_and_schema_use_internal_contract():
     assert set(schema["properties"]) == {
         "subject",
         "style",
+        "views",
         "required_parts",
         "non_goals",
         "construction_strategy",

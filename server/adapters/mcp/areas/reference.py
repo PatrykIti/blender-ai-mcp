@@ -23,6 +23,7 @@ from server.adapters.mcp.areas.reference_checkpoint_compare import (
 from server.adapters.mcp.areas.reference_current_view import (
     run_current_view_compare as _run_current_view_compare_impl,
 )
+from server.adapters.mcp.areas.reference_feedback import build_reference_orchestrator_feedback
 from server.adapters.mcp.areas.reference_images_runtime import (
     _validate_local_reference_path,
 )
@@ -115,6 +116,7 @@ from server.adapters.mcp.contracts.reference import (
     ReferenceRepairPlannerDetailContract,
     ReferenceRepairPlannerSummaryContract,
     ReferenceSilhouetteAnalysisContract,
+    ReferenceStrategyStateContract,
     ReferenceUnderstandingSummaryContract,
     ReferenceViewDiagnosticsHintContract,
 )
@@ -353,6 +355,7 @@ def _stage_compare_response(
     guided_reference_readiness: GuidedReferenceReadinessContract | None = None,
     reference_understanding_summary: ReferenceUnderstandingSummaryContract | None = None,
     reference_understanding_gate_ids: list[str] | None = None,
+    reference_strategy_state: dict[str, Any] | None = None,
     vision_assistant=None,
     truth_bundle: SceneCorrectionTruthBundleContract | None = None,
     truth_followup: SceneTruthFollowupContract | None = None,
@@ -372,15 +375,36 @@ def _stage_compare_response(
 ) -> ReferenceCompareStageCheckpointResponseContract:
     emitted_captures = list(captures) if include_captures else []
     gate_fields = _gate_checkpoint_fields(active_gate_plan)
+    guided_flow_contract = (
+        GuidedFlowStateContract.model_validate(guided_flow_state) if guided_flow_state is not None else None
+    )
+    active_gate_plan_contract = (
+        GatePlanContract.model_validate(active_gate_plan) if active_gate_plan is not None else None
+    )
+    reference_strategy_contract = (
+        ReferenceStrategyStateContract.model_validate(reference_strategy_state)
+        if reference_strategy_state is not None
+        else None
+    )
+    reference_orchestrator_feedback = build_reference_orchestrator_feedback(
+        goal=goal,
+        summary=reference_understanding_summary,
+        strategy_state=reference_strategy_contract,
+        guided_flow_state=guided_flow_contract,
+        gate_plan=active_gate_plan_contract,
+        guided_reference_readiness=guided_reference_readiness,
+        planner_summary=planner_summary,
+        correction_candidates=list(correction_candidates or []),
+        next_gate_actions=list(gate_fields["next_gate_actions"] or []),
+        recommended_bounded_tools=list(gate_fields["recommended_bounded_tools"] or []),
+    )
     return ReferenceCompareStageCheckpointResponseContract(
         action="compare_stage_checkpoint",
         session_id=session_id,
         transport=transport,
         goal=goal,
-        guided_flow_state=(
-            GuidedFlowStateContract.model_validate(guided_flow_state) if guided_flow_state is not None else None
-        ),
-        active_gate_plan=GatePlanContract.model_validate(active_gate_plan) if active_gate_plan is not None else None,
+        guided_flow_state=guided_flow_contract,
+        active_gate_plan=active_gate_plan_contract,
         gate_statuses=gate_fields["gate_statuses"],
         completion_blockers=gate_fields["completion_blockers"],
         next_gate_actions=gate_fields["next_gate_actions"],
@@ -388,6 +412,7 @@ def _stage_compare_response(
         guided_reference_readiness=guided_reference_readiness,
         reference_understanding_summary=reference_understanding_summary,
         reference_understanding_gate_ids=list(reference_understanding_gate_ids or []),
+        reference_orchestrator_feedback=reference_orchestrator_feedback,
         target_object=target_object,
         target_objects=target_objects,
         collection_name=collection_name,
@@ -445,6 +470,7 @@ def _iterate_stage_response(
     guided_reference_readiness: GuidedReferenceReadinessContract | None = None,
     reference_understanding_summary: ReferenceUnderstandingSummaryContract | None = None,
     reference_understanding_gate_ids: list[str] | None = None,
+    reference_strategy_state: dict[str, Any] | None = None,
     correction_candidates: list[ReferenceCorrectionCandidateContract] | None = None,
     budget_control: ReferenceHybridBudgetControlContract | None = None,
     refinement_route: ReferenceRefinementRouteContract | None = None,
@@ -473,17 +499,39 @@ def _iterate_stage_response(
             "next_gate_actions": list(compare_result.next_gate_actions or []),
             "recommended_bounded_tools": list(compare_result.recommended_bounded_tools or []),
         }
+    guided_flow_contract = (
+        GuidedFlowStateContract.model_validate(guided_flow_state) if guided_flow_state is not None else None
+    )
+    active_gate_plan_contract = (
+        GatePlanContract.model_validate(resolved_gate_plan) if resolved_gate_plan is not None else None
+    )
+    reference_strategy_contract = (
+        ReferenceStrategyStateContract.model_validate(reference_strategy_state)
+        if reference_strategy_state is not None
+        else None
+    )
+    resolved_correction_candidates = list(correction_candidates or compare_result.correction_candidates or [])
+    reference_orchestrator_feedback = build_reference_orchestrator_feedback(
+        goal=goal,
+        summary=reference_understanding_summary or compare_result.reference_understanding_summary,
+        strategy_state=reference_strategy_contract,
+        guided_flow_state=guided_flow_contract,
+        gate_plan=active_gate_plan_contract,
+        guided_reference_readiness=guided_reference_readiness or compare_result.guided_reference_readiness,
+        planner_summary=planner_summary or compare_result.planner_summary,
+        correction_candidates=resolved_correction_candidates,
+        next_gate_actions=list(gate_fields["next_gate_actions"] or []),
+        recommended_bounded_tools=list(gate_fields["recommended_bounded_tools"] or []),
+        correction_focus=correction_focus,
+        loop_disposition=loop_disposition,
+    )
     return ReferenceIterateStageCheckpointResponseContract(
         action="iterate_stage_checkpoint",
         session_id=session_id,
         transport=transport,
         goal=goal,
-        guided_flow_state=(
-            GuidedFlowStateContract.model_validate(guided_flow_state) if guided_flow_state is not None else None
-        ),
-        active_gate_plan=GatePlanContract.model_validate(resolved_gate_plan)
-        if resolved_gate_plan is not None
-        else None,
+        guided_flow_state=guided_flow_contract,
+        active_gate_plan=active_gate_plan_contract,
         gate_statuses=gate_fields["gate_statuses"],
         completion_blockers=gate_fields["completion_blockers"],
         next_gate_actions=gate_fields["next_gate_actions"],
@@ -496,13 +544,14 @@ def _iterate_stage_response(
             if reference_understanding_gate_ids is not None
             else list(compare_result.reference_understanding_gate_ids or [])
         ),
+        reference_orchestrator_feedback=reference_orchestrator_feedback,
         target_object=target_object,
         target_objects=target_objects,
         collection_name=collection_name,
         assembled_target_scope=compare_result.assembled_target_scope,
         truth_bundle=compare_result.truth_bundle,
         truth_followup=compare_result.truth_followup,
-        correction_candidates=list(correction_candidates or compare_result.correction_candidates or []),
+        correction_candidates=resolved_correction_candidates,
         budget_control=budget_control or compare_result.budget_control,
         refinement_route=refinement_route or compare_result.refinement_route,
         refinement_handoff=refinement_handoff or compare_result.refinement_handoff,
@@ -860,6 +909,7 @@ async def _run_stage_checkpoint_compare(
         else None
     )
     reference_understanding_gate_ids = list(session.reference_understanding_gate_ids or [])
+    reference_strategy_state = session.reference_strategy_state
     goal = session.goal
     if not readiness.compare_ready or goal is None:
         return _stage_compare_response(
@@ -882,6 +932,7 @@ async def _run_stage_checkpoint_compare(
             guided_reference_readiness=readiness_contract,
             reference_understanding_summary=reference_understanding_summary,
             reference_understanding_gate_ids=reference_understanding_gate_ids,
+            reference_strategy_state=reference_strategy_state,
             error=_guided_stage_reference_recovery_error(
                 readiness,
                 target_object=target_object,
@@ -917,6 +968,7 @@ async def _run_stage_checkpoint_compare(
             guided_reference_readiness=readiness_contract,
             reference_understanding_summary=reference_understanding_summary,
             reference_understanding_gate_ids=reference_understanding_gate_ids,
+            reference_strategy_state=reference_strategy_state,
             error=str(exc),
         )
     assembled_target_scope = _assembled_target_scope(
@@ -947,6 +999,7 @@ async def _run_stage_checkpoint_compare(
             guided_reference_readiness=readiness_contract,
             reference_understanding_summary=reference_understanding_summary,
             reference_understanding_gate_ids=reference_understanding_gate_ids,
+            reference_strategy_state=reference_strategy_state,
             error=scope_error,
         )
 
@@ -977,6 +1030,7 @@ async def _run_stage_checkpoint_compare(
             guided_reference_readiness=readiness_contract,
             reference_understanding_summary=reference_understanding_summary,
             reference_understanding_gate_ids=reference_understanding_gate_ids,
+            reference_strategy_state=reference_strategy_state,
             error="No matching reference images are attached for the requested target_object/target_view.",
         )
 
@@ -1012,6 +1066,7 @@ async def _run_stage_checkpoint_compare(
             guided_reference_readiness=readiness_contract,
             reference_understanding_summary=reference_understanding_summary,
             reference_understanding_gate_ids=reference_understanding_gate_ids,
+            reference_strategy_state=reference_strategy_state,
             error=str(exc),
         )
 
@@ -1272,6 +1327,7 @@ async def _run_stage_checkpoint_compare(
         guided_reference_readiness=readiness_contract,
         reference_understanding_summary=reference_understanding_summary,
         reference_understanding_gate_ids=reference_understanding_gate_ids,
+        reference_strategy_state=reference_strategy_state,
         vision_assistant=vision_assistant,
         truth_bundle=budgeted_truth_bundle,
         truth_followup=truth_followup,
@@ -1525,6 +1581,7 @@ async def reference_iterate_stage_checkpoint(
             stagnation_count=0,
             compare_result=compare_result,
             guided_reference_readiness=readiness,
+            reference_strategy_state=advanced_state.reference_strategy_state,
             correction_candidates=compare_result.correction_candidates,
             budget_control=compare_result.budget_control,
             refinement_route=compare_result.refinement_route,
@@ -1648,6 +1705,7 @@ async def reference_iterate_stage_checkpoint(
         stagnation_count=stagnation_count,
         compare_result=compare_result,
         guided_reference_readiness=readiness,
+        reference_strategy_state=advanced_state.reference_strategy_state,
         correction_candidates=compare_result.correction_candidates,
         budget_control=compare_result.budget_control,
         refinement_route=compare_result.refinement_route,

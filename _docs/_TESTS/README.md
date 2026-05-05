@@ -485,6 +485,11 @@ Focused unit coverage now also protects:
   - `tests/unit/adapters/mcp/test_search_surface.py`
 - reference checkpoint gate summary projection coverage on:
   - `tests/unit/adapters/mcp/test_reference_images.py`
+- reference strategy-state persistence, RU view/visual-metric augmentation, and
+  compact `reference_orchestrator_feedback` projection on:
+  - `tests/unit/adapters/mcp/test_reference_images.py`
+  - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
+  - `tests/unit/router/application/test_router_contracts.py`
 - compact view-space contracts, search/discovery shaping, and reference-loop
   adoption hints on:
   - `tests/unit/tools/scene/test_scene_contracts.py`

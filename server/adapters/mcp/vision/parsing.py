@@ -132,6 +132,7 @@ _REFERENCE_UNDERSTANDING_SOURCE_CLASS_VALUES = {
     "construction_hint",
     "gate_seed",
 }
+_REFERENCE_UNDERSTANDING_VIEW_VALUES = {"front", "side", "top", "back", "three_quarter", "detail", "unknown"}
 _REFERENCE_UNDERSTANDING_SEGMENTATION_ARTIFACT_VALUES = {"mask", "crop", "box"}
 _REFERENCE_UNDERSTANDING_SCULPT_POLICY_VALUES = {"hidden", "local_detail_only", "allowed_or_primary"}
 
@@ -590,6 +591,32 @@ def _normalize_reference_understanding_parts(parsed: dict[str, Any]) -> list[dic
     return items[:8]
 
 
+def _normalize_reference_understanding_views(parsed: dict[str, Any]) -> list[dict[str, Any]]:
+    value = parsed.get("views")
+    if not isinstance(value, list):
+        return []
+    items: list[dict[str, Any]] = []
+    for raw_item in value:
+        if not isinstance(raw_item, dict):
+            continue
+        view_id = str(raw_item.get("view_id") or raw_item.get("label") or "unknown").strip().lower()
+        if view_id not in _REFERENCE_UNDERSTANDING_VIEW_VALUES:
+            view_id = "unknown"
+        confidence = raw_item.get("confidence")
+        if not isinstance(confidence, (int, float)):
+            confidence = None
+        items.append(
+            {
+                "view_id": view_id,
+                "detected": bool(raw_item.get("detected", view_id != "unknown")),
+                "confidence": confidence,
+                "reference_ids": _coerce_string_list(raw_item.get("reference_ids")),
+                "key_features": _bounded_string_list(_coerce_string_list(raw_item.get("key_features")), max_items=6),
+            }
+        )
+    return items[:6]
+
+
 def _truncate_text_value(value: Any, *, limit: int = 240) -> str | None:
     if not isinstance(value, str):
         return None
@@ -807,6 +834,7 @@ def _build_reference_understanding_id(request: VisionRequest) -> str:
 def _normalize_reference_understanding_payload(parsed: dict[str, Any], request: VisionRequest) -> dict[str, Any]:
     strategy = _normalize_reference_understanding_strategy(parsed)
     parts = _normalize_reference_understanding_parts(parsed)
+    views = _normalize_reference_understanding_views(parsed)
     return {
         "status": "available",
         "understanding_id": _build_reference_understanding_id(request),
@@ -816,6 +844,7 @@ def _normalize_reference_understanding_payload(parsed: dict[str, Any], request: 
         ],
         "subject": _normalize_reference_understanding_subject(parsed),
         "style": _normalize_reference_understanding_style(parsed),
+        "views": views,
         "required_parts": parts,
         "non_goals": _bounded_string_list(_coerce_string_list(parsed.get("non_goals")), max_items=8),
         "construction_strategy": {key: value for key, value in strategy.items() if not key.startswith("_")},

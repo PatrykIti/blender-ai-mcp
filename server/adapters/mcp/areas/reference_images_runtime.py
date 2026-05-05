@@ -16,14 +16,19 @@ from uuid import uuid4
 
 from fastmcp import Context
 
+from server.adapters.mcp.areas.reference_feedback import build_reference_orchestrator_feedback
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.contracts.reference import (
+    GuidedReferenceReadinessContract,
     ReferenceImageRecordContract,
     ReferenceImagesResponseContract,
+    ReferenceStrategyStateContract,
+    ReferenceUnderstandingSummaryContract,
 )
 from server.adapters.mcp.guided_contract import canonicalize_reference_images_arguments
 from server.adapters.mcp.session_capabilities import (
     SessionCapabilityState,
+    build_guided_reference_readiness_payload,
     get_session_capability_state_async,
     replace_session_pending_reference_images_async,
     replace_session_reference_images_async,
@@ -104,15 +109,43 @@ def _as_response(
     action: _ReferenceResponseAction,
     goal: str | None,
     references: list[dict[str, Any]],
+    session_state: SessionCapabilityState | None = None,
     removed_reference_id: str | None = None,
     message: str | None = None,
     error: str | None = None,
 ) -> ReferenceImagesResponseContract:
+    readiness = (
+        GuidedReferenceReadinessContract.model_validate(build_guided_reference_readiness_payload(session_state))
+        if session_state is not None
+        else None
+    )
+    reference_understanding_summary = (
+        ReferenceUnderstandingSummaryContract.model_validate(session_state.reference_understanding_summary)
+        if session_state is not None and session_state.reference_understanding_summary is not None
+        else None
+    )
+    reference_strategy_state = (
+        ReferenceStrategyStateContract.model_validate(session_state.reference_strategy_state)
+        if session_state is not None and session_state.reference_strategy_state is not None
+        else None
+    )
+    reference_understanding_gate_ids = (
+        list(session_state.reference_understanding_gate_ids or []) if session_state is not None else []
+    )
     return ReferenceImagesResponseContract(
         action=action,
         goal=goal,
         reference_count=len(references),
         references=[ReferenceImageRecordContract.model_validate(item) for item in references],
+        guided_reference_readiness=readiness,
+        reference_understanding_summary=reference_understanding_summary,
+        reference_understanding_gate_ids=reference_understanding_gate_ids,
+        reference_orchestrator_feedback=build_reference_orchestrator_feedback(
+            goal=goal,
+            summary=reference_understanding_summary,
+            strategy_state=reference_strategy_state,
+            guided_reference_readiness=readiness,
+        ),
         removed_reference_id=removed_reference_id,
         message=message,
         error=error,
@@ -179,6 +212,7 @@ async def _clear_reference_images(
             session = await refresh_reference_understanding(ctx, session)
     if store.pending_references:
         await replace_session_pending_reference_images_async(ctx, [])
+    session = await get_session_capability_state_async(ctx)
 
     if store.active_references and store.pending_references:
         message = "Cleared active and pending reference images."
@@ -191,7 +225,7 @@ async def _clear_reference_images(
         ctx_info(ctx, "[REFERENCE] Cleared visible session reference images")
     else:
         ctx_info(ctx, "[REFERENCE] Cleared session reference images")
-    return _as_response(action="clear", goal=session.goal, references=[], message=message)
+    return _as_response(action="clear", goal=session.goal, references=[], session_state=session, message=message)
 
 
 async def _remove_reference_image(
@@ -207,6 +241,7 @@ async def _remove_reference_image(
             action="remove",
             goal=session.goal,
             references=_sorted_references(store.visible_references),
+            session_state=session,
             error="reference_id is required for remove",
         )
 
@@ -229,6 +264,7 @@ async def _remove_reference_image(
             action="remove",
             goal=session.goal,
             references=_sorted_references(store.visible_references),
+            session_state=session,
             error=f"Reference image not found: {reference_id}",
         )
 
@@ -239,6 +275,7 @@ async def _remove_reference_image(
             session = await refresh_reference_understanding(ctx, session)
     if len(remaining_pending) != len(store.pending_references):
         await replace_session_pending_reference_images_async(ctx, remaining_pending)
+    session = await get_session_capability_state_async(ctx)
 
     remaining_visible = (
         _merge_visible_references(remaining, remaining_pending) if session.goal is not None else remaining_pending
@@ -251,6 +288,7 @@ async def _remove_reference_image(
         action="remove",
         goal=session.goal,
         references=_sorted_references(remaining_visible),
+        session_state=session,
         removed_reference_id=reference_id,
         message=f"Removed reference image '{reference_id}'.",
     )
@@ -287,6 +325,7 @@ async def _attach_reference_image(
             action="attach",
             goal=store.session.goal,
             references=_sorted_references(store.visible_references),
+            session_state=store.session,
             error=str(exc),
         )
 
@@ -296,6 +335,7 @@ async def _attach_reference_image(
             action="attach",
             goal=store.session.goal,
             references=_sorted_references(store.visible_references),
+            session_state=store.session,
             error="source_path is required for attach",
         )
 
@@ -307,6 +347,7 @@ async def _attach_reference_image(
             action="attach",
             goal=store.session.goal,
             references=_sorted_references(store.visible_references),
+            session_state=store.session,
             error=str(exc),
         )
 
@@ -329,11 +370,13 @@ async def _attach_reference_image(
             if store.session.goal is not None
             else pending_updated
         )
+        session = await get_session_capability_state_async(ctx)
         ctx_info(ctx, f"[REFERENCE] Attached pending reference image {reference['reference_id']}")
         return _as_response(
             action="attach",
-            goal=store.session.goal,
+            goal=session.goal,
             references=_sorted_references(visible_updated),
+            session_state=session,
             message=(
                 f"Attached pending reference image '{reference['reference_id']}'. "
                 "It will be adopted automatically when the guided goal session becomes ready."
@@ -348,6 +391,7 @@ async def _attach_reference_image(
         action="attach",
         goal=session.goal,
         references=_sorted_references(updated_active),
+        session_state=session,
         message=f"Attached reference image '{reference['reference_id']}'.",
     )
 
@@ -384,6 +428,7 @@ async def handle_reference_images(
             action="list",
             goal=store.session.goal,
             references=_sorted_references(store.visible_references),
+            session_state=store.session,
         )
     if normalized_action == "clear":
         return await _clear_reference_images(

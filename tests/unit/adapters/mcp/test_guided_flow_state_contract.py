@@ -210,6 +210,17 @@ def test_session_state_round_trips_reference_understanding_linkage():
             },
         },
         reference_understanding_gate_ids=["creature_eye_pair", "creature_tail_core"],
+        reference_strategy_state={
+            "status": "available",
+            "understanding_id": "understanding_1234567890",
+            "construction_path": "low_poly_facet",
+            "primary_family": "modeling_mesh",
+            "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+            "blocked_families": ["sculpt_region"],
+            "sculpt_policy": "hidden",
+            "finish_policy": "preserve_facets",
+            "recommended_next_checkpoint": "reference_compare_stage_checkpoint",
+        },
     )
 
     set_session_capability_state(ctx, state)
@@ -218,6 +229,8 @@ def test_session_state_round_trips_reference_understanding_linkage():
     assert restored.reference_understanding_summary is not None
     assert restored.reference_understanding_summary["understanding_id"] == "understanding_1234567890"
     assert restored.reference_understanding_gate_ids == ["creature_eye_pair", "creature_tail_core"]
+    assert restored.reference_strategy_state is not None
+    assert restored.reference_strategy_state["primary_family"] == "modeling_mesh"
 
 
 def test_guided_flow_contract_accepts_allowed_families():

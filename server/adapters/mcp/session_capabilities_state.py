@@ -12,7 +12,10 @@ from fastmcp import Context
 
 from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract, GuidedFlowStepLiteral
 from server.adapters.mcp.contracts.quality_gates import GatePlanContract
-from server.adapters.mcp.contracts.reference import ReferenceUnderstandingSummaryContract
+from server.adapters.mcp.contracts.reference import (
+    ReferenceStrategyStateContract,
+    ReferenceUnderstandingSummaryContract,
+)
 from server.adapters.mcp.session_phase import SessionPhase, coerce_session_phase
 from server.adapters.mcp.session_state import (
     get_session_value,
@@ -41,6 +44,7 @@ SESSION_GUIDED_FLOW_STATE_KEY = "guided_flow_state"
 SESSION_GATE_PLAN_KEY = "gate_plan"
 SESSION_REFERENCE_UNDERSTANDING_SUMMARY_KEY = "reference_understanding_summary"
 SESSION_REFERENCE_UNDERSTANDING_GATE_IDS_KEY = "reference_understanding_gate_ids"
+SESSION_REFERENCE_STRATEGY_STATE_KEY = "reference_strategy_state"
 SESSION_PENDING_REFERENCE_IMAGES_KEY = "pending_reference_images"
 SESSION_GUIDED_PART_REGISTRY_KEY = "guided_part_registry"
 
@@ -82,6 +86,7 @@ class SessionCapabilityState:
     gate_plan: dict[str, Any] | None = None
     reference_understanding_summary: dict[str, Any] | None = None
     reference_understanding_gate_ids: list[str] | None = None
+    reference_strategy_state: dict[str, Any] | None = None
     guided_part_registry: list[dict[str, Any]] | None = None
     pending_reference_images: list[dict[str, Any]] | None = None
 
@@ -153,6 +158,15 @@ def _normalize_reference_understanding_gate_ids(value: Any) -> list[str] | None:
     return normalized or None
 
 
+def _normalize_reference_strategy_state(value: Any) -> dict[str, Any] | None:
+    if value is None:
+        return None
+    try:
+        return ReferenceStrategyStateContract.model_validate(value).model_dump(mode="json", exclude_none=True)
+    except Exception:
+        return None
+
+
 def _normalize_guided_part_registry(value: Any) -> list[dict[str, Any]] | None:
     if value is None:
         return None
@@ -201,6 +215,9 @@ def get_session_capability_state(ctx: Context) -> SessionCapabilityState:
         reference_understanding_gate_ids=_normalize_reference_understanding_gate_ids(
             get_session_value(ctx, SESSION_REFERENCE_UNDERSTANDING_GATE_IDS_KEY)
         ),
+        reference_strategy_state=_normalize_reference_strategy_state(
+            get_session_value(ctx, SESSION_REFERENCE_STRATEGY_STATE_KEY)
+        ),
         guided_part_registry=_normalize_guided_part_registry(get_session_value(ctx, SESSION_GUIDED_PART_REGISTRY_KEY)),
         pending_reference_images=get_session_value(ctx, SESSION_PENDING_REFERENCE_IMAGES_KEY),
     )
@@ -236,6 +253,9 @@ async def get_session_capability_state_async(ctx: Context) -> SessionCapabilityS
         reference_understanding_gate_ids=_normalize_reference_understanding_gate_ids(
             await get_session_value_async(ctx, SESSION_REFERENCE_UNDERSTANDING_GATE_IDS_KEY)
         ),
+        reference_strategy_state=_normalize_reference_strategy_state(
+            await get_session_value_async(ctx, SESSION_REFERENCE_STRATEGY_STATE_KEY)
+        ),
         guided_part_registry=_normalize_guided_part_registry(
             await get_session_value_async(ctx, SESSION_GUIDED_PART_REGISTRY_KEY)
         ),
@@ -266,6 +286,7 @@ def set_session_capability_state(ctx: Context, state: SessionCapabilityState) ->
     set_session_value(ctx, SESSION_GATE_PLAN_KEY, state.gate_plan)
     set_session_value(ctx, SESSION_REFERENCE_UNDERSTANDING_SUMMARY_KEY, state.reference_understanding_summary)
     set_session_value(ctx, SESSION_REFERENCE_UNDERSTANDING_GATE_IDS_KEY, state.reference_understanding_gate_ids)
+    set_session_value(ctx, SESSION_REFERENCE_STRATEGY_STATE_KEY, state.reference_strategy_state)
     set_session_value(ctx, SESSION_GUIDED_PART_REGISTRY_KEY, state.guided_part_registry)
     set_session_value(ctx, SESSION_PENDING_REFERENCE_IMAGES_KEY, state.pending_reference_images)
 
@@ -297,5 +318,6 @@ async def set_session_capability_state_async(ctx: Context, state: SessionCapabil
     await set_session_value_async(
         ctx, SESSION_REFERENCE_UNDERSTANDING_GATE_IDS_KEY, state.reference_understanding_gate_ids
     )
+    await set_session_value_async(ctx, SESSION_REFERENCE_STRATEGY_STATE_KEY, state.reference_strategy_state)
     await set_session_value_async(ctx, SESSION_GUIDED_PART_REGISTRY_KEY, state.guided_part_registry)
     await set_session_value_async(ctx, SESSION_PENDING_REFERENCE_IMAGES_KEY, state.pending_reference_images)

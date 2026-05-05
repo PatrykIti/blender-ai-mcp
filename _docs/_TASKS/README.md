@@ -22,7 +22,7 @@ flight.
 
 | Area | Document | Owner Tasks |
 |------|----------|-------------|
-| Vision / Reference Understanding | [Reference Understanding Roadmap](../_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md) | [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md), [TASK-135](./TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md), [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) |
+| Vision / Reference Understanding | [Reference Understanding Roadmap](../_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md) | [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md), [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md), [TASK-135](./TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md), [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) |
 
 ## 🧱 Hierarchy Rules
 
@@ -79,6 +79,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) | **Expand External Vision Contract Profiles Across Qwen, Anthropic, OpenAI, and NVIDIA** | 🔴 High | Board-level follow-on after TASK-139 for extending the external `vision_contract_profile` architecture across additional multimodal families on the existing provider surface, including OpenRouter model capability resolution and no new provider branches under this umbrella. |
+| [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md) | **Vision Orchestrator Feedback, Strategy Normalization, And Optional Perception Adapters** | 🔴 High | Board-level follow-on after TASK-158 for compact orchestrator-facing RU/runtime feedback on existing seams; first wave landed with RU views/visual metrics, session strategy state, and `reference_orchestrator_feedback`, while optional classifier/segmentation follow-ons remain open. |
 ---
 
 ## ✅ Done

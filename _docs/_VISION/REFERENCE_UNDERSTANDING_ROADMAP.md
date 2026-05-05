@@ -125,9 +125,16 @@ guided/reference surfaces:
 - `server/adapters/mcp/areas/reference.py` refreshes session-scoped
   reference-understanding from active references and reuses the closed
   `TASK-157` intake seam for advisory gate proposals
+- that same RU path now adds server-owned `views` and lightweight
+  `visual_metrics`, then normalizes the result into session-scoped
+  `reference_strategy_state`
 - `server/adapters/mcp/areas/router.py` surfaces the resulting
   `reference_understanding_summary` and `reference_understanding_gate_ids`
   through `router_get_status(...)`
+- `reference_images(...)`, `router_*`, and staged compare/iterate responses now
+  also expose compact `reference_orchestrator_feedback` so clients can read one
+  normalized next-step contract without losing access to the richer truth and
+  planner payloads
 - `reference_compare_stage_checkpoint(...)` and
   `reference_iterate_stage_checkpoint(...)` mirror the same typed linkage so
   later checkpoint loops can reuse the current pre-build understanding without a

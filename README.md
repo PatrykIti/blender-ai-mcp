@@ -80,8 +80,10 @@ When a bounded modeling intent matches, the default public working layer should 
 - `reference_guided_creature_build` as a native prompt asset for staged generic creature work on `llm-guided`
 - `recommended_prompts` can now steer creature-oriented guided sessions toward that prompt path by using active goal/session context
 - `guided_reference_readiness` on `router_set_goal`, `router_get_status`, and staged reference compare/iterate payloads so clients can see whether reference-driven stage work is actually ready
+- `reference_orchestrator_feedback` on `reference_images`, `router_*`, and staged reference compare/iterate payloads so clients can read one compact next-step contract instead of stitching together RU, gate, and planner fields by hand
 - `reference_compare_stage_checkpoint` for deterministic multi-view stage comparison against attached references during manual iterative work
 - `reference_iterate_stage_checkpoint` for a session-aware staged correction loop that remembers prior focus, can escalate into inspect/validate when the same correction repeats, and can now target one object, many objects, a collection, or the full assembled silhouette
+- RU summaries now also carry server-owned `views` plus lightweight `visual_metrics` that stay advisory-only and complement VLM interpretation
 - stage compare/iterate now also expose deterministic `silhouette_analysis` metrics, typed `action_hints`, and an advisory-only `part_segmentation` placeholder that stays disabled unless a separate sidecar is explicitly enabled
 - `scene_scope_graph` for one explicit read-only structural scope artifact with anchor/core/accessory role hints
 - `scene_relation_graph` for one explicit read-only pair-relation artifact derived from the current truth layer

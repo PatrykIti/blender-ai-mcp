@@ -328,6 +328,113 @@ def test_router_status_and_stage_checkpoint_surface_reference_understanding_with
     assert iterate_result.part_segmentation.status == "disabled"
 
 
+def test_reference_orchestrator_feedback_surface_with_real_blender_capture(
+    clean_scene,
+    scene_handler,
+    modeling_handler,
+    tmp_path,
+    monkeypatch,
+):
+    body_name = "Squirrel_Body"
+    reference_path = tmp_path / "creature_reference_front.png"
+    _write_creature_reference(reference_path)
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    try:
+        modeling_handler.create_primitive(primitive_type="CUBE", name=body_name, size=2.0, location=[0.0, 0.0, 0.0])
+    except RuntimeError as error:
+        _skip_if_blender_unavailable(error)
+
+    class Handler:
+        def set_goal(self, goal, resolved_params=None):
+            return {
+                "status": "no_match",
+                "continuation_mode": "guided_manual_build",
+                "workflow": None,
+                "resolved": {},
+                "unresolved": [],
+                "resolution_sources": {},
+                "phase_hint": "build",
+                "message": "Continue on the guided build surface.",
+            }
+
+        def clear_goal(self):
+            return "cleared"
+
+    monkeypatch.setattr("server.adapters.mcp.areas.router.get_router_handler", lambda: Handler())
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.router.get_config",
+        lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})(),
+    )
+    monkeypatch.setattr("server.adapters.mcp.areas.router._should_attach_repair_suggestion", lambda payload: False)
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: scene_handler)
+    monkeypatch.setattr(scene_area, "get_scene_handler", lambda: scene_handler)
+    monkeypatch.setattr("server.infrastructure.di.get_scene_handler", lambda: scene_handler)
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: _Resolver())
+    monkeypatch.setattr("server.infrastructure.di.get_vision_backend_resolver", lambda: _Resolver())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+
+    ctx = FakeContext()
+
+    asyncio.run(
+        reference_images(
+            cast(Context, ctx),
+            action="attach",
+            source_path=str(reference_path),
+            label="front_ref",
+            target_object=body_name,
+            target_view="front",
+        )
+    )
+    goal_result = asyncio.run(
+        router_set_goal(
+            cast(Context, ctx),
+            goal="create a low-poly squirrel matching front and side reference images",
+        )
+    )
+    status_result = asyncio.run(router_get_status(cast(Context, ctx)))
+    compare_result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            cast(Context, ctx),
+            target_object=body_name,
+            checkpoint_label="task_163_reference_orchestrator_compare",
+            target_view="front",
+            preset_profile="compact",
+        )
+    )
+    iterate_result = asyncio.run(
+        reference_iterate_stage_checkpoint(
+            cast(Context, ctx),
+            target_object=body_name,
+            checkpoint_label="task_163_reference_orchestrator_iterate",
+            target_view="front",
+            preset_profile="compact",
+        )
+    )
+
+    assert goal_result.reference_understanding_summary is not None
+    assert goal_result.reference_understanding_summary.views
+    assert goal_result.reference_understanding_summary.views[0].view_id == "front"
+    assert goal_result.reference_understanding_summary.visual_metrics
+    assert goal_result.reference_orchestrator_feedback is not None
+    assert goal_result.reference_orchestrator_feedback.selected_family == "modeling_mesh"
+    assert goal_result.reference_orchestrator_feedback.next_checkpoint_tool == "reference_compare_stage_checkpoint"
+
+    assert status_result.reference_orchestrator_feedback is not None
+    assert status_result.reference_orchestrator_feedback.selected_family == "modeling_mesh"
+    assert status_result.reference_understanding_summary is not None
+    assert status_result.reference_understanding_summary.visual_metrics
+
+    assert compare_result.reference_orchestrator_feedback is not None
+    assert compare_result.reference_orchestrator_feedback.next_checkpoint_tool == "reference_iterate_stage_checkpoint"
+    assert compare_result.reference_understanding_summary is not None
+    assert compare_result.reference_understanding_summary.visual_metrics
+
+    assert iterate_result.reference_orchestrator_feedback is not None
+    assert iterate_result.reference_orchestrator_feedback.next_checkpoint_tool == "reference_iterate_stage_checkpoint"
+
+
 def test_reference_understanding_refresh_clear_reapplies_visibility_immediately(tmp_path, monkeypatch):
     reference_path = tmp_path / "creature_reference_front.png"
     _write_creature_reference(reference_path)

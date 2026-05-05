@@ -727,6 +727,53 @@ async def _exercise_reference_understanding_refresh_replaces_gate_slice(
     assert compare_result["reference_understanding_gate_ids"] == ["required_part_ear_pair", "required_part_eye_pair"]
 
 
+async def _exercise_reference_orchestrator_feedback_transport_surface(client, reference_path: Path) -> None:
+    await client.call_tool(
+        "reference_images",
+        {
+            "action": "attach",
+            "source_path": str(reference_path),
+            "label": "front_ref",
+            "target_object": "Squirrel_Body",
+            "target_view": "front",
+        },
+    )
+    goal_result = result_payload(
+        await client.call_tool(
+            "router_set_goal",
+            {"goal": "create a low-poly squirrel matching front and side reference images"},
+        )
+    )
+    feedback = goal_result["reference_orchestrator_feedback"]
+    assert feedback is not None
+    assert feedback["selected_family"] == "modeling_mesh"
+    assert feedback["next_checkpoint_tool"] == "reference_compare_stage_checkpoint"
+    assert goal_result["reference_understanding_summary"]["views"]
+    assert goal_result["reference_understanding_summary"]["visual_metrics"]
+
+    status_result = result_payload(await client.call_tool("router_get_status", {}))
+    assert status_result["reference_orchestrator_feedback"] is not None
+    assert status_result["reference_understanding_summary"]["visual_metrics"]
+
+    compare_result = result_payload(
+        await client.call_tool(
+            "reference_compare_stage_checkpoint",
+            {
+                "target_object": "Squirrel_Body",
+                "target_objects": ["Squirrel_Tail"],
+                "checkpoint_label": "reference_orchestrator_feedback_transport_compare",
+                "target_view": "front",
+                "preset_profile": "compact",
+            },
+        )
+    )
+    assert compare_result["reference_orchestrator_feedback"] is not None
+    assert (
+        compare_result["reference_orchestrator_feedback"]["next_checkpoint_tool"]
+        == "reference_iterate_stage_checkpoint"
+    )
+
+
 async def _exercise_later_goal_gate_proposal_preserves_reference_understanding_gates(
     client,
     reference_path: Path,
@@ -1221,6 +1268,19 @@ def test_reference_understanding_refresh_replaces_gate_slice_over_stdio(tmp_path
                 front_reference_path,
                 side_reference_path,
             )
+
+    asyncio.run(run())
+
+
+@pytest.mark.slow
+def test_reference_orchestrator_feedback_transport_surface_over_stdio(tmp_path: Path):
+    script_path = write_server_script(tmp_path, _PATCHED_GATE_STATE_SERVER)
+    reference_path = tmp_path / "transport_front.png"
+    reference_path.write_bytes(_TRANSPORT_REFERENCE_PNG)
+
+    async def run() -> None:
+        async with stdio_client(script_path) as client:
+            await _exercise_reference_orchestrator_feedback_transport_surface(client, reference_path)
 
     asyncio.run(run())
 

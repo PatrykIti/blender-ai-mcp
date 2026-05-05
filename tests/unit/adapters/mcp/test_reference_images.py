@@ -395,7 +395,7 @@ def test_iterate_stage_response_carries_silhouette_analysis_and_action_hints():
 def test_refresh_reference_understanding_summary_persists_summary_and_gate_ids(tmp_path, monkeypatch):
     ctx = FakeContext()
     reference_path = tmp_path / "front.png"
-    reference_path.write_bytes(b"front")
+    _write_test_silhouette(reference_path, with_ears=True)
     set_session_capability_state(
         ctx,
         SessionCapabilityState(
@@ -488,7 +488,11 @@ def test_refresh_reference_understanding_summary_persists_summary_and_gate_ids(t
 
     assert updated.reference_understanding_summary is not None
     assert updated.reference_understanding_summary["understanding_id"] == "understanding_1234567890"
+    assert updated.reference_understanding_summary["views"][0]["view_id"] == "front"
+    assert updated.reference_understanding_summary["visual_metrics"]
     assert updated.reference_understanding_gate_ids is not None
+    assert updated.reference_strategy_state is not None
+    assert updated.reference_strategy_state["primary_family"] == "modeling_mesh"
     assert any(gate_id.endswith("eye_pair") for gate_id in updated.reference_understanding_gate_ids)
 
 
@@ -524,6 +528,8 @@ def test_reference_compare_stage_checkpoint_threads_reference_understanding_from
     assert result.reference_understanding_summary is not None
     assert result.reference_understanding_summary.reason == "reference_images_required"
     assert result.reference_understanding_gate_ids == ["creature_eye_pair"]
+    assert result.reference_orchestrator_feedback is not None
+    assert result.reference_orchestrator_feedback.next_checkpoint_tool == "reference_images"
 
 
 def test_reference_understanding_refresh_replaces_previous_reference_gate_slice(tmp_path, monkeypatch):
@@ -656,6 +662,83 @@ def test_reference_understanding_refresh_replaces_previous_reference_gate_slice(
     assert {gate["target_label"] for gate in refreshed_reference_gates} == {"ear_pair", "eye_pair"}
     eye_gate = next(gate for gate in refreshed_reference_gates if gate["target_label"] == "eye_pair")
     assert eye_gate["label"] == "dual-view eye pair"
+
+
+def test_reference_images_attach_returns_orchestrator_feedback(tmp_path, monkeypatch):
+    image = tmp_path / "front.png"
+    image.write_bytes(b"front")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(
+        ctx,
+        "create a low-poly squirrel",
+        {"status": "no_match"},
+        surface_profile="llm-guided",
+    )
+
+    class Backend:
+        async def analyze(self, request):
+            return {
+                "status": "available",
+                "understanding_id": "understanding_attach_feedback",
+                "goal": request.goal,
+                "reference_ids": ["ref_front"],
+                "subject": {
+                    "label": "low poly squirrel",
+                    "category": "creature",
+                    "confidence": 0.8,
+                    "uncertainty_notes": ["side reference is still missing"],
+                },
+                "style": {
+                    "style_label": "low_poly_faceted",
+                    "confidence": 0.8,
+                    "notes": ["angular silhouette"],
+                },
+                "views": [],
+                "required_parts": [{"part_label": "tail", "target_label": "tail_core"}],
+                "non_goals": ["do not smooth into an organic sculpt"],
+                "construction_strategy": {
+                    "construction_path": "low_poly_facet",
+                    "primary_family": "modeling_mesh",
+                    "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+                    "stage_sequence": ["primary_masses"],
+                    "finish_policy": "preserve_facets",
+                },
+                "router_handoff_hints": {
+                    "preferred_family": "modeling_mesh",
+                    "allowed_guided_families": ["reference_context", "primary_masses", "secondary_parts"],
+                    "sculpt_policy": "hidden",
+                },
+                "gate_proposals": [],
+                "visual_evidence_refs": [],
+                "verification_requirements": [],
+                "classification_scores": [],
+                "segmentation_artifacts": [],
+                "source_provenance": [{"source": "reference_understanding"}],
+                "boundary_policy": {
+                    "advisory_only": True,
+                    "not_truth_source": True,
+                    "may_unlock_tools": False,
+                    "may_pass_gates": False,
+                    "may_propose_gates": True,
+                },
+            }
+
+    class Resolver:
+        def resolve_default(self):
+            return Backend()
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: Resolver())
+
+    result = asyncio.run(reference_images(ctx, action="attach", source_path=str(image), label="front_ref"))
+
+    assert result.reference_understanding_summary is not None
+    assert result.reference_orchestrator_feedback is not None
+    assert result.reference_orchestrator_feedback.selected_family == "modeling_mesh"
+    assert result.reference_orchestrator_feedback.next_checkpoint_tool == "reference_compare_stage_checkpoint"
+    assert "tail" in result.reference_orchestrator_feedback.required_parts_pending
 
 
 def test_reference_images_ready_goal_refresh_reapplies_visibility_on_attach_and_clear(tmp_path, monkeypatch):

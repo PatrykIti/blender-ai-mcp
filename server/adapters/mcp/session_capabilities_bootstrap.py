@@ -362,6 +362,7 @@ def update_session_from_router_goal(
         gate_plan=current.gate_plan if same_goal else None,
         reference_understanding_summary=current.reference_understanding_summary if same_goal else None,
         reference_understanding_gate_ids=current.reference_understanding_gate_ids if same_goal else None,
+        reference_strategy_state=current.reference_strategy_state if same_goal else None,
         guided_part_registry=retained_guided_part_registry,
         pending_reference_images=pending_reference_images,
     )
@@ -457,6 +458,7 @@ async def update_session_from_router_goal_async(
         gate_plan=current.gate_plan if same_goal else None,
         reference_understanding_summary=current.reference_understanding_summary if same_goal else None,
         reference_understanding_gate_ids=current.reference_understanding_gate_ids if same_goal else None,
+        reference_strategy_state=current.reference_strategy_state if same_goal else None,
         guided_part_registry=retained_guided_part_registry,
         pending_reference_images=pending_reference_images,
     )
@@ -495,6 +497,7 @@ def clear_session_goal_state(
         gate_plan=None,
         reference_understanding_summary=None,
         reference_understanding_gate_ids=None,
+        reference_strategy_state=None,
         guided_part_registry=None,
         pending_reference_images=None,
     )
@@ -531,6 +534,7 @@ async def clear_session_goal_state_async(
         gate_plan=None,
         reference_understanding_summary=None,
         reference_understanding_gate_ids=None,
+        reference_strategy_state=None,
         guided_part_registry=None,
         pending_reference_images=None,
     )

@@ -17,7 +17,15 @@ from typing import Any, Dict, List, Optional, cast
 
 from fastmcp import Context
 
+from server.adapters.mcp.areas.reference_feedback import build_reference_orchestrator_feedback
 from server.adapters.mcp.context_utils import ctx_info, ctx_session_id, ctx_transport_type, ctx_warning
+from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract
+from server.adapters.mcp.contracts.quality_gates import GatePlanContract
+from server.adapters.mcp.contracts.reference import (
+    GuidedReferenceReadinessContract,
+    ReferenceStrategyStateContract,
+    ReferenceUnderstandingSummaryContract,
+)
 from server.adapters.mcp.contracts.router import (
     RouterGoalResponseContract,
     RouterStatusContract,
@@ -451,6 +459,31 @@ async def router_set_goal(
     result["guided_reference_readiness"] = build_guided_reference_readiness_payload(state)
     result["reference_understanding_summary"] = state.reference_understanding_summary
     result["reference_understanding_gate_ids"] = list(state.reference_understanding_gate_ids or [])
+    feedback = build_reference_orchestrator_feedback(
+        goal=goal,
+        summary=(
+            ReferenceUnderstandingSummaryContract.model_validate(state.reference_understanding_summary)
+            if state.reference_understanding_summary is not None
+            else None
+        ),
+        strategy_state=(
+            ReferenceStrategyStateContract.model_validate(state.reference_strategy_state)
+            if state.reference_strategy_state is not None
+            else None
+        ),
+        guided_flow_state=(
+            GuidedFlowStateContract.model_validate(state.guided_flow_state)
+            if state.guided_flow_state is not None
+            else None
+        ),
+        gate_plan=GatePlanContract.model_validate(state.gate_plan) if state.gate_plan is not None else None,
+        guided_reference_readiness=GuidedReferenceReadinessContract.model_validate(
+            build_guided_reference_readiness_payload(state)
+        ),
+    )
+    result["reference_orchestrator_feedback"] = (
+        None if feedback is None else feedback.model_dump(mode="json", exclude_none=True)
+    )
     await apply_visibility_for_session_state(ctx, state)
 
     # Log to context
@@ -538,6 +571,39 @@ async def router_get_status(ctx: Context) -> RouterStatusContract:
                 list(session.reference_understanding_gate_ids)
                 if session.reference_understanding_gate_ids is not None
                 else None
+            ),
+            "reference_orchestrator_feedback": (
+                None
+                if (
+                    feedback := build_reference_orchestrator_feedback(
+                        goal=session.goal,
+                        summary=(
+                            ReferenceUnderstandingSummaryContract.model_validate(
+                                session.reference_understanding_summary
+                            )
+                            if session.reference_understanding_summary is not None
+                            else None
+                        ),
+                        strategy_state=(
+                            ReferenceStrategyStateContract.model_validate(session.reference_strategy_state)
+                            if session.reference_strategy_state is not None
+                            else None
+                        ),
+                        guided_flow_state=(
+                            GuidedFlowStateContract.model_validate(session.guided_flow_state)
+                            if session.guided_flow_state is not None
+                            else None
+                        ),
+                        gate_plan=GatePlanContract.model_validate(session.gate_plan)
+                        if session.gate_plan is not None
+                        else None,
+                        guided_reference_readiness=GuidedReferenceReadinessContract.model_validate(
+                            build_guided_reference_readiness_payload(session)
+                        ),
+                    )
+                )
+                is None
+                else feedback.model_dump(mode="json", exclude_none=True)
             ),
         }
     )
