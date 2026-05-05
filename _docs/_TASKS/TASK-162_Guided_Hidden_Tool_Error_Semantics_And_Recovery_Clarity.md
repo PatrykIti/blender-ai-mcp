@@ -252,12 +252,12 @@ After this umbrella ships:
 - `router_get_status(...)` no longer lets persisted `guided_handoff` guidance
   contradict the currently authoritative live `visibility_rules` when the
   client re-checks status after a visibility transition
-- shaped-surface handoff/discovery docs no longer imply that stale direct-tool
-  names may be guessed into `call_tool(...)` after the surface changes
+- shaped-surface handoff/status semantics stay aligned with the repo’s existing
+  search-first guidance after the surface changes
 - integration coverage proves that a healthy MCP session returning tool errors is
   not misrepresented by the repo contract as a disconnect condition on the
-  guided discovery / `call_tool(...)` seam or the repo-owned direct guided
-  hidden-tool seam, with named lanes explicitly proving post-failure continuity
+  guided discovery / `call_tool(...)` seam, and that the transcript-backed
+  direct-path failure is prevented earlier by hiding the invalid mutators
   where the transport/session harness makes that observable
 - the final task docs leave implementation ownership, tests, and docs updates
   explicit enough that a future implementer does not need the original Claude

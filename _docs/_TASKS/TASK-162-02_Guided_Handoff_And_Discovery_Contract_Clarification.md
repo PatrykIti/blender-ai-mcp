@@ -3,7 +3,7 @@
 **Parent:** [TASK-162](./TASK-162_Guided_Hidden_Tool_Error_Semantics_And_Recovery_Clarity.md)
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
-**Objective:** Align the `guided_manual_build` handoff, shaped visibility contract, and public docs so `direct_tools`, `supporting_tools`, and `search_tools(...)` form one coherent operator path instead of encouraging stale-name guessing.
+**Objective:** Align the `guided_manual_build` handoff, shaped visibility contract, and public docs so `direct_tools`, `supporting_tools`, and `search_tools(...)` form one coherent operator path. The remaining problem is not that the repo broadly teaches stale-name guessing today, but that stale persisted handoff/status guidance can drift away from the already-correct search-first live surface after visibility changes.
 
 ## Repository Touchpoints
 

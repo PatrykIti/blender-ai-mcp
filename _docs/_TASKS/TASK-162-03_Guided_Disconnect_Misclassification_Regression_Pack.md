@@ -3,13 +3,16 @@
 **Parent:** [TASK-162](./TASK-162_Guided_Hidden_Tool_Error_Semantics_And_Recovery_Clarity.md)
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
-**Objective:** Add regression coverage and closeout notes proving that guided hidden-tool and stale-argument failures remain healthy MCP tool errors rather than apparent disconnects across both repo-owned seams involved in the transcripted failure family:
+**Objective:** Add regression coverage and closeout notes proving that guided hidden-tool and stale-argument failures remain healthy MCP tool errors rather than apparent disconnects across the repo-owned seams involved in the transcripted failure family:
 
-- the discovery / `call_tool(...)` seam
-- the direct guided hidden-tool seam after visibility narrows
+- the discovery / `call_tool(...)` seam, where this family owns the hidden-tool
+  error wording directly
+- the direct guided path only insofar as the repo can prevent the bad retry by
+  hiding invalid mutators earlier after visibility narrows
 
 The leaf must leave both seams with explicit proof lanes and explicit closeout
-documentation.
+documentation, without claiming that this family rewrites the raw direct hidden
+tool error surface itself.
 
 ## Repository Touchpoints
 
@@ -39,8 +42,8 @@ documentation.
   - the session is healthy
   - a direct guided tool that was valid earlier in the run becomes hidden after
     spatial rearm
-  - the resulting failure is still clearly a guided-surface/tool-contract error
-    rather than an apparent disconnect
+  - the bad retry is prevented earlier because the now-invalid mutator is no
+    longer visible on the shaped surface
 - add one regression for the transcript-backed creature path where attachment
   repair macros are not exposed during `inspect_validate` refresh barriers if
   `attachment_alignment` would be fail-closed anyway
@@ -134,8 +137,9 @@ assert status["guided_flow_state"]["spatial_refresh_required"] is True
 - a hidden-tool failure on the guided discovery / `call_tool(...)` path is
   provably distinguishable from a disconnect in both a stdio lane and a
   Streamable HTTP lane
-- a direct guided hidden-tool failure after visibility narrowing is also
-  provably distinguishable from a disconnect in integration coverage
+- on the direct guided path, the transcript-backed invalid mutator is no longer
+  visible after visibility narrowing, so the model is not led into a
+  visible-but-blocked retry
 - on the transcript-backed creature path, the attachment-repair macros are not
   shown during `inspect_validate` refresh barriers when they would be blocked
   by `attachment_alignment` family gating
