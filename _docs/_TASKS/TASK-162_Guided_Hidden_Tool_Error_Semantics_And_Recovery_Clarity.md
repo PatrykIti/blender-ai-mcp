@@ -174,10 +174,10 @@ After this umbrella ships:
 | `tests/e2e/integration/test_guided_search_first_call_tool_boundary.py` | Search-first proxy regressions | Existing proof lane for “search first” behavior; must expand to hidden-tool recovery clarity |
 | `tests/e2e/integration/test_guided_surface_contract_parity.py` | Guided surface parity | Existing end-to-end contract lane for `guided_manual_build` visibility and discovery |
 | `tests/e2e/integration/test_guided_streamable_spatial_support.py` | Streamable guided recovery | Existing lane for stale spatial context and reconnect-safe behavior |
-| `tests/e2e/router/test_guided_manual_handoff.py` | Guided handoff contract | Existing router-facing proof lane for the `guided_manual_build` payload |
+| `tests/e2e/router/test_guided_manual_handoff.py` | Guided handoff baseline | Existing router-facing proof lane for initial `guided_manual_build` persistence; if this family changes status semantics, extend it with a later post-transition divergence case |
 | `tests/unit/adapters/mcp/test_visibility_policy.py` | Handoff owner unit lane | Existing owner lane for guided handoff payload construction and visibility family shaping |
 | `tests/unit/adapters/mcp/test_session_phase.py` | Session-state persistence lane | Existing owner lane for `guided_handoff` persistence and same-goal session state transitions |
-| `tests/unit/adapters/mcp/test_router_elicitation.py` | Status/handoff exposure lane | Existing owner lane for `router_get_status(...)` and `guided_handoff` status exposure |
+| `tests/unit/adapters/mcp/test_router_elicitation.py` | Status/handoff exposure lane | Existing owner lane for baseline `router_get_status(...)` exposure; if this family changes live-vs-persisted semantics, extend it with a post-transition divergence case |
 | `tests/unit/adapters/mcp/test_public_surface_docs.py` | Public docs parity | Existing owner lane for hard-checked guided doc wording and examples |
 | `_docs/_MCP_SERVER/README.md` | Public MCP contract | Must document the distinction between unknown tools, hidden tools, stale guided surface transitions, and search-first recovery |
 | `_docs/AVAILABLE_TOOLS_SUMMARY.md` | Tool discovery wording | Must stay aligned with shaped-surface discovery and macro recovery guidance |
