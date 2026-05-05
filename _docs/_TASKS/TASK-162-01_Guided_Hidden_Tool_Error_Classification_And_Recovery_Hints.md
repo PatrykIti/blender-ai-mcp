@@ -3,7 +3,7 @@
 **Parent:** [TASK-162](./TASK-162_Guided_Hidden_Tool_Error_Semantics_And_Recovery_Clarity.md)
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
-**Objective:** Replace generic guided `Unknown tool` proxy failures with deterministic hidden-tool / stale-context recovery semantics when the server knows the active flow step and required spatial checks.
+**Objective:** Replace generic guided `Unknown tool` proxy failures on the `call_tool(...)` seam with deterministic hidden-tool / stale-context recovery semantics when the server knows the active flow step and required spatial checks, then keep direct-call parity explicit in the family-level proof.
 
 ## Repository Touchpoints
 
@@ -33,14 +33,15 @@
 ```python
 visible_tools = await transform._get_visible_tools(ctx)
 visible_names = {tool.name for tool in visible_tools}
-entry = discovery_entry_map.get(resolved_name)
+entry = transform._entry_map.get(resolved_name)
 session = await get_session_capability_state_async(ctx)
+guided_flow = session.guided_flow_state or {}
 
 if entry is None:
     raise ToolError(unknown_tool_message(resolved_name))
 
 if resolved_name not in visible_names:
-    if session.guided_flow_state.spatial_refresh_required:
+    if bool(guided_flow.get("spatial_refresh_required")):
         raise ToolError(
             hidden_due_to_spatial_refresh_message(
                 resolved_name,
@@ -62,14 +63,16 @@ return await ctx.fastmcp.call_tool(resolved_name, canonical_arguments)
 
 ## Tests To Add/Update
 
+- `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/e2e/integration/test_guided_search_first_call_tool_boundary.py`
 - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
-- targeted unit coverage if helper classification logic is extracted
 
 ## Docs To Update
 
-- inherit umbrella docs unless the final error wording requires explicit public
-  examples
+- `_docs/_MCP_SERVER/README.md`
+- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- inherit any additional umbrella docs if the final error wording changes
+  cross-surface examples
 
 ## Changelog Impact
 
@@ -78,17 +81,19 @@ return await ctx.fastmcp.call_tool(resolved_name, canonical_arguments)
 ## Validation Commands
 
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_search_first_call_tool_boundary.py tests/e2e/integration/test_guided_streamable_spatial_support.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_search_surface.py -q`
+- `poetry run python scripts/run_e2e_tests.py`
 - `poetry run pytest ./tests/unit`
 
 ## Acceptance Criteria
 
-- a client asking for a known-but-hidden guided tool gets a recovery-oriented
-  error, not a plain unknown-tool message
+- a client asking through `call_tool(...)` for a known-but-hidden guided tool
+  gets a recovery-oriented error, not a plain unknown-tool message
 - when spatial refresh is the cause, the error points to
   `scene_scope_graph`, `scene_relation_graph`, and `scene_view_diagnostics`
 - healthy tool-contract failures no longer look like transport disconnects in
-  the repo-owned surface semantics
+  the repo-owned proxy/discovery semantics
 
 ## Status / Board Update
 
-- historical child under `TASK-162`; no separate board row
+- active child under open parent `TASK-162`; no separate board row

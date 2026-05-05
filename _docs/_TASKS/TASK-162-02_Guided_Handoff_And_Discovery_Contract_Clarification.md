@@ -8,9 +8,12 @@
 ## Repository Touchpoints
 
 - `server/adapters/mcp/transforms/visibility_policy.py`
+- `server/adapters/mcp/areas/router.py`
+- `server/adapters/mcp/surfaces.py`
 - `server/application/tool_handlers/router_handler.py`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/e2e/integration/test_guided_surface_contract_parity.py`
 - `tests/e2e/integration/test_guided_inspect_validate_handoff.py`
 
@@ -18,10 +21,16 @@
 
 - keep `guided_handoff.direct_tools` limited to tools intended for direct use on
   the current shaped surface
+- update the adapter-owned handoff builder in `visibility_policy.py` and the
+  MCP-facing router response assembly, not only the coarse no-match shell in
+  `router_handler.py`
 - ensure the handoff message explicitly says that `direct_tools` are only valid
   while visible, and stale names must not be guessed through `call_tool(...)`
 - keep `discovery_tools=["search_tools","call_tool"]`, but update examples so
   they describe search-first recovery rather than speculative retries
+- keep the live `surfaces.py` instructions aligned with the same discovery-first
+  contract that `_docs/_MCP_SERVER/README.md` and `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+  describe
 - review whether `supporting_tools` should include phase-pinned spatial refresh
   tools more explicitly when later build families are temporarily hidden
 - preserve the FastMCP platform responsibility: this is client-surface shaping,
@@ -56,7 +65,10 @@ docs.example = [
 
 - `tests/e2e/integration/test_guided_surface_contract_parity.py`
 - `tests/e2e/integration/test_guided_inspect_validate_handoff.py`
-- public-doc parity tests if wording changes affect the checked examples
+- `tests/e2e/router/test_guided_manual_handoff.py`
+- `tests/e2e/integration/test_guided_streamable_spatial_support.py`
+- `tests/unit/adapters/mcp/test_visibility_policy.py`
+- `tests/unit/adapters/mcp/test_public_surface_docs.py`
 
 ## Docs To Update
 
@@ -70,6 +82,10 @@ docs.example = [
 ## Validation Commands
 
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/integration/test_guided_inspect_validate_handoff.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/router/test_guided_manual_handoff.py tests/e2e/integration/test_guided_streamable_spatial_support.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_policy.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- `poetry run python scripts/run_e2e_tests.py`
 - `poetry run pytest ./tests/unit`
 
 ## Acceptance Criteria
@@ -83,4 +99,4 @@ docs.example = [
 
 ## Status / Board Update
 
-- historical child under `TASK-162`; no separate board row
+- active child under open parent `TASK-162`; no separate board row

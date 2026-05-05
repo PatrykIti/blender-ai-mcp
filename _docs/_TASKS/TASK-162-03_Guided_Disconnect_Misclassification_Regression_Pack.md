@@ -3,7 +3,7 @@
 **Parent:** [TASK-162](./TASK-162_Guided_Hidden_Tool_Error_Semantics_And_Recovery_Clarity.md)
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
-**Objective:** Add regression coverage and closeout notes proving that guided hidden-tool and stale-argument failures remain healthy MCP tool errors rather than apparent disconnects.
+**Objective:** Add regression coverage and closeout notes proving that guided hidden-tool and stale-argument failures on the discovery / `call_tool(...)` seam remain healthy MCP tool errors rather than apparent disconnects, with one explicit stdio lane and one explicit Streamable HTTP lane.
 
 ## Repository Touchpoints
 
@@ -17,12 +17,20 @@
 
 - add one regression where:
   - the session is healthy
-  - a known guided tool becomes hidden after spatial rearm
-  - the client receives a typed recovery-oriented `ToolError`
+  - a known guided tool becomes hidden after spatial rearm on the guided
+    discovery / `call_tool(...)` path
+  - the client receives a recovery-oriented `ToolError`
   - subsequent MCP calls still succeed on the same session
 - add one regression for stale/legacy argument shapes on a visible macro so the
   failure is clearly a contract error rather than a transport symptom
 - keep at least one stdio lane and one Streamable HTTP lane in scope
+- the named files must be extended so they really cover this seam:
+  - `test_guided_search_first_call_tool_boundary.py` or
+    `test_guided_surface_contract_parity.py` must include the stale-argument
+    failure through `call_tool(...)`, not only a direct visible-tool failure
+  - `test_guided_streamable_spatial_support.py` must include the hidden-tool
+    failure through `call_tool(...)` on Streamable HTTP, not only the direct
+    hidden-tool lane
 - close out the task with validation evidence that names the exact files and
   the final expected error wording
 
@@ -45,8 +53,8 @@ assert status["guided_flow_state"]["spatial_refresh_required"] is True
 
 ## Runtime / Security Contract Notes
 
-- regression assertions should verify contract wording, not private exception
-  internals
+- regression assertions should verify deterministic contract wording, not private
+  exception internals
 - do not rely on brittle stack-trace matching
 - keep transport-health assertions bounded to supported MCP behavior such as
   successful subsequent calls on the same session
@@ -72,13 +80,15 @@ assert status["guided_flow_state"]["spatial_refresh_required"] is True
 
 ## Acceptance Criteria
 
-- a hidden-tool failure is provably distinguishable from a disconnect in
-  integration coverage
-- a stale-argument failure is provably distinguishable from a disconnect in
-  integration coverage
+- a hidden-tool failure on the guided discovery / `call_tool(...)` path is
+  provably distinguishable from a disconnect in both a stdio lane and a
+  Streamable HTTP lane
+- a stale-argument failure on the same seam is provably distinguishable from a
+  disconnect in integration coverage, and the proof is attached to an explicit
+  `call_tool(...)` regression rather than only a direct tool call
 - subsequent calls on the same guided session still work after the failure
   path, proving transport health
 
 ## Status / Board Update
 
-- historical child under `TASK-162`; no separate board row
+- active child under open parent `TASK-162`; no separate board row

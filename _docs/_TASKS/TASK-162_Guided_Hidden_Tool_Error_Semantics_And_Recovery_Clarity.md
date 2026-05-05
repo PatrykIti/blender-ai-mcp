@@ -10,10 +10,12 @@
 ## Objective
 
 Turn one recurring guided-runtime failure mode into an explicit product contract:
-when the client tries to call a tool that is currently hidden by guided
-visibility or blocked by `spatial_refresh_required`, the MCP surface should
-return a deterministic, phase-aware recovery explanation instead of a generic
-`Unknown tool` story that can be misread as a transport disconnect.
+when the client tries to call a tool through the guided discovery / `call_tool`
+path, or retries a now-hidden direct guided tool after the surface changed, and
+that tool is hidden by guided visibility or blocked by
+`spatial_refresh_required`, the MCP surface should return a deterministic,
+phase-aware recovery explanation instead of a generic `Unknown tool` story that
+can be misread as a transport disconnect.
 
 This umbrella covers the narrow, transcript-backed failure family observed on
 the active `llm-guided` surface:
@@ -62,8 +64,8 @@ enough at the exact moment the client needs it.
 
 After this umbrella ships:
 
-- guided hidden-tool failures distinguish “tool is not visible right now” from
-  “tool name does not exist”
+- repo-owned guided hidden-tool failures distinguish “tool is not visible right
+  now” from “tool name does not exist”
 - recovery instructions explicitly point to the next spatial-context tools when
   `spatial_refresh_required` is the cause
 - guided handoff / discovery docs stop implying that the model may freely guess
@@ -82,6 +84,9 @@ After this umbrella ships:
   the same class of event
 - do not loosen strict argument validation for macros or scene tools only to
   hide client mistakes
+- do not redesign direct top-level hidden-tool errors outside the guided
+  discovery / `call_tool(...)` seam in this umbrella; broader client-surface
+  work stays with `TASK-160`
 
 ## Relationship To Existing Board Work
 
@@ -112,10 +117,16 @@ After this umbrella ships:
 | `server/adapters/mcp/discovery/search_surface.py` | FastMCP search/call proxy | Current owner of `call_tool(...)` proxy errors and the first place where generic `Unknown tool` semantics are produced |
 | `server/adapters/mcp/transforms/visibility_policy.py` | Guided surface shaping | Owns the direct/supporting/discovery tool sets and the shaped visibility contract the client sees |
 | `server/adapters/mcp/session_capabilities_flow.py` | Guided flow recovery semantics | Owns required spatial-check sets and step/family transitions that need to be reflected in the recovery message |
-| `server/application/tool_handlers/router_handler.py` | Guided no-match handoff contract | Owns the `guided_manual_build` no-match payloads and their client-facing intent |
+| `server/adapters/mcp/transforms/visibility_policy.py` | Guided handoff payload | Builds the `guided_handoff` contract, including direct/supporting/discovery tool sets and phase-specific messages |
+| `server/adapters/mcp/areas/router.py` | Router adapter response assembly | Attaches the handoff payload and guided status details to the MCP-facing router response |
+| `server/adapters/mcp/surfaces.py` | Live guided surface instructions | Owns the runtime surface text FastMCP clients actually read about `search_tools(...)` and `call_tool(...)` |
+| `server/application/tool_handlers/router_handler.py` | Guided no-match shell | Still owns continuation mode / no-match goal semantics, but not the final adapter-owned handoff payload |
 | `tests/e2e/integration/test_guided_search_first_call_tool_boundary.py` | Search-first proxy regressions | Existing proof lane for “search first” behavior; must expand to hidden-tool recovery clarity |
 | `tests/e2e/integration/test_guided_surface_contract_parity.py` | Guided surface parity | Existing end-to-end contract lane for `guided_manual_build` visibility and discovery |
 | `tests/e2e/integration/test_guided_streamable_spatial_support.py` | Streamable guided recovery | Existing lane for stale spatial context and reconnect-safe behavior |
+| `tests/e2e/router/test_guided_manual_handoff.py` | Guided handoff contract | Existing router-facing proof lane for the `guided_manual_build` payload |
+| `tests/unit/adapters/mcp/test_visibility_policy.py` | Handoff owner unit lane | Existing owner lane for guided handoff payload construction and visibility family shaping |
+| `tests/unit/adapters/mcp/test_public_surface_docs.py` | Public docs parity | Existing owner lane for hard-checked guided doc wording and examples |
 | `_docs/_MCP_SERVER/README.md` | Public MCP contract | Must document the distinction between unknown tools, hidden tools, stale guided surface transitions, and search-first recovery |
 | `_docs/AVAILABLE_TOOLS_SUMMARY.md` | Tool discovery wording | Must stay aligned with shaped-surface discovery and macro recovery guidance |
 | `_docs/_TASKS/README.md` | Board sync | Track the new umbrella on the active board while the corrective work is open |
@@ -142,8 +153,10 @@ After this umbrella ships:
 - Compatibility shims for legacy `call_tool(tool=..., params=...)` should remain
   explicit and bounded; they must not become a loophole around shaped-surface
   visibility or strict argument validation.
-- Any typed recovery payload must preserve current redaction/logging limits and
-  stay machine-readable without depending on prose parsing alone.
+- Recovery wording should stay deterministic and structured enough for reliable
+  client handling across both discovery/proxy and repo-owned direct guided
+  hidden-tool seams, but this umbrella does not require a brand-new typed error
+  envelope beyond the existing `ToolError` surface.
 
 ## Docs To Update
 
@@ -161,15 +174,17 @@ After this umbrella ships:
 
 ## Acceptance Criteria
 
-- hidden guided tools no longer surface as a generic unknown-tool path when the
-  server can deterministically explain that visibility or spatial refresh is the
-  real reason
+- repo-owned hidden guided-tool failures no longer surface as a generic
+  unknown-tool path when the server can deterministically explain that
+  visibility or spatial refresh is the real reason
 - the recovery path explicitly points to the required spatial tools when
   `spatial_refresh_required` is active
 - shaped-surface handoff/discovery docs no longer imply that stale direct-tool
   names may be guessed into `call_tool(...)` after the surface changes
 - integration coverage proves that a healthy MCP session returning tool errors is
-  not misrepresented by the repo contract as a disconnect condition
+  not misrepresented by the repo contract as a disconnect condition on the
+  guided discovery / `call_tool(...)` seam or the repo-owned direct guided
+  hidden-tool seam
 - the final task docs leave implementation ownership, tests, and docs updates
   explicit enough that a future implementer does not need the original Claude
   transcript to understand the failure family
