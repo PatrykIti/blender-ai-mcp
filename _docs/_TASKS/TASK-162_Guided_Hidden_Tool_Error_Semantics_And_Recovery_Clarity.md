@@ -26,10 +26,38 @@ the active `llm-guided` surface:
 - the server currently answers with a generic unknown-tool/proxy error
 - the client can narrate that as “Blender disconnected” even though the MCP
   session is still healthy and returning `200 OK`
+- the client can also see attachment-repair macros during `inspect_validate`,
+  attempt to use them for a concrete geometry fix such as seating `Head`
+  against `Body`, and then hit fail-closed guided family blocking once
+  `spatial_refresh_required` narrows the allowed families again
+- the client can also re-read `router_get_status(...)` and keep seeing the old
+  persisted `guided_handoff.direct_tools` even after the shaped surface narrowed,
+  which makes stale tool guidance look authoritative longer than it should
 
 The delivery target is not broader “guided UX polish.” The target is a strict,
 typed, repo-owned recovery contract for this exact hidden-tool / stale-context
 path.
+
+## Selected Direction
+
+The product direction for this family is explicitly:
+
+- **Option 2: hide tools that are not currently usable**
+
+For this repo, that means:
+
+- if guided execution policy will fail-close a mutating family during
+  `spatial_refresh_required`, the shaped surface should stop exposing those
+  mutators as directly visible tools for that moment
+- read-only spatial refresh helpers remain visible
+- recovery messaging still matters, but the first UX fix is to avoid showing the
+  model a tempting tool that the runtime will reject anyway
+
+The motivating transcript is the current guided creature-build path where the
+operator/model can still see repair macros such as
+`macro_align_part_with_contact(...)` while trying to seat `Head` to `Body`,
+even though the active flow state has already re-armed spatial refresh and the
+same macro can then fail closed.
 
 ## Business Problem
 
@@ -50,6 +78,18 @@ Recent guided creature-build transcripts show the same confusion loop:
 6. The active MCP transport remains healthy, but the client can interpret the
    resulting tool error as a disconnect or session loss.
 
+The current repo also has a sharper version of this problem on the
+`inspect_validate` path:
+
+- the shaped surface can still expose attachment-alignment macros in
+  `GUIDED_INSPECT_ESCAPE_HATCH_TOOLS`
+- the guided flow can then re-arm `spatial_refresh_required`
+- execution policy can still fail-close `attachment_alignment` because
+  `allowed_families` were narrowed for refresh
+
+That is worse than a generic error-message issue because the model is shown a
+repair path that the runtime already knows it should not allow.
+
 This is a product problem because the runtime already knows the real recovery
 path through `guided_flow_state.required_checks`, but the current failure
 surface does not always communicate that path tightly enough at the exact moment
@@ -66,6 +106,11 @@ After this umbrella ships:
   now” from “tool name does not exist”
 - recovery instructions explicitly point to the next spatial-context tools when
   `spatial_refresh_required` is the cause
+- mutating attachment-repair tools are hidden during refresh barriers whenever
+  guided execution policy would fail-close them, instead of remaining visible
+  and inviting retries
+- `router_get_status(...)` no longer re-exposes stale guided-handoff tool lists
+  in a way that contradicts the currently shaped surface
 - guided handoff / discovery docs stop implying that the model may freely guess
   direct-tool names into `call_tool(...)` after the surface changes
 - integration tests prove that ordinary guided state transitions no longer look
@@ -85,6 +130,9 @@ After this umbrella ships:
 - do not redesign direct top-level hidden-tool errors outside the guided
   discovery / `call_tool(...)` seam in this umbrella; broader client-surface
   work stays with `TASK-160`
+- do not keep attachment-alignment tools visible during a refresh barrier just
+  to “teach the client” via fail-closed errors; the chosen strategy is hiding,
+  not visible-but-blocked nudging
 
 ## Relationship To Existing Board Work
 
@@ -105,8 +153,8 @@ After this umbrella ships:
 | Order | Subtask | Purpose |
 |------|---------|---------|
 | 1 | [TASK-162-01](./TASK-162-01_Guided_Hidden_Tool_Error_Classification_And_Recovery_Hints.md) | Classify guided hidden-tool/proxy failures in `search_surface.py` and emit deterministic recovery hints when `spatial_refresh_required` or phase visibility is the real cause |
-| 2 | [TASK-162-02](./TASK-162-02_Guided_Handoff_And_Discovery_Contract_Clarification.md) | Align handoff/discovery wording and shaped-surface semantics so `direct_tools`, `supporting_tools`, and `call_tool(...)` do not encourage stale-name guessing after visibility changes |
-| 3 | [TASK-162-03](./TASK-162-03_Guided_Disconnect_Misclassification_Regression_Pack.md) | Add integration/docs regression coverage proving that hidden-tool and stale-argument paths surface as recoverable guided contract errors, not apparent disconnects |
+| 2 | [TASK-162-02](./TASK-162-02_Guided_Handoff_And_Discovery_Contract_Clarification.md) | Align handoff/discovery wording and shaped-surface semantics so `direct_tools`, `supporting_tools`, and `call_tool(...)` do not encourage stale-name guessing after visibility changes, and hide mutating repair tools whenever a refresh barrier would fail-close them |
+| 3 | [TASK-162-03](./TASK-162-03_Guided_Disconnect_Misclassification_Regression_Pack.md) | Add integration/docs regression coverage proving that hidden-tool and stale-argument paths surface as recoverable guided contract errors, not apparent disconnects, and that visible-vs-usable drift is gone on the transcript-backed creature path |
 
 ## Repository Touchpoint Table
 
@@ -115,8 +163,11 @@ After this umbrella ships:
 | `server/adapters/mcp/discovery/search_surface.py` | FastMCP search/call proxy | Current owner of `call_tool(...)` proxy errors and the first place where generic `Unknown tool` semantics are produced |
 | `server/adapters/mcp/transforms/visibility_policy.py` | Guided surface shaping | Owns the direct/supporting/discovery tool sets and the shaped visibility contract the client sees |
 | `server/adapters/mcp/session_capabilities_flow.py` | Guided flow recovery semantics | Owns required spatial-check sets and step/family transitions that need to be reflected in the recovery message |
+| `server/adapters/mcp/router_helper.py` | Guided execution fail-closed policy | Owns the final family gating that currently blocks visible-but-no-longer-allowed mutators during refresh barriers |
 | `server/adapters/mcp/transforms/visibility_policy.py` | Guided handoff payload | Builds the `guided_handoff` contract, including direct/supporting/discovery tool sets and phase-specific messages |
 | `server/adapters/mcp/areas/router.py` | Router adapter response assembly | Attaches the handoff payload and guided status details to the MCP-facing router response |
+| `server/adapters/mcp/session_capabilities_state.py` | Persisted guided handoff / status state | Persists `guided_handoff` and re-exposes it via `router_get_status(...)`, so stale guidance can survive after visibility narrows |
+| `server/adapters/mcp/session_capabilities_bootstrap.py` | Guided goal persistence | Writes the initial `guided_handoff` into session state during router-goal bootstrap |
 | `server/adapters/mcp/surfaces.py` | Live guided surface instructions | Owns the runtime surface text FastMCP clients actually read about `search_tools(...)` and `call_tool(...)` |
 | `server/application/tool_handlers/router_handler.py` | Guided no-match shell | Still owns continuation mode / no-match goal semantics, but not the final adapter-owned handoff payload |
 | `tests/e2e/integration/test_guided_search_first_call_tool_boundary.py` | Search-first proxy regressions | Existing proof lane for “search first” behavior; must expand to hidden-tool recovery clarity |
@@ -124,6 +175,8 @@ After this umbrella ships:
 | `tests/e2e/integration/test_guided_streamable_spatial_support.py` | Streamable guided recovery | Existing lane for stale spatial context and reconnect-safe behavior |
 | `tests/e2e/router/test_guided_manual_handoff.py` | Guided handoff contract | Existing router-facing proof lane for the `guided_manual_build` payload |
 | `tests/unit/adapters/mcp/test_visibility_policy.py` | Handoff owner unit lane | Existing owner lane for guided handoff payload construction and visibility family shaping |
+| `tests/unit/adapters/mcp/test_session_phase.py` | Session-state persistence lane | Existing owner lane for `guided_handoff` persistence and same-goal session state transitions |
+| `tests/unit/adapters/mcp/test_router_elicitation.py` | Status/handoff exposure lane | Existing owner lane for `router_get_status(...)` and `guided_handoff` status exposure |
 | `tests/unit/adapters/mcp/test_public_surface_docs.py` | Public docs parity | Existing owner lane for hard-checked guided doc wording and examples |
 | `_docs/_MCP_SERVER/README.md` | Public MCP contract | Must document the distinction between unknown tools, hidden tools, stale guided surface transitions, and search-first recovery |
 | `_docs/AVAILABLE_TOOLS_SUMMARY.md` | Tool discovery wording | Must stay aligned with shaped-surface discovery and macro recovery guidance |
@@ -142,6 +195,10 @@ After this umbrella ships:
 
 - Visibility levels remain authoritative. A tool hidden by guided visibility
   must not become callable merely because the proxy can name it.
+- Visibility and execution policy must agree on mutating tool availability
+  during refresh barriers. If execution policy would fail-close a family such as
+  `attachment_alignment`, the shaped surface should not keep those tools
+  directly visible at the same moment.
 - Recovery hints may explain why the tool is unavailable and what to run next,
   but they must not reveal hidden mutating families beyond the current guided
   contract.
@@ -181,6 +238,14 @@ After this umbrella ships:
 - the recovery path explicitly points to the current pending `required_checks`
   when `spatial_refresh_required` is active, rather than a hard-coded static
   tool list
+- on the transcript-backed creature path, tools such as
+  `macro_align_part_with_contact(...)` and
+  `macro_cleanup_part_intersections(...)` are no longer visible during
+  refresh-barrier states where guided execution would fail-close
+  `attachment_alignment`
+- persisted `guided_handoff` data no longer contradicts the currently shaped
+  surface when the client re-checks `router_get_status(...)` after a visibility
+  transition
 - shaped-surface handoff/discovery docs no longer imply that stale direct-tool
   names may be guessed into `call_tool(...)` after the surface changes
 - integration coverage proves that a healthy MCP session returning tool errors is

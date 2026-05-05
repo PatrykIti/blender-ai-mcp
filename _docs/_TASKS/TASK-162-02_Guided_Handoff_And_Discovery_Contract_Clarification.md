@@ -9,11 +9,15 @@
 
 - `server/adapters/mcp/transforms/visibility_policy.py`
 - `server/adapters/mcp/areas/router.py`
+- `server/adapters/mcp/session_capabilities_state.py`
+- `server/adapters/mcp/session_capabilities_bootstrap.py`
 - `server/adapters/mcp/surfaces.py`
 - `server/application/tool_handlers/router_handler.py`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
+- `tests/unit/adapters/mcp/test_session_phase.py`
+- `tests/unit/adapters/mcp/test_router_elicitation.py`
 - `tests/e2e/integration/test_guided_surface_contract_parity.py`
 - `tests/e2e/integration/test_guided_inspect_validate_handoff.py`
 
@@ -24,12 +28,21 @@
 - update the adapter-owned handoff builder in `visibility_policy.py` and the
   MCP-facing router response assembly, not only the coarse no-match shell in
   `router_handler.py`
+- keep the persisted session `guided_handoff` aligned with the live product
+  contract exposed by `router_get_status(...)`; stale direct/supporting tool
+  lists must not continue to look like the current visible surface after a
+  refresh barrier narrows visibility
 - call out the live split explicitly:
   - generic `guided_manual_build` always emits a handoff payload
   - the stronger coupling between `guided_handoff.direct_tools` and the shaped
     build surface currently exists only for the creature blockout recipe
   - the generic build visibility fallback still comes from
     `GUIDED_BUILD_ESCAPE_HATCH_TOOLS`
+- implement the selected product strategy from `TASK-162`: if a refresh barrier
+  would fail-close `attachment_alignment`, remove
+  `macro_attach_part_to_surface`, `macro_align_part_with_contact`, and
+  `macro_cleanup_part_intersections` from the directly visible shaped surface
+  for that moment instead of leaving them visible as bait
 - ensure the handoff message explicitly says that `direct_tools` are only valid
   while visible, and stale names must not be guessed through `call_tool(...)`
 - keep `discovery_tools=["search_tools","call_tool"]`, but update examples so
@@ -53,10 +66,9 @@ handoff["message"] = (
 )
 
 docs.example = [
-    "scene_scope_graph(...)",
-    "scene_relation_graph(...)",
-    "scene_view_diagnostics(...)",
-    "search_tools(query='repair head body overlap contact')",
+    "... read guided_flow_state.required_checks ...",
+    "... run the currently pending spatial checks ...",
+    "... only after the barrier clears, search for attachment repair tools if still needed ...",
 ]
 ```
 
@@ -74,6 +86,8 @@ docs.example = [
 - `tests/e2e/router/test_guided_manual_handoff.py`
 - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
+- `tests/unit/adapters/mcp/test_session_phase.py`
+- `tests/unit/adapters/mcp/test_router_elicitation.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 
 ## Docs To Update
@@ -94,6 +108,7 @@ docs.example = [
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/integration/test_guided_inspect_validate_handoff.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/router/test_guided_manual_handoff.py tests/e2e/integration/test_guided_streamable_spatial_support.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_policy.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_session_phase.py tests/unit/adapters/mcp/test_router_elicitation.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
 - `poetry run python scripts/run_e2e_tests.py`
 - `poetry run pytest ./tests/unit`
@@ -106,8 +121,11 @@ docs.example = [
   recovery
 - the task docs explicitly distinguish the generic `guided_manual_build`
   handoff payload from the recipe-specific creature blockout visibility coupling
-- the inspect/build surfaces keep the bounded repair tools visible only when the
-  guided family policy actually allows them
+- persisted `guided_handoff` exposure through `router_get_status(...)` no longer
+  contradicts the currently shaped surface after visibility narrows
+- the inspect/build surfaces keep bounded repair tools visible only when the
+  guided family policy actually allows them; during refresh barriers they are
+  hidden instead of remaining visible-but-blocked
 
 ## Status / Board Update
 

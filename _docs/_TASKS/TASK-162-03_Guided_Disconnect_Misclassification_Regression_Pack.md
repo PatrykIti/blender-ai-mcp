@@ -15,8 +15,10 @@ documentation.
 
 - `server/adapters/mcp/discovery/search_surface.py`
 - `server/adapters/mcp/transforms/visibility_policy.py`
+- `server/adapters/mcp/session_capabilities_state.py`
 - `tests/e2e/integration/test_guided_search_first_call_tool_boundary.py`
 - `tests/e2e/integration/test_guided_surface_contract_parity.py`
+- `tests/e2e/integration/test_guided_inspect_validate_handoff.py`
 - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/_TASKS/README.md`
@@ -35,6 +37,12 @@ documentation.
     spatial rearm
   - the resulting failure is still clearly a guided-surface/tool-contract error
     rather than an apparent disconnect
+- add one regression for the transcript-backed creature path where attachment
+  repair macros are not exposed during `inspect_validate` refresh barriers if
+  `attachment_alignment` would be fail-closed anyway
+- add one regression where `router_get_status(...)` no longer looks like a live
+  source of stale `guided_handoff.direct_tools` after the shaped surface has
+  already narrowed
 - add one regression for stale/legacy argument shapes on a visible macro so the
   failure is clearly a contract error rather than a transport symptom
 - keep at least one stdio lane and one Streamable HTTP lane in scope
@@ -77,11 +85,17 @@ assert status["guided_flow_state"]["spatial_refresh_required"] is True
 
 - `tests/e2e/integration/test_guided_search_first_call_tool_boundary.py`
 - `tests/e2e/integration/test_guided_surface_contract_parity.py`
+- `tests/e2e/integration/test_guided_inspect_validate_handoff.py`
 - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
 
 ## Docs To Update
 
 - `_docs/_MCP_SERVER/README.md`
+- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `_docs/_PROMPTS/README.md`
+- `_docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md`
+- `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
+- `README.md`
 - `_docs/_TASKS/README.md`
 - inherit any additional umbrella closeout docs if the final implementation
   changes wider guided examples
@@ -93,8 +107,8 @@ assert status["guided_flow_state"]["spatial_refresh_required"] is True
 ## Validation Commands
 
 - `git diff --check`
-- `rg -n "search_tools\\(\\.\\.\\.\\)|call_tool\\(\\.\\.\\.\\)|Unknown tool|required_checks" _docs/_MCP_SERVER/README.md _docs/_TASKS/README.md`
-- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_search_first_call_tool_boundary.py tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/integration/test_guided_streamable_spatial_support.py -q`
+- `rg -n "search_tools\\(\\.\\.\\.\\)|call_tool\\(\\.\\.\\.\\)|Unknown tool|required_checks|guided_handoff" README.md _docs/_MCP_SERVER/README.md _docs/AVAILABLE_TOOLS_SUMMARY.md _docs/_PROMPTS/README.md _docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md _docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md _docs/_TASKS/README.md _docs/_TASKS/TASK-162*.md`
+- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_search_first_call_tool_boundary.py tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/integration/test_guided_inspect_validate_handoff.py tests/e2e/integration/test_guided_streamable_spatial_support.py -q`
 - `poetry run python scripts/run_e2e_tests.py`
 
 ## Acceptance Criteria
@@ -104,6 +118,12 @@ assert status["guided_flow_state"]["spatial_refresh_required"] is True
   Streamable HTTP lane
 - a direct guided hidden-tool failure after visibility narrowing is also
   provably distinguishable from a disconnect in integration coverage
+- on the transcript-backed creature path, the attachment-repair macros are not
+  shown during `inspect_validate` refresh barriers when they would be blocked
+  by `attachment_alignment` family gating
+- after visibility narrows, `router_get_status(...)` no longer misleads the
+  client with stale `guided_handoff` tool guidance that contradicts the current
+  shaped surface
 - a stale-argument failure on the same seam is provably distinguishable from a
   disconnect in integration coverage, and the proof is attached to an explicit
   `call_tool(...)` regression rather than only a direct tool call
