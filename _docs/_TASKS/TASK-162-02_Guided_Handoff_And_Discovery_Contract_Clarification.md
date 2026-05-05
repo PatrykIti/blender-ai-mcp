@@ -50,6 +50,9 @@
   - this remaining visible-but-blocked drift is specifically on the
     `inspect_validate` surface; build-phase refresh already collapses to
     spatial-context tools
+  - the implementation must cover both sources that currently make those macros
+    visible on `inspect_validate`: the explicit inspect escape-hatch list and
+    any gate-plan overlay added through `visible_tools_for_gate_plan(...)`
 - ensure the handoff message explicitly says that `direct_tools` are only valid
   while visible, and stale names must not be guessed through `call_tool(...)`
 - keep `discovery_tools=["search_tools","call_tool"]`, but update examples so

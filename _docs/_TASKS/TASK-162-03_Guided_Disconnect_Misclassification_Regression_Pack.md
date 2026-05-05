@@ -70,8 +70,9 @@ tool error surface itself.
 
 ```python
 result = await client.call_tool("router_set_goal", {...})
-# Attached-reference flows can already be at bootstrap_primary_workset.
-# Generic creature no-match flows may still be at establish_spatial_context.
+# The first step depends on current scene state.
+# Empty / bootstrap-noise scenes can already land on bootstrap_primary_workset,
+# while scenes with meaningful guided objects can stay at establish_spatial_context.
 assert result["guided_flow_state"]["current_step"] in {
     "establish_spatial_context",
     "bootstrap_primary_workset",

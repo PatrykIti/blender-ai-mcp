@@ -50,7 +50,10 @@ For this repo, that means:
 - if guided execution policy will fail-close a mutating family during
   `spatial_refresh_required`, the shaped surface should stop exposing those
   mutators as directly visible tools for that moment
-- read-only spatial refresh helpers remain visible
+- the bounded refresh/support surface remains visible, including the read-only
+  spatial helpers plus the already-supported recovery/workset tools that the
+  current repo intentionally keeps during refresh (for example
+  `collection_manage(...)`, `scene_clean_scene(...)`, and `reference_images(...)`)
 - recovery messaging still matters, but the first UX fix is to avoid showing the
   model a tempting tool that the runtime will reject anyway
 
