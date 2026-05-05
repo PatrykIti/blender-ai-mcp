@@ -1,0 +1,86 @@
+# TASK-162-02: Guided Handoff And Discovery Contract Clarification
+
+**Parent:** [TASK-162](./TASK-162_Guided_Hidden_Tool_Error_Semantics_And_Recovery_Clarity.md)
+**Status:** ⏳ To Do
+**Priority:** 🔴 High
+**Objective:** Align the `guided_manual_build` handoff, shaped visibility contract, and public docs so `direct_tools`, `supporting_tools`, and `search_tools(...)` form one coherent operator path instead of encouraging stale-name guessing.
+
+## Repository Touchpoints
+
+- `server/adapters/mcp/transforms/visibility_policy.py`
+- `server/application/tool_handlers/router_handler.py`
+- `_docs/_MCP_SERVER/README.md`
+- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `tests/e2e/integration/test_guided_surface_contract_parity.py`
+- `tests/e2e/integration/test_guided_inspect_validate_handoff.py`
+
+## Implementation Notes
+
+- keep `guided_handoff.direct_tools` limited to tools intended for direct use on
+  the current shaped surface
+- ensure the handoff message explicitly says that `direct_tools` are only valid
+  while visible, and stale names must not be guessed through `call_tool(...)`
+- keep `discovery_tools=["search_tools","call_tool"]`, but update examples so
+  they describe search-first recovery rather than speculative retries
+- review whether `supporting_tools` should include phase-pinned spatial refresh
+  tools more explicitly when later build families are temporarily hidden
+- preserve the FastMCP platform responsibility: this is client-surface shaping,
+  not router policy duplication
+
+## Pseudocode
+
+```python
+handoff = build_guided_handoff_payload(...)
+handoff["message"] = (
+    "Use directly visible tools first. "
+    "If a needed tool is no longer visible, do not guess it into call_tool(...); "
+    "refresh with search_tools(...) or the declared spatial checks first."
+)
+
+docs.example = [
+    "scene_scope_graph(...)",
+    "scene_relation_graph(...)",
+    "scene_view_diagnostics(...)",
+    "search_tools(query='repair head body overlap contact')",
+]
+```
+
+## Runtime / Security Contract Notes
+
+- do not expose hidden tool names in bootstrap/planning examples beyond the
+  tools already disclosed by the shaped surface
+- keep direct-vs-discovery semantics stable across stdio and Streamable HTTP
+- preserve reject-unknown and compatibility-shim wording for `call_tool(...)`
+
+## Tests To Add/Update
+
+- `tests/e2e/integration/test_guided_surface_contract_parity.py`
+- `tests/e2e/integration/test_guided_inspect_validate_handoff.py`
+- public-doc parity tests if wording changes affect the checked examples
+
+## Docs To Update
+
+- `_docs/_MCP_SERVER/README.md`
+- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+
+## Changelog Impact
+
+- include in the parent `TASK-162` changelog entry when shipped
+
+## Validation Commands
+
+- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/integration/test_guided_inspect_validate_handoff.py -q`
+- `poetry run pytest ./tests/unit`
+
+## Acceptance Criteria
+
+- the guided handoff no longer implies that stale direct-tool names may be
+  retried blindly through `call_tool(...)`
+- docs and shaped visibility semantics say the same thing about discovery-first
+  recovery
+- the inspect/build surfaces keep the bounded repair tools visible only when the
+  guided family policy actually allows them
+
+## Status / Board Update
+
+- historical child under `TASK-162`; no separate board row
