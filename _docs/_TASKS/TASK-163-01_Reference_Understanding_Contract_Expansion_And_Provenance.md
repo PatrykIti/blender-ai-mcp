@@ -21,6 +21,20 @@
 - `tests/unit/adapters/mcp/test_vision_parsing.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 
+## Docs To Update
+
+- `_docs/_VISION/README.md`
+- `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md`
+
+## Changelog Impact
+
+- covered by [318. TASK-163 reference orchestrator feedback core](../_CHANGELOG/318-2026-05-05-task-163-reference-orchestrator-feedback-core.md)
+
+## Status / Board Update
+
+- tracked under the open `TASK-163` umbrella
+- does not become its own board row
+
 ## Validation Commands
 
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_parsing.py tests/unit/adapters/mcp/test_reference_images.py -q`

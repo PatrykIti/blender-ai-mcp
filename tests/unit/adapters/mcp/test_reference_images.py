@@ -530,6 +530,7 @@ def test_reference_compare_stage_checkpoint_threads_reference_understanding_from
     assert result.reference_understanding_gate_ids == ["creature_eye_pair"]
     assert result.reference_orchestrator_feedback is not None
     assert result.reference_orchestrator_feedback.next_checkpoint_tool == "reference_images"
+    assert result.reference_orchestrator_feedback.current_guided_step == "create_primary_masses"
 
 
 def test_reference_understanding_refresh_replaces_previous_reference_gate_slice(tmp_path, monkeypatch):
@@ -664,6 +665,102 @@ def test_reference_understanding_refresh_replaces_previous_reference_gate_slice(
     assert eye_gate["label"] == "dual-view eye pair"
 
 
+def test_reference_understanding_refresh_merges_existing_view_with_live_reference_ids(tmp_path, monkeypatch):
+    ctx = FakeContext()
+    reference_path = tmp_path / "front.png"
+    _write_test_silhouette(reference_path, with_ears=True)
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel",
+            surface_profile="llm-guided",
+            guided_flow_state=_guided_reference_flow_state(),
+            reference_images=[
+                {
+                    "reference_id": "ref_front",
+                    "goal": "create a low-poly squirrel",
+                    "label": "front_ref",
+                    "target_view": "front",
+                    "media_type": "image/png",
+                    "source_kind": "local_path",
+                    "original_path": str(reference_path),
+                    "stored_path": str(reference_path),
+                    "added_at": "2026-05-02T00:00:00Z",
+                }
+            ],
+        ),
+    )
+
+    class Backend:
+        async def analyze(self, request):
+            return {
+                "status": "available",
+                "understanding_id": "understanding_view_merge",
+                "goal": request.goal,
+                "reference_ids": ["ref_front"],
+                "subject": {
+                    "label": "low poly squirrel",
+                    "category": "creature",
+                    "confidence": 0.8,
+                    "uncertainty_notes": [],
+                },
+                "style": {
+                    "style_label": "low_poly_faceted",
+                    "confidence": 0.8,
+                    "notes": [],
+                },
+                "views": [
+                    {
+                        "view_id": "front",
+                        "detected": True,
+                        "confidence": 0.7,
+                        "reference_ids": [],
+                        "key_features": ["triangular ears"],
+                    }
+                ],
+                "required_parts": [],
+                "non_goals": [],
+                "construction_strategy": {
+                    "construction_path": "low_poly_facet",
+                    "primary_family": "modeling_mesh",
+                    "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+                    "stage_sequence": ["primary_masses"],
+                    "finish_policy": "preserve_facets",
+                },
+                "router_handoff_hints": {
+                    "preferred_family": "modeling_mesh",
+                    "allowed_guided_families": ["reference_context", "primary_masses", "secondary_parts"],
+                    "sculpt_policy": "hidden",
+                },
+                "gate_proposals": [],
+                "visual_evidence_refs": [],
+                "verification_requirements": [],
+                "classification_scores": [],
+                "segmentation_artifacts": [],
+                "source_provenance": [{"source": "reference_understanding"}],
+                "boundary_policy": {
+                    "advisory_only": True,
+                    "not_truth_source": True,
+                    "may_unlock_tools": False,
+                    "may_pass_gates": False,
+                    "may_propose_gates": True,
+                },
+            }
+
+    class Resolver:
+        def resolve_default(self):
+            return Backend()
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: Resolver())
+
+    updated = asyncio.run(refresh_reference_understanding_summary_async(ctx))
+
+    assert updated.reference_understanding_summary is not None
+    assert updated.reference_understanding_summary["views"][0]["view_id"] == "front"
+    assert updated.reference_understanding_summary["views"][0]["reference_ids"] == ["ref_front"]
+
+
 def test_reference_images_attach_returns_orchestrator_feedback(tmp_path, monkeypatch):
     image = tmp_path / "front.png"
     image.write_bytes(b"front")
@@ -739,6 +836,189 @@ def test_reference_images_attach_returns_orchestrator_feedback(tmp_path, monkeyp
     assert result.reference_orchestrator_feedback.selected_family == "modeling_mesh"
     assert result.reference_orchestrator_feedback.next_checkpoint_tool == "reference_compare_stage_checkpoint"
     assert "tail" in result.reference_orchestrator_feedback.required_parts_pending
+
+
+def test_reference_images_ready_session_list_remove_and_clear_preserve_orchestrator_feedback(tmp_path):
+    active_path = tmp_path / "active.png"
+    pending_path = tmp_path / "pending.png"
+    active_path.write_bytes(b"active")
+    pending_path.write_bytes(b"pending")
+
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="table",
+            last_router_status="ready",
+            guided_flow_state=_guided_reference_flow_state(),
+            gate_plan={
+                "plan_id": "gate_plan_feedback",
+                "domain_profile": "generic",
+                "gates": [
+                    {
+                        "gate_id": "seat_presence",
+                        "gate_type": "required_part",
+                        "label": "seat is represented",
+                        "target_kind": "reference_part",
+                        "target_label": "seat_core",
+                        "required": True,
+                        "priority": "high",
+                        "status": "pending",
+                        "status_reason": "missing_required_part",
+                        "verification_strategy": "object_existence",
+                        "proposal_sources": ["reference_understanding"],
+                        "allowed_correction_families": ["primary_masses", "inspect_validate"],
+                        "evidence_requirements": [{"evidence_kind": "scene_truth", "required": True}],
+                        "evidence_refs": [],
+                    }
+                ],
+                "completion_blockers": [],
+                "policy_warnings": [],
+                "status_summary": {
+                    "required_total": 1,
+                    "required_passed": 0,
+                    "required_blocking": 1,
+                    "optional_total": 0,
+                    "status_counts": {"pending": 1},
+                },
+            },
+            reference_understanding_summary={
+                "status": "available",
+                "understanding_id": "understanding_table_feedback",
+                "goal": "table",
+                "reference_ids": ["ref_active"],
+                "subject": {
+                    "label": "simple table",
+                    "category": "hard_surface",
+                    "confidence": 0.8,
+                    "uncertainty_notes": [],
+                },
+                "style": {
+                    "style_label": "hard_surface",
+                    "confidence": 0.8,
+                    "notes": [],
+                },
+                "views": [],
+                "required_parts": [{"part_label": "seat", "target_label": "seat_core"}],
+                "non_goals": [],
+                "construction_strategy": {
+                    "construction_path": "hard_surface",
+                    "primary_family": "modeling_mesh",
+                    "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+                    "stage_sequence": ["primary_masses"],
+                    "finish_policy": "inspect_first",
+                },
+                "router_handoff_hints": {
+                    "preferred_family": "modeling_mesh",
+                    "allowed_guided_families": ["reference_context", "primary_masses", "secondary_parts"],
+                    "sculpt_policy": "hidden",
+                },
+                "gate_proposals": [],
+                "visual_evidence_refs": [],
+                "visual_metrics": [],
+                "classification_scores": [],
+                "segmentation_artifacts": [],
+                "verification_requirements": [],
+                "source_provenance": [{"source": "reference_understanding"}],
+                "boundary_policy": {
+                    "advisory_only": True,
+                    "not_truth_source": True,
+                    "may_unlock_tools": False,
+                    "may_pass_gates": False,
+                    "may_propose_gates": True,
+                },
+            },
+            reference_understanding_gate_ids=["seat_presence"],
+            reference_strategy_state={
+                "status": "available",
+                "understanding_id": "understanding_table_feedback",
+                "construction_path": "hard_surface",
+                "primary_family": "modeling_mesh",
+                "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+                "blocked_families": ["sculpt_region"],
+                "sculpt_policy": "hidden",
+                "finish_policy": "inspect_first",
+                "recommended_next_checkpoint": "reference_compare_stage_checkpoint",
+            },
+            reference_images=[
+                {
+                    "reference_id": "ref_active",
+                    "goal": "table",
+                    "label": "table_ref",
+                    "notes": None,
+                    "target_object": None,
+                    "target_view": None,
+                    "stored_path": str(active_path),
+                    "host_visible_path": str(active_path),
+                    "media_type": "image/png",
+                    "source_kind": "local_path",
+                    "original_path": str(active_path),
+                    "added_at": "2026-04-05T10:00:00Z",
+                }
+            ],
+            pending_reference_images=[
+                {
+                    "reference_id": "ref_pending",
+                    "goal": "chair",
+                    "label": "chair_ref",
+                    "notes": None,
+                    "target_object": None,
+                    "target_view": None,
+                    "stored_path": str(pending_path),
+                    "host_visible_path": str(pending_path),
+                    "media_type": "image/png",
+                    "source_kind": "local_path",
+                    "original_path": str(pending_path),
+                    "added_at": "2026-04-05T10:05:00Z",
+                }
+            ],
+        ),
+    )
+
+    listed = asyncio.run(reference_images(ctx, action="list"))
+    removed = asyncio.run(reference_images(ctx, action="remove", reference_id="ref_pending"))
+
+    assert listed.reference_orchestrator_feedback is not None
+    assert listed.reference_orchestrator_feedback.current_guided_step == "create_primary_masses"
+    assert listed.reference_orchestrator_feedback.active_gate_ids == ["seat_presence"]
+    assert listed.reference_orchestrator_feedback.next_checkpoint_tool == "reference_compare_stage_checkpoint"
+
+    assert removed.reference_orchestrator_feedback is not None
+    assert removed.reference_orchestrator_feedback.active_gate_ids == ["seat_presence"]
+    assert removed.reference_orchestrator_feedback.current_guided_step == "create_primary_masses"
+
+    # Recreate pending state to verify clear uses the same compact feedback path.
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            **{
+                **get_session_capability_state(ctx).__dict__,
+                "pending_reference_images": [
+                    {
+                        "reference_id": "ref_pending",
+                        "goal": "chair",
+                        "label": "chair_ref",
+                        "notes": None,
+                        "target_object": None,
+                        "target_view": None,
+                        "stored_path": str(pending_path),
+                        "host_visible_path": str(pending_path),
+                        "media_type": "image/png",
+                        "source_kind": "local_path",
+                        "original_path": str(pending_path),
+                        "added_at": "2026-04-05T10:05:00Z",
+                    }
+                ],
+            }
+        ),
+    )
+
+    cleared = asyncio.run(reference_images(ctx, action="clear"))
+
+    assert cleared.reference_orchestrator_feedback is not None
+    assert cleared.reference_orchestrator_feedback.active_gate_ids == []
+    assert cleared.reference_orchestrator_feedback.current_guided_step == "create_primary_masses"
 
 
 def test_reference_images_ready_goal_refresh_reapplies_visibility_on_attach_and_clear(tmp_path, monkeypatch):
@@ -1047,6 +1327,8 @@ def test_stage_checkpoint_responses_project_gate_plan_summary_fields():
     assert compare.recommended_bounded_tools == ["scene_relation_graph", "macro_attach_part_to_surface"]
     assert iterate.gate_statuses[0].gate_id == "tail_body_seam"
     assert iterate.completion_blockers[0].gate_id == "tail_body_seam"
+    assert iterate.reference_orchestrator_feedback is not None
+    assert iterate.reference_orchestrator_feedback.next_checkpoint_tool is None
 
 
 def test_truth_followup_emits_cleanup_macro_candidate_for_overlap_pairs():
@@ -5760,6 +6042,8 @@ def test_reference_iterate_stage_checkpoint_escalates_when_truth_signal_is_high_
     assert result.loop_disposition == "inspect_validate"
     assert result.correction_focus == ["TruthHead -> TruthBody failed the contact assertion."]
     assert "Deterministic truth findings remain high-priority" in (result.message or "")
+    assert result.reference_orchestrator_feedback is not None
+    assert result.reference_orchestrator_feedback.next_checkpoint_tool is None
 
 
 def test_reference_iterate_stage_checkpoint_escalates_when_required_gate_blockers_remain(monkeypatch):
@@ -5835,6 +6119,8 @@ def test_reference_iterate_stage_checkpoint_escalates_when_required_gate_blocker
     assert result.next_gate_actions == ["verify_or_repair_spatial_gate"]
     assert "macro_attach_part_to_surface" in result.recommended_bounded_tools
     assert "Quality gate blockers remain unresolved" in (result.message or "")
+    assert result.reference_orchestrator_feedback is not None
+    assert result.reference_orchestrator_feedback.next_checkpoint_tool is None
 
 
 def _guided_incomplete_secondary_flow_state() -> dict[str, object]:
@@ -6211,6 +6497,8 @@ def test_reference_iterate_stage_checkpoint_reapplies_visibility_on_error_stop(m
     assert result.guided_flow_state is not None
     assert result.guided_flow_state.current_step == "finish_or_stop"
     assert visibility_steps == ["finish_or_stop"]
+    assert result.reference_orchestrator_feedback is not None
+    assert result.reference_orchestrator_feedback.next_checkpoint_tool is None
 
 
 def test_reference_iterate_stage_checkpoint_preserves_flow_on_recoverable_reference_setup_error(monkeypatch):

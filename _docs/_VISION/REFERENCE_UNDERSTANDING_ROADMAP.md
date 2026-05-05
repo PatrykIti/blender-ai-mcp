@@ -67,6 +67,7 @@ Hard rules:
 |------|------|
 | `TASK-157` | Generic gate substrate: proposal sources, evidence refs, verifier authority, status model, guided cadence |
 | `TASK-158` | Post-`TASK-157` follow-on for docs alignment plus bounded reference-understanding and optional-perception readiness work |
+| `TASK-163` | Current promoted follow-on for compact orchestrator-facing RU/runtime feedback, session strategy state, and the remaining optional perception follow-ons |
 | `TASK-135` | First creature consumer of the gate substrate |
 | `TASK-135-03` | First low-poly form-refinement consumer; owns the faceted refinement stage and any creature profile macros |
 | `TASK-140` | External VLM model-family profile reliability; owns `vision_contract_profile` expansion, not quality-gate authority |
@@ -78,10 +79,11 @@ may become proposal/support refs, but the quality-gate verifier still owns
 pass/fail status.
 
 Do not create a third parallel task family that duplicates these owners.
-`TASK-158` is the current promoted follow-on for post-`TASK-157` docs alignment
-and bounded implementation work. New work should land as leaves under the
-nearest existing task unless a separate future adapter really needs its own
-task family.
+`TASK-158` is closed. `TASK-163` is now the current promoted follow-on for the
+compact orchestrator-feedback wave plus the remaining optional perception
+follow-ons. New work should land under `TASK-163`, `TASK-135-03`, or
+`TASK-140` according to current ownership unless a separate future adapter
+really needs its own task family.
 
 ## Target Flow
 
@@ -105,11 +107,12 @@ reference_iterate_stage_checkpoint(...)
 gate verifier and repair planner select bounded next actions
 ```
 
-The "reference understanding pass" may be exposed as an action on the existing
-reference surface or as a focused MCP tool only if the public-surface review
-justifies it. It must not introduce a public `router_apply_reference_strategy`
-tool. Applying the strategy is server-owned guided state, visibility, and gate
-policy work.
+The current promoted direction keeps the "reference understanding pass" on the
+existing `reference_images(...)`, `router_*`, and staged checkpoint seams.
+`TASK-163` does not leave room for a new focused public MCP tool in this wave,
+and it must not introduce a public `router_apply_reference_strategy` tool.
+Applying the strategy is server-owned guided state, visibility, and gate policy
+work.
 
 ## Current Implemented Surface
 

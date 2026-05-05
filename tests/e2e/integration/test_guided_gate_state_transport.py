@@ -728,16 +728,20 @@ async def _exercise_reference_understanding_refresh_replaces_gate_slice(
 
 
 async def _exercise_reference_orchestrator_feedback_transport_surface(client, reference_path: Path) -> None:
-    await client.call_tool(
-        "reference_images",
-        {
-            "action": "attach",
-            "source_path": str(reference_path),
-            "label": "front_ref",
-            "target_object": "Squirrel_Body",
-            "target_view": "front",
-        },
+    staged_attach = result_payload(
+        await client.call_tool(
+            "reference_images",
+            {
+                "action": "attach",
+                "source_path": str(reference_path),
+                "label": "front_ref",
+                "target_object": "Squirrel_Body",
+                "target_view": "front",
+            },
+        )
     )
+    assert staged_attach["reference_orchestrator_feedback"] is not None
+    assert "call_router_set_goal" in staged_attach["reference_orchestrator_feedback"]["next_actions"]
     goal_result = result_payload(
         await client.call_tool(
             "router_set_goal",
@@ -1011,6 +1015,7 @@ async def _exercise_gate_state_roundtrip(client, reference_path: Path) -> None:
     assert "resolve_quality_gate_blockers" in iterate_result["next_gate_actions"]
     assert "verify_or_repair_spatial_gate" in iterate_result["next_gate_actions"]
     assert "macro_attach_part_to_surface" in iterate_result["recommended_bounded_tools"]
+    assert iterate_result["reference_orchestrator_feedback"]["next_checkpoint_tool"] is None
 
 
 async def _exercise_support_gate_state_roundtrip(client, reference_path: Path) -> None:
@@ -1104,6 +1109,7 @@ async def _exercise_support_gate_state_roundtrip(client, reference_path: Path) -
     assert _support_gate(iterate_result["active_gate_plan"]["gates"])["status"] == "failed"
     assert any(blocker["gate_id"] == "body_base_support" for blocker in iterate_result["completion_blockers"])
     assert "verify_or_repair_spatial_gate" in iterate_result["next_gate_actions"]
+    assert iterate_result["reference_orchestrator_feedback"]["next_checkpoint_tool"] is None
 
 
 async def _exercise_symmetry_gate_state_roundtrip(client, reference_path: Path) -> None:
@@ -1197,6 +1203,7 @@ async def _exercise_symmetry_gate_state_roundtrip(client, reference_path: Path) 
     assert _symmetry_gate(iterate_result["active_gate_plan"]["gates"])["status"] == "failed"
     assert any(blocker["gate_id"] == "wheel_pair_symmetry" for blocker in iterate_result["completion_blockers"])
     assert "resolve_quality_gate_blockers" in iterate_result["next_gate_actions"]
+    assert iterate_result["reference_orchestrator_feedback"]["next_checkpoint_tool"] is None
 
 
 @pytest.mark.slow
@@ -1283,6 +1290,20 @@ def test_reference_orchestrator_feedback_transport_surface_over_stdio(tmp_path: 
             await _exercise_reference_orchestrator_feedback_transport_surface(client, reference_path)
 
     asyncio.run(run())
+
+
+@pytest.mark.slow
+def test_reference_orchestrator_feedback_transport_surface_over_streamable(tmp_path: Path):
+    script_path = write_server_script(tmp_path, _PATCHED_GATE_STATE_SERVER)
+    reference_path = tmp_path / "transport_front.png"
+    reference_path.write_bytes(_TRANSPORT_REFERENCE_PNG)
+
+    async def run(url: str) -> None:
+        async with streamable_client(url) as client:
+            await _exercise_reference_orchestrator_feedback_transport_surface(client, reference_path)
+
+    with run_streamable_server(script_path) as url:
+        asyncio.run(run(url))
 
 
 @pytest.mark.slow

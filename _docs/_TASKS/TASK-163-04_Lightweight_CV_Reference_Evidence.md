@@ -24,8 +24,24 @@
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/e2e/integration/test_guided_gate_state_transport.py`
+- `tests/e2e/vision/test_reference_understanding_runtime_surface.py`
+
+## Docs To Update
+
+- `_docs/_VISION/README.md`
+- `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md`
+
+## Changelog Impact
+
+- covered by [318. TASK-163 reference orchestrator feedback core](../_CHANGELOG/318-2026-05-05-task-163-reference-orchestrator-feedback-core.md)
+
+## Status / Board Update
+
+- tracked under the open `TASK-163` umbrella
+- does not become its own board row
 
 ## Validation Commands
 
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -k "reference_understanding_transport_roundtrip or reference_understanding_refresh_replaces_gate_slice" -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -k "reference_orchestrator_feedback_transport_surface or reference_understanding_transport_roundtrip or reference_understanding_refresh_replaces_gate_slice" -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_understanding_runtime_surface.py -k "reference_orchestrator_feedback_surface_with_real_blender_capture" -q`

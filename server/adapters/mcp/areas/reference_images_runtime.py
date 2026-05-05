@@ -18,6 +18,8 @@ from fastmcp import Context
 
 from server.adapters.mcp.areas.reference_feedback import build_reference_orchestrator_feedback
 from server.adapters.mcp.context_utils import ctx_info
+from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract
+from server.adapters.mcp.contracts.quality_gates import GatePlanContract
 from server.adapters.mcp.contracts.reference import (
     GuidedReferenceReadinessContract,
     ReferenceImageRecordContract,
@@ -132,6 +134,16 @@ def _as_response(
     reference_understanding_gate_ids = (
         list(session_state.reference_understanding_gate_ids or []) if session_state is not None else []
     )
+    guided_flow_state = (
+        GuidedFlowStateContract.model_validate(session_state.guided_flow_state)
+        if session_state is not None and session_state.guided_flow_state is not None
+        else None
+    )
+    gate_plan = (
+        GatePlanContract.model_validate(session_state.gate_plan)
+        if session_state is not None and session_state.gate_plan is not None
+        else None
+    )
     return ReferenceImagesResponseContract(
         action=action,
         goal=goal,
@@ -144,6 +156,8 @@ def _as_response(
             goal=goal,
             summary=reference_understanding_summary,
             strategy_state=reference_strategy_state,
+            guided_flow_state=guided_flow_state,
+            gate_plan=gate_plan,
             guided_reference_readiness=readiness,
         ),
         removed_reference_id=removed_reference_id,

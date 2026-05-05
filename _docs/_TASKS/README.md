@@ -3,7 +3,7 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 8 tasks
+- **To Do:** 9 tasks
 - **In Progress:** 0 tasks
 - **Done:** 91
 - **Superseded:** 162
@@ -79,7 +79,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) | **Expand External Vision Contract Profiles Across Qwen, Anthropic, OpenAI, and NVIDIA** | 🔴 High | Board-level follow-on after TASK-139 for extending the external `vision_contract_profile` architecture across additional multimodal families on the existing provider surface, including OpenRouter model capability resolution and no new provider branches under this umbrella. |
-| [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md) | **Vision Orchestrator Feedback, Strategy Normalization, And Optional Perception Adapters** | 🔴 High | Board-level follow-on after TASK-158 for compact orchestrator-facing RU/runtime feedback on existing seams; first wave landed with RU views/visual metrics, session strategy state, and `reference_orchestrator_feedback`, while optional classifier/segmentation follow-ons remain open. |
+| [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md) | **Vision Orchestrator Feedback, Strategy Normalization, And Optional Perception Adapters** | 🔴 High | Board-level follow-on after TASK-158 for compact orchestrator-facing RU/runtime feedback on existing seams; first wave landed with RU views/visual metrics, session strategy state, dedicated transport and Blender-backed proof lanes, while optional classifier/segmentation follow-ons and the final live-backend/docs closeout remain open. |
 ---
 
 ## ✅ Done

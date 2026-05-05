@@ -225,18 +225,32 @@ def augment_reference_understanding_summary(
                 )
 
     merged_views = list(summary.views or [])
-    existing_view_ids = {item.view_id for item in merged_views}
+    merged_by_view_id: dict[str, ReferenceUnderstandingViewContract] = {item.view_id: item for item in merged_views}
     for view_id, reference_ids in sorted(derived_views.items()):
-        if view_id in existing_view_ids:
-            continue
-        merged_views.append(
-            ReferenceUnderstandingViewContract(
+        existing = merged_by_view_id.get(view_id)
+        if existing is None:
+            merged_by_view_id[view_id] = ReferenceUnderstandingViewContract(
                 view_id=view_id,  # type: ignore[arg-type]
                 detected=view_id != "unknown",
                 confidence=1.0 if view_id != "unknown" else 0.5,
                 reference_ids=sorted(reference_ids),
             )
+            continue
+        merged_by_view_id[view_id] = existing.model_copy(
+            update={
+                "detected": existing.detected or view_id != "unknown",
+                "confidence": existing.confidence
+                if existing.confidence is not None
+                else (1.0 if view_id != "unknown" else 0.5),
+                "reference_ids": sorted(
+                    {
+                        *list(existing.reference_ids or []),
+                        *reference_ids,
+                    }
+                ),
+            }
         )
+    merged_views = list(merged_by_view_id.values())
 
     merged_evidence_refs = derived_evidence_refs[:12]
     merged_metrics = derived_metrics[:24]
@@ -344,10 +358,29 @@ def build_reference_orchestrator_feedback(
 ) -> ReferenceOrchestratorFeedbackContract | None:
     """Project one compact read model for LLM orchestrators."""
 
-    if summary is None and strategy_state is None:
+    if (
+        summary is None
+        and strategy_state is None
+        and guided_flow_state is None
+        and gate_plan is None
+        and guided_reference_readiness is None
+        and planner_summary is None
+        and not correction_candidates
+        and not next_gate_actions
+        and not recommended_bounded_tools
+        and not correction_focus
+        and loop_disposition is None
+    ):
         return None
 
-    effective_status = strategy_state.status if strategy_state is not None else summary.status  # type: ignore[union-attr]
+    if strategy_state is not None:
+        effective_status = strategy_state.status
+    elif summary is not None:
+        effective_status = summary.status
+    elif guided_reference_readiness is not None and guided_reference_readiness.status == "ready":
+        effective_status = "available"
+    else:
+        effective_status = "blocked"
     active_gate_ids = [gate.gate_id for gate in list(gate_plan.gates or [])[:8]] if gate_plan is not None else []
     blockers = (
         [blocker.message for blocker in list(gate_plan.completion_blockers or [])[:4]] if gate_plan is not None else []
@@ -389,7 +422,11 @@ def build_reference_orchestrator_feedback(
         else (strategy_state.primary_family if strategy_state is not None else "inspect_only")
     )
     next_checkpoint_tool = None
-    if loop_disposition is not None or correction_candidates:
+    if loop_disposition == "continue_build":
+        next_checkpoint_tool = "reference_iterate_stage_checkpoint"
+    elif loop_disposition in {"inspect_validate", "stop"}:
+        next_checkpoint_tool = None
+    elif correction_candidates:
         next_checkpoint_tool = "reference_iterate_stage_checkpoint"
     elif strategy_state is not None:
         next_checkpoint_tool = strategy_state.recommended_next_checkpoint

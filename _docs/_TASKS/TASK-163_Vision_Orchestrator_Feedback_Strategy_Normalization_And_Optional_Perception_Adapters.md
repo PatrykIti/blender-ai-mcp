@@ -55,6 +55,15 @@ After this umbrella finishes:
 - optional classifier and segmentation adapters remain default-off and
   advisory-only
 
+## Non-Goals
+
+- do not introduce a public `reference_understand(...)` tool
+- do not introduce a public `router_apply_reference_strategy(...)` tool
+- do not make optional classifier or segmentation adapters default-on
+- do not move low-poly creature refinement-stage ownership out of `TASK-135-03`
+- do not let server-owned image metrics, classifier scores, or segmentation
+  artifacts become gate pass/fail authority
+
 ## Execution Structure
 
 | Order | Task | Purpose |
@@ -80,6 +89,16 @@ After this umbrella finishes:
 | `server/adapters/mcp/vision/prompting.py`, `vision/parsing.py` | Shared RU prompt/schema/parser vocabulary |
 | `tests/unit/adapters/mcp/`, `tests/unit/router/application/`, `tests/e2e/integration/` | Contract, session, transport, and reference facade owner lanes |
 | `_docs/_VISION/`, `_docs/_MCP_SERVER/`, `_docs/_TESTS/`, `_docs/_TASKS/README.md` | Canonical repo-facing documentation and board state |
+
+## Test Matrix
+
+| Slice | Primary Validation Lane | Why |
+|------|--------------------------|-----|
+| RU contract/provenance expansion | unit prompt/parser/reference lanes | strict payload vocabulary and server-owned augmentation live here |
+| session strategy state | unit session/reference lanes | persistence and same-goal carry-forward are session-owned |
+| compact orchestrator feedback | unit facade/router lanes plus transport and Blender-backed E2E | this is client-facing runtime contract work |
+| lightweight CV metrics | unit reference-image lanes plus RU transport/Blender-backed E2E | the new metrics must stay advisory-only and schema-safe |
+| optional adapters follow-ons | future unit/runtime/harness lanes per adapter | heavy/default-off follow-ons must prove readiness separately |
 
 ## Acceptance Criteria
 
