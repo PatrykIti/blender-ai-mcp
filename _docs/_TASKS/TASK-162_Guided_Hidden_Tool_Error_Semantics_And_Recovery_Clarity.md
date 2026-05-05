@@ -260,10 +260,10 @@ After this umbrella ships:
   search-first guidance after the surface changes; the remaining delta is stale
   persisted guidance versus the live surface, not a repo-wide discovery-doc
   reversal
-- integration coverage proves that a healthy MCP session returning tool errors is
-  not misrepresented by the repo contract as a disconnect condition on the
-  guided discovery / `call_tool(...)` seam, and that the transcript-backed
-  direct-path failure is prevented earlier by hiding the invalid mutators
+- integration coverage proves deterministic error semantics plus healthy
+  post-failure session continuity on the guided discovery / `call_tool(...)`
+  seam, and shows that the transcript-backed direct-path failure is prevented
+  earlier by hiding the invalid mutators
   where the transport/session harness makes that observable
 - the final task docs leave implementation ownership, tests, and docs updates
   explicit enough that a future implementer does not need the original Claude

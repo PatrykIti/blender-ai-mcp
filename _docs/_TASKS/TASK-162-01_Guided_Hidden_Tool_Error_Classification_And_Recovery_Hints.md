@@ -127,10 +127,9 @@ The named tests should explicitly prove all three classifications:
   tool and does not get reclassified as a guided refresh failure
 - when spatial refresh is the cause, the error points to the current pending
   `required_checks` rather than one hard-coded list
-- healthy tool-contract failures no longer look like transport disconnects in
-  the repo-owned proxy/discovery semantics; the named proof lanes must make
-  clear which transports only prove wording and which prove post-failure
-  continuity
+- healthy tool-contract failures on the repo-owned proxy/discovery seam now have
+  deterministic error semantics; the named proof lanes must make clear which
+  transports prove wording and which also prove post-failure continuity
 
 ## Status / Board Update
 
