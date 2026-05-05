@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 VisionBackendKind = Literal["transformers_local", "mlx_local", "openai_compatible_external"]
 VisionExternalProviderName = Literal["generic", "openrouter", "google_ai_studio"]
 VisionContractProfile = Literal["generic_full", "google_family_compare"]
+VisionReferenceClassifierProviderName = Literal["generic_sidecar", "generic", "openrouter", "google_ai_studio"]
 VisionSegmentationProviderName = Literal["generic_sidecar"]
 VisionModelCapabilitySource = Literal["fallback_registry", "openrouter_api", "env_override", "unknown"]
 
@@ -109,6 +110,7 @@ class VisionRuntimeConfig(BaseModel):
     transformers_local: VisionTransformersLocalConfig | None = None
     mlx_local: VisionMLXLocalConfig | None = None
     openai_compatible_external: VisionOpenAICompatibleConfig | None = None
+    reference_classifier: "VisionReferenceClassifierConfig | None" = None
     segmentation_sidecar: "VisionSegmentationSidecarConfig | None" = None
 
     @property
@@ -180,10 +182,39 @@ class VisionRuntimeConfig(BaseModel):
         return self.openai_compatible_external.vision_contract_profile
 
     @property
+    def active_reference_classifier(self) -> "VisionReferenceClassifierConfig | None":
+        """Return the optional reference-classifier config when enabled."""
+
+        return self.reference_classifier
+
+    @property
     def active_segmentation_sidecar(self) -> "VisionSegmentationSidecarConfig | None":
         """Return the optional segmentation sidecar config when enabled."""
 
         return self.segmentation_sidecar
+
+
+class VisionReferenceClassifierConfig(BaseModel):
+    """Configuration for the optional reference-classifier sidecar."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = False
+    provider_name: VisionReferenceClassifierProviderName = "generic_sidecar"
+    endpoint: str | None = None
+    model: str | None = None
+    api_key: str | None = None
+    api_key_env: str | None = None
+    timeout_seconds: float = Field(default=15.0, gt=0)
+    max_labels: int = Field(default=8, ge=1, le=32)
+
+    @model_validator(mode="after")
+    def validate_endpoint(self) -> "VisionReferenceClassifierConfig":
+        """Require an explicit endpoint only when the classifier is enabled."""
+
+        if self.enabled and not self.endpoint:
+            raise ValueError("enabled reference_classifier requires endpoint")
+        return self
 
 
 class VisionSegmentationSidecarConfig(BaseModel):

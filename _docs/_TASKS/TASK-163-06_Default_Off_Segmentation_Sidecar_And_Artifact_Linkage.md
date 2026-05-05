@@ -1,11 +1,25 @@
 # TASK-163-06: Default-Off Segmentation Sidecar And Artifact Linkage
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md)
 **Objective:** Add default-off RU segmentation artifact linkage without changing truth ownership or making the sidecar mandatory.
 **Repository Touchpoints:** `server/infrastructure/config.py`, `server/adapters/mcp/vision/config.py`, `server/adapters/mcp/vision/runtime.py`, `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/reference.py`, `tests/unit/adapters/mcp/test_vision_runtime_config.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`
 **Acceptance Criteria:** missing sidecar stays non-fatal; segmentation artifacts remain advisory-only; no second public flow is introduced.
+
+## Completion Summary
+
+- reused the existing `VISION_SEGMENTATION_*` runtime seam so RU can
+  optionally fetch support-only `segmentation_artifacts` without adding a new
+  registry or public tool
+- kept RU artifact linkage bounded to ids, kinds, reference ids, and summaries;
+  normal payloads still avoid raw mask bytes and private local paths
+- preserved the staged compare/iterate `part_segmentation` contract as the
+  separate default-off runtime envelope while RU-side `segmentation_artifacts`
+  stay support evidence only
+- surfaced segmentation support summaries and unavailable notes through the
+  existing compact orchestrator-feedback path instead of inventing a second
+  discovery/read surface
 
 ## Implementation Notes
 
@@ -55,7 +69,7 @@ return [
 
 ## Changelog Impact
 
-- add a dedicated `_docs/_CHANGELOG/*` entry when this leaf lands
+- covered by [319. TASK-163 optional RU support adapters](../_CHANGELOG/319-2026-05-05-task-163-optional-ru-support-adapters.md)
 
 ## Status / Board Update
 

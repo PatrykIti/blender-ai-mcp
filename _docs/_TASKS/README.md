@@ -44,7 +44,7 @@ flight.
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md) | **Vision Orchestrator Feedback, Strategy Normalization, And Optional Perception Adapters** | 🔴 High | Board-level follow-on after TASK-158 for compact orchestrator-facing RU/runtime feedback on existing seams; first wave landed with RU views/visual metrics, session strategy state, dedicated transport and Blender-backed proof lanes, while optional classifier/segmentation follow-ons and the final live-backend/docs closeout remain open. |
+| [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md) | **Vision Orchestrator Feedback, Strategy Normalization, And Optional Perception Adapters** | 🔴 High | Board-level follow-on after TASK-158 for compact orchestrator-facing RU/runtime feedback on existing seams; RU views/visual metrics, session strategy state, compact transport projection, and the optional classifier/segmentation support-adapter wave are now landed, while the final live-backend/docs closeout remains open under `TASK-163-07`. |
 
 ## 🚨 To Do
 

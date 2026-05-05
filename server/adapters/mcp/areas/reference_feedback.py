@@ -407,6 +407,19 @@ def build_reference_orchestrator_feedback(
         evidence_summary.extend(
             item.summary for item in list(summary.visual_metrics or [])[:2] if item.summary is not None
         )
+        evidence_summary.extend(
+            f"Optional classifier scored {item.label} at {item.score:.2f}."
+            for item in list(summary.classification_scores or [])[:2]
+        )
+        evidence_summary.extend(
+            item.summary or f"Optional segmentation artifact {item.artifact_id} linked for support-only RU."
+            for item in list(summary.segmentation_artifacts or [])[:2]
+        )
+        evidence_summary.extend(
+            item.summary
+            for item in list(summary.source_provenance or [])
+            if item.source in {"classification_scores", "part_segmentation"} and item.summary is not None
+        )
         if summary.subject is not None:
             uncertainty_notes.extend(summary.subject.uncertainty_notes)
         if summary.style is not None:

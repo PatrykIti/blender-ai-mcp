@@ -131,6 +131,9 @@ guided/reference surfaces:
 - that same RU path now adds server-owned `views` and lightweight
   `visual_metrics`, then normalizes the result into session-scoped
   `reference_strategy_state`
+- when operators explicitly enable optional sidecars, the same RU path can now
+  merge support-only `classification_scores` and `segmentation_artifacts`
+  without changing gate authority or creating a second read surface
 - `server/adapters/mcp/areas/router.py` surfaces the resulting
   `reference_understanding_summary` and `reference_understanding_gate_ids`
   through `router_get_status(...)`
@@ -173,8 +176,8 @@ Minimum fields:
 | `router_handoff_hints` | Advisory families and constraints for guided policy normalization |
 | `gate_proposals` | Candidate `TASK-157` gate declarations, all initially advisory/pending |
 | `visual_evidence_refs` | Links to silhouette/CV/reference evidence payloads, not embedded blobs |
-| `classification_scores` | Optional future CLIP/SigLIP-style scores |
-| `segmentation_artifacts` | Optional future sidecar mask/crop refs |
+| `classification_scores` | Optional default-off CLIP/SigLIP-style support scores |
+| `segmentation_artifacts` | Optional default-off sidecar mask/crop refs |
 | `verification_requirements` | Suggested checks that the gate normalizer may convert to typed gates |
 | `boundary_policy` | Explicit advisory/truth/tool-unlock limits |
 
@@ -291,12 +294,14 @@ orchestration model.
 | Phase | Adapter | Output |
 |-------|---------|--------|
 | 2 | Pillow/numpy plus optional OpenCV/scikit-image | `visual_evidence_refs`, edge/facet/color/silhouette metrics |
-| 3 | CLIP/SigLIP | `classification_scores` that support or challenge VLM construction-path choice |
+| 3 | CLIP/SigLIP-style sidecar | `classification_scores` that support or challenge VLM construction-path choice |
 | 4 | SAM or segmentation sidecar | `segmentation_artifacts` with masks/crops, advisory only |
 | 5 | Grounding DINO / OWL-ViT style localization | optional text-prompted boxes that can seed segmentation masks |
 
-All later adapters must be typed, bounded, reproducible, optional, and
-unavailable-by-default until their own task promotes them.
+Phases 3 and 4 now have the first default-off sidecar linkage on the shipped
+RU path, but they remain typed, bounded, advisory-only, and unavailable by
+default until operators explicitly opt in. Later adapter work must still avoid
+changing the orchestration model or verifier authority.
 
 ## Low-Poly Creature Consumer
 

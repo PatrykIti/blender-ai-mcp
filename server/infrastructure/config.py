@@ -116,6 +116,40 @@ class Config(BaseSettings):
         default=None,
         description="Environment variable containing the Google AI Studio API key for vision",
     )
+    VISION_REFERENCE_CLASSIFIER_ENABLED: bool = Field(
+        default=False,
+        description="Enable optional reference-classifier sidecar for advisory RU scores",
+    )
+    VISION_REFERENCE_CLASSIFIER_PROVIDER: str = Field(
+        default="generic_sidecar",
+        description="Optional reference-classifier provider; leave default to inherit the main external vision provider when applicable",
+    )
+    VISION_REFERENCE_CLASSIFIER_ENDPOINT: str | None = Field(
+        default=None,
+        description="Endpoint/base URL for the optional reference-classifier sidecar; when empty it may inherit the main external vision endpoint",
+    )
+    VISION_REFERENCE_CLASSIFIER_MODEL: str | None = Field(
+        default=None,
+        description="Optional model identifier for the reference-classifier sidecar; when empty it may inherit the main external vision model",
+    )
+    VISION_REFERENCE_CLASSIFIER_API_KEY: str | None = Field(
+        default=None,
+        description="Inline API key for the reference-classifier sidecar; when empty it may inherit the main external vision API key",
+    )
+    VISION_REFERENCE_CLASSIFIER_API_KEY_ENV: str | None = Field(
+        default=None,
+        description="Environment variable containing the reference-classifier sidecar API key; when empty it may inherit the main external vision API key env",
+    )
+    VISION_REFERENCE_CLASSIFIER_TIMEOUT_SECONDS: float = Field(
+        default=15.0,
+        gt=0,
+        description="Timeout for one optional reference-classifier sidecar request",
+    )
+    VISION_REFERENCE_CLASSIFIER_MAX_LABELS: int = Field(
+        default=8,
+        gt=0,
+        description="Maximum classification labels accepted from the optional reference-classifier sidecar",
+    )
     VISION_SEGMENTATION_ENABLED: bool = Field(
         default=False,
         description="Enable optional part-segmentation sidecar for creature perception",
@@ -185,6 +219,15 @@ class Config(BaseSettings):
             raise ValueError("VISION_EXTERNAL_PROVIDER must be one of: generic, openrouter, google_ai_studio")
         if self.VISION_EXTERNAL_CONTRACT_PROFILE not in {None, "generic_full", "google_family_compare"}:
             raise ValueError("VISION_EXTERNAL_CONTRACT_PROFILE must be one of: generic_full, google_family_compare")
+        if self.VISION_REFERENCE_CLASSIFIER_PROVIDER not in {
+            "generic_sidecar",
+            "generic",
+            "openrouter",
+            "google_ai_studio",
+        }:
+            raise ValueError(
+                "VISION_REFERENCE_CLASSIFIER_PROVIDER must be one of: generic_sidecar, generic, openrouter, google_ai_studio"
+            )
         if self.VISION_SEGMENTATION_PROVIDER not in {"generic_sidecar"}:
             raise ValueError("VISION_SEGMENTATION_PROVIDER must be one of: generic_sidecar")
         return self
@@ -252,6 +295,18 @@ def get_config() -> Config:
         VISION_GEMINI_MODEL=os.getenv("VISION_GEMINI_MODEL") or None,
         VISION_GEMINI_API_KEY=os.getenv("VISION_GEMINI_API_KEY") or None,
         VISION_GEMINI_API_KEY_ENV=os.getenv("VISION_GEMINI_API_KEY_ENV") or None,
+        VISION_REFERENCE_CLASSIFIER_ENABLED=(
+            os.getenv("VISION_REFERENCE_CLASSIFIER_ENABLED", "false").lower() in ("true", "1", "yes")
+        ),
+        VISION_REFERENCE_CLASSIFIER_PROVIDER=os.getenv("VISION_REFERENCE_CLASSIFIER_PROVIDER", "generic_sidecar"),
+        VISION_REFERENCE_CLASSIFIER_ENDPOINT=os.getenv("VISION_REFERENCE_CLASSIFIER_ENDPOINT") or None,
+        VISION_REFERENCE_CLASSIFIER_MODEL=os.getenv("VISION_REFERENCE_CLASSIFIER_MODEL") or None,
+        VISION_REFERENCE_CLASSIFIER_API_KEY=os.getenv("VISION_REFERENCE_CLASSIFIER_API_KEY") or None,
+        VISION_REFERENCE_CLASSIFIER_API_KEY_ENV=os.getenv("VISION_REFERENCE_CLASSIFIER_API_KEY_ENV") or None,
+        VISION_REFERENCE_CLASSIFIER_TIMEOUT_SECONDS=float(
+            os.getenv("VISION_REFERENCE_CLASSIFIER_TIMEOUT_SECONDS", 15.0)
+        ),
+        VISION_REFERENCE_CLASSIFIER_MAX_LABELS=int(os.getenv("VISION_REFERENCE_CLASSIFIER_MAX_LABELS", 8)),
         VISION_SEGMENTATION_ENABLED=os.getenv("VISION_SEGMENTATION_ENABLED", "false").lower() in ("true", "1", "yes"),
         VISION_SEGMENTATION_PROVIDER=os.getenv("VISION_SEGMENTATION_PROVIDER", "generic_sidecar"),
         VISION_SEGMENTATION_ENDPOINT=os.getenv("VISION_SEGMENTATION_ENDPOINT") or None,

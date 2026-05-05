@@ -120,5 +120,12 @@ After this umbrella finishes:
   - existing reference/router/checkpoint surfaces now expose
     `reference_orchestrator_feedback`
   - lightweight CV metrics now augment RU on the server-owned path
-- 2026-05-05: `TASK-163-05` through `TASK-163-07` remain open follow-ons for
-  optional adapters and live-backend closeout proof
+- 2026-05-05: `TASK-163-05` and `TASK-163-06` landed as the optional
+  support-adapter wave:
+  - typed default-off `reference_classifier` runtime/config support now exists
+  - RU can merge support-only `classification_scores` and
+    `segmentation_artifacts` through explicit sidecars
+  - optional-adapter failures now degrade to provenance notes instead of
+    breaking guided sessions
+- 2026-05-05: `TASK-163-07` remains open for the live-backend harness proof,
+  final docs sweep, and umbrella closeout

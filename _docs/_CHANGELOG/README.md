@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [319](./319-2026-05-05-task-163-optional-ru-support-adapters.md) | 2026-05-05 | **TASK-163 optional RU support adapters** | - |
 | [318](./318-2026-05-05-task-163-reference-orchestrator-feedback-core.md) | 2026-05-05 | **TASK-163 reference orchestrator feedback core** | - |
 | [317](./317-2026-05-05-task-159-proof-lane-refresh.md) | 2026-05-05 | **TASK-159 proof-lane refresh** | - |
 | [316](./316-2026-05-05-task-159-governance-follow-on-closeout.md) | 2026-05-05 | **TASK-161 TASK-159 closeout alignment** | - |

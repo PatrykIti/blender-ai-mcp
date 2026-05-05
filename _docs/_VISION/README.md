@@ -660,6 +660,33 @@ Current staged-loop reading order for creature work:
 - `silhouette_analysis.metrics`
 - `vision_assistant.result.shape_mismatches` / `proportion_mismatches`
 
+## Optional Reference Classifier
+
+Reference-understanding can now accept one explicit support-only classifier
+sidecar without changing the public MCP surface.
+
+Current config surface:
+
+- `VISION_REFERENCE_CLASSIFIER_ENABLED=false` by default
+- `VISION_REFERENCE_CLASSIFIER_PROVIDER=generic_sidecar`
+- `VISION_REFERENCE_CLASSIFIER_ENDPOINT`
+- `VISION_REFERENCE_CLASSIFIER_MODEL`
+- `VISION_REFERENCE_CLASSIFIER_API_KEY` / `VISION_REFERENCE_CLASSIFIER_API_KEY_ENV`
+- `VISION_REFERENCE_CLASSIFIER_TIMEOUT_SECONDS`
+- `VISION_REFERENCE_CLASSIFIER_MAX_LABELS`
+
+Current RU behavior:
+
+- when enabled, RU may merge bounded `classification_scores` into
+  `reference_understanding_summary`
+- endpoint and credentials may inherit the main external vision config, while
+  `VISION_REFERENCE_CLASSIFIER_MODEL` may stay empty to reuse the main model or
+  override only the model for comparison experiments
+- those scores stay advisory-only and do not become gate or tool-unlock
+  authority
+- classifier failures degrade to provenance notes plus an empty score list
+  instead of breaking guided/reference sessions
+
 ## Optional Part-Segmentation Sidecar
 
 Part-aware segmentation remains explicitly opt-in and separate from the
@@ -680,6 +707,9 @@ Boundary rules:
 - the sidecar stays advisory-only
 - failure or absence of the sidecar must not break normal guided sessions
 - this config surface is separate from `VISION_EXTERNAL_CONTRACT_PROFILE`
+- when enabled, RU may merge bounded `segmentation_artifacts` links into
+  `reference_understanding_summary` while staged compare/iterate keeps the
+  separate `part_segmentation` envelope
 
 Current first-pass scored baseline on the synthetic repo scenarios:
 

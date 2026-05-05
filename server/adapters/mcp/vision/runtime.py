@@ -22,6 +22,8 @@ from .config import (
     VisionContractProfile,
     VisionMLXLocalConfig,
     VisionOpenAICompatibleConfig,
+    VisionReferenceClassifierConfig,
+    VisionReferenceClassifierProviderName,
     VisionRuntimeConfig,
     VisionSegmentationSidecarConfig,
     VisionTransformersLocalConfig,
@@ -74,6 +76,34 @@ def _resolve_openrouter_fallback_profile(model_name: str | None) -> ModelCapabil
     return resolve_model_profile(provider="openrouter", model_id=model_name)
 
 
+def _resolve_reference_classifier_provider_name(
+    *,
+    explicit_provider_name: str,
+    explicit_endpoint: str | None,
+    external_config: VisionOpenAICompatibleConfig | None,
+) -> VisionReferenceClassifierProviderName:
+    if explicit_endpoint or external_config is None:
+        return cast(VisionReferenceClassifierProviderName, explicit_provider_name)
+    if explicit_provider_name != "generic_sidecar":
+        return cast(VisionReferenceClassifierProviderName, explicit_provider_name)
+    return cast(VisionReferenceClassifierProviderName, external_config.provider_name)
+
+
+def _resolve_reference_classifier_api_credentials(
+    *,
+    explicit_api_key: str | None,
+    explicit_api_key_env: str | None,
+    external_config: VisionOpenAICompatibleConfig | None,
+) -> tuple[str | None, str | None]:
+    if explicit_api_key:
+        return explicit_api_key, explicit_api_key_env
+    if explicit_api_key_env:
+        return None, explicit_api_key_env
+    if external_config is None:
+        return None, None
+    return external_config.api_key, external_config.api_key_env
+
+
 def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
     """Build typed vision runtime config from flat application settings."""
 
@@ -94,6 +124,8 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
         )
 
     external_config = None
+    classifier_enabled = bool(getattr(config, "VISION_REFERENCE_CLASSIFIER_ENABLED", False))
+    reference_classifier_config = None
     segmentation_enabled = bool(getattr(config, "VISION_SEGMENTATION_ENABLED", False))
     segmentation_sidecar_config = None
     explicit_external_provider = config.VISION_EXTERNAL_PROVIDER
@@ -204,6 +236,32 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
             max_parts=int(getattr(config, "VISION_SEGMENTATION_MAX_PARTS", 16)),
         )
 
+    if classifier_enabled:
+        explicit_classifier_endpoint = getattr(config, "VISION_REFERENCE_CLASSIFIER_ENDPOINT", None)
+        explicit_classifier_model = getattr(config, "VISION_REFERENCE_CLASSIFIER_MODEL", None)
+        explicit_classifier_api_key = getattr(config, "VISION_REFERENCE_CLASSIFIER_API_KEY", None)
+        explicit_classifier_api_key_env = getattr(config, "VISION_REFERENCE_CLASSIFIER_API_KEY_ENV", None)
+        classifier_api_key, classifier_api_key_env = _resolve_reference_classifier_api_credentials(
+            explicit_api_key=explicit_classifier_api_key,
+            explicit_api_key_env=explicit_classifier_api_key_env,
+            external_config=external_config,
+        )
+        reference_classifier_config = VisionReferenceClassifierConfig(
+            enabled=True,
+            provider_name=_resolve_reference_classifier_provider_name(
+                explicit_provider_name=getattr(config, "VISION_REFERENCE_CLASSIFIER_PROVIDER", "generic_sidecar"),
+                explicit_endpoint=explicit_classifier_endpoint,
+                external_config=external_config,
+            ),
+            endpoint=explicit_classifier_endpoint
+            or (external_config.base_url if external_config is not None else None),
+            model=explicit_classifier_model or (external_config.model if external_config is not None else None),
+            api_key=classifier_api_key,
+            api_key_env=classifier_api_key_env,
+            timeout_seconds=float(getattr(config, "VISION_REFERENCE_CLASSIFIER_TIMEOUT_SECONDS", 15.0)),
+            max_labels=int(getattr(config, "VISION_REFERENCE_CLASSIFIER_MAX_LABELS", 8)),
+        )
+
     return VisionRuntimeConfig(
         enabled=config.VISION_ENABLED,
         provider=cast(VisionBackendKind, config.VISION_PROVIDER),
@@ -214,6 +272,7 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
         transformers_local=local_config,
         mlx_local=mlx_local_config,
         openai_compatible_external=external_config,
+        reference_classifier=reference_classifier_config,
         segmentation_sidecar=segmentation_sidecar_config,
     )
 

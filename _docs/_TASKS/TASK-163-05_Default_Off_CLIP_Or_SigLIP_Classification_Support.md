@@ -1,11 +1,25 @@
 # TASK-163-05: Default-Off CLIP Or SigLIP Classification Support
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md)
 **Objective:** Add default-off classifier support that can contribute `classification_scores` to RU without becoming a second authority.
 **Repository Touchpoints:** `server/infrastructure/config.py`, `server/adapters/mcp/vision/config.py`, `server/adapters/mcp/vision/runtime.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/contracts/reference.py`, `tests/unit/adapters/mcp/test_vision_runtime_config.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/scripts/test_script_tooling.py`
 **Acceptance Criteria:** classifier path stays optional, typed, and advisory-only; disabled/unavailable states do not break guided sessions.
+
+## Completion Summary
+
+- added a typed default-off `reference_classifier` seam to
+  `VisionRuntimeConfig` and the flat `VISION_REFERENCE_CLASSIFIER_*` config
+  family
+- RU refresh can now call one explicit support-only classifier sidecar and
+  merge bounded `classification_scores` into the existing
+  `reference_understanding_summary`
+- classifier failures or empty results degrade to bounded provenance notes plus
+  an empty `classification_scores` list instead of breaking guided/reference
+  flow
+- compact orchestrator feedback now surfaces classifier evidence summaries on
+  the existing `reference_images(...)`, `router_*`, and checkpoint lanes
 
 ## Implementation Notes
 
@@ -62,7 +76,7 @@ return [
 
 ## Changelog Impact
 
-- add a dedicated `_docs/_CHANGELOG/*` entry when this leaf lands
+- covered by [319. TASK-163 optional RU support adapters](../_CHANGELOG/319-2026-05-05-task-163-optional-ru-support-adapters.md)
 
 ## Status / Board Update
 

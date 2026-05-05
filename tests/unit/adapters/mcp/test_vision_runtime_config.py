@@ -67,6 +67,14 @@ def _base_config(**overrides) -> Config:
         "VISION_GEMINI_MODEL": None,
         "VISION_GEMINI_API_KEY": None,
         "VISION_GEMINI_API_KEY_ENV": None,
+        "VISION_REFERENCE_CLASSIFIER_ENABLED": False,
+        "VISION_REFERENCE_CLASSIFIER_PROVIDER": "generic_sidecar",
+        "VISION_REFERENCE_CLASSIFIER_ENDPOINT": None,
+        "VISION_REFERENCE_CLASSIFIER_MODEL": None,
+        "VISION_REFERENCE_CLASSIFIER_API_KEY": None,
+        "VISION_REFERENCE_CLASSIFIER_API_KEY_ENV": None,
+        "VISION_REFERENCE_CLASSIFIER_TIMEOUT_SECONDS": 15.0,
+        "VISION_REFERENCE_CLASSIFIER_MAX_LABELS": 8,
         "VISION_SEGMENTATION_ENABLED": False,
         "VISION_SEGMENTATION_PROVIDER": "generic_sidecar",
         "VISION_SEGMENTATION_ENDPOINT": None,
@@ -488,6 +496,96 @@ def test_optional_segmentation_sidecar_stays_disabled_by_default():
 
     assert runtime.segmentation_sidecar is None
     assert runtime.active_segmentation_sidecar is None
+
+
+def test_optional_reference_classifier_stays_disabled_by_default():
+    runtime = build_vision_runtime_config(_base_config())
+
+    assert runtime.reference_classifier is None
+    assert runtime.active_reference_classifier is None
+
+
+def test_optional_reference_classifier_uses_separate_opt_in_config_surface():
+    runtime = build_vision_runtime_config(
+        _base_config(
+            VISION_REFERENCE_CLASSIFIER_ENABLED=True,
+            VISION_REFERENCE_CLASSIFIER_ENDPOINT="http://localhost:9200/classify",
+            VISION_REFERENCE_CLASSIFIER_MODEL="siglip-sidecar-v1",
+            VISION_REFERENCE_CLASSIFIER_API_KEY_ENV="CLASSIFIER_API_KEY",
+            VISION_REFERENCE_CLASSIFIER_MAX_LABELS=6,
+        )
+    )
+
+    assert runtime.reference_classifier is not None
+    assert runtime.reference_classifier.enabled is True
+    assert runtime.reference_classifier.provider_name == "generic_sidecar"
+    assert runtime.reference_classifier.endpoint == "http://localhost:9200/classify"
+    assert runtime.reference_classifier.model == "siglip-sidecar-v1"
+    assert runtime.reference_classifier.api_key_env == "CLASSIFIER_API_KEY"
+    assert runtime.reference_classifier.max_labels == 6
+
+
+def test_optional_reference_classifier_can_inherit_main_external_vision_config():
+    runtime = build_vision_runtime_config(
+        _base_config(
+            VISION_ENABLED=True,
+            VISION_PROVIDER="openai_compatible_external",
+            VISION_EXTERNAL_PROVIDER="openrouter",
+            VISION_OPENROUTER_MODEL="google/gemma-3-27b-it:free",
+            VISION_OPENROUTER_API_KEY_ENV="OPENROUTER_API_KEY",
+            VISION_REFERENCE_CLASSIFIER_ENABLED=True,
+        )
+    )
+
+    assert runtime.reference_classifier is not None
+    assert runtime.reference_classifier.enabled is True
+    assert runtime.reference_classifier.provider_name == "openrouter"
+    assert runtime.reference_classifier.endpoint == "https://openrouter.ai/api/v1"
+    assert runtime.reference_classifier.model == "google/gemma-3-27b-it:free"
+    assert runtime.reference_classifier.api_key_env == "OPENROUTER_API_KEY"
+
+
+def test_optional_reference_classifier_can_override_model_while_inheriting_main_external_provider():
+    runtime = build_vision_runtime_config(
+        _base_config(
+            VISION_ENABLED=True,
+            VISION_PROVIDER="openai_compatible_external",
+            VISION_EXTERNAL_PROVIDER="google_ai_studio",
+            VISION_GEMINI_MODEL="gemini-2.5-flash",
+            VISION_GEMINI_API_KEY_ENV="GEMINI_API_KEY",
+            VISION_REFERENCE_CLASSIFIER_ENABLED=True,
+            VISION_REFERENCE_CLASSIFIER_MODEL="gemini-2.5-pro",
+        )
+    )
+
+    assert runtime.reference_classifier is not None
+    assert runtime.reference_classifier.provider_name == "google_ai_studio"
+    assert runtime.reference_classifier.endpoint == "https://generativelanguage.googleapis.com/v1beta"
+    assert runtime.reference_classifier.model == "gemini-2.5-pro"
+    assert runtime.reference_classifier.api_key_env == "GEMINI_API_KEY"
+
+
+def test_optional_reference_classifier_prefers_full_sidecar_config_over_main_external_fallback():
+    runtime = build_vision_runtime_config(
+        _base_config(
+            VISION_ENABLED=True,
+            VISION_PROVIDER="openai_compatible_external",
+            VISION_EXTERNAL_PROVIDER="openrouter",
+            VISION_OPENROUTER_MODEL="google/gemma-3-27b-it:free",
+            VISION_OPENROUTER_API_KEY_ENV="OPENROUTER_API_KEY",
+            VISION_REFERENCE_CLASSIFIER_ENABLED=True,
+            VISION_REFERENCE_CLASSIFIER_PROVIDER="generic_sidecar",
+            VISION_REFERENCE_CLASSIFIER_ENDPOINT="http://localhost:9200/classify",
+            VISION_REFERENCE_CLASSIFIER_MODEL="siglip-sidecar-v1",
+            VISION_REFERENCE_CLASSIFIER_API_KEY_ENV="CLASSIFIER_API_KEY",
+        )
+    )
+
+    assert runtime.reference_classifier is not None
+    assert runtime.reference_classifier.provider_name == "generic_sidecar"
+    assert runtime.reference_classifier.endpoint == "http://localhost:9200/classify"
+    assert runtime.reference_classifier.model == "siglip-sidecar-v1"
+    assert runtime.reference_classifier.api_key_env == "CLASSIFIER_API_KEY"
 
 
 def test_optional_segmentation_sidecar_uses_separate_opt_in_config_surface():

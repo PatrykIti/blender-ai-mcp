@@ -27,6 +27,7 @@ from server.adapters.mcp.contracts.reference import (
 )
 from server.adapters.mcp.session_capabilities import SessionCapabilityState
 from server.adapters.mcp.vision import VisionBackendUnavailableError, VisionImageInput, VisionRequest
+from server.adapters.mcp.vision.reference_support import augment_reference_understanding_optional_support
 
 
 def blocked_reference_understanding_summary(
@@ -229,6 +230,13 @@ async def refresh_reference_understanding_summary(
         payload = await backend.analyze(request)
         summary = ReferenceUnderstandingSummaryContract.model_validate(payload)
         summary = augment_reference_understanding_summary(summary, reference_records=reference_records)
+        runtime_config = getattr(resolver, "runtime_config", None)
+        summary = await augment_reference_understanding_optional_support(
+            summary,
+            goal=current.goal,
+            reference_records=reference_records,
+            runtime_config=runtime_config,
+        )
     except VisionBackendUnavailableError as exc:
         unavailable = blocked_reference_understanding_summary(
             goal=current.goal,

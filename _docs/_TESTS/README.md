@@ -473,8 +473,8 @@ Focused unit coverage now also protects:
 
 - deterministic silhouette metric/action-hint contracts on
   `tests/unit/adapters/mcp/test_reference_images.py`
-- optional segmentation-sidecar config defaults and opt-in validation on
-  `tests/unit/adapters/mcp/test_vision_runtime_config.py`
+- optional reference-classifier and segmentation-sidecar config defaults plus
+  opt-in validation on `tests/unit/adapters/mcp/test_vision_runtime_config.py`
 - goal-derived quality-gate contract and intake coverage on:
   - `tests/unit/adapters/mcp/test_quality_gate_contracts.py`
   - `tests/unit/adapters/mcp/test_quality_gate_verifier.py`
@@ -490,6 +490,8 @@ Focused unit coverage now also protects:
   - `tests/unit/adapters/mcp/test_reference_images.py`
   - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
   - `tests/unit/router/application/test_router_contracts.py`
+- optional RU classifier-score and segmentation-artifact augmentation on:
+  - `tests/unit/adapters/mcp/test_reference_images.py`
 - compact view-space contracts, search/discovery shaping, and reference-loop
   adoption hints on:
   - `tests/unit/tools/scene/test_scene_contracts.py`

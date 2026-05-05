@@ -1233,7 +1233,11 @@ family, pending required parts, active gate ids, current blockers, next
 actions, and the next checkpoint tool without replacing the richer truth or
 planner payloads. The RU summary itself now also carries typed `views` plus
 server-owned `visual_metrics` so lightweight deterministic image evidence can
-support the orchestrator without being treated as scene truth.
+support the orchestrator without being treated as scene truth. When operators
+explicitly enable the optional support sidecars, that same RU summary may also
+carry bounded `classification_scores` and `segmentation_artifacts`; failures on
+those support paths degrade to provenance notes instead of breaking the guided
+session.
 When an active goal and attached references are present, the server may now run
 an internal reference-understanding pass on the shared vision backend and
 surface the typed result through `router_get_status(...)` plus the staged
