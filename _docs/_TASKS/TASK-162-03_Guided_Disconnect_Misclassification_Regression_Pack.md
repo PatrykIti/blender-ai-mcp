@@ -24,7 +24,13 @@ tool error surface itself.
 - `tests/e2e/integration/test_guided_search_first_call_tool_boundary.py`
 - `tests/e2e/integration/test_guided_surface_contract_parity.py`
 - `tests/e2e/integration/test_guided_inspect_validate_handoff.py`
+  This file must carry the post-handoff `inspect_validate +
+  spatial_refresh_required` case proving those macros are hidden under the
+  refresh barrier, not only the current steady inspect visibility assertion.
 - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
+  This file must carry the synthetic Streamable HTTP `call_tool(...)`
+  hidden-tool lane and the post-failure continuity check for that path, not
+  only the current direct hidden-tool regression.
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/_TASKS/README.md`
 

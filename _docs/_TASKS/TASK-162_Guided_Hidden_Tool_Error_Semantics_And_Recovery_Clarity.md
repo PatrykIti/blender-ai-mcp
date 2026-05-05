@@ -170,6 +170,7 @@ After this umbrella ships:
 | `server/adapters/mcp/transforms/visibility_policy.py` | Guided surface shaping | Owns the direct/supporting/discovery tool sets and the shaped visibility contract the client sees |
 | `server/adapters/mcp/session_capabilities_flow.py` | Guided flow recovery semantics | Owns required spatial-check sets and step/family transitions that need to be reflected in the recovery message |
 | `server/adapters/mcp/router_helper.py` | Guided execution fail-closed policy | Owns the final family gating that currently blocks visible-but-no-longer-allowed mutators during refresh barriers |
+| `server/adapters/mcp/contracts/router.py` | Typed router/status contract | Types `guided_handoff`, `guided_flow_state`, and `visibility_rules` on the MCP-facing router responses when this family changes their semantics |
 | `server/adapters/mcp/transforms/visibility_policy.py` | Guided handoff payload | Builds the `guided_handoff` contract, including direct/supporting/discovery tool sets and phase-specific messages |
 | `server/adapters/mcp/areas/router.py` | Router adapter response assembly | Attaches the handoff payload and guided status details to the MCP-facing router response |
 | `server/adapters/mcp/surfaces.py` | Live guided surface instructions | Owns the runtime surface text FastMCP clients actually read about `search_tools(...)` and `call_tool(...)` |
@@ -182,6 +183,7 @@ After this umbrella ships:
 | `tests/unit/adapters/mcp/test_session_phase.py` | Session-state persistence lane | Existing owner lane for `guided_handoff` persistence and same-goal session state transitions |
 | `tests/unit/adapters/mcp/test_router_elicitation.py` | Status/handoff exposure lane | Existing owner lane for baseline `router_get_status(...)` exposure; if this family changes live-vs-persisted semantics, extend it with a post-transition divergence case |
 | `tests/unit/adapters/mcp/test_public_surface_docs.py` | Public docs parity | Existing owner lane for hard-checked guided doc wording and examples |
+| `tests/unit/adapters/mcp/test_server_factory.py` | Surface instruction owner lane | Existing owner lane for the live `llm-guided` `surfaces.py` instruction text exposed through the built FastMCP server |
 | `_docs/_MCP_SERVER/README.md` | Public MCP contract | Must document the distinction between unknown tools, hidden tools, stale guided surface transitions, and search-first recovery |
 | `_docs/AVAILABLE_TOOLS_SUMMARY.md` | Tool discovery wording | Must stay aligned with shaped-surface discovery and macro recovery guidance |
 | `_docs/_TASKS/README.md` | Board sync | Track the new umbrella on the active board while the corrective work is open |

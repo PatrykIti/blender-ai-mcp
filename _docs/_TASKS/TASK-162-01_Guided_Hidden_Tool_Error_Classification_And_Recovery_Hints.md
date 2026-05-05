@@ -76,6 +76,9 @@ return await ctx.fastmcp.call_tool(resolved_name, canonical_arguments)
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/e2e/integration/test_guided_search_first_call_tool_boundary.py`
 - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
+  This file must be extended with a synthetic Streamable HTTP `call_tool(...)`
+  hidden-tool case; the current direct `modeling_transform_object(...)` failure
+  lane is not enough for this leaf’s proxy-seam claim.
 
 The named tests should explicitly prove all three classifications:
 
@@ -120,9 +123,7 @@ The named tests should explicitly prove all three classifications:
 - a truly nonexistent tool name remains distinguishable from a known-but-hidden
   tool and does not get reclassified as a guided refresh failure
 - when spatial refresh is the cause, the error points to the current pending
-  `required_checks` rather than one hard-coded list; on the current creature
-  build path that will usually include `scene_scope_graph`,
-  `scene_relation_graph`, and `scene_view_diagnostics`
+  `required_checks` rather than one hard-coded list
 - healthy tool-contract failures no longer look like transport disconnects in
   the repo-owned proxy/discovery semantics; the named proof lanes must make
   clear which transports only prove wording and which prove post-failure

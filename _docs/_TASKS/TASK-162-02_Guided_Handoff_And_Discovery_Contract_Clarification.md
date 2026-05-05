@@ -8,6 +8,7 @@
 ## Repository Touchpoints
 
 - `server/adapters/mcp/transforms/visibility_policy.py`
+- `server/adapters/mcp/contracts/router.py`
 - `server/adapters/mcp/areas/router.py`
 - `server/adapters/mcp/surfaces.py`
 - `server/application/tool_handlers/router_handler.py`
@@ -17,10 +18,14 @@
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_session_phase.py`
 - `tests/unit/adapters/mcp/test_router_elicitation.py`
+- `tests/unit/adapters/mcp/test_server_factory.py`
 - `tests/e2e/router/test_guided_manual_handoff.py`
 - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
 - `tests/e2e/integration/test_guided_surface_contract_parity.py`
 - `tests/e2e/integration/test_guided_inspect_validate_handoff.py`
+  This file must be extended with one explicit `inspect_validate +
+  spatial_refresh_required` case; the current steady inspect visibility
+  assertion is not sufficient for this leaf.
 
 ## Implementation Notes
 
@@ -128,6 +133,7 @@ docs.example = [
 - `PYTHONPATH=. poetry run pytest tests/e2e/router/test_guided_manual_handoff.py tests/e2e/integration/test_guided_streamable_spatial_support.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_policy.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_session_phase.py tests/unit/adapters/mcp/test_router_elicitation.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_server_factory.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
 - `poetry run python scripts/run_e2e_tests.py`
 - `poetry run pytest ./tests/unit`
