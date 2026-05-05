@@ -397,8 +397,6 @@ The roadmap is satisfied when:
 
 - Whether `material_finish` deserves a new canonical planner family or should
   stay a stage/action-hint concept.
-- Whether `ReferenceUnderstandingContract` can start inside `reference.py` and
-  split later only if the shared contract owner grows too large.
 - Which existing VLM backend should be the first harness-ranked default for
   reference understanding, since compare-loop strength does not automatically
   prove pre-build understanding quality.
