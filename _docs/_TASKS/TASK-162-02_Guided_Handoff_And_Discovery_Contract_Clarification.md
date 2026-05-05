@@ -109,6 +109,8 @@ docs.example = [
 
 ## Validation Commands
 
+- `git diff --check`
+- `rg -n "search_tools\\(\\.\\.\\.\\)|call_tool\\(\\.\\.\\.\\)|Unknown tool|required_checks|guided_handoff" README.md _docs/_MCP_SERVER/README.md _docs/AVAILABLE_TOOLS_SUMMARY.md _docs/_PROMPTS/README.md _docs/_PROMPTS/GUIDED_SESSION_START.md _docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md _docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/integration/test_guided_inspect_validate_handoff.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/router/test_guided_manual_handoff.py tests/e2e/integration/test_guided_streamable_spatial_support.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_policy.py -q`

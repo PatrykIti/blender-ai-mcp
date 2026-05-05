@@ -63,7 +63,12 @@ documentation.
 
 ```python
 result = await client.call_tool("router_set_goal", {...})
-assert result["guided_flow_state"]["current_step"] == "bootstrap_primary_workset"
+# Attached-reference flows can already be at bootstrap_primary_workset.
+# Generic creature no-match flows may still be at establish_spatial_context.
+assert result["guided_flow_state"]["current_step"] in {
+    "establish_spatial_context",
+    "bootstrap_primary_workset",
+}
 
 ... create primary masses ...
 ... trigger spatial rearm ...
@@ -119,6 +124,7 @@ assert status["guided_flow_state"]["spatial_refresh_required"] is True
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_search_first_call_tool_boundary.py tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/integration/test_guided_inspect_validate_handoff.py tests/e2e/integration/test_guided_streamable_spatial_support.py tests/e2e/router/test_guided_manual_handoff.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_router_elicitation.py tests/unit/adapters/mcp/test_session_phase.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
 - `poetry run python scripts/run_e2e_tests.py`
+- `poetry run pytest ./tests/unit`
 
 ## Acceptance Criteria
 

@@ -9,9 +9,11 @@
 
 - `server/adapters/mcp/discovery/search_surface.py`
 - `server/adapters/mcp/session_capabilities_flow.py`
-- `server/adapters/mcp/session_capabilities.py`
+- `server/adapters/mcp/session_capabilities_state.py`
+- `server/adapters/mcp/session_capabilities_bootstrap.py`
 - `tests/e2e/integration/test_guided_search_first_call_tool_boundary.py`
 - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
+- `tests/unit/adapters/mcp/test_public_surface_docs.py`
 
 ## Implementation Notes
 
@@ -86,6 +88,9 @@ The named tests should explicitly prove all three classifications:
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
 - `_docs/_PROMPTS/README.md`
+- `_docs/_PROMPTS/GUIDED_SESSION_START.md`
+- `_docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md`
+- `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 - `README.md`
 - inherit any additional umbrella docs if the final error wording changes
   cross-surface examples
@@ -96,8 +101,11 @@ The named tests should explicitly prove all three classifications:
 
 ## Validation Commands
 
+- `git diff --check`
+- `rg -n "Unknown tool|search_tools\\(\\.\\.\\.\\)|call_tool\\(\\.\\.\\.\\)|required_checks" README.md _docs/_MCP_SERVER/README.md _docs/AVAILABLE_TOOLS_SUMMARY.md _docs/_PROMPTS/README.md _docs/_PROMPTS/GUIDED_SESSION_START.md _docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md _docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_search_first_call_tool_boundary.py tests/e2e/integration/test_guided_streamable_spatial_support.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_search_surface.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
 - `poetry run python scripts/run_e2e_tests.py`
 - `poetry run pytest ./tests/unit`
 

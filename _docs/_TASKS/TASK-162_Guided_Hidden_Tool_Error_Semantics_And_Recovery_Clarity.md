@@ -224,6 +224,7 @@ After this umbrella ships:
 - `_docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 - `README.md`
+- `_docs/_CHANGELOG/README.md`
 - `_docs/_TASKS/README.md`
 - area-specific guided client docs only when the final contract changes their
   normative examples
