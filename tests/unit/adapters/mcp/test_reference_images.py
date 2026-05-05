@@ -823,6 +823,129 @@ def test_refresh_reference_understanding_summary_keeps_optional_support_failures
     )
 
 
+def test_refresh_reference_understanding_summary_can_use_openai_compatible_classifier_path(tmp_path, monkeypatch):
+    ctx = FakeContext()
+    reference_path = tmp_path / "front.png"
+    _write_test_silhouette(reference_path, with_ears=True)
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel",
+            surface_profile="llm-guided",
+            guided_flow_state=_guided_reference_flow_state(),
+            reference_images=[
+                {
+                    "reference_id": "ref_front",
+                    "goal": "create a low-poly squirrel",
+                    "label": "front_ref",
+                    "target_view": "front",
+                    "media_type": "image/png",
+                    "source_kind": "local_path",
+                    "original_path": str(reference_path),
+                    "stored_path": str(reference_path),
+                    "added_at": "2026-05-05T00:00:00Z",
+                }
+            ],
+        ),
+    )
+
+    class Backend:
+        async def analyze(self, request):
+            return {
+                "status": "available",
+                "understanding_id": "understanding_external_classifier_support",
+                "goal": request.goal,
+                "reference_ids": ["ref_front"],
+                "subject": {
+                    "label": "low poly squirrel",
+                    "category": "creature",
+                    "confidence": 0.85,
+                    "uncertainty_notes": [],
+                },
+                "style": {
+                    "style_label": "low_poly_faceted",
+                    "confidence": 0.82,
+                    "notes": [],
+                },
+                "required_parts": [],
+                "non_goals": [],
+                "construction_strategy": {
+                    "construction_path": "low_poly_facet",
+                    "primary_family": "modeling_mesh",
+                    "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+                    "stage_sequence": ["primary_masses"],
+                    "finish_policy": "preserve_facets",
+                },
+                "router_handoff_hints": {
+                    "preferred_family": "modeling_mesh",
+                    "allowed_guided_families": ["reference_context", "primary_masses", "secondary_parts"],
+                    "sculpt_policy": "hidden",
+                },
+                "gate_proposals": [],
+                "visual_evidence_refs": [],
+                "verification_requirements": [],
+                "classification_scores": [],
+                "segmentation_artifacts": [],
+                "source_provenance": [{"source": "reference_understanding"}],
+                "boundary_policy": {
+                    "advisory_only": True,
+                    "not_truth_source": True,
+                    "may_unlock_tools": False,
+                    "may_pass_gates": False,
+                    "may_propose_gates": True,
+                },
+            }
+
+    classifier = SimpleNamespace(
+        enabled=True,
+        provider_name="openrouter",
+        endpoint="https://openrouter.ai/api/v1",
+        model="qwen/qwen3-vl-32b-instruct",
+        api_key=None,
+        api_key_env="OPENROUTER_API_KEY",
+        timeout_seconds=15.0,
+        max_labels=4,
+    )
+
+    class Resolver:
+        runtime_config = SimpleNamespace(
+            active_reference_classifier=classifier,
+            active_segmentation_sidecar=None,
+        )
+
+        def resolve_default(self):
+            return Backend()
+
+    async def _fake_classifier_analyze(self, request):
+        assert request.metadata["mode"] == "reference_classification"
+        assert request.metadata["reference_ids"] == ["ref_front"]
+        return {
+            "classification_scores": [
+                {"label": "low_poly_faceted", "score": 0.95},
+                {"label": "creature_blockout", "score": 0.54},
+            ]
+        }
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: Resolver())
+    monkeypatch.setattr(
+        "server.adapters.mcp.vision.reference_support.OpenAICompatibleVisionBackend.analyze",
+        _fake_classifier_analyze,
+    )
+
+    updated = asyncio.run(refresh_reference_understanding_summary_async(ctx))
+
+    assert updated.reference_understanding_summary is not None
+    assert updated.reference_understanding_summary["classification_scores"] == [
+        {"label": "low_poly_faceted", "score": 0.95},
+        {"label": "creature_blockout", "score": 0.54},
+    ]
+    assert any(
+        item["source"] == "classification_scores"
+        for item in updated.reference_understanding_summary["source_provenance"]
+    )
+
+
 def test_reference_compare_stage_checkpoint_threads_reference_understanding_from_session():
     ctx = FakeContext()
     set_session_capability_state(

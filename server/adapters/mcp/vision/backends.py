@@ -20,6 +20,7 @@ from .backend import VisionBackend, VisionBackendUnavailableError, VisionRequest
 from .config import VisionContractProfile, VisionRuntimeConfig
 from .parsing import diagnose_vision_output_text, parse_vision_output_text
 from .prompting import (
+    _is_reference_classification_request,
     _is_reference_understanding_request,
     build_local_vision_payload_text,
     build_vision_payload_text,
@@ -476,6 +477,9 @@ class TransformersLocalVisionBackend(VisionBackend):
         except Exception as exc:
             raise VisionBackendUnavailableError(f"Local vision inference failed: {exc}") from exc
 
+        if _is_reference_classification_request(request):
+            return parsed_content
+
         if _is_reference_understanding_request(request):
             return _normalize_reference_understanding_payload(
                 backend_kind=self.backend_kind,
@@ -603,6 +607,9 @@ class MLXLocalVisionBackend(VisionBackend):
             raise VisionBackendUnavailableError("MLX local vision runtime did not return valid JSON content.") from exc
         except Exception as exc:
             raise VisionBackendUnavailableError(f"MLX local vision inference failed: {exc}") from exc
+
+        if _is_reference_classification_request(request):
+            return parsed_content
 
         if _is_reference_understanding_request(request):
             return _normalize_reference_understanding_payload(
@@ -875,6 +882,9 @@ class OpenAICompatibleVisionBackend(VisionBackend):
                 "Vision endpoint did not return valid JSON content."
                 f"{_diagnostics_suffix(self._last_output_diagnostics)}"
             ) from exc
+
+        if _is_reference_classification_request(request):
+            return parsed_content
 
         if _is_reference_understanding_request(request):
             return _normalize_reference_understanding_payload(

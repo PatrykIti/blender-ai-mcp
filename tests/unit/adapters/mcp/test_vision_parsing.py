@@ -32,6 +32,17 @@ def _reference_understanding_request() -> VisionRequest:
     )
 
 
+def _reference_classification_request() -> VisionRequest:
+    return VisionRequest(
+        goal="classify the attached low-poly squirrel reference for bounded Blender planning",
+        images=(VisionImageInput(path="/tmp/ref_front.png", role="reference", label="ref_front"),),
+        metadata={
+            "mode": "reference_classification",
+            "reference_ids": ["ref_front"],
+        },
+    )
+
+
 def test_parse_vision_output_accepts_fenced_json():
     text = """```json
 {
@@ -348,6 +359,40 @@ def test_parse_reference_understanding_payload_normalizes_aliases_and_derives_de
     ]
     assert parsed["gate_proposals"][0]["allowed_correction_families"] == ["secondary_parts", "inspect_validate"]
     assert parsed["verification_requirements"][0]["tool_name"] == "scene_measure_alignment"
+
+
+def test_parse_reference_classification_payload_accepts_bounded_scores():
+    text = json.dumps(
+        {
+            "classification_scores": [
+                {"label": "low_poly_faceted", "score": 0.94},
+                {"label": "creature_blockout", "score": 0.66},
+            ]
+        }
+    )
+
+    parsed = parse_vision_output_text(text, _reference_classification_request())
+
+    assert parsed["classification_scores"] == [
+        {"label": "low_poly_faceted", "score": 0.94},
+        {"label": "creature_blockout", "score": 0.66},
+    ]
+
+
+def test_parse_reference_classification_payload_repairs_simple_label_score_map():
+    text = json.dumps(
+        {
+            "low_poly_faceted": 0.88,
+            "smooth_organic": 0.12,
+        }
+    )
+
+    parsed = parse_vision_output_text(text, _reference_classification_request())
+
+    assert parsed["classification_scores"] == [
+        {"label": "low_poly_faceted", "score": 0.88},
+        {"label": "smooth_organic", "score": 0.12},
+    ]
 
 
 def test_diagnose_vision_output_classifies_prose_without_json():

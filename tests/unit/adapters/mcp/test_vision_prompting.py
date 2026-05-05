@@ -53,6 +53,17 @@ def _reference_understanding_request() -> VisionRequest:
     )
 
 
+def _reference_classification_request() -> VisionRequest:
+    return VisionRequest(
+        goal="classify the attached low-poly squirrel reference for bounded Blender planning",
+        images=(VisionImageInput(path="/tmp/ref_front.png", role="reference", label="ref_front"),),
+        metadata={
+            "mode": "reference_classification",
+            "reference_ids": ["ref_front"],
+        },
+    )
+
+
 def test_local_prompt_payload_is_more_compact_and_task_focused():
     text = build_local_vision_payload_text(_request())
 
@@ -219,4 +230,19 @@ def test_reference_understanding_prompt_and_schema_use_internal_contract():
         "classification_scores",
         "segmentation_artifacts",
     }
+    _assert_strict_required_matches_properties(schema)
+
+
+def test_reference_classification_prompt_and_schema_use_bounded_contract():
+    request = _reference_classification_request()
+
+    system_prompt = build_vision_system_prompt(backend_kind="openai_compatible_external", request=request)
+    payload_text = build_vision_payload_text(request)
+    schema = build_vision_response_json_schema(request=request)
+
+    assert "bounded reference-classification assistant" in system_prompt
+    assert "classification_scores must be an array of 1-5 objects" in system_prompt
+    assert "Return exactly one JSON object with only this key:" in payload_text
+    assert "- classification_scores" in payload_text
+    assert set(schema["properties"]) == {"classification_scores"}
     _assert_strict_required_matches_properties(schema)

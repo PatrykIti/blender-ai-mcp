@@ -45,6 +45,7 @@ _REFERENCE_UNDERSTANDING_EXPECTED_KEYS = (
     "classification_scores",
     "segmentation_artifacts",
 )
+_REFERENCE_CLASSIFICATION_EXPECTED_KEYS = ("classification_scores",)
 
 _REFERENCE_GUIDED_CHECKPOINT_MODES = (
     "comparison_mode=checkpoint_vs_reference",
@@ -65,6 +66,13 @@ def _is_reference_understanding_request(request: VisionRequest | None) -> bool:
         return False
     mode = str(request.metadata.get("mode") or "").strip().lower()
     return mode == "reference_understanding"
+
+
+def _is_reference_classification_request(request: VisionRequest | None) -> bool:
+    if request is None:
+        return False
+    mode = str(request.metadata.get("mode") or "").strip().lower()
+    return mode == "reference_classification"
 
 
 def resolve_vision_contract_profile(
@@ -179,6 +187,16 @@ def _reference_understanding_output_template() -> str:
     return json.dumps(template, ensure_ascii=True, indent=2)
 
 
+def _reference_classification_output_template() -> str:
+    template: dict[str, object] = {
+        "classification_scores": [
+            {"label": "low_poly_faceted", "score": 0.92},
+            {"label": "creature_blockout", "score": 0.61},
+        ]
+    }
+    return json.dumps(template, ensure_ascii=True, indent=2)
+
+
 def build_vision_system_prompt(
     *,
     backend_kind: str,
@@ -187,6 +205,27 @@ def build_vision_system_prompt(
     request: VisionRequest | None = None,
 ) -> str:
     """Return the bounded system prompt, tuned slightly by backend family."""
+
+    if _is_reference_classification_request(request):
+        return (
+            "You are a bounded reference-classification assistant for Blender modeling.\n\n"
+            "Interpret only the attached reference images and the build goal.\n"
+            "You are advisory only. You are not the truth source, may not unlock tools, and may not mark gates passed.\n"
+            "Return exactly one JSON object with only this key:\n"
+            "- classification_scores\n\n"
+            "classification_scores must be an array of 1-5 objects sorted from strongest to weakest.\n"
+            "Each item must contain:\n"
+            "- label: string\n"
+            "- score: number between 0.0 and 1.0\n\n"
+            "Prefer labels that help Blender build-strategy choice, such as:\n"
+            "- low_poly_faceted\n"
+            "- creature_blockout\n"
+            "- smooth_organic\n"
+            "- hard_surface\n"
+            "- architectural_mass\n"
+            "- dental_surface\n"
+            "- organic_sculpt\n"
+        )
 
     if _is_reference_understanding_request(request):
         return (
@@ -367,6 +406,41 @@ def _build_reference_understanding_payload_text(request: VisionRequest) -> str:
     return "\n".join(parts)
 
 
+def _build_reference_classification_payload_text(request: VisionRequest) -> str:
+    image_lines = [f"- {image.role}: {image.label or image.role}" for image in request.images]
+    reference_ids = [str(item) for item in request.metadata.get("reference_ids") or []]
+    reference_id_lines = [f"- {reference_id}" for reference_id in reference_ids]
+    parts = [
+        "TASK:",
+        "Classify the attached references into bounded style/build-strategy labels that can support Blender planning.",
+        "",
+        f"GOAL: {request.goal}",
+        f"TARGET_OBJECT: {request.target_object or 'none'}",
+        "REFERENCE_IMAGES:",
+        *image_lines,
+    ]
+    if reference_id_lines:
+        parts.extend(["REFERENCE_IDS:", *reference_id_lines])
+    parts.extend(
+        [
+            "",
+            "Return exactly one JSON object with only this key:",
+            "- classification_scores",
+            "",
+            "Rules:",
+            "- classification_scores must contain 1-5 bounded label/score pairs",
+            "- sort from strongest to weakest",
+            "- scores must stay between 0.0 and 1.0",
+            "- labels should help Blender build-strategy choice, such as low_poly_faceted, creature_blockout, smooth_organic, hard_surface, architectural_mass, dental_surface, or organic_sculpt",
+            "- advisory only: do not claim passed/final-completion truth",
+            "- do not unlock tools, emit Blender code, or invent hidden/internal tools",
+            "OUTPUT_TEMPLATE:",
+            _reference_classification_output_template(),
+        ]
+    )
+    return "\n".join(parts)
+
+
 def build_vision_payload_text(
     request: VisionRequest,
     *,
@@ -374,6 +448,9 @@ def build_vision_payload_text(
     provider_name: str | None = None,
 ) -> str:
     """Serialize the bounded vision input payload."""
+
+    if _is_reference_classification_request(request):
+        return _build_reference_classification_payload_text(request)
 
     if _is_reference_understanding_request(request):
         return _build_reference_understanding_payload_text(request)
@@ -398,6 +475,9 @@ def build_vision_payload_text(
 
 def build_local_vision_payload_text(request: VisionRequest) -> str:
     """Return a shorter local-model-oriented payload to reduce echoing."""
+
+    if _is_reference_classification_request(request):
+        return _build_reference_classification_payload_text(request)
 
     if _is_reference_understanding_request(request):
         return _build_reference_understanding_payload_text(request)
@@ -465,6 +545,9 @@ def expected_json_keys(
 ) -> tuple[str, ...]:
     """Expose the canonical required JSON keys for tests and parse repair."""
 
+    if _is_reference_classification_request(request):
+        return _REFERENCE_CLASSIFICATION_EXPECTED_KEYS
+
     if _is_reference_understanding_request(request):
         return _REFERENCE_UNDERSTANDING_EXPECTED_KEYS
 
@@ -484,6 +567,27 @@ def build_vision_response_json_schema(
     request: VisionRequest | None = None,
 ) -> dict[str, object]:
     """Return a provider-agnostic JSON Schema for bounded vision responses."""
+
+    if _is_reference_classification_request(request):
+        return {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "classification_scores": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            "label": {"type": "string"},
+                            "score": {"type": "number"},
+                        },
+                        "required": ["label", "score"],
+                    },
+                }
+            },
+            "required": list(_REFERENCE_CLASSIFICATION_EXPECTED_KEYS),
+        }
 
     if _is_reference_understanding_request(request):
         return {

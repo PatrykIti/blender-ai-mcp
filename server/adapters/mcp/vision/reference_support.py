@@ -20,7 +20,14 @@ from server.adapters.mcp.contracts.reference import (
     ReferenceUnderstandingVisualEvidenceRefContract,
 )
 
-from .config import VisionReferenceClassifierConfig, VisionRuntimeConfig, VisionSegmentationSidecarConfig
+from . import OpenAICompatibleVisionBackend
+from .backend import VisionImageInput, VisionRequest
+from .config import (
+    VisionOpenAICompatibleConfig,
+    VisionReferenceClassifierConfig,
+    VisionRuntimeConfig,
+    VisionSegmentationSidecarConfig,
+)
 
 _SEGMENTATION_ARTIFACT_KINDS = {"mask", "crop", "box"}
 
@@ -94,6 +101,45 @@ def _build_support_request_payload(
     }
 
 
+def _build_classifier_request(
+    *,
+    goal: str | None,
+    summary: ReferenceUnderstandingSummaryContract,
+    reference_records: Sequence[Any],
+) -> VisionRequest:
+    images: list[VisionImageInput] = []
+    reference_ids: list[str] = []
+    for record in reference_records:
+        reference_id = str(getattr(record, "reference_id", "") or "").strip()
+        image_path = (
+            str(getattr(record, "stored_path", "") or "").strip()
+            or str(getattr(record, "host_visible_path", "") or "").strip()
+            or str(getattr(record, "original_path", "") or "").strip()
+        )
+        if not reference_id or not image_path:
+            continue
+        reference_ids.append(reference_id)
+        images.append(
+            VisionImageInput(
+                path=image_path,
+                role="reference",
+                label=str(getattr(record, "label", "") or "").strip() or reference_id,
+                media_type=str(getattr(record, "media_type", "") or "").strip() or "image/png",
+            )
+        )
+
+    return VisionRequest(
+        goal=goal or summary.goal or "Classify the attached references for bounded Blender build strategy.",
+        images=tuple(images),
+        prompt_hint="reference_classification",
+        metadata={
+            "mode": "reference_classification",
+            "reference_ids": reference_ids,
+            "source": "reference_classifier",
+        },
+    )
+
+
 async def _post_sidecar_payload(
     *,
     endpoint: str,
@@ -158,6 +204,35 @@ def _merge_source_provenance(
     return list(merged.values())[:12]
 
 
+def _build_openai_compatible_classifier_runtime(config: VisionReferenceClassifierConfig) -> VisionRuntimeConfig:
+    provider_name = cast(Any, config.provider_name)
+    external_config = VisionOpenAICompatibleConfig(
+        provider_name=provider_name,
+        vision_contract_profile="generic_full",
+        base_url=config.endpoint,
+        model=config.model,
+        api_key=config.api_key,
+        api_key_env=config.api_key_env,
+        site_url=None,
+        site_name=None,
+        require_parameters=provider_name == "openrouter",
+        enable_response_healing=provider_name == "openrouter",
+        prefer_json_object_for_qwen=provider_name == "openrouter",
+        model_capabilities=None,
+    )
+    return VisionRuntimeConfig(
+        enabled=True,
+        provider="openai_compatible_external",
+        allow_on_guided=True,
+        max_images=8,
+        max_tokens=300,
+        timeout_seconds=config.timeout_seconds,
+        openai_compatible_external=external_config,
+        reference_classifier=None,
+        segmentation_sidecar=None,
+    )
+
+
 def _normalize_classification_scores_payload(
     payload: dict[str, Any],
     *,
@@ -208,6 +283,8 @@ def _normalize_segmentation_artifacts_payload(
 async def _collect_classifier_support(
     *,
     config: VisionReferenceClassifierConfig | None,
+    summary: ReferenceUnderstandingSummaryContract,
+    reference_records: Sequence[Any],
     request_payload: dict[str, Any],
 ) -> tuple[
     list[ReferenceUnderstandingClassificationScoreContract],
@@ -222,12 +299,21 @@ async def _collect_classifier_support(
         return [], [], None
 
     try:
-        payload = await _post_sidecar_payload(
-            endpoint=config.endpoint,
-            timeout_seconds=config.timeout_seconds,
-            api_key=_resolve_api_key(inline_key=config.api_key, env_name=config.api_key_env),
-            payload=request_payload,
-        )
+        if config.provider_name == "generic_sidecar":
+            payload = await _post_sidecar_payload(
+                endpoint=config.endpoint,
+                timeout_seconds=config.timeout_seconds,
+                api_key=_resolve_api_key(inline_key=config.api_key, env_name=config.api_key_env),
+                payload=request_payload,
+            )
+        else:
+            classifier_request = _build_classifier_request(
+                goal=request_payload.get("goal"),
+                summary=summary,
+                reference_records=reference_records,
+            )
+            runtime = _build_openai_compatible_classifier_runtime(config)
+            payload = await OpenAICompatibleVisionBackend(runtime).analyze(classifier_request)
         scores = _normalize_classification_scores_payload(payload, max_labels=config.max_labels)
         if scores:
             top_score = scores[0]
@@ -352,6 +438,8 @@ async def augment_reference_understanding_optional_support(
 
     classifier_scores, classifier_evidence, classifier_provenance = await _collect_classifier_support(
         config=classifier_config,
+        summary=summary,
+        reference_records=reference_records,
         request_payload=request_payload,
     )
     segmentation_artifacts, segmentation_evidence, segmentation_provenance = await _collect_segmentation_support(

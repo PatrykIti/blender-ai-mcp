@@ -13,6 +13,7 @@ from typing import Any
 from .backend import VisionRequest
 from .config import VisionContractProfile
 from .prompting import (
+    _is_reference_classification_request,
     _is_reference_understanding_request,
     expected_json_keys,
     resolve_vision_contract_profile,
@@ -802,6 +803,31 @@ def _normalize_reference_classification_scores(parsed: dict[str, Any]) -> list[d
     return items[:8]
 
 
+def _normalize_reference_classification_payload(parsed: dict[str, Any]) -> dict[str, Any]:
+    scores = _normalize_reference_classification_scores(parsed)
+    if scores:
+        return {"classification_scores": scores}
+
+    score_map = parsed.get("scores")
+    items: list[dict[str, Any]] = []
+    if isinstance(score_map, dict):
+        for label, score in score_map.items():
+            if not isinstance(label, str) or not isinstance(score, (int, float)):
+                continue
+            items.append({"label": label.strip(), "score": float(score)})
+    elif (
+        parsed
+        and all(isinstance(key, str) for key in parsed)
+        and all(isinstance(value, (int, float)) for value in parsed.values())
+    ):
+        for label, score in parsed.items():
+            items.append({"label": str(label).strip(), "score": float(score)})
+
+    items = [item for item in items if item["label"]]
+    items.sort(key=lambda item: item["score"], reverse=True)
+    return {"classification_scores": items[:8]}
+
+
 def _normalize_reference_segmentation_artifacts(parsed: dict[str, Any]) -> list[dict[str, Any]]:
     value = parsed.get("segmentation_artifacts")
     if not isinstance(value, list):
@@ -1183,6 +1209,16 @@ def parse_vision_output_text(
 
     if parsed is None:
         raise json.JSONDecodeError("No JSON object found", text, 0)
+
+    if _is_reference_classification_request(request):
+        if _looks_like_input_echo(parsed) or _looks_like_label_map(parsed):
+            raise ValueError(
+                "Reference-classification output echoed the input instead of returning the required contract."
+            )
+        normalized = _normalize_reference_classification_payload(parsed)
+        if not normalized["classification_scores"]:
+            raise ValueError("Reference-classification output did not match the required contract shape.")
+        return normalized
 
     if _is_reference_understanding_request(request):
         if _looks_like_input_echo(parsed) or _looks_like_label_map(parsed):

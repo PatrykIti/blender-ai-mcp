@@ -5,19 +5,26 @@ from __future__ import annotations
 import asyncio
 import os
 from pathlib import Path
+from shutil import copyfile
 from typing import Any
 
 import pytest
-from PIL import Image
+from server.adapters.mcp.contracts.reference import (
+    ReferenceImageRecordContract,
+    ReferenceUnderstandingSummaryContract,
+)
 from server.adapters.mcp.vision import (
     OpenAICompatibleVisionBackend,
     VisionImageInput,
     VisionRequest,
     build_vision_runtime_config,
 )
+from server.adapters.mcp.vision.reference_support import augment_reference_understanding_optional_support
 from server.infrastructure.config import Config
 
 pytestmark = pytest.mark.e2e
+REPO_ROOT = Path(__file__).resolve().parents[3]
+_SQUIRREL_REFERENCE_IMAGE = REPO_ROOT / "_docs" / "_TEST_IMAGES" / "squirrel-front.png"
 
 
 def _base_config(**overrides) -> Config:
@@ -56,12 +63,9 @@ def _base_config(**overrides) -> Config:
     return Config(**payload)
 
 
-def _write_test_image(path: Path) -> None:
-    image = Image.new("RGB", (96, 96), (255, 255, 255))
-    for x in range(24, 72):
-        for y in range(24, 72):
-            image.putpixel((x, y), (0, 0, 0))
-    image.save(path)
+def _write_qwen_reference_image(path: Path) -> None:
+    assert _SQUIRREL_REFERENCE_IMAGE.exists()
+    copyfile(_SQUIRREL_REFERENCE_IMAGE, path)
 
 
 @pytest.mark.slow
@@ -74,14 +78,14 @@ def test_live_openrouter_qwen_json_mode_returns_parseable_contract(tmp_path: Pat
         pytest.skip("OPENROUTER_API_KEY is required for live OpenRouter/Qwen coverage")
 
     image_path = tmp_path / "qwen_test.png"
-    _write_test_image(image_path)
+    _write_qwen_reference_image(image_path)
 
     runtime = build_vision_runtime_config(_base_config())
     backend = OpenAICompatibleVisionBackend(runtime)
     request = VisionRequest(
-        goal="Return a bounded JSON visual comparison payload for this simple black square image.",
-        target_object="Square",
-        images=(VisionImageInput(path=str(image_path), role="reference", label="square_ref"),),
+        goal="Return a bounded JSON visual comparison payload for this low-poly squirrel reference image.",
+        target_object="Squirrel",
+        images=(VisionImageInput(path=str(image_path), role="reference", label="squirrel_ref"),),
         prompt_hint="comparison_mode=checkpoint_vs_reference",
     )
 
@@ -92,3 +96,56 @@ def test_live_openrouter_qwen_json_mode_returns_parseable_contract(tmp_path: Pat
     assert isinstance(result["visible_changes"], list)
     assert backend.last_output_diagnostics is not None
     assert backend.last_output_diagnostics["payload_shape"] != "no_json"
+
+
+@pytest.mark.slow
+def test_live_openrouter_qwen_reference_classifier_returns_bounded_scores(tmp_path: Path):
+    """Opt-in live check that the classifier support module can use OpenRouter/Qwen on the squirrel reference image."""
+
+    if not os.getenv("OPENROUTER_API_KEY"):
+        pytest.skip("OPENROUTER_API_KEY is required for live OpenRouter/Qwen classifier coverage")
+
+    reference_path = tmp_path / "qwen_test.png"
+    _write_qwen_reference_image(reference_path)
+
+    classifier_model_override = os.getenv("VISION_REFERENCE_CLASSIFIER_MODEL") or None
+    runtime = build_vision_runtime_config(
+        _base_config(
+            VISION_REFERENCE_CLASSIFIER_ENABLED=True,
+            VISION_REFERENCE_CLASSIFIER_MODEL=classifier_model_override,
+        )
+    )
+    summary = ReferenceUnderstandingSummaryContract(
+        status="available",
+        understanding_id="live_qwen_reference_classifier",
+        goal="classify the attached low-poly squirrel reference for bounded Blender planning",
+        reference_ids=["repo_squirrel_front"],
+        classification_scores=[],
+        segmentation_artifacts=[],
+    )
+    reference_record = ReferenceImageRecordContract(
+        reference_id="repo_squirrel_front",
+        goal=summary.goal or "low poly squirrel",
+        label="squirrel-front",
+        target_view="front",
+        media_type="image/png",
+        source_kind="local_path",
+        original_path=str(reference_path),
+        stored_path=str(reference_path),
+        host_visible_path=str(reference_path),
+        added_at="2026-05-05T00:00:00Z",
+    )
+
+    enriched = asyncio.run(
+        augment_reference_understanding_optional_support(
+            summary,
+            goal=summary.goal,
+            reference_records=(reference_record,),
+            runtime_config=runtime,
+        )
+    )
+
+    assert enriched.classification_scores
+    assert all(item.label.strip() for item in enriched.classification_scores)
+    assert all(0.0 <= item.score <= 1.0 for item in enriched.classification_scores)
+    assert any(item.source == "classification_scores" for item in enriched.source_provenance)

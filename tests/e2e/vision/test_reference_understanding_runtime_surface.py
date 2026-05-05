@@ -432,7 +432,8 @@ def test_reference_orchestrator_feedback_surface_with_real_blender_capture(
     assert compare_result.reference_understanding_summary.visual_metrics
 
     assert iterate_result.reference_orchestrator_feedback is not None
-    assert iterate_result.reference_orchestrator_feedback.next_checkpoint_tool == "reference_iterate_stage_checkpoint"
+    assert iterate_result.loop_disposition == "inspect_validate"
+    assert iterate_result.reference_orchestrator_feedback.next_checkpoint_tool is None
 
 
 def test_reference_understanding_refresh_clear_reapplies_visibility_immediately(tmp_path, monkeypatch):
