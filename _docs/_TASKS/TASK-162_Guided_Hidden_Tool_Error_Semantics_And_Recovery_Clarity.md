@@ -11,11 +11,13 @@
 
 Turn one recurring guided-runtime failure mode into an explicit product contract:
 when the client tries to call a tool through the guided discovery / `call_tool`
-path, or retries a now-hidden direct guided tool after the surface changed, and
-that tool is hidden by guided visibility or blocked by
+path and that tool is hidden by guided visibility or blocked by
 `spatial_refresh_required`, the MCP surface should return a deterministic,
 phase-aware recovery explanation instead of a generic `Unknown tool` story that
-can be misread as a transport disconnect.
+can be misread as a transport disconnect. For the direct guided path, this
+family’s repo-owned fix is narrower: hide now-invalid mutators earlier after
+the surface changes, instead of promising a rewritten direct hidden-tool error
+surface.
 
 This umbrella covers the narrow, transcript-backed failure family observed on
 the active `llm-guided` surface:

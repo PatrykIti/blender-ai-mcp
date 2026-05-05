@@ -17,6 +17,7 @@ tool error surface itself.
 ## Repository Touchpoints
 
 - `server/adapters/mcp/discovery/search_surface.py`
+- `server/adapters/mcp/guided_contract.py`
 - `server/adapters/mcp/transforms/visibility_policy.py`
 - `server/adapters/mcp/areas/router.py`
 - `server/adapters/mcp/router_helper.py`
