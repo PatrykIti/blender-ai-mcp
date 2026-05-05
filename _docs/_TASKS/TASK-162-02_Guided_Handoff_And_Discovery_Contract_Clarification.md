@@ -9,8 +9,6 @@
 
 - `server/adapters/mcp/transforms/visibility_policy.py`
 - `server/adapters/mcp/areas/router.py`
-- `server/adapters/mcp/session_capabilities_state.py`
-- `server/adapters/mcp/session_capabilities_bootstrap.py`
 - `server/adapters/mcp/surfaces.py`
 - `server/application/tool_handlers/router_handler.py`
 - `_docs/_MCP_SERVER/README.md`
@@ -54,8 +52,10 @@
 - keep the live `surfaces.py` instructions aligned with the same discovery-first
   contract that `_docs/_MCP_SERVER/README.md` and `_docs/AVAILABLE_TOOLS_SUMMARY.md`
   describe
-- review whether `supporting_tools` should include phase-pinned spatial refresh
-  tools more explicitly when later build families are temporarily hidden
+- preserve the current contract that `supporting_tools` already carry the
+  phase-pinned spatial refresh support tools; the work here is to keep that
+  guidance aligned with the shaped surface and status semantics, not to reopen
+  whether those tools belong there
 - preserve the FastMCP platform responsibility: this is client-surface shaping,
   not router policy duplication
 
@@ -97,6 +97,7 @@ docs.example = [
 ## Docs To Update
 
 - `_docs/_MCP_SERVER/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
 - `_docs/_PROMPTS/README.md`
 - `_docs/_PROMPTS/GUIDED_SESSION_START.md`
@@ -124,8 +125,10 @@ docs.example = [
 
 - the guided handoff no longer implies that stale direct-tool names may be
   retried blindly through `call_tool(...)`
-- docs and shaped visibility semantics say the same thing about discovery-first
-  recovery
+- docs and shaped visibility semantics stay aligned with the repo’s existing
+  discovery-first guidance after the surface changes; the remaining fix is the
+  stale persisted handoff/status drift, not a reversal of already-correct
+  operator wording
 - the task docs explicitly distinguish the generic `guided_manual_build`
   handoff payload from the recipe-specific creature blockout visibility coupling
 - `router_get_status(...)` semantics clearly distinguish persisted

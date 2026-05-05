@@ -113,8 +113,9 @@ After this umbrella ships:
 - `router_get_status(...)` preserves the persisted `guided_handoff` as
   historical intent, but no longer lets that persisted handoff contradict the
   currently authoritative live `visibility_rules`
-- guided handoff / discovery docs stop implying that the model may freely guess
-  direct-tool names into `call_tool(...)` after the surface changes
+- guided handoff / status semantics stay aligned with the repo’s already-landed
+  search-first guidance, so stale persisted guidance does not undercut the live
+  shaped surface after it changes
 - integration tests prove that ordinary guided state transitions no longer look
   like disconnects to a well-behaved MCP client
 
@@ -168,8 +169,6 @@ After this umbrella ships:
 | `server/adapters/mcp/router_helper.py` | Guided execution fail-closed policy | Owns the final family gating that currently blocks visible-but-no-longer-allowed mutators during refresh barriers |
 | `server/adapters/mcp/transforms/visibility_policy.py` | Guided handoff payload | Builds the `guided_handoff` contract, including direct/supporting/discovery tool sets and phase-specific messages |
 | `server/adapters/mcp/areas/router.py` | Router adapter response assembly | Attaches the handoff payload and guided status details to the MCP-facing router response |
-| `server/adapters/mcp/session_capabilities_state.py` | Persisted guided handoff / status state | Persists `guided_handoff` as historical session intent; if status semantics need an explicit live-vs-persisted split, that contract crosses this seam |
-| `server/adapters/mcp/session_capabilities_bootstrap.py` | Guided goal persistence | Seeds the initial `guided_handoff` into session state during router-goal bootstrap; must stay aligned with any later status-surface semantics |
 | `server/adapters/mcp/surfaces.py` | Live guided surface instructions | Owns the runtime surface text FastMCP clients actually read about `search_tools(...)` and `call_tool(...)` |
 | `server/application/tool_handlers/router_handler.py` | Guided no-match shell | Still owns continuation mode / no-match goal semantics, but not the final adapter-owned handoff payload |
 | `tests/e2e/integration/test_guided_search_first_call_tool_boundary.py` | Search-first proxy regressions | Existing proof lane for “search first” behavior; must expand to hidden-tool recovery clarity |
@@ -253,7 +252,9 @@ After this umbrella ships:
   contradict the currently authoritative live `visibility_rules` when the
   client re-checks status after a visibility transition
 - shaped-surface handoff/status semantics stay aligned with the repo’s existing
-  search-first guidance after the surface changes
+  search-first guidance after the surface changes; the remaining delta is stale
+  persisted guidance versus the live surface, not a repo-wide discovery-doc
+  reversal
 - integration coverage proves that a healthy MCP session returning tool errors is
   not misrepresented by the repo contract as a disconnect condition on the
   guided discovery / `call_tool(...)` seam, and that the transcript-backed

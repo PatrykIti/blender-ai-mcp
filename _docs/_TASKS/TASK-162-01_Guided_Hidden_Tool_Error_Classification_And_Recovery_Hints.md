@@ -72,6 +72,7 @@ return await ctx.fastmcp.call_tool(resolved_name, canonical_arguments)
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_search_surface.py`
+- `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/e2e/integration/test_guided_search_first_call_tool_boundary.py`
 - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
 
