@@ -112,6 +112,9 @@ docs.example = [
 - `tests/unit/adapters/mcp/test_router_elicitation.py`
 - `tests/unit/adapters/mcp/test_server_factory.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
+  This file must be extended with a direct assertion for
+  `_docs/_PROMPTS/GUIDED_SESSION_START.md`; grep-only auditing is not enough for
+  that named docs surface.
 
 ## Docs To Update
 

@@ -79,6 +79,9 @@ return await ctx.fastmcp.call_tool(resolved_name, canonical_arguments)
   This file must be extended with a synthetic Streamable HTTP `call_tool(...)`
   hidden-tool case; the current direct `modeling_transform_object(...)` failure
   lane is not enough for this leaf’s proxy-seam claim.
+  `tests/unit/adapters/mcp/test_public_surface_docs.py` must also gain a direct
+  assertion for `_docs/_PROMPTS/GUIDED_SESSION_START.md`; grep-only auditing is
+  not enough for this named docs surface.
 
 The named tests should explicitly prove all three classifications:
 

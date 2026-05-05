@@ -121,6 +121,9 @@ assert status["guided_flow_state"]["spatial_refresh_required"] is True
 - `tests/unit/adapters/mcp/test_router_elicitation.py`
 - `tests/unit/adapters/mcp/test_session_phase.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
+  This file must be extended with a direct assertion for
+  `_docs/_PROMPTS/GUIDED_SESSION_START.md`; grep-only auditing is not enough for
+  that named docs surface.
 
 ## Docs To Update
 
