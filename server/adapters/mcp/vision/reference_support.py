@@ -347,12 +347,15 @@ async def augment_reference_understanding_optional_support(
     if not request_payload["references"]:
         return summary
 
+    classifier_config = getattr(runtime_config, "active_reference_classifier", None)
+    segmentation_config = getattr(runtime_config, "active_segmentation_sidecar", None)
+
     classifier_scores, classifier_evidence, classifier_provenance = await _collect_classifier_support(
-        config=runtime_config.active_reference_classifier,
+        config=classifier_config,
         request_payload=request_payload,
     )
     segmentation_artifacts, segmentation_evidence, segmentation_provenance = await _collect_segmentation_support(
-        config=runtime_config.active_segmentation_sidecar,
+        config=segmentation_config,
         request_payload=request_payload,
     )
 
