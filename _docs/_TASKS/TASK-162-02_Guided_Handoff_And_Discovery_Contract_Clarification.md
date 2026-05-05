@@ -17,6 +17,8 @@
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_session_phase.py`
 - `tests/unit/adapters/mcp/test_router_elicitation.py`
+- `tests/e2e/router/test_guided_manual_handoff.py`
+- `tests/e2e/integration/test_guided_streamable_spatial_support.py`
 - `tests/e2e/integration/test_guided_surface_contract_parity.py`
 - `tests/e2e/integration/test_guided_inspect_validate_handoff.py`
 
@@ -31,6 +33,9 @@
   contract: the persisted `guided_handoff` remains historical intent, while
   live `visibility_rules` stay the authoritative current surface after a
   refresh barrier narrows visibility
+  - the named status/handoff proof lanes must be extended to cover one
+    post-transition divergence case, not only initial handoff persistence or a
+    static status snapshot
 - call out the live split explicitly:
   - generic `guided_manual_build` always emits a handoff payload
   - the stronger coupling between `guided_handoff.direct_tools` and the shaped
@@ -112,6 +117,7 @@ docs.example = [
 ## Validation Commands
 
 - `git diff --check`
+- `# _docs/_PROMPTS/GUIDED_SESSION_START.md is consistency-audited here because the current public docs parity suite does not load it directly.`
 - `rg -n "search_tools\\(\\.\\.\\.\\)|call_tool\\(\\.\\.\\.\\)|Unknown tool|required_checks|guided_handoff" README.md _docs/_MCP_SERVER/README.md _docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md _docs/AVAILABLE_TOOLS_SUMMARY.md _docs/_PROMPTS/README.md _docs/_PROMPTS/GUIDED_SESSION_START.md _docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md _docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/integration/test_guided_inspect_validate_handoff.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/router/test_guided_manual_handoff.py tests/e2e/integration/test_guided_streamable_spatial_support.py -q`
