@@ -240,7 +240,7 @@ After this umbrella ships:
 
 ## Acceptance Criteria
 
-- repo-owned hidden guided-tool failures no longer surface as a generic
+- proxy-side hidden guided-tool failures no longer surface as a generic
   unknown-tool path when the server can deterministically explain that
   visibility or spatial refresh is the real reason
 - the recovery path explicitly points to the current pending `required_checks`

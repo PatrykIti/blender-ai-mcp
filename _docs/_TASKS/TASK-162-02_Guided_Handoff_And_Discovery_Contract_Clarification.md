@@ -48,11 +48,13 @@
   `macro_cleanup_part_intersections` from the directly visible shaped surface
   for that moment instead of leaving them visible as bait
   - this remaining visible-but-blocked drift is specifically on the
-    `inspect_validate` surface; build-phase refresh already collapses to
-    spatial-context tools
-  - the implementation must cover both sources that currently make those macros
-    visible on `inspect_validate`: the explicit inspect escape-hatch list and
-    any gate-plan overlay added through `visible_tools_for_gate_plan(...)`
+    `inspect_validate` surface; build-phase refresh already collapses to the
+    bounded refresh/support set
+  - the named inspect proof lane must be extended with a post-handoff
+    `inspect_validate + spatial_refresh_required` case; the current steady
+    inspect visibility check is not sufficient on its own
+  - the implementation must cover the source that currently keeps those macros
+    visible on `inspect_validate`: the explicit inspect escape-hatch list
 - ensure the handoff message explicitly says that `direct_tools` are only valid
   while visible, and stale names must not be guessed through `call_tool(...)`
 - keep `discovery_tools=["search_tools","call_tool"]`, but update examples so
@@ -60,10 +62,10 @@
 - keep the live `surfaces.py` instructions aligned with the same discovery-first
   contract that `_docs/_MCP_SERVER/README.md` and `_docs/AVAILABLE_TOOLS_SUMMARY.md`
   describe
-- preserve the current contract that `supporting_tools` already carry the
-  phase-pinned spatial refresh support tools; the work here is to keep that
-  guidance aligned with the shaped surface and status semantics, not to reopen
-  whether those tools belong there
+- preserve the current contract split: `supporting_tools` already carry the
+  compare/iterate / status support subset, while the broader refresh-support
+  surface is shaped separately through visibility rules. The work here is to
+  keep those two layers aligned, not to imply they are already identical.
 - preserve the FastMCP platform responsibility: this is client-surface shaping,
   not router policy duplication
 

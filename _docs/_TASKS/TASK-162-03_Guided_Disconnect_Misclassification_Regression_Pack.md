@@ -47,6 +47,9 @@ tool error surface itself.
 - add one regression for the transcript-backed creature path where attachment
   repair macros are not exposed during `inspect_validate` refresh barriers if
   `attachment_alignment` would be fail-closed anyway
+  - this proof must live in an inspect/validate lane such as
+    `test_guided_inspect_validate_handoff.py`, extended with a post-handoff
+    refresh-barrier case, not only in the build refresh streamable lane
 - add one regression where `router_get_status(...)` no longer looks like a live
   source of stale `guided_handoff.direct_tools` after the shaped surface has
   already narrowed; persisted handoff stays historical intent while live
@@ -141,8 +144,8 @@ assert status["guided_flow_state"]["spatial_refresh_required"] is True
 ## Acceptance Criteria
 
 - a hidden-tool failure on the guided discovery / `call_tool(...)` path is
-  provably distinguishable from a disconnect in both a stdio lane and a
-  Streamable HTTP lane
+  provably a deterministic tool-contract error with healthy post-failure
+  session/transport continuity in the named stdio and Streamable HTTP lanes
 - on the direct guided path, the transcript-backed invalid mutator is no longer
   visible after visibility narrowing, so the model is not led into a
   visible-but-blocked retry
