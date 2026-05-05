@@ -16,6 +16,7 @@
 - `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
+- `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
 - `tests/unit/adapters/mcp/test_session_phase.py`
 - `tests/unit/adapters/mcp/test_router_elicitation.py`
 - `tests/unit/adapters/mcp/test_server_factory.py`
@@ -106,6 +107,7 @@ docs.example = [
 - `tests/e2e/router/test_guided_manual_handoff.py`
 - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
+- `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
 - `tests/unit/adapters/mcp/test_session_phase.py`
 - `tests/unit/adapters/mcp/test_router_elicitation.py`
 - `tests/unit/adapters/mcp/test_server_factory.py`
@@ -134,7 +136,7 @@ docs.example = [
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/integration/test_guided_inspect_validate_handoff.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/router/test_guided_manual_handoff.py tests/e2e/integration/test_guided_streamable_spatial_support.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_policy.py -q`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_session_phase.py tests/unit/adapters/mcp/test_router_elicitation.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_session_phase.py tests/unit/adapters/mcp/test_router_elicitation.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_server_factory.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
 - `poetry run python scripts/run_e2e_tests.py`
