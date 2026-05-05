@@ -218,6 +218,7 @@ After this umbrella ships:
 ## Docs To Update
 
 - `_docs/_MCP_SERVER/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
 - `_docs/_PROMPTS/README.md`
 - `_docs/_PROMPTS/GUIDED_SESSION_START.md`
@@ -256,7 +257,8 @@ After this umbrella ships:
 - integration coverage proves that a healthy MCP session returning tool errors is
   not misrepresented by the repo contract as a disconnect condition on the
   guided discovery / `call_tool(...)` seam or the repo-owned direct guided
-  hidden-tool seam
+  hidden-tool seam, with named lanes explicitly proving post-failure continuity
+  where the transport/session harness makes that observable
 - the final task docs leave implementation ownership, tests, and docs updates
   explicit enough that a future implementer does not need the original Claude
   transcript to understand the failure family

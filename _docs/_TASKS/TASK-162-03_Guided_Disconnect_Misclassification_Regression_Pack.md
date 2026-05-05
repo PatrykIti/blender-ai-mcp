@@ -33,6 +33,8 @@ documentation.
     discovery / `call_tool(...)` path
   - the client receives a recovery-oriented `ToolError`
   - subsequent MCP calls still succeed on the same session
+  - the named stdio proof lane is extended to perform that post-failure
+    follow-up call explicitly instead of only matching the first error text
 - add one regression where:
   - the session is healthy
   - a direct guided tool that was valid earlier in the run becomes hidden after
@@ -103,6 +105,7 @@ assert status["guided_flow_state"]["spatial_refresh_required"] is True
 ## Docs To Update
 
 - `_docs/_MCP_SERVER/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
 - `_docs/_PROMPTS/README.md`
 - `_docs/_PROMPTS/GUIDED_SESSION_START.md`
@@ -120,7 +123,7 @@ assert status["guided_flow_state"]["spatial_refresh_required"] is True
 ## Validation Commands
 
 - `git diff --check`
-- `rg -n "search_tools\\(\\.\\.\\.\\)|call_tool\\(\\.\\.\\.\\)|Unknown tool|required_checks|guided_handoff" README.md _docs/_MCP_SERVER/README.md _docs/AVAILABLE_TOOLS_SUMMARY.md _docs/_PROMPTS/README.md _docs/_PROMPTS/GUIDED_SESSION_START.md _docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md _docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md _docs/_TASKS/README.md _docs/_TASKS/TASK-162*.md`
+- `rg -n "search_tools\\(\\.\\.\\.\\)|call_tool\\(\\.\\.\\.\\)|Unknown tool|required_checks|guided_handoff" README.md _docs/_MCP_SERVER/README.md _docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md _docs/AVAILABLE_TOOLS_SUMMARY.md _docs/_PROMPTS/README.md _docs/_PROMPTS/GUIDED_SESSION_START.md _docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md _docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md _docs/_TASKS/README.md _docs/_TASKS/TASK-162*.md`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_search_first_call_tool_boundary.py tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/integration/test_guided_inspect_validate_handoff.py tests/e2e/integration/test_guided_streamable_spatial_support.py tests/e2e/router/test_guided_manual_handoff.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_router_elicitation.py tests/unit/adapters/mcp/test_session_phase.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
 - `poetry run python scripts/run_e2e_tests.py`
@@ -144,7 +147,8 @@ assert status["guided_flow_state"]["spatial_refresh_required"] is True
   disconnect in integration coverage, and the proof is attached to an explicit
   `call_tool(...)` regression rather than only a direct tool call
 - subsequent calls on the same guided session still work after the failure
-  path, proving transport health
+  path, proving transport health on the named lanes that are expected to carry
+  a post-failure follow-up call
 
 ## Status / Board Update
 

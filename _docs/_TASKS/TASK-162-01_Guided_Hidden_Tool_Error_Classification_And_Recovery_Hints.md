@@ -86,6 +86,7 @@ The named tests should explicitly prove all three classifications:
 ## Docs To Update
 
 - `_docs/_MCP_SERVER/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
 - `_docs/_PROMPTS/README.md`
 - `_docs/_PROMPTS/GUIDED_SESSION_START.md`
@@ -102,7 +103,7 @@ The named tests should explicitly prove all three classifications:
 ## Validation Commands
 
 - `git diff --check`
-- `rg -n "Unknown tool|search_tools\\(\\.\\.\\.\\)|call_tool\\(\\.\\.\\.\\)|required_checks" README.md _docs/_MCP_SERVER/README.md _docs/AVAILABLE_TOOLS_SUMMARY.md _docs/_PROMPTS/README.md _docs/_PROMPTS/GUIDED_SESSION_START.md _docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md _docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
+- `rg -n "Unknown tool|search_tools\\(\\.\\.\\.\\)|call_tool\\(\\.\\.\\.\\)|required_checks" README.md _docs/_MCP_SERVER/README.md _docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md _docs/AVAILABLE_TOOLS_SUMMARY.md _docs/_PROMPTS/README.md _docs/_PROMPTS/GUIDED_SESSION_START.md _docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md _docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_search_first_call_tool_boundary.py tests/e2e/integration/test_guided_streamable_spatial_support.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_search_surface.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
@@ -120,7 +121,9 @@ The named tests should explicitly prove all three classifications:
   build path that will usually include `scene_scope_graph`,
   `scene_relation_graph`, and `scene_view_diagnostics`
 - healthy tool-contract failures no longer look like transport disconnects in
-  the repo-owned proxy/discovery semantics
+  the repo-owned proxy/discovery semantics; the named proof lanes must make
+  clear which transports only prove wording and which prove post-failure
+  continuity
 
 ## Status / Board Update
 
