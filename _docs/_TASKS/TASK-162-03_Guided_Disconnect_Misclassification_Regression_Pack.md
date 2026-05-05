@@ -3,10 +3,18 @@
 **Parent:** [TASK-162](./TASK-162_Guided_Hidden_Tool_Error_Semantics_And_Recovery_Clarity.md)
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
-**Objective:** Add regression coverage and closeout notes proving that guided hidden-tool and stale-argument failures on the discovery / `call_tool(...)` seam remain healthy MCP tool errors rather than apparent disconnects, with one explicit stdio lane and one explicit Streamable HTTP lane.
+**Objective:** Add regression coverage and closeout notes proving that guided hidden-tool and stale-argument failures remain healthy MCP tool errors rather than apparent disconnects across both repo-owned seams involved in the transcripted failure family:
+
+- the discovery / `call_tool(...)` seam
+- the direct guided hidden-tool seam after visibility narrows
+
+The leaf must leave both seams with explicit proof lanes and explicit closeout
+documentation.
 
 ## Repository Touchpoints
 
+- `server/adapters/mcp/discovery/search_surface.py`
+- `server/adapters/mcp/transforms/visibility_policy.py`
 - `tests/e2e/integration/test_guided_search_first_call_tool_boundary.py`
 - `tests/e2e/integration/test_guided_surface_contract_parity.py`
 - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
@@ -21,6 +29,12 @@
     discovery / `call_tool(...)` path
   - the client receives a recovery-oriented `ToolError`
   - subsequent MCP calls still succeed on the same session
+- add one regression where:
+  - the session is healthy
+  - a direct guided tool that was valid earlier in the run becomes hidden after
+    spatial rearm
+  - the resulting failure is still clearly a guided-surface/tool-contract error
+    rather than an apparent disconnect
 - add one regression for stale/legacy argument shapes on a visible macro so the
   failure is clearly a contract error rather than a transport symptom
 - keep at least one stdio lane and one Streamable HTTP lane in scope
@@ -67,7 +81,10 @@ assert status["guided_flow_state"]["spatial_refresh_required"] is True
 
 ## Docs To Update
 
-- inherit umbrella docs and task closeout notes
+- `_docs/_MCP_SERVER/README.md`
+- `_docs/_TASKS/README.md`
+- inherit any additional umbrella closeout docs if the final implementation
+  changes wider guided examples
 
 ## Changelog Impact
 
@@ -75,6 +92,8 @@ assert status["guided_flow_state"]["spatial_refresh_required"] is True
 
 ## Validation Commands
 
+- `git diff --check`
+- `rg -n "search_tools\\(\\.\\.\\.\\)|call_tool\\(\\.\\.\\.\\)|Unknown tool|required_checks" _docs/_MCP_SERVER/README.md _docs/_TASKS/README.md`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_search_first_call_tool_boundary.py tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/integration/test_guided_streamable_spatial_support.py -q`
 - `poetry run python scripts/run_e2e_tests.py`
 
@@ -83,6 +102,8 @@ assert status["guided_flow_state"]["spatial_refresh_required"] is True
 - a hidden-tool failure on the guided discovery / `call_tool(...)` path is
   provably distinguishable from a disconnect in both a stdio lane and a
   Streamable HTTP lane
+- a direct guided hidden-tool failure after visibility narrowing is also
+  provably distinguishable from a disconnect in integration coverage
 - a stale-argument failure on the same seam is provably distinguishable from a
   disconnect in integration coverage, and the proof is attached to an explicit
   `call_tool(...)` regression rather than only a direct tool call

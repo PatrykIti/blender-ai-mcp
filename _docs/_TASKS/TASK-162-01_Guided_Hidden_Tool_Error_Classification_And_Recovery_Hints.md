@@ -23,8 +23,9 @@
   - known tool hidden by current guided visibility
   - known tool hidden because `spatial_refresh_required` narrowed the allowed
     families
-- when the stale-context path is active, point the client at the exact required
-  spatial tools instead of telling it only to use `search_tools(...)`
+- when the stale-context path is active, point the client at the current
+  pending `required_checks` from guided state instead of hard-coding one static
+  list of spatial tools
 - keep the response compatible with existing `ToolError` handling, but make the
   message deterministic enough that clients do not narrate it as disconnect
 
@@ -36,6 +37,11 @@ visible_names = {tool.name for tool in visible_tools}
 entry = transform._entry_map.get(resolved_name)
 session = await get_session_capability_state_async(ctx)
 guided_flow = session.guided_flow_state or {}
+required_checks = [
+    item.get("tool_name")
+    for item in guided_flow.get("required_checks") or []
+    if isinstance(item, dict) and str(item.get("status") or "") != "completed"
+]
 
 if entry is None:
     raise ToolError(unknown_tool_message(resolved_name))
@@ -45,7 +51,7 @@ if resolved_name not in visible_names:
         raise ToolError(
             hidden_due_to_spatial_refresh_message(
                 resolved_name,
-                required_checks=["scene_scope_graph", "scene_relation_graph", "scene_view_diagnostics"],
+                required_checks=required_checks,
             )
         )
     raise ToolError(hidden_due_to_guided_visibility_message(resolved_name))
@@ -67,10 +73,20 @@ return await ctx.fastmcp.call_tool(resolved_name, canonical_arguments)
 - `tests/e2e/integration/test_guided_search_first_call_tool_boundary.py`
 - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
 
+The named tests should explicitly prove all three classifications:
+
+- a truly unknown tool name stays an unknown-tool/discovery error
+- a known tool hidden by guided visibility is surfaced as hidden, not guessed as
+  missing
+- a known tool hidden because `spatial_refresh_required` is active points to the
+  current pending `required_checks`
+
 ## Docs To Update
 
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `_docs/_PROMPTS/README.md`
+- `README.md`
 - inherit any additional umbrella docs if the final error wording changes
   cross-surface examples
 
@@ -89,8 +105,12 @@ return await ctx.fastmcp.call_tool(resolved_name, canonical_arguments)
 
 - a client asking through `call_tool(...)` for a known-but-hidden guided tool
   gets a recovery-oriented error, not a plain unknown-tool message
-- when spatial refresh is the cause, the error points to
-  `scene_scope_graph`, `scene_relation_graph`, and `scene_view_diagnostics`
+- a truly nonexistent tool name remains distinguishable from a known-but-hidden
+  tool and does not get reclassified as a guided refresh failure
+- when spatial refresh is the cause, the error points to the current pending
+  `required_checks` rather than one hard-coded list; on the current creature
+  build path that will usually include `scene_scope_graph`,
+  `scene_relation_graph`, and `scene_view_diagnostics`
 - healthy tool-contract failures no longer look like transport disconnects in
   the repo-owned proxy/discovery semantics
 

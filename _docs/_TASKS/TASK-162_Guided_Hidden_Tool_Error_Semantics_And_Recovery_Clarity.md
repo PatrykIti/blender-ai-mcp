@@ -51,14 +51,12 @@ Recent guided creature-build transcripts show the same confusion loop:
    resulting tool error as a disconnect or session loss.
 
 This is a product problem because the runtime already knows the real recovery
-path:
-
-- `scene_scope_graph(...)`
-- `scene_relation_graph(...)`
-- `scene_view_diagnostics(...)`
-
-but the current failure surface does not always communicate that path tightly
-enough at the exact moment the client needs it.
+path through `guided_flow_state.required_checks`, but the current failure
+surface does not always communicate that path tightly enough at the exact moment
+the client needs it. On the current creature build path that often includes
+`scene_scope_graph(...)`, `scene_relation_graph(...)`, and
+`scene_view_diagnostics(...)`; other domain/step combinations can expose a
+narrower required-check set.
 
 ## Business Outcome
 
@@ -162,6 +160,9 @@ After this umbrella ships:
 
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `_docs/_PROMPTS/README.md`
+- `_docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md`
+- `README.md`
 - `_docs/_TASKS/README.md`
 - area-specific guided client docs only when the final contract changes their
   normative examples
@@ -177,8 +178,9 @@ After this umbrella ships:
 - repo-owned hidden guided-tool failures no longer surface as a generic
   unknown-tool path when the server can deterministically explain that
   visibility or spatial refresh is the real reason
-- the recovery path explicitly points to the required spatial tools when
-  `spatial_refresh_required` is active
+- the recovery path explicitly points to the current pending `required_checks`
+  when `spatial_refresh_required` is active, rather than a hard-coded static
+  tool list
 - shaped-surface handoff/discovery docs no longer imply that stale direct-tool
   names may be guessed into `call_tool(...)` after the surface changes
 - integration coverage proves that a healthy MCP session returning tool errors is

@@ -24,6 +24,12 @@
 - update the adapter-owned handoff builder in `visibility_policy.py` and the
   MCP-facing router response assembly, not only the coarse no-match shell in
   `router_handler.py`
+- call out the live split explicitly:
+  - generic `guided_manual_build` always emits a handoff payload
+  - the stronger coupling between `guided_handoff.direct_tools` and the shaped
+    build surface currently exists only for the creature blockout recipe
+  - the generic build visibility fallback still comes from
+    `GUIDED_BUILD_ESCAPE_HATCH_TOOLS`
 - ensure the handoff message explicitly says that `direct_tools` are only valid
   while visible, and stale names must not be guessed through `call_tool(...)`
 - keep `discovery_tools=["search_tools","call_tool"]`, but update examples so
@@ -43,7 +49,7 @@ handoff = build_guided_handoff_payload(...)
 handoff["message"] = (
     "Use directly visible tools first. "
     "If a needed tool is no longer visible, do not guess it into call_tool(...); "
-    "refresh with search_tools(...) or the declared spatial checks first."
+    "refresh with search_tools(...) or the current guided_flow_state.required_checks first."
 )
 
 docs.example = [
@@ -74,6 +80,10 @@ docs.example = [
 
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `_docs/_PROMPTS/README.md`
+- `_docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md`
+- `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
+- `README.md`
 
 ## Changelog Impact
 
@@ -94,6 +104,8 @@ docs.example = [
   retried blindly through `call_tool(...)`
 - docs and shaped visibility semantics say the same thing about discovery-first
   recovery
+- the task docs explicitly distinguish the generic `guided_manual_build`
+  handoff payload from the recipe-specific creature blockout visibility coupling
 - the inspect/build surfaces keep the bounded repair tools visible only when the
   guided family policy actually allows them
 
