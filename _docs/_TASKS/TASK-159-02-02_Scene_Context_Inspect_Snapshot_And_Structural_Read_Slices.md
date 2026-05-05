@@ -44,6 +44,8 @@ utility, and custom-property operations stay under
 - `tests/unit/tools/scene/test_scene_contracts.py`
 - `tests/unit/tools/test_handler_rpc_alignment.py`
 - `tests/unit/adapters/mcp/test_structured_contract_delivery.py`
+- `tests/e2e/tools/scene/test_scene_read_runtime_surfaces.py`
+- `tests/e2e/tools/scene/test_scene_inspect_runtime_surfaces.py`
 - `tests/e2e/tools/scene/test_scene_inspect_material_slots.py`
 - `tests/e2e/tools/scene/test_snapshot_tools.py`
 
@@ -147,7 +149,7 @@ for public_wrapper in read_heavy_scene_wrappers:
 ## Validation Commands
 
 - `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_scene_context_mega.py tests/unit/tools/scene/test_scene_inspect_mega.py tests/unit/tools/scene/test_scene_inspect_mesh_topology.py tests/unit/tools/scene/test_scene_inspect_modifiers.py tests/unit/tools/scene/test_get_constraints.py tests/unit/tools/scene/test_scene_state_assistants.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/test_handler_rpc_alignment.py tests/unit/adapters/mcp/test_structured_contract_delivery.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/tools/scene/test_scene_inspect_material_slots.py tests/e2e/tools/scene/test_snapshot_tools.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/tools/scene/test_scene_read_runtime_surfaces.py tests/e2e/tools/scene/test_scene_inspect_runtime_surfaces.py tests/e2e/tools/scene/test_scene_inspect_material_slots.py tests/e2e/tools/scene/test_snapshot_tools.py -q`
 
 ## Docs To Update
 

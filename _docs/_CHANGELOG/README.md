@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [317](./317-2026-05-05-task-159-proof-lane-refresh.md) | 2026-05-05 | **TASK-159 proof-lane refresh** | - |
 | [316](./316-2026-05-05-task-159-governance-follow-on-closeout.md) | 2026-05-05 | **TASK-161 TASK-159 closeout alignment** | - |
 | [315](./315-2026-05-04-task-159-final-closeout.md) | 2026-05-04 | **TASK-159 final closeout** | - |
 | [314](./314-2026-05-04-task-159-reference-facade-guards.md) | 2026-05-04 | **TASK-159 reference facade guards** | - |

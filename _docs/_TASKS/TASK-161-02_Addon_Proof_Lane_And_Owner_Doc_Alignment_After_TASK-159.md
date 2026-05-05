@@ -20,6 +20,8 @@ returns and registers.
 - `tests/unit/tools/scene/test_scene_contracts.py`
 - `tests/unit/tools/scene/test_scene_state_assistants.py`
 - `tests/unit/adapters/mcp/test_structured_contract_delivery.py`
+- `tests/e2e/tools/scene/test_scene_read_runtime_surfaces.py`
+- `tests/e2e/tools/scene/test_scene_inspect_runtime_surfaces.py`
 
 ## Implementation Notes
 
@@ -40,6 +42,7 @@ returns and registers.
 ## Validation Commands
 
 - `PYTHONPATH=. poetry run pytest tests/unit/addon/test_addon_registration.py tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/scene/test_scene_state_assistants.py tests/unit/adapters/mcp/test_structured_contract_delivery.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/tools/scene/test_scene_read_runtime_surfaces.py tests/e2e/tools/scene/test_scene_inspect_runtime_surfaces.py -q`
 
 ## Docs To Update
 
