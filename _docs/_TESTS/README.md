@@ -188,7 +188,7 @@ planning board:
   `tests/unit/scripts/test_script_tooling.py`, and
   `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
 
-Keep the current owner-lane rule explicit while Scope B stays open:
+Keep the current owner-lane rule explicit when similar follow-on work resumes:
 
 - start from the shared `vision/prompting.py`, `vision/parsing.py`, and
   `vision/backends.py` owners before creating dedicated
@@ -208,8 +208,8 @@ Keep the current owner-lane rule explicit while Scope B stays open:
 
 | Type | Count | Execution Time |
 |------|-------|----------------|
-| Unit Tests | 3239 collected | collect-only ~7 seconds; full runtime depends on selected lanes |
-| E2E Tests | 466 collected | collect-only ~14 seconds; Blender-backed runtime depends on active RPC/Blender state |
+| Unit Tests | 3242 collected | collect-only ~7 seconds; full runtime depends on selected lanes |
+| E2E Tests | 467 collected | collect-only ~14 seconds; Blender-backed runtime depends on active RPC/Blender state |
 
 Current repo-wide unit coverage (`server + blender_addon + scripts`):
 

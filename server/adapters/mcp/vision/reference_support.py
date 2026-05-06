@@ -210,13 +210,15 @@ def _merge_segmentation_artifacts(
 def _merge_visual_evidence_refs(
     existing: Sequence[ReferenceUnderstandingVisualEvidenceRefContract],
     incoming: Sequence[ReferenceUnderstandingVisualEvidenceRefContract],
+    *,
+    limit: int = 16,
 ) -> list[ReferenceUnderstandingVisualEvidenceRefContract]:
     merged: dict[str, ReferenceUnderstandingVisualEvidenceRefContract] = {}
     for item in [*list(existing), *list(incoming)]:
         key = item.evidence_id.strip().lower()
         if key not in merged:
             merged[key] = item
-    return list(merged.values())[:16]
+    return list(merged.values())[:limit]
 
 
 def _merge_source_provenance(
@@ -493,6 +495,10 @@ async def augment_reference_understanding_optional_support(
         config=segmentation_config,
         request_payload=request_payload,
     )
+    evidence_limit = max(
+        16,
+        len(summary.visual_evidence_refs or []) + len(classifier_evidence) + len(segmentation_evidence),
+    )
 
     return summary.model_copy(
         update={
@@ -508,6 +514,7 @@ async def augment_reference_understanding_optional_support(
             "visual_evidence_refs": _merge_visual_evidence_refs(
                 summary.visual_evidence_refs,
                 [*classifier_evidence, *segmentation_evidence],
+                limit=evidence_limit,
             ),
             "source_provenance": _merge_source_provenance(
                 summary.source_provenance,

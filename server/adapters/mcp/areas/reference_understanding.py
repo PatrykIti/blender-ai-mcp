@@ -138,6 +138,27 @@ def reference_understanding_gate_slice(gate_plan: GatePlanContract | None) -> Ga
     )
 
 
+def _rebuild_reference_understanding_gate_ids(gate_plan: Any) -> list[str] | None:
+    if gate_plan is None:
+        return None
+    if isinstance(gate_plan, GatePlanContract):
+        contract_gate_ids = [
+            gate.gate_id for gate in gate_plan.gates if "reference_understanding" in gate.proposal_sources
+        ]
+        return contract_gate_ids or None
+    if isinstance(gate_plan, dict):
+        gate_ids: list[str] = []
+        for raw_gate in list(gate_plan.get("gates") or []):
+            if not isinstance(raw_gate, dict):
+                continue
+            gate_id = str(raw_gate.get("gate_id") or "").strip()
+            proposal_sources = raw_gate.get("proposal_sources") or []
+            if gate_id and isinstance(proposal_sources, list) and "reference_understanding" in proposal_sources:
+                gate_ids.append(gate_id)
+        return gate_ids or None
+    return None
+
+
 def _optional_support_needs_refresh(
     summary: ReferenceUnderstandingSummaryContract,
     *,
@@ -146,15 +167,28 @@ def _optional_support_needs_refresh(
     if runtime_config is None:
         return False
 
-    provenance_sources = {item.source for item in list(summary.source_provenance or [])}
+    provenance_by_source: dict[str, list[Any]] = {}
+    for item in list(summary.source_provenance or []):
+        provenance_by_source.setdefault(item.source, []).append(item)
+
     classifier = getattr(runtime_config, "active_reference_classifier", None)
     if classifier is not None and getattr(classifier, "enabled", False):
-        if "classification_scores" not in provenance_sources:
+        classifier_provenance = provenance_by_source.get("classification_scores", [])
+        if not classifier_provenance:
+            return True
+        if not summary.classification_scores and any(
+            "unavailable" in str(item.summary or "").lower() for item in classifier_provenance
+        ):
             return True
 
     segmentation = getattr(runtime_config, "active_segmentation_sidecar", None)
     if segmentation is not None and getattr(segmentation, "enabled", False):
-        if "part_segmentation" not in provenance_sources:
+        segmentation_provenance = provenance_by_source.get("part_segmentation", [])
+        if not segmentation_provenance:
+            return True
+        if not summary.segmentation_artifacts and any(
+            "unavailable" in str(item.summary or "").lower() for item in segmentation_provenance
+        ):
             return True
 
     return False
@@ -242,6 +276,11 @@ async def refresh_reference_understanding_summary(
         summary = ReferenceUnderstandingSummaryContract.model_validate(existing_summary)
         resolver = get_vision_backend_resolver()
         runtime_config = getattr(resolver, "runtime_config", None)
+        rebuilt_gate_ids = (
+            _rebuild_reference_understanding_gate_ids(current.gate_plan)
+            if current.reference_understanding_gate_ids is None
+            else current.reference_understanding_gate_ids
+        )
         if _optional_support_needs_refresh(summary, runtime_config=runtime_config):
             refreshed_summary = await augment_reference_understanding_optional_support(
                 summary,
@@ -258,6 +297,7 @@ async def refresh_reference_understanding_summary(
                 updated = replace(
                     current,
                     reference_understanding_summary=refreshed_summary.model_dump(mode="json", exclude_none=True),
+                    reference_understanding_gate_ids=rebuilt_gate_ids,
                     reference_strategy_state=(
                         rebuilt_strategy.model_dump(mode="json", exclude_none=True)
                         if rebuilt_strategy is not None
@@ -276,6 +316,7 @@ async def refresh_reference_understanding_summary(
             if rebuilt_strategy is not None:
                 repaired = replace(
                     current,
+                    reference_understanding_gate_ids=rebuilt_gate_ids,
                     reference_strategy_state=rebuilt_strategy.model_dump(mode="json", exclude_none=True),
                 )
                 return await _persist_reference_understanding_state_async(
@@ -284,6 +325,14 @@ async def refresh_reference_understanding_summary(
                     set_session_capability_state_async=set_session_capability_state_async,
                     apply_visibility_for_session_state=apply_visibility_for_session_state,
                 )
+        if current.reference_understanding_gate_ids is None and rebuilt_gate_ids is not None:
+            repaired = replace(current, reference_understanding_gate_ids=rebuilt_gate_ids)
+            return await _persist_reference_understanding_state_async(
+                ctx,
+                repaired,
+                set_session_capability_state_async=set_session_capability_state_async,
+                apply_visibility_for_session_state=apply_visibility_for_session_state,
+            )
         return current
 
     request = reference_understanding_request(

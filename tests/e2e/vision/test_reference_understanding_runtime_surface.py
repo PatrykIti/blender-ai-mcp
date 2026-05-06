@@ -433,6 +433,13 @@ def test_reference_orchestrator_feedback_surface_with_real_blender_capture(
     assert goal_result.reference_understanding_summary.visual_metrics
     assert goal_result.reference_understanding_summary.classification_scores[0].label == "low_poly_faceted"
     assert goal_result.reference_understanding_summary.segmentation_artifacts[0].artifact_id == "mask_tail_front"
+    assert (
+        goal_result.reference_understanding_summary.segmentation_artifacts[0].reference_id
+        == goal_result.reference_understanding_summary.reference_ids[0]
+    )
+    assert goal_result.reference_understanding_summary.segmentation_artifacts[0].summary == (
+        "Support-only tail mask for RU follow-up."
+    )
     assert goal_result.reference_orchestrator_feedback is not None
     assert goal_result.reference_orchestrator_feedback.selected_family == "modeling_mesh"
     assert goal_result.reference_orchestrator_feedback.next_checkpoint_tool == "reference_compare_stage_checkpoint"
@@ -442,6 +449,9 @@ def test_reference_orchestrator_feedback_surface_with_real_blender_capture(
     assert status_result.reference_understanding_summary is not None
     assert status_result.reference_understanding_summary.visual_metrics
     assert status_result.reference_understanding_summary.segmentation_artifacts[0].artifact_id == "mask_tail_front"
+    assert status_result.reference_understanding_summary.segmentation_artifacts[0].summary == (
+        "Support-only tail mask for RU follow-up."
+    )
 
     assert compare_result.reference_orchestrator_feedback is not None
     assert compare_result.reference_orchestrator_feedback.next_checkpoint_tool == "reference_iterate_stage_checkpoint"

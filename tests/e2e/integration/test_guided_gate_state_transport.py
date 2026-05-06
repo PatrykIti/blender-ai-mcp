@@ -628,6 +628,13 @@ async def _exercise_reference_understanding_transport_roundtrip(client, referenc
     assert summary["router_handoff_hints"]["sculpt_policy"] == "hidden"
     assert summary["classification_scores"] == [{"label": "low_poly_faceted", "score": 0.94}]
     assert summary["segmentation_artifacts"][0]["artifact_id"] == "mask_tail_front"
+    assert summary["segmentation_artifacts"][0]["reference_id"] == summary["reference_ids"][0]
+    assert summary["segmentation_artifacts"][0]["summary"] == "Support-only tail mask for RU follow-up."
+    assert any(
+        item["source"] == "part_segmentation"
+        and item["summary"] == "Optional segmentation sidecar returned 1 artifact link(s)."
+        for item in summary["source_provenance"]
+    )
     assert goal_result["reference_understanding_gate_ids"]
     assert any(
         "reference_understanding" in gate["proposal_sources"]
@@ -639,6 +646,9 @@ async def _exercise_reference_understanding_transport_roundtrip(client, referenc
     assert status_result["reference_understanding_gate_ids"] == goal_result["reference_understanding_gate_ids"]
     assert status_result["reference_understanding_summary"]["segmentation_artifacts"][0]["artifact_id"] == (
         "mask_tail_front"
+    )
+    assert status_result["reference_understanding_summary"]["segmentation_artifacts"][0]["summary"] == (
+        "Support-only tail mask for RU follow-up."
     )
 
     compare_result = result_payload(
@@ -779,12 +789,21 @@ async def _exercise_reference_orchestrator_feedback_transport_surface(client, re
     assert goal_result["reference_understanding_summary"]["classification_scores"] == [
         {"label": "low_poly_faceted", "score": 0.94}
     ]
+    assert any(
+        item["source"] == "part_segmentation"
+        and item["summary"] == "Optional segmentation sidecar returned 1 artifact link(s)."
+        for item in goal_result["reference_understanding_summary"]["source_provenance"]
+    )
 
     status_result = result_payload(await client.call_tool("router_get_status", {}))
     assert status_result["reference_orchestrator_feedback"] is not None
     assert status_result["reference_understanding_summary"]["visual_metrics"]
     assert status_result["reference_understanding_summary"]["segmentation_artifacts"][0]["artifact_id"] == (
         "mask_tail_front"
+    )
+    assert (
+        status_result["reference_understanding_summary"]["segmentation_artifacts"][0]["reference_id"]
+        == (status_result["reference_understanding_summary"]["reference_ids"][0])
     )
 
     listed_result = result_payload(await client.call_tool("reference_images", {"action": "list"}))

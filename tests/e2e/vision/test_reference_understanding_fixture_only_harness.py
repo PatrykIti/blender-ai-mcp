@@ -223,3 +223,98 @@ def test_vision_harness_live_reference_understanding_subprocess_with_fake_mlx_ba
     assert row["result"]["reference_ids"] == ["fixture_ref_1"]
     assert row["result"]["construction_strategy"]["primary_family"] == "modeling_mesh"
     assert row["diagnostics"]["payload_shape"] == "contract"
+
+
+@pytest.mark.e2e
+def test_vision_harness_live_reference_understanding_bundle_subprocess_with_fake_mlx_backend(tmp_path: Path):
+    bundle_path = tmp_path / "bundle.json"
+    before_path = tmp_path / "before.jpg"
+    after_path = tmp_path / "after.jpg"
+    reference_path = tmp_path / "reference.png"
+    before_path.write_bytes(b"before")
+    after_path.write_bytes(b"after")
+    Image.new("RGBA", (8, 8), (0, 0, 0, 255)).save(reference_path)
+    bundle_path.write_text(
+        json.dumps(
+            {
+                "bundle_id": "bundle_1",
+                "target_object": "Housing",
+                "preset_names": ["context_wide"],
+                "captures_before": [
+                    {
+                        "label": "before_1",
+                        "image_path": str(before_path),
+                        "media_type": "image/jpeg",
+                    }
+                ],
+                "captures_after": [
+                    {
+                        "label": "after_1",
+                        "image_path": str(after_path),
+                        "media_type": "image/jpeg",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    references_path = tmp_path / "references.json"
+    references_path.write_text(
+        json.dumps(
+            {
+                "references": [
+                    {
+                        "reference_id": "ref_1",
+                        "goal": "rounded housing",
+                        "label": "front_reference",
+                        "media_type": "image/png",
+                        "source_kind": "local_path",
+                        "original_path": str(reference_path),
+                        "stored_path": str(reference_path),
+                        "host_visible_path": str(reference_path),
+                        "added_at": "2026-03-26T00:00:00Z",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    fake_modules = tmp_path / "fake_modules"
+    _write_fake_mlx_vlm_package(fake_modules)
+    env = dict(os.environ)
+    env["PYTHONPATH"] = f"{fake_modules}:{REPO_ROOT}"
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "scripts/vision_harness.py",
+            "--backend",
+            "mlx_local",
+            "--goal",
+            "rounded housing",
+            "--mode",
+            "reference-understanding",
+            "--bundle-json",
+            str(bundle_path),
+            "--references-json",
+            str(references_path),
+            "--mlx-model",
+            "mlx-community/Qwen3-VL-4B-Instruct-4bit",
+        ],
+        cwd=REPO_ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    payload = json.loads(completed.stdout)
+    assert isinstance(payload, list) and payload
+    row = payload[0]
+    assert row["backend"] == "mlx_local"
+    assert row["status"] == "success"
+    assert row["result"]["status"] == "available"
+    assert row["result"]["reference_ids"] == ["ref_1"]
+    assert row["result"]["construction_strategy"]["primary_family"] == "modeling_mesh"
+    assert row["diagnostics"]["payload_shape"] == "contract"
