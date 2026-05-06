@@ -146,8 +146,9 @@ class Config(BaseSettings):
         description="Timeout for one optional reference-classifier sidecar request",
     )
     VISION_REFERENCE_CLASSIFIER_MAX_LABELS: int = Field(
-        default=8,
-        gt=0,
+        default=5,
+        ge=1,
+        le=5,
         description="Maximum classification labels accepted from the optional reference-classifier sidecar",
     )
     VISION_SEGMENTATION_ENABLED: bool = Field(
@@ -306,7 +307,7 @@ def get_config() -> Config:
         VISION_REFERENCE_CLASSIFIER_TIMEOUT_SECONDS=float(
             os.getenv("VISION_REFERENCE_CLASSIFIER_TIMEOUT_SECONDS", 15.0)
         ),
-        VISION_REFERENCE_CLASSIFIER_MAX_LABELS=int(os.getenv("VISION_REFERENCE_CLASSIFIER_MAX_LABELS", 8)),
+        VISION_REFERENCE_CLASSIFIER_MAX_LABELS=int(os.getenv("VISION_REFERENCE_CLASSIFIER_MAX_LABELS", 5)),
         VISION_SEGMENTATION_ENABLED=os.getenv("VISION_SEGMENTATION_ENABLED", "false").lower() in ("true", "1", "yes"),
         VISION_SEGMENTATION_PROVIDER=os.getenv("VISION_SEGMENTATION_PROVIDER", "generic_sidecar"),
         VISION_SEGMENTATION_ENDPOINT=os.getenv("VISION_SEGMENTATION_ENDPOINT") or None,

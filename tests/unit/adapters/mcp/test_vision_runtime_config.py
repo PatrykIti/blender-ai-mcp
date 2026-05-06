@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
+from pydantic import ValidationError
 from server.adapters.mcp.vision import (
     LazyVisionBackendResolver,
     MLXLocalVisionBackend,
@@ -523,6 +524,11 @@ def test_optional_reference_classifier_uses_separate_opt_in_config_surface():
     assert runtime.reference_classifier.model == "siglip-sidecar-v1"
     assert runtime.reference_classifier.api_key_env == "CLASSIFIER_API_KEY"
     assert runtime.reference_classifier.max_labels == 5
+
+
+def test_optional_reference_classifier_rejects_more_than_five_labels_at_config_boundary():
+    with pytest.raises(ValidationError, match="less than or equal to 5"):
+        _base_config(VISION_REFERENCE_CLASSIFIER_MAX_LABELS=6)
 
 
 def test_optional_reference_classifier_can_inherit_main_external_vision_config():
