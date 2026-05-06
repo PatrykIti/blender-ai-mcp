@@ -1099,6 +1099,212 @@ def _reject_missing_contract_keys(
         raise ValueError(f"{contract_name} output omitted required top-level fields: {joined}")
 
 
+def _reject_unexpected_dict_keys(
+    payload: dict[str, Any],
+    *,
+    expected_keys: set[str],
+    contract_name: str,
+) -> None:
+    extra = sorted(key for key in payload.keys() if key not in expected_keys)
+    if extra:
+        joined = ", ".join(extra)
+        raise ValueError(f"{contract_name} output included unsupported nested fields: {joined}")
+
+
+def _require_str_list(value: Any, *, contract_name: str, field_name: str) -> list[str]:
+    if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+        raise ValueError(f"{contract_name} output included malformed nested section: {field_name}")
+    return value
+
+
+def _validate_reference_understanding_contract_shape(parsed: dict[str, Any]) -> None:
+    subject = parsed.get("subject")
+    if not isinstance(subject, dict):
+        raise ValueError("Reference-understanding output included malformed nested section: subject")
+    _reject_unexpected_dict_keys(
+        {str(key): value for key, value in subject.items()},
+        expected_keys={"label", "category", "confidence", "uncertainty_notes"},
+        contract_name="Reference-understanding",
+    )
+    if not isinstance(subject.get("label"), str):
+        raise ValueError("Reference-understanding output included malformed nested section: subject.label")
+    if (
+        not isinstance(subject.get("category"), str)
+        or subject.get("category") not in _REFERENCE_UNDERSTANDING_CATEGORY_VALUES
+    ):
+        raise ValueError("Reference-understanding output included malformed nested section: subject.category")
+    if subject.get("confidence") is not None and not isinstance(subject.get("confidence"), (int, float)):
+        raise ValueError("Reference-understanding output included malformed nested section: subject.confidence")
+    _require_str_list(
+        subject.get("uncertainty_notes"),
+        contract_name="Reference-understanding",
+        field_name="subject.uncertainty_notes",
+    )
+
+    style = parsed.get("style")
+    if not isinstance(style, dict):
+        raise ValueError("Reference-understanding output included malformed nested section: style")
+    _reject_unexpected_dict_keys(
+        {str(key): value for key, value in style.items()},
+        expected_keys={"style_label", "confidence", "notes"},
+        contract_name="Reference-understanding",
+    )
+    if (
+        not isinstance(style.get("style_label"), str)
+        or style.get("style_label") not in _REFERENCE_UNDERSTANDING_STYLE_VALUES
+    ):
+        raise ValueError("Reference-understanding output included malformed nested section: style.style_label")
+    if style.get("confidence") is not None and not isinstance(style.get("confidence"), (int, float)):
+        raise ValueError("Reference-understanding output included malformed nested section: style.confidence")
+    _require_str_list(style.get("notes"), contract_name="Reference-understanding", field_name="style.notes")
+
+    views = parsed.get("views")
+    if not isinstance(views, list):
+        raise ValueError("Reference-understanding output included malformed nested section: views")
+    for item in views:
+        if not isinstance(item, dict):
+            raise ValueError("Reference-understanding output included malformed nested section: views")
+        _reject_unexpected_dict_keys(
+            {str(key): value for key, value in item.items()},
+            expected_keys={"view_id", "detected", "confidence", "reference_ids", "key_features"},
+            contract_name="Reference-understanding",
+        )
+        if (
+            not isinstance(item.get("view_id"), str)
+            or item.get("view_id") not in _REFERENCE_UNDERSTANDING_VIEW_VALUES
+            or not isinstance(item.get("detected"), bool)
+        ):
+            raise ValueError("Reference-understanding output included malformed nested section: views")
+        if item.get("confidence") is not None and not isinstance(item.get("confidence"), (int, float)):
+            raise ValueError("Reference-understanding output included malformed nested section: views.confidence")
+        _require_str_list(
+            item.get("reference_ids"), contract_name="Reference-understanding", field_name="views.reference_ids"
+        )
+        _require_str_list(
+            item.get("key_features"), contract_name="Reference-understanding", field_name="views.key_features"
+        )
+
+    parts = parsed.get("required_parts")
+    if not isinstance(parts, list):
+        raise ValueError("Reference-understanding output included malformed nested section: required_parts")
+    for item in parts:
+        if not isinstance(item, dict):
+            raise ValueError("Reference-understanding output included malformed nested section: required_parts")
+        _reject_unexpected_dict_keys(
+            {str(key): value for key, value in item.items()},
+            expected_keys={"part_label", "target_label", "construction_hint", "priority", "source_reference_ids"},
+            contract_name="Reference-understanding",
+        )
+        if not isinstance(item.get("part_label"), str):
+            raise ValueError(
+                "Reference-understanding output included malformed nested section: required_parts.part_label"
+            )
+        if item.get("target_label") is not None and not isinstance(item.get("target_label"), str):
+            raise ValueError(
+                "Reference-understanding output included malformed nested section: required_parts.target_label"
+            )
+        if item.get("construction_hint") is not None and not isinstance(item.get("construction_hint"), str):
+            raise ValueError(
+                "Reference-understanding output included malformed nested section: required_parts.construction_hint"
+            )
+        if item.get("priority") not in {"high", "normal"}:
+            raise ValueError(
+                "Reference-understanding output included malformed nested section: required_parts.priority"
+            )
+        _require_str_list(
+            item.get("source_reference_ids"),
+            contract_name="Reference-understanding",
+            field_name="required_parts.source_reference_ids",
+        )
+
+    _require_str_list(parsed.get("non_goals"), contract_name="Reference-understanding", field_name="non_goals")
+
+    strategy = parsed.get("construction_strategy")
+    if not isinstance(strategy, dict):
+        raise ValueError("Reference-understanding output included malformed nested section: construction_strategy")
+    _reject_unexpected_dict_keys(
+        {str(key): value for key, value in strategy.items()},
+        expected_keys={"construction_path", "primary_family", "allowed_families", "stage_sequence", "finish_policy"},
+        contract_name="Reference-understanding",
+    )
+    if (
+        not isinstance(strategy.get("construction_path"), str)
+        or strategy.get("construction_path") not in _REFERENCE_UNDERSTANDING_CONSTRUCTION_PATH_VALUES
+        or not isinstance(strategy.get("primary_family"), str)
+        or strategy.get("primary_family") not in _REFERENCE_UNDERSTANDING_FAMILY_VALUES
+    ):
+        raise ValueError("Reference-understanding output included malformed nested section: construction_strategy")
+    allowed_families = _require_str_list(
+        strategy.get("allowed_families"),
+        contract_name="Reference-understanding",
+        field_name="construction_strategy.allowed_families",
+    )
+    if any(item not in _REFERENCE_UNDERSTANDING_FAMILY_VALUES for item in allowed_families):
+        raise ValueError(
+            "Reference-understanding output included malformed nested section: construction_strategy.allowed_families"
+        )
+    _require_str_list(
+        strategy.get("stage_sequence"),
+        contract_name="Reference-understanding",
+        field_name="construction_strategy.stage_sequence",
+    )
+    if (
+        not isinstance(strategy.get("finish_policy"), str)
+        or strategy.get("finish_policy") not in _REFERENCE_UNDERSTANDING_FINISH_POLICY_VALUES
+    ):
+        raise ValueError(
+            "Reference-understanding output included malformed nested section: construction_strategy.finish_policy"
+        )
+
+    hints = parsed.get("router_handoff_hints")
+    if not isinstance(hints, dict):
+        raise ValueError("Reference-understanding output included malformed nested section: router_handoff_hints")
+    _reject_unexpected_dict_keys(
+        {str(key): value for key, value in hints.items()},
+        expected_keys={"preferred_family", "allowed_guided_families", "sculpt_policy"},
+        contract_name="Reference-understanding",
+    )
+    if (
+        not isinstance(hints.get("preferred_family"), str)
+        or hints.get("preferred_family") not in _REFERENCE_UNDERSTANDING_FAMILY_VALUES
+        or not isinstance(hints.get("sculpt_policy"), str)
+        or hints.get("sculpt_policy") not in _REFERENCE_UNDERSTANDING_SCULPT_POLICY_VALUES
+    ):
+        raise ValueError("Reference-understanding output included malformed nested section: router_handoff_hints")
+    allowed_guided_families = _require_str_list(
+        hints.get("allowed_guided_families"),
+        contract_name="Reference-understanding",
+        field_name="router_handoff_hints.allowed_guided_families",
+    )
+    if any(item not in _REFERENCE_UNDERSTANDING_GUIDED_FAMILY_VALUES for item in allowed_guided_families):
+        raise ValueError(
+            "Reference-understanding output included malformed nested section: router_handoff_hints.allowed_guided_families"
+        )
+
+    for field_name in ("gate_proposals", "visual_evidence_refs", "verification_requirements"):
+        value = parsed.get(field_name)
+        if not isinstance(value, list):
+            raise ValueError(f"Reference-understanding output included malformed nested section: {field_name}")
+
+
+def _validate_reference_classification_contract_shape(parsed: dict[str, Any]) -> None:
+    scores = parsed.get("classification_scores")
+    if not isinstance(scores, list):
+        raise ValueError("Reference-classification output included malformed nested section: classification_scores")
+    if not 1 <= len(scores) <= 5:
+        raise ValueError("Reference-classification output did not match the required contract shape.")
+    for item in scores:
+        if not isinstance(item, dict):
+            raise ValueError("Reference-classification output included malformed nested section: classification_scores")
+        _reject_unexpected_dict_keys(
+            {str(key): value for key, value in item.items()},
+            expected_keys={"label", "score"},
+            contract_name="Reference-classification",
+        )
+        if not isinstance(item.get("label"), str) or not isinstance(item.get("score"), (int, float)):
+            raise ValueError("Reference-classification output included malformed nested section: classification_scores")
+
+
 def _reject_malformed_reference_understanding_contract(parsed: dict[str, Any]) -> None:
     expected_shapes: dict[str, type] = {
         "subject": dict,
@@ -1256,6 +1462,7 @@ def parse_vision_output_text(
             required_keys={"classification_scores"},
             contract_name="Reference-classification",
         )
+        _validate_reference_classification_contract_shape(parsed)
         normalized = _normalize_reference_classification_payload(parsed)
         if not normalized["classification_scores"]:
             raise ValueError("Reference-classification output did not match the required contract shape.")
@@ -1295,7 +1502,7 @@ def parse_vision_output_text(
             ),
             contract_name="Reference-understanding",
         )
-        _reject_malformed_reference_understanding_contract(parsed)
+        _validate_reference_understanding_contract_shape(parsed)
         return _normalize_reference_understanding_payload(parsed, request)
 
     if _looks_like_input_echo(parsed):
