@@ -293,6 +293,7 @@ def test_parse_reference_understanding_payload_normalizes_aliases_and_derives_de
                 "uncertainty_notes": [],
             },
             "style": {"style_label": "low_poly_faceted", "confidence": 0.8, "notes": ["faceted planes"]},
+            "views": [],
             "required_parts": [
                 {
                     "part_label": "tail",
@@ -385,12 +386,8 @@ def test_parse_reference_classification_payload_repairs_simple_label_score_map()
         }
     )
 
-    parsed = parse_vision_output_text(text, _reference_classification_request())
-
-    assert parsed["classification_scores"] == [
-        {"label": "low_poly_faceted", "score": 0.88},
-        {"label": "smooth_organic", "score": 0.12},
-    ]
+    with pytest.raises(ValueError, match="unsupported top-level fields"):
+        parse_vision_output_text(text, _reference_classification_request())
 
 
 def test_parse_reference_classification_payload_drops_out_of_range_scores():

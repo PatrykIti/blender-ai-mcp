@@ -394,3 +394,69 @@ def test_vision_harness_live_reference_understanding_bundle_inline_reference_sub
     assert row["result"]["reference_ids"] == ["cli_ref_1"]
     assert row["result"]["construction_strategy"]["primary_family"] == "modeling_mesh"
     assert row["diagnostics"]["payload_shape"] == "contract"
+
+
+@pytest.mark.e2e
+def test_vision_harness_fixture_only_reference_understanding_bundle_inline_reference_subprocess(tmp_path: Path):
+    bundle_path = tmp_path / "bundle.json"
+    before_path = tmp_path / "before.jpg"
+    after_path = tmp_path / "after.jpg"
+    reference_path = tmp_path / "reference.png"
+    before_path.write_bytes(b"before")
+    after_path.write_bytes(b"after")
+    Image.new("RGBA", (8, 8), (0, 0, 0, 255)).save(reference_path)
+    bundle_path.write_text(
+        json.dumps(
+            {
+                "bundle_id": "bundle_1",
+                "target_object": "Housing",
+                "preset_names": ["context_wide"],
+                "captures_before": [
+                    {
+                        "label": "before_1",
+                        "image_path": str(before_path),
+                        "media_type": "image/jpeg",
+                    }
+                ],
+                "captures_after": [
+                    {
+                        "label": "after_1",
+                        "image_path": str(after_path),
+                        "media_type": "image/jpeg",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "scripts/vision_harness.py",
+            "--backend",
+            "mlx_local",
+            "--goal",
+            "rounded housing",
+            "--bundle-json",
+            str(bundle_path),
+            "--reference",
+            str(reference_path),
+            "--fixture-only",
+            "reference-understanding",
+        ],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    payload = json.loads(completed.stdout)
+    assert isinstance(payload, list) and payload
+    row = payload[0]
+    assert row["fixture_only_mode"] == "reference-understanding"
+    assert row["result"]["goal"] == "rounded housing"
+    assert row["result"]["image_count"] == 1
+    assert row["result"]["image_roles"] == ["reference"]
+    assert row["result"]["metadata"]["reference_ids"] == ["cli_ref_1"]

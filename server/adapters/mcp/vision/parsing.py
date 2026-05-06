@@ -811,31 +811,7 @@ def _normalize_reference_classification_payload(parsed: dict[str, Any]) -> dict[
     scores = _normalize_reference_classification_scores(parsed)
     if scores:
         return {"classification_scores": scores}
-
-    score_map = parsed.get("scores")
-    items: list[dict[str, Any]] = []
-    if isinstance(score_map, dict):
-        for label, score in score_map.items():
-            if not isinstance(label, str) or not isinstance(score, (int, float)):
-                continue
-            normalized_score = float(score)
-            if not 0.0 <= normalized_score <= 1.0:
-                continue
-            items.append({"label": label.strip(), "score": normalized_score})
-    elif (
-        parsed
-        and all(isinstance(key, str) for key in parsed)
-        and all(isinstance(value, (int, float)) for value in parsed.values())
-    ):
-        for label, score in parsed.items():
-            normalized_score = float(score)
-            if not 0.0 <= normalized_score <= 1.0:
-                continue
-            items.append({"label": str(label).strip(), "score": normalized_score})
-
-    items = [item for item in items if item["label"]]
-    items.sort(key=lambda item: item["score"], reverse=True)
-    return {"classification_scores": items[:5]}
+    return {"classification_scores": []}
 
 
 def _normalize_reference_segmentation_artifacts(parsed: dict[str, Any]) -> list[dict[str, Any]]:
@@ -1111,6 +1087,18 @@ def _reject_unknown_contract_keys(
         raise ValueError(f"{contract_name} output included unsupported top-level fields: {joined}")
 
 
+def _reject_missing_contract_keys(
+    parsed: dict[str, Any],
+    *,
+    required_keys: set[str],
+    contract_name: str,
+) -> None:
+    missing_keys = sorted(str(key) for key in required_keys if str(key) not in parsed)
+    if missing_keys:
+        joined = ", ".join(missing_keys)
+        raise ValueError(f"{contract_name} output omitted required top-level fields: {joined}")
+
+
 def diagnose_vision_output_text(
     text: str,
     *,
@@ -1235,18 +1223,16 @@ def parse_vision_output_text(
             raise ValueError(
                 "Reference-classification output echoed the input instead of returning the required contract."
             )
-        if "classification_scores" in parsed:
-            _reject_unknown_contract_keys(
-                parsed,
-                allowed_keys={"classification_scores"},
-                contract_name="Reference-classification",
-            )
-        elif "scores" in parsed:
-            _reject_unknown_contract_keys(
-                parsed,
-                allowed_keys={"scores"},
-                contract_name="Reference-classification",
-            )
+        _reject_unknown_contract_keys(
+            parsed,
+            allowed_keys={"classification_scores"},
+            contract_name="Reference-classification",
+        )
+        _reject_missing_contract_keys(
+            parsed,
+            required_keys={"classification_scores"},
+            contract_name="Reference-classification",
+        )
         normalized = _normalize_reference_classification_payload(parsed)
         if not normalized["classification_scores"]:
             raise ValueError("Reference-classification output did not match the required contract shape.")
@@ -1267,6 +1253,17 @@ def parse_vision_output_text(
         _reject_unknown_contract_keys(
             parsed,
             allowed_keys=set(
+                expected_json_keys(
+                    vision_contract_profile=resolved_contract_profile,
+                    provider_name=provider_name,
+                    request=request,
+                )
+            ),
+            contract_name="Reference-understanding",
+        )
+        _reject_missing_contract_keys(
+            parsed,
+            required_keys=set(
                 expected_json_keys(
                     vision_contract_profile=resolved_contract_profile,
                     provider_name=provider_name,

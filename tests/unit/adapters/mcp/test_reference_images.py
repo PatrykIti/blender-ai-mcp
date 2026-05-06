@@ -3042,6 +3042,143 @@ def test_reference_images_ready_session_list_remove_and_clear_preserve_orchestra
     assert cleared.reference_orchestrator_feedback.current_guided_step == "create_primary_masses"
 
 
+def test_reference_images_list_and_remove_rebuild_reference_understanding_gate_ids_from_gate_plan(tmp_path):
+    active_path = tmp_path / "active.png"
+    active_path.write_bytes(b"active")
+
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="table",
+            surface_profile="llm-guided",
+            guided_flow_state={
+                "current_step": "create_primary_masses",
+                "family": "primary_masses",
+                "allowed_families": ["reference_context", "primary_masses", "inspect_validate"],
+                "next_actions": ["create_primary_masses"],
+            },
+            gate_plan={
+                "plan_id": "generic_quality_gate_plan",
+                "domain_profile": "generic",
+                "gates": [
+                    {
+                        "gate_id": "seat_presence",
+                        "gate_type": "required_part",
+                        "label": "seat is represented",
+                        "target_kind": "reference_part",
+                        "target_label": "seat_core",
+                        "required": True,
+                        "priority": "high",
+                        "status": "pending",
+                        "status_reason": "missing_required_part",
+                        "verification_strategy": "object_existence",
+                        "proposal_sources": ["reference_understanding"],
+                        "allowed_correction_families": ["primary_masses", "inspect_validate"],
+                        "evidence_requirements": [{"evidence_kind": "scene_truth", "required": True}],
+                        "evidence_refs": [],
+                    }
+                ],
+                "policy_warnings": [],
+                "completion_blockers": [],
+                "required_gate_count": 1,
+                "optional_gate_count": 0,
+                "status_summary": {
+                    "required_total": 1,
+                    "required_passed": 0,
+                    "required_blocking": 1,
+                    "optional_total": 0,
+                    "status_counts": {"pending": 1},
+                },
+            },
+            reference_understanding_summary={
+                "status": "available",
+                "understanding_id": "understanding_table_feedback",
+                "goal": "table",
+                "reference_ids": ["ref_active"],
+                "subject": {
+                    "label": "table",
+                    "category": "hard_surface",
+                    "confidence": 0.9,
+                    "uncertainty_notes": [],
+                },
+                "style": {
+                    "style_label": "hard_surface",
+                    "confidence": 0.8,
+                    "notes": [],
+                },
+                "required_parts": [],
+                "non_goals": [],
+                "construction_strategy": {
+                    "construction_path": "hard_surface",
+                    "primary_family": "modeling_mesh",
+                    "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+                    "stage_sequence": ["primary_masses"],
+                    "finish_policy": "inspect_first",
+                },
+                "router_handoff_hints": {
+                    "preferred_family": "modeling_mesh",
+                    "allowed_guided_families": ["reference_context", "primary_masses", "secondary_parts"],
+                    "sculpt_policy": "hidden",
+                },
+                "gate_proposals": [],
+                "visual_evidence_refs": [],
+                "visual_metrics": [],
+                "classification_scores": [],
+                "segmentation_artifacts": [],
+                "verification_requirements": [],
+                "source_provenance": [{"source": "reference_understanding"}],
+                "boundary_policy": {
+                    "advisory_only": True,
+                    "not_truth_source": True,
+                    "may_unlock_tools": False,
+                    "may_pass_gates": False,
+                    "may_propose_gates": True,
+                },
+            },
+            reference_understanding_gate_ids=None,
+            reference_strategy_state={
+                "status": "available",
+                "understanding_id": "understanding_table_feedback",
+                "construction_path": "hard_surface",
+                "primary_family": "modeling_mesh",
+                "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+                "blocked_families": ["sculpt_region"],
+                "sculpt_policy": "hidden",
+                "finish_policy": "inspect_first",
+                "recommended_next_checkpoint": "reference_compare_stage_checkpoint",
+            },
+            reference_images=[
+                {
+                    "reference_id": "ref_active",
+                    "goal": "table",
+                    "label": "table_ref",
+                    "notes": None,
+                    "target_object": None,
+                    "target_view": None,
+                    "stored_path": str(active_path),
+                    "host_visible_path": str(active_path),
+                    "media_type": "image/png",
+                    "source_kind": "local_path",
+                    "original_path": str(active_path),
+                    "added_at": "2026-04-05T10:00:00Z",
+                }
+            ],
+        ),
+    )
+
+    listed = asyncio.run(reference_images(ctx, action="list"))
+    removed = asyncio.run(reference_images(ctx, action="remove", reference_id="ref_active"))
+
+    assert listed.reference_understanding_gate_ids == ["seat_presence"]
+    assert listed.reference_orchestrator_feedback is not None
+    assert listed.reference_orchestrator_feedback.active_gate_ids == ["seat_presence"]
+    assert removed.reference_understanding_gate_ids == ["seat_presence"]
+    assert removed.reference_orchestrator_feedback is not None
+    assert removed.reference_orchestrator_feedback.active_gate_ids == ["seat_presence"]
+
+
 def test_reference_images_ready_goal_refresh_reapplies_visibility_on_attach_and_clear(tmp_path, monkeypatch):
     image_front = tmp_path / "front.png"
     image_front.write_bytes(b"front")
