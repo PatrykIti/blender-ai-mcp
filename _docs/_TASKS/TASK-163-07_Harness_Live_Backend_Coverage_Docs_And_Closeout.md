@@ -20,6 +20,28 @@
   proof output capture; this leaf should reuse that seam rather than inventing a
   second closeout harness
 
+## Progress Notes
+
+- 2026-05-06: local MLX RU reliability is now tracked explicitly as
+  [TASK-163-07-01](./TASK-163-07-01_Local_MLX_Reference_Understanding_JSON_Reliability.md)
+  so the remaining closeout blocker has a concrete owner seam and validation lane.
+- 2026-05-06: `scripts/vision_harness.py` now exposes a real live
+  `--mode reference-understanding` path instead of only the providerless
+  fixture-only RU mode.
+- 2026-05-06: external live RU proof on the repo-local squirrel reference is
+  green with:
+  - backend: `openai_compatible_external`
+  - provider: `openrouter`
+  - model: `qwen/qwen3-vl-32b-instruct`
+- 2026-05-06: the exact historical external proof command in this task file is
+  currently stale because OpenRouter now returns `404 No endpoints found` for
+  `google/gemma-3-27b-it:free`.
+- 2026-05-06: local live RU proof is still blocked on the current MLX path:
+  `mlx-community/Qwen3-VL-4B-Instruct-4bit` returned
+  `MLX local vision runtime did not return valid JSON content.` on the live RU
+  harness mode, so the umbrella should stay open until that lane is either
+  fixed or explicitly waived with scope-owner approval.
+
 ## Pseudocode
 
 ```python
@@ -66,6 +88,6 @@ record_closeout_with_real_or_explicitly_skipped_proof_lanes()
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest ./tests/unit -q`
 - `poetry run python scripts/run_e2e_tests.py`
-- exact local/external RU proof pair expected for closeout:
-  - local: `poetry run python scripts/vision_harness.py --backend mlx_local --golden-json tests/fixtures/vision_eval/squirrel_head_to_face_camera_perspective/golden.json --mlx-model mlx-community/Qwen3-VL-4B-Instruct-4bit`
-  - external: `poetry run python scripts/vision_harness.py --backend openai_compatible_external --external-provider openrouter --external-contract-profile google_family_compare --openrouter-model "google/gemma-3-27b-it:free" --openrouter-api-key-env OPENROUTER_API_KEY --golden-json tests/fixtures/vision_eval/squirrel_head_to_face_camera_perspective/golden.json`
+- current live RU proof commands on the shared squirrel reference image:
+  - local: `poetry run python scripts/vision_harness.py --backend mlx_local --mode reference-understanding --goal "classify the attached low-poly squirrel reference for bounded Blender planning" --reference _docs/_TEST_IMAGES/squirrel-front.png --mlx-model mlx-community/Qwen3-VL-4B-Instruct-4bit`
+  - external: `poetry run python scripts/vision_harness.py --backend openai_compatible_external --mode reference-understanding --goal "classify the attached low-poly squirrel reference for bounded Blender planning" --reference _docs/_TEST_IMAGES/squirrel-front.png --external-provider openrouter --external-contract-profile generic_full --openrouter-model qwen/qwen3-vl-32b-instruct --openrouter-api-key-env OPENROUTER_API_KEY`

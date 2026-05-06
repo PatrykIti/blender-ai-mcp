@@ -144,19 +144,53 @@ def _build_request_from_args(args: Any, golden: ResolvedVisionGoldenScenario | N
     prompt_hint = _effective_prompt_hint(args, golden)
     bundle_json = _effective_bundle_json(args, golden)
     references_json = _effective_references_json(args, golden)
+    request_mode = getattr(args, "mode", None)
 
     if bundle_json:
         bundle_path = Path(bundle_json)
         bundle_data = _resolve_bundle_paths(_read_json(bundle_path), bundle_path)
         bundle = VisionCaptureBundleContract.model_validate(bundle_data)
-        reference_records = tuple(
-            ReferenceImageRecordContract.model_validate(item)
-            for item in (
-                _resolve_reference_paths(_read_json(Path(references_json)), Path(references_json)).get("references", [])
-                if references_json
-                else []
+        if references_json:
+            raw_reference_items = _resolve_reference_paths(
+                _read_json(Path(references_json)), Path(references_json)
+            ).get("references", [])
+        else:
+            raw_reference_items = [
+                {
+                    "reference_id": f"cli_ref_{index}",
+                    "goal": goal,
+                    "label": f"reference_{index}",
+                    "media_type": "image/png" if str(path).lower().endswith(".png") else "image/jpeg",
+                    "source_kind": "local_path",
+                    "original_path": str(Path(path).resolve()),
+                    "stored_path": str(Path(path).resolve()),
+                    "host_visible_path": str(Path(path).resolve()),
+                    "added_at": "2026-05-06T00:00:00Z",
+                }
+                for index, path in enumerate(args.reference or [], start=1)
+            ]
+
+        reference_records = tuple(ReferenceImageRecordContract.model_validate(item) for item in raw_reference_items)
+        if request_mode == "reference-understanding":
+            return VisionRequest(
+                goal=goal,
+                images=tuple(
+                    VisionImageInput(
+                        path=image.image_path,
+                        role="reference",
+                        label=image.label,
+                        media_type=image.media_type,
+                    )
+                    for image in build_reference_capture_images(reference_records)
+                ),
+                target_object=target_object,
+                prompt_hint="reference_understanding",
+                metadata={
+                    "mode": "reference_understanding",
+                    "reference_ids": [record.reference_id for record in reference_records],
+                    "source": "vision_harness",
+                },
             )
-        )
         request = build_vision_request_from_capture_bundle(
             bundle,
             goal=goal,
@@ -216,6 +250,23 @@ def _build_request_from_args(args: Any, golden: ResolvedVisionGoldenScenario | N
         truth_summary=_read_json(Path(args.truth_json)) if args.truth_json else None,
         metadata={"source": "vision_harness"},
     )
+    if request_mode == "reference-understanding":
+        return VisionRequest(
+            goal=request.goal,
+            images=tuple(image for image in request.images if image.role == "reference"),
+            target_object=request.target_object,
+            prompt_hint="reference_understanding",
+            truth_summary=request.truth_summary,
+            metadata={
+                **request.metadata,
+                "mode": "reference_understanding",
+                "reference_ids": [
+                    f"fixture_ref_{index}"
+                    for index, image in enumerate(request.images, start=1)
+                    if image.role == "reference"
+                ],
+            },
+        )
     if getattr(args, "fixture_only", None) == "reference-understanding":
         return VisionRequest(
             goal=request.goal,
@@ -368,6 +419,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--bundle-json")
     parser.add_argument("--references-json")
     parser.add_argument("--truth-json")
+    parser.add_argument("--mode", choices=["compare", "reference-understanding"], default="compare")
     parser.add_argument("--before", action="append")
     parser.add_argument("--after", action="append")
     parser.add_argument("--reference", action="append")
@@ -415,7 +467,14 @@ def main(argv: list[str] | None = None) -> int:
     if args.golden_json is None and args.goal is None:
         parser.error("Provide --goal or --golden-json")
 
-    if args.golden_json is None and args.bundle_json is None and not any([args.before, args.after, args.reference]):
+    if args.mode == "reference-understanding":
+        if args.bundle_json is None and not args.reference:
+            parser.error("Provide --reference or --bundle-json when --mode=reference-understanding")
+        if args.bundle_json is not None and args.references_json is None and not args.reference:
+            parser.error(
+                "Provide --references-json or --reference when --mode=reference-understanding uses --bundle-json"
+            )
+    elif args.golden_json is None and args.bundle_json is None and not any([args.before, args.after, args.reference]):
         parser.error("Provide --bundle-json or at least one of --before/--after/--reference")
 
     results = asyncio.run(_run(args))

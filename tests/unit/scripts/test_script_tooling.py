@@ -549,3 +549,62 @@ def test_vision_harness_fixture_only_reference_understanding_keeps_backend_path_
     assert '"status": "fixture_only"' in output
     assert '"fixture_only_mode": "reference-understanding"' in output
     assert '"mode": "reference_understanding"' in output
+
+
+def test_vision_harness_live_reference_understanding_mode_uses_reference_images_only(tmp_path, monkeypatch, capsys):
+    module = _load_script("vision_harness")
+
+    async def _fake_run(args):
+        request = module._build_request_from_args(args)
+        return [
+            {
+                "backend": "mlx_local",
+                "status": "success",
+                "result": {
+                    "goal": request.goal,
+                    "image_count": len(request.images),
+                    "image_roles": [image.role for image in request.images],
+                    "metadata": request.metadata,
+                },
+            }
+        ]
+
+    monkeypatch.setattr(module, "_run", _fake_run)
+
+    reference_path = tmp_path / "reference.png"
+    reference_path.write_bytes(b"ref")
+
+    result = module.main(
+        [
+            "--backend",
+            "mlx_local",
+            "--goal",
+            "low poly squirrel",
+            "--mode",
+            "reference-understanding",
+            "--reference",
+            str(reference_path),
+        ]
+    )
+
+    assert result == 0
+    output = capsys.readouterr().out
+    assert '"image_count": 1' in output
+    assert '"image_roles": [' in output
+    assert '"mode": "reference_understanding"' in output
+
+
+def test_vision_harness_reference_understanding_mode_rejects_missing_reference_inputs():
+    module = _load_script("vision_harness")
+
+    with pytest.raises(SystemExit):
+        module.main(
+            [
+                "--backend",
+                "mlx_local",
+                "--goal",
+                "low poly squirrel",
+                "--mode",
+                "reference-understanding",
+            ]
+        )

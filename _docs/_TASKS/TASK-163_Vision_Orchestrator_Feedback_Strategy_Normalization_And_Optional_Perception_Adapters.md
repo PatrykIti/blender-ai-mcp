@@ -129,3 +129,8 @@ After this umbrella finishes:
     breaking guided sessions
 - 2026-05-05: `TASK-163-07` remains open for the live-backend harness proof,
   final docs sweep, and umbrella closeout
+- 2026-05-06: `TASK-163-07` now has a real live `reference-understanding`
+  harness mode plus one green external RU proof on the squirrel reference, but
+  the local MLX RU lane still blocks closeout because
+  `mlx-community/Qwen3-VL-4B-Instruct-4bit` did not return parseable JSON on
+  the live RU mode.
