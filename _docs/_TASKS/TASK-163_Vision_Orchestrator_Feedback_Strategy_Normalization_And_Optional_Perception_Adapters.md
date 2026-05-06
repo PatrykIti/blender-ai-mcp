@@ -1,6 +1,6 @@
 # TASK-163: Vision Orchestrator Feedback, Strategy Normalization, And Optional Perception Adapters
 
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** Vision / Guided Runtime / Orchestrator Feedback
 **Estimated Effort:** Large
@@ -134,3 +134,19 @@ After this umbrella finishes:
   the local MLX RU lane still blocks closeout because
   `mlx-community/Qwen3-VL-4B-Instruct-4bit` did not return parseable JSON on
   the live RU mode.
+- 2026-05-06: `TASK-163-07-01` resolved the local MLX RU truncation blocker and
+  `TASK-163-07` closed with both local and external live RU proof on the
+  shared squirrel reference lane.
+
+## Completion Summary
+
+- compact orchestrator-facing RU feedback now ships on existing
+  `reference_images(...)`, `router_*`, and staged checkpoint surfaces
+- session-owned `reference_strategy_state` now preserves normalized
+  construction-path policy
+- lightweight server-owned RU metrics, optional classifier support, and
+  optional segmentation linkage all remain advisory-only
+- the closeout proof now includes:
+  - one local live RU lane
+  - one external live RU lane
+  - synchronized task docs and historical changelog

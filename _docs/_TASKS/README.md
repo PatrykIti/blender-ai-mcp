@@ -4,8 +4,8 @@ Curated task board for promoted active work, promoted follow-on work, and select
 
 ## 📊 Statistics
 - **To Do:** 7 tasks
-- **In Progress:** 1 task
-- **Done:** 92
+- **In Progress:** 0 tasks
+- **Done:** 93
 - **Superseded:** 162
 
 ## 📐 Board Scope
@@ -42,9 +42,7 @@ flight.
 
 ## 🚧 In Progress
 
-| ID | Title | Priority | Notes |
-|----|-------|----------|-------|
-| [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md) | **Vision Orchestrator Feedback, Strategy Normalization, And Optional Perception Adapters** | 🔴 High | Board-level follow-on after TASK-158 for compact orchestrator-facing RU/runtime feedback on existing seams; RU views/visual metrics, session strategy state, compact transport projection, and the optional classifier/segmentation support-adapter wave are now landed, while the final live-backend/docs closeout remains open under `TASK-163-07`. |
+No currently promoted in-progress rows.
 
 ## 🚨 To Do
 
@@ -91,6 +89,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
 | [TASK-162](./TASK-162_Guided_Hidden_Tool_Error_Semantics_And_Recovery_Clarity.md) | **Guided Hidden-Tool Error Semantics And Recovery Clarity** | 🔴 High | 2026-05-06 |
+| [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md) | **Vision Orchestrator Feedback, Strategy Normalization, And Optional Perception Adapters** | 🔴 High | 2026-05-06 |
 | [TASK-161](./TASK-161_TASK-159_Closeout_Seam_And_Proof_Lane_Alignment.md) | **TASK-159 Closeout Seam And Proof-Lane Alignment** | 🔴 High | 2026-05-05 |
 | [TASK-159](./TASK-159_Modularize_Oversized_Guided_Runtime_And_Scene_Owner_Files.md) | **Modularize Oversized Guided Runtime And Scene Owner Files** | 🔴 High | 2026-05-04 |
 | [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md) | **Goal-Derived Quality Gates And Deterministic Verification** | 🔴 High | 2026-05-02 |

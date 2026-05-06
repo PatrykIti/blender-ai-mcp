@@ -1,20 +1,62 @@
 # TASK-163-07: Harness Live Backend Coverage, Docs, And Closeout
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md)
 **Objective:** Close the umbrella with live-backend proof lanes, final docs, and board/changelog closure.
 **Repository Touchpoints:** `tests/e2e/vision/`, `tests/e2e/integration/`, `tests/fixtures/vision_eval/`, `_docs/_VISION/`, `_docs/_MCP_SERVER/README.md`, `_docs/_TESTS/README.md`, `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/`
 **Acceptance Criteria:** at least one local and one external live RU lane are validated or explicitly recorded as intentionally skipped with a concrete reason; docs reflect the shipped compact feedback contract; board/changelog state is synchronized.
 
+## Completion Summary
+
+- added a real live `--mode reference-understanding` path to
+  `scripts/vision_harness.py` instead of relying only on fixture-only RU mode
+- validated one local and one external live RU proof lane on the shared
+  squirrel reference image:
+  - local: `mlx-community/Qwen3-VL-4B-Instruct-4bit`
+  - external: OpenRouter `qwen/qwen3-vl-32b-instruct`
+- replaced the earlier stale external closeout command that referenced
+  `google/gemma-3-27b-it:free`, because that OpenRouter route now returns
+  `404 No endpoints found`
+- closed the previously explicit MLX blocker through
+  [TASK-163-07-01](./TASK-163-07-01_Local_MLX_Reference_Understanding_JSON_Reliability.md)
+- kept the wider five-class RU harness matrix as future expansion work; the
+  current closeout operationalizes the squirrel proof lane that this umbrella
+  actually shipped
+
+## Coverage Vs Long Plan
+
+Covered from `_docs/blender-ai-mcp-vision-reference-understanding-plan.md` by
+`TASK-163`:
+
+- Stage 1 reference-understanding on the existing reference/guided seam
+- Stage 2 server-owned strategy apply through guided state/visibility/gate
+  policy
+- orchestrator-facing handoff/read model on existing surfaces
+- optional deterministic visual evidence
+- optional CLIP/SigLIP-style support classification seam
+- optional segmentation-sidecar linkage seam
+
+Not covered by `TASK-163` and still outside this umbrella closeout:
+
+- explicit low-poly facet refinement stage / macro family wave
+- the broader five-class RU fixture matrix as a mandatory closeout proof gate
+- heavier later adapters such as GroundingDINO / OWL-ViT localization
+- domain-consumer implementation tracks owned by `TASK-135-03`, `TASK-135`,
+  and `TASK-140`
+
 ## Implementation Notes
 
-- cover five golden classes:
+- target coverage matrix for future RU harness expansion:
   - low-poly squirrel
   - smooth organic creature
   - hard-surface product
   - architectural facade
   - dental crown mockup
+- current repo-supported closeout proof is operationalized only for the shared
+  squirrel RU lane. If the full five-class matrix becomes mandatory before
+  umbrella closure, split those additional fixture/proof lanes into explicit
+  follow-on leaves before claiming that coverage.
 - keep the low-poly domain consumer ownership with `TASK-135-03`
 - `scripts/vision_harness.py` is the owner for fixture/live RU eval commands and
   proof output capture; this leaf should reuse that seam rather than inventing a
@@ -76,16 +118,18 @@ record_closeout_with_real_or_explicitly_skipped_proof_lanes()
 
 ## Changelog Impact
 
-- add the final `_docs/_CHANGELOG/*` closeout entry for `TASK-163`
+- covered by [321. TASK-163 harness closeout and MLX RU proof](../_CHANGELOG/321-2026-05-06-task-163-harness-closeout-and-mlx-ru-proof.md)
 
 ## Status / Board Update
 
-- close the `TASK-163` umbrella only after this leaf records the final proof lanes
-- if external live-backend validation stays intentionally skipped, record that explicitly in the closeout summary
+- this leaf is now closed and no longer blocks umbrella closeout
+- if future RU harness expansion revives the five-class matrix as required
+  scope, track that as a new explicit follow-on instead of reopening this leaf
 
 ## Validation Commands
 
 - `git diff --check`
+- `poetry run pre-commit run --all-files --show-diff-on-failure`
 - `PYTHONPATH=. poetry run pytest ./tests/unit -q`
 - `poetry run python scripts/run_e2e_tests.py`
 - current live RU proof commands on the shared squirrel reference image:

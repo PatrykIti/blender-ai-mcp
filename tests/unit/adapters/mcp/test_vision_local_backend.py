@@ -55,6 +55,15 @@ def _config(**overrides) -> Config:
     return Config(**payload)
 
 
+def _reference_understanding_request(image_path: str) -> VisionRequest:
+    return VisionRequest(
+        goal="classify the attached low-poly squirrel reference for bounded Blender planning",
+        images=(VisionImageInput(path=image_path, role="reference", label="squirrel-front"),),
+        prompt_hint="reference_understanding",
+        metadata={"mode": "reference_understanding", "reference_ids": ["fixture_ref_1"]},
+    )
+
+
 def test_local_backend_init_does_not_import_heavy_runtime(monkeypatch):
     calls: list[str] = []
 
@@ -450,3 +459,70 @@ def test_mlx_local_backend_rejects_invalid_json_output(monkeypatch, tmp_path):
 
     with pytest.raises(VisionBackendUnavailableError, match="valid JSON"):
         asyncio.run(backend.analyze(request))
+
+
+def test_mlx_local_backend_raises_reference_understanding_output_cap(monkeypatch, tmp_path):
+    image_path = tmp_path / "mlx_ru.png"
+    image_path.write_bytes(b"fake-png")
+    request = _reference_understanding_request(str(image_path))
+
+    captured: dict[str, Any] = {}
+
+    class FakeGenerationResult:
+        def __init__(self, text: str) -> None:
+            self.text = text
+
+    class FakeMLXVLM:
+        @staticmethod
+        def load(model_source):
+            return "model", "processor"
+
+        @staticmethod
+        def generate(model, processor, *args, **kwargs):
+            captured["max_tokens"] = kwargs.get("max_tokens")
+            return FakeGenerationResult(
+                '{"subject":{"label":"low poly squirrel","category":"creature","confidence":0.8,"uncertainty_notes":[]},'
+                '"style":{"style_label":"low_poly_faceted","confidence":0.8,"notes":[]},'
+                '"views":[{"view_id":"front","detected":true,"confidence":0.9,"reference_ids":["fixture_ref_1"],"key_features":["faceted head"]}],'
+                '"required_parts":[{"part_label":"body core","target_label":"body_core","construction_hint":"Start with a simple faceted primary mass.","priority":"high","source_reference_ids":["fixture_ref_1"]}],'
+                '"non_goals":[],"construction_strategy":{"construction_path":"low_poly_facet","primary_family":"modeling_mesh","allowed_families":["macro","modeling_mesh","inspect_only"],"stage_sequence":["primary_masses"],"finish_policy":"preserve_facets"},'
+                '"router_handoff_hints":{"preferred_family":"modeling_mesh","allowed_guided_families":["reference_context","primary_masses"],"sculpt_policy":"hidden"},'
+                '"gate_proposals":[],"visual_evidence_refs":[],"verification_requirements":[],"classification_scores":[],"segmentation_artifacts":[]}'
+            )
+
+    class FakePromptUtils:
+        @staticmethod
+        def apply_chat_template(processor, config, prompt_payload, num_images=0):
+            return f"PROMPT::{num_images}"
+
+    class FakeUtils:
+        @staticmethod
+        def load_config(model_source):
+            return {"model_source": model_source}
+
+    def _fake_import(name: str):
+        if name == "mlx_vlm":
+            return FakeMLXVLM
+        if name == "mlx_vlm.prompt_utils":
+            return FakePromptUtils
+        if name == "mlx_vlm.utils":
+            return FakeUtils
+        raise ModuleNotFoundError(name)
+
+    monkeypatch.setattr(importlib, "import_module", _fake_import)
+
+    backend = MLXLocalVisionBackend(
+        build_vision_runtime_config(
+            _config(
+                VISION_PROVIDER="mlx_local",
+                VISION_MLX_MODEL_ID="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                VISION_LOCAL_MODEL_ID=None,
+                VISION_MAX_TOKENS=400,
+            )
+        )
+    )
+
+    result = asyncio.run(backend.analyze(request))
+
+    assert result["status"] == "available"
+    assert captured["max_tokens"] == 900

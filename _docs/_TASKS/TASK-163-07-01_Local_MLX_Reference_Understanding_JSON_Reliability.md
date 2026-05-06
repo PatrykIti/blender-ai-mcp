@@ -1,11 +1,24 @@
 # TASK-163-07-01: Local MLX Reference-Understanding JSON Reliability
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-163-07](./TASK-163-07_Harness_Live_Backend_Coverage_Docs_And_Closeout.md)
 **Objective:** Make the local MLX live `reference-understanding` harness lane return parseable bounded JSON so `TASK-163` can close with both local and external RU proof.
-**Repository Touchpoints:** `server/adapters/mcp/vision/prompting.py`, `server/adapters/mcp/vision/parsing.py`, `server/adapters/mcp/vision/backends.py`, `scripts/vision_harness.py`, `tests/unit/adapters/mcp/test_vision_prompting.py`, `tests/unit/adapters/mcp/test_vision_parsing.py`, `tests/unit/scripts/test_script_tooling.py`, `tests/e2e/vision/test_openrouter_qwen_json_mode.py`
+**Repository Touchpoints:** `server/adapters/mcp/vision/prompting.py`, `server/adapters/mcp/vision/parsing.py`, `server/adapters/mcp/vision/backends.py`, `scripts/vision_harness.py`, `tests/unit/adapters/mcp/test_vision_prompting.py`, `tests/unit/adapters/mcp/test_vision_parsing.py`, `tests/unit/adapters/mcp/test_vision_local_backend.py`, `tests/unit/scripts/test_script_tooling.py`
 **Acceptance Criteria:** the local MLX RU harness lane succeeds on the shared squirrel reference image with bounded JSON; no external-provider path regresses; `TASK-163-07` can record one green local RU proof instead of a blocker note.
+
+## Completion Summary
+
+- identified the actual local MLX blocker as output truncation on the
+  reference-understanding path rather than a parser-only contract mismatch
+- raised the MLX RU output cap to a minimum of `900` tokens for
+  `reference_understanding` requests so the local model can return the full
+  bounded contract on the shared squirrel reference lane
+- tightened the MLX diagnostics path so local invalid-JSON failures now carry
+  the same `diagnostics_suffix` style context used for external runtime
+  debugging
+- added the missing MLX backend owner coverage and reran the live external RU
+  regression lane after the local fix
 
 ## Context
 
@@ -57,6 +70,7 @@ confirm_external_ru_harness_still_passes()
 
 - `tests/unit/adapters/mcp/test_vision_prompting.py`
 - `tests/unit/adapters/mcp/test_vision_parsing.py`
+- `tests/unit/adapters/mcp/test_vision_local_backend.py`
 - `tests/unit/scripts/test_script_tooling.py` when harness CLI/runtime behavior changes
 - reuse the existing live lane in `TASK-163-07` after the unit owner lanes are green
 
@@ -67,8 +81,7 @@ confirm_external_ru_harness_still_passes()
 
 ## Changelog Impact
 
-- no dedicated changelog entry by default; fold into the final `TASK-163-07`
-  closeout entry unless this blocker turns into a larger standalone runtime fix
+- covered by [321. TASK-163 harness closeout and MLX RU proof](../_CHANGELOG/321-2026-05-06-task-163-harness-closeout-and-mlx-ru-proof.md)
 
 ## Status / Board Update
 
@@ -79,7 +92,8 @@ confirm_external_ru_harness_still_passes()
 ## Validation Commands
 
 - `git diff --check`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_parsing.py tests/unit/scripts/test_script_tooling.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_parsing.py tests/unit/adapters/mcp/test_vision_local_backend.py tests/unit/scripts/test_script_tooling.py -q`
+- `PYTHONPATH=. poetry run pytest ./tests/unit -q`
 - local RU proof lane:
   - `poetry run python scripts/vision_harness.py --backend mlx_local --mode reference-understanding --goal "classify the attached low-poly squirrel reference for bounded Blender planning" --reference _docs/_TEST_IMAGES/squirrel-front.png --mlx-model mlx-community/Qwen3-VL-4B-Instruct-4bit`
 - external regression check after the local fix:

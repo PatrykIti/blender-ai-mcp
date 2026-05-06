@@ -31,6 +31,7 @@ from .prompting import (
 logger = logging.getLogger(__name__)
 
 _QWEN_MODEL_MARKERS = ("qwen", "qvq")
+_REFERENCE_UNDERSTANDING_MIN_OUTPUT_TOKENS = 900
 
 
 def _media_type_for(path: str, fallback: str) -> str:
@@ -201,6 +202,12 @@ def _truncate_text(value: str | None, *, limit: int = 600) -> str | None:
     if len(text) <= limit:
         return text
     return f"{text[:limit]}... [truncated {len(text) - limit} chars]"
+
+
+def _output_token_cap(*, runtime_config: VisionRuntimeConfig, request: VisionRequest) -> int:
+    if _is_reference_understanding_request(request):
+        return max(runtime_config.max_tokens, _REFERENCE_UNDERSTANDING_MIN_OUTPUT_TOKENS)
+    return runtime_config.max_tokens
 
 
 def _request_payload_summary(
@@ -583,7 +590,7 @@ class MLXLocalVisionBackend(VisionBackend):
                     formatted_prompt,
                     image_paths,
                     verbose=False,
-                    max_tokens=self._runtime_config.max_tokens,
+                    max_tokens=_output_token_cap(runtime_config=self._runtime_config, request=request),
                 )
             except TypeError:
                 output = mlx_vlm.generate(
@@ -592,19 +599,22 @@ class MLXLocalVisionBackend(VisionBackend):
                     prompt=formatted_prompt,
                     image=image_paths,
                     verbose=False,
-                    max_tokens=self._runtime_config.max_tokens,
+                    max_tokens=_output_token_cap(runtime_config=self._runtime_config, request=request),
                 )
 
             output_text = getattr(output, "text", output)
             if not output_text:
                 raise VisionBackendUnavailableError("MLX local vision runtime returned no output.")
             raw_text = str(output_text)
-            self._last_output_diagnostics = diagnose_vision_output_text(raw_text)
+            self._last_output_diagnostics = diagnose_vision_output_text(raw_text, request=request)
             parsed_content = parse_vision_output_text(raw_text, request)
         except VisionBackendUnavailableError:
             raise
         except (json.JSONDecodeError, ValueError) as exc:
-            raise VisionBackendUnavailableError("MLX local vision runtime did not return valid JSON content.") from exc
+            raise VisionBackendUnavailableError(
+                "MLX local vision runtime did not return valid JSON content."
+                f"{_diagnostics_suffix(self._last_output_diagnostics)}"
+            ) from exc
         except Exception as exc:
             raise VisionBackendUnavailableError(f"MLX local vision inference failed: {exc}") from exc
 
