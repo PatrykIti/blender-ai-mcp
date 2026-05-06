@@ -183,13 +183,14 @@ def test_guided_surface_contract_parity_over_stdio(tmp_path: Path):
             )
             assert cleanup == "Scene cleaned."
 
-            batch_attach = result_payload(
+            with pytest.raises(ToolError, match="one reference per call"):
                 await client.call_tool(
-                    "reference_images",
-                    {"action": "attach", "images": [{"source_path": str(image)}]},
+                    "call_tool",
+                    {
+                        "tool": "reference_images",
+                        "params": {"action": "attach", "images": [{"source_path": str(image)}]},
+                    },
                 )
-            )
-            assert "one reference per call" in str(batch_attach["error"])
 
             staged_attach = result_payload(
                 await client.call_tool(

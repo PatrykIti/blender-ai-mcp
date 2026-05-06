@@ -59,6 +59,7 @@ from server.adapters.mcp.contracts.scene import (
     SceneSymmetrySemanticsContract,
 )
 from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
+from server.adapters.mcp.guided_contract import canonicalize_reference_images_arguments
 from server.adapters.mcp.sampling.result_types import (
     AssistantBudgetContract,
     AssistantRunResult,
@@ -4311,19 +4312,31 @@ def test_reference_images_attach_list_remove_and_clear(tmp_path, monkeypatch):
 
 
 def test_reference_images_attach_batch_shape_returns_actionable_error():
-    ctx = FakeContext()
-
-    result = asyncio.run(
-        reference_images(
-            ctx,
-            action="attach",
-            images=[{"source_path": "/tmp/front.png"}, {"source_path": "/tmp/side.png"}],
+    try:
+        canonicalize_reference_images_arguments(
+            {
+                "action": "attach",
+                "images": [{"source_path": "/tmp/front.png"}, {"source_path": "/tmp/side.png"}],
+            }
         )
-    )
+    except ValueError as exc:
+        assert "one reference per call" in str(exc)
+    else:
+        raise AssertionError("expected canonicalizer to reject images=[...] compatibility shape")
 
-    assert result.error is not None
-    assert "one reference per call" in result.error
-    assert result.reference_count == 0
+
+def test_reference_images_attach_source_paths_shape_returns_actionable_error():
+    try:
+        canonicalize_reference_images_arguments(
+            {
+                "action": "attach",
+                "source_paths": ["/tmp/front.png", "/tmp/side.png"],
+            }
+        )
+    except ValueError as exc:
+        assert "source_paths=[...]" in str(exc)
+    else:
+        raise AssertionError("expected canonicalizer to reject source_paths=[...] compatibility shape")
 
 
 def test_reference_compare_checkpoint_uses_goal_and_matching_references(tmp_path, monkeypatch):

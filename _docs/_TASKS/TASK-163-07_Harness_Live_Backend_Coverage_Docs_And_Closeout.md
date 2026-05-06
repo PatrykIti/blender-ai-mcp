@@ -75,9 +75,6 @@ Not covered by `TASK-163` and still outside this umbrella closeout:
   - backend: `openai_compatible_external`
   - provider: `openrouter`
   - model: `qwen/qwen3-vl-32b-instruct`
-- 2026-05-06: the exact historical external proof command in this task file is
-  currently stale because OpenRouter now returns `404 No endpoints found` for
-  `google/gemma-3-27b-it:free`.
 - 2026-05-06: the historical local MLX blocker was split into
   [TASK-163-07-01](./TASK-163-07-01_Local_MLX_Reference_Understanding_JSON_Reliability.md)
   and resolved later the same day, so this leaf no longer stays open on that
