@@ -4,7 +4,7 @@
 **Priority:** 🟠 High
 **Category:** Reconstruction / Organic Anatomy
 **Estimated Effort:** Large
-**Dependencies:** TASK-038, TASK-120, TASK-122, TASK-124
+**Dependencies:** TASK-038, TASK-120, TASK-122, TASK-124, TASK-157, TASK-163
 
 ## Objective
 
@@ -248,33 +248,87 @@ This umbrella does **not** cover:
 
 ## Repository Touchpoints
 
-- `server/adapters/mcp/prompts/`
+- `server/adapters/mcp/prompts/prompt_catalog.py`
+- `server/adapters/mcp/prompts/provider.py`
+- `server/adapters/mcp/prompts/rendering.py`
+- likely new `_docs/_PROMPTS/REFERENCE_GUIDED_ORGAN_BUILD.md`
 - `server/adapters/mcp/guided_mode.py`
 - `server/adapters/mcp/session_capabilities.py`
+- `server/adapters/mcp/session_capabilities_state.py`
+- `server/adapters/mcp/session_capabilities_flow.py`
+- `server/adapters/mcp/session_capabilities_runtime_glue.py`
 - `server/adapters/mcp/transforms/visibility_policy.py`
+- `server/adapters/mcp/transforms/quality_gate_verifier.py`
 - `server/adapters/mcp/discovery/search_documents.py`
+- `server/adapters/mcp/discovery/search_surface.py`
 - `server/adapters/mcp/contracts/reference.py`
+- `server/adapters/mcp/contracts/quality_gates.py`
 - `server/adapters/mcp/areas/reference.py`
-- `server/adapters/mcp/vision/`
+- `server/adapters/mcp/areas/reference_truth.py`
+- `server/adapters/mcp/areas/reference_understanding.py`
+- `server/adapters/mcp/areas/modeling.py`
+- `server/adapters/mcp/areas/mesh.py`
+- `server/adapters/mcp/areas/sculpt.py`
+- `server/adapters/mcp/areas/lattice.py`
 - `server/router/infrastructure/tools_metadata/`
-- future organ/anatomy-oriented MCP/tool surfacing under `server/adapters/mcp/`
-- `server/domain/tools/` and `server/application/tool_handlers/` if a new
-  bounded reconstruction-facing surface is introduced
-- `blender_addon/application/handlers/` if addon-side support becomes necessary
 - `tests/unit/adapters/mcp/`
-- `tests/unit/router/`
-- `tests/e2e/router/`
+- `tests/unit/tools/scene/`
+- `tests/unit/tools/sculpt/`
+- `tests/unit/tools/lattice/`
+- `tests/e2e/integration/`
 - `tests/e2e/vision/`
-- `_docs/_PROMPTS/`
 - `_docs/_VISION/`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
 - `_docs/_TESTS/README.md`
 - `_docs/_TASKS/README.md`
 
+## Repository Touchpoint Table
+
+| Path / Module | Scope | Expected Work |
+|---------------|-------|---------------|
+| `server/adapters/mcp/vision/prompting.py`, `server/adapters/mcp/vision/parsing.py`, and `server/adapters/mcp/areas/reference_understanding.py` | Organ-aware RU support | Add bounded organ vocabulary, fidelity hints, and medical-safe advisory interpretation on the existing RU seam |
+| `server/adapters/mcp/contracts/quality_gates.py` and `server/adapters/mcp/contracts/reference.py` | Domain contract | Define lobe/chamber/cavity/port gates and staged blockers using the existing generic gate substrate |
+| `server/adapters/mcp/areas/reference.py` and `server/adapters/mcp/areas/reference_truth.py` | Staged truth/checkpoints | Surface organ-specific failures and safe product-boundary messaging on the current staged envelopes |
+| `server/adapters/mcp/session_capabilities_state.py`, `session_capabilities_flow.py`, and `session_capabilities_runtime_glue.py` | Guided state | Add organ-domain stage sequencing and bounded correction routing without replacing the current session model |
+| `server/adapters/mcp/transforms/visibility_policy.py` and `server/adapters/mcp/discovery/search_surface.py` | Guided surface | Shape the bounded organ tool window and organic/anatomy search cues on the live runtime surface |
+| `server/adapters/mcp/areas/modeling.py`, `mesh.py`, `sculpt.py`, and `lattice.py` | Bounded reconstruction surface | Reuse or extend bounded organic/anatomy tools without turning free-form sculpt into the default public story |
+| `server/adapters/mcp/prompts/prompt_catalog.py`, `provider.py`, and a future organ prompt asset | Prompt assets | Expose one safe organ-oriented guided story on the current prompt surface |
+| `tests/unit/adapters/mcp/`, `tests/unit/tools/sculpt/`, `tests/unit/tools/lattice/`, `tests/e2e/integration/`, and future organ-focused `tests/e2e/vision/` lanes | Proof lanes | Prove safe domain boundaries, staged loop semantics, and bounded organic-surface behavior |
+
+## Execution Structure
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-137-01](./TASK-137-01_Organ_Domain_Boundary_Vocabulary_And_Fidelity_Tiers.md) | Define the first safe organ target classes, anatomy vocabulary, and medical-scope guardrails |
+| 2 | [TASK-137-02](./TASK-137-02_Guided_Organ_Loop_Relation_Semantics_And_Bounded_Surface.md) | Shape the guided organ loop, relation semantics, and bounded modeling/sculpt/lattice surface |
+| 3 | [TASK-137-03](./TASK-137-03_Organ_Regression_Docs_And_Medical_Guardrail_Closeout.md) | Lock the domain with regression, docs, and explicit non-clinical closeout criteria |
+
+## Test Matrix
+
+| Slice | Primary Validation Lane | Why |
+|------|--------------------------|-----|
+| organ vocabulary and safe domain boundary | unit prompt/parser/reference lanes | the first risk is overclaiming or under-specifying medical/anatomy semantics |
+| staged organ loop and bounded tool surface | unit guided-flow, visibility, search, sculpt, lattice, and reference lanes | the runtime must stay bounded while supporting organ-aware stages |
+| transport and staged truth | integration gate-transport lane plus future organ E2E | blockers and domain-boundary messaging must survive the real response path |
+| docs and operator safety | prompt/public-surface/test-doc audits | medical-safe limitations must match the shipped runtime contract |
+
+## Runtime / Security Contract Notes
+
+- organ reconstruction here is educational/visualization-oriented only; it is
+  not diagnosis, pathology interpretation, or patient-specific planning
+- keep `reference_understanding`, classifier scores, segmentation artifacts, and
+  any later organ-aware perception advisory-only; gate pass/fail authority
+  remains on the `TASK-157` verifier path
+- do not expose unrestricted sculpt or high-resolution anatomy workflows as the
+  default public story; stay within bounded modeling/sculpt/lattice slices
+- do not add new public organ-only MCP tools unless a dedicated surface review
+  promotes them
+
 ## Docs To Update
 
 - `_docs/_PROMPTS/README.md`
+- likely new `_docs/_PROMPTS/REFERENCE_GUIDED_ORGAN_BUILD.md`
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
@@ -284,14 +338,12 @@ This umbrella does **not** cover:
 ## Tests To Add/Update
 
 - focused unit coverage under `tests/unit/adapters/mcp/` for organ prompt
-  exposure, guided handoff, search shaping, and reference contracts
-- focused unit coverage under `tests/unit/router/` if organ-oriented session
-  shaping or correction contracts cross the router boundary
-- representative `tests/e2e/vision/` coverage for organ-reference scenarios
-- relation-aware regression coverage for lobe fusion, chamber/cavity embedding,
-  and inlet/outlet attachment cases
-- representative `tests/e2e/router/` coverage for organ-oriented guided handoff
-  and staged recovery flows
+  exposure, RU parsing/prompting, guided handoff, search shaping, and reference
+  contracts
+- focused unit coverage under `tests/unit/tools/sculpt/` and
+  `tests/unit/tools/lattice/` for any new bounded organ-surface operations
+- representative future `tests/e2e/vision/` coverage for organ-reference
+  scenarios plus integration coverage for staged transport
 
 ## Changelog Impact
 

@@ -1,0 +1,67 @@
+# TASK-137-01: Organ Domain Boundary, Vocabulary, And Fidelity Tiers
+
+**Status:** ⏳ To Do
+**Priority:** 🟠 High
+**Parent:** [TASK-137](./TASK-137_Anatomy_Aware_Reference_Guided_Organ_Reconstruction.md)
+**Objective:** Define the first safe organ target classes, anatomy vocabulary, fidelity tiers, and medical-scope guardrails on the existing RU/gate substrate.
+**Repository Touchpoints:** `server/adapters/mcp/vision/prompting.py`, `server/adapters/mcp/vision/parsing.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/contracts/quality_gates.py`, `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_truth.py`, likely new `_docs/_PROMPTS/REFERENCE_GUIDED_ORGAN_BUILD.md`, `_docs/_VISION/README.md`, `tests/unit/adapters/mcp/test_vision_prompting.py`, `tests/unit/adapters/mcp/test_vision_parsing.py`, `tests/unit/adapters/mcp/test_quality_gate_contracts.py`
+**Acceptance Criteria:** the repo names explicit non-clinical organ target classes and fidelity tiers; RU/reference/gate contracts can express organ-specific masses, chambers, lobes, cavities, and ports without implying medical diagnosis or patient-specific use.
+
+## Implementation Notes
+
+- start with safe visualization/teaching targets, not patient-specific or
+  diagnostic flows
+- define reusable organ nouns and relations:
+  - lobe
+  - chamber
+  - cavity
+  - inlet/outlet/port
+  - fused into mass
+  - embedded cavity
+  - attached landmark
+  - paired but separate
+- keep the medical boundary explicit in every contract and prompt surface
+
+## Pseudocode
+
+```python
+organ_class = select_safe_organ_target_class(goal, references)
+fidelity_tier = resolve_non_clinical_fidelity_tier(organ_class, goal)
+organ_vocab = build_organ_vocabulary(organ_class, fidelity_tier)
+
+ru_contract = extend_reference_understanding_contract(
+    domain_vocabulary=organ_vocab,
+    boundary_policy=medical_safe_boundary_policy(),
+)
+```
+
+## Runtime / Security Contract Notes
+
+- no diagnosis, pathology inference, regulatory claims, or patient-specific
+  planning
+- organ-aware RU remains advisory-only and bounded by the existing verifier
+  authority split
+- do not add a new public organ-only MCP tool in this slice
+
+## Tests To Add/Update
+
+- `tests/unit/adapters/mcp/test_vision_prompting.py`
+- `tests/unit/adapters/mcp/test_vision_parsing.py`
+- `tests/unit/adapters/mcp/test_quality_gate_contracts.py`
+
+## Docs To Update
+
+- likely new `_docs/_PROMPTS/REFERENCE_GUIDED_ORGAN_BUILD.md`
+- `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/README.md`
+- `_docs/_TESTS/README.md`
+
+## Changelog Impact
+
+- Add a `_docs/_CHANGELOG/*` entry when the first organ domain-contract slice
+  ships.
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_parsing.py tests/unit/adapters/mcp/test_quality_gate_contracts.py -q`

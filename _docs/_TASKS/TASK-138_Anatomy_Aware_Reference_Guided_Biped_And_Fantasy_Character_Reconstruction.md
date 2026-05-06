@@ -4,8 +4,7 @@
 **Priority:** 🔴 High
 **Category:** Reconstruction / Characters and Anatomy
 **Estimated Effort:** Large
-**Dependencies:** TASK-037, TASK-120, TASK-122, TASK-124, TASK-135
-**Follow-on After:** [TASK-135](./TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md)
+**Dependencies:** TASK-037, TASK-120, TASK-122, TASK-124, TASK-135, TASK-157, TASK-163
 
 ## Objective
 
@@ -280,33 +279,89 @@ This umbrella does **not** cover:
 
 ## Repository Touchpoints
 
-- `server/adapters/mcp/prompts/`
+- `server/adapters/mcp/prompts/prompt_catalog.py`
+- `server/adapters/mcp/prompts/provider.py`
+- `server/adapters/mcp/prompts/rendering.py`
+- likely new `_docs/_PROMPTS/REFERENCE_GUIDED_CHARACTER_BUILD.md`
 - `server/adapters/mcp/guided_mode.py`
 - `server/adapters/mcp/session_capabilities.py`
+- `server/adapters/mcp/session_capabilities_state.py`
+- `server/adapters/mcp/session_capabilities_flow.py`
+- `server/adapters/mcp/session_capabilities_runtime_glue.py`
 - `server/adapters/mcp/transforms/visibility_policy.py`
+- `server/adapters/mcp/transforms/quality_gate_verifier.py`
 - `server/adapters/mcp/discovery/search_documents.py`
+- `server/adapters/mcp/discovery/search_surface.py`
 - `server/adapters/mcp/contracts/reference.py`
+- `server/adapters/mcp/contracts/quality_gates.py`
 - `server/adapters/mcp/areas/reference.py`
-- `server/adapters/mcp/vision/`
+- `server/adapters/mcp/areas/reference_truth.py`
+- `server/adapters/mcp/areas/reference_understanding.py`
+- `server/adapters/mcp/areas/modeling.py`
+- `server/adapters/mcp/areas/mesh.py`
+- `server/adapters/mcp/areas/scene.py`
+- `server/adapters/mcp/areas/armature.py`
 - `server/router/infrastructure/tools_metadata/`
-- future character-oriented MCP/tool surfacing under `server/adapters/mcp/`
-- `server/domain/tools/` and `server/application/tool_handlers/` if a new
-  bounded reconstruction-facing surface is introduced
-- `blender_addon/application/handlers/` if addon-side support becomes necessary
 - `tests/unit/adapters/mcp/`
-- `tests/unit/router/`
-- `tests/e2e/router/`
+- `tests/unit/tools/scene/`
+- `tests/unit/tools/mesh/`
+- `tests/unit/tools/armature/`
+- `tests/e2e/integration/`
 - `tests/e2e/vision/`
-- `_docs/_PROMPTS/`
 - `_docs/_VISION/`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
 - `_docs/_TESTS/README.md`
 - `_docs/_TASKS/README.md`
 
+## Repository Touchpoint Table
+
+| Path / Module | Scope | Expected Work |
+|---------------|-------|---------------|
+| `server/adapters/mcp/vision/prompting.py`, `server/adapters/mcp/vision/parsing.py`, and `server/adapters/mcp/areas/reference_understanding.py` | Character-aware RU support | Add bounded humanoid/fantasy vocabulary, symmetry cues, and attachment hints on the existing RU seam |
+| `server/adapters/mcp/contracts/quality_gates.py` and `server/adapters/mcp/contracts/reference.py` | Domain contract | Define torso/limb/head/hand/foot/appendage gate templates, symmetry expectations, and staged blockers |
+| `server/adapters/mcp/areas/reference.py` and `server/adapters/mcp/areas/reference_truth.py` | Staged truth/checkpoints | Surface body-part, symmetry, and attachment failures through the current staged envelopes |
+| `server/adapters/mcp/session_capabilities_state.py`, `session_capabilities_flow.py`, and `session_capabilities_runtime_glue.py` | Guided state | Add character-domain stage sequencing and bounded recovery behavior without replacing the current session model |
+| `server/adapters/mcp/transforms/visibility_policy.py` and `server/adapters/mcp/discovery/search_surface.py` | Guided surface | Shape the bounded body-first tool window and search cues for humanoid/fantasy reconstruction |
+| `server/adapters/mcp/areas/modeling.py`, `mesh.py`, `scene.py`, and `armature.py` | Bounded reconstruction surface | Keep body-first modeling and later armature handoff separate on the public MCP surface |
+| `server/adapters/mcp/prompts/prompt_catalog.py`, `provider.py`, and a future character prompt asset | Prompt assets | Expose one character-oriented guided story on the current prompt surface |
+| `tests/unit/adapters/mcp/`, `tests/unit/tools/mesh/`, `tests/unit/tools/armature/`, `tests/e2e/integration/`, and future character-focused `tests/e2e/vision/` lanes | Proof lanes | Prove body-stage sequencing, symmetry/attachment semantics, and rig-handoff boundaries on the current seams |
+
+## Execution Structure
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-138-01](./TASK-138-01_Humanoid_Contract_Symmetry_And_Fidelity_Tiers.md) | Define the first humanoid/fantasy target classes, body vocabulary, symmetry rules, and fidelity tiers |
+| 2 | [TASK-138-02](./TASK-138-02_Guided_Character_Flow_Appendage_And_Garment_Boundaries.md) | Shape the guided body-first flow, appendage/armor boundaries, and bounded tool surface |
+| 3 | [TASK-138-03](./TASK-138-03_Character_Regression_Docs_And_Rig_Handoff_Closeout.md) | Lock the domain with regression, docs, and explicit rig-handoff boundary proof |
+
+## Test Matrix
+
+| Slice | Primary Validation Lane | Why |
+|------|--------------------------|-----|
+| humanoid vocabulary, symmetry, and fidelity tiers | unit prompt/parser/reference lanes | the first failure mode is generic-creature drift instead of character-aware structure |
+| guided character flow and bounded surface | unit guided-flow, visibility, search, mesh/modeling, and armature lanes | body-first reconstruction must stay separate from garment/armor and rigging follow-ons |
+| staged truth and transport | integration gate-transport lane plus future character E2E | staged blockers and attachment semantics must survive the real response path |
+| docs and operator guidance | prompt/public-surface/test-doc audits | character scope and rig-handoff boundaries must match the shipped runtime story |
+
+## Runtime / Security Contract Notes
+
+- keep character reconstruction on existing `reference_images(...)`, `router_*`,
+  and staged checkpoint surfaces; do not add a new public character-only MCP
+  tool without dedicated review
+- keep `reference_understanding`, classifier scores, silhouette metrics, and
+  segmentation artifacts advisory-only; gate pass/fail authority remains on the
+  `TASK-157` verifier path
+- body reconstruction, garment/armor seating, appendage handling, and later
+  armature handoff must stay explicitly separated; this umbrella does not ship a
+  full rigging workflow
+- do not expose unconstrained hero-character sculpting as the default public
+  path
+
 ## Docs To Update
 
 - `_docs/_PROMPTS/README.md`
+- likely new `_docs/_PROMPTS/REFERENCE_GUIDED_CHARACTER_BUILD.md`
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
@@ -316,15 +371,14 @@ This umbrella does **not** cover:
 ## Tests To Add/Update
 
 - focused unit coverage under `tests/unit/adapters/mcp/` for character prompt
-  exposure, guided handoff, search shaping, and reference contracts
-- focused unit coverage under `tests/unit/router/` if character-oriented
-  session shaping or correction contracts cross the router boundary
-- representative `tests/e2e/vision/` coverage for biped/fantasy-character
-  reference scenarios
-- relation-aware regression coverage for head/neck, limb/torso, hand/foot,
-  appendage/root, and armor/body seating cases
-- representative `tests/e2e/router/` coverage for character-oriented guided
-  handoff and staged recovery flows
+  exposure, RU parsing/prompting, guided handoff, search shaping, and reference
+  contracts
+- focused unit coverage under `tests/unit/tools/mesh/` and
+  `tests/unit/tools/armature/` for bounded body-stage and rig-handoff-adjacent
+  behaviors
+- representative future `tests/e2e/vision/` coverage for
+  biped/fantasy-character scenarios plus integration coverage for staged
+  transport
 
 ## Changelog Impact
 

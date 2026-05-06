@@ -4,7 +4,7 @@
 **Priority:** 🔴 High
 **Category:** Reconstruction / Architecture and Hard Surface
 **Estimated Effort:** Large
-**Dependencies:** TASK-118, TASK-120, TASK-122, TASK-124, TASK-130, TASK-157
+**Dependencies:** TASK-118, TASK-120, TASK-122, TASK-124, TASK-130, TASK-157, TASK-163
 
 ## Objective
 
@@ -277,35 +277,89 @@ This umbrella does **not** cover:
 
 ## Repository Touchpoints
 
-- `server/adapters/mcp/prompts/`
+- `server/adapters/mcp/prompts/prompt_catalog.py`
+- `server/adapters/mcp/prompts/provider.py`
+- `server/adapters/mcp/prompts/rendering.py`
+- `_docs/_PROMPTS/DEMO_TASK_LOW_POLY_MEDIEVAL_WELL.md`
+- likely new `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`
 - `server/adapters/mcp/guided_mode.py`
 - `server/adapters/mcp/session_capabilities.py`
+- `server/adapters/mcp/session_capabilities_state.py`
+- `server/adapters/mcp/session_capabilities_flow.py`
+- `server/adapters/mcp/session_capabilities_runtime_glue.py`
 - `server/adapters/mcp/transforms/visibility_policy.py`
+- `server/adapters/mcp/transforms/quality_gate_verifier.py`
 - `server/adapters/mcp/discovery/search_documents.py`
+- `server/adapters/mcp/discovery/search_surface.py`
 - `server/adapters/mcp/contracts/reference.py`
+- `server/adapters/mcp/contracts/quality_gates.py`
 - `server/adapters/mcp/areas/reference.py`
-- `server/adapters/mcp/vision/`
+- `server/adapters/mcp/areas/reference_truth.py`
+- `server/adapters/mcp/areas/reference_understanding.py`
+- `server/adapters/mcp/areas/scene.py`
+- `server/adapters/mcp/areas/modeling.py`
+- `server/adapters/mcp/areas/mesh.py`
+- `server/adapters/mcp/areas/scene_spatial_graph.py`
+- `server/application/services/spatial_graph.py`
 - `server/router/infrastructure/tools_metadata/`
-- future architecture-oriented MCP/tool surfacing under `server/adapters/mcp/`
-- `server/domain/tools/` and `server/application/tool_handlers/` if a new
-  bounded reconstruction-facing surface is introduced
-- `blender_addon/application/handlers/` if addon-side support becomes necessary
 - `tests/unit/adapters/mcp/`
-- `tests/unit/router/`
-- `tests/e2e/router/`
+- `tests/unit/tools/scene/`
+- `tests/e2e/integration/`
 - `tests/e2e/vision/`
-- `_docs/_PROMPTS/`
-- `_docs/_PROMPTS/DEMO_TASK_LOW_POLY_MEDIEVAL_WELL.md`
 - `_docs/_VISION/`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
 - `_docs/_TESTS/README.md`
 - `_docs/_TASKS/README.md`
 
+## Repository Touchpoint Table
+
+| Path / Module | Scope | Expected Work |
+|---------------|-------|---------------|
+| `server/adapters/mcp/contracts/quality_gates.py` and `server/adapters/mcp/contracts/reference.py` | Domain contract | Define building-specific gate templates, staged blockers, and checkpoint summaries on the existing generic substrate |
+| `server/adapters/mcp/areas/reference.py` and `server/adapters/mcp/areas/reference_truth.py` | Checkpoint/truth assembly | Surface shell/opening/roof/support blockers and architectural interface findings through the current staged response envelopes |
+| `server/adapters/mcp/session_capabilities_state.py`, `session_capabilities_flow.py`, and `session_capabilities_runtime_glue.py` | Guided state | Add building-domain step sequencing, gate persistence, and stale refresh behavior without replacing the current session-state model |
+| `server/adapters/mcp/transforms/visibility_policy.py` and `server/adapters/mcp/discovery/search_surface.py` | Guided search/visibility | Shape the bounded architecture tool window and building-specific search cues on the live runtime surface |
+| `server/adapters/mcp/areas/scene.py`, `modeling.py`, and `mesh.py` | Bounded build surface | Reuse or extend bounded layout/opening/support/roof tools only where the architecture flow actually needs them |
+| `server/adapters/mcp/vision/` and `server/adapters/mcp/areas/reference_understanding.py` | Advisory support evidence | Consume the closed `TASK-163` RU/session seams for architecture hints without changing verifier authority |
+| `server/application/services/spatial_graph.py` and `server/adapters/mcp/areas/scene_spatial_graph.py` | Relation semantics | Model wall/opening, roof/wall, beam/support, and facade rhythm interfaces in a way the verifier and staged truth surface can consume |
+| `server/adapters/mcp/prompts/prompt_catalog.py`, `provider.py`, `_docs/_PROMPTS/DEMO_TASK_LOW_POLY_MEDIEVAL_WELL.md`, and a future architecture prompt asset | Prompt assets | Expose and teach an architecture-oriented guided story on the current MCP prompt surface |
+| `tests/unit/adapters/mcp/`, `tests/unit/tools/scene/`, `tests/e2e/integration/`, and `tests/e2e/vision/` | Proof lanes | Prove architecture-domain state, search, truth, transport, and Blender-backed reconstruction behavior on the current owner seams |
+
+## Execution Structure
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-136-01](./TASK-136-01_Building_Contract_Vocabulary_And_Gate_Templates.md) | Define the first architecture target class, vocabulary, gate templates, and staged shell/opening/roof contract |
+| 2 | [TASK-136-02](./TASK-136-02_Guided_Building_Handoff_Search_And_Bounded_Surface.md) | Shape the guided building handoff, search, visibility, and bounded tool surface on current seams |
+| 3 | [TASK-136-03](./TASK-136-03_Architecture_Regression_Docs_And_Closeout.md) | Lock the new architecture path with owner-lane regression, docs, and board/changelog closeout |
+
+## Test Matrix
+
+| Slice | Primary Validation Lane | Why |
+|------|--------------------------|-----|
+| building gate contract and vocabulary | unit quality-gate/reference lanes plus scene/spatial unit seams | shell/opening/roof/support semantics must remain normalized and verifier-owned |
+| guided building flow/search/visibility | unit guided-flow, search, visibility, and prompt lanes | architecture discoverability must land on the current `llm-guided` surface |
+| staged building truth and transport | integration gate-transport lane plus Blender-backed building E2E | blockers and recommendations must survive the real staged response path |
+| docs and operator guidance | prompt/public-surface/test-doc audits | architecture docs must describe the same bounded product path the runtime emits |
+
+## Runtime / Security Contract Notes
+
+- consume the existing `reference_images(...)`, `router_*`, and staged
+  checkpoint surfaces; do not add a new public architecture-only MCP tool
+- keep `reference_understanding`, `classification_scores`, silhouette metrics,
+  and segmentation artifacts advisory-only; gate pass/fail authority remains on
+  the `TASK-157` verifier path
+- architecture work here is bounded reconstruction support, not CAD/BIM import,
+  survey-grade measurement, or code-compliance reasoning
+- any new architecture-facing tool or macro must remain bounded and guided-step
+  gated instead of reopening broad free-form hard-surface exposure
+
 ## Docs To Update
 
 - `_docs/_PROMPTS/README.md`
 - `_docs/_PROMPTS/DEMO_TASK_LOW_POLY_MEDIEVAL_WELL.md`
+- likely new `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
@@ -315,15 +369,14 @@ This umbrella does **not** cover:
 ## Tests To Add/Update
 
 - focused unit coverage under `tests/unit/adapters/mcp/` for architecture
-  prompt exposure, guided handoff, search shaping, and reference contracts
-- focused unit coverage under `tests/unit/router/` if architecture-oriented
-  session shaping or correction contracts cross the router boundary
+  prompt exposure, guided handoff, search shaping, gate/reference contracts,
+  and checkpoint reporting
+- focused unit coverage under `tests/unit/tools/scene/` for building relation
+  semantics and structural-truth mapping
 - representative `tests/e2e/vision/` coverage for plan/elevation-driven
-  architecture scenarios
-- relation-aware regression coverage for wall/opening, roof/wall, beam/support,
-  and facade-module interface cases
-- representative `tests/e2e/router/` coverage for architecture-oriented guided
-  handoff and staged recovery flows
+  building scenarios
+- representative `tests/e2e/integration/` coverage for building gate transport
+  and staged recovery flows
 
 ## Changelog Impact
 
