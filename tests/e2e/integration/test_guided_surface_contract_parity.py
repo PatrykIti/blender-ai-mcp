@@ -191,6 +191,14 @@ def test_guided_surface_contract_parity_over_stdio(tmp_path: Path):
                         "params": {"action": "attach", "images": [{"source_path": str(image)}]},
                     },
                 )
+            with pytest.raises(ToolError, match="source_paths=\\[\\.\\.\\.\\]"):
+                await client.call_tool(
+                    "call_tool",
+                    {
+                        "tool": "reference_images",
+                        "params": {"action": "attach", "source_paths": [str(image), str(image)]},
+                    },
+                )
 
             staged_attach = result_payload(
                 await client.call_tool(

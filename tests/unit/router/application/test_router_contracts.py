@@ -379,7 +379,7 @@ def test_router_get_status_preserves_absent_reference_understanding_gate_ids(mon
     result = asyncio.run(router_get_status(ctx))
 
     assert isinstance(result, RouterStatusContract)
-    assert result.reference_understanding_gate_ids is None
+    assert result.reference_understanding_gate_ids == []
 
 
 def test_router_get_status_exposes_guided_handoff_from_session(monkeypatch):

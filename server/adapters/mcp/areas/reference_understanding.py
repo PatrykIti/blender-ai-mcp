@@ -250,9 +250,19 @@ async def refresh_reference_understanding_summary(
                 runtime_config=runtime_config,
             )
             if refreshed_summary.model_dump(mode="json", exclude_none=True) != existing_summary:
+                rebuilt_strategy = (
+                    build_reference_strategy_state(refreshed_summary)
+                    if current.reference_strategy_state is None
+                    else None
+                )
                 updated = replace(
                     current,
                     reference_understanding_summary=refreshed_summary.model_dump(mode="json", exclude_none=True),
+                    reference_strategy_state=(
+                        rebuilt_strategy.model_dump(mode="json", exclude_none=True)
+                        if rebuilt_strategy is not None
+                        else current.reference_strategy_state
+                    ),
                 )
                 return await _persist_reference_understanding_state_async(
                     ctx,

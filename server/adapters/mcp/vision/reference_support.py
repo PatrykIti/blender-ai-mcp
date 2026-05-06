@@ -196,13 +196,15 @@ def _merge_classification_scores(
 def _merge_segmentation_artifacts(
     existing: Sequence[ReferenceUnderstandingSegmentationArtifactContract],
     incoming: Sequence[ReferenceUnderstandingSegmentationArtifactContract],
+    *,
+    limit: int = 16,
 ) -> list[ReferenceUnderstandingSegmentationArtifactContract]:
     merged: dict[str, ReferenceUnderstandingSegmentationArtifactContract] = {}
     for item in [*list(existing), *list(incoming)]:
         key = item.artifact_id.strip().lower()
         if key not in merged:
             merged[key] = item
-    return list(merged.values())[:8]
+    return list(merged.values())[:limit]
 
 
 def _merge_visual_evidence_refs(
@@ -312,7 +314,7 @@ def _normalize_segmentation_artifacts_payload(
                 summary=_redact_local_paths(_bounded_text(raw_item.get("summary"))),
             )
         )
-    return _merge_segmentation_artifacts([], items)[:max_artifacts]
+    return _merge_segmentation_artifacts([], items, limit=max_artifacts)[:max_artifacts]
 
 
 async def _collect_classifier_support(
@@ -501,6 +503,7 @@ async def augment_reference_understanding_optional_support(
             "segmentation_artifacts": _merge_segmentation_artifacts(
                 summary.segmentation_artifacts,
                 segmentation_artifacts,
+                limit=(getattr(segmentation_config, "max_parts", 16) if segmentation_config is not None else 16),
             ),
             "visual_evidence_refs": _merge_visual_evidence_refs(
                 summary.visual_evidence_refs,

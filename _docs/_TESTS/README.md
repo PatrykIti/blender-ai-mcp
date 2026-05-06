@@ -157,12 +157,12 @@ Operational prerequisites still matter for reruns:
   creature/building gate tests
 - local socket binding is required for the Streamable HTTP transport lane
 
-## Planned TASK-158 Scope B Lanes
+## Historical TASK-158 Scope B Lanes
 
-`TASK-158` is still open, so the lanes below are planning targets rather than
-currently shipped owner proofs. When Scope B starts implementation, promote the
-focused lanes from `TASK-158-04` and `TASK-158-05` onto these current owners
-first:
+`TASK-158` is closed. The lane map below records where the old Scope B planning
+intended work to land before the later `TASK-163` follow-on closed that family.
+Treat these as historical owner notes and follow-on hints, not as an open
+planning board:
 
 - shared prompt/parser/backend owners for `TASK-158-04`:
   `tests/unit/adapters/mcp/test_vision_prompting.py` and

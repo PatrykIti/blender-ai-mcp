@@ -604,4 +604,4 @@ def test_reference_understanding_refresh_clear_reapplies_visibility_immediately(
     )
 
     status_after_clear = asyncio.run(router_get_status(cast(Context, ctx)))
-    assert status_after_clear.reference_understanding_gate_ids is None
+    assert status_after_clear.reference_understanding_gate_ids == []

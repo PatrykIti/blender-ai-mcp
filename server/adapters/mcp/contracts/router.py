@@ -133,7 +133,7 @@ class RouterStatusContract(MCPContract):
     reference_image_count: int | None = None
     reference_images: list[ReferenceImageRecordContract] | None = None
     reference_understanding_summary: ReferenceUnderstandingSummaryContract | None = None
-    reference_understanding_gate_ids: list[str] | None = None
+    reference_understanding_gate_ids: list[str] = []
     reference_orchestrator_feedback: ReferenceOrchestratorFeedbackContract | None = None
 
 
