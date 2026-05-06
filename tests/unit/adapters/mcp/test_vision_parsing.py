@@ -339,8 +339,6 @@ def test_parse_reference_understanding_payload_normalizes_aliases_and_derives_de
                     "priority": "high",
                 }
             ],
-            "classification_scores": [{"label": "low_poly_facet", "score": 0.92}],
-            "segmentation_artifacts": [],
         }
     )
 
@@ -359,8 +357,6 @@ def test_parse_reference_understanding_payload_normalizes_aliases_and_derives_de
     ]
     assert parsed["gate_proposals"][0]["allowed_correction_families"] == ["secondary_parts", "inspect_validate"]
     assert parsed["verification_requirements"][0]["tool_name"] == "scene_measure_alignment"
-    assert "classification_scores" not in parsed
-    assert "segmentation_artifacts" not in parsed
 
 
 def test_parse_reference_classification_payload_accepts_bounded_scores():
@@ -438,6 +434,60 @@ def test_parse_reference_classification_payload_sorts_and_caps_to_five_scores():
         {"label": "label_5", "score": 0.30},
         {"label": "label_6", "score": 0.20},
     ]
+
+
+def test_parse_reference_understanding_payload_rejects_unknown_top_level_fields():
+    text = json.dumps(
+        {
+            "subject": {
+                "label": "low poly squirrel",
+                "category": "creature",
+                "confidence": 0.91,
+                "uncertainty_notes": [],
+            },
+            "style": {
+                "style_label": "low_poly_faceted",
+                "confidence": 0.88,
+                "notes": [],
+            },
+            "views": [],
+            "required_parts": [],
+            "non_goals": [],
+            "construction_strategy": {
+                "construction_path": "low_poly_facet",
+                "primary_family": "modeling_mesh",
+                "allowed_families": ["modeling_mesh", "inspect_only"],
+                "stage_sequence": ["primary_masses"],
+                "finish_policy": "preserve_facets",
+            },
+            "router_handoff_hints": {
+                "preferred_family": "modeling_mesh",
+                "allowed_guided_families": ["reference_context", "primary_masses"],
+                "sculpt_policy": "hidden",
+            },
+            "gate_proposals": [],
+            "visual_evidence_refs": [],
+            "verification_requirements": [],
+            "classification_scores": [{"label": "low_poly_facet", "score": 0.92}],
+        }
+    )
+
+    with pytest.raises(ValueError, match="unsupported top-level fields: classification_scores"):
+        parse_vision_output_text(text, _reference_understanding_request())
+
+
+def test_parse_reference_classification_payload_rejects_unknown_top_level_fields():
+    text = json.dumps(
+        {
+            "classification_scores": [
+                {"label": "low_poly_faceted", "score": 0.94},
+            ],
+            "extra_field": ["unexpected"],
+        }
+    )
+
+    with pytest.raises(ValueError, match="unsupported top-level fields: extra_field"):
+        parse_vision_output_text(text, _reference_classification_request())
 
 
 def test_diagnose_vision_output_classifies_prose_without_json():

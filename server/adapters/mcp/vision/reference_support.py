@@ -225,11 +225,19 @@ def _merge_source_provenance(
     existing: Sequence[GateSourceProvenanceContract],
     incoming: Sequence[GateSourceProvenanceContract],
 ) -> list[GateSourceProvenanceContract]:
-    merged: dict[tuple[str, str | None, str | None, str | None], GateSourceProvenanceContract] = {}
-    for item in [*list(existing), *list(incoming)]:
-        key = (item.source, item.provider, item.model_id, item.summary)
-        if key not in merged:
-            merged[key] = item
+    merged: dict[tuple[Any, ...], GateSourceProvenanceContract] = {}
+    for item in list(existing):
+        if item.source in {"classification_scores", "part_segmentation"}:
+            existing_key: tuple[Any, ...] = (item.source, item.provider, item.model_id, tuple(item.reference_ids))
+        else:
+            existing_key = (item.source, item.provider, item.model_id, item.summary)
+        merged[existing_key] = item
+    for item in list(incoming):
+        if item.source in {"classification_scores", "part_segmentation"}:
+            incoming_key: tuple[Any, ...] = (item.source, item.provider, item.model_id, tuple(item.reference_ids))
+        else:
+            incoming_key = (item.source, item.provider, item.model_id, item.summary)
+        merged[incoming_key] = item
     return list(merged.values())[:12]
 
 

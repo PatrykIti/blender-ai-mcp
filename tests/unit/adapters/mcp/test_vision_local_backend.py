@@ -487,7 +487,7 @@ def test_mlx_local_backend_raises_reference_understanding_output_cap(monkeypatch
                 '"required_parts":[{"part_label":"body core","target_label":"body_core","construction_hint":"Start with a simple faceted primary mass.","priority":"high","source_reference_ids":["fixture_ref_1"]}],'
                 '"non_goals":[],"construction_strategy":{"construction_path":"low_poly_facet","primary_family":"modeling_mesh","allowed_families":["macro","modeling_mesh","inspect_only"],"stage_sequence":["primary_masses"],"finish_policy":"preserve_facets"},'
                 '"router_handoff_hints":{"preferred_family":"modeling_mesh","allowed_guided_families":["reference_context","primary_masses"],"sculpt_policy":"hidden"},'
-                '"gate_proposals":[],"visual_evidence_refs":[],"verification_requirements":[],"classification_scores":[],"segmentation_artifacts":[]}'
+                '"gate_proposals":[],"visual_evidence_refs":[],"verification_requirements":[]}'
             )
 
     class FakePromptUtils:

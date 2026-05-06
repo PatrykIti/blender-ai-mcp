@@ -2171,6 +2171,166 @@ def test_refresh_reference_understanding_summary_retries_segmentation_after_fail
     ]
 
 
+def test_refresh_reference_understanding_summary_does_not_retry_support_after_empty_success(
+    tmp_path,
+    monkeypatch,
+):
+    ctx = FakeContext()
+    reference_path = tmp_path / "front.png"
+    _write_test_silhouette(reference_path, with_ears=True)
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel",
+            surface_profile="llm-guided",
+            guided_flow_state=_guided_reference_flow_state(),
+            reference_images=[
+                {
+                    "reference_id": "ref_front",
+                    "goal": "create a low-poly squirrel",
+                    "label": "front_ref",
+                    "target_view": "front",
+                    "media_type": "image/png",
+                    "source_kind": "local_path",
+                    "original_path": str(reference_path),
+                    "stored_path": str(reference_path),
+                    "host_visible_path": str(reference_path),
+                    "added_at": "2026-05-05T12:00:00Z",
+                }
+            ],
+            reference_understanding_summary={
+                "status": "available",
+                "understanding_id": "understanding_empty_support_retry",
+                "goal": "create a low-poly squirrel",
+                "reference_ids": ["ref_front"],
+                "subject": {
+                    "label": "low poly squirrel",
+                    "category": "creature",
+                    "confidence": 0.9,
+                    "uncertainty_notes": [],
+                },
+                "style": {
+                    "style_label": "low_poly_faceted",
+                    "confidence": 0.9,
+                    "notes": [],
+                },
+                "views": [
+                    {
+                        "view_id": "front",
+                        "detected": True,
+                        "confidence": 0.9,
+                        "reference_ids": ["ref_front"],
+                        "key_features": [],
+                    }
+                ],
+                "required_parts": [],
+                "non_goals": [],
+                "construction_strategy": {
+                    "construction_path": "low_poly_facet",
+                    "primary_family": "modeling_mesh",
+                    "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+                    "stage_sequence": ["primary_masses"],
+                    "finish_policy": "preserve_facets",
+                },
+                "router_handoff_hints": {
+                    "preferred_family": "modeling_mesh",
+                    "allowed_guided_families": ["reference_context", "primary_masses"],
+                    "sculpt_policy": "hidden",
+                },
+                "gate_proposals": [],
+                "visual_evidence_refs": [],
+                "verification_requirements": [],
+                "source_provenance": [
+                    {"source": "reference_understanding"},
+                    {
+                        "source": "classification_scores",
+                        "summary": "Optional reference classifier unavailable: timeout",
+                    },
+                    {"source": "part_segmentation", "summary": "Optional segmentation sidecar unavailable: timeout"},
+                ],
+                "boundary_policy": {
+                    "advisory_only": True,
+                    "not_truth_source": True,
+                    "may_unlock_tools": False,
+                    "may_pass_gates": False,
+                    "may_propose_gates": True,
+                },
+            },
+            reference_strategy_state={
+                "status": "available",
+                "understanding_id": "understanding_empty_support_retry",
+                "construction_path": "low_poly_facet",
+                "primary_family": "modeling_mesh",
+                "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+                "blocked_families": ["sculpt_region"],
+                "sculpt_policy": "hidden",
+                "finish_policy": "preserve_facets",
+                "recommended_next_checkpoint": "reference_compare_stage_checkpoint",
+            },
+        ),
+    )
+
+    classifier = SimpleNamespace(
+        enabled=True,
+        provider_name="generic_sidecar",
+        endpoint="http://localhost:9200/classify",
+        model="classifier-mini",
+        api_key=None,
+        api_key_env=None,
+        timeout_seconds=15.0,
+        max_labels=5,
+    )
+    sidecar = SimpleNamespace(
+        enabled=True,
+        provider_name="generic_sidecar",
+        endpoint="http://localhost:9100/segment",
+        model="segmenter-mini",
+        api_key=None,
+        api_key_env=None,
+        timeout_seconds=15.0,
+        max_parts=4,
+    )
+
+    class Backend:
+        async def analyze(self, request):
+            raise AssertionError("same-goal empty support retry should not rerun base reference-understanding backend")
+
+    class Resolver:
+        runtime_config = SimpleNamespace(
+            active_reference_classifier=classifier,
+            active_segmentation_sidecar=sidecar,
+        )
+
+        def resolve_default(self):
+            return Backend()
+
+    captured: list[dict[str, Any]] = []
+    responses = {
+        "http://localhost:9200/classify": {"classification_scores": []},
+        "http://localhost:9100/segment": {"segmentation_artifacts": []},
+    }
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: Resolver())
+    monkeypatch.setattr(
+        "server.adapters.mcp.vision.reference_support.httpx.AsyncClient",
+        lambda timeout=None: _FakeSupportAsyncClient(responses=responses, captured=captured),
+    )
+
+    updated = asyncio.run(refresh_reference_understanding_summary_async(ctx))
+    assert updated.reference_understanding_summary is not None
+    assert updated.reference_understanding_summary["classification_scores"] == []
+    assert updated.reference_understanding_summary["segmentation_artifacts"] == []
+    assert len(captured) == 2
+
+    captured.clear()
+    updated_again = asyncio.run(refresh_reference_understanding_summary_async(ctx, session=updated))
+    assert updated_again.reference_understanding_summary is not None
+    assert updated_again.reference_understanding_summary["classification_scores"] == []
+    assert updated_again.reference_understanding_summary["segmentation_artifacts"] == []
+    assert captured == []
+
+
 def test_reference_compare_stage_checkpoint_threads_reference_understanding_from_session():
     ctx = FakeContext()
     set_session_capability_state(

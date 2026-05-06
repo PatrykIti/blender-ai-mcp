@@ -1099,6 +1099,18 @@ def _payload_shape(parsed: dict[str, Any]) -> str:
     return "unsupported_json"
 
 
+def _reject_unknown_contract_keys(
+    parsed: dict[str, Any],
+    *,
+    allowed_keys: set[str],
+    contract_name: str,
+) -> None:
+    unknown_keys = sorted(str(key) for key in parsed.keys() if str(key) not in allowed_keys)
+    if unknown_keys:
+        joined = ", ".join(unknown_keys)
+        raise ValueError(f"{contract_name} output included unsupported top-level fields: {joined}")
+
+
 def diagnose_vision_output_text(
     text: str,
     *,
@@ -1223,6 +1235,18 @@ def parse_vision_output_text(
             raise ValueError(
                 "Reference-classification output echoed the input instead of returning the required contract."
             )
+        if "classification_scores" in parsed:
+            _reject_unknown_contract_keys(
+                parsed,
+                allowed_keys={"classification_scores"},
+                contract_name="Reference-classification",
+            )
+        elif "scores" in parsed:
+            _reject_unknown_contract_keys(
+                parsed,
+                allowed_keys={"scores"},
+                contract_name="Reference-classification",
+            )
         normalized = _normalize_reference_classification_payload(parsed)
         if not normalized["classification_scores"]:
             raise ValueError("Reference-classification output did not match the required contract shape.")
@@ -1240,6 +1264,17 @@ def parse_vision_output_text(
             provider_name=provider_name,
         ):
             raise ValueError("Reference-understanding output did not match the required contract shape.")
+        _reject_unknown_contract_keys(
+            parsed,
+            allowed_keys=set(
+                expected_json_keys(
+                    vision_contract_profile=resolved_contract_profile,
+                    provider_name=provider_name,
+                    request=request,
+                )
+            ),
+            contract_name="Reference-understanding",
+        )
         return _normalize_reference_understanding_payload(parsed, request)
 
     if _looks_like_input_echo(parsed):

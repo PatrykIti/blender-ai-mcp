@@ -176,20 +176,26 @@ def _optional_support_needs_refresh(
         classifier_provenance = provenance_by_source.get("classification_scores", [])
         if not classifier_provenance:
             return True
+        if any("unavailable" not in str(item.summary or "").lower() for item in classifier_provenance):
+            pass
         if not summary.classification_scores and any(
             "unavailable" in str(item.summary or "").lower() for item in classifier_provenance
         ):
-            return True
+            if all("unavailable" in str(item.summary or "").lower() for item in classifier_provenance):
+                return True
 
     segmentation = getattr(runtime_config, "active_segmentation_sidecar", None)
     if segmentation is not None and getattr(segmentation, "enabled", False):
         segmentation_provenance = provenance_by_source.get("part_segmentation", [])
         if not segmentation_provenance:
             return True
+        if any("unavailable" not in str(item.summary or "").lower() for item in segmentation_provenance):
+            pass
         if not summary.segmentation_artifacts and any(
             "unavailable" in str(item.summary or "").lower() for item in segmentation_provenance
         ):
-            return True
+            if all("unavailable" in str(item.summary or "").lower() for item in segmentation_provenance):
+                return True
 
     return False
 
