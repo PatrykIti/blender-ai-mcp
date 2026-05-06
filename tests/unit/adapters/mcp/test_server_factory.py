@@ -60,6 +60,7 @@ def test_build_server_builds_alternate_surface_profile():
     assert "If a tool is not already directly visible, use search_tools before call_tool" in guided.instructions
     assert "Use search_tools/call_tool only when you actually need discovery" in guided.instructions
     assert "trust live visibility_rules plus required_checks" in guided.instructions
+    assert "guided_handoff.direct_tools only while those tools remain directly visible" in guided.instructions
     assert "Build/workflow request: router_get_status -> router_set_goal" in guided.instructions
     assert "Utility/capture request: skip router_set_goal" in guided.instructions
     assert "For the full operating model, see the prompt docs" in guided.instructions

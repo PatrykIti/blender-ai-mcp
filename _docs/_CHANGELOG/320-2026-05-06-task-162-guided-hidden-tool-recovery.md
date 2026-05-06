@@ -33,6 +33,8 @@ Date: 2026-05-06
   - result on this machine: `18 passed`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_server_factory.py -q`
   - result on this machine: `6 passed`
+- `poetry run pytest ./tests/unit`
+  - result on this machine: `3223 passed`
 - outside sandbox:
   - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_search_first_call_tool_boundary.py tests/e2e/integration/test_guided_streamable_spatial_support.py tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/integration/test_guided_inspect_validate_handoff.py tests/e2e/router/test_guided_manual_handoff.py -q`
   - result on this machine: `18 passed`

@@ -21,6 +21,8 @@ from server.adapters.mcp.transforms import build_surface_transform_pipeline, mat
 from server.adapters.mcp.transforms.discovery import build_discovery_transform
 from server.adapters.mcp.transforms.prompts_bridge import build_prompts_bridge_transform
 from server.adapters.mcp.transforms.visibility_policy import (
+    CREATURE_LOW_POLY_BLOCKOUT_DIRECT_TOOLS,
+    CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS,
     build_visibility_rules,
 )
 
@@ -1676,7 +1678,7 @@ def test_call_tool_cannot_invoke_hidden_tool_during_bootstrap():
         )
 
     with pytest.raises(
-        (NotFoundError, ToolError),
+        ToolError,
         match="Hidden tool on the current guided surface|visibility_rules|search_tools",
     ):
         asyncio.run(run())
@@ -1764,6 +1766,137 @@ def test_call_tool_hidden_tool_during_spatial_refresh_points_to_pending_required
             "Hidden tool while spatial_refresh_required is active: 'modeling_create_primitive'.*"
             "scene_scope_graph\\(\\.\\.\\.\\).*scene_relation_graph\\(\\.\\.\\.\\).*scene_view_diagnostics\\(\\.\\.\\.\\)"
         ),
+    ):
+        asyncio.run(run())
+
+
+def test_call_tool_phase_hidden_tool_does_not_masquerade_as_spatial_refresh_recovery():
+    """Tools hidden by ordinary phase/surface visibility should not be mislabeled as refresh-barrier recoveries."""
+
+    class DummyFastMCP:
+        async def get_tool(self, _name):
+            return None
+
+    class Ctx:
+        fastmcp = DummyFastMCP()
+
+    transform = build_discovery_transform(get_surface_profile("llm-guided"))
+    assert transform is not None
+
+    async def fake_sync_visibility(_ctx):
+        return type(
+            "State",
+            (),
+            {
+                "phase": SessionPhase.BUILD,
+                "surface_profile": "llm-guided",
+                "guided_handoff": None,
+                "gate_plan": None,
+                "guided_flow_state": {
+                    "flow_id": "guided_creature_flow",
+                    "domain_profile": "creature",
+                    "current_step": "place_secondary_parts",
+                    "spatial_refresh_required": True,
+                    "required_checks": [
+                        {
+                            "check_id": "scope",
+                            "tool_name": "scene_scope_graph",
+                            "reason": "refresh scope",
+                            "status": "pending",
+                        }
+                    ],
+                    "allowed_families": ["spatial_context", "reference_context"],
+                },
+            },
+        )()
+
+    async def fake_is_tool_currently_visible_safe(_ctx, _tool_name):
+        return False
+
+    transform._sync_visibility_if_needed = fake_sync_visibility  # type: ignore[method-assign]
+    transform._is_tool_currently_visible_safe = fake_is_tool_currently_visible_safe  # type: ignore[method-assign]
+    call_tool = transform._make_call_tool().fn  # type: ignore[attr-defined]
+
+    async def run():
+        return await call_tool(
+            name="extraction_render_angles",
+            arguments={"object_name": "Cube", "angles": ["front"]},
+            ctx=Ctx(),
+        )
+
+    with pytest.raises(ToolError, match="Hidden tool on the current guided surface: 'extraction_render_angles'"):
+        asyncio.run(run())
+
+
+def test_call_tool_hidden_tool_after_not_found_reclassifies_proxy_race():
+    """A late NotFoundError should still reclassify to the hidden-tool contract when visibility catches up after the proxy call."""
+
+    class DummyFastMCP:
+        async def call_tool(self, _name, _arguments):
+            raise NotFoundError("Unknown tool")
+
+    class Ctx:
+        fastmcp = DummyFastMCP()
+
+    transform = build_discovery_transform(get_surface_profile("llm-guided"))
+    assert transform is not None
+
+    async def fake_sync_visibility(_ctx):
+        return type(
+            "State",
+            (),
+            {
+                "phase": SessionPhase.BUILD,
+                "surface_profile": "llm-guided",
+                "guided_handoff": {
+                    "kind": "guided_manual_build",
+                    "recipe_id": "low_poly_creature_blockout",
+                    "direct_tools": list(CREATURE_LOW_POLY_BLOCKOUT_DIRECT_TOOLS),
+                    "supporting_tools": list(CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS),
+                },
+                "gate_plan": None,
+                "guided_flow_state": {
+                    "flow_id": "guided_creature_flow",
+                    "domain_profile": "creature",
+                    "current_step": "place_secondary_parts",
+                    "spatial_refresh_required": True,
+                    "required_checks": [
+                        {
+                            "check_id": "scope",
+                            "tool_name": "scene_scope_graph",
+                            "reason": "refresh scope",
+                            "status": "pending",
+                        },
+                        {
+                            "check_id": "relation",
+                            "tool_name": "scene_relation_graph",
+                            "reason": "refresh relations",
+                            "status": "pending",
+                        },
+                    ],
+                },
+            },
+        )()
+
+    visibility_results = iter([None, False])
+
+    async def fake_is_tool_currently_visible_safe(_ctx, _tool_name):
+        return next(visibility_results)
+
+    transform._sync_visibility_if_needed = fake_sync_visibility  # type: ignore[method-assign]
+    transform._is_tool_currently_visible_safe = fake_is_tool_currently_visible_safe  # type: ignore[method-assign]
+    call_tool = transform._make_call_tool().fn  # type: ignore[attr-defined]
+
+    async def run():
+        return await call_tool(
+            name="modeling_create_primitive",
+            arguments={"primitive_type": "Cube"},
+            ctx=Ctx(),
+        )
+
+    with pytest.raises(
+        ToolError,
+        match="Hidden tool while spatial_refresh_required is active: 'modeling_create_primitive'.*scene_scope_graph",
     ):
         asyncio.run(run())
 

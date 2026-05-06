@@ -313,7 +313,10 @@ Search-first behavior now respects guided visibility:
 - when `spatial_refresh_required` is the reason, the hidden-tool recovery
   message points back to the live `required_checks` instead of looking like a
   transport drop or generic lookup miss
-- direct public calls and discovered `call_tool` calls share the same guided-surface router failure behavior
+- direct public calls and discovered `call_tool` calls still share the same
+  fail-closed router behavior for visible tools, but the hidden-tool recovery
+  wording hardened by `TASK-162` is specific to the discovery / `call_tool(...)`
+  seam
 - if a tool is not already directly visible, the intended operator path is
   `search_tools(...)` before `call_tool(...)`, not speculative name guessing
 - read-only spatial graph tools such as `scene_scope_graph` and

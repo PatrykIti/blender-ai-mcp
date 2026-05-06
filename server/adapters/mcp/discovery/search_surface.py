@@ -23,7 +23,12 @@ from server.adapters.mcp.session_capabilities import (
     get_session_capability_state_async,
 )
 from server.adapters.mcp.settings import SurfaceProfileSettings
-from server.adapters.mcp.transforms.visibility_policy import visible_tools_for_gate_plan
+from server.adapters.mcp.transforms.visibility_policy import (
+    build_visibility_rules,
+    materialize_visible_tool_names,
+    resolve_guided_tool_family,
+    visible_tools_for_gate_plan,
+)
 from server.adapters.mcp.version_policy import CONTRACT_LINE_LLM_GUIDED_V2
 
 from .search_documents import build_search_documents
@@ -73,8 +78,9 @@ def _guided_hidden_tool_error_message(
     tool_name: str,
     *,
     guided_flow_state: dict[str, Any] | None,
+    hidden_due_to_spatial_refresh: bool,
 ) -> str:
-    if bool((guided_flow_state or {}).get("spatial_refresh_required")):
+    if hidden_due_to_spatial_refresh:
         pending_checks = _pending_required_check_names(guided_flow_state)
         if pending_checks:
             checks_text = ", ".join(f"{name}(...)" for name in pending_checks)
@@ -95,6 +101,32 @@ def _guided_hidden_tool_error_message(
         "Trust live router_get_status().visibility_rules and use search_tools(...) to find the currently visible "
         "recovery path instead of retrying the stale name through call_tool(...)."
     )
+
+
+def _is_hidden_due_to_spatial_refresh(tool_name: str, *, session_state: Any) -> bool:
+    guided_flow_state = getattr(session_state, "guided_flow_state", None)
+    if not isinstance(guided_flow_state, dict):
+        return False
+    if not bool(guided_flow_state.get("spatial_refresh_required")):
+        return False
+    if not _pending_required_check_names(guided_flow_state):
+        return False
+
+    tool_family = resolve_guided_tool_family(tool_name)
+    if tool_family is None:
+        return False
+
+    relaxed_flow_state = dict(guided_flow_state)
+    relaxed_flow_state["spatial_refresh_required"] = False
+    relaxed_rules = build_visibility_rules(
+        getattr(session_state, "surface_profile", None) or "llm-guided",
+        getattr(session_state, "phase", None) or "build",
+        guided_handoff=getattr(session_state, "guided_handoff", None),
+        guided_flow_state=relaxed_flow_state,
+        gate_plan=getattr(session_state, "gate_plan", None),
+    )
+    relaxed_visible = materialize_visible_tool_names({tool_name}, relaxed_rules)
+    return tool_name in relaxed_visible
 
 
 def _catalog_hash(search_documents: dict[str, str]) -> str:
@@ -322,16 +354,21 @@ class BlenderDiscoverySearchTransform(BM25SearchTransform):
 
             tool_is_visible = await transform._is_tool_currently_visible_safe(ctx, resolved_name)
             guided_flow_state = getattr(session_state, "guided_flow_state", None)
+            hidden_due_to_spatial_refresh = bool(session_state) and _is_hidden_due_to_spatial_refresh(
+                resolved_name,
+                session_state=session_state,
+            )
             if tool_is_visible is False:
                 logger.warning(
                     "[CALL_TOOL_PROXY] hidden_tool name=%s spatial_refresh_required=%s",
                     resolved_name,
-                    bool((guided_flow_state or {}).get("spatial_refresh_required")),
+                    hidden_due_to_spatial_refresh,
                 )
                 raise ToolError(
                     _guided_hidden_tool_error_message(
                         resolved_name,
                         guided_flow_state=guided_flow_state,
+                        hidden_due_to_spatial_refresh=hidden_due_to_spatial_refresh,
                     )
                 )
             try:
@@ -346,12 +383,13 @@ class BlenderDiscoverySearchTransform(BM25SearchTransform):
                     logger.warning(
                         "[CALL_TOOL_PROXY] hidden_tool_after_not_found name=%s spatial_refresh_required=%s",
                         resolved_name,
-                        bool((guided_flow_state or {}).get("spatial_refresh_required")),
+                        hidden_due_to_spatial_refresh,
                     )
                     raise ToolError(
                         _guided_hidden_tool_error_message(
                             resolved_name,
                             guided_flow_state=guided_flow_state,
+                            hidden_due_to_spatial_refresh=hidden_due_to_spatial_refresh,
                         )
                     ) from exc
                 logger.warning(

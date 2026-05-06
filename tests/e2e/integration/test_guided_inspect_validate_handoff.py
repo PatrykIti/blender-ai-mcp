@@ -273,7 +273,7 @@ async def _iterate_and_collect_visibility(
 
 async def _iterate_repair_and_collect_visibility(
     script_path: Path, checkpoint_label: str
-) -> tuple[dict[str, object], dict[str, object], dict[str, object]]:
+) -> tuple[dict[str, object], dict[str, object], dict[str, object], set[str], set[str]]:
     async with stdio_client(script_path) as client:
         await client.call_tool(
             "router_set_goal",
@@ -291,10 +291,18 @@ async def _iterate_repair_and_collect_visibility(
             )
         )
         after_status = result_payload(await client.call_tool("router_get_status", {}))
+        tool_names_after_repair = {tool.name for tool in await client.list_tools()}
+        repair_search = result_payload(
+            await client.call_tool("search_tools", {"query": "contact repair nudge pair alignment"})
+        )
         assert isinstance(before_status, dict)
         assert isinstance(repair_result, dict)
         assert isinstance(after_status, dict)
-        return before_status, repair_result, after_status
+        assert isinstance(repair_search, list)
+        repair_search_names = {
+            item["name"] for item in repair_search if isinstance(item, dict) and isinstance(item.get("name"), str)
+        }
+        return before_status, repair_result, after_status, tool_names_after_repair, repair_search_names
 
 
 def _visible_tool_names_from_status(status: dict[str, object]) -> set[str]:
@@ -372,7 +380,7 @@ def test_guided_inspect_validate_refresh_barrier_hides_attachment_macros_after_r
     """Once inspect/validate re-arms spatial refresh, attachment mutators should disappear from the shaped surface."""
 
     script_path = write_server_script(tmp_path, _PATCHED_HANDOFF_SERVER)
-    before_status, repair_result, after_status = asyncio.run(
+    before_status, repair_result, after_status, tool_names_after_repair, repair_search_names = asyncio.run(
         _iterate_repair_and_collect_visibility(script_path, "truth_first")
     )
 
@@ -389,9 +397,11 @@ def test_guided_inspect_validate_refresh_barrier_hides_attachment_macros_after_r
     assert after_flow_state["current_step"] == "inspect_validate"
     assert after_flow_state["spatial_refresh_required"] is True
     assert after_flow_state["next_actions"] == ["refresh_spatial_context"]
+    assert "macro_align_part_with_contact" not in tool_names_after_repair
     assert "scene_scope_graph" in after_visible_tool_names
     assert "scene_relation_graph" in after_visible_tool_names
     assert "scene_view_diagnostics" in after_visible_tool_names
+    assert "macro_align_part_with_contact" not in repair_search_names
     assert "macro_attach_part_to_surface" not in after_visible_tool_names
     assert "macro_align_part_with_contact" not in after_visible_tool_names
     assert "macro_cleanup_part_intersections" not in after_visible_tool_names
