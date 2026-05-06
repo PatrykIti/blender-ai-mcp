@@ -185,7 +185,7 @@ def _looks_like_local_path(value: str) -> bool:
 def _redact_local_paths(text: str | None) -> str | None:
     if text is None:
         return None
-    return re.sub(r"(?<!\w)(?:[A-Za-z]:[\\/]|/)[^\s,;:]+", "[redacted-path]", text)
+    return re.sub(r"(?<!\w)(?:[A-Za-z]:[\\/]|/|\./|\.\./|~/)[^\s,;:]+", "[redacted-path]", text)
 
 
 def _sanitize_reference_understanding_summary(value: Any) -> Any:

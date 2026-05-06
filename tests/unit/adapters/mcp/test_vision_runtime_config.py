@@ -74,7 +74,7 @@ def _base_config(**overrides) -> Config:
         "VISION_REFERENCE_CLASSIFIER_API_KEY": None,
         "VISION_REFERENCE_CLASSIFIER_API_KEY_ENV": None,
         "VISION_REFERENCE_CLASSIFIER_TIMEOUT_SECONDS": 15.0,
-        "VISION_REFERENCE_CLASSIFIER_MAX_LABELS": 8,
+        "VISION_REFERENCE_CLASSIFIER_MAX_LABELS": 5,
         "VISION_SEGMENTATION_ENABLED": False,
         "VISION_SEGMENTATION_PROVIDER": "generic_sidecar",
         "VISION_SEGMENTATION_ENDPOINT": None,
@@ -512,7 +512,7 @@ def test_optional_reference_classifier_uses_separate_opt_in_config_surface():
             VISION_REFERENCE_CLASSIFIER_ENDPOINT="http://localhost:9200/classify",
             VISION_REFERENCE_CLASSIFIER_MODEL="siglip-sidecar-v1",
             VISION_REFERENCE_CLASSIFIER_API_KEY_ENV="CLASSIFIER_API_KEY",
-            VISION_REFERENCE_CLASSIFIER_MAX_LABELS=6,
+            VISION_REFERENCE_CLASSIFIER_MAX_LABELS=5,
         )
     )
 
@@ -522,7 +522,7 @@ def test_optional_reference_classifier_uses_separate_opt_in_config_surface():
     assert runtime.reference_classifier.endpoint == "http://localhost:9200/classify"
     assert runtime.reference_classifier.model == "siglip-sidecar-v1"
     assert runtime.reference_classifier.api_key_env == "CLASSIFIER_API_KEY"
-    assert runtime.reference_classifier.max_labels == 6
+    assert runtime.reference_classifier.max_labels == 5
 
 
 def test_optional_reference_classifier_can_inherit_main_external_vision_config():

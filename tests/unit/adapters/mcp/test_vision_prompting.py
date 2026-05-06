@@ -246,4 +246,5 @@ def test_reference_classification_prompt_and_schema_use_bounded_contract():
     assert "Return exactly one JSON object with only this key:" in payload_text
     assert "- classification_scores" in payload_text
     assert set(schema["properties"]) == {"classification_scores"}
+    assert schema["properties"]["classification_scores"]["maxItems"] == 5
     _assert_strict_required_matches_properties(schema)

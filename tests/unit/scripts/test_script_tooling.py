@@ -548,6 +548,9 @@ def test_vision_harness_fixture_only_reference_understanding_keeps_backend_path_
     output = capsys.readouterr().out
     assert '"status": "fixture_only"' in output
     assert '"fixture_only_mode": "reference-understanding"' in output
+    assert '"goal": "low poly squirrel"' in output
+    assert '"image_count": 1' in output
+    assert '"image_roles": [' in output
     assert '"mode": "reference_understanding"' in output
 
 

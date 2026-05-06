@@ -43,4 +43,8 @@ def test_vision_harness_fixture_only_reference_understanding_subprocess(tmp_path
     row = payload[0]
     assert row["status"] == "fixture_only"
     assert row["fixture_only_mode"] == "reference-understanding"
+    assert row["result"]["goal"] == "create a low-poly squirrel matching front and side references"
+    assert row["result"]["target_object"] is None
+    assert row["result"]["image_count"] == 1
+    assert row["result"]["image_roles"] == ["reference"]
     assert row["result"]["metadata"]["mode"] == "reference_understanding"

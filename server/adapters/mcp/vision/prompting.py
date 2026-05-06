@@ -568,6 +568,8 @@ def build_vision_response_json_schema(
             "properties": {
                 "classification_scores": {
                     "type": "array",
+                    "minItems": 1,
+                    "maxItems": 5,
                     "items": {
                         "type": "object",
                         "additionalProperties": False,

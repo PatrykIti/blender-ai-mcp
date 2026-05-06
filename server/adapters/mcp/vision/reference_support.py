@@ -79,7 +79,7 @@ def _sanitize_segmentation_artifact_id(value: Any, *, fallback: str) -> str:
 def _redact_local_paths(text: str | None) -> str | None:
     if text is None:
         return None
-    redacted = re.sub(r"(?<!\w)(?:[A-Za-z]:[\\/]|/)[^\s,;:]+", "[redacted-path]", text)
+    redacted = re.sub(r"(?<!\w)(?:[A-Za-z]:[\\/]|/|\./|\.\./|~/)[^\s,;:]+", "[redacted-path]", text)
     return redacted
 
 
@@ -190,7 +190,7 @@ def _merge_classification_scores(
         current = merged.get(key)
         if current is None or float(item.score) > float(current.score):
             merged[key] = item
-    return sorted(merged.values(), key=lambda item: float(item.score), reverse=True)[:8]
+    return sorted(merged.values(), key=lambda item: float(item.score), reverse=True)[:5]
 
 
 def _merge_segmentation_artifacts(

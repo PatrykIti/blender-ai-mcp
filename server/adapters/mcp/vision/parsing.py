@@ -589,7 +589,7 @@ def _normalize_reference_understanding_parts(parsed: dict[str, Any]) -> list[dic
                 "source_reference_ids": _coerce_string_list(raw_item.get("source_reference_ids")),
             }
         )
-    return items[:8]
+    return items[:5]
 
 
 def _normalize_reference_understanding_views(parsed: dict[str, Any]) -> list[dict[str, Any]]:
@@ -784,7 +784,7 @@ def _normalize_reference_verification_requirements(parsed: dict[str, Any]) -> li
         if priority not in {"high", "normal"}:
             priority = "normal"
         items.append({"tool_name": tool_name, "reason": reason, "priority": priority})
-    return items[:8]
+    return items[:5]
 
 
 def _normalize_reference_classification_scores(parsed: dict[str, Any]) -> list[dict[str, Any]]:
@@ -834,7 +834,7 @@ def _normalize_reference_classification_payload(parsed: dict[str, Any]) -> dict[
 
     items = [item for item in items if item["label"]]
     items.sort(key=lambda item: item["score"], reverse=True)
-    return {"classification_scores": items[:8]}
+    return {"classification_scores": items[:5]}
 
 
 def _normalize_reference_segmentation_artifacts(parsed: dict[str, Any]) -> list[dict[str, Any]]:

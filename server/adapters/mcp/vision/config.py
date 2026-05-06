@@ -206,7 +206,7 @@ class VisionReferenceClassifierConfig(BaseModel):
     api_key: str | None = None
     api_key_env: str | None = None
     timeout_seconds: float = Field(default=15.0, gt=0)
-    max_labels: int = Field(default=8, ge=1, le=32)
+    max_labels: int = Field(default=5, ge=1, le=5)
 
     @model_validator(mode="after")
     def validate_endpoint(self) -> "VisionReferenceClassifierConfig":

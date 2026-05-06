@@ -1254,16 +1254,16 @@ def test_get_session_capability_state_sanitizes_invalid_optional_support_payload
             ],
             "segmentation_artifacts": [
                 {
-                    "artifact_id": "/tmp/private/mask_tail_front.png",
+                    "artifact_id": "./private/mask_tail_front.png",
                     "artifact_kind": "mask",
-                    "reference_id": "/tmp/private/ref_front",
-                    "summary": "Stored at /tmp/private/mask_tail_front.png",
+                    "reference_id": "../private/ref_front",
+                    "summary": "Stored at ~/private/mask_tail_front.png",
                 }
             ],
             "source_provenance": [
                 {
                     "source": "part_segmentation",
-                    "summary": "Optional segmentation sidecar unavailable: /tmp/private/socket timeout",
+                    "summary": "Optional segmentation sidecar unavailable: ./private/socket timeout",
                 }
             ],
             "boundary_policy": {

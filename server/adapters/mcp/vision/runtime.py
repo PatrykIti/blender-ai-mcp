@@ -259,7 +259,7 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
             api_key=classifier_api_key,
             api_key_env=classifier_api_key_env,
             timeout_seconds=float(getattr(config, "VISION_REFERENCE_CLASSIFIER_TIMEOUT_SECONDS", 15.0)),
-            max_labels=int(getattr(config, "VISION_REFERENCE_CLASSIFIER_MAX_LABELS", 8)),
+            max_labels=int(getattr(config, "VISION_REFERENCE_CLASSIFIER_MAX_LABELS", 5)),
         )
 
     return VisionRuntimeConfig(
