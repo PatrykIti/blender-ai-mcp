@@ -77,9 +77,10 @@ Instead:
 - creature-specific prompts and future perception outputs may seed gate
   proposals or shape-profile evidence, but this umbrella does not pull SAM,
   CLIP, or another heavy perception adapter into the baseline implementation
-- bounded reference-understanding summaries and default-off optional perception
-  adapters remain owned by `TASK-158` Scope B and should reach this umbrella
-  only through the closed `TASK-157` proposal/support seams when they land
+- bounded reference-understanding summaries, session strategy state, and
+  default-off optional support evidence already ship through the closed
+  `TASK-163` reference/checkpoint/session seams and should reach this umbrella
+  only through the closed `TASK-157` proposal/support boundary
 
 ## Current Capability Ceiling
 
@@ -279,13 +280,22 @@ This umbrella does **not** cover:
 
 ## Repository Touchpoints
 
-- `server/adapters/mcp/prompts/`
+- `server/adapters/mcp/prompts/prompt_catalog.py`
+- `server/adapters/mcp/prompts/provider.py`
+- `server/adapters/mcp/prompts/rendering.py`
 - `server/adapters/mcp/guided_mode.py`
 - `server/adapters/mcp/session_capabilities.py`
+- `server/adapters/mcp/session_capabilities_state.py`
+- `server/adapters/mcp/session_capabilities_flow.py`
+- `server/adapters/mcp/session_capabilities_runtime_glue.py`
 - `server/adapters/mcp/transforms/visibility_policy.py`
+- `server/adapters/mcp/transforms/quality_gate_verifier.py`
 - `server/adapters/mcp/discovery/search_documents.py`
+- `server/adapters/mcp/discovery/search_surface.py`
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/areas/reference.py`
+- `server/adapters/mcp/areas/reference_truth.py`
+- `server/adapters/mcp/areas/reference_understanding.py`
 - `server/adapters/mcp/vision/`
 - `server/router/infrastructure/tools_metadata/`
 - future reconstruction-oriented MCP/tool surfacing under `server/adapters/mcp/`
@@ -293,8 +303,8 @@ This umbrella does **not** cover:
   bounded reconstruction-facing surface is introduced
 - `blender_addon/application/handlers/` if addon-side support becomes necessary
 - `tests/unit/adapters/mcp/`
-- `tests/unit/router/`
-- `tests/e2e/router/`
+- `tests/unit/tools/scene/`
+- `tests/e2e/integration/`
 - `tests/e2e/vision/`
 - `_docs/_PROMPTS/`
 - `_docs/_VISION/`
@@ -307,18 +317,24 @@ This umbrella does **not** cover:
 
 | Path / Module | Scope | Expected Work |
 |---------------|-------|---------------|
-| `server/adapters/mcp/contracts/reference.py` | Reference loop contracts | Add creature gate summaries and completion blockers using the closed `TASK-157` contracts, and consume any bounded reference-understanding linkage that `TASK-158-04` later promotes into declared checkpoint fields |
+| `server/adapters/mcp/contracts/reference.py` | Reference loop contracts | Add creature gate summaries and completion blockers using the closed `TASK-157` contracts, and consume the already-shipped bounded reference-understanding linkage from the closed `TASK-163` seams |
 | `server/adapters/mcp/contracts/quality_gates.py` | Generic dependency | Consume normalized gate types for creature-specific templates |
-| `server/adapters/mcp/areas/reference.py` | Checkpoint assembly | Include creature gate status, missing visual roles, seam/profile blockers, and any `TASK-158-04` summary linkage only through the existing reference/checkpoint surface |
-| `server/adapters/mcp/session_capabilities.py` | Guided state | Persist creature gate plan, role cardinality, stale gate versions, and next gate actions |
+| `server/adapters/mcp/areas/reference.py` | Checkpoint assembly | Include creature gate status, missing visual roles, seam/profile blockers, and existing `reference_understanding_summary` / `reference_orchestrator_feedback` linkage only through the current reference/checkpoint surface |
+| `server/adapters/mcp/areas/reference_truth.py` | Truth bundle and follow-up assembly | Keep creature seam/profile failures aligned with the staged truth/follow-up payloads that already feed checkpoint decisions |
+| `server/adapters/mcp/session_capabilities.py` | Stable facade | Keep the public session-capability API stable while new creature state/gate fields route through the split session-capability modules below |
+| `server/adapters/mcp/session_capabilities_state.py` | Session state model | Persist creature gate plan, role cardinality, stale gate versions, and next gate actions in the canonical session state |
+| `server/adapters/mcp/session_capabilities_flow.py` | Guided step/domain policy | Extend creature step progression and role-group expectations for reconstruction-oriented flow stages |
+| `server/adapters/mcp/session_capabilities_runtime_glue.py` | Gate projection and stale marking | Apply gate-plan updates, guided-state refresh, and visibility sync on the runtime path |
 | `server/application/services/spatial_graph.py` | Truth mapping | Map creature seam relations to `attachment_seam` and `support_contact` gate evidence |
+| `server/adapters/mcp/transforms/quality_gate_verifier.py` | Gate authority | Keep creature completion and refinement blockers grounded in verifier-owned pass/fail logic instead of prose or perception confidence |
 | `server/adapters/mcp/areas/scene.py` | Bounded macros | Use attach/align/arc/profile macros as gate repair tools |
 | `server/adapters/mcp/areas/mesh.py` | Form refinement | Expose bounded mesh tools during the creature refinement gate window |
 | `server/adapters/mcp/areas/modeling.py` | Primitive and transform | Keep primary/secondary creation role-aware and mark affected gates stale |
-| `server/adapters/mcp/discovery/search_documents.py` | Search shaping | Bias creature gate blockers toward attachment, arc-tail, eye/detail, and mesh-profile tools |
+| `server/adapters/mcp/discovery/search_documents.py` and `server/adapters/mcp/discovery/search_surface.py` | Search shaping | Bias creature gate blockers toward attachment, arc-tail, eye/detail, and mesh-profile tools on the current runtime search surface |
 | `server/router/infrastructure/tools_metadata/` | Metadata | Add gate-oriented hints for creature repair/refinement tools |
-| `blender_addon/application/handlers/mesh_handler.py` | E2E-backed behavior | Update only if mesh refinement gates require new Blender operations |
-| `blender_addon/application/handlers/modeling_handler.py` | E2E-backed behavior | Update only if profile/appendage macros need new primitive or transform support |
+| `server/adapters/mcp/prompts/prompt_catalog.py`, `server/adapters/mcp/prompts/provider.py`, and `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md` | Prompt assets | Keep the current prompt-asset surface aligned with creature reconstruction sequencing instead of inventing a second prompt path |
+| `blender_addon/application/handlers/mesh.py` | E2E-backed behavior | Update only if mesh refinement gates require new Blender operations |
+| `blender_addon/application/handlers/modeling.py` | E2E-backed behavior | Update only if profile/appendage macros need new primitive or transform support |
 | `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md` | Prompt guidance | Teach dynamic gates, required seams, eyes/detail, tail chain, and refinement window |
 | `_docs/_MCP_SERVER/README.md` | Public contract | Document creature gate status and repair recommendations |
 | `_docs/_TESTS/README.md` | Test lanes | Document creature gate unit/E2E regression commands |
@@ -359,16 +375,31 @@ This umbrella does **not** cover:
 ## Tests To Add/Update
 
 - focused unit coverage under `tests/unit/adapters/mcp/` for guided handoff,
-  prompt exposure, search shaping, reference contracts, and reconstruction
-  reporting surfaces
-- focused unit coverage under `tests/unit/router/` if reconstruction-oriented
-  session shaping or contract behavior crosses the router boundary
+  prompt exposure, search shaping, reference contracts, gate verification, and
+  reconstruction reporting surfaces
+- focused unit coverage under `tests/unit/tools/scene/` for creature seam and
+  relation-truth semantics that feed the verifier
 - representative `tests/e2e/vision/` coverage for front/side
   anatomy-aware creature reconstruction scenarios
 - relation-aware regression coverage for part-attachment cases such as ear/head,
   eye/head, snout/head, tail/body, and limb/body seating
-- representative `tests/e2e/router/` coverage for reconstruction-oriented
-  guided handoff and session recovery flows
+- representative `tests/e2e/integration/` coverage for reconstruction-oriented
+  guided handoff, gate transport, and session recovery flows
+
+## Runtime / Security Contract Notes
+
+- consume the existing `reference_images(...)`, `router_*`, and staged
+  checkpoint surfaces; do not propose a new public creature-only MCP tool
+- keep `reference_understanding`, `classification_scores`, silhouette metrics,
+  and segmentation artifacts advisory-only; gate pass/fail authority remains on
+  the `TASK-157` verifier path
+- preserve the current `guided_flow_state` / `active_gate_plan` / session-state
+  contracts instead of inventing a second creature-only state model
+- any new macro/profile surface must stay bounded, step-gated, and aligned with
+  existing visibility/search policy instead of broadening sculpt or free-form
+  modeling by default
+- keep medical/clinical claims out of this family; creature reconstruction is
+  low-poly, reference-guided, and visualization-oriented only
 
 ## Changelog Impact
 

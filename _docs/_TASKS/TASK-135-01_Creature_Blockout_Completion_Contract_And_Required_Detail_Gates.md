@@ -46,9 +46,14 @@ all tool calls return structured results.
 |---------------|-----------------|
 | `server/adapters/mcp/contracts/reference.py` | Add creature completion blockers and gate summary fields to checkpoint payloads |
 | `server/adapters/mcp/contracts/quality_gates.py` | Reuse generic gate status and blocker contracts from `TASK-157` |
-| `server/adapters/mcp/areas/reference.py` | Refuse final completion when required creature gates are missing/failed/stale |
-| `server/adapters/mcp/session_capabilities.py` | Persist creature required visual roles, role counts, and stale gate versions |
+| `server/adapters/mcp/areas/reference.py` | Refuse final completion when required creature gates are missing/failed/stale on the staged checkpoint surface |
+| `server/adapters/mcp/areas/reference_truth.py` | Keep required creature seams and completion blockers aligned with staged truth/follow-up payloads |
+| `server/adapters/mcp/transforms/quality_gate_verifier.py` | Enforce verifier-owned completion and seam pass/fail semantics |
+| `server/adapters/mcp/session_capabilities.py` | Keep the public session-capability facade stable while creature gate state routes through the split modules below |
+| `server/adapters/mcp/session_capabilities_state.py` | Persist creature required visual roles, role counts, and stale gate versions |
+| `server/adapters/mcp/session_capabilities_runtime_glue.py` | Project updated gate status and stale marking back into session state and visibility |
 | `server/application/services/spatial_graph.py` | Map required creature seams to attachment/support gate evidence |
+| `server/adapters/mcp/discovery/search_surface.py` | Bias missing-detail and seam blockers toward bounded repair/build tools on the live search surface |
 | `server/router/infrastructure/tools_metadata/` | Add creature completion and visual-detail search hints |
 | `tests/unit/adapters/mcp/` | Add contract, checkpoint, visibility, and guided state tests |
 | `tests/unit/tools/scene/` | Add seam verifier and macro evidence tests |
@@ -117,6 +122,17 @@ if only_intersection_cleanup_was_done and any_required_seam_not_seated:
 return maybe_complete()
 ```
 
+## Runtime / Security Contract Notes
+
+- keep gate pass/fail authority on the existing `TASK-157` verifier path
+- consume the already-shipped staged reference/checkpoint surfaces instead of
+  inventing a creature-only completion tool
+- use current `reference_understanding_summary` / `reference_orchestrator_feedback`
+  linkage from the closed `TASK-163` seams as support evidence only; those
+  fields must not pass gates by themselves
+- preserve the current bounded distinction between embedded organic seams and
+  true blocking `floating_gap` failures
+
 ## Tests To Add/Update
 
 | Layer | Tests |
@@ -139,6 +155,13 @@ return maybe_complete()
 ## Changelog Impact
 
 - Add a `_docs/_CHANGELOG/*` entry when this completion gate ships.
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
+- `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_goal_derived_gate_creature_completion.py tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py -q`
 
 ## Acceptance Criteria
 

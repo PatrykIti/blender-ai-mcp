@@ -5,7 +5,7 @@
 **Parent:** [TASK-135](./TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md)
 **Category:** Reconstruction / Guided Mesh Refinement
 **Estimated Effort:** Large
-**Depends On:** [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md)
+**Depends On:** [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-135-01](./TASK-135-01_Creature_Blockout_Completion_Contract_And_Required_Detail_Gates.md)
 
 ## Objective
 
@@ -40,20 +40,26 @@ For low-poly reconstruction, the expected baseline should be:
 Without an explicit refinement window, clients often stop too early or avoid
 mesh tools entirely.
 
+This file is now a technical subtask and decomposition anchor. Do not execute
+it as one oversized leaf; use the dedicated `TASK-135-03-*` leaves below.
+
 ## Repository Touchpoints
 
 | Path / Module | Expected Change |
 |---------------|-----------------|
-| `server/adapters/mcp/session_capabilities.py` | Add `refine_low_poly_forms` gate/step state and stale tracking |
+| `server/adapters/mcp/session_capabilities.py` | Keep the public session-capability facade stable while refinement-stage state routes through the split modules below |
+| `server/adapters/mcp/session_capabilities_state.py` | Add `refine_low_poly_forms` gate/step state and stale tracking to the canonical session state |
+| `server/adapters/mcp/session_capabilities_flow.py` | Extend creature step sequencing and role-group policy for the refinement stage |
+| `server/adapters/mcp/session_capabilities_runtime_glue.py` | Keep gate-plan refresh, stale marking, and visibility sync aligned with the new refinement stage |
 | `server/adapters/mcp/transforms/visibility_policy.py` | Open bounded mesh/modeling tools only when refinement prerequisites pass |
-| `server/adapters/mcp/discovery/search_documents.py` | Add low-poly profile/refinement search cues |
+| `server/adapters/mcp/discovery/search_documents.py` and `server/adapters/mcp/discovery/search_surface.py` | Add low-poly profile/refinement search cues on the live discovery surface |
 | `server/adapters/mcp/areas/mesh.py` | Ensure selected mesh tools work in the guided refinement window |
 | `server/adapters/mcp/areas/modeling.py` | Keep bounded transforms available for part profiling |
 | `server/adapters/mcp/areas/scene.py` | Add or expose profile macros if needed |
 | `server/router/infrastructure/tools_metadata/` | Add gate metadata for refinement tools and macros |
 | `server/application/tool_handlers/macro_handler.py` | Add optional profile macros only when existing mesh tools are insufficient |
-| `blender_addon/application/handlers/mesh_handler.py` | Update if new mesh operations are required |
-| `blender_addon/application/handlers/modeling_handler.py` | Update if profile macros need addon support |
+| `blender_addon/application/handlers/mesh.py` | Update if new mesh operations are required |
+| `blender_addon/application/handlers/modeling.py` | Update if profile macros need addon support |
 | `tests/unit/adapters/mcp/` | Visibility, checkpoint, gate prerequisite tests |
 | `tests/unit/tools/macro/` | Profile macro tests if macros are introduced |
 | `tests/e2e/tools/mesh/` | Blender-backed mesh refinement tests |
@@ -75,14 +81,13 @@ mesh tools entirely.
   - bounded modeling transforms
   - selected creature macros
 - Do not unlock broad sculpt by default for this stage.
-- Prefer reusable bounded macros where repeated primitive-to-form refinement is
-  common, for example:
-  - `macro_refine_creature_part_profile`
-  - `macro_point_creature_ears`
-  - `macro_flatten_limb_contact_patch`
-  - `macro_add_creature_eye_pair`
-- Keep macros optional if existing mesh/modeling tools can safely express the
-  first slice.
+- Prefer reusable bounded macros only when repeated primitive-to-form
+  refinement cannot be expressed safely enough with the bounded mesh/modeling
+  window.
+- Treat candidate names such as `macro_refine_creature_part_profile`,
+  `macro_point_creature_ears`, `macro_flatten_limb_contact_patch`, and
+  `macro_add_creature_eye_pair` as optional follow-ons, not as already-shipped
+  tools.
 - Add relation-aware preconditions:
   - do not refine final form while required seams still float
 - do not use mesh edits to hide unresolved attachment failures
@@ -96,11 +101,11 @@ mesh tools entirely.
   `silhouette_analysis` or future segmentation masks may support active
   `shape_profile` gates. The refinement stage still opens bounded mesh/modeling
   tools only after gate prerequisites pass.
-- Keep `TASK-158` Scope B ownership explicit: `TASK-158-04` owns any bounded
-  reference-understanding summary/linkage fields, and `TASK-158-05` owns any
-  default-off optional support-evidence adapters. This refinement task only
-  consumes their declared support refs through the closed `TASK-157`
-  substrate.
+- Keep the closed-owner split explicit: bounded RU summary/linkage and
+  default-off optional support-evidence adapters already ship on the closed
+  `TASK-163` seams. This refinement task consumes those support refs through the
+  closed `TASK-157` substrate and must not reopen earlier closed
+  vision-planning owners.
 - Keep broad sculpt out of the default low-poly refinement path. Sculpt remains
   a planner-driven, preconditioned handoff from `TASK-145`, not the baseline
   answer for faceted low-poly profile work.
@@ -121,9 +126,29 @@ if current_step == "refine_low_poly_forms":
         "mesh_loop_cut",
         "mesh_bevel",
         "mesh_symmetrize",
-        "macro_refine_creature_part_profile",
+        # Optional profile macros may join later if bounded mesh/modeling tools
+        # are not sufficient for the first slice.
     ]
 ```
+
+## Execution Structure
+
+| Order | Leaf | Purpose |
+|------|------|---------|
+| 1 | [TASK-135-03-01](./TASK-135-03-01_Refinement_Stage_State_And_Visibility_Gate.md) | Add the explicit refinement stage to guided state, gate policy, and visibility shaping |
+| 2 | [TASK-135-03-02](./TASK-135-03-02_Bounded_Profile_Tools_And_Optional_Macro_Wave.md) | Make the refinement stage operational with bounded profile tools and only the smallest necessary macro additions |
+| 3 | [TASK-135-03-03](./TASK-135-03-03_Refinement_Regression_Docs_And_Closeout.md) | Lock the new refinement path with transport/Blender-backed proof and final docs/changelog alignment |
+
+## Runtime / Security Contract Notes
+
+- keep refinement on the existing `guided_flow_state`, `active_gate_plan`,
+  `reference_images(...)`, and staged checkpoint surfaces
+- do not add a new public refinement tool or a second creature-only flow
+- treat `reference_understanding_summary`, `classification_scores`,
+  `segmentation_artifacts`, and silhouette signals as support evidence only; the
+  verifier still owns gate pass/fail
+- keep sculpt hidden on the normal refinement stage unless a later bounded
+  `TASK-145` handoff explicitly recommends it
 
 ## Tests To Add/Update
 
@@ -134,7 +159,7 @@ if current_step == "refine_low_poly_forms":
 | Unit search | "profile low-poly body/ears/limbs" returns bounded mesh/profile tools |
 | Unit safety | Sculpt remains hidden unless planner emits explicit sculpt handoff |
 | Unit checkpoint | Primitive-only creature reports refinement blockers |
-| Unit evidence refs | `TASK-157`/`TASK-158` support refs for shape-profile gates open only bounded profile tools after prerequisites |
+| Unit evidence refs | `TASK-157` plus the shipped `TASK-163` support refs for shape-profile gates open only bounded profile tools after prerequisites |
 | E2E mesh | A selected part can be profiled through guided mesh tools without losing state |
 | E2E vision | Primitive-only squirrel cannot pass final completion before refinement gate |
 | E2E macro | Any new profile macro has Blender-backed geometry assertions |
@@ -150,6 +175,13 @@ if current_step == "refine_low_poly_forms":
 
 - Add a `_docs/_CHANGELOG/*` entry when the refinement stage or first profile
   macro ships.
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
+- `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_goal_derived_gate_creature_completion.py tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py -q`
 
 ## Acceptance Criteria
 

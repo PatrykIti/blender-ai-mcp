@@ -5,7 +5,7 @@
 **Parent:** [TASK-135](./TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md)
 **Category:** Reconstruction / Guided Creature Tooling
 **Estimated Effort:** Medium
-**Depends On:** [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md)
+**Depends On:** [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-135-01](./TASK-135-01_Creature_Blockout_Completion_Contract_And_Required_Detail_Gates.md)
 
 ## Objective
 
@@ -37,10 +37,13 @@ front/side reference proportions are partially followed.
 |---------------|-----------------|
 | `server/adapters/mcp/areas/scene.py` | Keep `macro_adjust_segment_chain_arc(...)` visible/recommended for appendage-chain gates |
 | `server/application/tool_handlers/macro_handler.py` | Extend only if a new `macro_build_curved_tail_chain` becomes necessary |
-| `server/adapters/mcp/session_capabilities.py` | Represent tail chain/profile gates in guided state |
-| `server/adapters/mcp/discovery/search_documents.py` | Add search cues for curved/bushy/arched appendage chains |
+| `server/adapters/mcp/session_capabilities.py` | Keep the public session-capability facade stable while tail chain/profile state routes through the split modules below |
+| `server/adapters/mcp/session_capabilities_state.py` | Persist tail chain/profile gates in guided session state |
+| `server/adapters/mcp/session_capabilities_flow.py` | Keep tail chain/profile progression aligned with creature step policy |
+| `server/adapters/mcp/transforms/visibility_policy.py` | Keep arc/attachment tooling visible only on the right creature gate step |
+| `server/adapters/mcp/discovery/search_documents.py` and `server/adapters/mcp/discovery/search_surface.py` | Add search cues for curved/bushy/arched appendage chains on the live discovery surface |
 | `server/router/infrastructure/tools_metadata/` | Add metadata linking tail profile gates to arc and attachment macros |
-| `server/adapters/mcp/prompts/` | Teach multi-segment tail creation before arc adjustment |
+| `server/adapters/mcp/prompts/prompt_catalog.py`, `server/adapters/mcp/prompts/provider.py`, and `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md` | Teach multi-segment tail creation before arc adjustment on the current prompt-asset surface |
 | `tests/unit/tools/macro/test_macro_adjust_segment_chain_arc.py` | Add appendage-chain arc cases |
 | `tests/unit/tools/scene/test_macro_adjust_segment_chain_arc_mcp.py` | Add MCP structured contract cases |
 | `tests/e2e/tools/macro/test_macro_adjust_segment_chain_arc.py` | Add Blender-backed tail-chain arc case |
@@ -100,6 +103,17 @@ if creature_profile.tail_shape in {"curved", "bushy", "arched"}:
     )
 ```
 
+## Runtime / Security Contract Notes
+
+- keep `macro_adjust_segment_chain_arc(...)` on the existing bounded macro
+  surface; do not create a creature-only appendage runtime outside current MCP
+  seams
+- tail-chain/profile cues may consume shipped `reference_understanding_summary`
+  or silhouette support evidence from the closed `TASK-163` seams, but those
+  signals stay advisory-only and cannot bypass current gate/visibility policy
+- any new `macro_build_curved_tail_chain` follow-on must stay deterministic,
+  object-based, and compatible with the current attach/arc validation path
+
 ## Tests To Add/Update
 
 | Layer | Tests |
@@ -121,6 +135,13 @@ if creature_profile.tail_shape in {"curved", "bushy", "arched"}:
 ## Changelog Impact
 
 - Add a `_docs/_CHANGELOG/*` entry when the tail-chain path ships.
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/tools/macro/test_macro_adjust_segment_chain_arc.py tests/unit/tools/scene/test_macro_adjust_segment_chain_arc_mcp.py -q`
+- `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/tools/macro/test_macro_adjust_segment_chain_arc.py tests/e2e/vision/test_goal_derived_gate_creature_completion.py -q`
 
 ## Acceptance Criteria
 
