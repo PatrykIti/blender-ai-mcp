@@ -572,7 +572,7 @@ def test_parse_reference_classification_payload_repairs_simple_label_score_map()
         parse_vision_output_text(text, _reference_classification_request())
 
 
-def test_parse_reference_classification_payload_drops_out_of_range_scores():
+def test_parse_reference_classification_payload_rejects_out_of_range_scores():
     text = json.dumps(
         {
             "classification_scores": [
@@ -587,7 +587,7 @@ def test_parse_reference_classification_payload_drops_out_of_range_scores():
         parse_vision_output_text(text, _reference_classification_request())
 
 
-def test_parse_reference_classification_payload_sorts_and_caps_to_five_scores():
+def test_parse_reference_classification_payload_rejects_more_than_five_scores():
     text = json.dumps(
         {
             "classification_scores": [
