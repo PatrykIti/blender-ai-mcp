@@ -667,6 +667,98 @@ def test_vision_harness_live_reference_understanding_executes_backend_path(
     assert captured["roles"] == ["reference"]
 
 
+def test_vision_harness_live_reference_understanding_executes_bundle_backend_path(
+    tmp_path,
+    monkeypatch,
+    capsys,
+):
+    module = _load_script("vision_harness")
+    bundle_path = tmp_path / "bundle.json"
+    bundle_path.write_text(
+        json.dumps(
+            {
+                "bundle_id": "bundle_1",
+                "target_object": "Housing",
+                "preset_names": ["context_wide"],
+                "captures_before": [
+                    {
+                        "label": "before_1",
+                        "image_path": str(tmp_path / "before.jpg"),
+                        "media_type": "image/jpeg",
+                    }
+                ],
+                "captures_after": [
+                    {
+                        "label": "after_1",
+                        "image_path": str(tmp_path / "after.jpg"),
+                        "media_type": "image/jpeg",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    refs_path = tmp_path / "references.json"
+    refs_path.write_text(
+        json.dumps(
+            {
+                "references": [
+                    {
+                        "reference_id": "ref_1",
+                        "goal": "rounded housing",
+                        "label": "front_reference",
+                        "media_type": "image/png",
+                        "source_kind": "local_path",
+                        "original_path": str(tmp_path / "ref.png"),
+                        "stored_path": str(tmp_path / "ref.png"),
+                        "host_visible_path": str(tmp_path / "ref.png"),
+                        "added_at": "2026-03-26T00:00:00Z",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    captured: dict[str, object] = {}
+
+    class FakeBackend:
+        def __init__(self) -> None:
+            self.last_output_diagnostics = {"provider_path": "bundle-backend-executed"}
+
+        async def analyze(self, request):
+            captured["metadata"] = dict(request.metadata)
+            captured["roles"] = [image.role for image in request.images]
+            return {"status": "available", "understanding_id": "understanding_bundle_harness"}
+
+    monkeypatch.setattr(module, "create_vision_backend", lambda runtime: FakeBackend())
+
+    result = module.main(
+        [
+            "--backend",
+            "mlx_local",
+            "--goal",
+            "rounded housing",
+            "--mode",
+            "reference-understanding",
+            "--bundle-json",
+            str(bundle_path),
+            "--references-json",
+            str(refs_path),
+        ]
+    )
+
+    assert result == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload[0]["status"] == "success"
+    assert payload[0]["diagnostics"] == {"provider_path": "bundle-backend-executed"}
+    assert captured["metadata"] == {
+        "mode": "reference_understanding",
+        "reference_ids": ["ref_1"],
+        "source": "vision_harness",
+    }
+    assert captured["roles"] == ["reference"]
+
+
 def test_vision_harness_reference_understanding_mode_rejects_missing_reference_inputs():
     module = _load_script("vision_harness")
 

@@ -208,7 +208,7 @@ Keep the current owner-lane rule explicit while Scope B stays open:
 
 | Type | Count | Execution Time |
 |------|-------|----------------|
-| Unit Tests | 3228 collected | collect-only ~7 seconds; full runtime depends on selected lanes |
+| Unit Tests | 3233 collected | collect-only ~7 seconds; full runtime depends on selected lanes |
 | E2E Tests | 464 collected | collect-only ~14 seconds; Blender-backed runtime depends on active RPC/Blender state |
 
 Current repo-wide unit coverage (`server + blender_addon + scripts`):

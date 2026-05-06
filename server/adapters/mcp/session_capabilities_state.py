@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import asdict, dataclass
 from typing import Any, Literal
 
@@ -144,7 +145,10 @@ def _normalize_reference_understanding_summary(value: Any) -> dict[str, Any] | N
     if value is None:
         return None
     try:
-        return ReferenceUnderstandingSummaryContract.model_validate(value).model_dump(mode="json", exclude_none=True)
+        sanitized = _sanitize_reference_understanding_summary(value)
+        return ReferenceUnderstandingSummaryContract.model_validate(sanitized).model_dump(
+            mode="json", exclude_none=True
+        )
     except Exception:
         return None
 
@@ -165,6 +169,90 @@ def _normalize_reference_strategy_state(value: Any) -> dict[str, Any] | None:
         return ReferenceStrategyStateContract.model_validate(value).model_dump(mode="json", exclude_none=True)
     except Exception:
         return None
+
+
+def _looks_like_local_path(value: str) -> bool:
+    candidate = value.strip()
+    if not candidate:
+        return False
+    return bool(
+        candidate.startswith(("/", "./", "../", "~"))
+        or re.match(r"^[A-Za-z]:[\\/]", candidate) is not None
+        or "\\" in candidate
+    )
+
+
+def _redact_local_paths(text: str | None) -> str | None:
+    if text is None:
+        return None
+    return re.sub(r"(?<!\w)(?:[A-Za-z]:[\\/]|/)[^\s,;:]+", "[redacted-path]", text)
+
+
+def _sanitize_reference_understanding_summary(value: Any) -> Any:
+    if not isinstance(value, dict):
+        return value
+
+    sanitized = dict(value)
+    reference_ids = {str(item).strip() for item in list(sanitized.get("reference_ids") or []) if str(item).strip()}
+
+    classification_scores = sanitized.get("classification_scores")
+    if isinstance(classification_scores, list):
+        filtered_scores: list[dict[str, Any]] = []
+        for raw_item in classification_scores:
+            if not isinstance(raw_item, dict):
+                continue
+            label = str(raw_item.get("label") or "").strip()
+            score = raw_item.get("score")
+            if not label or not isinstance(score, (int, float)):
+                continue
+            normalized_score = float(score)
+            if not 0.0 <= normalized_score <= 1.0:
+                continue
+            filtered_scores.append({"label": label, "score": normalized_score})
+        sanitized["classification_scores"] = filtered_scores
+
+    segmentation_artifacts = sanitized.get("segmentation_artifacts")
+    if isinstance(segmentation_artifacts, list):
+        filtered_artifacts: list[dict[str, Any]] = []
+        for index, raw_item in enumerate(segmentation_artifacts, start=1):
+            if not isinstance(raw_item, dict):
+                continue
+            artifact_id = str(raw_item.get("artifact_id") or "").strip()
+            if not artifact_id or _looks_like_local_path(artifact_id) or "/" in artifact_id:
+                artifact_id = f"segmentation_artifact_{index}"
+            artifact_kind = str(raw_item.get("artifact_kind") or "mask").strip().lower() or "mask"
+            if artifact_kind not in {"mask", "crop", "box"}:
+                artifact_kind = "mask"
+            reference_id = str(raw_item.get("reference_id") or "").strip() or None
+            if reference_id is not None and reference_id not in reference_ids:
+                reference_id = None
+            summary = str(raw_item.get("summary") or "").strip() or None
+            filtered_artifacts.append(
+                {
+                    "artifact_id": artifact_id[:120],
+                    "artifact_kind": artifact_kind,
+                    "reference_id": reference_id,
+                    "summary": _redact_local_paths(summary),
+                }
+            )
+        sanitized["segmentation_artifacts"] = filtered_artifacts
+
+    source_provenance = sanitized.get("source_provenance")
+    if isinstance(source_provenance, list):
+        updated_provenance: list[Any] = []
+        for raw_item in source_provenance:
+            if not isinstance(raw_item, dict):
+                updated_provenance.append(raw_item)
+                continue
+            item = dict(raw_item)
+            if item.get("source") in {"classification_scores", "part_segmentation"}:
+                summary = item.get("summary")
+                if isinstance(summary, str):
+                    item["summary"] = _redact_local_paths(summary)
+            updated_provenance.append(item)
+        sanitized["source_provenance"] = updated_provenance
+
+    return sanitized
 
 
 def _normalize_guided_part_registry(value: Any) -> list[dict[str, Any]] | None:

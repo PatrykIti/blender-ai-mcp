@@ -516,9 +516,20 @@ _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
                         "priority": "high",
                     }
                 ],
-                "classification_scores": [],
-                "segmentation_artifacts": [],
-                "source_provenance": [{"source": "reference_understanding"}],
+                "classification_scores": [{"label": "low_poly_faceted", "score": 0.94}],
+                "segmentation_artifacts": [
+                    {
+                        "artifact_id": "mask_tail_front",
+                        "artifact_kind": "mask",
+                        "reference_id": (reference_ids or ["ref_front"])[0],
+                        "summary": "Support-only tail mask for RU follow-up.",
+                    }
+                ],
+                "source_provenance": [
+                    {"source": "reference_understanding"},
+                    {"source": "classification_scores", "summary": "Optional classifier scored low_poly_faceted at 0.94."},
+                    {"source": "part_segmentation", "summary": "Optional segmentation sidecar returned 1 artifact link(s)."},
+                ],
                 "boundary_policy": {
                     "advisory_only": True,
                     "not_truth_source": True,
@@ -615,6 +626,8 @@ async def _exercise_reference_understanding_transport_roundtrip(client, referenc
     assert summary["understanding_id"] == "understanding_transport_seed"
     assert summary["construction_strategy"]["primary_family"] == "modeling_mesh"
     assert summary["router_handoff_hints"]["sculpt_policy"] == "hidden"
+    assert summary["classification_scores"] == [{"label": "low_poly_faceted", "score": 0.94}]
+    assert summary["segmentation_artifacts"][0]["artifact_id"] == "mask_tail_front"
     assert goal_result["reference_understanding_gate_ids"]
     assert any(
         "reference_understanding" in gate["proposal_sources"]
@@ -624,6 +637,9 @@ async def _exercise_reference_understanding_transport_roundtrip(client, referenc
     status_result = result_payload(await client.call_tool("router_get_status", {}))
     assert status_result["reference_understanding_summary"]["understanding_id"] == "understanding_transport_seed"
     assert status_result["reference_understanding_gate_ids"] == goal_result["reference_understanding_gate_ids"]
+    assert status_result["reference_understanding_summary"]["segmentation_artifacts"][0]["artifact_id"] == (
+        "mask_tail_front"
+    )
 
     compare_result = result_payload(
         await client.call_tool(
@@ -639,6 +655,9 @@ async def _exercise_reference_understanding_transport_roundtrip(client, referenc
     )
     assert compare_result["reference_understanding_summary"]["understanding_id"] == "understanding_transport_seed"
     assert compare_result["reference_understanding_gate_ids"] == goal_result["reference_understanding_gate_ids"]
+    assert compare_result["reference_understanding_summary"]["classification_scores"] == [
+        {"label": "low_poly_faceted", "score": 0.94}
+    ]
     assert compare_result["part_segmentation"]["status"] == "disabled"
 
     iterate_result = result_payload(
@@ -653,6 +672,9 @@ async def _exercise_reference_understanding_transport_roundtrip(client, referenc
     )
     assert iterate_result["reference_understanding_summary"]["understanding_id"] == "understanding_transport_seed"
     assert iterate_result["reference_understanding_gate_ids"] == goal_result["reference_understanding_gate_ids"]
+    assert iterate_result["reference_understanding_summary"]["segmentation_artifacts"][0]["artifact_id"] == (
+        "mask_tail_front"
+    )
     assert iterate_result["part_segmentation"]["status"] == "disabled"
 
 
@@ -754,16 +776,25 @@ async def _exercise_reference_orchestrator_feedback_transport_surface(client, re
     assert feedback["next_checkpoint_tool"] == "reference_compare_stage_checkpoint"
     assert goal_result["reference_understanding_summary"]["views"]
     assert goal_result["reference_understanding_summary"]["visual_metrics"]
+    assert goal_result["reference_understanding_summary"]["classification_scores"] == [
+        {"label": "low_poly_faceted", "score": 0.94}
+    ]
 
     status_result = result_payload(await client.call_tool("router_get_status", {}))
     assert status_result["reference_orchestrator_feedback"] is not None
     assert status_result["reference_understanding_summary"]["visual_metrics"]
+    assert status_result["reference_understanding_summary"]["segmentation_artifacts"][0]["artifact_id"] == (
+        "mask_tail_front"
+    )
 
     listed_result = result_payload(await client.call_tool("reference_images", {"action": "list"}))
     assert listed_result["reference_orchestrator_feedback"] is not None
     assert (
         listed_result["reference_orchestrator_feedback"]["next_checkpoint_tool"] == "reference_compare_stage_checkpoint"
     )
+    assert listed_result["reference_understanding_summary"]["classification_scores"] == [
+        {"label": "low_poly_faceted", "score": 0.94}
+    ]
     listed_reference_id = listed_result["references"][0]["reference_id"]
 
     removed_result = result_payload(
@@ -771,6 +802,7 @@ async def _exercise_reference_orchestrator_feedback_transport_surface(client, re
     )
     assert removed_result["reference_orchestrator_feedback"] is not None
     assert removed_result["reference_orchestrator_feedback"]["next_checkpoint_tool"] == "reference_images"
+    assert removed_result["reference_understanding_summary"]["segmentation_artifacts"] == []
 
     reattached_result = result_payload(
         await client.call_tool(

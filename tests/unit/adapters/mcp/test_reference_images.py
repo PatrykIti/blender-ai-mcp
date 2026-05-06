@@ -1202,6 +1202,98 @@ def test_refresh_reference_understanding_summary_rebuilds_missing_strategy_state
     assert updated.reference_strategy_state["construction_path"] == "low_poly_facet"
 
 
+def test_get_session_capability_state_sanitizes_invalid_optional_support_payloads():
+    ctx = FakeContext()
+    ctx.set_state(
+        "reference_understanding_summary",
+        {
+            "status": "available",
+            "understanding_id": "understanding_support_sanitize",
+            "goal": "create a low-poly squirrel",
+            "reference_ids": ["ref_front"],
+            "subject": {
+                "label": "low poly squirrel",
+                "category": "creature",
+                "confidence": 0.9,
+                "uncertainty_notes": [],
+            },
+            "style": {
+                "style_label": "low_poly_faceted",
+                "confidence": 0.9,
+                "notes": [],
+            },
+            "views": [
+                {
+                    "view_id": "front",
+                    "detected": True,
+                    "confidence": 0.9,
+                    "reference_ids": ["ref_front"],
+                    "key_features": [],
+                }
+            ],
+            "required_parts": [],
+            "non_goals": [],
+            "construction_strategy": {
+                "construction_path": "low_poly_facet",
+                "primary_family": "modeling_mesh",
+                "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+                "stage_sequence": ["primary_masses"],
+                "finish_policy": "preserve_facets",
+            },
+            "router_handoff_hints": {
+                "preferred_family": "modeling_mesh",
+                "allowed_guided_families": ["reference_context", "primary_masses"],
+                "sculpt_policy": "hidden",
+            },
+            "gate_proposals": [],
+            "visual_evidence_refs": [],
+            "verification_requirements": [],
+            "classification_scores": [
+                {"label": "low_poly_faceted", "score": 0.91},
+                {"label": "bad_score", "score": 1.4},
+            ],
+            "segmentation_artifacts": [
+                {
+                    "artifact_id": "/tmp/private/mask_tail_front.png",
+                    "artifact_kind": "mask",
+                    "reference_id": "/tmp/private/ref_front",
+                    "summary": "Stored at /tmp/private/mask_tail_front.png",
+                }
+            ],
+            "source_provenance": [
+                {
+                    "source": "part_segmentation",
+                    "summary": "Optional segmentation sidecar unavailable: /tmp/private/socket timeout",
+                }
+            ],
+            "boundary_policy": {
+                "advisory_only": True,
+                "not_truth_source": True,
+                "may_unlock_tools": False,
+                "may_pass_gates": False,
+                "may_propose_gates": True,
+            },
+        },
+    )
+
+    state = get_session_capability_state(ctx)
+
+    assert state.reference_understanding_summary is not None
+    assert state.reference_understanding_summary["classification_scores"] == [
+        {"label": "low_poly_faceted", "score": 0.91},
+    ]
+    assert state.reference_understanding_summary["segmentation_artifacts"] == [
+        {
+            "artifact_id": "segmentation_artifact_1",
+            "artifact_kind": "mask",
+            "summary": "Stored at [redacted-path]",
+        }
+    ]
+    assert state.reference_understanding_summary["source_provenance"][0]["summary"] == (
+        "Optional segmentation sidecar unavailable: [redacted-path] timeout"
+    )
+
+
 def test_reference_compare_stage_checkpoint_threads_reference_understanding_from_session():
     ctx = FakeContext()
     set_session_capability_state(

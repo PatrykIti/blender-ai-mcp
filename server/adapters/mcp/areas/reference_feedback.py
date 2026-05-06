@@ -373,6 +373,9 @@ def build_reference_orchestrator_feedback(
     ):
         return None
 
+    if strategy_state is None and summary is not None:
+        strategy_state = build_reference_strategy_state(summary)
+
     if strategy_state is not None:
         effective_status = strategy_state.status
     elif summary is not None:

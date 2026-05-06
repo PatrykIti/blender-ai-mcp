@@ -285,6 +285,7 @@ def _normalize_segmentation_artifacts_payload(
     payload: dict[str, Any],
     *,
     max_artifacts: int,
+    allowed_reference_ids: set[str] | None = None,
 ) -> list[ReferenceUnderstandingSegmentationArtifactContract]:
     value = payload.get("segmentation_artifacts")
     if not isinstance(value, list):
@@ -300,11 +301,14 @@ def _normalize_segmentation_artifacts_payload(
         artifact_kind = str(raw_item.get("artifact_kind") or "mask").strip().lower()
         if artifact_kind not in _SEGMENTATION_ARTIFACT_KINDS:
             artifact_kind = "mask"
+        reference_id = str(raw_item.get("reference_id") or "").strip() or None
+        if reference_id is not None and allowed_reference_ids is not None and reference_id not in allowed_reference_ids:
+            reference_id = None
         items.append(
             ReferenceUnderstandingSegmentationArtifactContract(
                 artifact_id=artifact_id,
                 artifact_kind=cast(Literal["mask", "crop", "box"], artifact_kind),
-                reference_id=str(raw_item.get("reference_id") or "").strip() or None,
+                reference_id=reference_id,
                 summary=_redact_local_paths(_bounded_text(raw_item.get("summary"))),
             )
         )
@@ -363,7 +367,10 @@ async def _collect_classifier_support(
                 provider=config.provider_name,
                 model_id=config.model,
                 reference_ids=reference_ids,
-                summary=_bounded_text(f"Optional reference classifier unavailable: {exc}", fallback=None),
+                summary=_bounded_text(
+                    _redact_local_paths(f"Optional reference classifier unavailable: {exc}"),
+                    fallback=None,
+                ),
             ),
         )
 
@@ -410,7 +417,11 @@ async def _collect_segmentation_support(
             api_key=_resolve_api_key(inline_key=config.api_key, env_name=config.api_key_env),
             payload=request_payload,
         )
-        artifacts = _normalize_segmentation_artifacts_payload(payload, max_artifacts=config.max_parts)
+        artifacts = _normalize_segmentation_artifacts_payload(
+            payload,
+            max_artifacts=config.max_parts,
+            allowed_reference_ids=set(reference_ids),
+        )
         if artifacts:
             summary_text = f"Optional segmentation sidecar returned {len(artifacts)} artifact link(s)."
         else:
@@ -424,7 +435,10 @@ async def _collect_segmentation_support(
                 provider=config.provider_name,
                 model_id=config.model,
                 reference_ids=reference_ids,
-                summary=_bounded_text(f"Optional segmentation sidecar unavailable: {exc}", fallback=None),
+                summary=_bounded_text(
+                    _redact_local_paths(f"Optional segmentation sidecar unavailable: {exc}"),
+                    fallback=None,
+                ),
             ),
         )
 

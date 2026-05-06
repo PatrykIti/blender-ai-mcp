@@ -169,9 +169,23 @@ class _ReferenceUnderstandingBackend:
                     "priority": "high",
                 }
             ],
-            "classification_scores": [],
-            "segmentation_artifacts": [],
-            "source_provenance": [{"source": "reference_understanding"}],
+            "classification_scores": [{"label": "low_poly_faceted", "score": 0.94}],
+            "segmentation_artifacts": [
+                {
+                    "artifact_id": "mask_tail_front",
+                    "artifact_kind": "mask",
+                    "reference_id": (request.metadata.get("reference_ids") or ["ref_front"])[0],
+                    "summary": "Support-only tail mask for RU follow-up.",
+                }
+            ],
+            "source_provenance": [
+                {"source": "reference_understanding"},
+                {"source": "classification_scores", "summary": "Optional classifier scored low_poly_faceted at 0.94."},
+                {
+                    "source": "part_segmentation",
+                    "summary": "Optional segmentation sidecar returned 1 artifact link(s).",
+                },
+            ],
             "boundary_policy": {
                 "advisory_only": True,
                 "not_truth_source": True,
@@ -417,6 +431,8 @@ def test_reference_orchestrator_feedback_surface_with_real_blender_capture(
     assert goal_result.reference_understanding_summary.views
     assert goal_result.reference_understanding_summary.views[0].view_id == "front"
     assert goal_result.reference_understanding_summary.visual_metrics
+    assert goal_result.reference_understanding_summary.classification_scores[0].label == "low_poly_faceted"
+    assert goal_result.reference_understanding_summary.segmentation_artifacts[0].artifact_id == "mask_tail_front"
     assert goal_result.reference_orchestrator_feedback is not None
     assert goal_result.reference_orchestrator_feedback.selected_family == "modeling_mesh"
     assert goal_result.reference_orchestrator_feedback.next_checkpoint_tool == "reference_compare_stage_checkpoint"
@@ -425,15 +441,19 @@ def test_reference_orchestrator_feedback_surface_with_real_blender_capture(
     assert status_result.reference_orchestrator_feedback.selected_family == "modeling_mesh"
     assert status_result.reference_understanding_summary is not None
     assert status_result.reference_understanding_summary.visual_metrics
+    assert status_result.reference_understanding_summary.segmentation_artifacts[0].artifact_id == "mask_tail_front"
 
     assert compare_result.reference_orchestrator_feedback is not None
     assert compare_result.reference_orchestrator_feedback.next_checkpoint_tool == "reference_iterate_stage_checkpoint"
     assert compare_result.reference_understanding_summary is not None
     assert compare_result.reference_understanding_summary.visual_metrics
+    assert compare_result.reference_understanding_summary.classification_scores[0].label == "low_poly_faceted"
 
     assert iterate_result.reference_orchestrator_feedback is not None
     assert iterate_result.loop_disposition == "inspect_validate"
     assert iterate_result.reference_orchestrator_feedback.next_checkpoint_tool is None
+    assert iterate_result.reference_understanding_summary is not None
+    assert iterate_result.reference_understanding_summary.segmentation_artifacts[0].artifact_id == "mask_tail_front"
 
 
 def test_reference_understanding_refresh_clear_reapplies_visibility_immediately(tmp_path, monkeypatch):

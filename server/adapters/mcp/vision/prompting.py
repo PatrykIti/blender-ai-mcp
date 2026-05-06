@@ -243,8 +243,6 @@ def build_vision_system_prompt(
             "- gate_proposals\n"
             "- visual_evidence_refs\n"
             "- verification_requirements\n"
-            "- classification_scores\n"
-            "- segmentation_artifacts\n"
         )
 
     if _uses_google_family_compare_contract(

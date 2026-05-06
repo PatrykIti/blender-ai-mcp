@@ -54,7 +54,7 @@ async def _call_stage_compare_via_client(client: Client) -> object:
     return result.data
 
 
-async def _fetch_stage_compare_stdio_session_id() -> tuple[str | None, str | None]:
+async def _run_stdio_client(callback) -> tuple[str | None, str | None] | tuple[str | None, str | None]:
     log_file = tempfile.NamedTemporaryFile(prefix="bam-stdio-", suffix=".log", delete=False)
     log_path = Path(log_file.name)
     log_file.close()
@@ -67,8 +67,32 @@ async def _fetch_stage_compare_stdio_session_id() -> tuple[str | None, str | Non
         log_file=log_path,
     )
     async with Client(transport, timeout=10, init_timeout=10) as client:
-        payload = await _call_stage_compare_via_client(client)
-        return getattr(payload, "session_id", None), getattr(payload, "transport", None)
+        return await callback(client)
+
+
+def _run_stdio_with_retry(callback):
+    deadline = time.time() + 20
+    last_error: Exception | None = None
+    last_log_text = ""
+    while time.time() < deadline:
+        try:
+            return asyncio.run(_run_stdio_client(callback))
+        except Exception as exc:  # noqa: PERF203 - test-only retry loop
+            last_error = exc
+            stdio_logs = sorted(
+                Path(tempfile.gettempdir()).glob("bam-stdio-*.log"), key=lambda path: path.stat().st_mtime
+            )
+            if stdio_logs:
+                last_log_text = stdio_logs[-1].read_text(encoding="utf-8", errors="replace")
+            time.sleep(0.25)
+    raise AssertionError(
+        f"stdio MCP server did not become ready within retry window: {last_error}\n\n--- server log ---\n{last_log_text}"
+    ) from last_error
+
+
+async def _fetch_stage_compare_stdio_session_id_from_client(client: Client) -> tuple[str | None, str | None]:
+    payload = await _call_stage_compare_via_client(client)
+    return getattr(payload, "session_id", None), getattr(payload, "transport", None)
 
 
 @contextmanager
@@ -129,8 +153,8 @@ async def _fetch_streamable_session_id(url: str) -> tuple[str | None, str | None
 
 @pytest.mark.slow
 def test_stdio_transport_e2e_preserves_session_id_within_client_and_changes_on_reconnect():
-    first_session_id, first_transport = asyncio.run(_fetch_stage_compare_stdio_session_id())
-    second_session_id, second_transport = asyncio.run(_fetch_stage_compare_stdio_session_id())
+    first_session_id, first_transport = _run_stdio_with_retry(_fetch_stage_compare_stdio_session_id_from_client)
+    second_session_id, second_transport = _run_stdio_with_retry(_fetch_stage_compare_stdio_session_id_from_client)
 
     assert first_transport == "stdio"
     assert second_transport == "stdio"
@@ -154,24 +178,12 @@ def test_streamable_transport_e2e_preserves_session_id_within_client_and_changes
 
 @pytest.mark.slow
 def test_stdio_transport_e2e_keeps_same_session_id_across_calls_in_one_client():
-    async def run() -> tuple[str | None, str | None]:
-        log_file = tempfile.NamedTemporaryFile(prefix="bam-stdio-", suffix=".log", delete=False)
-        log_path = Path(log_file.name)
-        log_file.close()
-        transport = StdioTransport(
-            command=sys.executable,
-            args=["-m", "server.main"],
-            env=_base_env(transport_mode="stdio"),
-            cwd=str(REPO_ROOT),
-            keep_alive=False,
-            log_file=log_path,
-        )
-        async with Client(transport, timeout=10, init_timeout=10) as client:
-            first = await _call_stage_compare_via_client(client)
-            second = await _call_stage_compare_via_client(client)
-            return getattr(first, "session_id", None), getattr(second, "session_id", None)
+    async def callback(client: Client) -> tuple[str | None, str | None]:
+        first = await _call_stage_compare_via_client(client)
+        second = await _call_stage_compare_via_client(client)
+        return getattr(first, "session_id", None), getattr(second, "session_id", None)
 
-    first_session_id, second_session_id = asyncio.run(run())
+    first_session_id, second_session_id = _run_stdio_with_retry(callback)
 
     assert first_session_id is not None
     assert first_session_id == second_session_id
