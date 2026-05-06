@@ -1024,6 +1024,59 @@ def test_refresh_reference_understanding_summary_redacts_backend_failure_paths(t
     assert updated.reference_understanding_summary["message"] == "Failed to read [redacted-path]"
 
 
+def test_refresh_reference_understanding_summary_redacts_generic_backend_failure_paths(tmp_path, monkeypatch):
+    ctx = FakeContext()
+    reference_path = tmp_path / "front.png"
+    _write_test_silhouette(reference_path, with_ears=True)
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel",
+            surface_profile="llm-guided",
+            guided_flow_state=_guided_reference_flow_state(),
+            reference_images=[
+                {
+                    "reference_id": "ref_front",
+                    "goal": "create a low-poly squirrel",
+                    "label": "front_ref",
+                    "target_view": "front",
+                    "media_type": "image/png",
+                    "source_kind": "local_path",
+                    "original_path": str(reference_path),
+                    "stored_path": str(reference_path),
+                    "host_visible_path": str(reference_path),
+                    "added_at": "2026-05-05T12:00:00Z",
+                }
+            ],
+        ),
+    )
+
+    class Backend:
+        async def analyze(self, request):
+            raise RuntimeError("Crashed while reading ../private/reference.png")
+
+    class Resolver:
+        runtime_config = SimpleNamespace(
+            active_reference_classifier=None,
+            active_segmentation_sidecar=None,
+        )
+
+        def resolve_default(self):
+            return Backend()
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: Resolver())
+
+    updated = asyncio.run(refresh_reference_understanding_summary_async(ctx))
+
+    assert updated.reference_understanding_summary is not None
+    assert updated.reference_understanding_summary["status"] == "unavailable"
+    assert (
+        updated.reference_understanding_summary["message"]
+        == "Reference understanding could not complete: Crashed while reading [redacted-path]"
+    )
+
+
 def test_refresh_reference_understanding_summary_can_use_openai_compatible_classifier_path(tmp_path, monkeypatch):
     ctx = FakeContext()
     reference_path = tmp_path / "front.png"
@@ -1747,9 +1800,10 @@ def test_get_session_capability_state_sanitizes_invalid_optional_support_payload
             "source_provenance": [
                 {
                     "source": "part_segmentation",
-                    "summary": "Optional segmentation sidecar unavailable: ./private/socket timeout",
+                    "summary": "Optional segmentation sidecar unavailable: .\\private\\socket timeout",
                 }
             ],
+            "message": "Reference understanding could not complete: .\\private\\reference.png",
             "boundary_policy": {
                 "advisory_only": True,
                 "not_truth_source": True,
@@ -1775,6 +1829,9 @@ def test_get_session_capability_state_sanitizes_invalid_optional_support_payload
     ]
     assert state.reference_understanding_summary["source_provenance"][0]["summary"] == (
         "Optional segmentation sidecar unavailable: [redacted-path] timeout"
+    )
+    assert state.reference_understanding_summary["message"] == (
+        "Reference understanding could not complete: [redacted-path]"
     )
 
 
@@ -2419,6 +2476,71 @@ def test_reference_compare_stage_checkpoint_threads_reference_understanding_from
     assert result.reference_orchestrator_feedback.current_guided_step == "create_primary_masses"
 
 
+def test_reference_compare_stage_checkpoint_rebuilds_gate_ids_from_gate_plan_when_session_ids_missing():
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel",
+            surface_profile="llm-guided",
+            guided_flow_state=_guided_reference_flow_state(),
+            gate_plan={
+                "plan_id": "creature_quality_gate_plan",
+                "domain_profile": "creature",
+                "gates": [
+                    {
+                        "gate_id": "required_part_eye_pair",
+                        "gate_type": "required_part",
+                        "label": "visible eye pair",
+                        "required": True,
+                        "priority": "high",
+                        "status": "pending",
+                        "status_reason": "missing_required_part",
+                        "verification_strategy": "object_existence",
+                        "proposal_sources": ["reference_understanding"],
+                        "target_kind": "reference_part",
+                        "target_label": "eye_pair",
+                        "allowed_correction_families": ["primary_masses", "inspect_validate"],
+                        "evidence_requirements": [{"evidence_kind": "scene_truth", "required": True}],
+                        "evidence_refs": [],
+                    }
+                ],
+                "policy_warnings": [],
+                "completion_blockers": [],
+                "required_gate_count": 1,
+                "optional_gate_count": 0,
+                "status_summary": {
+                    "required_total": 1,
+                    "required_passed": 0,
+                    "required_blocking": 1,
+                    "optional_total": 0,
+                    "status_counts": {"pending": 1},
+                },
+            },
+            reference_understanding_summary={
+                "status": "blocked",
+                "goal": "create a low-poly squirrel",
+                "reference_ids": [],
+                "reason": "reference_images_required",
+                "message": "Attach references first.",
+            },
+            reference_understanding_gate_ids=None,
+        ),
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            target_object="Squirrel",
+            checkpoint_label="stage_squirrel",
+            preset_profile="compact",
+        )
+    )
+
+    assert result.reference_understanding_gate_ids == ["required_part_eye_pair"]
+
+
 def test_reference_understanding_refresh_replaces_previous_reference_gate_slice(tmp_path, monkeypatch):
     image_front = tmp_path / "front.png"
     image_side = tmp_path / "side.png"
@@ -2877,12 +2999,14 @@ def test_reference_images_ready_session_list_remove_and_clear_preserve_orchestra
     assert listed.reference_orchestrator_feedback.active_gate_ids == ["seat_presence"]
     assert listed.reference_orchestrator_feedback.next_checkpoint_tool == "reference_compare_stage_checkpoint"
     assert listed.reference_understanding_summary is not None
+    assert listed.reference_understanding_gate_ids == ["seat_presence"]
     assert listed.reference_understanding_summary.segmentation_artifacts[0].artifact_id == "mask_seat_front"
 
     assert removed.reference_orchestrator_feedback is not None
     assert removed.reference_orchestrator_feedback.active_gate_ids == ["seat_presence"]
     assert removed.reference_orchestrator_feedback.current_guided_step == "create_primary_masses"
     assert removed.reference_understanding_summary is not None
+    assert removed.reference_understanding_gate_ids == ["seat_presence"]
     assert removed.reference_understanding_summary.segmentation_artifacts[0].artifact_id == "mask_seat_front"
 
     # Recreate pending state to verify clear uses the same compact feedback path.

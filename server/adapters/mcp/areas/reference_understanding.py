@@ -51,7 +51,11 @@ def blocked_reference_understanding_summary(
 
 
 def _redact_local_paths(text: str) -> str:
-    return re.sub(r"(?<!\w)(?:[A-Za-z]:[\\/]|/|\./|\.\./|~/)[^\s,;:]+", "[redacted-path]", text)
+    return re.sub(
+        r"(?<!\w)(?:[A-Za-z]:[\\/]|/|\.{1,2}[\\/]|~[\\/])[^\s,;:]+|[^\s,;:]*\\[^\s,;:]+",
+        "[redacted-path]",
+        text,
+    )
 
 
 def _sanitize_reference_understanding_error_message(message: str) -> str:

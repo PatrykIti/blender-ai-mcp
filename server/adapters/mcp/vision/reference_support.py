@@ -79,7 +79,11 @@ def _sanitize_segmentation_artifact_id(value: Any, *, fallback: str) -> str:
 def _redact_local_paths(text: str | None) -> str | None:
     if text is None:
         return None
-    redacted = re.sub(r"(?<!\w)(?:[A-Za-z]:[\\/]|/|\./|\.\./|~/)[^\s,;:]+", "[redacted-path]", text)
+    redacted = re.sub(
+        r"(?<!\w)(?:[A-Za-z]:[\\/]|/|\.{1,2}[\\/]|~[\\/])[^\s,;:]+|[^\s,;:]*\\[^\s,;:]+",
+        "[redacted-path]",
+        text,
+    )
     return redacted
 
 

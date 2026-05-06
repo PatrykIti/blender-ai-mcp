@@ -881,6 +881,15 @@ async def _run_checkpoint_compare(
     )
 
 
+def _effective_reference_understanding_gate_ids_from_session(session: SessionCapabilityState) -> list[str]:
+    if session.reference_understanding_gate_ids is not None:
+        return list(session.reference_understanding_gate_ids)
+    if session.gate_plan is None:
+        return []
+    gate_plan = GatePlanContract.model_validate(session.gate_plan)
+    return [gate.gate_id for gate in gate_plan.gates if "reference_understanding" in gate.proposal_sources]
+
+
 async def _run_stage_checkpoint_compare(
     ctx: Context,
     *,
@@ -908,7 +917,7 @@ async def _run_stage_checkpoint_compare(
         if session.reference_understanding_summary is not None
         else None
     )
-    reference_understanding_gate_ids = list(session.reference_understanding_gate_ids or [])
+    reference_understanding_gate_ids = _effective_reference_understanding_gate_ids_from_session(session)
     reference_strategy_state = session.reference_strategy_state
     goal = session.goal
     if not readiness.compare_ready or goal is None:
