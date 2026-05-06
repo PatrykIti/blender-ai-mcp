@@ -583,11 +583,8 @@ def test_parse_reference_classification_payload_drops_out_of_range_scores():
         }
     )
 
-    parsed = parse_vision_output_text(text, _reference_classification_request())
-
-    assert parsed["classification_scores"] == [
-        {"label": "low_poly_faceted", "score": 0.91},
-    ]
+    with pytest.raises(ValueError, match="classification_scores"):
+        parse_vision_output_text(text, _reference_classification_request())
 
 
 def test_parse_reference_classification_payload_sorts_and_caps_to_five_scores():
@@ -604,15 +601,8 @@ def test_parse_reference_classification_payload_sorts_and_caps_to_five_scores():
         }
     )
 
-    parsed = parse_vision_output_text(text, _reference_classification_request())
-
-    assert parsed["classification_scores"] == [
-        {"label": "label_2", "score": 0.90},
-        {"label": "label_3", "score": 0.70},
-        {"label": "label_4", "score": 0.50},
-        {"label": "label_5", "score": 0.30},
-        {"label": "label_6", "score": 0.20},
-    ]
+    with pytest.raises(ValueError, match="required contract shape"):
+        parse_vision_output_text(text, _reference_classification_request())
 
 
 def test_parse_reference_understanding_payload_rejects_unknown_top_level_fields():

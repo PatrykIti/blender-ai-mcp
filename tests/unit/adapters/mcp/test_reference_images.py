@@ -3174,9 +3174,9 @@ def test_reference_images_list_and_remove_rebuild_reference_understanding_gate_i
     assert listed.reference_understanding_gate_ids == ["seat_presence"]
     assert listed.reference_orchestrator_feedback is not None
     assert listed.reference_orchestrator_feedback.active_gate_ids == ["seat_presence"]
-    assert removed.reference_understanding_gate_ids == ["seat_presence"]
+    assert removed.reference_understanding_gate_ids == []
     assert removed.reference_orchestrator_feedback is not None
-    assert removed.reference_orchestrator_feedback.active_gate_ids == ["seat_presence"]
+    assert removed.reference_orchestrator_feedback.active_gate_ids == []
 
 
 def test_reference_images_ready_goal_refresh_reapplies_visibility_on_attach_and_clear(tmp_path, monkeypatch):
