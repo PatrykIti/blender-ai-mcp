@@ -496,6 +496,73 @@ def test_streamable_guided_transform_object_fails_cleanly_during_spatial_refresh
 
 
 @pytest.mark.slow
+def test_streamable_guided_call_tool_hidden_during_spatial_refresh_points_to_required_checks(tmp_path: Path):
+    """A hidden call_tool retry should explain the live spatial refresh path and keep the Streamable session healthy."""
+
+    script_path = write_server_script(tmp_path, _PATCHED_GUIDED_STREAMABLE_SERVER)
+
+    async def run(url: str) -> None:
+        async with streamable_client(url) as client:
+            await client.call_tool(
+                "router_set_goal",
+                {"goal": "create a low-poly squirrel matching front and side reference images"},
+            )
+
+            await client.call_tool(
+                "modeling_create_primitive",
+                {
+                    "primitive_type": "Sphere",
+                    "name": "Squirrel_Body",
+                    "location": [0.0, 0.0, 0.6],
+                    "radius": 0.5,
+                    "guided_role": "body_core",
+                },
+            )
+            await client.call_tool(
+                "modeling_create_primitive",
+                {
+                    "primitive_type": "Sphere",
+                    "name": "Squirrel_Head",
+                    "location": [0.0, -0.4, 1.45],
+                    "radius": 0.35,
+                    "guided_role": "head_mass",
+                },
+            )
+
+            with pytest.raises(
+                ToolError,
+                match=(
+                    "Hidden tool while spatial_refresh_required is active: 'modeling_transform_object'.*"
+                    "scene_scope_graph\\(\\.\\.\\.\\).*scene_relation_graph\\(\\.\\.\\.\\).*scene_view_diagnostics\\(\\.\\.\\.\\)"
+                ),
+            ):
+                await client.call_tool(
+                    "call_tool",
+                    {
+                        "name": "modeling_transform_object",
+                        "arguments": {"name": "Squirrel_Head", "scale": [1.0, 0.92, 0.95]},
+                    },
+                )
+
+            status_result = result_payload(await client.call_tool("router_get_status", {}))
+            assert status_result["current_phase"] == "build"
+            assert status_result["guided_flow_state"]["current_step"] == "place_secondary_parts"
+            assert status_result["guided_flow_state"]["spatial_refresh_required"] is True
+            assert [item["tool_name"] for item in status_result["guided_flow_state"]["required_checks"]] == [
+                "scene_scope_graph",
+                "scene_relation_graph",
+                "scene_view_diagnostics",
+            ]
+
+            refresh_scope = {"target_object": "Squirrel_Body", "target_objects": ["Squirrel_Head"]}
+            scope_result = result_payload(await client.call_tool("scene_scope_graph", refresh_scope))
+            assert scope_result
+
+    with run_streamable_server(script_path) as url:
+        asyncio.run(run(url))
+
+
+@pytest.mark.slow
 def test_streamable_guided_reconnect_resets_build_only_visibility_but_keeps_spatial_support(tmp_path: Path):
     """A new streamable session should keep default spatial support while build tools remain search-discovered only."""
 

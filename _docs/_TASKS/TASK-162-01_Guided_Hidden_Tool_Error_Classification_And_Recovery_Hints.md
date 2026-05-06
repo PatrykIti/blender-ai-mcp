@@ -1,7 +1,7 @@
 # TASK-162-01: Guided Hidden-Tool Error Classification And Recovery Hints
 
 **Parent:** [TASK-162](./TASK-162_Guided_Hidden_Tool_Error_Semantics_And_Recovery_Clarity.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Objective:** Replace generic guided `Unknown tool` proxy failures on the `call_tool(...)` seam with deterministic hidden-tool / stale-context recovery semantics when the server knows the active flow step and required spatial checks, then keep direct-call parity explicit in the family-level proof.
 
@@ -134,6 +134,18 @@ The named tests should explicitly prove all three classifications:
   deterministic error semantics; the named proof lanes must make clear which
   transports prove wording and which also prove post-failure continuity
 
+## Completion Summary
+
+Completed on 2026-05-06.
+
+- `search_surface.py` now classifies proxy failures into unknown-tool,
+  hidden-by-current-visibility, and hidden-during-`spatial_refresh_required`
+  paths without widening the callable surface
+- the spatial-refresh message is derived from live pending `required_checks`
+  rather than from a hard-coded static tool list
+- unit plus stdio/Streamable proof lanes now verify that the same session
+  remains healthy after the hidden-tool error path
+
 ## Status / Board Update
 
-- active child under open parent `TASK-162`; no separate board row
+- completed under closed parent `TASK-162`; no separate board row

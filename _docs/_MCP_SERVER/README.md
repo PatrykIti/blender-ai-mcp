@@ -308,6 +308,11 @@ Search-first behavior now respects guided visibility:
 
 - hidden tools do not appear in bootstrap-phase search results
 - hidden tools cannot be invoked through `call_tool`
+- `call_tool(...)` now distinguishes a truly unknown public tool id from a
+  known guided tool that is currently hidden by surface/phase visibility
+- when `spatial_refresh_required` is the reason, the hidden-tool recovery
+  message points back to the live `required_checks` instead of looking like a
+  transport drop or generic lookup miss
 - direct public calls and discovered `call_tool` calls share the same guided-surface router failure behavior
 - if a tool is not already directly visible, the intended operator path is
   `search_tools(...)` before `call_tool(...)`, not speculative name guessing
@@ -516,6 +521,9 @@ On `llm-guided`, `router_set_goal()` now exposes explicit typed continuation met
 
 - `guided_handoff` is returned for bounded guided continuations such as `guided_manual_build` and `guided_utility`
 - it names `target_phase`, `direct_tools`, `supporting_tools`, and `discovery_tools`
+- treat `guided_handoff` as typed continuation context, not as a permanent
+  visibility promise; if later `router_get_status().visibility_rules` narrow,
+  the live visibility rules are authoritative over stale direct-tool lists
 - creature-oriented manual-build handoffs can also expose a stable
   `recipe_id`, currently `low_poly_creature_blockout`, so session visibility
   and search shaping can narrow to the smaller creature recipe instead of the

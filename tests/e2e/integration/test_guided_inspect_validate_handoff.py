@@ -12,9 +12,14 @@ from ._guided_surface_harness import result_payload, stdio_client, write_server_
 
 _PATCHED_HANDOFF_SERVER = textwrap.dedent(
     """
+    from dataclasses import replace
+    from fastmcp import Context
     from server.adapters.mcp.areas import router as router_area
     import server.adapters.mcp.areas.reference as reference_area
+    import server.adapters.mcp.areas.scene as scene_area
     from server.adapters.mcp.contracts.reference import ReferenceCompareStageCheckpointResponseContract
+    import server.adapters.mcp.router_helper as router_helper
+    import server.adapters.mcp.session_capabilities as session_caps
 
 
     class RouterHandler:
@@ -180,6 +185,54 @@ _PATCHED_HANDOFF_SERVER = textwrap.dedent(
     router_area.get_router_handler = lambda: RouterHandler()
     router_area._should_attach_repair_suggestion = lambda payload: False
     reference_area.reference_compare_stage_checkpoint = _fake_reference_compare_stage_checkpoint
+
+
+    async def _fake_macro_align_part_with_contact(
+        ctx: Context,
+        part_object,
+        reference_object,
+        target_relation="contact",
+        gap=0.0,
+        align_mode="none",
+        normal_axis=None,
+        preserve_side=True,
+        max_nudge=0.5,
+        offset=None,
+    ):
+        current = await session_caps.get_session_capability_state_async(ctx)
+        flow_state = dict(current.guided_flow_state or {})
+        flow_state["current_step"] = "inspect_validate"
+        flow_state["spatial_refresh_required"] = True
+        flow_state["required_checks"] = [
+            {"check_id": "scope", "tool_name": "scene_scope_graph", "reason": "refresh scope", "status": "pending"},
+            {"check_id": "relation", "tool_name": "scene_relation_graph", "reason": "refresh relations", "status": "pending"},
+            {"check_id": "view", "tool_name": "scene_view_diagnostics", "reason": "refresh view", "status": "pending"},
+        ]
+        flow_state["next_actions"] = ["refresh_spatial_context"]
+        flow_state["allowed_families"] = ["spatial_context", "checkpoint_iterate", "inspect_validate"]
+        await session_caps.set_session_capability_state_async(
+            ctx,
+            replace(current, guided_flow_state=flow_state),
+        )
+        return {
+            "status": "success",
+            "macro_name": "macro_align_part_with_contact",
+            "intent": f"repair '{part_object}' relative to '{reference_object}'",
+            "actions_taken": [
+                {
+                    "status": "applied",
+                    "action": "nudge_pair_contact",
+                    "tool_name": "modeling_transform_object",
+                    "summary": "Synthetic bounded contact repair.",
+                }
+            ],
+            "objects_modified": [part_object],
+            "requires_followup": False,
+        }
+
+
+    scene_area.macro_align_part_with_contact = _fake_macro_align_part_with_contact
+    router_helper.is_router_enabled = lambda: False
     """
 )
 
@@ -216,6 +269,49 @@ async def _iterate_and_collect_visibility(
         status_result = result_payload(await client.call_tool("router_get_status", {}))
         assert isinstance(status_result, dict)
         return payload, status_result
+
+
+async def _iterate_repair_and_collect_visibility(
+    script_path: Path, checkpoint_label: str
+) -> tuple[dict[str, object], dict[str, object], dict[str, object]]:
+    async with stdio_client(script_path) as client:
+        await client.call_tool(
+            "router_set_goal",
+            {"goal": "create a low-poly squirrel matching front and side reference images"},
+        )
+        await client.call_tool(
+            "reference_iterate_stage_checkpoint",
+            {"target_object": "TruthHead", "target_objects": ["TruthBody"], "checkpoint_label": checkpoint_label},
+        )
+        before_status = result_payload(await client.call_tool("router_get_status", {}))
+        repair_result = result_payload(
+            await client.call_tool(
+                "macro_align_part_with_contact",
+                {"part_object": "TruthHead", "reference_object": "TruthBody"},
+            )
+        )
+        after_status = result_payload(await client.call_tool("router_get_status", {}))
+        assert isinstance(before_status, dict)
+        assert isinstance(repair_result, dict)
+        assert isinstance(after_status, dict)
+        return before_status, repair_result, after_status
+
+
+def _visible_tool_names_from_status(status: dict[str, object]) -> set[str]:
+    visible_names: set[str] = set()
+    raw_rules = status.get("visibility_rules")
+    if not isinstance(raw_rules, list):
+        return visible_names
+    for raw_rule in raw_rules:
+        if not isinstance(raw_rule, dict):
+            continue
+        components = raw_rule.get("components")
+        if components != ["tool"] and components != {"tool"}:
+            continue
+        for raw_name in raw_rule.get("names") or []:
+            if isinstance(raw_name, str):
+                visible_names.add(raw_name)
+    return visible_names
 
 
 @pytest.mark.slow
@@ -269,3 +365,33 @@ def test_guided_inspect_validate_surface_exposes_spatial_and_attachment_tools_co
     assert "macro_attach_part_to_surface" in visible_tool_names
     assert "macro_align_part_with_contact" in visible_tool_names
     assert "macro_cleanup_part_intersections" in visible_tool_names
+
+
+@pytest.mark.slow
+def test_guided_inspect_validate_refresh_barrier_hides_attachment_macros_after_repair_mutation(tmp_path: Path):
+    """Once inspect/validate re-arms spatial refresh, attachment mutators should disappear from the shaped surface."""
+
+    script_path = write_server_script(tmp_path, _PATCHED_HANDOFF_SERVER)
+    before_status, repair_result, after_status = asyncio.run(
+        _iterate_repair_and_collect_visibility(script_path, "truth_first")
+    )
+
+    before_visible_tool_names = _visible_tool_names_from_status(before_status)
+    after_visible_tool_names = _visible_tool_names_from_status(after_status)
+    after_flow_state = after_status.get("guided_flow_state")
+    assert isinstance(after_flow_state, dict)
+
+    assert before_status["current_phase"] == "inspect_validate"
+    assert "macro_align_part_with_contact" in before_visible_tool_names
+    assert repair_result["status"] == "success"
+    assert repair_result["macro_name"] == "macro_align_part_with_contact"
+    assert after_status["current_phase"] == "inspect_validate"
+    assert after_flow_state["current_step"] == "inspect_validate"
+    assert after_flow_state["spatial_refresh_required"] is True
+    assert after_flow_state["next_actions"] == ["refresh_spatial_context"]
+    assert "scene_scope_graph" in after_visible_tool_names
+    assert "scene_relation_graph" in after_visible_tool_names
+    assert "scene_view_diagnostics" in after_visible_tool_names
+    assert "macro_attach_part_to_surface" not in after_visible_tool_names
+    assert "macro_align_part_with_contact" not in after_visible_tool_names
+    assert "macro_cleanup_part_intersections" not in after_visible_tool_names

@@ -71,6 +71,14 @@ the same guided discovery path but biases recovery queries toward the bounded
 verification/repair tools named by the blocker instead of recommending a goal
 reset or broad catalog exploration.
 
+On the same surface, `call_tool(...)` is strict:
+
+- a guessed or non-canonical public name still stays an `Unknown tool` error
+- a known public tool that is merely hidden by the current guided surface now
+  reports that it is hidden instead of pretending the transport/session died
+- when `spatial_refresh_required` is active, the recovery path points back to
+  the live `required_checks` / `visibility_rules` contract
+
 Reference stage compare/iterate responses expose both the nested
 `active_gate_plan` and top-level gate summary fields (`gate_statuses`,
 `completion_blockers`, `next_gate_actions`, `recommended_bounded_tools`) so

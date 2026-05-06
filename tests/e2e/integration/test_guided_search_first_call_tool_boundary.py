@@ -30,17 +30,23 @@ _PATCHED_GUIDED_SEARCH_SERVER = textwrap.dedent(
 
 @pytest.mark.slow
 def test_guided_call_tool_hidden_tool_failure_points_back_to_search(tmp_path: Path):
-    """Unknown guided call_tool targets should push the client back toward search_tools."""
+    """Known-but-hidden guided call_tool targets should surface recovery guidance without killing the session."""
 
     script_path = write_server_script(tmp_path, _PATCHED_GUIDED_SEARCH_SERVER)
 
     async def run() -> None:
         async with stdio_client(script_path) as client:
-            with pytest.raises(ToolError, match="search_tools"):
+            with pytest.raises(
+                ToolError,
+                match="Hidden tool on the current guided surface: 'inspect_scene'.*visibility_rules.*search_tools",
+            ):
                 await client.call_tool(
                     "call_tool",
                     {"name": "inspect_scene", "arguments": {"action": "object", "target_object": "Cube"}},
                 )
+
+            recovery = result_payload(await client.call_tool("search_tools", {"query": "clean reset fresh scene"}))
+            assert "scene_clean_scene" in {item["name"] for item in recovery}
 
     asyncio.run(run())
 

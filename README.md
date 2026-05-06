@@ -298,9 +298,9 @@ The guided surface supports missing-input handling as part of the product contra
 The guided surface now treats workflow fallback as an explicit typed contract instead of a phase side effect hidden in prose.
 
 - `router_set_goal(...)` returns `guided_handoff` on bounded continuation paths such as `continuation_mode="guided_manual_build"` and `continuation_mode="guided_utility"`.
-- `guided_handoff` names the `target_phase`, `direct_tools`, `supporting_tools`, and `discovery_tools` for the next step on `llm-guided`.
+- `guided_handoff` names the `target_phase`, `direct_tools`, `supporting_tools`, and `discovery_tools` for the next step on `llm-guided`, but it is continuation context rather than a permanent visibility guarantee.
 - `workflow_import_recommended` stays `False` on these fallback paths unless the user explicitly asks for workflow import/create behavior.
-- `router_get_status(...)` preserves the active `guided_handoff` in session diagnostics so clients can recover the intended continuation path.
+- `router_get_status(...)` preserves the active `guided_handoff` in session diagnostics so clients can recover the intended continuation path, while the live `visibility_rules` remain the authoritative current surface after later refresh barriers or phase transitions.
 
 ## Server-Driven Guided Flow State
 
@@ -474,6 +474,10 @@ contract in addition to `guided_handoff`.
   `router_get_status().guided_flow_state`, complete the listed
   `required_checks`, and follow `next_actions` instead of guessing hidden tool
   names into `call_tool(...)`
+- if `call_tool(...)` reports that a known public tool is hidden while
+  `spatial_refresh_required` is active, treat that as a guided recovery state,
+  not a disconnect: complete the live `required_checks`, then trust the updated
+  `visibility_rules` before retrying
 - if an explicit guided goal stayed on a manual/no-match path, a strong
   pattern-suggested workflow can still expand; what remains suppressed in that
   state is the lower-confidence heuristic reopening path

@@ -46,6 +46,57 @@ _GATE_RECOVERY_QUERY_HINTS = (
 )
 
 
+def _unknown_tool_error_message(tool_name: str) -> str:
+    return (
+        f"Unknown tool: '{tool_name}'. On the shaped guided surface, do not guess tool names into "
+        "call_tool(...). Use search_tools(...) first unless the tool is already directly visible."
+    )
+
+
+def _pending_required_check_names(guided_flow_state: dict[str, Any] | None) -> list[str]:
+    if not isinstance(guided_flow_state, dict):
+        return []
+
+    pending_checks: list[str] = []
+    for item in guided_flow_state.get("required_checks") or []:
+        if not isinstance(item, dict):
+            continue
+        if str(item.get("status") or "").strip().lower() == "completed":
+            continue
+        tool_name = str(item.get("tool_name") or "").strip()
+        if tool_name:
+            pending_checks.append(tool_name)
+    return pending_checks
+
+
+def _guided_hidden_tool_error_message(
+    tool_name: str,
+    *,
+    guided_flow_state: dict[str, Any] | None,
+) -> str:
+    if bool((guided_flow_state or {}).get("spatial_refresh_required")):
+        pending_checks = _pending_required_check_names(guided_flow_state)
+        if pending_checks:
+            checks_text = ", ".join(f"{name}(...)" for name in pending_checks)
+            checks_clause = f"Complete the current required_checks first: {checks_text}."
+        else:
+            checks_clause = "Read router_get_status().guided_flow_state.required_checks and complete the current spatial checks first."
+        return (
+            f"Hidden tool while spatial_refresh_required is active: '{tool_name}'. "
+            "This public tool exists, but the guided flow currently requires refreshed spatial context before that "
+            f"family can run. {checks_clause} Then trust live router_get_status().visibility_rules or use "
+            "search_tools(...) on the refreshed surface."
+        )
+
+    return (
+        f"Hidden tool on the current guided surface: '{tool_name}'. "
+        "This public tool exists, but it is not visible on the current surface/phase. "
+        "If guided_handoff or an older search result suggested it earlier, treat that as historical context only. "
+        "Trust live router_get_status().visibility_rules and use search_tools(...) to find the currently visible "
+        "recovery path instead of retrying the stale name through call_tool(...)."
+    )
+
+
 def _catalog_hash(search_documents: dict[str, str]) -> str:
     key = "|".join(f"{tool_name}:{document}" for tool_name, document in sorted(search_documents.items()))
     return hashlib.sha256(key.encode()).hexdigest()
@@ -128,17 +179,26 @@ class BlenderDiscoverySearchTransform(BM25SearchTransform):
     def _canonicalize_call_arguments(self, name: str, arguments: dict[str, Any] | None) -> dict[str, Any] | None:
         return canonicalize_guided_tool_arguments(name, arguments, contract_line=self._contract_line)
 
-    async def _sync_visibility_if_needed(self, ctx: Context | None) -> None:
+    async def _sync_visibility_if_needed(self, ctx: Context | None) -> Any | None:
         """Best-effort visibility refresh before discovery/proxy operations."""
 
         if ctx is None:
-            return
+            return None
 
         try:
             session_state = await get_session_capability_state_async(ctx)
             await apply_visibility_for_session_state(ctx, session_state)
+            return session_state
         except Exception:
-            return
+            return None
+
+    async def _is_tool_currently_visible_safe(self, ctx: Context | None, tool_name: str) -> bool | None:
+        if ctx is None:
+            return None
+        try:
+            return await ctx.fastmcp.get_tool(tool_name) is not None
+        except Exception:
+            return None
 
     async def _active_gate_recovery_tools(
         self,
@@ -233,7 +293,7 @@ class BlenderDiscoverySearchTransform(BM25SearchTransform):
             if ctx is None:
                 raise RuntimeError("call_tool proxy requires an active FastMCP context")
 
-            await transform._sync_visibility_if_needed(ctx)
+            session_state = await transform._sync_visibility_if_needed(ctx)
             resolved_arguments = arguments if arguments is not None else params
             if isinstance(resolved_arguments, str):
                 try:
@@ -251,18 +311,55 @@ class BlenderDiscoverySearchTransform(BM25SearchTransform):
                 resolved_name,
                 sorted(canonical_arguments.keys()) if isinstance(canonical_arguments, dict) else [],
             )
-            try:
-                return await ctx.fastmcp.call_tool(resolved_name, canonical_arguments)
-            except NotFoundError as exc:
+            entry = transform._entry_map.get(resolved_name)
+            if entry is None:
                 logger.warning(
                     "[CALL_TOOL_PROXY] unknown_tool name=%s canonical_arg_keys=%s",
                     resolved_name,
                     sorted(canonical_arguments.keys()) if isinstance(canonical_arguments, dict) else [],
                 )
+                raise ToolError(_unknown_tool_error_message(resolved_name))
+
+            tool_is_visible = await transform._is_tool_currently_visible_safe(ctx, resolved_name)
+            guided_flow_state = getattr(session_state, "guided_flow_state", None)
+            if tool_is_visible is False:
+                logger.warning(
+                    "[CALL_TOOL_PROXY] hidden_tool name=%s spatial_refresh_required=%s",
+                    resolved_name,
+                    bool((guided_flow_state or {}).get("spatial_refresh_required")),
+                )
                 raise ToolError(
-                    f"Unknown tool: '{resolved_name}'. On the shaped guided surface, do not guess tool names into "
-                    "call_tool(...). Use search_tools(...) first unless the tool is already directly visible."
-                ) from exc
+                    _guided_hidden_tool_error_message(
+                        resolved_name,
+                        guided_flow_state=guided_flow_state,
+                    )
+                )
+            try:
+                return await ctx.fastmcp.call_tool(resolved_name, canonical_arguments)
+            except NotFoundError as exc:
+                tool_is_visible = (
+                    tool_is_visible
+                    if tool_is_visible is not None
+                    else await transform._is_tool_currently_visible_safe(ctx, resolved_name)
+                )
+                if tool_is_visible is False:
+                    logger.warning(
+                        "[CALL_TOOL_PROXY] hidden_tool_after_not_found name=%s spatial_refresh_required=%s",
+                        resolved_name,
+                        bool((guided_flow_state or {}).get("spatial_refresh_required")),
+                    )
+                    raise ToolError(
+                        _guided_hidden_tool_error_message(
+                            resolved_name,
+                            guided_flow_state=guided_flow_state,
+                        )
+                    ) from exc
+                logger.warning(
+                    "[CALL_TOOL_PROXY] unknown_tool name=%s canonical_arg_keys=%s",
+                    resolved_name,
+                    sorted(canonical_arguments.keys()) if isinstance(canonical_arguments, dict) else [],
+                )
+                raise ToolError(_unknown_tool_error_message(resolved_name)) from exc
 
         return Tool.from_function(fn=call_tool, name=self._call_tool_name)
 

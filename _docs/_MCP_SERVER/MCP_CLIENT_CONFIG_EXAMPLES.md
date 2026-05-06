@@ -51,6 +51,9 @@ Guided creature contract reminders for this profile:
 - use `collection_manage(action=..., collection_name=...)` as the canonical collection target shape
 - use `modeling_create_primitive(...)` only with `primitive_type`,
   `radius`/`size`, `location`, `rotation`, and optional `name`
+- if `call_tool(...)` reports a hidden tool while `spatial_refresh_required`
+  is active, read the live `required_checks` from `router_get_status(...)`
+  before retrying anything on the build surface
 - if `loop_disposition="inspect_validate"` or degraded compare still returns
   strong truth findings, stop free-form modeling and switch to inspect/measure/assert
 

@@ -5,7 +5,7 @@ E2E-style router tests for guided manual-build handoff after no-match.
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from server.adapters.mcp.areas.router import router_get_status, router_set_goal
 from server.adapters.mcp.sampling.result_types import (
@@ -13,6 +13,7 @@ from server.adapters.mcp.sampling.result_types import (
     AssistantRunResult,
     RepairSuggestionContract,
 )
+from server.adapters.mcp.session_capabilities import get_session_capability_state, set_session_capability_state
 from server.adapters.mcp.transforms.visibility_policy import GUIDED_SPATIAL_CONTEXT_DIRECT_TOOLS
 from server.application.tool_handlers.router_handler import RouterToolHandler
 
@@ -155,5 +156,48 @@ def test_router_area_reference_guided_creature_goal_persists_creature_recipe_han
     assert any(
         rule.get("names") == set(GUIDED_SPATIAL_CONTEXT_DIRECT_TOOLS)
         for rule in status.visibility_rules or []
+        if rule.get("components") == {"tool"}
+    )
+
+    current_state = get_session_capability_state(ctx)
+    assert current_state.guided_flow_state is not None
+    set_session_capability_state(
+        ctx,
+        replace(
+            current_state,
+            guided_flow_state={
+                **current_state.guided_flow_state,
+                "current_step": "place_secondary_parts",
+                "spatial_refresh_required": True,
+                "required_checks": [
+                    {
+                        "check_id": "scope",
+                        "tool_name": "scene_scope_graph",
+                        "reason": "refresh scope",
+                        "status": "pending",
+                    },
+                    {
+                        "check_id": "relation",
+                        "tool_name": "scene_relation_graph",
+                        "reason": "refresh relations",
+                        "status": "pending",
+                    },
+                ],
+                "allowed_families": ["spatial_context", "reference_context"],
+                "next_actions": ["refresh_spatial_context"],
+            },
+        ),
+    )
+
+    stale_status = asyncio.run(router_get_status(ctx))
+
+    assert stale_status.guided_handoff is not None
+    assert "modeling_create_primitive" in stale_status.guided_handoff.direct_tools
+    assert stale_status.guided_flow_state is not None
+    assert stale_status.guided_flow_state.spatial_refresh_required is True
+    assert stale_status.guided_flow_state.next_actions == ["refresh_spatial_context"]
+    assert any(
+        rule.get("names") == set(GUIDED_SPATIAL_CONTEXT_DIRECT_TOOLS)
+        for rule in stale_status.visibility_rules or []
         if rule.get("components") == {"tool"}
     )

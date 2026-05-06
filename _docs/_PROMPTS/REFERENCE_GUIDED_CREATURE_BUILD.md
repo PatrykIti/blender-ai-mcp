@@ -89,6 +89,12 @@ Rules:
   `call_tool(...)`
 - use `call_tool(...)` only for tools that are directly visible or were just
   discovered through `search_tools(...)`
+- if `guided_handoff.direct_tools` later diverge from live `visibility_rules`,
+  trust the live `visibility_rules` and `required_checks` instead of replaying
+  stale names through `call_tool(...)`
+- if `call_tool(...)` reports that a known tool is hidden while
+  `spatial_refresh_required` is active, complete the live `required_checks`
+  first and then continue from the refreshed surface
 - use the canonical `call_tool(name=..., arguments=...)` wrapper; legacy
   `tool=...` / `params=...` aliases are compatibility-only
 - the same guided contract hardening now applies on directly visible tools too:

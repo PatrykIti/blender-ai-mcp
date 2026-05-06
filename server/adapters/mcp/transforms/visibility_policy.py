@@ -40,6 +40,11 @@ GUIDED_SPATIAL_SUPPORT_TOOLS: tuple[str, ...] = (
     *GUIDED_SPATIAL_GRAPH_TOOLS,
     *GUIDED_VIEW_DIAGNOSTIC_TOOLS,
 )
+GUIDED_ATTACHMENT_ALIGNMENT_TOOLS: tuple[str, ...] = (
+    "macro_attach_part_to_surface",
+    "macro_align_part_with_contact",
+    "macro_cleanup_part_intersections",
+)
 GUIDED_ATTACHMENT_GATE_TOOLS: tuple[str, ...] = (
     "scene_relation_graph",
     "scene_measure_gap",
@@ -452,9 +457,7 @@ GUIDED_INSPECT_ESCAPE_HATCH_TOOLS: tuple[str, ...] = (
     "scene_assert_containment",
     "scene_assert_symmetry",
     "scene_assert_proportion",
-    "macro_attach_part_to_surface",
-    "macro_align_part_with_contact",
-    "macro_cleanup_part_intersections",
+    *GUIDED_ATTACHMENT_ALIGNMENT_TOOLS,
     "reference_compare_checkpoint",
     "reference_compare_current_view",
     "reference_compare_stage_checkpoint",
@@ -509,8 +512,10 @@ def build_guided_handoff_payload(
                 "workflow_import_recommended": False,
                 "message": (
                     "Continue on the guided creature blockout surface. "
-                    "Start with modeling/mesh blockout tools, use reference iterate/measure tools between stages, "
-                    "and keep sculpt or finish-heavy tools for later refinement only."
+                    "Treat guided_handoff as continuation context, not as a permanent visibility guarantee: "
+                    "use these direct tools while they remain visible, trust live visibility_rules and "
+                    "required_checks after refresh barriers, and keep sculpt or finish-heavy tools for later "
+                    "refinement only."
                 ),
             }
         return {
@@ -524,7 +529,9 @@ def build_guided_handoff_payload(
             "workflow_import_recommended": False,
             "message": (
                 "Continue manual modeling on the guided build surface. "
-                "Use directly visible build tools/macros first, and only use discovery when needed."
+                "Treat guided_handoff as continuation context: use directly visible build tools/macros first, "
+                "but if visibility narrows later, trust live visibility_rules plus required_checks instead of "
+                "retrying stale direct tool names through call_tool(...)."
             ),
         }
 
@@ -543,7 +550,9 @@ def build_guided_handoff_payload(
             "workflow_import_recommended": False,
             "message": (
                 "Continue on the guided utility path. "
-                "Use direct utility tools first, and only use discovery when needed."
+                "Use direct utility tools first, and only use discovery when needed. "
+                "If current visibility narrows later, trust live visibility_rules instead of replaying stale "
+                "guided_handoff direct tool names."
             ),
         }
 
@@ -676,11 +685,14 @@ def build_visibility_rules(
         build_tools = set(build_tools) | gate_visible_tools
         rules.append({"enabled": True, "components": {"tool"}, "names": build_tools})
     elif resolved_phase == SessionPhase.INSPECT_VALIDATE:
+        inspect_tools = set(GUIDED_INSPECT_ESCAPE_HATCH_TOOLS)
+        if refresh_barrier_active:
+            inspect_tools.difference_update(GUIDED_ATTACHMENT_ALIGNMENT_TOOLS)
         rules.append(
             {
                 "enabled": True,
                 "components": {"tool"},
-                "names": set(GUIDED_INSPECT_ESCAPE_HATCH_TOOLS) | gate_visible_tools,
+                "names": inspect_tools | gate_visible_tools,
             }
         )
 

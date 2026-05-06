@@ -158,6 +158,12 @@ Interpretation:
 - only use `search_tools(...)` / `call_tool(...)` when discovery is actually needed
 - `call_tool(...)` cannot summon hidden internal tools by guessed name; `Unknown tool`
   on `llm-guided` usually means the current phase/surface is wrong
+- if `guided_handoff.direct_tools` drift away from live `visibility_rules`,
+  treat `guided_handoff` as historical continuation context and trust the live
+  `visibility_rules` plus `required_checks`
+- if `call_tool(...)` reports that a known tool is hidden while
+  `spatial_refresh_required` is active, complete the live `required_checks`
+  before retrying the hidden family
 - do not switch to `manual_tools_no_router` mentally while still using the
   `llm-guided` shaped profile; if you need manual/no-router behavior, use the
   matching manual profile/session intentionally

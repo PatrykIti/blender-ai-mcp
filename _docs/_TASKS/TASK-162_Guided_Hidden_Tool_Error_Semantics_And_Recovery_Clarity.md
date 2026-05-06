@@ -1,6 +1,6 @@
 # TASK-162: Guided Hidden-Tool Error Semantics And Recovery Clarity
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** FastMCP Platform / Guided Client UX
 **Estimated Effort:** Large
@@ -273,7 +273,30 @@ After this umbrella ships:
 
 ## Status / Board Update
 
-- promote `TASK-162` on `_docs/_TASKS/README.md` as an active FastMCP / guided
-  client UX umbrella
-- keep execution details in the nested subtasks while the umbrella remains the
-  board-level owner
+- closed on 2026-05-06 and moved from the promoted FastMCP / guided-client UX
+  to-do board row into completed milestones on `_docs/_TASKS/README.md`
+- child tasks `TASK-162-01`, `TASK-162-02`, and `TASK-162-03` close with the
+  umbrella; no open child remains under this completed parent
+
+## Completion Summary
+
+Completed on 2026-05-06.
+
+- `call_tool(...)` now distinguishes truly unknown public ids from known guided
+  tools that are temporarily hidden by current visibility or by
+  `spatial_refresh_required`
+- hidden-tool recovery now points the client back to live
+  `guided_flow_state.required_checks` / `visibility_rules` instead of looking
+  like a transport disconnect
+- `inspect_validate` refresh barriers now hide
+  `macro_attach_part_to_surface(...)`,
+  `macro_align_part_with_contact(...)`, and
+  `macro_cleanup_part_intersections(...)` when guided policy would fail-close
+  `attachment_alignment` anyway
+- public docs, prompt docs, transport regressions, board state, and changelog
+  history were updated in the same branch so `TASK-162` is fully closed before
+  resuming overlapping `TASK-163` follow-up work
+- validation for this closeout includes full repo `tests/unit`, targeted live
+  stdio/Streamable HTTP proof lanes for the `TASK-162` seams, and one attempted
+  full `scripts/run_e2e_tests.py` run that was blocked by an already-occupied
+  Blender RPC port `8765` on this machine

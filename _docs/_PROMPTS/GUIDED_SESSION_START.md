@@ -18,6 +18,7 @@ Fail-safe rules:
 - `call_tool(...)` is not a bypass for hidden or phase-locked tools.
 - If a tool is not already directly visible and you did not just discover it through `search_tools(...)`, do not send it to `call_tool(...)`.
 - If `call_tool(...)` returns `Unknown tool`, stop guessing names and re-check the current phase/surface.
+- If `call_tool(...)` says a known tool is hidden, treat that as a live guided-surface transition, not as a disconnect.
 - For real build goals, start from `router_get_status()` and then `router_set_goal(...)`.
 - For utility/capture requests, do not force `router_set_goal(...)`; use the guided utility path.
 - Cleanup rule: prefer `scene_clean_scene(...)` before `router_set_goal(...)`, but if scene drift is discovered after entering build phase, the same tool is an allowed recovery hatch on the guided build surface.
@@ -54,9 +55,11 @@ Recovery protocol:
 1. `Unknown tool` -> re-check phase/surface, do not guess again.
 2. Wrong workflow path -> stop and report the bad workflow match.
 3. Missing reference path or missing required user input -> report the missing input explicitly.
-4. If `guided_handoff` is present -> use `guided_handoff.direct_tools` first.
-5. If a build call is blocked by family/role policy -> inspect `allowed_families`, `allowed_roles`, and `missing_roles` instead of retrying with guessed tool names.
-6. If spatial tools are needed, provide explicit scope with `target_object=...`, `target_objects=[...]`, or `collection_name=...`.
+4. If `guided_handoff` is present -> use `guided_handoff.direct_tools` first, but treat that as continuation context only while those tools remain directly visible.
+5. If `visibility_rules` and `guided_handoff.direct_tools` diverge -> trust the live `visibility_rules`.
+6. If `call_tool(...)` reports a hidden tool while `spatial_refresh_required` is active -> complete the live `required_checks` first.
+7. If a build call is blocked by family/role policy -> inspect `allowed_families`, `allowed_roles`, and `missing_roles` instead of retrying with guessed tool names.
+8. If spatial tools are needed, provide explicit scope with `target_object=...`, `target_objects=[...]`, or `collection_name=...`.
 ```
 
 ---

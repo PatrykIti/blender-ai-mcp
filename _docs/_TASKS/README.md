@@ -3,9 +3,9 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 8 tasks
+- **To Do:** 7 tasks
 - **In Progress:** 1 task
-- **Done:** 91
+- **Done:** 92
 - **Superseded:** 171
 
 ## 📐 Board Scope
@@ -55,7 +55,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 |----|-------|----------|-------|
 | [TASK-148](./TASK-148_No_Auth_HTTP_MCP_Client_Compatibility_And_Auth_Misclassification_Recovery.md) | **No-Auth HTTP MCP Client Compatibility And Auth Misclassification Recovery** | 🔴 High | Board-level follow-on after TASK-125 for hardening the no-auth Streamable HTTP path across Claude, Codex, Gemini, and similar MCP clients without falsely advertising OAuth support. |
 | [TASK-160](./TASK-160_Guided_Client_Feedback_And_Streamable_HTTP_Recovery_UX.md) | **Guided Client Feedback And Streamable HTTP Recovery UX** | 🔴 High | Board-level follow-on after TASK-145 / TASK-157 / TASK-158 for clarifying guided-flow transitions to MCP clients, separating harness disconnects from repo runtime behavior, and evaluating whether the long-term fix should stay in existing tool contracts, move into a structured guided-flow delta, or add optional FastMCP app-surface UX without inventing a second flow. |
-| [TASK-162](./TASK-162_Guided_Hidden_Tool_Error_Semantics_And_Recovery_Clarity.md) | **Guided Hidden-Tool Error Semantics And Recovery Clarity** | 🔴 High | Narrow corrective umbrella for guided hidden-tool / stale-context failures that currently read like disconnects to MCP clients, with search-surface recovery hints and handoff/discovery contract alignment grounded in live guided creature-build transcripts. |
 
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
@@ -91,6 +90,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-162](./TASK-162_Guided_Hidden_Tool_Error_Semantics_And_Recovery_Clarity.md) | **Guided Hidden-Tool Error Semantics And Recovery Clarity** | 🔴 High | 2026-05-06 |
 | [TASK-161](./TASK-161_TASK-159_Closeout_Seam_And_Proof_Lane_Alignment.md) | **TASK-159 Closeout Seam And Proof-Lane Alignment** | 🔴 High | 2026-05-05 |
 | [TASK-159](./TASK-159_Modularize_Oversized_Guided_Runtime_And_Scene_Owner_Files.md) | **Modularize Oversized Guided Runtime And Scene Owner Files** | 🔴 High | 2026-05-04 |
 | [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md) | **Goal-Derived Quality Gates And Deterministic Verification** | 🔴 High | 2026-05-02 |

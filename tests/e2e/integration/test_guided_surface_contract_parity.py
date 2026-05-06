@@ -309,6 +309,14 @@ def test_guided_surface_contract_parity_over_stdio(tmp_path: Path):
                 "spatial_context",
                 "reference_context",
             ]
+            assert "modeling_create_primitive" in role_unlocked_status["guided_handoff"]["direct_tools"]
+            stale_visible_tool_names = {
+                name
+                for rule in role_unlocked_status["visibility_rules"]
+                if rule.get("components") == ["tool"] or rule.get("components") == {"tool"}
+                for name in (rule.get("names") or [])
+            }
+            assert "modeling_create_primitive" not in stale_visible_tool_names
 
             refresh_scope = {"target_object": "Squirrel_Body", "target_objects": ["Squirrel_Head"]}
             await client.call_tool("scene_scope_graph", refresh_scope)
@@ -408,15 +416,18 @@ def test_guided_surface_contract_parity_over_stdio(tmp_path: Path):
 
             with pytest.raises(ToolError, match="modeling_transform_object\\(scale=\\.\\.\\.\\)"):
                 await client.call_tool(
-                    "modeling_create_primitive",
+                    "call_tool",
                     {
-                        "primitive_type": "uv_sphere",
-                        "name": "Head",
-                        "location": [0.0, 0.0, 1.1],
-                        "scale": [0.42, 0.38, 0.38],
-                        "segments": 8,
-                        "rings": 6,
-                        "collection_name": "Squirrel",
+                        "name": "modeling_create_primitive",
+                        "arguments": {
+                            "primitive_type": "uv_sphere",
+                            "name": "Head",
+                            "location": [0.0, 0.0, 1.1],
+                            "scale": [0.42, 0.38, 0.38],
+                            "segments": 8,
+                            "rings": 6,
+                            "collection_name": "Squirrel",
+                        },
                     },
                 )
 

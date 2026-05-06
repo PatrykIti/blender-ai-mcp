@@ -1,7 +1,7 @@
 # TASK-162-03: Guided Disconnect Misclassification Regression Pack
 
 **Parent:** [TASK-162](./TASK-162_Guided_Hidden_Tool_Error_Semantics_And_Recovery_Clarity.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Objective:** Add regression coverage and closeout notes proving that guided hidden-tool and stale-argument failures remain healthy MCP tool errors rather than apparent disconnects across the repo-owned seams involved in the transcripted failure family:
 
@@ -178,4 +178,15 @@ assert status["guided_flow_state"]["spatial_refresh_required"] is True
 
 ## Status / Board Update
 
-- active child under open parent `TASK-162`; no separate board row
+- completed under closed parent `TASK-162`; no separate board row
+
+## Completion Summary
+
+Completed on 2026-05-06.
+
+- the regression pack now covers stdio and Streamable HTTP hidden-tool errors
+  on the `call_tool(...)` seam with healthy post-failure follow-up calls
+- the guided creature contract parity lanes now prove the split between
+  persisted `guided_handoff.direct_tools` and live narrowed `visibility_rules`
+- the inspect/validate proof lane now demonstrates that refresh barriers hide
+  attachment-repair macros after the runtime re-arms spatial checks

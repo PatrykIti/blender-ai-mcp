@@ -74,7 +74,8 @@ REQUEST TRIAGE (FIRST STEP)
    - If workflow matching is not useful, continue on the guided build surface.
    - If router_set_goal(...) returns `no_match` with `continuation_mode="guided_manual_build"`,
      treat that as the intended handoff into this path, not as a failure.
-   - If `guided_handoff` is present, use `guided_handoff.direct_tools` first.
+   - If `guided_handoff` is present, use `guided_handoff.direct_tools` first while those tools remain directly visible.
+   - If `guided_handoff.direct_tools` drift away from the current `visibility_rules`, trust the live `visibility_rules` and `required_checks`.
    - Treat `guided_handoff.discovery_tools` as fallback only, not the default first move.
    - Use directly visible tools first.
    - If a needed tool is not already directly visible, run `search_tools(...)`
@@ -108,13 +109,14 @@ WORKFLOW MATCHING (ONLY WHEN REQUEST TYPE = BUILD/WORKFLOW)
          before `call_tool(...)`.
        * Use search_tools / call_tool only when you need discovery or need to reach a non-entry tool that is not already visible.
        * If `call_tool(...)` reports `Unknown tool`, do not keep guessing names; re-check the current phase/surface and whether build tools have actually been unlocked.
+       * If `call_tool(...)` reports that a known tool is hidden while `spatial_refresh_required` is active, complete the live `required_checks` before retrying.
        * If the server rejects a call because the family or role is wrong for the current step, do not retry by guessing another build tool name. Read `allowed_families`, `allowed_roles`, and `missing_roles`, then continue with the permitted family/role.
        * If the task is a bounded recess/cutout/opening, prefer `macro_cutout_recess` over manually creating cutters, placing them, and chaining boolean cleanup.
        * If the task is bounded relative placement/alignment/contact-gap work, prefer `macro_relative_layout` over transform-by-transform placement.
        * If the task is a bounded finishing stack (rounded housing, panel finish, shell thicken, smooth subdivision), prefer `macro_finish_form` over manually rebuilding the modifier stack with `modeling_add_modifier(...)`.
    - If status == "no_match" or "disabled":
        * If `continuation_mode == "guided_manual_build"`, continue on the guided build surface.
-       * If `guided_handoff` is present, start from `guided_handoff.direct_tools` and respect `workflow_import_recommended=false`.
+       * If `guided_handoff` is present, start from `guided_handoff.direct_tools` and respect `workflow_import_recommended=false`, but treat that list as continuation context rather than a permanent visibility promise.
        * If `guided_flow_state` is present, respect its step gating before broad build or finish actions.
        * Use `guided_register_part(...)` or `guided_role=...` when the server needs semantic part roles to keep the build order enforceable.
        * Use directly visible build tools first.

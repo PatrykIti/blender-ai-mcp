@@ -42,6 +42,7 @@ def test_readme_documents_llm_guided_public_aliases():
         "use the same inspect/measure/assert handoff",
         "Guided Handoff Contract",
         "guided_handoff",
+        "continuation context rather than a permanent visibility guarantee",
         "Server-Driven Guided Flow State",
         "guided_flow_state",
         "gate_proposal",
@@ -170,6 +171,8 @@ def test_mcp_docs_describe_aliases_and_hidden_arguments():
         "do not treat “no scope” as “whole scene”",
         "bounded attachment repair macros",
         "hidden/blocked-by-flow",
+        "known guided tool that is currently hidden by surface/phase visibility",
+        "message points back to the live `required_checks` instead of looking like a",
         "scene_hide_object",
         "scene_show_all_objects",
         "scene_isolate_object",
@@ -199,6 +202,7 @@ def test_mcp_client_config_examples_document_guided_creature_contract():
         "scene_clean_scene(keep_lights_and_cameras=...)",
         'reference_images(action="attach", source_path=...)',
         "collection_manage(action=..., collection_name=...)",
+        "hidden tool while `spatial_refresh_required`",
         'loop_disposition="inspect_validate"',
         "stop free-form modeling and switch to inspect/measure/assert",
     ):
@@ -318,6 +322,7 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     """Prompt docs should prefer current llm-guided aliases for user-facing examples."""
 
     prompt_readme = (REPO_ROOT / "_docs" / "_PROMPTS" / "README.md").read_text(encoding="utf-8")
+    guided_start_prompt = (REPO_ROOT / "_docs" / "_PROMPTS" / "GUIDED_SESSION_START.md").read_text(encoding="utf-8")
     workflow_prompt = (REPO_ROOT / "_docs" / "_PROMPTS" / "WORKFLOW_ROUTER_FIRST.md").read_text(encoding="utf-8")
     manual_prompt = (REPO_ROOT / "_docs" / "_PROMPTS" / "MANUAL_TOOLS_NO_ROUTER.md").read_text(encoding="utf-8")
     creature_prompt = (REPO_ROOT / "_docs" / "_PROMPTS" / "REFERENCE_GUIDED_CREATURE_BUILD.md").read_text(
@@ -391,6 +396,8 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "`Unknown tool`" in prompt_readme
     assert "current phase/surface is wrong" in prompt_readme
     assert "build-phase cleanup is still allowed when recovery is needed" in prompt_readme
+    assert "`guided_handoff.direct_tools` drift away from live `visibility_rules`" in prompt_readme
+    assert "known tool is hidden while" in prompt_readme
     assert "manual_tools_no_router` is a different operating mode" in prompt_readme
     assert "correction_focus" in prompt_readme
     assert "correction_candidates" in prompt_readme
@@ -426,8 +433,10 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "`workflow_import_recommended=false`" in workflow_prompt
     assert "Do not guess hidden internal tool names and feed them into `call_tool(...)`." in workflow_prompt
     assert "If a needed tool is not already directly visible, run `search_tools(...)`" in workflow_prompt
+    assert "drift away from the current `visibility_rules`" in workflow_prompt
     assert "allowed recovery hatch there" in workflow_prompt
     assert "If `call_tool(...)` reports `Unknown tool`, do not keep guessing names" in workflow_prompt
+    assert "hidden while `spatial_refresh_required` is active" in workflow_prompt
     assert (
         "If a needed tool is already directly visible on the current surface/phase, call it directly."
         in workflow_prompt
@@ -492,6 +501,8 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "body + head primary masses" in creature_prompt
     assert "do not jump early to ears or legs" in creature_prompt
     assert "if a tool is not already directly visible, use `search_tools(...)` before" in creature_prompt
+    assert "diverge from live `visibility_rules`" in creature_prompt
+    assert "known tool is hidden while" in creature_prompt
     assert "allowed build-phase recovery hatch" in creature_prompt
     assert "`guided_reference_readiness`" in creature_prompt
     assert "`loop_disposition`" in creature_prompt
@@ -504,6 +515,10 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert 'reference_images(action="attach", source_path=..., ...)' in creature_prompt
     assert 'collection_manage(action="create", collection_name=...)' in creature_prompt
     assert "modeling_transform_object(scale=...)" in creature_prompt
+
+    assert "If `call_tool(...)` says a known tool is hidden" in guided_start_prompt
+    assert "use `guided_handoff.direct_tools` first, but treat that as continuation context only" in guided_start_prompt
+    assert "If `call_tool(...)` reports a hidden tool while `spatial_refresh_required` is active" in guided_start_prompt
 
 
 def test_reference_guided_creature_prompt_stays_english():

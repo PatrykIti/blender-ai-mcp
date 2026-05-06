@@ -13,6 +13,7 @@ from server.adapters.mcp.transforms import materialize_transforms
 from server.adapters.mcp.transforms.visibility_policy import (
     CREATURE_LOW_POLY_BLOCKOUT_DIRECT_TOOLS,
     CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS,
+    GUIDED_ATTACHMENT_ALIGNMENT_TOOLS,
     GUIDED_BUILD_ESCAPE_HATCH_TOOLS,
     GUIDED_DISCOVERY_TOOLS,
     GUIDED_ENTRY_TOOLS,
@@ -248,6 +249,9 @@ def test_guided_handoff_payloads_stay_explicit_and_bounded():
     assert set(GUIDED_VIEW_DIAGNOSTIC_TOOLS).issubset(manual["supporting_tools"])
     assert manual["discovery_tools"] == list(GUIDED_DISCOVERY_TOOLS)
     assert manual["workflow_import_recommended"] is False
+    assert "continuation context" in manual["message"]
+    assert "visibility_rules" in manual["message"]
+    assert "required_checks" in manual["message"]
 
     assert utility is not None
     assert utility["recipe_id"] is None
@@ -256,6 +260,7 @@ def test_guided_handoff_payloads_stay_explicit_and_bounded():
     assert utility["supporting_tools"] == list(GUIDED_UTILITY_SUPPORTING_TOOLS)
     assert utility["discovery_tools"] == list(GUIDED_DISCOVERY_TOOLS)
     assert utility["workflow_import_recommended"] is False
+    assert "visibility_rules" in utility["message"]
 
 
 def test_gate_blocker_visibility_exposes_bounded_attachment_repair_tools():
@@ -570,6 +575,42 @@ def test_visibility_rules_rearm_build_phase_to_spatial_context_when_refresh_requ
     assert "modeling_create_primitive" not in rules[-1]["names"]
     assert "guided_register_part" not in rules[-1]["names"]
     assert "scene_view_diagnostics" in rules[-1]["names"]
+
+
+def test_visibility_rules_hide_attachment_macros_during_inspect_refresh_barrier():
+    """Inspect refresh barriers should not keep attachment mutators visible when policy would fail-close them."""
+
+    rules = build_visibility_rules(
+        "llm-guided",
+        SessionPhase.INSPECT_VALIDATE,
+        guided_flow_state={
+            "flow_id": "guided_creature_flow",
+            "domain_profile": "creature",
+            "current_step": "inspect_validate",
+            "spatial_refresh_required": True,
+            "required_checks": [
+                {"check_id": "scope", "tool_name": "scene_scope_graph", "reason": "refresh scope", "status": "pending"}
+            ],
+            "allowed_families": ["spatial_context", "reference_context", "inspect_validate"],
+            "next_actions": ["refresh_spatial_context"],
+        },
+    )
+
+    names = set(
+        materialize_visible_tool_names(
+            {
+                "scene_scope_graph",
+                "scene_relation_graph",
+                "scene_view_diagnostics",
+                "scene_assert_contact",
+                *GUIDED_ATTACHMENT_ALIGNMENT_TOOLS,
+            },
+            rules,
+        )
+    )
+
+    assert {"scene_scope_graph", "scene_relation_graph", "scene_view_diagnostics", "scene_assert_contact"} <= names
+    assert not set(GUIDED_ATTACHMENT_ALIGNMENT_TOOLS).intersection(names)
 
 
 def test_llm_guided_surface_materializes_visibility_transforms():
