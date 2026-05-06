@@ -1285,6 +1285,49 @@ def _validate_reference_understanding_contract_shape(parsed: dict[str, Any]) -> 
         value = parsed.get(field_name)
         if not isinstance(value, list):
             raise ValueError(f"Reference-understanding output included malformed nested section: {field_name}")
+    for item in parsed.get("visual_evidence_refs", []):
+        if not isinstance(item, dict):
+            raise ValueError("Reference-understanding output included malformed nested section: visual_evidence_refs")
+        _reject_unexpected_dict_keys(
+            {str(key): value for key, value in item.items()},
+            expected_keys={"evidence_id", "source_class", "summary", "reference_id"},
+            contract_name="Reference-understanding",
+        )
+        if not isinstance(item.get("evidence_id"), str):
+            raise ValueError("Reference-understanding output included malformed nested section: visual_evidence_refs")
+        if (
+            not isinstance(item.get("source_class"), str)
+            or item.get("source_class") not in _REFERENCE_UNDERSTANDING_SOURCE_CLASS_VALUES
+        ):
+            raise ValueError(
+                "Reference-understanding output included malformed nested section: visual_evidence_refs.source_class"
+            )
+        if not isinstance(item.get("summary"), str):
+            raise ValueError(
+                "Reference-understanding output included malformed nested section: visual_evidence_refs.summary"
+            )
+        if item.get("reference_id") is not None and not isinstance(item.get("reference_id"), str):
+            raise ValueError(
+                "Reference-understanding output included malformed nested section: visual_evidence_refs.reference_id"
+            )
+    for item in parsed.get("verification_requirements", []):
+        if not isinstance(item, dict):
+            raise ValueError(
+                "Reference-understanding output included malformed nested section: verification_requirements"
+            )
+        _reject_unexpected_dict_keys(
+            {str(key): value for key, value in item.items()},
+            expected_keys={"tool_name", "reason", "priority"},
+            contract_name="Reference-understanding",
+        )
+        if not isinstance(item.get("tool_name"), str) or not isinstance(item.get("reason"), str):
+            raise ValueError(
+                "Reference-understanding output included malformed nested section: verification_requirements"
+            )
+        if item.get("priority") not in {"high", "normal"}:
+            raise ValueError(
+                "Reference-understanding output included malformed nested section: verification_requirements.priority"
+            )
 
 
 def _validate_reference_classification_contract_shape(parsed: dict[str, Any]) -> None:
@@ -1301,7 +1344,12 @@ def _validate_reference_classification_contract_shape(parsed: dict[str, Any]) ->
             expected_keys={"label", "score"},
             contract_name="Reference-classification",
         )
-        if not isinstance(item.get("label"), str) or not isinstance(item.get("score"), (int, float)):
+        score = item.get("score")
+        if (
+            not isinstance(item.get("label"), str)
+            or not isinstance(score, (int, float))
+            or not 0.0 <= float(score) <= 1.0
+        ):
             raise ValueError("Reference-classification output included malformed nested section: classification_scores")
 
 

@@ -16,6 +16,7 @@ def _assert_strict_required_matches_properties(schema: dict) -> None:
         return
     properties = schema.get("properties")
     if isinstance(properties, dict):
+        assert schema.get("additionalProperties") is False
         assert set(schema.get("required") or []) == set(properties)
         for nested in properties.values():
             if isinstance(nested, dict):

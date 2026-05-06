@@ -459,6 +459,89 @@ def test_parse_reference_understanding_payload_rejects_noncanonical_nested_value
         parse_vision_output_text(text, _reference_understanding_request())
 
 
+def test_parse_reference_understanding_payload_rejects_malformed_visual_evidence_refs():
+    text = json.dumps(
+        {
+            "subject": {
+                "label": "Low poly squirrel",
+                "category": "creature",
+                "confidence": 0.9,
+                "uncertainty_notes": [],
+            },
+            "style": {"style_label": "low_poly_faceted", "confidence": 0.8, "notes": ["faceted planes"]},
+            "views": [],
+            "required_parts": [],
+            "non_goals": [],
+            "construction_strategy": {
+                "construction_path": "low_poly_facet",
+                "primary_family": "modeling_mesh",
+                "allowed_families": ["modeling_mesh", "inspect_only"],
+                "stage_sequence": ["primary_masses", "secondary_parts"],
+                "finish_policy": "preserve_facets",
+            },
+            "router_handoff_hints": {
+                "preferred_family": "modeling_mesh",
+                "allowed_guided_families": ["reference_context", "finish", "secondary_parts"],
+                "sculpt_policy": "hidden",
+            },
+            "gate_proposals": [],
+            "visual_evidence_refs": [
+                {
+                    "evidence_id": "tail_curve",
+                    "source_class": "unexpected_class",
+                    "summary": "The side reference shows a visible curled tail arc.",
+                    "reference_id": "ref_side",
+                }
+            ],
+            "verification_requirements": [],
+        }
+    )
+
+    with pytest.raises(ValueError, match="visual_evidence_refs.source_class"):
+        parse_vision_output_text(text, _reference_understanding_request())
+
+
+def test_parse_reference_understanding_payload_rejects_malformed_verification_requirements():
+    text = json.dumps(
+        {
+            "subject": {
+                "label": "Low poly squirrel",
+                "category": "creature",
+                "confidence": 0.9,
+                "uncertainty_notes": [],
+            },
+            "style": {"style_label": "low_poly_faceted", "confidence": 0.8, "notes": ["faceted planes"]},
+            "views": [],
+            "required_parts": [],
+            "non_goals": [],
+            "construction_strategy": {
+                "construction_path": "low_poly_facet",
+                "primary_family": "modeling_mesh",
+                "allowed_families": ["modeling_mesh", "inspect_only"],
+                "stage_sequence": ["primary_masses", "secondary_parts"],
+                "finish_policy": "preserve_facets",
+            },
+            "router_handoff_hints": {
+                "preferred_family": "modeling_mesh",
+                "allowed_guided_families": ["reference_context", "finish", "secondary_parts"],
+                "sculpt_policy": "hidden",
+            },
+            "gate_proposals": [],
+            "visual_evidence_refs": [],
+            "verification_requirements": [
+                {
+                    "tool_name": "scene_measure_alignment",
+                    "reason": "Confirm symmetry before local detail edits.",
+                    "priority": "urgent",
+                }
+            ],
+        }
+    )
+
+    with pytest.raises(ValueError, match="verification_requirements.priority"):
+        parse_vision_output_text(text, _reference_understanding_request())
+
+
 def test_parse_reference_classification_payload_accepts_bounded_scores():
     text = json.dumps(
         {

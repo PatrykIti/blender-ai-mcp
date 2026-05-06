@@ -854,3 +854,21 @@ def test_vision_harness_reference_understanding_mode_rejects_missing_reference_i
                 "reference-understanding",
             ]
         )
+
+
+def test_vision_harness_reference_understanding_mode_rejects_bundle_without_reference_inputs():
+    module = _load_script("vision_harness")
+
+    with pytest.raises(SystemExit):
+        module.main(
+            [
+                "--backend",
+                "mlx_local",
+                "--goal",
+                "low poly squirrel",
+                "--mode",
+                "reference-understanding",
+                "--bundle-json",
+                "/tmp/bundle.json",
+            ]
+        )
