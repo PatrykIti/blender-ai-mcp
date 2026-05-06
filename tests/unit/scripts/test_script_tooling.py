@@ -594,6 +594,79 @@ def test_vision_harness_live_reference_understanding_mode_uses_reference_images_
     assert '"mode": "reference_understanding"' in output
 
 
+@pytest.mark.parametrize(
+    ("argv", "expected_backend"),
+    [
+        (
+            [
+                "--backend",
+                "mlx_local",
+                "--goal",
+                "low poly squirrel",
+                "--mode",
+                "reference-understanding",
+            ],
+            "mlx_local",
+        ),
+        (
+            [
+                "--backend",
+                "openai_compatible_external",
+                "--goal",
+                "low poly squirrel",
+                "--mode",
+                "reference-understanding",
+                "--external-provider",
+                "openrouter",
+                "--external-contract-profile",
+                "generic_full",
+                "--openrouter-model",
+                "qwen/qwen3-vl-32b-instruct",
+                "--openrouter-api-key-env",
+                "OPENROUTER_API_KEY",
+            ],
+            "openai_compatible_external",
+        ),
+    ],
+)
+def test_vision_harness_live_reference_understanding_executes_backend_path(
+    tmp_path,
+    monkeypatch,
+    capsys,
+    argv,
+    expected_backend,
+):
+    module = _load_script("vision_harness")
+    reference_path = tmp_path / "reference.png"
+    reference_path.write_bytes(b"ref")
+    captured: dict[str, object] = {}
+
+    class FakeBackend:
+        def __init__(self) -> None:
+            self.last_output_diagnostics = {"provider_path": "backend-executed"}
+
+        async def analyze(self, request):
+            captured["metadata"] = dict(request.metadata)
+            captured["roles"] = [image.role for image in request.images]
+            return {"status": "available", "understanding_id": "understanding_live_harness"}
+
+    monkeypatch.setattr(module, "create_vision_backend", lambda runtime: FakeBackend())
+
+    result = module.main([*argv, "--reference", str(reference_path)])
+
+    assert result == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload[0]["backend"] == expected_backend
+    assert payload[0]["status"] == "success"
+    assert payload[0]["diagnostics"] == {"provider_path": "backend-executed"}
+    assert captured["metadata"] == {
+        "mode": "reference_understanding",
+        "reference_ids": ["fixture_ref_1"],
+        "source": "vision_harness",
+    }
+    assert captured["roles"] == ["reference"]
+
+
 def test_vision_harness_reference_understanding_mode_rejects_missing_reference_inputs():
     module = _load_script("vision_harness")
 

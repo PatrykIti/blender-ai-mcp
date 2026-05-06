@@ -359,6 +359,8 @@ def test_parse_reference_understanding_payload_normalizes_aliases_and_derives_de
     ]
     assert parsed["gate_proposals"][0]["allowed_correction_families"] == ["secondary_parts", "inspect_validate"]
     assert parsed["verification_requirements"][0]["tool_name"] == "scene_measure_alignment"
+    assert "classification_scores" not in parsed
+    assert "segmentation_artifacts" not in parsed
 
 
 def test_parse_reference_classification_payload_accepts_bounded_scores():
@@ -392,6 +394,24 @@ def test_parse_reference_classification_payload_repairs_simple_label_score_map()
     assert parsed["classification_scores"] == [
         {"label": "low_poly_faceted", "score": 0.88},
         {"label": "smooth_organic", "score": 0.12},
+    ]
+
+
+def test_parse_reference_classification_payload_drops_out_of_range_scores():
+    text = json.dumps(
+        {
+            "classification_scores": [
+                {"label": "low_poly_faceted", "score": 0.91},
+                {"label": "too_high", "score": 1.4},
+                {"label": "too_low", "score": -0.2},
+            ]
+        }
+    )
+
+    parsed = parse_vision_output_text(text, _reference_classification_request())
+
+    assert parsed["classification_scores"] == [
+        {"label": "low_poly_faceted", "score": 0.91},
     ]
 
 

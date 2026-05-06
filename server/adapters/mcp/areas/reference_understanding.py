@@ -217,6 +217,20 @@ async def refresh_reference_understanding_summary(
         and existing_summary.get("goal") == current.goal
         and list(existing_summary.get("reference_ids") or []) == reference_ids
     ):
+        if current.reference_strategy_state is None:
+            summary = ReferenceUnderstandingSummaryContract.model_validate(existing_summary)
+            rebuilt_strategy = build_reference_strategy_state(summary)
+            if rebuilt_strategy is not None:
+                repaired = replace(
+                    current,
+                    reference_strategy_state=rebuilt_strategy.model_dump(mode="json", exclude_none=True),
+                )
+                return await _persist_reference_understanding_state_async(
+                    ctx,
+                    repaired,
+                    set_session_capability_state_async=set_session_capability_state_async,
+                    apply_visibility_for_session_state=apply_visibility_for_session_state,
+                )
         return current
 
     request = reference_understanding_request(

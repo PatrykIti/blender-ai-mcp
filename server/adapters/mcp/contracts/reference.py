@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from typing import Literal
 
+from pydantic import Field
+
 from server.adapters.mcp.contracts.scene import (
     SceneAssembledTargetScopeContract,
     SceneCorrectionTruthBundleContract,
@@ -171,7 +173,7 @@ class ReferenceUnderstandingClassificationScoreContract(MCPContract):
     """Optional later classification score preserved as bounded support evidence."""
 
     label: str
-    score: float
+    score: float = Field(ge=0.0, le=1.0)
 
 
 class ReferenceUnderstandingSegmentationArtifactContract(MCPContract):

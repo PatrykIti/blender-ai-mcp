@@ -67,7 +67,7 @@ Hard rules:
 |------|------|
 | `TASK-157` | Generic gate substrate: proposal sources, evidence refs, verifier authority, status model, guided cadence |
 | `TASK-158` | Post-`TASK-157` follow-on for docs alignment plus bounded reference-understanding and optional-perception readiness work |
-| `TASK-163` | Current promoted follow-on for compact orchestrator-facing RU/runtime feedback, session strategy state, and the remaining optional perception follow-ons |
+| `TASK-163` | Closed umbrella that shipped compact orchestrator-facing RU/runtime feedback, session strategy state, and the first optional perception follow-ons |
 | `TASK-135` | First creature consumer of the gate substrate |
 | `TASK-135-03` | First low-poly form-refinement consumer; owns the faceted refinement stage and any creature profile macros |
 | `TASK-140` | External VLM model-family profile reliability; owns `vision_contract_profile` expansion, not quality-gate authority |
@@ -79,11 +79,9 @@ may become proposal/support refs, but the quality-gate verifier still owns
 pass/fail status.
 
 Do not create a third parallel task family that duplicates these owners.
-`TASK-158` is closed. `TASK-163` is now the current promoted follow-on for the
-compact orchestrator-feedback wave plus the remaining optional perception
-follow-ons. New work should land under `TASK-163`, `TASK-135-03`, or
-`TASK-140` according to current ownership unless a separate future adapter
-really needs its own task family.
+`TASK-158` and `TASK-163` are closed. New work should land under
+`TASK-135-03`, `TASK-140`, or a new explicit follow-on task when the remaining
+adapter/runtime work no longer fits those existing owners.
 
 ## Target Flow
 

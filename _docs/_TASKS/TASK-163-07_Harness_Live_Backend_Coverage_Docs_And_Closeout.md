@@ -78,11 +78,10 @@ Not covered by `TASK-163` and still outside this umbrella closeout:
 - 2026-05-06: the exact historical external proof command in this task file is
   currently stale because OpenRouter now returns `404 No endpoints found` for
   `google/gemma-3-27b-it:free`.
-- 2026-05-06: local live RU proof is still blocked on the current MLX path:
-  `mlx-community/Qwen3-VL-4B-Instruct-4bit` returned
-  `MLX local vision runtime did not return valid JSON content.` on the live RU
-  harness mode, so the umbrella should stay open until that lane is either
-  fixed or explicitly waived with scope-owner approval.
+- 2026-05-06: the historical local MLX blocker was split into
+  [TASK-163-07-01](./TASK-163-07-01_Local_MLX_Reference_Understanding_JSON_Reliability.md)
+  and resolved later the same day, so this leaf no longer stays open on that
+  condition.
 
 ## Pseudocode
 

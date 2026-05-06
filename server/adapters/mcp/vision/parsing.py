@@ -799,7 +799,10 @@ def _normalize_reference_classification_scores(parsed: dict[str, Any]) -> list[d
         score = raw_item.get("score")
         if not label or not isinstance(score, (int, float)):
             continue
-        items.append({"label": label, "score": float(score)})
+        normalized_score = float(score)
+        if not 0.0 <= normalized_score <= 1.0:
+            continue
+        items.append({"label": label, "score": normalized_score})
     return items[:8]
 
 
@@ -814,14 +817,20 @@ def _normalize_reference_classification_payload(parsed: dict[str, Any]) -> dict[
         for label, score in score_map.items():
             if not isinstance(label, str) or not isinstance(score, (int, float)):
                 continue
-            items.append({"label": label.strip(), "score": float(score)})
+            normalized_score = float(score)
+            if not 0.0 <= normalized_score <= 1.0:
+                continue
+            items.append({"label": label.strip(), "score": normalized_score})
     elif (
         parsed
         and all(isinstance(key, str) for key in parsed)
         and all(isinstance(value, (int, float)) for value in parsed.values())
     ):
         for label, score in parsed.items():
-            items.append({"label": str(label).strip(), "score": float(score)})
+            normalized_score = float(score)
+            if not 0.0 <= normalized_score <= 1.0:
+                continue
+            items.append({"label": str(label).strip(), "score": normalized_score})
 
     items = [item for item in items if item["label"]]
     items.sort(key=lambda item: item["score"], reverse=True)
@@ -878,8 +887,6 @@ def _normalize_reference_understanding_payload(parsed: dict[str, Any], request: 
         "gate_proposals": _normalize_reference_gate_proposals(parsed, parts=parts),
         "visual_evidence_refs": _normalize_reference_visual_evidence_refs(parsed),
         "verification_requirements": _normalize_reference_verification_requirements(parsed),
-        "classification_scores": _normalize_reference_classification_scores(parsed),
-        "segmentation_artifacts": _normalize_reference_segmentation_artifacts(parsed),
         "boundary_policy": {
             "advisory_only": True,
             "not_truth_source": True,

@@ -42,8 +42,6 @@ _REFERENCE_UNDERSTANDING_EXPECTED_KEYS = (
     "gate_proposals",
     "visual_evidence_refs",
     "verification_requirements",
-    "classification_scores",
-    "segmentation_artifacts",
 )
 _REFERENCE_CLASSIFICATION_EXPECTED_KEYS = ("classification_scores",)
 
@@ -181,8 +179,6 @@ def _reference_understanding_output_template() -> str:
         "gate_proposals": [],
         "visual_evidence_refs": [],
         "verification_requirements": [],
-        "classification_scores": [],
-        "segmentation_artifacts": [],
     }
     return json.dumps(template, ensure_ascii=True, indent=2)
 
@@ -379,6 +375,7 @@ def _build_reference_understanding_payload_text(request: VisionRequest) -> str:
             "Return exactly one JSON object with only these keys:",
             "- subject",
             "- style",
+            "- views",
             "- required_parts",
             "- non_goals",
             "- construction_strategy",
@@ -386,8 +383,6 @@ def _build_reference_understanding_payload_text(request: VisionRequest) -> str:
             "- gate_proposals",
             "- visual_evidence_refs",
             "- verification_requirements",
-            "- classification_scores",
-            "- segmentation_artifacts",
             "",
             "Rules:",
             "- advisory only: do not claim passed/final-completion truth",
@@ -580,7 +575,7 @@ def build_vision_response_json_schema(
                         "additionalProperties": False,
                         "properties": {
                             "label": {"type": "string"},
-                            "score": {"type": "number"},
+                            "score": {"type": "number", "minimum": 0.0, "maximum": 1.0},
                         },
                         "required": ["label", "score"],
                     },
@@ -777,32 +772,6 @@ def build_vision_response_json_schema(
                             "priority": {"type": "string", "enum": ["high", "normal"]},
                         },
                         "required": ["tool_name", "reason", "priority"],
-                    },
-                },
-                "classification_scores": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "additionalProperties": False,
-                        "properties": {
-                            "label": {"type": "string"},
-                            "score": {"type": "number"},
-                        },
-                        "required": ["label", "score"],
-                    },
-                },
-                "segmentation_artifacts": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "additionalProperties": False,
-                        "properties": {
-                            "artifact_id": {"type": "string"},
-                            "artifact_kind": {"type": "string", "enum": ["mask", "crop", "box"]},
-                            "reference_id": {"type": ["string", "null"]},
-                            "summary": {"type": ["string", "null"]},
-                        },
-                        "required": ["artifact_id", "artifact_kind", "reference_id", "summary"],
                     },
                 },
             },

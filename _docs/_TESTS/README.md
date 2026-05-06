@@ -198,7 +198,9 @@ Keep the current owner-lane rule explicit while Scope B stays open:
   gate-normalization lane
 - providerless fixture/eval behavior for `scripts/vision_harness.py` must be an
   explicit opt-in path; the default harness flow stays backend-executing.
-  The current CLI entrypoint is `--fixture-only reference-understanding`.
+  The explicit fixture/eval CLI entrypoint remains
+  `--fixture-only reference-understanding`, while the live RU lane uses
+  `--mode reference-understanding`.
 
 ---
 
@@ -206,8 +208,8 @@ Keep the current owner-lane rule explicit while Scope B stays open:
 
 | Type | Count | Execution Time |
 |------|-------|----------------|
-| Unit Tests | 3158 collected | collect-only ~9 seconds; full runtime depends on selected lanes |
-| E2E Tests | 429 collected | collect-only ~15 seconds; Blender-backed runtime depends on active RPC/Blender state |
+| Unit Tests | 3228 collected | collect-only ~7 seconds; full runtime depends on selected lanes |
+| E2E Tests | 464 collected | collect-only ~14 seconds; Blender-backed runtime depends on active RPC/Blender state |
 
 Current repo-wide unit coverage (`server + blender_addon + scripts`):
 

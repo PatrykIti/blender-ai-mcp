@@ -476,8 +476,8 @@ Minimal setup:
 export VISION_ENABLED=1
 export VISION_PROVIDER=openai_compatible_external
 export VISION_EXTERNAL_PROVIDER=openrouter
-export VISION_EXTERNAL_CONTRACT_PROFILE="google_family_compare"
-export VISION_OPENROUTER_MODEL="google/gemma-3-27b-it:free"
+export VISION_EXTERNAL_CONTRACT_PROFILE="generic_full"
+export VISION_OPENROUTER_MODEL="qwen/qwen3-vl-32b-instruct"
 export VISION_OPENROUTER_API_KEY_ENV=OPENROUTER_API_KEY
 export OPENROUTER_API_KEY="<your-openrouter-key>"
 export VISION_OPENROUTER_REQUIRE_PARAMETERS=false
@@ -491,10 +491,9 @@ Config precedence note:
   provider profile and default base URL
 - model/auth values resolve from `VISION_OPENROUTER_*` first and then fall back
   to generic `VISION_EXTERNAL_*`
-- if `VISION_EXTERNAL_CONTRACT_PROFILE` is unset, common Google-family model
-  ids such as `gemma` or `gemini` auto-match to
-  `google_family_compare`; the explicit env above keeps the compare-contract
-  assumption visible in reproducible harness runs
+- if `VISION_EXTERNAL_CONTRACT_PROFILE` is unset, provider/model heuristics may
+  still resolve a compatible contract profile; the explicit env above keeps the
+  bounded contract assumption visible in reproducible harness runs
 - `VISION_OPENROUTER_REQUIRE_PARAMETERS` now defaults to `false` in this repo
   because some vision requests need broader fallback routing than the strict
   provider capability filter allows
@@ -526,8 +525,8 @@ Harness example:
 poetry run python scripts/vision_harness.py \
   --backend openai_compatible_external \
   --external-provider openrouter \
-  --external-contract-profile google_family_compare \
-  --openrouter-model "google/gemma-3-27b-it:free" \
+  --external-contract-profile generic_full \
+  --openrouter-model "qwen/qwen3-vl-32b-instruct" \
   --openrouter-api-key-env OPENROUTER_API_KEY \
   --golden-json tests/fixtures/vision_eval/squirrel_head_to_face_camera_perspective/golden.json
 ```

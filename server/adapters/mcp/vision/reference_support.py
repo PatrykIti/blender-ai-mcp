@@ -58,6 +58,31 @@ def _bounded_text(value: Any, *, fallback: str | None = None) -> str | None:
     return text[:240]
 
 
+def _looks_like_local_path(value: str) -> bool:
+    candidate = value.strip()
+    if not candidate:
+        return False
+    return bool(
+        candidate.startswith(("/", "./", "../", "~"))
+        or re.match(r"^[A-Za-z]:[\\/]", candidate) is not None
+        or "\\" in candidate
+    )
+
+
+def _sanitize_segmentation_artifact_id(value: Any, *, fallback: str) -> str:
+    artifact_id = str(value or "").strip()
+    if not artifact_id or _looks_like_local_path(artifact_id) or "/" in artifact_id:
+        return fallback
+    return artifact_id[:120]
+
+
+def _redact_local_paths(text: str | None) -> str | None:
+    if text is None:
+        return None
+    redacted = re.sub(r"(?<!\w)(?:[A-Za-z]:[\\/]|/)[^\s,;:]+", "[redacted-path]", text)
+    return redacted
+
+
 def _build_support_request_payload(
     *,
     goal: str | None,
@@ -249,7 +274,10 @@ def _normalize_classification_scores_payload(
         score = raw_item.get("score")
         if not label or not isinstance(score, (int, float)):
             continue
-        items.append(ReferenceUnderstandingClassificationScoreContract(label=label, score=float(score)))
+        normalized_score = float(score)
+        if not 0.0 <= normalized_score <= 1.0:
+            continue
+        items.append(ReferenceUnderstandingClassificationScoreContract(label=label, score=normalized_score))
     return _merge_classification_scores([], items)[:max_labels]
 
 
@@ -265,7 +293,10 @@ def _normalize_segmentation_artifacts_payload(
     for index, raw_item in enumerate(value, start=1):
         if not isinstance(raw_item, dict):
             continue
-        artifact_id = str(raw_item.get("artifact_id") or f"segmentation_artifact_{index}").strip()
+        artifact_id = _sanitize_segmentation_artifact_id(
+            raw_item.get("artifact_id"),
+            fallback=f"segmentation_artifact_{index}",
+        )
         artifact_kind = str(raw_item.get("artifact_kind") or "mask").strip().lower()
         if artifact_kind not in _SEGMENTATION_ARTIFACT_KINDS:
             artifact_kind = "mask"
@@ -274,7 +305,7 @@ def _normalize_segmentation_artifacts_payload(
                 artifact_id=artifact_id,
                 artifact_kind=cast(Literal["mask", "crop", "box"], artifact_kind),
                 reference_id=str(raw_item.get("reference_id") or "").strip() or None,
-                summary=_bounded_text(raw_item.get("summary")),
+                summary=_redact_local_paths(_bounded_text(raw_item.get("summary"))),
             )
         )
     return _merge_segmentation_artifacts([], items)[:max_artifacts]

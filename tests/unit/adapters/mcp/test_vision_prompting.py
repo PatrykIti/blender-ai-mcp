@@ -214,6 +214,7 @@ def test_reference_understanding_prompt_and_schema_use_internal_contract():
     assert "bounded reference-understanding assistant" in system_prompt
     assert "mesh_edit -> modeling_mesh" in system_prompt
     assert "Return exactly one JSON object with only these keys:" in payload_text
+    assert "- views" in payload_text
     assert "- construction_strategy" in payload_text
     assert "- router_handoff_hints" in payload_text
     assert set(schema["properties"]) == {
@@ -227,9 +228,9 @@ def test_reference_understanding_prompt_and_schema_use_internal_contract():
         "gate_proposals",
         "visual_evidence_refs",
         "verification_requirements",
-        "classification_scores",
-        "segmentation_artifacts",
     }
+    assert "- classification_scores" not in payload_text
+    assert "- segmentation_artifacts" not in payload_text
     _assert_strict_required_matches_properties(schema)
 
 

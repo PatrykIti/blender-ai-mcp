@@ -32,7 +32,8 @@
 
 ## Status / Board Update
 
-- tracked under the open `TASK-163` umbrella
+- closed historically under `TASK-163`; future related work should use an
+  explicit follow-on task
 - does not become its own board row
 
 ## Validation Commands
