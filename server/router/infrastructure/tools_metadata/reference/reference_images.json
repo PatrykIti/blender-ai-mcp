@@ -13,6 +13,8 @@
   "parameters": {
     "action": {"type": "enum", "options": ["attach", "list", "remove", "clear"], "required": true},
     "source_path": {"type": "string", "default": null},
+    "source_paths": {"type": "array", "default": null},
+    "images": {"type": "array", "default": null},
     "reference_id": {"type": "string", "default": null},
     "label": {"type": "string", "default": null},
     "notes": {"type": "string", "default": null},

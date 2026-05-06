@@ -209,7 +209,8 @@ def _sanitize_reference_understanding_summary(value: Any) -> Any:
             if not 0.0 <= normalized_score <= 1.0:
                 continue
             filtered_scores.append({"label": label, "score": normalized_score})
-        sanitized["classification_scores"] = filtered_scores
+        filtered_scores.sort(key=lambda item: item["score"], reverse=True)
+        sanitized["classification_scores"] = filtered_scores[:5]
 
     segmentation_artifacts = sanitized.get("segmentation_artifacts")
     if isinstance(segmentation_artifacts, list):

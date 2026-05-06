@@ -554,6 +554,84 @@ def test_vision_harness_fixture_only_reference_understanding_keeps_backend_path_
     assert '"mode": "reference_understanding"' in output
 
 
+def test_vision_harness_fixture_only_reference_understanding_bundle_uses_reference_images_only(
+    tmp_path,
+    monkeypatch,
+    capsys,
+):
+    module = _load_script("vision_harness")
+    bundle_path = tmp_path / "bundle.json"
+    bundle_path.write_text(
+        json.dumps(
+            {
+                "bundle_id": "bundle_1",
+                "target_object": "Housing",
+                "preset_names": ["context_wide"],
+                "captures_before": [
+                    {
+                        "label": "before_1",
+                        "image_path": str(tmp_path / "before.jpg"),
+                        "media_type": "image/jpeg",
+                    }
+                ],
+                "captures_after": [
+                    {
+                        "label": "after_1",
+                        "image_path": str(tmp_path / "after.jpg"),
+                        "media_type": "image/jpeg",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    refs_path = tmp_path / "references.json"
+    refs_path.write_text(
+        json.dumps(
+            {
+                "references": [
+                    {
+                        "reference_id": "ref_1",
+                        "goal": "rounded housing",
+                        "label": "front_reference",
+                        "media_type": "image/png",
+                        "source_kind": "local_path",
+                        "original_path": str(tmp_path / "ref.png"),
+                        "stored_path": str(tmp_path / "ref.png"),
+                        "host_visible_path": str(tmp_path / "ref.png"),
+                        "added_at": "2026-03-26T00:00:00Z",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = module.main(
+        [
+            "--backend",
+            "mlx_local",
+            "--goal",
+            "rounded housing",
+            "--bundle-json",
+            str(bundle_path),
+            "--references-json",
+            str(refs_path),
+            "--fixture-only",
+            "reference-understanding",
+        ]
+    )
+
+    assert result == 0
+    output = capsys.readouterr().out
+    assert '"fixture_only_mode": "reference-understanding"' in output
+    assert '"image_count": 1' in output
+    assert '"image_roles": [' in output
+    assert '"reference"' in output
+    assert '"before"' not in output
+    assert '"after"' not in output
+
+
 def test_vision_harness_live_reference_understanding_mode_uses_reference_images_only(tmp_path, monkeypatch, capsys):
     module = _load_script("vision_harness")
 

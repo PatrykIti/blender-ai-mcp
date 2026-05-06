@@ -212,7 +212,10 @@ class ReferenceUnderstandingSummaryContract(MCPContract):
     gate_proposals: list[GateProposalGateContract] = []
     visual_evidence_refs: list[ReferenceUnderstandingVisualEvidenceRefContract] = []
     visual_metrics: list[ReferenceUnderstandingVisualMetricContract] = []
-    classification_scores: list[ReferenceUnderstandingClassificationScoreContract] = []
+    classification_scores: list[ReferenceUnderstandingClassificationScoreContract] = Field(
+        default_factory=list,
+        max_length=5,
+    )
     segmentation_artifacts: list[ReferenceUnderstandingSegmentationArtifactContract] = []
     verification_requirements: list[ReferenceUnderstandingVerificationRequirementContract] = []
     source_provenance: list[GateSourceProvenanceContract] = []

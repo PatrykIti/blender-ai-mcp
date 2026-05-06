@@ -138,6 +138,28 @@ def reference_understanding_gate_slice(gate_plan: GatePlanContract | None) -> Ga
     )
 
 
+def _optional_support_needs_refresh(
+    summary: ReferenceUnderstandingSummaryContract,
+    *,
+    runtime_config: Any,
+) -> bool:
+    if runtime_config is None:
+        return False
+
+    provenance_sources = {item.source for item in list(summary.source_provenance or [])}
+    classifier = getattr(runtime_config, "active_reference_classifier", None)
+    if classifier is not None and getattr(classifier, "enabled", False):
+        if "classification_scores" not in provenance_sources:
+            return True
+
+    segmentation = getattr(runtime_config, "active_segmentation_sidecar", None)
+    if segmentation is not None and getattr(segmentation, "enabled", False):
+        if "part_segmentation" not in provenance_sources:
+            return True
+
+    return False
+
+
 async def _persist_reference_understanding_state_async(
     ctx: Context,
     state: SessionCapabilityState,
@@ -217,8 +239,29 @@ async def refresh_reference_understanding_summary(
         and existing_summary.get("goal") == current.goal
         and list(existing_summary.get("reference_ids") or []) == reference_ids
     ):
+        summary = ReferenceUnderstandingSummaryContract.model_validate(existing_summary)
+        resolver = get_vision_backend_resolver()
+        runtime_config = getattr(resolver, "runtime_config", None)
+        if _optional_support_needs_refresh(summary, runtime_config=runtime_config):
+            refreshed_summary = await augment_reference_understanding_optional_support(
+                summary,
+                goal=current.goal,
+                reference_records=reference_records,
+                runtime_config=runtime_config,
+            )
+            if refreshed_summary.model_dump(mode="json", exclude_none=True) != existing_summary:
+                updated = replace(
+                    current,
+                    reference_understanding_summary=refreshed_summary.model_dump(mode="json", exclude_none=True),
+                )
+                return await _persist_reference_understanding_state_async(
+                    ctx,
+                    updated,
+                    set_session_capability_state_async=set_session_capability_state_async,
+                    apply_visibility_for_session_state=apply_visibility_for_session_state,
+                )
+
         if current.reference_strategy_state is None:
-            summary = ReferenceUnderstandingSummaryContract.model_validate(existing_summary)
             rebuilt_strategy = build_reference_strategy_state(summary)
             if rebuilt_strategy is not None:
                 repaired = replace(

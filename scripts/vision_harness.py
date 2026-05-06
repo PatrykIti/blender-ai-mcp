@@ -200,7 +200,7 @@ def _build_request_from_args(args: Any, golden: ResolvedVisionGoldenScenario | N
         if getattr(args, "fixture_only", None) == "reference-understanding":
             return VisionRequest(
                 goal=request.goal,
-                images=request.images,
+                images=tuple(image for image in request.images if image.role == "reference"),
                 target_object=request.target_object,
                 prompt_hint="reference_understanding",
                 truth_summary=request.truth_summary,
@@ -270,7 +270,7 @@ def _build_request_from_args(args: Any, golden: ResolvedVisionGoldenScenario | N
     if getattr(args, "fixture_only", None) == "reference-understanding":
         return VisionRequest(
             goal=request.goal,
-            images=request.images,
+            images=tuple(image for image in request.images if image.role == "reference"),
             target_object=request.target_object,
             prompt_hint="reference_understanding",
             truth_summary=request.truth_summary,

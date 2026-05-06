@@ -415,6 +415,31 @@ def test_parse_reference_classification_payload_drops_out_of_range_scores():
     ]
 
 
+def test_parse_reference_classification_payload_sorts_and_caps_to_five_scores():
+    text = json.dumps(
+        {
+            "classification_scores": [
+                {"label": "label_1", "score": 0.10},
+                {"label": "label_2", "score": 0.90},
+                {"label": "label_3", "score": 0.70},
+                {"label": "label_4", "score": 0.50},
+                {"label": "label_5", "score": 0.30},
+                {"label": "label_6", "score": 0.20},
+            ]
+        }
+    )
+
+    parsed = parse_vision_output_text(text, _reference_classification_request())
+
+    assert parsed["classification_scores"] == [
+        {"label": "label_2", "score": 0.90},
+        {"label": "label_3", "score": 0.70},
+        {"label": "label_4", "score": 0.50},
+        {"label": "label_5", "score": 0.30},
+        {"label": "label_6", "score": 0.20},
+    ]
+
+
 def test_diagnose_vision_output_classifies_prose_without_json():
     diagnostics = diagnose_vision_output_text("This is just prose with no JSON at all.")
 

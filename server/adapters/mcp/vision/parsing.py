@@ -803,7 +803,8 @@ def _normalize_reference_classification_scores(parsed: dict[str, Any]) -> list[d
         if not 0.0 <= normalized_score <= 1.0:
             continue
         items.append({"label": label, "score": normalized_score})
-    return items[:8]
+    items.sort(key=lambda item: item["score"], reverse=True)
+    return items[:5]
 
 
 def _normalize_reference_classification_payload(parsed: dict[str, Any]) -> dict[str, Any]:
