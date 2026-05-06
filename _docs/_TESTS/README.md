@@ -209,7 +209,7 @@ Keep the current owner-lane rule explicit when similar follow-on work resumes:
 | Type | Count | Execution Time |
 |------|-------|----------------|
 | Unit Tests | 3247 collected | collect-only ~7 seconds; full runtime depends on selected lanes |
-| E2E Tests | 467 collected | collect-only ~14 seconds; Blender-backed runtime depends on active RPC/Blender state |
+| E2E Tests | 468 collected | collect-only ~14 seconds; Blender-backed runtime depends on active RPC/Blender state |
 
 Current repo-wide unit coverage (`server + blender_addon + scripts`):
 

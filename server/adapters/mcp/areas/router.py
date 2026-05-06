@@ -529,6 +529,16 @@ async def router_get_status(ctx: Context) -> RouterStatusContract:
         guided_flow_state=session.guided_flow_state,
         gate_plan=session.gate_plan,
     )
+    gate_plan_contract = GatePlanContract.model_validate(session.gate_plan) if session.gate_plan is not None else None
+    reference_understanding_gate_ids = (
+        list(session.reference_understanding_gate_ids)
+        if session.reference_understanding_gate_ids is not None
+        else (
+            [gate.gate_id for gate in gate_plan_contract.gates if "reference_understanding" in gate.proposal_sources]
+            if gate_plan_contract is not None
+            else []
+        )
+    )
     status_payload = get_router_status()
     background_job_count, background_job_counts_by_status, background_jobs = _build_background_job_diagnostics()
     status_payload.update(
@@ -567,7 +577,7 @@ async def router_get_status(ctx: Context) -> RouterStatusContract:
             "reference_image_count": len(session.reference_images or []),
             "reference_images": list(session.reference_images or []),
             "reference_understanding_summary": session.reference_understanding_summary,
-            "reference_understanding_gate_ids": list(session.reference_understanding_gate_ids or []),
+            "reference_understanding_gate_ids": reference_understanding_gate_ids,
             "reference_orchestrator_feedback": (
                 None
                 if (
@@ -590,9 +600,7 @@ async def router_get_status(ctx: Context) -> RouterStatusContract:
                             if session.guided_flow_state is not None
                             else None
                         ),
-                        gate_plan=GatePlanContract.model_validate(session.gate_plan)
-                        if session.gate_plan is not None
-                        else None,
+                        gate_plan=gate_plan_contract,
                         guided_reference_readiness=GuidedReferenceReadinessContract.model_validate(
                             build_guided_reference_readiness_payload(session)
                         ),

@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Awaitable, Callable
 from dataclasses import replace
 from typing import Any, Literal
@@ -47,6 +48,14 @@ def blocked_reference_understanding_summary(
         reason=reason,
         message=message,
     )
+
+
+def _redact_local_paths(text: str) -> str:
+    return re.sub(r"(?<!\w)(?:[A-Za-z]:[\\/]|/|\./|\.\./|~/)[^\s,;:]+", "[redacted-path]", text)
+
+
+def _sanitize_reference_understanding_error_message(message: str) -> str:
+    return _redact_local_paths(message)
 
 
 def _active_reference_records(session: SessionCapabilityState) -> tuple[ReferenceImageRecordContract, ...]:
@@ -363,7 +372,7 @@ async def refresh_reference_understanding_summary(
         unavailable = blocked_reference_understanding_summary(
             goal=current.goal,
             reason="vision_backend_unavailable",
-            message=str(exc),
+            message=_sanitize_reference_understanding_error_message(str(exc)),
             reference_ids=reference_ids,
         )
         unavailable_strategy = build_reference_strategy_state(unavailable)
@@ -388,7 +397,9 @@ async def refresh_reference_understanding_summary(
         unavailable = blocked_reference_understanding_summary(
             goal=current.goal,
             reason="vision_backend_unavailable",
-            message=f"Reference understanding could not complete: {exc}",
+            message=_sanitize_reference_understanding_error_message(
+                f"Reference understanding could not complete: {exc}"
+            ),
             reference_ids=reference_ids,
         )
         unavailable_strategy = build_reference_strategy_state(unavailable)

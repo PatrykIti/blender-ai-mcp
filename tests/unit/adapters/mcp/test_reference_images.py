@@ -72,6 +72,7 @@ from server.adapters.mcp.session_capabilities import (
     update_session_from_router_goal,
 )
 from server.adapters.mcp.session_phase import SessionPhase
+from server.adapters.mcp.vision import VisionBackendUnavailableError
 from server.adapters.mcp.vision.silhouette import build_silhouette_analysis
 
 
@@ -971,6 +972,56 @@ def test_refresh_reference_understanding_summary_keeps_optional_support_failures
         item["source"] == "part_segmentation" and "unavailable" in str(item.get("summary", ""))
         for item in updated.reference_understanding_summary["source_provenance"]
     )
+
+
+def test_refresh_reference_understanding_summary_redacts_backend_failure_paths(tmp_path, monkeypatch):
+    ctx = FakeContext()
+    reference_path = tmp_path / "front.png"
+    _write_test_silhouette(reference_path, with_ears=True)
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel",
+            surface_profile="llm-guided",
+            guided_flow_state=_guided_reference_flow_state(),
+            reference_images=[
+                {
+                    "reference_id": "ref_front",
+                    "goal": "create a low-poly squirrel",
+                    "label": "front_ref",
+                    "target_view": "front",
+                    "media_type": "image/png",
+                    "source_kind": "local_path",
+                    "original_path": str(reference_path),
+                    "stored_path": str(reference_path),
+                    "host_visible_path": str(reference_path),
+                    "added_at": "2026-05-05T12:00:00Z",
+                }
+            ],
+        ),
+    )
+
+    class Backend:
+        async def analyze(self, request):
+            raise VisionBackendUnavailableError("Failed to read ~/private/reference.png")
+
+    class Resolver:
+        runtime_config = SimpleNamespace(
+            active_reference_classifier=None,
+            active_segmentation_sidecar=None,
+        )
+
+        def resolve_default(self):
+            return Backend()
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: Resolver())
+
+    updated = asyncio.run(refresh_reference_understanding_summary_async(ctx))
+
+    assert updated.reference_understanding_summary is not None
+    assert updated.reference_understanding_summary["status"] == "unavailable"
+    assert updated.reference_understanding_summary["message"] == "Failed to read [redacted-path]"
 
 
 def test_refresh_reference_understanding_summary_can_use_openai_compatible_classifier_path(tmp_path, monkeypatch):

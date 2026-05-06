@@ -382,6 +382,87 @@ def test_router_get_status_preserves_absent_reference_understanding_gate_ids(mon
     assert result.reference_understanding_gate_ids == []
 
 
+def test_router_get_status_rebuilds_reference_understanding_gate_ids_from_gate_plan(monkeypatch):
+    class Handler:
+        def set_goal(self, goal, resolved_params=None):
+            return {
+                "status": "ready",
+                "workflow": "chair_workflow",
+                "resolved": {},
+                "unresolved": [],
+                "resolution_sources": {},
+                "message": "ok",
+            }
+
+    monkeypatch.setattr("server.adapters.mcp.areas.router.get_router_handler", lambda: Handler())
+
+    ctx = DummyContext()
+    ctx.state["reference_understanding_summary"] = {
+        "status": "available",
+        "goal": "chair",
+        "reference_ids": ["ref_front"],
+        "required_parts": [],
+        "non_goals": [],
+        "gate_proposals": [],
+        "visual_evidence_refs": [],
+        "verification_requirements": [],
+        "source_provenance": [{"source": "reference_understanding"}],
+        "boundary_policy": {
+            "advisory_only": True,
+            "not_truth_source": True,
+            "may_unlock_tools": False,
+            "may_pass_gates": False,
+            "may_propose_gates": True,
+        },
+        "construction_strategy": {
+            "construction_path": "low_poly_facet",
+            "primary_family": "modeling_mesh",
+            "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+            "stage_sequence": ["primary_masses"],
+            "finish_policy": "preserve_facets",
+        },
+    }
+    ctx.state["gate_plan"] = {
+        "plan_id": "creature_quality_gate_plan",
+        "domain_profile": "creature",
+        "gates": [
+            {
+                "gate_id": "required_part_eye_pair",
+                "gate_type": "required_part",
+                "label": "visible eye pair",
+                "required": True,
+                "priority": "high",
+                "status": "pending",
+                "status_reason": "missing_required_part",
+                "verification_strategy": "object_existence",
+                "proposal_sources": ["reference_understanding"],
+                "target_kind": "reference_part",
+                "target_label": "eye_pair",
+                "allowed_correction_families": ["primary_masses", "inspect_validate"],
+                "evidence_requirements": [{"evidence_kind": "scene_truth", "required": True}],
+                "evidence_refs": [],
+            }
+        ],
+        "policy_warnings": [],
+        "completion_blockers": [],
+        "required_gate_count": 1,
+        "optional_gate_count": 0,
+        "status_summary": {
+            "required_total": 1,
+            "required_passed": 0,
+            "required_blocking": 1,
+            "optional_total": 0,
+            "status_counts": {"pending": 1},
+        },
+    }
+    ctx.state["reference_understanding_gate_ids"] = None
+
+    result = asyncio.run(router_get_status(ctx))
+
+    assert isinstance(result, RouterStatusContract)
+    assert result.reference_understanding_gate_ids == ["required_part_eye_pair"]
+
+
 def test_router_get_status_exposes_guided_handoff_from_session(monkeypatch):
     """router_get_status should surface the active guided handoff contract from session state."""
 

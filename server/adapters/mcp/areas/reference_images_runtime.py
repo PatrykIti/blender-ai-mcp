@@ -106,6 +106,19 @@ def _copy_reference_image(source_path: Path) -> tuple[str, str]:
     return str(internal_path), host_visible_path
 
 
+def _effective_reference_understanding_gate_ids(
+    session_state: SessionCapabilityState | None,
+    gate_plan: GatePlanContract | None,
+) -> list[str]:
+    if session_state is None:
+        return []
+    if session_state.reference_understanding_gate_ids is not None:
+        return list(session_state.reference_understanding_gate_ids)
+    if gate_plan is None:
+        return []
+    return [gate.gate_id for gate in gate_plan.gates if "reference_understanding" in gate.proposal_sources]
+
+
 def _as_response(
     *,
     action: _ReferenceResponseAction,
@@ -144,6 +157,7 @@ def _as_response(
         if session_state is not None and session_state.gate_plan is not None
         else None
     )
+    reference_understanding_gate_ids = _effective_reference_understanding_gate_ids(session_state, gate_plan)
     return ReferenceImagesResponseContract(
         action=action,
         goal=goal,
