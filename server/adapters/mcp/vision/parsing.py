@@ -1099,6 +1099,29 @@ def _reject_missing_contract_keys(
         raise ValueError(f"{contract_name} output omitted required top-level fields: {joined}")
 
 
+def _reject_malformed_reference_understanding_contract(parsed: dict[str, Any]) -> None:
+    expected_shapes: dict[str, type] = {
+        "subject": dict,
+        "style": dict,
+        "views": list,
+        "required_parts": list,
+        "non_goals": list,
+        "construction_strategy": dict,
+        "router_handoff_hints": dict,
+        "gate_proposals": list,
+        "visual_evidence_refs": list,
+        "verification_requirements": list,
+    }
+    malformed = [
+        key
+        for key, expected_type in expected_shapes.items()
+        if key in parsed and not isinstance(parsed[key], expected_type)
+    ]
+    if malformed:
+        joined = ", ".join(sorted(malformed))
+        raise ValueError(f"Reference-understanding output included malformed top-level sections: {joined}")
+
+
 def diagnose_vision_output_text(
     text: str,
     *,
@@ -1272,6 +1295,7 @@ def parse_vision_output_text(
             ),
             contract_name="Reference-understanding",
         )
+        _reject_malformed_reference_understanding_contract(parsed)
         return _normalize_reference_understanding_payload(parsed, request)
 
     if _looks_like_input_echo(parsed):

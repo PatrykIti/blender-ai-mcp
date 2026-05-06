@@ -14,6 +14,8 @@ from server.adapters.mcp.contracts.router import (
 )
 from server.adapters.mcp.contracts.workflow_catalog import WorkflowCatalogResponseContract
 from server.adapters.mcp.elicitation_contracts import ClarificationFallbackPayload
+from server.adapters.mcp.session_capabilities import SessionCapabilityState
+from server.adapters.mcp.session_phase import SessionPhase
 from server.adapters.mcp.tasks.job_registry import reset_background_job_registry_for_tests
 from server.adapters.mcp.tasks.runtime_policy import TaskRuntimeReport
 
@@ -460,6 +462,143 @@ def test_router_get_status_rebuilds_reference_understanding_gate_ids_from_gate_p
     result = asyncio.run(router_get_status(ctx))
 
     assert isinstance(result, RouterStatusContract)
+    assert result.reference_understanding_gate_ids == ["required_part_eye_pair"]
+
+
+def test_router_effective_reference_understanding_gate_ids_rebuilds_from_gate_plan_dict():
+    gate_ids = router_area._effective_reference_understanding_gate_ids(
+        None,
+        {
+            "gates": [
+                {
+                    "gate_id": "required_part_eye_pair",
+                    "proposal_sources": ["reference_understanding"],
+                },
+                {
+                    "gate_id": "generic_layout_check",
+                    "proposal_sources": ["llm_goal"],
+                },
+            ]
+        },
+    )
+
+    assert gate_ids == ["required_part_eye_pair"]
+
+
+def test_router_set_goal_uses_reference_understanding_gate_id_fallback(monkeypatch):
+    class Handler:
+        def set_goal(self, goal, resolved_params=None):
+            return {
+                "status": "no_match",
+                "workflow": None,
+                "resolved": {},
+                "unresolved": [],
+                "resolution_sources": {},
+                "message": "ok",
+                "continuation_mode": "guided_manual_build",
+            }
+
+    async def _fake_update_session_from_router_goal_async(ctx, goal, result, **kwargs):
+        return SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal=goal,
+            last_router_status="needs_input",
+            surface_profile="llm-guided",
+            guided_flow_state={
+                "current_step": "create_primary_masses",
+                "family": "primary_masses",
+                "allowed_families": ["reference_context", "primary_masses", "inspect_validate"],
+                "next_actions": ["create_primary_masses"],
+            },
+            gate_plan={
+                "plan_id": "creature_quality_gate_plan",
+                "domain_profile": "creature",
+                "gates": [
+                    {
+                        "gate_id": "required_part_eye_pair",
+                        "gate_type": "required_part",
+                        "label": "visible eye pair",
+                        "required": True,
+                        "priority": "high",
+                        "status": "pending",
+                        "status_reason": "missing_required_part",
+                        "verification_strategy": "object_existence",
+                        "proposal_sources": ["reference_understanding"],
+                        "target_kind": "reference_part",
+                        "target_label": "eye_pair",
+                        "allowed_correction_families": ["primary_masses", "inspect_validate"],
+                        "evidence_requirements": [{"evidence_kind": "scene_truth", "required": True}],
+                        "evidence_refs": [],
+                    }
+                ],
+                "policy_warnings": [],
+                "completion_blockers": [],
+                "required_gate_count": 1,
+                "optional_gate_count": 0,
+                "status_summary": {
+                    "required_total": 1,
+                    "required_passed": 0,
+                    "required_blocking": 1,
+                    "optional_total": 0,
+                    "status_counts": {"pending": 1},
+                },
+            },
+            reference_understanding_summary={
+                "status": "available",
+                "goal": goal,
+                "reference_ids": ["ref_front"],
+                "required_parts": [],
+                "non_goals": [],
+                "gate_proposals": [],
+                "visual_evidence_refs": [],
+                "verification_requirements": [],
+                "source_provenance": [{"source": "reference_understanding"}],
+                "boundary_policy": {
+                    "advisory_only": True,
+                    "not_truth_source": True,
+                    "may_unlock_tools": False,
+                    "may_pass_gates": False,
+                    "may_propose_gates": True,
+                },
+                "construction_strategy": {
+                    "construction_path": "low_poly_facet",
+                    "primary_family": "modeling_mesh",
+                    "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+                    "stage_sequence": ["primary_masses"],
+                    "finish_policy": "preserve_facets",
+                },
+            },
+            reference_understanding_gate_ids=None,
+        )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.router.get_router_handler", lambda: Handler())
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.router.update_session_from_router_goal_async",
+        _fake_update_session_from_router_goal_async,
+    )
+
+    async def _fake_apply_visibility_for_session_state(ctx, state):
+        return None
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.router.apply_visibility_for_session_state",
+        _fake_apply_visibility_for_session_state,
+    )
+    monkeypatch.setattr("server.adapters.mcp.areas.router._scene_has_meaningful_guided_objects", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.areas.router._should_attach_repair_suggestion", lambda payload: False)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.router.get_config",
+        lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})(),
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.router._effective_reference_understanding_gate_ids",
+        lambda gate_ids, gate_plan: ["required_part_eye_pair"],
+    )
+
+    callable_router_set_goal = getattr(router_set_goal, "fn", router_set_goal)
+    result = asyncio.run(callable_router_set_goal(DummyContext(), goal="low poly squirrel"))
+
+    assert isinstance(result, RouterGoalResponseContract)
     assert result.reference_understanding_gate_ids == ["required_part_eye_pair"]
 
 

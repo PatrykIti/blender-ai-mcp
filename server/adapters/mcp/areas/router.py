@@ -70,6 +70,30 @@ ROUTER_PUBLIC_TOOL_NAMES = (
     "router_feedback",
 )
 
+
+def _effective_reference_understanding_gate_ids(
+    gate_ids: list[str] | None,
+    gate_plan: Any,
+) -> list[str]:
+    if gate_ids is not None:
+        return list(gate_ids)
+    if gate_plan is None:
+        return []
+    if isinstance(gate_plan, GatePlanContract):
+        return [gate.gate_id for gate in gate_plan.gates if "reference_understanding" in gate.proposal_sources]
+    if isinstance(gate_plan, dict):
+        gate_ids_from_plan: list[str] = []
+        for raw_gate in list(gate_plan.get("gates") or []):
+            if not isinstance(raw_gate, dict):
+                continue
+            gate_id = str(raw_gate.get("gate_id") or "").strip()
+            proposal_sources = raw_gate.get("proposal_sources") or []
+            if gate_id and isinstance(proposal_sources, list) and "reference_understanding" in proposal_sources:
+                gate_ids_from_plan.append(gate_id)
+        return gate_ids_from_plan
+    return []
+
+
 _GUIDED_HELPER_OR_PLACEHOLDER_NAMES = {
     "camera",
     "light",
@@ -458,7 +482,11 @@ async def router_set_goal(
         result["gate_intake_result"] = gate_intake_result.model_dump(mode="json", exclude_none=True)
     result["guided_reference_readiness"] = build_guided_reference_readiness_payload(state)
     result["reference_understanding_summary"] = state.reference_understanding_summary
-    result["reference_understanding_gate_ids"] = list(state.reference_understanding_gate_ids or [])
+    gate_plan_contract = GatePlanContract.model_validate(state.gate_plan) if state.gate_plan is not None else None
+    result["reference_understanding_gate_ids"] = _effective_reference_understanding_gate_ids(
+        state.reference_understanding_gate_ids,
+        state.gate_plan,
+    )
     feedback = build_reference_orchestrator_feedback(
         goal=goal,
         summary=(
@@ -476,7 +504,7 @@ async def router_set_goal(
             if state.guided_flow_state is not None
             else None
         ),
-        gate_plan=GatePlanContract.model_validate(state.gate_plan) if state.gate_plan is not None else None,
+        gate_plan=gate_plan_contract,
         guided_reference_readiness=GuidedReferenceReadinessContract.model_validate(
             build_guided_reference_readiness_payload(state)
         ),

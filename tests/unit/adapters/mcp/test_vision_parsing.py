@@ -360,6 +360,70 @@ def test_parse_reference_understanding_payload_normalizes_aliases_and_derives_de
     assert parsed["verification_requirements"][0]["tool_name"] == "scene_measure_alignment"
 
 
+def test_parse_reference_understanding_payload_rejects_missing_required_top_level_fields():
+    text = json.dumps(
+        {
+            "subject": {
+                "label": "Low poly squirrel",
+                "category": "creature",
+                "confidence": 0.9,
+                "uncertainty_notes": [],
+            },
+            "style": {"style_label": "low_poly_faceted", "confidence": 0.8, "notes": ["faceted planes"]},
+            "required_parts": [],
+            "non_goals": [],
+            "construction_strategy": {
+                "construction_path": "low_poly_facet",
+                "primary_family": "mesh_edit",
+                "allowed_families": ["mesh_edit", "material_finish", "inspect_only"],
+                "stage_sequence": ["primary_masses", "secondary_parts"],
+                "finish_policy": "preserve_facets",
+            },
+            "router_handoff_hints": {
+                "preferred_family": "mesh_edit",
+                "allowed_guided_families": ["reference_context", "material_finish", "secondary_parts"],
+                "sculpt_policy": "hidden",
+            },
+            "gate_proposals": [],
+            "visual_evidence_refs": [],
+            "verification_requirements": [],
+        }
+    )
+
+    with pytest.raises(ValueError, match="omitted required top-level fields: views"):
+        parse_vision_output_text(text, _reference_understanding_request())
+
+
+def test_parse_reference_understanding_payload_rejects_malformed_top_level_sections():
+    text = json.dumps(
+        {
+            "subject": "low poly squirrel",
+            "style": {"style_label": "low_poly_faceted", "confidence": 0.8, "notes": ["faceted planes"]},
+            "views": [],
+            "required_parts": [],
+            "non_goals": [],
+            "construction_strategy": {
+                "construction_path": "low_poly_facet",
+                "primary_family": "mesh_edit",
+                "allowed_families": ["mesh_edit", "material_finish", "inspect_only"],
+                "stage_sequence": ["primary_masses", "secondary_parts"],
+                "finish_policy": "preserve_facets",
+            },
+            "router_handoff_hints": {
+                "preferred_family": "mesh_edit",
+                "allowed_guided_families": ["reference_context", "material_finish", "secondary_parts"],
+                "sculpt_policy": "hidden",
+            },
+            "gate_proposals": [],
+            "visual_evidence_refs": [],
+            "verification_requirements": [],
+        }
+    )
+
+    with pytest.raises(ValueError, match="malformed top-level sections: subject"):
+        parse_vision_output_text(text, _reference_understanding_request())
+
+
 def test_parse_reference_classification_payload_accepts_bounded_scores():
     text = json.dumps(
         {
@@ -484,6 +548,13 @@ def test_parse_reference_classification_payload_rejects_unknown_top_level_fields
     )
 
     with pytest.raises(ValueError, match="unsupported top-level fields: extra_field"):
+        parse_vision_output_text(text, _reference_classification_request())
+
+
+def test_parse_reference_classification_payload_rejects_missing_required_top_level_fields():
+    text = json.dumps({})
+
+    with pytest.raises(ValueError, match="omitted required top-level fields: classification_scores"):
         parse_vision_output_text(text, _reference_classification_request())
 
 
