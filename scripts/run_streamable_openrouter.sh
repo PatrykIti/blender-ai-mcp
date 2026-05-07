@@ -103,7 +103,7 @@ if [[ "${VISION_REFERENCE_CLASSIFIER_ENABLED}" == "true" && "${VISION_REFERENCE_
     export REFERENCE_CLASSIFIER_MODEL="${REFERENCE_CLASSIFIER_MODEL:-${VISION_REFERENCE_CLASSIFIER_MODEL:-google/siglip2-base-patch16-224}}"
     sidecar_log="$(mktemp /tmp/blender-ai-reference-classifier.XXXXXX.log)"
     echo "Starting local reference classifier sidecar before Docker MCP: ${derived_classifier_endpoint}"
-    "${SCRIPT_DIR}/run_reference_classifier_sidecar.sh" >"${sidecar_log}" 2>&1 &
+    bash "${SCRIPT_DIR}/run_reference_classifier_sidecar.sh" >"${sidecar_log}" 2>&1 &
     sidecar_pid="$!"
     trap cleanup EXIT
     if ! wait_for_sidecar "${REFERENCE_CLASSIFIER_PORT}"; then
