@@ -15,6 +15,7 @@ from server.adapters.mcp.client_profiles import get_client_profile_preset
 from server.adapters.mcp.session_phase import SessionPhase, coerce_session_phase
 from server.adapters.mcp.transforms.visibility_policy import build_visibility_rules, materialize_visible_tool_names
 from server.adapters.mcp.visibility.tags import ENTRY_GUIDED
+from server.adapters.mcp.visibility_runtime import run_visibility_transaction
 
 
 @dataclass(frozen=True)
@@ -29,6 +30,7 @@ class VisibilityDiagnostics:
     hidden_capability_ids: tuple[str, ...]
     visible_entry_capability_ids: tuple[str, ...]
     hidden_category_counts: dict[str, int]
+    visible_tool_names: tuple[str, ...]
 
 
 def build_visibility_diagnostics(
@@ -85,6 +87,7 @@ def build_visibility_diagnostics(
         hidden_capability_ids=tuple(hidden_capability_ids),
         visible_entry_capability_ids=tuple(visible_entry_capability_ids),
         hidden_category_counts=hidden_category_counts,
+        visible_tool_names=tuple(sorted(visible_tool_names)),
     )
 
 
@@ -106,25 +109,39 @@ async def apply_session_visibility(
         guided_flow_state=guided_flow_state,
         gate_plan=gate_plan,
     )
-    await ctx.reset_visibility()
+    guided_flow_state_dict = guided_flow_state if isinstance(guided_flow_state, dict) else {}
+    current_step = guided_flow_state_dict.get("current_step")
+    spatial_refresh_required = bool(guided_flow_state_dict.get("spatial_refresh_required"))
 
-    for rule in diagnostics.rules:
-        version = None
-        if rule.get("version"):
-            version = VersionSpec(**rule["version"])
+    async def _apply_rules() -> None:
+        await ctx.reset_visibility()
 
-        params = {
-            "names": set(rule["names"]) if rule.get("names") else None,
-            "keys": set(rule["keys"]) if rule.get("keys") else None,
-            "version": version,
-            "tags": set(rule["tags"]) if rule.get("tags") else None,
-            "components": set(rule["components"]) if rule.get("components") else None,
-            "match_all": rule.get("match_all", False),
-        }
+        for rule in diagnostics.rules:
+            version = None
+            if rule.get("version"):
+                version = VersionSpec(**rule["version"])
 
-        if rule["enabled"]:
-            await ctx.enable_components(**params)
-        else:
-            await ctx.disable_components(**params)
+            params = {
+                "names": set(rule["names"]) if rule.get("names") else None,
+                "keys": set(rule["keys"]) if rule.get("keys") else None,
+                "version": version,
+                "tags": set(rule["tags"]) if rule.get("tags") else None,
+                "components": set(rule["components"]) if rule.get("components") else None,
+                "match_all": rule.get("match_all", False),
+            }
+
+            if rule["enabled"]:
+                await ctx.enable_components(**params)
+            else:
+                await ctx.disable_components(**params)
+
+    await run_visibility_transaction(
+        ctx,
+        phase=str(diagnostics.phase),
+        current_step=str(current_step) if current_step is not None else None,
+        spatial_refresh_required=spatial_refresh_required,
+        expected_tool_names=diagnostics.visible_tool_names,
+        apply=_apply_rules,
+    )
 
     return diagnostics

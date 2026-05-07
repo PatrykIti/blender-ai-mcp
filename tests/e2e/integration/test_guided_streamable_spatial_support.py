@@ -44,6 +44,7 @@ _PATCHED_GUIDED_STREAMABLE_SERVER = textwrap.dedent(
             return [
                 {"name": "Squirrel_Body", "type": "MESH"},
                 {"name": "Squirrel_Head", "type": "MESH"},
+                {"name": "Squirrel_Tail", "type": "MESH"},
                 {"name": "ForeL", "type": "MESH"},
             ]
 
@@ -145,6 +146,39 @@ _PATCHED_GUIDED_STREAMABLE_SERVER = textwrap.dedent(
     modeling_area.get_modeling_handler = lambda: ModelingHandler()
     mesh_area.get_mesh_handler = lambda: MeshHandler()
     router_helper.is_router_enabled = lambda: False
+    """
+)
+
+_PATCHED_GUIDED_STREAMABLE_SERVER_WITH_SLOW_VISIBILITY = _PATCHED_GUIDED_STREAMABLE_SERVER + textwrap.dedent(
+    """
+
+    import asyncio
+    from fastmcp import Context as FastMCPContext
+
+    _original_reset_visibility = FastMCPContext.reset_visibility
+    _original_enable_components = FastMCPContext.enable_components
+    _original_disable_components = FastMCPContext.disable_components
+
+
+    async def _slow_reset_visibility(self, *args, **kwargs):
+        result = await _original_reset_visibility(self, *args, **kwargs)
+        await asyncio.sleep(0.05)
+        return result
+
+
+    async def _slow_enable_components(self, *args, **kwargs):
+        await asyncio.sleep(0.01)
+        return await _original_enable_components(self, *args, **kwargs)
+
+
+    async def _slow_disable_components(self, *args, **kwargs):
+        await asyncio.sleep(0.01)
+        return await _original_disable_components(self, *args, **kwargs)
+
+
+    FastMCPContext.reset_visibility = _slow_reset_visibility
+    FastMCPContext.enable_components = _slow_enable_components
+    FastMCPContext.disable_components = _slow_disable_components
     """
 )
 
@@ -292,6 +326,45 @@ def test_streamable_guided_session_expands_visible_tools_after_goal_handoff(tmp_
 
 
 @pytest.mark.slow
+def test_streamable_list_tools_waits_for_inflight_visibility_refresh(tmp_path: Path):
+    """Concurrent `tools/list` should not observe a transient partial surface during guided visibility reapply."""
+
+    script_path = write_server_script(tmp_path, _PATCHED_GUIDED_STREAMABLE_SERVER_WITH_SLOW_VISIBILITY)
+
+    async def run(url: str) -> None:
+        async with streamable_client(url) as client:
+            await client.call_tool(
+                "router_set_goal",
+                {"goal": "create a low-poly squirrel matching front and side reference images"},
+            )
+            await client.call_tool(
+                "guided_register_part",
+                {"object_name": "Squirrel_Body", "role": "body_core"},
+            )
+
+            body_tools_task = asyncio.create_task(
+                client.call_tool(
+                    "guided_register_part",
+                    {"object_name": "Squirrel_Head", "role": "head_mass"},
+                )
+            )
+            list_tools_task = asyncio.create_task(client.list_tools())
+
+            await body_tools_task
+            listed = {tool.name for tool in await list_tools_task}
+            assert {"search_tools", "call_tool"}.issubset(listed)
+            assert {"scene_scope_graph", "scene_relation_graph", "scene_view_diagnostics"}.issubset(listed)
+            assert "modeling_create_primitive" not in listed
+
+            status = result_payload(await client.call_tool("router_get_status", {}))
+            assert status["guided_flow_state"]["current_step"] == "place_secondary_parts"
+            assert status["guided_flow_state"]["spatial_refresh_required"] is True
+
+    with run_streamable_server(script_path) as url:
+        asyncio.run(run(url))
+
+
+@pytest.mark.slow
 def test_streamable_guided_scene_cleanup_returns_after_goal_handoff(tmp_path: Path):
     """Build-phase cleanup should not leave Streamable HTTP clients waiting for a tool response."""
 
@@ -433,6 +506,44 @@ def test_streamable_guided_view_diagnostics_requires_bound_scope_before_refresh_
 
             refreshed_status = result_payload(await client.call_tool("router_get_status", {}))
             assert refreshed_status["guided_flow_state"]["spatial_refresh_required"] is False
+
+    with run_streamable_server(script_path) as url:
+        asyncio.run(run(url))
+
+
+@pytest.mark.slow
+def test_streamable_wrong_scope_spatial_checks_keep_discovery_tools_visible(tmp_path: Path):
+    """Wrong-scope spatial refresh hints must not collapse discovery tools or the pinned spatial helpers."""
+
+    script_path = write_server_script(tmp_path, _PATCHED_GUIDED_STREAMABLE_SERVER)
+
+    async def run(url: str) -> None:
+        async with streamable_client(url) as client:
+            await client.call_tool(
+                "router_set_goal",
+                {"goal": "create a low-poly squirrel matching front and side reference images"},
+            )
+            await client.call_tool(
+                "guided_register_part",
+                {"object_name": "Squirrel_Body", "role": "body_core"},
+            )
+            await client.call_tool(
+                "guided_register_part",
+                {"object_name": "Squirrel_Head", "role": "head_mass"},
+            )
+
+            active_scope = {"target_objects": ["Squirrel_Body", "Squirrel_Head"]}
+            await client.call_tool("scene_scope_graph", active_scope)
+            wrong_scope = {"target_objects": ["Squirrel_Body", "Squirrel_Head", "Squirrel_Tail"]}
+            scope_result = result_payload(await client.call_tool("scene_scope_graph", wrong_scope))
+            relation_result = result_payload(await client.call_tool("scene_relation_graph", wrong_scope))
+
+            assert "did not satisfy the active guided spatial scope" in scope_result["payload"]["message"]
+            assert "did not satisfy the active guided spatial scope" in relation_result["payload"]["message"]
+
+            listed = {tool.name for tool in await client.list_tools()}
+            assert {"search_tools", "call_tool"}.issubset(listed)
+            assert {"scene_scope_graph", "scene_relation_graph", "scene_view_diagnostics"}.issubset(listed)
 
     with run_streamable_server(script_path) as url:
         asyncio.run(run(url))

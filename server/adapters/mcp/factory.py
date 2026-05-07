@@ -18,6 +18,7 @@ from server.adapters.mcp.transforms import (
     build_surface_transform_pipeline,
     materialize_transforms,
 )
+from server.adapters.mcp.visibility_runtime import SessionVisibilityAuditMiddleware
 from server.infrastructure.config import get_config
 
 
@@ -65,6 +66,8 @@ def build_server(
     prompts_bridge = build_prompts_bridge_transform(surface, provider=server)
     if prompts_bridge is not None:
         server.add_transform(prompts_bridge)
+
+    server.add_middleware(SessionVisibilityAuditMiddleware())
 
     # Factory-owned bootstrap metadata used by tests and later TASK-083/084/086 work.
     server._bam_surface_profile = surface.name

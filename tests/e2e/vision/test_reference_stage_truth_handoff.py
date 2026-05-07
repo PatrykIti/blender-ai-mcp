@@ -306,6 +306,30 @@ def test_reference_compare_stage_checkpoint_rich_profile_exposes_ready_sculpt_pl
             )
 
         monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+        monkeypatch.setattr(
+            scene_handler,
+            "get_view_diagnostics",
+            lambda **kwargs: {
+                "view_query": {
+                    "requested_view_source": "named_view",
+                    "resolved_view_source": "named_view",
+                    "analysis_backend": "named_view",
+                    "available": True,
+                    "state_restored": True,
+                },
+                "summary": {
+                    "target_count": 1,
+                    "visible_count": 1,
+                    "partially_visible_count": 0,
+                    "fully_occluded_count": 0,
+                    "outside_frame_count": 0,
+                    "unavailable_count": 0,
+                    "centered_target_count": 1,
+                    "framing_issue_count": 0,
+                },
+                "targets": [],
+            },
+        )
         monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: scene_handler)
         monkeypatch.setattr(
             "server.adapters.mcp.areas.reference.get_vision_backend_resolver",

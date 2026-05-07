@@ -1,6 +1,6 @@
 # TASK-160: Guided Client Feedback And Streamable HTTP Recovery UX
 
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
 **Priority:** 🔴 High
 **Category:** FastMCP Platform / Guided Client UX
 **Estimated Effort:** Large
@@ -22,8 +22,13 @@ This task is intentionally a single umbrella analysis pass. It documents:
 - which solution options exist
 - which ownership boundaries must be preserved
 
-It does **not** yet split into physical execution branches. That decomposition
-should happen only after the option analysis is chosen.
+It does **not** yet fully split into broad execution branches. The first narrow
+runtime slice is now tracked in
+[TASK-160-01](./TASK-160-01_Streamable_HTTP_Visibility_Transaction_Audit_And_Discovery_Churn_Regression.md)
+to harden Streamable HTTP visibility transactions and prove whether apparent
+tool disconnects come from repo-side visibility churn or from client/harness
+deferred-tool handling. Broader client-contract decomposition should still
+follow only after the option analysis is chosen.
 
 ## Current Baseline Already Landed
 
@@ -295,6 +300,9 @@ This umbrella deliberately does not:
 - Transport boundary: Streamable HTTP request paths must finish guided
   finalizers before the response completes; client feedback must not rely on
   detached writes.
+- Session boundary: same-session visibility/discovery stabilization may be
+  added where Streamable HTTP clients can race a refresh, but the contract must
+  remain session-scoped rather than becoming a cross-session/global bottleneck.
 - Client contract: any new feedback must remain valid for tool-only clients
   before it becomes an app-capable enhancement.
 - Truth boundary: feedback may explain state transitions, but it must not blur
@@ -341,6 +349,7 @@ This umbrella deliberately does not:
 ## Status / Board Update
 
 - promote `TASK-160` as one board-level umbrella only
-- do not split it into child board rows in this pass
+- keep `TASK-160-01` as a completed narrow execution leaf under the umbrella,
+  but do not promote it to its own board row in this pass
 - when the option analysis is accepted, create the next physical execution
   subtree from this umbrella instead of improvising ad hoc follow-ons

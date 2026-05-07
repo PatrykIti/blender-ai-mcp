@@ -454,6 +454,13 @@ The `llm-guided` surface now has a first complete guided-mode visibility baselin
   final advanced `guided_flow_state` is stored. Completing required roles can
   move the flow to a new step, and `list_tools()` should expose that step's
   visible tools before the Streamable HTTP response completes.
+- Streamable guided visibility reapply is serialized per MCP session against
+  concurrent `tools/list` reads, and same-session discovery visibility checks
+  wait for that refresh before trusting the shaped surface. The runtime logs
+  expected-vs-observed public tool ids only, so operators can distinguish
+  repo-side surface churn from client/harness-side caching or reconnect
+  behavior without widening hidden-tool exposure or blocking unrelated
+  sessions.
 - Async public tool variants must preserve the original public tool docstrings.
   This is required for visible guided spatial helpers such as
   `scene_scope_graph(...)`, `scene_relation_graph(...)`, and

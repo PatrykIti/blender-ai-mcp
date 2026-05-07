@@ -419,6 +419,12 @@ contract in addition to `guided_handoff`.
 - async guided-role registration reapplies FastMCP visibility after the final
   advanced `guided_flow_state` is persisted, so `list_tools()` reflects the
   new guided step before the Streamable HTTP response completes
+- Streamable guided visibility reapply is serialized per MCP session against
+  concurrent `list_tools()` reads, and same-session discovery visibility checks
+  wait for the active refresh before trusting the shaped surface; unrelated
+  sessions stay unblocked and clients should not observe transient partial tool
+  catalogs while the server is resetting and rebuilding the current session
+  surface
 - async public tool variants must preserve the original public docstrings,
   especially for visible guided spatial and modeling helpers whose descriptions
   teach required scope arguments, workflow order, and argument constraints

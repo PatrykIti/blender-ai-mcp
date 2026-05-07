@@ -30,6 +30,7 @@ from server.adapters.mcp.transforms.visibility_policy import (
     visible_tools_for_gate_plan,
 )
 from server.adapters.mcp.version_policy import CONTRACT_LINE_LLM_GUIDED_V2
+from server.adapters.mcp.visibility_runtime import run_visibility_observation
 
 from .search_documents import build_search_documents
 from .tool_inventory import build_discovery_entry_map, get_pinned_public_tools
@@ -228,7 +229,15 @@ class BlenderDiscoverySearchTransform(BM25SearchTransform):
         if ctx is None:
             return None
         try:
-            return await ctx.fastmcp.get_tool(tool_name) is not None
+
+            async def _read_visibility() -> bool:
+                return await ctx.fastmcp.get_tool(tool_name) is not None
+
+            return await run_visibility_observation(
+                ctx,
+                operation=f"get_tool:{tool_name}",
+                read=_read_visibility,
+            )
         except Exception:
             return None
 
