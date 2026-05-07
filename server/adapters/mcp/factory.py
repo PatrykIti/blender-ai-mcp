@@ -67,7 +67,8 @@ def build_server(
     if prompts_bridge is not None:
         server.add_transform(prompts_bridge)
 
-    server.add_middleware(SessionVisibilityAuditMiddleware())
+    if surface.name == "llm-guided":
+        server.add_middleware(SessionVisibilityAuditMiddleware())
 
     # Factory-owned bootstrap metadata used by tests and later TASK-083/084/086 work.
     server._bam_surface_profile = surface.name

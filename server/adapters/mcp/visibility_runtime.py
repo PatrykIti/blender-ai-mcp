@@ -236,6 +236,7 @@ def _expected_audit_tool_names(
 
     from server.adapters.mcp.discovery.tool_inventory import build_discovery_entry_map
     from server.adapters.mcp.surfaces import get_surface_profile
+    from server.infrastructure.config import get_config
 
     visible_runtime_tool_set = {str(name).strip() for name in visible_runtime_tool_names if str(name).strip()}
     surface = get_surface_profile(state.surface_profile or "legacy-flat")
@@ -251,6 +252,8 @@ def _expected_audit_tool_names(
 
     if surface.search_enabled:
         public_visible_names.update({"search_tools", "call_tool"})
+        if get_config().MCP_PROMPTS_AS_TOOLS_ENABLED:
+            public_visible_names.update({"list_prompts", "get_prompt"})
 
     return tuple(sorted(public_visible_names))
 

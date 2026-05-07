@@ -173,6 +173,30 @@ def test_cancelled_waiter_does_not_leak_session_lock():
     asyncio.run(run())
 
 
+def test_tracker_lookup_prunes_only_stale_idle_sessions(monkeypatch):
+    visibility_runtime_module._SESSION_TRACKERS.clear()
+    visibility_runtime_module._SESSION_TRACKERS.update(
+        {
+            "stale-session": visibility_runtime_module._SessionVisibilityTracker(last_touched_monotonic=0.0),
+            "busy-session": visibility_runtime_module._SessionVisibilityTracker(
+                busy=True,
+                last_touched_monotonic=0.0,
+            ),
+            "recent-session": visibility_runtime_module._SessionVisibilityTracker(last_touched_monotonic=3500.0),
+        }
+    )
+    monkeypatch.setattr(visibility_runtime_module.time, "monotonic", lambda: 4000.0)
+
+    tracker = visibility_runtime_module._tracker_for_session("fresh-session")
+
+    assert tracker is visibility_runtime_module._SESSION_TRACKERS["fresh-session"]
+    assert "stale-session" not in visibility_runtime_module._SESSION_TRACKERS
+    assert "busy-session" in visibility_runtime_module._SESSION_TRACKERS
+    assert "recent-session" in visibility_runtime_module._SESSION_TRACKERS
+
+    visibility_runtime_module._SESSION_TRACKERS.clear()
+
+
 def test_audit_list_tools_snapshot_logs_visibility_mismatch(monkeypatch, caplog):
     ctx = _FakeContext()
 
@@ -250,12 +274,22 @@ def test_audit_list_tools_snapshot_accepts_shaped_public_names(monkeypatch, capl
         "server.adapters.mcp.surfaces.get_surface_profile",
         lambda _surface_profile: SimpleNamespace(search_enabled=True, default_contract_line="llm-guided-v2"),
     )
+    monkeypatch.setattr(
+        "server.infrastructure.config.get_config",
+        lambda: SimpleNamespace(MCP_PROMPTS_AS_TOOLS_ENABLED=True),
+    )
 
     async def run() -> None:
         with caplog.at_level(logging.WARNING, logger="server.adapters.mcp.visibility_runtime"):
             await audit_list_tools_snapshot(
                 ctx,
-                tools=[_tool("scene_relation_graph"), _tool("search_tools"), _tool("call_tool")],
+                tools=[
+                    _tool("scene_relation_graph"),
+                    _tool("search_tools"),
+                    _tool("call_tool"),
+                    _tool("list_prompts"),
+                    _tool("get_prompt"),
+                ],
                 source="tools/list",
             )
 

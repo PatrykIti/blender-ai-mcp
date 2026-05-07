@@ -8,6 +8,7 @@ from fastmcp import FastMCP
 from server.adapters.mcp.factory import build_server
 from server.adapters.mcp.platform.capability_manifest import get_capability_manifest
 from server.adapters.mcp.surfaces import SURFACE_PROFILES, get_surface_profile
+from server.adapters.mcp.visibility_runtime import SessionVisibilityAuditMiddleware
 
 
 def test_get_surface_profile_returns_expected_profiles():
@@ -74,6 +75,10 @@ def test_build_server_builds_alternate_surface_profile():
     )
     assert "Current entry tools are router_set_goal" in guided.instructions
     assert "task-capable" in code_mode.instructions
+    assert any(isinstance(middleware, SessionVisibilityAuditMiddleware) for middleware in guided.middleware)
+    assert not any(isinstance(middleware, SessionVisibilityAuditMiddleware) for middleware in manual.middleware)
+    assert not any(isinstance(middleware, SessionVisibilityAuditMiddleware) for middleware in debug.middleware)
+    assert not any(isinstance(middleware, SessionVisibilityAuditMiddleware) for middleware in code_mode.middleware)
 
 
 def test_factory_bootstrap_no_longer_imports_areas_side_effect_registry():

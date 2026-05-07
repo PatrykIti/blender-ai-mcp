@@ -28,6 +28,9 @@ Date: 2026-05-07
     and `list_tools()` calls while visibility rebuild is intentionally slowed
   - a session transcript-style regression that wrong-scope spatial checks do not
     collapse the discovery tools or pinned spatial helpers
+  - a deterministic reference-stage planner-handoff test adjustment so the broad
+    repo E2E lane can keep carrying clean-view evidence without relying on a
+    flaky real viewport framing outcome
 
 ## Runtime / Transport Contract
 
@@ -43,7 +46,7 @@ Date: 2026-05-07
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_runtime.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_session_phase.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_server_factory.py -q`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_runtime.py tests/e2e/integration/test_guided_streamable_spatial_support.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_runtime.py tests/e2e/integration/test_guided_streamable_spatial_support.py -q` (focused local reproduction lane; the repo-supported E2E validation remains `poetry run python scripts/run_e2e_tests.py`)
 - `poetry run pytest ./tests/unit`
 - `poetry run python scripts/run_e2e_tests.py`
 - `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure`

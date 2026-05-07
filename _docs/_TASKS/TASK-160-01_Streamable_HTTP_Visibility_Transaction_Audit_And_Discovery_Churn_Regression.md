@@ -28,6 +28,7 @@ disconnect narratives.
 | `server/adapters/mcp/discovery/search_surface.py` | Discovery proxy seam | `call_tool(...)` and the public discovery visibility checks should wait for an in-flight same-session visibility refresh before trusting current visibility. |
 | `server/adapters/mcp/factory.py` | FastMCP composition root | Owns middleware registration for `tools/list` audit / serialization. |
 | `tests/e2e/integration/test_guided_streamable_spatial_support.py` | Streamable runtime proof lane | Should reproduce same-session guided visibility churn during spatial refresh and prove the stable list/discovery surface. |
+| `tests/e2e/vision/test_reference_stage_truth_handoff.py` | Broad validation drift guard | Keeps the repo-wide E2E lane deterministic after the follow-up review touched shared visibility/audit proof and required one planner-handoff test to carry explicit clean view evidence. |
 | `tests/unit/adapters/mcp/` | Targeted adapter/runtime helper proof | Should cover the visibility-transaction helper or audit middleware contract without requiring Blender. |
 | `README.md`, `_docs/_MCP_SERVER/README.md` | Product/runtime contract docs | Need one explicit note that Streamable guided visibility reapply is serialized against `list_tools()` so clients should not see partial surfaces. |
 
@@ -69,6 +70,9 @@ disconnect narratives.
   `pre-commit run --all-files --show-diff-on-failure`.
 - The owner-lane commands below remain the focused proof for this slice and can
   still be used to reproduce the local visibility/runtime checks quickly.
+- The raw `pytest tests/e2e/integration/test_guided_streamable_spatial_support.py`
+  lane is a fast local reproduction command only; the repo-supported E2E
+  validation for closeout remains `poetry run python scripts/run_e2e_tests.py`.
 
 ## Tests To Add / Update
 
@@ -101,7 +105,7 @@ disconnect narratives.
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_runtime.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_session_phase.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_server_factory.py -q`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_runtime.py tests/e2e/integration/test_guided_streamable_spatial_support.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_runtime.py tests/e2e/integration/test_guided_streamable_spatial_support.py -q`  (focused local reproduction lane; not a replacement for the repo-supported E2E runner)
 - `poetry run pytest ./tests/unit`
 - `poetry run python scripts/run_e2e_tests.py`
 - `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure`
