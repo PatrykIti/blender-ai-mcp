@@ -5,12 +5,12 @@
 **Parent:** [TASK-136](./TASK-136_Reference_Guided_Architecture_And_Building_Reconstruction.md)
 **Depends On:** [TASK-136-01](./TASK-136-01_Building_Contract_Vocabulary_And_Gate_Templates.md)
 **Objective:** Extend the shipped `building` guided/runtime path with architecture-specific prompt assets, guided-state sequencing, visibility/search shaping, and bounded scene/modeling/mesh surfaces for reconstruction-oriented building work.
-**Repository Touchpoints:** `server/adapters/mcp/prompts/prompt_catalog.py`, `server/adapters/mcp/prompts/provider.py`, `server/adapters/mcp/prompts/rendering.py`, `server/adapters/mcp/contracts/guided_flow.py`, `server/adapters/mcp/guided_mode.py`, `server/adapters/mcp/session_capabilities.py`, `server/adapters/mcp/session_capabilities_state.py`, `server/adapters/mcp/session_capabilities_flow.py`, `server/adapters/mcp/session_capabilities_runtime_glue.py`, `server/adapters/mcp/transforms/visibility_policy.py`, `server/adapters/mcp/discovery/search_surface.py`, `server/adapters/mcp/areas/scene.py`, `server/adapters/mcp/areas/scene_guided_runtime.py`, `server/adapters/mcp/areas/modeling.py`, `server/adapters/mcp/areas/mesh.py`, `server/router/infrastructure/tools_metadata/scene/`, `server/router/infrastructure/tools_metadata/modeling/`, `server/router/infrastructure/tools_metadata/reference/`, `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`, `tests/unit/adapters/mcp/test_guided_mode.py`, `tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py`, `tests/unit/adapters/mcp/test_router_elicitation.py`, `tests/unit/adapters/mcp/test_visibility_policy.py`, `tests/unit/adapters/mcp/test_search_surface.py`
+**Repository Touchpoints:** `server/adapters/mcp/prompts/prompt_catalog.py`, `server/adapters/mcp/prompts/provider.py`, `server/adapters/mcp/prompts/rendering.py`, `server/adapters/mcp/contracts/guided_flow.py`, `server/adapters/mcp/guided_mode.py`, `server/adapters/mcp/session_capabilities.py`, `server/adapters/mcp/session_capabilities_registry.py`, `server/adapters/mcp/session_capabilities_state.py`, `server/adapters/mcp/session_capabilities_flow.py`, `server/adapters/mcp/session_capabilities_runtime_glue.py`, `server/adapters/mcp/transforms/visibility_policy.py`, `server/adapters/mcp/discovery/search_surface.py`, `server/adapters/mcp/areas/scene.py`, `server/adapters/mcp/areas/scene_guided_runtime.py`, `server/adapters/mcp/areas/modeling.py`, `server/adapters/mcp/areas/mesh.py`, `server/router/infrastructure/tools_metadata/scene/`, `server/router/infrastructure/tools_metadata/modeling/`, `server/router/infrastructure/tools_metadata/reference/`, `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`, `tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py`, `tests/unit/adapters/mcp/test_guided_mode.py`, `tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py`, `tests/unit/adapters/mcp/test_router_elicitation.py`, `tests/unit/adapters/mcp/test_visibility_policy.py`, `tests/unit/adapters/mcp/test_search_surface.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`
 **Acceptance Criteria:**
 - a building-oriented guided session emits an architecture-specific sequence on the existing guided-flow substrate, either by extending the current step model or by documenting a typed architecture sub-sequence on top of it
 - prompt recommendations and prompt assets expose a dedicated architecture reconstruction story instead of only generic building or hard-surface wording
 - search and visibility unlock only the bounded architecture-relevant tools for the current step, while broad hard-surface or hidden/internal surfaces remain unavailable
-- unit owner lanes prove building flow initialization, prompt exposure, visibility/search shaping, and router-handoff behavior on the current control-plane seams
+- the shipped control-plane seams preserve typed building flow initialization, registry-driven role advancement, prompt exposure, visibility/search shaping, and router-handoff behavior
 
 ## Implementation Notes
 
@@ -70,11 +70,13 @@ if domain_profile == "building":
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
+- `tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py`
 - `tests/unit/adapters/mcp/test_guided_mode.py`
 - `tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py`
 - `tests/unit/adapters/mcp/test_router_elicitation.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
+- `tests/e2e/integration/test_guided_gate_state_transport.py`
 
 ## Docs To Update
 
@@ -92,7 +94,14 @@ if domain_profile == "building":
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py tests/unit/adapters/mcp/test_router_elicitation.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py -q`
+- `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
 - `poetry run pre-commit run check-router-tool-metadata --all-files`
+
+Adjacent shared regression when the architecture slice changes common guided
+transport/public-surface behavior:
+
+- `poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py -q`
 
 ## Status / Board Update
 

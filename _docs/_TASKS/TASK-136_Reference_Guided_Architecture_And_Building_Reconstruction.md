@@ -309,6 +309,8 @@ This umbrella does **not** cover:
 - `server/adapters/mcp/guided_mode.py`
 - `server/adapters/mcp/contracts/guided_flow.py`
 - `server/adapters/mcp/session_capabilities.py`
+- `server/adapters/mcp/session_capabilities_bootstrap.py`
+- `server/adapters/mcp/session_capabilities_registry.py`
 - `server/adapters/mcp/session_capabilities_state.py`
 - `server/adapters/mcp/session_capabilities_flow.py`
 - `server/adapters/mcp/session_capabilities_runtime_glue.py`
@@ -333,10 +335,12 @@ This umbrella does **not** cover:
 - `server/application/services/spatial_graph.py`
 - `server/router/infrastructure/tools_metadata/`
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
+- `tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py`
 - `tests/unit/adapters/mcp/test_guided_mode.py`
 - `tests/unit/adapters/mcp/test_quality_gate_verifier.py`
 - `tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py`
 - `tests/unit/adapters/mcp/test_router_elicitation.py`
+- `tests/unit/adapters/mcp/test_scene_guided_scope_requirements.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
@@ -357,7 +361,7 @@ This umbrella does **not** cover:
 |---------------|-------|---------------|
 | `server/adapters/mcp/contracts/quality_gates.py` and `server/adapters/mcp/contracts/reference.py` | MCP/public contract | Extend the shipped building gate/reference vocabulary on the existing adapter-layer contract path without leaking FastMCP or router policy into `server/domain/` |
 | `server/adapters/mcp/areas/reference.py`, `reference_checkpoint_compare.py`, `reference_images_runtime.py`, `reference_truth.py`, `reference_understanding.py`, and `reference_view_diagnostics.py` | Reference/checkpoint assembly | Treat `reference.py` as the thin orchestration facade and update the split owner seams that actually shape checkpoint, RU, and staged feedback payloads |
-| `server/adapters/mcp/contracts/guided_flow.py`, `session_capabilities.py`, `session_capabilities_state.py`, `session_capabilities_flow.py`, and `session_capabilities_runtime_glue.py` | Guided state/control plane | Extend the shipped building domain profile, required checks, allowed roles, prompt requirements, and stale refresh behavior without inventing a second guided flow system |
+| `server/adapters/mcp/contracts/guided_flow.py`, `session_capabilities.py`, `session_capabilities_bootstrap.py`, `session_capabilities_registry.py`, `session_capabilities_state.py`, `session_capabilities_flow.py`, and `session_capabilities_runtime_glue.py` | Guided state/control plane | Extend the shipped building domain profile, bootstrap/readiness carry-forward, registry-driven role advancement, required checks, prompt requirements, and stale refresh behavior without inventing a second guided flow system |
 | `server/adapters/mcp/transforms/visibility_policy.py` and `server/adapters/mcp/discovery/search_surface.py` | Guided search/visibility | Shape the bounded architecture tool window and building-specific search cues on the live runtime surface |
 | `server/adapters/mcp/areas/scene.py`, `scene_guided_runtime.py`, `modeling.py`, and `mesh.py` | Bounded build surface | Keep `scene.py` as the MCP facade, update guided runtime glue where scoped enforcement lives today, and reuse or extend bounded layout/opening/support/roof tools only where the architecture flow actually needs them |
 | `server/adapters/mcp/vision/` and `server/adapters/mcp/areas/reference_understanding.py` | Advisory support evidence | Consume the closed `TASK-163` RU/session seams for architecture hints without changing verifier authority |
@@ -409,11 +413,13 @@ This umbrella does **not** cover:
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
+- `tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py`
 - `tests/unit/adapters/mcp/test_guided_mode.py`
 - `tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py`
 - `tests/unit/adapters/mcp/test_quality_gate_contracts.py`
 - `tests/unit/adapters/mcp/test_quality_gate_intake.py`
 - `tests/unit/adapters/mcp/test_quality_gate_verifier.py`
+- `tests/unit/adapters/mcp/test_scene_guided_scope_requirements.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/unit/adapters/mcp/test_router_elicitation.py`
@@ -424,6 +430,11 @@ This umbrella does **not** cover:
 - `tests/e2e/integration/test_guided_gate_state_transport.py`
 - `tests/e2e/vision/test_goal_derived_gate_building_completion.py`
 - `tests/e2e/vision/test_goal_derived_gate_support_symmetry_surfaces.py`
+
+Adjacent shared regression when the architecture slice changes common guided
+transport/public-surface behavior:
+
+- `tests/e2e/integration/test_guided_surface_contract_parity.py`
 
 ## Changelog Impact
 
