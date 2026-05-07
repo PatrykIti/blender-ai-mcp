@@ -266,9 +266,9 @@ return maybe_advance_or_complete()
 - Direct children `TASK-157-01`, `TASK-157-01-01`, `TASK-157-02`,
   `TASK-157-02-01`, `TASK-157-03`, `TASK-157-03-01`, and `TASK-157-04` are all
   closed in the same branch.
-- `TASK-158` remains the promoted follow-on for reference-understanding and
-  optional-perception work that intentionally sits outside the closed generic
-  gate/verifier substrate.
+- At the time this closeout landed, `TASK-158` was the promoted follow-on for
+  reference-understanding and optional-perception work that intentionally sat
+  outside the closed generic gate/verifier substrate.
 - Broader domain-consumer follow-ons now stay explicitly tracked under
   `TASK-135`, `TASK-136`, `TASK-137`, `TASK-138`, and `TASK-140` instead of
   reopening this generic umbrella.
@@ -299,11 +299,11 @@ Completed the generic quality-gate substrate and its owner-lane proof:
 ## Validation Commands
 
 - `git diff --check`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_contracts.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py -v`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_reference_images.py -v`
-- `python3 scripts/run_e2e_tests.py` for implementation slices that change real
-  Blender scene state, geometry, transport behavior, or final completion
-  semantics.
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_contracts.py tests/unit/adapters/mcp/test_quality_gate_intake.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/scene/test_spatial_graph_service.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
+- `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_goal_derived_gate_creature_completion.py tests/e2e/vision/test_goal_derived_gate_building_completion.py tests/e2e/vision/test_goal_derived_gate_support_symmetry_surfaces.py -q`
 
 ## Acceptance Criteria
 
