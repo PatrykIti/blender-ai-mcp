@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [322](./322-2026-05-07-task-164-local-siglip2-classifier-sidecar-and-operator-scripts.md) | 2026-05-07 | **TASK-164 local SigLIP2 classifier sidecar and operator scripts** | - |
 | [321](./321-2026-05-06-task-163-harness-closeout-and-mlx-ru-proof.md) | 2026-05-06 | **TASK-163 harness closeout and MLX RU proof** | - |
 | [320](./320-2026-05-06-task-162-guided-hidden-tool-recovery.md) | 2026-05-06 | **TASK-162 guided hidden-tool recovery and visibility alignment** | - |
 | [319](./319-2026-05-05-task-163-optional-ru-support-adapters.md) | 2026-05-05 | **TASK-163 optional RU support adapters** | - |

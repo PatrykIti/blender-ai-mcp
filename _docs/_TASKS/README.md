@@ -5,7 +5,7 @@ Curated task board for promoted active work, promoted follow-on work, and select
 ## 📊 Statistics
 - **To Do:** 7 tasks
 - **In Progress:** 0 tasks
-- **Done:** 93
+- **Done:** 94
 - **Superseded:** 162
 
 ## 📐 Board Scope
@@ -22,7 +22,7 @@ flight.
 
 | Area | Document | Owner Tasks |
 |------|----------|-------------|
-| Vision / Reference Understanding | [Reference Understanding Roadmap](../_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md) | [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md), [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md), [TASK-135](./TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md), [TASK-136](./TASK-136_Reference_Guided_Architecture_And_Building_Reconstruction.md), [TASK-137](./TASK-137_Anatomy_Aware_Reference_Guided_Organ_Reconstruction.md), [TASK-138](./TASK-138_Anatomy_Aware_Reference_Guided_Biped_And_Fantasy_Character_Reconstruction.md), [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) |
+| Vision / Reference Understanding | [Reference Understanding Roadmap](../_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md) | [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md), [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md), [TASK-164](./TASK-164_Local_SigLIP2_Reference_Classifier_Sidecar_And_Operator_Scripts.md), [TASK-135](./TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md), [TASK-136](./TASK-136_Reference_Guided_Architecture_And_Building_Reconstruction.md), [TASK-137](./TASK-137_Anatomy_Aware_Reference_Guided_Organ_Reconstruction.md), [TASK-138](./TASK-138_Anatomy_Aware_Reference_Guided_Biped_And_Fantasy_Character_Reconstruction.md), [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) |
 
 ## 🧱 Hierarchy Rules
 
@@ -88,6 +88,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-164](./TASK-164_Local_SigLIP2_Reference_Classifier_Sidecar_And_Operator_Scripts.md) | **Local SigLIP2 Reference Classifier Sidecar And Operator Scripts** | 🔴 High | 2026-05-07 |
 | [TASK-162](./TASK-162_Guided_Hidden_Tool_Error_Semantics_And_Recovery_Clarity.md) | **Guided Hidden-Tool Error Semantics And Recovery Clarity** | 🔴 High | 2026-05-06 |
 | [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md) | **Vision Orchestrator Feedback, Strategy Normalization, And Optional Perception Adapters** | 🔴 High | 2026-05-06 |
 | [TASK-161](./TASK-161_TASK-159_Closeout_Seam_And_Proof_Lane_Alignment.md) | **TASK-159 Closeout Seam And Proof-Lane Alignment** | 🔴 High | 2026-05-05 |

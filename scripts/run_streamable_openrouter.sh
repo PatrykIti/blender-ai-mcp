@@ -2,6 +2,7 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 IMAGE="${IMAGE:-blender-ai-mcp:local}"
 MCP_HTTP_HOST="${MCP_HTTP_HOST:-0.0.0.0}"
 MCP_HTTP_PORT="${MCP_HTTP_PORT:-8000}"
@@ -23,6 +24,12 @@ VISION_REFERENCE_CLASSIFIER_API_KEY="${VISION_REFERENCE_CLASSIFIER_API_KEY:-}"
 VISION_REFERENCE_CLASSIFIER_API_KEY_ENV="${VISION_REFERENCE_CLASSIFIER_API_KEY_ENV:-}"
 VISION_REFERENCE_CLASSIFIER_TIMEOUT_SECONDS="${VISION_REFERENCE_CLASSIFIER_TIMEOUT_SECONDS:-120}"
 VISION_REFERENCE_CLASSIFIER_MAX_LABELS="${VISION_REFERENCE_CLASSIFIER_MAX_LABELS:-8}"
+REFERENCE_CLASSIFIER_AUTO_START="${REFERENCE_CLASSIFIER_AUTO_START:-true}"
+REFERENCE_CLASSIFIER_HOST="${REFERENCE_CLASSIFIER_HOST:-0.0.0.0}"
+REFERENCE_CLASSIFIER_PORT="${REFERENCE_CLASSIFIER_PORT:-9200}"
+REFERENCE_CLASSIFIER_DEVICE="${REFERENCE_CLASSIFIER_DEVICE:-auto}"
+REFERENCE_CLASSIFIER_TOP_K="${REFERENCE_CLASSIFIER_TOP_K:-${VISION_REFERENCE_CLASSIFIER_MAX_LABELS}}"
+REFERENCE_CLASSIFIER_DOCKER_HOST="${REFERENCE_CLASSIFIER_DOCKER_HOST:-host.docker.internal}"
 VISION_MAX_IMAGES="${VISION_MAX_IMAGES:-8}"
 VISION_MAX_TOKENS="${VISION_MAX_TOKENS:-600}"
 VISION_TIMEOUT_SECONDS="${VISION_TIMEOUT_SECONDS:-120}"
@@ -33,6 +40,83 @@ if [[ -z "${OPENROUTER_API_KEY:-}" ]]; then
   exit 1
 fi
 
+OS_NAME="$(uname -s || echo unknown)"
+DOCKER_EXTRA_HOST_ARGS=()
+case "${OS_NAME}" in
+  Linux*)
+    DOCKER_EXTRA_HOST_ARGS=(--add-host host.docker.internal:host-gateway)
+    ;;
+esac
+
+sidecar_pid=""
+sidecar_log=""
+
+cleanup() {
+  if [[ -n "${sidecar_pid}" ]] && kill -0 "${sidecar_pid}" 2>/dev/null; then
+    kill "${sidecar_pid}" 2>/dev/null || true
+    wait "${sidecar_pid}" 2>/dev/null || true
+  fi
+}
+
+wait_for_sidecar() {
+  local port="$1"
+  local attempts=30
+  local python_bin="python3"
+
+  if ! command -v "${python_bin}" >/dev/null 2>&1; then
+    python_bin="python"
+  fi
+
+  for ((i = 1; i <= attempts; i++)); do
+    if "${python_bin}" - <<'PY' "${port}" >/dev/null 2>&1
+import json
+import sys
+import urllib.request
+
+port = sys.argv[1]
+with urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=2) as response:
+    payload = json.loads(response.read().decode("utf-8"))
+    if payload.get("status") != "ok":
+        raise SystemExit(1)
+PY
+    then
+      return 0
+    fi
+    sleep 1
+  done
+  return 1
+}
+
+if [[ "${VISION_REFERENCE_CLASSIFIER_ENABLED}" == "true" && "${VISION_REFERENCE_CLASSIFIER_PROVIDER}" == "generic_sidecar" ]]; then
+  derived_classifier_endpoint="http://${REFERENCE_CLASSIFIER_DOCKER_HOST}:${REFERENCE_CLASSIFIER_PORT}/classify"
+  if [[ "${REFERENCE_CLASSIFIER_AUTO_START}" == "true" ]]; then
+    if [[ -n "${VISION_REFERENCE_CLASSIFIER_ENDPOINT}" && "${VISION_REFERENCE_CLASSIFIER_ENDPOINT}" != "${derived_classifier_endpoint}" ]]; then
+      echo "VISION_REFERENCE_CLASSIFIER_ENDPOINT=${VISION_REFERENCE_CLASSIFIER_ENDPOINT} conflicts with the auto-start sidecar endpoint ${derived_classifier_endpoint}." >&2
+      echo "Set REFERENCE_CLASSIFIER_AUTO_START=false if you want to use a remote classifier endpoint." >&2
+      exit 1
+    fi
+    VISION_REFERENCE_CLASSIFIER_ENDPOINT="${derived_classifier_endpoint}"
+    export REFERENCE_CLASSIFIER_HOST
+    export REFERENCE_CLASSIFIER_PORT
+    export REFERENCE_CLASSIFIER_DEVICE
+    export REFERENCE_CLASSIFIER_TOP_K
+    export REFERENCE_CLASSIFIER_MODEL="${REFERENCE_CLASSIFIER_MODEL:-${VISION_REFERENCE_CLASSIFIER_MODEL:-google/siglip2-base-patch16-224}}"
+    sidecar_log="$(mktemp /tmp/blender-ai-reference-classifier.XXXXXX.log)"
+    echo "Starting local reference classifier sidecar before Docker MCP: ${derived_classifier_endpoint}"
+    "${SCRIPT_DIR}/run_reference_classifier_sidecar.sh" >"${sidecar_log}" 2>&1 &
+    sidecar_pid="$!"
+    trap cleanup EXIT
+    if ! wait_for_sidecar "${REFERENCE_CLASSIFIER_PORT}"; then
+      echo "Reference classifier sidecar did not become ready. Log: ${sidecar_log}" >&2
+      tail -n 50 "${sidecar_log}" >&2 || true
+      exit 1
+    fi
+    echo "Reference classifier sidecar ready. Log: ${sidecar_log}"
+  elif [[ -z "${VISION_REFERENCE_CLASSIFIER_ENDPOINT}" ]]; then
+    VISION_REFERENCE_CLASSIFIER_ENDPOINT="${derived_classifier_endpoint}"
+  fi
+fi
+
 echo "Starting ${IMAGE} in stateful Streamable HTTP mode on http://127.0.0.1:${MCP_HTTP_PORT}${MCP_STREAMABLE_HTTP_PATH}"
 echo "Blender RPC host: ${BLENDER_RPC_HOST}"
 echo "Prompt bridge tools: ${MCP_PROMPTS_AS_TOOLS_ENABLED}"
@@ -40,6 +124,7 @@ echo "Reference classifier enabled: ${VISION_REFERENCE_CLASSIFIER_ENABLED}"
 echo "Reference classifier model override: ${VISION_REFERENCE_CLASSIFIER_MODEL:-<inherits from VISION_OPENROUTER_MODEL>}"
 
 exec docker run --rm \
+  "${DOCKER_EXTRA_HOST_ARGS[@]}" \
   -p "${MCP_HTTP_PORT}:${MCP_HTTP_PORT}" \
   -v /tmp:/tmp \
   -e BLENDER_AI_TMP_INTERNAL_DIR=/tmp \

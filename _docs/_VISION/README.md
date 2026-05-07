@@ -686,6 +686,20 @@ Current RU behavior:
 - classifier failures degrade to provenance notes plus an empty score list
   instead of breaking guided/reference sessions
 
+Local operator path:
+
+- repo-local sidecar entrypoint: `scripts/reference_classifier_sidecar.py`
+- convenience runner: `scripts/run_reference_classifier_sidecar.sh`
+- the runner defaults to `google/siglip2-base-patch16-224` and reuses
+  `VISION_REFERENCE_CLASSIFIER_MODEL` when that env is already set for the MCP
+  server
+- for a local MCP process use:
+  - `VISION_REFERENCE_CLASSIFIER_PROVIDER=generic_sidecar`
+  - `VISION_REFERENCE_CLASSIFIER_ENDPOINT=http://127.0.0.1:9200/classify`
+- for the Docker-guided MCP helper use:
+  - `VISION_REFERENCE_CLASSIFIER_PROVIDER=generic_sidecar`
+  - `VISION_REFERENCE_CLASSIFIER_ENDPOINT=http://host.docker.internal:9200/classify`
+
 ## Optional Part-Segmentation Sidecar
 
 Part-aware segmentation remains explicitly opt-in and separate from the

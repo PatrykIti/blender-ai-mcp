@@ -154,6 +154,38 @@ Uses the same external-runtime path with the Gemini provider profile:
 }
 ```
 
+## Optional Reference Classifier Sidecar Add-On
+
+This sidecar stays disabled by default and uses the existing
+`generic_sidecar` classifier contract:
+
+- start the sidecar locally with `scripts/run_reference_classifier_sidecar.sh`
+- install the optional vision deps first with `poetry install --with vision`
+
+For a local MCP server process:
+
+```json
+{
+  "VISION_REFERENCE_CLASSIFIER_ENABLED": "true",
+  "VISION_REFERENCE_CLASSIFIER_PROVIDER": "generic_sidecar",
+  "VISION_REFERENCE_CLASSIFIER_ENDPOINT": "http://127.0.0.1:9200/classify",
+  "VISION_REFERENCE_CLASSIFIER_MODEL": "google/siglip2-base-patch16-224",
+  "VISION_REFERENCE_CLASSIFIER_MAX_LABELS": "5"
+}
+```
+
+For the Docker-guided helper on macOS/Windows:
+
+```json
+{
+  "VISION_REFERENCE_CLASSIFIER_ENABLED": "true",
+  "VISION_REFERENCE_CLASSIFIER_PROVIDER": "generic_sidecar",
+  "VISION_REFERENCE_CLASSIFIER_ENDPOINT": "http://host.docker.internal:9200/classify",
+  "VISION_REFERENCE_CLASSIFIER_MODEL": "google/siglip2-base-patch16-224",
+  "VISION_REFERENCE_CLASSIFIER_MAX_LABELS": "5"
+}
+```
+
 ## Optional Segmentation Sidecar Add-On
 
 This sidecar stays disabled by default and is separate from the normal

@@ -40,8 +40,97 @@ def test_streamable_openrouter_shell_script_contains_required_runtime_env():
         'VISION_OPENROUTER_REQUIRE_PARAMETERS="${VISION_OPENROUTER_REQUIRE_PARAMETERS}"',
         'VISION_OPENROUTER_ENABLE_RESPONSE_HEALING="${VISION_OPENROUTER_ENABLE_RESPONSE_HEALING}"',
         'VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN="${VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN}"',
+        "REFERENCE_CLASSIFIER_AUTO_START",
+        "REFERENCE_CLASSIFIER_DOCKER_HOST",
+        "run_reference_classifier_sidecar.sh",
+        "/health",
+        "host-gateway",
+        "Set REFERENCE_CLASSIFIER_AUTO_START=false if you want to use a remote classifier endpoint.",
     ):
         assert expected in script
+
+
+def test_reference_classifier_sidecar_shell_script_contains_operator_defaults():
+    script = (REPO_ROOT / "scripts" / "run_reference_classifier_sidecar.sh").read_text(encoding="utf-8")
+
+    for expected in (
+        "REFERENCE_CLASSIFIER_HOST",
+        "REFERENCE_CLASSIFIER_PORT",
+        "REFERENCE_CLASSIFIER_MODEL",
+        "VISION_REFERENCE_CLASSIFIER_MODEL",
+        "poetry install --with vision",
+        "Docker MCP endpoint",
+        "Local MCP endpoint",
+        "scripts/reference_classifier_sidecar.py",
+    ):
+        assert expected in script
+
+
+def test_reference_classifier_sidecar_parser_and_service_contract(tmp_path, monkeypatch):
+    module = _load_script("reference_classifier_sidecar")
+    image_path = tmp_path / "reference.png"
+
+    try:
+        from PIL import Image
+    except ModuleNotFoundError:
+        pytest.skip("Pillow is required for script-side image contract tests")
+
+    Image.new("RGB", (16, 16), (255, 255, 255)).save(image_path)
+
+    args = module.build_parser().parse_args(
+        [
+            "--host",
+            "127.0.0.1",
+            "--port",
+            "9200",
+            "--model",
+            "google/siglip2-base-patch16-224",
+            "--device",
+            "cpu",
+            "--top-k",
+            "3",
+        ]
+    )
+
+    assert args.host == "127.0.0.1"
+    assert args.port == 9200
+    assert args.model == "google/siglip2-base-patch16-224"
+    assert args.device == "cpu"
+    assert args.top_k == 3
+
+    def _fake_pipeline(image, candidate_labels):
+        assert candidate_labels
+        return [
+            {"label": "a low-poly faceted animal reference", "score": 0.93},
+            {"label": "a generic creature blockout reference", "score": 0.62},
+            {"label": "a hard-surface product or prop reference", "score": 0.11},
+        ]
+
+    monkeypatch.setattr(module, "_build_classifier_pipeline", lambda **kwargs: _fake_pipeline)
+
+    service = module.ReferenceClassifierService(
+        model_name="google/siglip2-base-patch16-224",
+        device_name="cpu",
+        top_k=2,
+    )
+    response = service.classify_payload(
+        {
+            "goal": "classify the attached squirrel reference",
+            "references": [
+                {
+                    "reference_id": "ref_1",
+                    "image_path": str(image_path),
+                }
+            ],
+        }
+    )
+
+    assert response["classification_scores"] == [
+        {"label": "low_poly_faceted", "score": 0.93},
+        {"label": "creature_blockout", "score": 0.62},
+    ]
+    assert response["model_name"] == "google/siglip2-base-patch16-224"
+    assert response["device_name"] == "cpu"
 
 
 def test_update_openrouter_model_profiles_generates_vision_candidates(tmp_path):

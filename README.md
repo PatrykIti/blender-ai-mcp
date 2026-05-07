@@ -818,6 +818,15 @@ For broader profile/config examples, use:
 
 - [MCP Server Docs](./_docs/_MCP_SERVER/README.md)
 - [MCP Client Config Examples](./_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md)
+
+Optional local reference-classifier sidecar:
+
+- start the repo-local SigLIP2 sidecar with `scripts/run_reference_classifier_sidecar.sh`
+- for a local MCP server process point
+  `VISION_REFERENCE_CLASSIFIER_ENDPOINT` at `http://127.0.0.1:9200/classify`
+- for the Docker-guided MCP helper on macOS/Windows point
+  `VISION_REFERENCE_CLASSIFIER_ENDPOINT` at
+  `http://host.docker.internal:9200/classify`
 - [`.env.example`](./.env.example) for the full tracked runtime/config variable set
 
 ## Testing
