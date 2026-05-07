@@ -690,6 +690,8 @@ Local operator path:
 
 - repo-local sidecar entrypoint: `scripts/reference_classifier_sidecar.py`
 - convenience runner: `scripts/run_reference_classifier_sidecar.sh`
+- the convenience runner starts only the classifier sidecar and stays in the
+  foreground; it does not launch the FastMCP server
 - the runner defaults to `google/siglip2-base-patch16-224` and reuses
   `VISION_REFERENCE_CLASSIFIER_MODEL` when that env is already set for the MCP
   server

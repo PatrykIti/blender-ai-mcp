@@ -26,6 +26,8 @@ planned under `TASK-165`, but they are not yet operator-supported here.
   - `scripts/run_streamable_openrouter.sh`
 - local SigLIP2 classifier sidecar helper:
   - `scripts/run_reference_classifier_sidecar.sh`
+  - this helper starts only the classifier sidecar and stays in the foreground
+  - it does not launch the FastMCP server by itself
 
 ## What The Launcher Does
 
@@ -48,6 +50,11 @@ Current flow:
 ```bash
 ./scripts/run_mcp_server.sh
 ```
+
+If you run `scripts/run_reference_classifier_sidecar.sh` directly, expect only
+the classifier sidecar on `:9200`. The combined FastMCP + Docker-guided launch
+belongs to `scripts/run_mcp_server.sh` or the lower-level
+`scripts/run_streamable_openrouter.sh`.
 
 The launcher is interactive. It will prompt before:
 

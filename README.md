@@ -828,6 +828,10 @@ For broader profile/config examples, use:
 Optional local reference-classifier sidecar:
 
 - start the repo-local SigLIP2 sidecar with `scripts/run_reference_classifier_sidecar.sh`
+- that helper starts only the classifier sidecar and stays in the foreground;
+  it does not launch the FastMCP server
+- for the combined Docker-guided + optional sidecar path use
+  `./scripts/run_mcp_server.sh`
 - for a local MCP server process point
   `VISION_REFERENCE_CLASSIFIER_ENDPOINT` at `http://127.0.0.1:9200/classify`
 - for the Docker-guided MCP helper on macOS/Windows point

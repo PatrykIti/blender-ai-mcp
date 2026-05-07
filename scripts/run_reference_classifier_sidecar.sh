@@ -14,6 +14,8 @@ echo "Device: ${REFERENCE_CLASSIFIER_DEVICE}"
 echo "Top K: ${REFERENCE_CLASSIFIER_TOP_K}"
 echo "Local MCP endpoint:  http://127.0.0.1:${REFERENCE_CLASSIFIER_PORT}/classify"
 echo "Docker MCP endpoint: http://host.docker.internal:${REFERENCE_CLASSIFIER_PORT}/classify"
+echo "Mode: foreground sidecar-only helper. This script does not start the FastMCP server."
+echo "For combined launch use ./scripts/run_mcp_server.sh or scripts/run_streamable_openrouter.sh."
 echo "Remember to install optional vision deps first: poetry install --with vision"
 
 exec poetry run python scripts/reference_classifier_sidecar.py \
