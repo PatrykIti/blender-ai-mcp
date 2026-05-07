@@ -406,6 +406,8 @@ This umbrella does **not** cover:
 - likely new `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
+- `_docs/_ROUTER/README.md`
+- `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
 - `_docs/_TESTS/README.md`
 - `_docs/_TASKS/README.md`
