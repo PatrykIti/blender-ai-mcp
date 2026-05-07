@@ -1,11 +1,11 @@
 # TASK-137-03: Organ Regression, Docs, And Medical Guardrail Closeout
 
 **Status:** ⏳ To Do
-**Priority:** 🟠 High
+**Priority:** 🔴 High
 **Parent:** [TASK-137](./TASK-137_Anatomy_Aware_Reference_Guided_Organ_Reconstruction.md)
 **Depends On:** [TASK-137-01](./TASK-137-01_Organ_Domain_Boundary_Vocabulary_And_Fidelity_Tiers.md), [TASK-137-02](./TASK-137-02_Guided_Organ_Loop_Relation_Semantics_And_Bounded_Surface.md), [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md), [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md)
 **Objective:** Lock the first organ domain slice with regression, docs, and explicit proof that the product boundary stays non-clinical.
-**Repository Touchpoints:** `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_images_runtime.py`, `server/adapters/mcp/areas/reference_truth.py`, `server/adapters/mcp/areas/router.py`, `server/adapters/mcp/transforms/quality_gate_verifier.py`, `server/application/services/spatial_graph.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/unit/adapters/mcp/test_public_surface_docs.py`, `tests/unit/adapters/mcp/test_quality_gate_verifier.py`, `tests/unit/tools/scene/test_scene_contracts.py`, `tests/unit/tools/scene/test_spatial_graph_service.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`, future `tests/e2e/vision/test_guided_organ_reconstruction.py`, `_docs/_PROMPTS/README.md`, likely new `_docs/_PROMPTS/REFERENCE_GUIDED_ORGAN_BUILD.md`, `_docs/_VISION/README.md`, `_docs/_MCP_SERVER/README.md`, `_docs/AVAILABLE_TOOLS_SUMMARY.md`, `_docs/_TESTS/README.md`, `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/`
+**Repository Touchpoints:** `README.md`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/areas/reference_images_runtime.py`, `server/adapters/mcp/areas/reference_truth.py`, `server/adapters/mcp/areas/router.py`, `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/transforms/quality_gate_verifier.py`, `server/application/services/spatial_graph.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/unit/adapters/mcp/test_public_surface_docs.py`, `tests/unit/adapters/mcp/test_quality_gate_verifier.py`, `tests/unit/tools/scene/test_scene_contracts.py`, `tests/unit/tools/scene/test_spatial_graph_service.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/integration/test_guided_surface_contract_parity.py`, `tests/e2e/integration/test_mcp_transport_modes.py`, `tests/e2e/vision/test_reference_stage_truth_handoff.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`, future `tests/e2e/vision/test_guided_organ_reconstruction.py`, `_docs/_PROMPTS/README.md`, likely new `_docs/_PROMPTS/REFERENCE_GUIDED_ORGAN_BUILD.md`, `_docs/_VISION/README.md`, `_docs/_MCP_SERVER/README.md`, `_docs/AVAILABLE_TOOLS_SUMMARY.md`, `_docs/_TESTS/README.md`, `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/`
 **Acceptance Criteria:** the first organ E2E lane proves staged organ blockers on the live transport surface; docs and changelog state explicit non-clinical limits; operator guidance does not overclaim what the domain can do.
 
 ## Implementation Notes
@@ -49,12 +49,17 @@ audit_docs_for_non_clinical_boundary_consistency()
 - `tests/unit/adapters/mcp/test_quality_gate_verifier.py`
 - `tests/unit/tools/scene/test_scene_contracts.py`
 - `tests/unit/tools/scene/test_spatial_graph_service.py`
-- future `tests/e2e/vision/test_guided_organ_reconstruction.py`
+- `tests/e2e/vision/test_guided_organ_reconstruction.py`
 - `tests/e2e/integration/test_guided_gate_state_transport.py`
+- `tests/e2e/integration/test_guided_surface_contract_parity.py`
+- `tests/e2e/integration/test_mcp_transport_modes.py` as supplemental transport
+  plumbing smoke, not as organ guided/reference parity proof
+- `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 - `tests/e2e/vision/test_reference_understanding_runtime_surface.py`
 
 ## Docs To Update
 
+- `README.md`
 - `_docs/_PROMPTS/README.md`
 - likely new `_docs/_PROMPTS/REFERENCE_GUIDED_ORGAN_BUILD.md`
 - `_docs/_VISION/README.md`
@@ -75,12 +80,18 @@ audit_docs_for_non_clinical_boundary_consistency()
 ## Validation Commands
 
 - `git diff --check`
+- `Rerun TASK-137-01 owner pack: PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_parsing.py tests/unit/adapters/mcp/test_quality_gate_contracts.py tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_prompt_catalog.py tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py tests/unit/adapters/mcp/test_prompt_provider.py tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- `Rerun TASK-137-02 owner pack: PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_guided_naming_policy.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_router_elicitation.py tests/unit/adapters/mcp/test_context_bridge.py tests/unit/adapters/mcp/test_prompt_catalog.py tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py tests/unit/adapters/mcp/test_quality_gate_contracts.py tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/router/application/test_router_contracts.py tests/unit/router/infrastructure/test_metadata_loader.py tests/unit/router/infrastructure/test_mcp_tools_metadata_alignment.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/scene/test_spatial_graph_service.py tests/unit/tools/modeling/test_modeling_tools.py tests/unit/tools/mesh/test_mesh_organic.py tests/unit/tools/sculpt/test_sculpt_tools.py tests/unit/tools/lattice/test_lattice_handler.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/scene/test_spatial_graph_service.py -q`
-- `PYTHONPATH=. poetry run pytest ./tests/unit -q`
+- `Outside sandbox before closeout: PYTHONPATH=. poetry run pytest ./tests/unit -q`
 - `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
+- `poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py -q`
+- `poetry run pytest tests/e2e/integration/test_mcp_transport_modes.py -q`
+- `poetry run pytest tests/e2e/vision/test_reference_stage_truth_handoff.py -q`
+- `poetry run pytest tests/e2e/vision/test_guided_organ_reconstruction.py -q`
 - `poetry run pytest tests/e2e/vision/test_reference_understanding_runtime_surface.py -q`
-- `poetry run python scripts/run_e2e_tests.py`
+- `Outside sandbox before closeout: poetry run python scripts/run_e2e_tests.py`
 
 ## Status / Board Update
 

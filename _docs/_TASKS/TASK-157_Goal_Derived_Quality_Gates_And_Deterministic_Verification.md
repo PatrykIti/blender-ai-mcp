@@ -163,22 +163,22 @@ same bounded evidence/proposal records through the vision/perception layer.
 
 ## Repository Touchpoint Table
 
-| Path / Module | Scope | Why It Is In Scope |
-|---------------|-------|--------------------|
-| `server/adapters/mcp/contracts/` | New gate contracts | Typed MCP-facing models for proposed gates, normalized gates, verifier status, and completion blockers |
-| `server/adapters/mcp/session_capabilities.py` | Guided state | Store active gate plan, statuses, required gates, waivers, and next gate actions |
-| `server/adapters/mcp/areas/reference.py` | Checkpoint loop | Include gate status in compare/iterate outputs and block final completion on unresolved required gates |
-| `server/adapters/mcp/contracts/reference.py` | Perception handoff | Reference gate proposals and evidence refs must point at existing reference/vision payload fields instead of duplicating them |
-| `server/adapters/mcp/vision/` | Perception evidence | Existing silhouette/action-hint and optional segmentation outputs may feed gate proposals/evidence through typed refs only |
-| `server/adapters/mcp/areas/scene.py` | Spatial and macro tools | Feed seam/contact/support verification and macro follow-up hints |
-| `server/application/services/spatial_graph.py` | Truth evidence | Reuse relation graph verdicts for seam/support gate status |
-| `server/router/infrastructure/tools_metadata/` | Discovery metadata | Add gate-oriented search hints through existing metadata fields first (`keywords`, `sample_prompts`, `related_tools`, `patterns`); adding a new `gate_families` field requires schema, loader, dataclass, and search tests |
-| `server/adapters/mcp/discovery/search_documents.py` | Search shaping | Bias search toward tools that satisfy unresolved gate families using existing metadata fields first |
-| `server/adapters/mcp/transforms/visibility_policy.py` | Visibility | Expose bounded tools for the active unresolved gate, not the whole catalog |
-| `server/adapters/mcp/prompts/` | Prompt assets | Teach clients how to propose gates and consume server-verified gate state |
-| `_docs/_ROUTER/` | Runtime design docs | Document the LLM-proposes/server-verifies boundary |
-| `_docs/_MCP_SERVER/README.md` | MCP contract docs | Document gate payloads, status model, and client guidance |
-| `_docs/_TASKS/README.md` | Board | Track this umbrella as the generic substrate for domain reconstruction |
+| Path / Module | Expected Ownership | Why It Is In Scope |
+|---------------|--------------------|--------------------|
+| `server/adapters/mcp/contracts/` | Gate-contract owners | They hold the typed MCP-facing models for proposed gates, normalized gates, verifier status, and completion blockers |
+| `server/adapters/mcp/session_capabilities_state.py` and `server/adapters/mcp/session_capabilities.py` | Guided-state owners | They persist active gate plans, statuses, required gates, and waivers through the current session-state path |
+| `server/adapters/mcp/areas/reference.py` | Checkpoint-loop owner | It includes gate status in compare/iterate outputs, derives `next_gate_actions`, and blocks final completion on unresolved required gates |
+| `server/adapters/mcp/contracts/reference.py` | Perception-handoff contract owner | It keeps gate proposals and evidence refs pointed at existing reference/vision payload fields instead of duplicating them |
+| `server/adapters/mcp/vision/` | Perception-evidence owners | Existing silhouette/action-hint and optional segmentation outputs may feed gate proposals/evidence through typed refs only |
+| `server/adapters/mcp/areas/scene.py` | Spatial/macro owner | It feeds seam/contact/support verification and macro follow-up hints |
+| `server/application/services/spatial_graph.py` | Truth-evidence owner | It reuses relation graph verdicts for seam/support gate status |
+| `server/router/infrastructure/tools_metadata/` | Discovery-metadata owners | They add gate-oriented search hints through existing metadata fields first (`keywords`, `sample_prompts`, `related_tools`, `patterns`); adding a new `gate_families` field requires schema, loader, dataclass, and search tests |
+| `server/adapters/mcp/discovery/search_surface.py` and `server/adapters/mcp/discovery/search_documents.py` | Search-shaping owners | They bias search toward tools that satisfy unresolved gate families, with the live unresolved-gate recovery override on `search_surface.py` and metadata indexing on `search_documents.py` |
+| `server/adapters/mcp/transforms/visibility_policy.py` | Visibility owner | It exposes bounded tools for the active unresolved gate, not the whole catalog |
+| `server/adapters/mcp/prompts/` | Prompt-asset owners | They teach clients how to propose gates and consume server-verified gate state |
+| `_docs/_ROUTER/` | Runtime-design docs owner | It documents the LLM-proposes/server-verifies boundary |
+| `_docs/_MCP_SERVER/README.md` | MCP-contract docs owner | It documents gate payloads, status model, and client guidance |
+| `_docs/_TASKS/README.md` | Board owner | It tracks this umbrella as the generic substrate for domain reconstruction |
 
 ## Runtime / Security Contract Notes
 
@@ -295,6 +295,22 @@ Completed the generic quality-gate substrate and its owner-lane proof:
 - left broader post-substrate work explicitly tracked under `TASK-158`,
   `TASK-135`, `TASK-136`, `TASK-137`, `TASK-138`, and `TASK-140` instead of
   keeping this umbrella open
+- docs updated in the closeout wave:
+  - `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md`
+  - `_docs/_MCP_SERVER/README.md`
+  - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+  - `_docs/_PROMPTS/README.md`
+  - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
+  - `_docs/_TESTS/README.md`
+  - `_docs/_TASKS/README.md`
+- historical validation note:
+  - the original closeout recorded targeted owner-lane `pytest` proof only
+  - it did not separately record a `pre-commit` run
+  - it did not separately record the repo-wide `pytest ./tests/unit` pass or
+    the Blender-backed `scripts/run_e2e_tests.py` lane
+  - current reruns should use `_docs/_TESTS/README.md` as the authoritative
+    owner-lane map and follow the current repo policy for pre-commit and
+    outside-sandbox repo-wide validation
 
 ## Validation Commands
 
