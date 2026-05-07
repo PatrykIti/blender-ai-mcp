@@ -47,6 +47,7 @@ all tool calls return structured results.
 | `server/adapters/mcp/contracts/reference.py` | Reuse the existing checkpoint gate-summary and completion-blocker fields for creature-specific blocker semantics |
 | `server/adapters/mcp/contracts/quality_gates.py` | Reuse generic gate status and blocker contracts from `TASK-157` |
 | `server/adapters/mcp/areas/reference.py` | Refuse final completion when required creature gates are missing/failed/stale on the staged checkpoint surface |
+| `server/adapters/mcp/areas/reference_feedback.py` | Keep `reference_orchestrator_feedback` aligned with the same blocker, next-action, and loop-disposition semantics exposed to clients |
 | `server/adapters/mcp/areas/reference_truth.py` | Keep required creature seams and completion blockers aligned with staged truth/follow-up payloads |
 | `server/adapters/mcp/transforms/quality_gate_verifier.py` | Enforce verifier-owned completion and seam pass/fail semantics |
 | `server/adapters/mcp/session_capabilities.py` | Keep the public session-capability facade stable while creature gate state routes through the split modules below |
@@ -151,10 +152,13 @@ return maybe_complete()
   behavior. Any compatibility shim for older payloads must stay explicit in the
   owning contract layer.
 - Side effects, recovery, and logging: keep gate pass/fail authority on the
-  existing `TASK-157` verifier path. `reference_understanding_summary` and
-  `reference_orchestrator_feedback` stay support-only. If evidence is stale or
-  a seam still floats, fail closed to blockers or `inspect_validate` instead of
-  prose completion, and keep provider keys or local paths out of logs.
+  existing `TASK-157` verifier path. `reference_understanding_summary` stays
+  support-only. `reference_orchestrator_feedback` remains a client-facing read
+  model that must stay aligned with blocker, planner-family, next-action, and
+  `loop_disposition` semantics, but it still cannot mark gates passed by itself.
+  If evidence is stale or a seam still floats, fail closed to blockers or
+  `inspect_validate` instead of prose completion, and keep provider keys or
+  local paths out of logs.
 
 ## Tests To Add/Update
 

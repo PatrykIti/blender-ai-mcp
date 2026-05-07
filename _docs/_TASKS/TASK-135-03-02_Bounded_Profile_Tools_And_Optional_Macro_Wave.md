@@ -5,8 +5,7 @@
 **Parent:** [TASK-135-03](./TASK-135-03_Low_Poly_Form_Refinement_Mesh_Window_And_Profile_Macros.md)
 **Depends On:** [TASK-135-03-01](./TASK-135-03-01_Refinement_Stage_State_And_Visibility_Gate.md)
 **Objective:** Make the refinement stage operational by exposing the right bounded mesh/modeling tools and only the smallest necessary macro additions for low-poly creature profiling.
-**Repository Touchpoints:** `server/adapters/mcp/areas/mesh.py`, `server/adapters/mcp/areas/modeling.py`, `server/adapters/mcp/areas/scene.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/transforms/visibility_policy.py`, `server/adapters/mcp/router_helper.py`, `server/adapters/mcp/discovery/search_surface.py`, `server/router/infrastructure/tools_metadata/mesh/`, `server/router/infrastructure/tools_metadata/modeling/`, `server/router/infrastructure/tools_metadata/scene/`, `server/application/tool_handlers/macro_handler.py`, `server/domain/tools/macro.py`, `server/adapters/mcp/dispatcher.py`, `blender_addon/application/handlers/mesh.py`, `blender_addon/application/handlers/modeling.py`, `tests/unit/adapters/mcp/test_visibility_policy.py`, `tests/unit/adapters/mcp/test_search_surface.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/unit/adapters/mcp/test_guided_mode.py`, `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`, `tests/unit/adapters/mcp/test_public_surface_docs.py`, `tests/unit/tools/scene/test_macro_adjust_segment_chain_arc_mcp.py`, `tests/e2e/tools/macro/test_macro_adjust_segment_chain_arc.py`, `tests/e2e/vision/test_reference_stage_truth_handoff.py`
-**Repository Touchpoints:** `server/adapters/mcp/areas/mesh.py`, `server/adapters/mcp/areas/modeling.py`, `server/adapters/mcp/areas/scene.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/transforms/visibility_policy.py`, `server/adapters/mcp/router_helper.py`, `server/adapters/mcp/discovery/search_surface.py`, `server/router/infrastructure/tools_metadata/mesh/`, `server/router/infrastructure/tools_metadata/modeling/`, `server/router/infrastructure/tools_metadata/scene/`, `server/application/tool_handlers/macro_handler.py`, `server/domain/tools/macro.py`, `server/adapters/mcp/dispatcher.py`, `blender_addon/application/handlers/mesh.py`, `blender_addon/application/handlers/modeling.py`, `tests/unit/adapters/mcp/test_visibility_policy.py`, `tests/unit/adapters/mcp/test_search_surface.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/unit/adapters/mcp/test_guided_mode.py`, `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`, `tests/unit/adapters/mcp/test_public_surface_docs.py`, `tests/unit/tools/macro/test_macro_adjust_segment_chain_arc.py`, `tests/unit/tools/scene/test_macro_adjust_segment_chain_arc_mcp.py`, `tests/e2e/tools/macro/test_macro_adjust_segment_chain_arc.py`, `tests/e2e/vision/test_reference_stage_truth_handoff.py`
+**Repository Touchpoints:** `server/adapters/mcp/areas/mesh.py`, `server/adapters/mcp/areas/modeling.py`, `server/adapters/mcp/areas/scene.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_planner.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/transforms/visibility_policy.py`, `server/adapters/mcp/router_helper.py`, `server/adapters/mcp/discovery/search_surface.py`, `server/router/infrastructure/tools_metadata/mesh/`, `server/router/infrastructure/tools_metadata/modeling/`, `server/router/infrastructure/tools_metadata/scene/`, `server/application/tool_handlers/macro_handler.py`, `server/domain/tools/macro.py`, `server/adapters/mcp/dispatcher.py`, `blender_addon/application/handlers/mesh.py`, `blender_addon/application/handlers/modeling.py`, `tests/unit/adapters/mcp/test_visibility_policy.py`, `tests/unit/adapters/mcp/test_search_surface.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/unit/adapters/mcp/test_context_bridge.py`, `tests/unit/adapters/mcp/test_guided_mode.py`, `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`, `tests/unit/adapters/mcp/test_public_surface_docs.py`, `tests/unit/tools/macro/test_macro_adjust_segment_chain_arc.py`, `tests/unit/tools/scene/test_macro_adjust_segment_chain_arc_mcp.py`, `tests/e2e/integration/test_guided_streamable_spatial_support.py`, `tests/e2e/tools/macro/test_macro_adjust_segment_chain_arc.py`, `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 **Acceptance Criteria:** the refinement step exposes a bounded profile-tool window; existing mesh/modeling tools cover the first slice unless one concrete missing profile operation forces a new macro; any new macro has matching MCP, handler, and Blender-backed tests.
 
 ## Implementation Notes
@@ -88,11 +87,13 @@
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
+- `tests/unit/adapters/mcp/test_context_bridge.py`
 - `tests/unit/adapters/mcp/test_guided_mode.py`
 - `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/unit/tools/macro/test_macro_adjust_segment_chain_arc.py`
 - `tests/unit/tools/scene/test_macro_adjust_segment_chain_arc_mcp.py`
+- `tests/e2e/integration/test_guided_streamable_spatial_support.py`
 - `tests/e2e/tools/macro/test_macro_adjust_segment_chain_arc.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 - targeted `tests/unit/tools/mesh/` or `tests/unit/tools/modeling/` lanes when
@@ -101,9 +102,17 @@
 ## Docs To Update
 
 - `README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
+- `_docs/_PROMPTS/README.md`
+- `_docs/_PROMPTS/GUIDED_SESSION_START.md`
+- `_docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md`
+- `_docs/_PROMPTS/MANUAL_TOOLS_NO_ROUTER.md`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `_docs/_VISION/README.md`
+- relevant `_docs/_VISION/*` creature and refinement docs enforced by
+  `test_public_surface_docs.py` when public guided-surface wording changes
 - `_docs/_CHANGELOG/README.md`
 - `_docs/_TESTS/README.md`
 
@@ -116,9 +125,9 @@
 
 - `git diff --check`
 - `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/tools/macro/test_macro_adjust_segment_chain_arc.py tests/unit/tools/scene/test_macro_adjust_segment_chain_arc_mcp.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_context_bridge.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/tools/macro/test_macro_adjust_segment_chain_arc.py tests/unit/tools/scene/test_macro_adjust_segment_chain_arc_mcp.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/tools/macro/test_macro_adjust_segment_chain_arc.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_truth_handoff.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_streamable_spatial_support.py tests/e2e/vision/test_reference_stage_truth_handoff.py -q`
 - `Outside sandbox before closeout: PYTHONPATH=. poetry run pytest ./tests/unit`
 - `Outside sandbox for Blender-backed runtime proof: poetry run python scripts/run_e2e_tests.py`
 

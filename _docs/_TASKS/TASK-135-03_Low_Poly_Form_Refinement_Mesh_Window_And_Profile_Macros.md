@@ -60,7 +60,9 @@ of creating a second refinement recommendation path.
 | `server/adapters/mcp/session_capabilities_runtime_glue.py` | Keep gate-plan refresh, stale marking, and visibility sync aligned with the new refinement stage |
 | `server/adapters/mcp/transforms/visibility_policy.py` | Open bounded mesh/modeling tools only when refinement prerequisites pass |
 | `server/adapters/mcp/discovery/search_documents.py` and `server/adapters/mcp/discovery/search_surface.py` | Add low-poly profile/refinement search cues on the live discovery surface |
-| `server/adapters/mcp/areas/reference.py` | Reuse the existing `refinement_route` / `refinement_handoff` checkpoint surfaces when the explicit refinement step becomes active |
+| `server/adapters/mcp/areas/reference.py` | Keep the public staged compare/iterate surface aligned while the split planner/feedback owners below project refinement details |
+| `server/adapters/mcp/areas/reference_planner.py` | Keep `refinement_route` / `refinement_handoff` aligned with the explicit refinement step and current candidate ranking logic |
+| `server/adapters/mcp/areas/reference_feedback.py` | Keep `reference_orchestrator_feedback` aligned when refinement changes selected family, blockers, next actions, or checkpoint advice |
 | `server/adapters/mcp/areas/mesh.py` | Ensure selected mesh tools work in the guided refinement window |
 | `server/adapters/mcp/areas/modeling.py` | Keep bounded transforms available for part profiling |
 | `server/adapters/mcp/areas/scene.py` | Add or expose profile macros if needed |
@@ -211,9 +213,11 @@ if current_step == "refine_low_poly_forms":
 | Unit checkpoint | Primitive-only creature reports refinement blockers |
 | Unit evidence refs | `TASK-157` plus the shipped `TASK-163` support refs for shape-profile gates open only bounded profile tools after prerequisites |
 | Unit guided public surface | Guided family summaries, guided-mode visibility, and public surface docs stay aligned with the new refinement step |
+| Unit guided enforcement | Context-bridge and guided execution enforcement stay aligned if refinement or optional macros become visible mutators |
 | E2E mesh | A selected part can be profiled through guided mesh tools without losing state |
 | E2E vision | Primitive-only squirrel cannot pass final completion before refinement gate |
 | E2E macro | Any new profile macro has Blender-backed geometry assertions |
+| E2E Streamable guided surface | Guided visibility/search and mutator enforcement stay aligned on the Streamable HTTP path, not only stdio |
 
 ## Docs To Update
 
@@ -241,11 +245,26 @@ if current_step == "refine_low_poly_forms":
 ## Validation Commands
 
 - `git diff --check`
+- `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
-- `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_context_bridge.py -q`
+- `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py tests/e2e/integration/test_guided_streamable_spatial_support.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_goal_derived_gate_creature_completion.py tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py tests/e2e/vision/test_reference_stage_truth_handoff.py -q`
 - `Outside sandbox before closeout: PYTHONPATH=. poetry run pytest ./tests/unit`
 - `Outside sandbox for Blender-backed runtime proof: poetry run python scripts/run_e2e_tests.py`
+
+## Status / Board Update
+
+- When this refinement parent ships, update its task status plus the child leaf
+  statuses under `TASK-135-03`, refresh the umbrella `TASK-135` execution
+  structure if ordering or remaining follow-ons changed, and record whether
+  `_docs/_TASKS/README.md` board wording also changed.
+- Record whether the `pre-commit` lane, owner-lane pytest commands, full unit
+  pass, full Blender E2E pass, and any Streamable/stdio parity lanes ran or
+  were intentionally skipped.
+- If follow-on refinement work remains after the first bounded wave, track it as
+  an explicit new leaf or follow-on task instead of burying it in the status
+  field.
 
 ## Acceptance Criteria
 

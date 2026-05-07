@@ -37,7 +37,9 @@ front/side reference proportions are partially followed.
 |---------------|-----------------|
 | `server/adapters/mcp/contracts/quality_gates.py` | Keep the curved-tail gate on the existing `allowed_correction_families` plus `recommended_bounded_tools` contract shape |
 | `server/adapters/mcp/contracts/reference.py` | Reuse the existing staged checkpoint fields when curved-tail blockers need to surface on compare/iterate responses |
-| `server/adapters/mcp/areas/reference.py` | Reuse current gate-summary and planner surfaces for curved-tail blockers instead of inventing a tail-specific checkpoint payload |
+| `server/adapters/mcp/areas/reference.py` | Keep the public staged compare/iterate surface aligned while the split planner/feedback owners below project curved-tail blockers |
+| `server/adapters/mcp/areas/reference_planner.py` | Keep curved-tail blocker routing aligned with the live `refinement_route` / `refinement_handoff` owner logic |
+| `server/adapters/mcp/areas/reference_feedback.py` | Keep `reference_orchestrator_feedback` aligned when curved-tail blockers change selected family, next actions, or checkpoint advice |
 | `server/adapters/mcp/areas/reference_truth.py` | Keep tail-root seating and curved-tail truth findings aligned with existing staged truth/follow-up assembly |
 | `server/adapters/mcp/transforms/quality_gate_verifier.py` | Verify curved-tail blockers on the existing `shape_profile` plus attachment-gate path instead of introducing ad hoc gate fields |
 | `server/adapters/mcp/areas/scene.py` | Keep `macro_adjust_segment_chain_arc(...)` visible/recommended for appendage-chain gates |
@@ -51,10 +53,13 @@ front/side reference proportions are partially followed.
 | `server/adapters/mcp/prompts/prompt_catalog.py`, `server/adapters/mcp/prompts/provider.py`, and `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md` | Teach multi-segment tail creation before arc adjustment on the current prompt-asset surface |
 | `tests/unit/adapters/mcp/test_contract_payload_parity.py` | Keep staged checkpoint payload wording aligned if curved-tail blockers surface on compare/iterate envelopes |
 | `tests/unit/adapters/mcp/test_visibility_policy.py` | Keep guided visibility and blocker-driven tool exposure aligned if a tail-chain macro becomes part of the guided surface |
+| `tests/unit/adapters/mcp/test_context_bridge.py` | Keep guided execution enforcement aligned if a promoted tail-chain macro becomes a visible mutator on `llm-guided` |
 | `tests/unit/adapters/mcp/test_guided_mode.py` and `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py` | Keep guided search/visibility exposure aligned if curved-tail guidance becomes client-visible on the default guided surface |
 | `tests/unit/adapters/mcp/test_public_surface_docs.py` | Keep public checkpoint and macro docs aligned if this leaf changes the client-visible contract |
+| `tests/unit/adapters/mcp/test_prompt_catalog.py` and `tests/unit/adapters/mcp/test_prompt_provider.py` | Keep native prompt-surface exposure aligned if this leaf really changes prompt catalog/provider output instead of docs only |
 | `tests/unit/tools/macro/test_macro_adjust_segment_chain_arc.py` | Add appendage-chain arc cases |
 | `tests/unit/tools/scene/test_macro_adjust_segment_chain_arc_mcp.py` | Add MCP structured contract cases |
+| `tests/e2e/integration/test_guided_streamable_spatial_support.py` | Prove the same guided macro exposure and enforcement still behaves on the Streamable HTTP path |
 | `tests/e2e/integration/test_guided_surface_contract_parity.py` | Prove that any guided-surface macro exposure actually appears on the live stdio surface and is not hidden or hard-blocked |
 | `tests/e2e/tools/macro/test_macro_adjust_segment_chain_arc.py` | Add Blender-backed tail-chain arc case |
 | `tests/e2e/vision/` | Add squirrel-tail profile gate scenario |
@@ -217,7 +222,8 @@ if creature_profile.tail_shape in {"curved", "bushy", "arched"}:
 - `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/tools/macro/test_macro_adjust_segment_chain_arc.py tests/unit/tools/scene/test_macro_adjust_segment_chain_arc_mcp.py -q`
 - `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/tools/macro/test_macro_adjust_segment_chain_arc.py tests/e2e/vision/test_goal_derived_gate_creature_completion.py tests/e2e/vision/test_reference_stage_truth_handoff.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_context_bridge.py tests/unit/adapters/mcp/test_prompt_catalog.py tests/unit/adapters/mcp/test_prompt_provider.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/integration/test_guided_streamable_spatial_support.py tests/e2e/tools/macro/test_macro_adjust_segment_chain_arc.py tests/e2e/vision/test_goal_derived_gate_creature_completion.py tests/e2e/vision/test_reference_stage_truth_handoff.py -q`
 - `Outside sandbox before closeout: PYTHONPATH=. poetry run pytest ./tests/unit`
 - `Outside sandbox for Blender-backed runtime proof: poetry run python scripts/run_e2e_tests.py`
 

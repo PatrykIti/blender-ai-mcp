@@ -5,7 +5,7 @@
 **Parent:** [TASK-135-03](./TASK-135-03_Low_Poly_Form_Refinement_Mesh_Window_And_Profile_Macros.md)
 **Depends On:** [TASK-135-03-01](./TASK-135-03-01_Refinement_Stage_State_And_Visibility_Gate.md), [TASK-135-03-02](./TASK-135-03-02_Bounded_Profile_Tools_And_Optional_Macro_Wave.md)
 **Objective:** Lock the new refinement stage with owner-lane regression, Blender-backed proof, and docs that describe the shipped bounded creature refinement path accurately.
-**Repository Touchpoints:** `server/adapters/mcp/areas/reference.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/unit/adapters/mcp/test_guided_mode.py`, `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`, `tests/unit/adapters/mcp/test_public_surface_docs.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/integration/test_guided_surface_contract_parity.py`, `tests/e2e/vision/test_goal_derived_gate_creature_completion.py`, `tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py`, `tests/e2e/vision/test_reference_stage_truth_handoff.py`, `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_TESTS/README.md`, `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/`
+**Repository Touchpoints:** `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_planner.py`, `server/adapters/mcp/areas/reference_feedback.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/unit/adapters/mcp/test_context_bridge.py`, `tests/unit/adapters/mcp/test_guided_mode.py`, `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`, `tests/unit/adapters/mcp/test_public_surface_docs.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/integration/test_guided_surface_contract_parity.py`, `tests/e2e/integration/test_guided_streamable_spatial_support.py`, `tests/e2e/vision/test_goal_derived_gate_creature_completion.py`, `tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py`, `tests/e2e/vision/test_reference_stage_truth_handoff.py`, `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_TESTS/README.md`, `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/`
 **Acceptance Criteria:** primitive-only creature runs cannot complete past the new refinement gate without the required profile work; transport and checkpoint surfaces describe the same stage/blocker semantics; docs and changelog record the shipped behavior and validation lanes accurately.
 
 ## Implementation Notes
@@ -56,11 +56,13 @@
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
+- `tests/unit/adapters/mcp/test_context_bridge.py`
 - `tests/unit/adapters/mcp/test_guided_mode.py`
 - `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/e2e/integration/test_guided_gate_state_transport.py`
 - `tests/e2e/integration/test_guided_surface_contract_parity.py`
+- `tests/e2e/integration/test_guided_streamable_spatial_support.py`
 - `tests/e2e/vision/test_goal_derived_gate_creature_completion.py`
 - `tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
@@ -92,7 +94,20 @@
 - `git diff --check`
 - `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
-- `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py tests/e2e/integration/test_guided_surface_contract_parity.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_context_bridge.py -q`
+- `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/integration/test_guided_streamable_spatial_support.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_goal_derived_gate_creature_completion.py tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py tests/e2e/vision/test_reference_stage_truth_handoff.py -q`
 - `Outside sandbox before closeout: PYTHONPATH=. poetry run pytest ./tests/unit`
 - `Outside sandbox for Blender-backed runtime proof: poetry run python scripts/run_e2e_tests.py`
+
+## Status / Board Update
+
+- When this closeout leaf ships, update its task status plus the parent
+  `TASK-135-03` status, confirm the sibling leaf statuses under
+  `TASK-135-03-*`, and record whether `_docs/_TASKS/README.md` and the umbrella
+  `TASK-135` execution notes changed.
+- Record whether the `pre-commit` lane, owner-lane pytest commands, full unit
+  pass, full Blender E2E pass, and stdio/Streamable parity lanes ran or were
+  intentionally skipped.
+- If follow-on work remains, track it explicitly as a new leaf or follow-on
+  task rather than implying it in the completion prose.
