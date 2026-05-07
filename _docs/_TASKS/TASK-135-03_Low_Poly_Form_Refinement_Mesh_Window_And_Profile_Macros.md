@@ -186,12 +186,17 @@ if current_step == "refine_low_poly_forms":
   with reject-unknown behavior. Compatibility shims stay explicit in the owning
   contract layer.
 - Side effects, recovery, and logging: treat
-  `reference_understanding_summary`, `classification_scores`,
-  `segmentation_artifacts`, and silhouette signals as support evidence only; the
-  verifier still owns gate pass/fail. If prerequisites are stale or unresolved,
-  return blockers or `inspect_validate` rather than a docs-only refinement
-  notion. Keep provider keys, local paths, and raw vision debug payloads out of
-  logs.
+  `reference_understanding_summary`, `part_segmentation`, and silhouette
+  signals as support evidence only; classifier or segmentation details stay
+  nested inside the existing RU / part-segmentation surfaces rather than
+  becoming new top-level refinement contracts. The verifier still owns gate
+  pass/fail. If prerequisites are stale or unresolved, return blockers or
+  `inspect_validate` rather than a docs-only refinement notion. Keep provider
+  keys, local paths, and raw vision debug payloads out of logs.
+- Resource and timeout limits: keep the first refinement window bounded to the
+  current assembled creature scope or a small active object set already selected
+  by the checkpoint loop, and avoid unbounded repeated mesh passes from one
+  checkpoint result before the next staged refresh.
 - Sculpt boundary: keep sculpt hidden on the normal refinement stage unless a
   later bounded `TASK-145` handoff explicitly recommends it.
 

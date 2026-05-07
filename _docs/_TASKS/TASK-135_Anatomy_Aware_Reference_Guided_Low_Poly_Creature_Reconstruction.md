@@ -430,6 +430,11 @@ separate follow-on explicitly reopens those closed surfaces.
   gated next actions instead of silent completion. Provider keys, local paths,
   and raw vision debug payloads stay redacted from client-facing logs and
   evidence refs.
+- Resource and timeout limits: keep the first creature wave bounded to the
+  current assembled target scope, current staged checkpoint cadence, and
+  bounded local repairs. Do not add unbounded gate recomputation, broad
+  whole-scene refinement windows, or long-running macro chains beyond the
+  existing checkpoint and local-RPC limits.
 - Domain scope guardrail: keep medical or clinical claims out of this family.
   Creature reconstruction stays low-poly, reference-guided, and
   visualization-oriented only.

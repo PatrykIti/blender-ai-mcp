@@ -45,6 +45,8 @@ front/side reference proportions are partially followed.
 | `server/adapters/mcp/discovery/search_documents.py` and `server/adapters/mcp/discovery/search_surface.py` | Add search cues for curved/bushy/arched appendage chains on the live discovery surface |
 | `server/router/infrastructure/tools_metadata/` | Add metadata linking tail profile gates to arc and attachment macros |
 | `server/adapters/mcp/prompts/prompt_catalog.py`, `server/adapters/mcp/prompts/provider.py`, and `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md` | Teach multi-segment tail creation before arc adjustment on the current prompt-asset surface |
+| `tests/unit/adapters/mcp/test_contract_payload_parity.py` | Keep staged checkpoint payload wording aligned if curved-tail blockers surface on compare/iterate envelopes |
+| `tests/unit/adapters/mcp/test_public_surface_docs.py` | Keep public checkpoint and macro docs aligned if this leaf changes the client-visible contract |
 | `tests/unit/tools/macro/test_macro_adjust_segment_chain_arc.py` | Add appendage-chain arc cases |
 | `tests/unit/tools/scene/test_macro_adjust_segment_chain_arc_mcp.py` | Add MCP structured contract cases |
 | `tests/e2e/tools/macro/test_macro_adjust_segment_chain_arc.py` | Add Blender-backed tail-chain arc case |
@@ -87,12 +89,20 @@ front/side reference proportions are partially followed.
 - Before `TASK-135-03-01` lands, keep this work on the current
   `place_secondary_parts` plus checkpoint cadence. Do not introduce a
   tail-specific guided step or a separate refinement-stage state model here.
-- Model this as a generic `shape_profile` gate:
-  - `profile_kind="curved_appendage_chain"`
-  - `required_segments >= 3` for squirrel-like bushy tails unless waived
-  - `root_attachment_gate` points to `TailRoot -> Body`
-  - `allowed_correction_families=["attachment_alignment", "secondary_parts"]`
-  - `recommended_bounded_tools=["macro_attach_part_to_surface", "macro_adjust_segment_chain_arc"]`
+- Model this as one generic `shape_profile` gate plus existing staged truth
+  and planner surfaces:
+  - keep the curved-tail requirement in the gate label/target semantics, not as
+    ad hoc gate fields such as `profile_kind`, `required_segments`, or
+    `root_attachment_gate`
+  - keep `TailRoot` seated to `Body` through the existing attachment/truth path,
+    while tail-chain segment count remains a creature-tail policy/verifier
+    expectation rather than a new guided role-group or gate-schema field
+  - if the creature domain template needs a correction-family hint, stay on the
+    current gate vocabulary such as
+    `allowed_correction_families=["attachment_alignment", "secondary_parts"]`
+  - let `recommended_bounded_tools` remain a server-derived blocker output from
+    gate status, truth follow-up, and search shaping instead of a declarative
+    gate input field
 
 ## Pseudocode
 
@@ -148,6 +158,10 @@ if creature_profile.tail_shape in {"curved", "bushy", "arched"}:
   deterministic, object-based, bounded in segment count/transform range, fail
   closed to blockers when attachment proof is stale, and keep provider keys or
   local paths out of logs.
+- Resource and timeout limits: keep the first slice bounded to one ordered tail
+  chain on the current target scope, cap the default chain to 3-4 segments, and
+  reuse one attach plus one arc pass per checkpoint iteration instead of
+  unbounded per-segment repair loops or curve-system generation.
 
 ## Tests To Add/Update
 
@@ -156,6 +170,7 @@ if creature_profile.tail_shape in {"curved", "bushy", "arched"}:
 | Unit gate template | Curved squirrel tail emits `shape_profile=curved_appendage_chain` |
 | Unit search | Curved/bushy/arched tail queries rank `macro_adjust_segment_chain_arc` |
 | Unit checkpoint semantics | Curved-tail blockers reuse the existing compare/iterate checkpoint summaries and recommended-tool surfaces |
+| Unit public contract | Compare/iterate parity and public docs stay aligned if curved-tail blockers or macro wording become client-visible |
 | Unit macro | Existing arc macro handles three or more tail-like segments |
 | Unit MCP contract | Arc macro returns structured verification recommendations |
 | E2E macro | TailRoot/TailMid/TailTip arc while TailRoot remains attached to Body |
@@ -178,7 +193,7 @@ if creature_profile.tail_shape in {"curved", "bushy", "arched"}:
 ## Validation Commands
 
 - `git diff --check`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/tools/macro/test_macro_adjust_segment_chain_arc.py tests/unit/tools/scene/test_macro_adjust_segment_chain_arc_mcp.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/tools/macro/test_macro_adjust_segment_chain_arc.py tests/unit/tools/scene/test_macro_adjust_segment_chain_arc_mcp.py -q`
 - `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/tools/macro/test_macro_adjust_segment_chain_arc.py tests/e2e/vision/test_goal_derived_gate_creature_completion.py tests/e2e/vision/test_reference_stage_truth_handoff.py -q`
 - `Outside sandbox before closeout: PYTHONPATH=. poetry run pytest ./tests/unit`

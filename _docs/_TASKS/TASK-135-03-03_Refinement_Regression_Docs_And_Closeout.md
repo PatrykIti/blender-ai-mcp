@@ -22,6 +22,9 @@
   from the shipped planner baseline
 - update `_docs/_TESTS/README.md` only after the owner lanes are stable enough to
   document as the current rerun baseline
+- record whether the relevant `pre-commit` lane ran or was intentionally skipped,
+  and record the parent/child status sync plus `_docs/_TASKS/README.md` board
+  update proof when this closeout leaf actually ships
 
 ## Runtime / Security Contract Notes
 
@@ -44,6 +47,10 @@
 - Side effects, recovery, and logging: do not claim refinement closeout without
   a matching regression lane. Keep logs and proof artifacts free of provider
   keys, raw local paths, or unredacted vision payloads.
+- Resource and timeout limits: keep the closeout proof pack on owner-lane
+  reruns plus the repo-supported full unit/E2E commands; do not rely on ad hoc
+  long-running provider loops or unbounded manual reruns to declare this leaf
+  complete.
 
 ## Tests To Add/Update
 
@@ -74,6 +81,7 @@
 ## Validation Commands
 
 - `git diff --check`
+- `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
 - `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_goal_derived_gate_creature_completion.py tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py tests/e2e/vision/test_reference_stage_truth_handoff.py -q`

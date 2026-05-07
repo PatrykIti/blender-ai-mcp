@@ -32,8 +32,9 @@
   - `guided_flow_state.allowed_families` continues to use
     `GuidedFlowFamilyLiteral`
   - `refinement_route.selected_family` and
-    `reference_strategy_state.construction_strategy.primary_family` keep the
-    planner-facing `ReferencePlannerFamilyLiteral`
+    `reference_strategy_state.primary_family` keep the planner-facing
+    `ReferencePlannerFamilyLiteral`; `reference_understanding_summary`
+    separately keeps its own `construction_strategy.primary_family`
 - keep sculpt hidden on this step unless a later `TASK-145` handoff explicitly
   recommends bounded local sculpt
 
@@ -79,6 +80,10 @@ if current_step == "refine_low_poly_forms":
   status, not perception confidence. If prerequisites are stale or unresolved,
   keep the flow blocked or in `inspect_validate` instead of silently advancing,
   and keep provider keys or local paths out of logs.
+- Resource and timeout limits: keep the refinement-step transition bounded to
+  the currently active creature scope and one staged checkpoint cadence; do not
+  add background refresh loops or repeated gate recomputation beyond the
+  existing guided refresh boundaries.
 
 ## Tests To Add/Update
 
