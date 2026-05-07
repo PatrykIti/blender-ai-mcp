@@ -23,8 +23,9 @@ disconnect narratives.
 | Path | Expected ownership | Why it is in scope |
 |------|--------------------|--------------------|
 | `server/adapters/mcp/guided_mode.py` | FastMCP visibility application seam | Owns the actual `reset_visibility()` + `enable/disable` transaction that can leak partial visibility to concurrent readers. |
+| `server/adapters/mcp/visibility_runtime.py` | Session-scoped visibility barrier and audit seam | Owns the same-session serialization, lifecycle guardrails, and shaped-surface audit path introduced by this slice. |
 | `server/adapters/mcp/session_capabilities_runtime_glue.py` | Session-state runtime glue | Calls the visibility application path whenever guided state changes. |
-| `server/adapters/mcp/discovery/search_surface.py` | Discovery proxy seam | `call_tool(...)` and `search_tools(...)` should wait for in-flight visibility refreshes before trusting current visibility. |
+| `server/adapters/mcp/discovery/search_surface.py` | Discovery proxy seam | `call_tool(...)` and the public discovery visibility checks should wait for an in-flight same-session visibility refresh before trusting current visibility. |
 | `server/adapters/mcp/factory.py` | FastMCP composition root | Owns middleware registration for `tools/list` audit / serialization. |
 | `tests/e2e/integration/test_guided_streamable_spatial_support.py` | Streamable runtime proof lane | Should reproduce same-session guided visibility churn during spatial refresh and prove the stable list/discovery surface. |
 | `tests/unit/adapters/mcp/` | Targeted adapter/runtime helper proof | Should cover the visibility-transaction helper or audit middleware contract without requiring Blender. |
@@ -63,11 +64,11 @@ disconnect narratives.
 
 ## Validation Closeout Notes
 
-- This closeout records the owner-lane validation commands for the slice and
-  keeps the broader repo validation lanes explicit.
-- It does not claim a newly reconfirmed full repo-wide `pytest ./tests/unit` or
-  full Blender-backed `scripts/run_e2e_tests.py` completion in this docs-only
-  cleanup pass.
+- The follow-up review loop reran the repo-required broad lanes before the final
+  closure commit: full unit tests, the Blender-backed E2E runner, and
+  `pre-commit run --all-files --show-diff-on-failure`.
+- The owner-lane commands below remain the focused proof for this slice and can
+  still be used to reproduce the local visibility/runtime checks quickly.
 
 ## Tests To Add / Update
 
@@ -75,8 +76,9 @@ disconnect narratives.
   and issues a concurrent `list_tools()` request while visibility reapply is
   intentionally slowed; the client must still receive a stable discovery/tool
   surface.
-- Add a narrow unit test for the visibility transaction helper or middleware
-  audit path so lock-and-audit behavior stays deterministic without a full
+- Add narrow unit tests for the visibility transaction helper, the public
+  discovery visibility checks used by `call_tool(...)`, and the middleware
+  audit path so the lock-and-audit behavior stays deterministic without a full
   FastMCP server run.
 
 ## Docs To Update
@@ -102,15 +104,17 @@ disconnect narratives.
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_runtime.py tests/e2e/integration/test_guided_streamable_spatial_support.py -q`
 - `poetry run pytest ./tests/unit`
 - `poetry run python scripts/run_e2e_tests.py`
+- `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure`
 
 ## Acceptance Criteria
 
 - Guided Streamable HTTP sessions no longer expose transient partial tool sets
   to concurrent `tools/list()` reads during visibility reapply.
-- `search_tools(...)` / `call_tool(...)` no longer trust visibility mid-refresh
-  when a same-session guided transition is still being applied.
+- `call_tool(...)` and the public discovery visibility checks no longer trust
+  visibility mid-refresh when a same-session guided transition is still being
+  applied.
 - Server logs make it possible to tell whether a future “tool disappeared”
   incident came from:
-  - repo-side `tools/list()` output changing
-  - repo-side visibility mismatch
+  - repo-side public `tools/list()` output changing
+  - repo-side shaped-surface visibility mismatch
   - or client/harness deferred-tool churn despite a stable server surface.

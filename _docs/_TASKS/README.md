@@ -3,8 +3,8 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 7 tasks
-- **In Progress:** 1 task
+- **To Do:** 6 tasks
+- **In Progress:** 2 tasks
 - **Done:** 94
 - **Superseded:** 162
 
@@ -45,6 +45,7 @@ flight.
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-165](./TASK-165_Mac_First_Interactive_MCP_Server_Installer_And_Launcher.md) | **macOS-First Interactive MCP Server Installer And Launcher** | 🔴 High | Board-level follow-on after TASK-164 for replacing the narrow Streamable helper with a macOS-first interactive launcher that checks prerequisites, offers explicit install/update/skip decisions, and wires the supported MCP + classifier runtime combinations together. |
+| [TASK-160](./TASK-160_Guided_Client_Feedback_And_Streamable_HTTP_Recovery_UX.md) | **Guided Client Feedback And Streamable HTTP Recovery UX** | 🔴 High | In progress after TASK-160-01 closed the Streamable visibility serialization slice; the umbrella still owns the broader guided client-feedback contract and follow-on surface decisions. |
 
 ## 🚨 To Do
 
@@ -54,7 +55,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-148](./TASK-148_No_Auth_HTTP_MCP_Client_Compatibility_And_Auth_Misclassification_Recovery.md) | **No-Auth HTTP MCP Client Compatibility And Auth Misclassification Recovery** | 🔴 High | Board-level follow-on after TASK-125 for hardening the no-auth Streamable HTTP path across Claude, Codex, Gemini, and similar MCP clients without falsely advertising OAuth support. |
-| [TASK-160](./TASK-160_Guided_Client_Feedback_And_Streamable_HTTP_Recovery_UX.md) | **Guided Client Feedback And Streamable HTTP Recovery UX** | 🔴 High | Board-level follow-on after TASK-145 / TASK-157 / TASK-158 for clarifying guided-flow transitions to MCP clients, separating harness disconnects from repo runtime behavior, and evaluating whether the long-term fix should stay in existing tool contracts, move into a structured guided-flow delta, or add optional FastMCP app-surface UX without inventing a second flow. |
 
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |

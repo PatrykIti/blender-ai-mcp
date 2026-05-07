@@ -10,16 +10,20 @@ Date: 2026-05-07
   concurrent `tools/list()` reads wait for the active `reset_visibility()` /
   `enable_components()` rebuild to finish instead of observing a transient
   partial surface
+- hardened the session barrier follow-up so cancellation while waiting on the
+  same-session guard does not leak a stuck session lock, and stale idle
+  session trackers can be retired over time
 - registered a FastMCP middleware in `server/adapters/mcp/factory.py` that:
   - waits for in-flight visibility refreshes before returning `tools/list`
-  - compares the observed public tool set with the visibility policy expected by
-    the current session state
+  - compares the observed public tool set with the shaped-surface public names
+    expected by the current session state instead of raw runtime/internal names
   - logs missing or unexpected public tools when the runtime surface diverges
 - hardened the guided discovery proxy in
   `server/adapters/mcp/discovery/search_surface.py` so `get_tool(...)`
   visibility checks also wait for same-session visibility refreshes
 - expanded proof lanes with:
   - a unit test for middleware waiting on an in-flight visibility transaction
+  - a unit regression that a cancelled waiter does not poison later operations
   - a Streamable regression that issues concurrent `guided_register_part(...)`
     and `list_tools()` calls while visibility rebuild is intentionally slowed
   - a session transcript-style regression that wrong-scope spatial checks do not
@@ -42,3 +46,4 @@ Date: 2026-05-07
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_runtime.py tests/e2e/integration/test_guided_streamable_spatial_support.py -q`
 - `poetry run pytest ./tests/unit`
 - `poetry run python scripts/run_e2e_tests.py`
+- `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure`

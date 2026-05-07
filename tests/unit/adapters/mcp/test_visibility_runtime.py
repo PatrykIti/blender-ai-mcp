@@ -6,6 +6,7 @@ import asyncio
 import logging
 from types import SimpleNamespace
 
+import pytest
 import server.adapters.mcp.guided_mode as guided_mode_module
 import server.adapters.mcp.visibility_runtime as visibility_runtime_module
 from fastmcp.tools.tool import Tool
@@ -116,12 +117,69 @@ def test_discovery_proxy_waits_for_inflight_visibility_transaction():
     assert observed_lock_state["locked"] is True
 
 
+def test_cancelled_waiter_does_not_leak_session_lock():
+    ctx = _FakeContext()
+
+    async def run() -> None:
+        gate = asyncio.Event()
+
+        async def slow_refresh() -> None:
+            await gate.wait()
+
+        refresh_task = asyncio.create_task(
+            run_visibility_transaction(
+                ctx,
+                phase="build",
+                current_step="place_secondary_parts",
+                spatial_refresh_required=True,
+                expected_tool_names=("call_tool",),
+                apply=slow_refresh,
+            )
+        )
+        await asyncio.sleep(0)
+
+        waiting_task = asyncio.create_task(
+            run_visibility_transaction(
+                ctx,
+                phase="build",
+                current_step="place_secondary_parts",
+                spatial_refresh_required=True,
+                expected_tool_names=("call_tool",),
+                apply=lambda: asyncio.sleep(0, result=None),
+            )
+        )
+        await asyncio.sleep(0.02)
+        waiting_task.cancel()
+
+        with pytest.raises(asyncio.CancelledError):
+            await waiting_task
+
+        gate.set()
+        await refresh_task
+
+        recovered = await asyncio.wait_for(
+            run_visibility_transaction(
+                ctx,
+                phase="build",
+                current_step="place_secondary_parts",
+                spatial_refresh_required=False,
+                expected_tool_names=("call_tool",),
+                apply=lambda: asyncio.sleep(0, result="recovered"),
+            ),
+            timeout=0.2,
+        )
+        assert recovered == "recovered"
+
+    asyncio.run(run())
+
+
 def test_audit_list_tools_snapshot_logs_visibility_mismatch(monkeypatch, caplog):
     ctx = _FakeContext()
 
     async def fake_state(_ctx: _FakeContext) -> SimpleNamespace:
         return SimpleNamespace(
             surface_profile="llm-guided",
+            contract_version="llm-guided-v2",
             phase="build",
             guided_handoff=None,
             guided_flow_state={"current_step": "place_secondary_parts"},
@@ -137,6 +195,11 @@ def test_audit_list_tools_snapshot_logs_visibility_mismatch(monkeypatch, caplog)
             phase="build",
         ),
     )
+    monkeypatch.setattr(
+        visibility_runtime_module,
+        "_expected_audit_tool_names",
+        lambda **kwargs: ("call_tool", "scene_relation_graph"),
+    )
 
     async def run() -> None:
         with caplog.at_level(logging.WARNING, logger="server.adapters.mcp.visibility_runtime"):
@@ -150,6 +213,54 @@ def test_audit_list_tools_snapshot_logs_visibility_mismatch(monkeypatch, caplog)
     assert "[VISIBILITY_AUDIT]" in caplog.text
     assert "missing=['scene_relation_graph']" in caplog.text
     assert "unexpected=['unexpected_tool']" in caplog.text
+
+
+def test_audit_list_tools_snapshot_accepts_shaped_public_names(monkeypatch, caplog):
+    ctx = _FakeContext()
+
+    async def fake_state(_ctx: _FakeContext) -> SimpleNamespace:
+        return SimpleNamespace(
+            surface_profile="llm-guided",
+            contract_version="llm-guided-v2",
+            phase="build",
+            guided_handoff=None,
+            guided_flow_state={"current_step": "place_secondary_parts"},
+            gate_plan=None,
+        )
+
+    monkeypatch.setattr(visibility_runtime_module, "get_session_capability_state_async", fake_state)
+    monkeypatch.setattr(
+        guided_mode_module,
+        "build_visibility_diagnostics",
+        lambda *args, **kwargs: SimpleNamespace(
+            visible_tool_names=("scene_relation_graph",),
+            phase="build",
+        ),
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.discovery.tool_inventory.build_discovery_entry_map",
+        lambda **kwargs: {
+            "scene_relation_graph": SimpleNamespace(
+                internal_name="scene_relation_graph",
+                public_name="scene_relation_graph",
+            )
+        },
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.surfaces.get_surface_profile",
+        lambda _surface_profile: SimpleNamespace(search_enabled=True, default_contract_line="llm-guided-v2"),
+    )
+
+    async def run() -> None:
+        with caplog.at_level(logging.WARNING, logger="server.adapters.mcp.visibility_runtime"):
+            await audit_list_tools_snapshot(
+                ctx,
+                tools=[_tool("scene_relation_graph"), _tool("search_tools"), _tool("call_tool")],
+                source="tools/list",
+            )
+
+    asyncio.run(run())
+    assert "[VISIBILITY_AUDIT]" not in caplog.text
 
 
 def test_visibility_transactions_do_not_block_other_sessions_discovery():

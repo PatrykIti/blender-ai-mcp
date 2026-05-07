@@ -349,6 +349,9 @@ def test_streamable_list_tools_waits_for_inflight_visibility_refresh(tmp_path: P
                 )
             )
             list_tools_task = asyncio.create_task(client.list_tools())
+            await asyncio.sleep(0.01)
+            assert body_tools_task.done() is False
+            assert list_tools_task.done() is False
 
             await body_tools_task
             listed = {tool.name for tool in await list_tools_task}
@@ -364,7 +367,6 @@ def test_streamable_list_tools_waits_for_inflight_visibility_refresh(tmp_path: P
         asyncio.run(run(url))
 
 
-@pytest.mark.slow
 def test_streamable_guided_scene_cleanup_returns_after_goal_handoff(tmp_path: Path):
     """Build-phase cleanup should not leave Streamable HTTP clients waiting for a tool response."""
 
