@@ -269,6 +269,9 @@ return maybe_advance_or_complete()
 - `TASK-158` remains the promoted follow-on for reference-understanding and
   optional-perception work that intentionally sits outside the closed generic
   gate/verifier substrate.
+- Broader domain-consumer follow-ons now stay explicitly tracked under
+  `TASK-135`, `TASK-136`, `TASK-137`, `TASK-138`, and `TASK-140` instead of
+  reopening this generic umbrella.
 
 ## Changelog Impact
 
@@ -290,7 +293,8 @@ Completed the generic quality-gate substrate and its owner-lane proof:
   dedicated Blender-backed public surfaces without introducing a parallel tool
   or router flow
 - left broader post-substrate work explicitly tracked under `TASK-158`,
-  `TASK-135`, `TASK-136`, and `TASK-140` instead of keeping this umbrella open
+  `TASK-135`, `TASK-136`, `TASK-137`, `TASK-138`, and `TASK-140` instead of
+  keeping this umbrella open
 
 ## Validation Commands
 

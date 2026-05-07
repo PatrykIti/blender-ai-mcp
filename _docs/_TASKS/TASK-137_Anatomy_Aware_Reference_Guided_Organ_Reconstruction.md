@@ -4,7 +4,7 @@
 **Priority:** 🟠 High
 **Category:** Reconstruction / Organic Anatomy
 **Estimated Effort:** Large
-**Dependencies:** TASK-038, TASK-120, TASK-122, TASK-124, TASK-157, TASK-163
+**Dependencies:** TASK-038, TASK-120, TASK-122, TASK-124, TASK-157, TASK-158, TASK-163
 
 ## Objective
 
@@ -53,6 +53,24 @@ The repo already has strong ingredients this umbrella should build on:
 
 This follow-on should build a bounded product path on top of those pieces. It
 should not blur into medical inference or unbounded clinical promises.
+
+## Substrate Ownership And Adjacent Tracks
+
+This umbrella is a domain consumer of already-landed guided/runtime substrates,
+not a place to reopen them:
+
+- consume the closed `TASK-157` gate/verifier substrate for gate intake,
+  normalization, transport, and deterministic completion blocking
+- consume the closed `TASK-158` RU contract/handoff seams for typed
+  `reference_understanding` parsing, session linkage, and bounded guided
+  exposure on existing surfaces
+- consume the closed `TASK-163` strategy/orchestrator seams for
+  `reference_orchestrator_feedback`, `reference_strategy_state`, optional
+  support evidence, and existing transport projections
+- stay separate from domain-consumer siblings:
+  - `TASK-135` low-poly creatures
+  - `TASK-136` architecture/buildings
+  - `TASK-138` bipeds and fantasy characters
 
 ## Current Capability Ceiling
 
@@ -126,7 +144,6 @@ If this umbrella is done correctly, the repo gains:
   - lobed organs
   - chambered organs
   - paired organs
-  - simple tubular biological structures
 - Support organ-aware reference interpretation across:
   - front/side/top references
   - simplified anatomical plates
@@ -136,7 +153,6 @@ If this umbrella is done correctly, the repo gains:
   - chamber
   - cavity
   - inlet/outlet/port
-  - stalk/branch entry points
   - paired symmetry anchors where applicable
 - Define organ-specific relation semantics for:
   - fused into mass
@@ -200,7 +216,7 @@ If this umbrella is done correctly, the repo gains:
 - Likely organ-oriented tool-surface gaps include bounded support for:
   - lobe/chamber mass setup
   - cavity shell creation
-  - controlled organic branching or inlet/outlet setup
+  - controlled inlet/outlet landmark setup
   - paired-organ mirroring with anatomy-aware exceptions
   - bounded organ refinement and cleanup handoffs
 - Define a relation-aware correction policy so organ loops can choose between
@@ -252,6 +268,8 @@ This umbrella does **not** cover:
 - `server/adapters/mcp/prompts/provider.py`
 - `server/adapters/mcp/prompts/rendering.py`
 - likely new `_docs/_PROMPTS/REFERENCE_GUIDED_ORGAN_BUILD.md`
+- `server/adapters/mcp/contracts/guided_flow.py`
+- `server/adapters/mcp/contracts/router.py`
 - `server/adapters/mcp/guided_mode.py`
 - `server/adapters/mcp/session_capabilities.py`
 - `server/adapters/mcp/session_capabilities_state.py`
@@ -264,14 +282,27 @@ This umbrella does **not** cover:
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/contracts/quality_gates.py`
 - `server/adapters/mcp/areas/reference.py`
+- `server/adapters/mcp/areas/reference_images_runtime.py`
 - `server/adapters/mcp/areas/reference_truth.py`
 - `server/adapters/mcp/areas/reference_understanding.py`
+- `server/adapters/mcp/areas/reference_feedback.py`
+- `server/adapters/mcp/areas/router.py`
 - `server/adapters/mcp/areas/modeling.py`
 - `server/adapters/mcp/areas/mesh.py`
 - `server/adapters/mcp/areas/sculpt.py`
 - `server/adapters/mcp/areas/lattice.py`
 - `server/router/infrastructure/tools_metadata/`
 - `tests/unit/adapters/mcp/`
+- `tests/unit/adapters/mcp/test_prompt_catalog.py`
+- `tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py`
+- `tests/unit/adapters/mcp/test_prompt_provider.py`
+- `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_guided_mode.py`
+- `tests/unit/adapters/mcp/test_router_elicitation.py`
+- `tests/unit/adapters/mcp/test_contract_payload_parity.py`
+- `tests/unit/adapters/mcp/test_public_surface_docs.py`
+- `tests/unit/tools/modeling/`
+- `tests/unit/tools/mesh/`
 - `tests/unit/tools/scene/`
 - `tests/unit/tools/sculpt/`
 - `tests/unit/tools/lattice/`
@@ -287,14 +318,14 @@ This umbrella does **not** cover:
 
 | Path / Module | Scope | Expected Work |
 |---------------|-------|---------------|
-| `server/adapters/mcp/vision/prompting.py`, `server/adapters/mcp/vision/parsing.py`, and `server/adapters/mcp/areas/reference_understanding.py` | Organ-aware RU support | Add bounded organ vocabulary, fidelity hints, and medical-safe advisory interpretation on the existing RU seam |
-| `server/adapters/mcp/contracts/quality_gates.py` and `server/adapters/mcp/contracts/reference.py` | Domain contract | Define lobe/chamber/cavity/port gates and staged blockers using the existing generic gate substrate |
-| `server/adapters/mcp/areas/reference.py` and `server/adapters/mcp/areas/reference_truth.py` | Staged truth/checkpoints | Surface organ-specific failures and safe product-boundary messaging on the current staged envelopes |
-| `server/adapters/mcp/session_capabilities_state.py`, `session_capabilities_flow.py`, and `session_capabilities_runtime_glue.py` | Guided state | Add organ-domain stage sequencing and bounded correction routing without replacing the current session model |
+| `server/adapters/mcp/vision/prompting.py`, `server/adapters/mcp/vision/parsing.py`, `server/adapters/mcp/areas/reference_understanding.py`, and `server/adapters/mcp/areas/reference_feedback.py` | Organ-aware RU support | Add bounded organ vocabulary, fidelity hints, optional support-evidence handling, and medical-safe advisory interpretation on the existing RU seam |
+| `server/adapters/mcp/contracts/quality_gates.py`, `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/contracts/guided_flow.py`, and `server/adapters/mcp/contracts/router.py` | Domain contract | Declare organ gate vocabulary, staged blockers, prompt requirements, and any router/reference payload fields through the existing strict contracts |
+| `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_images_runtime.py`, `server/adapters/mcp/areas/router.py`, and `server/adapters/mcp/areas/reference_truth.py` | Staged truth and public transport | Keep organ-specific failures, checkpoints, guided status, and attach/list/remove reference messaging on the current public surfaces instead of inventing an organ-only tool |
+| `server/adapters/mcp/session_capabilities.py`, `session_capabilities_state.py`, `session_capabilities_flow.py`, `session_capabilities_runtime_glue.py`, and `guided_mode.py` | Guided state | Add organ-domain stage sequencing, required prompts, and bounded correction routing without replacing the current session model or diagnostics assembly |
 | `server/adapters/mcp/transforms/visibility_policy.py` and `server/adapters/mcp/discovery/search_surface.py` | Guided surface | Shape the bounded organ tool window and organic/anatomy search cues on the live runtime surface |
 | `server/adapters/mcp/areas/modeling.py`, `mesh.py`, `sculpt.py`, and `lattice.py` | Bounded reconstruction surface | Reuse or extend bounded organic/anatomy tools without turning free-form sculpt into the default public story |
-| `server/adapters/mcp/prompts/prompt_catalog.py`, `provider.py`, and a future organ prompt asset | Prompt assets | Expose one safe organ-oriented guided story on the current prompt surface |
-| `tests/unit/adapters/mcp/`, `tests/unit/tools/sculpt/`, `tests/unit/tools/lattice/`, `tests/e2e/integration/`, and future organ-focused `tests/e2e/vision/` lanes | Proof lanes | Prove safe domain boundaries, staged loop semantics, and bounded organic-surface behavior |
+| `server/adapters/mcp/prompts/prompt_catalog.py`, `provider.py`, `rendering.py`, and a future organ prompt asset | Prompt assets | Expose one safe organ-oriented guided story on the current prompt surface and keep required-prompt mapping on the declared prompt owners |
+| `tests/unit/adapters/mcp/test_prompt_catalog.py`, `test_prompt_catalog_flow_mapping.py`, `test_prompt_provider.py`, `test_reference_images.py`, `test_guided_flow_state_contract.py`, `test_guided_mode.py`, `test_visibility_policy.py`, `test_search_surface.py`, `test_router_elicitation.py`, `test_contract_payload_parity.py`, `test_public_surface_docs.py`, `tests/unit/tools/modeling/test_modeling_tools.py`, `tests/unit/tools/mesh/test_mesh_organic.py`, `tests/unit/tools/sculpt/test_sculpt_tools.py`, `tests/unit/tools/lattice/test_lattice_handler.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, and `tests/e2e/vision/test_reference_understanding_runtime_surface.py` | Proof lanes | Prove safe domain boundaries, staged loop semantics, strict payloads, and bounded organ-surface behavior on the existing transport/runtime seams |
 
 ## Execution Structure
 
@@ -337,13 +368,30 @@ This umbrella does **not** cover:
 
 ## Tests To Add/Update
 
-- focused unit coverage under `tests/unit/adapters/mcp/` for organ prompt
-  exposure, RU parsing/prompting, guided handoff, search shaping, and reference
-  contracts
-- focused unit coverage under `tests/unit/tools/sculpt/` and
-  `tests/unit/tools/lattice/` for any new bounded organ-surface operations
-- representative future `tests/e2e/vision/` coverage for organ-reference
-  scenarios plus integration coverage for staged transport
+- `tests/unit/adapters/mcp/test_vision_prompting.py`,
+  `tests/unit/adapters/mcp/test_vision_parsing.py`,
+  `tests/unit/adapters/mcp/test_prompt_catalog.py`,
+  `tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py`,
+  `tests/unit/adapters/mcp/test_prompt_provider.py`,
+  `tests/unit/adapters/mcp/test_reference_images.py`,
+  `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`,
+  `tests/unit/adapters/mcp/test_guided_mode.py`,
+  `tests/unit/adapters/mcp/test_visibility_policy.py`,
+  `tests/unit/adapters/mcp/test_search_surface.py`,
+  `tests/unit/adapters/mcp/test_router_elicitation.py`,
+  `tests/unit/adapters/mcp/test_contract_payload_parity.py`, and
+  `tests/unit/adapters/mcp/test_public_surface_docs.py` for organ prompt
+  exposure, RU parsing/prompting, public payload projection, guided handoff,
+  and search shaping
+- `tests/unit/tools/modeling/test_modeling_tools.py`,
+  `tests/unit/tools/mesh/test_mesh_organic.py`,
+  `tests/unit/tools/sculpt/test_sculpt_tools.py`, and
+  `tests/unit/tools/lattice/test_lattice_handler.py` for any new bounded
+  organ-surface operations
+- `tests/e2e/integration/test_guided_gate_state_transport.py`,
+  `tests/e2e/vision/test_reference_understanding_runtime_surface.py`, and
+  representative future `tests/e2e/vision/test_guided_organ_reconstruction.py`
+  coverage for organ-reference scenarios and staged transport/runtime parity
 
 ## Changelog Impact
 
