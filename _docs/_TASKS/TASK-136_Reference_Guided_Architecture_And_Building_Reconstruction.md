@@ -4,28 +4,28 @@
 **Priority:** 🔴 High
 **Category:** Reconstruction / Architecture and Hard Surface
 **Estimated Effort:** Large
-**Dependencies:** TASK-118, TASK-120, TASK-122, TASK-124, TASK-130, TASK-157, TASK-163
+**Follow-on After:** [TASK-118](./TASK-118_Scene_Render_World_And_Configuration_Wave.md), [TASK-120](./TASK-120_Macro_Tool_Layer_And_Guided_Surface_Collapse.md), [TASK-122](./TASK-122_Hybrid_Vision_Truth_And_Correction_Macro_Wave.md), [TASK-124](./TASK-124_Guided_Session_Goal_And_Reference_Orchestration.md), [TASK-130](./TASK-130_Default_Guided_Surface_Bootstrap_Consistency.md), [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md)
 
 ## Objective
 
-Move the product from generic hard-surface building blocks and isolated
-macro/layout tools to a true reference-guided architecture reconstruction
-surface, so an LLM operating the MCP server can rebuild small and medium
-structures from plans, elevations, sections, or photo references while
-preserving footprint, openings, structural rhythm, roof form, and major
-proportions.
+Extend the shipped first-pass `building` guided/runtime substrate into a
+reconstruction-grade architecture path, so an LLM operating the MCP server can
+rebuild small and medium structures from plans, elevations, sections, or photo
+references while preserving footprint, openings, structural rhythm, roof form,
+and major proportions.
 
 ## Business Problem
 
-The repo already supports many bounded architectural subproblems:
+The repo already supports many bounded architectural subproblems and the first
+generic `building` overlay:
 
 - placement and relative layout
 - cutouts, recesses, and openings
 - dimension checks and grouped scene inspection
 - low-level modeling and mesh editing
 
-That is useful, but it does not yet add up to a coherent product path for
-reference-guided architectural reconstruction.
+That shipped substrate is useful, but it does not yet add up to a
+reconstruction-grade product path for architecture-specific reference work.
 
 The missing business capability is not "can Blender do hard-surface work?" but
 "can the guided MCP product help the model rebuild buildings and architectural
@@ -33,25 +33,37 @@ modules from references without rediscovering the whole strategy each time?"
 
 Current limitations are:
 
-- no promoted architecture-specific prompt/handoff/search story on
-  `llm-guided`
+- no dedicated architecture prompt asset or architecture-specific prompt
+  recommendation path on `llm-guided`
 - no explicit product contract for architectural reconstruction fidelity
-- no reference-analysis contract for plans/elevations/rooflines/opening grids
-- no loop-system contract for staged shell/opening/roof/support validation
-- no clear domain-specific boundary between generic hard-surface tools and
-  reconstruction-oriented building workflows
+- the current building guided flow is still coarse relative to the intended
+  architecture sequence, because it stops at generic building masses and
+  secondary parts instead of explicitly modeling shell/opening/roof/support
+  phases
+- relation semantics, facade rhythm, and opening-grid expectations are still
+  too generic for reconstruction from plans/elevations
+- the owner-lane docs and regression plan do not yet point cleanly at the
+  current building runtime seams that already ship
 
 ## Current Runtime Baseline
 
 The repo already has strong foundations this umbrella should build on:
 
 - `llm-guided` search-first bootstrap and goal-scoped reference intake
+- a shipped `building` domain profile with guided flow/role selection, bounded
+  visibility ordering, and building-specific required checks
 - staged `reference_compare_*` and `reference_iterate_stage_checkpoint(...)`
   flows
+- closed `TASK-157` quality-gate templates and verifier lanes, including
+  building `attachment_seam` / `opening_or_cut` behavior
+- closed `TASK-163` reference-understanding and orchestrator-feedback seams on
+  the existing `reference_images(...)`, `router_*`, and checkpoint surfaces
 - grouped scene inspection/configuration from `TASK-118`
 - bounded hard-surface and layout macros such as cutout, placement, contact,
   and proportion repair
 - prompt-driven guided sessions and shaped visibility/search behavior
+- building owner-lane tests in guided flow/search/visibility plus the current
+  building gate transport and Blender-backed E2E proof lanes
 
 The follow-on should extend that product foundation into the architecture
 domain. It should not reopen the old flat-catalog model or bypass the guided
@@ -73,6 +85,10 @@ Today the product can support:
 
 - bounded hard-surface prop work
 - isolated openings or placement repairs
+- a generic building overlay with `footprint_mass`, `main_volume`, `roof_mass`,
+  `facade_opening`, and `support_element` roles
+- building gate blockers such as `roof_wall` seams and `opening_or_cut`
+  failures on the staged checkpoint path
 - manual low-poly architecture tasks when the operator already knows the tool
   path
 
@@ -89,14 +105,19 @@ structured systems:
 
 The follow-on gap to close is:
 
-- the public guided story does not yet define architectural reconstruction as a
-  first-class guided domain
-- the repo has no promoted distinction between:
-  - generic hard-surface editing
-  - reference-guided building reconstruction
-- current vision/reference handling is not yet designed around
-  plan/elevation/section reasoning
-- the loop output does not yet express building-specific failures such as:
+- the public guided story still treats architecture as a first-pass building
+  overlay instead of an explicit reconstruction-grade domain
+- the repo still lacks a dedicated architecture prompt asset and
+  recommendation/handoff wording for plans, elevations, sections, and facade
+  rhythm
+- current vision/reference handling still needs architecture-specific
+  interpretation for plan/elevation/section reasoning, opening grids, and roof
+  profiles on top of the closed RU substrate
+- the current building flow/control plane is too coarse for the intended
+  shell/openings/roof/support sequencing, so this umbrella must extend the
+  existing guided-step model instead of pretending it does not exist
+- the loop output does not yet express enough building-specific failures such
+  as:
   - missing or duplicated openings
   - wrong bay spacing
   - floor-height drift
@@ -113,11 +134,14 @@ The follow-on gap to close is:
   - expected seated/support contact
   - acceptable modular interface contact
   - bad overlap or floating separation that really needs cleanup
-- `llm-guided` does not yet have architecture-specific recommendation, handoff,
-  and search-bias behavior
+- `llm-guided` does not yet have a dedicated architecture-specific prompt
+  asset, recommendation path, handoff wording, and search-bias behavior
 - there is no explicit tool-surface roadmap for reconstruction-heavy
   architecture tasks such as opening grids, repeated supports, roof generators,
   facade rhythm, and modular structural rebuilds
+- the current task docs and proof lanes do not yet cleanly map to the shipped
+  owner seams that now own building guided flow, session control, reference
+  checkpoint shaping, and architecture-adjacent regression
 
 ## Business Outcome
 
@@ -280,9 +304,10 @@ This umbrella does **not** cover:
 - `server/adapters/mcp/prompts/prompt_catalog.py`
 - `server/adapters/mcp/prompts/provider.py`
 - `server/adapters/mcp/prompts/rendering.py`
-- `_docs/_PROMPTS/DEMO_TASK_LOW_POLY_MEDIEVAL_WELL.md`
 - likely new `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`
+- `_docs/_PROMPTS/README.md`
 - `server/adapters/mcp/guided_mode.py`
+- `server/adapters/mcp/contracts/guided_flow.py`
 - `server/adapters/mcp/session_capabilities.py`
 - `server/adapters/mcp/session_capabilities_state.py`
 - `server/adapters/mcp/session_capabilities_flow.py`
@@ -294,14 +319,28 @@ This umbrella does **not** cover:
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/contracts/quality_gates.py`
 - `server/adapters/mcp/areas/reference.py`
+- `server/adapters/mcp/areas/reference_checkpoint_compare.py`
+- `server/adapters/mcp/areas/reference_images_runtime.py`
+- `server/adapters/mcp/areas/reference_planner.py`
 - `server/adapters/mcp/areas/reference_truth.py`
 - `server/adapters/mcp/areas/reference_understanding.py`
+- `server/adapters/mcp/areas/reference_view_diagnostics.py`
 - `server/adapters/mcp/areas/scene.py`
+- `server/adapters/mcp/areas/scene_guided_runtime.py`
 - `server/adapters/mcp/areas/modeling.py`
 - `server/adapters/mcp/areas/mesh.py`
 - `server/adapters/mcp/areas/scene_spatial_graph.py`
 - `server/application/services/spatial_graph.py`
 - `server/router/infrastructure/tools_metadata/`
+- `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
+- `tests/unit/adapters/mcp/test_guided_mode.py`
+- `tests/unit/adapters/mcp/test_quality_gate_verifier.py`
+- `tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py`
+- `tests/unit/adapters/mcp/test_router_elicitation.py`
+- `tests/unit/adapters/mcp/test_search_surface.py`
+- `tests/unit/adapters/mcp/test_visibility_policy.py`
+- `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/unit/adapters/mcp/`
 - `tests/unit/tools/scene/`
 - `tests/e2e/integration/`
@@ -316,15 +355,15 @@ This umbrella does **not** cover:
 
 | Path / Module | Scope | Expected Work |
 |---------------|-------|---------------|
-| `server/adapters/mcp/contracts/quality_gates.py` and `server/adapters/mcp/contracts/reference.py` | Domain contract | Define building-specific gate templates, staged blockers, and checkpoint summaries on the existing generic substrate |
-| `server/adapters/mcp/areas/reference.py` and `server/adapters/mcp/areas/reference_truth.py` | Checkpoint/truth assembly | Surface shell/opening/roof/support blockers and architectural interface findings through the current staged response envelopes |
-| `server/adapters/mcp/session_capabilities_state.py`, `session_capabilities_flow.py`, and `session_capabilities_runtime_glue.py` | Guided state | Add building-domain step sequencing, gate persistence, and stale refresh behavior without replacing the current session-state model |
+| `server/adapters/mcp/contracts/quality_gates.py` and `server/adapters/mcp/contracts/reference.py` | MCP/public contract | Extend the shipped building gate/reference vocabulary on the existing adapter-layer contract path without leaking FastMCP or router policy into `server/domain/` |
+| `server/adapters/mcp/areas/reference.py`, `reference_checkpoint_compare.py`, `reference_images_runtime.py`, `reference_truth.py`, `reference_understanding.py`, and `reference_view_diagnostics.py` | Reference/checkpoint assembly | Treat `reference.py` as the thin orchestration facade and update the split owner seams that actually shape checkpoint, RU, and staged feedback payloads |
+| `server/adapters/mcp/contracts/guided_flow.py`, `session_capabilities.py`, `session_capabilities_state.py`, `session_capabilities_flow.py`, and `session_capabilities_runtime_glue.py` | Guided state/control plane | Extend the shipped building domain profile, required checks, allowed roles, prompt requirements, and stale refresh behavior without inventing a second guided flow system |
 | `server/adapters/mcp/transforms/visibility_policy.py` and `server/adapters/mcp/discovery/search_surface.py` | Guided search/visibility | Shape the bounded architecture tool window and building-specific search cues on the live runtime surface |
-| `server/adapters/mcp/areas/scene.py`, `modeling.py`, and `mesh.py` | Bounded build surface | Reuse or extend bounded layout/opening/support/roof tools only where the architecture flow actually needs them |
+| `server/adapters/mcp/areas/scene.py`, `scene_guided_runtime.py`, `modeling.py`, and `mesh.py` | Bounded build surface | Keep `scene.py` as the MCP facade, update guided runtime glue where scoped enforcement lives today, and reuse or extend bounded layout/opening/support/roof tools only where the architecture flow actually needs them |
 | `server/adapters/mcp/vision/` and `server/adapters/mcp/areas/reference_understanding.py` | Advisory support evidence | Consume the closed `TASK-163` RU/session seams for architecture hints without changing verifier authority |
 | `server/application/services/spatial_graph.py` and `server/adapters/mcp/areas/scene_spatial_graph.py` | Relation semantics | Model wall/opening, roof/wall, beam/support, and facade rhythm interfaces in a way the verifier and staged truth surface can consume |
-| `server/adapters/mcp/prompts/prompt_catalog.py`, `provider.py`, `_docs/_PROMPTS/DEMO_TASK_LOW_POLY_MEDIEVAL_WELL.md`, and a future architecture prompt asset | Prompt assets | Expose and teach an architecture-oriented guided story on the current MCP prompt surface |
-| `tests/unit/adapters/mcp/`, `tests/unit/tools/scene/`, `tests/e2e/integration/`, and `tests/e2e/vision/` | Proof lanes | Prove architecture-domain state, search, truth, transport, and Blender-backed reconstruction behavior on the current owner seams |
+| `server/adapters/mcp/prompts/prompt_catalog.py`, `provider.py`, `rendering.py`, `_docs/_PROMPTS/README.md`, and a future architecture prompt asset | Prompt assets | Expose and teach an architecture-oriented guided story on the current MCP prompt surface, then keep prompt inventory docs aligned; treat `DEMO_TASK_LOW_POLY_MEDIEVAL_WELL.md` only as an optional adjacent bounded-example reference if wording or sequencing is intentionally reused |
+| `tests/unit/adapters/mcp/`, `tests/unit/tools/scene/`, `tests/e2e/integration/`, and `tests/e2e/vision/` | Proof lanes | Prove architecture-domain state, search, truth, transport, and Blender-backed reconstruction behavior on the current owner seams instead of re-planning already-shipped building lanes |
 
 ## Execution Structure
 
@@ -358,7 +397,8 @@ This umbrella does **not** cover:
 ## Docs To Update
 
 - `_docs/_PROMPTS/README.md`
-- `_docs/_PROMPTS/DEMO_TASK_LOW_POLY_MEDIEVAL_WELL.md`
+- optional adjacent example if wording/sequencing is intentionally reused:
+  `_docs/_PROMPTS/DEMO_TASK_LOW_POLY_MEDIEVAL_WELL.md`
 - likely new `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
@@ -368,15 +408,22 @@ This umbrella does **not** cover:
 
 ## Tests To Add/Update
 
-- focused unit coverage under `tests/unit/adapters/mcp/` for architecture
-  prompt exposure, guided handoff, search shaping, gate/reference contracts,
-  and checkpoint reporting
-- focused unit coverage under `tests/unit/tools/scene/` for building relation
-  semantics and structural-truth mapping
-- representative `tests/e2e/vision/` coverage for plan/elevation-driven
-  building scenarios
-- representative `tests/e2e/integration/` coverage for building gate transport
-  and staged recovery flows
+- `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
+- `tests/unit/adapters/mcp/test_guided_mode.py`
+- `tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py`
+- `tests/unit/adapters/mcp/test_quality_gate_contracts.py`
+- `tests/unit/adapters/mcp/test_quality_gate_intake.py`
+- `tests/unit/adapters/mcp/test_quality_gate_verifier.py`
+- `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_contract_payload_parity.py`
+- `tests/unit/adapters/mcp/test_router_elicitation.py`
+- `tests/unit/adapters/mcp/test_search_surface.py`
+- `tests/unit/adapters/mcp/test_visibility_policy.py`
+- `tests/unit/tools/scene/test_scene_contracts.py`
+- `tests/unit/tools/scene/test_spatial_graph_service.py`
+- `tests/e2e/integration/test_guided_gate_state_transport.py`
+- `tests/e2e/vision/test_goal_derived_gate_building_completion.py`
+- `tests/e2e/vision/test_goal_derived_gate_support_symmetry_surfaces.py`
 
 ## Changelog Impact
 
@@ -390,3 +437,5 @@ This umbrella does **not** cover:
   around its own vision, loop, and tool-surface requirements
 - do not treat current hard-surface or demo-prompt coverage as equivalent to
   delivered architecture reconstruction behavior
+- keep `_docs/_TASKS/README.md` aligned with the strategic RU roadmap linkages
+  while this umbrella stays promoted
