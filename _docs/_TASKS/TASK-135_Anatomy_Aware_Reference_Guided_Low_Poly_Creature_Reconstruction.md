@@ -330,7 +330,7 @@ separate follow-on explicitly reopens those closed surfaces.
 |---------------|-------|---------------|
 | `server/adapters/mcp/contracts/reference.py` | Reference loop contracts | Reuse the existing `TASK-157` gate-summary, completion-blocker, and `TASK-163` linkage fields for creature-specific semantics instead of inventing new checkpoint envelopes |
 | `server/adapters/mcp/contracts/quality_gates.py` | Generic dependency | Consume normalized gate types for creature-specific templates |
-| `server/adapters/mcp/contracts/guided_flow.py` | Public guided-flow contract | Add any new creature refinement step/family literals and keep `guided_flow_state` strict and machine-readable on checkpoint/router surfaces |
+| `server/adapters/mcp/contracts/guided_flow.py` | Public guided-flow contract | Add any new creature refinement step literals while keeping the existing guided family vocabulary strict and machine-readable on checkpoint/router surfaces |
 | `server/adapters/mcp/areas/reference.py` | Checkpoint assembly | Include creature gate status, missing visual roles, seam/profile blockers, existing `reference_understanding_summary` / `reference_orchestrator_feedback` linkage, and the current `refinement_route` / `refinement_handoff` surfaces instead of inventing a second refinement planner |
 | `server/adapters/mcp/areas/reference_truth.py` | Truth bundle and follow-up assembly | Keep creature seam/profile failures aligned with the staged truth/follow-up payloads that already feed checkpoint decisions |
 | `server/adapters/mcp/session_capabilities.py` | Stable facade | Keep the public session-capability API stable while new creature state/gate fields route through the split session-capability modules below |

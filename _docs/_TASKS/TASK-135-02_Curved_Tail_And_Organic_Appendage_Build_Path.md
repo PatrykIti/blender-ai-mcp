@@ -44,14 +44,18 @@ front/side reference proportions are partially followed.
 | `server/domain/tools/macro.py` | Extend the macro interface only if a promoted `macro_build_curved_tail_chain` is unavoidable on the existing public macro surface |
 | `server/application/tool_handlers/macro_handler.py` | Extend only if a new `macro_build_curved_tail_chain` becomes necessary |
 | `server/adapters/mcp/dispatcher.py` | Register a promoted tail-chain macro only if it becomes a real public macro on the current scene/macro surface |
+| `server/adapters/mcp/transforms/visibility_policy.py` | Keep any promoted tail-chain macro visible only through the guided tool sets that already gate mutators by phase and blocker state |
+| `server/adapters/mcp/router_helper.py` | Map any promoted tail-chain macro into guided family enforcement so `llm-guided` does not hard-block it as an unmapped mutator |
 | `server/adapters/mcp/discovery/search_documents.py` and `server/adapters/mcp/discovery/search_surface.py` | Add search cues for curved/bushy/arched appendage chains on the live discovery surface |
 | `server/router/infrastructure/tools_metadata/` | Add metadata linking tail profile gates to arc and attachment macros |
 | `server/adapters/mcp/prompts/prompt_catalog.py`, `server/adapters/mcp/prompts/provider.py`, and `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md` | Teach multi-segment tail creation before arc adjustment on the current prompt-asset surface |
 | `tests/unit/adapters/mcp/test_contract_payload_parity.py` | Keep staged checkpoint payload wording aligned if curved-tail blockers surface on compare/iterate envelopes |
+| `tests/unit/adapters/mcp/test_visibility_policy.py` | Keep guided visibility and blocker-driven tool exposure aligned if a tail-chain macro becomes part of the guided surface |
 | `tests/unit/adapters/mcp/test_guided_mode.py` and `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py` | Keep guided search/visibility exposure aligned if curved-tail guidance becomes client-visible on the default guided surface |
 | `tests/unit/adapters/mcp/test_public_surface_docs.py` | Keep public checkpoint and macro docs aligned if this leaf changes the client-visible contract |
 | `tests/unit/tools/macro/test_macro_adjust_segment_chain_arc.py` | Add appendage-chain arc cases |
 | `tests/unit/tools/scene/test_macro_adjust_segment_chain_arc_mcp.py` | Add MCP structured contract cases |
+| `tests/e2e/integration/test_guided_surface_contract_parity.py` | Prove that any guided-surface macro exposure actually appears on the live stdio surface and is not hidden or hard-blocked |
 | `tests/e2e/tools/macro/test_macro_adjust_segment_chain_arc.py` | Add Blender-backed tail-chain arc case |
 | `tests/e2e/vision/` | Add squirrel-tail profile gate scenario |
 | `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md` | Document tail chain and arc gate flow |
@@ -84,9 +88,11 @@ front/side reference proportions are partially followed.
   `server/domain/tools/macro.py`,
   `server/application/tool_handlers/macro_handler.py`,
   `server/adapters/mcp/areas/scene.py`,
-  `server/adapters/mcp/dispatcher.py`, router metadata, tests, and docs. Only
-  extend DI or addon handlers if the macro cannot be composed from the current
-  server-side modeling/scene RPC path.
+  `server/adapters/mcp/dispatcher.py`,
+  `server/adapters/mcp/transforms/visibility_policy.py`, and guided execution
+  enforcement in `server/adapters/mcp/router_helper.py`, plus router metadata,
+  tests, and docs. Only extend DI or addon handlers if the macro cannot be
+  composed from the current server-side modeling/scene RPC path.
 - Keep the first version low-poly and object-based; do not require rigging,
   sculpt, or a heavy curve system for the baseline.
 - Before `TASK-135-03-01` lands, keep this work on the current
@@ -187,9 +193,17 @@ if creature_profile.tail_shape in {"curved", "bushy", "arched"}:
 ## Docs To Update
 
 - `README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
+- `_docs/_PROMPTS/README.md`
+- `_docs/_PROMPTS/GUIDED_SESSION_START.md`
+- `_docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md`
+- `_docs/_PROMPTS/MANUAL_TOOLS_NO_ROUTER.md`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `_docs/_VISION/README.md`
+- relevant `_docs/_VISION/*` creature and refinement docs enforced by
+  `test_public_surface_docs.py` when public guided-surface wording changes
 - `_docs/_CHANGELOG/README.md`
 - `_docs/_TESTS/README.md`
 
@@ -201,9 +215,9 @@ if creature_profile.tail_shape in {"curved", "bushy", "arched"}:
 
 - `git diff --check`
 - `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/tools/macro/test_macro_adjust_segment_chain_arc.py tests/unit/tools/scene/test_macro_adjust_segment_chain_arc_mcp.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/tools/macro/test_macro_adjust_segment_chain_arc.py tests/unit/tools/scene/test_macro_adjust_segment_chain_arc_mcp.py -q`
 - `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/tools/macro/test_macro_adjust_segment_chain_arc.py tests/e2e/vision/test_goal_derived_gate_creature_completion.py tests/e2e/vision/test_reference_stage_truth_handoff.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py tests/e2e/tools/macro/test_macro_adjust_segment_chain_arc.py tests/e2e/vision/test_goal_derived_gate_creature_completion.py tests/e2e/vision/test_reference_stage_truth_handoff.py -q`
 - `Outside sandbox before closeout: PYTHONPATH=. poetry run pytest ./tests/unit`
 - `Outside sandbox for Blender-backed runtime proof: poetry run python scripts/run_e2e_tests.py`
 

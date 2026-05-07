@@ -53,7 +53,7 @@ of creating a second refinement recommendation path.
 | Path / Module | Expected Change |
 |---------------|-----------------|
 | `server/adapters/mcp/session_capabilities.py` | Keep the public session-capability facade stable while refinement-stage state routes through the split modules below |
-| `server/adapters/mcp/contracts/guided_flow.py` | Add the explicit refinement step/family literals and keep `guided_flow_state` strict on public router/reference payloads |
+| `server/adapters/mcp/contracts/guided_flow.py` | Add the explicit refinement step literal and keep the existing guided family vocabulary strict on public router/reference payloads |
 | `server/adapters/mcp/session_capabilities_registry.py` | Advance into and out of the refinement step from role registration and checkpoint outcomes on the current split guided runtime |
 | `server/adapters/mcp/session_capabilities_state.py` | Persist the updated guided flow state, gate plan, and stale markers for the refinement step in the canonical session state |
 | `server/adapters/mcp/session_capabilities_flow.py` | Extend creature step sequencing and role-group policy for the refinement stage |
@@ -218,9 +218,18 @@ if current_step == "refine_low_poly_forms":
 ## Docs To Update
 
 - `README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
+- `_docs/_PROMPTS/README.md`
+- `_docs/_PROMPTS/GUIDED_SESSION_START.md`
+- `_docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md`
+- `_docs/_PROMPTS/MANUAL_TOOLS_NO_ROUTER.md`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `_docs/_VISION/README.md`
+- relevant `_docs/_VISION/*` creature and refinement docs enforced by
+  `test_public_surface_docs.py` when the explicit refinement stage changes
+  guided-surface wording
 - `_docs/_CHANGELOG/README.md`
 - `_docs/_TESTS/README.md`
 

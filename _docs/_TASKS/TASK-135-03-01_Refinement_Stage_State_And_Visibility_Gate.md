@@ -14,8 +14,9 @@
   modules
 - add one explicit creature refinement step such as `refine_low_poly_forms`
   rather than overloading `place_secondary_parts` or `finish_or_stop`
-- update `GuidedFlowStepLiteral` / `GuidedFlowFamilyLiteral` in
-  `server/adapters/mcp/contracts/guided_flow.py` together with the real step
+- update `GuidedFlowStepLiteral` in
+  `server/adapters/mcp/contracts/guided_flow.py` while keeping the current
+  `GuidedFlowFamilyLiteral` vocabulary intact, then wire the real step
   advancement paths in
   `server/adapters/mcp/session_capabilities_registry.py`, especially
   `_maybe_advance_guided_flow_from_part_registry_dict(...)` and the

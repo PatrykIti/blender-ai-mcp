@@ -57,8 +57,8 @@ all tool calls return structured results.
 | `server/application/services/spatial_graph.py` | Map required creature seams to attachment/support gate evidence |
 | `server/adapters/mcp/discovery/search_surface.py` | Bias missing-detail and seam blockers toward bounded repair/build tools on the live search surface |
 | `server/router/infrastructure/tools_metadata/` | Add creature completion and visual-detail search hints |
-| `tests/unit/adapters/mcp/` | Add contract, checkpoint, visibility, and guided state tests |
-| `tests/unit/tools/scene/` | Add seam verifier and macro evidence tests |
+| `tests/unit/adapters/mcp/` | Add contract, checkpoint, visibility, guided state, and gate-verifier tests, especially `test_quality_gate_verifier.py` for completion-blocking seam behavior |
+| `tests/unit/tools/scene/` | Add only upstream spatial-graph or macro-evidence coverage when relation evidence generation itself changes |
 | `tests/e2e/vision/` | Add primitive-only squirrel completion-blocking E2E |
 | `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md` | Document required visual roles and no-floating-gap completion rule |
 | `_docs/_MCP_SERVER/README.md` | Document creature completion gate semantics |
@@ -171,9 +171,17 @@ return maybe_complete()
 ## Docs To Update
 
 - `README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
+- `_docs/_PROMPTS/README.md`
+- `_docs/_PROMPTS/GUIDED_SESSION_START.md`
+- `_docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md`
+- `_docs/_PROMPTS/MANUAL_TOOLS_NO_ROUTER.md`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `_docs/_VISION/README.md`
+- relevant `_docs/_VISION/*` creature and refinement docs enforced by
+  `test_public_surface_docs.py` when completion or blocker wording changes
 - `_docs/_CHANGELOG/README.md`
 - `_docs/_TESTS/README.md`
 
