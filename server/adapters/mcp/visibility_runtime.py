@@ -17,6 +17,7 @@ from fastmcp.server.middleware import Middleware, MiddlewareContext
 from fastmcp.tools.tool import Tool
 
 from server.adapters.mcp.session_capabilities import get_session_capability_state_async
+from server.adapters.mcp.transforms.visibility_policy import GUIDED_DISCOVERY_TOOLS
 
 logger = logging.getLogger(__name__)
 
@@ -186,18 +187,18 @@ async def audit_list_tools_snapshot(
     tracker.last_observed_tool_names = tool_names
 
     state = await get_session_capability_state_async(ctx)
-    from server.adapters.mcp.guided_mode import build_visibility_diagnostics
-
-    diagnostics = build_visibility_diagnostics(
-        state.surface_profile or "legacy-flat",
-        state.phase,
-        guided_handoff=state.guided_handoff,
-        guided_flow_state=state.guided_flow_state,
-        gate_plan=state.gate_plan,
+    surface_profile = (
+        getattr(state, "surface_profile", None) or getattr(ctx.fastmcp, "_bam_surface_profile", None) or "legacy-flat"
     )
+    contract_line = getattr(state, "contract_version", None) or getattr(ctx.fastmcp, "_bam_contract_line", None)
+    prompts_as_tools_enabled = bool(getattr(ctx.fastmcp, "_bam_prompts_as_tools_enabled", False))
     expected_tool_names = _expected_audit_tool_names(
-        state=state, visible_runtime_tool_names=diagnostics.visible_tool_names
+        surface_profile=surface_profile,
+        contract_line=contract_line,
+        prompts_as_tools_enabled=prompts_as_tools_enabled,
     )
+    if not expected_tool_names:
+        return
     missing = sorted(set(expected_tool_names).difference(tool_names))
     unexpected = sorted(set(tool_names).difference(expected_tool_names))
     if missing or unexpected:
@@ -205,7 +206,7 @@ async def audit_list_tools_snapshot(
             "[VISIBILITY_AUDIT] session=%s source=%s phase=%s step=%s observed_tool_count=%d expected_tool_count=%d missing=%s unexpected=%s",
             session_id,
             source,
-            diagnostics.phase,
+            getattr(state, "phase", None) or "-",
             str(state.guided_flow_state.get("current_step")) if isinstance(state.guided_flow_state, dict) else "-",
             len(tool_names),
             len(expected_tool_names),
@@ -229,32 +230,23 @@ async def audit_list_tools_snapshot(
 
 def _expected_audit_tool_names(
     *,
-    state: Any,
-    visible_runtime_tool_names: Sequence[str],
+    surface_profile: str,
+    contract_line: str | None,
+    prompts_as_tools_enabled: bool,
 ) -> tuple[str, ...]:
-    """Translate visibility expectations into the public shaped surface names."""
+    """Return the stable shaped public surface expected from `tools/list()`."""
 
-    from server.adapters.mcp.discovery.tool_inventory import build_discovery_entry_map
-    from server.adapters.mcp.surfaces import get_surface_profile
-    from server.infrastructure.config import get_config
+    if surface_profile != "llm-guided":
+        return ()
 
-    visible_runtime_tool_set = {str(name).strip() for name in visible_runtime_tool_names if str(name).strip()}
-    surface = get_surface_profile(state.surface_profile or "legacy-flat")
-    contract_line = state.contract_version or surface.default_contract_line
-    entry_map = build_discovery_entry_map(contract_line=contract_line)
+    from server.adapters.mcp.discovery.tool_inventory import get_pinned_public_tools
 
     public_visible_names = {
-        entry.public_name for entry in entry_map.values() if entry.internal_name in visible_runtime_tool_set
+        *get_pinned_public_tools(contract_line=contract_line),
+        *GUIDED_DISCOVERY_TOOLS,
     }
-    public_visible_names.update(
-        name for name in visible_runtime_tool_set if name not in {entry.internal_name for entry in entry_map.values()}
-    )
-
-    if surface.search_enabled:
-        public_visible_names.update({"search_tools", "call_tool"})
-        if get_config().MCP_PROMPTS_AS_TOOLS_ENABLED:
-            public_visible_names.update({"list_prompts", "get_prompt"})
-
+    if prompts_as_tools_enabled:
+        public_visible_names.update({"list_prompts", "get_prompt"})
     return tuple(sorted(public_visible_names))
 
 

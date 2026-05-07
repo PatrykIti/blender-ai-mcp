@@ -7,12 +7,12 @@ import logging
 from types import SimpleNamespace
 
 import pytest
-import server.adapters.mcp.guided_mode as guided_mode_module
 import server.adapters.mcp.visibility_runtime as visibility_runtime_module
 from fastmcp.tools.tool import Tool
 from server.adapters.mcp.discovery.search_surface import BlenderDiscoverySearchTransform
 from server.adapters.mcp.visibility_runtime import (
     SessionVisibilityAuditMiddleware,
+    _expected_audit_tool_names,
     audit_list_tools_snapshot,
     run_visibility_transaction,
 )
@@ -21,10 +21,33 @@ from server.adapters.mcp.visibility_runtime import (
 class _FakeContext:
     def __init__(self, session_id: str = "session-1"):
         self.session_id = session_id
+        self.fastmcp = SimpleNamespace(
+            _bam_surface_profile="llm-guided",
+            _bam_contract_line="llm-guided-v2",
+            _bam_prompts_as_tools_enabled=False,
+        )
 
 
 def _tool(name: str) -> Tool:
     return Tool.from_function(lambda: "ok", name=name)
+
+
+def test_expected_audit_tool_names_matches_shaped_guided_surface():
+    assert _expected_audit_tool_names(
+        surface_profile="llm-guided",
+        contract_line="llm-guided-v2",
+        prompts_as_tools_enabled=False,
+    ) == (
+        "browse_workflows",
+        "call_tool",
+        "reference_images",
+        "router_get_status",
+        "router_set_goal",
+        "scene_relation_graph",
+        "scene_scope_graph",
+        "scene_view_diagnostics",
+        "search_tools",
+    )
 
 
 def test_list_tools_middleware_waits_for_inflight_visibility_transaction():
@@ -212,14 +235,6 @@ def test_audit_list_tools_snapshot_logs_visibility_mismatch(monkeypatch, caplog)
 
     monkeypatch.setattr(visibility_runtime_module, "get_session_capability_state_async", fake_state)
     monkeypatch.setattr(
-        guided_mode_module,
-        "build_visibility_diagnostics",
-        lambda *args, **kwargs: SimpleNamespace(
-            visible_tool_names=("call_tool", "scene_relation_graph"),
-            phase="build",
-        ),
-    )
-    monkeypatch.setattr(
         visibility_runtime_module,
         "_expected_audit_tool_names",
         lambda **kwargs: ("call_tool", "scene_relation_graph"),
@@ -253,30 +268,17 @@ def test_audit_list_tools_snapshot_accepts_shaped_public_names(monkeypatch, capl
         )
 
     monkeypatch.setattr(visibility_runtime_module, "get_session_capability_state_async", fake_state)
+    ctx.fastmcp._bam_prompts_as_tools_enabled = True
     monkeypatch.setattr(
-        guided_mode_module,
-        "build_visibility_diagnostics",
-        lambda *args, **kwargs: SimpleNamespace(
-            visible_tool_names=("scene_relation_graph",),
-            phase="build",
+        visibility_runtime_module,
+        "_expected_audit_tool_names",
+        lambda **kwargs: (
+            "scene_relation_graph",
+            "search_tools",
+            "call_tool",
+            "list_prompts",
+            "get_prompt",
         ),
-    )
-    monkeypatch.setattr(
-        "server.adapters.mcp.discovery.tool_inventory.build_discovery_entry_map",
-        lambda **kwargs: {
-            "scene_relation_graph": SimpleNamespace(
-                internal_name="scene_relation_graph",
-                public_name="scene_relation_graph",
-            )
-        },
-    )
-    monkeypatch.setattr(
-        "server.adapters.mcp.surfaces.get_surface_profile",
-        lambda _surface_profile: SimpleNamespace(search_enabled=True, default_contract_line="llm-guided-v2"),
-    )
-    monkeypatch.setattr(
-        "server.infrastructure.config.get_config",
-        lambda: SimpleNamespace(MCP_PROMPTS_AS_TOOLS_ENABLED=True),
     )
 
     async def run() -> None:
