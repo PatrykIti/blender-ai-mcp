@@ -53,6 +53,8 @@ The repo already has the foundations this umbrella should build on:
 - typed `guided_handoff` and guided visibility shaping
 - staged `reference_compare_*` and `reference_iterate_stage_checkpoint(...)`
   loops
+- deterministic `refinement_route` and recommendation-only
+  `refinement_handoff` on the staged checkpoint surface from `TASK-145`
 - bounded modeling, mesh, inspection, measure/assert, and correction macros
 - the `TASK-128` direction for creature-oriented prompting, silhouette metrics,
   and optional part-aware perception
@@ -284,7 +286,9 @@ This umbrella does **not** cover:
 - `server/adapters/mcp/prompts/provider.py`
 - `server/adapters/mcp/prompts/rendering.py`
 - `server/adapters/mcp/guided_mode.py`
+- `server/adapters/mcp/contracts/guided_flow.py`
 - `server/adapters/mcp/session_capabilities.py`
+- `server/adapters/mcp/session_capabilities_registry.py`
 - `server/adapters/mcp/session_capabilities_state.py`
 - `server/adapters/mcp/session_capabilities_flow.py`
 - `server/adapters/mcp/session_capabilities_runtime_glue.py`
@@ -295,13 +299,13 @@ This umbrella does **not** cover:
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/areas/reference.py`
 - `server/adapters/mcp/areas/reference_truth.py`
-- `server/adapters/mcp/areas/reference_understanding.py`
-- `server/adapters/mcp/vision/`
 - `server/router/infrastructure/tools_metadata/`
-- future reconstruction-oriented MCP/tool surfacing under `server/adapters/mcp/`
-- `server/domain/tools/` and `server/application/tool_handlers/` if a new
-  bounded reconstruction-facing surface is introduced
-- `blender_addon/application/handlers/` if addon-side support becomes necessary
+- `server/domain/tools/macro.py` and
+  `server/application/tool_handlers/macro_handler.py` only if a later leaf
+  proves the current bounded macro/modeling surface is insufficient
+- `server/adapters/mcp/dispatcher.py`, `server/infrastructure/di.py`, and
+  `blender_addon/application/handlers/` only if a later promoted macro cannot
+  be composed from the existing modeling/scene RPC path
 - `tests/unit/adapters/mcp/`
 - `tests/unit/tools/scene/`
 - `tests/e2e/integration/`
@@ -313,15 +317,24 @@ This umbrella does **not** cover:
 - `_docs/_TESTS/README.md`
 - `_docs/_TASKS/README.md`
 
+Closed `TASK-163` reference-understanding and optional support-evidence seams
+remain upstream inputs for this umbrella. Consume their already-shipped linkage
+through `reference.py`, gate contracts, and session state. Do not treat
+`server/adapters/mcp/areas/reference_understanding.py` or
+`server/adapters/mcp/vision/` as direct edit owners under `TASK-135` unless a
+separate follow-on explicitly reopens those closed surfaces.
+
 ## Repository Touchpoint Table
 
 | Path / Module | Scope | Expected Work |
 |---------------|-------|---------------|
-| `server/adapters/mcp/contracts/reference.py` | Reference loop contracts | Add creature gate summaries and completion blockers using the closed `TASK-157` contracts, and consume the already-shipped bounded reference-understanding linkage from the closed `TASK-163` seams |
+| `server/adapters/mcp/contracts/reference.py` | Reference loop contracts | Reuse the existing `TASK-157` gate-summary, completion-blocker, and `TASK-163` linkage fields for creature-specific semantics instead of inventing new checkpoint envelopes |
 | `server/adapters/mcp/contracts/quality_gates.py` | Generic dependency | Consume normalized gate types for creature-specific templates |
-| `server/adapters/mcp/areas/reference.py` | Checkpoint assembly | Include creature gate status, missing visual roles, seam/profile blockers, and existing `reference_understanding_summary` / `reference_orchestrator_feedback` linkage only through the current reference/checkpoint surface |
+| `server/adapters/mcp/contracts/guided_flow.py` | Public guided-flow contract | Add any new creature refinement step/family literals and keep `guided_flow_state` strict and machine-readable on checkpoint/router surfaces |
+| `server/adapters/mcp/areas/reference.py` | Checkpoint assembly | Include creature gate status, missing visual roles, seam/profile blockers, existing `reference_understanding_summary` / `reference_orchestrator_feedback` linkage, and the current `refinement_route` / `refinement_handoff` surfaces instead of inventing a second refinement planner |
 | `server/adapters/mcp/areas/reference_truth.py` | Truth bundle and follow-up assembly | Keep creature seam/profile failures aligned with the staged truth/follow-up payloads that already feed checkpoint decisions |
 | `server/adapters/mcp/session_capabilities.py` | Stable facade | Keep the public session-capability API stable while new creature state/gate fields route through the split session-capability modules below |
+| `server/adapters/mcp/session_capabilities_registry.py` | Guided step advancement | Advance creature steps from part-registration and checkpoint outcomes once a refinement stage becomes explicit, while keeping the public facade stable |
 | `server/adapters/mcp/session_capabilities_state.py` | Session state model | Persist creature gate plan, role cardinality, stale gate versions, and next gate actions in the canonical session state |
 | `server/adapters/mcp/session_capabilities_flow.py` | Guided step/domain policy | Extend creature step progression and role-group expectations for reconstruction-oriented flow stages |
 | `server/adapters/mcp/session_capabilities_runtime_glue.py` | Gate projection and stale marking | Apply gate-plan updates, guided-state refresh, and visibility sync on the runtime path |
@@ -364,11 +377,13 @@ This umbrella does **not** cover:
 
 ## Docs To Update
 
+- `README.md`
 - `_docs/_PROMPTS/README.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `_docs/_CHANGELOG/README.md`
 - `_docs/_TESTS/README.md`
 - `_docs/_TASKS/README.md`
 
@@ -388,18 +403,36 @@ This umbrella does **not** cover:
 
 ## Runtime / Security Contract Notes
 
-- consume the existing `reference_images(...)`, `router_*`, and staged
-  checkpoint surfaces; do not propose a new public creature-only MCP tool
-- keep `reference_understanding`, `classification_scores`, silhouette metrics,
-  and segmentation artifacts advisory-only; gate pass/fail authority remains on
-  the `TASK-157` verifier path
-- preserve the current `guided_flow_state` / `active_gate_plan` / session-state
-  contracts instead of inventing a second creature-only state model
-- any new macro/profile surface must stay bounded, step-gated, and aligned with
-  existing visibility/search policy instead of broadening sculpt or free-form
-  modeling by default
-- keep medical/clinical claims out of this family; creature reconstruction is
-  low-poly, reference-guided, and visualization-oriented only
+- Visibility level: extend the existing public `reference_images(...)`,
+  `reference_compare_stage_checkpoint(...)`,
+  `reference_iterate_stage_checkpoint(...)`, and public scene/modeling/mesh/macro
+  surfaces. Any new macro stays on the current public scene-macro surface and
+  remains step-gated or hidden until the active creature gate requires it.
+- Read-only vs mutating behavior: gate plans, blocker summaries,
+  `guided_flow_state`, `refinement_route`, and visibility/search shaping are
+  server/session-state outputs. Existing modeling, mesh, scene, and macro tools
+  remain the only mutating Blender paths and must mark affected gate or spatial
+  evidence stale instead of silently preserving old pass states.
+- Mode and selection impact: reconstruction repairs must preserve or explicitly
+  re-establish expected object/edit mode and selection state through the
+  existing guided/runtime helpers. This family must not strand sessions in
+  unexpected edit or sculpt mode after a bounded repair.
+- Session and auth assumptions: guided flow, gate plans, and recommended tools
+  stay scoped to the active stdio or Streamable HTTP session. Local Blender RPC
+  remains the only trusted mutating backend and must not leak state across
+  sessions.
+- Parameter validation and compatibility: guided-flow step names, gate types,
+  recommended tool ids, and any new macro arguments use strict typed contracts
+  with reject-unknown behavior. Compatibility shims, if ever needed, stay
+  explicit in the owning contract layer.
+- Side effects, recovery, and logging: when evidence is stale, insufficient, or
+  conflicting, the runtime must return blockers, `inspect_validate`, or other
+  gated next actions instead of silent completion. Provider keys, local paths,
+  and raw vision debug payloads stay redacted from client-facing logs and
+  evidence refs.
+- Domain scope guardrail: keep medical or clinical claims out of this family.
+  Creature reconstruction stays low-poly, reference-guided, and
+  visualization-oriented only.
 
 ## Changelog Impact
 

@@ -44,12 +44,14 @@ all tool calls return structured results.
 
 | Path / Module | Expected Change |
 |---------------|-----------------|
-| `server/adapters/mcp/contracts/reference.py` | Add creature completion blockers and gate summary fields to checkpoint payloads |
+| `server/adapters/mcp/contracts/reference.py` | Reuse the existing checkpoint gate-summary and completion-blocker fields for creature-specific blocker semantics |
 | `server/adapters/mcp/contracts/quality_gates.py` | Reuse generic gate status and blocker contracts from `TASK-157` |
 | `server/adapters/mcp/areas/reference.py` | Refuse final completion when required creature gates are missing/failed/stale on the staged checkpoint surface |
 | `server/adapters/mcp/areas/reference_truth.py` | Keep required creature seams and completion blockers aligned with staged truth/follow-up payloads |
 | `server/adapters/mcp/transforms/quality_gate_verifier.py` | Enforce verifier-owned completion and seam pass/fail semantics |
 | `server/adapters/mcp/session_capabilities.py` | Keep the public session-capability facade stable while creature gate state routes through the split modules below |
+| `server/adapters/mcp/session_capabilities_flow.py` | Keep the existing creature guided-role vocabulary and pair cardinality aligned when gate-only detail blockers reference the same semantic body parts |
+| `server/adapters/mcp/session_capabilities_registry.py` | Keep part-registration and flow-advance behavior aligned with any creature gate summary that depends on the current guided role model |
 | `server/adapters/mcp/session_capabilities_state.py` | Persist creature required visual roles, role counts, and stale gate versions |
 | `server/adapters/mcp/session_capabilities_runtime_glue.py` | Project updated gate status and stale marking back into session state and visibility |
 | `server/application/services/spatial_graph.py` | Map required creature seams to attachment/support gate evidence |
@@ -77,6 +79,12 @@ all tool calls return structured results.
   - `hindleg_pair`
 - Keep role cardinality explicit for paired details such as eyes, ears,
   forelegs, and hindlegs.
+- Keep the live owner split explicit:
+  - existing creature guided-flow cardinality stays owned by
+    `server/adapters/mcp/session_capabilities_flow.py` and
+    `server/adapters/mcp/session_capabilities_registry.py`
+  - `eye_pair` remains gate-only in this slice unless a separate follow-on
+    explicitly promotes it into the guided role vocabulary
 - Do not allow final completion when required seams still report
   `floating_gap`, especially:
   - head/body
@@ -124,14 +132,29 @@ return maybe_complete()
 
 ## Runtime / Security Contract Notes
 
-- keep gate pass/fail authority on the existing `TASK-157` verifier path
-- consume the already-shipped staged reference/checkpoint surfaces instead of
-  inventing a creature-only completion tool
-- use current `reference_understanding_summary` / `reference_orchestrator_feedback`
-  linkage from the closed `TASK-163` seams as support evidence only; those
-  fields must not pass gates by themselves
-- preserve the current bounded distinction between embedded organic seams and
-  true blocking `floating_gap` failures
+- Visibility level: extend the existing public staged reference/checkpoint
+  surfaces and current public repair/build tools; do not add a creature-only
+  completion surface.
+- Read-only vs mutating behavior: checkpoint payload fields, gate blockers, and
+  completion summaries are read-only server/session-state outputs. Existing
+  modeling, mesh, scene, and macro repairs remain the only mutating Blender
+  paths and must mark attachment or final-completion evidence stale after a
+  scene change.
+- Mode and selection impact: attach or cleanup repairs that clear completion
+  blockers must preserve or explicitly restore expected object/edit mode and
+  active selection through the current guided runtime helpers.
+- Session and auth assumptions: creature completion blockers stay scoped to the
+  active stdio or Streamable HTTP session, with local Blender RPC as the only
+  trusted mutating backend.
+- Parameter validation and compatibility: gate blockers, required-role labels,
+  and any new checkpoint fields use strict typed contracts with reject-unknown
+  behavior. Any compatibility shim for older payloads must stay explicit in the
+  owning contract layer.
+- Side effects, recovery, and logging: keep gate pass/fail authority on the
+  existing `TASK-157` verifier path. `reference_understanding_summary` and
+  `reference_orchestrator_feedback` stay support-only. If evidence is stale or
+  a seam still floats, fail closed to blockers or `inspect_validate` instead of
+  prose completion, and keep provider keys or local paths out of logs.
 
 ## Tests To Add/Update
 
@@ -147,9 +170,11 @@ return maybe_complete()
 
 ## Docs To Update
 
+- `README.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `_docs/_CHANGELOG/README.md`
 - `_docs/_TESTS/README.md`
 
 ## Changelog Impact
@@ -162,6 +187,8 @@ return maybe_complete()
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
 - `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_goal_derived_gate_creature_completion.py tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py -q`
+- `Outside sandbox before closeout: PYTHONPATH=. poetry run pytest ./tests/unit`
+- `Outside sandbox for Blender-backed runtime proof: poetry run python scripts/run_e2e_tests.py`
 
 ## Acceptance Criteria
 

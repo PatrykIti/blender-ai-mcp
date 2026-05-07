@@ -43,16 +43,24 @@ mesh tools entirely.
 This file is now a technical subtask and decomposition anchor. Do not execute
 it as one oversized leaf; use the dedicated `TASK-135-03-*` leaves below.
 
+The staged checkpoint loop already emits `refinement_route` and
+`refinement_handoff` from `TASK-145`. This subtask must wire an explicit
+creature refinement step into that existing planner/checkpoint baseline instead
+of creating a second refinement recommendation path.
+
 ## Repository Touchpoints
 
 | Path / Module | Expected Change |
 |---------------|-----------------|
 | `server/adapters/mcp/session_capabilities.py` | Keep the public session-capability facade stable while refinement-stage state routes through the split modules below |
-| `server/adapters/mcp/session_capabilities_state.py` | Add `refine_low_poly_forms` gate/step state and stale tracking to the canonical session state |
+| `server/adapters/mcp/contracts/guided_flow.py` | Add the explicit refinement step/family literals and keep `guided_flow_state` strict on public router/reference payloads |
+| `server/adapters/mcp/session_capabilities_registry.py` | Advance into and out of the refinement step from role registration and checkpoint outcomes on the current split guided runtime |
+| `server/adapters/mcp/session_capabilities_state.py` | Persist the updated guided flow state, gate plan, and stale markers for the refinement step in the canonical session state |
 | `server/adapters/mcp/session_capabilities_flow.py` | Extend creature step sequencing and role-group policy for the refinement stage |
 | `server/adapters/mcp/session_capabilities_runtime_glue.py` | Keep gate-plan refresh, stale marking, and visibility sync aligned with the new refinement stage |
 | `server/adapters/mcp/transforms/visibility_policy.py` | Open bounded mesh/modeling tools only when refinement prerequisites pass |
 | `server/adapters/mcp/discovery/search_documents.py` and `server/adapters/mcp/discovery/search_surface.py` | Add low-poly profile/refinement search cues on the live discovery surface |
+| `server/adapters/mcp/areas/reference.py` | Reuse the existing `refinement_route` / `refinement_handoff` checkpoint surfaces when the explicit refinement step becomes active |
 | `server/adapters/mcp/areas/mesh.py` | Ensure selected mesh tools work in the guided refinement window |
 | `server/adapters/mcp/areas/modeling.py` | Keep bounded transforms available for part profiling |
 | `server/adapters/mcp/areas/scene.py` | Add or expose profile macros if needed |
@@ -63,6 +71,8 @@ it as one oversized leaf; use the dedicated `TASK-135-03-*` leaves below.
 | `tests/unit/adapters/mcp/` | Visibility, checkpoint, gate prerequisite tests |
 | `tests/unit/tools/macro/` | Profile macro tests if macros are introduced |
 | `tests/e2e/tools/mesh/` | Blender-backed mesh refinement tests |
+| `tests/unit/adapters/mcp/test_reference_images.py` | Keep low-poly refinement-family routing aligned with the checkpoint planner surfaces |
+| `tests/e2e/vision/test_reference_stage_truth_handoff.py` | Prove the staged refinement route/handoff stays aligned with the explicit refinement step |
 | `tests/e2e/vision/` | Primitive-only creature cannot complete before refinement gate |
 | `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md` | Document refinement window and completion blockers |
 | `_docs/_MCP_SERVER/README.md` | Document gated mesh visibility and profile gate semantics |
@@ -84,6 +94,18 @@ it as one oversized leaf; use the dedicated `TASK-135-03-*` leaves below.
 - Prefer reusable bounded macros only when repeated primitive-to-form
   refinement cannot be expressed safely enough with the bounded mesh/modeling
   window.
+- Extend the existing `refinement_route` / `refinement_handoff` baseline from
+  `TASK-145` and the current checkpoint assembler in
+  `server/adapters/mcp/areas/reference.py`; do not build a second refinement
+  planner beside those shipped surfaces.
+- Keep the two vocabularies separate:
+  - `guided_flow_state.allowed_families` stays on the current
+    `GuidedFlowFamilyLiteral` values from
+    `server/adapters/mcp/contracts/guided_flow.py`
+  - planner-facing families such as `macro`, `modeling_mesh`, or
+    `sculpt_region` stay on the checkpoint-local `refinement_route` /
+    `reference_strategy_state` contracts from
+    `server/adapters/mcp/contracts/reference.py`
 - Treat candidate names such as `macro_refine_creature_part_profile`,
   `macro_point_creature_ears`, `macro_flatten_limb_contact_patch`, and
   `macro_add_creature_eye_pair` as optional follow-ons, not as already-shipped
@@ -118,8 +140,13 @@ if current_step == "place_secondary_parts" and required_roles_complete:
         advance_to("refine_low_poly_forms")
 
 if current_step == "refine_low_poly_forms":
-    allowed_families = ["modeling_mesh", "macro", "reference_context"]
-    allowed_tools = [
+    guided_allowed_families = [
+        "secondary_parts",
+        "attachment_alignment",
+        "reference_context",
+    ]
+    planner_allowed_families = ["modeling_mesh", "macro"]
+    visible_tool_targets = [
         "mesh_select",
         "mesh_select_targeted",
         "mesh_extrude_region",
@@ -141,14 +168,32 @@ if current_step == "refine_low_poly_forms":
 
 ## Runtime / Security Contract Notes
 
-- keep refinement on the existing `guided_flow_state`, `active_gate_plan`,
-  `reference_images(...)`, and staged checkpoint surfaces
-- do not add a new public refinement tool or a second creature-only flow
-- treat `reference_understanding_summary`, `classification_scores`,
+- Visibility level: keep refinement on the existing public `guided_flow_state`,
+  `active_gate_plan`, `reference_images(...)`, and staged checkpoint surfaces.
+  Do not add a new public refinement tool or a second creature-only flow.
+- Read-only vs mutating behavior: refinement-step state, blockers, route, and
+  handoff remain server/session-state outputs. Existing modeling, mesh, scene,
+  and macro tools remain the only mutating Blender paths and must mark affected
+  refinement evidence stale after scene changes.
+- Mode and selection impact: refinement tools may temporarily enter edit mode,
+  but the step must preserve or explicitly restore expected mode and selection
+  through the existing guided runtime helpers before returning.
+- Session and auth assumptions: refinement-step progression stays scoped to the
+  active stdio or Streamable HTTP session, with local Blender RPC as the only
+  trusted mutating backend.
+- Parameter validation and compatibility: new step names, family literals,
+  checkpoint fields, and any profile-macro arguments use strict typed contracts
+  with reject-unknown behavior. Compatibility shims stay explicit in the owning
+  contract layer.
+- Side effects, recovery, and logging: treat
+  `reference_understanding_summary`, `classification_scores`,
   `segmentation_artifacts`, and silhouette signals as support evidence only; the
-  verifier still owns gate pass/fail
-- keep sculpt hidden on the normal refinement stage unless a later bounded
-  `TASK-145` handoff explicitly recommends it
+  verifier still owns gate pass/fail. If prerequisites are stale or unresolved,
+  return blockers or `inspect_validate` rather than a docs-only refinement
+  notion. Keep provider keys, local paths, and raw vision debug payloads out of
+  logs.
+- Sculpt boundary: keep sculpt hidden on the normal refinement stage unless a
+  later bounded `TASK-145` handoff explicitly recommends it.
 
 ## Tests To Add/Update
 
@@ -160,15 +205,18 @@ if current_step == "refine_low_poly_forms":
 | Unit safety | Sculpt remains hidden unless planner emits explicit sculpt handoff |
 | Unit checkpoint | Primitive-only creature reports refinement blockers |
 | Unit evidence refs | `TASK-157` plus the shipped `TASK-163` support refs for shape-profile gates open only bounded profile tools after prerequisites |
+| Unit guided public surface | Guided family summaries, guided-mode visibility, and public surface docs stay aligned with the new refinement step |
 | E2E mesh | A selected part can be profiled through guided mesh tools without losing state |
 | E2E vision | Primitive-only squirrel cannot pass final completion before refinement gate |
 | E2E macro | Any new profile macro has Blender-backed geometry assertions |
 
 ## Docs To Update
 
+- `README.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `_docs/_CHANGELOG/README.md`
 - `_docs/_TESTS/README.md`
 
 ## Changelog Impact
@@ -179,9 +227,11 @@ if current_step == "refine_low_poly_forms":
 ## Validation Commands
 
 - `git diff --check`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
 - `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_goal_derived_gate_creature_completion.py tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_goal_derived_gate_creature_completion.py tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py tests/e2e/vision/test_reference_stage_truth_handoff.py -q`
+- `Outside sandbox before closeout: PYTHONPATH=. poetry run pytest ./tests/unit`
+- `Outside sandbox for Blender-backed runtime proof: poetry run python scripts/run_e2e_tests.py`
 
 ## Acceptance Criteria
 
