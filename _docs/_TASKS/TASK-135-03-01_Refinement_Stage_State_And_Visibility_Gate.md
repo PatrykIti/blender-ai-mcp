@@ -112,8 +112,20 @@ if current_step == "refine_low_poly_forms":
 ## Validation Commands
 
 - `git diff --check`
+- `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_router_elicitation.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
 - `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_truth_handoff.py -q`
 - `Outside sandbox before closeout: PYTHONPATH=. poetry run pytest ./tests/unit`
 - `Outside sandbox for Blender-backed runtime proof: poetry run python scripts/run_e2e_tests.py`
+
+## Status / Board Update
+
+- When this leaf ships, update its task status plus the parent `TASK-135-03`
+  execution structure and note whether the umbrella `TASK-135` sequencing text
+  also changed.
+- Record whether the `pre-commit` lane, owner-lane pytest commands, full unit
+  pass, and full Blender E2E pass ran or were intentionally skipped.
+- If the explicit refinement step still leaves follow-on runtime or visibility
+  work, capture that as a new leaf instead of burying it in the completion
+  summary.

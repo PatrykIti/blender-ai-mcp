@@ -184,11 +184,22 @@ return maybe_complete()
 ## Validation Commands
 
 - `git diff --check`
+- `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
 - `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_goal_derived_gate_creature_completion.py tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py -q`
 - `Outside sandbox before closeout: PYTHONPATH=. poetry run pytest ./tests/unit`
 - `Outside sandbox for Blender-backed runtime proof: poetry run python scripts/run_e2e_tests.py`
+
+## Status / Board Update
+
+- When this direct child ships, update its task status, refresh the parent
+  `TASK-135` execution notes if the remaining slices changed, and record whether
+  `_docs/_TASKS/README.md` board wording also changed.
+- Record whether the `pre-commit` lane, owner-lane pytest commands, full unit
+  pass, and full Blender E2E pass ran or were intentionally skipped.
+- If follow-on work remains, keep it as a new explicit task or child leaf rather
+  than leaving the closeout ambiguous in the status field.
 
 ## Acceptance Criteria
 
