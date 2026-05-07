@@ -5,7 +5,7 @@
 **Parent:** [TASK-136](./TASK-136_Reference_Guided_Architecture_And_Building_Reconstruction.md)
 **Depends On:** [TASK-136-01](./TASK-136-01_Building_Contract_Vocabulary_And_Gate_Templates.md)
 **Objective:** Extend the shipped `building` guided/runtime path with architecture-specific prompt assets, guided-state sequencing, visibility/search shaping, and bounded scene/modeling/mesh surfaces for reconstruction-oriented building work.
-**Repository Touchpoints:** `server/adapters/mcp/prompts/prompt_catalog.py`, `server/adapters/mcp/prompts/provider.py`, `server/adapters/mcp/prompts/rendering.py`, `server/adapters/mcp/contracts/guided_flow.py`, `server/adapters/mcp/contracts/router.py`, `server/adapters/mcp/guided_mode.py`, `server/adapters/mcp/session_capabilities.py`, `server/adapters/mcp/session_capabilities_bootstrap.py`, `server/adapters/mcp/session_capabilities_registry.py`, `server/adapters/mcp/session_capabilities_state.py`, `server/adapters/mcp/session_capabilities_flow.py`, `server/adapters/mcp/session_capabilities_runtime_glue.py`, `server/adapters/mcp/transforms/visibility_policy.py`, `server/adapters/mcp/discovery/search_surface.py`, `server/adapters/mcp/areas/scene.py`, `server/adapters/mcp/areas/scene_guided_runtime.py`, `server/adapters/mcp/areas/modeling.py`, `server/adapters/mcp/areas/mesh.py`, `server/router/infrastructure/tools_metadata/scene/`, `server/router/infrastructure/tools_metadata/modeling/`, `server/router/infrastructure/tools_metadata/mesh/`, `server/router/infrastructure/tools_metadata/reference/`, `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`, `tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py`, `tests/unit/adapters/mcp/test_guided_mode.py`, `tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py`, `tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py`, `tests/unit/router/application/test_router_contracts.py`, `tests/unit/adapters/mcp/test_router_elicitation.py`, `tests/unit/adapters/mcp/test_visibility_policy.py`, `tests/unit/adapters/mcp/test_search_surface.py`, `tests/e2e/router/test_guided_manual_handoff.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/integration/test_guided_search_first_call_tool_boundary.py`, `tests/e2e/integration/test_guided_streamable_spatial_support.py`
+**Repository Touchpoints:** `server/adapters/mcp/prompts/prompt_catalog.py`, `server/adapters/mcp/prompts/provider.py`, `server/adapters/mcp/prompts/rendering.py`, `server/adapters/mcp/contracts/guided_flow.py`, `server/adapters/mcp/contracts/router.py`, `server/adapters/mcp/guided_mode.py`, `server/adapters/mcp/platform/capability_manifest.py`, `server/adapters/mcp/platform/public_contracts.py`, `server/adapters/mcp/session_capabilities.py`, `server/adapters/mcp/session_capabilities_bootstrap.py`, `server/adapters/mcp/session_capabilities_registry.py`, `server/adapters/mcp/session_capabilities_state.py`, `server/adapters/mcp/session_capabilities_flow.py`, `server/adapters/mcp/session_capabilities_runtime_glue.py`, `server/adapters/mcp/transforms/prompts_bridge.py`, `server/adapters/mcp/transforms/visibility_policy.py`, `server/adapters/mcp/discovery/tool_inventory.py`, `server/adapters/mcp/discovery/search_surface.py`, `server/adapters/mcp/areas/router.py`, `server/adapters/mcp/areas/scene.py`, `server/adapters/mcp/areas/scene_guided_runtime.py`, `server/adapters/mcp/areas/modeling.py`, `server/adapters/mcp/areas/mesh.py`, `server/application/tool_handlers/router_handler.py`, `server/router/infrastructure/tools_metadata/scene/`, `server/router/infrastructure/tools_metadata/modeling/`, `server/router/infrastructure/tools_metadata/mesh/`, `server/router/infrastructure/tools_metadata/reference/`, `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`, `tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py`, `tests/unit/adapters/mcp/test_guided_mode.py`, `tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py`, `tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py`, `tests/unit/router/application/test_router_contracts.py`, `tests/unit/adapters/mcp/test_router_elicitation.py`, `tests/unit/adapters/mcp/test_visibility_policy.py`, `tests/unit/adapters/mcp/test_search_surface.py`, `tests/e2e/router/test_guided_manual_handoff.py`, `tests/e2e/router/test_guided_direct_calls_do_not_trigger_workflows.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/integration/test_guided_search_first_call_tool_boundary.py`, `tests/e2e/integration/test_guided_streamable_spatial_support.py`
 **Acceptance Criteria:**
 - a building-oriented guided session emits an architecture-specific sequence on the existing guided-flow substrate, with typed guided-flow/control-plane changes wherever the current step model is too coarse
 - prompt recommendations and prompt assets expose a dedicated architecture reconstruction story instead of only generic building or hard-surface wording
@@ -77,12 +77,15 @@ if domain_profile == "building":
 - `tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py`
 - `tests/unit/adapters/mcp/test_guided_mode.py`
 - `tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py`
+- `tests/unit/adapters/mcp/test_prompt_provider.py`
 - `tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py`
+- `tests/unit/adapters/mcp/test_prompts_bridge.py`
 - `tests/unit/router/application/test_router_contracts.py`
 - `tests/unit/adapters/mcp/test_router_elicitation.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/e2e/router/test_guided_manual_handoff.py`
+- `tests/e2e/router/test_guided_direct_calls_do_not_trigger_workflows.py`
 - `tests/e2e/integration/test_guided_gate_state_transport.py`
 - `tests/e2e/integration/test_guided_search_first_call_tool_boundary.py`
 - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
@@ -95,11 +98,13 @@ if domain_profile == "building":
 - `_docs/_ROUTER/README.md`
 - `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `_docs/_CHANGELOG/README.md`
 
 ## Changelog Impact
 
 - Add a `_docs/_CHANGELOG/*` entry when the first architecture guided-surface
   slice ships.
+- Update `_docs/_CHANGELOG/README.md` when that historical entry is added.
 
 ## Validation Commands
 
@@ -107,10 +112,11 @@ if domain_profile == "building":
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py tests/unit/adapters/mcp/test_router_elicitation.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py -q`
 - `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py tests/unit/router/application/test_router_contracts.py -q`
-- `poetry run pytest tests/e2e/router/test_guided_manual_handoff.py tests/e2e/integration/test_guided_search_first_call_tool_boundary.py tests/e2e/integration/test_guided_streamable_spatial_support.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_prompt_provider.py tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py tests/unit/adapters/mcp/test_prompts_bridge.py tests/unit/router/application/test_router_contracts.py -q`
+- `poetry run pytest tests/e2e/router/test_guided_manual_handoff.py tests/e2e/router/test_guided_direct_calls_do_not_trigger_workflows.py tests/e2e/integration/test_guided_search_first_call_tool_boundary.py tests/e2e/integration/test_guided_streamable_spatial_support.py -q`
 - `poetry run pytest ./tests/unit`
 - `poetry run python scripts/run_e2e_tests.py`
+- `poetry run pre-commit run --all-files --show-diff-on-failure`
 - `poetry run pre-commit run check-router-tool-metadata --all-files`
 
 Adjacent shared regression when the architecture slice changes common guided
@@ -125,3 +131,6 @@ transport/public-surface behavior:
 - when this leaf lands, update `TASK-136-02` and the parent `TASK-136`
   progress notes together so the next closeout leaf inherits the corrected
   guided/runtime owner mapping
+- add or refresh the completion summary and record which docs, unit tests,
+  E2E lanes, pre-commit checks, and changelog updates were run or
+  intentionally skipped

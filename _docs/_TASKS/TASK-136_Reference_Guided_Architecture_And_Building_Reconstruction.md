@@ -296,27 +296,32 @@ This umbrella does **not** cover:
 - the loop contract can steer staged reconstruction across shell/openings/roof
   work with deterministic follow-up
 - `llm-guided` can recommend and expose an architecture-oriented handoff path
-- docs, runtime behavior, and regression criteria describe the same bounded
-  architecture capability and limitations
+- public docs and guided/runtime surfaces describe the same bounded
+  architecture capability and limitations visible to operators
 
 ## Repository Touchpoints
 
 - `server/adapters/mcp/prompts/prompt_catalog.py`
 - `server/adapters/mcp/prompts/provider.py`
 - `server/adapters/mcp/prompts/rendering.py`
+- `server/adapters/mcp/platform/capability_manifest.py`
+- `server/adapters/mcp/platform/public_contracts.py`
 - likely new `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`
 - `_docs/_PROMPTS/README.md`
 - `server/adapters/mcp/guided_mode.py`
 - `server/adapters/mcp/contracts/guided_flow.py`
+- `server/adapters/mcp/contracts/router.py`
 - `server/adapters/mcp/session_capabilities.py`
 - `server/adapters/mcp/session_capabilities_bootstrap.py`
 - `server/adapters/mcp/session_capabilities_registry.py`
 - `server/adapters/mcp/session_capabilities_state.py`
 - `server/adapters/mcp/session_capabilities_flow.py`
 - `server/adapters/mcp/session_capabilities_runtime_glue.py`
+- `server/adapters/mcp/transforms/prompts_bridge.py`
 - `server/adapters/mcp/transforms/visibility_policy.py`
 - `server/adapters/mcp/transforms/quality_gate_verifier.py`
 - `server/adapters/mcp/discovery/search_documents.py`
+- `server/adapters/mcp/discovery/tool_inventory.py`
 - `server/adapters/mcp/discovery/search_surface.py`
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/contracts/quality_gates.py`
@@ -327,12 +332,14 @@ This umbrella does **not** cover:
 - `server/adapters/mcp/areas/reference_truth.py`
 - `server/adapters/mcp/areas/reference_understanding.py`
 - `server/adapters/mcp/areas/reference_view_diagnostics.py`
+- `server/adapters/mcp/areas/router.py`
 - `server/adapters/mcp/areas/scene.py`
 - `server/adapters/mcp/areas/scene_guided_runtime.py`
 - `server/adapters/mcp/areas/modeling.py`
 - `server/adapters/mcp/areas/mesh.py`
 - `server/adapters/mcp/areas/scene_spatial_graph.py`
 - `server/application/services/spatial_graph.py`
+- `server/application/tool_handlers/router_handler.py`
 - `server/router/infrastructure/tools_metadata/`
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
 - `tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py`
@@ -360,14 +367,14 @@ This umbrella does **not** cover:
 | Path / Module | Scope | Expected Work |
 |---------------|-------|---------------|
 | `server/adapters/mcp/contracts/quality_gates.py` and `server/adapters/mcp/contracts/reference.py` | MCP/public contract | Extend the shipped building gate/reference vocabulary on the existing adapter-layer contract path without leaking FastMCP or router policy into `server/domain/` |
-| `server/adapters/mcp/areas/reference.py`, `reference_checkpoint_compare.py`, `reference_images_runtime.py`, `reference_truth.py`, `reference_understanding.py`, and `reference_view_diagnostics.py` | Reference/checkpoint assembly | Treat `reference.py` as the thin orchestration facade and update the split owner seams that actually shape checkpoint, RU, and staged feedback payloads |
+| `server/adapters/mcp/areas/reference.py`, `reference_checkpoint_compare.py`, `reference_feedback.py`, `reference_images_runtime.py`, `reference_planner.py`, `reference_truth.py`, `reference_understanding.py`, and `reference_view_diagnostics.py` | Reference/checkpoint assembly | Treat `reference.py` as the thin orchestration facade and update the split owner seams that actually shape checkpoint, RU, orchestrator follow-up, planner guidance, and staged feedback payloads |
 | `server/adapters/mcp/contracts/guided_flow.py`, `session_capabilities.py`, `session_capabilities_bootstrap.py`, `session_capabilities_registry.py`, `session_capabilities_state.py`, `session_capabilities_flow.py`, and `session_capabilities_runtime_glue.py` | Guided state/control plane | Extend the shipped building domain profile, bootstrap/readiness carry-forward, registry-driven role advancement, required checks, prompt requirements, and stale refresh behavior without inventing a second guided flow system |
-| `server/adapters/mcp/transforms/visibility_policy.py` and `server/adapters/mcp/discovery/search_surface.py` | Guided search/visibility | Shape the bounded architecture tool window and building-specific search cues on the live runtime surface |
+| `server/adapters/mcp/contracts/router.py`, `server/adapters/mcp/platform/capability_manifest.py`, `server/adapters/mcp/platform/public_contracts.py`, `server/adapters/mcp/transforms/prompts_bridge.py`, `server/adapters/mcp/transforms/visibility_policy.py`, `server/adapters/mcp/discovery/search_documents.py`, `server/adapters/mcp/discovery/tool_inventory.py`, `server/adapters/mcp/discovery/search_surface.py`, `server/adapters/mcp/areas/router.py`, and `server/application/tool_handlers/router_handler.py` | Guided handoff/search/visibility | Shape the bounded architecture handoff contract, public-surface prompt exposure, searchable prompt/tool cues, and step-gated visibility on the live runtime surface |
 | `server/adapters/mcp/areas/scene.py`, `scene_guided_runtime.py`, `modeling.py`, and `mesh.py` | Bounded build surface | Keep `scene.py` as the MCP facade, update guided runtime glue where scoped enforcement lives today, and reuse or extend bounded layout/opening/support/roof tools only where the architecture flow actually needs them |
 | `server/adapters/mcp/vision/` and `server/adapters/mcp/areas/reference_understanding.py` | Advisory support evidence | Consume the closed `TASK-163` RU/session seams for architecture hints without changing verifier authority |
 | `server/application/services/spatial_graph.py` and `server/adapters/mcp/areas/scene_spatial_graph.py` | Relation semantics | Model wall/opening, roof/wall, beam/support, and facade rhythm interfaces in a way the verifier and staged truth surface can consume |
 | `server/adapters/mcp/prompts/prompt_catalog.py`, `provider.py`, `rendering.py`, `_docs/_PROMPTS/README.md`, and a future architecture prompt asset | Prompt assets | Expose and teach an architecture-oriented guided story on the current MCP prompt surface, then keep prompt inventory docs aligned; treat `DEMO_TASK_LOW_POLY_MEDIEVAL_WELL.md` only as an optional adjacent bounded-example reference if wording or sequencing is intentionally reused |
-| `tests/unit/adapters/mcp/`, `tests/unit/tools/scene/`, `tests/e2e/integration/`, and `tests/e2e/vision/` | Proof lanes | Prove architecture-domain state, search, truth, transport, and Blender-backed reconstruction behavior on the current owner seams instead of re-planning already-shipped building lanes |
+| `tests/unit/adapters/mcp/`, `tests/unit/router/application/`, `tests/unit/tools/scene/`, `tests/e2e/router/`, `tests/e2e/integration/`, and `tests/e2e/vision/` | Proof lanes | Prove architecture-domain state, prompt/handoff/search behavior, truth/transport shaping, and Blender-backed reconstruction behavior on the current owner seams instead of re-planning already-shipped building lanes |
 
 ## Execution Structure
 
@@ -411,6 +418,7 @@ This umbrella does **not** cover:
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
 - `_docs/_TESTS/README.md`
 - `_docs/_TASKS/README.md`
+- `_docs/_CHANGELOG/README.md`
 
 ## Tests To Add/Update
 
@@ -442,6 +450,7 @@ transport/public-surface behavior:
 
 - add a dedicated `_docs/_CHANGELOG/*` entry when the first meaningful
   implementation slice under this umbrella ships
+- update `_docs/_CHANGELOG/README.md` whenever that historical entry is added
 
 ## Status / Board Update
 
@@ -452,3 +461,6 @@ transport/public-surface behavior:
   delivered architecture reconstruction behavior
 - keep `_docs/_TASKS/README.md` aligned with the strategic RU roadmap linkages
   while this umbrella stays promoted
+- when any child slice closes, record the completion summary, docs updated,
+  tests/pre-commit lanes run or intentionally skipped, and changelog decision
+  alongside the status update
