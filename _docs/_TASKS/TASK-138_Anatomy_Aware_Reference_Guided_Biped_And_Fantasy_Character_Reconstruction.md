@@ -33,7 +33,8 @@ references in a domain-aware, staged, and bounded way?"
 
 Current limitations are:
 
-- no promoted biped/fantasy-character prompt/handoff/search story
+- character-like goals still fall through the creature-oriented prompt/search
+  fallback instead of reaching a dedicated character domain story
 - no explicit product contract for character reconstruction fidelity
 - no humanoid anatomy vocabulary in the guided/reference loop
 - no loop design for torso/limb/head/hands/feet stages
@@ -45,6 +46,10 @@ Current limitations are:
 The repo already has foundations this umbrella should build on:
 
 - `llm-guided` goal/reference intake and staged compare/iterate loops
+- the current prompt catalog and guided-session bootstrap can detect
+  character-like wording, but only by routing it through the existing creature
+  prompt asset and the current `generic` / `creature` / `building`
+  domain-profile split
 - cross-domain refinement taxonomy, including anatomy and organic classes
 - creature-oriented reliability work under `TASK-128`
 - anatomy-aware creature reconstruction direction under `TASK-135`
@@ -77,7 +82,8 @@ references. What is missing is a domain contract for:
 
 The follow-on gap to close is:
 
-- the public guided story does not yet define biped/fantasy reconstruction as a
+- the public guided story still routes many character-like goals through the
+  creature fallback instead of defining biped/fantasy reconstruction as a
   first-class domain
 - there is no explicit separation between:
   - generic creature reconstruction
@@ -111,8 +117,9 @@ The follow-on gap to close is:
   - bad cleanup-worthy intersections
 - the loop contract does not yet express character-specific reconstruction
   failures or staging
-- `llm-guided` has no character-oriented prompt asset, handoff, or search-bias
-  path
+- `llm-guided` has no dedicated character prompt asset, guided-handoff recipe,
+  `guided_flow_state.flow_id`, or search-bias path; the current fallback still
+  points character-like goals at creature-oriented surfaces
 - the repo has no explicit domain boundary for:
   - body vs garment
   - body vs armor
@@ -279,12 +286,18 @@ This umbrella does **not** cover:
 
 ## Repository Touchpoints
 
+- Treat the table below as the canonical exact owner map when a touchpoint needs
+  narrower file-level scope than this flat inventory.
+- `server/adapters/mcp/contracts/guided_flow.py`
+- `server/adapters/mcp/contracts/router.py`
 - `server/adapters/mcp/prompts/prompt_catalog.py`
 - `server/adapters/mcp/prompts/provider.py`
 - `server/adapters/mcp/prompts/rendering.py`
 - likely new `_docs/_PROMPTS/REFERENCE_GUIDED_CHARACTER_BUILD.md`
 - `server/adapters/mcp/guided_mode.py`
 - `server/adapters/mcp/session_capabilities.py`
+- `server/adapters/mcp/session_capabilities_bootstrap.py`
+- `server/adapters/mcp/session_capabilities_registry.py`
 - `server/adapters/mcp/session_capabilities_state.py`
 - `server/adapters/mcp/session_capabilities_flow.py`
 - `server/adapters/mcp/session_capabilities_runtime_glue.py`
@@ -295,18 +308,28 @@ This umbrella does **not** cover:
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/contracts/quality_gates.py`
 - `server/adapters/mcp/areas/reference.py`
+- `server/adapters/mcp/areas/reference_feedback.py`
 - `server/adapters/mcp/areas/reference_truth.py`
 - `server/adapters/mcp/areas/reference_understanding.py`
-- `server/adapters/mcp/areas/modeling.py`
-- `server/adapters/mcp/areas/mesh.py`
-- `server/adapters/mcp/areas/scene.py`
-- `server/adapters/mcp/areas/armature.py`
-- `server/router/infrastructure/tools_metadata/`
-- `tests/unit/adapters/mcp/`
-- `tests/unit/tools/scene/`
-- `tests/unit/tools/mesh/`
-- `tests/unit/tools/armature/`
+- `tests/unit/adapters/mcp/test_guided_mode.py`
+- `tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py`
+- `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
+- `tests/unit/adapters/mcp/test_prompt_catalog.py`
+- `tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py`
+- `tests/unit/adapters/mcp/test_prompt_provider.py`
+- `tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py`
+- `tests/unit/adapters/mcp/test_router_elicitation.py`
+- `tests/unit/adapters/mcp/test_search_surface.py`
+- `tests/unit/adapters/mcp/test_session_phase.py`
+- `tests/unit/adapters/mcp/test_visibility_policy.py`
+- `tests/unit/adapters/mcp/test_vision_parsing.py`
+- `tests/unit/adapters/mcp/test_vision_prompting.py`
+- `tests/unit/adapters/mcp/test_quality_gate_contracts.py`
+- `tests/unit/router/application/test_router_contracts.py`
+- `tests/unit/router/infrastructure/test_mcp_tools_metadata_alignment.py`
 - `tests/e2e/integration/`
+- `tests/e2e/integration/test_guided_surface_contract_parity.py`
+- `tests/e2e/router/test_guided_manual_handoff.py`
 - `tests/e2e/vision/`
 - `_docs/_VISION/`
 - `_docs/_MCP_SERVER/README.md`
@@ -318,14 +341,13 @@ This umbrella does **not** cover:
 
 | Path / Module | Scope | Expected Work |
 |---------------|-------|---------------|
-| `server/adapters/mcp/vision/prompting.py`, `server/adapters/mcp/vision/parsing.py`, and `server/adapters/mcp/areas/reference_understanding.py` | Character-aware RU support | Add bounded humanoid/fantasy vocabulary, symmetry cues, and attachment hints on the existing RU seam |
-| `server/adapters/mcp/contracts/quality_gates.py` and `server/adapters/mcp/contracts/reference.py` | Domain contract | Define torso/limb/head/hand/foot/appendage gate templates, symmetry expectations, and staged blockers |
-| `server/adapters/mcp/areas/reference.py` and `server/adapters/mcp/areas/reference_truth.py` | Staged truth/checkpoints | Surface body-part, symmetry, and attachment failures through the current staged envelopes |
-| `server/adapters/mcp/session_capabilities_state.py`, `session_capabilities_flow.py`, and `session_capabilities_runtime_glue.py` | Guided state | Add character-domain stage sequencing and bounded recovery behavior without replacing the current session model |
-| `server/adapters/mcp/transforms/visibility_policy.py` and `server/adapters/mcp/discovery/search_surface.py` | Guided surface | Shape the bounded body-first tool window and search cues for humanoid/fantasy reconstruction |
-| `server/adapters/mcp/areas/modeling.py`, `mesh.py`, `scene.py`, and `armature.py` | Bounded reconstruction surface | Keep body-first modeling and later armature handoff separate on the public MCP surface |
-| `server/adapters/mcp/prompts/prompt_catalog.py`, `provider.py`, and a future character prompt asset | Prompt assets | Expose one character-oriented guided story on the current prompt surface |
-| `tests/unit/adapters/mcp/`, `tests/unit/tools/mesh/`, `tests/unit/tools/armature/`, `tests/e2e/integration/`, and future character-focused `tests/e2e/vision/` lanes | Proof lanes | Prove body-stage sequencing, symmetry/attachment semantics, and rig-handoff boundaries on the current seams |
+| `server/adapters/mcp/vision/prompting.py`, `server/adapters/mcp/vision/parsing.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/contracts/quality_gates.py`, `server/adapters/mcp/transforms/quality_gate_verifier.py`, `server/adapters/mcp/contracts/reference.py`, and `server/adapters/mcp/contracts/guided_flow.py` | Character-aware RU, support metrics, and gate contract | Keep advisory vocabulary and gate seeding on the RU path, keep server-owned support metrics on `reference_feedback.py`, and keep authoritative pass/fail semantics on the verifier path while introducing the first `character` domain-profile contract |
+| `server/adapters/mcp/contracts/router.py`, `server/adapters/mcp/guided_mode.py`, `server/adapters/mcp/session_capabilities.py`, `server/adapters/mcp/session_capabilities_bootstrap.py`, `server/adapters/mcp/session_capabilities_registry.py`, `server/adapters/mcp/session_capabilities_state.py`, `server/adapters/mcp/session_capabilities_flow.py`, and `server/adapters/mcp/session_capabilities_runtime_glue.py` | Guided handoff and state | Introduce one explicit character recipe / flow-id pair, role sequencing, prompt bundle wiring, registry-driven step advancement, and handoff wording without widening armature runtime behavior |
+| `server/adapters/mcp/prompts/prompt_catalog.py`, `server/adapters/mcp/prompts/provider.py`, `server/adapters/mcp/prompts/rendering.py`, and a future `REFERENCE_GUIDED_CHARACTER_BUILD` prompt asset | Prompt assets | Expose a character-specific guided story instead of routing character-like goals through the creature prompt fallback |
+| `server/adapters/mcp/transforms/visibility_policy.py`, `server/adapters/mcp/discovery/search_documents.py`, and `server/adapters/mcp/discovery/search_surface.py` | Guided surface and discovery | Bias the bounded body-first surface, search cues, and recovery path around the character recipe plus explicit appendage / garment follow-ons |
+| `server/router/infrastructure/tools_metadata/modeling/modeling_create_primitive.json`, `server/router/infrastructure/tools_metadata/modeling/modeling_transform_object.json`, `server/router/infrastructure/tools_metadata/mesh/mesh_select.json`, `mesh_select_targeted.json`, `mesh_extrude_region.json`, `mesh_loop_cut.json`, `mesh_bevel.json`, `mesh_symmetrize.json`, `server/router/infrastructure/tools_metadata/scene/macro_attach_part_to_surface.json`, `macro_align_part_with_contact.json`, `macro_cleanup_part_intersections.json`, `macro_place_symmetry_pair.json`, `macro_place_supported_pair.json`, `macro_adjust_relative_proportion.json`, `macro_adjust_segment_chain_arc.json`, `server/router/infrastructure/tools_metadata/reference/reference_images.json`, `reference_compare_stage_checkpoint.json`, and `reference_iterate_stage_checkpoint.json` | Router metadata | Keep discovery text, related tools, and parameter alignment in sync with the character guided surface and validate that JSON/schema state through the repo metadata alignment lane |
+| `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_feedback.py`, and `server/adapters/mcp/areas/reference_truth.py` | Staged truth, planner, and checkpoints | Surface character-domain blockers, support metrics, relation semantics, orchestrator feedback, and checkpoint envelopes on the existing reference/truth surfaces |
+| `tests/unit/adapters/mcp/test_guided_mode.py`, `test_guided_flow_domain_profiles.py`, `test_guided_flow_state_contract.py`, `test_prompt_catalog.py`, `test_prompt_catalog_flow_mapping.py`, `test_prompt_provider.py`, `test_prompt_provider_flow_bundles.py`, `test_router_elicitation.py`, `test_search_surface.py`, `test_session_phase.py`, `test_visibility_policy.py`, `test_vision_parsing.py`, `test_vision_prompting.py`, `test_quality_gate_contracts.py`, `tests/unit/router/application/test_router_contracts.py`, `tests/unit/router/infrastructure/test_mcp_tools_metadata_alignment.py`, `tests/e2e/router/test_guided_manual_handoff.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/integration/test_guided_surface_contract_parity.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`, `tests/e2e/vision/test_reference_stage_truth_handoff.py`, and future character-focused `tests/e2e/vision/` lanes | Proof lanes | Prove domain selection, prompt bundling, search/visibility shaping, metadata alignment, router contracts, router handoff, staged transport, runtime surface parity, reference feedback envelopes, and future body-first character reconstruction boundaries on the current seams |
 
 ## Execution Structure
 
@@ -339,9 +361,9 @@ This umbrella does **not** cover:
 
 | Slice | Primary Validation Lane | Why |
 |------|--------------------------|-----|
-| humanoid vocabulary, symmetry, and fidelity tiers | unit prompt/parser/reference lanes | the first failure mode is generic-creature drift instead of character-aware structure |
-| guided character flow and bounded surface | unit guided-flow, visibility, search, mesh/modeling, and armature lanes | body-first reconstruction must stay separate from garment/armor and rigging follow-ons |
-| staged truth and transport | integration gate-transport lane plus future character E2E | staged blockers and attachment semantics must survive the real response path |
+| humanoid vocabulary, symmetry, and fidelity tiers | unit prompt/parser/reference plus verifier-support lanes | the first failure mode is generic-creature drift or incorrectly treating RU/support metrics as authoritative character truth |
+| guided character flow and bounded surface | unit guided-flow, domain-profile, prompt-bundle, visibility, search, metadata-alignment, and router-handoff lanes | body-first reconstruction must stay separate from appendage/garment follow-ons and later rigging handoff without changing armature runtime contracts |
+| staged truth and transport | integration gate-transport lane, router handoff regression, plus future character E2E | staged blockers, domain-specific envelopes, and handoff semantics must survive the real response path |
 | docs and operator guidance | prompt/public-surface/test-doc audits | character scope and rig-handoff boundaries must match the shipped runtime story |
 
 ## Runtime / Security Contract Notes
@@ -370,12 +392,14 @@ This umbrella does **not** cover:
 
 ## Tests To Add/Update
 
-- focused unit coverage under `tests/unit/adapters/mcp/` for character prompt
-  exposure, RU parsing/prompting, guided handoff, search shaping, and reference
-  contracts
-- focused unit coverage under `tests/unit/tools/mesh/` and
-  `tests/unit/tools/armature/` for bounded body-stage and rig-handoff-adjacent
-  behaviors
+- focused unit coverage under `tests/unit/adapters/mcp/` for character RU
+  parsing/prompting, guided domain-profile selection, prompt-bundle exposure,
+  router handoff, search shaping, visibility, and reference/gate contracts
+- focused metadata-alignment coverage in
+  `tests/unit/router/infrastructure/test_mcp_tools_metadata_alignment.py`
+  whenever router metadata JSON files change for the character surface
+- router handoff regression coverage in
+  `tests/e2e/router/test_guided_manual_handoff.py`
 - representative future `tests/e2e/vision/` coverage for
   biped/fantasy-character scenarios plus integration coverage for staged
   transport
@@ -391,5 +415,8 @@ This umbrella does **not** cover:
 - keep it explicitly downstream of the creature anatomy branch so shared
   anatomy/perception lessons can carry over without conflating quadruped and
   humanoid domains
+- if later work needs real `server/adapters/mcp/areas/armature.py` or armature
+  runtime changes, promote that as a separate follow-on instead of widening
+  this body-first family
 - do not treat generic creature guidance or existing rigging tools as
   equivalent to delivered biped/fantasy-character reconstruction behavior
