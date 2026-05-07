@@ -4,8 +4,8 @@
 **Priority:** 🔴 High
 **Parent:** [TASK-138](./TASK-138_Anatomy_Aware_Reference_Guided_Biped_And_Fantasy_Character_Reconstruction.md)
 **Objective:** Define the first humanoid/fantasy target classes, body vocabulary, symmetry rules, and fidelity tiers on the existing RU/gate substrate.
-**Repository Touchpoints:** `server/adapters/mcp/contracts/guided_flow.py`, `server/adapters/mcp/vision/prompting.py`, `server/adapters/mcp/vision/parsing.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/contracts/quality_gates.py`, `server/adapters/mcp/transforms/quality_gate_verifier.py`, `server/adapters/mcp/contracts/reference.py`, `_docs/_VISION/README.md`, `_docs/_MCP_SERVER/README.md`, `tests/unit/adapters/mcp/test_vision_prompting.py`, `tests/unit/adapters/mcp/test_vision_parsing.py`, `tests/unit/adapters/mcp/test_quality_gate_contracts.py`, `tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py`
-**Acceptance Criteria:** character-domain RU and gate contracts serialize bounded torso/pelvis/head/limb vocabulary, symmetry/proportion/final-completion templates, and explicit low/mid-fidelity limits without treating creature fallback or hero-sculpt claims as acceptable substitutes.
+**Repository Touchpoints:** `server/adapters/mcp/contracts/guided_flow.py`, `server/adapters/mcp/vision/prompting.py`, `server/adapters/mcp/vision/parsing.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/contracts/quality_gates.py`, `server/adapters/mcp/transforms/quality_gate_verifier.py`, `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/session_capabilities_flow.py`, `server/adapters/mcp/session_capabilities_bootstrap.py`, `server/adapters/mcp/session_capabilities_runtime_glue.py`, `_docs/_VISION/README.md`, `_docs/_MCP_SERVER/README.md`, `tests/unit/adapters/mcp/test_vision_prompting.py`, `tests/unit/adapters/mcp/test_vision_parsing.py`, `tests/unit/adapters/mcp/test_quality_gate_contracts.py`, `tests/unit/adapters/mcp/test_quality_gate_intake.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`
+**Acceptance Criteria:** character-domain RU, gate-ingestion, and reference-envelope contracts serialize bounded torso/pelvis/head/limb vocabulary, symmetry/proportion/final-completion templates, and explicit low/mid-fidelity limits without treating creature fallback or hero-sculpt claims as acceptable substitutes.
 
 ## Implementation Notes
 
@@ -66,6 +66,9 @@ gate_templates = derive_character_gate_templates(
 - `tests/unit/adapters/mcp/test_vision_prompting.py`
 - `tests/unit/adapters/mcp/test_vision_parsing.py`
 - `tests/unit/adapters/mcp/test_quality_gate_contracts.py`
+- `tests/unit/adapters/mcp/test_quality_gate_intake.py`
+- `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/e2e/vision/test_reference_understanding_runtime_surface.py`
 
 ## Docs To Update
 
@@ -81,4 +84,15 @@ gate_templates = derive_character_gate_templates(
 ## Validation Commands
 
 - `git diff --check`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_parsing.py tests/unit/adapters/mcp/test_quality_gate_contracts.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_parsing.py tests/unit/adapters/mcp/test_quality_gate_contracts.py tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_reference_images.py -q`
+- `poetry run pytest ./tests/unit`
+- `poetry run python scripts/run_e2e_tests.py`
+  Covers the runtime-surface lane including `tests/e2e/vision/test_reference_understanding_runtime_surface.py`.
+
+## Status / Board Update
+
+- keep `TASK-138-02` and `TASK-138-03` open after this leaf lands; `TASK-138-01`
+  only closes the character contract substrate and does not close the umbrella
+- if downstream runtime envelopes or public prompt surfaces still need work
+  after this slice, record that on the remaining open children instead of
+  folding it back into this contract leaf

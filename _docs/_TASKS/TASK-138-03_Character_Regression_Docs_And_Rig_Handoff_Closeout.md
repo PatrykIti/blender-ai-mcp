@@ -5,7 +5,7 @@
 **Parent:** [TASK-138](./TASK-138_Anatomy_Aware_Reference_Guided_Biped_And_Fantasy_Character_Reconstruction.md)
 **Depends On:** [TASK-138-01](./TASK-138-01_Humanoid_Contract_Symmetry_And_Fidelity_Tiers.md), [TASK-138-02](./TASK-138-02_Guided_Character_Flow_Appendage_And_Garment_Boundaries.md)
 **Objective:** Lock the first character domain slice with regression, docs, and explicit proof that body reconstruction, appendage/garment handling, and later rig-handoff boundaries are described consistently.
-**Repository Touchpoints:** `server/adapters/mcp/prompts/prompt_catalog.py`, `server/adapters/mcp/prompts/provider.py`, `server/adapters/mcp/prompts/rendering.py`, `tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py`, `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`, `tests/unit/adapters/mcp/test_prompt_catalog.py`, `tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py`, `tests/unit/adapters/mcp/test_prompt_provider.py`, `tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py`, `tests/unit/adapters/mcp/test_router_elicitation.py`, `tests/unit/adapters/mcp/test_visibility_policy.py`, `tests/unit/adapters/mcp/test_search_surface.py`, `tests/unit/router/application/test_router_contracts.py`, `tests/unit/router/infrastructure/test_mcp_tools_metadata_alignment.py`, `tests/e2e/router/test_guided_manual_handoff.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/integration/test_guided_surface_contract_parity.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`, `tests/e2e/vision/test_reference_stage_truth_handoff.py`, new `tests/e2e/vision/test_guided_character_reconstruction.py`, likely new `_docs/_PROMPTS/REFERENCE_GUIDED_CHARACTER_BUILD.md`, `_docs/_PROMPTS/README.md`, `_docs/_VISION/README.md`, `_docs/_MCP_SERVER/README.md`, `_docs/AVAILABLE_TOOLS_SUMMARY.md`, `_docs/_TESTS/README.md`, `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/README.md`
+**Repository Touchpoints:** `server/adapters/mcp/contracts/router.py`, `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/areas/reference_truth.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/guided_naming_policy.py`, `server/adapters/mcp/router_helper.py`, `server/adapters/mcp/prompts/prompt_catalog.py`, `server/adapters/mcp/prompts/provider.py`, `server/adapters/mcp/prompts/rendering.py`, `tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py`, `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`, `tests/unit/adapters/mcp/test_guided_naming_policy.py`, `tests/unit/adapters/mcp/test_prompt_catalog.py`, `tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py`, `tests/unit/adapters/mcp/test_prompt_provider.py`, `tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py`, `tests/unit/adapters/mcp/test_prompts_bridge.py`, `tests/unit/adapters/mcp/test_router_elicitation.py`, `tests/unit/adapters/mcp/test_visibility_policy.py`, `tests/unit/adapters/mcp/test_search_surface.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_public_surface_docs.py`, `tests/unit/router/application/test_router_contracts.py`, `tests/unit/router/infrastructure/test_mcp_tools_metadata_alignment.py`, `tests/e2e/router/test_guided_manual_handoff.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/integration/test_guided_surface_contract_parity.py`, `tests/e2e/integration/test_guided_streamable_spatial_support.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`, `tests/e2e/vision/test_reference_stage_truth_handoff.py`, new `tests/e2e/vision/test_guided_character_reconstruction.py`, `README.md`, likely new `_docs/_PROMPTS/REFERENCE_GUIDED_CHARACTER_BUILD.md`, `_docs/_PROMPTS/README.md`, `_docs/_VISION/README.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`, `_docs/AVAILABLE_TOOLS_SUMMARY.md`, `_docs/_TESTS/README.md`, `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/README.md`
 **Acceptance Criteria:** unit owner lanes, router handoff regression, gate-transport regression, and the first bounded character E2E all pass in that order; docs, board state, and changelog keep body-first reconstruction, appendage/garment follow-ons, and later rig-handoff boundaries aligned without implying armature-runtime delivery.
 
 ## Implementation Notes
@@ -43,17 +43,22 @@ verify_docs_keep_rig_handoff_separate_from_body_reconstruction()
 
 - `tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py`
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
+- `tests/unit/adapters/mcp/test_guided_naming_policy.py`
 - `tests/unit/adapters/mcp/test_prompt_catalog.py`
 - `tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py`
 - `tests/unit/adapters/mcp/test_prompt_provider.py`
 - `tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py`
+- `tests/unit/adapters/mcp/test_prompts_bridge.py`
 - `tests/unit/adapters/mcp/test_router_elicitation.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
+- `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/unit/router/application/test_router_contracts.py`
 - `tests/unit/router/infrastructure/test_mcp_tools_metadata_alignment.py`
 - `tests/e2e/router/test_guided_manual_handoff.py`
 - `tests/e2e/integration/test_guided_surface_contract_parity.py`
+- `tests/e2e/integration/test_guided_streamable_spatial_support.py`
 - `tests/e2e/vision/test_reference_understanding_runtime_surface.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 - new `tests/e2e/vision/test_guided_character_reconstruction.py`
@@ -62,9 +67,11 @@ verify_docs_keep_rig_handoff_separate_from_body_reconstruction()
 ## Docs To Update
 
 - likely new `_docs/_PROMPTS/REFERENCE_GUIDED_CHARACTER_BUILD.md`
+- `README.md`
 - `_docs/_PROMPTS/README.md`
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
 - `_docs/_TESTS/README.md`
 - `_docs/_TASKS/README.md`
@@ -78,13 +85,10 @@ verify_docs_keep_rig_handoff_separate_from_body_reconstruction()
 ## Validation Commands
 
 - `git diff --check`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_prompt_catalog.py tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py tests/unit/adapters/mcp/test_prompt_provider.py tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py tests/unit/adapters/mcp/test_router_elicitation.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/router/application/test_router_contracts.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_guided_naming_policy.py tests/unit/adapters/mcp/test_prompt_catalog.py tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py tests/unit/adapters/mcp/test_prompt_provider.py tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py tests/unit/adapters/mcp/test_prompts_bridge.py tests/unit/adapters/mcp/test_router_elicitation.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/router/application/test_router_contracts.py -q`
+- `poetry run pytest ./tests/unit`
 - `PYTHONPATH=. poetry run pytest tests/unit/router/infrastructure/test_mcp_tools_metadata_alignment.py -q`
-- `poetry run pytest tests/e2e/router/test_guided_manual_handoff.py -q`
-- `poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py -q`
-- `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_understanding_runtime_surface.py tests/e2e/vision/test_reference_stage_truth_handoff.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_guided_character_reconstruction.py -q`
+- `poetry run python scripts/run_e2e_tests.py`
 
 ## Status / Board Update
 

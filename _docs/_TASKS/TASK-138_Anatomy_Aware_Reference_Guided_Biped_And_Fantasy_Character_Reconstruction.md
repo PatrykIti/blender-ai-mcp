@@ -46,10 +46,10 @@ Current limitations are:
 The repo already has foundations this umbrella should build on:
 
 - `llm-guided` goal/reference intake and staged compare/iterate loops
-- the current prompt catalog and guided-session bootstrap can detect
-  character-like wording, but only by routing it through the existing creature
-  prompt asset and the current `generic` / `creature` / `building`
-  domain-profile split
+- the current prompt catalog already carries a `character` recommendation hint,
+  but guided bootstrap and runtime handoff still remain limited to the existing
+  creature-oriented recipe and the current `generic` / `creature` /
+  `building` domain-profile split
 - cross-domain refinement taxonomy, including anatomy and organic classes
 - creature-oriented reliability work under `TASK-128`
 - anatomy-aware creature reconstruction direction under `TASK-135`
@@ -308,9 +308,11 @@ This umbrella does **not** cover:
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/contracts/quality_gates.py`
 - `server/adapters/mcp/areas/reference.py`
+- `server/adapters/mcp/areas/reference_images_runtime.py`
 - `server/adapters/mcp/areas/reference_feedback.py`
 - `server/adapters/mcp/areas/reference_truth.py`
 - `server/adapters/mcp/areas/reference_understanding.py`
+- `server/adapters/mcp/areas/router.py`
 - `tests/unit/adapters/mcp/test_guided_mode.py`
 - `tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py`
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
@@ -342,7 +344,7 @@ This umbrella does **not** cover:
 | Path / Module | Scope | Expected Work |
 |---------------|-------|---------------|
 | `server/adapters/mcp/vision/prompting.py`, `server/adapters/mcp/vision/parsing.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/contracts/quality_gates.py`, `server/adapters/mcp/transforms/quality_gate_verifier.py`, `server/adapters/mcp/contracts/reference.py`, and `server/adapters/mcp/contracts/guided_flow.py` | Character-aware RU, support metrics, and gate contract | Keep advisory vocabulary and gate seeding on the RU path, keep server-owned support metrics on `reference_feedback.py`, and keep authoritative pass/fail semantics on the verifier path while introducing the first `character` domain-profile contract |
-| `server/adapters/mcp/contracts/router.py`, `server/adapters/mcp/guided_mode.py`, `server/adapters/mcp/session_capabilities.py`, `server/adapters/mcp/session_capabilities_bootstrap.py`, `server/adapters/mcp/session_capabilities_registry.py`, `server/adapters/mcp/session_capabilities_state.py`, `server/adapters/mcp/session_capabilities_flow.py`, and `server/adapters/mcp/session_capabilities_runtime_glue.py` | Guided handoff and state | Introduce one explicit character recipe / flow-id pair, role sequencing, prompt bundle wiring, registry-driven step advancement, and handoff wording without widening armature runtime behavior |
+| `server/adapters/mcp/contracts/router.py`, `server/adapters/mcp/guided_mode.py`, `server/adapters/mcp/session_capabilities.py`, `server/adapters/mcp/session_capabilities_bootstrap.py`, `server/adapters/mcp/session_capabilities_registry.py`, `server/adapters/mcp/session_capabilities_state.py`, `server/adapters/mcp/session_capabilities_flow.py`, `server/adapters/mcp/session_capabilities_runtime_glue.py`, `server/adapters/mcp/areas/router.py`, and `server/adapters/mcp/areas/reference_images_runtime.py` | Guided handoff and state | Introduce one explicit character recipe / flow-id pair, role sequencing, prompt bundle wiring, registry-driven step advancement, and runtime projection onto the existing `router_*` / `reference_images(...)` public surfaces without widening armature runtime behavior |
 | `server/adapters/mcp/prompts/prompt_catalog.py`, `server/adapters/mcp/prompts/provider.py`, `server/adapters/mcp/prompts/rendering.py`, and a future `REFERENCE_GUIDED_CHARACTER_BUILD` prompt asset | Prompt assets | Expose a character-specific guided story instead of routing character-like goals through the creature prompt fallback |
 | `server/adapters/mcp/transforms/visibility_policy.py`, `server/adapters/mcp/discovery/search_documents.py`, and `server/adapters/mcp/discovery/search_surface.py` | Guided surface and discovery | Bias the bounded body-first surface, search cues, and recovery path around the character recipe plus explicit appendage / garment follow-ons |
 | `server/router/infrastructure/tools_metadata/modeling/modeling_create_primitive.json`, `server/router/infrastructure/tools_metadata/modeling/modeling_transform_object.json`, `server/router/infrastructure/tools_metadata/mesh/mesh_select.json`, `mesh_select_targeted.json`, `mesh_extrude_region.json`, `mesh_loop_cut.json`, `mesh_bevel.json`, `mesh_symmetrize.json`, `server/router/infrastructure/tools_metadata/scene/macro_attach_part_to_surface.json`, `macro_align_part_with_contact.json`, `macro_cleanup_part_intersections.json`, `macro_place_symmetry_pair.json`, `macro_place_supported_pair.json`, `macro_adjust_relative_proportion.json`, `macro_adjust_segment_chain_arc.json`, `server/router/infrastructure/tools_metadata/reference/reference_images.json`, `reference_compare_stage_checkpoint.json`, and `reference_iterate_stage_checkpoint.json` | Router metadata | Keep discovery text, related tools, and parameter alignment in sync with the character guided surface and validate that JSON/schema state through the repo metadata alignment lane |
