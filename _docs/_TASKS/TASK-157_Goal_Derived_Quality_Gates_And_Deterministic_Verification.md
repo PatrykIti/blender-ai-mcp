@@ -305,9 +305,12 @@ Completed the generic quality-gate substrate and its owner-lane proof:
   - `_docs/_TASKS/README.md`
 - historical validation note:
   - the original closeout recorded targeted owner-lane `pytest` proof only
-  - it did not separately record a `pre-commit` run
-  - it did not separately record the repo-wide `pytest ./tests/unit` pass or
-    the Blender-backed `scripts/run_e2e_tests.py` lane
+  - `pre-commit`: intentionally treated as not recorded / skipped in this
+    historical closeout note
+  - repo-wide `PYTHONPATH=. poetry run pytest ./tests/unit`: intentionally
+    treated as not recorded / skipped in this historical closeout note
+  - Blender-backed `poetry run python scripts/run_e2e_tests.py`: intentionally
+    treated as not recorded / skipped in this historical closeout note
   - current reruns should use `_docs/_TESTS/README.md` as the authoritative
     owner-lane map and follow the current repo policy for pre-commit and
     outside-sandbox repo-wide validation
