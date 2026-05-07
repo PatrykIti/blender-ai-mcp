@@ -68,6 +68,65 @@ def test_reference_classifier_sidecar_shell_script_contains_operator_defaults():
         assert expected in script
 
 
+def test_run_mcp_server_shell_script_invokes_python_launcher():
+    script = (REPO_ROOT / "scripts" / "run_mcp_server.sh").read_text(encoding="utf-8")
+
+    assert 'poetry run python scripts/run_mcp_server.py "$@"' in script
+
+
+def test_run_mcp_server_docs_explain_macos_first_flow():
+    doc = (REPO_ROOT / "scripts" / "RUN_MCP_SERVER.md").read_text(encoding="utf-8")
+
+    for expected in (
+        "macOS-first",
+        "scripts/run_mcp_server.sh",
+        "scripts/run_streamable_openrouter.sh",
+        "scripts/run_reference_classifier_sidecar.sh",
+        "First Run",
+        "Docker On macOS",
+        "Optional Dependency Groups",
+    ):
+        assert expected in doc
+
+
+def test_run_mcp_server_launch_env_wires_classifier_plan(monkeypatch):
+    module = _load_script("run_mcp_server")
+
+    captured: dict[str, object] = {}
+
+    def _fake_run(command, cwd=None, env=None, check=False, **kwargs):
+        captured["command"] = command
+        captured["cwd"] = cwd
+        captured["env"] = env
+        return types.SimpleNamespace(returncode=0)
+
+    monkeypatch.setattr(module.subprocess, "run", _fake_run)
+    monkeypatch.setattr(module, "_ask_yes_no", lambda *args, **kwargs: True)
+
+    plan = module.LauncherPlan(
+        enable_classifier=True,
+        auto_start_classifier=True,
+        classifier_endpoint=None,
+        classifier_model="google/siglip2-base-patch16-224",
+        openrouter_model="openai/gpt-5.4-mini",
+        openrouter_api_key="secret",
+        install_mlx=False,
+        install_vision=True,
+    )
+
+    result = module._run_streamable_openrouter(plan)
+
+    assert result == 0
+    assert captured["command"] == ["bash", str(module.SCRIPT_DIR / "run_streamable_openrouter.sh")]
+    env = captured["env"]
+    assert isinstance(env, dict)
+    assert env["OPENROUTER_API_KEY"] == "secret"
+    assert env["VISION_OPENROUTER_MODEL"] == "openai/gpt-5.4-mini"
+    assert env["VISION_REFERENCE_CLASSIFIER_ENABLED"] == "true"
+    assert env["REFERENCE_CLASSIFIER_AUTO_START"] == "true"
+    assert env["VISION_REFERENCE_CLASSIFIER_MODEL"] == "google/siglip2-base-patch16-224"
+
+
 def test_reference_classifier_sidecar_parser_and_service_contract(tmp_path, monkeypatch):
     module = _load_script("reference_classifier_sidecar")
     image_path = tmp_path / "reference.png"
