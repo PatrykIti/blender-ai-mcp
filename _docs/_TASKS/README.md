@@ -4,7 +4,7 @@ Curated task board for promoted active work, promoted follow-on work, and select
 
 ## 📊 Statistics
 - **To Do:** 7 tasks
-- **In Progress:** 0 tasks
+- **In Progress:** 1 task
 - **Done:** 94
 - **Superseded:** 162
 
@@ -42,7 +42,9 @@ flight.
 
 ## 🚧 In Progress
 
-No currently promoted in-progress rows.
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| [TASK-165](./TASK-165_Mac_First_Interactive_MCP_Server_Installer_And_Launcher.md) | **macOS-First Interactive MCP Server Installer And Launcher** | 🔴 High | Board-level follow-on after TASK-164 for replacing the narrow Streamable helper with a macOS-first interactive launcher that checks prerequisites, offers explicit install/update/skip decisions, and wires the supported MCP + classifier runtime combinations together. |
 
 ## 🚨 To Do
 
