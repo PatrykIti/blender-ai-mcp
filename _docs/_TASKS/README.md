@@ -3,7 +3,7 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 6 tasks
+- **To Do:** 7 tasks
 - **In Progress:** 2 tasks
 - **Done:** 94
 - **Superseded:** 162
@@ -83,6 +83,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Vision & Hybrid Loop
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md) | **Hierarchical Reference Compare, Perceived Evidence, And Budget Control** | 🔴 High | Board-level follow-on after TASK-145 / TASK-163 / TASK-140-06 for replacing monolithic compare payloads with view-first and scope-first packets, deterministic CV plus optional PyTorch support evidence, complexity-tier scaling for 6-12 image runs, and configurable `vision_assist` budgets. |
 | [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) | **Expand External Vision Contract Profiles Across Qwen, Anthropic, OpenAI, and NVIDIA** | 🔴 High | Board-level follow-on after TASK-139 for extending the external `vision_contract_profile` architecture across additional multimodal families on the existing provider surface, including OpenRouter model capability resolution and no new provider branches under this umbrella. |
 ---
 
