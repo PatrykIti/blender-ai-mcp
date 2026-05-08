@@ -9,8 +9,11 @@
 
 - `server/adapters/mcp/vision/config.py`
 - `server/adapters/mcp/vision/runner.py`
+- `server/adapters/mcp/sampling/result_types.py`
 - `server/adapters/mcp/areas/reference.py`
+- `server/adapters/mcp/areas/reference_planner.py`
 - `server/adapters/mcp/areas/reference_feedback.py`
+- `server/adapters/mcp/contracts/reference.py`
 - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
 
 ## Implementation Notes
@@ -18,6 +21,9 @@
 - Surface configured vs effective budget values through the existing
   `budget_control` seam and any additive `compare_diagnostics` field without
   making clients parse raw runner internals.
+- Keep the staged compare assembler, planner budget helpers, and compact
+  feedback projection aligned on one typed configured-vs-effective budget
+  picture rather than recomputing ad-hoc diagnostics per caller.
 - Keep fail-safe upper bounds explicit so operators can distinguish
   configured-budget intent from clipped effective runtime behavior.
 - If budget clipping changes the next safe action, the compact
@@ -36,6 +42,9 @@
 - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
 - `tests/unit/adapters/mcp/test_vision_runner.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_contract_payload_parity.py`
+- `tests/unit/adapters/mcp/test_public_surface_docs.py`
+- `tests/unit/router/application/test_router_contracts.py`
 - `tests/e2e/integration/test_guided_gate_state_transport.py` when budget
   diagnostics change a client-visible staged contract
 
@@ -43,6 +52,9 @@
 
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
+- `README.md`
+- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `_docs/_TESTS/README.md`
 
 ## Changelog Impact
 
@@ -60,4 +72,7 @@
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runner.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`

@@ -9,7 +9,9 @@
 
 - `server/adapters/mcp/areas/reference.py`
 - `server/adapters/mcp/areas/reference_silhouette.py`
+- `server/adapters/mcp/vision/silhouette.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_vision_silhouette.py`
 
 ## Implementation Notes
 
@@ -23,8 +25,8 @@
   - edge density
   - connected components
   - bounded symmetry/coverage heuristics where justified
-- `vision/reference_support.py` remains the RU augmentation seam unless the repo
-  deliberately expands it for compare-time sidecars later.
+- `server/adapters/mcp/vision/reference_support.py` remains the RU augmentation
+  seam unless the repo deliberately expands it for compare-time sidecars later.
 
 ## Acceptance Criteria
 
@@ -37,11 +39,13 @@
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_silhouette.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_silhouette_contract.py -q`
 
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_vision_silhouette.py`
 - silhouette/CV owner-lane coverage for emitted metrics and compact machine
   readability
 - `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
@@ -50,6 +54,9 @@
 
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
+- `README.md`
+- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `_docs/_TESTS/README.md`
 
 ## Changelog Impact
 

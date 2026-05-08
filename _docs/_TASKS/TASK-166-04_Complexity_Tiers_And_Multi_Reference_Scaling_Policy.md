@@ -10,6 +10,9 @@
 - `server/adapters/mcp/areas/reference.py`
 - `server/adapters/mcp/areas/reference_planner.py`
 - `server/adapters/mcp/contracts/reference.py`
+- `server/application/services/`
+- `server/adapters/mcp/vision/config.py`
+- `server/adapters/mcp/vision/runner.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/e2e/vision/`
 
@@ -20,6 +23,13 @@
   - packet size
   - synthesis strategy
   - optional sidecar usage threshold
+- Tier resolution and packet-policy selection should live in a dedicated helper
+  or application-service seam once the policy stops being trivial; do not let
+  `reference_compare_stage_checkpoint(...)` absorb the long-term policy matrix.
+- Packet scheduling for 6-12 image runs must stay within `runtime.max_images`
+  from `server/adapters/mcp/vision/config.py` /
+  `server/adapters/mcp/vision/runner.py` or explicitly coordinate with
+  `TASK-166-05` before widening runtime limits.
 
 ## Current Flow Integration
 
@@ -62,8 +72,14 @@ staged_compare = assemble_compare_from_packet_plan(packet_plan)
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_vision_policy.py`
+- `tests/unit/adapters/mcp/test_contract_payload_parity.py`
+- `tests/unit/adapters/mcp/test_public_surface_docs.py`
+- `tests/unit/router/application/test_router_contracts.py`
 - packet-policy unit coverage in `reference_planner.py`
-- `tests/e2e/vision/test_reference_stage_truth_handoff.py`
+- create a dedicated staged multi-reference scaling lane, for example
+  `tests/e2e/vision/test_reference_stage_multi_reference_scaling.py`, before
+  closeout
 - integration proof when tiered packet scaling changes staged compare / iterate
   payloads
 - optional harness/model-eval suites such as
@@ -75,6 +91,9 @@ staged_compare = assemble_compare_from_packet_plan(packet_plan)
 
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
+- `README.md`
+- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `_docs/_TESTS/README.md`
 
 ## Changelog Impact
 
@@ -91,6 +110,9 @@ staged_compare = assemble_compare_from_packet_plan(packet_plan)
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_policy.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_truth_handoff.py -q`
 - `poetry run python scripts/run_e2e_tests.py`

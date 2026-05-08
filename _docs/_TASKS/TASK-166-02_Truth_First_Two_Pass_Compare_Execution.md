@@ -11,7 +11,11 @@
 - `server/adapters/mcp/areas/reference_planner.py`
 - `server/adapters/mcp/areas/reference_feedback.py`
 - `server/adapters/mcp/contracts/reference.py`
+- `server/adapters/mcp/sampling/result_types.py`
+- `server/adapters/mcp/vision/prompting.py`
+- `server/adapters/mcp/vision/parsing.py`
 - `server/adapters/mcp/vision/runner.py`
+- `server/application/services/`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 
 ## Implementation Notes
@@ -24,6 +28,11 @@
   - correction ranking
   - support-tool hints
   - packet synthesis where needed
+- Keep `server/adapters/mcp/vision/runner.py` as the bounded
+  transport/budget executor; the narrow extraction-vs-ranking contract belongs
+  in typed result, prompting, and parsing seams, while packet execution
+  ordering should move into dedicated helper/service code rather than
+  accreting inside the `@mcp.tool` wrapper.
 
 ## Current Flow Integration
 
@@ -65,7 +74,13 @@ iterate = consume_staged_compare(staged_compare)
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_vision_prompting.py`
+- `tests/unit/adapters/mcp/test_vision_parsing.py`
+- `tests/unit/adapters/mcp/test_vision_result_types.py`
 - `tests/unit/adapters/mcp/test_vision_runner.py`
+- `tests/unit/adapters/mcp/test_contract_payload_parity.py`
+- `tests/unit/adapters/mcp/test_public_surface_docs.py`
+- `tests/unit/router/application/test_router_contracts.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 - `tests/e2e/integration/test_guided_gate_state_transport.py`
 
@@ -73,6 +88,9 @@ iterate = consume_staged_compare(staged_compare)
 
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
+- `README.md`
+- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `_docs/_TESTS/README.md`
 
 ## Changelog Impact
 
@@ -88,8 +106,14 @@ iterate = consume_staged_compare(staged_compare)
 ## Validation Commands
 
 - `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_parsing.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_result_types.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runner.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_truth_handoff.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
 

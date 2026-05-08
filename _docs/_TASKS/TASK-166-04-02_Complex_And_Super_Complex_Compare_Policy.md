@@ -11,6 +11,8 @@
 - `server/adapters/mcp/areas/reference_feedback.py`
 - `server/adapters/mcp/areas/reference_planner.py`
 - `server/adapters/mcp/contracts/reference.py`
+- `server/adapters/mcp/vision/config.py`
+- `server/adapters/mcp/vision/runner.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/e2e/integration/test_guided_gate_state_transport.py`
 - `tests/e2e/vision/`
@@ -26,6 +28,11 @@
     complexity-policy seam
   - one synthesis path that can surface packet conflict into both additive
     staged diagnostics and compact `reference_orchestrator_feedback`
+- The complex/super-complex packet scheduler must respect the live
+  `runtime.max_images` limiter enforced by
+  `server/adapters/mcp/vision/config.py` /
+  `server/adapters/mcp/vision/runner.py`, or else land in lockstep with the
+  `TASK-166-05` runtime budget changes.
 - Error cases to call out:
   - packet budget overflow on 6-12 image runs
   - contradictory packet conclusions that must degrade into explicit
@@ -43,10 +50,15 @@
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_contract_payload_parity.py`
+- `tests/unit/adapters/mcp/test_public_surface_docs.py`
+- `tests/unit/router/application/test_router_contracts.py`
 - complex-tier packet-scheduler coverage for conflict/uncertainty projection
 - `tests/e2e/integration/test_guided_gate_state_transport.py` when complex-tier
   packet conflict/uncertainty changes staged compare / iterate payloads
-- `tests/e2e/vision/test_reference_stage_truth_handoff.py`
+- create a dedicated staged multi-reference scaling lane, for example
+  `tests/e2e/vision/test_reference_stage_multi_reference_scaling.py`, before
+  closeout
 - the repo-supported Blender runner when the packet scheduler changes real
   multi-reference runtime behavior beyond those focused owner lanes
 - optional harness/model-eval suites may remain supplementary smoke coverage,
@@ -56,6 +68,9 @@
 
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
+- `README.md`
+- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `_docs/_TESTS/README.md`
 
 ## Changelog Impact
 
@@ -71,6 +86,8 @@
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_truth_handoff.py -q`
 - `poetry run python scripts/run_e2e_tests.py`

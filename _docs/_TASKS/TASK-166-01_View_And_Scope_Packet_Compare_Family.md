@@ -10,6 +10,7 @@
 - `server/adapters/mcp/areas/reference.py`
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/areas/reference_planner.py`
+- `server/application/services/`
 - `server/adapters/mcp/vision/capture.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/e2e/integration/`
@@ -21,6 +22,10 @@
   - `scope_packets`
   - `packet_order`
   - `synthesis_required`
+- Keep the compare-plan builder out of the `@mcp.tool` body once it becomes
+  more than simple data selection; `reference_compare_stage_checkpoint(...)`
+  should call a dedicated helper/service and remain the staged-response
+  assembler.
 - Packet planning must support:
   - front-only runs
   - front+side runs
@@ -47,6 +52,7 @@
 ```text
 compare_plan = build_compare_plan(
   stage=current_guided_step,
+  gate_plan=active_gate_plan,
   assembled_scope=assembled_target_scope,
   reference_records=selected_reference_records,
   target_view=target_view,
@@ -73,6 +79,9 @@ packet_inputs = select_packet_inputs(
 
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
+- `README.md`
+- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `_docs/_TESTS/README.md`
 
 ## Changelog Impact
 

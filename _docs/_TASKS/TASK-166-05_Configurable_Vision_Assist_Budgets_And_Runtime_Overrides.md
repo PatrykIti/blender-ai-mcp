@@ -8,9 +8,13 @@
 ## Repository Touchpoints
 
 - `server/adapters/mcp/vision/runner.py`
+- `server/adapters/mcp/vision/runtime.py`
+- `server/adapters/mcp/sampling/result_types.py`
 - `server/infrastructure/config.py`
 - `server/adapters/mcp/vision/config.py`
 - `server/adapters/mcp/areas/reference.py`
+- `server/adapters/mcp/areas/reference_planner.py`
+- `server/adapters/mcp/contracts/reference.py`
 - `scripts/run_streamable_openrouter.sh`
 - `tests/unit/adapters/mcp/test_vision_runner.py`
 - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
@@ -22,11 +26,24 @@
   explicit runtime config.
 - Keep safe defaults and fail-safe upper bounds.
 - Diagnostics must expose configured vs effective compare budgets.
+- The runtime-owned budget source must be consumed consistently by
+  `server/adapters/mcp/vision/runner.py`,
+  `server/adapters/mcp/areas/reference.py`, and
+  `server/adapters/mcp/areas/reference_planner.py`; do not leave independent
+  direct reads of `VISION_ASSIST_POLICY` behind in staged compare assembly or
+  planner helpers.
+- The current runtime config exposes `max_images` and `max_tokens` but not a
+  compare-path `max_input_chars` home, so this family must define that config
+  ownership before rewiring runner rejection and staged budget projection.
+- `server/adapters/mcp/vision/runtime.py` remains the bridge from
+  infrastructure `Config` into `VisionRuntimeConfig`, so budget/env changes are
+  not complete until that seam and its runtime-config tests stay aligned.
 
 ## Current Flow Integration
 
-- The new knobs should feed the existing `VISION_ASSIST_POLICY` owner seam in
-  `vision/runner.py`.
+- The new knobs should feed one runtime-owned budget source exposed through the
+  `server/adapters/mcp/vision/runner.py` seam and reused by staged compare
+  helpers.
 - `reference_compare_stage_checkpoint(...)` and
   `reference_iterate_stage_checkpoint(...)` should continue to surface the final
   chosen values through `budget_control`, but they should no longer depend on
@@ -60,6 +77,8 @@ staged_compare = project_budget_state_into_budget_control(runner, effective_budg
 - compare input budgets are operator-configurable
 - diagnostics explain configured and effective budget values
 - detailed budget visibility remains additive to the existing staged contract
+- runner rejection, staged truth trimming, and `budget_control` all consume one
+  resolved runtime budget instead of partially independent limits
 
 ## Tests To Add/Update
 
@@ -68,12 +87,18 @@ staged_compare = project_budget_state_into_budget_control(runner, effective_budg
 - `tests/unit/scripts/test_script_tooling.py`
 - `tests/unit/adapters/mcp/test_reference_images.py` for staged budget
   projection behavior
+- `tests/unit/adapters/mcp/test_contract_payload_parity.py`
+- `tests/unit/adapters/mcp/test_public_surface_docs.py`
+- `tests/unit/router/application/test_router_contracts.py`
 
 ## Docs To Update
 
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
 - relevant script/runtime operator notes when env/config knobs are added
+- `README.md`
+- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `_docs/_TESTS/README.md`
 
 ## Changelog Impact
 
@@ -93,4 +118,7 @@ staged_compare = project_budget_state_into_budget_control(runner, effective_budg
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/scripts/test_script_tooling.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`

@@ -10,7 +10,13 @@
 - `server/adapters/mcp/areas/reference.py`
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/areas/reference_planner.py`
+- `server/adapters/mcp/sampling/result_types.py`
+- `server/adapters/mcp/vision/prompting.py`
+- `server/adapters/mcp/vision/parsing.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_contract_payload_parity.py`
+- `tests/unit/adapters/mcp/test_public_surface_docs.py`
+- `tests/unit/router/application/test_router_contracts.py`
 - `tests/e2e/integration/test_guided_gate_state_transport.py`
 
 ## Implementation Notes
@@ -20,6 +26,11 @@
   little information.
 - Both phases still project back through the staged compare assembler; this leaf
   does not create a second iterate-owned ranking path.
+- Prompt/schema/parser ownership for extraction and ranking status stays in
+  `server/adapters/mcp/sampling/result_types.py`,
+  `server/adapters/mcp/vision/prompting.py`, and
+  `server/adapters/mcp/vision/parsing.py`; do not push that contract work down
+  into `server/adapters/mcp/vision/runner.py` alone.
 - Packet status, skip reasons, and ranking failure details should stay explicit
   enough for additive compare diagnostics and compact orchestrator projection.
 
@@ -36,6 +47,12 @@
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_vision_prompting.py`
+- `tests/unit/adapters/mcp/test_vision_parsing.py`
+- `tests/unit/adapters/mcp/test_vision_result_types.py`
+- `tests/unit/adapters/mcp/test_contract_payload_parity.py`
+- `tests/unit/adapters/mcp/test_public_surface_docs.py`
+- `tests/unit/router/application/test_router_contracts.py`
 - staged compare/iterate contract tests covering extraction-only success,
   ranking skip, and ranking failure projection
 - `tests/e2e/integration/test_guided_gate_state_transport.py` when packet
@@ -45,6 +62,9 @@
 
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
+- `README.md`
+- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `_docs/_TESTS/README.md`
 
 ## Changelog Impact
 
@@ -60,4 +80,10 @@
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_parsing.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_result_types.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`

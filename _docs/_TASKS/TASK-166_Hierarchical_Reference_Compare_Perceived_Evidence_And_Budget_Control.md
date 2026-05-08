@@ -202,12 +202,22 @@ But internally the path becomes:
   into:
   - packet extraction first
   - correction ranking/synthesis second
+- Narrow extraction/ranking contract work must update the typed
+  `VisionAssistContract` plus the
+  `server/adapters/mcp/vision/prompting.py` and
+  `server/adapters/mcp/vision/parsing.py` seams;
+  `server/adapters/mcp/vision/runner.py` remains the bounded transport and
+  budget executor, not the primary prompt/schema owner.
 - Configurable budgets replace the current fixed `VISION_ASSIST_POLICY`
-  constraint in `vision/runner.py`, but packet decomposition remains the primary
-  scaling mechanism.
+  constraint in `server/adapters/mcp/vision/runner.py`, but packet
+  decomposition remains the primary scaling mechanism.
 - Any new `compare_diagnostics` or typed packet evidence must extend the
   existing staged compare/iterate contracts and feed the existing compact
   `reference_orchestrator_feedback` projection instead of bypassing it.
+- Once packet planning, packet execution, or synthesis policy grows beyond light
+  staging glue, move it into an explicit `server/application/services/` seam
+  and keep `server/adapters/mcp/areas/reference.py` limited to staged compare
+  orchestration and public-response projection.
 
 ### Multi-Reference Guidance
 
@@ -216,6 +226,8 @@ For 6-12 image sets, the intended generic strategy is:
 - compare one view packet or one small paired packet at a time
 - persist packet-local evidence and provenance
 - produce one short synthesis summary afterward
+- keep packet scheduling within the live `runtime.max_images` envelope until
+  `TASK-166-05` deliberately changes the runtime budget owner
 
 That makes the family usable for:
 
@@ -229,14 +241,14 @@ without requiring one massive all-images compare request.
 
 | Event | What Runs | Primary Owner Seams | Outputs Carried Forward | Boundary Role |
 |------|------|------|------|------|
-| `reference_images(action="attach", ...)` | Existing reference-understanding bootstrap plus optional RU support adapters | `areas/reference_understanding.py`, `vision/reference_support.py` | `reference_understanding_summary`, `reference_strategy_state`, optional classifier / segmentation RU evidence | support-only bootstrap context; not staged compare truth authority |
-| `reference_compare_stage_checkpoint(...)` | deterministic compare-plan build from guided state, scope, references, and active blockers | `areas/reference.py`, `areas/reference_planner.py` | packet order, packet-local view/scope selection, staged response scaffolding | server-owned deterministic planning |
-| per-packet preflight | packet-local truth slice and visibility framing | `scene_scope_graph`, `scene_relation_graph`, `scene_view_diagnostics`, `vision/capture.py` | packet-local truth inputs, selected captures/references, view ambiguity hints | deterministic truth owner |
-| per-packet support evidence | always-on deterministic CV plus optional advisory-only sidecars when policy allows | `areas/reference_silhouette.py`, `areas/reference.py`, optional compare-time extensions in `vision/reference_support.py` only if that seam is deliberately expanded beyond RU | compact CV metrics, optional advisory artifacts, packet-local evidence refs | deterministic support evidence plus advisory-only sidecars; never sole correctness authority |
-| per-packet pass 1 | narrow VLM extraction for one packet | `vision/runner.py`, compare prompting/parsing seams | bounded extraction findings, packet status | bounded visual support on top of truth inputs |
-| per-packet pass 2 | ranking and synthesis only when extraction warrants it | `areas/reference.py`, `areas/reference_planner.py`, `vision/runner.py` | ranked packet guidance, packet conflict notes, synthesis inputs | derived compare guidance, not a second truth source |
-| staged compare projection | project packet synthesis onto the existing staged compare contract | `areas/reference.py`, `contracts/reference.py`, `areas/reference_feedback.py` | `truth_followup`, `correction_candidates`, `planner_summary`, `budget_control`, `reference_orchestrator_feedback`, additive `compare_diagnostics` when needed | existing public response family; no second flow |
-| `reference_iterate_stage_checkpoint(...)` | consume staged compare output and advance or hold the loop | `areas/reference.py`, `areas/reference_feedback.py` | `correction_focus`, `loop_disposition`, updated `reference_orchestrator_feedback`, optional compacted nested compare payload | existing iterative loop owner consuming packet synthesis rather than raw packet internals |
+| `reference_images(action="attach", ...)` | Existing reference-understanding bootstrap plus optional RU support adapters | `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/vision/reference_support.py` | `reference_understanding_summary`, `reference_strategy_state`, optional classifier / segmentation RU evidence | support-only bootstrap context; not staged compare truth authority |
+| `reference_compare_stage_checkpoint(...)` | deterministic compare-plan build from guided state, scope, references, and active blockers | `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_planner.py` | packet order, packet-local view/scope selection, staged response scaffolding | server-owned deterministic planning |
+| per-packet preflight | packet-local truth slice and visibility framing | `scene_scope_graph`, `scene_relation_graph`, `scene_view_diagnostics`, `server/adapters/mcp/vision/capture.py` | packet-local truth inputs, selected captures/references, view ambiguity hints | deterministic truth owner |
+| per-packet support evidence | always-on deterministic CV plus optional advisory-only sidecars when policy allows | `server/adapters/mcp/areas/reference_silhouette.py`, `server/adapters/mcp/areas/reference.py`, optional compare-time extensions in `server/adapters/mcp/vision/reference_support.py` only if that seam is deliberately expanded beyond RU | compact CV metrics, optional advisory artifacts, packet-local evidence refs | deterministic support evidence plus advisory-only sidecars; never sole correctness authority |
+| per-packet pass 1 | narrow VLM extraction for one packet | `server/adapters/mcp/vision/runner.py`, `server/adapters/mcp/vision/prompting.py`, `server/adapters/mcp/vision/parsing.py` | bounded extraction findings, packet status | bounded visual support on top of truth inputs |
+| per-packet pass 2 | ranking and synthesis only when extraction warrants it | `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_planner.py`, `server/adapters/mcp/vision/runner.py` | ranked packet guidance, packet conflict notes, synthesis inputs | derived compare guidance, not a second truth source |
+| staged compare projection | project packet synthesis onto the existing staged compare contract | `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/areas/reference_feedback.py` | `truth_followup`, `correction_candidates`, `planner_summary`, `budget_control`, `reference_orchestrator_feedback`, additive `compare_diagnostics` when needed | existing public response family; no second flow |
+| `reference_iterate_stage_checkpoint(...)` | consume staged compare output and advance or hold the loop | `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_feedback.py` | `correction_focus`, `loop_disposition`, updated `reference_orchestrator_feedback`, optional compacted nested compare payload | existing iterative loop owner consuming packet synthesis rather than raw packet internals |
 
 ### Classifier Role Clarification
 
@@ -262,18 +274,20 @@ without requiring one massive all-images compare request.
 
 | Path / Module | Expected Ownership | Why It Is In Scope |
 |---------------|--------------------|--------------------|
-| `server/adapters/mcp/areas/reference.py` | Stage compare/iterate assembler | Current monolithic payload owner |
-| `server/adapters/mcp/areas/reference_planner.py` | Packet synthesis and budget policy | Already owns trimming and planner shaping |
+| `server/adapters/mcp/areas/reference.py` | Stage compare/iterate assembler | Current monolithic payload owner; should remain orchestration-first rather than the long-term home for packet policy |
+| `server/adapters/mcp/areas/reference_planner.py` | Packet synthesis and staged budget policy | Already owns trimming and planner shaping, so budget/runtime work must keep this seam aligned with the runner and staged contract |
 | `server/adapters/mcp/areas/reference_feedback.py` | Compact orchestrator read model | Must keep owning compact projection instead of forcing orchestrators to parse raw packet detail |
 | `server/adapters/mcp/contracts/reference.py` | Public compare/iterate contracts | Any packet/synthesis/budget metadata must be declared explicitly |
 | `server/adapters/mcp/vision/capture.py` | Capture/reference request assembly | Packet-local capture/reference narrowing must happen here or at its caller, not only at the outer compare wrapper |
-| `server/adapters/mcp/vision/runner.py` | `vision_assist` budget policy | Current fixed `max_input_chars=12000` lives here |
-| `server/adapters/mcp/vision/runtime.py`, `vision/config.py`, `vision/backends.py` | Runtime/provider config | Own provider/model budgets and request assembly |
+| `server/adapters/mcp/sampling/result_types.py` | Typed vision result contract | Extraction/ranking split and additive diagnostics must stay schema-first instead of becoming ad-hoc dict packing |
+| `server/adapters/mcp/vision/prompting.py`, `server/adapters/mcp/vision/parsing.py` | Narrow compare prompt/schema/parser contract | Packet extraction and ranking split changes live here, not only in the runner transport layer |
+| `server/adapters/mcp/vision/runner.py` | Bounded `vision_assist` transport and budget enforcement | Current fixed `max_input_chars=12000` lives here, but the runner should not become the only owner of compare-time prompt/schema changes |
+| `server/adapters/mcp/vision/runtime.py`, `server/adapters/mcp/vision/config.py`, `server/adapters/mcp/vision/backends.py` | Runtime/provider config | Own provider/model budgets and request assembly |
 | `server/adapters/mcp/vision/reference_support.py` | RU support and optional sidecar extension seam | Existing RU support owner that compare-time sidecars may extend deliberately, but it is not the current compare-time heuristic CV owner |
-| `server/application/services/` (new helper if needed) | Framework-free compare policy | Packet planning and synthesis should move out of the MCP area once non-trivial |
+| `server/application/services/` | Framework-free compare policy | Non-trivial packet planning, packet execution ordering, and synthesis policy should live outside the FastMCP tool wrapper so `server/adapters/mcp/areas/reference.py` stays orchestration-only |
 | `tests/unit/adapters/mcp/test_reference_images.py` | Compare/iterate owner lane | Most compare payload/budget logic already lives here |
 | `tests/e2e/vision/`, `tests/e2e/integration/` | Runtime proof lanes | Need multi-view and multi-reference runtime proof |
-| `_docs/_VISION/README.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_TASKS/README.md` | Canonical docs and board state | Must reflect the new compare architecture and operator knobs |
+| `README.md`, `_docs/AVAILABLE_TOOLS_SUMMARY.md`, `_docs/_VISION/README.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_TESTS/README.md`, `_docs/_TASKS/README.md` | Canonical docs and board state | Must reflect the new compare architecture, public tool surface, validation map, and operator knobs |
 
 ## Test Matrix
 
@@ -310,3 +324,34 @@ without requiring one massive all-images compare request.
     parsing
 - the final family remains generic across creature, architecture, organ, and
   character domains
+
+## Docs To Update
+
+- `README.md`
+- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/README.md`
+- `_docs/_TESTS/README.md`
+- `_docs/_TASKS/README.md`
+
+## Changelog Impact
+
+- one umbrella `_docs/_CHANGELOG/` entry when the packeted compare family ships
+
+## Status / Board Update
+
+- keep the promoted `TASK-166` row aligned with all open/closed `TASK-166-*`
+  subtasks and leaves in `_docs/_TASKS/README.md`
+- when the umbrella closes, record which follow-on items remain explicit
+  standalone tasks rather than leaving open descendants under a closed parent
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
+- `poetry run pytest ./tests/unit`
+- `poetry run python scripts/run_e2e_tests.py`

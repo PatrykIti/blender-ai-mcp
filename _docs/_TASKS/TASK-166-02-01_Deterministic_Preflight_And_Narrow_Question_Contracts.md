@@ -9,6 +9,9 @@
 
 - `server/adapters/mcp/areas/reference.py`
 - `server/adapters/mcp/contracts/reference.py`
+- `server/adapters/mcp/sampling/result_types.py`
+- `server/adapters/mcp/vision/prompting.py`
+- `server/adapters/mcp/vision/parsing.py`
 - `server/adapters/mcp/vision/runner.py`
 
 ## Implementation Notes
@@ -17,6 +20,11 @@
   - one packet-preflight helper that resolves deterministic inputs first
   - one packet-question builder that receives the resolved truth slice plus
     selected captures/reference ids
+- Keep `server/adapters/mcp/vision/runner.py` limited to bounded execution and
+  budget enforcement; packet question schema ownership belongs in
+  `server/adapters/mcp/sampling/result_types.py`,
+  `server/adapters/mcp/vision/prompting.py`, and
+  `server/adapters/mcp/vision/parsing.py`.
 - Preflight must always be grounded in:
   - `scene_scope_graph`
   - `scene_relation_graph`
@@ -41,10 +49,16 @@
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_parsing.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_result_types.py -q`
 
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_vision_prompting.py`
+- `tests/unit/adapters/mcp/test_vision_parsing.py`
+- `tests/unit/adapters/mcp/test_vision_result_types.py`
 - packet-preflight contract tests for blocked, low-information, and narrow
   question shaping outcomes
 
@@ -52,6 +66,9 @@
 
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
+- `README.md`
+- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `_docs/_TESTS/README.md`
 
 ## Changelog Impact
 

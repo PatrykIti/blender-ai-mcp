@@ -35,9 +35,10 @@
 - The compact orchestrator path remains `reference_orchestrator_feedback`; rich
   packet diagnostics are an additive explanation surface, not a bypass around
   that read model.
-- `reference_feedback.py` should accept typed staged inputs such as
-  `compare_diagnostics` and `budget_control` directly rather than relying on
-  ad-hoc caller-side string packing.
+- Extend `server/adapters/mcp/areas/reference_feedback.py`'s existing typed
+  staged-input path so `compare_diagnostics`, `budget_control`, and any
+  packet-uncertainty summary fields arrive as first-class typed inputs
+  alongside the current planner and correction-candidate contracts.
 - Compact projection rules should stay explicit:
   - packet rationale / bounded provenance -> `evidence_summary`
   - packet conflicts, skipped ranking, and budget clipping -> `uncertainty_notes`
@@ -88,6 +89,9 @@ compact_feedback = project_compare_diagnostics_into_feedback(
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_contract_payload_parity.py`
+- `tests/unit/adapters/mcp/test_public_surface_docs.py`
+- `tests/unit/router/application/test_router_contracts.py`
 - staged compare / iterate contract-shape tests for additive diagnostics fields
 - profile-behavior tests covering compact omission, rich inclusion, and
   failure/uncertainty auto-inclusion
@@ -100,6 +104,9 @@ compact_feedback = project_compare_diagnostics_into_feedback(
 
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
+- `README.md`
+- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `_docs/_TESTS/README.md`
 
 ## Changelog Impact
 
@@ -117,4 +124,7 @@ compact_feedback = project_compare_diagnostics_into_feedback(
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`

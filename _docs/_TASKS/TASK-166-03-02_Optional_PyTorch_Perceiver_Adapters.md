@@ -27,8 +27,8 @@
   covers compare-time packet-local advisory usage when enabled.
 - Because the compare-time sidecars must surface through staged compare
   responses, any emitted sidecar artifacts or availability state still route
-  through `areas/reference.py` and the public staged contracts, not only through
-  the backend adapter seam.
+  through `server/adapters/mcp/areas/reference.py` and the public staged
+  contracts, not only through the backend adapter seam.
 
 ## Acceptance Criteria
 
@@ -40,6 +40,9 @@
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_contract_payload_parity.py`
+- `tests/unit/adapters/mcp/test_public_surface_docs.py`
+- `tests/unit/router/application/test_router_contracts.py`
 - compare-time sidecar availability / staged-contract projection tests
 - `tests/e2e/integration/test_guided_gate_state_transport.py` when optional
   sidecar surfacing changes client-visible staged compare / iterate payloads
@@ -48,6 +51,9 @@
 
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
+- `README.md`
+- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `_docs/_TESTS/README.md`
 
 ## Changelog Impact
 
@@ -63,4 +69,7 @@
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
