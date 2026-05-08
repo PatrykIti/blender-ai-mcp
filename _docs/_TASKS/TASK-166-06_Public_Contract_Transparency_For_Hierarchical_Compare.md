@@ -47,6 +47,29 @@
 - Any new provenance or authority wording must align with the existing repo
   boundary/gate vocabulary and the shipped `advisory_only` sidecar semantics.
 
+## Pseudocode
+
+```text
+compare_diagnostics = build_compare_diagnostics(packet_results, budget_state)
+staged_compare = attach_compare_diagnostics(compare_result, compare_diagnostics)
+iterate = attach_compare_diagnostics(iterate_result, compare_diagnostics)
+compact_feedback = project_compare_diagnostics_into_feedback(
+  compare_diagnostics,
+  budget_control,
+  correction_candidates,
+)
+```
+
+## Runtime / Security Contract Notes
+
+- `compare_diagnostics` is additive and profile-aware; it must not create a
+  second public response family or bypass the compact `reference_orchestrator_feedback`
+  seam.
+- Failure/uncertainty diagnostics need one unambiguous surfaced path on both
+  staged compare and staged iterate responses.
+- Provenance/budget detail must remain bounded and transport-safe; do not leak
+  raw internal packet logs or unredacted runtime payloads.
+
 ## Acceptance Criteria
 
 - `correction_candidates` can carry packet-aware provenance/evidence without

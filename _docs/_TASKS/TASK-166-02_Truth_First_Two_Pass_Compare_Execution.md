@@ -39,6 +39,29 @@
   model built from the staged compare result, not a new direct projection from
   raw packet internals.
 
+## Pseudocode
+
+```text
+for packet in compare_plan.packet_order:
+  preflight = build_packet_preflight(packet, truth_inputs, view_inputs)
+  extraction = run_packet_extraction(packet, preflight)
+  ranking = maybe_run_packet_ranking(packet, extraction)
+  collect_packet_result(packet, preflight, extraction, ranking)
+
+staged_compare = assemble_staged_compare(packet_results, budget_state)
+iterate = consume_staged_compare(staged_compare)
+```
+
+## Runtime / Security Contract Notes
+
+- Ranking/extraction remain server-owned staged compare work; iterate must not
+  become a second public or hidden execution path for packet ranking.
+- Packet status and diagnostics remain additive to the existing staged compare /
+  iterate contracts; they do not replace `truth_followup`,
+  `correction_candidates`, or `planner_summary`.
+- Public client-visible failure/uncertainty semantics must stay explicit across
+  stdio and Streamable HTTP.
+
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_reference_images.py`

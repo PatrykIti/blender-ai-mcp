@@ -37,6 +37,25 @@
   overloading RU-only fields or duplicating `silhouette_analysis` /
   `part_segmentation` as a parallel evidence channel.
 
+## Pseudocode
+
+```text
+cv_evidence = build_compare_time_cv(packet, captures, references)
+sidecar_evidence = maybe_collect_compare_time_sidecars(packet, runtime_config)
+packet_inputs = merge_packet_support_evidence(cv_evidence, sidecar_evidence)
+staged_compare = project_packet_support_into_staged_contract(packet_inputs)
+```
+
+## Runtime / Security Contract Notes
+
+- Deterministic compare-time CV extends the existing public staged compare
+  surface; it must remain compact, machine-readable, and non-authoritative on
+  its own.
+- Optional sidecars stay default-off and advisory-only, with failures degrading
+  to bounded availability notes instead of breaking staged compare.
+- Compare-time evidence should not overload RU-only support contracts or create
+  a second perception/public-discovery flow.
+
 ## Acceptance Criteria
 
 - packet evidence no longer depends only on raw LLM perception
@@ -52,6 +71,7 @@
   `reference_silhouette.py` and staged compare assembly; expand
   `reference_support.py` coverage only when that seam is deliberately extended
   beyond RU
+- `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
 - selected integration/runtime proof when compare-time packet evidence changes
   the staged public payload
 
@@ -75,4 +95,5 @@
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_silhouette_contract.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`

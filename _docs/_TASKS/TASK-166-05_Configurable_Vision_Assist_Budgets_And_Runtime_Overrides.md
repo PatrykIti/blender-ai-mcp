@@ -37,6 +37,24 @@
 - Configurable budgets are a support mechanism for the packeted family, not the
   primary replacement for packet decomposition.
 
+## Pseudocode
+
+```text
+runtime_budget = resolve_runtime_budget(config, env, defaults)
+effective_budget = clamp_budget(runtime_budget, fail_safe_caps)
+runner = project_effective_budget_into_vision_runner(effective_budget)
+staged_compare = project_budget_state_into_budget_control(runner, effective_budget)
+```
+
+## Runtime / Security Contract Notes
+
+- Config/env overrides must not silently disable fail-safe caps.
+- Public staged compare / iterate responses keep one canonical budget surface:
+  `budget_control`, with additive diagnostics only when extra transparency is
+  justified.
+- Budget overrides that change client-visible behavior must remain explicit and
+  transport-safe across stdio and Streamable HTTP.
+
 ## Acceptance Criteria
 
 - compare input budgets are operator-configurable

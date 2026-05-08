@@ -33,6 +33,24 @@
   - compact flows keep the orchestration read model short
   - rich or failure/uncertainty paths may surface additive packet diagnostics
 
+## Pseudocode
+
+```text
+tier = resolve_compare_complexity(selected_references, assembled_scope, captures)
+policy = resolve_compare_policy_for_tier(tier)
+packet_plan = build_packet_plan(policy, selected_references, assembled_scope)
+staged_compare = assemble_compare_from_packet_plan(packet_plan)
+```
+
+## Runtime / Security Contract Notes
+
+- Tier selection must stay deterministic and server-owned; the public staged
+  response shape remains one family regardless of tier.
+- Multi-reference scaling proof must validate the real staged compare owner
+  seam, not only the compact transport wrapper.
+- When rich packet detail is omitted, failure/uncertainty still needs an
+  explicit surfaced path through the existing staged contracts.
+
 ## Acceptance Criteria
 
 - simple, complex, and super-complex tiers use different packet/synthesis
@@ -45,8 +63,11 @@
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - packet-policy unit coverage in `reference_planner.py`
-- selected `tests/e2e/vision/` or integration proof for multi-reference runtime
-  scaling behavior
+- `tests/e2e/vision/test_reference_stage_truth_handoff.py`
+- `tests/e2e/vision/test_reference_guided_creature_comparison.py`
+- `tests/e2e/vision/test_real_view_variant_model_comparison.py`
+- integration proof when tiered packet scaling changes staged compare / iterate
+  payloads
 
 ## Docs To Update
 
@@ -69,4 +90,7 @@
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_truth_handoff.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_guided_creature_comparison.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_real_view_variant_model_comparison.py -q`
 - `poetry run python scripts/run_e2e_tests.py`
