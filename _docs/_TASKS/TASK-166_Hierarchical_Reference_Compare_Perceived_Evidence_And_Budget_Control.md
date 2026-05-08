@@ -191,8 +191,8 @@ But internally the path becomes:
 
 ### Where New Pieces Fit
 
-- View-first and scope-first planning slot in **before**
-  `build_vision_request_from_stage_captures(...)`, but staged packet work must
+- View-first and scope-first planning slot into the staged compare path
+  **before a final `VisionRequest` is assembled**, and staged packet work must
   start from the earlier capture/truth seams:
   `server/adapters/mcp/vision/capture_runtime.py` for deterministic stage
   captures plus `server/adapters/mcp/areas/reference_truth.py` and
@@ -287,13 +287,13 @@ without requiring one massive all-images compare request.
 | `server/adapters/mcp/areas/reference_planner.py` | Packet synthesis and staged budget policy | Already owns trimming and planner shaping, so budget/runtime work must keep this seam aligned with the runner and staged contract |
 | `server/adapters/mcp/areas/reference_feedback.py` | Compact orchestrator read model | Must keep owning compact projection instead of forcing orchestrators to parse raw packet detail |
 | `server/adapters/mcp/contracts/reference.py` | Public compare/iterate contracts | Any packet/synthesis/budget metadata must be declared explicitly |
-| `server/adapters/mcp/vision/capture_runtime.py` | Staged compare capture preset and scene-state seam | Packet-local view planning must stay aligned with the live stage-capture owner instead of assuming request assembly is the only capture seam |
-| `server/adapters/mcp/vision/capture.py` | Capture/reference request assembly | Packet-local capture/reference narrowing must happen here or at its caller, not only at the outer compare wrapper |
+| `server/adapters/mcp/vision/capture_runtime.py` | Staged compare capture preset and scene-state seam | Packet-local view planning must stay aligned with the live stage-capture owner before any final request assembly happens |
+| `server/adapters/mcp/vision/capture.py` | Final capture/reference request assembly seam | Packet-local capture/reference narrowing may still affect request assembly, but this is the later assembly layer, not the sole owner of staged compare planning |
 | `server/adapters/mcp/sampling/result_types.py` | Typed vision result contract | Extraction/ranking split and additive diagnostics must stay schema-first instead of becoming ad-hoc dict packing |
 | `server/adapters/mcp/vision/prompting.py`, `server/adapters/mcp/vision/parsing.py` | Narrow compare prompt/schema/parser contract | Packet extraction and ranking split changes live here, not only in the runner transport layer |
 | `server/adapters/mcp/vision/runner.py` | Bounded `vision_assist` transport and budget enforcement | Current fixed `max_input_chars=12000` lives here, but the runner should not become the only owner of compare-time prompt/schema changes |
 | `server/adapters/mcp/vision/runtime.py`, `server/adapters/mcp/vision/config.py`, `server/adapters/mcp/vision/backends.py` | Runtime/provider config | Own provider/model budgets and request assembly |
-| `server/adapters/mcp/vision/reference_support.py` | RU support and optional shared sidecar adapter/config seam | Existing RU support owner that compare-time sidecars may reuse deliberately, but it is not the default durable owner for staged packet-evidence execution |
+| `server/adapters/mcp/vision/reference_support.py` | RU support and optional shared sidecar adapter/config seam | Existing RU support owner that compare-time sidecars may borrow from deliberately, but it is not the default durable owner for staged packet-evidence execution or operator-facing compare-time config |
 | `server/application/services/` | Framework-free compare policy | Non-trivial packet planning, packet execution ordering, and synthesis policy should live outside the FastMCP tool wrapper so `server/adapters/mcp/areas/reference.py` stays orchestration-only |
 | `tests/unit/adapters/mcp/test_reference_images.py` | Compare/iterate owner lane | Most compare payload/budget logic already lives here |
 | `tests/e2e/vision/`, `tests/e2e/integration/` | Runtime proof lanes | Need multi-view and multi-reference runtime proof |

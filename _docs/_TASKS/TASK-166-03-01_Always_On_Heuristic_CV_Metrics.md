@@ -41,6 +41,8 @@
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_silhouette.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_silhouette_contract.py -q`
+- `poetry run pytest ./tests/unit`
+- `poetry run python scripts/run_e2e_tests.py`
 
 ## Tests To Add/Update
 

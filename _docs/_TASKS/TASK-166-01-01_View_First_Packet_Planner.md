@@ -40,6 +40,8 @@
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- `poetry run pytest ./tests/unit`
+- `poetry run python scripts/run_e2e_tests.py`
 
 ## Tests To Add/Update
 

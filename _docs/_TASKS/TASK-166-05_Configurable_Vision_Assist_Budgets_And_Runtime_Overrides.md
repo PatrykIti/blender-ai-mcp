@@ -123,3 +123,5 @@ staged_compare = project_budget_state_into_budget_control(runner, effective_budg
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
+- `poetry run pytest ./tests/unit`
+- `poetry run python scripts/run_e2e_tests.py`

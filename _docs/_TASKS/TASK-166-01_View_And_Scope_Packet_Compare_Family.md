@@ -37,9 +37,10 @@
 
 - Keep `reference_compare_stage_checkpoint(...)` and
   `reference_iterate_stage_checkpoint(...)` as the public entrypoints.
-- Insert packet planning and packet-local capture/reference narrowing
-  immediately before the current `build_vision_request_from_stage_captures(...)`
-  path.
+- Insert packet planning and packet-local capture/reference narrowing into the
+  staged compare path before the final `VisionRequest` assembly, starting from
+  the deterministic stage-capture, truth, and framing seams rather than only
+  from the final request builder.
 - Keep the plan aligned with the live staged capture seam in
   `server/adapters/mcp/vision/capture_runtime.py`; packet planning is not only
   about request assembly after captures already exist.
@@ -111,6 +112,8 @@ packet_inputs = select_packet_inputs(
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
+- `poetry run pytest ./tests/unit`
+- `poetry run python scripts/run_e2e_tests.py`
 
 ## Acceptance Criteria
 

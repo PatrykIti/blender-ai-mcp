@@ -13,6 +13,7 @@
 - `server/adapters/mcp/vision/config.py`
 - `server/adapters/mcp/vision/runtime.py`
 - `server/infrastructure/config.py`
+- `server/application/services/`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
 - `_docs/_VISION/README.md`
@@ -32,6 +33,9 @@
   shared-adapter-oriented; it must not make compare-time packet evidence look
   like an attach-time RU concern or collapse staged compare execution back into
   the RU pipeline.
+- If compare-time sidecar execution grows beyond a light adapter call, move it
+  into a staged compare-specific helper/service seam and keep RU support code as
+  optional shared infrastructure rather than the default execution owner.
 - Because the compare-time sidecars must surface through staged compare
   responses, any emitted sidecar artifacts or availability state still route
   through `server/adapters/mcp/areas/reference.py` and the public staged
@@ -59,7 +63,9 @@
 
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
-- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md` only when dedicated
+  compare-time sidecar env/config examples are added alongside or instead of the
+  existing RU-oriented examples
 - `README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
 - `_docs/_TESTS/README.md`
@@ -83,3 +89,5 @@
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
+- `poetry run pytest ./tests/unit`
+- `poetry run python scripts/run_e2e_tests.py`

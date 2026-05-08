@@ -92,4 +92,5 @@
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
 - after adding the dedicated multi-reference scaling lane, run:
   `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_multi_reference_scaling.py -q`
+- `poetry run pytest ./tests/unit`
 - `poetry run python scripts/run_e2e_tests.py`

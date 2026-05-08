@@ -14,6 +14,7 @@
 - `server/adapters/mcp/vision/runtime.py`
 - `server/adapters/mcp/areas/reference.py`
 - `server/adapters/mcp/contracts/reference.py`
+- `server/application/services/`
 - `server/infrastructure/config.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_vision_silhouette.py`
@@ -37,6 +38,10 @@
   `server/adapters/mcp/vision/reference_support.py` when justified, but the
   current repo entrypoint there is still RU augmentation and must not be
   mistaken for the durable compare-time packet-evidence owner.
+- Compare-time sidecar execution/projection should default to a staged
+  compare-specific helper/service seam plus staged response projection; reuse
+  RU-side helpers or config only when they are deliberately generalized for
+  compare-time work.
 - Packet compare should consume these pre-chewed facts so the LLM is asked
   narrower questions rather than raw broad image interpretation.
 - Compare-time evidence should extend the staged compare contracts without
@@ -93,7 +98,9 @@ staged_compare = project_packet_support_into_staged_contract(packet_inputs)
 
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
-- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md` when compare-time sidecar
+  env/config becomes operator-facing through a dedicated compare-time example,
+  not by implicitly reusing RU-only examples
 - `README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
 - `_docs/_TESTS/README.md`
@@ -120,3 +127,5 @@ staged_compare = project_packet_support_into_staged_contract(packet_inputs)
 - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_silhouette_contract.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
+- `poetry run pytest ./tests/unit`
+- `poetry run python scripts/run_e2e_tests.py`
