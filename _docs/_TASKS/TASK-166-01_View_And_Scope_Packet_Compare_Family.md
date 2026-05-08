@@ -43,6 +43,11 @@
 - Keep the plan aligned with the live staged capture seam in
   `server/adapters/mcp/vision/capture_runtime.py`; packet planning is not only
   about request assembly after captures already exist.
+- Packet planning also has to align with the pre-request truth/framing seams in
+  `server/adapters/mcp/areas/reference_truth.py` and
+  `server/adapters/mcp/areas/reference_view_diagnostics.py`, because staged
+  compare currently resolves truth bundle and framing hints before final request
+  assembly.
 - Reuse current `target_view`, `target_object`, `target_objects`, and
   `collection_name` as packet-planning hints rather than treating them as the
   final whole-request scope.

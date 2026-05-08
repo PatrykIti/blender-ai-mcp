@@ -8,10 +8,16 @@
 ## Repository Touchpoints
 
 - `server/adapters/mcp/areas/reference_silhouette.py`
+- `server/adapters/mcp/vision/silhouette.py`
 - `server/adapters/mcp/vision/reference_support.py`
+- `server/adapters/mcp/vision/config.py`
+- `server/adapters/mcp/vision/runtime.py`
 - `server/adapters/mcp/areas/reference.py`
 - `server/adapters/mcp/contracts/reference.py`
+- `server/infrastructure/config.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_vision_silhouette.py`
+- `tests/unit/adapters/mcp/test_vision_runtime_config.py`
 - `_docs/_VISION/README.md`
 
 ## Implementation Notes
@@ -27,15 +33,18 @@
   compare path already emits deterministic silhouette evidence and action hints.
 - Always-on CV should feed packet-level evidence slots on the staged compare
   family before the LLM compare question is assembled.
-- Optional PyTorch sidecars should extend the existing `reference_support.py`
-  seam instead of creating a second parallel perception stack, but the current
-  repo entrypoint there is still RU augmentation and must not be mistaken for
-  the already-shipped compare-time heuristic CV owner.
+- Optional PyTorch sidecars may reuse shared adapter/config patterns from
+  `server/adapters/mcp/vision/reference_support.py` when justified, but the
+  current repo entrypoint there is still RU augmentation and must not be
+  mistaken for the durable compare-time packet-evidence owner.
 - Packet compare should consume these pre-chewed facts so the LLM is asked
   narrower questions rather than raw broad image interpretation.
 - Compare-time evidence should extend the staged compare contracts without
   overloading RU-only fields or duplicating `silhouette_analysis` /
   `part_segmentation` as a parallel evidence channel.
+- If a compare-time sidecar execution seam becomes non-trivial, give it a
+  staged-compare-specific helper/service owner instead of silently collapsing it
+  back into RU-specific support code.
 
 ## Pseudocode
 
@@ -67,6 +76,8 @@ staged_compare = project_packet_support_into_staged_contract(packet_inputs)
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_vision_silhouette.py`
+- `tests/unit/adapters/mcp/test_vision_runtime_config.py`
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/unit/router/application/test_router_contracts.py`
@@ -82,6 +93,7 @@ staged_compare = project_packet_support_into_staged_contract(packet_inputs)
 
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - `README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
 - `_docs/_TESTS/README.md`
@@ -101,6 +113,8 @@ staged_compare = project_packet_support_into_staged_contract(packet_inputs)
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_silhouette.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`

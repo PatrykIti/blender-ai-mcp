@@ -28,6 +28,10 @@
 - Attach-time global classifier support remains on the existing
   `reference_understanding` bootstrap path from `TASK-163`; this leaf only
   covers compare-time packet-local advisory usage when enabled.
+- Reuse of `server/adapters/mcp/vision/reference_support.py` is optional and
+  shared-adapter-oriented; it must not make compare-time packet evidence look
+  like an attach-time RU concern or collapse staged compare execution back into
+  the RU pipeline.
 - Because the compare-time sidecars must surface through staged compare
   responses, any emitted sidecar artifacts or availability state still route
   through `server/adapters/mcp/areas/reference.py` and the public staged
