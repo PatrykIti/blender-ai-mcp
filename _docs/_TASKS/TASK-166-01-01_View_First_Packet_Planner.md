@@ -40,3 +40,23 @@
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+
+## Tests To Add/Update
+
+- `tests/unit/adapters/mcp/test_reference_images.py`
+- view-packet unit coverage for missing-view degradation and stable packet ids
+
+## Docs To Update
+
+- `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/README.md`
+
+## Changelog Impact
+
+- include in the umbrella `_docs/_CHANGELOG/` entry when view-first packet
+  planning ships
+
+## Status / Board Update
+
+- keep parent `TASK-166` and this leaf aligned when view-first planning closes
+  or is split further

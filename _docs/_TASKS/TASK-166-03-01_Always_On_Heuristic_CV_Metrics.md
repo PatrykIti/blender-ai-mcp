@@ -37,3 +37,24 @@
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+
+## Tests To Add/Update
+
+- `tests/unit/adapters/mcp/test_reference_images.py`
+- silhouette/CV owner-lane coverage for emitted metrics and compact machine
+  readability
+
+## Docs To Update
+
+- `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/README.md`
+
+## Changelog Impact
+
+- include in the umbrella `_docs/_CHANGELOG/` entry when always-on compare-time
+  CV metrics ship
+
+## Status / Board Update
+
+- keep parent `TASK-166` and this leaf aligned when compare-time heuristic CV
+  closes or remains explicit follow-on scope

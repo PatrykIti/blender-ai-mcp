@@ -49,7 +49,9 @@
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - targeted unit coverage for compare-time support-evidence shaping in
-  `reference_support.py`
+  `reference_silhouette.py` and staged compare assembly; expand
+  `reference_support.py` coverage only when that seam is deliberately extended
+  beyond RU
 - selected integration/runtime proof when compare-time packet evidence changes
   the staged public payload
 

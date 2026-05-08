@@ -41,3 +41,24 @@
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+
+## Tests To Add/Update
+
+- `tests/unit/adapters/mcp/test_reference_images.py`
+- packet-preflight contract tests for blocked, low-information, and narrow
+  question shaping outcomes
+
+## Docs To Update
+
+- `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/README.md`
+
+## Changelog Impact
+
+- include in the umbrella `_docs/_CHANGELOG/` entry when packet preflight and
+  narrow question contracts ship
+
+## Status / Board Update
+
+- keep parent `TASK-166` and this leaf aligned when deterministic packet
+  preflight closes or splits into follow-on work

@@ -42,3 +42,24 @@
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+
+## Tests To Add/Update
+
+- `tests/unit/adapters/mcp/test_reference_images.py`
+- simple-tier packet-policy coverage for minimal packet count and synthesis skip
+  behavior
+
+## Docs To Update
+
+- `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/README.md`
+
+## Changelog Impact
+
+- include in the umbrella `_docs/_CHANGELOG/` entry when the simple compare
+  tier ships
+
+## Status / Board Update
+
+- keep parent `TASK-166` and this leaf aligned when the simple compare policy
+  closes or is superseded by a refined tier split
