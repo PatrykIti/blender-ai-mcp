@@ -443,6 +443,9 @@ def build_reference_orchestrator_feedback(
         uncertainty_notes.extend(list(compare_diagnostics.conflict_notes or []))
         uncertainty_notes.extend(list(compare_diagnostics.budget_notes or []))
         uncertainty_notes.extend(
+            note for packet in list(compare_diagnostics.packets or []) for note in list(packet.uncertainty_notes or [])
+        )
+        uncertainty_notes.extend(
             f"{packet.packet_label}: {packet.status_reason}"
             for packet in list(compare_diagnostics.packets or [])
             if packet.status_reason

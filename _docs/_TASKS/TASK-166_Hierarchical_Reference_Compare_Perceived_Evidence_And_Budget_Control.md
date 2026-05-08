@@ -363,6 +363,13 @@ without requiring one massive all-images compare request.
   - staged compare now maps packet status from the parsed packet contract into
     `compare_diagnostics` instead of inferring everything from generic mismatch
     lists
+- 2026-05-08: `TASK-166-02-02` is now closed:
+  - packet extraction and packet ranking are now two bounded staged compare
+    phases instead of one always-large packet call
+  - ranking is skipped explicitly for clean / low-information / blocked
+    extraction outcomes
+  - ranking failure now preserves extraction evidence and projects explicit
+    `ranking_status="error"` uncertainty through `compare_diagnostics`
 - 2026-05-08: remaining follow-on work still includes the deeper TASK-166
   leaves for packet-specific prompt/parser contract hardening, explicit
   extraction-vs-ranking phase semantics, deterministic CV / optional PyTorch

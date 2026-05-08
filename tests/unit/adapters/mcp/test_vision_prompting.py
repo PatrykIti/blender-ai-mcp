@@ -88,6 +88,38 @@ def _packet_compare_request() -> VisionRequest:
     )
 
 
+def _packet_ranking_request() -> VisionRequest:
+    return VisionRequest(
+        goal="low poly squirrel",
+        target_object="Squirrel",
+        images=(
+            VisionImageInput(path="/tmp/front.png", role="after", label="target_front_after"),
+            VisionImageInput(path="/tmp/ref_front.png", role="reference", label="ref_front"),
+        ),
+        prompt_hint="comparison_mode=stage_checkpoint_vs_reference | compare_phase=packet_ranking",
+        metadata={
+            "mode": "reference_compare_packet",
+            "packet_id": "packet:front:1234abcd",
+            "packet_kind": "view",
+            "packet_label": "front packet",
+            "packet_view": "front",
+            "packet_scope": "Squirrel",
+            "packet_reference_ids": ["ref_front"],
+            "packet_capture_labels": ["target_front_after"],
+            "compare_phase": "packet_ranking",
+            "extraction_goal_summary": "Front packet still shows a round head silhouette.",
+            "extraction_reference_match_summary": "The packet has enough signal for one more bounded correction step.",
+            "extraction_visible_changes": ["Front silhouette is readable."],
+            "extraction_shape_mismatches": ["Head silhouette is still too spherical."],
+            "extraction_proportion_mismatches": ["Head still reads slightly too large."],
+            "extraction_correction_focus": ["Head silhouette"],
+            "extraction_next_corrections": ["Flatten the head silhouette slightly."],
+            "extraction_status_reason": None,
+        },
+        truth_summary={"summary": {"pair_count": 0}},
+    )
+
+
 def test_local_prompt_payload_is_more_compact_and_task_focused():
     text = build_local_vision_payload_text(_request())
 
@@ -182,6 +214,20 @@ def test_packet_compare_request_uses_packet_specific_prompt_payload_and_schema()
         "ranking_recommendation",
     }
     _assert_strict_required_matches_properties(schema)
+
+
+def test_packet_ranking_request_uses_ranking_specific_prompt_payload():
+    request = _packet_ranking_request()
+
+    system_prompt = build_vision_system_prompt(backend_kind="mlx_local", request=request)
+    payload_text = build_vision_payload_text(request)
+
+    assert "bounded packet-ranking vision assistant" in system_prompt
+    assert "second staged compare phase" in system_prompt
+    assert "COMPARE_PHASE: packet_ranking" in payload_text
+    assert "EXTRACTION_EVIDENCE:" in payload_text
+    assert "- shape_mismatch: Head silhouette is still too spherical." in payload_text
+    assert "- suggested_next_correction: Flatten the head silhouette slightly." in payload_text
 
 
 def test_google_family_compare_profile_uses_narrow_contract_even_on_openrouter():

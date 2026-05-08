@@ -94,6 +94,15 @@ def _is_reference_packet_compare_request(request: VisionRequest | None) -> bool:
     return mode == "reference_compare_packet"
 
 
+def _reference_packet_compare_phase(request: VisionRequest | None) -> str:
+    if request is None:
+        return "packet_extraction"
+    phase = str(request.metadata.get("compare_phase") or "").strip().lower()
+    if phase in {"packet_extraction", "packet_ranking"}:
+        return phase
+    return "packet_extraction"
+
+
 def resolve_vision_contract_profile(
     *,
     vision_contract_profile: VisionContractProfile | None = None,
@@ -247,12 +256,45 @@ def build_vision_system_prompt(
     """Return the bounded system prompt, tuned slightly by backend family."""
 
     if _is_reference_packet_compare_request(request):
+        packet_phase = _reference_packet_compare_phase(request)
+        if packet_phase == "packet_ranking":
+            return (
+                "You are a bounded packet-ranking vision assistant for Blender modeling.\n\n"
+                "This request is the second staged compare phase for one packet only.\n"
+                "The packet already has bounded extraction evidence. Use the provided extraction summary to rank the "
+                "most important correction focus and next corrections. Do not rediscover the whole packet from scratch.\n"
+                "You are not the truth source. Do not infer scene-wide conclusions from this packet alone.\n\n"
+                "Return exactly one JSON object with only these keys:\n"
+                "- goal_summary\n"
+                "- reference_match_summary\n"
+                "- visible_changes\n"
+                "- shape_mismatches\n"
+                "- proportion_mismatches\n"
+                "- correction_focus\n"
+                "- likely_issues\n"
+                "- next_corrections\n"
+                "- recommended_checks\n"
+                "- packet_guidance\n"
+                "- confidence\n"
+                "- captures_used\n\n"
+                "packet_guidance must be an object with exactly these keys:\n"
+                '- packet_status: "ready" | "clean" | "low_information" | "blocked"\n'
+                "- status_reason: string or null\n"
+                '- ranking_recommendation: "rank" | "skip_clean" | "skip_low_information" | "skip_blocked"\n\n'
+                "Rules:\n"
+                "- treat the extracted mismatches as the source material to rank and phrase cleanly\n"
+                "- keep correction_focus and next_corrections bounded to 0-3 items each\n"
+                "- preserve packet_status=ready unless the supplied extraction evidence itself is too weak or blocked\n"
+                "- do not inflate new mismatch classes that were not justified by the extraction evidence\n"
+                "- use recommended_checks only for canonical MCP tool ids\n"
+                "- do not echo the input payload and do not wrap the result in markdown\n"
+            )
         return (
             "You are a bounded packet-compare vision assistant for Blender modeling.\n\n"
             "This request is one staged compare packet only. Work only on the provided packet-local captures, "
             "references, and deterministic truth slice.\n"
             "You are not the truth source. Do not infer scene-wide conclusions from this packet alone.\n"
-            "Keep the result bounded to 0-3 concrete mismatches and 0-3 concrete next corrections.\n\n"
+            "Keep the extraction result bounded to 0-3 concrete mismatches and 0-3 conservative next corrections.\n\n"
             "Return exactly one JSON object with only these keys:\n"
             "- goal_summary\n"
             "- reference_match_summary\n"
@@ -526,6 +568,7 @@ def build_vision_payload_text(
         packet_id = str(request.metadata.get("packet_id") or "").strip() or "packet"
         packet_kind = str(request.metadata.get("packet_kind") or "").strip() or "view"
         packet_label = str(request.metadata.get("packet_label") or "").strip() or packet_id
+        packet_phase = _reference_packet_compare_phase(request)
         packet_scope = str(request.metadata.get("packet_scope") or "").strip() or "none"
         packet_view = str(request.metadata.get("packet_view") or "").strip() or "none"
         reference_ids = [str(item) for item in request.metadata.get("packet_reference_ids") or []]
@@ -544,6 +587,7 @@ def build_vision_payload_text(
             f"PACKET_ID: {packet_id}",
             f"PACKET_KIND: {packet_kind}",
             f"PACKET_LABEL: {packet_label}",
+            f"COMPARE_PHASE: {packet_phase}",
             f"PACKET_VIEW: {packet_view}",
             f"PACKET_SCOPE: {packet_scope}",
             f"PROMPT_HINT: {request.prompt_hint or 'none'}",
@@ -556,6 +600,40 @@ def build_vision_payload_text(
             parts.extend(["PACKET_CAPTURE_LABELS:", *[f"- {item}" for item in capture_labels]])
         if truth_lines:
             parts.extend(["TRUTH_SUMMARY:", *truth_lines])
+        if packet_phase == "packet_ranking":
+            extraction_visible_changes = [
+                str(item) for item in request.metadata.get("extraction_visible_changes") or [] if str(item).strip()
+            ]
+            extraction_shape_mismatches = [
+                str(item) for item in request.metadata.get("extraction_shape_mismatches") or [] if str(item).strip()
+            ]
+            extraction_proportion_mismatches = [
+                str(item)
+                for item in request.metadata.get("extraction_proportion_mismatches") or []
+                if str(item).strip()
+            ]
+            extraction_correction_focus = [
+                str(item) for item in request.metadata.get("extraction_correction_focus") or [] if str(item).strip()
+            ]
+            extraction_next_corrections = [
+                str(item) for item in request.metadata.get("extraction_next_corrections") or [] if str(item).strip()
+            ]
+            extraction_status_reason = str(request.metadata.get("extraction_status_reason") or "").strip()
+            extraction_goal_summary = str(request.metadata.get("extraction_goal_summary") or "").strip()
+            extraction_reference_match = str(request.metadata.get("extraction_reference_match_summary") or "").strip()
+            parts.extend(
+                [
+                    "EXTRACTION_EVIDENCE:",
+                    f"- goal_summary: {extraction_goal_summary or 'none'}",
+                    f"- reference_match_summary: {extraction_reference_match or 'none'}",
+                    *[f"- visible_change: {item}" for item in extraction_visible_changes],
+                    *[f"- shape_mismatch: {item}" for item in extraction_shape_mismatches],
+                    *[f"- proportion_mismatch: {item}" for item in extraction_proportion_mismatches],
+                    *[f"- suggested_focus: {item}" for item in extraction_correction_focus],
+                    *[f"- suggested_next_correction: {item}" for item in extraction_next_corrections],
+                    f"- extraction_status_reason: {extraction_status_reason or 'none'}",
+                ]
+            )
         parts.extend(
             [
                 "",

@@ -1,9 +1,22 @@
 # TASK-166-02-02: Visual Extraction And Correction Ranking Split
 
 **Parent:** [TASK-166-02](./TASK-166-02_Truth_First_Two_Pass_Compare_Execution.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Objective:** Separate packet-level visual extraction from later correction ranking so one failed ranking step does not invalidate usable extraction evidence.
+
+## Completion Summary
+
+- staged compare packet execution now runs:
+  - one bounded extraction pass first
+  - one bounded ranking pass only when extraction returns
+    `ranking_recommendation="rank"`
+- packet-local prompt/schema/parser seams now distinguish extraction and
+  ranking request phases through the packet compare contract
+- ranking failure no longer discards usable extraction evidence; staged compare
+  keeps the extraction result and marks the packet `ranking_status="error"`
+- packet clean / low-information / blocked outcomes now skip the ranking pass
+  explicitly instead of inferring that state from missing fields
 
 ## Repository Touchpoints
 

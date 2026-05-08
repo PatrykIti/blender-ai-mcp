@@ -136,7 +136,11 @@ from server.adapters.mcp.contracts.scene import (
     SceneCorrectionTruthSummaryContract,
     SceneTruthFollowupContract,
 )
-from server.adapters.mcp.sampling.result_types import VisionAssistantContract, to_vision_assistant_contract
+from server.adapters.mcp.sampling.result_types import (
+    VisionAssistantContract,
+    VisionAssistContract,
+    to_vision_assistant_contract,
+)
 from server.adapters.mcp.session_capabilities import (
     GuidedReferenceReadinessState,
     SessionCapabilityState,
@@ -304,6 +308,32 @@ def _packet_reference_subset(
     if not selected_ids:
         return list(reference_records)
     return [record for record in reference_records if record.reference_id in selected_ids]
+
+
+def _merge_packet_phase_results(
+    extraction_result: VisionAssistContract,
+    ranking_result: VisionAssistContract,
+) -> VisionAssistContract:
+    return extraction_result.model_copy(
+        update={
+            "goal_summary": ranking_result.goal_summary or extraction_result.goal_summary,
+            "reference_match_summary": ranking_result.reference_match_summary
+            or extraction_result.reference_match_summary,
+            "visible_changes": list(extraction_result.visible_changes or ranking_result.visible_changes or []),
+            "shape_mismatches": list(extraction_result.shape_mismatches or []),
+            "proportion_mismatches": list(extraction_result.proportion_mismatches or []),
+            "correction_focus": list(ranking_result.correction_focus or extraction_result.correction_focus or []),
+            "likely_issues": list(ranking_result.likely_issues or extraction_result.likely_issues or []),
+            "next_corrections": list(ranking_result.next_corrections or extraction_result.next_corrections or []),
+            "recommended_checks": list(ranking_result.recommended_checks or extraction_result.recommended_checks or []),
+            "packet_guidance": extraction_result.packet_guidance or ranking_result.packet_guidance,
+            "confidence": ranking_result.confidence
+            if ranking_result.confidence is not None
+            else extraction_result.confidence,
+            "captures_used": list(extraction_result.captures_used or ranking_result.captures_used or []),
+            "input_summary": extraction_result.input_summary or ranking_result.input_summary,
+        }
+    )
 
 
 def _packet_truth_bundle(
@@ -1261,7 +1291,7 @@ async def _run_stage_checkpoint_compare(
 
         packet_truth_bundle = _packet_truth_bundle(budgeted_truth_bundle, packet=packet)
         packet_reference_images = build_reference_capture_images(packet_reference_records)
-        packet_request = build_vision_request_from_stage_captures(
+        extraction_request = build_vision_request_from_stage_captures(
             packet_captures,
             goal=goal,
             target_object=resolved_target_object,
@@ -1272,6 +1302,7 @@ async def _run_stage_checkpoint_compare(
                 for part in (
                     prompt_hint,
                     "comparison_mode=stage_checkpoint_vs_reference",
+                    "compare_phase=packet_extraction",
                     f"checkpoint_label={checkpoint_label}" if checkpoint_label else None,
                     f"preset_profile={preset_profile}",
                     f"packet_id={packet.packet_id}",
@@ -1299,6 +1330,7 @@ async def _run_stage_checkpoint_compare(
             or None,
             metadata={
                 "mode": "reference_compare_packet",
+                "compare_phase": "packet_extraction",
                 "source": "compare_stage_checkpoint",
                 "checkpoint_id": checkpoint_id,
                 "preset_profile": preset_profile,
@@ -1315,21 +1347,21 @@ async def _run_stage_checkpoint_compare(
                 "assembled_target_scope": assembled_target_scope.model_dump(mode="json"),
             },
         )
-        packet_outcome = await run_vision_assist(
+        extraction_outcome = await run_vision_assist(
             ctx,
-            request=packet_request,
+            request=extraction_request,
             resolver=resolver,
         )
-        packet_vision_assistant = to_vision_assistant_contract(packet_outcome)
-        packet_assistants.append((packet, packet_vision_assistant))
-        if packet_vision_assistant.status != "success" or packet_vision_assistant.result is None:
+        extraction_vision_assistant = to_vision_assistant_contract(extraction_outcome)
+        if extraction_vision_assistant.status != "success" or extraction_vision_assistant.result is None:
             packet.extraction_status = "error"
             packet.ranking_status = "skipped"
-            packet.status_reason = packet_vision_assistant.rejection_reason or packet_vision_assistant.message
+            packet.status_reason = extraction_vision_assistant.rejection_reason or extraction_vision_assistant.message
             packet.uncertainty_notes = [packet.status_reason] if packet.status_reason else []
+            packet_assistants.append((packet, extraction_vision_assistant))
             continue
 
-        packet_guidance = packet_vision_assistant.result.packet_guidance
+        packet_guidance = extraction_vision_assistant.result.packet_guidance
         packet_status = packet_guidance.packet_status if packet_guidance is not None else None
         packet.extraction_status = cast(
             Literal["success", "blocked", "low_information", "skipped", "error"],
@@ -1341,34 +1373,122 @@ async def _run_stage_checkpoint_compare(
                 None: "success",
             }[packet_status],
         )
-        packet.evidence_summary = packet_vision_assistant.result.goal_summary
+        effective_packet_assistant = extraction_vision_assistant
+        effective_packet_result = extraction_vision_assistant.result
+        packet.evidence_summary = extraction_vision_assistant.result.goal_summary
         packet.correction_focus = list(
-            packet_vision_assistant.result.correction_focus
-            or packet_vision_assistant.result.next_corrections
-            or packet_vision_assistant.result.shape_mismatches
+            extraction_vision_assistant.result.correction_focus
+            or extraction_vision_assistant.result.next_corrections
+            or extraction_vision_assistant.result.shape_mismatches
         )[:3]
         packet.status_reason = packet_guidance.status_reason if packet_guidance is not None else None
         packet.uncertainty_notes = _dedupe_preserving_order(
             [
-                *(packet_vision_assistant.result.proportion_mismatches or []),
-                *(item.summary for item in list(packet_vision_assistant.result.likely_issues or [])),
+                *(extraction_vision_assistant.result.proportion_mismatches or []),
+                *(item.summary for item in list(extraction_vision_assistant.result.likely_issues or [])),
                 *([packet.status_reason] if packet.status_reason else []),
             ]
         )[:3]
         ranking_recommendation = packet_guidance.ranking_recommendation if packet_guidance is not None else None
         if ranking_recommendation == "rank":
-            packet.ranking_status = "success" if packet.correction_focus else "skipped"
+            ranking_request = build_vision_request_from_stage_captures(
+                packet_captures,
+                goal=goal,
+                target_object=resolved_target_object,
+                reference_images=packet_reference_images,
+                truth_summary=packet_truth_bundle.model_dump(mode="json"),
+                prompt_hint=" | ".join(
+                    part
+                    for part in (
+                        prompt_hint,
+                        "comparison_mode=stage_checkpoint_vs_reference",
+                        "compare_phase=packet_ranking",
+                        f"checkpoint_label={checkpoint_label}" if checkpoint_label else None,
+                        f"preset_profile={preset_profile}",
+                        f"packet_id={packet.packet_id}",
+                        f"packet_kind={packet.packet_kind}",
+                        f"packet_label={packet.packet_label}",
+                        f"packet_view={packet.target_view}" if packet.target_view else None,
+                        f"packet_scope={packet.scope_label}" if packet.scope_label else None,
+                    )
+                    if part
+                )
+                or None,
+                metadata={
+                    "mode": "reference_compare_packet",
+                    "compare_phase": "packet_ranking",
+                    "source": "compare_stage_checkpoint",
+                    "checkpoint_id": checkpoint_id,
+                    "preset_profile": preset_profile,
+                    "capture_count": len(packet_captures),
+                    "packet_id": packet.packet_id,
+                    "packet_kind": packet.packet_kind,
+                    "packet_label": packet.packet_label,
+                    "packet_view": packet.target_view,
+                    "packet_scope": packet.scope_label,
+                    "packet_reference_ids": list(packet.reference_ids),
+                    "packet_capture_labels": list(packet.capture_labels),
+                    "collection_name": resolved_collection_name,
+                    "target_objects": list(packet.target_objects or resolved_target_objects),
+                    "assembled_target_scope": assembled_target_scope.model_dump(mode="json"),
+                    "extraction_goal_summary": extraction_vision_assistant.result.goal_summary,
+                    "extraction_reference_match_summary": extraction_vision_assistant.result.reference_match_summary,
+                    "extraction_visible_changes": list(extraction_vision_assistant.result.visible_changes or []),
+                    "extraction_shape_mismatches": list(extraction_vision_assistant.result.shape_mismatches or []),
+                    "extraction_proportion_mismatches": list(
+                        extraction_vision_assistant.result.proportion_mismatches or []
+                    ),
+                    "extraction_correction_focus": list(extraction_vision_assistant.result.correction_focus or []),
+                    "extraction_next_corrections": list(extraction_vision_assistant.result.next_corrections or []),
+                    "extraction_status_reason": packet.status_reason,
+                },
+            )
+            ranking_outcome = await run_vision_assist(
+                ctx,
+                request=ranking_request,
+                resolver=resolver,
+            )
+            ranking_vision_assistant = to_vision_assistant_contract(ranking_outcome)
+            if ranking_vision_assistant.status != "success" or ranking_vision_assistant.result is None:
+                packet.ranking_status = "error"
+                ranking_error = ranking_vision_assistant.rejection_reason or ranking_vision_assistant.message
+                packet.uncertainty_notes = _dedupe_preserving_order(
+                    [*packet.uncertainty_notes, f"Packet ranking failed: {ranking_error}"]
+                )[:3]
+            else:
+                packet.ranking_status = "success"
+                effective_packet_result = _merge_packet_phase_results(
+                    extraction_vision_assistant.result,
+                    ranking_vision_assistant.result,
+                )
+                effective_packet_assistant = extraction_vision_assistant.model_copy(
+                    update={
+                        "message": "vision_assist completed extraction and ranking for one compare packet.",
+                        "result": effective_packet_result,
+                    }
+                )
+                packet.correction_focus = list(
+                    effective_packet_result.correction_focus
+                    or effective_packet_result.next_corrections
+                    or effective_packet_result.shape_mismatches
+                )[:3]
         elif ranking_recommendation == "skip_clean":
             packet.ranking_status = "not_needed"
         elif ranking_recommendation in {"skip_low_information", "skip_blocked"}:
             packet.ranking_status = "skipped"
         else:
             packet.ranking_status = "success" if packet.correction_focus else "skipped"
+        packet_assistants.append((packet, effective_packet_assistant))
 
     successful_packet_results = [
         (packet, assistant.result)
         for packet, assistant in packet_assistants
-        if assistant is not None and assistant.status == "success" and assistant.result is not None
+        if (
+            assistant is not None
+            and assistant.status == "success"
+            and assistant.result is not None
+            and packet.extraction_status == "success"
+        )
     ]
     if compare_diagnostics.synthesis_required:
         synthesized_packet_result = _synthesize_packet_vision_result(successful_packet_results)

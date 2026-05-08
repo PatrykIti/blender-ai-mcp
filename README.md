@@ -83,6 +83,7 @@ When a bounded modeling intent matches, the default public working layer should 
 - `reference_orchestrator_feedback` on `reference_images`, `router_*`, and staged reference compare/iterate payloads so clients can read one compact next-step contract instead of stitching together RU, gate, and planner fields by hand
 - `reference_compare_stage_checkpoint` for deterministic multi-view stage comparison against attached references during manual iterative work
 - staged reference compare now decomposes bounded stage requests into packet-local view/scope compares internally and can expose additive `compare_diagnostics` on rich or uncertainty paths without creating a second public tool family
+- packet-local staged compare now runs extraction first and ranking second only when extraction warrants it, so ranking failure no longer erases usable packet evidence
 - `reference_iterate_stage_checkpoint` for a session-aware staged correction loop that remembers prior focus, can escalate into inspect/validate when the same correction repeats, and can now target one object, many objects, a collection, or the full assembled silhouette
 - RU summaries now also carry server-owned `views` plus lightweight `visual_metrics` that stay advisory-only and complement VLM interpretation
 - stage compare/iterate now also expose deterministic `silhouette_analysis` metrics, typed `action_hints`, and an advisory-only `part_segmentation` placeholder that stays disabled unless a separate sidecar is explicitly enabled

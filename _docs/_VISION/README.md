@@ -630,7 +630,8 @@ and `reference_iterate_stage_checkpoint(...)`:
 - `compare_diagnostics`
   - additive packet diagnostics for hierarchical staged compare
   - packets can name packet ids, packet-local view/scope slices, selected
-    capture/reference inputs, extraction status, and packet uncertainty notes
+    capture/reference inputs, extraction status, ranking status, and packet
+    uncertainty notes
   - compact paths emit it on synthesis/uncertainty or budget pressure; rich
     paths emit it directly
 - `silhouette_analysis`
@@ -654,6 +655,9 @@ Interpretation rules:
 - `action_hints` complement `correction_candidates` and `truth_followup`
 - `vision_contract_profile` still only routes external prompt/schema/parser
   behavior; it is not itself evidence or proof that the result is correct
+- packet extraction and packet ranking are now separate bounded phases on the
+  staged compare path; ranking may be skipped or may fail without discarding
+  the extraction result
 
 Current staged-loop reading order for creature work:
 

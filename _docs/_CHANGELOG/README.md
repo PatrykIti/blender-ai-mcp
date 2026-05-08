@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [326](./326-2026-05-08-task-166-two-pass-packet-compare.md) | 2026-05-08 | **TASK-166 two-pass packet compare** | - |
 | [325](./325-2026-05-08-task-166-packet-guidance-contract.md) | 2026-05-08 | **TASK-166 packet guidance contract** | - |
 | [324](./324-2026-05-08-task-166-packeted-stage-compare-core.md) | 2026-05-08 | **TASK-166 packeted stage compare core** | - |
 | [323](./323-2026-05-07-task-160-streamable-visibility-transaction-audit.md) | 2026-05-07 | **TASK-160 Streamable visibility transaction audit and `tools/list` stability** | - |
