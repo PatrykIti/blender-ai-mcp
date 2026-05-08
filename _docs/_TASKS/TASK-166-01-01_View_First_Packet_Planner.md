@@ -14,12 +14,20 @@
 
 ## Implementation Notes
 
+- Likely implementation shape:
+  - one deterministic `build_view_packets(...)` helper under the compare-plan
+    owner seam
+  - stable packet ids derived from view intent plus selected reference/capture
+    slice
 - Each packet should name:
   - its target view
   - the reference ids included
   - the capture labels included
   - the compare question for that packet
 - View packets should work even when some views are missing.
+- Missing or low-quality side/top coverage should degrade to fewer packets or a
+  typed blocked/low-information packet outcome rather than collapsing the whole
+  compare run.
 
 ## Acceptance Criteria
 

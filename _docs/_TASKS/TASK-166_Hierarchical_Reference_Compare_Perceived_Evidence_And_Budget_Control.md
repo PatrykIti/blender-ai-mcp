@@ -174,7 +174,7 @@ But internally the path becomes:
 3. for each packet:
    - run deterministic truth preflight first
    - attach always-on lightweight CV metrics
-   - optionally attach support-only sidecar evidence
+   - optionally attach advisory-only sidecar evidence
    - ask one narrow LLM question instead of one whole-model prompt
 4. merge packet results into one short synthesis result
 5. project that synthesis back onto the existing staged compare / iterate

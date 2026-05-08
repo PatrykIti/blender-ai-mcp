@@ -13,6 +13,10 @@
 
 ## Implementation Notes
 
+- Likely implementation shape:
+  - one packet-preflight helper that resolves deterministic inputs first
+  - one packet-question builder that receives the resolved truth slice plus
+    selected captures/reference ids
 - Preflight must always be grounded in:
   - `scene_scope_graph`
   - `scene_relation_graph`
@@ -20,6 +24,11 @@
 - Packet questions should be narrow, for example:
   - "Is tail silhouette too short from side?"
   - "Are ears visible and readable from front?"
+- Error cases to make explicit:
+  - missing reference slice
+  - missing target view coverage
+  - preflight ambiguity that should yield a typed blocked or low-information
+    packet instead of a broad fallback prompt
 
 ## Acceptance Criteria
 

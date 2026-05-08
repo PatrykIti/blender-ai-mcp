@@ -7,8 +7,11 @@
 
 ## Repository Touchpoints
 
+- `server/adapters/mcp/areas/reference.py`
+- `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/vision/reference_support.py`
 - `server/infrastructure/config.py`
+- `tests/unit/adapters/mcp/test_reference_images.py`
 - `_docs/_VISION/README.md`
 
 ## Implementation Notes
@@ -22,6 +25,10 @@
 - Attach-time global classifier support remains on the existing
   `reference_understanding` bootstrap path from `TASK-163`; this leaf only
   covers compare-time packet-local advisory usage when enabled.
+- Because the compare-time sidecars must surface through staged compare
+  responses, any emitted sidecar artifacts or availability state still route
+  through `areas/reference.py` and the public staged contracts, not only through
+  the backend adapter seam.
 
 ## Acceptance Criteria
 
