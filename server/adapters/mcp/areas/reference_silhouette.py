@@ -12,6 +12,8 @@ from server.adapters.mcp.contracts.reference import (
     ReferenceActionHintContract,
     ReferenceCompareSupportEvidenceContract,
     ReferenceImageRecordContract,
+    ReferencePartSegmentationContract,
+    ReferencePartSegmentationPartContract,
     ReferenceRefinementToolCandidateContract,
     ReferenceSilhouetteAnalysisContract,
     ReferenceSilhouetteMetricContract,
@@ -268,6 +270,7 @@ def build_compare_support_evidence(
     silhouette_analysis: ReferenceSilhouetteAnalysisContract | None,
     *,
     action_hints: list[ReferenceActionHintContract] | None = None,
+    part_segmentation: ReferencePartSegmentationContract | None = None,
 ) -> list[ReferenceCompareSupportEvidenceContract]:
     """Project compact compare-time CV evidence for packet-local staged compare."""
 
@@ -290,6 +293,20 @@ def build_compare_support_evidence(
             )
             for metric in prioritized_metrics[:3]
         )
+    if part_segmentation is not None and part_segmentation.status == "available":
+        evidence.extend(
+            ReferenceCompareSupportEvidenceContract(
+                evidence_kind="part_segmentation",
+                summary=_part_segmentation_summary(part),
+                severity="medium",
+                reference_label=silhouette_analysis.reference_label if silhouette_analysis is not None else None,
+                capture_label=silhouette_analysis.capture_label if silhouette_analysis is not None else None,
+                target_view=silhouette_analysis.target_view if silhouette_analysis is not None else None,
+                part_label=part.part_label,
+                confidence=part.confidence,
+            )
+            for part in list(part_segmentation.parts or [])[:2]
+        )
     if action_hints:
         evidence.extend(
             ReferenceCompareSupportEvidenceContract(
@@ -303,7 +320,7 @@ def build_compare_support_evidence(
             )
             for hint in list(action_hints)[:2]
         )
-    return evidence[:5]
+    return evidence[:6]
 
 
 def summarize_compare_support_evidence(
@@ -312,3 +329,9 @@ def summarize_compare_support_evidence(
     """Return short prompt-facing summaries for typed packet support evidence."""
 
     return [item.summary for item in evidence if item.summary.strip()]
+
+
+def _part_segmentation_summary(part: ReferencePartSegmentationPartContract) -> str:
+    if part.confidence is not None:
+        return f"Segmentation sidecar marked {part.part_label} at {part.confidence:.2f} confidence."
+    return f"Segmentation sidecar marked {part.part_label} for advisory compare support."

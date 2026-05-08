@@ -87,7 +87,7 @@ When a bounded modeling intent matches, the default public working layer should 
 - packet-local staged compare also feeds typed silhouette/action-hint `support_evidence` items into packet requests before the LLM compare phase, so bounded CV facts stay machine-readable without creating a second perception flow
 - `reference_iterate_stage_checkpoint` for a session-aware staged correction loop that remembers prior focus, can escalate into inspect/validate when the same correction repeats, and can now target one object, many objects, a collection, or the full assembled silhouette
 - RU summaries now also carry server-owned `views` plus lightweight `visual_metrics` that stay advisory-only and complement VLM interpretation
-- stage compare/iterate now also expose deterministic `silhouette_analysis` metrics, typed `action_hints`, and an advisory-only `part_segmentation` placeholder that stays disabled unless a separate sidecar is explicitly enabled
+- stage compare/iterate now also expose deterministic `silhouette_analysis` metrics, typed `action_hints`, and an advisory-only `part_segmentation` envelope that stays `disabled` by default and becomes bounded compare-time sidecar output only when a separate sidecar is explicitly enabled
 - `scene_scope_graph` for one explicit read-only structural scope artifact with anchor/core/accessory role hints
 - `scene_relation_graph` for one explicit read-only pair-relation artifact derived from the current truth layer
 - `scene_view_diagnostics` for one explicit read-only view-space artifact with projected extent, frame coverage, centering, and visible/partial/occluded/off-frame verdicts for named cameras or `USER_PERSPECTIVE`
@@ -580,10 +580,11 @@ contract in addition to `guided_handoff`.
   adapters preserve that structured report, including `actions_taken`,
   modified objects, verification recommendations, capture/truth data, and
   follow-up guidance, instead of coercing it into an empty failed envelope
-- if the optional segmentation sidecar is enabled on runtime config but not yet
-  executed on the current compare path, staged compare/iterate responses now
-  report `part_segmentation.status="unavailable"` instead of silently staying
-  `disabled`
+- if the optional segmentation sidecar is enabled on runtime config, staged
+  compare/iterate now run it as bounded advisory-only packet support when a
+  packet-local capture/reference slice is available; failures or empty sidecar
+  results degrade to `part_segmentation.status="unavailable"` instead of
+  breaking the staged loop
 - if the server warns or blocks on guided naming, rename or create the object
   using one of the suggested semantic names instead of retrying the same weak
   abbreviation

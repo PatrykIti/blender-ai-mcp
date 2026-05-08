@@ -1,9 +1,20 @@
 # TASK-166-03: Deterministic CV And Optional PyTorch Perceiver Sidecars
 
 **Parent:** [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md)  
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Objective:** Feed compact image evidence into compare packets through always-on deterministic CV support evidence and optional heavier PyTorch-based advisory adapters.
+
+## Completion Summary
+
+- compare-time packet requests now receive always-on deterministic silhouette
+  metrics plus typed action hints before the LLM compare phase runs
+- operators can now explicitly enable one advisory-only compare-time
+  segmentation sidecar path that runs per packet and projects bounded output
+  into both packet-local `support_evidence` and top-level `part_segmentation`
+- the public staged compare/iterate surface stays additive: optional sidecar
+  failures degrade to bounded availability notes and never become the sole
+  authority for packet completion or correction ranking
 
 ## Repository Touchpoints
 

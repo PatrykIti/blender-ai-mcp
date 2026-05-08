@@ -1,9 +1,23 @@
 # TASK-166-03-02: Optional PyTorch Perceiver Adapters
 
 **Parent:** [TASK-166-03](./TASK-166-03_Deterministic_CV_And_Optional_PyTorch_Perceiver_Sidecars.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Objective:** Define the optional PyTorch-based perception adapters that can enrich compare packets when lightweight CV is not enough, while keeping compare-time sidecars advisory-only.
+
+## Completion Summary
+
+- staged compare/iterate now execute the optional compare-time segmentation
+  sidecar per packet when operators explicitly enable it on runtime config
+- packet-local sidecar output now merges into the existing top-level
+  `part_segmentation` envelope instead of remaining a disabled/unavailable
+  placeholder only
+- packet-local `support_evidence` can now carry bounded
+  `evidence_kind="part_segmentation"` items, so compare prompts receive compact
+  sidecar cues without creating a second perception flow
+- sidecar failure or empty output remains advisory-only and degrades to bounded
+  `part_segmentation.status="unavailable"` notes instead of blocking staged
+  compare or emitting correction authority on its own
 
 ## Repository Touchpoints
 

@@ -168,6 +168,12 @@ from server.adapters.mcp.vision import (
     run_vision_assist,
     select_reference_records_for_target,
 )
+from server.adapters.mcp.vision.reference_support import (
+    collect_compare_time_segmentation_support as _collect_compare_time_segmentation_support,
+)
+from server.adapters.mcp.vision.reference_support import (
+    merge_compare_time_part_segmentation as _merge_compare_time_part_segmentation,
+)
 from server.adapters.mcp.vision.runner import VISION_ASSIST_POLICY
 from server.application.services.reference_compare_packets import (
     count_failed_compare_packets as _count_failed_compare_packets,
@@ -940,7 +946,7 @@ def _configured_part_segmentation() -> ReferencePartSegmentationContract:
         parts=[],
         notes=[
             "Optional part segmentation sidecar is enabled on the runtime config.",
-            "This compare/iterate path does not yet execute the sidecar and currently reports it as unavailable.",
+            "No compare-time sidecar result was collected for this staged compare run.",
             "The sidecar path is advisory-only and separate from vision_contract_profile routing.",
         ],
     )
@@ -1216,6 +1222,10 @@ async def _run_stage_checkpoint_compare(
     )
 
     resolver = get_vision_backend_resolver()
+    runtime_config = getattr(resolver, "runtime_config", None)
+    segmentation_sidecar_config = (
+        getattr(runtime_config, "active_segmentation_sidecar", None) if runtime_config is not None else None
+    )
     runtime_max_tokens, runtime_max_images, runtime_model_name = _resolve_hybrid_budget_runtime(resolver)
     truth_bundle, _truth_relation_graph = _build_correction_truth_bundle(
         scene_handler,
@@ -1267,6 +1277,7 @@ async def _run_stage_checkpoint_compare(
         assembled_target_scope=assembled_target_scope,
         truth_followup=truth_followup,
     )
+    part_segmentation: ReferencePartSegmentationContract | None = None
     packet_assistants: list[tuple[ReferenceComparePacketContract, VisionAssistantContract | None]] = []
     for packet in compare_diagnostics.packets:
         packet_captures = _packet_capture_subset(list(captures), packet)
@@ -1303,9 +1314,22 @@ async def _run_stage_checkpoint_compare(
             if packet.target_objects
             else (resolved_target_object or assembled_target_scope.primary_target),
         )
+        packet_part_segmentation = await _collect_compare_time_segmentation_support(
+            config=segmentation_sidecar_config,
+            goal=goal,
+            packet_id=packet.packet_id,
+            packet_label=packet.packet_label,
+            target_view=packet.target_view or target_view,
+            scope_label=packet.scope_label,
+            target_objects=packet.target_objects or resolved_target_objects,
+            reference_records=packet_reference_records,
+            captures=packet_captures,
+        )
+        part_segmentation = _merge_compare_time_part_segmentation(part_segmentation, packet_part_segmentation)
         packet.support_evidence = _build_compare_support_evidence(
             packet_silhouette_analysis,
             action_hints=packet_action_hints,
+            part_segmentation=packet_part_segmentation,
         )
         packet_support_evidence_summaries = _summarize_compare_support_evidence(packet.support_evidence)
         extraction_request = build_vision_request_from_stage_captures(
@@ -1561,7 +1585,8 @@ async def _run_stage_checkpoint_compare(
         compare_diagnostics.conflict_notes.append(
             f"{failed_packet_count} compare packet(s) were blocked, low-information, or failed before synthesis."
         )
-    part_segmentation = _configured_part_segmentation()
+    if part_segmentation is None:
+        part_segmentation = _configured_part_segmentation()
     full_correction_candidates = _build_correction_candidates(
         ReferenceCompareStageCheckpointResponseContract(
             action="compare_stage_checkpoint",

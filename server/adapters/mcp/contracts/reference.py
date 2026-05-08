@@ -38,7 +38,7 @@ ReferenceComparePacketStatusLiteral = Literal["success", "blocked", "low_informa
 ReferenceCompareRankingStatusLiteral = Literal["success", "skipped", "not_needed", "error"]
 ReferenceComparePacketGuidanceLiteral = Literal["ready", "clean", "low_information", "blocked"]
 ReferenceCompareRankingRecommendationLiteral = Literal["rank", "skip_clean", "skip_low_information", "skip_blocked"]
-ReferenceCompareSupportEvidenceKindLiteral = Literal["silhouette_metric", "action_hint"]
+ReferenceCompareSupportEvidenceKindLiteral = Literal["silhouette_metric", "action_hint", "part_segmentation"]
 ReferencePlannerSourceLiteral = Literal[
     "vision",
     "truth",
@@ -430,6 +430,8 @@ class ReferenceCompareSupportEvidenceContract(MCPContract):
     reference_label: str | None = None
     capture_label: str | None = None
     target_view: str | None = None
+    part_label: str | None = None
+    confidence: float | None = None
 
 
 class ReferenceComparePacketContract(MCPContract):

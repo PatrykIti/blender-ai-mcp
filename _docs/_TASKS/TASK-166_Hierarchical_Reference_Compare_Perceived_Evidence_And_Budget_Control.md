@@ -376,6 +376,15 @@ without requiring one massive all-images compare request.
   - packet compare requests now receive compact deterministic CV summaries in
     metadata/payload instead of discovering those facts only after the compare
     response is assembled
+- 2026-05-08: `TASK-166-03-02` is now closed:
+  - staged compare/iterate now execute the optional compare-time segmentation
+    sidecar when operators explicitly enable it on runtime config
+  - packet-local sidecar output now merges into top-level
+    `part_segmentation` plus packet-local
+    `compare_diagnostics.packets[*].support_evidence`
+  - sidecar failures stay advisory-only and degrade to bounded
+    `part_segmentation.status="unavailable"` notes instead of blocking the
+    staged compare loop
 - 2026-05-08: follow-up repair pass tightened the shipped packet/runtime
   contract:
   - packet planning now runs through
@@ -396,9 +405,8 @@ without requiring one massive all-images compare request.
     overstating the final staged compare input summary
 - 2026-05-08: remaining follow-on work still includes the deeper TASK-166
   leaves for packet-specific prompt/parser contract hardening, explicit
-  extraction-vs-ranking phase semantics, deterministic CV / optional PyTorch
-  sidecars, richer complexity-tier scaling for 6-12 image sets, and runtime
-  budget overrides.
+  extraction-vs-ranking phase semantics, richer complexity-tier scaling for
+  6-12 image sets, and runtime budget overrides.
 
 ## Docs To Update
 

@@ -644,8 +644,9 @@ and `reference_iterate_stage_checkpoint(...)`:
 - `action_hints`
   - typed, bounded tool suggestions derived from those silhouette metrics
 - `part_segmentation`
-- optional sidecar placeholder; defaults to `status="disabled"` on the
-  normal runtime
+- optional advisory-only sidecar envelope; defaults to `status="disabled"` on
+  the normal runtime and becomes bounded compare-time output only when the
+  separate segmentation sidecar is enabled
 - RU summaries now also expose typed `views` and lightweight
   server-owned `visual_metrics`; those heuristics stay advisory-only and do not
   become verifier truth
@@ -664,6 +665,10 @@ Interpretation rules:
 - packet compare also receives compact silhouette/action-hint support evidence
   before the packet LLM phase runs; those CV items stay advisory-only and
   do not replace truth or gate authority
+- when the optional segmentation sidecar is enabled, packet compare may also
+  attach bounded `part_segmentation` output plus packet-local segmentation
+  support evidence; failures degrade to `status="unavailable"` notes instead of
+  breaking the staged loop
 
 Current staged-loop reading order for creature work:
 
@@ -742,6 +747,9 @@ Boundary rules:
 - when enabled, RU may merge bounded `segmentation_artifacts` links into
   `reference_understanding_summary` while staged compare/iterate keeps the
   separate `part_segmentation` envelope
+- staged compare/iterate may now execute one bounded packet-local advisory
+  sidecar pass and merge the returned parts into top-level `part_segmentation`
+  plus packet-local `support_evidence`
 
 Current first-pass scored baseline on the synthetic repo scenarios:
 
