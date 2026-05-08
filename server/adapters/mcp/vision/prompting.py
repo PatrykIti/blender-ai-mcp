@@ -573,6 +573,9 @@ def build_vision_payload_text(
         packet_view = str(request.metadata.get("packet_view") or "").strip() or "none"
         reference_ids = [str(item) for item in request.metadata.get("packet_reference_ids") or []]
         capture_labels = [str(item) for item in request.metadata.get("packet_capture_labels") or []]
+        support_evidence_summaries = [
+            str(item) for item in request.metadata.get("support_evidence_summaries") or [] if str(item).strip()
+        ]
         truth_summary = request.truth_summary or {}
         truth_lines = []
         if isinstance(truth_summary, dict):
@@ -598,6 +601,8 @@ def build_vision_payload_text(
             parts.extend(["PACKET_REFERENCE_IDS:", *[f"- {item}" for item in reference_ids]])
         if capture_labels:
             parts.extend(["PACKET_CAPTURE_LABELS:", *[f"- {item}" for item in capture_labels]])
+        if support_evidence_summaries:
+            parts.extend(["SUPPORT_EVIDENCE:", *[f"- {item}" for item in support_evidence_summaries]])
         if truth_lines:
             parts.extend(["TRUTH_SUMMARY:", *truth_lines])
         if packet_phase == "packet_ranking":
@@ -656,6 +661,7 @@ def build_vision_payload_text(
                 "- packet_guidance.packet_status must be one of ready, clean, low_information, or blocked",
                 "- packet_guidance.ranking_recommendation must be one of rank, skip_clean, skip_low_information, or skip_blocked",
                 "- do not infer scene-wide claims from this packet alone",
+                "- use the support-evidence summaries as advisory pre-chewed CV facts, not as scene-truth authority",
                 "- use canonical MCP tool ids only for recommended_checks",
                 "OUTPUT_TEMPLATE:",
                 _packet_compare_output_template(request),

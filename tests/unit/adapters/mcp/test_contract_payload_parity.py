@@ -92,6 +92,10 @@ from server.adapters.mcp.contracts.workflow_catalog import WorkflowCatalogRespon
                             "extraction_status": "success",
                             "ranking_status": "error",
                             "status_reason": None,
+                            "support_evidence": [
+                                "Silhouette overlap is 0.52 (high).",
+                                "Action hint: Upper silhouette band is narrower than the reference.",
+                            ],
                             "evidence_summary": "Front packet still shows a round heart silhouette.",
                             "uncertainty_notes": ["Packet ranking failed: ranking_failed"],
                             "correction_focus": ["Heart silhouette"],

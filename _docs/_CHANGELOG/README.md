@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [327](./327-2026-05-08-task-166-compare-time-cv-support-evidence.md) | 2026-05-08 | **TASK-166 compare-time CV support evidence** | - |
 | [326](./326-2026-05-08-task-166-two-pass-packet-compare.md) | 2026-05-08 | **TASK-166 two-pass packet compare** | - |
 | [325](./325-2026-05-08-task-166-packet-guidance-contract.md) | 2026-05-08 | **TASK-166 packet guidance contract** | - |
 | [324](./324-2026-05-08-task-166-packeted-stage-compare-core.md) | 2026-05-08 | **TASK-166 packeted stage compare core** | - |

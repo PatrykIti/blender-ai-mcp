@@ -83,6 +83,10 @@ def _packet_compare_request() -> VisionRequest:
             "packet_scope": "Squirrel",
             "packet_reference_ids": ["ref_front"],
             "packet_capture_labels": ["target_front_after"],
+            "support_evidence_summaries": [
+                "Silhouette overlap is 0.52 (high).",
+                "Action hint: Upper silhouette band is narrower than the reference.",
+            ],
         },
         truth_summary={"summary": {"pair_count": 0}},
     )
@@ -107,6 +111,10 @@ def _packet_ranking_request() -> VisionRequest:
             "packet_reference_ids": ["ref_front"],
             "packet_capture_labels": ["target_front_after"],
             "compare_phase": "packet_ranking",
+            "support_evidence_summaries": [
+                "Silhouette overlap is 0.52 (high).",
+                "Action hint: Upper silhouette band is narrower than the reference.",
+            ],
             "extraction_goal_summary": "Front packet still shows a round head silhouette.",
             "extraction_reference_match_summary": "The packet has enough signal for one more bounded correction step.",
             "extraction_visible_changes": ["Front silhouette is readable."],
@@ -193,6 +201,7 @@ def test_packet_compare_request_uses_packet_specific_prompt_payload_and_schema()
     assert "packet_guidance" in system_prompt
     assert "PACKET_ID: packet:front:1234abcd" in payload_text
     assert "PACKET_LABEL: front packet" in payload_text
+    assert "SUPPORT_EVIDENCE:" in payload_text
     assert '"packet_guidance"' in payload_text
     assert set(schema["properties"]) == {
         "goal_summary",
@@ -225,6 +234,7 @@ def test_packet_ranking_request_uses_ranking_specific_prompt_payload():
     assert "bounded packet-ranking vision assistant" in system_prompt
     assert "second staged compare phase" in system_prompt
     assert "COMPARE_PHASE: packet_ranking" in payload_text
+    assert "SUPPORT_EVIDENCE:" in payload_text
     assert "EXTRACTION_EVIDENCE:" in payload_text
     assert "- shape_mismatch: Head silhouette is still too spherical." in payload_text
     assert "- suggested_next_correction: Flatten the head silhouette slightly." in payload_text

@@ -13,6 +13,7 @@ from server.adapters.mcp.contracts.reference import (
     ReferenceImageRecordContract,
     ReferenceRefinementToolCandidateContract,
     ReferenceSilhouetteAnalysisContract,
+    ReferenceSilhouetteMetricContract,
 )
 from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
 from server.adapters.mcp.vision.silhouette import build_silhouette_analysis
@@ -250,3 +251,31 @@ def build_action_hints_from_silhouette(
         )
 
     return hints
+
+
+def _metric_summary(metric: ReferenceSilhouetteMetricContract) -> str:
+    if metric.metric_id == "mask_iou":
+        return f"Silhouette overlap is {metric.observed_value:.2f} ({metric.severity})."
+    if metric.metric_id == "contour_drift":
+        return f"Contour drift is {metric.observed_value:.2f} ({metric.severity})."
+    if metric.metric_id == "aspect_ratio_delta":
+        return f"Aspect ratio delta is {metric.delta:.2f} ({metric.severity})."
+    return f"{metric.metric_id} delta is {metric.delta:.2f} ({metric.severity})."
+
+
+def build_compare_support_evidence(
+    silhouette_analysis: ReferenceSilhouetteAnalysisContract | None,
+    *,
+    action_hints: list[ReferenceActionHintContract] | None = None,
+) -> list[str]:
+    """Project compact compare-time CV evidence for packet-local staged compare."""
+
+    evidence: list[str] = []
+    if silhouette_analysis is not None and silhouette_analysis.status == "available":
+        prioritized_metrics = [
+            metric for metric in silhouette_analysis.metrics if metric.severity in {"high", "medium"}
+        ] or list(silhouette_analysis.metrics[:2])
+        evidence.extend(_metric_summary(metric) for metric in prioritized_metrics[:3])
+    if action_hints:
+        evidence.extend(f"Action hint: {hint.summary}" for hint in list(action_hints)[:2])
+    return evidence[:5]

@@ -1,7 +1,7 @@
 # TASK-166-03: Deterministic CV And Optional PyTorch Perceiver Sidecars
 
 **Parent:** [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md)  
-**Status:** ⏳ To Do  
+**Status:** 🚧 In Progress
 **Priority:** 🔴 High
 **Objective:** Feed compact image evidence into compare packets through always-on deterministic CV support evidence and optional heavier PyTorch-based advisory adapters.
 

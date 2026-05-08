@@ -5,6 +5,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from server.adapters.mcp.areas.reference_silhouette import (
+    build_action_hints_from_silhouette,
+    build_compare_support_evidence,
+)
+from server.adapters.mcp.contracts.reference import ReferenceSilhouetteAnalysisContract
 from server.adapters.mcp.vision.silhouette import build_silhouette_analysis
 
 
@@ -60,3 +65,24 @@ def test_silhouette_analysis_returns_unavailable_for_uniform_opaque_images(tmp_p
     assert payload["status"] == "unavailable"
     assert payload["metrics"] == []
     assert any("uniform" in note for note in payload["notes"])
+
+
+def test_compare_support_evidence_projects_metric_and_hint_summaries(tmp_path: Path):
+    reference_path = tmp_path / "reference.png"
+    capture_path = tmp_path / "capture.png"
+    _write_offset_rectangle(reference_path, box=(35, 45, 95, 165))
+    _write_offset_rectangle(capture_path, box=(35, 45, 70, 165))
+
+    payload = build_silhouette_analysis(
+        reference_path=str(reference_path),
+        capture_path=str(capture_path),
+        reference_label="reference",
+        capture_label="capture",
+        target_view="front",
+    )
+    analysis = ReferenceSilhouetteAnalysisContract.model_validate(payload)
+    hints = build_action_hints_from_silhouette(analysis, target_object="Creature")
+    evidence = build_compare_support_evidence(analysis, action_hints=hints)
+
+    assert evidence
+    assert any("Silhouette overlap" in item or "delta" in item for item in evidence)

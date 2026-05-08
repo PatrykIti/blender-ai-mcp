@@ -430,6 +430,7 @@ class ReferenceComparePacketContract(MCPContract):
     extraction_status: ReferenceComparePacketStatusLiteral = "skipped"
     ranking_status: ReferenceCompareRankingStatusLiteral = "not_needed"
     status_reason: str | None = None
+    support_evidence: list[str] = []
     evidence_summary: str | None = None
     uncertainty_notes: list[str] = []
     correction_focus: list[str] = []

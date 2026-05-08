@@ -502,6 +502,9 @@ Focused unit coverage now also protects:
   - `tests/unit/adapters/mcp/test_vision_parsing.py`
   - `tests/unit/adapters/mcp/test_vision_result_types.py`
   - `tests/unit/adapters/mcp/test_reference_images.py`
+- compare-time silhouette/action-hint support-evidence projection on:
+  - `tests/unit/adapters/mcp/test_vision_silhouette.py`
+  - `tests/unit/adapters/mcp/test_reference_images.py`
 - optional RU classifier-score and segmentation-artifact augmentation on:
   - `tests/unit/adapters/mcp/test_reference_images.py`
 - compact view-space contracts, search/discovery shaping, and reference-loop

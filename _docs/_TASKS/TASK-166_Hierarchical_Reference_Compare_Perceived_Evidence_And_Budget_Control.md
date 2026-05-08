@@ -370,6 +370,12 @@ without requiring one massive all-images compare request.
     extraction outcomes
   - ranking failure now preserves extraction evidence and projects explicit
     `ranking_status="error"` uncertainty through `compare_diagnostics`
+- 2026-05-08: `TASK-166-03-01` is now closed:
+  - compare-time silhouette/action-hint evidence now feeds packet-local
+    `support_evidence` before packet extraction/ranking runs
+  - packet compare requests now receive compact deterministic CV summaries in
+    metadata/payload instead of discovering those facts only after the compare
+    response is assembled
 - 2026-05-08: remaining follow-on work still includes the deeper TASK-166
   leaves for packet-specific prompt/parser contract hardening, explicit
   extraction-vs-ranking phase semantics, deterministic CV / optional PyTorch

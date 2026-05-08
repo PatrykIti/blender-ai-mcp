@@ -79,6 +79,9 @@ from server.adapters.mcp.areas.reference_silhouette import (
     build_action_hints_from_silhouette as _build_action_hints_from_silhouette,
 )
 from server.adapters.mcp.areas.reference_silhouette import (
+    build_compare_support_evidence as _build_compare_support_evidence,
+)
+from server.adapters.mcp.areas.reference_silhouette import (
     build_silhouette_analysis_payload as _build_silhouette_analysis_payload,
 )
 from server.adapters.mcp.areas.reference_truth import (
@@ -1263,6 +1266,15 @@ async def _run_stage_checkpoint_compare(
         max_truth_chars=max_truth_chars,
     )
     truth_followup = _build_truth_followup(budgeted_truth_bundle)
+    silhouette_analysis = _build_silhouette_analysis_payload(
+        selected_reference_records=selected_reference_records,
+        captures=captures,
+        target_view=target_view,
+    )
+    action_hints = _build_action_hints_from_silhouette(
+        silhouette_analysis,
+        target_object=resolved_target_object or assembled_target_scope.primary_target,
+    )
     compare_diagnostics = _build_compare_packets(
         target_view=target_view,
         captures=captures,
@@ -1291,6 +1303,10 @@ async def _run_stage_checkpoint_compare(
 
         packet_truth_bundle = _packet_truth_bundle(budgeted_truth_bundle, packet=packet)
         packet_reference_images = build_reference_capture_images(packet_reference_records)
+        packet.support_evidence = _build_compare_support_evidence(
+            silhouette_analysis,
+            action_hints=action_hints,
+        )
         extraction_request = build_vision_request_from_stage_captures(
             packet_captures,
             goal=goal,
@@ -1311,6 +1327,10 @@ async def _run_stage_checkpoint_compare(
                     f"packet_view={packet.target_view}" if packet.target_view else None,
                     f"packet_scope={packet.scope_label}" if packet.scope_label else None,
                     f"compare_question={packet.compare_question}",
+                    *[
+                        f"support_evidence[{index}]={item}"
+                        for index, item in enumerate(packet.support_evidence, start=1)
+                    ],
                     f"collection_name={resolved_collection_name}" if resolved_collection_name else None,
                     f"target_objects={','.join(packet.target_objects or resolved_target_objects)}"
                     if (packet.target_objects or resolved_target_objects)
@@ -1342,6 +1362,7 @@ async def _run_stage_checkpoint_compare(
                 "packet_scope": packet.scope_label,
                 "packet_reference_ids": list(packet.reference_ids),
                 "packet_capture_labels": list(packet.capture_labels),
+                "support_evidence_summaries": list(packet.support_evidence),
                 "collection_name": resolved_collection_name,
                 "target_objects": list(packet.target_objects or resolved_target_objects),
                 "assembled_target_scope": assembled_target_scope.model_dump(mode="json"),
@@ -1410,6 +1431,10 @@ async def _run_stage_checkpoint_compare(
                         f"packet_label={packet.packet_label}",
                         f"packet_view={packet.target_view}" if packet.target_view else None,
                         f"packet_scope={packet.scope_label}" if packet.scope_label else None,
+                        *[
+                            f"support_evidence[{index}]={item}"
+                            for index, item in enumerate(packet.support_evidence, start=1)
+                        ],
                     )
                     if part
                 )
@@ -1428,6 +1453,7 @@ async def _run_stage_checkpoint_compare(
                     "packet_scope": packet.scope_label,
                     "packet_reference_ids": list(packet.reference_ids),
                     "packet_capture_labels": list(packet.capture_labels),
+                    "support_evidence_summaries": list(packet.support_evidence),
                     "collection_name": resolved_collection_name,
                     "target_objects": list(packet.target_objects or resolved_target_objects),
                     "assembled_target_scope": assembled_target_scope.model_dump(mode="json"),
@@ -1523,15 +1549,6 @@ async def _run_stage_checkpoint_compare(
         compare_diagnostics.conflict_notes.append(
             f"{failed_packet_count} compare packet(s) were blocked, low-information, or failed before synthesis."
         )
-    silhouette_analysis = _build_silhouette_analysis_payload(
-        selected_reference_records=selected_reference_records,
-        captures=captures,
-        target_view=target_view,
-    )
-    action_hints = _build_action_hints_from_silhouette(
-        silhouette_analysis,
-        target_object=resolved_target_object or assembled_target_scope.primary_target,
-    )
     part_segmentation = _configured_part_segmentation()
     full_correction_candidates = _build_correction_candidates(
         ReferenceCompareStageCheckpointResponseContract(

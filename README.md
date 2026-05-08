@@ -84,6 +84,7 @@ When a bounded modeling intent matches, the default public working layer should 
 - `reference_compare_stage_checkpoint` for deterministic multi-view stage comparison against attached references during manual iterative work
 - staged reference compare now decomposes bounded stage requests into packet-local view/scope compares internally and can expose additive `compare_diagnostics` on rich or uncertainty paths without creating a second public tool family
 - packet-local staged compare now runs extraction first and ranking second only when extraction warrants it, so ranking failure no longer erases usable packet evidence
+- packet-local staged compare also feeds compact silhouette/action-hint `support_evidence` into packet requests before the LLM compare phase, so bounded CV facts are available without creating a second perception flow
 - `reference_iterate_stage_checkpoint` for a session-aware staged correction loop that remembers prior focus, can escalate into inspect/validate when the same correction repeats, and can now target one object, many objects, a collection, or the full assembled silhouette
 - RU summaries now also carry server-owned `views` plus lightweight `visual_metrics` that stay advisory-only and complement VLM interpretation
 - stage compare/iterate now also expose deterministic `silhouette_analysis` metrics, typed `action_hints`, and an advisory-only `part_segmentation` placeholder that stays disabled unless a separate sidecar is explicitly enabled

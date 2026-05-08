@@ -1,9 +1,19 @@
 # TASK-166-03-01: Always-On Heuristic CV Metrics
 
 **Parent:** [TASK-166-03](./TASK-166-03_Deterministic_CV_And_Optional_PyTorch_Perceiver_Sidecars.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Objective:** Add always-on deterministic CV metrics using lightweight libraries such as OpenCV / scikit-image so the compare family gets compact structural evidence before broad LLM interpretation.
+
+## Completion Summary
+
+- compare-time deterministic CV now reuses the existing silhouette/action-hint
+  seam before packet compare execution, not only after the staged compare
+  result is assembled
+- packet-local `compare_diagnostics.packets[*].support_evidence` now carries a
+  compact support-only summary derived from silhouette metrics and action hints
+- packet extraction/ranking requests now receive those compact support-evidence
+  summaries in packet metadata/payload before the LLM compare phase runs
 
 ## Repository Touchpoints
 
