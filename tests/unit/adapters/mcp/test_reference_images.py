@@ -7624,6 +7624,7 @@ def test_reference_compare_stage_checkpoint_preserves_required_creature_seams_un
             runtime_config=SimpleNamespace(
                 max_tokens=200,
                 max_images=8,
+                max_input_chars=9000,
                 active_model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
             )
         ),
@@ -7796,6 +7797,7 @@ def test_reference_compare_stage_checkpoint_marks_rich_planner_detail_as_trimmed
             runtime_config=SimpleNamespace(
                 max_tokens=200,
                 max_images=8,
+                max_input_chars=9000,
                 active_model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
             )
         ),
@@ -7830,6 +7832,7 @@ def test_reference_compare_stage_checkpoint_marks_rich_planner_detail_as_trimmed
     assert result.budget_control.scope_trimmed is True
     assert result.budget_control.detail_trimmed is True
     assert result.budget_control.trim_reason == "model_aware_budget_control"
+    assert result.budget_control.max_input_chars == 9000
     assert result.captures
     assert result.planner_detail is not None
     assert result.planner_detail.detail_trimmed is True

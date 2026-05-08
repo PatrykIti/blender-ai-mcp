@@ -1,9 +1,22 @@
 # TASK-166-05-01: Expose Vision-Assist Input Budget Config
 
 **Parent:** [TASK-166-05](./TASK-166-05_Configurable_Vision_Assist_Budgets_And_Runtime_Overrides.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Objective:** Replace the current hard-coded `vision_assist` input-character limit with explicit runtime config/env parsing and safe defaults.
+
+## Completion Summary
+
+- added runtime-owned `VISION_MAX_INPUT_CHARS` wiring through
+  infrastructure `Config`, `VisionRuntimeConfig`, and the bounded
+  `vision_assist` runner
+- runner rejection for `input_budget_exceeded` now uses the resolved runtime
+  limit instead of a compare-only Python constant
+- staged compare truth trimming and top-level `budget_control.max_input_chars`
+  now read the same resolved runtime limit, so packet assembly and runner
+  enforcement no longer drift on input-budget ownership
+- operator launch examples now expose `VISION_MAX_INPUT_CHARS` alongside the
+  existing image/token knobs
 
 ## Repository Touchpoints
 

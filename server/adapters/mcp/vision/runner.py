@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from typing import cast
 
 from fastmcp import Context
@@ -21,6 +22,7 @@ from server.adapters.mcp.sampling.result_types import (
 from server.adapters.mcp.tasks.task_bridge import is_background_task_context
 
 from .backend import VisionBackendUnavailableError, VisionRequest
+from .config import VisionRuntimeConfig
 from .runtime import LazyVisionBackendResolver
 
 VISION_ASSIST_POLICY = AssistantPolicy(
@@ -30,6 +32,15 @@ VISION_ASSIST_POLICY = AssistantPolicy(
     max_messages=1,
     max_tokens=400,
 )
+
+
+def _resolve_vision_assist_policy(runtime: VisionRuntimeConfig) -> AssistantPolicy:
+    """Project the runtime-owned input budget onto the bounded runner policy."""
+
+    return replace(
+        VISION_ASSIST_POLICY,
+        max_input_chars=int(getattr(runtime, "max_input_chars", VISION_ASSIST_POLICY.max_input_chars)),
+    )
 
 
 def _estimate_request_chars(request: VisionRequest) -> int:
@@ -59,14 +70,15 @@ async def run_vision_assist(
 ) -> AssistantRunResult[VisionAssistContract]:
     """Run one bounded vision assist request against the configured backend."""
 
-    budget = VISION_ASSIST_POLICY.to_budget_contract()
-    request_id = ctx_request_id(ctx)
     runtime = resolver.runtime_config
+    policy = _resolve_vision_assist_policy(runtime)
+    budget = policy.to_budget_contract()
+    request_id = ctx_request_id(ctx)
 
     if is_background_task_context(ctx):
         return AssistantRunResult(
             status="rejected_by_policy",
-            assistant_name=VISION_ASSIST_POLICY.assistant_name,
+            assistant_name=policy.assistant_name,
             message="Vision assistance stays bound to foreground MCP requests.",
             budget=budget,
             request_id=request_id,
@@ -77,7 +89,7 @@ async def run_vision_assist(
     if len(request.images) == 0:
         return AssistantRunResult(
             status="rejected_by_policy",
-            assistant_name=VISION_ASSIST_POLICY.assistant_name,
+            assistant_name=policy.assistant_name,
             message="Vision request requires at least one image.",
             budget=budget,
             request_id=request_id,
@@ -88,7 +100,7 @@ async def run_vision_assist(
     if len(request.images) > runtime.max_images:
         return AssistantRunResult(
             status="rejected_by_policy",
-            assistant_name=VISION_ASSIST_POLICY.assistant_name,
+            assistant_name=policy.assistant_name,
             message="Vision request exceeded the image budget.",
             budget=budget,
             request_id=request_id,
@@ -96,10 +108,10 @@ async def run_vision_assist(
             rejection_reason="image_budget_exceeded",
         )
 
-    if _estimate_request_chars(request) > VISION_ASSIST_POLICY.max_input_chars:
+    if _estimate_request_chars(request) > policy.max_input_chars:
         return AssistantRunResult(
             status="rejected_by_policy",
-            assistant_name=VISION_ASSIST_POLICY.assistant_name,
+            assistant_name=policy.assistant_name,
             message="Vision request exceeded the allowed input character budget.",
             budget=budget,
             request_id=request_id,
@@ -112,7 +124,7 @@ async def run_vision_assist(
     except VisionBackendUnavailableError as exc:
         return AssistantRunResult(
             status="unavailable",
-            assistant_name=VISION_ASSIST_POLICY.assistant_name,
+            assistant_name=policy.assistant_name,
             message="Vision backend is unavailable on the active runtime.",
             budget=budget,
             request_id=request_id,
@@ -130,7 +142,7 @@ async def run_vision_assist(
     except VisionBackendUnavailableError as exc:
         return AssistantRunResult(
             status="unavailable",
-            assistant_name=VISION_ASSIST_POLICY.assistant_name,
+            assistant_name=policy.assistant_name,
             message="Vision backend is unavailable on the active runtime.",
             budget=budget,
             request_id=request_id,
@@ -140,7 +152,7 @@ async def run_vision_assist(
     except Exception as exc:  # pragma: no cover - defensive normalization
         return AssistantRunResult(
             status="masked_error",
-            assistant_name=VISION_ASSIST_POLICY.assistant_name,
+            assistant_name=policy.assistant_name,
             message="vision_assist failed during bounded execution. Error details were masked.",
             budget=budget,
             request_id=request_id,
@@ -150,7 +162,7 @@ async def run_vision_assist(
 
     return AssistantRunResult(
         status="success",
-        assistant_name=VISION_ASSIST_POLICY.assistant_name,
+        assistant_name=policy.assistant_name,
         message="vision_assist completed.",
         budget=budget,
         request_id=request_id,

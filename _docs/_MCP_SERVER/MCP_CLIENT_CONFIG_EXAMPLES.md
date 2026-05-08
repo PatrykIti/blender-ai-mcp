@@ -76,6 +76,7 @@ Recommended for Apple Silicon local vision testing:
         "VISION_PROVIDER": "mlx_local",
         "VISION_MLX_MODEL_ID": "mlx-community/Qwen3-VL-4B-Instruct-4bit",
         "VISION_MAX_IMAGES": "8",
+        "VISION_MAX_INPUT_CHARS": "12000",
         "VISION_MAX_TOKENS": "600",
         "VISION_TIMEOUT_SECONDS": "120",
         "PYTHONUNBUFFERED": "1"
@@ -113,6 +114,7 @@ Uses the external-runtime path with OpenRouter-specific config aliases:
         "VISION_OPENROUTER_ENABLE_RESPONSE_HEALING": "true",
         "VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN": "true",
         "VISION_MAX_IMAGES": "8",
+        "VISION_MAX_INPUT_CHARS": "12000",
         "VISION_MAX_TOKENS": "600",
         "VISION_TIMEOUT_SECONDS": "120",
         "PYTHONUNBUFFERED": "1"
@@ -145,6 +147,7 @@ Uses the same external-runtime path with the Gemini provider profile:
         "VISION_GEMINI_API_KEY_ENV": "GEMINI_API_KEY",
         "GEMINI_API_KEY": "<YOUR_GEMINI_KEY>",
         "VISION_MAX_IMAGES": "8",
+        "VISION_MAX_INPUT_CHARS": "12000",
         "VISION_MAX_TOKENS": "600",
         "VISION_TIMEOUT_SECONDS": "120",
         "PYTHONUNBUFFERED": "1"
@@ -311,6 +314,7 @@ Set it to `true` only for clients that cannot consume native prompt components.
         "-e", "VISION_OPENROUTER_ENABLE_RESPONSE_HEALING=true",
         "-e", "VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN=true",
         "-e", "VISION_MAX_IMAGES=8",
+        "-e", "VISION_MAX_INPUT_CHARS=12000",
         "-e", "VISION_MAX_TOKENS=600",
         "-e", "VISION_TIMEOUT_SECONDS=120",
         "-e", "PYTHONUNBUFFERED=1",
@@ -346,6 +350,7 @@ Set it to `true` only for clients that cannot consume native prompt components.
         "-e", "VISION_GEMINI_API_KEY_ENV=GEMINI_API_KEY",
         "-e", "GEMINI_API_KEY=<YOUR_GEMINI_KEY>",
         "-e", "VISION_MAX_IMAGES=8",
+        "-e", "VISION_MAX_INPUT_CHARS=12000",
         "-e", "VISION_MAX_TOKENS=600",
         "-e", "VISION_TIMEOUT_SECONDS=120",
         "-e", "PYTHONUNBUFFERED=1",

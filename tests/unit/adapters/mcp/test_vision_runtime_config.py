@@ -41,6 +41,7 @@ def _base_config(**overrides) -> Config:
         "VISION_PROVIDER": "transformers_local",
         "VISION_ALLOW_ON_GUIDED": True,
         "VISION_MAX_IMAGES": 6,
+        "VISION_MAX_INPUT_CHARS": 12000,
         "VISION_MAX_TOKENS": 400,
         "VISION_TIMEOUT_SECONDS": 20.0,
         "VISION_LOCAL_MODEL_ID": None,
@@ -497,6 +498,12 @@ def test_optional_segmentation_sidecar_stays_disabled_by_default():
 
     assert runtime.segmentation_sidecar is None
     assert runtime.active_segmentation_sidecar is None
+
+
+def test_build_vision_runtime_config_threads_input_char_budget():
+    runtime = build_vision_runtime_config(_base_config(VISION_MAX_INPUT_CHARS=16384))
+
+    assert runtime.max_input_chars == 16384
 
 
 def test_optional_reference_classifier_stays_disabled_by_default():

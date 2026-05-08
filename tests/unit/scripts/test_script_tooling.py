@@ -45,6 +45,7 @@ def test_streamable_openrouter_shell_script_contains_required_runtime_env():
         "REFERENCE_CLASSIFIER_LOG_PATH",
         "run_reference_classifier_sidecar.sh",
         "Appending reference classifier sidecar logs to:",
+        'VISION_MAX_INPUT_CHARS="${VISION_MAX_INPUT_CHARS}"',
         "/health",
         "host-gateway",
         "Set REFERENCE_CLASSIFIER_AUTO_START=false if you want to use a remote classifier endpoint.",

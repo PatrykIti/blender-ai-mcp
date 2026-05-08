@@ -385,6 +385,14 @@ without requiring one massive all-images compare request.
   - sidecar failures stay advisory-only and degrade to bounded
     `part_segmentation.status="unavailable"` notes instead of blocking the
     staged compare loop
+- 2026-05-08: `TASK-166-05-01` is now closed:
+  - `VISION_MAX_INPUT_CHARS` is now runtime-owned through infrastructure
+    config, `VisionRuntimeConfig`, and the bounded `vision_assist` runner
+  - staged compare truth trimming and `budget_control.max_input_chars` now
+    read the same resolved input-character limit instead of a compare-only
+    Python constant
+  - operator launch examples now expose the shared input-budget knob next to
+    the existing image/token runtime settings
 - 2026-05-08: follow-up repair pass tightened the shipped packet/runtime
   contract:
   - packet planning now runs through
@@ -406,7 +414,8 @@ without requiring one massive all-images compare request.
 - 2026-05-08: remaining follow-on work still includes the deeper TASK-166
   leaves for packet-specific prompt/parser contract hardening, explicit
   extraction-vs-ranking phase semantics, richer complexity-tier scaling for
-  6-12 image sets, and runtime budget overrides.
+  6-12 image sets, and the configured-vs-effective budget diagnostics /
+  fail-safe caps follow-on under `TASK-166-05-02`.
 
 ## Docs To Update
 

@@ -168,6 +168,8 @@ The repo now has the first implementation scaffolding for the vision layer:
   - trims pairwise truth scope when needed
   - trims ranked correction candidates when needed
   - records the decision in `budget_control`
+  - reads the compare input-character limit from runtime-owned
+    `VISION_MAX_INPUT_CHARS` instead of a compare-only Python constant
   - uses runtime token/image limits plus a bounded model-name bias instead of
     one static expansion size
   - small-tier downgrades now key off explicit model tokens such as `-mini` or
@@ -738,6 +740,9 @@ Current config surface:
 - `VISION_SEGMENTATION_API_KEY` / `VISION_SEGMENTATION_API_KEY_ENV`
 - `VISION_SEGMENTATION_TIMEOUT_SECONDS`
 - `VISION_SEGMENTATION_MAX_PARTS`
+- staged compare also reads the shared runtime input budget from
+  `VISION_MAX_INPUT_CHARS` when packet truth trimming and `budget_control`
+  projection need the effective compare-size limit
 
 Boundary rules:
 

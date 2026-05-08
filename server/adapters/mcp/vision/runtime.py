@@ -267,6 +267,7 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
         provider=cast(VisionBackendKind, config.VISION_PROVIDER),
         allow_on_guided=config.VISION_ALLOW_ON_GUIDED,
         max_images=config.VISION_MAX_IMAGES,
+        max_input_chars=config.VISION_MAX_INPUT_CHARS,
         max_tokens=config.VISION_MAX_TOKENS,
         timeout_seconds=config.VISION_TIMEOUT_SECONDS,
         transformers_local=local_config,

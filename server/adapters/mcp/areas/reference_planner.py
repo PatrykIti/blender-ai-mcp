@@ -878,13 +878,14 @@ def trim_correction_candidates(
     return list(candidates[:candidate_budget]), True
 
 
-def resolve_hybrid_budget_runtime(resolver: Any) -> tuple[int, int, str | None]:
+def resolve_hybrid_budget_runtime(resolver: Any) -> tuple[int, int, int, str | None]:
     runtime_config = getattr(resolver, "runtime_config", None)
     if runtime_config is None:
-        return VISION_ASSIST_POLICY.max_tokens, 8, None
+        return VISION_ASSIST_POLICY.max_tokens, 8, VISION_ASSIST_POLICY.max_input_chars, None
     return (
         int(getattr(runtime_config, "max_tokens", VISION_ASSIST_POLICY.max_tokens)),
         int(getattr(runtime_config, "max_images", 8)),
+        int(getattr(runtime_config, "max_input_chars", VISION_ASSIST_POLICY.max_input_chars)),
         cast(str | None, getattr(runtime_config, "active_model_name", None)),
     )
 

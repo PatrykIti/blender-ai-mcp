@@ -1,9 +1,18 @@
 # TASK-166-05: Configurable Vision-Assist Budgets And Runtime Overrides
 
 **Parent:** [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md)  
-**Status:** ⏳ To Do  
+**Status:** 🚧 In Progress
 **Priority:** 🔴 High
 **Objective:** Expose compare-related `vision_assist` budgets and runtime overrides as config/env instead of one hard-coded assistant policy.
+
+## Completion Summary
+
+- `TASK-166-05-01` is now complete:
+  - `VISION_MAX_INPUT_CHARS` is runtime-owned and flows through config,
+    runtime, runner enforcement, staged truth trimming, and
+    `budget_control.max_input_chars`
+- richer configured-vs-effective diagnostics and explicit fail-safe clipping
+  remain open under `TASK-166-05-02`
 
 ## Repository Touchpoints
 

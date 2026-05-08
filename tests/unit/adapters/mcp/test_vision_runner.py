@@ -38,6 +38,7 @@ def _config(**overrides) -> Config:
         "VISION_PROVIDER": "transformers_local",
         "VISION_ALLOW_ON_GUIDED": True,
         "VISION_MAX_IMAGES": 2,
+        "VISION_MAX_INPUT_CHARS": 12000,
         "VISION_MAX_TOKENS": 400,
         "VISION_TIMEOUT_SECONDS": 20.0,
         "VISION_LOCAL_MODEL_ID": "Qwen/Qwen3-VL-4B-Instruct",
@@ -126,6 +127,17 @@ def test_runner_rejects_image_budget_overflow():
 
     assert result.status == "rejected_by_policy"
     assert result.rejection_reason == "image_budget_exceeded"
+
+
+def test_runner_rejects_input_budget_overflow_from_runtime_config():
+    runtime = build_vision_runtime_config(_config(VISION_MAX_INPUT_CHARS=10))
+    resolver = LazyVisionBackendResolver(runtime)
+
+    result = asyncio.run(run_vision_assist(_Ctx(), request=_request(), resolver=resolver))
+
+    assert result.status == "rejected_by_policy"
+    assert result.rejection_reason == "input_budget_exceeded"
+    assert result.budget.max_input_chars == 10
 
 
 def test_runner_returns_unavailable_when_backend_is_disabled():

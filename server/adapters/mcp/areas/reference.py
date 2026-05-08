@@ -174,7 +174,6 @@ from server.adapters.mcp.vision.reference_support import (
 from server.adapters.mcp.vision.reference_support import (
     merge_compare_time_part_segmentation as _merge_compare_time_part_segmentation,
 )
-from server.adapters.mcp.vision.runner import VISION_ASSIST_POLICY
 from server.application.services.reference_compare_packets import (
     count_failed_compare_packets as _count_failed_compare_packets,
 )
@@ -1226,7 +1225,9 @@ async def _run_stage_checkpoint_compare(
     segmentation_sidecar_config = (
         getattr(runtime_config, "active_segmentation_sidecar", None) if runtime_config is not None else None
     )
-    runtime_max_tokens, runtime_max_images, runtime_model_name = _resolve_hybrid_budget_runtime(resolver)
+    runtime_max_tokens, runtime_max_images, runtime_max_input_chars, runtime_model_name = (
+        _resolve_hybrid_budget_runtime(resolver)
+    )
     truth_bundle, _truth_relation_graph = _build_correction_truth_bundle(
         scene_handler,
         assembled_target_scope,
@@ -1252,7 +1253,7 @@ async def _run_stage_checkpoint_compare(
         truth_char_share = 0.5
         truth_char_floor = 1800
     max_truth_chars = min(
-        int(VISION_ASSIST_POLICY.max_input_chars * truth_char_share),
+        int(runtime_max_input_chars * truth_char_share),
         max(truth_char_floor, runtime_max_tokens * 12),
     )
     budgeted_truth_bundle, scope_trimmed = _trim_truth_bundle_to_budget(
@@ -1633,7 +1634,7 @@ async def _run_stage_checkpoint_compare(
     model_aware_trimming_applied = scope_trimmed or candidate_detail_trimmed
     budget_control = ReferenceHybridBudgetControlContract(
         model_name=runtime_model_name,
-        max_input_chars=VISION_ASSIST_POLICY.max_input_chars,
+        max_input_chars=runtime_max_input_chars,
         max_output_tokens=runtime_max_tokens,
         max_images=runtime_max_images,
         original_pair_count=truth_bundle.summary.pair_count,

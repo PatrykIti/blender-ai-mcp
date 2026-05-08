@@ -49,6 +49,11 @@ class Config(BaseSettings):
     )
     VISION_ALLOW_ON_GUIDED: bool = Field(default=True, description="Allow vision assistance on llm-guided")
     VISION_MAX_IMAGES: int = Field(default=8, gt=0, description="Maximum images per bounded vision request")
+    VISION_MAX_INPUT_CHARS: int = Field(
+        default=12000,
+        gt=0,
+        description="Maximum serialized input characters per bounded vision request",
+    )
     VISION_MAX_TOKENS: int = Field(default=400, gt=0, description="Maximum output tokens for vision assistance")
     VISION_TIMEOUT_SECONDS: float = Field(default=20.0, gt=0, description="Timeout for one bounded vision request")
     VISION_LOCAL_MODEL_ID: str | None = Field(default=None, description="Local HF vision model id")
@@ -263,6 +268,7 @@ def get_config() -> Config:
         VISION_PROVIDER=os.getenv("VISION_PROVIDER", "transformers_local"),
         VISION_ALLOW_ON_GUIDED=os.getenv("VISION_ALLOW_ON_GUIDED", "true").lower() in ("true", "1", "yes"),
         VISION_MAX_IMAGES=int(os.getenv("VISION_MAX_IMAGES", 8)),
+        VISION_MAX_INPUT_CHARS=int(os.getenv("VISION_MAX_INPUT_CHARS", 12000)),
         VISION_MAX_TOKENS=int(os.getenv("VISION_MAX_TOKENS", 400)),
         VISION_TIMEOUT_SECONDS=float(os.getenv("VISION_TIMEOUT_SECONDS", 20.0)),
         VISION_LOCAL_MODEL_ID=os.getenv("VISION_LOCAL_MODEL_ID") or None,
