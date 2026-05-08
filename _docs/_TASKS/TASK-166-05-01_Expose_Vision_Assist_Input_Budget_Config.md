@@ -62,6 +62,7 @@
 
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - relevant runtime/operator notes for new config or env knobs
 - `README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`

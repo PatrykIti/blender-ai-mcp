@@ -11,6 +11,7 @@
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/areas/reference_planner.py`
 - `server/application/services/`
+- `server/adapters/mcp/vision/capture_runtime.py`
 - `server/adapters/mcp/vision/capture.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/e2e/integration/`
@@ -39,6 +40,9 @@
 - Insert packet planning and packet-local capture/reference narrowing
   immediately before the current `build_vision_request_from_stage_captures(...)`
   path.
+- Keep the plan aligned with the live staged capture seam in
+  `server/adapters/mcp/vision/capture_runtime.py`; packet planning is not only
+  about request assembly after captures already exist.
 - Reuse current `target_view`, `target_object`, `target_objects`, and
   `collection_name` as packet-planning hints rather than treating them as the
   final whole-request scope.
@@ -73,6 +77,8 @@ packet_inputs = select_packet_inputs(
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_contract_payload_parity.py`
+- `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/e2e/integration/test_guided_gate_state_transport.py`
 
 ## Docs To Update
@@ -97,6 +103,8 @@ packet_inputs = select_packet_inputs(
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
 
 ## Acceptance Criteria

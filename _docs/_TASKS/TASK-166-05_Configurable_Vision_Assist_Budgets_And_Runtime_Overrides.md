@@ -95,6 +95,7 @@ staged_compare = project_budget_state_into_budget_control(runner, effective_budg
 
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - relevant script/runtime operator notes when env/config knobs are added
 - `README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`

@@ -3,7 +3,7 @@
 **Parent:** [TASK-166-02](./TASK-166-02_Truth_First_Two_Pass_Compare_Execution.md)  
 **Status:** ⏳ To Do  
 **Priority:** 🔴 High
-**Objective:** Define the deterministic preflight and narrow packet question contract that sits in front of any LLM compare call.
+**Objective:** Define the deterministic preflight and narrow packet question contract that sits in front of staged packet compare LLM calls.
 
 ## Repository Touchpoints
 
@@ -52,6 +52,8 @@
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_parsing.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_result_types.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
 
 ## Tests To Add/Update
 
@@ -59,6 +61,8 @@
 - `tests/unit/adapters/mcp/test_vision_prompting.py`
 - `tests/unit/adapters/mcp/test_vision_parsing.py`
 - `tests/unit/adapters/mcp/test_vision_result_types.py`
+- `tests/unit/adapters/mcp/test_contract_payload_parity.py`
+- `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - packet-preflight contract tests for blocked, low-information, and narrow
   question shaping outcomes
 

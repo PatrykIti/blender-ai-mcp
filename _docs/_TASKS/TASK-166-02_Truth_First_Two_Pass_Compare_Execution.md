@@ -36,8 +36,11 @@
 
 ## Current Flow Integration
 
-- `reference_compare_stage_checkpoint(...)` should become the owner of packet
-  extraction, conditional ranking, and packet synthesis for the current stage.
+- `reference_compare_stage_checkpoint(...)` should remain the public staged
+  orchestration entrypoint for packet extraction, conditional ranking, and
+  packet synthesis for the current stage; durable execution ordering and
+  ranking/synthesis policy should live in dedicated helper/service code rather
+  than in the `@mcp.tool` body itself.
 - `reference_iterate_stage_checkpoint(...)` should consume packet results and
   the already synthesized staged compare result when deciding loop disposition;
   it must not become a second ranking/synthesis owner flow.
