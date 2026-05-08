@@ -40,6 +40,22 @@
 - `tests/unit/adapters/mcp/test_reference_images.py` for staged
   `budget_control.max_input_chars` projection
 
+## Docs To Update
+
+- `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/README.md`
+- relevant runtime/operator notes for new config or env knobs
+
+## Changelog Impact
+
+- include in the umbrella `_docs/_CHANGELOG/` entry when input-budget config
+  becomes runtime-owned
+
+## Status / Board Update
+
+- keep parent `TASK-166` and this leaf aligned when config parsing lands or is
+  split from broader budget diagnostics work
+
 ## Validation Commands
 
 - `git diff --check`

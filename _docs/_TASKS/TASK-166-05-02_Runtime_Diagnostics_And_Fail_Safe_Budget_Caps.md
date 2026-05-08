@@ -39,6 +39,21 @@
 - `tests/e2e/integration/test_guided_gate_state_transport.py` when budget
   diagnostics change a client-visible staged contract
 
+## Docs To Update
+
+- `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/README.md`
+
+## Changelog Impact
+
+- include in the umbrella `_docs/_CHANGELOG/` entry when budget diagnostics and
+  fail-safe caps ship
+
+## Status / Board Update
+
+- keep parent `TASK-166` and this leaf aligned when budget diagnostics close or
+  remain explicit follow-on work
+
 ## Validation Commands
 
 - `git diff --check`

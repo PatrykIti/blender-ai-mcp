@@ -51,6 +51,11 @@
 - include in the umbrella `_docs/_CHANGELOG/` entry when extraction/ranking
   split semantics ship
 
+## Status / Board Update
+
+- keep parent `TASK-166` and this leaf aligned when extraction/ranking split
+  semantics close or are split into follow-on work
+
 ## Validation Commands
 
 - `git diff --check`

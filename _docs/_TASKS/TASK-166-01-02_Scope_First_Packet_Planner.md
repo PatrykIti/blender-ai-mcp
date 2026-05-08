@@ -15,6 +15,10 @@
 
 - Scope packets should align with current guided step, gate blockers, and active
   target scope.
+- Likely implementation shape:
+  - one `build_scope_packets(...)` helper on the compare-plan seam
+  - one mapping from existing truth-pair / object-cluster data into packet-local
+    scope groups
 - Scope packets should map back to existing truth pairs/object clusters instead
   of inventing a second scope graph beside the staged compare truth bundle.
 - Packet planning must remain generic across domains.
@@ -25,3 +29,29 @@
 - large assembled models no longer force every compare to include every part
 - scope packets identify the object cluster / truth-pair slice they own so later
   synthesis and feedback can attribute findings without guessing
+
+## Tests To Add/Update
+
+- `tests/unit/adapters/mcp/test_reference_images.py`
+- packet-plan unit coverage for scope-cluster mapping and blocker-driven packet
+  selection
+
+## Docs To Update
+
+- `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/README.md`
+
+## Changelog Impact
+
+- include in the umbrella `_docs/_CHANGELOG/` entry when scope-first packet
+  planning ships
+
+## Status / Board Update
+
+- keep parent `TASK-166` and this leaf aligned when scope-first planning closes
+  or splits into follow-on work
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`

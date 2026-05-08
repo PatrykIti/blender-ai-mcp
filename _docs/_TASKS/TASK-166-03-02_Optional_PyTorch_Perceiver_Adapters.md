@@ -37,7 +37,30 @@
 - compare-time sidecars cannot become the sole basis for emitted correction
   candidates or packet completion claims
 
+## Tests To Add/Update
+
+- `tests/unit/adapters/mcp/test_reference_images.py`
+- compare-time sidecar availability / staged-contract projection tests
+- `tests/e2e/integration/test_guided_gate_state_transport.py` when optional
+  sidecar surfacing changes client-visible staged compare / iterate payloads
+
+## Docs To Update
+
+- `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/README.md`
+
+## Changelog Impact
+
+- include in the umbrella `_docs/_CHANGELOG/` entry when compare-time sidecar
+  surfacing ships
+
+## Status / Board Update
+
+- keep parent `TASK-166` and this leaf aligned when compare-time sidecar work
+  closes or remains explicit follow-on scope
+
 ## Validation Commands
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
