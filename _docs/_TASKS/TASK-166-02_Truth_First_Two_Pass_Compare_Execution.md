@@ -55,10 +55,17 @@
 - include in the umbrella `_docs/_CHANGELOG/` entry when two-pass staged compare
   ships
 
+## Status / Board Update
+
+- keep parent `TASK-166` and this subtask aligned in `_docs/_TASKS/README.md`
+- when this subtask closes, update child-leaf state and note whether transport
+  proof shipped or remains explicit follow-on work
+
 ## Validation Commands
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
 
 ## Acceptance Criteria
 

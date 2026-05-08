@@ -7,6 +7,7 @@
 
 ## Repository Touchpoints
 
+- `server/adapters/mcp/areas/reference_silhouette.py`
 - `server/adapters/mcp/vision/reference_support.py`
 - `server/adapters/mcp/areas/reference.py`
 - `server/adapters/mcp/contracts/reference.py`
@@ -21,10 +22,15 @@
 
 ## Current Flow Integration
 
+- Compare-time always-on heuristic CV should extend the existing
+  `reference_silhouette.py` seam first, because that is where the current staged
+  compare path already emits deterministic silhouette evidence and action hints.
 - Always-on CV should feed packet-level evidence slots on the staged compare
   family before the LLM compare question is assembled.
 - Optional PyTorch sidecars should extend the existing `reference_support.py`
-  seam instead of creating a second parallel perception stack.
+  seam instead of creating a second parallel perception stack, but the current
+  repo entrypoint there is still RU augmentation and must not be mistaken for
+  the already-shipped compare-time heuristic CV owner.
 - Packet compare should consume these pre-chewed facts so the LLM is asked
   narrower questions rather than raw broad image interpretation.
 - Compare-time evidence should extend the staged compare contracts without
@@ -55,6 +61,12 @@
 
 - include in the umbrella `_docs/_CHANGELOG/` entry when compare-time support
   evidence ships
+
+## Status / Board Update
+
+- keep parent `TASK-166` and this subtask aligned in `_docs/_TASKS/README.md`
+- call out explicitly whether compare-time CV landed through the silhouette
+  seam only or whether optional sidecar extensions also shipped
 
 ## Validation Commands
 

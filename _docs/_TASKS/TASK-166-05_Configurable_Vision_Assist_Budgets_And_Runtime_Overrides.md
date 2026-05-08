@@ -62,6 +62,12 @@
 - include in the umbrella `_docs/_CHANGELOG/` entry when runtime budget
   overrides ship
 
+## Status / Board Update
+
+- keep parent `TASK-166` and this subtask aligned in `_docs/_TASKS/README.md`
+- note explicitly whether config parsing, runtime diagnostics, and fail-safe
+  caps all shipped together or remain split across open leaves
+
 ## Validation Commands
 
 - `git diff --check`

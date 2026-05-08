@@ -58,6 +58,12 @@
 - include in the umbrella `_docs/_CHANGELOG/` entry when complexity-tier policy
   ships
 
+## Status / Board Update
+
+- keep parent `TASK-166` and this subtask aligned in `_docs/_TASKS/README.md`
+- record whether simple/complex/super-complex policy all shipped together or
+  whether any tier remains open as explicit follow-on work
+
 ## Validation Commands
 
 - `git diff --check`

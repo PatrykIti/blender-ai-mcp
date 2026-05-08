@@ -82,7 +82,15 @@
 - include in the umbrella `_docs/_CHANGELOG/` entry when the transparency
   contract ships
 
+## Status / Board Update
+
+- keep parent `TASK-166`, this subtask, and the promoted board row aligned in
+  `_docs/_TASKS/README.md`
+- when this subtask closes, record whether transport/integration proof shipped
+  in the same branch or remains explicit follow-on work
+
 ## Validation Commands
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`

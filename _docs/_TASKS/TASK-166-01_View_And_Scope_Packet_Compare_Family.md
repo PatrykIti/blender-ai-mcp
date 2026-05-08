@@ -78,6 +78,12 @@ packet_inputs = select_packet_inputs(
 
 - one `_docs/_CHANGELOG/` entry when packet planning ships
 
+## Status / Board Update
+
+- keep `TASK-166` as the promoted board row
+- update this subtask, relevant leaves, and the board summary in
+  `_docs/_TASKS/README.md` together when packet planning closes or splits
+
 ## Validation Commands
 
 - `git diff --check`
