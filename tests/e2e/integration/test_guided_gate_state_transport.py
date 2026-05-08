@@ -659,7 +659,7 @@ async def _exercise_reference_understanding_transport_roundtrip(client, referenc
                 "target_objects": ["Squirrel_Tail"],
                 "checkpoint_label": "reference_understanding_transport_compare",
                 "target_view": "front",
-                "preset_profile": "compact",
+                "preset_profile": "rich",
             },
         )
     )
@@ -668,6 +668,13 @@ async def _exercise_reference_understanding_transport_roundtrip(client, referenc
     assert compare_result["reference_understanding_summary"]["classification_scores"] == [
         {"label": "low_poly_faceted", "score": 0.94}
     ]
+    assert compare_result["compare_diagnostics"]["packets"][0]["packet_status"] in {
+        "ready",
+        "clean",
+        "low_information",
+        "blocked",
+    }
+    assert "support_evidence" in compare_result["compare_diagnostics"]["packets"][0]
     assert compare_result["part_segmentation"]["status"] == "disabled"
 
     iterate_result = result_payload(
@@ -677,11 +684,13 @@ async def _exercise_reference_understanding_transport_roundtrip(client, referenc
                 "target_object": "Squirrel_Body",
                 "target_objects": ["Squirrel_Tail"],
                 "checkpoint_label": "reference_understanding_transport_iterate",
+                "preset_profile": "rich",
             },
         )
     )
     assert iterate_result["reference_understanding_summary"]["understanding_id"] == "understanding_transport_seed"
     assert iterate_result["reference_understanding_gate_ids"] == goal_result["reference_understanding_gate_ids"]
+    assert "support_evidence" in iterate_result["compare_diagnostics"]["packets"][0]
     assert iterate_result["reference_understanding_summary"]["segmentation_artifacts"][0]["artifact_id"] == (
         "mask_tail_front"
     )

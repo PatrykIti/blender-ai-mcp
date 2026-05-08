@@ -17,6 +17,9 @@
   keeps the extraction result and marks the packet `ranking_status="error"`
 - packet clean / low-information / blocked outcomes now skip the ranking pass
   explicitly instead of inferring that state from missing fields
+- staged `compare_diagnostics` now also project explicit packet-level
+  `packet_status` / `ranking_recommendation`, and successful ranking can replace
+  extraction guidance when the second pass returns narrower packet-local focus
 
 ## Repository Touchpoints
 

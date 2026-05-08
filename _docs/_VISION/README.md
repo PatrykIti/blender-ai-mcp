@@ -632,10 +632,11 @@ and `reference_iterate_stage_checkpoint(...)`:
   - packets can name packet ids, packet-local view/scope slices, selected
     capture/reference inputs, extraction status, ranking status, and packet
     uncertainty notes
-  - packets can also carry compact `support_evidence` summaries derived from
-    deterministic silhouette/action-hint preflight before the packet LLM phase
-  - compact paths emit it on synthesis/uncertainty or budget pressure; rich
-    paths emit it directly
+  - packets can also carry typed packet-local `support_evidence` items derived
+    from deterministic silhouette/action-hint preflight before the packet LLM
+    phase
+  - compact paths emit it on synthesis, ranking/extraction uncertainty, or
+    model-aware budget pressure; rich paths emit it directly
 - `silhouette_analysis`
   - typed metrics such as `mask_iou`, `contour_drift`, `aspect_ratio_delta`,
     `upper_band_width_delta`, `mid_band_width_delta`, `lower_band_width_delta`,
@@ -661,7 +662,7 @@ Interpretation rules:
   staged compare path; ranking may be skipped or may fail without discarding
   the extraction result
 - packet compare also receives compact silhouette/action-hint support evidence
-  before the packet LLM phase runs; those CV summaries stay advisory-only and
+  before the packet LLM phase runs; those CV items stay advisory-only and
   do not replace truth or gate authority
 
 Current staged-loop reading order for creature work:

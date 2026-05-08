@@ -19,6 +19,7 @@ from server.adapters.mcp.sampling.result_types import (
     AssistantBudgetContract,
     AssistantRunResult,
     VisionAssistContract,
+    VisionPacketStatusContract,
 )
 from server.adapters.mcp.session_capabilities import update_session_from_router_goal
 
@@ -103,6 +104,11 @@ def test_reference_stage_compare_and_iterate_expose_silhouette_metrics_and_actio
                 shape_mismatches=["The ears are still missing from the silhouette."],
                 correction_focus=[],
                 next_corrections=["Build the upper silhouette before detail cleanup."],
+                packet_guidance=VisionPacketStatusContract(
+                    packet_status="ready",
+                    status_reason=None,
+                    ranking_recommendation="skip_clean",
+                ),
             ),
         )
 
@@ -138,7 +144,7 @@ def test_reference_stage_compare_and_iterate_expose_silhouette_metrics_and_actio
             target_object="Creature",
             checkpoint_label="stage_ears",
             target_view="front",
-            preset_profile="compact",
+            preset_profile="rich",
         )
     )
 
@@ -150,6 +156,10 @@ def test_reference_stage_compare_and_iterate_expose_silhouette_metrics_and_actio
     assert any(
         hint.hint_type in {"widen_upper_profile", "reduce_upper_profile"} for hint in compare_result.action_hints
     )
+    assert compare_result.compare_diagnostics is not None
+    assert compare_result.compare_diagnostics.packets[0].support_evidence
+    assert compare_result.compare_diagnostics.packets[0].support_evidence[0].evidence_kind == "silhouette_metric"
+    assert compare_result.compare_diagnostics.packets[0].packet_status == "ready"
     assert compare_result.part_segmentation is not None
     assert compare_result.part_segmentation.status == "disabled"
 
@@ -159,7 +169,7 @@ def test_reference_stage_compare_and_iterate_expose_silhouette_metrics_and_actio
             target_object="Creature",
             checkpoint_label="stage_ears_iterate",
             target_view="front",
-            preset_profile="compact",
+            preset_profile="rich",
         )
     )
 
@@ -172,5 +182,7 @@ def test_reference_stage_compare_and_iterate_expose_silhouette_metrics_and_actio
     assert any(
         hint.hint_type in {"widen_upper_profile", "reduce_upper_profile"} for hint in iterate_result.action_hints
     )
+    assert iterate_result.compare_diagnostics is not None
+    assert iterate_result.compare_diagnostics.packets[0].support_evidence
     assert iterate_result.part_segmentation is not None
     assert iterate_result.part_segmentation.status == "disabled"

@@ -76,6 +76,16 @@ _UNHELPFUL_CORRECTION_SNIPPETS = (
     "volume unchanged",
     "bounding box unchanged",
 )
+_PACKET_CLEAN_HINTS = (
+    "looks visually clean",
+    "visually acceptable",
+    "no dominant",
+    "no clear mismatch",
+    "matches the reference",
+    "match the reference",
+    "aligned with the reference",
+    "no correction needed",
+)
 _REFERENCE_UNDERSTANDING_STYLE_VALUES = {
     "low_poly_faceted",
     "hard_surface",
@@ -289,6 +299,11 @@ def _prune_unhelpful_correction_items(items: list[str]) -> list[str]:
             continue
         pruned.append(item)
     return pruned
+
+
+def _looks_clean_packet_text(*values: str | None) -> bool:
+    normalized = " | ".join(str(value or "").strip().lower() for value in values if str(value or "").strip())
+    return bool(normalized) and any(hint in normalized for hint in _PACKET_CLEAN_HINTS)
 
 
 def _bounded_string_list(items: list[str], *, max_items: int = 3, prune_unhelpful: bool = False) -> list[str]:
@@ -940,7 +955,7 @@ def _normalize_payload(parsed: dict[str, Any], request: VisionRequest) -> dict[s
         if packet_status not in {"ready", "clean", "low_information", "blocked"}:
             if correction_focus or shape_mismatches or proportion_mismatches or next_corrections:
                 packet_status = "ready"
-            elif visible_changes or reference_match_summary:
+            elif _looks_clean_packet_text(goal_summary, reference_match_summary):
                 packet_status = "clean"
             else:
                 packet_status = "low_information"

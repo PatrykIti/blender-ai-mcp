@@ -340,6 +340,32 @@ def test_parse_vision_output_derives_packet_compare_guidance_when_missing():
     }
 
 
+def test_parse_vision_output_defaults_packet_compare_to_low_information_without_clean_signal():
+    text = json.dumps(
+        {
+            "goal_summary": "The packet captures one readable silhouette.",
+            "reference_match_summary": "The packet response stayed short.",
+            "visible_changes": ["Front silhouette is readable."],
+            "shape_mismatches": [],
+            "proportion_mismatches": [],
+            "correction_focus": [],
+            "likely_issues": [],
+            "next_corrections": [],
+            "recommended_checks": [],
+            "confidence": 0.4,
+            "captures_used": ["target_front_after", "ref_front"],
+        }
+    )
+
+    parsed = parse_vision_output_text(text, _packet_compare_request())
+
+    assert parsed["packet_guidance"] == {
+        "packet_status": "low_information",
+        "status_reason": "Packet did not provide enough bounded visual signal for confident ranking.",
+        "ranking_recommendation": "skip_low_information",
+    }
+
+
 def test_diagnose_vision_output_classifies_fenced_contract_json():
     text = """```json
 {"goal_summary":"ok","reference_match_summary":null,"visible_changes":[],"likely_issues":[],"recommended_checks":[],"confidence":0.2,"captures_used":["before_1"]}

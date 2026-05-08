@@ -1,9 +1,19 @@
 # TASK-166-01-02: Scope-First Packet Planner
 
 **Parent:** [TASK-166-01](./TASK-166-01_View_And_Scope_Packet_Compare_Family.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
 **Objective:** Plan compare packets by active scope clusters such as `Body + Head`, `Tail`, and `Ears` instead of always comparing the full assembled model.
+
+## Completion Summary
+
+- scope packet planning now groups common creature seams into semantic scope
+  clusters such as `Body + Head`, `Tail`, and `Ears`
+- complex staged compare runs now preserve both view and scope on packet-local
+  diagnostics instead of dropping secondary views once focus pairs are present
+- when truth follow-up does not provide explicit focus pairs, packet planning can
+  still derive bounded scope clusters from the assembled target scope instead of
+  falling back to one whole-model compare
 
 ## Repository Touchpoints
 

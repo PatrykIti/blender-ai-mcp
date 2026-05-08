@@ -293,8 +293,11 @@ def test_compare_support_evidence_projects_silhouette_metrics_and_action_hints(t
     evidence = build_compare_support_evidence(analysis, action_hints=hints)
 
     assert evidence
-    assert any("Silhouette overlap" in item or "upper_band_width_delta" in item for item in evidence)
-    assert any("Action hint:" in item for item in evidence)
+    assert any(
+        item.evidence_kind == "silhouette_metric" and ("Silhouette overlap" in item.summary or item.metric_id)
+        for item in evidence
+    )
+    assert any(item.evidence_kind == "action_hint" and "Action hint:" in item.summary for item in evidence)
 
 
 def test_iterate_stage_response_carries_silhouette_analysis_and_action_hints():
@@ -6147,12 +6150,13 @@ def test_reference_compare_stage_checkpoint_captures_deterministic_stage_set(tmp
     assert result.truth_bundle.summary.pairing_strategy == "none"
     assert result.truth_followup is not None
     assert result.truth_followup.continue_recommended is False
+    assert result.compare_diagnostics is not None
+    assert result.compare_diagnostics.packet_count == 2
+    assert [packet.target_view for packet in result.compare_diagnostics.packets] == ["front", "side"]
     assert captured["request"].truth_summary["scope"]["scope_kind"] == "single_object"
     assert [image.role for image in captured["request"].images] == [
         "after",
         "after",
-        "after",
-        "reference",
         "reference",
     ]
     assert "comparison_mode=stage_checkpoint_vs_reference" in (captured["request"].prompt_hint or "")
@@ -6272,6 +6276,152 @@ def test_reference_compare_stage_checkpoint_threads_compare_time_support_evidenc
     assert any("Action hint:" in item for item in request.metadata["support_evidence_summaries"])
     assert result.compare_diagnostics is not None
     assert result.compare_diagnostics.packets[0].support_evidence
+    assert result.compare_diagnostics.packets[0].support_evidence[0].target_view == "front"
+    assert result.compare_diagnostics.packets[0].support_evidence[0].capture_label == "target_front_after"
+
+
+def test_reference_compare_stage_checkpoint_keeps_support_evidence_packet_local(tmp_path, monkeypatch):
+    front_reference_path = tmp_path / "reference_front.png"
+    side_reference_path = tmp_path / "reference_side.png"
+    front_capture_path = tmp_path / "capture_front.png"
+    side_capture_path = tmp_path / "capture_side.png"
+    _write_upper_profile_silhouette(front_reference_path, upper_width=110)
+    _write_upper_profile_silhouette(front_capture_path, upper_width=50)
+    _write_upper_profile_silhouette(side_reference_path, upper_width=80)
+    _write_upper_profile_silhouette(side_capture_path, upper_width=78)
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly creature", {"status": "no_match"})
+    asyncio.run(
+        reference_images(
+            ctx,
+            action="attach",
+            source_path=str(front_reference_path),
+            label="front_ref",
+            target_object="Creature",
+            target_view="front",
+        )
+    )
+    asyncio.run(
+        reference_images(
+            ctx,
+            action="attach",
+            source_path=str(side_reference_path),
+            label="side_ref",
+            target_object="Creature",
+            target_view="side",
+        )
+    )
+
+    class SceneHandler:
+        def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "relation": "contact", "gap": 0.0}
+
+        def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "is_aligned": True,
+                "axes": axes or ["X", "Y", "Z"],
+            }
+
+        def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "overlaps": False, "relation": "disjoint"}
+
+        def assert_contact(
+            self, from_object: str, to_object: str, max_gap: float = 0.0001, allow_overlap: bool = False
+        ):
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": True,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.0, "relation": "contact"},
+            }
+
+    captured_requests: list[object] = []
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        captured_requests.append(request)
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="Packet compare completed.",
+                reference_match_summary="Packet completed.",
+                visible_changes=["Readable silhouette."],
+                shape_mismatches=[],
+                proportion_mismatches=[],
+                correction_focus=[],
+                likely_issues=[],
+                next_corrections=[],
+                recommended_checks=[],
+                packet_guidance=VisionPacketStatusContract(
+                    packet_status="clean",
+                    status_reason="Packet appears visually acceptable without a ranking pass.",
+                    ranking_recommendation="skip_clean",
+                ),
+            ),
+        )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: object())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="target_front_after",
+                image_path=str(front_capture_path),
+                host_visible_path=str(front_capture_path),
+                preset_name="target_front",
+                media_type="image/png",
+                view_kind="focus",
+            ),
+            VisionCaptureImageContract(
+                label="target_side_after",
+                image_path=str(side_capture_path),
+                host_visible_path=str(side_capture_path),
+                preset_name="target_side",
+                media_type="image/png",
+                view_kind="focus",
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            target_object="Creature",
+            checkpoint_label="stage_packet_local_support_evidence",
+            preset_profile="rich",
+        )
+    )
+
+    assert result.error is None
+    assert result.compare_diagnostics is not None
+    assert [packet.target_view for packet in result.compare_diagnostics.packets] == ["front", "side"]
+    front_packet, side_packet = result.compare_diagnostics.packets
+    assert front_packet.support_evidence
+    assert side_packet.support_evidence
+    assert front_packet.support_evidence[0].capture_label == "target_front_after"
+    assert front_packet.support_evidence[0].reference_label == "front_ref"
+    assert side_packet.support_evidence[0].capture_label == "target_side_after"
+    assert side_packet.support_evidence[0].reference_label == "side_ref"
+    assert front_packet.support_evidence != side_packet.support_evidence
+    assert len(captured_requests) == 2
+    assert (
+        captured_requests[0].metadata["support_evidence_summaries"]
+        != captured_requests[1].metadata["support_evidence_summaries"]
+    )
 
 
 def test_reference_compare_stage_checkpoint_maps_packet_guidance_into_compare_diagnostics(tmp_path, monkeypatch):
@@ -6381,6 +6531,115 @@ def test_reference_compare_stage_checkpoint_maps_packet_guidance_into_compare_di
     assert result.compare_diagnostics.packets[0].status_reason == (
         "Packet appears visually acceptable without a ranking pass."
     )
+    assert result.compare_diagnostics.packets[0].packet_status == "clean"
+    assert result.compare_diagnostics.packets[0].ranking_recommendation == "skip_clean"
+
+
+def test_reference_compare_stage_checkpoint_omits_compare_diagnostics_on_clean_compact_single_packet(
+    tmp_path, monkeypatch
+):
+    image_front = tmp_path / "front.png"
+    image_front.write_bytes(b"front")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly squirrel", {"status": "no_match"})
+    asyncio.run(
+        reference_images(
+            ctx,
+            action="attach",
+            source_path=str(image_front),
+            label="front_ref",
+            target_object="Squirrel",
+            target_view="front",
+        )
+    )
+
+    class SceneHandler:
+        def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "relation": "contact", "gap": 0.0}
+
+        def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "is_aligned": True,
+                "axes": axes or ["X", "Y", "Z"],
+            }
+
+        def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "overlaps": False, "relation": "disjoint"}
+
+        def assert_contact(
+            self, from_object: str, to_object: str, max_gap: float = 0.0001, allow_overlap: bool = False
+        ):
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": True,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.0, "relation": "contact"},
+            }
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="Front packet looks visually clean relative to the reference.",
+                reference_match_summary="No dominant front mismatch remains.",
+                visible_changes=["Front silhouette is readable."],
+                shape_mismatches=[],
+                proportion_mismatches=[],
+                correction_focus=[],
+                likely_issues=[],
+                next_corrections=[],
+                recommended_checks=[],
+                packet_guidance=VisionPacketStatusContract(
+                    packet_status="clean",
+                    status_reason="Packet appears visually acceptable without a ranking pass.",
+                    ranking_recommendation="skip_clean",
+                ),
+            ),
+        )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: object())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="target_front_after",
+                image_path=str(tmp_path / "front.jpg"),
+                host_visible_path=str(tmp_path / "front.jpg"),
+                preset_name="target_front",
+                media_type="image/jpeg",
+                view_kind="focus",
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            target_object="Squirrel",
+            checkpoint_label="stage_front_clean_compact",
+            preset_profile="compact",
+        )
+    )
+
+    assert result.error is None
+    assert result.compare_diagnostics is None
+    assert result.budget_control is not None
+    assert result.budget_control.trim_reason == "compact_checkpoint_payload"
 
 
 def test_reference_compare_stage_checkpoint_preserves_extraction_when_packet_ranking_fails(tmp_path, monkeypatch):
@@ -6507,6 +6766,127 @@ def test_reference_compare_stage_checkpoint_preserves_extraction_when_packet_ran
     assert result.compare_diagnostics.packets[0].ranking_status == "error"
     assert "Packet ranking failed: ranking_failed" in result.compare_diagnostics.packets[0].uncertainty_notes
     assert result.compare_diagnostics.conflict_notes == []
+    assert result.reference_orchestrator_feedback is not None
+    assert "Packet ranking failed: ranking_failed" in result.reference_orchestrator_feedback.uncertainty_notes
+
+
+def test_reference_compare_stage_checkpoint_emits_compare_diagnostics_on_compact_ranking_error(tmp_path, monkeypatch):
+    image_front = tmp_path / "front.png"
+    image_front.write_bytes(b"front")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly squirrel", {"status": "no_match"})
+    asyncio.run(
+        reference_images(
+            ctx,
+            action="attach",
+            source_path=str(image_front),
+            label="front_ref",
+            target_object="Squirrel",
+            target_view="front",
+        )
+    )
+
+    class SceneHandler:
+        def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "relation": "contact", "gap": 0.0}
+
+        def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "is_aligned": True,
+                "axes": axes or ["X", "Y", "Z"],
+            }
+
+        def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "overlaps": False, "relation": "disjoint"}
+
+        def assert_contact(
+            self, from_object: str, to_object: str, max_gap: float = 0.0001, allow_overlap: bool = False
+        ):
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": True,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.0, "relation": "contact"},
+            }
+
+    calls: list[str] = []
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        compare_phase = str(request.metadata.get("compare_phase") or "packet_extraction")
+        calls.append(compare_phase)
+        if compare_phase == "packet_extraction":
+            return AssistantRunResult(
+                status="success",
+                assistant_name="vision_assist",
+                message="ok",
+                budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+                capability_source="local_runtime",
+                result=VisionAssistContract(
+                    backend_kind="mlx_local",
+                    model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                    goal_summary="Front packet still shows a round head silhouette.",
+                    reference_match_summary="The packet has enough signal for one more bounded correction step.",
+                    visible_changes=["Front silhouette is readable."],
+                    shape_mismatches=["Head silhouette is still too spherical."],
+                    proportion_mismatches=[],
+                    correction_focus=["Head silhouette"],
+                    likely_issues=[],
+                    next_corrections=["Flatten the head silhouette slightly."],
+                    recommended_checks=[],
+                    packet_guidance=VisionPacketStatusContract(
+                        packet_status="ready",
+                        status_reason=None,
+                        ranking_recommendation="rank",
+                    ),
+                ),
+            )
+        return AssistantRunResult(
+            status="masked_error",
+            assistant_name="vision_assist",
+            message="ranking failed",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            rejection_reason="ranking_failed",
+            result=None,
+        )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: object())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="target_front_after",
+                image_path=str(tmp_path / "front.jpg"),
+                host_visible_path=str(tmp_path / "front.jpg"),
+                preset_name="target_front",
+                media_type="image/jpeg",
+                view_kind="focus",
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            target_object="Squirrel",
+            checkpoint_label="stage_front_rank_fail_compact",
+            preset_profile="compact",
+        )
+    )
+
+    assert result.error is None
+    assert calls == ["packet_extraction", "packet_ranking"]
+    assert result.compare_diagnostics is not None
+    assert result.compare_diagnostics.packets[0].ranking_status == "error"
     assert result.reference_orchestrator_feedback is not None
     assert "Packet ranking failed: ranking_failed" in result.reference_orchestrator_feedback.uncertainty_notes
 
@@ -6819,7 +7199,7 @@ def test_reference_compare_stage_checkpoint_can_expand_collection_scope(tmp_path
     assert result.compare_diagnostics.packets[1].truth_pairs == ["Squirrel_Tail -> Squirrel_Body"]
     assert captured["capture_kwargs"]["target_object"] == "Squirrel_Body"
     assert captured["request"].truth_summary["summary"]["pair_count"] == 1
-    assert captured["request"].metadata["packet_scope"] == "Squirrel_Tail + Squirrel_Body"
+    assert captured["request"].metadata["packet_scope"] == "Tail"
     assert captured["request"].metadata["collection_name"] == "Squirrel"
 
 

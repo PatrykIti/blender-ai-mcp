@@ -4,7 +4,7 @@ Date: 2026-05-08
 
 ## Summary
 
-- added packet-local `support_evidence` on
+- added packet-local typed `support_evidence` items on
   `server/adapters/mcp/contracts/reference.py` so staged compare packets can
   carry compact deterministic CV summaries without creating a second full
   perception contract
@@ -28,3 +28,5 @@ Date: 2026-05-08
 - `git diff --check`
 - `poetry run mypy server/adapters/mcp/contracts/reference.py server/adapters/mcp/areas/reference_silhouette.py server/adapters/mcp/areas/reference.py server/adapters/mcp/vision/prompting.py`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_vision_silhouette.py tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
+- `poetry run pytest ./tests/unit`
+- `poetry run python scripts/run_e2e_tests.py`

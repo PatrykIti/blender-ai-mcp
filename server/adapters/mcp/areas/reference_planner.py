@@ -39,12 +39,17 @@ from server.adapters.mcp.contracts.scene import (
 from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
 from server.adapters.mcp.sampling.result_types import (
     VisionAssistContract,
-    VisionBoundaryPolicyContract,
-    VisionInputSummaryContract,
-    VisionIssueContract,
-    VisionRecommendedCheckContract,
 )
 from server.adapters.mcp.vision.runner import VISION_ASSIST_POLICY
+from server.application.services.reference_compare_packets import (
+    build_compare_packets as _service_build_compare_packets,
+)
+from server.application.services.reference_compare_packets import (
+    resolve_compare_complexity_tier as _service_resolve_compare_complexity_tier,
+)
+from server.application.services.reference_compare_packets import (
+    synthesize_packet_vision_result as _service_synthesize_packet_vision_result,
+)
 
 LOW_POLY_HINTS: tuple[str, ...] = ("low poly", "low-poly", "blockout")
 HARD_SURFACE_HINTS: tuple[str, ...] = (
@@ -217,13 +222,12 @@ def resolve_compare_complexity_tier(
     capture_count: int,
     focus_pair_count: int,
 ) -> ReferenceCompareComplexityTierLiteral:
-    scope_kind = assembled_target_scope.scope_kind if assembled_target_scope is not None else "unknown"
-    object_count = assembled_target_scope.object_count if assembled_target_scope is not None else 0
-    if reference_count >= 6 or focus_pair_count >= 4 or object_count >= 6 or capture_count >= 5:
-        return "super_complex"
-    if scope_kind in {"collection", "object_set"} or reference_count >= 3 or focus_pair_count >= 1 or object_count >= 3:
-        return "complex"
-    return "simple"
+    return _service_resolve_compare_complexity_tier(
+        assembled_target_scope=assembled_target_scope,
+        reference_count=reference_count,
+        capture_count=capture_count,
+        focus_pair_count=focus_pair_count,
+    )
 
 
 def build_compare_packets(
@@ -234,255 +238,19 @@ def build_compare_packets(
     assembled_target_scope: SceneAssembledTargetScopeContract | None,
     truth_followup: SceneTruthFollowupContract | None,
 ) -> ReferenceCompareDiagnosticsContract:
-    capture_labels_by_view: dict[str, list[str]] = {}
-    context_capture_labels: list[str] = []
-    for capture in captures:
-        view_id = _capture_view_id(capture)
-        if view_id is None:
-            context_capture_labels.append(capture.label)
-            continue
-        capture_labels_by_view.setdefault(view_id, []).append(capture.label)
-
-    reference_ids_by_view: dict[str, list[str]] = {}
-    generic_reference_ids: list[str] = []
-    for reference in reference_records:
-        view_id = _reference_view_id(reference)
-        if view_id is None:
-            generic_reference_ids.append(reference.reference_id)
-            continue
-        reference_ids_by_view.setdefault(view_id, []).append(reference.reference_id)
-
-    normalized_target_view = _normalize_view_token(target_view)
-    available_views = [
-        view_id
-        for view_id in _PACKET_VIEW_ORDER
-        if view_id in capture_labels_by_view or view_id in reference_ids_by_view
-    ]
-    focus_pairs = list(truth_followup.focus_pairs or []) if truth_followup is not None else []
-    complexity_tier = resolve_compare_complexity_tier(
+    return _service_build_compare_packets(
+        target_view=target_view,
+        captures=captures,
+        reference_records=reference_records,
         assembled_target_scope=assembled_target_scope,
-        reference_count=len(reference_records),
-        capture_count=len(captures),
-        focus_pair_count=len(focus_pairs),
-    )
-    packets: list[ReferenceComparePacketContract] = []
-
-    if complexity_tier == "simple":
-        packet_views = [normalized_target_view] if normalized_target_view is not None else available_views[:2]
-        packet_views = [view for view in packet_views if view is not None]
-        packet_capture_labels = _unique_preserving_order(
-            [
-                *context_capture_labels,
-                *[label for view in packet_views for label in capture_labels_by_view.get(view, [])],
-            ]
-            or [capture.label for capture in captures]
-        )
-        packet_reference_ids = _unique_preserving_order(
-            [
-                *[reference_id for view in packet_views for reference_id in reference_ids_by_view.get(view, [])],
-                *generic_reference_ids,
-            ]
-            or [reference.reference_id for reference in reference_records]
-        )
-        paired_label = " + ".join(packet_views) if packet_views else "general"
-        packets.append(
-            ReferenceComparePacketContract(
-                packet_id=_stable_packet_id(
-                    "packet", "simple", paired_label, *packet_reference_ids, *packet_capture_labels
-                ),
-                packet_kind="view_scope" if len(packet_views) > 1 else "view",
-                packet_label=f"{paired_label} packet" if paired_label != "general" else "simple packet",
-                target_view=packet_views[0] if len(packet_views) == 1 else None,
-                scope_label=assembled_target_scope.scope_kind if assembled_target_scope is not None else None,
-                target_objects=list(assembled_target_scope.object_names or [])
-                if assembled_target_scope is not None
-                else [],
-                reference_ids=packet_reference_ids,
-                capture_labels=packet_capture_labels,
-                compare_question=_packet_question_for_view(packet_views[0] if len(packet_views) == 1 else None),
-            )
-        )
-    elif focus_pairs:
-        packet_views = (
-            [normalized_target_view] if normalized_target_view is not None else available_views[:2] or ["front"]
-        )
-        for focus_pair in focus_pairs:
-            from_object, to_object = focus_pair.split(" -> ", 1)
-            if complexity_tier == "super_complex":
-                active_views = packet_views
-            else:
-                active_views = [packet_views[0]]
-            for view_id in active_views:
-                packet_capture_labels = _unique_preserving_order(
-                    [
-                        *context_capture_labels,
-                        *capture_labels_by_view.get(view_id, []),
-                    ]
-                    or [capture.label for capture in captures]
-                )
-                packet_reference_ids = _unique_preserving_order(
-                    [
-                        *reference_ids_by_view.get(view_id, []),
-                        *generic_reference_ids,
-                    ]
-                    or [reference.reference_id for reference in reference_records]
-                )
-                packet_label = f"{from_object} + {to_object}"
-                packets.append(
-                    ReferenceComparePacketContract(
-                        packet_id=_stable_packet_id(
-                            "packet", focus_pair, view_id, *packet_reference_ids, *packet_capture_labels
-                        ),
-                        packet_kind="view_scope" if complexity_tier == "super_complex" else "scope",
-                        packet_label=packet_label,
-                        target_view=view_id if complexity_tier == "super_complex" else None,
-                        scope_label=packet_label,
-                        target_objects=[from_object, to_object],
-                        truth_pairs=[focus_pair],
-                        reference_ids=packet_reference_ids,
-                        capture_labels=packet_capture_labels,
-                        compare_question=_packet_question_for_view(view_id, scope_label=packet_label),
-                    )
-                )
-    else:
-        packet_views = [normalized_target_view] if normalized_target_view is not None else available_views or ["front"]
-        for view_id in packet_views:
-            packet_capture_labels = _unique_preserving_order(
-                [
-                    *context_capture_labels,
-                    *capture_labels_by_view.get(view_id, []),
-                ]
-                or [capture.label for capture in captures]
-            )
-            packet_reference_ids = _unique_preserving_order(
-                [
-                    *reference_ids_by_view.get(view_id, []),
-                    *generic_reference_ids,
-                ]
-                or [reference.reference_id for reference in reference_records]
-            )
-            packets.append(
-                ReferenceComparePacketContract(
-                    packet_id=_stable_packet_id(
-                        "packet", "view", view_id, *packet_reference_ids, *packet_capture_labels
-                    ),
-                    packet_kind="view",
-                    packet_label=f"{view_id} packet",
-                    target_view=view_id,
-                    target_objects=list(assembled_target_scope.object_names or [])
-                    if assembled_target_scope is not None
-                    else [],
-                    reference_ids=packet_reference_ids,
-                    capture_labels=packet_capture_labels,
-                    compare_question=_packet_question_for_view(view_id),
-                )
-            )
-
-    return ReferenceCompareDiagnosticsContract(
-        complexity_tier=complexity_tier,
-        packet_count=len(packets),
-        packet_order=[packet.packet_id for packet in packets],
-        synthesis_required=len(packets) > 1,
-        synthesis_status="not_needed" if len(packets) <= 1 else "skipped",
-        packets=packets,
+        truth_followup=truth_followup,
     )
 
 
 def synthesize_packet_vision_result(
     packet_results: Sequence[tuple[ReferenceComparePacketContract, VisionAssistContract | None]],
 ) -> VisionAssistContract | None:
-    successful_results = [result for _, result in packet_results if result is not None]
-    if not successful_results:
-        return None
-
-    goal_summaries = _unique_preserving_order(
-        [result.goal_summary for result in successful_results if result.goal_summary]
-    )
-    reference_match_summaries = _unique_preserving_order(
-        [summary for result in successful_results if (summary := result.reference_match_summary)]
-    )
-    visible_changes = _unique_preserving_order(
-        [item for result in successful_results for item in list(result.visible_changes or [])]
-    )[:8]
-    shape_mismatches = _unique_preserving_order(
-        [item for result in successful_results for item in list(result.shape_mismatches or [])]
-    )[:6]
-    proportion_mismatches = _unique_preserving_order(
-        [item for result in successful_results for item in list(result.proportion_mismatches or [])]
-    )[:6]
-    correction_focus = _unique_preserving_order(
-        [item for result in successful_results for item in list(result.correction_focus or [])]
-    )[:6]
-    next_corrections = _unique_preserving_order(
-        [item for result in successful_results for item in list(result.next_corrections or [])]
-    )[:6]
-    captures_used = _unique_preserving_order(
-        [item for result in successful_results for item in list(result.captures_used or [])]
-    )
-
-    likely_issues: list[VisionIssueContract] = []
-    seen_issue_keys: set[tuple[str, str]] = set()
-    for result in successful_results:
-        for issue in list(result.likely_issues or []):
-            issue_key = (issue.category, issue.summary)
-            if issue_key in seen_issue_keys:
-                continue
-            seen_issue_keys.add(issue_key)
-            likely_issues.append(issue)
-
-    recommended_checks: list[VisionRecommendedCheckContract] = []
-    seen_check_keys: set[tuple[str, str]] = set()
-    for result in successful_results:
-        for check in list(result.recommended_checks or []):
-            check_key = (check.tool_name, check.reason)
-            if check_key in seen_check_keys:
-                continue
-            seen_check_keys.add(check_key)
-            recommended_checks.append(check)
-
-    confidences = [float(result.confidence) for result in successful_results if result.confidence is not None]
-    input_summaries = [result.input_summary for result in successful_results if result.input_summary is not None]
-    merged_input_summary = (
-        VisionInputSummaryContract(
-            before_image_count=sum(item.before_image_count for item in input_summaries),
-            after_image_count=sum(item.after_image_count for item in input_summaries),
-            reference_image_count=sum(item.reference_image_count for item in input_summaries),
-            target_object=next(
-                (item.target_object for item in input_summaries if item.target_object),
-                None,
-            ),
-        )
-        if input_summaries
-        else None
-    )
-    packet_labels = [packet.packet_label for packet, result in packet_results if result is not None]
-    summary_prefix = (
-        goal_summaries[0]
-        if len(goal_summaries) == 1
-        else f"Packeted compare synthesized {len(successful_results)} bounded packet result(s)."
-    )
-    if len(packet_labels) > 1:
-        summary_prefix = f"{summary_prefix} Active packets: {', '.join(packet_labels[:4])}."
-
-    return VisionAssistContract(
-        backend_kind=successful_results[0].backend_kind,
-        backend_name=successful_results[0].backend_name,
-        model_name=successful_results[0].model_name,
-        vision_contract_profile=successful_results[0].vision_contract_profile,
-        goal_summary=summary_prefix,
-        reference_match_summary=reference_match_summaries[0] if reference_match_summaries else None,
-        visible_changes=visible_changes,
-        shape_mismatches=shape_mismatches,
-        proportion_mismatches=proportion_mismatches,
-        correction_focus=correction_focus,
-        likely_issues=likely_issues[:6],
-        next_corrections=next_corrections,
-        recommended_checks=recommended_checks[:6],
-        confidence=(sum(confidences) / len(confidences)) if confidences else None,
-        captures_used=captures_used,
-        input_summary=merged_input_summary,
-        boundary_policy=VisionBoundaryPolicyContract(),
-    )
+    return _service_synthesize_packet_vision_result(packet_results)
 
 
 def _contains_any(text: str, hints: tuple[str, ...]) -> bool:

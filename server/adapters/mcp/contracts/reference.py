@@ -36,6 +36,9 @@ ReferenceCompareComplexityTierLiteral = Literal["simple", "complex", "super_comp
 ReferenceComparePacketKindLiteral = Literal["view", "scope", "view_scope", "synthesis"]
 ReferenceComparePacketStatusLiteral = Literal["success", "blocked", "low_information", "skipped", "error"]
 ReferenceCompareRankingStatusLiteral = Literal["success", "skipped", "not_needed", "error"]
+ReferenceComparePacketGuidanceLiteral = Literal["ready", "clean", "low_information", "blocked"]
+ReferenceCompareRankingRecommendationLiteral = Literal["rank", "skip_clean", "skip_low_information", "skip_blocked"]
+ReferenceCompareSupportEvidenceKindLiteral = Literal["silhouette_metric", "action_hint"]
 ReferencePlannerSourceLiteral = Literal[
     "vision",
     "truth",
@@ -414,6 +417,21 @@ class ReferenceCorrectionCandidateContract(MCPContract):
     truth_evidence: ReferenceCorrectionTruthEvidenceContract | None = None
 
 
+class ReferenceCompareSupportEvidenceContract(MCPContract):
+    """One compact, machine-readable support-evidence item for packet compare."""
+
+    evidence_kind: ReferenceCompareSupportEvidenceKindLiteral
+    summary: str
+    metric_id: str | None = None
+    hint_type: str | None = None
+    severity: Literal["high", "medium", "low"] | None = None
+    observed_value: float | None = None
+    delta: float | None = None
+    reference_label: str | None = None
+    capture_label: str | None = None
+    target_view: str | None = None
+
+
 class ReferenceComparePacketContract(MCPContract):
     """One packet-level compare unit surfaced additively on staged compare responses."""
 
@@ -429,8 +447,10 @@ class ReferenceComparePacketContract(MCPContract):
     compare_question: str
     extraction_status: ReferenceComparePacketStatusLiteral = "skipped"
     ranking_status: ReferenceCompareRankingStatusLiteral = "not_needed"
+    packet_status: ReferenceComparePacketGuidanceLiteral | None = None
+    ranking_recommendation: ReferenceCompareRankingRecommendationLiteral | None = None
     status_reason: str | None = None
-    support_evidence: list[str] = []
+    support_evidence: list[ReferenceCompareSupportEvidenceContract] = []
     evidence_summary: str | None = None
     uncertainty_notes: list[str] = []
     correction_focus: list[str] = []

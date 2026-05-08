@@ -1,9 +1,20 @@
 # TASK-166-04-01: Simple Model Compare Policy
 
 **Parent:** [TASK-166-04](./TASK-166-04_Complexity_Tiers_And_Multi_Reference_Scaling_Policy.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
 **Objective:** Define the minimal compare strategy for simple models so easy cases do not pay the overhead of a super-complex packet pipeline.
+
+## Completion Summary
+
+- simple-tier staged compare now emits one bounded packet per captured view,
+  typically one front packet or one front + one side packet
+- clean compact single-packet runs can stay slim again by omitting additive
+  `compare_diagnostics`, while ranking/extraction uncertainty still forces that
+  surface back on demand
+- simple-tier planning no longer invents mixed front+side packets from
+  reference-only view coverage when the current staged capture set does not
+  contain those views
 
 ## Repository Touchpoints
 

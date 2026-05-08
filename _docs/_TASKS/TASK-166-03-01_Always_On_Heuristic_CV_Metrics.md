@@ -11,7 +11,8 @@
   seam before packet compare execution, not only after the staged compare
   result is assembled
 - packet-local `compare_diagnostics.packets[*].support_evidence` now carries a
-  compact support-only summary derived from silhouette metrics and action hints
+  compact typed support-only item list derived from silhouette metrics and
+  action hints, including packet-local capture/reference provenance
 - packet extraction/ranking requests now receive those compact support-evidence
   summaries in packet metadata/payload before the LLM compare phase runs
 

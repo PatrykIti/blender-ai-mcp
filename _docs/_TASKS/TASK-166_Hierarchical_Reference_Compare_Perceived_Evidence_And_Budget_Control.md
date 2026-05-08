@@ -376,6 +376,24 @@ without requiring one massive all-images compare request.
   - packet compare requests now receive compact deterministic CV summaries in
     metadata/payload instead of discovering those facts only after the compare
     response is assembled
+- 2026-05-08: follow-up repair pass tightened the shipped packet/runtime
+  contract:
+  - packet planning now runs through
+    `server/application/services/reference_compare_packets.py`, so durable
+    view/scope policy and synthesis/merge rules are no longer concentrated only
+    inside the MCP adapter layer
+  - simple runs now emit explicit per-view packets, and complex runs now keep
+    both packet-local view and scope slices together instead of dropping
+    secondary views once focus pairs exist
+  - semantic scope clusters now surface common creature buckets such as
+    `Body + Head`, `Tail`, and `Ears` on packet diagnostics
+  - packet-local `support_evidence` is now typed and packet-scoped, with
+    capture/reference provenance preserved on each packet item
+  - clean compact single-packet runs can omit additive `compare_diagnostics`
+    again, while compact ranking failures still force explicit packet
+    diagnostics through the public staged response
+  - packet synthesis now dedupes reused capture/reference counts instead of
+    overstating the final staged compare input summary
 - 2026-05-08: remaining follow-on work still includes the deeper TASK-166
   leaves for packet-specific prompt/parser contract hardening, explicit
   extraction-vs-ranking phase semantics, deterministic CV / optional PyTorch

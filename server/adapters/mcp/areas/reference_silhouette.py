@@ -10,6 +10,7 @@ from typing import Literal
 
 from server.adapters.mcp.contracts.reference import (
     ReferenceActionHintContract,
+    ReferenceCompareSupportEvidenceContract,
     ReferenceImageRecordContract,
     ReferenceRefinementToolCandidateContract,
     ReferenceSilhouetteAnalysisContract,
@@ -267,15 +268,47 @@ def build_compare_support_evidence(
     silhouette_analysis: ReferenceSilhouetteAnalysisContract | None,
     *,
     action_hints: list[ReferenceActionHintContract] | None = None,
-) -> list[str]:
+) -> list[ReferenceCompareSupportEvidenceContract]:
     """Project compact compare-time CV evidence for packet-local staged compare."""
 
-    evidence: list[str] = []
+    evidence: list[ReferenceCompareSupportEvidenceContract] = []
     if silhouette_analysis is not None and silhouette_analysis.status == "available":
         prioritized_metrics = [
             metric for metric in silhouette_analysis.metrics if metric.severity in {"high", "medium"}
         ] or list(silhouette_analysis.metrics[:2])
-        evidence.extend(_metric_summary(metric) for metric in prioritized_metrics[:3])
+        evidence.extend(
+            ReferenceCompareSupportEvidenceContract(
+                evidence_kind="silhouette_metric",
+                summary=_metric_summary(metric),
+                metric_id=metric.metric_id,
+                severity=metric.severity,
+                observed_value=metric.observed_value,
+                delta=metric.delta,
+                reference_label=silhouette_analysis.reference_label,
+                capture_label=silhouette_analysis.capture_label,
+                target_view=silhouette_analysis.target_view,
+            )
+            for metric in prioritized_metrics[:3]
+        )
     if action_hints:
-        evidence.extend(f"Action hint: {hint.summary}" for hint in list(action_hints)[:2])
+        evidence.extend(
+            ReferenceCompareSupportEvidenceContract(
+                evidence_kind="action_hint",
+                summary=f"Action hint: {hint.summary}",
+                hint_type=hint.hint_type,
+                severity="high" if hint.priority == "high" else "medium",
+                reference_label=silhouette_analysis.reference_label if silhouette_analysis is not None else None,
+                capture_label=silhouette_analysis.capture_label if silhouette_analysis is not None else None,
+                target_view=silhouette_analysis.target_view if silhouette_analysis is not None else None,
+            )
+            for hint in list(action_hints)[:2]
+        )
     return evidence[:5]
+
+
+def summarize_compare_support_evidence(
+    evidence: list[ReferenceCompareSupportEvidenceContract] | tuple[ReferenceCompareSupportEvidenceContract, ...],
+) -> list[str]:
+    """Return short prompt-facing summaries for typed packet support evidence."""
+
+    return [item.summary for item in evidence if item.summary.strip()]

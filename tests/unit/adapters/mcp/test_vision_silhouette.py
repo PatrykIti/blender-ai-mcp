@@ -85,4 +85,8 @@ def test_compare_support_evidence_projects_metric_and_hint_summaries(tmp_path: P
     evidence = build_compare_support_evidence(analysis, action_hints=hints)
 
     assert evidence
-    assert any("Silhouette overlap" in item or "delta" in item for item in evidence)
+    assert any(
+        item.evidence_kind == "silhouette_metric" and ("Silhouette overlap" in item.summary or "delta" in item.summary)
+        for item in evidence
+    )
+    assert any(item.evidence_kind == "action_hint" for item in evidence)

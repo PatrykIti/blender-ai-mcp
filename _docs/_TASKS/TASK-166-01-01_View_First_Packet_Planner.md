@@ -1,9 +1,20 @@
 # TASK-166-01-01: View-First Packet Planner
 
 **Parent:** [TASK-166-01](./TASK-166-01_View_And_Scope_Packet_Compare_Family.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
 **Objective:** Plan compare packets by view (`front`, `side`, optional `top` / silhouette) so each packet can be retried and interpreted independently.
+
+## Completion Summary
+
+- simple staged compare runs now emit explicit per-view packets for front/side
+  evidence instead of collapsing those views into one mixed packet
+- packet view selection now follows the deterministic stage capture set first;
+  reference-only views no longer create implicit mixed packets when the current
+  stage never captured that view
+- explicit `target_view` requests can still degrade into typed packet-local
+  low-information outcomes when the requested view is missing from the current
+  staged capture set
 
 ## Repository Touchpoints
 
