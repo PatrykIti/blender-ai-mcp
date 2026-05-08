@@ -1,7 +1,7 @@
 # TASK-166 Transparency Amendments And Contract Proposals
 
 **Type:** Analysis / Amendment proposal for [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md)
-**Status:** 📝 Draft — reviewed 2026-05-08; merge target is the canonical `TASK-166*` family
+**Review State:** Archived after merge into the canonical `TASK-166*` family on 2026-05-08
 **Audience:** task-writing agent + maintainers of `_docs/_TASKS/TASK-166*`
 **Goal:** Tighten TASK-166 so vision-module feedback becomes transparent **on the public contract**, not only inside the engine.
 
