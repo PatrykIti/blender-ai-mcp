@@ -17,3 +17,5 @@
 
 - the input-character budget is no longer a Python constant only
 - operators can override it intentionally through runtime config
+- the configured value flows through the existing runner owner seam without
+  breaking the current staged compare `budget_control` contract

@@ -8,6 +8,8 @@
 ## Repository Touchpoints
 
 - `server/adapters/mcp/areas/reference.py`
+- `server/adapters/mcp/areas/reference_planner.py`
+- `server/adapters/mcp/areas/reference_feedback.py`
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/vision/runner.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
@@ -33,8 +35,13 @@
 - Existing deterministic gates, `truth_followup`, and `planner_summary` stay in
   the same staged response family; the internal sequencing changes, not the
   public contract ownership.
+- `reference_orchestrator_feedback` remains the compact consumer-facing read
+  model built from the staged compare result, not a new direct projection from
+  raw packet internals.
 
 ## Acceptance Criteria
 
 - compare no longer mixes extraction and ranking in one always-large payload
 - the LLM receives narrower packet questions instead of one whole-model prompt
+- extraction and ranking outcomes are independently representable so skipped or
+  failed ranking does not erase usable packet evidence

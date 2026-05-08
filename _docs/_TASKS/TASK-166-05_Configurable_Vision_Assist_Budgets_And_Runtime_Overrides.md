@@ -31,6 +31,9 @@
   `reference_iterate_stage_checkpoint(...)` should continue to surface the final
   chosen values through `budget_control`, but they should no longer depend on
   one code-only constant.
+- More detailed configured-vs-effective budget reporting may surface additively
+  through compare diagnostics or compact feedback notes, but it must not replace
+  the existing `budget_control` surface.
 - Configurable budgets are a support mechanism for the packeted family, not the
   primary replacement for packet decomposition.
 
@@ -38,3 +41,4 @@
 
 - compare input budgets are operator-configurable
 - diagnostics explain configured and effective budget values
+- detailed budget visibility remains additive to the existing staged contract

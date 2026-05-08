@@ -21,3 +21,8 @@
 
 - extraction-only success is representable in the compare contract
 - ranking is a second bounded phase, not an always-on payload burden
+- extraction and ranking can expose independent packet status so a clean,
+  low-information, skipped, or failed ranking phase is explicit instead of
+  being inferred from omission
+- ranking skipped after a clean or low-information extraction is represented as
+  an intentional outcome with a reason, not as a hidden failure

@@ -25,3 +25,5 @@
 
 - the compare family can express packet-specific questions
 - deterministic preflight stays first authority
+- packet question contracts can name the packet id, selected reference ids,
+  selected capture labels, and required deterministic inputs for that packet

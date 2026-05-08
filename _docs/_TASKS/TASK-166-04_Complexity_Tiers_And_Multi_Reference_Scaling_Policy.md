@@ -28,9 +28,15 @@
   hood before one final staged response is assembled.
 - For 6-12 image sets, packeting should default to one image or one small
   paired packet at a time, then one short synthesis pass.
+- Complexity policy should also determine how much packet detail is surfaced
+  back to clients:
+  - compact flows keep the orchestration read model short
+  - rich or failure/uncertainty paths may surface additive packet diagnostics
 
 ## Acceptance Criteria
 
 - simple, complex, and super-complex tiers use different packet/synthesis
   defaults
 - 6-12 image runs no longer imply one monolithic compare request
+- uncertainty from complex packet runs can propagate into the compact feedback
+  layer without forcing raw packet replay

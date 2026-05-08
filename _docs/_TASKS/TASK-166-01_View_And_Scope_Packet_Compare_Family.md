@@ -11,6 +11,7 @@
 - `server/adapters/mcp/areas/reference_checkpoint_compare.py`
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/areas/reference_planner.py`
+- `server/adapters/mcp/vision/capture.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/e2e/integration/`
 
@@ -31,11 +32,16 @@
 
 - Keep `reference_compare_stage_checkpoint(...)` and
   `reference_iterate_stage_checkpoint(...)` as the public entrypoints.
-- Insert packet planning immediately before the current
-  `build_vision_request_from_stage_captures(...)` path.
+- Insert packet planning and packet-local capture/reference narrowing
+  immediately before the current `build_vision_request_from_stage_captures(...)`
+  path.
 - Reuse current `target_view`, `target_object`, `target_objects`, and
   `collection_name` as packet-planning hints rather than treating them as the
   final whole-request scope.
+- Reuse current reference selection and stage capture seams as the first
+  narrowing layer, but allow the packet plan to further slice the selected
+  captures/reference ids per packet so one packet wrapper does not still ship a
+  monolithic request underneath.
 
 ## Pseudocode
 
@@ -45,6 +51,11 @@ compare_plan = build_compare_plan(
   assembled_scope=assembled_target_scope,
   reference_records=selected_reference_records,
   target_view=target_view,
+)
+packet_inputs = select_packet_inputs(
+  compare_plan=compare_plan,
+  captures=stage_captures,
+  reference_records=selected_reference_records,
 )
 ```
 
@@ -77,3 +88,5 @@ compare_plan = build_compare_plan(
 
 - compare/iterate no longer assumes one monolithic request shape
 - packet planning is deterministic and stage-aware
+- each packet can identify its packet-local view/scope, selected reference ids,
+  and selected capture labels without inventing a second public flow

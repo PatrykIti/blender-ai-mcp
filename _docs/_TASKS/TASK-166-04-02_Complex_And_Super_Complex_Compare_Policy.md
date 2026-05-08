@@ -22,3 +22,5 @@
 
 - 6-12 image runs stay bounded and explain packet conflicts explicitly
 - synthesis remains short enough for generic LLM operators
+- packet conflict/uncertainty reporting can feed both additive staged compare
+  diagnostics and the compact `reference_orchestrator_feedback` summary

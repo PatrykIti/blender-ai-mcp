@@ -19,8 +19,13 @@
   - GroundingDINO / OWL-ViT style part proposals for text-conditioned part cues
 - Keep them default-off unless one adapter graduates into a clearly justified
   default support path.
+- Attach-time global classifier support remains on the existing
+  `reference_understanding` bootstrap path from `TASK-163`; this leaf only
+  covers compare-time packet-local advisory usage when enabled.
 
 ## Acceptance Criteria
 
 - optional heavy adapters are scoped as support-only enrichers
 - the task family names clear upgrade criteria before anything becomes default-on
+- compare-time sidecars cannot become the sole basis for emitted correction
+  candidates or packet completion claims

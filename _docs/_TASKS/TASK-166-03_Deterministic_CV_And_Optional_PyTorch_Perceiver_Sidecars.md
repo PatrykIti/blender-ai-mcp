@@ -21,14 +21,19 @@
 
 ## Current Flow Integration
 
-- Always-on CV should feed packet-level `visual_metrics` / `visual_evidence_refs`
-  before the LLM compare question is assembled.
+- Always-on CV should feed packet-level evidence slots on the staged compare
+  family before the LLM compare question is assembled.
 - Optional PyTorch sidecars should extend the existing `reference_support.py`
   seam instead of creating a second parallel perception stack.
 - Packet compare should consume these pre-chewed facts so the LLM is asked
   narrower questions rather than raw broad image interpretation.
+- Compare-time evidence should extend the staged compare contracts without
+  overloading RU-only fields or duplicating `silhouette_analysis` /
+  `part_segmentation` as a parallel evidence channel.
 
 ## Acceptance Criteria
 
 - packet evidence no longer depends only on raw LLM perception
 - optional heavy adapters stay advisory-only and explicitly bounded
+- support evidence lands in the existing staged compare family rather than in a
+  second planner/evidence flow

@@ -6,7 +6,7 @@
 **Estimated Effort:** Large
 **Follow-on After:** [TASK-145](./TASK-145_Spatial_Repair_Planner_And_Sculpt_Handoff_Context.md), [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md), [TASK-140-06](./TASK-140-06_OpenRouter_Model_Capability_Aware_Vision_Runtime.md)
 **Related:** [TASK-122-03-06](./TASK-122-03-06_Hybrid_Loop_Model_Aware_Budget_And_Scope_Control.md), [TASK-135](./TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md), [TASK-136](./TASK-136_Reference_Guided_Architecture_And_Building_Reconstruction.md), [TASK-137](./TASK-137_Anatomy_Aware_Reference_Guided_Organ_Reconstruction.md), [TASK-138](./TASK-138_Anatomy_Aware_Reference_Guided_Biped_And_Fantasy_Character_Reconstruction.md), [TASK-160](./TASK-160_Guided_Client_Feedback_And_Streamable_HTTP_Recovery_UX.md)
-**Objective:** Replace monolithic staged compare/iterate payloads with a hierarchical packeted compare family, deterministic pre-LLM image evidence, optional heavier perception support, and configurable compare budgets that scale from simple to super-complex 6-12 image runs.
+**Objective:** Replace monolithic staged compare/iterate payloads with a hierarchical packeted compare family, deterministic pre-LLM image evidence, optional heavier perception support, additive packet transparency on the existing staged contracts, and configurable compare budgets that scale from simple to super-complex 6-12 image runs.
 
 ## Objective
 
@@ -58,6 +58,9 @@ After this umbrella lands:
 - optional PyTorch sidecars can enrich packet evidence when justified, without
   becoming authoritative by default
 - one short synthesis layer can merge packet results for the LLM/operator
+- packet provenance, pass status, conflicts, and budget pressure can surface
+  additively on the existing staged compare / iterate contracts when clients
+  need more than the compact summary
 - compare budgets are configurable and diagnosable at runtime
 
 ## Non-Goals
@@ -69,6 +72,9 @@ After this umbrella lands:
 - do not treat larger budgets as the main solution when packet decomposition is
   the real fix
 - do not hardcode creature-only heuristics into the generic compare family
+- do not create a second planner/evidence flow that duplicates
+  `silhouette_analysis`, `part_segmentation`, `planner_detail`,
+  `budget_control`, or `reference_orchestrator_feedback`
 
 ## Product Design Principles
 
@@ -179,11 +185,17 @@ But internally the path becomes:
    - `planner_summary`
    - `budget_control`
    - `reference_orchestrator_feedback`
+6. expose richer packet diagnostics only as additive, profile-aware detail on
+   the same staged response family, and keep `reference_orchestrator_feedback`
+   as the owner of the compact orchestration-facing read model
 
 ### Where New Pieces Fit
 
 - View-first and scope-first planning slot in **before**
   `build_vision_request_from_stage_captures(...)`.
+- Packet planning also owns packet-local capture/reference narrowing so the
+  implementation does not degenerate into one packet wrapper around the current
+  monolithic `VisionRequest`.
 - Deterministic CV and optional PyTorch sidecars slot in **between** truth
   preflight and the narrow packet LLM question.
 - Two-pass compare splits the current monolithic `run_vision_assist(...)` usage
@@ -193,6 +205,9 @@ But internally the path becomes:
 - Configurable budgets replace the current fixed `VISION_ASSIST_POLICY`
   constraint in `vision/runner.py`, but packet decomposition remains the primary
   scaling mechanism.
+- Any new `compare_diagnostics` or typed packet evidence must extend the
+  existing staged compare/iterate contracts and feed the existing compact
+  `reference_orchestrator_feedback` projection instead of bypassing it.
 
 ### Multi-Reference Guidance
 
@@ -210,6 +225,28 @@ That makes the family usable for:
 
 without requiring one massive all-images compare request.
 
+## Runtime Trigger Matrix
+
+| Event | What Runs | Primary Owner Seams | Outputs Carried Forward | Boundary Role |
+|------|------|------|------|------|
+| `reference_images(action="attach", ...)` | Existing reference-understanding bootstrap plus optional RU support adapters | `areas/reference_understanding.py`, `vision/reference_support.py` | `reference_understanding_summary`, `reference_strategy_state`, optional classifier / segmentation RU evidence | support-only bootstrap context; not staged compare truth authority |
+| `reference_compare_stage_checkpoint(...)` | deterministic compare-plan build from guided state, scope, references, and active blockers | `areas/reference.py`, `areas/reference_planner.py` | packet order, packet-local view/scope selection, staged response scaffolding | server-owned deterministic planning |
+| per-packet preflight | packet-local truth slice and visibility framing | `scene_scope_graph`, `scene_relation_graph`, `scene_view_diagnostics`, `vision/capture.py` | packet-local truth inputs, selected captures/references, view ambiguity hints | deterministic truth owner |
+| per-packet support evidence | always-on CV plus optional sidecars when policy allows | `vision/reference_support.py`, `areas/reference_silhouette.py` | compact metrics, optional advisory artifacts, packet-local evidence refs | support-only / advisory support; never sole correctness authority |
+| per-packet pass 1 | narrow VLM extraction for one packet | `vision/runner.py`, compare prompting/parsing seams | bounded extraction findings, packet status | bounded visual support on top of truth inputs |
+| per-packet pass 2 | ranking and synthesis only when extraction warrants it | `areas/reference.py`, `areas/reference_planner.py`, `vision/runner.py` | ranked packet guidance, packet conflict notes, synthesis inputs | derived compare guidance, not a second truth source |
+| staged compare projection | project packet synthesis onto the existing staged compare contract | `areas/reference.py`, `contracts/reference.py`, `areas/reference_feedback.py` | `truth_followup`, `correction_candidates`, `planner_summary`, `budget_control`, `reference_orchestrator_feedback`, additive `compare_diagnostics` when needed | existing public response family; no second flow |
+| `reference_iterate_stage_checkpoint(...)` | consume staged compare output and advance or hold the loop | `areas/reference.py`, `areas/reference_feedback.py` | `correction_focus`, `loop_disposition`, updated `reference_orchestrator_feedback`, optional compacted nested compare payload | existing iterative loop owner consuming packet synthesis rather than raw packet internals |
+
+### Classifier Role Clarification
+
+- Attach-time classifier support stays on the existing `TASK-163`
+  `reference_understanding` path as global bootstrap context.
+- Compare-time classifier usage is packet-local and advisory when enabled.
+- Mid-flow authority remains with deterministic truth plus bounded CV/support
+  evidence; classifier support must not become the main packet-comparison
+  engine.
+
 ## Execution Structure
 
 | Order | Task | Purpose |
@@ -219,6 +256,7 @@ without requiring one massive all-images compare request.
 | 3 | [TASK-166-03](./TASK-166-03_Deterministic_CV_And_Optional_PyTorch_Perceiver_Sidecars.md) | Add always-on lightweight CV and optional heavy perception adapters as support evidence |
 | 4 | [TASK-166-04](./TASK-166-04_Complexity_Tiers_And_Multi_Reference_Scaling_Policy.md) | Make the family scale from simple to super-complex 6-12 image runs |
 | 5 | [TASK-166-05](./TASK-166-05_Configurable_Vision_Assist_Budgets_And_Runtime_Overrides.md) | Expose configurable compare budgets and runtime diagnostics instead of one hard-coded assistant gate |
+| 6 | [TASK-166-06](./TASK-166-06_Public_Contract_Transparency_For_Hierarchical_Compare.md) | Add additive packet transparency and compact feedback projection on the existing staged compare/iterate contracts |
 
 ## Repository Touchpoints
 
@@ -227,7 +265,9 @@ without requiring one massive all-images compare request.
 | `server/adapters/mcp/areas/reference.py` | Stage compare/iterate assembler | Current monolithic payload owner |
 | `server/adapters/mcp/areas/reference_checkpoint_compare.py` | Shared compare helper | Likely owner for bounded packet-level compare execution |
 | `server/adapters/mcp/areas/reference_planner.py` | Packet synthesis and budget policy | Already owns trimming and planner shaping |
+| `server/adapters/mcp/areas/reference_feedback.py` | Compact orchestrator read model | Must keep owning compact projection instead of forcing orchestrators to parse raw packet detail |
 | `server/adapters/mcp/contracts/reference.py` | Public compare/iterate contracts | Any packet/synthesis/budget metadata must be declared explicitly |
+| `server/adapters/mcp/vision/capture.py` | Capture/reference request assembly | Packet-local capture/reference narrowing must happen here or at its caller, not only at the outer compare wrapper |
 | `server/adapters/mcp/vision/runner.py` | `vision_assist` budget policy | Current fixed `max_input_chars=12000` lives here |
 | `server/adapters/mcp/vision/runtime.py`, `vision/config.py`, `vision/backends.py` | Runtime/provider config | Own provider/model budgets and request assembly |
 | `server/adapters/mcp/vision/reference_support.py` | Optional classifier / segmentation support | Existing sidecar support owner that this family should extend, not duplicate |
@@ -245,6 +285,7 @@ without requiring one massive all-images compare request.
 | lightweight CV and optional sidecars | unit CV/reference support lanes plus selected runtime proof | keeps deterministic and optional evidence roles clear |
 | 6-12 image scaling | unit packet synthesis + optional live compare proof | main scaling goal |
 | configurable budgets | unit runtime/runner/script tests | operator tuning must be explicit and testable |
+| additive compare transparency | unit staged compare/iterate/reference-feedback tests | packet detail must stay additive while the compact orchestrator read model remains first-class |
 
 ## Acceptance Criteria
 
@@ -255,5 +296,11 @@ without requiring one massive all-images compare request.
 - deterministic CV and optional PyTorch sidecars feed compact packet evidence to
   the LLM instead of leaving all low-level perception to one large prompt
 - compare assistant budgets are configurable and visible in diagnostics
+- packet provenance, pass status, conflicts, and budget pressure can surface
+  additively on the existing staged compare / iterate contracts without
+  renaming or removing the current fields
+- `reference_orchestrator_feedback` remains the compact owner seam for LLM
+  orchestration and can project packet uncertainty/provenance without requiring
+  raw packet parsing
 - the final family remains generic across creature, architecture, organ, and
   character domains

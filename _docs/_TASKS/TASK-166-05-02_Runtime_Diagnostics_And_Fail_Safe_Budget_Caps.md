@@ -16,3 +16,5 @@
 
 - runtime diagnostics show configured vs effective compare budgets
 - hard safety caps still prevent pathological payload growth
+- per-run budget detail can surface additively in richer compare diagnostics
+  while `budget_control` remains the existing top-level operator surface

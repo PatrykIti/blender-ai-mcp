@@ -14,3 +14,5 @@
 
 - one or two reference images can stay on a lightweight packet plan
 - simple models do not require unnecessary synthesis stages
+- simple runs may omit rich packet diagnostics on clean paths while still
+  surfacing failure/uncertainty additively when needed

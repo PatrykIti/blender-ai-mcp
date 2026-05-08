@@ -25,3 +25,5 @@
 
 - deterministic image metrics are available to packet compare
 - these metrics stay compact and machine-readable
+- CV-derived packet evidence is explicitly support-only and does not claim
+  deterministic truth authority on its own

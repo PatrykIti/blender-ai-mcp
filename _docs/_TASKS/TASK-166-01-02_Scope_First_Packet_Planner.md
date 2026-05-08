@@ -15,9 +15,13 @@
 
 - Scope packets should align with current guided step, gate blockers, and active
   target scope.
+- Scope packets should map back to existing truth pairs/object clusters instead
+  of inventing a second scope graph beside the staged compare truth bundle.
 - Packet planning must remain generic across domains.
 
 ## Acceptance Criteria
 
 - compare packets can isolate one blocker cluster
 - large assembled models no longer force every compare to include every part
+- scope packets identify the object cluster / truth-pair slice they own so later
+  synthesis and feedback can attribute findings without guessing
