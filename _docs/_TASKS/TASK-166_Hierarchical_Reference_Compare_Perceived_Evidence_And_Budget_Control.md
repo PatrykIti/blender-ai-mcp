@@ -353,6 +353,16 @@ without requiring one massive all-images compare request.
   - `reference_orchestrator_feedback` now accepts packet diagnostics as a
     first-class summary input instead of forcing orchestrators to inspect raw
     packet payloads
+- 2026-05-08: packet-specific vision contract follow-up landed for the staged
+  compare path:
+  - packet-local compare requests now use an explicit packet mode in the
+    prompt/schema/parser seams
+  - packet-local `vision_assist` output can now carry typed
+    `packet_guidance.packet_status`, `status_reason`, and
+    `ranking_recommendation`
+  - staged compare now maps packet status from the parsed packet contract into
+    `compare_diagnostics` instead of inferring everything from generic mismatch
+    lists
 - 2026-05-08: remaining follow-on work still includes the deeper TASK-166
   leaves for packet-specific prompt/parser contract hardening, explicit
   extraction-vs-ranking phase semantics, deterministic CV / optional PyTorch

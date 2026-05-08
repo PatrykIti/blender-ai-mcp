@@ -1298,6 +1298,7 @@ async def _run_stage_checkpoint_compare(
             )
             or None,
             metadata={
+                "mode": "reference_compare_packet",
                 "source": "compare_stage_checkpoint",
                 "checkpoint_id": checkpoint_id,
                 "preset_profile": preset_profile,
@@ -1328,20 +1329,41 @@ async def _run_stage_checkpoint_compare(
             packet.uncertainty_notes = [packet.status_reason] if packet.status_reason else []
             continue
 
-        packet.extraction_status = "success"
+        packet_guidance = packet_vision_assistant.result.packet_guidance
+        packet_status = packet_guidance.packet_status if packet_guidance is not None else None
+        packet.extraction_status = cast(
+            Literal["success", "blocked", "low_information", "skipped", "error"],
+            {
+                "ready": "success",
+                "clean": "success",
+                "low_information": "low_information",
+                "blocked": "blocked",
+                None: "success",
+            }[packet_status],
+        )
         packet.evidence_summary = packet_vision_assistant.result.goal_summary
         packet.correction_focus = list(
             packet_vision_assistant.result.correction_focus
             or packet_vision_assistant.result.next_corrections
             or packet_vision_assistant.result.shape_mismatches
         )[:3]
+        packet.status_reason = packet_guidance.status_reason if packet_guidance is not None else None
         packet.uncertainty_notes = _dedupe_preserving_order(
             [
                 *(packet_vision_assistant.result.proportion_mismatches or []),
                 *(item.summary for item in list(packet_vision_assistant.result.likely_issues or [])),
+                *([packet.status_reason] if packet.status_reason else []),
             ]
         )[:3]
-        packet.ranking_status = "success" if packet.correction_focus else "skipped"
+        ranking_recommendation = packet_guidance.ranking_recommendation if packet_guidance is not None else None
+        if ranking_recommendation == "rank":
+            packet.ranking_status = "success" if packet.correction_focus else "skipped"
+        elif ranking_recommendation == "skip_clean":
+            packet.ranking_status = "not_needed"
+        elif ranking_recommendation in {"skip_low_information", "skip_blocked"}:
+            packet.ranking_status = "skipped"
+        else:
+            packet.ranking_status = "success" if packet.correction_focus else "skipped"
 
     successful_packet_results = [
         (packet, assistant.result)

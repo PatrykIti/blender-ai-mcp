@@ -110,6 +110,14 @@ class VisionBoundaryPolicyContract(MCPContract):
     confidence_is_non_authoritative: bool = True
 
 
+class VisionPacketStatusContract(MCPContract):
+    """Explicit packet-local extraction/ranking guidance for staged compare packets."""
+
+    packet_status: Literal["ready", "clean", "low_information", "blocked"] | None = None
+    status_reason: str | None = None
+    ranking_recommendation: Literal["rank", "skip_clean", "skip_low_information", "skip_blocked"] | None = None
+
+
 class VisionAssistContract(MCPContract):
     """Structured bounded vision result for macro/workflow reporting."""
 
@@ -126,6 +134,7 @@ class VisionAssistContract(MCPContract):
     likely_issues: list[VisionIssueContract] = []
     next_corrections: list[str] = []
     recommended_checks: list[VisionRecommendedCheckContract] = []
+    packet_guidance: VisionPacketStatusContract | None = None
     confidence: float | None = None
     captures_used: list[str] = []
     input_summary: VisionInputSummaryContract | None = None

@@ -14,6 +14,7 @@ from .backend import VisionRequest
 from .config import VisionContractProfile
 from .prompting import (
     _is_reference_classification_request,
+    _is_reference_packet_compare_request,
     _is_reference_understanding_request,
     expected_json_keys,
     resolve_vision_contract_profile,
@@ -928,6 +929,52 @@ def _normalize_payload(parsed: dict[str, Any], request: VisionRequest) -> dict[s
     if not isinstance(confidence, (int, float)) and confidence is not None:
         confidence = None
 
+    packet_guidance = None
+    if _is_reference_packet_compare_request(request):
+        raw_packet_guidance = parsed.get("packet_guidance")
+        if not isinstance(raw_packet_guidance, dict):
+            raw_packet_guidance = {}
+        packet_status = (
+            str(raw_packet_guidance.get("packet_status") or parsed.get("packet_status") or "").strip().lower()
+        )
+        if packet_status not in {"ready", "clean", "low_information", "blocked"}:
+            if correction_focus or shape_mismatches or proportion_mismatches or next_corrections:
+                packet_status = "ready"
+            elif visible_changes or reference_match_summary:
+                packet_status = "clean"
+            else:
+                packet_status = "low_information"
+
+        ranking_recommendation = (
+            str(raw_packet_guidance.get("ranking_recommendation") or parsed.get("ranking_recommendation") or "")
+            .strip()
+            .lower()
+        )
+        if ranking_recommendation not in {"rank", "skip_clean", "skip_low_information", "skip_blocked"}:
+            ranking_recommendation = {
+                "ready": "rank",
+                "clean": "skip_clean",
+                "low_information": "skip_low_information",
+                "blocked": "skip_blocked",
+            }[packet_status]
+
+        status_reason = _first_string(
+            raw_packet_guidance,
+            ("status_reason",),
+        ) or _first_string(parsed, ("status_reason",))
+        if status_reason is None:
+            status_reason = {
+                "ready": None,
+                "clean": "Packet appears visually acceptable without a ranking pass.",
+                "low_information": "Packet did not provide enough bounded visual signal for confident ranking.",
+                "blocked": "Packet-local evidence was insufficient or missing for safe interpretation.",
+            }[packet_status]
+        packet_guidance = {
+            "packet_status": packet_status,
+            "status_reason": status_reason,
+            "ranking_recommendation": ranking_recommendation,
+        }
+
     return {
         "goal_summary": goal_summary,
         "reference_match_summary": reference_match_summary,
@@ -938,6 +985,7 @@ def _normalize_payload(parsed: dict[str, Any], request: VisionRequest) -> dict[s
         "likely_issues": likely_issues,
         "next_corrections": next_corrections,
         "recommended_checks": recommended_checks,
+        "packet_guidance": packet_guidance,
         "confidence": confidence,
         "captures_used": list(parsed.get("captures_used") or labels),
     }

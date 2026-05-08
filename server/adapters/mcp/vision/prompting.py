@@ -23,6 +23,20 @@ _EXPECTED_KEYS = (
     "confidence",
     "captures_used",
 )
+_PACKET_COMPARE_EXPECTED_KEYS = (
+    "goal_summary",
+    "reference_match_summary",
+    "visible_changes",
+    "shape_mismatches",
+    "proportion_mismatches",
+    "correction_focus",
+    "likely_issues",
+    "next_corrections",
+    "recommended_checks",
+    "packet_guidance",
+    "confidence",
+    "captures_used",
+)
 _GEMINI_COMPARE_EXPECTED_KEYS = (
     "goal_summary",
     "reference_match_summary",
@@ -71,6 +85,13 @@ def _is_reference_classification_request(request: VisionRequest | None) -> bool:
         return False
     mode = str(request.metadata.get("mode") or "").strip().lower()
     return mode == "reference_classification"
+
+
+def _is_reference_packet_compare_request(request: VisionRequest | None) -> bool:
+    if request is None:
+        return False
+    mode = str(request.metadata.get("mode") or "").strip().lower()
+    return mode == "reference_compare_packet"
 
 
 def resolve_vision_contract_profile(
@@ -128,6 +149,29 @@ def _gemini_compare_output_template() -> str:
         "proportion_mismatches": [],
         "correction_focus": [],
         "next_corrections": [],
+    }
+    return json.dumps(template, ensure_ascii=True, indent=2)
+
+
+def _packet_compare_output_template(request: VisionRequest) -> str:
+    labels = [image.label or image.role for image in request.images]
+    template: dict[str, object] = {
+        "goal_summary": "One short sentence about the packet-local compare outcome.",
+        "reference_match_summary": None,
+        "visible_changes": [],
+        "shape_mismatches": [],
+        "proportion_mismatches": [],
+        "correction_focus": [],
+        "likely_issues": [],
+        "next_corrections": [],
+        "recommended_checks": [],
+        "packet_guidance": {
+            "packet_status": "ready",
+            "status_reason": None,
+            "ranking_recommendation": "rank",
+        },
+        "confidence": None,
+        "captures_used": labels,
     }
     return json.dumps(template, ensure_ascii=True, indent=2)
 
@@ -201,6 +245,41 @@ def build_vision_system_prompt(
     request: VisionRequest | None = None,
 ) -> str:
     """Return the bounded system prompt, tuned slightly by backend family."""
+
+    if _is_reference_packet_compare_request(request):
+        return (
+            "You are a bounded packet-compare vision assistant for Blender modeling.\n\n"
+            "This request is one staged compare packet only. Work only on the provided packet-local captures, "
+            "references, and deterministic truth slice.\n"
+            "You are not the truth source. Do not infer scene-wide conclusions from this packet alone.\n"
+            "Keep the result bounded to 0-3 concrete mismatches and 0-3 concrete next corrections.\n\n"
+            "Return exactly one JSON object with only these keys:\n"
+            "- goal_summary\n"
+            "- reference_match_summary\n"
+            "- visible_changes\n"
+            "- shape_mismatches\n"
+            "- proportion_mismatches\n"
+            "- correction_focus\n"
+            "- likely_issues\n"
+            "- next_corrections\n"
+            "- recommended_checks\n"
+            "- packet_guidance\n"
+            "- confidence\n"
+            "- captures_used\n\n"
+            "packet_guidance must be an object with exactly these keys:\n"
+            '- packet_status: "ready" | "clean" | "low_information" | "blocked"\n'
+            "- status_reason: string or null\n"
+            '- ranking_recommendation: "rank" | "skip_clean" | "skip_low_information" | "skip_blocked"\n\n'
+            "Rules:\n"
+            "- packet_status=ready only when the packet contains enough signal for bounded mismatch extraction\n"
+            "- packet_status=clean when the packet looks visually acceptable and no ranking pass is needed\n"
+            "- packet_status=low_information when the packet is too weak, ambiguous, or incomplete\n"
+            "- packet_status=blocked when the packet cannot be interpreted because the required packet-local evidence is missing\n"
+            "- ranking_recommendation must match packet_status\n"
+            "- if packet_status is clean, low_information, or blocked, keep correction_focus and next_corrections conservative\n"
+            "- use recommended_checks only for canonical MCP tool ids\n"
+            "- do not echo the input payload and do not wrap the result in markdown\n"
+        )
 
     if _is_reference_classification_request(request):
         return (
@@ -442,6 +521,70 @@ def build_vision_payload_text(
 ) -> str:
     """Serialize the bounded vision input payload."""
 
+    if _is_reference_packet_compare_request(request):
+        image_lines = [f"- {image.role}: {image.label or image.role}" for image in request.images]
+        packet_id = str(request.metadata.get("packet_id") or "").strip() or "packet"
+        packet_kind = str(request.metadata.get("packet_kind") or "").strip() or "view"
+        packet_label = str(request.metadata.get("packet_label") or "").strip() or packet_id
+        packet_scope = str(request.metadata.get("packet_scope") or "").strip() or "none"
+        packet_view = str(request.metadata.get("packet_view") or "").strip() or "none"
+        reference_ids = [str(item) for item in request.metadata.get("packet_reference_ids") or []]
+        capture_labels = [str(item) for item in request.metadata.get("packet_capture_labels") or []]
+        truth_summary = request.truth_summary or {}
+        truth_lines = []
+        if isinstance(truth_summary, dict):
+            for key, value in truth_summary.items():
+                truth_lines.append(f"- {key}: {value}")
+        parts = [
+            "TASK:",
+            "Interpret this staged compare packet only.",
+            "",
+            f"GOAL: {request.goal}",
+            f"TARGET_OBJECT: {request.target_object or 'none'}",
+            f"PACKET_ID: {packet_id}",
+            f"PACKET_KIND: {packet_kind}",
+            f"PACKET_LABEL: {packet_label}",
+            f"PACKET_VIEW: {packet_view}",
+            f"PACKET_SCOPE: {packet_scope}",
+            f"PROMPT_HINT: {request.prompt_hint or 'none'}",
+            "IMAGES:",
+            *image_lines,
+        ]
+        if reference_ids:
+            parts.extend(["PACKET_REFERENCE_IDS:", *[f"- {item}" for item in reference_ids]])
+        if capture_labels:
+            parts.extend(["PACKET_CAPTURE_LABELS:", *[f"- {item}" for item in capture_labels]])
+        if truth_lines:
+            parts.extend(["TRUTH_SUMMARY:", *truth_lines])
+        parts.extend(
+            [
+                "",
+                "Return exactly one JSON object with only these keys:",
+                "- goal_summary",
+                "- reference_match_summary",
+                "- visible_changes",
+                "- shape_mismatches",
+                "- proportion_mismatches",
+                "- correction_focus",
+                "- likely_issues",
+                "- next_corrections",
+                "- recommended_checks",
+                "- packet_guidance",
+                "- confidence",
+                "- captures_used",
+                "",
+                "Rules:",
+                "- keep the packet bounded to 0-3 visible mismatches and 0-3 next corrections",
+                "- packet_guidance.packet_status must be one of ready, clean, low_information, or blocked",
+                "- packet_guidance.ranking_recommendation must be one of rank, skip_clean, skip_low_information, or skip_blocked",
+                "- do not infer scene-wide claims from this packet alone",
+                "- use canonical MCP tool ids only for recommended_checks",
+                "OUTPUT_TEMPLATE:",
+                _packet_compare_output_template(request),
+            ]
+        )
+        return "\n".join(parts)
+
     if _is_reference_classification_request(request):
         return _build_reference_classification_payload_text(request)
 
@@ -474,6 +617,9 @@ def build_local_vision_payload_text(request: VisionRequest) -> str:
 
     if _is_reference_understanding_request(request):
         return _build_reference_understanding_payload_text(request)
+
+    if _is_reference_packet_compare_request(request):
+        return build_vision_payload_text(request)
 
     image_lines = [f"- {image.role}: {image.label or image.role}" for image in request.images]
     truth_summary = request.truth_summary or {}
@@ -543,6 +689,9 @@ def expected_json_keys(
 
     if _is_reference_understanding_request(request):
         return _REFERENCE_UNDERSTANDING_EXPECTED_KEYS
+
+    if _is_reference_packet_compare_request(request):
+        return _PACKET_COMPARE_EXPECTED_KEYS
 
     if _uses_google_family_compare_contract(
         vision_contract_profile=vision_contract_profile,
@@ -776,6 +925,66 @@ def build_vision_response_json_schema(
                 },
             },
             "required": list(_REFERENCE_UNDERSTANDING_EXPECTED_KEYS),
+        }
+
+    if _is_reference_packet_compare_request(request):
+        return {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "goal_summary": {"type": "string"},
+                "reference_match_summary": {"type": ["string", "null"]},
+                "visible_changes": {"type": "array", "items": {"type": "string"}},
+                "shape_mismatches": {"type": "array", "items": {"type": "string"}},
+                "proportion_mismatches": {"type": "array", "items": {"type": "string"}},
+                "correction_focus": {"type": "array", "items": {"type": "string"}},
+                "likely_issues": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            "category": {"type": "string"},
+                            "summary": {"type": "string"},
+                            "severity": {"type": "string", "enum": ["high", "medium", "low"]},
+                        },
+                        "required": ["category", "summary", "severity"],
+                    },
+                },
+                "next_corrections": {"type": "array", "items": {"type": "string"}},
+                "recommended_checks": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            "tool_name": {"type": "string"},
+                            "reason": {"type": "string"},
+                            "priority": {"type": "string", "enum": ["high", "normal"]},
+                        },
+                        "required": ["tool_name", "reason", "priority"],
+                    },
+                },
+                "packet_guidance": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "packet_status": {
+                            "type": ["string", "null"],
+                            "enum": ["ready", "clean", "low_information", "blocked", None],
+                        },
+                        "status_reason": {"type": ["string", "null"]},
+                        "ranking_recommendation": {
+                            "type": ["string", "null"],
+                            "enum": ["rank", "skip_clean", "skip_low_information", "skip_blocked", None],
+                        },
+                    },
+                    "required": ["packet_status", "status_reason", "ranking_recommendation"],
+                },
+                "confidence": {"type": ["number", "null"]},
+                "captures_used": {"type": "array", "items": {"type": "string"}},
+            },
+            "required": list(_PACKET_COMPARE_EXPECTED_KEYS),
         }
 
     if _uses_google_family_compare_contract(

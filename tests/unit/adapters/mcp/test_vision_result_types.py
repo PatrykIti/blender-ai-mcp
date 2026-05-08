@@ -6,6 +6,7 @@ from server.adapters.mcp.sampling.result_types import (
     AssistantBudgetContract,
     AssistantRunResult,
     VisionAssistContract,
+    VisionPacketStatusContract,
     to_vision_assistant_contract,
 )
 
@@ -35,6 +36,11 @@ def test_vision_assistant_contract_wraps_structured_result():
             likely_issues=[],
             next_corrections=["Thicken the ears slightly and reduce the head/body ratio."],
             recommended_checks=[],
+            packet_guidance=VisionPacketStatusContract(
+                packet_status="ready",
+                status_reason=None,
+                ranking_recommendation="rank",
+            ),
             confidence=0.61,
             captures_used=["front_before", "front_after", "reference_main"],
         ),
@@ -50,5 +56,8 @@ def test_vision_assistant_contract_wraps_structured_result():
     assert contract.result.model_name == "Qwen/Qwen3-VL-4B-Instruct"
     assert contract.result.shape_mismatches == ["Ears still look too thin."]
     assert contract.result.correction_focus == ["Head/body ratio", "Ear thickness"]
+    assert contract.result.packet_guidance is not None
+    assert contract.result.packet_guidance.packet_status == "ready"
+    assert contract.result.packet_guidance.ranking_recommendation == "rank"
     assert contract.result.boundary_policy is not None
     assert contract.result.boundary_policy.not_truth_source is True

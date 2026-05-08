@@ -65,6 +65,29 @@ def _reference_classification_request() -> VisionRequest:
     )
 
 
+def _packet_compare_request() -> VisionRequest:
+    return VisionRequest(
+        goal="low poly squirrel",
+        target_object="Squirrel",
+        images=(
+            VisionImageInput(path="/tmp/front.png", role="after", label="target_front_after"),
+            VisionImageInput(path="/tmp/ref_front.png", role="reference", label="ref_front"),
+        ),
+        prompt_hint="comparison_mode=stage_checkpoint_vs_reference | compare_phase=packet_extraction",
+        metadata={
+            "mode": "reference_compare_packet",
+            "packet_id": "packet:front:1234abcd",
+            "packet_kind": "view",
+            "packet_label": "front packet",
+            "packet_view": "front",
+            "packet_scope": "Squirrel",
+            "packet_reference_ids": ["ref_front"],
+            "packet_capture_labels": ["target_front_after"],
+        },
+        truth_summary={"summary": {"pair_count": 0}},
+    )
+
+
 def test_local_prompt_payload_is_more_compact_and_task_focused():
     text = build_local_vision_payload_text(_request())
 
@@ -125,6 +148,40 @@ def test_local_prompt_adds_reference_guided_checkpoint_guidance_when_requested()
 
     assert "Because this is a reference-guided checkpoint comparison:" in local_prompt
     assert "correction_focus should rank the most important fixes first" in local_prompt
+
+
+def test_packet_compare_request_uses_packet_specific_prompt_payload_and_schema():
+    request = _packet_compare_request()
+
+    system_prompt = build_vision_system_prompt(backend_kind="mlx_local", request=request)
+    payload_text = build_vision_payload_text(request)
+    schema = build_vision_response_json_schema(request=request)
+
+    assert "bounded packet-compare vision assistant" in system_prompt
+    assert "packet_guidance" in system_prompt
+    assert "PACKET_ID: packet:front:1234abcd" in payload_text
+    assert "PACKET_LABEL: front packet" in payload_text
+    assert '"packet_guidance"' in payload_text
+    assert set(schema["properties"]) == {
+        "goal_summary",
+        "reference_match_summary",
+        "visible_changes",
+        "shape_mismatches",
+        "proportion_mismatches",
+        "correction_focus",
+        "likely_issues",
+        "next_corrections",
+        "recommended_checks",
+        "packet_guidance",
+        "confidence",
+        "captures_used",
+    }
+    assert set(schema["properties"]["packet_guidance"]["properties"]) == {
+        "packet_status",
+        "status_reason",
+        "ranking_recommendation",
+    }
+    _assert_strict_required_matches_properties(schema)
 
 
 def test_google_family_compare_profile_uses_narrow_contract_even_on_openrouter():

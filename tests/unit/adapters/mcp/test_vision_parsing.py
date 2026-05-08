@@ -43,6 +43,29 @@ def _reference_classification_request() -> VisionRequest:
     )
 
 
+def _packet_compare_request() -> VisionRequest:
+    return VisionRequest(
+        goal="low poly squirrel",
+        target_object="Squirrel",
+        images=(
+            VisionImageInput(path="/tmp/front.png", role="after", label="target_front_after"),
+            VisionImageInput(path="/tmp/ref_front.png", role="reference", label="ref_front"),
+        ),
+        prompt_hint="comparison_mode=stage_checkpoint_vs_reference | compare_phase=packet_extraction",
+        metadata={
+            "mode": "reference_compare_packet",
+            "packet_id": "packet:front:1234abcd",
+            "packet_kind": "view",
+            "packet_label": "front packet",
+            "packet_view": "front",
+            "packet_scope": "Squirrel",
+            "packet_reference_ids": ["ref_front"],
+            "packet_capture_labels": ["target_front_after"],
+        },
+        truth_summary={"summary": {"pair_count": 0}},
+    )
+
+
 def test_parse_vision_output_accepts_fenced_json():
     text = """```json
 {
@@ -257,6 +280,64 @@ def test_parse_vision_output_backfills_correction_focus_for_reference_guided_che
         "Tail still reads too small relative to the body.",
         "Flatten the head silhouette slightly and enlarge the tail arc.",
     ]
+
+
+def test_parse_vision_output_normalizes_packet_compare_guidance():
+    text = json.dumps(
+        {
+            "goal_summary": "Front packet still shows a round head silhouette.",
+            "reference_match_summary": "The packet has enough signal for one more bounded correction step.",
+            "visible_changes": ["Front silhouette is readable."],
+            "shape_mismatches": ["Head silhouette is still too spherical."],
+            "proportion_mismatches": [],
+            "correction_focus": ["Head silhouette"],
+            "likely_issues": [],
+            "next_corrections": ["Flatten the head silhouette slightly."],
+            "recommended_checks": [],
+            "packet_guidance": {
+                "packet_status": "ready",
+                "status_reason": None,
+                "ranking_recommendation": "rank",
+            },
+            "confidence": 0.7,
+            "captures_used": ["target_front_after", "ref_front"],
+        }
+    )
+
+    parsed = parse_vision_output_text(text, _packet_compare_request())
+
+    assert parsed["packet_guidance"] == {
+        "packet_status": "ready",
+        "status_reason": None,
+        "ranking_recommendation": "rank",
+    }
+    assert parsed["correction_focus"] == ["Head silhouette"]
+
+
+def test_parse_vision_output_derives_packet_compare_guidance_when_missing():
+    text = json.dumps(
+        {
+            "goal_summary": "The packet looks visually clean relative to the front reference.",
+            "reference_match_summary": "No dominant front mismatch stands out.",
+            "visible_changes": ["Front silhouette is readable."],
+            "shape_mismatches": [],
+            "proportion_mismatches": [],
+            "correction_focus": [],
+            "likely_issues": [],
+            "next_corrections": [],
+            "recommended_checks": [],
+            "confidence": 0.55,
+            "captures_used": ["target_front_after", "ref_front"],
+        }
+    )
+
+    parsed = parse_vision_output_text(text, _packet_compare_request())
+
+    assert parsed["packet_guidance"] == {
+        "packet_status": "clean",
+        "status_reason": "Packet appears visually acceptable without a ranking pass.",
+        "ranking_recommendation": "skip_clean",
+    }
 
 
 def test_diagnose_vision_output_classifies_fenced_contract_json():
