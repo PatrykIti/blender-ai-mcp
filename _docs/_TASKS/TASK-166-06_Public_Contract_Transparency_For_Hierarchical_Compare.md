@@ -87,6 +87,7 @@ compact_feedback = project_compare_diagnostics_into_feedback(
 
 ## Tests To Add/Update
 
+- `tests/unit/adapters/mcp/test_reference_images.py`
 - staged compare / iterate contract-shape tests for additive diagnostics fields
 - profile-behavior tests covering compact omission, rich inclusion, and
   failure/uncertainty auto-inclusion

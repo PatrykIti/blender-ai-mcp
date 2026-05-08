@@ -37,12 +37,14 @@
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_silhouette_contract.py -q`
 
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - silhouette/CV owner-lane coverage for emitted metrics and compact machine
   readability
+- `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
 
 ## Docs To Update
 

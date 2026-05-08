@@ -66,6 +66,7 @@ iterate = consume_staged_compare(staged_compare)
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_vision_runner.py`
+- `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 - `tests/e2e/integration/test_guided_gate_state_transport.py`
 
 ## Docs To Update
@@ -89,6 +90,7 @@ iterate = consume_staged_compare(staged_compare)
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runner.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_truth_handoff.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
 
 ## Acceptance Criteria

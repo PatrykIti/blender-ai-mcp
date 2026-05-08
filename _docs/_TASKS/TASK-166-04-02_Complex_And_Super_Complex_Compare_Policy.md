@@ -47,10 +47,10 @@
 - `tests/e2e/integration/test_guided_gate_state_transport.py` when complex-tier
   packet conflict/uncertainty changes staged compare / iterate payloads
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
-- `tests/e2e/vision/test_reference_guided_creature_comparison.py`
-- `tests/e2e/vision/test_real_view_variant_model_comparison.py`
 - the repo-supported Blender runner when the packet scheduler changes real
   multi-reference runtime behavior beyond those focused owner lanes
+- optional harness/model-eval suites may remain supplementary smoke coverage,
+  but they are not the primary staged-owner proof lane for this leaf
 
 ## Docs To Update
 
@@ -73,6 +73,4 @@
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_truth_handoff.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_guided_creature_comparison.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_real_view_variant_model_comparison.py -q`
 - `poetry run python scripts/run_e2e_tests.py`

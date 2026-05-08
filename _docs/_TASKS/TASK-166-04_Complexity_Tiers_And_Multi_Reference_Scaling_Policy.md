@@ -64,10 +64,12 @@ staged_compare = assemble_compare_from_packet_plan(packet_plan)
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - packet-policy unit coverage in `reference_planner.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
-- `tests/e2e/vision/test_reference_guided_creature_comparison.py`
-- `tests/e2e/vision/test_real_view_variant_model_comparison.py`
 - integration proof when tiered packet scaling changes staged compare / iterate
   payloads
+- optional harness/model-eval suites such as
+  `test_reference_guided_creature_comparison.py` and
+  `test_real_view_variant_model_comparison.py` may remain supplementary smoke
+  coverage, but they are not the primary staged-owner proof lane for closeout
 
 ## Docs To Update
 
@@ -91,6 +93,4 @@ staged_compare = assemble_compare_from_packet_plan(packet_plan)
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_truth_handoff.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_guided_creature_comparison.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_real_view_variant_model_comparison.py -q`
 - `poetry run python scripts/run_e2e_tests.py`
