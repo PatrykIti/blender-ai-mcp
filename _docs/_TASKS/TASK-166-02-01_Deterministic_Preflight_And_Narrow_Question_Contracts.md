@@ -27,3 +27,8 @@
 - deterministic preflight stays first authority
 - packet question contracts can name the packet id, selected reference ids,
   selected capture labels, and required deterministic inputs for that packet
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`

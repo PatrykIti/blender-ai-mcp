@@ -27,3 +27,8 @@
 - missing side/top views degrade to fewer packets instead of one failed monolith
 - view packets carry stable packet ids plus packet-local reference/capture
   selection that can be retried independently
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`

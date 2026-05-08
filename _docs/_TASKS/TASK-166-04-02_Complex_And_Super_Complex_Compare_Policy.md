@@ -24,3 +24,8 @@
 - synthesis remains short enough for generic LLM operators
 - packet conflict/uncertainty reporting can feed both additive staged compare
   diagnostics and the compact `reference_orchestrator_feedback` summary
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`

@@ -29,3 +29,8 @@
 - the task family names clear upgrade criteria before anything becomes default-on
 - compare-time sidecars cannot become the sole basis for emitted correction
   candidates or packet completion claims
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`

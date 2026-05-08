@@ -3,7 +3,7 @@
 **Parent:** [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md)  
 **Status:** ⏳ To Do  
 **Priority:** 🔴 High
-**Objective:** Feed compact image evidence into compare packets through always-on lightweight CV and optional heavier PyTorch-based perception adapters.
+**Objective:** Feed compact image evidence into compare packets through always-on deterministic CV support evidence and optional heavier PyTorch-based advisory adapters.
 
 ## Repository Touchpoints
 
@@ -18,7 +18,7 @@
 
 - Always-on lightweight CV should pre-chew low-level image facts.
 - Optional PyTorch sidecars should enrich packets when they materially improve
-  compare quality, but remain support-only.
+  compare quality, but remain advisory-only.
 
 ## Current Flow Integration
 
@@ -40,6 +40,7 @@
 ## Acceptance Criteria
 
 - packet evidence no longer depends only on raw LLM perception
+- always-on deterministic CV remains bounded support evidence
 - optional heavy adapters stay advisory-only and explicitly bounded
 - support evidence lands in the existing staged compare family rather than in a
   second planner/evidence flow
@@ -72,3 +73,4 @@
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
