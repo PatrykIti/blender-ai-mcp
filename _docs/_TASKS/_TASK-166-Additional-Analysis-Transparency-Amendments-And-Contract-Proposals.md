@@ -31,6 +31,16 @@ The remaining sections below are preserved as historical proposal text for
 review context. Where they differ from the merged `TASK-166*` docs, the task
 family is canonical.
 
+Do not implement the following from the historical draft below:
+
+- the alternative authority taxonomy `first / support / advisory / derived`
+- the older attach-time trigger story that normalized strategy primarily in
+  `router_set_goal(...) after attach`
+- the older compare-time owner assumption that concentrated packet CV / sidecar
+  execution primarily in `vision/reference_support.py`
+- the idea that new packet evidence should supersede existing staged candidate
+  vocabulary such as `source_signals`, `vision_evidence`, or `truth_evidence`
+
 ---
 
 ## 1. Problem Statement

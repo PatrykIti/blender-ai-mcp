@@ -37,3 +37,26 @@
 - optional heavy adapters stay advisory-only and explicitly bounded
 - support evidence lands in the existing staged compare family rather than in a
   second planner/evidence flow
+
+## Tests To Add/Update
+
+- `tests/unit/adapters/mcp/test_reference_images.py`
+- targeted unit coverage for compare-time support-evidence shaping in
+  `reference_support.py`
+- selected integration/runtime proof when compare-time packet evidence changes
+  the staged public payload
+
+## Docs To Update
+
+- `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/README.md`
+
+## Changelog Impact
+
+- include in the umbrella `_docs/_CHANGELOG/` entry when compare-time support
+  evidence ships
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`

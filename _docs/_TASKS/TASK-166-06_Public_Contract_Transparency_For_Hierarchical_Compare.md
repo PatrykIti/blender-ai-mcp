@@ -23,12 +23,27 @@
   - omitted by default in compact flows unless failure or uncertainty makes it
     necessary
   - included in `preset_profile="rich"` and on compare uncertainty/failure
+- On `reference_compare_stage_checkpoint(...)`, `compare_diagnostics` should
+  live top-level on the staged compare response.
+- On `reference_iterate_stage_checkpoint(...)`, `compare_diagnostics` should
+  also be reachable top-level on the iterate response; the nested compact
+  `compare_result` may remain slim and is not the required access path for
+  forced failure/uncertainty diagnostics.
 - `compare_diagnostics` must extend the current staged surfaces instead of
   duplicating `silhouette_analysis`, `part_segmentation`, `planner_detail`, or
   `budget_control`.
 - The compact orchestrator path remains `reference_orchestrator_feedback`; rich
   packet diagnostics are an additive explanation surface, not a bypass around
   that read model.
+- `reference_feedback.py` should accept typed staged inputs such as
+  `compare_diagnostics` and `budget_control` directly rather than relying on
+  ad-hoc caller-side string packing.
+- Compact projection rules should stay explicit:
+  - packet rationale / bounded provenance -> `evidence_summary`
+  - packet conflicts, skipped ranking, and budget clipping -> `uncertainty_notes`
+  - merged actionable packet outputs -> `correction_focus`
+  - if packet/budget uncertainty changes the recommended next step, the existing
+    message/next-action path carries that guidance
 - Any new provenance or authority wording must align with the existing repo
   boundary/gate vocabulary and the shipped `advisory_only` sidecar semantics.
 
@@ -38,6 +53,8 @@
   renaming or removing the existing candidate fields.
 - staged compare / iterate responses can expose additive `compare_diagnostics`
   with packet ids, pass status, conflict notes, and per-run budget detail.
+- compact iterate responses have one unambiguous access path for forced
+  failure/uncertainty diagnostics even when nested `compare_result` stays slim.
 - compact orchestrator feedback can project packet uncertainty/provenance at
   summary level without requiring the caller to parse raw packet diagnostics.
 - uncertainty and packet conflicts are surfaced explicitly instead of being
@@ -52,6 +69,8 @@
   failure/uncertainty auto-inclusion
 - `reference_orchestrator_feedback` projection tests for packet uncertainty and
   budget pressure summaries
+- integration/transport proof on `tests/e2e/integration/test_guided_gate_state_transport.py`
+  when staged compare / iterate payload shape changes for client-visible flows
 
 ## Docs To Update
 

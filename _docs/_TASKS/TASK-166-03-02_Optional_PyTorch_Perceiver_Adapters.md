@@ -3,7 +3,7 @@
 **Parent:** [TASK-166-03](./TASK-166-03_Deterministic_CV_And_Optional_PyTorch_Perceiver_Sidecars.md)  
 **Status:** ⏳ To Do  
 **Priority:** 🔴 High
-**Objective:** Define the optional PyTorch-based perception adapters that can enrich compare packets when lightweight CV is not enough.
+**Objective:** Define the optional PyTorch-based perception adapters that can enrich compare packets when lightweight CV is not enough, while keeping compare-time sidecars advisory-only.
 
 ## Repository Touchpoints
 
@@ -25,7 +25,7 @@
 
 ## Acceptance Criteria
 
-- optional heavy adapters are scoped as support-only enrichers
+- optional heavy adapters are scoped as advisory-only compare enrichers
 - the task family names clear upgrade criteria before anything becomes default-on
 - compare-time sidecars cannot become the sole basis for emitted correction
   candidates or packet completion claims

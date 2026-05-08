@@ -40,3 +40,25 @@
 - 6-12 image runs no longer imply one monolithic compare request
 - uncertainty from complex packet runs can propagate into the compact feedback
   layer without forcing raw packet replay
+
+## Tests To Add/Update
+
+- `tests/unit/adapters/mcp/test_reference_images.py`
+- packet-policy unit coverage in `reference_planner.py`
+- selected `tests/e2e/vision/` or integration proof for multi-reference runtime
+  scaling behavior
+
+## Docs To Update
+
+- `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/README.md`
+
+## Changelog Impact
+
+- include in the umbrella `_docs/_CHANGELOG/` entry when complexity-tier policy
+  ships
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`

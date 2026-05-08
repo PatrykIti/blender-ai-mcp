@@ -28,10 +28,10 @@
 ## Current Flow Integration
 
 - `reference_compare_stage_checkpoint(...)` should become the owner of packet
-  extraction and packet synthesis for the current stage.
+  extraction, conditional ranking, and packet synthesis for the current stage.
 - `reference_iterate_stage_checkpoint(...)` should consume packet results and
-  only invoke ranking/synthesis when packet extraction produced actionable
-  mismatches.
+  the already synthesized staged compare result when deciding loop disposition;
+  it must not become a second ranking/synthesis owner flow.
 - Existing deterministic gates, `truth_followup`, and `planner_summary` stay in
   the same staged response family; the internal sequencing changes, not the
   public contract ownership.
@@ -39,9 +39,32 @@
   model built from the staged compare result, not a new direct projection from
   raw packet internals.
 
+## Tests To Add/Update
+
+- `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_vision_runner.py`
+- `tests/e2e/integration/test_guided_gate_state_transport.py`
+
+## Docs To Update
+
+- `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/README.md`
+
+## Changelog Impact
+
+- include in the umbrella `_docs/_CHANGELOG/` entry when two-pass staged compare
+  ships
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+
 ## Acceptance Criteria
 
 - compare no longer mixes extraction and ranking in one always-large payload
 - the LLM receives narrower packet questions instead of one whole-model prompt
 - extraction and ranking outcomes are independently representable so skipped or
   failed ranking does not erase usable packet evidence
+- iterate consumes staged packet synthesis and loop guidance instead of owning a
+  second ranking/synthesis pass

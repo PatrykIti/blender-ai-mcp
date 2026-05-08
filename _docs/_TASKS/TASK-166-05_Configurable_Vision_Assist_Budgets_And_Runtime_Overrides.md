@@ -42,3 +42,27 @@
 - compare input budgets are operator-configurable
 - diagnostics explain configured and effective budget values
 - detailed budget visibility remains additive to the existing staged contract
+
+## Tests To Add/Update
+
+- `tests/unit/adapters/mcp/test_vision_runner.py`
+- `tests/unit/adapters/mcp/test_vision_runtime_config.py`
+- `tests/unit/scripts/test_script_tooling.py`
+- `tests/unit/adapters/mcp/test_reference_images.py` for staged budget
+  projection behavior
+
+## Docs To Update
+
+- `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/README.md`
+- relevant script/runtime operator notes when env/config knobs are added
+
+## Changelog Impact
+
+- include in the umbrella `_docs/_CHANGELOG/` entry when runtime budget
+  overrides ship
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runner.py -q`

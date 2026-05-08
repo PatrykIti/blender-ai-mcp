@@ -113,7 +113,7 @@ After this umbrella lands:
 ### 5. Deterministic CV before broad LLM interpretation
 
 - always-on lightweight CV should pre-chew image facts for the compare family
-- optional heavier PyTorch sidecars should be support-only enrichers, not the
+- optional heavier PyTorch sidecars should be advisory-only enrichers, not the
   default authority
 - the LLM should consume compact packet evidence, not raw overloaded image+text
   bundles wherever deterministic extraction is sufficient
@@ -263,7 +263,6 @@ without requiring one massive all-images compare request.
 | Path / Module | Expected Ownership | Why It Is In Scope |
 |---------------|--------------------|--------------------|
 | `server/adapters/mcp/areas/reference.py` | Stage compare/iterate assembler | Current monolithic payload owner |
-| `server/adapters/mcp/areas/reference_checkpoint_compare.py` | Shared compare helper | Likely owner for bounded packet-level compare execution |
 | `server/adapters/mcp/areas/reference_planner.py` | Packet synthesis and budget policy | Already owns trimming and planner shaping |
 | `server/adapters/mcp/areas/reference_feedback.py` | Compact orchestrator read model | Must keep owning compact projection instead of forcing orchestrators to parse raw packet detail |
 | `server/adapters/mcp/contracts/reference.py` | Public compare/iterate contracts | Any packet/synthesis/budget metadata must be declared explicitly |
@@ -302,5 +301,12 @@ without requiring one massive all-images compare request.
 - `reference_orchestrator_feedback` remains the compact owner seam for LLM
   orchestration and can project packet uncertainty/provenance without requiring
   raw packet parsing
+- compact feedback projection stays explicit and typed at the builder boundary:
+  - packet rationale / dominant evidence -> `evidence_summary`
+  - packet conflicts, skipped ranking, and budget clipping -> `uncertainty_notes`
+  - merged actionable packet outputs -> `correction_focus`
+  - any packet/budget condition that changes the next safe step must surface
+    through the existing message/next-action path rather than ad-hoc raw packet
+    parsing
 - the final family remains generic across creature, architecture, organ, and
   character domains

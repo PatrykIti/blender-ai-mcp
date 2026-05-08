@@ -8,7 +8,6 @@
 ## Repository Touchpoints
 
 - `server/adapters/mcp/areas/reference.py`
-- `server/adapters/mcp/areas/reference_checkpoint_compare.py`
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/areas/reference_planner.py`
 - `server/adapters/mcp/vision/capture.py`
