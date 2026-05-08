@@ -1,7 +1,7 @@
 # TASK-166-02: Truth-First Two-Pass Compare Execution
 
 **Parent:** [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md)  
-**Status:** ⏳ To Do  
+**Status:** 🚧 In Progress
 **Priority:** 🔴 High
 **Objective:** Split compare into deterministic preflight + narrow visual extraction first, then bounded correction ranking only when needed.
 

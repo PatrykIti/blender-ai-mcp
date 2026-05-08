@@ -6417,8 +6417,15 @@ def test_reference_compare_stage_checkpoint_can_expand_collection_scope(tmp_path
     assert result.correction_candidates[0].priority_rank == 1
     assert result.correction_candidates[0].candidate_kind == "truth_only"
     assert result.correction_candidates[0].truth_evidence is not None
+    assert result.compare_diagnostics is not None
+    assert result.compare_diagnostics.complexity_tier == "complex"
+    assert result.compare_diagnostics.packet_count == 2
+    assert result.compare_diagnostics.synthesis_required is True
+    assert result.compare_diagnostics.packets[0].truth_pairs == ["Squirrel_Head -> Squirrel_Body"]
+    assert result.compare_diagnostics.packets[1].truth_pairs == ["Squirrel_Tail -> Squirrel_Body"]
     assert captured["capture_kwargs"]["target_object"] == "Squirrel_Body"
-    assert captured["request"].truth_summary["summary"]["pair_count"] == 2
+    assert captured["request"].truth_summary["summary"]["pair_count"] == 1
+    assert captured["request"].metadata["packet_scope"] == "Squirrel_Tail + Squirrel_Body"
     assert captured["request"].metadata["collection_name"] == "Squirrel"
 
 

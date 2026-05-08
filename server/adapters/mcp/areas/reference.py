@@ -31,6 +31,9 @@ from server.adapters.mcp.areas.reference_images_runtime import (
     handle_reference_images as _handle_reference_images,
 )
 from server.adapters.mcp.areas.reference_planner import (
+    build_compare_packets as _build_compare_packets,
+)
+from server.adapters.mcp.areas.reference_planner import (
     build_correction_candidates as _planner_build_correction_candidates,
 )
 from server.adapters.mcp.areas.reference_planner import (
@@ -65,6 +68,9 @@ from server.adapters.mcp.areas.reference_planner import (
 )
 from server.adapters.mcp.areas.reference_planner import (
     should_inspect_from_truth_signal as _planner_should_inspect_from_truth_signal,
+)
+from server.adapters.mcp.areas.reference_planner import (
+    synthesize_packet_vision_result as _synthesize_packet_vision_result,
 )
 from server.adapters.mcp.areas.reference_planner import (
     trim_correction_candidates as _planner_trim_correction_candidates,
@@ -105,9 +111,12 @@ from server.adapters.mcp.contracts.reference import (
     GuidedReferenceReadinessContract,
     ReferenceActionHintContract,
     ReferenceCompareCheckpointResponseContract,
+    ReferenceCompareDiagnosticsContract,
+    ReferenceComparePacketContract,
     ReferenceCompareStageCheckpointResponseContract,
     ReferenceCorrectionCandidateContract,
     ReferenceHybridBudgetControlContract,
+    ReferenceImageRecordContract,
     ReferenceImagesResponseContract,
     ReferenceIterateStageCheckpointResponseContract,
     ReferencePartSegmentationContract,
@@ -123,9 +132,11 @@ from server.adapters.mcp.contracts.reference import (
 from server.adapters.mcp.contracts.scene import (
     SceneAssembledTargetScopeContract,
     SceneCorrectionTruthBundleContract,
+    SceneCorrectionTruthPairContract,
+    SceneCorrectionTruthSummaryContract,
     SceneTruthFollowupContract,
 )
-from server.adapters.mcp.sampling.result_types import to_vision_assistant_contract
+from server.adapters.mcp.sampling.result_types import VisionAssistantContract, to_vision_assistant_contract
 from server.adapters.mcp.session_capabilities import (
     GuidedReferenceReadinessState,
     SessionCapabilityState,
@@ -245,6 +256,18 @@ def _build_correction_truth_bundle(
     )
 
 
+def _dedupe_preserving_order(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    deduped: list[str] = []
+    for value in values:
+        normalized = value.strip()
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        deduped.append(normalized)
+    return deduped
+
+
 def _register_existing_tool(target, tool_name: str):
     tool = globals()[tool_name]
     fn = getattr(tool, "fn", tool)
@@ -261,6 +284,85 @@ def _safe_checkpoint_token(value: str | None) -> str:
     raw = str(value or "scene").strip()
     normalized = re.sub(r"[^A-Za-z0-9._-]+", "_", raw).strip("._-")
     return normalized or "scene"
+
+
+def _packet_capture_subset(
+    captures: list,
+    packet: ReferenceComparePacketContract,
+) -> list:
+    selected_labels = set(packet.capture_labels)
+    if not selected_labels:
+        return list(captures)
+    return [capture for capture in captures if capture.label in selected_labels]
+
+
+def _packet_reference_subset(
+    reference_records: list[ReferenceImageRecordContract],
+    packet: ReferenceComparePacketContract,
+) -> list[ReferenceImageRecordContract]:
+    selected_ids = set(packet.reference_ids)
+    if not selected_ids:
+        return list(reference_records)
+    return [record for record in reference_records if record.reference_id in selected_ids]
+
+
+def _packet_truth_bundle(
+    truth_bundle: SceneCorrectionTruthBundleContract,
+    *,
+    packet: ReferenceComparePacketContract,
+) -> SceneCorrectionTruthBundleContract:
+    if not packet.truth_pairs and not packet.target_objects:
+        return truth_bundle
+
+    truth_pairs = set(packet.truth_pairs)
+    target_objects = set(packet.target_objects)
+    selected_checks: list[SceneCorrectionTruthPairContract] = []
+    for check in list(truth_bundle.checks or []):
+        current_pair_label = (
+            f"{check.from_object} -> {check.to_object}" if check.from_object and check.to_object else None
+        )
+        if current_pair_label is not None and current_pair_label in truth_pairs:
+            selected_checks.append(check)
+            continue
+        if target_objects and {check.from_object, check.to_object}.issubset(target_objects):
+            selected_checks.append(check)
+
+    if not selected_checks:
+        return truth_bundle
+
+    selected_scope = truth_bundle.scope.model_copy(
+        update={
+            "scope_kind": "object_set" if len(target_objects) > 1 else truth_bundle.scope.scope_kind,
+            "primary_target": packet.target_objects[0] if packet.target_objects else truth_bundle.scope.primary_target,
+            "object_names": list(packet.target_objects or truth_bundle.scope.object_names or []),
+            "object_count": len(packet.target_objects or truth_bundle.scope.object_names or []),
+        }
+    )
+    selected_summary = SceneCorrectionTruthSummaryContract(
+        pairing_strategy=truth_bundle.summary.pairing_strategy,
+        pair_count=len(selected_checks),
+        evaluated_pairs=len(selected_checks),
+        contact_failures=sum(
+            1
+            for check in selected_checks
+            if check.contact_assertion is not None and check.contact_assertion.passed is False
+        ),
+        overlap_pairs=sum(
+            1 for check in selected_checks if any(verdict == "overlap" for verdict in check.relation_verdicts)
+        ),
+        separated_pairs=sum(
+            1 for check in selected_checks if any(verdict == "separated" for verdict in check.relation_verdicts)
+        ),
+        misaligned_pairs=sum(
+            1 for check in selected_checks if any(verdict == "misaligned" for verdict in check.relation_verdicts)
+        ),
+    )
+    return SceneCorrectionTruthBundleContract(
+        scope=selected_scope,
+        summary=selected_summary,
+        checks=selected_checks,
+        error=truth_bundle.error,
+    )
 
 
 def _compare_response(
@@ -359,6 +461,7 @@ def _stage_compare_response(
     vision_assistant=None,
     truth_bundle: SceneCorrectionTruthBundleContract | None = None,
     truth_followup: SceneTruthFollowupContract | None = None,
+    compare_diagnostics: ReferenceCompareDiagnosticsContract | None = None,
     correction_candidates: list[ReferenceCorrectionCandidateContract] | None = None,
     budget_control: ReferenceHybridBudgetControlContract | None = None,
     refinement_route: ReferenceRefinementRouteContract | None = None,
@@ -393,6 +496,7 @@ def _stage_compare_response(
         guided_flow_state=guided_flow_contract,
         gate_plan=active_gate_plan_contract,
         guided_reference_readiness=guided_reference_readiness,
+        compare_diagnostics=compare_diagnostics,
         planner_summary=planner_summary,
         correction_candidates=list(correction_candidates or []),
         next_gate_actions=list(gate_fields["next_gate_actions"] or []),
@@ -419,6 +523,7 @@ def _stage_compare_response(
         assembled_target_scope=assembled_target_scope,
         truth_bundle=truth_bundle,
         truth_followup=truth_followup,
+        compare_diagnostics=compare_diagnostics,
         correction_candidates=list(correction_candidates or []),
         budget_control=budget_control,
         refinement_route=refinement_route,
@@ -518,6 +623,7 @@ def _iterate_stage_response(
         guided_flow_state=guided_flow_contract,
         gate_plan=active_gate_plan_contract,
         guided_reference_readiness=guided_reference_readiness or compare_result.guided_reference_readiness,
+        compare_diagnostics=compare_result.compare_diagnostics,
         planner_summary=planner_summary or compare_result.planner_summary,
         correction_candidates=resolved_correction_candidates,
         next_gate_actions=list(gate_fields["next_gate_actions"] or []),
@@ -551,6 +657,7 @@ def _iterate_stage_response(
         assembled_target_scope=compare_result.assembled_target_scope,
         truth_bundle=compare_result.truth_bundle,
         truth_followup=compare_result.truth_followup,
+        compare_diagnostics=compare_result.compare_diagnostics,
         correction_candidates=resolved_correction_candidates,
         budget_control=budget_control or compare_result.budget_control,
         refinement_route=refinement_route or compare_result.refinement_route,
@@ -591,6 +698,7 @@ def _compact_compare_result_for_iterate(
         update={
             "truth_bundle": None,
             "truth_followup": None,
+            "compare_diagnostics": None,
             "correction_candidates": [],
             "silhouette_analysis": None,
             "action_hints": [],
@@ -1125,49 +1233,154 @@ async def _run_stage_checkpoint_compare(
         max_truth_chars=max_truth_chars,
     )
     truth_followup = _build_truth_followup(budgeted_truth_bundle)
-    reference_images = build_reference_capture_images(selected_reference_records)
-    vision_request = build_vision_request_from_stage_captures(
-        captures,
-        goal=goal,
-        target_object=resolved_target_object,
-        reference_images=reference_images,
-        truth_summary=budgeted_truth_bundle.model_dump(mode="json"),
-        prompt_hint=" | ".join(
-            part
-            for part in (
-                prompt_hint,
-                "comparison_mode=stage_checkpoint_vs_reference",
-                f"checkpoint_label={checkpoint_label}" if checkpoint_label else None,
-                f"preset_profile={preset_profile}",
-                f"collection_name={resolved_collection_name}" if resolved_collection_name else None,
-                f"target_objects={','.join(resolved_target_objects)}" if resolved_target_objects else None,
-                f"target_view={target_view}" if target_view else None,
-                *[f"capture[{index}] label={capture.label}" for index, capture in enumerate(captures, start=1)],
-                *[
-                    f"reference[{index}] label={record.label}"
-                    for index, record in enumerate(selected_reference_records, start=1)
-                    if record.label
-                ],
+    compare_diagnostics = _build_compare_packets(
+        target_view=target_view,
+        captures=captures,
+        reference_records=selected_reference_records,
+        assembled_target_scope=assembled_target_scope,
+        truth_followup=truth_followup,
+    )
+    packet_assistants: list[tuple[ReferenceComparePacketContract, VisionAssistantContract | None]] = []
+    for packet in compare_diagnostics.packets:
+        packet_captures = _packet_capture_subset(list(captures), packet)
+        packet_reference_records = _packet_reference_subset(list(selected_reference_records), packet)
+        if not packet_captures:
+            packet.extraction_status = "low_information"
+            packet.ranking_status = "skipped"
+            packet.status_reason = "No packet-local staged captures were available for this compare packet."
+            packet.uncertainty_notes = [packet.status_reason]
+            packet_assistants.append((packet, None))
+            continue
+        if not packet_reference_records:
+            packet.extraction_status = "blocked"
+            packet.ranking_status = "skipped"
+            packet.status_reason = "No packet-local reference slice was available for this compare packet."
+            packet.uncertainty_notes = [packet.status_reason]
+            packet_assistants.append((packet, None))
+            continue
+
+        packet_truth_bundle = _packet_truth_bundle(budgeted_truth_bundle, packet=packet)
+        packet_reference_images = build_reference_capture_images(packet_reference_records)
+        packet_request = build_vision_request_from_stage_captures(
+            packet_captures,
+            goal=goal,
+            target_object=resolved_target_object,
+            reference_images=packet_reference_images,
+            truth_summary=packet_truth_bundle.model_dump(mode="json"),
+            prompt_hint=" | ".join(
+                part
+                for part in (
+                    prompt_hint,
+                    "comparison_mode=stage_checkpoint_vs_reference",
+                    f"checkpoint_label={checkpoint_label}" if checkpoint_label else None,
+                    f"preset_profile={preset_profile}",
+                    f"packet_id={packet.packet_id}",
+                    f"packet_kind={packet.packet_kind}",
+                    f"packet_label={packet.packet_label}",
+                    f"packet_view={packet.target_view}" if packet.target_view else None,
+                    f"packet_scope={packet.scope_label}" if packet.scope_label else None,
+                    f"compare_question={packet.compare_question}",
+                    f"collection_name={resolved_collection_name}" if resolved_collection_name else None,
+                    f"target_objects={','.join(packet.target_objects or resolved_target_objects)}"
+                    if (packet.target_objects or resolved_target_objects)
+                    else None,
+                    *[
+                        f"capture[{index}] label={capture.label}"
+                        for index, capture in enumerate(packet_captures, start=1)
+                    ],
+                    *[
+                        f"reference[{index}] label={record.label}"
+                        for index, record in enumerate(packet_reference_records, start=1)
+                        if record.label
+                    ],
+                )
+                if part
             )
-            if part
+            or None,
+            metadata={
+                "source": "compare_stage_checkpoint",
+                "checkpoint_id": checkpoint_id,
+                "preset_profile": preset_profile,
+                "capture_count": len(packet_captures),
+                "packet_id": packet.packet_id,
+                "packet_kind": packet.packet_kind,
+                "packet_label": packet.packet_label,
+                "packet_view": packet.target_view,
+                "packet_scope": packet.scope_label,
+                "packet_reference_ids": list(packet.reference_ids),
+                "packet_capture_labels": list(packet.capture_labels),
+                "collection_name": resolved_collection_name,
+                "target_objects": list(packet.target_objects or resolved_target_objects),
+                "assembled_target_scope": assembled_target_scope.model_dump(mode="json"),
+            },
         )
-        or None,
-        metadata={
-            "source": "compare_stage_checkpoint",
-            "checkpoint_id": checkpoint_id,
-            "preset_profile": preset_profile,
-            "capture_count": len(captures),
-            "collection_name": resolved_collection_name,
-            "target_objects": list(resolved_target_objects),
-            "assembled_target_scope": assembled_target_scope.model_dump(mode="json"),
-        },
+        packet_outcome = await run_vision_assist(
+            ctx,
+            request=packet_request,
+            resolver=resolver,
+        )
+        packet_vision_assistant = to_vision_assistant_contract(packet_outcome)
+        packet_assistants.append((packet, packet_vision_assistant))
+        if packet_vision_assistant.status != "success" or packet_vision_assistant.result is None:
+            packet.extraction_status = "error"
+            packet.ranking_status = "skipped"
+            packet.status_reason = packet_vision_assistant.rejection_reason or packet_vision_assistant.message
+            packet.uncertainty_notes = [packet.status_reason] if packet.status_reason else []
+            continue
+
+        packet.extraction_status = "success"
+        packet.evidence_summary = packet_vision_assistant.result.goal_summary
+        packet.correction_focus = list(
+            packet_vision_assistant.result.correction_focus
+            or packet_vision_assistant.result.next_corrections
+            or packet_vision_assistant.result.shape_mismatches
+        )[:3]
+        packet.uncertainty_notes = _dedupe_preserving_order(
+            [
+                *(packet_vision_assistant.result.proportion_mismatches or []),
+                *(item.summary for item in list(packet_vision_assistant.result.likely_issues or [])),
+            ]
+        )[:3]
+        packet.ranking_status = "success" if packet.correction_focus else "skipped"
+
+    successful_packet_results = [
+        (packet, assistant.result)
+        for packet, assistant in packet_assistants
+        if assistant is not None and assistant.status == "success" and assistant.result is not None
+    ]
+    if compare_diagnostics.synthesis_required:
+        synthesized_packet_result = _synthesize_packet_vision_result(successful_packet_results)
+        compare_diagnostics.synthesis_status = "success" if synthesized_packet_result is not None else "error"
+    else:
+        synthesized_packet_result = successful_packet_results[0][1] if successful_packet_results else None
+        compare_diagnostics.synthesis_status = "not_needed"
+
+    successful_assistants = [
+        assistant for _, assistant in packet_assistants if assistant is not None and assistant.status == "success"
+    ]
+    vision_assistant: VisionAssistantContract | None
+    if successful_assistants and synthesized_packet_result is not None:
+        if len(successful_assistants) == 1 and not compare_diagnostics.synthesis_required:
+            vision_assistant = successful_assistants[0]
+        else:
+            vision_assistant = successful_assistants[0].model_copy(
+                update={
+                    "message": (f"vision_assist completed across {len(successful_assistants)} compare packet(s)."),
+                    "result": synthesized_packet_result,
+                }
+            )
+    else:
+        vision_assistant = next((assistant for _, assistant in packet_assistants if assistant is not None), None)
+
+    failed_packet_count = sum(
+        1
+        for packet in compare_diagnostics.packets
+        if packet.extraction_status in {"blocked", "low_information", "error"}
     )
-    outcome = await run_vision_assist(
-        ctx,
-        request=vision_request,
-        resolver=resolver,
-    )
-    vision_assistant = to_vision_assistant_contract(outcome)
+    if failed_packet_count:
+        compare_diagnostics.conflict_notes.append(
+            f"{failed_packet_count} compare packet(s) were blocked, low-information, or failed before synthesis."
+        )
     silhouette_analysis = _build_silhouette_analysis_payload(
         selected_reference_records=selected_reference_records,
         captures=captures,
@@ -1191,6 +1404,7 @@ async def _run_stage_checkpoint_compare(
             assembled_target_scope=assembled_target_scope,
             truth_bundle=budgeted_truth_bundle,
             truth_followup=truth_followup,
+            compare_diagnostics=compare_diagnostics,
             target_view=target_view,
             view_diagnostics_hints=view_diagnostics_hints,
             checkpoint_id=checkpoint_id,
@@ -1241,6 +1455,22 @@ async def _run_stage_checkpoint_compare(
         ),
         selected_focus_pairs=list(truth_followup.focus_pairs or []),
     )
+    if budget_control.trimming_applied:
+        compare_diagnostics.budget_notes.append(
+            "Model-aware budget control trimmed staged compare evidence before final projection."
+        )
+    if compare_diagnostics.synthesis_required and compare_diagnostics.synthesis_status == "success":
+        compare_diagnostics.conflict_notes = _dedupe_preserving_order(compare_diagnostics.conflict_notes)
+    emitted_compare_diagnostics = (
+        compare_diagnostics
+        if (
+            preset_profile == "rich"
+            or compare_diagnostics.synthesis_required
+            or failed_packet_count > 0
+            or budget_control.trimming_applied
+        )
+        else None
+    )
     staged_compare_contract = ReferenceCompareStageCheckpointResponseContract(
         action="compare_stage_checkpoint",
         goal=goal,
@@ -1253,6 +1483,7 @@ async def _run_stage_checkpoint_compare(
         assembled_target_scope=assembled_target_scope,
         truth_bundle=budgeted_truth_bundle,
         truth_followup=truth_followup,
+        compare_diagnostics=emitted_compare_diagnostics,
         correction_candidates=correction_candidates,
         budget_control=budget_control,
         view_diagnostics_hints=view_diagnostics_hints,
@@ -1340,6 +1571,7 @@ async def _run_stage_checkpoint_compare(
         vision_assistant=vision_assistant,
         truth_bundle=budgeted_truth_bundle,
         truth_followup=truth_followup,
+        compare_diagnostics=emitted_compare_diagnostics,
         correction_candidates=correction_candidates,
         budget_control=budget_control,
         refinement_route=refinement_route,
@@ -1352,11 +1584,16 @@ async def _run_stage_checkpoint_compare(
         view_diagnostics_hints=view_diagnostics_hints,
         include_captures=preset_profile != "compact",
         message=(
-            f"Captured and compared stage checkpoint '{checkpoint_label or checkpoint_id}' using {len(captures)} deterministic view(s)."
-            if outcome.status == "success"
-            else "Stage checkpoint capture executed but vision assistance did not complete successfully."
+            f"Captured and compared stage checkpoint '{checkpoint_label or checkpoint_id}' across "
+            f"{compare_diagnostics.packet_count} packet(s) using {len(captures)} deterministic view(s)."
+            if vision_assistant is not None and vision_assistant.status == "success"
+            else "Stage checkpoint capture executed but packeted vision assistance did not complete successfully."
         ),
-        error=vision_assistant.rejection_reason if vision_assistant.status != "success" else None,
+        error=(
+            vision_assistant.rejection_reason
+            if vision_assistant is not None and vision_assistant.status != "success"
+            else None
+        ),
     )
 
 

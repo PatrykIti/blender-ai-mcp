@@ -15,6 +15,7 @@ from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract
 from server.adapters.mcp.contracts.quality_gates import GatePlanContract
 from server.adapters.mcp.contracts.reference import (
     GuidedReferenceReadinessContract,
+    ReferenceCompareDiagnosticsContract,
     ReferenceCorrectionCandidateContract,
     ReferenceOrchestratorFeedbackContract,
     ReferencePlannerFamilyLiteral,
@@ -349,6 +350,7 @@ def build_reference_orchestrator_feedback(
     guided_flow_state: GuidedFlowStateContract | None = None,
     gate_plan: GatePlanContract | None = None,
     guided_reference_readiness: GuidedReferenceReadinessContract | None = None,
+    compare_diagnostics: ReferenceCompareDiagnosticsContract | None = None,
     planner_summary: ReferenceRepairPlannerSummaryContract | None = None,
     correction_candidates: list[ReferenceCorrectionCandidateContract] | None = None,
     next_gate_actions: list[str] | None = None,
@@ -429,6 +431,25 @@ def build_reference_orchestrator_feedback(
             uncertainty_notes.extend(summary.style.notes)
     if planner_summary is not None:
         evidence_summary.append(planner_summary.rationale)
+    if compare_diagnostics is not None:
+        evidence_summary.extend(
+            f"{packet.packet_label}: {packet.evidence_summary}"
+            for packet in list(compare_diagnostics.packets or [])
+            if packet.evidence_summary
+        )
+        evidence_summary.append(
+            f"Compare used {compare_diagnostics.packet_count} packet(s) in the {compare_diagnostics.complexity_tier} tier."
+        )
+        uncertainty_notes.extend(list(compare_diagnostics.conflict_notes or []))
+        uncertainty_notes.extend(list(compare_diagnostics.budget_notes or []))
+        uncertainty_notes.extend(
+            f"{packet.packet_label}: {packet.status_reason}"
+            for packet in list(compare_diagnostics.packets or [])
+            if packet.status_reason
+            and (
+                packet.extraction_status in {"blocked", "low_information", "error"} or packet.ranking_status == "error"
+            )
+        )
     evidence_summary = _dedupe_strings(evidence_summary)[:6]
     uncertainty_notes = _dedupe_strings(uncertainty_notes)[:6]
 

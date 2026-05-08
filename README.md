@@ -82,6 +82,7 @@ When a bounded modeling intent matches, the default public working layer should 
 - `guided_reference_readiness` on `router_set_goal`, `router_get_status`, and staged reference compare/iterate payloads so clients can see whether reference-driven stage work is actually ready
 - `reference_orchestrator_feedback` on `reference_images`, `router_*`, and staged reference compare/iterate payloads so clients can read one compact next-step contract instead of stitching together RU, gate, and planner fields by hand
 - `reference_compare_stage_checkpoint` for deterministic multi-view stage comparison against attached references during manual iterative work
+- staged reference compare now decomposes bounded stage requests into packet-local view/scope compares internally and can expose additive `compare_diagnostics` on rich or uncertainty paths without creating a second public tool family
 - `reference_iterate_stage_checkpoint` for a session-aware staged correction loop that remembers prior focus, can escalate into inspect/validate when the same correction repeats, and can now target one object, many objects, a collection, or the full assembled silhouette
 - RU summaries now also carry server-owned `views` plus lightweight `visual_metrics` that stay advisory-only and complement VLM interpretation
 - stage compare/iterate now also expose deterministic `silhouette_analysis` metrics, typed `action_hints`, and an advisory-only `part_segmentation` placeholder that stays disabled unless a separate sidecar is explicitly enabled
@@ -635,6 +636,12 @@ hidden ordering assumptions.
   into top-level `gate_statuses`, `completion_blockers`,
   `next_gate_actions`, and `recommended_bounded_tools`, so clients do not need
   to infer the immediate repair path from the nested plan shape.
+- staged reference compare/iterate may now also expose additive
+  `compare_diagnostics` when the run uses multi-packet synthesis, hits packet
+  uncertainty/failure, or the caller requests `preset_profile="rich"`; that
+  diagnostics layer names packet ids, packet-local view/scope slices, packet
+  status, and budget/conflict notes while leaving the existing staged compare
+  fields in place
 - `scene_relation_graph(...)` updates the first deterministic gate slice for
   `required_part`, `attachment_seam`, `support_contact`, and `symmetry_pair`
   with authoritative evidence refs, status reasons, completion blockers, and

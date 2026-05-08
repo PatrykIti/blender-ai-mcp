@@ -1,7 +1,7 @@
 # TASK-166-06: Public Contract Transparency For Hierarchical Compare
 
 **Parent:** [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md)
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
 **Priority:** 🔴 High
 **Objective:** Expose additive packet provenance, pass status, conflict notes, and budget diagnostics on the existing staged compare / iterate contracts while keeping `reference_orchestrator_feedback` as the compact orchestration-facing owner seam.
 

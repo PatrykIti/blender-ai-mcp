@@ -32,6 +32,10 @@ from .quality_gates import (
 )
 
 ReferencePlannerFamilyLiteral = Literal["macro", "modeling_mesh", "sculpt_region", "inspect_only"]
+ReferenceCompareComplexityTierLiteral = Literal["simple", "complex", "super_complex"]
+ReferenceComparePacketKindLiteral = Literal["view", "scope", "view_scope", "synthesis"]
+ReferenceComparePacketStatusLiteral = Literal["success", "blocked", "low_information", "skipped", "error"]
+ReferenceCompareRankingStatusLiteral = Literal["success", "skipped", "not_needed", "error"]
 ReferencePlannerSourceLiteral = Literal[
     "vision",
     "truth",
@@ -410,6 +414,40 @@ class ReferenceCorrectionCandidateContract(MCPContract):
     truth_evidence: ReferenceCorrectionTruthEvidenceContract | None = None
 
 
+class ReferenceComparePacketContract(MCPContract):
+    """One packet-level compare unit surfaced additively on staged compare responses."""
+
+    packet_id: str
+    packet_kind: ReferenceComparePacketKindLiteral = "view"
+    packet_label: str
+    target_view: str | None = None
+    scope_label: str | None = None
+    target_objects: list[str] = []
+    truth_pairs: list[str] = []
+    reference_ids: list[str] = []
+    capture_labels: list[str] = []
+    compare_question: str
+    extraction_status: ReferenceComparePacketStatusLiteral = "skipped"
+    ranking_status: ReferenceCompareRankingStatusLiteral = "not_needed"
+    status_reason: str | None = None
+    evidence_summary: str | None = None
+    uncertainty_notes: list[str] = []
+    correction_focus: list[str] = []
+
+
+class ReferenceCompareDiagnosticsContract(MCPContract):
+    """Additive packet/synthesis diagnostics for staged compare and iterate flows."""
+
+    complexity_tier: ReferenceCompareComplexityTierLiteral = "simple"
+    packet_count: int = 0
+    packet_order: list[str] = []
+    synthesis_required: bool = False
+    synthesis_status: Literal["success", "skipped", "not_needed", "error"] = "not_needed"
+    packets: list[ReferenceComparePacketContract] = []
+    conflict_notes: list[str] = []
+    budget_notes: list[str] = []
+
+
 class ReferenceHybridBudgetControlContract(MCPContract):
     """Budget/scope control metadata for hybrid-loop compare and iterate responses."""
 
@@ -641,6 +679,7 @@ class ReferenceCompareStageCheckpointResponseContract(MCPContract):
     assembled_target_scope: SceneAssembledTargetScopeContract | None = None
     truth_bundle: SceneCorrectionTruthBundleContract | None = None
     truth_followup: SceneTruthFollowupContract | None = None
+    compare_diagnostics: ReferenceCompareDiagnosticsContract | None = None
     correction_candidates: list[ReferenceCorrectionCandidateContract] = []
     budget_control: ReferenceHybridBudgetControlContract | None = None
     refinement_route: ReferenceRefinementRouteContract | None = None
@@ -689,6 +728,7 @@ class ReferenceIterateStageCheckpointResponseContract(MCPContract):
     assembled_target_scope: SceneAssembledTargetScopeContract | None = None
     truth_bundle: SceneCorrectionTruthBundleContract | None = None
     truth_followup: SceneTruthFollowupContract | None = None
+    compare_diagnostics: ReferenceCompareDiagnosticsContract | None = None
     correction_candidates: list[ReferenceCorrectionCandidateContract] = []
     budget_control: ReferenceHybridBudgetControlContract | None = None
     refinement_route: ReferenceRefinementRouteContract | None = None

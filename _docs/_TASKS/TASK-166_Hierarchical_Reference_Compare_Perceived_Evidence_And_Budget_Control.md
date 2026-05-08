@@ -1,11 +1,12 @@
 # TASK-166: Hierarchical Reference Compare, Perceived Evidence, And Budget Control
 
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
 **Priority:** 🔴 High
 **Category:** Vision / Hybrid Loop / Guided Runtime
 **Estimated Effort:** Large
 **Follow-on After:** [TASK-145](./TASK-145_Spatial_Repair_Planner_And_Sculpt_Handoff_Context.md), [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md), [TASK-140-06](./TASK-140-06_OpenRouter_Model_Capability_Aware_Vision_Runtime.md)
 **Related:** [TASK-122-03-06](./TASK-122-03-06_Hybrid_Loop_Model_Aware_Budget_And_Scope_Control.md), [TASK-135](./TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md), [TASK-136](./TASK-136_Reference_Guided_Architecture_And_Building_Reconstruction.md), [TASK-137](./TASK-137_Anatomy_Aware_Reference_Guided_Organ_Reconstruction.md), [TASK-138](./TASK-138_Anatomy_Aware_Reference_Guided_Biped_And_Fantasy_Character_Reconstruction.md), [TASK-160](./TASK-160_Guided_Client_Feedback_And_Streamable_HTTP_Recovery_UX.md)
+**Context Anchor:** [324. TASK-166 packeted stage compare core](../_CHANGELOG/324-2026-05-08-task-166-packeted-stage-compare-core.md)
 **Objective:** Replace monolithic staged compare/iterate payloads with a hierarchical packeted compare family, deterministic pre-LLM image evidence, optional heavier perception support, additive packet transparency on the existing staged contracts, and configurable compare budgets that scale from simple to super-complex 6-12 image runs.
 
 ## Objective
@@ -334,6 +335,29 @@ without requiring one massive all-images compare request.
     parsing
 - the final family remains generic across creature, architecture, organ, and
   character domains
+
+## Progress Notes
+
+- 2026-05-08: first packeted staged-compare slice landed on the existing
+  `reference_compare_stage_checkpoint(...)` /
+  `reference_iterate_stage_checkpoint(...)` family:
+  - staged compare now builds deterministic compare packets from the staged
+    view set, active scope, and truth-followup focus pairs instead of assuming
+    one always-monolithic request shape
+  - packet-local staged compare execution now narrows captures, reference ids,
+    and truth-summary payloads per packet before calling `vision_assist`
+  - compact packet synthesis now merges successful packet results back into the
+    existing staged compare contract, and additive `compare_diagnostics` can
+    surface packet ids, pass state, packet-local scope/view selection, and
+    budget/conflict notes on rich or uncertainty paths
+  - `reference_orchestrator_feedback` now accepts packet diagnostics as a
+    first-class summary input instead of forcing orchestrators to inspect raw
+    packet payloads
+- 2026-05-08: remaining follow-on work still includes the deeper TASK-166
+  leaves for packet-specific prompt/parser contract hardening, explicit
+  extraction-vs-ranking phase semantics, deterministic CV / optional PyTorch
+  sidecars, richer complexity-tier scaling for 6-12 image sets, and runtime
+  budget overrides.
 
 ## Docs To Update
 

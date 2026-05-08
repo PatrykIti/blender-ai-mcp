@@ -627,6 +627,12 @@ top of the existing bounded vision/runtime baseline.
 Current public payload additions on `reference_compare_stage_checkpoint(...)`
 and `reference_iterate_stage_checkpoint(...)`:
 
+- `compare_diagnostics`
+  - additive packet diagnostics for hierarchical staged compare
+  - packets can name packet ids, packet-local view/scope slices, selected
+    capture/reference inputs, extraction status, and packet uncertainty notes
+  - compact paths emit it on synthesis/uncertainty or budget pressure; rich
+    paths emit it directly
 - `silhouette_analysis`
   - typed metrics such as `mask_iou`, `contour_drift`, `aspect_ratio_delta`,
     `upper_band_width_delta`, `mid_band_width_delta`, `lower_band_width_delta`,
@@ -652,6 +658,7 @@ Interpretation rules:
 Current staged-loop reading order for creature work:
 
 - `loop_disposition`
+- `compare_diagnostics`
 - `correction_candidates`
 - `truth_followup`
 - `action_hints`

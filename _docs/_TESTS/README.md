@@ -492,6 +492,11 @@ Focused unit coverage now also protects:
   - `tests/unit/adapters/mcp/test_reference_images.py`
   - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
   - `tests/unit/router/application/test_router_contracts.py`
+- packeted staged-compare planning, additive `compare_diagnostics`, and
+  compact feedback projection on:
+  - `tests/unit/adapters/mcp/test_reference_images.py`
+  - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
+  - `tests/unit/router/application/test_router_contracts.py`
 - optional RU classifier-score and segmentation-artifact augmentation on:
   - `tests/unit/adapters/mcp/test_reference_images.py`
 - compact view-space contracts, search/discovery shaping, and reference-loop

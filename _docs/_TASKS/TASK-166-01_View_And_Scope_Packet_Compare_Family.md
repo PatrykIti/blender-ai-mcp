@@ -1,7 +1,7 @@
 # TASK-166-01: View And Scope Packet Compare Family
 
 **Parent:** [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md)  
-**Status:** ⏳ To Do  
+**Status:** 🚧 In Progress
 **Priority:** 🔴 High
 **Objective:** Define one deterministic packet family for compare/iterate that decomposes work by view and active scope instead of sending one full-scene compare payload.
 

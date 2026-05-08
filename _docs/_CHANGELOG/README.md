@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [324](./324-2026-05-08-task-166-packeted-stage-compare-core.md) | 2026-05-08 | **TASK-166 packeted stage compare core** | - |
 | [323](./323-2026-05-07-task-160-streamable-visibility-transaction-audit.md) | 2026-05-07 | **TASK-160 Streamable visibility transaction audit and `tools/list` stability** | - |
 | [322](./322-2026-05-07-task-164-local-siglip2-classifier-sidecar-and-operator-scripts.md) | 2026-05-07 | **TASK-164 local SigLIP2 classifier sidecar and operator scripts** | - |
 | [321](./321-2026-05-06-task-163-harness-closeout-and-mlx-ru-proof.md) | 2026-05-06 | **TASK-163 harness closeout and MLX RU proof** | - |
