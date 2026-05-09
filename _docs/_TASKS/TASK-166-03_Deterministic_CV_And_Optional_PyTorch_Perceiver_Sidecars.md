@@ -96,7 +96,6 @@ staged_compare = project_packet_support_into_staged_contract(packet_inputs)
 - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
-- `tests/unit/router/application/test_router_contracts.py`
 - targeted unit coverage for compare-time support-evidence shaping in
   `reference_silhouette.py` and staged compare assembly; expand
   `reference_support.py` coverage only when that seam is deliberately extended
@@ -135,7 +134,6 @@ staged_compare = project_packet_support_into_staged_contract(packet_inputs)
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
-- `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_silhouette_contract.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
 - `poetry run pytest ./tests/unit`

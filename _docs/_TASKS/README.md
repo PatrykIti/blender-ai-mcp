@@ -3,8 +3,8 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 7 tasks
-- **In Progress:** 2 tasks
+- **To Do:** 6 tasks
+- **In Progress:** 3 tasks
 - **Done:** 94
 - **Superseded:** 162
 
@@ -46,6 +46,7 @@ flight.
 |----|-------|----------|-------|
 | [TASK-165](./TASK-165_Mac_First_Interactive_MCP_Server_Installer_And_Launcher.md) | **macOS-First Interactive MCP Server Installer And Launcher** | 🔴 High | Board-level follow-on after TASK-164 for replacing the narrow Streamable helper with a macOS-first interactive launcher that checks prerequisites, offers explicit install/update/skip decisions, and wires the supported MCP + classifier runtime combinations together. |
 | [TASK-160](./TASK-160_Guided_Client_Feedback_And_Streamable_HTTP_Recovery_UX.md) | **Guided Client Feedback And Streamable HTTP Recovery UX** | 🔴 High | In progress after TASK-160-01 closed the Streamable visibility serialization slice; the umbrella still owns the broader guided client-feedback contract and follow-on surface decisions. |
+| [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md) | **Hierarchical Reference Compare, Perceived Evidence, And Budget Control** | 🔴 High | In progress after the live packet-planning, packet-local narrow-question, synthesis, compare-time CV/segmentation, and runtime-owned input-budget slices. Remaining open scope is the richer super-complex scheduling policy under `TASK-166-04-02`, configured-vs-effective budget diagnostics / fail-safe caps under `TASK-166-05-02`, and the remaining public transparency hardening tracked under `TASK-166-06`. |
 
 ## 🚨 To Do
 
@@ -83,7 +84,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Vision & Hybrid Loop
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md) | **Hierarchical Reference Compare, Perceived Evidence, And Budget Control** | 🔴 High | Board-level follow-on after TASK-145 / TASK-163 / TASK-140-06 for replacing monolithic compare payloads with view-first and scope-first packets, typed packet-local CV support evidence, additive staged compare transparency on the existing contracts, complexity-tier scaling for 6-12 image runs, and configurable `vision_assist` budgets. View/scope packet planning, compact/rich diagnostics repair, compare-time CV, advisory compare-time segmentation sidecar support, and runtime-owned input-character budget wiring are now live; richer budget diagnostics/fail-safe caps and deeper super-complex scheduling remain open. |
 | [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) | **Expand External Vision Contract Profiles Across Qwen, Anthropic, OpenAI, and NVIDIA** | 🔴 High | Board-level follow-on after TASK-139 for extending the external `vision_contract_profile` architecture across additional multimodal families on the existing provider surface, including OpenRouter model capability resolution and no new provider branches under this umbrella. |
 ---
 

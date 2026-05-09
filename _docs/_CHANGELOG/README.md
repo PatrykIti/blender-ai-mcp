@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [331](./331-2026-05-09-task-166-packet-scope-alignment-and-proof-refresh.md) | 2026-05-09 | **TASK-166 packet scope alignment and proof refresh** | - |
 | [330](./330-2026-05-08-task-166-runtime-input-budget-config.md) | 2026-05-08 | **TASK-166 runtime input-budget config** | - |
 | [329](./329-2026-05-08-task-166-compare-time-segmentation-sidecar.md) | 2026-05-08 | **TASK-166 compare-time segmentation sidecar** | - |
 | [328](./328-2026-05-08-task-166-packet-policy-repair-and-proof.md) | 2026-05-08 | **TASK-166 packet policy repair and proof** | - |

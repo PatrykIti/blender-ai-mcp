@@ -226,3 +226,38 @@ def test_synthesize_packet_vision_result_dedupes_reused_capture_and_reference_co
     assert synthesized.input_summary is not None
     assert synthesized.input_summary.after_image_count == 2
     assert synthesized.input_summary.reference_image_count == 1
+
+
+def test_build_compare_packets_keeps_packet_reference_ids_local_to_scope_targets():
+    scope = SceneAssembledTargetScopeContract(
+        scope_kind="collection",
+        primary_target="Squirrel_Body",
+        object_names=["Squirrel_Head", "Squirrel_Body", "Squirrel_Tail"],
+        object_count=3,
+        collection_name="Squirrel",
+    )
+    packets = build_compare_packets(
+        target_view="front",
+        captures=[_capture("target_front_after", preset_name="target_front")],
+        reference_records=[
+            _reference("head_ref", label="head_front", target_view="front").model_copy(
+                update={"target_object": "Squirrel_Head"}
+            ),
+            _reference("tail_ref", label="tail_front", target_view="front").model_copy(
+                update={"target_object": "Squirrel_Tail"}
+            ),
+            _reference("generic_ref", label="generic_front", target_view="front"),
+        ],
+        assembled_target_scope=scope,
+        truth_followup=SceneTruthFollowupContract(
+            scope=scope,
+            continue_recommended=True,
+            message="Head and tail still need work.",
+            focus_pairs=["Squirrel_Head -> Squirrel_Body", "Squirrel_Tail -> Squirrel_Body"],
+        ),
+    )
+
+    assert packets.packet_count == 2
+    packet_by_scope = {packet.scope_label: packet for packet in packets.packets}
+    assert packet_by_scope["Body + Head"].reference_ids == ["head_ref"]
+    assert packet_by_scope["Tail"].reference_ids == ["tail_ref"]

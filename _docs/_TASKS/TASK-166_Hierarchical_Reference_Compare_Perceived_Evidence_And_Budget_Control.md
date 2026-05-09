@@ -411,11 +411,26 @@ without requiring one massive all-images compare request.
     diagnostics through the public staged response
   - packet synthesis now dedupes reused capture/reference counts instead of
     overstating the final staged compare input summary
-- 2026-05-08: remaining follow-on work still includes the deeper TASK-166
-  leaves for packet-specific prompt/parser contract hardening, explicit
-  extraction-vs-ranking phase semantics, richer complexity-tier scaling for
-  6-12 image sets, and the configured-vs-effective budget diagnostics /
-  fail-safe caps follow-on under `TASK-166-05-02`.
+- 2026-05-09: packet-local scope/validation follow-up tightened the live
+  runtime and task-family proof lanes:
+  - staged compare now keeps packet-local reference slices aligned to scope
+    clusters and passes packet-local focus targets into the bounded vision
+    requests instead of reusing only the root staged target
+  - recoverable staged-iterate setup errors no longer return
+    `loop_disposition="continue_build"` together with
+    `continue_recommended=false`
+  - owner-lane tests now pin low-information packets, blocked packet-local
+    reference slices, and the compact iterate rule that keeps top-level
+    `compare_diagnostics` while omitting nested compact debug payloads
+  - the task-family validation docs now point at live owner-lane tests instead
+    of the removed `tests/unit/router/application/test_router_contracts.py`
+  - `TASK-166-01`, `TASK-166-01-03`, `TASK-166-02`, and `TASK-166-02-01` are
+    now closed against the shipped code paths
+- 2026-05-09: remaining follow-on work is now limited to the richer
+  super-complex scheduling policy under `TASK-166-04-02`,
+  configured-vs-effective budget diagnostics / fail-safe caps under
+  `TASK-166-05-02`, and the remaining public transparency hardening tracked in
+  `TASK-166-06`.
 
 ## Docs To Update
 
@@ -442,9 +457,9 @@ without requiring one massive all-images compare request.
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_compare_packets.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
-- `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
 - `poetry run pytest ./tests/unit`
 - `poetry run python scripts/run_e2e_tests.py`

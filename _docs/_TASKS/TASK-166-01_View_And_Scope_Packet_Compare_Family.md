@@ -1,9 +1,23 @@
 # TASK-166-01: View And Scope Packet Compare Family
 
 **Parent:** [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md)  
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Objective:** Define one deterministic packet family for compare/iterate that decomposes work by view and active scope instead of sending one full-scene compare payload.
+
+## Completion Summary
+
+- staged compare now builds deterministic view-first and scope-first packet
+  plans through `server/application/services/reference_compare_packets.py`
+  instead of keeping that policy inline inside the MCP tool wrapper
+- simple compare runs now emit explicit per-view packets, while assembled
+  multi-part runs expand semantic scope clusters such as `Body + Head`, `Tail`,
+  and `Ears`
+- packet-local staged compare now narrows selected reference slices per scope
+  packet and passes packet-local target objects into the final `VisionRequest`
+  instead of reusing only the root staged target
+- packet synthesis and additive diagnostics remain on the existing staged
+  compare / iterate contract family, with no second public compare surface
 
 ## Repository Touchpoints
 
@@ -83,6 +97,7 @@ packet_inputs = select_packet_inputs(
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_reference_compare_packets.py`
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/e2e/integration/test_guided_gate_state_transport.py`
@@ -109,6 +124,7 @@ packet_inputs = select_packet_inputs(
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_compare_packets.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`

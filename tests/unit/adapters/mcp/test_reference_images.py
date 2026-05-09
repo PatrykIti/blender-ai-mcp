@@ -469,6 +469,80 @@ def test_iterate_stage_response_carries_silhouette_analysis_and_action_hints():
     assert result.compare_result.action_hints == []
 
 
+def test_iterate_stage_response_keeps_top_level_compare_diagnostics_on_compact_path():
+    compare_result = ReferenceCompareStageCheckpointResponseContract.model_validate(
+        {
+            "action": "compare_stage_checkpoint",
+            "goal": "low poly creature",
+            "target_object": "Creature",
+            "target_objects": ["Creature"],
+            "checkpoint_id": "checkpoint_iterate_compact",
+            "checkpoint_label": "stage_iterate_compact",
+            "preset_profile": "compact",
+            "preset_names": ["focus"],
+            "capture_count": 1,
+            "captures": [],
+            "reference_count": 1,
+            "reference_ids": ["ref_1"],
+            "reference_labels": ["front_ref"],
+            "compare_diagnostics": {
+                "complexity_tier": "simple",
+                "packet_count": 1,
+                "packet_order": ["packet:front:test"],
+                "synthesis_required": False,
+                "synthesis_status": "not_needed",
+                "packets": [
+                    {
+                        "packet_id": "packet:front:test",
+                        "packet_kind": "view",
+                        "packet_label": "front packet",
+                        "target_view": "front",
+                        "reference_ids": ["ref_1"],
+                        "capture_labels": ["focus_after"],
+                        "compare_question": "Compare the front silhouette against the references.",
+                        "extraction_status": "low_information",
+                        "ranking_status": "skipped",
+                        "packet_status": "low_information",
+                        "ranking_recommendation": "skip_low_information",
+                        "status_reason": "No packet-local staged captures were available for this compare packet.",
+                        "support_evidence": [],
+                        "uncertainty_notes": [
+                            "No packet-local staged captures were available for this compare packet."
+                        ],
+                        "correction_focus": [],
+                    }
+                ],
+                "conflict_notes": ["1 compare packet(s) were blocked, low-information, or failed before synthesis."],
+                "budget_notes": [],
+            },
+        }
+    )
+
+    result = _iterate_stage_response(
+        goal="low poly creature",
+        target_object="Creature",
+        target_objects=["Creature"],
+        collection_name=None,
+        target_view="front",
+        checkpoint_id="checkpoint_iterate_compact",
+        checkpoint_label="stage_iterate_compact",
+        iteration_index=1,
+        loop_disposition="continue_build",
+        continue_recommended=True,
+        prior_checkpoint_id=None,
+        prior_correction_focus=[],
+        correction_focus=[],
+        repeated_correction_focus=[],
+        stagnation_count=0,
+        compare_result=compare_result,
+    )
+
+    assert result.compare_diagnostics is not None
+    assert result.compare_diagnostics.packet_count == 1
+    assert result.compare_result.compare_diagnostics is None
+    assert result.debug_payload_omitted is True
+
+
 def test_refresh_reference_understanding_summary_persists_summary_and_gate_ids(tmp_path, monkeypatch):
     ctx = FakeContext()
     reference_path = tmp_path / "front.png"
@@ -7361,6 +7435,339 @@ def test_reference_compare_stage_checkpoint_can_expand_collection_scope(tmp_path
     assert captured["request"].metadata["collection_name"] == "Squirrel"
 
 
+def test_reference_compare_stage_checkpoint_uses_packet_local_target_and_reference_slice_for_scope_packets(
+    tmp_path, monkeypatch
+):
+    head_reference = tmp_path / "head_front.png"
+    tail_reference = tmp_path / "tail_front.png"
+    head_reference.write_bytes(b"head")
+    tail_reference.write_bytes(b"tail")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly squirrel", {"status": "no_match"})
+    asyncio.run(
+        reference_images(
+            ctx,
+            action="attach",
+            source_path=str(head_reference),
+            label="head_front_ref",
+            target_object="Squirrel_Head",
+            target_view="front",
+        )
+    )
+    asyncio.run(
+        reference_images(
+            ctx,
+            action="attach",
+            source_path=str(tail_reference),
+            label="tail_front_ref",
+            target_object="Squirrel_Tail",
+            target_view="front",
+        )
+    )
+
+    class CollectionHandler:
+        def list_objects(self, collection_name: str, recursive: bool = True, include_hidden: bool = False):
+            assert collection_name == "Squirrel"
+            return {
+                "objects": [
+                    {"name": "Squirrel_Head"},
+                    {"name": "Squirrel_Body"},
+                    {"name": "Squirrel_Tail"},
+                ]
+            }
+
+    class SceneHandler:
+        def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "relation": "contact", "gap": 0.0}
+
+        def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "is_aligned": True,
+                "axes": axes or ["X", "Y", "Z"],
+            }
+
+        def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "overlaps": False, "relation": "disjoint"}
+
+        def assert_contact(
+            self, from_object: str, to_object: str, max_gap: float = 0.0001, allow_overlap: bool = False
+        ):
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": True,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.0, "relation": "contact"},
+            }
+
+    captured_requests: list[Any] = []
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        captured_requests.append(request)
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="Packet compare completed.",
+                visible_changes=["Front silhouette is readable."],
+                correction_focus=[],
+            ),
+        )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_collection_handler", lambda: CollectionHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: object())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="target_front_after",
+                image_path=str(tmp_path / "front.jpg"),
+                host_visible_path=str(tmp_path / "front.jpg"),
+                preset_name="target_front",
+                media_type="image/jpeg",
+                view_kind="focus",
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            collection_name="Squirrel",
+            checkpoint_label="stage_scope_local_refs",
+            target_view="front",
+            preset_profile="rich",
+        )
+    )
+
+    assert result.error is None
+    request_by_scope = {str(request.metadata.get("packet_scope")): request for request in captured_requests}
+    assert set(request_by_scope) == {"Body + Head", "Tail"}
+    head_packet_request = request_by_scope["Body + Head"]
+    tail_packet_request = request_by_scope["Tail"]
+    assert head_packet_request.target_object == "Squirrel_Head"
+    assert tail_packet_request.target_object == "Squirrel_Tail"
+    assert [image.label for image in head_packet_request.images if image.role == "reference"] == ["head_front_ref"]
+    assert [image.label for image in tail_packet_request.images if image.role == "reference"] == ["tail_front_ref"]
+    assert len(head_packet_request.metadata["packet_reference_ids"]) == 1
+    assert len(tail_packet_request.metadata["packet_reference_ids"]) == 1
+
+
+def test_reference_compare_stage_checkpoint_marks_packet_low_information_when_target_view_has_no_capture(
+    tmp_path, monkeypatch
+):
+    image_front = tmp_path / "front.png"
+    image_front.write_bytes(b"front")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly squirrel", {"status": "no_match"})
+    asyncio.run(
+        reference_images(
+            ctx,
+            action="attach",
+            source_path=str(image_front),
+            label="front_ref",
+            target_object="Squirrel",
+            target_view="front",
+        )
+    )
+
+    class SceneHandler:
+        def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "relation": "contact", "gap": 0.0}
+
+        def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "is_aligned": True,
+                "axes": axes or ["X", "Y", "Z"],
+            }
+
+        def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "overlaps": False, "relation": "disjoint"}
+
+        def assert_contact(
+            self, from_object: str, to_object: str, max_gap: float = 0.0001, allow_overlap: bool = False
+        ):
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": True,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.0, "relation": "contact"},
+            }
+
+    async def _unexpected_run_vision_assist(*args, **kwargs):
+        raise AssertionError("low-information packets must not call vision_assist before capture coverage exists")
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: object())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _unexpected_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="target_side_after",
+                image_path=str(tmp_path / "side.jpg"),
+                host_visible_path=str(tmp_path / "side.jpg"),
+                preset_name="target_side",
+                media_type="image/jpeg",
+                view_kind="focus",
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            target_object="Squirrel",
+            checkpoint_label="stage_missing_front_capture",
+            target_view="front",
+            preset_profile="compact",
+        )
+    )
+
+    assert result.error is None
+    assert result.compare_diagnostics is not None
+    assert result.compare_diagnostics.packets[0].extraction_status == "low_information"
+    assert result.compare_diagnostics.packets[0].ranking_status == "skipped"
+    assert result.compare_diagnostics.packets[0].packet_status == "low_information"
+    assert "No packet-local staged captures" in (result.compare_diagnostics.packets[0].status_reason or "")
+
+
+def test_reference_compare_stage_checkpoint_marks_packet_blocked_when_scope_reference_slice_is_missing(
+    tmp_path, monkeypatch
+):
+    image_head = tmp_path / "head_front.png"
+    image_head.write_bytes(b"head")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly squirrel", {"status": "no_match"})
+    asyncio.run(
+        reference_images(
+            ctx,
+            action="attach",
+            source_path=str(image_head),
+            label="head_front_ref",
+            target_object="Squirrel_Head",
+            target_view="front",
+        )
+    )
+
+    class CollectionHandler:
+        def list_objects(self, collection_name: str, recursive: bool = True, include_hidden: bool = False):
+            assert collection_name == "Squirrel"
+            return {
+                "objects": [
+                    {"name": "Squirrel_Head"},
+                    {"name": "Squirrel_Body"},
+                    {"name": "Squirrel_Tail"},
+                ]
+            }
+
+    class SceneHandler:
+        def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "relation": "contact", "gap": 0.0}
+
+        def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "is_aligned": True,
+                "axes": axes or ["X", "Y", "Z"],
+            }
+
+        def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "overlaps": False, "relation": "disjoint"}
+
+        def assert_contact(
+            self, from_object: str, to_object: str, max_gap: float = 0.0001, allow_overlap: bool = False
+        ):
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": True,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.0, "relation": "contact"},
+            }
+
+    captured_requests: list[Any] = []
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        captured_requests.append(request)
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="Packet compare completed.",
+                visible_changes=["Front silhouette is readable."],
+                correction_focus=[],
+            ),
+        )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_collection_handler", lambda: CollectionHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: object())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="target_front_after",
+                image_path=str(tmp_path / "front.jpg"),
+                host_visible_path=str(tmp_path / "front.jpg"),
+                preset_name="target_front",
+                media_type="image/jpeg",
+                view_kind="focus",
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            collection_name="Squirrel",
+            checkpoint_label="stage_missing_tail_reference",
+            target_view="front",
+            preset_profile="compact",
+        )
+    )
+
+    assert result.error is None
+    assert len(captured_requests) == 1
+    assert result.compare_diagnostics is not None
+    tail_packet = next(packet for packet in result.compare_diagnostics.packets if packet.scope_label == "Tail")
+    assert tail_packet.extraction_status == "blocked"
+    assert tail_packet.ranking_status == "skipped"
+    assert tail_packet.packet_status == "blocked"
+    assert "No packet-local reference slice" in (tail_packet.status_reason or "")
+
+
 def test_reference_compare_stage_checkpoint_returns_structured_error_for_invalid_collection(tmp_path, monkeypatch):
     image_front = tmp_path / "front.png"
     image_front.write_bytes(b"front")
@@ -9698,7 +10105,7 @@ def test_reference_iterate_stage_checkpoint_preserves_flow_on_recoverable_refere
     )
 
     assert result.loop_disposition == "continue_build"
-    assert result.continue_recommended is False
+    assert result.continue_recommended is True
     assert result.guided_flow_state is not None
     assert result.guided_flow_state.current_step == "place_secondary_parts"
     assert "place_secondary_parts" not in result.guided_flow_state.completed_steps

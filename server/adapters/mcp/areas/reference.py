@@ -9,7 +9,7 @@ import re
 from dataclasses import replace
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Literal, Mapping, cast
+from typing import Any, Literal, Mapping, Sequence, cast
 from uuid import uuid4
 
 from fastmcp import Context
@@ -329,6 +329,26 @@ def _packet_reference_subset(
     return [record for record in reference_records if record.reference_id in selected_ids]
 
 
+def _packet_target_object(
+    packet: ReferenceComparePacketContract,
+    *,
+    fallback_target_object: str | None,
+) -> str | None:
+    if packet.truth_pairs:
+        first_pair = str(packet.truth_pairs[0]).strip()
+        if " -> " in first_pair:
+            focus_object, _anchor_object = first_pair.split(" -> ", 1)
+            normalized_focus = focus_object.strip()
+            if normalized_focus:
+                return normalized_focus
+    packet_targets = [value.strip() for value in list(packet.target_objects or []) if value.strip()]
+    if len(packet_targets) > 1:
+        return packet_targets[1]
+    if packet_targets:
+        return packet_targets[0]
+    return fallback_target_object
+
+
 def _packet_truth_bundle(
     truth_bundle: SceneCorrectionTruthBundleContract,
     *,
@@ -385,6 +405,76 @@ def _packet_truth_bundle(
         summary=selected_summary,
         checks=selected_checks,
         error=truth_bundle.error,
+    )
+
+
+def _select_reference_records_for_scope(
+    reference_records: Sequence[ReferenceImageRecordContract | dict[str, Any]],
+    *,
+    resolved_target_object: str | None,
+    assembled_target_scope: SceneAssembledTargetScopeContract,
+    target_view: str | None,
+) -> tuple[ReferenceImageRecordContract, ...]:
+    resolved_reference_records = [
+        record
+        if isinstance(record, ReferenceImageRecordContract)
+        else ReferenceImageRecordContract.model_validate(record)
+        for record in reference_records
+    ]
+
+    def _strict_scope_selection(scope_target: str) -> tuple[ReferenceImageRecordContract, ...]:
+        if target_view is not None:
+            targeted_view = tuple(
+                record
+                for record in resolved_reference_records
+                if record.target_object == scope_target and record.target_view == target_view
+            )
+            if targeted_view:
+                return targeted_view
+
+        targeted = tuple(record for record in resolved_reference_records if record.target_object == scope_target)
+        if targeted:
+            return targeted
+
+        if target_view is not None:
+            generic_view = tuple(
+                record
+                for record in resolved_reference_records
+                if record.target_object is None and record.target_view == target_view
+            )
+            if generic_view:
+                return generic_view
+
+        return tuple(record for record in resolved_reference_records if record.target_object is None)
+
+    scoped_targets = _dedupe_preserving_order(
+        [
+            *(assembled_target_scope.object_names or []),
+            *([resolved_target_object] if resolved_target_object else []),
+        ]
+    )
+    if not scoped_targets:
+        return select_reference_records_for_target(
+            resolved_reference_records,
+            target_object=resolved_target_object,
+            target_view=target_view,
+        )
+
+    ordered_records: list[ReferenceImageRecordContract] = []
+    seen_reference_ids: set[str] = set()
+    for scoped_target in scoped_targets:
+        selected_records = _strict_scope_selection(scoped_target)
+        for record in selected_records:
+            if record.reference_id in seen_reference_ids:
+                continue
+            seen_reference_ids.add(record.reference_id)
+            ordered_records.append(record)
+    if ordered_records:
+        return tuple(ordered_records)
+    return select_reference_records_for_target(
+        resolved_reference_records,
+        target_object=resolved_target_object,
+        target_view=target_view,
     )
 
 
@@ -1144,9 +1234,10 @@ async def _run_stage_checkpoint_compare(
         )
 
     references = list(session.reference_images or [])
-    selected_reference_records = select_reference_records_for_target(
+    selected_reference_records = _select_reference_records_for_scope(
         references,
-        target_object=resolved_target_object,
+        resolved_target_object=resolved_target_object,
+        assembled_target_scope=assembled_target_scope,
         target_view=target_view,
     )
     if not selected_reference_records:
@@ -1304,6 +1395,10 @@ async def _run_stage_checkpoint_compare(
 
         packet_truth_bundle = _packet_truth_bundle(budgeted_truth_bundle, packet=packet)
         packet_reference_images = build_reference_capture_images(packet_reference_records)
+        packet_target_object = _packet_target_object(
+            packet,
+            fallback_target_object=resolved_target_object or assembled_target_scope.primary_target,
+        )
         packet_silhouette_analysis = _build_silhouette_analysis_payload(
             selected_reference_records=packet_reference_records,
             captures=packet_captures,
@@ -1336,7 +1431,7 @@ async def _run_stage_checkpoint_compare(
         extraction_request = build_vision_request_from_stage_captures(
             packet_captures,
             goal=goal,
-            target_object=resolved_target_object,
+            target_object=packet_target_object,
             reference_images=packet_reference_images,
             truth_summary=packet_truth_bundle.model_dump(mode="json"),
             prompt_hint=" | ".join(
@@ -1386,6 +1481,7 @@ async def _run_stage_checkpoint_compare(
                 "packet_label": packet.packet_label,
                 "packet_view": packet.target_view,
                 "packet_scope": packet.scope_label,
+                "packet_target_object": packet_target_object,
                 "packet_reference_ids": list(packet.reference_ids),
                 "packet_capture_labels": list(packet.capture_labels),
                 "support_evidence_summaries": list(packet_support_evidence_summaries),
@@ -1443,7 +1539,7 @@ async def _run_stage_checkpoint_compare(
             ranking_request = build_vision_request_from_stage_captures(
                 packet_captures,
                 goal=goal,
-                target_object=resolved_target_object,
+                target_object=packet_target_object,
                 reference_images=packet_reference_images,
                 truth_summary=packet_truth_bundle.model_dump(mode="json"),
                 prompt_hint=" | ".join(
@@ -1479,6 +1575,7 @@ async def _run_stage_checkpoint_compare(
                     "packet_label": packet.packet_label,
                     "packet_view": packet.target_view,
                     "packet_scope": packet.scope_label,
+                    "packet_target_object": packet_target_object,
                     "packet_reference_ids": list(packet.reference_ids),
                     "packet_capture_labels": list(packet.capture_labels),
                     "support_evidence_summaries": list(packet_support_evidence_summaries),
@@ -2000,6 +2097,7 @@ async def reference_iterate_stage_checkpoint(
         error_loop_disposition: Literal["continue_build", "inspect_validate", "stop"] = (
             "continue_build" if recoverable_setup_error else ("inspect_validate" if truth_only_handoff else "stop")
         )
+        error_continue_recommended = error_loop_disposition != "stop"
         return _iterate_stage_response(
             session_id=compare_result.session_id,
             transport=compare_result.transport,
@@ -2014,7 +2112,7 @@ async def reference_iterate_stage_checkpoint(
             checkpoint_label=checkpoint_label,
             iteration_index=1,
             loop_disposition=error_loop_disposition,
-            continue_recommended=truth_only_handoff,
+            continue_recommended=error_continue_recommended,
             prior_checkpoint_id=None,
             prior_correction_focus=[],
             correction_focus=correction_focus,

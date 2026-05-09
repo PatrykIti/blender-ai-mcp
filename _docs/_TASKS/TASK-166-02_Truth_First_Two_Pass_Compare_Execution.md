@@ -1,9 +1,21 @@
 # TASK-166-02: Truth-First Two-Pass Compare Execution
 
 **Parent:** [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md)  
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Objective:** Split compare into deterministic preflight + narrow visual extraction first, then bounded correction ranking only when needed.
+
+## Completion Summary
+
+- staged compare now executes one bounded extraction pass first and runs the
+  ranking pass only when packet guidance explicitly returns
+  `ranking_recommendation="rank"`
+- packet-local prompt/schema/parser seams now carry narrow packet metadata and
+  typed `packet_guidance`, while extraction-only success, blocked packets,
+  low-information packets, and ranking failures stay representable on the
+  staged contract
+- iterate continues to consume the already synthesized staged compare result;
+  it does not own a second ranking or synthesis path
 
 ## Repository Touchpoints
 
@@ -17,6 +29,7 @@
 - `server/adapters/mcp/vision/runner.py`
 - `server/application/services/`
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_reference_compare_packets.py`
 
 ## Implementation Notes
 
@@ -81,9 +94,9 @@ iterate = consume_staged_compare(staged_compare)
 - `tests/unit/adapters/mcp/test_vision_parsing.py`
 - `tests/unit/adapters/mcp/test_vision_result_types.py`
 - `tests/unit/adapters/mcp/test_vision_runner.py`
+- `tests/unit/adapters/mcp/test_reference_compare_packets.py`
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
-- `tests/unit/router/application/test_router_contracts.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 - `tests/e2e/integration/test_guided_gate_state_transport.py`
 
@@ -114,9 +127,9 @@ iterate = consume_staged_compare(staged_compare)
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_result_types.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runner.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_compare_packets.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
-- `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_truth_handoff.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
 - `poetry run pytest ./tests/unit`

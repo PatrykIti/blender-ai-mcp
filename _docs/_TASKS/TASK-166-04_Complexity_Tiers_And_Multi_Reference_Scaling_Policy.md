@@ -74,7 +74,6 @@ staged_compare = assemble_compare_from_packet_plan(packet_plan)
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
-- `tests/unit/router/application/test_router_contracts.py`
 - packet-policy unit coverage in `reference_planner.py`
 - add a dedicated staged multi-reference scaling lane under
   `tests/e2e/vision/`, likely `test_reference_stage_multi_reference_scaling.py`,
@@ -111,7 +110,6 @@ staged_compare = assemble_compare_from_packet_plan(packet_plan)
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
-- `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
 - after adding the dedicated multi-reference scaling lane, run:
   `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_multi_reference_scaling.py -q`

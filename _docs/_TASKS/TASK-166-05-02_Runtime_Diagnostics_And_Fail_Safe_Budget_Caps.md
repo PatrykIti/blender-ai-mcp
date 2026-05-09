@@ -44,7 +44,6 @@
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
-- `tests/unit/router/application/test_router_contracts.py`
 - `tests/e2e/integration/test_guided_gate_state_transport.py` when budget
   diagnostics change a client-visible staged contract
 
@@ -74,7 +73,6 @@
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
-- `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
 - `poetry run pytest ./tests/unit`
 - `poetry run python scripts/run_e2e_tests.py`

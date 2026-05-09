@@ -332,17 +332,48 @@ def _packet_capture_labels(
 def _packet_reference_ids(
     *,
     view_id: str | None,
-    reference_ids_by_view: dict[str, list[str]],
-    generic_reference_ids: list[str],
-    all_reference_ids: list[str],
+    packet_target_objects: Sequence[str],
+    reference_records: Sequence[ReferenceImageRecordContract],
 ) -> list[str]:
-    if view_id is None:
-        return _unique_preserving_order(generic_reference_ids or all_reference_ids)
-    matched_ids = list(reference_ids_by_view.get(view_id, []))
-    if matched_ids:
-        return _unique_preserving_order([*matched_ids, *generic_reference_ids])
-    if generic_reference_ids:
-        return _unique_preserving_order(generic_reference_ids)
+    packet_targets = {value.strip() for value in packet_target_objects if value.strip()}
+    targeted_view: list[str] = []
+    targeted_any_view: list[str] = []
+    generic_view: list[str] = []
+    generic_any_view: list[str] = []
+
+    for reference in reference_records:
+        reference_id = reference.reference_id
+        reference_target = str(reference.target_object or "").strip() or None
+        reference_view = _reference_view_id(reference)
+        in_packet_scope = reference_target is not None and reference_target in packet_targets
+
+        if view_id is None:
+            if in_packet_scope:
+                targeted_any_view.append(reference_id)
+            elif reference_target is None:
+                generic_any_view.append(reference_id)
+            continue
+
+        if in_packet_scope and reference_view == view_id:
+            targeted_view.append(reference_id)
+            continue
+        if in_packet_scope:
+            targeted_any_view.append(reference_id)
+            continue
+        if reference_target is None and reference_view == view_id:
+            generic_view.append(reference_id)
+            continue
+        if reference_target is None:
+            generic_any_view.append(reference_id)
+
+    if targeted_view:
+        return _unique_preserving_order(targeted_view)
+    if targeted_any_view:
+        return _unique_preserving_order(targeted_any_view)
+    if generic_view:
+        return _unique_preserving_order(generic_view)
+    if generic_any_view:
+        return _unique_preserving_order(generic_any_view)
     return []
 
 
@@ -386,15 +417,7 @@ def build_compare_packets(
             continue
         capture_labels_by_view.setdefault(view_id, []).append(capture.label)
 
-    reference_ids_by_view: dict[str, list[str]] = {}
-    generic_reference_ids: list[str] = []
     all_reference_ids = [reference.reference_id for reference in reference_records]
-    for reference in reference_records:
-        view_id = _reference_view_id(reference)
-        if view_id is None:
-            generic_reference_ids.append(reference.reference_id)
-            continue
-        reference_ids_by_view.setdefault(view_id, []).append(reference.reference_id)
 
     normalized_target_view = _normalize_view_token(target_view)
     capture_views = _ordered_views(capture_labels_by_view)
@@ -431,9 +454,10 @@ def build_compare_packets(
             )
             packet_reference_ids = _packet_reference_ids(
                 view_id=view_id,
-                reference_ids_by_view=reference_ids_by_view,
-                generic_reference_ids=generic_reference_ids,
-                all_reference_ids=all_reference_ids,
+                packet_target_objects=list(assembled_target_scope.object_names or [])
+                if assembled_target_scope is not None
+                else [],
+                reference_records=reference_records,
             )
             packets.append(
                 ReferenceComparePacketContract(
@@ -473,9 +497,8 @@ def build_compare_packets(
                     )
                     packet_reference_ids = _packet_reference_ids(
                         view_id=view_id,
-                        reference_ids_by_view=reference_ids_by_view,
-                        generic_reference_ids=generic_reference_ids,
-                        all_reference_ids=all_reference_ids,
+                        packet_target_objects=cluster.target_objects,
+                        reference_records=reference_records,
                     )
                     packets.append(
                         ReferenceComparePacketContract(
@@ -507,9 +530,10 @@ def build_compare_packets(
                 )
                 packet_reference_ids = _packet_reference_ids(
                     view_id=view_id,
-                    reference_ids_by_view=reference_ids_by_view,
-                    generic_reference_ids=generic_reference_ids,
-                    all_reference_ids=all_reference_ids,
+                    packet_target_objects=list(assembled_target_scope.object_names or [])
+                    if assembled_target_scope is not None
+                    else [],
+                    reference_records=reference_records,
                 )
                 packets.append(
                     ReferenceComparePacketContract(

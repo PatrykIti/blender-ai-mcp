@@ -68,7 +68,6 @@
 - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
-- `tests/unit/router/application/test_router_contracts.py`
 - compare-time sidecar availability / staged-contract projection tests
 - `tests/e2e/integration/test_guided_gate_state_transport.py` when optional
   sidecar surfacing changes client-visible staged compare / iterate payloads
@@ -101,7 +100,6 @@
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
-- `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
 - `poetry run pytest ./tests/unit`
 - `poetry run python scripts/run_e2e_tests.py`

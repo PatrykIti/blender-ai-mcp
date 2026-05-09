@@ -1,9 +1,21 @@
 # TASK-166-02-01: Deterministic Preflight And Narrow Question Contracts
 
 **Parent:** [TASK-166-02](./TASK-166-02_Truth_First_Two_Pass_Compare_Execution.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Objective:** Define the deterministic preflight and narrow packet question contract that sits in front of staged packet compare LLM calls.
+
+## Completion Summary
+
+- packet compare requests now carry packet-local question text, packet id,
+  packet label, packet view/scope, selected reference ids, selected capture
+  labels, and deterministic truth slices before the bounded vision call runs
+- packet guidance is now typed through `VisionAssistContract.packet_guidance`
+  and projected back into staged `compare_diagnostics` instead of inferring
+  packet state from loose mismatch lists
+- staged compare now handles missing packet-local captures and missing
+  packet-local reference slices before any assistant call, surfacing explicit
+  `low_information` and `blocked` packet states
 
 ## Repository Touchpoints
 
@@ -13,6 +25,7 @@
 - `server/adapters/mcp/vision/prompting.py`
 - `server/adapters/mcp/vision/parsing.py`
 - `server/adapters/mcp/vision/runner.py`
+- `server/application/services/reference_compare_packets.py`
 
 ## Implementation Notes
 
@@ -49,6 +62,7 @@
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_compare_packets.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_parsing.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_result_types.py -q`
@@ -60,6 +74,7 @@
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_reference_compare_packets.py`
 - `tests/unit/adapters/mcp/test_vision_prompting.py`
 - `tests/unit/adapters/mcp/test_vision_parsing.py`
 - `tests/unit/adapters/mcp/test_vision_result_types.py`

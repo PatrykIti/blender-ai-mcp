@@ -1,9 +1,21 @@
 # TASK-166-01-03: Multi-Reference Packet Synthesis
 
 **Parent:** [TASK-166-01](./TASK-166-01_View_And_Scope_Packet_Compare_Family.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Objective:** Merge packet-level compare results into one short synthesis summary that generic LLM operators can read without replaying every packet transcript.
+
+## Completion Summary
+
+- packeted staged compare now synthesizes successful packet outputs back into
+  one compact `VisionAssistContract` result instead of forcing callers to
+  inspect each packet separately
+- additive `compare_diagnostics` now surface packet order, synthesis
+  requirement/status, packet-local evidence summaries, and uncertainty notes on
+  the existing staged compare / iterate contracts
+- compact `reference_orchestrator_feedback` now projects synthesized packet
+  rationale and uncertainty without exposing raw packet internals as the main
+  orchestration seam
 
 ## Repository Touchpoints
 
@@ -11,9 +23,10 @@
 - `server/adapters/mcp/areas/reference_planner.py`
 - `server/adapters/mcp/areas/reference_feedback.py`
 - `server/adapters/mcp/contracts/reference.py`
+- `server/application/services/reference_compare_packets.py`
+- `tests/unit/adapters/mcp/test_reference_compare_packets.py`
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
-- `tests/unit/router/application/test_router_contracts.py`
 
 ## Implementation Notes
 
@@ -39,9 +52,9 @@
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_reference_compare_packets.py`
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
-- `tests/unit/router/application/test_router_contracts.py`
 - packet-synthesis unit coverage for provenance retention and conflict
   projection
 - `tests/e2e/integration/test_guided_gate_state_transport.py` when synthesis
@@ -68,9 +81,9 @@
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_compare_packets.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
-- `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
 - `poetry run pytest ./tests/unit`
 - `poetry run python scripts/run_e2e_tests.py`
