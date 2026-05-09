@@ -25,7 +25,7 @@
 - `server/adapters/mcp/vision/prompting.py`
 - `server/adapters/mcp/vision/parsing.py`
 - `server/adapters/mcp/vision/runner.py`
-- `server/application/services/reference_compare_packets.py`
+- `server/adapters/mcp/areas/reference_compare_packets.py`
 
 ## Implementation Notes
 

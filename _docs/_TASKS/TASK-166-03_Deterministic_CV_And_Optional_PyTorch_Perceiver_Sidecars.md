@@ -24,8 +24,8 @@
 - `server/adapters/mcp/vision/config.py`
 - `server/adapters/mcp/vision/runtime.py`
 - `server/adapters/mcp/areas/reference.py`
+- `server/adapters/mcp/areas/reference_compare_packets.py`
 - `server/adapters/mcp/contracts/reference.py`
-- `server/application/services/`
 - `server/infrastructure/config.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_vision_silhouette.py`
@@ -47,20 +47,21 @@
   family before the LLM compare question is assembled.
 - Optional PyTorch sidecars may reuse shared adapter/config patterns from
   `server/adapters/mcp/vision/reference_support.py` when justified, but the
-  current repo entrypoint there is still RU augmentation and must not be
+  current repo entrypoint there remains RU augmentation and must not be
   mistaken for the durable compare-time packet-evidence owner.
-- Compare-time sidecar execution/projection should default to a staged
-  compare-specific helper/service seam plus staged response projection; reuse
-  RU-side helpers or config only when they are deliberately generalized for
-  compare-time work.
+- Compare-time sidecar execution/projection now defaults to the staged
+  compare-specific helper seam in
+  `server/adapters/mcp/areas/reference_compare_packets.py` plus staged
+  response projection; reuse RU-side helpers or config only when they are
+  deliberately generalized for compare-time work.
 - Packet compare should consume these pre-chewed facts so the LLM is asked
   narrower questions rather than raw broad image interpretation.
 - Compare-time evidence should extend the staged compare contracts without
   overloading RU-only fields or duplicating `silhouette_analysis` /
   `part_segmentation` as a parallel evidence channel.
-- If a compare-time sidecar execution seam becomes non-trivial, give it a
-  staged-compare-specific helper/service owner instead of silently collapsing it
-  back into RU-specific support code.
+- If a compare-time sidecar execution seam grows further, keep it on the
+  staged-compare-specific helper owner instead of silently collapsing it back
+  into RU-specific support code.
 
 ## Pseudocode
 

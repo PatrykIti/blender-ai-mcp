@@ -8,7 +8,7 @@
 ## Completion Summary
 
 - staged compare now builds deterministic view-first and scope-first packet
-  plans through `server/application/services/reference_compare_packets.py`
+  plans through `server/adapters/mcp/areas/reference_compare_packets.py`
   instead of keeping that policy inline inside the MCP tool wrapper
 - simple compare runs now emit explicit per-view packets, while assembled
   multi-part runs expand semantic scope clusters such as `Body + Head`, `Tail`,
@@ -24,7 +24,7 @@
 - `server/adapters/mcp/areas/reference.py`
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/areas/reference_planner.py`
-- `server/application/services/`
+- `server/adapters/mcp/areas/reference_compare_packets.py`
 - `server/adapters/mcp/vision/capture_runtime.py`
 - `server/adapters/mcp/vision/capture.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`

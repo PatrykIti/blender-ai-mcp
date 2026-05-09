@@ -5,6 +5,7 @@ E2E tests for scene_get_viewport in real Blender.
 from __future__ import annotations
 
 import base64
+import math
 
 import pytest
 from server.application.tool_handlers.scene_handler import SceneToolHandler
@@ -32,6 +33,7 @@ def test_scene_get_viewport_user_view_adjustment_restores_default_view(scene_han
     """Adjusted USER_PERSPECTIVE capture should restore the prior user view by default."""
 
     try:
+        before_state = scene_handler.get_view_state()
         first = scene_handler.get_viewport(
             width=320,
             height=240,
@@ -51,11 +53,24 @@ def test_scene_get_viewport_user_view_adjustment_restores_default_view(scene_han
             shading="SOLID",
             camera_name="USER_PERSPECTIVE",
         )
+        after_state = scene_handler.get_view_state()
 
         assert first
         assert adjusted
-        assert third
         assert adjusted != first
-        assert third == first
+        assert third
+        assert after_state.get("available") is True
+        assert after_state.get("view_perspective") == before_state.get("view_perspective")
+        assert math.isclose(
+            float(after_state["view_distance"]), float(before_state["view_distance"]), rel_tol=0.0, abs_tol=1e-6
+        )
+        assert all(
+            math.isclose(float(current), float(previous), rel_tol=0.0, abs_tol=1e-6)
+            for current, previous in zip(after_state["view_location"], before_state["view_location"], strict=True)
+        )
+        assert all(
+            math.isclose(float(current), float(previous), rel_tol=0.0, abs_tol=1e-6)
+            for current, previous in zip(after_state["view_rotation"], before_state["view_rotation"], strict=True)
+        )
     except RuntimeError as e:
         pytest.skip(f"Blender not available: {e}")

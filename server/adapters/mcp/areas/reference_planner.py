@@ -10,6 +10,15 @@ import re
 from collections.abc import Sequence
 from typing import Any, Literal, cast
 
+from server.adapters.mcp.areas.reference_compare_packets import (
+    build_compare_packets as _service_build_compare_packets,
+)
+from server.adapters.mcp.areas.reference_compare_packets import (
+    resolve_compare_complexity_tier as _service_resolve_compare_complexity_tier,
+)
+from server.adapters.mcp.areas.reference_compare_packets import (
+    synthesize_packet_vision_result as _service_synthesize_packet_vision_result,
+)
 from server.adapters.mcp.areas.reference_truth import dedupe_names, pair_label
 from server.adapters.mcp.contracts.reference import (
     ReferenceCompareComplexityTierLiteral,
@@ -41,15 +50,6 @@ from server.adapters.mcp.sampling.result_types import (
     VisionAssistContract,
 )
 from server.adapters.mcp.vision.runner import VISION_ASSIST_POLICY
-from server.application.services.reference_compare_packets import (
-    build_compare_packets as _service_build_compare_packets,
-)
-from server.application.services.reference_compare_packets import (
-    resolve_compare_complexity_tier as _service_resolve_compare_complexity_tier,
-)
-from server.application.services.reference_compare_packets import (
-    synthesize_packet_vision_result as _service_synthesize_packet_vision_result,
-)
 
 LOW_POLY_HINTS: tuple[str, ...] = ("low poly", "low-poly", "blockout")
 HARD_SURFACE_HINTS: tuple[str, ...] = (

@@ -24,10 +24,10 @@
 - `server/adapters/mcp/areas/reference.py`
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/vision/reference_support.py`
+- `server/adapters/mcp/areas/reference_compare_packets.py`
 - `server/adapters/mcp/vision/config.py`
 - `server/adapters/mcp/vision/runtime.py`
 - `server/infrastructure/config.py`
-- `server/application/services/`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
 - `_docs/_VISION/README.md`
@@ -44,12 +44,13 @@
   `reference_understanding` bootstrap path from `TASK-163`; this leaf only
   covers compare-time packet-local advisory usage when enabled.
 - Reuse of `server/adapters/mcp/vision/reference_support.py` is optional and
-  shared-adapter-oriented; it must not make compare-time packet evidence look
+  shared-adapter-oriented; compare-time packet evidence now lives on
+  `server/adapters/mcp/areas/reference_compare_packets.py` so it does not look
   like an attach-time RU concern or collapse staged compare execution back into
   the RU pipeline.
-- If compare-time sidecar execution grows beyond a light adapter call, move it
-  into a staged compare-specific helper/service seam and keep RU support code as
-  optional shared infrastructure rather than the default execution owner.
+- If compare-time sidecar execution grows beyond the current helper, keep it on
+  the staged compare-specific owner seam and leave RU support code as optional
+  shared infrastructure rather than the default execution owner.
 - Because the compare-time sidecars must surface through staged compare
   responses, any emitted sidecar artifacts or availability state still route
   through `server/adapters/mcp/areas/reference.py` and the public staged

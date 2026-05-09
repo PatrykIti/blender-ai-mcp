@@ -8,8 +8,8 @@ Date: 2026-05-08
   `reference_iterate_stage_checkpoint(...)` packet execution so the optional
   segmentation sidecar can now run as bounded advisory-only compare support
   instead of surfacing only a disabled/unavailable placeholder
-- generalized `server/adapters/mcp/vision/reference_support.py` with one
-  compare-time segmentation collection/merge path that:
+- added one staged-compare-owned segmentation collection/merge path under
+  `server/adapters/mcp/areas/reference_compare_packets.py` that:
   - accepts packet-local references and captures
   - normalizes sidecar `parts` payloads into the existing
     `ReferencePartSegmentationContract`

@@ -23,7 +23,7 @@
 - `server/adapters/mcp/areas/reference_planner.py`
 - `server/adapters/mcp/areas/reference_feedback.py`
 - `server/adapters/mcp/contracts/reference.py`
-- `server/application/services/reference_compare_packets.py`
+- `server/adapters/mcp/areas/reference_compare_packets.py`
 - `tests/unit/adapters/mcp/test_reference_compare_packets.py`
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`

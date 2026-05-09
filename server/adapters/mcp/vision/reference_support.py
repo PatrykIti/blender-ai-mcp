@@ -14,15 +14,11 @@ import httpx
 
 from server.adapters.mcp.contracts.quality_gates import GateSourceProvenanceContract
 from server.adapters.mcp.contracts.reference import (
-    ReferencePartSegmentationContract,
-    ReferencePartSegmentationLandmarkContract,
-    ReferencePartSegmentationPartContract,
     ReferenceUnderstandingClassificationScoreContract,
     ReferenceUnderstandingSegmentationArtifactContract,
     ReferenceUnderstandingSummaryContract,
     ReferenceUnderstandingVisualEvidenceRefContract,
 )
-from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
 
 from . import OpenAICompatibleVisionBackend
 from .backend import VisionImageInput, VisionRequest
@@ -59,13 +55,6 @@ def _bounded_text(value: Any, *, fallback: str | None = None) -> str | None:
     text = str(value).strip() if value is not None else ""
     if not text:
         return fallback
-    return text[:240]
-
-
-def _bounded_path(value: Any) -> str | None:
-    text = str(value or "").strip()
-    if not text:
-        return None
     return text[:240]
 
 
@@ -151,63 +140,6 @@ def _build_support_request_payload(
                 else summary.construction_strategy.model_dump(mode="json", exclude_none=True)
             ),
         },
-    }
-
-
-def _build_compare_segmentation_request_payload(
-    *,
-    goal: str | None,
-    packet_id: str,
-    packet_label: str,
-    target_view: str | None,
-    scope_label: str | None,
-    target_objects: Sequence[str],
-    reference_records: Sequence[Any],
-    captures: Sequence[VisionCaptureImageContract],
-) -> dict[str, Any]:
-    references: list[dict[str, Any]] = []
-    for record in reference_records:
-        reference_id = str(getattr(record, "reference_id", "") or "").strip()
-        image_path = (
-            str(getattr(record, "stored_path", "") or "").strip()
-            or str(getattr(record, "host_visible_path", "") or "").strip()
-            or str(getattr(record, "original_path", "") or "").strip()
-        )
-        if not reference_id or not image_path:
-            continue
-        references.append(
-            {
-                "reference_id": reference_id,
-                "label": str(getattr(record, "label", "") or "").strip() or None,
-                "target_view": str(getattr(record, "target_view", "") or "").strip() or None,
-                "media_type": str(getattr(record, "media_type", "") or "").strip() or None,
-                "image_path": image_path,
-            }
-        )
-
-    capture_payload = [
-        {
-            "label": capture.label,
-            "preset_name": capture.preset_name,
-            "view_kind": capture.view_kind,
-            "image_path": capture.image_path,
-            "media_type": capture.media_type,
-        }
-        for capture in captures
-        if str(capture.image_path or "").strip()
-    ]
-
-    return {
-        "goal": goal,
-        "packet": {
-            "packet_id": packet_id,
-            "packet_label": packet_label,
-            "target_view": target_view,
-            "scope_label": scope_label,
-            "target_objects": list(target_objects),
-        },
-        "references": references,
-        "captures": capture_payload,
     }
 
 
@@ -412,63 +344,6 @@ def _normalize_segmentation_artifacts_payload(
     return _merge_segmentation_artifacts([], items, limit=max_artifacts)[:max_artifacts]
 
 
-def _normalize_part_segmentation_landmarks(
-    raw_landmarks: Any,
-) -> list[ReferencePartSegmentationLandmarkContract]:
-    if not isinstance(raw_landmarks, list):
-        return []
-
-    landmarks: list[ReferencePartSegmentationLandmarkContract] = []
-    for index, raw_item in enumerate(raw_landmarks, start=1):
-        if not isinstance(raw_item, dict):
-            continue
-        x = raw_item.get("x")
-        y = raw_item.get("y")
-        if not isinstance(x, (int, float)) or not isinstance(y, (int, float)):
-            continue
-        landmark_id = _bounded_text(raw_item.get("landmark_id"), fallback=f"landmark_{index}") or f"landmark_{index}"
-        landmarks.append(
-            ReferencePartSegmentationLandmarkContract(
-                landmark_id=landmark_id,
-                x=float(x),
-                y=float(y),
-            )
-        )
-    return landmarks[:16]
-
-
-def _normalize_compare_part_segmentation_payload(
-    payload: dict[str, Any],
-    *,
-    max_parts: int,
-) -> list[ReferencePartSegmentationPartContract]:
-    value = payload.get("parts")
-    if not isinstance(value, list):
-        return []
-
-    parts: list[ReferencePartSegmentationPartContract] = []
-    for index, raw_item in enumerate(value, start=1):
-        if not isinstance(raw_item, dict):
-            continue
-        part_label = _bounded_text(raw_item.get("part_label"), fallback=f"part_{index}")
-        if not part_label:
-            continue
-        confidence = raw_item.get("confidence")
-        normalized_confidence = float(confidence) if isinstance(confidence, (int, float)) else None
-        if normalized_confidence is not None and not 0.0 <= normalized_confidence <= 1.0:
-            normalized_confidence = None
-        parts.append(
-            ReferencePartSegmentationPartContract(
-                part_label=part_label,
-                mask_path=_bounded_path(raw_item.get("mask_path")),
-                crop_path=_bounded_path(raw_item.get("crop_path")),
-                confidence=normalized_confidence,
-                landmarks=_normalize_part_segmentation_landmarks(raw_item.get("landmarks")),
-            )
-        )
-    return parts[:max_parts]
-
-
 async def _collect_classifier_support(
     *,
     config: VisionReferenceClassifierConfig | None,
@@ -614,126 +489,6 @@ async def _collect_segmentation_support(
         summary=summary_text,
     )
     return artifacts, evidence_refs, provenance
-
-
-def merge_compare_time_part_segmentation(
-    existing: ReferencePartSegmentationContract | None,
-    incoming: ReferencePartSegmentationContract | None,
-) -> ReferencePartSegmentationContract | None:
-    """Merge packet-local segmentation results into one staged compare payload."""
-
-    if incoming is None:
-        return existing
-    if existing is None:
-        return incoming
-
-    merged_parts: dict[tuple[str, str | None, str | None], ReferencePartSegmentationPartContract] = {}
-    for item in [*list(existing.parts or []), *list(incoming.parts or [])]:
-        key = (item.part_label.strip().lower(), item.mask_path, item.crop_path)
-        if key not in merged_parts:
-            merged_parts[key] = item
-
-    merged_notes = _dedupe_strings([*list(existing.notes or []), *list(incoming.notes or [])])[:8]
-    merged_status: Literal["disabled", "available", "unavailable"]
-    if existing.status == "available" or incoming.status == "available":
-        merged_status = "available"
-    elif existing.status == "disabled" and incoming.status == "disabled":
-        merged_status = "disabled"
-    else:
-        merged_status = "unavailable"
-
-    return ReferencePartSegmentationContract(
-        status=merged_status,
-        provider_name=incoming.provider_name or existing.provider_name,
-        advisory_only=True,
-        parts=list(merged_parts.values())[:16],
-        notes=merged_notes,
-    )
-
-
-async def collect_compare_time_segmentation_support(
-    *,
-    config: VisionSegmentationSidecarConfig | None,
-    goal: str | None,
-    packet_id: str,
-    packet_label: str,
-    target_view: str | None,
-    scope_label: str | None,
-    target_objects: Sequence[str],
-    reference_records: Sequence[Any],
-    captures: Sequence[VisionCaptureImageContract],
-) -> ReferencePartSegmentationContract | None:
-    """Run the optional advisory-only segmentation sidecar for one compare packet."""
-
-    if config is None or not bool(getattr(config, "enabled", False)) or not getattr(config, "endpoint", None):
-        return None
-
-    payload = _build_compare_segmentation_request_payload(
-        goal=goal,
-        packet_id=packet_id,
-        packet_label=packet_label,
-        target_view=target_view,
-        scope_label=scope_label,
-        target_objects=target_objects,
-        reference_records=reference_records,
-        captures=captures,
-    )
-    if not payload["references"] or not payload["captures"]:
-        return ReferencePartSegmentationContract(
-            status="unavailable",
-            provider_name=config.provider_name,
-            advisory_only=True,
-            parts=[],
-            notes=[
-                "No bounded packet-local reference/capture slice was available for optional part segmentation.",
-                "The sidecar path is advisory-only and separate from vision_contract_profile routing.",
-            ],
-        )
-
-    try:
-        response_payload = await _post_sidecar_payload(
-            endpoint=str(getattr(config, "endpoint")),
-            timeout_seconds=float(getattr(config, "timeout_seconds", 15.0)),
-            api_key=_resolve_api_key(
-                inline_key=getattr(config, "api_key", None),
-                env_name=getattr(config, "api_key_env", None),
-            ),
-            payload=payload,
-        )
-        parts = _normalize_compare_part_segmentation_payload(
-            response_payload,
-            max_parts=int(getattr(config, "max_parts", 16)),
-        )
-    except Exception as exc:
-        return ReferencePartSegmentationContract(
-            status="unavailable",
-            provider_name=getattr(config, "provider_name", None),
-            advisory_only=True,
-            parts=[],
-            notes=[
-                _bounded_text(
-                    _redact_local_paths(f"Optional compare-time part segmentation unavailable: {exc}"),
-                    fallback="Optional compare-time part segmentation unavailable.",
-                )
-                or "Optional compare-time part segmentation unavailable.",
-                "The sidecar path is advisory-only and separate from vision_contract_profile routing.",
-            ],
-        )
-
-    if parts:
-        summary_note = f"Optional part segmentation sidecar returned {len(parts)} bounded part(s) for compare support."
-    else:
-        summary_note = "Optional part segmentation sidecar returned no bounded parts for compare support."
-    return ReferencePartSegmentationContract(
-        status="available",
-        provider_name=getattr(config, "provider_name", None),
-        advisory_only=True,
-        parts=parts,
-        notes=[
-            summary_note,
-            "The sidecar path is advisory-only and separate from vision_contract_profile routing.",
-        ],
-    )
 
 
 async def augment_reference_understanding_optional_support(

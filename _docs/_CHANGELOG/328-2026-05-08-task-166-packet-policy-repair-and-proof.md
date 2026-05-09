@@ -4,10 +4,12 @@ Date: 2026-05-08
 
 ## Summary
 
-- moved durable TASK-166 packet-planning / packet-synthesis policy into
-  `server/application/services/reference_compare_packets.py` so view/scope
+- moved durable TASK-166 packet-planning / packet-synthesis policy into the
+  staged-compare helper seam now located at
+  `server/adapters/mcp/areas/reference_compare_packets.py` so view/scope
   decomposition, phase-result merging, diagnostics emission, and synthesized
-  input-summary policy are no longer concentrated only inside the MCP adapter
+  input-summary policy are no longer concentrated only inside
+  `server/adapters/mcp/areas/reference.py`
 - repaired simple-tier view-first behavior:
   - front + side staged captures now emit explicit per-view packets
   - reference-only views no longer create mixed front+side packets when the
@@ -46,7 +48,7 @@ Date: 2026-05-08
 ## Validation
 
 - `git diff --check`
-- `poetry run mypy server/application/services/reference_compare_packets.py server/adapters/mcp/contracts/reference.py server/adapters/mcp/areas/reference_silhouette.py server/adapters/mcp/areas/reference_planner.py server/adapters/mcp/areas/reference.py server/adapters/mcp/vision/parsing.py`
+- `poetry run mypy server/adapters/mcp/areas/reference_compare_packets.py server/adapters/mcp/contracts/reference.py server/adapters/mcp/areas/reference_silhouette.py server/adapters/mcp/areas/reference_planner.py server/adapters/mcp/areas/reference.py server/adapters/mcp/vision/parsing.py`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_compare_packets.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_vision_parsing.py tests/unit/adapters/mcp/test_vision_silhouette.py tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py tests/e2e/vision/test_reference_stage_silhouette_contract.py -q`
 - `poetry run pytest ./tests/unit`

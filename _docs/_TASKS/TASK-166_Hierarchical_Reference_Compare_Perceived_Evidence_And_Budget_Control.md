@@ -205,9 +205,10 @@ But internally the path becomes:
 - Deterministic CV and optional PyTorch sidecars slot in **between** truth
   preflight and the narrow packet LLM question.
 - Compare-time sidecar execution/projection should stay a staged compare seam
-  owned by packet compare helpers/services plus staged response projection; do
-  not treat the RU-specific `server/adapters/mcp/vision/reference_support.py`
-  module as the default durable owner for packet-evidence execution.
+  owned by `server/adapters/mcp/areas/reference_compare_packets.py` plus staged
+  response projection; do not treat the RU-specific
+  `server/adapters/mcp/vision/reference_support.py` module as the default
+  durable owner for packet-evidence execution.
 - Two-pass compare splits the current monolithic `run_vision_assist(...)` usage
   into:
   - packet extraction first
@@ -224,9 +225,10 @@ But internally the path becomes:
 - Any new `compare_diagnostics` or typed packet evidence must extend the
   existing staged compare/iterate contracts and feed the existing compact
   `reference_orchestrator_feedback` projection instead of bypassing it.
-- Once packet planning, packet execution, or synthesis policy grows beyond light
-  staging glue, move it into an explicit `server/application/services/` seam
-  and keep `server/adapters/mcp/areas/reference.py` limited to staged compare
+- Keep packet planning, packet execution, and synthesis policy in dedicated
+  staged-compare helper seams such as
+  `server/adapters/mcp/areas/reference_compare_packets.py`, and keep
+  `server/adapters/mcp/areas/reference.py` limited to staged compare
   orchestration and public-response projection.
 
 ### Multi-Reference Guidance
@@ -252,11 +254,11 @@ without requiring one massive all-images compare request.
 | Event | What Runs | Primary Owner Seams | Outputs Carried Forward | Boundary Role |
 |------|------|------|------|------|
 | `reference_images(action="attach", ...)` | Existing reference-understanding bootstrap plus optional RU support adapters | `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_images_runtime.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/vision/reference_support.py` | `reference_understanding_summary`, `reference_strategy_state`, optional classifier / segmentation RU evidence | support-only bootstrap context; not staged compare truth authority |
-| `reference_compare_stage_checkpoint(...)` | deterministic compare-plan build from guided state, scope, references, and active blockers | `server/adapters/mcp/areas/reference.py` for staged orchestration, `server/application/services/` for durable packet policy, `server/adapters/mcp/areas/reference_planner.py` for staged projection/budget shaping | packet order, packet-local view/scope selection, staged response scaffolding | server-owned deterministic planning |
+| `reference_compare_stage_checkpoint(...)` | deterministic compare-plan build from guided state, scope, references, and active blockers | `server/adapters/mcp/areas/reference.py` for staged orchestration, `server/adapters/mcp/areas/reference_compare_packets.py` for durable packet policy/execution, `server/adapters/mcp/areas/reference_planner.py` for staged projection/budget shaping | packet order, packet-local view/scope selection, staged response scaffolding | server-owned deterministic planning |
 | per-packet preflight | packet-local truth slice and visibility framing | `scene_scope_graph`, `scene_relation_graph`, `scene_view_diagnostics`, `server/adapters/mcp/areas/reference_truth.py`, `server/adapters/mcp/areas/reference_view_diagnostics.py`, `server/adapters/mcp/vision/capture_runtime.py`, `server/adapters/mcp/vision/capture.py` | packet-local truth inputs, selected captures/references, view ambiguity hints | deterministic truth owner |
-| per-packet support evidence | always-on deterministic CV plus optional advisory-only sidecars when policy allows | `server/adapters/mcp/areas/reference_silhouette.py`, `server/adapters/mcp/vision/silhouette.py`, `server/adapters/mcp/areas/reference.py`, `server/application/services/`, and only optional shared adapters/config borrowed from `server/adapters/mcp/vision/reference_support.py` when that RU seam is deliberately generalized | compact CV metrics, optional advisory artifacts, packet-local evidence refs | deterministic support evidence plus advisory-only sidecars; never sole correctness authority |
+| per-packet support evidence | always-on deterministic CV plus optional advisory-only sidecars when policy allows | `server/adapters/mcp/areas/reference_silhouette.py`, `server/adapters/mcp/vision/silhouette.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, and only optional shared adapters/config borrowed from `server/adapters/mcp/vision/reference_support.py` when that RU seam is deliberately generalized | compact CV metrics, optional advisory artifacts, packet-local evidence refs | deterministic support evidence plus advisory-only sidecars; never sole correctness authority |
 | per-packet pass 1 | narrow VLM extraction for one packet | `server/adapters/mcp/vision/runner.py`, `server/adapters/mcp/vision/prompting.py`, `server/adapters/mcp/vision/parsing.py` | bounded extraction findings, packet status | bounded visual support on top of truth inputs |
-| per-packet pass 2 | ranking and synthesis only when extraction warrants it | `server/adapters/mcp/areas/reference.py` for staged orchestration, `server/application/services/` for ranking/synthesis policy, `server/adapters/mcp/areas/reference_planner.py` for staged projection, `server/adapters/mcp/vision/runner.py` for bounded assistant execution | ranked packet guidance, packet conflict notes, synthesis inputs | derived compare guidance, not a second truth source |
+| per-packet pass 2 | ranking and synthesis only when extraction warrants it | `server/adapters/mcp/areas/reference.py` for staged orchestration, `server/adapters/mcp/areas/reference_compare_packets.py` for ranking/synthesis policy, `server/adapters/mcp/areas/reference_planner.py` for staged projection, `server/adapters/mcp/vision/runner.py` for bounded assistant execution | ranked packet guidance, packet conflict notes, synthesis inputs | derived compare guidance, not a second truth source |
 | staged compare projection | project packet synthesis onto the existing staged compare contract | `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/areas/reference_feedback.py` | `truth_followup`, `correction_candidates`, `planner_summary`, `budget_control`, `reference_orchestrator_feedback`, additive `compare_diagnostics` when needed | existing public response family; no second flow |
 | `reference_iterate_stage_checkpoint(...)` | consume staged compare output and advance or hold the loop | `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_feedback.py` | `correction_focus`, `loop_disposition`, updated `reference_orchestrator_feedback`, optional compacted nested compare payload | existing iterative loop owner consuming packet synthesis rather than raw packet internals |
 
@@ -294,8 +296,8 @@ without requiring one massive all-images compare request.
 | `server/adapters/mcp/vision/prompting.py`, `server/adapters/mcp/vision/parsing.py` | Narrow compare prompt/schema/parser contract | Packet extraction and ranking split changes live here, not only in the runner transport layer |
 | `server/adapters/mcp/vision/runner.py` | Bounded `vision_assist` transport and budget enforcement | Current fixed `max_input_chars=12000` lives here, but the runner should not become the only owner of compare-time prompt/schema changes |
 | `server/adapters/mcp/vision/runtime.py`, `server/adapters/mcp/vision/config.py`, `server/adapters/mcp/vision/backends.py` | Runtime/provider config | Own provider/model budgets and request assembly |
-| `server/adapters/mcp/vision/reference_support.py` | RU support and optional shared sidecar adapter/config seam | Existing RU support owner that compare-time sidecars may borrow from deliberately, but it is not the default durable owner for staged packet-evidence execution or operator-facing compare-time config |
-| `server/application/services/` | Framework-free compare policy | Non-trivial packet planning, packet execution ordering, and synthesis policy should live outside the FastMCP tool wrapper so `server/adapters/mcp/areas/reference.py` stays orchestration-only |
+| `server/adapters/mcp/vision/reference_support.py` | RU support and optional shared sidecar adapter/config seam | Existing RU support owner for attach-time optional support; compare-time sidecars may borrow only shared infrastructure from here, but staged packet-evidence execution should stay elsewhere |
+| `server/adapters/mcp/areas/reference_compare_packets.py` | Staged packet policy and compare-time execution | Non-trivial packet planning, packet execution ordering, compare-time sidecar support, and synthesis policy live here so `server/adapters/mcp/areas/reference.py` stays orchestration-only |
 | `tests/unit/adapters/mcp/test_reference_images.py` | Compare/iterate owner lane | Most compare payload/budget logic already lives here |
 | `tests/e2e/vision/`, `tests/e2e/integration/` | Runtime proof lanes | Need multi-view and multi-reference runtime proof |
 | `README.md`, `_docs/AVAILABLE_TOOLS_SUMMARY.md`, `_docs/_VISION/README.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`, `_docs/_TESTS/README.md`, `_docs/_TASKS/README.md` | Canonical docs and board state | Must reflect the new compare architecture, public tool surface, validation map, operator knobs, and operator-facing client/runtime config examples |
@@ -396,7 +398,7 @@ without requiring one massive all-images compare request.
 - 2026-05-08: follow-up repair pass tightened the shipped packet/runtime
   contract:
   - packet planning now runs through
-    `server/application/services/reference_compare_packets.py`, so durable
+    `server/adapters/mcp/areas/reference_compare_packets.py`, so durable
     view/scope policy and synthesis/merge rules are no longer concentrated only
     inside the MCP adapter layer
   - simple runs now emit explicit per-view packets, and complex runs now keep

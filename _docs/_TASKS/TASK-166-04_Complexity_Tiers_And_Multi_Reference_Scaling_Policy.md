@@ -10,7 +10,7 @@
 - `server/adapters/mcp/areas/reference.py`
 - `server/adapters/mcp/areas/reference_planner.py`
 - `server/adapters/mcp/contracts/reference.py`
-- `server/application/services/`
+- `server/adapters/mcp/areas/reference_compare_packets.py`
 - `server/adapters/mcp/vision/config.py`
 - `server/adapters/mcp/vision/runner.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
@@ -23,8 +23,8 @@
   - packet size
   - synthesis strategy
   - optional sidecar usage threshold
-- Tier resolution and packet-policy selection should live in a dedicated helper
-  or application-service seam once the policy stops being trivial; do not let
+- Tier resolution and packet-policy selection should live in a dedicated
+  staged-compare helper seam once the policy stops being trivial; do not let
   `reference_compare_stage_checkpoint(...)` absorb the long-term policy matrix.
 - Packet scheduling for 6-12 image runs must stay within `runtime.max_images`
   from `server/adapters/mcp/vision/config.py` /

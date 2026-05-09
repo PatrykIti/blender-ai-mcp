@@ -6463,7 +6463,7 @@ def test_reference_compare_stage_checkpoint_projects_compare_time_segmentation_s
     monkeypatch.setattr("server.infrastructure.di.get_vision_backend_resolver", lambda: resolver)
     monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
     monkeypatch.setattr(
-        "server.adapters.mcp.vision.reference_support.httpx.AsyncClient",
+        "server.adapters.mcp.areas.reference_compare_packets.httpx.AsyncClient",
         lambda timeout=None: _FakeSupportAsyncClient(responses=responses, captured=[]),
     )
     monkeypatch.setattr(
