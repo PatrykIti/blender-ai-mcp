@@ -94,10 +94,54 @@ def test_gate_proposal_intake_persists_normalized_plan_for_active_goal():
     assert result.status == "accepted"
     assert restored.gate_plan is not None
     assert restored.gate_plan["domain_profile"] == "creature"
-    eye_gate = next(gate for gate in restored.gate_plan["gates"] if gate.get("target_label") == "eye_pair")
+    eye_gate = next(
+        gate
+        for gate in restored.gate_plan["gates"]
+        if gate.get("target_label") == "eye_pair" and gate.get("gate_type") == "symmetry_pair"
+    )
     assert eye_gate["gate_type"] == "symmetry_pair"
     assert eye_gate["status"] == "pending"
     assert restored.gate_plan["policy_warnings"][0]["code"] == "unsupported_completion_status"
+
+
+def test_gate_proposal_intake_adds_creature_required_visual_role_templates():
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel",
+            surface_profile="llm-guided",
+            guided_flow_state=_guided_flow_state(),
+        ),
+    )
+
+    result = ingest_quality_gate_proposal(
+        ctx,
+        {
+            "proposal_id": "squirrel-gates",
+            "source": "llm_goal",
+            "gates": [],
+        },
+    )
+
+    assert result.status == "accepted"
+    assert result.gate_plan is not None
+    required_labels = {gate.target_label for gate in result.gate_plan.gates if gate.gate_type == "required_part"}
+    assert {
+        "body_core",
+        "head_mass",
+        "tail_mass",
+        "snout_mass",
+        "ear_pair",
+        "eye_pair",
+        "foreleg_pair",
+        "hindleg_pair",
+    }.issubset(required_labels)
+
+    eye_gate = next(gate for gate in result.gate_plan.gates if gate.target_label == "eye_pair")
+    assert eye_gate.target_kind == "reference_part"
+    assert eye_gate.proposal_sources == ["domain_template"]
 
 
 def test_gate_proposal_intake_rejects_unknown_payload_fields():

@@ -151,6 +151,13 @@ The repo now has the first implementation scaffolding for the vision layer:
   - attachment verdict such as `seated_contact`, `floating_gap`,
     `intersecting`, or `misaligned_attachment`
   - the preferred bounded repair family for that seam
+- creature completion gates now include repo-owned required visual roles for
+  body, head, tail, snout, ears, eyes, forelegs, and hindlegs. `eye_pair`
+  remains gate-only in this slice, while existing guided role vocabulary keeps
+  owning ears and limb pairs.
+- staged checkpoints materialize required creature seams into the same
+  `active_gate_plan`, so `floating_gap` on a required seam blocks final
+  completion even if generic overlap cleanup already ran.
 - `truth_followup` and ranked `correction_candidates` now keep multiple failing
   required creature seams visible together, so one repaired local pair no
   longer implies that the assembled creature stage is globally acceptable

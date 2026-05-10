@@ -133,6 +133,8 @@ Current owner-lane validation for the shipped TASK-157 substrate is:
 - verifier/status, stale marking, gate-driven visibility/search, and staged
   checkpoint summaries:
   `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
+- creature completion gate templates and checkpoint-derived seam gates:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_reference_images.py::test_reference_compare_stage_checkpoint_materializes_creature_completion_gates_from_truth -q`
 - guided gate/runtime transport:
   `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
 - Blender-backed gate-state regression:

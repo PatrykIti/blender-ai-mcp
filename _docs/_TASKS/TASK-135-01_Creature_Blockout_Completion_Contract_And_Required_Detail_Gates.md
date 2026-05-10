@@ -1,6 +1,6 @@
 # TASK-135-01: Creature Blockout Completion Contract And Required Detail Gates
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-135](./TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md)
 **Category:** Reconstruction / Guided Creature Quality
@@ -205,13 +205,50 @@ return maybe_complete()
 
 ## Status / Board Update
 
-- When this direct child ships, update its task status, refresh the parent
-  `TASK-135` execution notes if the remaining slices changed, and record whether
-  `_docs/_TASKS/README.md` board wording also changed.
-- Record whether the `pre-commit` lane, owner-lane pytest commands, full unit
-  pass, and full Blender E2E pass ran or were intentionally skipped.
-- If follow-on work remains, keep it as a new explicit task or child leaf rather
-  than leaving the closeout ambiguous in the status field.
+- `TASK-135-01` is closed as the first direct child under `TASK-135`.
+- The parent `TASK-135` remains open for the curved tail / appendage build path
+  and the later low-poly refinement stage.
+- `_docs/_TASKS/README.md` board wording did not change because the promoted
+  umbrella row remains open.
+
+## Completion Summary
+
+- 2026-05-10: Creature domain gate templates now require the visual roles that
+  define a minimally acceptable quadruped blockout: body, head, tail, snout,
+  ears, eyes, forelegs, and hindlegs.
+- `eye_pair` remains gate-only in this slice; existing guided flow role
+  vocabulary still owns ears and limb pairs.
+- Staged checkpoint truth now materializes required creature seams into
+  `reference_checkpoint` gate proposals, so `floating_gap` on required seams
+  blocks final completion on the same `active_gate_plan` / top-level gate
+  summary surface as other `TASK-157` gates.
+- Prompt, MCP, vision, tool-summary, test, and changelog docs now describe the
+  stricter creature completion contract.
+
+## Validation Results
+
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_intake.py -q`
+  - passed, `13 passed`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py::test_reference_compare_stage_checkpoint_materializes_creature_completion_gates_from_truth tests/unit/adapters/mcp/test_reference_images.py::test_reference_compare_stage_checkpoint_projects_gate_state_from_checkpoint_truth_without_prior_relation_call -q`
+  - passed, `2 passed`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+  - passed, `117 passed`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+  - passed, `12 passed`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py -q`
+  - passed, `77 passed`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
+  - passed, `10 passed`
+- `poetry run ruff check server/adapters/mcp/contracts/quality_gates.py server/adapters/mcp/areas/reference.py tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/adapters/mcp/test_reference_images.py tests/e2e/vision/test_goal_derived_gate_creature_completion.py`
+  - passed
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+  - passed outside sandbox, `3313 passed`
+- `PYTEST_ADDOPTS='-k creature_gate_repair_macro_clears_tail_seam_blocker' poetry run python scripts/run_e2e_tests.py --skip-build`
+  - passed outside sandbox, `1 passed, 470 deselected`
+- `poetry run python -u scripts/run_e2e_tests.py`
+  - passed outside sandbox, `468 passed, 3 skipped`
+- `git diff --check`
+  - passed
 
 ## Acceptance Criteria
 

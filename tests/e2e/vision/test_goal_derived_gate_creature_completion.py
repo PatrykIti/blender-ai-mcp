@@ -436,8 +436,14 @@ def test_creature_gate_repair_macro_clears_tail_seam_blocker(
 
         tail_seam = _gate_by_id(second, "tail_body_seam")
         final_completion = _gate_by_id(second, "final_completion")
+        remaining_blocker_ids = {blocker.gate_id for blocker in second.completion_blockers}
         assert tail_seam.status == "passed"
-        assert all(blocker.gate_id != "tail_body_seam" for blocker in second.completion_blockers)
-        assert final_completion.status == "passed"
+        assert "tail_body_seam" not in remaining_blocker_ids
+        assert final_completion.status == "blocked"
+        assert final_completion.status_reason == "required_gate_unresolved"
+        assert {
+            "creature_eye_pair_required",
+            "creature_ear_pair_required",
+        }.issubset(remaining_blocker_ids)
     except RuntimeError as error:
         _skip_if_blender_unavailable(error)

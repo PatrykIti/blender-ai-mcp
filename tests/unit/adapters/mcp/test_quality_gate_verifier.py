@@ -145,12 +145,7 @@ def test_local_scope_verification_keeps_required_part_gate_outside_scope_unchang
     )
     seeded = plan.model_copy(
         update={
-            "gates": [
-                gate.model_copy(update={"status": "passed"})
-                if gate.gate_id in {"creature_body_core_required", "creature_head_mass_required", "final_completion"}
-                else gate
-                for gate in plan.gates
-            ]
+            "gates": [gate.model_copy(update={"status": "passed"}) if gate.required else gate for gate in plan.gates]
         }
     )
 

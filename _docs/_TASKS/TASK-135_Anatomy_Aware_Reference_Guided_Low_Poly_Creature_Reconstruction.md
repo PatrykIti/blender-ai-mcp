@@ -360,7 +360,7 @@ separate follow-on explicitly reopens those closed surfaces.
 
 | Order | Subtask | Purpose |
 |------|---------|---------|
-| 1 | [TASK-135-01](./TASK-135-01_Creature_Blockout_Completion_Contract_And_Required_Detail_Gates.md) | Prevent primitive-only creature runs from completing when required visual details or seated required seams are missing |
+| 1 | [TASK-135-01](./TASK-135-01_Creature_Blockout_Completion_Contract_And_Required_Detail_Gates.md) | ✅ Closed: primitive-only creature runs cannot complete when required visual details or seated required seams are missing |
 | 2 | [TASK-135-02](./TASK-135-02_Curved_Tail_And_Organic_Appendage_Build_Path.md) | Turn curved/bushy tails into an explicit tail-chain and arc-building path instead of one detached oval |
 | 3 | [TASK-135-03](./TASK-135-03_Low_Poly_Form_Refinement_Mesh_Window_And_Profile_Macros.md) | Add a bounded mesh/modeling refinement window after primitive placement so low-poly forms can be profiled instead of left as blobs |
 
@@ -447,6 +447,16 @@ separate follow-on explicitly reopens those closed surfaces.
 
 - add a dedicated `_docs/_CHANGELOG/*` entry when the first meaningful
   implementation slice under this umbrella ships
+
+## Progress Notes
+
+- 2026-05-10: `TASK-135-01` is closed:
+  - creature gate templates now include required visual roles for body, head,
+    tail, snout, ears, eyes, forelegs, and hindlegs
+  - staged checkpoint truth now materializes required creature seams into the
+    active quality-gate plan, keeping final completion blocked on unresolved
+    `floating_gap` seams
+  - `TASK-135` remains open for `TASK-135-02` and `TASK-135-03`
 
 ## Status / Board Update
 

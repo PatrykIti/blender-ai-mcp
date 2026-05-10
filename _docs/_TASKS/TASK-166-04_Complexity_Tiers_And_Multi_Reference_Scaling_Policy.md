@@ -112,7 +112,8 @@ staged_compare = assemble_compare_from_packet_plan(packet_plan)
 ## Status / Board Update
 
 - `TASK-166-04` is closed; no open direct complexity-tier leaves remain
-- promoted `TASK-166` remains open for `TASK-166-06`
+- later public transparency cleanup closed under `TASK-166-06`; changelog
+  `336` closed the promoted `TASK-166` umbrella
 
 ## Validation Commands
 

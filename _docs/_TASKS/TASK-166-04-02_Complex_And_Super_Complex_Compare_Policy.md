@@ -95,8 +95,8 @@
 
 - parent `TASK-166-04` is now ready to close because both simple and
   complex/super-complex policy leaves are complete
-- promoted `TASK-166` remains open for the public transparency cleanup tracked
-  under `TASK-166-06`
+- later public transparency cleanup closed under `TASK-166-06`; changelog
+  `336` closed the promoted `TASK-166` umbrella
 
 ## Validation Commands
 

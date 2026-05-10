@@ -276,6 +276,11 @@ Workflow:
 20. for segment seams such as head/body, tail/body, and limb/body, do not
     rationalize `floating_gap` as “expected blockout state”; it still needs
     correction
+21. do not mark the creature complete while required visual-role gates remain
+    missing; common quadruped runs need body, head, tail, snout, ears, eyes,
+    forelegs, and hindlegs unless a gate is explicitly waived
+22. treat `eye_pair` as a quality gate in this slice, not as a guided role that
+    changes `guided_flow_state.allowed_roles`
 
 At the end of each stage, return only:
 - what was done

@@ -1439,6 +1439,13 @@ If the task is specifically "separate these two overlapping parts with a bounded
 On required creature seams, overlap removal alone does not count as success if
 the attachment verdict is still `floating_gap`, `intersecting`, or
 `misaligned_attachment`.
+Creature completion also includes required visual-role gates for `body_core`,
+`head_mass`, `tail_mass`, `snout_mass`, `ear_pair`, `eye_pair`,
+`foreleg_pair`, and `hindleg_pair`. `eye_pair` is a gate-only detail in this
+slice; it is not a new guided build role. Staged checkpoints can materialize
+required creature seam gates from deterministic truth, so final completion
+stays blocked until those roles exist and required seams are seated or
+explicitly accepted as embedded attachments.
 If the main issue is cross-object size/ratio drift, prefer `macro_adjust_relative_proportion` over ad hoc scale guessing or open-ended sculpting.
 If the task is to reshape an ordered segment chain into a cleaner arc, prefer `macro_adjust_segment_chain_arc` over manual per-segment transform chaining.
 If the task is bounded relative placement/alignment, prefer `macro_relative_layout` over manual transform-by-transform placement.

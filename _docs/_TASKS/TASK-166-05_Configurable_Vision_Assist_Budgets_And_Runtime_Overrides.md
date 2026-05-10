@@ -122,7 +122,9 @@ staged_compare = project_budget_state_into_budget_control(runner, effective_budg
 ## Status / Board Update
 
 - `TASK-166-05` is closed; no open direct budget leaves remain
-- promoted `TASK-166` remains open for `TASK-166-04-02` and `TASK-166-06`
+- later complexity-tier and public transparency cleanup closed under
+  `TASK-166-04-02` and `TASK-166-06`; changelog `336` closed the promoted
+  `TASK-166` umbrella
 
 ## Validation Commands
 

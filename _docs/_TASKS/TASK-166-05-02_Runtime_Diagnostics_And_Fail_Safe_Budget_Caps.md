@@ -80,7 +80,9 @@
 
 - parent `TASK-166-05` is now ready to close because both config parsing and
   configured-vs-effective diagnostics have shipped
-- promoted `TASK-166` remains open for `TASK-166-04-02` and `TASK-166-06`
+- later complexity-tier and public transparency cleanup closed under
+  `TASK-166-04-02` and `TASK-166-06`; changelog `336` closed the promoted
+  `TASK-166` umbrella
 
 ## Validation
 

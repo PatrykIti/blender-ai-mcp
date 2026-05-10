@@ -84,6 +84,9 @@ Reference stage compare/iterate responses expose both the nested
 `completion_blockers`, `next_gate_actions`, `recommended_bounded_tools`) so
 clients can consume the active repair path without duplicating gate-plan
 projection logic.
+For guided creature work, those gate fields now include required visual roles
+and checkpoint-derived required seam blockers, so a primitive-only creature
+does not complete merely because broad masses exist.
 
 Task-capable heavy-operation rollout on task-enabled surfaces:
 

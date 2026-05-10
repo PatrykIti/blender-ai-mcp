@@ -481,6 +481,10 @@ contract in addition to `guided_handoff`.
 - for creature blockout seams, `intersecting` can still be acceptable for
   embedded ear/head or snout/head placement, but `floating_gap` on head/body,
   tail/body, or limb/body remains actionable
+- guided creature completion now also carries repo-owned required visual-role
+  gates for body, head, tail, snout, ears, eyes, forelegs, and hindlegs; a
+  primitive-only blockout cannot finish while those required roles are missing
+  or while checkpoint-derived required creature seams still block completion
 - if a needed tool family is hidden/blocked-by-flow, inspect
   `router_get_status().guided_flow_state`, complete the listed
   `required_checks`, and follow `next_actions` instead of guessing hidden tool

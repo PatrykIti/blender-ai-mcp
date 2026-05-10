@@ -921,6 +921,70 @@ def _configured_part_segmentation() -> ReferencePartSegmentationContract:
     )
 
 
+def _gate_slug(value: str | None) -> str:
+    normalized = re.sub(r"[^a-zA-Z0-9]+", "_", str(value or "").strip().lower()).strip("_")
+    return normalized or "unknown"
+
+
+def _guided_domain_profile(guided_flow_state: dict[str, Any] | None) -> str | None:
+    if guided_flow_state is None:
+        return None
+    try:
+        return str(GuidedFlowStateContract.model_validate(guided_flow_state).domain_profile)
+    except Exception:
+        return None
+
+
+def _reference_checkpoint_gate_proposal(
+    *,
+    session: SessionCapabilityState,
+    truth_bundle: SceneCorrectionTruthBundleContract,
+) -> dict[str, Any] | None:
+    """Build checkpoint-owned quality gates from deterministic creature seam truth."""
+
+    if _guided_domain_profile(session.guided_flow_state) != "creature":
+        return None
+
+    gates: list[dict[str, Any]] = []
+    seen_pairs: set[tuple[str, str]] = set()
+    if truth_bundle.summary.pairing_strategy == "required_creature_seams":
+        for check in truth_bundle.checks:
+            semantics = check.attachment_semantics
+            if semantics is None or not semantics.required_seam:
+                continue
+            part_object = str(semantics.part_object or check.from_object).strip()
+            anchor_object = str(semantics.anchor_object or check.to_object).strip()
+            if not part_object or not anchor_object:
+                continue
+            pair_key = (part_object, anchor_object)
+            if pair_key in seen_pairs:
+                continue
+            seen_pairs.add(pair_key)
+            seam_kind = str(semantics.seam_kind)
+            gates.append(
+                {
+                    "gate_id": (
+                        f"creature_{_gate_slug(seam_kind)}_"
+                        f"{_gate_slug(part_object)}_to_{_gate_slug(anchor_object)}_seam"
+                    ),
+                    "gate_type": "attachment_seam",
+                    "label": f"{seam_kind.replace('_', '/')} seam is seated",
+                    "target_kind": "object_pair",
+                    "target_objects": [part_object, anchor_object],
+                    "allow_embedded_intersection": semantics.relation_kind == "embedded_attachment",
+                    "allowed_correction_families": ["attachment_alignment", "inspect_validate"],
+                }
+            )
+
+    if not gates and session.gate_plan is not None:
+        return None
+    return {
+        "proposal_id": "reference_checkpoint_creature_completion_gates",
+        "source": "reference_checkpoint",
+        "gates": gates,
+    }
+
+
 async def refresh_reference_understanding_summary_async(
     ctx: Context,
     *,
@@ -1235,6 +1299,14 @@ async def _run_stage_checkpoint_compare(
         max_truth_chars=max_truth_chars,
     )
     truth_followup = _build_truth_followup(budgeted_truth_bundle)
+    checkpoint_gate_proposal = _reference_checkpoint_gate_proposal(
+        session=session,
+        truth_bundle=truth_bundle,
+    )
+    if checkpoint_gate_proposal is not None:
+        gate_intake = await ingest_quality_gate_proposal_async(ctx, checkpoint_gate_proposal)
+        if gate_intake.status == "accepted":
+            session = await get_session_capability_state_async(ctx)
     silhouette_analysis = _build_silhouette_analysis_payload(
         selected_reference_records=selected_reference_records,
         captures=captures,
