@@ -70,6 +70,8 @@
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - compare-time sidecar availability / staged-contract projection tests
+- advisory-only negative coverage where available `part_segmentation` support
+  evidence does not emit correction candidates or completion claims by itself
 - `tests/e2e/integration/test_guided_gate_state_transport.py` when optional
   sidecar surfacing changes client-visible staged compare / iterate payloads
 

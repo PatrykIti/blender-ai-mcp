@@ -692,6 +692,83 @@ def test_contracts_accept_representative_handler_shaped_payloads(contract_cls, p
     assert current == expected
 
 
+def test_reference_stage_and_iterate_contracts_accept_full_budget_control_fields():
+    budget = {
+        "model_name": "gpt-budget-test",
+        "max_input_chars": 48_000,
+        "max_output_tokens": 8_192,
+        "max_images": 12,
+        "configured_max_input_chars": 100_000,
+        "configured_max_output_tokens": 250_000,
+        "configured_max_images": 20,
+        "effective_max_input_chars": 48_000,
+        "effective_max_output_tokens": 8_192,
+        "effective_max_images": 12,
+        "fail_safe_max_input_chars": 48_000,
+        "fail_safe_max_output_tokens": 8_192,
+        "fail_safe_max_images": 12,
+        "budget_clipped": True,
+        "budget_clip_fields": ["max_images", "max_input_chars", "max_output_tokens"],
+        "original_pair_count": 5,
+        "emitted_pair_count": 4,
+        "original_candidate_count": 3,
+        "emitted_candidate_count": 2,
+        "trimming_applied": True,
+        "scope_trimmed": True,
+        "detail_trimmed": True,
+        "trim_reason": "model_aware_budget_control",
+        "selected_focus_pairs": ["Head -> Body"],
+    }
+    compare = ReferenceCompareStageCheckpointResponseContract(
+        action="compare_stage_checkpoint",
+        goal="refine organic surface",
+        target_object="Heart",
+        target_objects=["Heart"],
+        checkpoint_id="stage_budget",
+        checkpoint_label="stage",
+        preset_profile="rich",
+        preset_names=[],
+        capture_count=0,
+        captures=[],
+        reference_count=1,
+        reference_ids=["ref_1"],
+        reference_labels=["front"],
+        budget_control=budget,
+    )
+    iterate = ReferenceIterateStageCheckpointResponseContract(
+        action="iterate_stage_checkpoint",
+        goal="refine organic surface",
+        target_object="Heart",
+        target_objects=["Heart"],
+        checkpoint_id="stage_budget_iterate",
+        checkpoint_label="stage",
+        iteration_index=1,
+        loop_disposition="continue_build",
+        continue_recommended=True,
+        prior_checkpoint_id=None,
+        prior_correction_focus=[],
+        correction_focus=[],
+        repeated_correction_focus=[],
+        stagnation_count=0,
+        compare_result=compare.model_dump(mode="json"),
+        budget_control=budget,
+    )
+
+    for contract in (compare, iterate):
+        assert contract.budget_control is not None
+        assert contract.budget_control.configured_max_input_chars == 100_000
+        assert contract.budget_control.configured_max_output_tokens == 250_000
+        assert contract.budget_control.configured_max_images == 20
+        assert contract.budget_control.effective_max_input_chars == 48_000
+        assert contract.budget_control.effective_max_output_tokens == 8_192
+        assert contract.budget_control.effective_max_images == 12
+        assert contract.budget_control.fail_safe_max_input_chars == 48_000
+        assert contract.budget_control.fail_safe_max_output_tokens == 8_192
+        assert contract.budget_control.fail_safe_max_images == 12
+        assert contract.budget_control.budget_clipped is True
+        assert contract.budget_control.budget_clip_fields == ["max_images", "max_input_chars", "max_output_tokens"]
+
+
 def test_router_goal_contract_omits_optional_guided_flow_state_cleanly():
     contract = RouterGoalResponseContract(
         status="ready",

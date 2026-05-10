@@ -71,9 +71,13 @@
 - complex-tier packet-scheduler coverage for conflict/uncertainty projection
 - `tests/e2e/integration/test_guided_gate_state_transport.py` when complex-tier
   packet conflict/uncertainty changes staged compare / iterate payloads
-- add a dedicated staged multi-reference scaling lane under
-  `tests/e2e/vision/`, likely `test_reference_stage_multi_reference_scaling.py`,
-  before closeout
+- dedicated staged multi-reference scaling coverage now lives in
+  `tests/e2e/vision/test_reference_stage_multi_reference_scaling.py` and
+  protects six-reference packet scheduling through a Blender-runner lane with
+  deterministic staged captures
+- `VISION_MAX_IMAGES=1` now has owner-lane unit coverage for explicit
+  blocked-packet uncertainty and no runner call without a packet-local
+  reference slice
 - the repo-supported Blender runner when the packet scheduler changes real
   multi-reference runtime behavior beyond those focused owner lanes
 - optional harness/model-eval suites may remain supplementary smoke coverage,

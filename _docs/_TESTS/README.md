@@ -210,8 +210,8 @@ Keep the current owner-lane rule explicit when similar follow-on work resumes:
 
 | Type | Count | Execution Time |
 |------|-------|----------------|
-| Unit Tests | 3262 collected | collect-only ~7 seconds; full runtime depends on selected lanes |
-| E2E Tests | 469 collected | collect-only ~14 seconds; Blender-backed runtime depends on active RPC/Blender state |
+| Unit Tests | 3324 collected | collect-only ~7 seconds; full runtime depends on selected lanes |
+| E2E Tests | 472 collected | collect-only ~14 seconds; Blender-backed runtime depends on active RPC/Blender state |
 
 Current repo-wide unit coverage (`server + blender_addon + scripts`):
 
@@ -460,6 +460,7 @@ Hybrid-loop assembled-creature regression pack:
 - combines:
   - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
   - `tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py`
+  - `tests/e2e/vision/test_reference_stage_multi_reference_scaling.py`
   - `tests/e2e/vision/test_reference_guided_creature_comparison.py`
   - `tests/e2e/tools/sculpt/test_sculpt_tools.py`
 - review staged hybrid-loop output in this order:
@@ -482,6 +483,10 @@ Focused unit coverage now also protects:
 - vision budget fail-safe clipping and configured/effective runner diagnostics on:
   - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
   - `tests/unit/adapters/mcp/test_vision_runner.py`
+- TASK-166 packet scheduler closeout coverage on:
+  - `tests/unit/adapters/mcp/test_reference_compare_packets.py`
+  - `tests/unit/adapters/mcp/test_reference_images.py`
+  - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - goal-derived quality-gate contract and intake coverage on:
   - `tests/unit/adapters/mcp/test_quality_gate_contracts.py`
   - `tests/unit/adapters/mcp/test_quality_gate_verifier.py`

@@ -57,7 +57,10 @@
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_reference_compare_packets.py`
 - view-packet unit coverage for missing-view degradation and stable packet ids
+- post-closeout audit proof now covers stable packet ids across equivalent
+  scheduler inputs and extraction/ranking retry requests
 
 ## Docs To Update
 

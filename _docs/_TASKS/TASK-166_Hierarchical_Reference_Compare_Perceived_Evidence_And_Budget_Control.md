@@ -287,7 +287,7 @@ without requiring one massive all-images compare request.
 | Path / Module | Expected Ownership | Why It Is In Scope |
 |---------------|--------------------|--------------------|
 | `server/adapters/mcp/areas/reference.py` | Stage compare/iterate assembler | Current monolithic payload owner; should remain orchestration-first rather than the long-term home for packet policy |
-| `server/adapters/mcp/areas/reference_planner.py` | Packet synthesis and staged budget policy | Already owns trimming and planner shaping, so budget/runtime work must keep this seam aligned with the runner and staged contract |
+| `server/adapters/mcp/areas/reference_planner.py` | Staged projection, planner summaries, and budget shaping | Owns trimming, planner/refinement projection, and runtime-budget shaping; packet planning/synthesis delegates to `server/adapters/mcp/areas/reference_compare_packets.py` and should stay aligned with the runner and staged contract |
 | `server/adapters/mcp/areas/reference_feedback.py` | Compact orchestrator read model | Must keep owning compact projection instead of forcing orchestrators to parse raw packet detail |
 | `server/adapters/mcp/contracts/reference.py` | Public compare/iterate contracts | Any packet/synthesis/budget metadata must be declared explicitly |
 | `server/adapters/mcp/vision/capture_runtime.py` | Staged compare capture preset and scene-state seam | Packet-local view planning must stay aligned with the live stage-capture owner before any final request assembly happens |
@@ -399,8 +399,8 @@ without requiring one massive all-images compare request.
   contract:
   - packet planning now runs through
     `server/adapters/mcp/areas/reference_compare_packets.py`, so durable
-    view/scope policy and synthesis/merge rules are no longer concentrated only
-    inside the MCP adapter layer
+    view/scope policy and synthesis/merge rules are separated from the
+    `server/adapters/mcp/areas/reference.py` staged orchestration facade
   - simple runs now emit explicit per-view packets, and complex runs now keep
     both packet-local view and scope slices together instead of dropping
     secondary views once focus pairs exist
@@ -477,6 +477,18 @@ without requiring one massive all-images compare request.
     candidate-level packet refs
   - validation closed with focused unit/E2E proof, full unit proof, and the
     Blender-backed E2E runner passing on rerun with `468 passed, 3 skipped`
+- 2026-05-10: post-closeout audit hardening added the missing proof lanes:
+  - packet retry provenance now has unit coverage for stable packet ids across
+    extraction/ranking retries and equivalent scheduler inputs
+  - `VISION_MAX_IMAGES=1` now has explicit blocked-packet uncertainty coverage
+    instead of relying on broad budget tests
+  - compare-time `part_segmentation` now has an advisory-only negative test
+    proving sidecar evidence alone does not emit correction candidates
+  - `budget_control` parity now covers configured, effective, and fail-safe
+    fields on compare and iterate contracts
+  - `tests/e2e/vision/test_reference_stage_multi_reference_scaling.py` now
+    exercises the six-reference staged packet split through a Blender-runner
+    scheduler lane with deterministic staged captures
 
 ## Docs To Update
 
@@ -492,7 +504,8 @@ without requiring one massive all-images compare request.
 
 - use incremental `_docs/_CHANGELOG/` closeouts for shipped TASK-166 slices
   instead of one umbrella-only entry; the current packeted compare history is
-  recorded in entries `324` through `336`
+  recorded in entries `324` through `336`, plus post-closeout coverage
+  hardening entry `339`
 
 ## Status / Board Update
 

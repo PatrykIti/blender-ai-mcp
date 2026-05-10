@@ -232,6 +232,89 @@ def test_build_compare_packets_tight_image_budget_drops_context_before_reference
     ]
 
 
+def test_build_compare_packets_reuses_stable_packet_ids_for_equivalent_retry_inputs():
+    def _build() -> ReferenceCompareDiagnosticsContract:
+        return build_compare_packets(
+            target_view="front",
+            captures=[
+                _capture("context_wide_after", preset_name="context_wide", view_kind="wide"),
+                _capture("target_front_after", preset_name="target_front"),
+            ],
+            reference_records=[
+                _reference(f"ref_front_{index}", label=f"front_ref_{index}", target_view="front")
+                for index in range(1, 7)
+            ],
+            assembled_target_scope=SceneAssembledTargetScopeContract(
+                scope_kind="single_object",
+                primary_target="Creature",
+                object_names=["Creature"],
+                object_count=1,
+            ),
+            truth_followup=SceneTruthFollowupContract(
+                scope=SceneAssembledTargetScopeContract(
+                    scope_kind="single_object",
+                    primary_target="Creature",
+                    object_names=["Creature"],
+                    object_count=1,
+                ),
+                continue_recommended=False,
+                message="No structural blocker.",
+            ),
+            max_images_per_packet=3,
+        )
+
+    first = _build()
+    retry = _build()
+
+    assert retry.packet_order == first.packet_order
+    assert len(set(first.packet_order)) == first.packet_count
+    assert [(packet.packet_id, packet.reference_ids, packet.capture_labels) for packet in retry.packets] == [
+        (packet.packet_id, packet.reference_ids, packet.capture_labels) for packet in first.packets
+    ]
+
+
+def test_build_compare_packets_marks_one_image_budget_as_incomplete_reference_evidence():
+    packets = build_compare_packets(
+        target_view="front",
+        captures=[
+            _capture("context_wide_after", preset_name="context_wide", view_kind="wide"),
+            _capture("target_front_after", preset_name="target_front"),
+        ],
+        reference_records=[
+            _reference("ref_front_1", label="front_ref_1", target_view="front"),
+            _reference("ref_front_2", label="front_ref_2", target_view="front"),
+        ],
+        assembled_target_scope=SceneAssembledTargetScopeContract(
+            scope_kind="single_object",
+            primary_target="Creature",
+            object_names=["Creature"],
+            object_count=1,
+        ),
+        truth_followup=SceneTruthFollowupContract(
+            scope=SceneAssembledTargetScopeContract(
+                scope_kind="single_object",
+                primary_target="Creature",
+                object_names=["Creature"],
+                object_count=1,
+            ),
+            continue_recommended=False,
+            message="No structural blocker.",
+        ),
+        max_images_per_packet=1,
+    )
+
+    assert packets.packet_count == 1
+    assert packets.packets[0].capture_labels == ["target_front_after"]
+    assert packets.packets[0].reference_ids == []
+    assert packets.budget_notes == [
+        "Compare packet policy omitted context captures from some packets to stay within VISION_MAX_IMAGES=1.",
+        "Compare packet policy split reference evidence into bounded packet-local slices to stay within "
+        "VISION_MAX_IMAGES=1.",
+        "Runtime image budget is below the 2-image minimum for reference compare packets; "
+        "raise VISION_MAX_IMAGES before treating packet conclusions as complete.",
+    ]
+
+
 def test_compare_synthesis_conflict_notes_call_out_mixed_packet_statuses():
     diagnostics = ReferenceCompareDiagnosticsContract(
         complexity_tier="complex",

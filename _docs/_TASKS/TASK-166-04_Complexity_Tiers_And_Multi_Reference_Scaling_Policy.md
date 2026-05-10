@@ -85,10 +85,13 @@ staged_compare = assemble_compare_from_packet_plan(packet_plan)
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
-- packet-policy unit coverage in `reference_planner.py`
-- add a dedicated staged multi-reference scaling lane under
-  `tests/e2e/vision/`, likely `test_reference_stage_multi_reference_scaling.py`,
-  plus any supporting fixtures needed for 6-12 image packet scheduling proof
+- packet-policy unit coverage in
+  `tests/unit/adapters/mcp/test_reference_compare_packets.py` for the
+  `server/adapters/mcp/areas/reference_compare_packets.py` owner seam
+- dedicated staged multi-reference scaling coverage now lives in
+  `tests/e2e/vision/test_reference_stage_multi_reference_scaling.py` and
+  protects six-reference packet scheduling through a Blender-runner lane with
+  deterministic staged captures
 - integration proof when tiered packet scaling changes staged compare / iterate
   payloads
 - optional harness/model-eval suites such as

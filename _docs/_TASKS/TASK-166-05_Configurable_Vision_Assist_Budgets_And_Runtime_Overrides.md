@@ -101,7 +101,9 @@ staged_compare = project_budget_state_into_budget_control(runner, effective_budg
 - `tests/unit/scripts/test_script_tooling.py`
 - `tests/unit/adapters/mcp/test_reference_images.py` for staged budget
   projection behavior
-- `tests/unit/adapters/mcp/test_contract_payload_parity.py`
+- `tests/unit/adapters/mcp/test_contract_payload_parity.py` now also covers
+  full configured/effective/fail-safe `budget_control` fields on compare and
+  iterate contracts
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 
 ## Docs To Update
