@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [338](./338-2026-05-10-task-140-06-openrouter-model-metadata-client.md) | 2026-05-10 | **TASK-140-06 OpenRouter model metadata client** | - |
 | [337](./337-2026-05-10-task-135-creature-completion-gates.md) | 2026-05-10 | **TASK-135 creature completion gates** | - |
 | [336](./336-2026-05-10-task-166-public-contract-transparency-closeout.md) | 2026-05-10 | **TASK-166 public contract transparency closeout** | - |
 | [335](./335-2026-05-10-task-166-super-complex-packet-scheduling.md) | 2026-05-10 | **TASK-166 super-complex packet scheduling** | - |

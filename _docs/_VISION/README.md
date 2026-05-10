@@ -378,12 +378,16 @@ OpenAI/Azure strict structured-output note:
 - reviewed OpenRouter fallback profiles can also declare a preferred compare
   contract for model ids whose names do not match the simple family heuristics
   such as `anthropic/claude-opus-4.6-fast`
+- OpenRouter-backed vision requests now attempt one bounded, lazy `/models`
+  catalog lookup before request assembly; live catalog metadata becomes the
+  primary source for context length, provider output cap, modalities, and
+  supported parameters when it is available
 - `openai/gpt-5.4-nano` currently has a reviewed fallback capability entry
   (`context_length=400000`, `max_completion_tokens=128000`, `text+image`
   input) so the runtime can raise the effective checkpoint output cap above a
   small static `VISION_MAX_TOKENS` value when OpenRouter API metadata is not
-  yet available
-- the fallback registry is secondary to future OpenRouter API metadata and
+  available
+- the fallback registry is secondary to live OpenRouter API metadata and
   should be treated as last-reviewed operational knowledge, not as a permanent
   source of truth
 - set `VISION_EXTERNAL_CONTRACT_PROFILE=generic_full` only when an operator
@@ -502,6 +506,9 @@ Config precedence note:
 
 - if `VISION_EXTERNAL_PROVIDER=openrouter`, the runtime uses the OpenRouter
   provider profile and default base URL
+- the first OpenRouter-backed vision request attempts a bounded `/models`
+  metadata lookup and uses that API data ahead of reviewed fallback profiles
+  when the requested model id is found
 - model/auth values resolve from `VISION_OPENROUTER_*` first and then fall back
   to generic `VISION_EXTERNAL_*`
 - if `VISION_EXTERNAL_CONTRACT_PROFILE` is unset, provider/model heuristics may

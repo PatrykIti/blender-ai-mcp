@@ -18,6 +18,7 @@ import httpx
 
 from .backend import VisionBackend, VisionBackendUnavailableError, VisionRequest
 from .config import VisionContractProfile, VisionRuntimeConfig
+from .openrouter_models import resolve_openrouter_model_capabilities
 from .parsing import diagnose_vision_output_text, parse_vision_output_text
 from .prompting import (
     _is_reference_classification_request,
@@ -654,6 +655,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
         self._runtime_config = runtime_config
         self._external_config = runtime_config.openai_compatible_external
         self._last_output_diagnostics: dict[str, Any] | None = None
+        self._openrouter_capability_lookup_attempted = False
 
     @property
     def backend_kind(self):
@@ -695,6 +697,32 @@ class OpenAICompatibleVisionBackend(VisionBackend):
             if self._external_config.site_name:
                 headers["X-Title"] = self._external_config.site_name
         return headers
+
+    async def _refresh_openrouter_model_capabilities(self) -> None:
+        if self._external_config.provider_name != "openrouter":
+            return
+        if self._openrouter_capability_lookup_attempted:
+            return
+        current_capabilities = self._external_config.model_capabilities
+        if current_capabilities is not None and current_capabilities.capability_source == "openrouter_api":
+            self._openrouter_capability_lookup_attempted = True
+            return
+
+        self._openrouter_capability_lookup_attempted = True
+        resolved = await resolve_openrouter_model_capabilities(
+            base_url=self._external_config.base_url,
+            model_id=self.model_name,
+            api_key=self._external_config.api_key,
+            api_key_env=self._external_config.api_key_env,
+            timeout_seconds=min(self._runtime_config.timeout_seconds, 5.0),
+        )
+        if resolved.capability_source != "openrouter_api" and current_capabilities is not None:
+            return
+
+        self._external_config = self._external_config.model_copy(update={"model_capabilities": resolved})
+        self._runtime_config = self._runtime_config.model_copy(
+            update={"openai_compatible_external": self._external_config}
+        )
 
     def _build_request_payload(self, request: VisionRequest) -> dict[str, Any]:
         vision_contract_profile = self._external_config.vision_contract_profile
@@ -815,6 +843,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
         return payload
 
     async def analyze(self, request: VisionRequest) -> dict[str, object]:
+        await self._refresh_openrouter_model_capabilities()
         headers = {"Content-Type": "application/json"}
         headers.update(self._provider_headers())
         api_key = self._resolved_api_key()

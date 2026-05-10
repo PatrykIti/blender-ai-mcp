@@ -97,6 +97,12 @@ resolution:
 
 - `TASK-140-06-03` is complete for the first known fallback model,
   `openai/gpt-5.4-nano`
-- API-first OpenRouter catalog resolution, richer provider capability merging,
-  env override taxonomy, harness diagnostics, and final closeout remain open
-  under the other TASK-140-06 leaves
+- `TASK-140-06-01` is complete for the first API-first OpenRouter catalog
+  resolution slice:
+  - the runtime now has one bounded `/models` lookup path that normalizes
+    catalog fields into `VisionModelCapabilities`
+  - lookup runs lazily at first OpenRouter vision request and keeps fallback
+    registry data when the catalog is unavailable
+- Richer request-policy use of the capability object, env override taxonomy,
+  harness diagnostics, and final closeout remain open under the other
+  `TASK-140-06` leaves

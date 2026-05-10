@@ -19,6 +19,7 @@ from server.adapters.mcp.vision import (
     VisionRequest,
     build_vision_runtime_config,
 )
+from server.adapters.mcp.vision.config import VisionModelCapabilities
 from server.infrastructure.config import Config
 
 
@@ -400,6 +401,122 @@ def test_openrouter_openai_family_uses_capability_aware_output_cap(monkeypatch, 
     result = asyncio.run(backend.analyze(request))
 
     assert result["vision_contract_profile"] == "google_family_compare"
+    assert captured["json"]["max_tokens"] == 4096
+
+
+def test_openrouter_api_metadata_overrides_fallback_capability_policy(monkeypatch, tmp_path):
+    image_path = tmp_path / "after.png"
+    image_path.write_bytes(b"fake-png")
+
+    runtime = build_vision_runtime_config(
+        _config(
+            VISION_EXTERNAL_PROVIDER="openrouter",
+            VISION_OPENROUTER_MODEL="openai/gpt-5.4-nano",
+            VISION_OPENROUTER_API_KEY="openrouter-secret",
+            VISION_MAX_TOKENS=600,
+        )
+    )
+    backend = OpenAICompatibleVisionBackend(runtime)
+    request = VisionRequest(
+        goal="low poly squirrel",
+        images=(VisionImageInput(path=str(image_path), role="after"),),
+        prompt_hint="comparison_mode=stage_checkpoint_vs_reference",
+    )
+
+    async def _fake_openrouter_capabilities(**kwargs):
+        assert kwargs["model_id"] == "openai/gpt-5.4-nano"
+        assert kwargs["api_key"] == "openrouter-secret"
+        return VisionModelCapabilities(
+            model_id="openai/gpt-5.4-nano",
+            capability_source="openrouter_api",
+            context_length=400_000,
+            max_completion_tokens=3_000,
+            input_modalities=["text", "image"],
+            output_modalities=["text"],
+            supported_parameters=["max_tokens", "response_format"],
+        )
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.vision.backends.resolve_openrouter_model_capabilities",
+        _fake_openrouter_capabilities,
+    )
+    captured: dict = {}
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda timeout=None: _FakeAsyncClient(
+            response=_FakeResponse(
+                {
+                    "choices": [
+                        {
+                            "message": {
+                                "content": '{"goal_summary":"ok","shape_mismatches":[],"proportion_mismatches":[],"correction_focus":[],"next_corrections":[]}'
+                            }
+                        }
+                    ]
+                }
+            ),
+            captured=captured,
+        ),
+    )
+
+    asyncio.run(backend.analyze(request))
+
+    assert captured["json"]["max_tokens"] == 3_000
+
+
+def test_openrouter_metadata_failure_keeps_reviewed_fallback_policy(monkeypatch, tmp_path):
+    image_path = tmp_path / "after.png"
+    image_path.write_bytes(b"fake-png")
+
+    runtime = build_vision_runtime_config(
+        _config(
+            VISION_EXTERNAL_PROVIDER="openrouter",
+            VISION_OPENROUTER_MODEL="openai/gpt-5.4-nano",
+            VISION_OPENROUTER_API_KEY="openrouter-secret",
+            VISION_MAX_TOKENS=600,
+        )
+    )
+    backend = OpenAICompatibleVisionBackend(runtime)
+    request = VisionRequest(
+        goal="low poly squirrel",
+        images=(VisionImageInput(path=str(image_path), role="after"),),
+        prompt_hint="comparison_mode=stage_checkpoint_vs_reference",
+    )
+
+    async def _fake_openrouter_capabilities(**kwargs):
+        return VisionModelCapabilities(
+            model_id="openai/gpt-5.4-nano",
+            capability_source="unknown",
+            metadata_summary={"lookup_status": "lookup_failed"},
+        )
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.vision.backends.resolve_openrouter_model_capabilities",
+        _fake_openrouter_capabilities,
+    )
+    captured: dict = {}
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda timeout=None: _FakeAsyncClient(
+            response=_FakeResponse(
+                {
+                    "choices": [
+                        {
+                            "message": {
+                                "content": '{"goal_summary":"ok","shape_mismatches":[],"proportion_mismatches":[],"correction_focus":[],"next_corrections":[]}'
+                            }
+                        }
+                    ]
+                }
+            ),
+            captured=captured,
+        ),
+    )
+
+    asyncio.run(backend.analyze(request))
+
     assert captured["json"]["max_tokens"] == 4096
 
 

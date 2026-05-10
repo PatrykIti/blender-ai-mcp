@@ -44,4 +44,12 @@ class ModelCapabilityProfile(BaseModel):
             input_modalities=list(self.input_modalities),
             output_modalities=list(self.output_modalities),
             supported_parameters=list(self.supported_parameters),
+            metadata_summary={
+                "provider": self.provider,
+                "family": self.family,
+                "docs_url": self.docs_url,
+                "last_reviewed": self.last_reviewed,
+                "preferred_contract_profile": self.preferred_contract_profile,
+                "preferred_stage_max_tokens": self.preferred_stage_max_tokens,
+            },
         )

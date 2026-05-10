@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -32,6 +32,7 @@ class VisionModelCapabilities(BaseModel):
     input_modalities: list[str] = []
     output_modalities: list[str] = []
     supported_parameters: list[str] = []
+    metadata_summary: dict[str, Any] = Field(default_factory=dict)
 
 
 class VisionTransformersLocalConfig(BaseModel):
