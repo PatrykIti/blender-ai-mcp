@@ -47,6 +47,12 @@
     message/next-action path carries that guidance
 - Any new provenance or authority wording must align with the existing repo
   boundary/gate vocabulary and the shipped `advisory_only` sidecar semantics.
+- Deferred owner-seam follow-on from the 2026-05-10 backend repair:
+  `server/adapters/mcp/vision/parsing.py` owns packet guidance normalization,
+  `server/adapters/mcp/vision/backends.py` only forwards parsed
+  `packet_guidance`, and any broader typed projection cleanup across backend /
+  runner / public transparency seams should be handled here without duplicating
+  status or ranking heuristics in provider backends.
 
 ## Pseudocode
 
@@ -110,8 +116,9 @@ compact_feedback = project_compare_diagnostics_into_feedback(
 
 ## Changelog Impact
 
-- include in the umbrella `_docs/_CHANGELOG/` entry when the transparency
-  contract ships
+- record transparency changes through incremental TASK-166 changelogs; the
+  2026-05-10 backend packet-guidance normalizer repair is tracked in entry
+  `333`, while broader owner-seam cleanup remains deferred under this subtask
 
 ## Status / Board Update
 

@@ -1,7 +1,7 @@
 # TASK-166-01-02: Scope-First Packet Planner
 
 **Parent:** [TASK-166-01](./TASK-166-01_View_And_Scope_Packet_Compare_Family.md)  
-**Status:** ✅ Done  
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Objective:** Plan compare packets by active scope clusters such as `Body + Head`, `Tail`, and `Ears` instead of always comparing the full assembled model.
 

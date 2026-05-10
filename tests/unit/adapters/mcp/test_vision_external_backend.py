@@ -8,6 +8,10 @@ from typing import Any
 
 import httpx
 import pytest
+from server.adapters.mcp.sampling.result_types import (
+    VisionAssistContract,
+    VisionPacketStatusContract,
+)
 from server.adapters.mcp.vision import (
     OpenAICompatibleVisionBackend,
     VisionBackendUnavailableError,
@@ -159,6 +163,86 @@ def test_external_backend_analyze_returns_structured_payload(monkeypatch, tmp_pa
     assert captured["url"] == "http://localhost:8000/v1/chat/completions"
     assert captured["headers"]["Authorization"] == "Bearer secret"
     assert captured["json"]["response_format"] == {"type": "json_object"}
+
+
+def test_external_backend_preserves_packet_guidance_from_packet_compare(monkeypatch, tmp_path):
+    after_path = tmp_path / "target_front_after.png"
+    reference_path = tmp_path / "ref_front.png"
+    after_path.write_bytes(b"fake-after-png")
+    reference_path.write_bytes(b"fake-reference-png")
+
+    request = VisionRequest(
+        goal="Make the squirrel front silhouette closer to the reference.",
+        target_object="Squirrel",
+        images=(
+            VisionImageInput(path=str(after_path), role="after", label="target_front_after"),
+            VisionImageInput(path=str(reference_path), role="reference", label="ref_front"),
+        ),
+        prompt_hint=("comparison_mode=stage_checkpoint_vs_reference | compare_phase=packet_extraction"),
+        metadata={
+            "mode": "reference_compare_packet",
+            "packet_id": "packet:front:1234abcd",
+            "packet_kind": "view",
+            "packet_label": "front packet",
+            "packet_view": "front",
+            "packet_scope": "Squirrel",
+            "packet_reference_ids": ["ref_front"],
+            "packet_capture_labels": ["target_front_after"],
+        },
+        truth_summary={"summary": {"pair_count": 0}},
+    )
+    runtime = build_vision_runtime_config(_config(VISION_EXTERNAL_API_KEY="secret"))
+    backend = OpenAICompatibleVisionBackend(runtime)
+
+    payload = {
+        "choices": [
+            {
+                "message": {
+                    "content": json.dumps(
+                        {
+                            "goal_summary": "Front packet still shows a round head silhouette.",
+                            "reference_match_summary": (
+                                "The packet has enough signal for one more bounded correction step."
+                            ),
+                            "visible_changes": ["Front silhouette is readable."],
+                            "shape_mismatches": ["Head silhouette is still too spherical."],
+                            "proportion_mismatches": [],
+                            "correction_focus": ["Head silhouette"],
+                            "likely_issues": [],
+                            "next_corrections": ["Flatten the head silhouette slightly."],
+                            "recommended_checks": [],
+                            "packet_guidance": {
+                                "packet_status": "ready",
+                                "status_reason": None,
+                                "ranking_recommendation": "rank",
+                            },
+                            "confidence": 0.7,
+                            "captures_used": ["target_front_after", "ref_front"],
+                        }
+                    )
+                }
+            }
+        ]
+    }
+    captured: dict = {}
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda timeout=None: _FakeAsyncClient(response=_FakeResponse(payload), captured=captured),
+    )
+
+    result = asyncio.run(backend.analyze(request))
+    contract = VisionAssistContract.model_validate(result)
+
+    assert result["packet_guidance"] == {
+        "packet_status": "ready",
+        "status_reason": None,
+        "ranking_recommendation": "rank",
+    }
+    assert contract.packet_guidance is not None
+    assert isinstance(contract.packet_guidance, VisionPacketStatusContract)
+    assert contract.packet_guidance.packet_status == "ready"
+    assert contract.packet_guidance.ranking_recommendation == "rank"
 
 
 def test_external_backend_uses_api_key_env_when_inline_key_missing(monkeypatch, tmp_path):

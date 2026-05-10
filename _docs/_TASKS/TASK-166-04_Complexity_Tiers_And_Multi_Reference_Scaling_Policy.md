@@ -1,7 +1,7 @@
 # TASK-166-04: Complexity Tiers And Multi-Reference Scaling Policy
 
 **Parent:** [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md)  
-**Status:** 🚧 In Progress  
+**Status:** 🚧 In Progress
 **Priority:** 🔴 High
 **Objective:** Define how the compare family scales from simple models to complex and super-complex 6-12 image runs without one static request shape.
 

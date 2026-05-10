@@ -20,6 +20,10 @@
 - staged `compare_diagnostics` now also project explicit packet-level
   `packet_status` / `ranking_recommendation`, and successful ranking can replace
   extraction guidance when the second pass returns narrower packet-local focus
+- runtime completion required the 2026-05-10 backend normalizer repair:
+  `server/adapters/mcp/vision/parsing.py` remains the owner of packet status /
+  ranking normalization, while `server/adapters/mcp/vision/backends.py` now
+  forwards parsed `packet_guidance` into `VisionAssistContract`
 
 ## Repository Touchpoints
 
@@ -29,6 +33,8 @@
 - `server/adapters/mcp/sampling/result_types.py`
 - `server/adapters/mcp/vision/prompting.py`
 - `server/adapters/mcp/vision/parsing.py`
+- `server/adapters/mcp/vision/backends.py`
+- `tests/unit/adapters/mcp/test_vision_external_backend.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
@@ -64,6 +70,7 @@
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_vision_prompting.py`
 - `tests/unit/adapters/mcp/test_vision_parsing.py`
+- `tests/unit/adapters/mcp/test_vision_external_backend.py`
 - `tests/unit/adapters/mcp/test_vision_result_types.py`
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
@@ -82,8 +89,9 @@
 
 ## Changelog Impact
 
-- include in the umbrella `_docs/_CHANGELOG/` entry when extraction/ranking
-  split semantics ship
+- record extraction/ranking semantics through the incremental TASK-166
+  changelogs, including the backend packet-guidance normalization repair in
+  `_docs/_CHANGELOG/333-2026-05-10-task-166-backend-packet-guidance-normalization.md`
 
 ## Status / Board Update
 
@@ -96,6 +104,7 @@
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_parsing.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_external_backend.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_result_types.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`

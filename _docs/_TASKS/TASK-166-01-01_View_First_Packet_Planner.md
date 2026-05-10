@@ -1,7 +1,7 @@
 # TASK-166-01-01: View-First Packet Planner
 
 **Parent:** [TASK-166-01](./TASK-166-01_View_And_Scope_Packet_Compare_Family.md)  
-**Status:** ✅ Done  
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Objective:** Plan compare packets by view (`front`, `side`, optional `top` / silhouette) so each packet can be retried and interpreted independently.
 

@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [333](./333-2026-05-10-task-166-backend-packet-guidance-normalization.md) | 2026-05-10 | **TASK-166 backend packet-guidance normalization** | - |
 | [332](./332-2026-05-09-task-166-owner-seam-relocation-and-viewport-proof.md) | 2026-05-09 | **TASK-166 owner seam relocation and viewport proof hardening** | - |
 | [331](./331-2026-05-09-task-166-packet-scope-alignment-and-proof-refresh.md) | 2026-05-09 | **TASK-166 packet scope alignment and proof refresh** | - |
 | [330](./330-2026-05-08-task-166-runtime-input-budget-config.md) | 2026-05-08 | **TASK-166 runtime input-budget config** | - |

@@ -433,6 +433,15 @@ without requiring one massive all-images compare request.
   configured-vs-effective budget diagnostics / fail-safe caps under
   `TASK-166-05-02`, and the remaining public transparency hardening tracked in
   `TASK-166-06`.
+- 2026-05-10: backend packet-guidance normalization repair landed:
+  - `server/adapters/mcp/vision/backends.py` now forwards parser-owned
+    `packet_guidance` into `VisionAssistContract` so packet extraction status
+    and `ranking_recommendation` survive the real external-backend runtime path
+  - `server/adapters/mcp/vision/parsing.py` remains the normalization owner for
+    packet status/ranking heuristics; provider backends only project parsed
+    fields and must not duplicate those heuristics
+  - the owner-seam cleanup question for broader public transparency remains a
+    deferred `TASK-166-06` follow-on rather than a code move in this repair
 
 ## Docs To Update
 
@@ -446,7 +455,9 @@ without requiring one massive all-images compare request.
 
 ## Changelog Impact
 
-- one umbrella `_docs/_CHANGELOG/` entry when the packeted compare family ships
+- use incremental `_docs/_CHANGELOG/` closeouts for shipped TASK-166 slices
+  instead of one umbrella-only entry; the current packeted compare history is
+  recorded in entries `324` through `333`
 
 ## Status / Board Update
 

@@ -1,7 +1,7 @@
 # TASK-166-04-02: Complex And Super-Complex Compare Policy
 
 **Parent:** [TASK-166-04](./TASK-166-04_Complexity_Tiers_And_Multi_Reference_Scaling_Policy.md)  
-**Status:** 🚧 In Progress  
+**Status:** 🚧 In Progress
 **Priority:** 🔴 High
 **Objective:** Define the packet scheduler and synthesis posture for complex and super-complex 6-12 image compare runs.
 

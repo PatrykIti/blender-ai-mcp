@@ -134,6 +134,7 @@ def _normalize_assist_payload(
         "likely_issues": list(parsed.get("likely_issues") or []),
         "next_corrections": list(parsed.get("next_corrections") or []),
         "recommended_checks": list(parsed.get("recommended_checks") or []),
+        "packet_guidance": parsed.get("packet_guidance"),
         "confidence": parsed.get("confidence"),
         "captures_used": list(parsed.get("captures_used") or []),
         "input_summary": _build_input_summary(request),

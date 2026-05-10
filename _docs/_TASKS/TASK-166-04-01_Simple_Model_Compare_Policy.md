@@ -1,7 +1,7 @@
 # TASK-166-04-01: Simple Model Compare Policy
 
 **Parent:** [TASK-166-04](./TASK-166-04_Complexity_Tiers_And_Multi_Reference_Scaling_Policy.md)  
-**Status:** ✅ Done  
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Objective:** Define the minimal compare strategy for simple models so easy cases do not pay the overhead of a super-complex packet pipeline.
 
