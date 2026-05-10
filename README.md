@@ -83,6 +83,7 @@ When a bounded modeling intent matches, the default public working layer should 
 - `reference_orchestrator_feedback` on `reference_images`, `router_*`, and staged reference compare/iterate payloads so clients can read one compact next-step contract instead of stitching together RU, gate, and planner fields by hand
 - `reference_compare_stage_checkpoint` for deterministic multi-view stage comparison against attached references during manual iterative work
 - staged reference compare now decomposes bounded stage requests into packet-local view/scope compares internally and can expose additive `compare_diagnostics` on rich or uncertainty paths without creating a second public tool family
+- super-complex staged compare keeps 6-12 image runs bounded by slicing large same-view reference sets into packet-local chunks that respect the effective `VISION_MAX_IMAGES` runtime limit
 - packet-local staged compare now runs extraction first and ranking second only when extraction warrants it, so ranking failure no longer erases usable packet evidence
 - packet-local staged compare also feeds typed silhouette/action-hint `support_evidence` items into packet requests before the LLM compare phase, so bounded CV facts stay machine-readable without creating a second perception flow
 - `reference_iterate_stage_checkpoint` for a session-aware staged correction loop that remembers prior focus, can escalate into inspect/validate when the same correction repeats, and can now target one object, many objects, a collection, or the full assembled silhouette
@@ -647,6 +648,10 @@ hidden ordering assumptions.
   while leaving the existing staged compare fields in place; `budget_control`
   now also reports configured and effective runtime limits so fail-safe clipping
   is visible without parsing runner internals
+- super-complex staged compare resolves packet-local image budgets before
+  execution; large same-view reference sets become bounded reference slices
+  that stay within `VISION_MAX_IMAGES`, and mixed clean vs corrective packet
+  statuses surface as conflict uncertainty in `compare_diagnostics`
 - `scene_relation_graph(...)` updates the first deterministic gate slice for
   `required_part`, `attachment_seam`, `support_contact`, and `symmetry_pair`
   with authoritative evidence refs, status reasons, completion blockers, and

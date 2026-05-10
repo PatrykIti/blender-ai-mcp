@@ -1,9 +1,22 @@
 # TASK-166-04: Complexity Tiers And Multi-Reference Scaling Policy
 
 **Parent:** [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md)  
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Objective:** Define how the compare family scales from simple models to complex and super-complex 6-12 image runs without one static request shape.
+
+## Completion Summary
+
+- simple-tier compare keeps lightweight one-view or two-view packet plans and
+  skips synthesis when a clean compact single packet is enough
+- complex collection/object-set compare uses scope/view packets so active seam
+  failures remain local to their target scope
+- super-complex 6-12 image compare now slices large same-view reference sets
+  into bounded packet-local chunks based on the effective runtime
+  `VISION_MAX_IMAGES` limit before packet execution
+- packet synthesis now reports mixed clean/corrective packet conclusions as
+  explicit conflict uncertainty instead of silently collapsing them into one
+  stronger verdict
 
 ## Repository Touchpoints
 
@@ -11,10 +24,8 @@
 - `server/adapters/mcp/areas/reference_planner.py`
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/areas/reference_compare_packets.py`
-- `server/adapters/mcp/vision/config.py`
-- `server/adapters/mcp/vision/runner.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
-- `tests/e2e/vision/`
+- `tests/unit/adapters/mcp/test_reference_compare_packets.py`
 
 ## Implementation Notes
 
@@ -95,23 +106,22 @@ staged_compare = assemble_compare_from_packet_plan(packet_plan)
 
 ## Changelog Impact
 
-- include in the umbrella `_docs/_CHANGELOG/` entry when complexity-tier policy
-  ships
+- shipped through incremental TASK-166 entries including
+  `_docs/_CHANGELOG/335-2026-05-10-task-166-super-complex-packet-scheduling.md`
 
 ## Status / Board Update
 
-- keep parent `TASK-166` and this subtask aligned in `_docs/_TASKS/README.md`
-- record whether simple/complex/super-complex policy all shipped together or
-  whether any tier remains open as explicit follow-on work
+- `TASK-166-04` is closed; no open direct complexity-tier leaves remain
+- promoted `TASK-166` remains open for `TASK-166-06`
 
 ## Validation Commands
 
 - `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_compare_packets.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q -k "super_complex_packets or deterministic_stage_set or packet_local_target"`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
-- after adding the dedicated multi-reference scaling lane, run:
-  `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_multi_reference_scaling.py -q`
-- `poetry run pytest ./tests/unit`
-- `poetry run python scripts/run_e2e_tests.py`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+- `PYTHONPATH=. poetry run python scripts/run_e2e_tests.py`
+- `poetry run ruff check server/adapters/mcp/areas/reference_compare_packets.py server/adapters/mcp/areas/reference.py server/adapters/mcp/areas/reference_planner.py tests/unit/adapters/mcp/test_reference_compare_packets.py tests/unit/adapters/mcp/test_reference_images.py`

@@ -4,8 +4,13 @@ from __future__ import annotations
 
 from typing import Literal
 
+from server.adapters.mcp.areas.reference_compare_packets import append_compare_synthesis_conflict_notes
 from server.adapters.mcp.areas.reference_planner import build_compare_packets, synthesize_packet_vision_result
-from server.adapters.mcp.contracts.reference import ReferenceImageRecordContract
+from server.adapters.mcp.contracts.reference import (
+    ReferenceCompareDiagnosticsContract,
+    ReferenceComparePacketContract,
+    ReferenceImageRecordContract,
+)
 from server.adapters.mcp.contracts.scene import SceneAssembledTargetScopeContract, SceneTruthFollowupContract
 from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
 from server.adapters.mcp.sampling.result_types import VisionAssistContract, VisionInputSummaryContract
@@ -140,6 +145,125 @@ def test_build_compare_packets_complex_focus_clusters_keep_view_and_scope_slices
     assert {packet.scope_label for packet in packets.packets} == {"Body + Head", "Tail"}
     assert {packet.target_view for packet in packets.packets} == {"front", "side"}
     assert all(packet.packet_kind == "view_scope" for packet in packets.packets)
+
+
+def test_build_compare_packets_super_complex_slices_references_to_runtime_image_budget():
+    packets = build_compare_packets(
+        target_view="front",
+        captures=[
+            _capture("context_wide_after", preset_name="context_wide", view_kind="wide"),
+            _capture("target_front_after", preset_name="target_front"),
+        ],
+        reference_records=[
+            _reference(f"ref_front_{index}", label=f"front_ref_{index}", target_view="front") for index in range(1, 7)
+        ],
+        assembled_target_scope=SceneAssembledTargetScopeContract(
+            scope_kind="single_object",
+            primary_target="Creature",
+            object_names=["Creature"],
+            object_count=1,
+        ),
+        truth_followup=SceneTruthFollowupContract(
+            scope=SceneAssembledTargetScopeContract(
+                scope_kind="single_object",
+                primary_target="Creature",
+                object_names=["Creature"],
+                object_count=1,
+            ),
+            continue_recommended=False,
+            message="No structural blocker.",
+        ),
+        max_images_per_packet=4,
+    )
+
+    assert packets.complexity_tier == "super_complex"
+    assert packets.packet_count == 3
+    assert packets.synthesis_required is True
+    assert [len(packet.reference_ids) for packet in packets.packets] == [2, 2, 2]
+    assert all(packet.capture_labels == ["context_wide_after", "target_front_after"] for packet in packets.packets)
+    assert [packet.packet_label for packet in packets.packets] == [
+        "front packet reference slice 1",
+        "front packet reference slice 2",
+        "front packet reference slice 3",
+    ]
+    assert packets.budget_notes == [
+        "Compare packet policy split reference evidence into bounded packet-local slices to stay within "
+        "VISION_MAX_IMAGES=4."
+    ]
+
+
+def test_build_compare_packets_tight_image_budget_drops_context_before_reference_signal():
+    packets = build_compare_packets(
+        target_view="front",
+        captures=[
+            _capture("context_wide_after", preset_name="context_wide", view_kind="wide"),
+            _capture("target_front_after", preset_name="target_front"),
+        ],
+        reference_records=[
+            _reference("ref_front_1", label="front_ref_1", target_view="front"),
+            _reference("ref_front_2", label="front_ref_2", target_view="front"),
+        ],
+        assembled_target_scope=SceneAssembledTargetScopeContract(
+            scope_kind="single_object",
+            primary_target="Creature",
+            object_names=["Creature"],
+            object_count=1,
+        ),
+        truth_followup=SceneTruthFollowupContract(
+            scope=SceneAssembledTargetScopeContract(
+                scope_kind="single_object",
+                primary_target="Creature",
+                object_names=["Creature"],
+                object_count=1,
+            ),
+            continue_recommended=False,
+            message="No structural blocker.",
+        ),
+        max_images_per_packet=2,
+    )
+
+    assert packets.packet_count == 2
+    assert all(packet.capture_labels == ["target_front_after"] for packet in packets.packets)
+    assert [packet.reference_ids for packet in packets.packets] == [["ref_front_1"], ["ref_front_2"]]
+    assert packets.budget_notes == [
+        "Compare packet policy omitted context captures from some packets to stay within VISION_MAX_IMAGES=2.",
+        "Compare packet policy split reference evidence into bounded packet-local slices to stay within "
+        "VISION_MAX_IMAGES=2.",
+    ]
+
+
+def test_compare_synthesis_conflict_notes_call_out_mixed_packet_statuses():
+    diagnostics = ReferenceCompareDiagnosticsContract(
+        complexity_tier="complex",
+        packet_count=2,
+        packet_order=["packet:clean", "packet:ready"],
+        synthesis_required=True,
+        synthesis_status="success",
+        packets=[
+            ReferenceComparePacketContract(
+                packet_id="packet:clean",
+                packet_label="front packet",
+                compare_question="Compare front.",
+                extraction_status="success",
+                packet_status="clean",
+            ),
+            ReferenceComparePacketContract(
+                packet_id="packet:ready",
+                packet_label="side packet",
+                compare_question="Compare side.",
+                extraction_status="success",
+                packet_status="ready",
+                correction_focus=["Tail arc"],
+            ),
+        ],
+    )
+
+    append_compare_synthesis_conflict_notes(diagnostics)
+
+    assert diagnostics.conflict_notes == [
+        "Compare packets returned mixed clean and corrective/uncertain statuses; "
+        "treat synthesis as advisory until the bounded packet details are inspected."
+    ]
 
 
 def test_synthesize_packet_vision_result_dedupes_reused_capture_and_reference_counts():

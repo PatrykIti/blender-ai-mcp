@@ -451,6 +451,18 @@ without requiring one massive all-images compare request.
     surfaces fail-safe clipping as bounded uncertainty
   - `TASK-166-05` is now closed; remaining open scope is limited to
     `TASK-166-04-02` and `TASK-166-06`
+- 2026-05-10: `TASK-166-04-02` is now closed:
+  - `reference_compare_stage_checkpoint(...)` now passes the effective runtime
+    image budget into packet planning before packet-local vision requests run
+  - super-complex 6-12 image runs split large same-view reference sets into
+    bounded packet-local reference slices and keep each packet within
+    `VISION_MAX_IMAGES`
+  - tight image budgets preserve focused captures before context captures,
+    surface reference-slice clipping in `compare_diagnostics.budget_notes`, and
+    mark mixed clean/corrective packet synthesis as explicit conflict
+    uncertainty
+  - `TASK-166-04` is now closed; remaining open scope is limited to
+    `TASK-166-06`
 
 ## Docs To Update
 
@@ -466,7 +478,7 @@ without requiring one massive all-images compare request.
 
 - use incremental `_docs/_CHANGELOG/` closeouts for shipped TASK-166 slices
   instead of one umbrella-only entry; the current packeted compare history is
-  recorded in entries `324` through `333`
+  recorded in entries `324` through `335`
 
 ## Status / Board Update
 

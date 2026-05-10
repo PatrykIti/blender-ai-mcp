@@ -81,6 +81,15 @@ class _ScopeCluster:
 
 
 @dataclass(frozen=True)
+class ComparePacketPolicy:
+    """Resolved packet sizing policy for one staged compare run."""
+
+    max_images_per_packet: int | None
+    max_capture_labels_per_packet: int | None
+    max_reference_ids_per_packet: int | None
+
+
+@dataclass(frozen=True)
 class PacketCompareExecutionResult:
     compare_diagnostics: ReferenceCompareDiagnosticsContract
     vision_assistant: VisionAssistantContract | None
@@ -154,6 +163,11 @@ def _unique_preserving_order(values: Sequence[str]) -> list[str]:
         seen.add(normalized)
         ordered.append(normalized)
     return ordered
+
+
+def _append_unique_note(notes: list[str], note: str) -> None:
+    if note not in notes:
+        notes.append(note)
 
 
 def _build_compare_segmentation_request_payload(
@@ -496,6 +510,33 @@ def resolve_compare_complexity_tier(
     return "simple"
 
 
+def resolve_complex_compare_policy(
+    *,
+    complexity_tier: ReferenceCompareComplexityTierLiteral,
+    max_images_per_packet: int | None,
+) -> ComparePacketPolicy:
+    """Resolve packet-local image limits for complex staged compare."""
+
+    normalized_max_images = max(1, int(max_images_per_packet)) if max_images_per_packet is not None else None
+    if normalized_max_images is None:
+        return ComparePacketPolicy(
+            max_images_per_packet=None,
+            max_capture_labels_per_packet=None,
+            max_reference_ids_per_packet=2 if complexity_tier == "super_complex" else None,
+        )
+
+    max_capture_labels = max(1, normalized_max_images - 1)
+    max_reference_ids = max(0, normalized_max_images - 1)
+    if complexity_tier == "super_complex":
+        max_reference_ids = min(max_reference_ids, 2)
+
+    return ComparePacketPolicy(
+        max_images_per_packet=normalized_max_images,
+        max_capture_labels_per_packet=max_capture_labels,
+        max_reference_ids_per_packet=max_reference_ids,
+    )
+
+
 def _ordered_views(view_map: dict[str, list[str]]) -> list[str]:
     return [view_id for view_id in _PACKET_VIEW_ORDER if view_id in view_map]
 
@@ -578,26 +619,128 @@ def _packet_reference_ids(
     return []
 
 
-def _general_packet(
+def _budgeted_capture_labels(
+    capture_labels: Sequence[str],
     *,
-    complexity_tier: ReferenceCompareComplexityTierLiteral,
-    assembled_target_scope: SceneAssembledTargetScopeContract | None,
-    all_reference_ids: list[str],
-    all_capture_labels: list[str],
-) -> ReferenceComparePacketContract:
-    scope_label = assembled_target_scope.scope_kind if assembled_target_scope is not None else None
-    return ReferenceComparePacketContract(
-        packet_id=_stable_packet_id(
-            "packet", complexity_tier, scope_label or "general", *all_reference_ids, *all_capture_labels
-        ),
-        packet_kind="scope",
-        packet_label="general packet",
-        scope_label=scope_label,
-        target_objects=list(assembled_target_scope.object_names or []) if assembled_target_scope is not None else [],
-        reference_ids=list(all_reference_ids),
-        capture_labels=list(all_capture_labels),
-        compare_question=_packet_question_for_view(None, scope_label=scope_label),
+    context_capture_labels: Sequence[str],
+    policy: ComparePacketPolicy,
+) -> tuple[list[str], bool]:
+    ordered_capture_labels = _unique_preserving_order(list(capture_labels))
+    max_capture_labels = policy.max_capture_labels_per_packet
+    if max_capture_labels is None or len(ordered_capture_labels) <= max_capture_labels:
+        return ordered_capture_labels, False
+
+    context_labels = set(context_capture_labels)
+    focus_labels = [label for label in ordered_capture_labels if label not in context_labels]
+    fallback_context_labels = [label for label in ordered_capture_labels if label in context_labels]
+    return _unique_preserving_order([*focus_labels, *fallback_context_labels])[:max_capture_labels], True
+
+
+def _reference_id_chunks_for_policy(
+    reference_ids: Sequence[str],
+    *,
+    capture_count: int,
+    policy: ComparePacketPolicy,
+) -> tuple[list[list[str]], bool]:
+    ordered_reference_ids = _unique_preserving_order(list(reference_ids))
+    if not ordered_reference_ids:
+        return [[]], False
+
+    max_reference_ids = policy.max_reference_ids_per_packet
+    if policy.max_images_per_packet is not None:
+        image_slots = max(0, policy.max_images_per_packet - capture_count)
+        max_reference_ids = image_slots if max_reference_ids is None else min(max_reference_ids, image_slots)
+
+    if max_reference_ids is None:
+        return [ordered_reference_ids], False
+    if max_reference_ids <= 0:
+        return [[]], True
+    if len(ordered_reference_ids) <= max_reference_ids:
+        return [ordered_reference_ids], False
+
+    chunks = [
+        ordered_reference_ids[index : index + max_reference_ids]
+        for index in range(0, len(ordered_reference_ids), max_reference_ids)
+    ]
+    return chunks, True
+
+
+def _append_policy_packets(
+    packets: list[ReferenceComparePacketContract],
+    *,
+    packet_id_parts: Sequence[str],
+    packet_kind: Literal["view", "scope", "view_scope"],
+    packet_label: str,
+    target_view: str | None,
+    scope_label: str | None,
+    target_objects: Sequence[str],
+    truth_pairs: Sequence[str] = (),
+    reference_ids: Sequence[str],
+    capture_labels: Sequence[str],
+    compare_question: str,
+    context_capture_labels: Sequence[str],
+    policy: ComparePacketPolicy,
+    budget_notes: list[str],
+) -> None:
+    effective_capture_labels, captures_trimmed = _budgeted_capture_labels(
+        capture_labels,
+        context_capture_labels=context_capture_labels,
+        policy=policy,
     )
+    reference_chunks, references_split = _reference_id_chunks_for_policy(
+        reference_ids,
+        capture_count=len(effective_capture_labels),
+        policy=policy,
+    )
+
+    if captures_trimmed and policy.max_images_per_packet is not None:
+        _append_unique_note(
+            budget_notes,
+            (
+                "Compare packet policy omitted context captures from some packets to stay within "
+                f"VISION_MAX_IMAGES={policy.max_images_per_packet}."
+            ),
+        )
+    if references_split and policy.max_images_per_packet is not None:
+        _append_unique_note(
+            budget_notes,
+            (
+                "Compare packet policy split reference evidence into bounded packet-local slices to stay within "
+                f"VISION_MAX_IMAGES={policy.max_images_per_packet}."
+            ),
+        )
+    if references_split and not any(reference_chunks) and policy.max_images_per_packet is not None:
+        _append_unique_note(
+            budget_notes,
+            (
+                "Runtime image budget is below the 2-image minimum for reference compare packets; "
+                "raise VISION_MAX_IMAGES before treating packet conclusions as complete."
+            ),
+        )
+
+    for index, chunk in enumerate(reference_chunks, start=1):
+        sliced = len(reference_chunks) > 1
+        effective_packet_label = f"{packet_label} reference slice {index}" if sliced else packet_label
+        stable_parts = [
+            *packet_id_parts,
+            *([f"slice_{index}"] if sliced else []),
+            *(chunk or ["no_reference_slice"]),
+            *effective_capture_labels,
+        ]
+        packets.append(
+            ReferenceComparePacketContract(
+                packet_id=_stable_packet_id("packet", *stable_parts),
+                packet_kind=packet_kind,
+                packet_label=effective_packet_label,
+                target_view=target_view,
+                scope_label=scope_label,
+                target_objects=list(target_objects),
+                truth_pairs=list(truth_pairs),
+                reference_ids=list(chunk),
+                capture_labels=list(effective_capture_labels),
+                compare_question=compare_question,
+            )
+        )
 
 
 def build_compare_packets(
@@ -607,6 +750,7 @@ def build_compare_packets(
     reference_records: Sequence[ReferenceImageRecordContract],
     assembled_target_scope: SceneAssembledTargetScopeContract | None,
     truth_followup: SceneTruthFollowupContract | None,
+    max_images_per_packet: int | None = None,
 ) -> ReferenceCompareDiagnosticsContract:
     capture_labels_by_view: dict[str, list[str]] = {}
     context_capture_labels: list[str] = []
@@ -634,17 +778,32 @@ def build_compare_packets(
         capture_views=capture_views,
         complexity_tier=complexity_tier,
     )
+    packet_policy = resolve_complex_compare_policy(
+        complexity_tier=complexity_tier,
+        max_images_per_packet=max_images_per_packet,
+    )
 
     packets: list[ReferenceComparePacketContract] = []
+    budget_notes: list[str] = []
     if complexity_tier == "simple":
         if not selected_views:
-            packets.append(
-                _general_packet(
-                    complexity_tier=complexity_tier,
-                    assembled_target_scope=assembled_target_scope,
-                    all_reference_ids=all_reference_ids,
-                    all_capture_labels=all_capture_labels,
-                )
+            scope_label = assembled_target_scope.scope_kind if assembled_target_scope is not None else None
+            _append_policy_packets(
+                packets,
+                packet_id_parts=(complexity_tier, scope_label or "general"),
+                packet_kind="scope",
+                packet_label="general packet",
+                target_view=None,
+                scope_label=scope_label,
+                target_objects=list(assembled_target_scope.object_names or [])
+                if assembled_target_scope is not None
+                else [],
+                reference_ids=all_reference_ids,
+                capture_labels=all_capture_labels,
+                compare_question=_packet_question_for_view(None, scope_label=scope_label),
+                context_capture_labels=context_capture_labels,
+                policy=packet_policy,
+                budget_notes=budget_notes,
             )
         for view_id in selected_views:
             packet_capture_labels = _packet_capture_labels(
@@ -660,22 +819,22 @@ def build_compare_packets(
                 else [],
                 reference_records=reference_records,
             )
-            packets.append(
-                ReferenceComparePacketContract(
-                    packet_id=_stable_packet_id(
-                        "packet", "simple", view_id, *packet_reference_ids, *packet_capture_labels
-                    ),
-                    packet_kind="view",
-                    packet_label=f"{view_id} packet",
-                    target_view=view_id,
-                    scope_label=assembled_target_scope.scope_kind if assembled_target_scope is not None else None,
-                    target_objects=list(assembled_target_scope.object_names or [])
-                    if assembled_target_scope is not None
-                    else [],
-                    reference_ids=packet_reference_ids,
-                    capture_labels=packet_capture_labels,
-                    compare_question=_packet_question_for_view(view_id),
-                )
+            _append_policy_packets(
+                packets,
+                packet_id_parts=("simple", view_id),
+                packet_kind="view",
+                packet_label=f"{view_id} packet",
+                target_view=view_id,
+                scope_label=assembled_target_scope.scope_kind if assembled_target_scope is not None else None,
+                target_objects=list(assembled_target_scope.object_names or [])
+                if assembled_target_scope is not None
+                else [],
+                reference_ids=packet_reference_ids,
+                capture_labels=packet_capture_labels,
+                compare_question=_packet_question_for_view(view_id),
+                context_capture_labels=context_capture_labels,
+                policy=packet_policy,
+                budget_notes=budget_notes,
             )
     else:
         scope_clusters = (
@@ -701,25 +860,21 @@ def build_compare_packets(
                         packet_target_objects=cluster.target_objects,
                         reference_records=reference_records,
                     )
-                    packets.append(
-                        ReferenceComparePacketContract(
-                            packet_id=_stable_packet_id(
-                                "packet",
-                                cluster.scope_label,
-                                view_id or "scope",
-                                *packet_reference_ids,
-                                *packet_capture_labels,
-                            ),
-                            packet_kind="view_scope" if view_id is not None else "scope",
-                            packet_label=cluster.scope_label,
-                            target_view=view_id,
-                            scope_label=cluster.scope_label,
-                            target_objects=list(cluster.target_objects),
-                            truth_pairs=list(cluster.truth_pairs),
-                            reference_ids=packet_reference_ids,
-                            capture_labels=packet_capture_labels,
-                            compare_question=_packet_question_for_view(view_id, scope_label=cluster.scope_label),
-                        )
+                    _append_policy_packets(
+                        packets,
+                        packet_id_parts=(cluster.scope_label, view_id or "scope"),
+                        packet_kind="view_scope" if view_id is not None else "scope",
+                        packet_label=cluster.scope_label,
+                        target_view=view_id,
+                        scope_label=cluster.scope_label,
+                        target_objects=list(cluster.target_objects),
+                        truth_pairs=list(cluster.truth_pairs),
+                        reference_ids=packet_reference_ids,
+                        capture_labels=packet_capture_labels,
+                        compare_question=_packet_question_for_view(view_id, scope_label=cluster.scope_label),
+                        context_capture_labels=context_capture_labels,
+                        policy=packet_policy,
+                        budget_notes=budget_notes,
                     )
         elif selected_views:
             for view_id in selected_views:
@@ -736,30 +891,41 @@ def build_compare_packets(
                     else [],
                     reference_records=reference_records,
                 )
-                packets.append(
-                    ReferenceComparePacketContract(
-                        packet_id=_stable_packet_id(
-                            "packet", "view", view_id, *packet_reference_ids, *packet_capture_labels
-                        ),
-                        packet_kind="view",
-                        packet_label=f"{view_id} packet",
-                        target_view=view_id,
-                        target_objects=list(assembled_target_scope.object_names or [])
-                        if assembled_target_scope is not None
-                        else [],
-                        reference_ids=packet_reference_ids,
-                        capture_labels=packet_capture_labels,
-                        compare_question=_packet_question_for_view(view_id),
-                    )
+                _append_policy_packets(
+                    packets,
+                    packet_id_parts=("view", view_id),
+                    packet_kind="view",
+                    packet_label=f"{view_id} packet",
+                    target_view=view_id,
+                    scope_label=None,
+                    target_objects=list(assembled_target_scope.object_names or [])
+                    if assembled_target_scope is not None
+                    else [],
+                    reference_ids=packet_reference_ids,
+                    capture_labels=packet_capture_labels,
+                    compare_question=_packet_question_for_view(view_id),
+                    context_capture_labels=context_capture_labels,
+                    policy=packet_policy,
+                    budget_notes=budget_notes,
                 )
         else:
-            packets.append(
-                _general_packet(
-                    complexity_tier=complexity_tier,
-                    assembled_target_scope=assembled_target_scope,
-                    all_reference_ids=all_reference_ids,
-                    all_capture_labels=all_capture_labels,
-                )
+            scope_label = assembled_target_scope.scope_kind if assembled_target_scope is not None else None
+            _append_policy_packets(
+                packets,
+                packet_id_parts=(complexity_tier, scope_label or "general"),
+                packet_kind="scope",
+                packet_label="general packet",
+                target_view=None,
+                scope_label=scope_label,
+                target_objects=list(assembled_target_scope.object_names or [])
+                if assembled_target_scope is not None
+                else [],
+                reference_ids=all_reference_ids,
+                capture_labels=all_capture_labels,
+                compare_question=_packet_question_for_view(None, scope_label=scope_label),
+                context_capture_labels=context_capture_labels,
+                policy=packet_policy,
+                budget_notes=budget_notes,
             )
 
     return ReferenceCompareDiagnosticsContract(
@@ -769,6 +935,7 @@ def build_compare_packets(
         synthesis_required=len(packets) > 1,
         synthesis_status="not_needed" if len(packets) <= 1 else "skipped",
         packets=packets,
+        budget_notes=budget_notes,
     )
 
 
@@ -926,6 +1093,27 @@ def has_compare_uncertainty(compare_diagnostics: ReferenceCompareDiagnosticsCont
         packet.extraction_status in {"blocked", "low_information", "error"} or packet.ranking_status == "error"
         for packet in compare_diagnostics.packets
     )
+
+
+def append_compare_synthesis_conflict_notes(compare_diagnostics: ReferenceCompareDiagnosticsContract) -> None:
+    """Surface mixed packet conclusions as explicit synthesis uncertainty."""
+
+    if not compare_diagnostics.synthesis_required:
+        return
+
+    packet_statuses = {
+        packet.packet_status
+        for packet in compare_diagnostics.packets
+        if packet.packet_status in {"clean", "ready", "blocked", "low_information"}
+    }
+    if "clean" in packet_statuses and packet_statuses.intersection({"ready", "blocked", "low_information"}):
+        _append_unique_note(
+            compare_diagnostics.conflict_notes,
+            (
+                "Compare packets returned mixed clean and corrective/uncertain statuses; "
+                "treat synthesis as advisory until the bounded packet details are inspected."
+            ),
+        )
 
 
 def should_emit_compare_diagnostics(
@@ -1496,9 +1684,11 @@ async def execute_compare_packets(
 
     failed_packet_count = count_failed_compare_packets(compare_diagnostics)
     if failed_packet_count:
-        compare_diagnostics.conflict_notes.append(
-            f"{failed_packet_count} compare packet(s) were blocked, low-information, or failed before synthesis."
+        _append_unique_note(
+            compare_diagnostics.conflict_notes,
+            f"{failed_packet_count} compare packet(s) were blocked, low-information, or failed before synthesis.",
         )
+    append_compare_synthesis_conflict_notes(compare_diagnostics)
 
     return PacketCompareExecutionResult(
         compare_diagnostics=compare_diagnostics,

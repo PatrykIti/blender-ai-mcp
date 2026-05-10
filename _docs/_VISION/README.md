@@ -641,6 +641,9 @@ and `reference_iterate_stage_checkpoint(...)`:
   - packets can also carry typed packet-local `support_evidence` items derived
     from deterministic silhouette/action-hint preflight before the packet LLM
     phase
+  - super-complex runs split large same-view reference sets into bounded
+    packet-local reference slices based on the effective `VISION_MAX_IMAGES`
+    runtime limit before the packet request reaches the runner
   - compact paths emit it on synthesis, ranking/extraction uncertainty, or
     model-aware budget pressure; rich paths emit it directly
 - `silhouette_analysis`
@@ -750,6 +753,10 @@ Current config surface:
 - runner and staged compare diagnostics distinguish configured values from
   effective fail-safe caps for image count, serialized input characters, and
   output tokens
+- staged compare packet planning also consumes the effective image budget from
+  `VISION_MAX_IMAGES`; when a super-complex run has more same-view references
+  than one packet can carry, it emits bounded reference slices plus
+  `compare_diagnostics.budget_notes`
 
 Boundary rules:
 

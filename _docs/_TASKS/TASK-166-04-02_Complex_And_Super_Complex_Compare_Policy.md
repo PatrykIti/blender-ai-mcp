@@ -1,21 +1,37 @@
 # TASK-166-04-02: Complex And Super-Complex Compare Policy
 
 **Parent:** [TASK-166-04](./TASK-166-04_Complexity_Tiers_And_Multi_Reference_Scaling_Policy.md)  
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Objective:** Define the packet scheduler and synthesis posture for complex and super-complex 6-12 image compare runs.
+
+## Completion Summary
+
+- complex and super-complex staged compare now resolves a packet image policy
+  from the effective runtime `max_images` budget before executing packet-local
+  vision requests
+- super-complex runs split large same-view reference sets into bounded
+  reference slices, keep per-packet image counts within `VISION_MAX_IMAGES`,
+  and surface the split through additive `compare_diagnostics.budget_notes`
+- tight image budgets preserve the focused stage capture before optional
+  context captures, then mark impossible 1-image budgets as explicit packet
+  uncertainty instead of silently overfilling the runner request
+- mixed clean vs corrective/uncertain packet statuses now add a synthesis
+  conflict note so clients do not treat packet synthesis as stronger than the
+  bounded packet evidence
 
 ## Repository Touchpoints
 
 - `server/adapters/mcp/areas/reference.py`
-- `server/adapters/mcp/areas/reference_feedback.py`
 - `server/adapters/mcp/areas/reference_planner.py`
-- `server/adapters/mcp/contracts/reference.py`
-- `server/adapters/mcp/vision/config.py`
-- `server/adapters/mcp/vision/runner.py`
+- `server/adapters/mcp/areas/reference_compare_packets.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
-- `tests/e2e/integration/test_guided_gate_state_transport.py`
-- `tests/e2e/vision/`
+- `tests/unit/adapters/mcp/test_reference_compare_packets.py`
+- `README.md`
+- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `_docs/_MCP_SERVER/README.md`
+- `_docs/_VISION/README.md`
+- `_docs/_TESTS/README.md`
 
 ## Implementation Notes
 
@@ -73,22 +89,21 @@
 
 ## Changelog Impact
 
-- include in the umbrella `_docs/_CHANGELOG/` entry when complex and
-  super-complex compare policy ships
+- shipped in `_docs/_CHANGELOG/335-2026-05-10-task-166-super-complex-packet-scheduling.md`
 
 ## Status / Board Update
 
-- keep parent `TASK-166` and this leaf aligned when complex-tier packet policy
-  closes or splits into follow-on runtime work
+- parent `TASK-166-04` is now ready to close because both simple and
+  complex/super-complex policy leaves are complete
+- promoted `TASK-166` remains open for the public transparency cleanup tracked
+  under `TASK-166-06`
 
 ## Validation Commands
 
 - `git diff --check`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
-- after adding the dedicated multi-reference scaling lane, run:
-  `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_multi_reference_scaling.py -q`
-- `poetry run pytest ./tests/unit`
-- `poetry run python scripts/run_e2e_tests.py`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_compare_packets.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q -k "super_complex_packets or deterministic_stage_set or packet_local_target"`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_reference_compare_packets.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+- `PYTHONPATH=. poetry run python scripts/run_e2e_tests.py`
+- `poetry run ruff check server/adapters/mcp/areas/reference_compare_packets.py server/adapters/mcp/areas/reference.py server/adapters/mcp/areas/reference_planner.py tests/unit/adapters/mcp/test_reference_compare_packets.py tests/unit/adapters/mcp/test_reference_images.py`

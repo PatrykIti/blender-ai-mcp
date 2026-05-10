@@ -495,7 +495,8 @@ Focused unit coverage now also protects:
   - `tests/unit/adapters/mcp/test_reference_images.py`
   - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
   - `tests/unit/router/application/test_router_contracts.py`
-- packeted staged-compare planning, additive `compare_diagnostics`, and
+- packeted staged-compare planning, super-complex image-budget slicing,
+  additive `compare_diagnostics`, mixed packet-status conflict notes, and
   compact feedback/budget projection on:
   - `tests/unit/adapters/mcp/test_reference_images.py`
   - `tests/unit/adapters/mcp/test_reference_compare_packets.py`

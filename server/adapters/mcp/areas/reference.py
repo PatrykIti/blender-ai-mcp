@@ -1250,6 +1250,7 @@ async def _run_stage_checkpoint_compare(
         reference_records=selected_reference_records,
         assembled_target_scope=assembled_target_scope,
         truth_followup=truth_followup,
+        max_images_per_packet=runtime_max_images,
     )
     packet_execution = await _execute_compare_packets(
         ctx=ctx,

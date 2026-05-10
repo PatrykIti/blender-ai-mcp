@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [335](./335-2026-05-10-task-166-super-complex-packet-scheduling.md) | 2026-05-10 | **TASK-166 super-complex packet scheduling** | - |
 | [334](./334-2026-05-10-task-166-runtime-budget-diagnostics-and-fail-safe-caps.md) | 2026-05-10 | **TASK-166 runtime budget diagnostics and fail-safe caps** | - |
 | [333](./333-2026-05-10-task-166-backend-packet-guidance-normalization.md) | 2026-05-10 | **TASK-166 backend packet-guidance normalization** | - |
 | [332](./332-2026-05-09-task-166-owner-seam-relocation-and-viewport-proof.md) | 2026-05-09 | **TASK-166 owner seam relocation and viewport proof hardening** | - |
