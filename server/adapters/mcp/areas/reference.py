@@ -488,6 +488,7 @@ def _stage_compare_response(
         gate_plan=active_gate_plan_contract,
         guided_reference_readiness=guided_reference_readiness,
         compare_diagnostics=compare_diagnostics,
+        budget_control=budget_control,
         planner_summary=planner_summary,
         correction_candidates=list(correction_candidates or []),
         next_gate_actions=list(gate_fields["next_gate_actions"] or []),
@@ -615,6 +616,7 @@ def _iterate_stage_response(
         gate_plan=active_gate_plan_contract,
         guided_reference_readiness=guided_reference_readiness or compare_result.guided_reference_readiness,
         compare_diagnostics=compare_result.compare_diagnostics,
+        budget_control=budget_control or compare_result.budget_control,
         planner_summary=planner_summary or compare_result.planner_summary,
         correction_candidates=resolved_correction_candidates,
         next_gate_actions=list(gate_fields["next_gate_actions"] or []),
@@ -1194,9 +1196,11 @@ async def _run_stage_checkpoint_compare(
     segmentation_sidecar_config = (
         getattr(runtime_config, "active_segmentation_sidecar", None) if runtime_config is not None else None
     )
-    runtime_max_tokens, runtime_max_images, runtime_max_input_chars, runtime_model_name = (
-        _resolve_hybrid_budget_runtime(resolver)
-    )
+    runtime_budget = _resolve_hybrid_budget_runtime(resolver)
+    runtime_max_tokens = runtime_budget.max_tokens
+    runtime_max_images = runtime_budget.max_images
+    runtime_max_input_chars = runtime_budget.max_input_chars
+    runtime_model_name = runtime_budget.model_name
     truth_bundle, _truth_relation_graph = _build_correction_truth_bundle(
         scene_handler,
         assembled_target_scope,
@@ -1322,6 +1326,17 @@ async def _run_stage_checkpoint_compare(
         max_input_chars=runtime_max_input_chars,
         max_output_tokens=runtime_max_tokens,
         max_images=runtime_max_images,
+        configured_max_input_chars=runtime_budget.configured_max_input_chars,
+        configured_max_output_tokens=runtime_budget.configured_max_tokens,
+        configured_max_images=runtime_budget.configured_max_images,
+        effective_max_input_chars=runtime_budget.max_input_chars,
+        effective_max_output_tokens=runtime_budget.max_tokens,
+        effective_max_images=runtime_budget.max_images,
+        fail_safe_max_input_chars=runtime_budget.fail_safe_max_input_chars,
+        fail_safe_max_output_tokens=runtime_budget.fail_safe_max_tokens,
+        fail_safe_max_images=runtime_budget.fail_safe_max_images,
+        budget_clipped=runtime_budget.budget_clipped,
+        budget_clip_fields=list(runtime_budget.budget_clip_fields),
         original_pair_count=truth_bundle.summary.pair_count,
         emitted_pair_count=budgeted_truth_bundle.summary.pair_count,
         original_candidate_count=len(full_correction_candidates),
@@ -1342,6 +1357,11 @@ async def _run_stage_checkpoint_compare(
         compare_diagnostics.budget_notes.append(
             "Model-aware budget control trimmed staged compare evidence before final projection."
         )
+    if runtime_budget.budget_clipped:
+        clipped_fields = ", ".join(runtime_budget.budget_clip_fields)
+        compare_diagnostics.budget_notes.append(
+            f"Configured vision budget exceeded fail-safe caps; effective limits were clipped for {clipped_fields}."
+        )
     if compare_diagnostics.synthesis_required and compare_diagnostics.synthesis_status == "success":
         compare_diagnostics.conflict_notes = _dedupe_preserving_order(compare_diagnostics.conflict_notes)
     emitted_compare_diagnostics = (
@@ -1349,7 +1369,7 @@ async def _run_stage_checkpoint_compare(
         if _should_emit_compare_diagnostics(
             compare_diagnostics=compare_diagnostics,
             preset_profile=preset_profile,
-            model_aware_trimming_applied=model_aware_trimming_applied,
+            model_aware_trimming_applied=model_aware_trimming_applied or runtime_budget.budget_clipped,
         )
         else None
     )

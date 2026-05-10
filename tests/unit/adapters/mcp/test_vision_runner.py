@@ -140,6 +140,31 @@ def test_runner_rejects_input_budget_overflow_from_runtime_config():
     assert result.budget.max_input_chars == 10
 
 
+def test_runner_reports_configured_and_effective_fail_safe_budgets():
+    runtime = build_vision_runtime_config(
+        _config(
+            VISION_MAX_IMAGES=20,
+            VISION_MAX_INPUT_CHARS=100_000,
+            VISION_MAX_TOKENS=250_000,
+        )
+    )
+    resolver = LazyVisionBackendResolver(runtime)
+
+    result = asyncio.run(run_vision_assist(_Ctx(), request=_request(image_count=13), resolver=resolver))
+
+    assert result.status == "rejected_by_policy"
+    assert result.rejection_reason == "image_budget_exceeded"
+    assert result.budget.max_images == 12
+    assert result.budget.configured_max_images == 20
+    assert result.budget.configured_max_input_chars == 100_000
+    assert result.budget.configured_max_tokens == 250_000
+    assert result.budget.effective_max_images == 12
+    assert result.budget.effective_max_input_chars == 48_000
+    assert result.budget.effective_max_tokens == 8_192
+    assert result.budget.budget_clipped is True
+    assert result.budget.budget_clip_fields == ["max_images", "max_input_chars", "max_output_tokens"]
+
+
 def test_runner_returns_unavailable_when_backend_is_disabled():
     runtime = build_vision_runtime_config(_config(VISION_ENABLED=False))
     resolver = LazyVisionBackendResolver(runtime)

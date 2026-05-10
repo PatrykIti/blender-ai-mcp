@@ -17,6 +17,7 @@ from server.adapters.mcp.contracts.reference import (
     GuidedReferenceReadinessContract,
     ReferenceCompareDiagnosticsContract,
     ReferenceCorrectionCandidateContract,
+    ReferenceHybridBudgetControlContract,
     ReferenceOrchestratorFeedbackContract,
     ReferencePlannerFamilyLiteral,
     ReferenceRepairPlannerSummaryContract,
@@ -351,6 +352,7 @@ def build_reference_orchestrator_feedback(
     gate_plan: GatePlanContract | None = None,
     guided_reference_readiness: GuidedReferenceReadinessContract | None = None,
     compare_diagnostics: ReferenceCompareDiagnosticsContract | None = None,
+    budget_control: ReferenceHybridBudgetControlContract | None = None,
     planner_summary: ReferenceRepairPlannerSummaryContract | None = None,
     correction_candidates: list[ReferenceCorrectionCandidateContract] | None = None,
     next_gate_actions: list[str] | None = None,
@@ -366,6 +368,7 @@ def build_reference_orchestrator_feedback(
         and guided_flow_state is None
         and gate_plan is None
         and guided_reference_readiness is None
+        and budget_control is None
         and planner_summary is None
         and not correction_candidates
         and not next_gate_actions
@@ -452,6 +455,12 @@ def build_reference_orchestrator_feedback(
             and (
                 packet.extraction_status in {"blocked", "low_information", "error"} or packet.ranking_status == "error"
             )
+        )
+    if budget_control is not None and budget_control.budget_clipped:
+        clipped_fields = ", ".join(budget_control.budget_clip_fields or [])
+        uncertainty_notes.append(
+            "Configured vision budget was clipped by fail-safe caps"
+            + (f" for {clipped_fields}." if clipped_fields else ".")
         )
     evidence_summary = _dedupe_strings(evidence_summary)[:6]
     uncertainty_notes = _dedupe_strings(uncertainty_notes)[:6]

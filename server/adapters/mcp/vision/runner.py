@@ -14,6 +14,7 @@ from fastmcp import Context
 from server.adapters.mcp.context_utils import ctx_request_id
 from server.adapters.mcp.contracts.base import to_contract
 from server.adapters.mcp.sampling.result_types import (
+    AssistantBudgetContract,
     AssistantCapabilitySource,
     AssistantPolicy,
     AssistantRunResult,
@@ -22,7 +23,12 @@ from server.adapters.mcp.sampling.result_types import (
 from server.adapters.mcp.tasks.task_bridge import is_background_task_context
 
 from .backend import VisionBackendUnavailableError, VisionRequest
-from .config import VisionRuntimeConfig
+from .config import (
+    VISION_FAIL_SAFE_MAX_IMAGES,
+    VISION_FAIL_SAFE_MAX_INPUT_CHARS,
+    VISION_FAIL_SAFE_MAX_TOKENS,
+    VisionRuntimeConfig,
+)
 from .runtime import LazyVisionBackendResolver
 
 VISION_ASSIST_POLICY = AssistantPolicy(
@@ -39,7 +45,27 @@ def _resolve_vision_assist_policy(runtime: VisionRuntimeConfig) -> AssistantPoli
 
     return replace(
         VISION_ASSIST_POLICY,
-        max_input_chars=int(getattr(runtime, "max_input_chars", VISION_ASSIST_POLICY.max_input_chars)),
+        max_input_chars=runtime.effective_max_input_chars,
+        max_tokens=runtime.effective_max_tokens,
+    )
+
+
+def _vision_assist_budget_contract(runtime: VisionRuntimeConfig, policy: AssistantPolicy) -> AssistantBudgetContract:
+    return policy.to_budget_contract().model_copy(
+        update={
+            "max_images": runtime.effective_max_images,
+            "configured_max_input_chars": runtime.max_input_chars,
+            "configured_max_tokens": runtime.max_tokens,
+            "configured_max_images": runtime.max_images,
+            "effective_max_input_chars": runtime.effective_max_input_chars,
+            "effective_max_tokens": runtime.effective_max_tokens,
+            "effective_max_images": runtime.effective_max_images,
+            "fail_safe_max_input_chars": VISION_FAIL_SAFE_MAX_INPUT_CHARS,
+            "fail_safe_max_tokens": VISION_FAIL_SAFE_MAX_TOKENS,
+            "fail_safe_max_images": VISION_FAIL_SAFE_MAX_IMAGES,
+            "budget_clipped": bool(runtime.budget_clip_fields),
+            "budget_clip_fields": list(runtime.budget_clip_fields),
+        }
     )
 
 
@@ -72,7 +98,7 @@ async def run_vision_assist(
 
     runtime = resolver.runtime_config
     policy = _resolve_vision_assist_policy(runtime)
-    budget = policy.to_budget_contract()
+    budget = _vision_assist_budget_contract(runtime, policy)
     request_id = ctx_request_id(ctx)
 
     if is_background_task_context(ctx):
@@ -97,7 +123,7 @@ async def run_vision_assist(
             rejection_reason="empty_images",
         )
 
-    if len(request.images) > runtime.max_images:
+    if len(request.images) > runtime.effective_max_images:
         return AssistantRunResult(
             status="rejected_by_policy",
             assistant_name=policy.assistant_name,

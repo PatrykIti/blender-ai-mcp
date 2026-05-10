@@ -478,6 +478,17 @@ class ReferenceHybridBudgetControlContract(MCPContract):
     max_input_chars: int
     max_output_tokens: int
     max_images: int
+    configured_max_input_chars: int | None = None
+    configured_max_output_tokens: int | None = None
+    configured_max_images: int | None = None
+    effective_max_input_chars: int | None = None
+    effective_max_output_tokens: int | None = None
+    effective_max_images: int | None = None
+    fail_safe_max_input_chars: int | None = None
+    fail_safe_max_output_tokens: int | None = None
+    fail_safe_max_images: int | None = None
+    budget_clipped: bool = False
+    budget_clip_fields: list[str] = []
     original_pair_count: int = 0
     emitted_pair_count: int = 0
     original_candidate_count: int = 0

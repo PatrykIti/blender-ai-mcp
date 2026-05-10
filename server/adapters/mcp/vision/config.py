@@ -15,6 +15,9 @@ VisionContractProfile = Literal["generic_full", "google_family_compare"]
 VisionReferenceClassifierProviderName = Literal["generic_sidecar", "generic", "openrouter", "google_ai_studio"]
 VisionSegmentationProviderName = Literal["generic_sidecar"]
 VisionModelCapabilitySource = Literal["fallback_registry", "openrouter_api", "env_override", "unknown"]
+VISION_FAIL_SAFE_MAX_IMAGES = 12
+VISION_FAIL_SAFE_MAX_INPUT_CHARS = 48_000
+VISION_FAIL_SAFE_MAX_TOKENS = 8_192
 
 
 class VisionModelCapabilities(BaseModel):
@@ -104,7 +107,7 @@ class VisionRuntimeConfig(BaseModel):
     enabled: bool = False
     provider: VisionBackendKind = "transformers_local"
     allow_on_guided: bool = True
-    max_images: int = Field(default=8, ge=1, le=12)
+    max_images: int = Field(default=8, ge=1)
     max_input_chars: int = Field(default=12000, ge=1)
     max_tokens: int = Field(default=400, ge=1)
     timeout_seconds: float = Field(default=20.0, gt=0)
@@ -115,18 +118,43 @@ class VisionRuntimeConfig(BaseModel):
     segmentation_sidecar: "VisionSegmentationSidecarConfig | None" = None
 
     @property
+    def effective_max_images(self) -> int:
+        """Return the image cap after fail-safe clipping."""
+
+        return min(self.max_images, VISION_FAIL_SAFE_MAX_IMAGES)
+
+    @property
+    def effective_max_input_chars(self) -> int:
+        """Return the input-character cap after fail-safe clipping."""
+
+        return min(self.max_input_chars, VISION_FAIL_SAFE_MAX_INPUT_CHARS)
+
+    @property
     def effective_max_tokens(self) -> int:
-        """Return the output-token cap after model-capability fallback policy."""
+        """Return the output-token cap after model-capability and fail-safe policy."""
 
         model_capabilities = (
             self.openai_compatible_external.model_capabilities if self.openai_compatible_external is not None else None
         )
         model_cap = model_capabilities.max_completion_tokens if model_capabilities is not None else None
         if model_cap is None:
-            return self.max_tokens
+            return min(self.max_tokens, VISION_FAIL_SAFE_MAX_TOKENS)
         profile = self.active_vision_contract_profile
         profile_floor = 4096 if profile == "google_family_compare" else 2048
-        return min(max(self.max_tokens, profile_floor), model_cap)
+        return min(max(self.max_tokens, profile_floor), model_cap, VISION_FAIL_SAFE_MAX_TOKENS)
+
+    @property
+    def budget_clip_fields(self) -> list[str]:
+        """Return budget names where configured values were clipped before execution."""
+
+        clipped_fields: list[str] = []
+        if self.effective_max_images < self.max_images:
+            clipped_fields.append("max_images")
+        if self.effective_max_input_chars < self.max_input_chars:
+            clipped_fields.append("max_input_chars")
+        if self.effective_max_tokens < self.max_tokens:
+            clipped_fields.append("max_output_tokens")
+        return clipped_fields
 
     @model_validator(mode="after")
     def validate_provider_config(self) -> "VisionRuntimeConfig":

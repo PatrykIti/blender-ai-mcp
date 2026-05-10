@@ -207,8 +207,8 @@ def _truncate_text(value: str | None, *, limit: int = 600) -> str | None:
 
 def _output_token_cap(*, runtime_config: VisionRuntimeConfig, request: VisionRequest) -> int:
     if _is_reference_understanding_request(request):
-        return max(runtime_config.max_tokens, _REFERENCE_UNDERSTANDING_MIN_OUTPUT_TOKENS)
-    return runtime_config.max_tokens
+        return max(runtime_config.effective_max_tokens, _REFERENCE_UNDERSTANDING_MIN_OUTPUT_TOKENS)
+    return runtime_config.effective_max_tokens
 
 
 def _request_payload_summary(
@@ -247,8 +247,13 @@ def _request_payload_summary(
         "image_roles": image_roles,
         "image_labels": image_labels,
         "image_file_bytes": image_bytes,
+        "max_images": runtime_config.max_images,
+        "effective_max_images": runtime_config.effective_max_images,
+        "max_input_chars": runtime_config.max_input_chars,
+        "effective_max_input_chars": runtime_config.effective_max_input_chars,
         "max_tokens": runtime_config.max_tokens,
         "effective_max_tokens": runtime_config.effective_max_tokens,
+        "budget_clip_fields": runtime_config.budget_clip_fields,
         "prompt_hint": _truncate_text(request.prompt_hint, limit=240),
     }
     model_capabilities = (

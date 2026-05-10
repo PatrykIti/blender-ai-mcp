@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib
 import re
 from collections.abc import Sequence
+from dataclasses import dataclass
 from typing import Any, Literal, cast
 
 from server.adapters.mcp.areas.reference_compare_packets import (
@@ -48,6 +49,11 @@ from server.adapters.mcp.contracts.scene import (
 from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
 from server.adapters.mcp.sampling.result_types import (
     VisionAssistContract,
+)
+from server.adapters.mcp.vision.config import (
+    VISION_FAIL_SAFE_MAX_IMAGES,
+    VISION_FAIL_SAFE_MAX_INPUT_CHARS,
+    VISION_FAIL_SAFE_MAX_TOKENS,
 )
 from server.adapters.mcp.vision.runner import VISION_ASSIST_POLICY
 
@@ -140,6 +146,27 @@ _VIEW_TOKEN_ALIASES: dict[str, str] = {
     "silhouette": "detail",
 }
 _PACKET_VIEW_ORDER: tuple[str, ...] = ("front", "side", "top", "back", "three_quarter", "detail")
+
+
+@dataclass(frozen=True, slots=True)
+class HybridBudgetRuntime:
+    """Configured and effective vision budget values for staged compare."""
+
+    max_tokens: int
+    max_images: int
+    max_input_chars: int
+    model_name: str | None
+    configured_max_tokens: int
+    configured_max_images: int
+    configured_max_input_chars: int
+    fail_safe_max_tokens: int
+    fail_safe_max_images: int
+    fail_safe_max_input_chars: int
+    budget_clip_fields: tuple[str, ...]
+
+    @property
+    def budget_clipped(self) -> bool:
+        return bool(self.budget_clip_fields)
 
 
 def _normalize_view_token(value: str | None) -> str | None:
@@ -878,15 +905,84 @@ def trim_correction_candidates(
     return list(candidates[:candidate_budget]), True
 
 
-def resolve_hybrid_budget_runtime(resolver: Any) -> tuple[int, int, int, str | None]:
+def _runtime_budget_clip_fields(
+    *,
+    configured_max_tokens: int,
+    configured_max_images: int,
+    configured_max_input_chars: int,
+    effective_max_tokens: int,
+    effective_max_images: int,
+    effective_max_input_chars: int,
+) -> tuple[str, ...]:
+    clipped_fields: list[str] = []
+    if effective_max_images < configured_max_images:
+        clipped_fields.append("max_images")
+    if effective_max_input_chars < configured_max_input_chars:
+        clipped_fields.append("max_input_chars")
+    if effective_max_tokens < configured_max_tokens:
+        clipped_fields.append("max_output_tokens")
+    return tuple(clipped_fields)
+
+
+def resolve_hybrid_budget_runtime(resolver: Any) -> HybridBudgetRuntime:
     runtime_config = getattr(resolver, "runtime_config", None)
     if runtime_config is None:
-        return VISION_ASSIST_POLICY.max_tokens, 8, VISION_ASSIST_POLICY.max_input_chars, None
-    return (
-        int(getattr(runtime_config, "max_tokens", VISION_ASSIST_POLICY.max_tokens)),
-        int(getattr(runtime_config, "max_images", 8)),
-        int(getattr(runtime_config, "max_input_chars", VISION_ASSIST_POLICY.max_input_chars)),
-        cast(str | None, getattr(runtime_config, "active_model_name", None)),
+        return HybridBudgetRuntime(
+            max_tokens=VISION_ASSIST_POLICY.max_tokens,
+            max_images=8,
+            max_input_chars=VISION_ASSIST_POLICY.max_input_chars,
+            model_name=None,
+            configured_max_tokens=VISION_ASSIST_POLICY.max_tokens,
+            configured_max_images=8,
+            configured_max_input_chars=VISION_ASSIST_POLICY.max_input_chars,
+            fail_safe_max_tokens=VISION_FAIL_SAFE_MAX_TOKENS,
+            fail_safe_max_images=VISION_FAIL_SAFE_MAX_IMAGES,
+            fail_safe_max_input_chars=VISION_FAIL_SAFE_MAX_INPUT_CHARS,
+            budget_clip_fields=(),
+        )
+
+    configured_max_tokens = int(getattr(runtime_config, "max_tokens", VISION_ASSIST_POLICY.max_tokens))
+    configured_max_images = int(getattr(runtime_config, "max_images", 8))
+    configured_max_input_chars = int(getattr(runtime_config, "max_input_chars", VISION_ASSIST_POLICY.max_input_chars))
+    effective_max_tokens = int(
+        getattr(runtime_config, "effective_max_tokens", min(configured_max_tokens, VISION_FAIL_SAFE_MAX_TOKENS))
+    )
+    effective_max_images = int(
+        getattr(runtime_config, "effective_max_images", min(configured_max_images, VISION_FAIL_SAFE_MAX_IMAGES))
+    )
+    effective_max_input_chars = int(
+        getattr(
+            runtime_config,
+            "effective_max_input_chars",
+            min(configured_max_input_chars, VISION_FAIL_SAFE_MAX_INPUT_CHARS),
+        )
+    )
+    budget_clip_fields = tuple(
+        getattr(
+            runtime_config,
+            "budget_clip_fields",
+            _runtime_budget_clip_fields(
+                configured_max_tokens=configured_max_tokens,
+                configured_max_images=configured_max_images,
+                configured_max_input_chars=configured_max_input_chars,
+                effective_max_tokens=effective_max_tokens,
+                effective_max_images=effective_max_images,
+                effective_max_input_chars=effective_max_input_chars,
+            ),
+        )
+    )
+    return HybridBudgetRuntime(
+        max_tokens=effective_max_tokens,
+        max_images=effective_max_images,
+        max_input_chars=effective_max_input_chars,
+        model_name=cast(str | None, getattr(runtime_config, "active_model_name", None)),
+        configured_max_tokens=configured_max_tokens,
+        configured_max_images=configured_max_images,
+        configured_max_input_chars=configured_max_input_chars,
+        fail_safe_max_tokens=VISION_FAIL_SAFE_MAX_TOKENS,
+        fail_safe_max_images=VISION_FAIL_SAFE_MAX_IMAGES,
+        fail_safe_max_input_chars=VISION_FAIL_SAFE_MAX_INPUT_CHARS,
+        budget_clip_fields=budget_clip_fields,
     )
 
 

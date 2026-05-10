@@ -326,7 +326,7 @@ async def _resolve_macro_capture_profile(ctx: Context) -> str | None:
     session = await get_session_capability_state_async(ctx)
     return choose_capture_preset_profile(
         reference_image_count=len(session.reference_images or []),
-        max_images=resolver.runtime_config.max_images,
+        max_images=resolver.runtime_config.effective_max_images,
     )
 
 

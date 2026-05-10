@@ -170,6 +170,8 @@ The repo now has the first implementation scaffolding for the vision layer:
   - records the decision in `budget_control`
   - reads the compare input-character limit from runtime-owned
     `VISION_MAX_INPUT_CHARS` instead of a compare-only Python constant
+  - reports configured and effective image/input/output budgets plus
+    fail-safe clipping fields through `budget_control`
   - uses runtime token/image limits plus a bounded model-name bias instead of
     one static expansion size
   - small-tier downgrades now key off explicit model tokens such as `-mini` or
@@ -218,6 +220,8 @@ Current image-budget assumption:
 - the default bounded runtime now assumes up to `8` images per request
 - this leaves room for before/after capture sets plus a small number of
   goal-scoped reference images
+- effective runtime enforcement still clips image requests at the fail-safe
+  `12` image cap and reports that clipping through runner/staged diagnostics
 
 Current capture-profile policy:
 
@@ -743,6 +747,9 @@ Current config surface:
 - staged compare also reads the shared runtime input budget from
   `VISION_MAX_INPUT_CHARS` when packet truth trimming and `budget_control`
   projection need the effective compare-size limit
+- runner and staged compare diagnostics distinguish configured values from
+  effective fail-safe caps for image count, serialized input characters, and
+  output tokens
 
 Boundary rules:
 

@@ -504,6 +504,25 @@ def test_build_vision_runtime_config_threads_input_char_budget():
     runtime = build_vision_runtime_config(_base_config(VISION_MAX_INPUT_CHARS=16384))
 
     assert runtime.max_input_chars == 16384
+    assert runtime.effective_max_input_chars == 16384
+
+
+def test_build_vision_runtime_config_reports_fail_safe_budget_clipping():
+    runtime = build_vision_runtime_config(
+        _base_config(
+            VISION_MAX_IMAGES=20,
+            VISION_MAX_INPUT_CHARS=100_000,
+            VISION_MAX_TOKENS=250_000,
+        )
+    )
+
+    assert runtime.max_images == 20
+    assert runtime.effective_max_images == 12
+    assert runtime.max_input_chars == 100_000
+    assert runtime.effective_max_input_chars == 48_000
+    assert runtime.max_tokens == 250_000
+    assert runtime.effective_max_tokens == 8_192
+    assert runtime.budget_clip_fields == ["max_images", "max_input_chars", "max_output_tokens"]
 
 
 def test_optional_reference_classifier_stays_disabled_by_default():

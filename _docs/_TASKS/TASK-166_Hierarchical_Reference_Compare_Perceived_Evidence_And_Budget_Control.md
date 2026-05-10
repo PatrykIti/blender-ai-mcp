@@ -428,11 +428,9 @@ without requiring one massive all-images compare request.
     of the removed `tests/unit/router/application/test_router_contracts.py`
   - `TASK-166-01`, `TASK-166-01-03`, `TASK-166-02`, and `TASK-166-02-01` are
     now closed against the shipped code paths
-- 2026-05-09: remaining follow-on work is now limited to the richer
-  super-complex scheduling policy under `TASK-166-04-02`,
-  configured-vs-effective budget diagnostics / fail-safe caps under
-  `TASK-166-05-02`, and the remaining public transparency hardening tracked in
-  `TASK-166-06`.
+- 2026-05-10: remaining follow-on work is now limited to the richer
+  super-complex scheduling policy under `TASK-166-04-02` and the remaining
+  public transparency hardening tracked in `TASK-166-06`.
 - 2026-05-10: backend packet-guidance normalization repair landed:
   - `server/adapters/mcp/vision/backends.py` now forwards parser-owned
     `packet_guidance` into `VisionAssistContract` so packet extraction status
@@ -442,6 +440,17 @@ without requiring one massive all-images compare request.
     fields and must not duplicate those heuristics
   - the owner-seam cleanup question for broader public transparency remains a
     deferred `TASK-166-06` follow-on rather than a code move in this repair
+- 2026-05-10: `TASK-166-05-02` is now closed:
+  - bounded vision runtime keeps configured image/input/output budget values
+    but computes effective fail-safe-clipped limits before execution
+  - `run_vision_assist(...)`, backend output caps, macro capture-profile
+    selection, staged truth trimming, and staged `budget_control` now consume
+    effective limits instead of raw env values
+  - staged compare / iterate `budget_control` exposes configured, effective,
+    fail-safe, and clipped-field diagnostics, and compact orchestrator feedback
+    surfaces fail-safe clipping as bounded uncertainty
+  - `TASK-166-05` is now closed; remaining open scope is limited to
+    `TASK-166-04-02` and `TASK-166-06`
 
 ## Docs To Update
 

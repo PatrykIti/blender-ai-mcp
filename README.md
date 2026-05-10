@@ -43,7 +43,7 @@ The business idea formalized in `TASK-113` is simple:
 - **Workflow tools** are bounded multi-step process tools with explicit reporting, not open-ended "do anything" endpoints.
 - **Goal-first orchestration** keeps sessions anchored to an active intent instead of making the model rediscover context on every turn.
 - **Vision assists interpretation**, while deterministic measurement and assertions provide the final truth layer.
-- **Pluggable vision runtimes** now cover local MLX plus external OpenRouter and Google AI Studio / Gemini provider paths, with model-family-specific external contract profiles for prompt/schema/parser behavior and runtime-owned input-budget controls.
+- **Pluggable vision runtimes** now cover local MLX plus external OpenRouter and Google AI Studio / Gemini provider paths, with model-family-specific external contract profiles for prompt/schema/parser behavior and runtime-owned input-budget controls with configured-vs-effective fail-safe diagnostics.
 
 This is what turns the project from "Blender tools exposed over MCP" into a usable AI control product for modeling pipelines.
 
@@ -644,7 +644,9 @@ hidden ordering assumptions.
   uncertainty/failure, or the caller requests `preset_profile="rich"`; that
   diagnostics layer names packet ids, packet-local view/scope slices, packet
   status, typed packet-local `support_evidence`, and budget/conflict notes
-  while leaving the existing staged compare fields in place
+  while leaving the existing staged compare fields in place; `budget_control`
+  now also reports configured and effective runtime limits so fail-safe clipping
+  is visible without parsing runner internals
 - `scene_relation_graph(...)` updates the first deterministic gate slice for
   `required_part`, `attachment_seam`, `support_contact`, and `symmetry_pair`
   with authoritative evidence refs, status reasons, completion blockers, and

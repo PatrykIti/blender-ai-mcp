@@ -477,6 +477,9 @@ Focused unit coverage now also protects:
   `tests/unit/adapters/mcp/test_reference_images.py`
 - optional reference-classifier and segmentation-sidecar config defaults plus
   opt-in validation on `tests/unit/adapters/mcp/test_vision_runtime_config.py`
+- vision budget fail-safe clipping and configured/effective runner diagnostics on:
+  - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
+  - `tests/unit/adapters/mcp/test_vision_runner.py`
 - goal-derived quality-gate contract and intake coverage on:
   - `tests/unit/adapters/mcp/test_quality_gate_contracts.py`
   - `tests/unit/adapters/mcp/test_quality_gate_verifier.py`
@@ -493,7 +496,7 @@ Focused unit coverage now also protects:
   - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
   - `tests/unit/router/application/test_router_contracts.py`
 - packeted staged-compare planning, additive `compare_diagnostics`, and
-  compact feedback projection on:
+  compact feedback/budget projection on:
   - `tests/unit/adapters/mcp/test_reference_images.py`
   - `tests/unit/adapters/mcp/test_reference_compare_packets.py`
   - `tests/unit/adapters/mcp/test_contract_payload_parity.py`

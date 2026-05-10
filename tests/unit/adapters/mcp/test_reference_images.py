@@ -47,6 +47,7 @@ from server.adapters.mcp.areas.reference_truth import (
 )
 from server.adapters.mcp.contracts.reference import (
     ReferenceCompareStageCheckpointResponseContract,
+    ReferenceHybridBudgetControlContract,
     ReferenceImageRecordContract,
 )
 from server.adapters.mcp.contracts.scene import (
@@ -541,6 +542,52 @@ def test_iterate_stage_response_keeps_top_level_compare_diagnostics_on_compact_p
     assert result.compare_diagnostics.packet_count == 1
     assert result.compare_result.compare_diagnostics is None
     assert result.debug_payload_omitted is True
+
+
+def test_stage_compare_response_projects_clipped_budget_into_orchestrator_feedback():
+    budget_control = ReferenceHybridBudgetControlContract.model_validate(
+        {
+            "model_name": "gpt-budget-test",
+            "max_input_chars": 48_000,
+            "max_output_tokens": 8_192,
+            "max_images": 12,
+            "configured_max_input_chars": 100_000,
+            "configured_max_output_tokens": 250_000,
+            "configured_max_images": 20,
+            "effective_max_input_chars": 48_000,
+            "effective_max_output_tokens": 8_192,
+            "effective_max_images": 12,
+            "fail_safe_max_input_chars": 48_000,
+            "fail_safe_max_output_tokens": 8_192,
+            "fail_safe_max_images": 12,
+            "budget_clipped": True,
+            "budget_clip_fields": ["max_images", "max_input_chars", "max_output_tokens"],
+        }
+    )
+
+    result = _stage_compare_response(
+        checkpoint_id="checkpoint_budget_clip",
+        checkpoint_label="stage_budget_clip",
+        goal="low poly creature",
+        target_object="Creature",
+        target_objects=["Creature"],
+        collection_name=None,
+        target_view="front",
+        preset_profile="compact",
+        preset_names=[],
+        reference_ids=["ref_1"],
+        reference_labels=["front_ref"],
+        budget_control=budget_control,
+    )
+
+    assert result.budget_control is not None
+    assert result.budget_control.configured_max_output_tokens == 250_000
+    assert result.budget_control.max_output_tokens == 8_192
+    assert result.budget_control.budget_clipped is True
+    assert result.reference_orchestrator_feedback is not None
+    assert (
+        "Configured vision budget was clipped by fail-safe caps for max_images, max_input_chars, max_output_tokens."
+    ) in result.reference_orchestrator_feedback.uncertainty_notes
 
 
 def test_refresh_reference_understanding_summary_persists_summary_and_gate_ids(tmp_path, monkeypatch):

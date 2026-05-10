@@ -1,7 +1,7 @@
 # TASK-166-05: Configurable Vision-Assist Budgets And Runtime Overrides
 
 **Parent:** [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md)  
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Objective:** Expose compare-related `vision_assist` budgets and runtime overrides as config/env instead of one hard-coded assistant policy.
 
@@ -11,8 +11,13 @@
   - `VISION_MAX_INPUT_CHARS` is runtime-owned and flows through config,
     runtime, runner enforcement, staged truth trimming, and
     `budget_control.max_input_chars`
-- richer configured-vs-effective diagnostics and explicit fail-safe clipping
-  remain open under `TASK-166-05-02`
+- `TASK-166-05-02` is now complete:
+  - runtime config preserves configured budget intent while exposing effective
+    fail-safe-clipped image/input/output limits
+  - runner envelopes and staged compare / iterate `budget_control` report
+    configured vs effective values and clipping fields
+  - compact orchestrator feedback carries a bounded uncertainty note when
+    fail-safe clipping occurs
 
 ## Repository Touchpoints
 
@@ -111,14 +116,13 @@ staged_compare = project_budget_state_into_budget_control(runner, effective_budg
 
 ## Changelog Impact
 
-- include in the umbrella `_docs/_CHANGELOG/` entry when runtime budget
-  overrides ship
+- runtime input-budget config shipped in changelog `330`
+- configured/effective diagnostics and fail-safe caps shipped in changelog `334`
 
 ## Status / Board Update
 
-- keep parent `TASK-166` and this subtask aligned in `_docs/_TASKS/README.md`
-- note explicitly whether config parsing, runtime diagnostics, and fail-safe
-  caps all shipped together or remain split across open leaves
+- `TASK-166-05` is closed; no open direct budget leaves remain
+- promoted `TASK-166` remains open for `TASK-166-04-02` and `TASK-166-06`
 
 ## Validation Commands
 

@@ -34,6 +34,18 @@ class AssistantBudgetContract(MCPContract):
     max_messages: int
     max_tokens: int
     tool_budget: int
+    max_images: int | None = None
+    configured_max_input_chars: int | None = None
+    configured_max_tokens: int | None = None
+    configured_max_images: int | None = None
+    effective_max_input_chars: int | None = None
+    effective_max_tokens: int | None = None
+    effective_max_images: int | None = None
+    fail_safe_max_input_chars: int | None = None
+    fail_safe_max_tokens: int | None = None
+    fail_safe_max_images: int | None = None
+    budget_clipped: bool = False
+    budget_clip_fields: list[str] = []
 
 
 class InspectionSummaryContract(MCPContract):

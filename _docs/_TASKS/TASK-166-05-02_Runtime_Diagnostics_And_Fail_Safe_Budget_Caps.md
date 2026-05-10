@@ -1,9 +1,26 @@
 # TASK-166-05-02: Runtime Diagnostics And Fail-Safe Budget Caps
 
 **Parent:** [TASK-166-05](./TASK-166-05_Configurable_Vision_Assist_Budgets_And_Runtime_Overrides.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Objective:** Surface configured and effective compare budgets in diagnostics while keeping fail-safe caps that prevent accidental unbounded payloads.
+
+## Completion Summary
+
+- Added explicit fail-safe caps for bounded vision execution:
+  - `12` images
+  - `48_000` serialized input characters
+  - `8_192` output tokens
+- `VisionRuntimeConfig` now keeps configured values while exposing effective
+  clipped values and `budget_clip_fields` for runtime diagnostics.
+- `run_vision_assist(...)`, local/external backend token caps, macro capture
+  profile selection, staged truth trimming, and staged `budget_control` now use
+  effective limits.
+- Staged compare / iterate `budget_control` reports configured, effective, and
+  fail-safe limits plus clipping fields; compact orchestrator feedback carries a
+  bounded uncertainty note when fail-safe clipping occurs.
+- `scripts/run_streamable_openrouter.sh` now defaults `VISION_MAX_TOKENS` to
+  the fail-safe output cap instead of an intentionally oversized provider value.
 
 ## Repository Touchpoints
 
@@ -57,13 +74,21 @@
 
 ## Changelog Impact
 
-- include in the umbrella `_docs/_CHANGELOG/` entry when budget diagnostics and
-  fail-safe caps ship
+- shipped in `_docs/_CHANGELOG/334-2026-05-10-task-166-runtime-budget-diagnostics-and-fail-safe-caps.md`
 
 ## Status / Board Update
 
-- keep parent `TASK-166` and this leaf aligned when budget diagnostics close or
-  remain explicit follow-on work
+- parent `TASK-166-05` is now ready to close because both config parsing and
+  configured-vs-effective diagnostics have shipped
+- promoted `TASK-166` remains open for `TASK-166-04-02` and `TASK-166-06`
+
+## Validation
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_runner.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/scripts/test_script_tooling.py -q`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
 
 ## Validation Commands
 
