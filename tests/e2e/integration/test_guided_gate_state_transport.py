@@ -1084,6 +1084,10 @@ async def _exercise_gate_state_roundtrip(client, reference_path: Path) -> None:
     assert compare_result["active_gate_plan"] is not None
     assert _tail_gate(compare_result["active_gate_plan"]["gates"])["status"] == "failed"
     assert any(blocker["gate_id"] == "tail_body_seam" for blocker in compare_result["completion_blockers"])
+    assert compare_result["compare_diagnostics"] is not None
+    assert compare_result["compare_diagnostics"]["packets"][0]["extraction_status"] == "low_information"
+    assert "No packet-local staged captures" in compare_result["compare_diagnostics"]["packets"][0]["status_reason"]
+    assert compare_result["reference_orchestrator_feedback"]["uncertainty_notes"]
 
     iterate_result = result_payload(
         await client.call_tool(
@@ -1092,11 +1096,15 @@ async def _exercise_gate_state_roundtrip(client, reference_path: Path) -> None:
                 "target_object": "Squirrel_Body",
                 "target_objects": ["Squirrel_Tail"],
                 "checkpoint_label": "gate_transport",
+                "target_view": "front",
             },
         )
     )
 
     assert iterate_result["loop_disposition"] == "inspect_validate"
+    assert iterate_result["compare_diagnostics"] is not None
+    assert iterate_result["compare_result"]["compare_diagnostics"] is None
+    assert iterate_result["debug_payload_omitted"] is True
     assert iterate_result["active_gate_plan"] is not None
     assert _tail_gate(iterate_result["active_gate_plan"]["gates"])["status"] == "failed"
     assert any(blocker["gate_id"] == "tail_body_seam" for blocker in iterate_result["completion_blockers"])

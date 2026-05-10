@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
@@ -191,6 +192,52 @@ def test_mcp_docs_describe_aliases_and_hidden_arguments():
         "`browse_workflows`",
     ):
         assert expected in text
+
+
+def test_reference_stage_public_transparency_is_documented():
+    """TASK-166 public docs and discovery text should expose packet transparency rules."""
+
+    readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    mcp_readme = (REPO_ROOT / "_docs" / "_MCP_SERVER" / "README.md").read_text(encoding="utf-8")
+    vision_readme = (REPO_ROOT / "_docs" / "_VISION" / "README.md").read_text(encoding="utf-8")
+    tools_summary = (REPO_ROOT / "_docs" / "AVAILABLE_TOOLS_SUMMARY.md").read_text(encoding="utf-8")
+    reference_source = (REPO_ROOT / "server" / "adapters" / "mcp" / "areas" / "reference.py").read_text(
+        encoding="utf-8"
+    )
+    compare_metadata = json.loads(
+        (
+            REPO_ROOT
+            / "server"
+            / "router"
+            / "infrastructure"
+            / "tools_metadata"
+            / "reference"
+            / "reference_compare_stage_checkpoint.json"
+        ).read_text(encoding="utf-8")
+    )
+    iterate_metadata = json.loads(
+        (
+            REPO_ROOT
+            / "server"
+            / "router"
+            / "infrastructure"
+            / "tools_metadata"
+            / "reference"
+            / "reference_iterate_stage_checkpoint.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    for text in (readme, mcp_readme, vision_readme, tools_summary):
+        assert "compare_diagnostics" in text
+        assert "support_evidence" in text
+        assert "budget_control" in text
+
+    assert "bounded view/scope packets" in reference_source
+    assert "Top-level compare_diagnostics remains the public access path" in reference_source
+    assert "top-level compare_diagnostics" in compare_metadata["description"]
+    assert "budget_control" in compare_metadata["description"]
+    assert "top-level compare_diagnostics remains the public access path" in iterate_metadata["description"]
+    assert "support_evidence" in iterate_metadata["description"]
 
 
 def test_mcp_client_config_examples_document_guided_creature_contract():

@@ -27,6 +27,7 @@ from server.adapters.mcp.contracts.reference import (
     ReferenceComparePacketContract,
     ReferenceCompareStageCheckpointResponseContract,
     ReferenceCorrectionCandidateContract,
+    ReferenceCorrectionPacketEvidenceRefContract,
     ReferenceCorrectionTruthEvidenceContract,
     ReferenceCorrectionVisionEvidenceContract,
     ReferenceImageRecordContract,
@@ -1103,6 +1104,7 @@ def _build_vision_candidate_evidence(
     *,
     vision_result,
     focus_items: list[str],
+    compare_diagnostics: ReferenceCompareDiagnosticsContract | None,
 ) -> ReferenceCorrectionVisionEvidenceContract | None:
     if vision_result is None or not focus_items:
         return None
@@ -1111,7 +1113,56 @@ def _build_vision_candidate_evidence(
         shape_mismatches=list(vision_result.shape_mismatches or []),
         proportion_mismatches=list(vision_result.proportion_mismatches or []),
         next_corrections=list(vision_result.next_corrections or []),
+        packet_evidence_refs=_packet_evidence_refs_for_focus(compare_diagnostics, focus_items=focus_items),
     )
+
+
+def _packet_evidence_refs_for_focus(
+    compare_diagnostics: ReferenceCompareDiagnosticsContract | None,
+    *,
+    focus_items: Sequence[str],
+) -> list[ReferenceCorrectionPacketEvidenceRefContract]:
+    """Return bounded candidate-level refs; packet detail remains in compare_diagnostics."""
+
+    if compare_diagnostics is None:
+        return []
+
+    normalized_focus = [normalize_focus_key(item) for item in focus_items if normalize_focus_key(item)]
+    if not normalized_focus:
+        return []
+
+    refs: list[ReferenceCorrectionPacketEvidenceRefContract] = []
+    seen_packet_ids: set[str] = set()
+    for packet in compare_diagnostics.packets:
+        packet_texts = [
+            *list(packet.correction_focus or []),
+            *([packet.evidence_summary] if packet.evidence_summary else []),
+            *([packet.status_reason] if packet.status_reason else []),
+        ]
+        normalized_packet_texts = [normalize_focus_key(item) for item in packet_texts if normalize_focus_key(item)]
+        if not any(
+            focus == packet_text or focus in packet_text or packet_text in focus
+            for focus in normalized_focus
+            for packet_text in normalized_packet_texts
+        ):
+            continue
+        if packet.packet_id in seen_packet_ids:
+            continue
+        seen_packet_ids.add(packet.packet_id)
+        refs.append(
+            ReferenceCorrectionPacketEvidenceRefContract(
+                packet_id=packet.packet_id,
+                packet_label=packet.packet_label,
+                target_view=packet.target_view,
+                scope_label=packet.scope_label,
+                extraction_status=packet.extraction_status,
+                ranking_status=packet.ranking_status,
+                packet_status=packet.packet_status,
+                evidence_summary=packet.evidence_summary,
+                support_evidence_count=len(packet.support_evidence or []),
+            )
+        )
+    return refs[:4]
 
 
 def build_correction_candidates(
@@ -1174,6 +1225,7 @@ def build_correction_candidates(
                 vision_evidence=_build_vision_candidate_evidence(
                     vision_result=vision_result,
                     focus_items=matched_focus,
+                    compare_diagnostics=compare_result.compare_diagnostics,
                 ),
                 truth_evidence=ReferenceCorrectionTruthEvidenceContract(
                     focus_pairs=[current_pair_label],
@@ -1212,6 +1264,7 @@ def build_correction_candidates(
                 vision_evidence=_build_vision_candidate_evidence(
                     vision_result=vision_result,
                     focus_items=[focus_item],
+                    compare_diagnostics=compare_result.compare_diagnostics,
                 ),
                 truth_evidence=None,
             )

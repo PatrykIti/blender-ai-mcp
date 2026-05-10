@@ -1,7 +1,7 @@
 # TASK-166-06: Public Contract Transparency For Hierarchical Compare
 
 **Parent:** [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md)
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Objective:** Expose additive packet provenance, pass status, conflict notes, and budget diagnostics on the existing staged compare / iterate contracts while keeping `reference_orchestrator_feedback` as the compact orchestration-facing owner seam.
 
@@ -118,14 +118,42 @@ compact_feedback = project_compare_diagnostics_into_feedback(
 
 - record transparency changes through incremental TASK-166 changelogs; the
   2026-05-10 backend packet-guidance normalizer repair is tracked in entry
-  `333`, while broader owner-seam cleanup remains deferred under this subtask
+  `333`, while this final public-transparency closeout is tracked in entry
+  `336`
 
 ## Status / Board Update
 
-- keep parent `TASK-166`, this subtask, and the promoted board row aligned in
-  `_docs/_TASKS/README.md`
-- when this subtask closes, record whether transport/integration proof shipped
-  in the same branch or remains explicit follow-on work
+- `TASK-166-06` is closed together with parent `TASK-166`.
+- `_docs/_TASKS/README.md` moves the promoted `TASK-166` row to Done.
+- No open `TASK-166-*` descendants remain.
+
+## Completion Summary
+
+- 2026-05-10: Closed the public transparency lane by keeping detailed packet
+  provenance on additive top-level `compare_diagnostics` and adding bounded
+  `correction_candidates[*].vision_evidence.packet_evidence_refs` pointers
+  instead of duplicating raw packet payloads in candidates.
+- Public tool docstrings, router metadata, and docs now describe packet ids,
+  pass status, `support_evidence`, `budget_control`, compact iterate debug
+  omission, and compact feedback projection rules.
+- Transport proof now pins top-level staged compare / iterate
+  `compare_diagnostics` while compact nested `compare_result` may omit debug
+  payloads.
+
+## Validation Results
+
+- `poetry run ruff check server/adapters/mcp/contracts/reference.py server/adapters/mcp/areas/reference.py server/adapters/mcp/areas/reference_planner.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/e2e/integration/test_guided_gate_state_transport.py`
+  - passed
+- `poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_reference_compare_packets.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+  - passed, `146 passed`
+- `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
+  - passed, `16 passed`
+- `poetry run pytest ./tests/unit`
+  - passed, `3311 passed`
+- `poetry run pytest tests/e2e/integration/test_mcp_transport_modes.py::test_stdio_transport_e2e_keeps_same_session_id_across_calls_in_one_client -q`
+  - passed after the first full-run stdio startup timeout, `1 passed`
+- `poetry run python ./scripts/run_e2e_tests.py`
+  - passed on rerun, `468 passed, 3 skipped`
 
 ## Validation Commands
 

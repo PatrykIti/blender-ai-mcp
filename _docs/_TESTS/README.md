@@ -497,11 +497,11 @@ Focused unit coverage now also protects:
   - `tests/unit/router/application/test_router_contracts.py`
 - packeted staged-compare planning, super-complex image-budget slicing,
   additive `compare_diagnostics`, mixed packet-status conflict notes, and
-  compact feedback/budget projection on:
+  compact feedback/budget/candidate-provenance projection on:
   - `tests/unit/adapters/mcp/test_reference_images.py`
   - `tests/unit/adapters/mcp/test_reference_compare_packets.py`
   - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
-  - `tests/unit/router/application/test_router_contracts.py`
+  - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - packet extraction/ranking prompt-parser split and ranking-failure retention on:
   - `tests/unit/adapters/mcp/test_vision_prompting.py`
   - `tests/unit/adapters/mcp/test_vision_parsing.py`
@@ -510,7 +510,8 @@ Focused unit coverage now also protects:
 - compare-time silhouette/action-hint support-evidence projection on:
   - `tests/unit/adapters/mcp/test_vision_silhouette.py`
   - `tests/unit/adapters/mcp/test_reference_images.py`
-- staged compare transport and Blender-backed packet diagnostics proof on:
+- staged compare transport, compact uncertainty top-level diagnostics, and
+  Blender-backed packet diagnostics proof on:
   - `tests/e2e/integration/test_guided_gate_state_transport.py`
   - `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
 - optional RU classifier-score and segmentation-artifact augmentation on:

@@ -3,7 +3,19 @@
   "category": "reference",
   "mode_required": "ANY",
   "selection_required": false,
-  "keywords": ["reference", "iterate", "loop", "stage", "checkpoint", "continue", "stagnation", "vision"],
+  "keywords": [
+    "reference",
+    "iterate",
+    "loop",
+    "stage",
+    "checkpoint",
+    "continue",
+    "stagnation",
+    "vision",
+    "packet",
+    "diagnostics",
+    "budget"
+  ],
   "sample_prompts": [
     "run one iterative correction loop step for this squirrel stage",
     "compare this stage to the references and tell me whether to continue building or validate",
@@ -21,5 +33,5 @@
   },
   "related_tools": ["reference_compare_stage_checkpoint", "reference_images", "router_get_status", "scene_get_viewport"],
   "patterns": [],
-  "description": "Runs one session-aware stage checkpoint iteration: capture deterministic views, compare them against the active references, remember the prior correction focus, and return whether to continue building, inspect/validate, or stop."
+  "description": "Runs one session-aware stage checkpoint iteration: capture deterministic views, compare them against the active references, remember the prior correction focus, and return whether to continue building, inspect/validate, or stop. The loop keeps reference_orchestrator_feedback as the compact next-step surface, while top-level compare_diagnostics remains the public access path for packet ids, pass status, conflict/budget uncertainty, and packet-local support_evidence when rich delivery or compact uncertainty requires it."
 }

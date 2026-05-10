@@ -68,6 +68,7 @@ Hard rules:
 | `TASK-157` | Generic gate substrate: proposal sources, evidence refs, verifier authority, status model, guided cadence |
 | `TASK-158` | Post-`TASK-157` follow-on for docs alignment plus bounded reference-understanding and optional-perception readiness work |
 | `TASK-163` | Closed umbrella that shipped compact orchestrator-facing RU/runtime feedback, session strategy state, and the first optional perception follow-ons |
+| `TASK-166` | Staged compare/RU consumer that packetizes compare evidence, keeps packet provenance on additive `compare_diagnostics`, and feeds compact packet uncertainty into `reference_orchestrator_feedback` |
 | `TASK-135` | First creature consumer of the gate substrate |
 | `TASK-135-03` | First low-poly form-refinement consumer; owns the faceted refinement stage and any creature profile macros |
 | `TASK-140` | External VLM model-family profile reliability; owns `vision_contract_profile` expansion, not quality-gate authority |

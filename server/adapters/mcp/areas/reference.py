@@ -1627,7 +1627,13 @@ async def reference_compare_stage_checkpoint(
     prompt_hint: str | None = None,
     preset_profile: CapturePresetProfile = "compact",
 ) -> ReferenceCompareStageCheckpointResponseContract:
-    """Capture one deterministic stage view-set and compare it against attached references."""
+    """Capture deterministic stage views and run packeted reference compare.
+
+    The public tool name stays stable while the server may split the compare into
+    bounded view/scope packets. Rich responses and compact uncertainty paths can
+    expose additive top-level compare_diagnostics with packet ids, pass status,
+    support evidence, conflict notes, and budget_control details.
+    """
 
     checkpoint_target = _safe_checkpoint_token(collection_name or target_object or "scene")
     checkpoint_id = f"stage_checkpoint_{checkpoint_target}_{uuid4().hex[:8]}"
@@ -1656,7 +1662,12 @@ async def reference_iterate_stage_checkpoint(
     prompt_hint: str | None = None,
     preset_profile: CapturePresetProfile = "compact",
 ) -> ReferenceIterateStageCheckpointResponseContract:
-    """Run one session-aware stage checkpoint iteration and return continuation guidance."""
+    """Run one session-aware packeted reference-compare iteration.
+
+    Returns loop_disposition and compact reference_orchestrator_feedback for the
+    next safe step. Top-level compare_diagnostics remains the public access path
+    for packet uncertainty even when the nested compact compare_result is slimmed.
+    """
 
     compare_result = await reference_compare_stage_checkpoint(
         ctx,

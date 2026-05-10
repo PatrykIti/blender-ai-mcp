@@ -1,6 +1,6 @@
 # TASK-166: Hierarchical Reference Compare, Perceived Evidence, And Budget Control
 
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** Vision / Hybrid Loop / Guided Runtime
 **Estimated Effort:** Large
@@ -463,6 +463,20 @@ without requiring one massive all-images compare request.
     uncertainty
   - `TASK-166-04` is now closed; remaining open scope is limited to
     `TASK-166-06`
+- 2026-05-10: `TASK-166-06` and the `TASK-166` umbrella are now closed:
+  - public staged compare / iterate contracts keep detailed packet provenance
+    on top-level additive `compare_diagnostics`
+  - `correction_candidates[*].vision_evidence.packet_evidence_refs` now carries
+    bounded typed pointers back to relevant compare packets without duplicating
+    raw packet payloads
+  - `reference_orchestrator_feedback` remains the compact owner seam for
+    orchestration-facing packet uncertainty and next-step guidance
+  - public tool docstrings, router metadata, user docs, test docs, and
+    changelog entry `336` now document packet ids, pass status,
+    `support_evidence`, `budget_control`, compact iterate behavior, and
+    candidate-level packet refs
+  - validation closed with focused unit/E2E proof, full unit proof, and the
+    Blender-backed E2E runner passing on rerun with `468 passed, 3 skipped`
 
 ## Docs To Update
 
@@ -478,14 +492,14 @@ without requiring one massive all-images compare request.
 
 - use incremental `_docs/_CHANGELOG/` closeouts for shipped TASK-166 slices
   instead of one umbrella-only entry; the current packeted compare history is
-  recorded in entries `324` through `335`
+  recorded in entries `324` through `336`
 
 ## Status / Board Update
 
-- keep the promoted `TASK-166` row aligned with all open/closed `TASK-166-*`
-  subtasks and leaves in `_docs/_TASKS/README.md`
-- when the umbrella closes, record which follow-on items remain explicit
-  standalone tasks rather than leaving open descendants under a closed parent
+- `_docs/_TASKS/README.md` moves the promoted `TASK-166` row from In Progress
+  to Done with completion date `2026-05-10`.
+- All direct `TASK-166-*` subtasks and leaves are closed. No standalone
+  follow-on remains under this umbrella.
 
 ## Validation Commands
 

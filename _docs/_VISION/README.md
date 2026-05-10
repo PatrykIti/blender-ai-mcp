@@ -646,6 +646,11 @@ and `reference_iterate_stage_checkpoint(...)`:
     runtime limit before the packet request reaches the runner
   - compact paths emit it on synthesis, ranking/extraction uncertainty, or
     model-aware budget pressure; rich paths emit it directly
+- `correction_candidates[*].vision_evidence.packet_evidence_refs`
+  - bounded join-back pointers from compact ranked correction candidates to the
+    packet ids/statuses that produced the visual correction
+  - full packet provenance and packet-local support evidence remain owned by
+    `compare_diagnostics`, not duplicated on every candidate
 - `silhouette_analysis`
   - typed metrics such as `mask_iou`, `contour_drift`, `aspect_ratio_delta`,
     `upper_band_width_delta`, `mid_band_width_delta`, `lower_band_width_delta`,
@@ -666,6 +671,9 @@ Interpretation rules:
 - silhouette metrics are computed from the matching target/focus capture when
   available; the wide context capture is only the fallback source
 - `action_hints` complement `correction_candidates` and `truth_followup`
+- `correction_candidates` remain the compact ranked action list; packet detail
+  is read through `compare_diagnostics`, with `packet_evidence_refs` acting only
+  as bounded provenance pointers
 - `vision_contract_profile` still only routes external prompt/schema/parser
   behavior; it is not itself evidence or proof that the result is correct
 - packet extraction and packet ranking are now separate bounded phases on the

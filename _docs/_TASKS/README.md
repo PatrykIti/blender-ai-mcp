@@ -4,8 +4,8 @@ Curated task board for promoted active work, promoted follow-on work, and select
 
 ## 📊 Statistics
 - **To Do:** 6 tasks
-- **In Progress:** 3 tasks
-- **Done:** 94
+- **In Progress:** 2 tasks
+- **Done:** 95
 - **Superseded:** 162
 
 ## 📐 Board Scope
@@ -46,7 +46,6 @@ flight.
 |----|-------|----------|-------|
 | [TASK-165](./TASK-165_Mac_First_Interactive_MCP_Server_Installer_And_Launcher.md) | **macOS-First Interactive MCP Server Installer And Launcher** | 🔴 High | Board-level follow-on after TASK-164 for replacing the narrow Streamable helper with a macOS-first interactive launcher that checks prerequisites, offers explicit install/update/skip decisions, and wires the supported MCP + classifier runtime combinations together. |
 | [TASK-160](./TASK-160_Guided_Client_Feedback_And_Streamable_HTTP_Recovery_UX.md) | **Guided Client Feedback And Streamable HTTP Recovery UX** | 🔴 High | In progress after TASK-160-01 closed the Streamable visibility serialization slice; the umbrella still owns the broader guided client-feedback contract and follow-on surface decisions. |
-| [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md) | **Hierarchical Reference Compare, Perceived Evidence, And Budget Control** | 🔴 High | In progress after the live packet-planning, packet-local narrow-question, synthesis, compare-time CV/segmentation, runtime-owned input budgets, configured-vs-effective fail-safe budget diagnostics, and super-complex packet scheduling. Remaining open scope is the public transparency hardening tracked under `TASK-166-06`. |
 
 ## 🚨 To Do
 
@@ -91,6 +90,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md) | **Hierarchical Reference Compare, Perceived Evidence, And Budget Control** | 🔴 High | 2026-05-10 |
 | [TASK-164](./TASK-164_Local_SigLIP2_Reference_Classifier_Sidecar_And_Operator_Scripts.md) | **Local SigLIP2 Reference Classifier Sidecar And Operator Scripts** | 🔴 High | 2026-05-07 |
 | [TASK-162](./TASK-162_Guided_Hidden_Tool_Error_Semantics_And_Recovery_Clarity.md) | **Guided Hidden-Tool Error Semantics And Recovery Clarity** | 🔴 High | 2026-05-06 |
 | [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md) | **Vision Orchestrator Feedback, Strategy Normalization, And Optional Perception Adapters** | 🔴 High | 2026-05-06 |

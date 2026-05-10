@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [336](./336-2026-05-10-task-166-public-contract-transparency-closeout.md) | 2026-05-10 | **TASK-166 public contract transparency closeout** | - |
 | [335](./335-2026-05-10-task-166-super-complex-packet-scheduling.md) | 2026-05-10 | **TASK-166 super-complex packet scheduling** | - |
 | [334](./334-2026-05-10-task-166-runtime-budget-diagnostics-and-fail-safe-caps.md) | 2026-05-10 | **TASK-166 runtime budget diagnostics and fail-safe caps** | - |
 | [333](./333-2026-05-10-task-166-backend-packet-guidance-normalization.md) | 2026-05-10 | **TASK-166 backend packet-guidance normalization** | - |

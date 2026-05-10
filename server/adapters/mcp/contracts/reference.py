@@ -369,6 +369,20 @@ class ReferenceCompareCheckpointResponseContract(MCPContract):
     error: str | None = None
 
 
+class ReferenceCorrectionPacketEvidenceRefContract(MCPContract):
+    """Bounded pointer from a correction candidate back to packet diagnostics."""
+
+    packet_id: str
+    packet_label: str
+    target_view: str | None = None
+    scope_label: str | None = None
+    extraction_status: ReferenceComparePacketStatusLiteral = "skipped"
+    ranking_status: ReferenceCompareRankingStatusLiteral = "not_needed"
+    packet_status: ReferenceComparePacketGuidanceLiteral | None = None
+    evidence_summary: str | None = None
+    support_evidence_count: int = 0
+
+
 class ReferenceCorrectionVisionEvidenceContract(MCPContract):
     """Vision-side evidence attached to one merged correction candidate."""
 
@@ -376,6 +390,7 @@ class ReferenceCorrectionVisionEvidenceContract(MCPContract):
     shape_mismatches: list[str] = []
     proportion_mismatches: list[str] = []
     next_corrections: list[str] = []
+    packet_evidence_refs: list[ReferenceCorrectionPacketEvidenceRefContract] = []
 
 
 class ReferenceCorrectionTruthEvidenceContract(MCPContract):

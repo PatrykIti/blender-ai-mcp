@@ -4746,6 +4746,61 @@ def test_build_correction_candidates_merges_truth_macro_and_matching_vision_focu
                     "captures_used": ["target_front_after"],
                 },
             },
+            "compare_diagnostics": {
+                "complexity_tier": "complex",
+                "packet_count": 2,
+                "packet_order": ["packet:contact", "packet:silhouette"],
+                "synthesis_required": True,
+                "synthesis_status": "success",
+                "packets": [
+                    {
+                        "packet_id": "packet:contact",
+                        "packet_kind": "view_scope",
+                        "packet_label": "Body + Head",
+                        "target_view": "front",
+                        "scope_label": "Body + Head",
+                        "target_objects": ["TruthHead", "TruthBody"],
+                        "truth_pairs": ["TruthHead -> TruthBody"],
+                        "reference_ids": ["ref_1"],
+                        "capture_labels": ["target_front_after"],
+                        "compare_question": "Compare the front silhouette for the Body + Head scope.",
+                        "extraction_status": "success",
+                        "ranking_status": "success",
+                        "packet_status": "ready",
+                        "ranking_recommendation": "rank",
+                        "support_evidence": [
+                            {
+                                "evidence_kind": "silhouette_metric",
+                                "summary": "Silhouette overlap is 0.52 (high).",
+                                "metric_id": "mask_iou",
+                            }
+                        ],
+                        "evidence_summary": "The body/head contact still needs correction.",
+                        "uncertainty_notes": [],
+                        "correction_focus": ["TruthHead -> TruthBody contact"],
+                    },
+                    {
+                        "packet_id": "packet:silhouette",
+                        "packet_kind": "view",
+                        "packet_label": "front packet",
+                        "target_view": "front",
+                        "target_objects": ["TruthHead", "TruthBody"],
+                        "reference_ids": ["ref_1"],
+                        "capture_labels": ["target_front_after"],
+                        "compare_question": "Compare the front silhouette against the references.",
+                        "extraction_status": "success",
+                        "ranking_status": "not_needed",
+                        "packet_status": "clean",
+                        "ranking_recommendation": "skip_clean",
+                        "support_evidence": [],
+                        "evidence_summary": "The head silhouette is the remaining visible issue.",
+                        "uncertainty_notes": [],
+                        "correction_focus": ["Head silhouette"],
+                    },
+                ],
+                "conflict_notes": [],
+                "budget_notes": [],
+            },
         }
     )
 
@@ -4761,8 +4816,12 @@ def test_build_correction_candidates_merges_truth_macro_and_matching_vision_focu
     assert candidates[0].truth_evidence.macro_candidates[0].macro_name == "macro_align_part_with_contact"
     assert candidates[0].vision_evidence is not None
     assert candidates[0].vision_evidence.correction_focus == ["TruthHead -> TruthBody contact"]
+    assert candidates[0].vision_evidence.packet_evidence_refs[0].packet_id == "packet:contact"
+    assert candidates[0].vision_evidence.packet_evidence_refs[0].support_evidence_count == 1
     assert candidates[1].candidate_kind == "vision_only"
     assert candidates[1].summary == "Head silhouette"
+    assert candidates[1].vision_evidence is not None
+    assert candidates[1].vision_evidence.packet_evidence_refs[0].packet_id == "packet:silhouette"
 
 
 def test_build_correction_candidates_keeps_multiple_required_creature_seams_separate():
