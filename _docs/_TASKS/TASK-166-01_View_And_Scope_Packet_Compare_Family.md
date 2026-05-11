@@ -112,13 +112,15 @@ packet_inputs = select_packet_inputs(
 
 ## Changelog Impact
 
-- one `_docs/_CHANGELOG/` entry when packet planning ships
+- shipped packet-planning closeout is recorded in `_docs/_CHANGELOG/324*`,
+  `_docs/_CHANGELOG/325*`, `_docs/_CHANGELOG/328*`, and later TASK-166
+  hardening entries
 
 ## Status / Board Update
 
-- keep `TASK-166` as the promoted board row
-- update this subtask, relevant leaves, and the board summary in
-  `_docs/_TASKS/README.md` together when packet planning closes or splits
+- `TASK-166` remains the promoted board row and this subtask is closed under it.
+- The relevant packet-planning leaves and `_docs/_TASKS/README.md` are aligned;
+  no open child remains under this subtask.
 
 ## Validation Commands
 

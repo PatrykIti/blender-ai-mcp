@@ -83,13 +83,13 @@
 
 ## Changelog Impact
 
-- include in the umbrella `_docs/_CHANGELOG/` entry when input-budget config
-  becomes runtime-owned
+- runtime-owned input-budget config shipped through `_docs/_CHANGELOG/330*`
+  and later budget-diagnostics hardening.
 
 ## Status / Board Update
 
-- keep parent `TASK-166` and this leaf aligned when config parsing lands or is
-  split from broader budget diagnostics work
+- parent `TASK-166` and this leaf are aligned as `✅ Done`; broader budget
+  diagnostics also shipped under `TASK-166-05-02`.
 
 ## Validation Commands
 

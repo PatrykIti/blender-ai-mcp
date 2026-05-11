@@ -294,6 +294,11 @@ class LazyVisionBackendResolver:
 
         return self._runtime_config
 
+    def update_runtime_config(self, runtime_config: VisionRuntimeConfig) -> None:
+        """Persist backend-refined runtime config for later budget diagnostics."""
+
+        self._runtime_config = runtime_config
+
     def resolve(self, factory: Callable[[VisionRuntimeConfig], VisionBackend | None]) -> VisionBackend:
         """Resolve one backend lazily using an injected factory.
 

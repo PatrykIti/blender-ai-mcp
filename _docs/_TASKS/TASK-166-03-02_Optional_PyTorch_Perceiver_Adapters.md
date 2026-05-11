@@ -88,13 +88,13 @@
 
 ## Changelog Impact
 
-- include in the umbrella `_docs/_CHANGELOG/` entry when compare-time sidecar
-  surfacing ships
+- compare-time sidecar surfacing shipped through `_docs/_CHANGELOG/329*` and
+  later TASK-166 hardening entries.
 
 ## Status / Board Update
 
-- keep parent `TASK-166` and this leaf aligned when compare-time sidecar work
-  closes or remains explicit follow-on scope
+- parent `TASK-166` and this leaf are aligned as `✅ Done`; no open follow-on
+  remains for compare-time sidecar support.
 
 ## Validation Commands
 

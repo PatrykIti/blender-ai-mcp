@@ -692,7 +692,9 @@ Interpretation rules:
   behavior; it is not itself evidence or proof that the result is correct
 - packet extraction and packet ranking are now separate bounded phases on the
   staged compare path; ranking may be skipped or may fail without discarding
-  the extraction result
+  the extraction result, while ranking downgrades to `low_information` or
+  `blocked` stay diagnostic and do not promote extraction-only focus into
+  correction candidates
 - packet compare also receives compact silhouette/action-hint support evidence
   before the packet LLM phase runs; those CV items stay advisory-only and
   do not replace truth or gate authority

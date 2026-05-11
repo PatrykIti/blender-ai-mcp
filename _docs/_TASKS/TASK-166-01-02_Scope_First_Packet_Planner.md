@@ -56,13 +56,13 @@
 
 ## Changelog Impact
 
-- include in the umbrella `_docs/_CHANGELOG/` entry when scope-first packet
-  planning ships
+- scope-first packet planning shipped through the TASK-166 packeted compare
+  closeout and later packet scope/proof hardening changelog entries.
 
 ## Status / Board Update
 
-- keep parent `TASK-166` and this leaf aligned when scope-first planning closes
-  or splits into follow-on work
+- parent `TASK-166` and this leaf are aligned as `✅ Done`; no open follow-on
+  remains for scope-first packet planning.
 
 ## Validation Commands
 

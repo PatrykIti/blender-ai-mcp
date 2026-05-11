@@ -208,6 +208,74 @@ def test_local_backend_analyze_runs_generic_transformers_flow(monkeypatch, tmp_p
     assert backend.last_output_diagnostics["payload_shape"] == "contract"
 
 
+def test_local_backend_uses_effective_output_token_cap(monkeypatch, tmp_path):
+    image_path = tmp_path / "before.png"
+    image_path.write_bytes(b"fake-png")
+    request = VisionRequest(goal="goal", images=(VisionImageInput(path=str(image_path), role="before"),))
+
+    class FakeInputs(dict):
+        def __init__(self):
+            super().__init__({"input_ids": [[1, 2, 3]]})
+            self.input_ids = self["input_ids"]
+
+        def to(self, device):
+            return self
+
+    class FakeProcessor:
+        @classmethod
+        def from_pretrained(cls, model_source):
+            return cls()
+
+        def apply_chat_template(self, messages, **kwargs):
+            return FakeInputs()
+
+        def batch_decode(self, generated_ids, **kwargs):
+            return [
+                '{"goal_summary":"ok","reference_match_summary":null,"visible_changes":[],"likely_issues":[],"recommended_checks":[],"confidence":0.5,"captures_used":["before_1"]}'
+            ]
+
+    class FakeModel:
+        device = "cpu"
+        generated_kwargs: dict[str, Any] | None = None
+
+        @classmethod
+        def from_pretrained(cls, model_source, **kwargs):
+            return cls()
+
+        def to(self, device):
+            self.device = device
+            return self
+
+        def generate(self, **kwargs):
+            self.generated_kwargs = kwargs
+            return [[1, 2, 3, 4]]
+
+    class FakeTransformers:
+        AutoProcessor = FakeProcessor
+        AutoModelForImageTextToText = FakeModel
+
+    class FakeTorch:
+        float32 = "float32"
+        float16 = "float16"
+        bfloat16 = "bfloat16"
+
+    def _fake_import(name: str):
+        if name == "transformers":
+            return FakeTransformers
+        if name == "torch":
+            return FakeTorch
+        raise ModuleNotFoundError(name)
+
+    monkeypatch.setattr(importlib, "import_module", _fake_import)
+
+    backend = TransformersLocalVisionBackend(build_vision_runtime_config(_config(VISION_MAX_TOKENS=250_000)))
+
+    asyncio.run(backend.analyze(request))
+
+    assert backend._model is not None
+    assert backend._model.generated_kwargs["max_new_tokens"] == 8_192
+
+
 def test_local_backend_rejects_invalid_json_output(monkeypatch, tmp_path):
     image_path = tmp_path / "after.png"
     image_path.write_bytes(b"fake-png")

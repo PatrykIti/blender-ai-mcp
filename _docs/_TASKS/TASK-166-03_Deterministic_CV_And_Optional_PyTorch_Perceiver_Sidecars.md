@@ -118,14 +118,17 @@ staged_compare = project_packet_support_into_staged_contract(packet_inputs)
 
 ## Changelog Impact
 
-- include in the umbrella `_docs/_CHANGELOG/` entry when compare-time support
-  evidence ships
+- compare-time support evidence and optional sidecar support shipped through
+  `_docs/_CHANGELOG/327*`, `_docs/_CHANGELOG/329*`, and later TASK-166
+  hardening entries.
 
 ## Status / Board Update
 
-- keep parent `TASK-166` and this subtask aligned in `_docs/_TASKS/README.md`
-- call out explicitly whether compare-time CV landed through the silhouette
-  seam only or whether optional sidecar extensions also shipped
+- parent `TASK-166`, this subtask, child leaves, and `_docs/_TASKS/README.md`
+  are aligned as `✅ Done`.
+- Compare-time CV landed through silhouette/action-hint support evidence, and
+  optional segmentation sidecar extensions also shipped as advisory-only packet
+  support.
 
 ## Validation Commands
 

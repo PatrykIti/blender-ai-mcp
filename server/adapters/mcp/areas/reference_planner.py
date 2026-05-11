@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import re
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -132,21 +131,6 @@ _STRUCTURAL_RELATION_BLOCKER_KINDS: frozenset[str] = frozenset(
     {"contact_failure", "gap", "overlap", "attachment", "support", "symmetry", "measurement_error"}
 )
 _PROPORTION_BLOCKING_HINT_TYPES: frozenset[str] = frozenset({"rebalance_proportion"})
-_VIEW_TOKEN_ALIASES: dict[str, str] = {
-    "front": "front",
-    "side": "side",
-    "profile": "side",
-    "top": "top",
-    "back": "back",
-    "rear": "back",
-    "three": "three_quarter",
-    "quarter": "three_quarter",
-    "3q": "three_quarter",
-    "detail": "detail",
-    "close": "detail",
-    "silhouette": "detail",
-}
-_PACKET_VIEW_ORDER: tuple[str, ...] = ("front", "side", "top", "back", "three_quarter", "detail")
 
 
 @dataclass(frozen=True, slots=True)
@@ -168,79 +152,6 @@ class HybridBudgetRuntime:
     @property
     def budget_clipped(self) -> bool:
         return bool(self.budget_clip_fields)
-
-
-def _normalize_view_token(value: str | None) -> str | None:
-    tokens = [token for token in re.split(r"[^a-z0-9]+", str(value or "").strip().lower()) if token]
-    for token in tokens:
-        normalized = _VIEW_TOKEN_ALIASES.get(token)
-        if normalized is not None:
-            return normalized
-    return None
-
-
-def _capture_view_id(capture: VisionCaptureImageContract) -> str | None:
-    return _normalize_view_token(capture.preset_name) or _normalize_view_token(capture.label)
-
-
-def _reference_view_id(reference_record: ReferenceImageRecordContract) -> str | None:
-    return _normalize_view_token(reference_record.target_view) or _normalize_view_token(reference_record.label)
-
-
-def _stable_packet_id(prefix: str, *parts: str) -> str:
-    normalized_parts = [re.sub(r"[^a-z0-9]+", "_", part.strip().lower()).strip("_") for part in parts if part.strip()]
-    digest = hashlib.sha1("|".join(normalized_parts).encode("utf-8")).hexdigest()[:8]
-    slug = "__".join(normalized_parts[:3]) or "packet"
-    return f"{prefix}:{slug}:{digest}"
-
-
-def _unique_preserving_order(values: Sequence[str]) -> list[str]:
-    seen: set[str] = set()
-    ordered: list[str] = []
-    for value in values:
-        normalized = value.strip()
-        if not normalized or normalized in seen:
-            continue
-        seen.add(normalized)
-        ordered.append(normalized)
-    return ordered
-
-
-def _packet_question_for_view(view_id: str | None, *, scope_label: str | None = None) -> str:
-    if scope_label and view_id == "side":
-        return (
-            f"Compare the side/profile silhouette for the {scope_label} scope. "
-            "Focus on depth, arc length, attachment continuity, and obvious proportion drift."
-        )
-    if scope_label and view_id == "front":
-        return (
-            f"Compare the front silhouette for the {scope_label} scope. "
-            "Focus on visible width, symmetry, attachment readability, and dominant shape mismatches."
-        )
-    if scope_label:
-        return (
-            f"Compare the {scope_label} scope against the references. "
-            "Focus on the intended local silhouette, attachment/seam state, and dominant shape drift."
-        )
-    if view_id == "side":
-        return (
-            "Compare the side/profile silhouette against the references. "
-            "Focus on length, depth, arc shape, and obvious proportion drift."
-        )
-    if view_id == "front":
-        return (
-            "Compare the front silhouette against the references. "
-            "Focus on width, symmetry, primary masses, and dominant shape mismatches."
-        )
-    if view_id == "top":
-        return (
-            "Compare the top-view mass layout against the references. "
-            "Focus on width balance, spacing, and large placement errors."
-        )
-    return (
-        "Compare this bounded packet against the references. "
-        "Focus only on the dominant visible mismatch, required local relations, and the safest next correction."
-    )
 
 
 def resolve_compare_complexity_tier(

@@ -85,7 +85,7 @@ When a bounded modeling intent matches, the default public working layer should 
 - staged reference compare now decomposes bounded stage requests into packet-local view/scope compares internally and can expose additive `compare_diagnostics` on rich or uncertainty paths without creating a second public tool family
 - `correction_candidates[*].vision_evidence.packet_evidence_refs` can point back to the packet ids that produced an actionable visual correction, while full packet provenance remains owned by `compare_diagnostics`
 - super-complex staged compare keeps 6-12 image runs bounded by slicing large same-view reference sets into packet-local chunks that respect the effective `VISION_MAX_IMAGES` runtime limit
-- packet-local staged compare now runs extraction first and ranking second only when extraction warrants it, so ranking failure no longer erases usable packet evidence
+- packet-local staged compare now runs extraction first and ranking second only when extraction warrants it, so ranking failure no longer erases usable packet evidence and ranking downgrades stay diagnostic instead of producing correction candidates
 - packet-local staged compare also feeds typed silhouette/action-hint `support_evidence` items into packet requests before the LLM compare phase, so bounded CV facts stay machine-readable without creating a second perception flow
 - `reference_iterate_stage_checkpoint` for a session-aware staged correction loop that remembers prior focus, can escalate into inspect/validate when the same correction repeats, and can now target one object, many objects, a collection, or the full assembled silhouette
 - RU summaries now also carry server-owned `views` plus lightweight `visual_metrics` that stay advisory-only and complement VLM interpretation
@@ -657,6 +657,9 @@ hidden ordering assumptions.
   comes from visual packet evidence, its `vision_evidence.packet_evidence_refs`
   carries bounded packet ids/statuses so clients can join back to
   `compare_diagnostics` without parsing raw packet details from every candidate
+- ranking-pass downgrades to `low_information` or `blocked` remain visible
+  through packet diagnostics and orchestrator uncertainty, but they do not
+  promote extraction-only focus into actionable `correction_candidates`
 - super-complex staged compare resolves packet-local image budgets before
   execution; large same-view reference sets become bounded reference slices
   that stay within `VISION_MAX_IMAGES`, and mixed clean vs corrective packet

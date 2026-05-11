@@ -72,10 +72,10 @@
 
 ## Changelog Impact
 
-- include in the umbrella `_docs/_CHANGELOG/` entry when view-first packet
-  planning ships
+- view-first packet planning shipped through the TASK-166 packeted compare
+  closeout and subsequent hardening changelog entries.
 
 ## Status / Board Update
 
-- keep parent `TASK-166` and this leaf aligned when view-first planning closes
-  or is split further
+- parent `TASK-166` and this leaf are aligned as `✅ Done`; no open follow-on
+  remains for view-first packet planning.

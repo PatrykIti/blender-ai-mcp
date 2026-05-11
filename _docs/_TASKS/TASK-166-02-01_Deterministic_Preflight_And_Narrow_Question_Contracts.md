@@ -93,10 +93,10 @@
 
 ## Changelog Impact
 
-- include in the umbrella `_docs/_CHANGELOG/` entry when packet preflight and
-  narrow question contracts ship
+- packet preflight and narrow question contracts shipped through the TASK-166
+  two-pass / packet-guidance changelog entries.
 
 ## Status / Board Update
 
-- keep parent `TASK-166` and this leaf aligned when deterministic packet
-  preflight closes or splits into follow-on work
+- parent `TASK-166` and this leaf are aligned as `✅ Done`; no open follow-on
+  remains for deterministic packet preflight.

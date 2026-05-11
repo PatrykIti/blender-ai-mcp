@@ -7,7 +7,10 @@ from types import SimpleNamespace
 from typing import Any, Literal
 
 from server.adapters.mcp.areas import reference_compare_packets as compare_packets_area
-from server.adapters.mcp.areas.reference_compare_packets import append_compare_synthesis_conflict_notes
+from server.adapters.mcp.areas.reference_compare_packets import (
+    append_compare_synthesis_conflict_notes,
+    merge_packet_phase_results,
+)
 from server.adapters.mcp.areas.reference_planner import build_compare_packets, synthesize_packet_vision_result
 from server.adapters.mcp.areas.reference_silhouette import build_compare_support_evidence
 from server.adapters.mcp.contracts.reference import (
@@ -17,7 +20,11 @@ from server.adapters.mcp.contracts.reference import (
 )
 from server.adapters.mcp.contracts.scene import SceneAssembledTargetScopeContract, SceneTruthFollowupContract
 from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
-from server.adapters.mcp.sampling.result_types import VisionAssistContract, VisionInputSummaryContract
+from server.adapters.mcp.sampling.result_types import (
+    VisionAssistContract,
+    VisionInputSummaryContract,
+    VisionPacketStatusContract,
+)
 
 
 class _FakeSupportResponse:
@@ -503,6 +510,47 @@ def test_synthesize_packet_vision_result_dedupes_reused_capture_and_reference_co
     assert synthesized.input_summary is not None
     assert synthesized.input_summary.after_image_count == 2
     assert synthesized.input_summary.reference_image_count == 1
+    assert synthesized.packet_guidance is not None
+    assert synthesized.packet_guidance.packet_status == "clean"
+    assert synthesized.packet_guidance.ranking_recommendation == "skip_clean"
+
+
+def test_merge_packet_phase_results_does_not_keep_extraction_focus_after_ranking_downgrade():
+    extraction_result = VisionAssistContract(
+        backend_kind="mlx_local",
+        model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+        goal_summary="Extraction found a possible head issue.",
+        visible_changes=["Front silhouette is readable."],
+        shape_mismatches=["Head looks too round."],
+        correction_focus=["Head silhouette"],
+        next_corrections=["Flatten the head silhouette."],
+        packet_guidance=VisionPacketStatusContract(
+            packet_status="ready",
+            ranking_recommendation="rank",
+        ),
+    )
+    ranking_result = VisionAssistContract(
+        backend_kind="mlx_local",
+        model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+        goal_summary="Ranking pass could not confirm the packet.",
+        visible_changes=["Front silhouette is readable."],
+        shape_mismatches=["Contradictory low-information shape hint."],
+        correction_focus=["Contradictory low-information focus."],
+        next_corrections=["Contradictory low-information correction."],
+        packet_guidance=VisionPacketStatusContract(
+            packet_status="low_information",
+            status_reason="Ranking pass found too little focused packet evidence.",
+            ranking_recommendation="skip_low_information",
+        ),
+    )
+
+    merged = merge_packet_phase_results(extraction_result, ranking_result)
+
+    assert merged.packet_guidance is not None
+    assert merged.packet_guidance.packet_status == "low_information"
+    assert merged.correction_focus == []
+    assert merged.shape_mismatches == []
+    assert merged.next_corrections == []
 
 
 def test_build_compare_packets_keeps_packet_reference_ids_local_to_scope_targets():

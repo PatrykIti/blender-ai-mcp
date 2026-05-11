@@ -518,7 +518,8 @@ Focused unit coverage now also protects:
   - `tests/unit/adapters/mcp/test_vision_silhouette.py`
   - `tests/unit/adapters/mcp/test_reference_images.py`
 - staged compare transport, compact uncertainty top-level diagnostics, and
-  Blender-backed packet diagnostics proof on:
+  Blender-runner packet diagnostics proof with mocked stage capture/scene seams
+  on:
   - `tests/e2e/integration/test_guided_gate_state_transport.py`
   - `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
 - optional RU classifier-score and segmentation-artifact augmentation on:

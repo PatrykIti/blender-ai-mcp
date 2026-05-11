@@ -73,10 +73,10 @@
 
 ## Changelog Impact
 
-- include in the umbrella `_docs/_CHANGELOG/` entry when always-on compare-time
-  CV metrics ship
+- always-on compare-time CV metrics shipped through `_docs/_CHANGELOG/327*`
+  and later TASK-166 hardening entries.
 
 ## Status / Board Update
 
-- keep parent `TASK-166` and this leaf aligned when compare-time heuristic CV
-  closes or remains explicit follow-on scope
+- parent `TASK-166` and this leaf are aligned as `✅ Done`; no open follow-on
+  remains for always-on heuristic CV metrics.

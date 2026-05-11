@@ -467,7 +467,10 @@ class TransformersLocalVisionBackend(VisionBackend):
             )
             model_device = getattr(model, "device", self._local_config.device)
             inputs = self._move_inputs_to_device(inputs, model_device)
-            output_ids = model.generate(**inputs, max_new_tokens=self._runtime_config.max_tokens)
+            output_ids = model.generate(
+                **inputs,
+                max_new_tokens=_output_token_cap(runtime_config=self._runtime_config, request=request),
+            )
             input_ids = getattr(inputs, "input_ids", None)
             if input_ids is None and isinstance(inputs, dict):
                 input_ids = inputs.get("input_ids")
@@ -724,6 +727,9 @@ class OpenAICompatibleVisionBackend(VisionBackend):
             update={"openai_compatible_external": self._external_config}
         )
 
+    async def prepare_for_request(self, request: VisionRequest) -> None:
+        await self._refresh_openrouter_model_capabilities()
+
     def _build_request_payload(self, request: VisionRequest) -> dict[str, Any]:
         vision_contract_profile = self._external_config.vision_contract_profile
         if self._external_config.provider_name == "google_ai_studio":
@@ -843,7 +849,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
         return payload
 
     async def analyze(self, request: VisionRequest) -> dict[str, object]:
-        await self._refresh_openrouter_model_capabilities()
+        await self.prepare_for_request(request)
         headers = {"Content-Type": "application/json"}
         headers.update(self._provider_headers())
         api_key = self._resolved_api_key()

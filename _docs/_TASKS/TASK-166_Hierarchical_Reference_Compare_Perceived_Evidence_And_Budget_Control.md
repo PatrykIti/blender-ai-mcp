@@ -425,7 +425,8 @@ without requiring one massive all-images compare request.
     reference slices, and the compact iterate rule that keeps top-level
     `compare_diagnostics` while omitting nested compact debug payloads
   - the task-family validation docs now point at live owner-lane tests instead
-    of the removed `tests/unit/router/application/test_router_contracts.py`
+    of relying on `tests/unit/router/application/test_router_contracts.py` as
+    a TASK-166 validation lane
   - `TASK-166-01`, `TASK-166-01-03`, `TASK-166-02`, and `TASK-166-02-01` are
     now closed against the shipped code paths
 - 2026-05-10: remaining follow-on work is now limited to the richer
@@ -499,6 +500,16 @@ without requiring one massive all-images compare request.
     responses
   - `scripts/run_streamable_openrouter.sh` now forwards the documented
     default-off `VISION_SEGMENTATION_*` sidecar variables into Docker
+- 2026-05-11: ranking downgrade actionability cleanup closed a follow-up
+  implementation drift:
+  - ranking-pass downgrades to `low_information` or `blocked` no longer inherit
+    actionable extraction focus or emit correction candidates from evidence the
+    ranking pass could not confirm
+  - downgraded packets still surface through `compare_diagnostics` and compact
+    orchestrator uncertainty notes
+  - stale packet-planning helper duplicates were removed from
+    `server/adapters/mcp/areas/reference_planner.py`; packet policy remains
+    centralized in `server/adapters/mcp/areas/reference_compare_packets.py`
 
 ## Docs To Update
 
@@ -515,7 +526,24 @@ without requiring one massive all-images compare request.
 - use incremental `_docs/_CHANGELOG/` closeouts for shipped TASK-166 slices
   instead of one umbrella-only entry; the current packeted compare history is
   recorded in entries `324` through `336`, plus post-closeout hardening entries
-  `339` through `341`
+  `339` through `342`
+
+## Completion Summary
+
+- TASK-166 is closed as one staged-compare refactor on the existing
+  `reference_compare_stage_checkpoint(...)` /
+  `reference_iterate_stage_checkpoint(...)` public surface; no second public
+  compare tool family was introduced.
+- The shipped implementation keeps packet policy in
+  `server/adapters/mcp/areas/reference_compare_packets.py`, typed public
+  projection in `server/adapters/mcp/contracts/reference.py`, compact
+  orchestrator projection in `server/adapters/mcp/areas/reference_feedback.py`,
+  and runtime budget ownership in the vision runtime/runner seams.
+- Public/user docs, test docs, task board state, and changelog entries `324`
+  through `336` plus hardening entries `339` through `342` record the shipped
+  behavior and post-review repairs.
+- All direct TASK-166 children are closed; no standalone follow-on remains under
+  this umbrella.
 
 ## Status / Board Update
 
@@ -531,6 +559,17 @@ without requiring one massive all-images compare request.
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_compare_packets.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_parsing.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_result_types.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_silhouette.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runner.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_local_backend.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/scripts/test_script_tooling.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_truth_handoff.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_silhouette_contract.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_multi_reference_scaling.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
 - `poetry run pytest ./tests/unit`
 - `poetry run python scripts/run_e2e_tests.py`

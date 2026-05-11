@@ -368,6 +368,7 @@ def build_reference_orchestrator_feedback(
         and guided_flow_state is None
         and gate_plan is None
         and guided_reference_readiness is None
+        and compare_diagnostics is None
         and budget_control is None
         and planner_summary is None
         and not correction_candidates

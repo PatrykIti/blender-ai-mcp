@@ -72,10 +72,10 @@
 
 ## Changelog Impact
 
-- include in the umbrella `_docs/_CHANGELOG/` entry when the simple compare
-  tier ships
+- the simple compare tier shipped through the TASK-166 packeted compare and
+  packet-policy hardening changelog entries.
 
 ## Status / Board Update
 
-- keep parent `TASK-166` and this leaf aligned when the simple compare policy
-  closes or is superseded by a refined tier split
+- parent `TASK-166` and this leaf are aligned as `✅ Done`; no open follow-on
+  remains for the simple compare policy.

@@ -95,8 +95,8 @@
 
 ## Status / Board Update
 
-- keep parent `TASK-166` and this leaf aligned when extraction/ranking split
-  semantics close or are split into follow-on work
+- parent `TASK-166` and this leaf are aligned as `✅ Done`; no open follow-on
+  remains for the extraction/ranking split semantics.
 
 ## Validation Commands
 

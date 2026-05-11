@@ -69,6 +69,11 @@ def _vision_assist_budget_contract(runtime: VisionRuntimeConfig, policy: Assista
     )
 
 
+def _project_runtime_budget(runtime: VisionRuntimeConfig) -> tuple[AssistantPolicy, AssistantBudgetContract]:
+    policy = _resolve_vision_assist_policy(runtime)
+    return policy, _vision_assist_budget_contract(runtime, policy)
+
+
 def _estimate_request_chars(request: VisionRequest) -> int:
     payload = {
         "goal": request.goal,
@@ -97,8 +102,7 @@ async def run_vision_assist(
     """Run one bounded vision assist request against the configured backend."""
 
     runtime = resolver.runtime_config
-    policy = _resolve_vision_assist_policy(runtime)
-    budget = _vision_assist_budget_contract(runtime, policy)
+    policy, budget = _project_runtime_budget(runtime)
     request_id = ctx_request_id(ctx)
 
     if is_background_task_context(ctx):
@@ -158,6 +162,24 @@ async def run_vision_assist(
             rejection_reason=str(exc),
         )
 
+    try:
+        await backend.prepare_for_request(request)
+        backend_runtime = backend.runtime_config
+        if backend_runtime is not None:
+            resolver.update_runtime_config(backend_runtime)
+            runtime = resolver.runtime_config
+            policy, budget = _project_runtime_budget(runtime)
+    except VisionBackendUnavailableError as exc:
+        return AssistantRunResult(
+            status="unavailable",
+            assistant_name=policy.assistant_name,
+            message="Vision backend is unavailable on the active runtime.",
+            budget=budget,
+            request_id=request_id,
+            capability_source="unavailable",
+            rejection_reason=str(exc),
+        )
+
     capability_source = cast(
         AssistantCapabilitySource,
         "local_runtime" if backend.backend_kind in {"transformers_local", "mlx_local"} else "external_runtime",
@@ -165,6 +187,11 @@ async def run_vision_assist(
 
     try:
         payload = await backend.analyze(request)
+        backend_runtime = backend.runtime_config
+        if backend_runtime is not None:
+            resolver.update_runtime_config(backend_runtime)
+            runtime = resolver.runtime_config
+            policy, budget = _project_runtime_budget(runtime)
     except VisionBackendUnavailableError as exc:
         return AssistantRunResult(
             status="unavailable",

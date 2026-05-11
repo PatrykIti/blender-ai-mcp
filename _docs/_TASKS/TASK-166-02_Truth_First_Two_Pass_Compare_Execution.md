@@ -110,14 +110,15 @@ iterate = consume_staged_compare(staged_compare)
 
 ## Changelog Impact
 
-- include in the umbrella `_docs/_CHANGELOG/` entry when two-pass staged compare
-  ships
+- two-pass staged compare shipped through `_docs/_CHANGELOG/326*` plus later
+  TASK-166 hardening entries.
 
 ## Status / Board Update
 
-- keep parent `TASK-166` and this subtask aligned in `_docs/_TASKS/README.md`
-- when this subtask closes, update child-leaf state and note whether transport
-  proof shipped or remains explicit follow-on work
+- parent `TASK-166`, this subtask, child leaves, and `_docs/_TASKS/README.md`
+  are aligned as `✅ Done`.
+- Transport/public proof for this branch shipped through the later TASK-166
+  transparency and full E2E validation closeouts; no open child remains.
 
 ## Validation Commands
 

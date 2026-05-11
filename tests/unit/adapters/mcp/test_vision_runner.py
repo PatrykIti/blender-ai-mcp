@@ -15,6 +15,7 @@ from server.adapters.mcp.vision import (
     build_vision_runtime_config,
     run_vision_assist,
 )
+from server.adapters.mcp.vision.config import VisionModelCapabilities
 from server.infrastructure.config import Config
 
 
@@ -100,6 +101,42 @@ class _SuccessBackend(VisionBackend):
         }
 
 
+class _PreparedBudgetBackend(_SuccessBackend):
+    def __init__(self, runtime_config):
+        super().__init__("openai_compatible_external", "openai/gpt-5.4-nano")
+        assert runtime_config.openai_compatible_external is not None
+        self._runtime_config = runtime_config
+        self._prepared_runtime_config = runtime_config.model_copy(
+            update={
+                "openai_compatible_external": runtime_config.openai_compatible_external.model_copy(
+                    update={
+                        "model_capabilities": VisionModelCapabilities(
+                            model_id="openai/gpt-5.4-nano",
+                            capability_source="openrouter_api",
+                            context_length=400_000,
+                            max_completion_tokens=3_000,
+                            input_modalities=["text", "image"],
+                            output_modalities=["text"],
+                            supported_parameters=["max_tokens", "response_format"],
+                        )
+                    }
+                )
+            }
+        )
+
+    async def prepare_for_request(self, request: VisionRequest) -> None:
+        self._runtime_config = self._prepared_runtime_config
+
+
+class _PreparingBackend(_SuccessBackend):
+    def __init__(self) -> None:
+        super().__init__("openai_compatible_external", "openai/gpt-5.4-nano")
+        self.prepare_called = False
+
+    async def prepare_for_request(self, request: VisionRequest) -> None:
+        self.prepare_called = True
+
+
 def _request(image_count: int = 1) -> VisionRequest:
     images = tuple(
         VisionImageInput(path=f"/tmp/image_{idx}.png", role="before", label=f"before_{idx}")
@@ -127,6 +164,27 @@ def test_runner_rejects_image_budget_overflow():
 
     assert result.status == "rejected_by_policy"
     assert result.rejection_reason == "image_budget_exceeded"
+
+
+def test_runner_rejects_image_budget_before_backend_prepare(monkeypatch):
+    runtime = build_vision_runtime_config(
+        _config(
+            VISION_PROVIDER="openai_compatible_external",
+            VISION_EXTERNAL_BASE_URL="http://localhost:8000/v1",
+            VISION_EXTERNAL_MODEL="openai/gpt-5.4-nano",
+            VISION_EXTERNAL_API_KEY="secret",
+            VISION_MAX_IMAGES=1,
+        )
+    )
+    resolver = LazyVisionBackendResolver(runtime)
+    backend = _PreparingBackend()
+    monkeypatch.setattr(resolver, "resolve_default", lambda: backend)
+
+    result = asyncio.run(run_vision_assist(_Ctx(), request=_request(image_count=2), resolver=resolver))
+
+    assert result.status == "rejected_by_policy"
+    assert result.rejection_reason == "image_budget_exceeded"
+    assert backend.prepare_called is False
 
 
 def test_runner_rejects_input_budget_overflow_from_runtime_config():
@@ -163,6 +221,29 @@ def test_runner_reports_configured_and_effective_fail_safe_budgets():
     assert result.budget.effective_max_tokens == 8_192
     assert result.budget.budget_clipped is True
     assert result.budget.budget_clip_fields == ["max_images", "max_input_chars", "max_output_tokens"]
+
+
+def test_runner_projects_backend_prepared_runtime_budget(monkeypatch):
+    runtime = build_vision_runtime_config(
+        _config(
+            VISION_PROVIDER="openai_compatible_external",
+            VISION_LOCAL_MODEL_ID=None,
+            VISION_EXTERNAL_BASE_URL="http://localhost:8000/v1",
+            VISION_EXTERNAL_MODEL="openai/gpt-5.4-nano",
+            VISION_EXTERNAL_API_KEY="secret",
+            VISION_MAX_TOKENS=5_000,
+        )
+    )
+    resolver = LazyVisionBackendResolver(runtime)
+    monkeypatch.setattr(resolver, "resolve_default", lambda: _PreparedBudgetBackend(runtime))
+
+    result = asyncio.run(run_vision_assist(_Ctx(), request=_request(), resolver=resolver))
+
+    assert result.status == "success"
+    assert result.budget.configured_max_tokens == 5_000
+    assert result.budget.effective_max_tokens == 3_000
+    assert result.budget.budget_clipped is True
+    assert resolver.runtime_config.effective_max_tokens == 3_000
 
 
 def test_runner_returns_unavailable_when_backend_is_disabled():

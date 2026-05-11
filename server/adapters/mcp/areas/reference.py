@@ -1350,6 +1350,11 @@ async def _run_stage_checkpoint_compare(
     part_segmentation = packet_execution.part_segmentation
     if part_segmentation is None:
         part_segmentation = _configured_part_segmentation()
+    runtime_budget = _resolve_hybrid_budget_runtime(resolver)
+    runtime_max_tokens = runtime_budget.max_tokens
+    runtime_max_images = runtime_budget.max_images
+    runtime_max_input_chars = runtime_budget.max_input_chars
+    runtime_model_name = runtime_budget.model_name
     full_correction_candidates = _build_correction_candidates(
         ReferenceCompareStageCheckpointResponseContract(
             action="compare_stage_checkpoint",

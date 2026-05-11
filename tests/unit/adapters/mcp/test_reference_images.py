@@ -24,6 +24,7 @@ from server.adapters.mcp.areas.reference import (
     reference_iterate_stage_checkpoint,
     refresh_reference_understanding_summary_async,
 )
+from server.adapters.mcp.areas.reference_feedback import build_reference_orchestrator_feedback
 from server.adapters.mcp.areas.reference_planner import (
     build_correction_candidates as _build_correction_candidates,
 )
@@ -46,6 +47,8 @@ from server.adapters.mcp.areas.reference_truth import (
     trim_truth_bundle_to_budget as _trim_truth_bundle_to_budget,
 )
 from server.adapters.mcp.contracts.reference import (
+    ReferenceCompareDiagnosticsContract,
+    ReferenceComparePacketContract,
     ReferenceCompareStageCheckpointResponseContract,
     ReferenceHybridBudgetControlContract,
     ReferenceImageRecordContract,
@@ -588,6 +591,38 @@ def test_stage_compare_response_projects_clipped_budget_into_orchestrator_feedba
     assert (
         "Configured vision budget was clipped by fail-safe caps for max_images, max_input_chars, max_output_tokens."
     ) in result.reference_orchestrator_feedback.uncertainty_notes
+
+
+def test_reference_orchestrator_feedback_projects_compare_diagnostics_without_ru_summary():
+    feedback = build_reference_orchestrator_feedback(
+        goal="low poly creature",
+        summary=None,
+        strategy_state=None,
+        compare_diagnostics=ReferenceCompareDiagnosticsContract(
+            complexity_tier="complex",
+            packet_count=1,
+            packet_order=["packet:front"],
+            synthesis_required=False,
+            synthesis_status="not_needed",
+            packets=[
+                ReferenceComparePacketContract(
+                    packet_id="packet:front",
+                    packet_label="front packet",
+                    target_view="front",
+                    compare_question="Compare the front silhouette.",
+                    extraction_status="low_information",
+                    packet_status="low_information",
+                    status_reason="No packet-local staged captures were available.",
+                    uncertainty_notes=["No packet-local staged captures were available."],
+                )
+            ],
+        ),
+    )
+
+    assert feedback is not None
+    assert feedback.status == "blocked"
+    assert "Compare used 1 packet(s) in the complex tier." in feedback.evidence_summary
+    assert "No packet-local staged captures were available." in feedback.uncertainty_notes
 
 
 def test_refresh_reference_understanding_summary_persists_summary_and_gate_ids(tmp_path, monkeypatch):
@@ -6481,6 +6516,147 @@ def test_reference_compare_stage_checkpoint_keeps_super_complex_packets_within_r
     assert all(len(request.images) == 3 for request in captured_requests)
 
 
+def test_reference_compare_stage_checkpoint_uses_effective_fail_safe_image_budget(tmp_path, monkeypatch):
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly creature", {"status": "no_match"})
+    for index in range(1, 7):
+        reference_path = tmp_path / f"front_ref_{index}.png"
+        reference_path.write_bytes(f"front-{index}".encode("utf-8"))
+        asyncio.run(
+            reference_images(
+                ctx,
+                action="attach",
+                source_path=str(reference_path),
+                label=f"front_ref_{index}",
+                target_object="Creature",
+                target_view="front",
+            )
+        )
+
+    class SceneHandler:
+        def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "relation": "contact", "gap": 0.0}
+
+        def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "is_aligned": True,
+                "axes": axes or ["X", "Y", "Z"],
+            }
+
+        def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "overlaps": False, "relation": "disjoint"}
+
+        def assert_contact(
+            self, from_object: str, to_object: str, max_gap: float = 0.0001, allow_overlap: bool = False
+        ):
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": True,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.0, "relation": "contact"},
+            }
+
+    captured_requests: list[Any] = []
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        captured_requests.append(request)
+        assert len(request.images) <= 12
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="Packet compare completed.",
+                visible_changes=["Front silhouette is readable."],
+                shape_mismatches=[],
+                correction_focus=[],
+                packet_guidance=VisionPacketStatusContract(
+                    packet_status="clean",
+                    ranking_recommendation="skip_clean",
+                ),
+            ),
+        )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.get_vision_backend_resolver",
+        lambda: SimpleNamespace(
+            runtime_config=SimpleNamespace(
+                max_images=20,
+                effective_max_images=12,
+                max_input_chars=100_000,
+                effective_max_input_chars=48_000,
+                max_tokens=250_000,
+                effective_max_tokens=8_192,
+                budget_clip_fields=["max_images", "max_input_chars", "max_output_tokens"],
+                active_model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                active_segmentation_sidecar=None,
+            )
+        ),
+    )
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="context_wide_after",
+                image_path=str(tmp_path / "context.jpg"),
+                host_visible_path=str(tmp_path / "context.jpg"),
+                preset_name="context_wide",
+                media_type="image/jpeg",
+                view_kind="wide",
+            ),
+            VisionCaptureImageContract(
+                label="target_front_after",
+                image_path=str(tmp_path / "front.jpg"),
+                host_visible_path=str(tmp_path / "front.jpg"),
+                preset_name="target_front",
+                media_type="image/jpeg",
+                view_kind="focus",
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            target_object="Creature",
+            checkpoint_label="stage_fail_safe_budget",
+            preset_profile="rich",
+            target_view="front",
+        )
+    )
+
+    assert result.error is None
+    assert result.budget_control is not None
+    assert result.budget_control.configured_max_images == 20
+    assert result.budget_control.effective_max_images == 12
+    assert result.budget_control.budget_clipped is True
+    assert result.compare_diagnostics is not None
+    assert (
+        "Compare packet policy split reference evidence into bounded packet-local slices to stay within "
+        "VISION_MAX_IMAGES=12."
+    ) in result.compare_diagnostics.budget_notes
+    assert any(
+        "Configured vision budget exceeded fail-safe caps" in note for note in result.compare_diagnostics.budget_notes
+    )
+    assert len(captured_requests) == 3
+    assert all(
+        len([image for image in request.images if image.role == "reference"]) == 2 for request in captured_requests
+    )
+
+
 def test_reference_compare_stage_checkpoint_marks_one_image_budget_as_uncertain_without_runner_call(
     tmp_path, monkeypatch
 ):
@@ -7912,6 +8088,11 @@ def test_reference_compare_stage_checkpoint_emits_compare_diagnostics_on_compact
     assert packet.ranking_status == "success"
     assert packet.packet_status == "low_information"
     assert "Ranking pass found too little focused packet evidence." in packet.uncertainty_notes
+    assert result.vision_assistant is not None
+    assert result.vision_assistant.result is not None
+    assert result.vision_assistant.result.correction_focus == []
+    assert result.vision_assistant.result.shape_mismatches == []
+    assert result.correction_candidates == []
     assert result.reference_orchestrator_feedback is not None
     assert "Ranking pass found too little focused packet evidence." in (
         result.reference_orchestrator_feedback.uncertainty_notes

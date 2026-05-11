@@ -943,18 +943,37 @@ def merge_packet_phase_results(
     extraction_result: VisionAssistContract,
     ranking_result: VisionAssistContract,
 ) -> VisionAssistContract:
+    ranking_guidance = ranking_result.packet_guidance
+    ranking_downgraded = ranking_guidance is not None and (
+        ranking_guidance.packet_status in {"blocked", "low_information"}
+        or ranking_guidance.ranking_recommendation in {"skip_blocked", "skip_low_information"}
+    )
+    if ranking_downgraded:
+        shape_mismatches: list[str] = []
+        proportion_mismatches: list[str] = []
+        correction_focus: list[str] = []
+        likely_issues: list[VisionIssueContract] = []
+        next_corrections: list[str] = []
+        recommended_checks: list[VisionRecommendedCheckContract] = []
+    else:
+        shape_mismatches = list(extraction_result.shape_mismatches or [])
+        proportion_mismatches = list(extraction_result.proportion_mismatches or [])
+        correction_focus = list(ranking_result.correction_focus or extraction_result.correction_focus or [])
+        likely_issues = list(ranking_result.likely_issues or extraction_result.likely_issues or [])
+        next_corrections = list(ranking_result.next_corrections or extraction_result.next_corrections or [])
+        recommended_checks = list(ranking_result.recommended_checks or extraction_result.recommended_checks or [])
     return extraction_result.model_copy(
         update={
             "goal_summary": ranking_result.goal_summary or extraction_result.goal_summary,
             "reference_match_summary": ranking_result.reference_match_summary
             or extraction_result.reference_match_summary,
             "visible_changes": list(ranking_result.visible_changes or extraction_result.visible_changes or []),
-            "shape_mismatches": list(extraction_result.shape_mismatches or []),
-            "proportion_mismatches": list(extraction_result.proportion_mismatches or []),
-            "correction_focus": list(ranking_result.correction_focus or extraction_result.correction_focus or []),
-            "likely_issues": list(ranking_result.likely_issues or extraction_result.likely_issues or []),
-            "next_corrections": list(ranking_result.next_corrections or extraction_result.next_corrections or []),
-            "recommended_checks": list(ranking_result.recommended_checks or extraction_result.recommended_checks or []),
+            "shape_mismatches": shape_mismatches,
+            "proportion_mismatches": proportion_mismatches,
+            "correction_focus": correction_focus,
+            "likely_issues": likely_issues,
+            "next_corrections": next_corrections,
+            "recommended_checks": recommended_checks,
             "packet_guidance": ranking_result.packet_guidance or extraction_result.packet_guidance,
             "confidence": ranking_result.confidence
             if ranking_result.confidence is not None
@@ -1069,7 +1088,7 @@ def synthesize_packet_vision_result(
         next_corrections=next_corrections,
         recommended_checks=recommended_checks[:6],
         packet_guidance=VisionPacketStatusContract(
-            packet_status="ready",
+            packet_status="ready" if correction_focus else "clean",
             status_reason=None,
             ranking_recommendation="rank" if correction_focus else "skip_clean",
         ),
@@ -1672,6 +1691,7 @@ async def execute_compare_packets(
             and assistant.status == "success"
             and assistant.result is not None
             and packet.extraction_status == "success"
+            and packet.packet_status not in {"blocked", "low_information"}
         )
     ]
     if compare_diagnostics.synthesis_required:

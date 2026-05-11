@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-from .config import VisionBackendKind
+from .config import VisionBackendKind, VisionRuntimeConfig
 
 VisionImageRole = Literal["before", "after", "reference"]
 
@@ -52,6 +52,18 @@ class VisionBackend(ABC):
     @abstractmethod
     async def analyze(self, request: VisionRequest) -> dict[str, Any]:
         """Run bounded vision analysis and return adapter-neutral structured data."""
+
+    @property
+    def runtime_config(self) -> VisionRuntimeConfig | None:
+        """Return a resolved runtime config when the backend refines it lazily."""
+
+        value = getattr(self, "_runtime_config", None)
+        return value if isinstance(value, VisionRuntimeConfig) else None
+
+    async def prepare_for_request(self, request: VisionRequest) -> None:
+        """Resolve lazy model/provider metadata before runner budget projection."""
+
+        return None
 
 
 class VisionBackendUnavailableError(RuntimeError):

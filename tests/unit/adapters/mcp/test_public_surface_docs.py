@@ -252,6 +252,10 @@ def test_mcp_client_config_examples_document_guided_creature_contract():
         "hidden tool while `spatial_refresh_required`",
         'loop_disposition="inspect_validate"',
         "stop free-form modeling and switch to inspect/measure/assert",
+        "Optional Segmentation Sidecar Add-On",
+        "VISION_SEGMENTATION_ENABLED",
+        "VISION_SEGMENTATION_ENDPOINT",
+        "advisory part-segmentation path",
     ):
         assert expected in text
 
