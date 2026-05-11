@@ -1437,9 +1437,14 @@ async def _run_stage_checkpoint_compare(
         )
     if compare_diagnostics.synthesis_required and compare_diagnostics.synthesis_status == "success":
         compare_diagnostics.conflict_notes = _dedupe_preserving_order(compare_diagnostics.conflict_notes)
+    candidate_packet_refs_present = any(
+        candidate.vision_evidence is not None and bool(candidate.vision_evidence.packet_evidence_refs)
+        for candidate in correction_candidates
+    )
     emitted_compare_diagnostics = (
         compare_diagnostics
-        if _should_emit_compare_diagnostics(
+        if candidate_packet_refs_present
+        or _should_emit_compare_diagnostics(
             compare_diagnostics=compare_diagnostics,
             preset_profile=preset_profile,
             model_aware_trimming_applied=model_aware_trimming_applied or runtime_budget.budget_clipped,

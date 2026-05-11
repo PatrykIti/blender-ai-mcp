@@ -489,6 +489,16 @@ without requiring one massive all-images compare request.
   - `tests/e2e/vision/test_reference_stage_multi_reference_scaling.py` now
     exercises the six-reference staged packet split through a Blender-runner
     scheduler lane with deterministic staged captures
+- 2026-05-11: final drift cleanup closed the remaining post-review issues:
+  - compact actionable responses now keep top-level `compare_diagnostics` when
+    `correction_candidates[*].vision_evidence.packet_evidence_refs` are present,
+    so candidate packet refs always have a public diagnostic packet to join
+    against
+  - ranking-pass downgrades to `low_information` or `blocked` now count as
+    packet uncertainty and surface the ranking status reason on compact
+    responses
+  - `scripts/run_streamable_openrouter.sh` now forwards the documented
+    default-off `VISION_SEGMENTATION_*` sidecar variables into Docker
 
 ## Docs To Update
 
@@ -504,8 +514,8 @@ without requiring one massive all-images compare request.
 
 - use incremental `_docs/_CHANGELOG/` closeouts for shipped TASK-166 slices
   instead of one umbrella-only entry; the current packeted compare history is
-  recorded in entries `324` through `336`, plus post-closeout coverage
-  hardening entry `339`
+  recorded in entries `324` through `336`, plus post-closeout hardening entries
+  `339` through `341`
 
 ## Status / Board Update
 

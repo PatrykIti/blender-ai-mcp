@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [341](./341-2026-05-11-task-166-final-drift-cleanup.md) | 2026-05-11 | **TASK-166 final drift cleanup** | - |
 | [340](./340-2026-05-10-task-166-post-review-drift-repairs.md) | 2026-05-10 | **TASK-166 post-review drift repairs** | - |
 | [339](./339-2026-05-10-task-166-post-closeout-coverage-hardening.md) | 2026-05-10 | **TASK-166 post-closeout coverage hardening** | - |
 | [338](./338-2026-05-10-task-140-06-openrouter-model-metadata-client.md) | 2026-05-10 | **TASK-140-06 OpenRouter model metadata client** | - |

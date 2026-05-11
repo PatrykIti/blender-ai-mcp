@@ -1090,7 +1090,9 @@ def count_failed_compare_packets(compare_diagnostics: ReferenceCompareDiagnostic
 
 def has_compare_uncertainty(compare_diagnostics: ReferenceCompareDiagnosticsContract) -> bool:
     return any(
-        packet.extraction_status in {"blocked", "low_information", "error"} or packet.ranking_status == "error"
+        packet.extraction_status in {"blocked", "low_information", "error"}
+        or packet.packet_status in {"blocked", "low_information"}
+        or packet.ranking_status == "error"
         for packet in compare_diagnostics.packets
     )
 
@@ -1650,6 +1652,10 @@ async def execute_compare_packets(
                     or effective_packet_result.next_corrections
                     or effective_packet_result.shape_mismatches
                 )[:3]
+                if packet.packet_status in {"blocked", "low_information"} and packet.status_reason:
+                    packet.uncertainty_notes = _unique_preserving_order(
+                        [*packet.uncertainty_notes, packet.status_reason]
+                    )[:3]
         elif ranking_recommendation == "skip_clean":
             packet.ranking_status = "not_needed"
         elif ranking_recommendation in {"skip_low_information", "skip_blocked"}:
