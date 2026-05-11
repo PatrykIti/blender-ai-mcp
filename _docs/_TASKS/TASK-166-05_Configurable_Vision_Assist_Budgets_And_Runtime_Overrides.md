@@ -36,8 +36,9 @@
 
 ## Implementation Notes
 
-- The current fixed `VISION_ASSIST_POLICY.max_input_chars=12000` should become
-  explicit runtime config.
+- `VisionRuntimeConfig.max_input_chars` is the runtime-owned compare input
+  budget home; `Config.VISION_MAX_INPUT_CHARS` feeds it through
+  `server/adapters/mcp/vision/runtime.py`.
 - Keep safe defaults and fail-safe upper bounds.
 - Diagnostics must expose configured vs effective compare budgets.
 - The runtime-owned budget source must be consumed consistently by
@@ -46,9 +47,9 @@
   `server/adapters/mcp/areas/reference_planner.py`; do not leave independent
   direct reads of `VISION_ASSIST_POLICY` behind in staged compare assembly or
   planner helpers.
-- The current runtime config exposes `max_images` and `max_tokens` but not a
-  compare-path `max_input_chars` home, so this family must define that config
-  ownership before rewiring runner rejection and staged budget projection.
+- The runtime config exposes `max_images`, `max_tokens`, and
+  `max_input_chars`; staged compare and runner rejection must continue to
+  consume that shared runtime source instead of compare-local constants.
 - `server/adapters/mcp/vision/runtime.py` remains the bridge from
   infrastructure `Config` into `VisionRuntimeConfig`, so budget/env changes are
   not complete until that seam and its runtime-config tests stay aligned.

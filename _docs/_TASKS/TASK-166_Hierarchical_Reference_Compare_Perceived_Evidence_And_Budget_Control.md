@@ -294,7 +294,7 @@ without requiring one massive all-images compare request.
 | `server/adapters/mcp/vision/capture.py` | Final capture/reference request assembly seam | Packet-local capture/reference narrowing may still affect request assembly, but this is the later assembly layer, not the sole owner of staged compare planning |
 | `server/adapters/mcp/sampling/result_types.py` | Typed vision result contract | Extraction/ranking split and additive diagnostics must stay schema-first instead of becoming ad-hoc dict packing |
 | `server/adapters/mcp/vision/prompting.py`, `server/adapters/mcp/vision/parsing.py` | Narrow compare prompt/schema/parser contract | Packet extraction and ranking split changes live here, not only in the runner transport layer |
-| `server/adapters/mcp/vision/runner.py` | Bounded `vision_assist` transport and budget enforcement | Current fixed `max_input_chars=12000` lives here, but the runner should not become the only owner of compare-time prompt/schema changes |
+| `server/adapters/mcp/vision/runner.py` | Bounded `vision_assist` transport and budget enforcement | Enforces runtime-owned image/input/output limits, including `VisionRuntimeConfig.max_input_chars`, while avoiding ownership of compare-time prompt/schema policy |
 | `server/adapters/mcp/vision/runtime.py`, `server/adapters/mcp/vision/config.py`, `server/adapters/mcp/vision/backends.py` | Runtime/provider config | Own provider/model budgets and request assembly |
 | `server/adapters/mcp/vision/reference_support.py` | RU support and optional shared sidecar adapter/config seam | Existing RU support owner for attach-time optional support; compare-time sidecars may borrow only shared infrastructure from here, but staged packet-evidence execution should stay elsewhere |
 | `server/adapters/mcp/areas/reference_compare_packets.py` | Staged packet policy and compare-time execution | Non-trivial packet planning, packet execution ordering, compare-time sidecar support, and synthesis policy live here so `server/adapters/mcp/areas/reference.py` stays orchestration-only |
@@ -555,6 +555,7 @@ without requiring one massive all-images compare request.
 ## Validation Commands
 
 - `git diff --check`
+- `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_compare_packets.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
