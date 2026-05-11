@@ -146,7 +146,12 @@ def _verify_required_part_gate(
         guided_part_registry=guided_part_registry,
     )
     expected_count = _expected_scope_match_count(gate)
-    status = "passed" if len(matched_objects) >= expected_count else "failed"
+    matched_count = _matched_scope_object_count(
+        gate,
+        matched_objects,
+        guided_part_registry=guided_part_registry,
+    )
+    status = "passed" if matched_count >= expected_count else "failed"
     reason_code: GateStatusReasonCodeLiteral | None = None if status == "passed" else "missing_required_part"
     evidence = GateEvidenceRefContract(
         evidence_id=f"scene_relation_graph:{gate.gate_id}:scope",
@@ -161,6 +166,7 @@ def _verify_required_part_gate(
         metadata={
             "object_names": object_names,
             "matched_objects": matched_objects,
+            "matched_count": matched_count,
             "expected_count": expected_count,
             "spatial_state_version": spatial_state_version,
         },
@@ -710,7 +716,12 @@ def _skip_local_scope_verification(
             object_names,
             guided_part_registry=guided_part_registry,
         )
-        return gate.status != "pending" and len(matched_objects) < expected_count
+        matched_count = _matched_scope_object_count(
+            gate,
+            matched_objects,
+            guided_part_registry=guided_part_registry,
+        )
+        return gate.status != "pending" and matched_count < expected_count
 
     if gate.gate_type == "symmetry_pair":
         matched_objects = _matched_scope_objects(
@@ -770,6 +781,39 @@ def _matched_scope_objects(
         return []
     meaningful_tokens = _meaningful_target_tokens(gate.target_label or gate.label)
     return [name for name in object_names if meaningful_tokens and meaningful_tokens & _target_tokens(name)]
+
+
+def _matched_scope_object_count(
+    gate: NormalizedQualityGateContract,
+    matched_objects: list[str],
+    *,
+    guided_part_registry: list[Mapping[str, Any]] | None = None,
+) -> int:
+    if gate.target_kind != "object_role" or not gate.target_label or not matched_objects:
+        return len(matched_objects)
+
+    target_role = _normalize_name(gate.target_label)
+    matched_names = {_normalize_name(name) for name in matched_objects}
+    count = 0
+    for item in list(guided_part_registry or []):
+        if _normalize_name(str(item.get("role") or "")) != target_role:
+            continue
+        object_name = str(item.get("object_name") or "").strip()
+        if _normalize_name(object_name) not in matched_names:
+            continue
+        count += _guided_role_instance_count(target_role, object_name)
+    return count or len(matched_objects)
+
+
+def _guided_role_instance_count(role: str, object_name: str) -> int:
+    normalized_role = _normalize_name(role)
+    normalized_object = _normalize_name(object_name)
+    aggregate_tokens = {
+        "ear_pair": ("ears", "ear_pair", "earpair"),
+        "foreleg_pair": ("forelegs", "fore_legs", "frontlegs", "front_legs", "foreleg_pair", "forelegpair"),
+        "hindleg_pair": ("hindlegs", "hind_legs", "backlegs", "back_legs", "hindleg_pair", "hindlegpair"),
+    }.get(normalized_role, ())
+    return 2 if any(token in normalized_object for token in aggregate_tokens) else 1
 
 
 def _meaningful_target_tokens(value: str | None) -> set[str]:

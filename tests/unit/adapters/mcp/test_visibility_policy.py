@@ -501,6 +501,65 @@ def test_required_part_gate_does_not_reopen_mutating_tools_while_spatial_refresh
     assert {"scene_scope_graph", "scene_relation_graph", "scene_view_diagnostics"} <= names
 
 
+def test_reference_part_required_gate_exposes_create_path_without_role_registration():
+    rules = build_visibility_rules(
+        "llm-guided",
+        SessionPhase.BUILD,
+        guided_handoff={
+            "kind": "guided_manual_build",
+            "recipe_id": "low_poly_creature_blockout",
+            "direct_tools": [],
+            "supporting_tools": ["router_get_status"],
+        },
+        guided_flow_state={
+            "flow_id": "guided_creature_flow",
+            "domain_profile": "creature",
+            "current_step": "place_secondary_parts",
+            "spatial_refresh_required": False,
+        },
+        gate_plan={
+            "plan_id": "creature_quality_gate_plan",
+            "domain_profile": "creature",
+            "completion_blockers": [
+                {
+                    "gate_id": "creature_eye_pair_required",
+                    "gate_type": "required_part",
+                    "label": "Eye pair is present",
+                    "status": "failed",
+                    "reason_code": "missing_required_part",
+                    "target_kind": "reference_part",
+                    "target_label": "eye_pair",
+                    "recommended_bounded_tools": [
+                        "guided_register_part",
+                        "scene_scope_graph",
+                        "scene_create",
+                        "modeling_create_primitive",
+                    ],
+                    "message": "Eye pair is missing.",
+                }
+            ],
+            "gates": [],
+        },
+    )
+
+    names = set(
+        materialize_visible_tool_names(
+            {
+                "guided_register_part",
+                "modeling_create_primitive",
+                "scene_create",
+                "scene_scope_graph",
+                "macro_finish_form",
+            },
+            rules,
+        )
+    )
+
+    assert {"scene_create", "modeling_create_primitive", "scene_scope_graph"} <= names
+    assert "guided_register_part" not in names
+    assert "macro_finish_form" not in names
+
+
 def test_visibility_rules_can_shape_build_phase_for_creature_handoff():
     """Creature handoff should narrow build visibility without changing the generic build baseline."""
 

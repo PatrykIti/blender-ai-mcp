@@ -178,7 +178,7 @@ _CORRECTION_FAMILIES_BY_GATE_TYPE: dict[GateTypeLiteral, tuple[GuidedFlowFamilyL
     "final_completion": ("inspect_validate", "finish"),
 }
 _RECOMMENDED_TOOLS_BY_GATE_TYPE: dict[GateTypeLiteral, tuple[str, ...]] = {
-    "required_part": ("scene_scope_graph",),
+    "required_part": ("scene_scope_graph", "scene_create", "modeling_create_primitive"),
     "attachment_seam": (
         "scene_relation_graph",
         "scene_measure_gap",
@@ -653,10 +653,60 @@ def mark_gate_plan_stale(
                 }
             )
         )
+    updated_gates = _mark_final_completion_blocked_for_unresolved_required_gates(
+        updated_gates,
+        spatial_state_version=spatial_state_version,
+    )
     return refresh_gate_plan_status(
         contract.model_copy(update={"gates": updated_gates}),
         last_verification_source=reason,
     )
+
+
+def _mark_final_completion_blocked_for_unresolved_required_gates(
+    gates: list[NormalizedQualityGateContract],
+    *,
+    spatial_state_version: int | None,
+) -> list[NormalizedQualityGateContract]:
+    blockers = [
+        gate
+        for gate in gates
+        if gate.required and gate.gate_type != "final_completion" and gate.status in _BLOCKING_GATE_STATUSES
+    ]
+    if not blockers:
+        return gates
+
+    blocker_ids = [gate.gate_id for gate in blockers]
+    updated: list[NormalizedQualityGateContract] = []
+    for gate in gates:
+        if gate.gate_type != "final_completion" or gate.status == "waived":
+            updated.append(gate)
+            continue
+        updated.append(
+            gate.model_copy(
+                update={
+                    "status": "blocked",
+                    "status_reason": "required_gate_unresolved",
+                    "verified_at_spatial_version": spatial_state_version,
+                    "recommended_bounded_tools": gate.recommended_bounded_tools
+                    or _recommended_tools_for_gate_type(gate.gate_type),
+                    "evidence_refs": [
+                        GateEvidenceRefContract(
+                            evidence_id=f"quality_gate_plan:{gate.gate_id}:aggregate",
+                            evidence_kind="scene_truth",
+                            source="scene_truth",
+                            authority="authoritative",
+                            status="available",
+                            tool_name="scene_relation_graph",
+                            reason_code="required_gate_unresolved",
+                            summary="Required quality gates are unresolved.",
+                            metadata={"blocking_gate_ids": blocker_ids},
+                        )
+                    ],
+                }
+            )
+        )
+    return updated
 
 
 def _normalize_one_gate(

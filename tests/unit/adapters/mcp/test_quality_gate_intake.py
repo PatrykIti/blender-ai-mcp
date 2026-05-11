@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
 
+from server.adapters.mcp.contracts.quality_gates import normalize_gate_plan
 from server.adapters.mcp.session_capabilities import (
     SessionCapabilityState,
     get_session_capability_state,
@@ -42,6 +43,31 @@ def _guided_flow_state() -> dict[str, object]:
         "missing_roles": ["body_core", "head_mass"],
         "required_role_groups": ["primary_masses"],
     }
+
+
+def test_reference_part_required_gate_recommends_bounded_create_without_role_registration():
+    plan = normalize_gate_plan(
+        {
+            "source": "llm_goal",
+            "gates": [
+                {
+                    "gate_id": "creature_eye_pair_required",
+                    "gate_type": "required_part",
+                    "label": "Eye pair is present",
+                    "target_kind": "reference_part",
+                    "target_label": "eye_pair",
+                }
+            ],
+        },
+        domain_profile="generic",
+        templates=[],
+    )
+
+    blocker = plan.completion_blockers[0]
+
+    assert "scene_create" in blocker.recommended_bounded_tools
+    assert "modeling_create_primitive" in blocker.recommended_bounded_tools
+    assert "guided_register_part" not in blocker.recommended_bounded_tools
 
 
 def test_gate_proposal_intake_ignores_missing_active_guided_goal():
@@ -562,7 +588,7 @@ def test_mutating_tool_only_stales_gates_touching_affected_objects():
             gate_plan={
                 "plan_id": "creature_quality_gate_plan",
                 "domain_profile": "creature",
-                "required_gate_count": 2,
+                "required_gate_count": 3,
                 "optional_gate_count": 0,
                 "gates": [
                     {
@@ -611,6 +637,28 @@ def test_mutating_tool_only_stales_gates_touching_affected_objects():
                             }
                         ],
                     },
+                    {
+                        "gate_id": "final_completion",
+                        "gate_type": "final_completion",
+                        "label": "all required gates complete",
+                        "target_kind": "scene",
+                        "required": True,
+                        "priority": "high",
+                        "status": "passed",
+                        "verification_strategy": "aggregate_required_gates",
+                        "allowed_correction_families": ["inspect_validate", "finish"],
+                        "recommended_bounded_tools": ["scene_scope_graph"],
+                        "proposal_sources": ["domain_template"],
+                        "evidence_requirements": [{"evidence_kind": "scene_truth", "required": True}],
+                        "evidence_refs": [
+                            {
+                                "evidence_id": "final",
+                                "evidence_kind": "scene_truth",
+                                "source": "scene_truth",
+                                "authority": "authoritative",
+                            }
+                        ],
+                    },
                 ],
             },
         ),
@@ -627,8 +675,12 @@ def test_mutating_tool_only_stales_gates_touching_affected_objects():
     assert restored.gate_plan is not None
     tail_gate = next(gate for gate in restored.gate_plan["gates"] if gate["gate_id"] == "tail_body_seam")
     ear_gate = next(gate for gate in restored.gate_plan["gates"] if gate["gate_id"] == "ear_pair_symmetry")
+    final_gate = next(gate for gate in restored.gate_plan["gates"] if gate["gate_id"] == "final_completion")
     assert tail_gate["status"] == "stale"
     assert ear_gate["status"] == "passed"
+    assert final_gate["status"] == "blocked"
+    assert final_gate["status_reason"] == "required_gate_unresolved"
+    assert any(blocker["gate_id"] == "tail_body_seam" for blocker in restored.gate_plan["completion_blockers"])
 
 
 def test_mutating_tool_stales_object_role_gate_when_registered_object_is_affected():

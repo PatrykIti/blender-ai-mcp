@@ -254,6 +254,27 @@ return maybe_complete()
 - `git diff --check`
   - passed
 
+## Follow-up Contract Hardening
+
+- 2026-05-11: Post-review code pass fixed three `TASK-135-01` contract drifts:
+  aggregate guided pair-role objects now satisfy required pair gates, targeted
+  stale marking reblocks `final_completion` when required gates become stale,
+  and gate-only `eye_pair` blockers no longer expose `guided_register_part`.
+- Added regression coverage for aggregate `ear_pair` / `foreleg_pair` /
+  `hindleg_pair` gate matching, final-completion stale consistency, and
+  `eye_pair` bounded create/detail visibility.
+- Validation:
+  - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_verifier.py::test_required_part_pair_role_gate_accepts_aggregate_guided_role_object tests/unit/adapters/mcp/test_quality_gate_intake.py::test_mutating_tool_only_stales_gates_touching_affected_objects tests/unit/adapters/mcp/test_quality_gate_intake.py::test_reference_part_required_gate_recommends_bounded_create_without_role_registration tests/unit/adapters/mcp/test_visibility_policy.py::test_reference_part_required_gate_exposes_create_path_without_role_registration -q`
+    - passed, `6 passed`
+  - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
+    - passed, `245 passed`
+  - `poetry run ruff check server/adapters/mcp/contracts/quality_gates.py server/adapters/mcp/transforms/quality_gate_verifier.py server/adapters/mcp/transforms/visibility_policy.py tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/adapters/mcp/test_visibility_policy.py`
+    - passed
+  - `PYTEST_ADDOPTS='-k creature_gate' poetry run python scripts/run_e2e_tests.py --skip-build`
+    - passed outside sandbox, `2 passed, 471 deselected`
+  - `git diff --check`
+    - passed
+
 ## Acceptance Criteria
 
 - The guided creature loop reports missing visual roles before final completion.

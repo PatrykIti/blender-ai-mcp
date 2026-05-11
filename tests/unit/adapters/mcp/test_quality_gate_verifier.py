@@ -138,6 +138,58 @@ def test_required_part_object_role_gate_uses_guided_part_registry_when_names_are
     assert gate.status == "passed"
 
 
+@pytest.mark.parametrize(
+    ("gate_id", "target_label", "object_name"),
+    [
+        ("creature_ear_pair_required", "ear_pair", "Squirrel_Ears"),
+        ("creature_foreleg_pair_required", "foreleg_pair", "Squirrel_FrontLegs"),
+        ("creature_hindleg_pair_required", "hindleg_pair", "Squirrel_HindLegs"),
+    ],
+)
+def test_required_part_pair_role_gate_accepts_aggregate_guided_role_object(
+    gate_id: str,
+    target_label: str,
+    object_name: str,
+):
+    plan = normalize_gate_plan(
+        {"source": "llm_goal", "gates": []},
+        domain_profile="creature",
+    )
+
+    updated = verify_gate_plan_with_relation_graph(
+        plan,
+        {
+            "scope": {
+                "scope_kind": "object_set",
+                "primary_target": object_name,
+                "object_names": [object_name],
+                "object_count": 1,
+            },
+            "summary": {
+                "pairing_strategy": "guided_spatial_pairs",
+                "pair_count": 0,
+                "evaluated_pairs": 0,
+                "failing_pairs": 0,
+                "attachment_pairs": 0,
+                "support_pairs": 0,
+                "symmetry_pairs": 0,
+            },
+            "pairs": [],
+        },
+        guided_part_registry=[
+            {
+                "object_name": object_name,
+                "role": target_label,
+                "role_group": "secondary_parts",
+            }
+        ],
+    )
+
+    gate = _gate(updated, gate_id)
+    assert gate.status == "passed"
+    assert gate.evidence_refs[0].metadata["matched_count"] == 2
+
+
 def test_local_scope_verification_keeps_required_part_gate_outside_scope_unchanged():
     plan = normalize_gate_plan(
         {"source": "llm_goal", "gates": []},

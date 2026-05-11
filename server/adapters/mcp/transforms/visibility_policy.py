@@ -588,6 +588,13 @@ def get_guided_overlay_family_order(domain_profile: str) -> tuple[GuidedFlowFami
     return GUIDED_OVERLAY_FAMILY_ORDER.get(domain_profile, GUIDED_OVERLAY_FAMILY_ORDER["generic"])
 
 
+def _required_part_gate_tools_for_blocker(blocker: dict[str, Any]) -> set[str]:
+    tools = set(GUIDED_REQUIRED_PART_GATE_TOOLS)
+    if str(blocker.get("target_kind") or "") == "reference_part":
+        tools.discard("guided_register_part")
+    return tools
+
+
 def build_visibility_rules(
     surface_profile: SurfaceProfileSettings | str,
     phase: SessionPhase | str = SessionPhase.BOOTSTRAP,
@@ -723,13 +730,16 @@ def visible_tools_for_gate_plan(gate_plan: dict[str, Any] | None) -> set[str]:
     visible_tools: set[str] = set()
     for blocker in selected_blockers:
         gate_type = str(blocker.get("gate_type") or "")
-        visible_tools.update(str(name) for name in blocker.get("recommended_bounded_tools") or [] if str(name).strip())
+        recommended_tools = {str(name) for name in blocker.get("recommended_bounded_tools") or [] if str(name).strip()}
+        if gate_type == "required_part" and str(blocker.get("target_kind") or "") == "reference_part":
+            recommended_tools.discard("guided_register_part")
+        visible_tools.update(recommended_tools)
         if gate_type == "attachment_seam":
             visible_tools.update(GUIDED_ATTACHMENT_GATE_TOOLS)
         elif gate_type == "support_contact":
             visible_tools.update(GUIDED_SUPPORT_GATE_TOOLS)
         elif gate_type == "required_part":
-            visible_tools.update(GUIDED_REQUIRED_PART_GATE_TOOLS)
+            visible_tools.update(_required_part_gate_tools_for_blocker(blocker))
         elif gate_type == "symmetry_pair":
             visible_tools.update(GUIDED_SYMMETRY_GATE_TOOLS)
         elif gate_type in {"shape_profile", "proportion_ratio", "refinement_stage"}:
