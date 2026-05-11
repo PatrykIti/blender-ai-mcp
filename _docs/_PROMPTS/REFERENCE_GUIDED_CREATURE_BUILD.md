@@ -134,6 +134,10 @@ Rules:
 - for failed seam/support blockers, expect guided visibility/search to return
   bounded relation, measure/assert, and macro repair tools before refinement or
   finish tools
+- when `guided_flow_state.current_step == "refine_low_poly_forms"`, stay inside
+  the bounded profile/refinement lane: use visible mesh/profile macros and
+  spatial/reference support, but do not reopen primary-mass creation or
+  finish-heavy tools unless the server exposes a specific active gate path
 - attach references one at a time with
   `reference_images(action="attach", source_path=..., ...)`; do not pass
   batch shapes such as `images=[...]`
@@ -262,14 +266,17 @@ Workflow:
 16. if `planner_summary.blockers` or `refinement_handoff.state == "blocked"`
     names `scene_view_diagnostics(...)`, run that read-only support tool before
     attempting any local sculpt correction
-17. if a build call is blocked because the family or role is wrong for the
+17. if `guided_flow_state.current_step == "refine_low_poly_forms"`, perform
+    bounded low-poly profile work with the visible mesh/profile tools, then
+    rerun `reference_iterate_stage_checkpoint(...)` before claiming progress
+18. if a build call is blocked because the family or role is wrong for the
     current step, do not try another guessed build tool name
     - inspect `guided_flow_state.allowed_families`
     - inspect `guided_flow_state.allowed_roles`
     - inspect `guided_flow_state.missing_roles`
-17. when the current issue is an embedded organic seam such as snout/head or
+19. when the current issue is an embedded organic seam such as snout/head or
     nose/snout, prefer `macro_attach_part_to_surface`
-18. when the current issue is a non-overlapping head/body, tail/body, or
+20. when the current issue is a non-overlapping head/body, tail/body, or
     limb/body contact/gap nudge, prefer `macro_align_part_with_contact`
     - if the same rounded organic seam is already `intersecting`, prefer
       `macro_attach_part_to_surface` instead of pushing the part sideways to
@@ -277,12 +284,12 @@ Workflow:
     - use `align_mode="none"` when seating legs or appendages that should keep
       their current lateral/vertical offsets while moving only along the
       surface normal
-19. do not treat generic overlap cleanup as success for a creature seam unless
+21. do not treat generic overlap cleanup as success for a creature seam unless
     the final attachment verdict has also moved to `seated_contact`
-20. for segment seams such as head/body, tail/body, and limb/body, do not
+22. for segment seams such as head/body, tail/body, and limb/body, do not
     rationalize `floating_gap` as “expected blockout state”; it still needs
     correction
-21. do not mark the creature complete while required visual-role gates remain
+23. do not mark the creature complete while required visual-role gates remain
     missing; common quadruped runs need body, head, tail, snout, ears, eyes,
     forelegs, and hindlegs unless a gate is explicitly waived
 22. do not treat one vertical oval as a completed squirrel-like tail when the

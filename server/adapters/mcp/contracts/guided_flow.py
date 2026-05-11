@@ -28,6 +28,7 @@ GuidedFlowStepLiteral = Literal[
     "establish_reference_context",
     "create_primary_masses",
     "place_secondary_parts",
+    "refine_low_poly_forms",
     "checkpoint_iterate",
     "inspect_validate",
     "finish_or_stop",

@@ -7,6 +7,8 @@ import asyncio
 from server.adapters.mcp.guided_mode import apply_session_visibility, build_visibility_diagnostics
 from server.adapters.mcp.session_phase import SessionPhase
 from server.adapters.mcp.transforms.visibility_policy import (
+    CREATURE_LOW_POLY_BLOCKOUT_DIRECT_TOOLS,
+    CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS,
     GUIDED_DISCOVERY_TOOLS,
     GUIDED_ENTRY_TOOLS,
     GUIDED_INSPECT_ESCAPE_HATCH_TOOLS,
@@ -124,6 +126,33 @@ def test_guided_mode_can_gate_build_visibility_by_guided_flow_step():
     assert diagnostics.rules[-1]["names"] == set(GUIDED_SPATIAL_CONTEXT_DIRECT_TOOLS)
     assert "macro_finish_form" not in diagnostics.rules[-1]["names"]
     assert "scene_scope_graph" in diagnostics.rules[-1]["names"]
+
+
+def test_guided_mode_refinement_step_keeps_primary_creation_hidden():
+    diagnostics = build_visibility_diagnostics(
+        "llm-guided",
+        SessionPhase.BUILD,
+        guided_handoff={
+            "kind": "guided_manual_build",
+            "recipe_id": "low_poly_creature_blockout",
+            "direct_tools": list(CREATURE_LOW_POLY_BLOCKOUT_DIRECT_TOOLS),
+            "supporting_tools": list(CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS),
+        },
+        guided_flow_state={
+            "flow_id": "guided_creature_flow",
+            "domain_profile": "creature",
+            "current_step": "refine_low_poly_forms",
+            "allowed_families": ["secondary_parts", "attachment_alignment", "reference_context"],
+        },
+    )
+
+    names = diagnostics.rules[-1]["names"]
+
+    assert "mesh_extrude_region" in names
+    assert "macro_adjust_segment_chain_arc" in names
+    assert "modeling_create_primitive" not in names
+    assert "modeling_transform_object" not in names
+    assert "macro_finish_form" not in names
 
 
 def test_guided_mode_inspect_phase_prefers_verification_capabilities_over_build_families():

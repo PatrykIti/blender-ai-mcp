@@ -75,7 +75,6 @@ GUIDED_SHAPE_PROFILE_GATE_TOOLS: tuple[str, ...] = (
     "mesh_inspect",
     "macro_adjust_relative_proportion",
     "macro_adjust_segment_chain_arc",
-    "macro_finish_form",
 )
 GUIDED_SPATIAL_CONTEXT_DIRECT_TOOLS: tuple[str, ...] = (
     *GUIDED_SPATIAL_SUPPORT_TOOLS,
@@ -155,6 +154,25 @@ CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS: tuple[str, ...] = (
     "reference_iterate_stage_checkpoint",
     "router_get_status",
     *GUIDED_SPATIAL_SUPPORT_TOOLS,
+)
+
+GUIDED_REFINEMENT_STEP_DIRECT_TOOLS: tuple[str, ...] = (
+    "mesh_select",
+    "mesh_select_targeted",
+    "mesh_extrude_region",
+    "mesh_loop_cut",
+    "mesh_bevel",
+    "mesh_symmetrize",
+    "mesh_merge_by_distance",
+    "mesh_dissolve",
+    "modeling_convert_to_mesh",
+    "modeling_join_objects",
+    "modeling_separate_object",
+    "modeling_set_origin",
+    "macro_adjust_relative_proportion",
+    "macro_adjust_segment_chain_arc",
+    "macro_align_part_with_contact",
+    "macro_cleanup_part_intersections",
 )
 
 GUIDED_UTILITY_HANDOFF_TOOLS: tuple[str, ...] = (
@@ -690,6 +708,8 @@ def build_visibility_rules(
                 else set(GUIDED_BUILD_ESCAPE_HATCH_TOOLS)
             )
         build_tools = set(build_tools) | gate_visible_tools
+        if current_flow_step == "refine_low_poly_forms":
+            build_tools = build_tools.intersection(set(GUIDED_REFINEMENT_STEP_DIRECT_TOOLS)) | gate_visible_tools
         rules.append({"enabled": True, "components": {"tool"}, "names": build_tools})
     elif resolved_phase == SessionPhase.INSPECT_VALIDATE:
         inspect_tools = set(GUIDED_INSPECT_ESCAPE_HATCH_TOOLS)

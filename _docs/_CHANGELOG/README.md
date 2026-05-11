@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [346](./346-2026-05-11-task-135-refinement-step-gate.md) | 2026-05-11 | **TASK-135 refinement step gate** | - |
 | [345](./345-2026-05-11-task-135-curved-tail-profile-gates.md) | 2026-05-11 | **TASK-135 curved-tail profile gates** | - |
 | [344](./344-2026-05-11-task-135-creature-gate-contract-hardening.md) | 2026-05-11 | **TASK-135 creature gate contract hardening** | - |
 | [343](./343-2026-05-11-streamable-call-tool-proxy-result.md) | 2026-05-11 | **Streamable call_tool proxy result unwrap** | - |

@@ -1,6 +1,6 @@
 # TASK-135-03: Low-Poly Form Refinement Mesh Window And Profile Macros
 
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
 **Priority:** 🔴 High
 **Parent:** [TASK-135](./TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md)
 **Category:** Reconstruction / Guided Mesh Refinement
@@ -153,7 +153,7 @@ if current_step == "refine_low_poly_forms":
 
 | Order | Leaf | Purpose |
 |------|------|---------|
-| 1 | [TASK-135-03-01](./TASK-135-03-01_Refinement_Stage_State_And_Visibility_Gate.md) | Add the explicit refinement stage to guided state, gate policy, and visibility shaping |
+| 1 | [TASK-135-03-01](./TASK-135-03-01_Refinement_Stage_State_And_Visibility_Gate.md) | ✅ Closed: `refine_low_poly_forms` is now an explicit guided step, gated by normalized profile/refinement blockers after role/seam/stale prerequisites clear |
 | 2 | [TASK-135-03-02](./TASK-135-03-02_Bounded_Profile_Tools_And_Optional_Macro_Wave.md) | Decomposition anchor for the bounded profile-tool wave; do not implement as one oversized leaf |
 | 2.1 | [TASK-135-03-02-01](./TASK-135-03-02-01_Refinement_Visibility_Search_And_Planner_Routing.md) | Wire refinement blockers to visibility, discovery, and planner routing with existing tools only |
 | 2.2 | [TASK-135-03-02-02](./TASK-135-03-02-02_Existing_Profile_Tool_Proof_And_Geometry_Cases.md) | Prove selected mesh/modeling/macro operations can profile creature parts without new public macros |

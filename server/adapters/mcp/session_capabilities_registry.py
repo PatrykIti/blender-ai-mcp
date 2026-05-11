@@ -12,6 +12,7 @@ from typing import Any, Callable
 from fastmcp import Context
 
 from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract, GuidedTargetScopeContract
+from server.adapters.mcp.contracts.quality_gates import GatePlanContract, completion_blockers_for_gate_plan
 from server.adapters.mcp.session_capabilities_flow import (
     _GUIDED_FLOW_STOPPED_STEPS,
     _GUIDED_PRIMARY_REQUIRED_ROLES,
@@ -40,6 +41,10 @@ from server.adapters.mcp.session_capabilities_state import (
 )
 from server.adapters.mcp.session_phase import SessionPhase
 
+_REFINEMENT_ENTRY_GATE_TYPES = {"shape_profile", "proportion_ratio", "opening_or_cut", "refinement_stage"}
+_REFINEMENT_PREREQUISITE_GATE_TYPES = {"attachment_seam", "support_contact"}
+_REFINEMENT_ENTRY_STATUSES = {"pending", "blocked", "failed"}
+
 
 def _update_guided_flow_role_summary_dict(
     flow_state: dict[str, Any],
@@ -61,6 +66,7 @@ def _maybe_advance_guided_flow_from_part_registry_dict(
     flow_state: dict[str, Any],
     *,
     part_registry: list[dict[str, Any]] | None,
+    gate_plan: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     contract = GuidedFlowStateContract.model_validate(flow_state)
     current_role_summary = _build_role_summary(
@@ -90,10 +96,15 @@ def _maybe_advance_guided_flow_from_part_registry_dict(
         if all(role in completed_roles for role in required_roles):
             if "place_secondary_parts" not in contract.completed_steps:
                 contract.completed_steps.append("place_secondary_parts")
-            contract.current_step = "checkpoint_iterate"
+            contract.current_step = (
+                "refine_low_poly_forms"
+                if _can_enter_refinement_stage(contract, gate_plan=gate_plan)
+                else "checkpoint_iterate"
+            )
             contract.blocked_families = []
             _flow_state_for_current_step(contract, part_registry=part_registry)
-            _apply_spatial_refresh_gate(contract, part_registry=part_registry, force=True)
+            if contract.current_step == "checkpoint_iterate":
+                _apply_spatial_refresh_gate(contract, part_registry=part_registry, force=True)
 
     role_summary = _build_role_summary(
         domain_profile=contract.domain_profile,
@@ -103,6 +114,38 @@ def _maybe_advance_guided_flow_from_part_registry_dict(
     )
     _apply_role_summary(contract, role_summary)
     return contract.model_dump(mode="json")
+
+
+def _can_enter_refinement_stage(
+    contract: GuidedFlowStateContract,
+    *,
+    gate_plan: dict[str, Any] | None,
+) -> bool:
+    """Return True when normalized gate state proves refinement is the next bounded lane."""
+
+    if contract.domain_profile != "creature":
+        return False
+    if contract.spatial_state_stale or contract.spatial_refresh_required:
+        return False
+    if gate_plan is None:
+        return False
+
+    try:
+        plan = GatePlanContract.model_validate(gate_plan)
+        blockers = list(plan.completion_blockers) or completion_blockers_for_gate_plan(plan)
+    except Exception:
+        return False
+
+    if not blockers:
+        return False
+    if any(blocker.status == "stale" for blocker in blockers):
+        return False
+    if any(blocker.gate_type in _REFINEMENT_PREREQUISITE_GATE_TYPES for blocker in blockers):
+        return False
+    return any(
+        blocker.gate_type in _REFINEMENT_ENTRY_GATE_TYPES and blocker.status in _REFINEMENT_ENTRY_STATUSES
+        for blocker in blockers
+    )
 
 
 async def register_guided_part_role_async(
@@ -152,6 +195,7 @@ async def register_guided_part_role_async(
     updated_flow_state = _maybe_advance_guided_flow_from_part_registry_dict(
         updated_flow_state,
         part_registry=updated_registry,
+        gate_plan=current.gate_plan,
     )
     state = replace(current, guided_flow_state=updated_flow_state, guided_part_registry=updated_registry)
     await set_session_capability_state_async(ctx, state)
@@ -209,6 +253,7 @@ def register_guided_part_role(
     updated_flow_state = _maybe_advance_guided_flow_from_part_registry_dict(
         updated_flow_state,
         part_registry=updated_registry,
+        gate_plan=current.gate_plan,
     )
     state = replace(current, guided_flow_state=updated_flow_state, guided_part_registry=updated_registry)
     set_session_capability_state(ctx, state)
@@ -521,6 +566,7 @@ def _advance_guided_flow_for_iteration_dict(
     *,
     loop_disposition: str,
     part_registry: list[dict[str, Any]] | None = None,
+    gate_plan: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     contract = GuidedFlowStateContract.model_validate(flow_state)
     current_step = contract.current_step
@@ -541,7 +587,14 @@ def _advance_guided_flow_for_iteration_dict(
     if current_step not in contract.completed_steps and current_step not in _GUIDED_FLOW_STOPPED_STEPS:
         contract.completed_steps.append(current_step)
 
-    if loop_disposition == "inspect_validate":
+    if (
+        loop_disposition == "continue_build"
+        and current_step in {"place_secondary_parts", "checkpoint_iterate"}
+        and _can_enter_refinement_stage(contract, gate_plan=gate_plan)
+    ):
+        contract.current_step = "refine_low_poly_forms"
+        contract.blocked_families = []
+    elif loop_disposition == "inspect_validate":
         contract.current_step = "inspect_validate"
         contract.blocked_families = ["late_refinement", "finish"]
     elif loop_disposition == "stop":
@@ -573,6 +626,7 @@ async def advance_guided_flow_from_iteration_async(
         current.guided_flow_state,
         loop_disposition=loop_disposition,
         part_registry=current.guided_part_registry,
+        gate_plan=current.gate_plan,
     )
     next_phase = current.phase
     if loop_disposition == "inspect_validate":

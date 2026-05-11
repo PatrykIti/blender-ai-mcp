@@ -375,7 +375,7 @@ separate follow-on explicitly reopens those closed surfaces.
 |------|---------|---------|
 | 1 | [TASK-135-01](./TASK-135-01_Creature_Blockout_Completion_Contract_And_Required_Detail_Gates.md) | ✅ Closed: primitive-only creature runs cannot complete when required visual details or seated required seams are missing |
 | 2A | [TASK-135-02](./TASK-135-02_Curved_Tail_And_Organic_Appendage_Build_Path.md) | ✅ Closed: curved-tail cues seed generic `shape_profile` gates and recommend the existing ordered-chain arc macro with Blender-backed root-seating proof |
-| 2B | [TASK-135-03](./TASK-135-03_Low_Poly_Form_Refinement_Mesh_Window_And_Profile_Macros.md) | Add a bounded mesh/modeling refinement window after primitive placement; may run after `TASK-135-01` in parallel with `TASK-135-02` if ownership stays disjoint |
+| 2B | [TASK-135-03](./TASK-135-03_Low_Poly_Form_Refinement_Mesh_Window_And_Profile_Macros.md) | 🚧 In progress: `TASK-135-03-01` closed the explicit `refine_low_poly_forms` state/visibility gate; bounded search/planner/profile-tool proof remains under `TASK-135-03-02*` |
 
 `TASK-135-02` and `TASK-135-03` are parallel follow-on branches after
 `TASK-135-01`, not a strict serial dependency. If a future implementation makes

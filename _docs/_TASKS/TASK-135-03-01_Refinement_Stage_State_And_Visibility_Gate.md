@@ -1,6 +1,7 @@
 # TASK-135-03-01: Refinement Stage State And Visibility Gate
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-11
 **Priority:** 🔴 High
 **Parent:** [TASK-135-03](./TASK-135-03_Low_Poly_Form_Refinement_Mesh_Window_And_Profile_Macros.md)
 **Objective:** Add one explicit low-poly refinement stage to the current creature guided flow so the runtime can open a bounded mesh/modeling window only after required roles and seams are stable enough.
@@ -163,11 +164,32 @@ if current_step == "refine_low_poly_forms":
 
 ## Status / Board Update
 
-- When this leaf ships, update its task status plus the parent `TASK-135-03`
-  execution structure and note whether the umbrella `TASK-135` sequencing text
-  also changed.
-- Record whether the `pre-commit` lane, owner-lane pytest commands, full unit
-  pass, and full Blender E2E pass ran or were intentionally skipped.
-- If the explicit refinement step still leaves follow-on runtime or visibility
-  work, capture that as a new leaf instead of burying it in the completion
-  summary.
+- 2026-05-11: Shipped `refine_low_poly_forms` as a strict
+  `GuidedFlowStepLiteral`, wired role summaries / next actions / allowed
+  families, and let creature sessions enter the step from secondary-role
+  registration or checkpoint iteration only when a normalized
+  `shape_profile`, `proportion_ratio`, `opening_or_cut`, or
+  `refinement_stage` blocker is ready and required seam/support blockers plus
+  stale spatial state are clear.
+- The refinement step keeps `guided_flow_state.allowed_families` on the
+  existing `secondary_parts`, `attachment_alignment`, and `reference_context`
+  vocabulary, while `build_visibility_rules(...)` narrows the creature
+  handoff surface to bounded mesh/profile/attachment tools and removes
+  primary-mass creation / finish-heavy defaults.
+- Updated `README.md`, `_docs/_MCP_SERVER/README.md`,
+  `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`,
+  `_docs/_TESTS/README.md`, this task, the `TASK-135` / `TASK-135-03`
+  task summaries, and `_docs/_CHANGELOG/`.
+- Validation run outside the sandbox:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_mode.py -q`
+  (`75 passed`).
+- Additional closeout validation outside the sandbox:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+  (`87 passed`), `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
+  (`17 passed`), focused `poetry run ruff check ...`, and
+  `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure`
+  (passed).
+- `git diff --check` passed before docs closeout.
+- Follow-on runtime/search/planner routing remains tracked by
+  `TASK-135-03-02-01`; no new public refinement tool or creature-only state
+  envelope was added in this leaf.

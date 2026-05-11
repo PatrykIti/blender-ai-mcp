@@ -553,7 +553,7 @@ Current machine-readable `guided_flow_state` fields:
 |---|---|
 | `flow_id` | Stable flow identifier for the current guided runtime contract |
 | `domain_profile` | Current guided overlay: `generic`, `creature`, or `building` |
-| `current_step` | Active guided step such as `understand_goal`, `establish_spatial_context`, `create_primary_masses`, `checkpoint_iterate`, or `inspect_validate` |
+| `current_step` | Active guided step such as `understand_goal`, `establish_spatial_context`, `create_primary_masses`, `place_secondary_parts`, `refine_low_poly_forms`, `checkpoint_iterate`, or `inspect_validate` |
 | `completed_steps` | Steps already completed in the current guided run |
 | `active_target_scope` | Compact target scope identity the guided spatial checks currently apply to |
 | `spatial_scope_fingerprint` | Deterministic fingerprint for the active guided target scope |
@@ -619,6 +619,13 @@ Current guided-flow behavior:
   `shape_profile` gate, for example `target_label="tail_profile"`, and the
   blocker recommends bounded profile tools such as `macro_adjust_segment_chain_arc`
   without adding tail-specific gate fields
+- guided creature sessions can enter `refine_low_poly_forms` when required
+  secondary roles are registered, the spatial state is clean, and active
+  profile/refinement blockers are not waiting behind required seam/support
+  blockers; the step keeps `allowed_families` on the existing
+  `secondary_parts`, `attachment_alignment`, and `reference_context`
+  vocabulary and does not expose primary-mass creation or broad finish tools by
+  default
 - supported first-pass gate types are `required_part`, `attachment_seam`,
   `support_contact`, `symmetry_pair`, `proportion_ratio`, `shape_profile`,
   `opening_or_cut`, `refinement_stage`, and `final_completion`
@@ -853,7 +860,9 @@ Current guided-flow behavior:
   `place_secondary_parts`
 - overlays that use secondary-part role groups can likewise move from
   `place_secondary_parts` into `checkpoint_iterate` when the required
-  secondary roles are complete
+  secondary roles are complete, or into `refine_low_poly_forms` when a
+  normalized profile/refinement blocker is ready and seam/support prerequisites
+  are clear
 - later guided steps may still keep earlier corrective build families
   available for already-created masses, so the runtime can support bounded
   in-place refinement without reopening the entire generic build surface

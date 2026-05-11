@@ -485,6 +485,12 @@ contract in addition to `guided_handoff`.
   gates for body, head, tail, snout, ears, eyes, forelegs, and hindlegs; a
   primitive-only blockout cannot finish while those required roles are missing
   or while checkpoint-derived required creature seams still block completion
+- creature sessions can now enter an explicit `refine_low_poly_forms` step
+  when required secondary roles are present, the spatial state is clean, and
+  active `shape_profile` / `refinement_stage` blockers are not waiting behind
+  seam/support blockers; that step keeps `allowed_families` on the existing
+  `secondary_parts`, `attachment_alignment`, and `reference_context`
+  vocabulary and hides primary-mass creation / finish-heavy tools by default
 - if a needed tool family is hidden/blocked-by-flow, inspect
   `router_get_status().guided_flow_state`, complete the listed
   `required_checks`, and follow `next_actions` instead of guessing hidden tool

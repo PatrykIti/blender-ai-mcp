@@ -80,6 +80,7 @@ _GUIDED_BOOTSTRAP_PLACEHOLDER_COLLECTION_NAMES: set[str] = {"collection", "scene
 _SPATIAL_REARM_ALLOWED_STEPS: set[GuidedFlowStepLiteral] = {
     "create_primary_masses",
     "place_secondary_parts",
+    "refine_low_poly_forms",
     "checkpoint_iterate",
     "inspect_validate",
     "finish_or_stop",
@@ -134,6 +135,7 @@ _GUIDED_ROLE_SUMMARY_PLAN: dict[str, dict[GuidedFlowStepLiteral, dict[str, list[
             "allowed_roles": ["secondary_mass", "support_part"],
             "required_role_groups": ["secondary_parts"],
         },
+        "refine_low_poly_forms": {"allowed_roles": [], "required_role_groups": ["refinement_stage"]},
         "checkpoint_iterate": {"allowed_roles": [], "required_role_groups": ["checkpoint_iterate"]},
         "inspect_validate": {"allowed_roles": [], "required_role_groups": ["inspect_validate"]},
         "finish_or_stop": {"allowed_roles": ["detail_part"], "required_role_groups": ["finish"]},
@@ -154,6 +156,7 @@ _GUIDED_ROLE_SUMMARY_PLAN: dict[str, dict[GuidedFlowStepLiteral, dict[str, list[
             "allowed_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
             "required_role_groups": ["secondary_parts"],
         },
+        "refine_low_poly_forms": {"allowed_roles": [], "required_role_groups": ["refinement_stage"]},
         "checkpoint_iterate": {"allowed_roles": [], "required_role_groups": ["checkpoint_iterate"]},
         "inspect_validate": {"allowed_roles": [], "required_role_groups": ["inspect_validate"]},
         "finish_or_stop": {"allowed_roles": [], "required_role_groups": ["finish"]},
@@ -174,6 +177,7 @@ _GUIDED_ROLE_SUMMARY_PLAN: dict[str, dict[GuidedFlowStepLiteral, dict[str, list[
             "allowed_roles": ["facade_opening", "support_element", "detail_element"],
             "required_role_groups": ["secondary_parts"],
         },
+        "refine_low_poly_forms": {"allowed_roles": [], "required_role_groups": ["refinement_stage"]},
         "checkpoint_iterate": {"allowed_roles": [], "required_role_groups": ["checkpoint_iterate"]},
         "inspect_validate": {"allowed_roles": [], "required_role_groups": ["inspect_validate"]},
         "finish_or_stop": {"allowed_roles": [], "required_role_groups": ["finish"]},
@@ -501,6 +505,11 @@ def _build_allowed_families(
             if domain_profile == "creature"
             else ["primary_masses", "secondary_parts"]
         ),
+        "refine_low_poly_forms": (
+            ["secondary_parts", "attachment_alignment", "reference_context"]
+            if domain_profile == "creature"
+            else ["secondary_parts", "reference_context"]
+        ),
         "checkpoint_iterate": (
             ["primary_masses", "secondary_parts", "attachment_alignment", "checkpoint_iterate", "reference_context"]
             if domain_profile == "creature"
@@ -556,11 +565,11 @@ def _build_role_summary(
     completed_roles = sorted(
         role for role, count in role_counts.items() if count >= _guided_role_cardinality(domain_profile, role)
     )
-    if current_step in {"place_secondary_parts", "checkpoint_iterate"}:
+    if current_step in {"place_secondary_parts", "refine_low_poly_forms", "checkpoint_iterate"}:
         primary_roles = list(_GUIDED_ROLE_SUMMARY_PLAN[domain_profile]["create_primary_masses"]["allowed_roles"])
         missing_primary_roles = [role for role in primary_roles if role not in completed_roles]
         allowed_roles = [*missing_primary_roles, *allowed_roles]
-    if current_step == "checkpoint_iterate":
+    if current_step in {"refine_low_poly_forms", "checkpoint_iterate"}:
         secondary_roles = list(_GUIDED_ROLE_SUMMARY_PLAN[domain_profile]["place_secondary_parts"]["allowed_roles"])
         missing_secondary_roles = [role for role in secondary_roles if role not in completed_roles]
         allowed_roles = [*allowed_roles, *missing_secondary_roles]
@@ -611,6 +620,7 @@ def _default_next_actions_for_step(current_step: GuidedFlowStepLiteral) -> list[
         "establish_reference_context": ["attach_reference_images"],
         "create_primary_masses": ["begin_primary_masses"],
         "place_secondary_parts": ["begin_secondary_parts"],
+        "refine_low_poly_forms": ["refine_low_poly_forms"],
         "checkpoint_iterate": ["run_checkpoint_iterate"],
         "inspect_validate": ["switch_to_inspect_validate"],
         "finish_or_stop": ["stop_or_finalize"],
@@ -681,6 +691,7 @@ def _should_rearm_spatial_gate(contract: GuidedFlowStateContract, *, force: bool
         return False
     return contract.current_step in {
         "place_secondary_parts",
+        "refine_low_poly_forms",
         "checkpoint_iterate",
         "inspect_validate",
         "finish_or_stop",

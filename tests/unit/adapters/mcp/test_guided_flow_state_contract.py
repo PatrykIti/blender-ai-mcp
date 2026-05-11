@@ -94,6 +94,44 @@ def test_session_state_round_trips_guided_flow_state():
     assert restored.guided_flow_state["allowed_families"] == ["spatial_context", "reference_context"]
 
 
+def test_session_state_round_trips_refinement_guided_flow_step():
+    ctx = FakeContext()
+    state = SessionCapabilityState(
+        phase=SessionPhase.BUILD,
+        guided_flow_state={
+            "flow_id": "guided_creature_flow",
+            "domain_profile": "creature",
+            "current_step": "refine_low_poly_forms",
+            "completed_steps": [
+                "understand_goal",
+                "establish_spatial_context",
+                "create_primary_masses",
+                "place_secondary_parts",
+            ],
+            "required_checks": [],
+            "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+            "preferred_prompts": ["workflow_router_first"],
+            "next_actions": ["refine_low_poly_forms"],
+            "blocked_families": [],
+            "allowed_families": ["secondary_parts", "attachment_alignment", "reference_context"],
+            "required_role_groups": ["refinement_stage"],
+            "step_status": "ready",
+        },
+    )
+    set_session_capability_state(ctx, state)
+
+    restored = get_session_capability_state(ctx)
+
+    assert restored.guided_flow_state is not None
+    assert restored.guided_flow_state["current_step"] == "refine_low_poly_forms"
+    assert restored.guided_flow_state["allowed_families"] == [
+        "secondary_parts",
+        "attachment_alignment",
+        "reference_context",
+    ]
+    assert restored.guided_flow_state["required_role_groups"] == ["refinement_stage"]
+
+
 def test_session_state_round_trips_gate_plan_state():
     ctx = FakeContext()
     gate_plan = normalize_gate_plan(
@@ -1464,6 +1502,66 @@ def test_iteration_can_move_flow_into_inspect_validate():
     ]
 
 
+def test_checkpoint_iteration_can_enter_refinement_for_unblocked_profile_gate():
+    ctx = FakeContext()
+    gate_plan = normalize_gate_plan(
+        {
+            "source": "reference_understanding",
+            "gates": [
+                {
+                    "gate_id": "tail_shape_profile",
+                    "gate_type": "shape_profile",
+                    "label": "Tail follows the reference arc profile",
+                    "target_kind": "reference_part",
+                    "target_label": "tail_profile",
+                }
+            ],
+        },
+        domain_profile="creature",
+        templates=[],
+    ).model_dump(mode="json")
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            gate_plan=gate_plan,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "checkpoint_iterate",
+                "completed_steps": [
+                    "understand_goal",
+                    "establish_spatial_context",
+                    "create_primary_masses",
+                    "place_secondary_parts",
+                ],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["run_checkpoint_iterate"],
+                "blocked_families": [],
+                "allowed_families": ["checkpoint_iterate", "reference_context"],
+                "completed_roles": ["body_core", "head_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["checkpoint_iterate"],
+                "step_status": "needs_checkpoint",
+            },
+        ),
+    )
+
+    state = asyncio.run(
+        advance_guided_flow_from_iteration_async(
+            ctx,
+            loop_disposition="continue_build",
+        )
+    )
+
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["current_step"] == "refine_low_poly_forms"
+    assert state.guided_flow_state["step_status"] == "ready"
+    assert state.guided_flow_state["next_actions"] == ["refine_low_poly_forms"]
+    assert state.guided_flow_state["required_role_groups"] == ["refinement_stage"]
+
+
 def test_clear_session_goal_state_clears_guided_part_registry():
     ctx = FakeContext()
     set_session_capability_state(
@@ -1622,6 +1720,194 @@ def test_secondary_role_registration_advances_creature_flow_to_checkpoint_iterat
         "reference_context",
     ]
     assert state.guided_flow_state["allowed_roles"] == ["tail_mass", "snout_mass"]
+
+
+def test_secondary_role_registration_enters_refinement_when_profile_gate_is_unblocked():
+    ctx = FakeContext()
+    gate_plan = normalize_gate_plan(
+        {
+            "source": "reference_understanding",
+            "gates": [
+                {
+                    "gate_id": "tail_shape_profile",
+                    "gate_type": "shape_profile",
+                    "label": "Tail follows the reference arc profile",
+                    "target_kind": "reference_part",
+                    "target_label": "tail_profile",
+                }
+            ],
+        },
+        domain_profile="creature",
+        templates=[],
+    ).model_dump(mode="json")
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            gate_plan=gate_plan,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "spatial_state_stale": False,
+                "spatial_refresh_required": False,
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["secondary_parts", "attachment_alignment"],
+                "allowed_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass"],
+                "missing_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    register_guided_part_role(ctx, object_name="Squirrel_Ears", role="ear_pair")
+    register_guided_part_role(ctx, object_name="Squirrel_FrontLegs", role="foreleg_pair")
+    state = register_guided_part_role(ctx, object_name="Squirrel_HindLegs", role="hindleg_pair")
+
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["current_step"] == "refine_low_poly_forms"
+    assert state.guided_flow_state["spatial_refresh_required"] is False
+    assert state.guided_flow_state["step_status"] == "ready"
+    assert state.guided_flow_state["completed_steps"] == [
+        "understand_goal",
+        "establish_spatial_context",
+        "create_primary_masses",
+        "place_secondary_parts",
+    ]
+    assert state.guided_flow_state["required_role_groups"] == ["refinement_stage"]
+    assert state.guided_flow_state["allowed_families"] == [
+        "secondary_parts",
+        "attachment_alignment",
+        "reference_context",
+    ]
+    assert state.guided_flow_state["next_actions"] == ["refine_low_poly_forms"]
+
+
+def test_secondary_role_registration_keeps_refinement_blocked_by_required_seam_gate():
+    ctx = FakeContext()
+    gate_plan = normalize_gate_plan(
+        {
+            "source": "reference_understanding",
+            "gates": [
+                {
+                    "gate_id": "tail_body_seam",
+                    "gate_type": "attachment_seam",
+                    "label": "Tail is seated on body",
+                    "target_kind": "object_pair",
+                    "target_objects": ["Tail", "Body"],
+                },
+                {
+                    "gate_id": "tail_shape_profile",
+                    "gate_type": "shape_profile",
+                    "label": "Tail follows the reference arc profile",
+                    "target_kind": "reference_part",
+                    "target_label": "tail_profile",
+                },
+            ],
+        },
+        domain_profile="creature",
+        templates=[],
+    ).model_dump(mode="json")
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            gate_plan=gate_plan,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["secondary_parts", "attachment_alignment"],
+                "allowed_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass"],
+                "missing_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    register_guided_part_role(ctx, object_name="Squirrel_Ears", role="ear_pair")
+    register_guided_part_role(ctx, object_name="Squirrel_FrontLegs", role="foreleg_pair")
+    state = register_guided_part_role(ctx, object_name="Squirrel_HindLegs", role="hindleg_pair")
+
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["current_step"] == "checkpoint_iterate"
+    assert state.guided_flow_state["spatial_refresh_required"] is True
+    assert state.guided_flow_state["step_status"] == "blocked"
+    assert state.guided_flow_state["required_role_groups"] == ["checkpoint_iterate"]
+    assert state.guided_flow_state["allowed_families"] == ["spatial_context", "reference_context"]
+
+
+def test_secondary_role_registration_keeps_stale_spatial_state_out_of_refinement():
+    ctx = FakeContext()
+    gate_plan = normalize_gate_plan(
+        {
+            "source": "reference_understanding",
+            "gates": [
+                {
+                    "gate_id": "tail_shape_profile",
+                    "gate_type": "shape_profile",
+                    "label": "Tail follows the reference arc profile",
+                    "target_kind": "reference_part",
+                    "target_label": "tail_profile",
+                }
+            ],
+        },
+        domain_profile="creature",
+        templates=[],
+    ).model_dump(mode="json")
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            gate_plan=gate_plan,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "spatial_state_stale": True,
+                "spatial_refresh_required": True,
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["secondary_parts", "attachment_alignment"],
+                "allowed_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass"],
+                "missing_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    register_guided_part_role(ctx, object_name="Squirrel_Ears", role="ear_pair")
+    register_guided_part_role(ctx, object_name="Squirrel_FrontLegs", role="foreleg_pair")
+    state = register_guided_part_role(ctx, object_name="Squirrel_HindLegs", role="hindleg_pair")
+
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["current_step"] == "checkpoint_iterate"
+    assert state.guided_flow_state["spatial_refresh_required"] is True
+    assert state.guided_flow_state["step_status"] == "blocked"
 
 
 def test_guided_part_role_registration_rejects_mismatched_role_group():
