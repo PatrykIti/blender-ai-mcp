@@ -610,10 +610,10 @@ def _packet_reference_ids(
 
     if targeted_view:
         return _unique_preserving_order(targeted_view)
-    if targeted_any_view:
-        return _unique_preserving_order(targeted_any_view)
     if generic_view:
         return _unique_preserving_order(generic_view)
+    if targeted_any_view:
+        return _unique_preserving_order(targeted_any_view)
     if generic_any_view:
         return _unique_preserving_order(generic_any_view)
     return []
@@ -1337,6 +1337,16 @@ async def collect_compare_time_segmentation_support(
         summary_note = f"Optional part segmentation sidecar returned {len(parts)} bounded part(s) for compare support."
     else:
         summary_note = "Optional part segmentation sidecar returned no bounded parts for compare support."
+        return ReferencePartSegmentationContract(
+            status="unavailable",
+            provider_name=getattr(config, "provider_name", None),
+            advisory_only=True,
+            parts=[],
+            notes=[
+                summary_note,
+                "The sidecar path is advisory-only and separate from vision_contract_profile routing.",
+            ],
+        )
     return ReferencePartSegmentationContract(
         status="available",
         provider_name=getattr(config, "provider_name", None),

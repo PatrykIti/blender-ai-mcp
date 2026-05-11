@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Literal
+import asyncio
+from types import SimpleNamespace
+from typing import Any, Literal
 
+from server.adapters.mcp.areas import reference_compare_packets as compare_packets_area
 from server.adapters.mcp.areas.reference_compare_packets import append_compare_synthesis_conflict_notes
 from server.adapters.mcp.areas.reference_planner import build_compare_packets, synthesize_packet_vision_result
+from server.adapters.mcp.areas.reference_silhouette import build_compare_support_evidence
 from server.adapters.mcp.contracts.reference import (
     ReferenceCompareDiagnosticsContract,
     ReferenceComparePacketContract,
@@ -14,6 +18,36 @@ from server.adapters.mcp.contracts.reference import (
 from server.adapters.mcp.contracts.scene import SceneAssembledTargetScopeContract, SceneTruthFollowupContract
 from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
 from server.adapters.mcp.sampling.result_types import VisionAssistContract, VisionInputSummaryContract
+
+
+class _FakeSupportResponse:
+    def __init__(self, payload: dict[str, Any]) -> None:
+        self._payload = payload
+
+    def raise_for_status(self) -> None:
+        return None
+
+    def json(self) -> dict[str, Any]:
+        return self._payload
+
+
+class _FakeSupportAsyncClient:
+    def __init__(self, *, responses: dict[str, Any], captured: list[dict[str, Any]]) -> None:
+        self._responses = responses
+        self._captured = captured
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        return False
+
+    async def post(self, url, json=None, headers=None):
+        self._captured.append({"url": url, "json": json, "headers": headers})
+        payload = self._responses[url]
+        if isinstance(payload, Exception):
+            raise payload
+        return _FakeSupportResponse(payload)
 
 
 def _reference(reference_id: str, *, label: str, target_view: str | None = None) -> ReferenceImageRecordContract:
@@ -79,6 +113,42 @@ def test_build_compare_packets_simple_front_and_side_use_explicit_view_packets()
     assert packets.packet_count == 2
     assert [packet.target_view for packet in packets.packets] == ["front", "side"]
     assert [packet.packet_kind for packet in packets.packets] == ["view", "view"]
+
+
+def test_build_compare_packets_prefers_generic_view_over_target_any_view_fallback():
+    packets = build_compare_packets(
+        target_view=None,
+        captures=[
+            _capture("target_front_after", preset_name="target_front"),
+            _capture("target_side_after", preset_name="target_side"),
+        ],
+        reference_records=[
+            _reference("creature_front", label="creature_front_ref", target_view="front"),
+            _reference("generic_side", label="generic_side_ref", target_view="side").model_copy(
+                update={"target_object": None}
+            ),
+        ],
+        assembled_target_scope=SceneAssembledTargetScopeContract(
+            scope_kind="single_object",
+            primary_target="Creature",
+            object_names=["Creature"],
+            object_count=1,
+        ),
+        truth_followup=SceneTruthFollowupContract(
+            scope=SceneAssembledTargetScopeContract(
+                scope_kind="single_object",
+                primary_target="Creature",
+                object_names=["Creature"],
+                object_count=1,
+            ),
+            continue_recommended=False,
+            message="No structural blocker.",
+        ),
+    )
+
+    packet_by_view = {packet.target_view: packet for packet in packets.packets}
+    assert packet_by_view["front"].reference_ids == ["creature_front"]
+    assert packet_by_view["side"].reference_ids == ["generic_side"]
 
 
 def test_build_compare_packets_simple_drops_unmatched_reference_view_without_target_request():
@@ -468,3 +538,45 @@ def test_build_compare_packets_keeps_packet_reference_ids_local_to_scope_targets
     packet_by_scope = {packet.scope_label: packet for packet in packets.packets}
     assert packet_by_scope["Body + Head"].reference_ids == ["head_ref"]
     assert packet_by_scope["Tail"].reference_ids == ["tail_ref"]
+
+
+def test_collect_compare_time_segmentation_support_treats_empty_parts_as_unavailable(monkeypatch):
+    sidecar = SimpleNamespace(
+        enabled=True,
+        provider_name="generic_sidecar",
+        endpoint="http://localhost:9100/segment",
+        model="sam-sidecar-v1",
+        api_key=None,
+        api_key_env=None,
+        timeout_seconds=15.0,
+        max_parts=4,
+    )
+    responses = {"http://localhost:9100/segment": {"parts": []}}
+    captured: list[dict[str, Any]] = []
+    monkeypatch.setattr(
+        compare_packets_area.httpx,
+        "AsyncClient",
+        lambda timeout=None: _FakeSupportAsyncClient(responses=responses, captured=captured),
+    )
+
+    result = asyncio.run(
+        compare_packets_area.collect_compare_time_segmentation_support(
+            config=sidecar,
+            goal="low poly creature",
+            packet_id="packet:front:test",
+            packet_label="front packet",
+            target_view="front",
+            scope_label=None,
+            target_objects=["Creature"],
+            reference_records=[_reference("ref_front", label="front_ref", target_view="front")],
+            captures=[_capture("target_front_after", preset_name="target_front")],
+        )
+    )
+
+    assert captured
+    assert result is not None
+    assert result.status == "unavailable"
+    assert result.provider_name == "generic_sidecar"
+    assert result.parts == []
+    assert any("returned no bounded parts" in note for note in result.notes)
+    assert build_compare_support_evidence(None, part_segmentation=result) == []

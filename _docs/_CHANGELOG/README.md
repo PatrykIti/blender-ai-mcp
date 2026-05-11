@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [340](./340-2026-05-10-task-166-post-review-drift-repairs.md) | 2026-05-10 | **TASK-166 post-review drift repairs** | - |
 | [339](./339-2026-05-10-task-166-post-closeout-coverage-hardening.md) | 2026-05-10 | **TASK-166 post-closeout coverage hardening** | - |
 | [338](./338-2026-05-10-task-140-06-openrouter-model-metadata-client.md) | 2026-05-10 | **TASK-140-06 OpenRouter model metadata client** | - |
 | [337](./337-2026-05-10-task-135-creature-completion-gates.md) | 2026-05-10 | **TASK-135 creature completion gates** | - |

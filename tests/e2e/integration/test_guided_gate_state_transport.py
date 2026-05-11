@@ -19,9 +19,11 @@ from ._guided_surface_harness import (
 
 _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
     """
+    import os
     from server.adapters.mcp.areas import router as router_area
     import server.adapters.mcp.areas.modeling as modeling_area
     import server.adapters.mcp.areas.reference as reference_area
+    import server.adapters.mcp.areas.reference_compare_packets as compare_packets_area
     import server.adapters.mcp.areas.scene as scene_area
     import server.adapters.mcp.router_helper as router_helper
     import server.infrastructure.di as di
@@ -540,13 +542,70 @@ _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
             }
 
 
+    def _active_compare_segmentation_sidecar():
+        if os.environ.get("ENABLE_COMPARE_SEGMENTATION_SIDECAR") != "true":
+            return None
+        return SimpleNamespace(
+            enabled=True,
+            provider_name="generic_sidecar",
+            endpoint="http://sidecar.local/segment",
+            model="sam-sidecar-v1",
+            api_key=None,
+            api_key_env=None,
+            timeout_seconds=15.0,
+            max_parts=4,
+        )
+
+
+    class _SidecarResponse:
+        def __init__(self, payload):
+            self._payload = payload
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return self._payload
+
+
+    class _FakeSidecarClient:
+        def __init__(self, timeout=None):
+            self._timeout = timeout
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            return False
+
+        async def post(self, endpoint, json=None, headers=None):
+            if endpoint != "http://sidecar.local/segment":
+                raise RuntimeError(f"unexpected sidecar endpoint: {endpoint}")
+            return _SidecarResponse(
+                {
+                    "parts": [
+                        {
+                            "part_label": "tail_profile",
+                            "mask_path": "/tmp/tail_profile_mask.png",
+                            "crop_path": "/tmp/tail_profile_crop.png",
+                            "confidence": 0.91,
+                        }
+                    ]
+                }
+            )
+
+
+    if os.environ.get("ENABLE_COMPARE_SEGMENTATION_SIDECAR") == "true":
+        compare_packets_area.httpx.AsyncClient = _FakeSidecarClient
+
+
     class Resolver:
         def __init__(self):
             self.runtime_config = SimpleNamespace(
                 max_tokens=200,
                 max_images=8,
                 active_model_name="transport-reference-understanding-model",
-                active_segmentation_sidecar=None,
+                active_segmentation_sidecar=_active_compare_segmentation_sidecar(),
             )
 
         def resolve_default(self):
@@ -555,6 +614,33 @@ _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
 
     _transport_capture = Path("/tmp/transport_gate_capture.png")
     _transport_capture.write_bytes(b"transport-capture")
+    _transport_front_capture = Path("/tmp/transport_gate_capture_front.png")
+    _transport_front_capture.write_bytes(b"transport-front-capture")
+
+
+    def _capture_stage_images(*args, **kwargs):
+        captures = [
+            VisionCaptureImageContract(
+                label="context_wide_after",
+                image_path=str(_transport_capture),
+                host_visible_path=str(_transport_capture),
+                preset_name="context_wide",
+                media_type="image/png",
+                view_kind="wide",
+            )
+        ]
+        if os.environ.get("ENABLE_COMPARE_SEGMENTATION_SIDECAR") == "true":
+            captures.append(
+                VisionCaptureImageContract(
+                    label="target_front_after",
+                    image_path=str(_transport_front_capture),
+                    host_visible_path=str(_transport_front_capture),
+                    preset_name="target_front",
+                    media_type="image/png",
+                    view_kind="focus",
+                )
+            )
+        return captures
 
 
     router_area.get_router_handler = lambda: RouterHandler()
@@ -565,16 +651,7 @@ _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
     reference_area.get_scene_handler = lambda: SceneHandler()
     reference_area.run_vision_assist = _fake_run_vision_assist
     reference_area.get_vision_backend_resolver = lambda: Resolver()
-    reference_area.capture_stage_images = lambda *args, **kwargs: [
-        VisionCaptureImageContract(
-            label="context_wide_after",
-            image_path=str(_transport_capture),
-            host_visible_path=str(_transport_capture),
-            preset_name="context_wide",
-            media_type="image/png",
-            view_kind="wide",
-        )
-    ]
+    reference_area.capture_stage_images = _capture_stage_images
     di.get_scene_handler = lambda: SceneHandler()
     router_helper.is_router_enabled = lambda: False
     """
@@ -695,6 +772,59 @@ async def _exercise_reference_understanding_transport_roundtrip(client, referenc
         "mask_tail_front"
     )
     assert iterate_result["part_segmentation"]["status"] == "disabled"
+
+
+async def _exercise_enabled_compare_segmentation_sidecar_transport(client, reference_path: Path) -> None:
+    staged_attach = result_payload(
+        await client.call_tool(
+            "reference_images",
+            {
+                "action": "attach",
+                "source_path": str(reference_path),
+                "label": "front_ref",
+                "target_object": "Squirrel_Body",
+                "target_view": "front",
+            },
+        )
+    )
+    assert staged_attach["reference_count"] == 1
+
+    goal_result = result_payload(
+        await client.call_tool(
+            "router_set_goal",
+            {"goal": "create a low-poly squirrel matching front and side reference images"},
+        )
+    )
+    assert goal_result["reference_understanding_summary"]["status"] == "available"
+
+    compare_result = result_payload(
+        await client.call_tool(
+            "reference_compare_stage_checkpoint",
+            {
+                "target_object": "Squirrel_Body",
+                "target_objects": ["Squirrel_Tail"],
+                "checkpoint_label": "reference_segmentation_sidecar_transport_compare",
+                "target_view": "front",
+                "preset_profile": "rich",
+            },
+        )
+    )
+
+    part_segmentation = compare_result["part_segmentation"]
+    assert part_segmentation["status"] == "available"
+    assert part_segmentation["provider_name"] == "generic_sidecar"
+    assert part_segmentation["advisory_only"] is True
+    assert part_segmentation["parts"][0]["part_label"] == "tail_profile"
+    assert part_segmentation["parts"][0]["confidence"] == 0.91
+    support_evidence = [
+        item
+        for packet in compare_result["compare_diagnostics"]["packets"]
+        for item in packet["support_evidence"]
+        if item["evidence_kind"] == "part_segmentation"
+    ]
+    assert support_evidence
+    assert support_evidence[0]["part_label"] == "tail_profile"
+    assert support_evidence[0]["confidence"] == 0.91
 
 
 async def _exercise_reference_understanding_refresh_replaces_gate_slice(
@@ -1341,6 +1471,22 @@ def test_reference_understanding_transport_roundtrip_over_stdio(tmp_path: Path):
     async def run() -> None:
         async with stdio_client(script_path) as client:
             await _exercise_reference_understanding_transport_roundtrip(client, reference_path)
+
+    asyncio.run(run())
+
+
+@pytest.mark.slow
+def test_reference_compare_segmentation_sidecar_transport_over_stdio(tmp_path: Path):
+    script_path = write_server_script(tmp_path, _PATCHED_GATE_STATE_SERVER)
+    reference_path = tmp_path / "transport_front.png"
+    reference_path.write_bytes(_TRANSPORT_REFERENCE_PNG)
+
+    async def run() -> None:
+        async with stdio_client(
+            script_path,
+            extra_env={"ENABLE_COMPARE_SEGMENTATION_SIDECAR": "true"},
+        ) as client:
+            await _exercise_enabled_compare_segmentation_sidecar_transport(client, reference_path)
 
     asyncio.run(run())
 
