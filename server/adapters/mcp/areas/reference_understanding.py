@@ -19,6 +19,7 @@ from server.adapters.mcp.areas.reference_feedback import (
 from server.adapters.mcp.contracts.quality_gates import (
     GatePlanContract,
     GateProposalContract,
+    GateProposalGateContract,
     refresh_gate_plan_status,
     without_proposal_source,
 )
@@ -28,6 +29,7 @@ from server.adapters.mcp.contracts.reference import (
 )
 from server.adapters.mcp.session_capabilities import SessionCapabilityState
 from server.adapters.mcp.vision import VisionBackendUnavailableError, VisionImageInput, VisionRequest
+from server.adapters.mcp.vision.reference_gates import derive_tail_profile_gate_proposals
 from server.adapters.mcp.vision.reference_support import augment_reference_understanding_optional_support
 
 
@@ -48,6 +50,26 @@ def blocked_reference_understanding_summary(
         reason=reason,
         message=message,
     )
+
+
+def _with_reference_understanding_profile_gate_defaults(
+    summary: ReferenceUnderstandingSummaryContract,
+) -> ReferenceUnderstandingSummaryContract:
+    """Derive generic profile gates from typed RU parts when no explicit gate slice exists."""
+
+    if summary.gate_proposals:
+        return summary
+
+    derived = [
+        GateProposalGateContract.model_validate(payload)
+        for payload in derive_tail_profile_gate_proposals(
+            [part.model_dump(mode="json", exclude_none=True) for part in summary.required_parts]
+        )
+    ]
+
+    if not derived:
+        return summary
+    return summary.model_copy(update={"gate_proposals": [*summary.gate_proposals, *derived]})
 
 
 def _redact_local_paths(text: str) -> str:
@@ -365,6 +387,7 @@ async def refresh_reference_understanding_summary(
         payload = await backend.analyze(request)
         summary = ReferenceUnderstandingSummaryContract.model_validate(payload)
         summary = augment_reference_understanding_summary(summary, reference_records=reference_records)
+        summary = _with_reference_understanding_profile_gate_defaults(summary)
         runtime_config = getattr(resolver, "runtime_config", None)
         summary = await augment_reference_understanding_optional_support(
             summary,

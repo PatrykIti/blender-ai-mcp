@@ -729,6 +729,115 @@ def test_refresh_reference_understanding_summary_persists_summary_and_gate_ids(t
     assert any(gate_id.endswith("eye_pair") for gate_id in updated.reference_understanding_gate_ids)
 
 
+def test_refresh_reference_understanding_summary_derives_curved_tail_shape_profile_gate(tmp_path, monkeypatch):
+    ctx = FakeContext()
+    reference_path = tmp_path / "side.png"
+    _write_test_silhouette(reference_path, with_ears=True)
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel with a curved bushy tail",
+            surface_profile="llm-guided",
+            guided_flow_state=_guided_reference_flow_state(),
+            reference_images=[
+                {
+                    "reference_id": "ref_side",
+                    "goal": "create a low-poly squirrel with a curved bushy tail",
+                    "label": "side_ref",
+                    "media_type": "image/png",
+                    "source_kind": "local_path",
+                    "original_path": str(reference_path),
+                    "stored_path": str(reference_path),
+                    "added_at": "2026-05-11T00:00:00Z",
+                }
+            ],
+        ),
+    )
+
+    class Backend:
+        async def analyze(self, request):
+            assert request.metadata["mode"] == "reference_understanding"
+            return {
+                "status": "available",
+                "understanding_id": "understanding_curved_tail",
+                "goal": request.goal,
+                "reference_ids": ["ref_side"],
+                "subject": {
+                    "label": "low poly squirrel",
+                    "category": "creature",
+                    "confidence": 0.9,
+                    "uncertainty_notes": [],
+                },
+                "style": {
+                    "style_label": "low_poly_faceted",
+                    "confidence": 0.9,
+                    "notes": [],
+                },
+                "required_parts": [
+                    {
+                        "part_label": "curved bushy tail",
+                        "target_label": "tail_profile",
+                        "construction_hint": "Use an arched segmented tail profile instead of one vertical oval.",
+                        "priority": "high",
+                    }
+                ],
+                "non_goals": [],
+                "construction_strategy": {
+                    "construction_path": "creature_blockout",
+                    "primary_family": "modeling_mesh",
+                    "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+                    "stage_sequence": ["primary_masses"],
+                    "finish_policy": "preserve_facets",
+                },
+                "router_handoff_hints": {
+                    "preferred_family": "modeling_mesh",
+                    "allowed_guided_families": [
+                        "reference_context",
+                        "primary_masses",
+                        "secondary_parts",
+                        "inspect_validate",
+                    ],
+                    "sculpt_policy": "hidden",
+                },
+                "gate_proposals": [],
+                "visual_evidence_refs": [],
+                "verification_requirements": [],
+                "classification_scores": [],
+                "segmentation_artifacts": [],
+                "source_provenance": [{"source": "reference_understanding"}],
+                "boundary_policy": {
+                    "advisory_only": True,
+                    "not_truth_source": True,
+                    "may_unlock_tools": False,
+                    "may_pass_gates": False,
+                    "may_propose_gates": True,
+                },
+            }
+
+    class Resolver:
+        def resolve_default(self):
+            return Backend()
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: Resolver())
+
+    updated = asyncio.run(refresh_reference_understanding_summary_async(ctx))
+
+    assert updated.reference_understanding_gate_ids is not None
+    assert "shape_profile_tail_profile" in updated.reference_understanding_gate_ids
+    assert updated.gate_plan is not None
+    tail_profile_gate = next(
+        gate for gate in updated.gate_plan["gates"] if gate["gate_id"] == "shape_profile_tail_profile"
+    )
+    assert tail_profile_gate["gate_type"] == "shape_profile"
+    assert tail_profile_gate["target_kind"] == "reference_part"
+    assert tail_profile_gate["target_label"] == "tail_profile"
+    assert "profile_kind" not in tail_profile_gate
+    assert "required_segments" not in tail_profile_gate
+    assert "macro_adjust_segment_chain_arc" in tail_profile_gate["recommended_bounded_tools"]
+    assert tail_profile_gate["proposal_sources"] == ["reference_understanding"]
+
+
 def test_refresh_reference_understanding_summary_merges_optional_support_evidence(tmp_path, monkeypatch):
     ctx = FakeContext()
     reference_path = tmp_path / "front.png"

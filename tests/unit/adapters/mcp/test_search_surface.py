@@ -761,6 +761,57 @@ def test_failed_attachment_gate_search_surfaces_bounded_repair_tools():
     assert "macro_finish_form" not in names
 
 
+def test_failed_tail_profile_gate_search_surfaces_arc_repair_tool():
+    """Active tail-profile blockers should recover the existing appendage arc macro."""
+
+    server = _build_flow_search_server(
+        SessionPhase.BUILD,
+        {
+            "flow_id": "guided_creature_flow",
+            "domain_profile": "creature",
+            "current_step": "place_secondary_parts",
+        },
+        guided_handoff={
+            "kind": "guided_manual_build",
+            "recipe_id": "low_poly_creature_blockout",
+            "direct_tools": ["modeling_create_primitive"],
+            "supporting_tools": ["reference_iterate_stage_checkpoint", "router_get_status"],
+        },
+        gate_plan={
+            "plan_id": "creature_quality_gate_plan",
+            "domain_profile": "creature",
+            "completion_blockers": [
+                {
+                    "gate_id": "shape_profile_tail_profile",
+                    "gate_type": "shape_profile",
+                    "label": "Tail follows the curved reference profile",
+                    "status": "blocked",
+                    "reason_code": "missing_required_evidence",
+                    "target_kind": "reference_part",
+                    "target_label": "tail_profile",
+                    "recommended_bounded_tools": [
+                        "mesh_inspect",
+                        "scene_view_diagnostics",
+                        "macro_adjust_segment_chain_arc",
+                    ],
+                    "message": "Tail profile needs deterministic verification.",
+                }
+            ],
+            "gates": [],
+        },
+    )
+
+    async def run():
+        result = await server.call_tool("search_tools", {"query": "repair curved tail arc profile gate"})
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+    names = {tool["name"] for tool in payload}
+
+    assert "macro_adjust_segment_chain_arc" in names
+    assert "macro_finish_form" not in names
+
+
 def test_active_gate_recovery_search_does_not_recommend_goal_reset(monkeypatch):
     """Reset-style recovery queries should prefer active gate repair tools."""
 

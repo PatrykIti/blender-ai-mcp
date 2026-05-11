@@ -196,7 +196,12 @@ _RECOMMENDED_TOOLS_BY_GATE_TYPE: dict[GateTypeLiteral, tuple[str, ...]] = {
     ),
     "symmetry_pair": ("scene_relation_graph", "scene_assert_symmetry", "macro_place_symmetry_pair"),
     "proportion_ratio": ("scene_measure_dimensions", "macro_adjust_relative_proportion"),
-    "shape_profile": ("mesh_inspect", "scene_view_diagnostics"),
+    "shape_profile": (
+        "mesh_inspect",
+        "scene_view_diagnostics",
+        "macro_adjust_relative_proportion",
+        "macro_adjust_segment_chain_arc",
+    ),
     "opening_or_cut": ("mesh_inspect", "scene_view_diagnostics", "macro_cutout_recess"),
     "refinement_stage": ("scene_inspect", "mesh_inspect"),
     "final_completion": ("scene_scope_graph", "scene_relation_graph", "scene_view_diagnostics"),

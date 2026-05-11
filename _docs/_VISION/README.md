@@ -158,6 +158,9 @@ The repo now has the first implementation scaffolding for the vision layer:
 - staged checkpoints materialize required creature seams into the same
   `active_gate_plan`, so `floating_gap` on a required seam blocks final
   completion even if generic overlap cleanup already ran.
+- reference-understanding can now seed curved/bushy tail cues as generic
+  `shape_profile` gates on `tail_profile`; the verifier still requires
+  deterministic mesh/profile evidence before those gates pass.
 - `truth_followup` and ranked `correction_candidates` now keep multiple failing
   required creature seams visible together, so one repaired local pair no
   longer implies that the assembled creature stage is globally acceptable
@@ -205,6 +208,9 @@ The repo now has the first implementation scaffolding for the vision layer:
   - `modeling_mesh`
   - `sculpt_region`
   - `inspect_only`
+- creature tail-profile blockers stay on the `macro` / `modeling_mesh` path
+  by recommending the existing ordered-chain arc macro; they do not make vision
+  prose authoritative and do not create a tail-only gate schema
 - current product rule: `sculpt_region` can be recommended through
   `refinement_handoff` only when preconditions are ready; deterministic sculpt
   tools are still not part of the normal `llm-guided` build visibility by

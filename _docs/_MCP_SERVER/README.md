@@ -615,6 +615,10 @@ Current guided-flow behavior:
   failed seam/support gates expose bounded relation, measure/assert, and macro
   repair tools; refinement/profile gates wait behind unresolved required
   seam/support blockers
+- reference-understanding can seed a curved or bushy tail as a normal
+  `shape_profile` gate, for example `target_label="tail_profile"`, and the
+  blocker recommends bounded profile tools such as `macro_adjust_segment_chain_arc`
+  without adding tail-specific gate fields
 - supported first-pass gate types are `required_part`, `attachment_seam`,
   `support_contact`, `symmetry_pair`, `proportion_ratio`, `shape_profile`,
   `opening_or_cut`, `refinement_stage`, and `final_completion`
@@ -1452,7 +1456,7 @@ required creature seam gates from deterministic truth, so final completion
 stays blocked until those roles exist and required seams are seated or
 explicitly accepted as embedded attachments.
 If the main issue is cross-object size/ratio drift, prefer `macro_adjust_relative_proportion` over ad hoc scale guessing or open-ended sculpting.
-If the task is to reshape an ordered segment chain into a cleaner arc, prefer `macro_adjust_segment_chain_arc` over manual per-segment transform chaining.
+If the task is to reshape an ordered segment chain into a cleaner arc, prefer `macro_adjust_segment_chain_arc` over manual per-segment transform chaining. For creature tails, keep the root segment seated to the body with the existing attachment macro path before or after arcing the ordered root/mid/tip chain.
 If the task is bounded relative placement/alignment, prefer `macro_relative_layout` over manual transform-by-transform placement.
 If the task is a bounded recess/opening, prefer `macro_cutout_recess` over hand-building the cutter/boolean sequence.
 

@@ -374,7 +374,7 @@ separate follow-on explicitly reopens those closed surfaces.
 | Order | Subtask | Purpose |
 |------|---------|---------|
 | 1 | [TASK-135-01](./TASK-135-01_Creature_Blockout_Completion_Contract_And_Required_Detail_Gates.md) | ✅ Closed: primitive-only creature runs cannot complete when required visual details or seated required seams are missing |
-| 2A | [TASK-135-02](./TASK-135-02_Curved_Tail_And_Organic_Appendage_Build_Path.md) | Add tail-chain/arc policy on top of existing `macro_adjust_segment_chain_arc(...)`; may run after `TASK-135-01` without waiting for `TASK-135-03` |
+| 2A | [TASK-135-02](./TASK-135-02_Curved_Tail_And_Organic_Appendage_Build_Path.md) | ✅ Closed: curved-tail cues seed generic `shape_profile` gates and recommend the existing ordered-chain arc macro with Blender-backed root-seating proof |
 | 2B | [TASK-135-03](./TASK-135-03_Low_Poly_Form_Refinement_Mesh_Window_And_Profile_Macros.md) | Add a bounded mesh/modeling refinement window after primitive placement; may run after `TASK-135-01` in parallel with `TASK-135-02` if ownership stays disjoint |
 
 `TASK-135-02` and `TASK-135-03` are parallel follow-on branches after
@@ -475,6 +475,14 @@ files and this table in the same branch.
     active quality-gate plan, keeping final completion blocked on unresolved
     `floating_gap` seams
   - `TASK-135` remains open for `TASK-135-02` and `TASK-135-03`
+- 2026-05-11: `TASK-135-02` is closed:
+  - curved or bushy tail cues from reference understanding now become generic
+    `shape_profile` gates rather than a creature-only gate schema
+  - `shape_profile` blockers recommend bounded profile/arc tooling including
+    `macro_adjust_segment_chain_arc(...)`
+  - Blender-backed proof covers `TailRoot` seated to `Body` while `TailMid` and
+    `TailTip` are arced
+  - `TASK-135` remains open for the `TASK-135-03*` refinement-stage family
 
 ## Status / Board Update
 

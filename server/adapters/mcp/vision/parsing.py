@@ -19,6 +19,7 @@ from .prompting import (
     expected_json_keys,
     resolve_vision_contract_profile,
 )
+from .reference_gates import derive_tail_profile_gate_proposals
 
 _SUMMARY_ALIASES = ("comparison", "summary", "analysis", "description", "result")
 _VISIBLE_CHANGES_ALIASES = ("changes", "visible_differences", "differences")
@@ -754,7 +755,8 @@ def _normalize_reference_gate_proposals(parsed: dict[str, Any], *, parts: list[d
                 "rationale": item.get("construction_hint"),
             }
         )
-    return derived
+    derived.extend(derive_tail_profile_gate_proposals(parts))
+    return derived[:8]
 
 
 def _normalize_reference_visual_evidence_refs(parsed: dict[str, Any]) -> list[dict[str, Any]]:

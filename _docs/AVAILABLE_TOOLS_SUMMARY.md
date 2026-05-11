@@ -87,6 +87,9 @@ projection logic.
 For guided creature work, those gate fields now include required visual roles
 and checkpoint-derived required seam blockers, so a primitive-only creature
 does not complete merely because broad masses exist.
+Curved or bushy tail cues from reference understanding use the same generic
+`shape_profile` gate vocabulary and can recommend the existing ordered-chain
+arc macro instead of creating a creature-only gate schema.
 
 Task-capable heavy-operation rollout on task-enabled surfaces:
 
@@ -373,7 +376,7 @@ None.
 | `macro_place_supported_pair` | `left_object`, `right_object`, `support_object`, `axis`, `mirror_coordinate`, `support_axis`, `support_side`, `anchor_object`, `gap`, `tolerance` | Bounded macro for placing/correcting one mirrored pair against a shared support surface by combining explicit mirror placement with explicit support contact and blocking when both constraints cannot stay compatible within tolerance. | ✅ Done |
 | `macro_cleanup_part_intersections` | `part_object`, `reference_object`, `gap`, `normal_axis`, `preserve_side`, `max_push` | Bounded macro for separating one overlapping pair by inferring a stable cleanup axis/side when possible and applying one limited push toward contact or a small gap. | ✅ Done |
 | `macro_adjust_relative_proportion` | `primary_object`, `reference_object`, `expected_ratio`, `primary_axis`, `reference_axis`, `scale_target`, `tolerance`, `uniform_scale`, `max_scale_delta` | Bounded macro for repairing cross-object proportion drift with an explicit target ratio and a bounded scale adjustment. | ✅ Done |
-| `macro_adjust_segment_chain_arc` | `segment_objects`, `rotation_axis`, `total_angle`, `direction`, `segment_spacing`, `apply_rotation` | Bounded macro for adjusting an ordered segment chain into a planar arc through deterministic per-segment placement and optional progressive rotation. | ✅ Done |
+| `macro_adjust_segment_chain_arc` | `segment_objects`, `rotation_axis`, `total_angle`, `direction`, `segment_spacing`, `apply_rotation` | Bounded macro for adjusting an ordered segment chain into a planar arc through deterministic per-segment placement and optional progressive rotation; used by creature tail-profile gates after a root/mid/tip chain exists. | ✅ Done |
 | `macro_relative_layout` | `moving_object`, `reference_object`, `x_mode`, `y_mode`, `z_mode`, `contact_axis`, `contact_side`, `gap`, `offset` | Bounded macro for relative object placement using bbox alignment modes, optional outside-face contact/gap placement, and one deterministic transform. | ✅ Done |
 | `modeling_create_primitive` | `primitive_type`, `size/radius`, `location`, `rotation` | Creates basic shapes (Cube, Sphere, Cylinder, Plane, Cone, Monkey). | ✅ Done |
 | `modeling_transform_object` | `name`, `location`, `rotation`, `scale` | Moves, rotates, or scales an object. | ✅ Done |

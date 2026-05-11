@@ -70,6 +70,33 @@ def test_reference_part_required_gate_recommends_bounded_create_without_role_reg
     assert "guided_register_part" not in blocker.recommended_bounded_tools
 
 
+def test_shape_profile_gate_recommends_bounded_profile_and_arc_tools():
+    plan = normalize_gate_plan(
+        {
+            "source": "reference_understanding",
+            "gates": [
+                {
+                    "gate_id": "shape_profile_tail_profile",
+                    "gate_type": "shape_profile",
+                    "label": "Tail follows the curved reference profile",
+                    "target_kind": "reference_part",
+                    "target_label": "tail_profile",
+                }
+            ],
+        },
+        domain_profile="creature",
+        templates=[],
+    )
+
+    blocker = plan.completion_blockers[0]
+
+    assert blocker.gate_type == "shape_profile"
+    assert blocker.target_label == "tail_profile"
+    assert "mesh_inspect" in blocker.recommended_bounded_tools
+    assert "scene_view_diagnostics" in blocker.recommended_bounded_tools
+    assert "macro_adjust_segment_chain_arc" in blocker.recommended_bounded_tools
+
+
 def test_gate_proposal_intake_ignores_missing_active_guided_goal():
     ctx = FakeContext()
 

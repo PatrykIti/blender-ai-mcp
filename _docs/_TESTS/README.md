@@ -473,6 +473,10 @@ Hybrid-loop assembled-creature regression pack:
   - `truth_followup`
   - `action_hints`
   - `correction_focus`
+- curved-tail gate coverage also includes unit proof that reference
+  understanding derives a generic `shape_profile` blocker plus Blender-backed
+  proof that `TailRoot` stays seated to `Body` while `TailMid` / `TailTip` arc
+  through `macro_adjust_segment_chain_arc`
 
 Focused unit coverage now also protects:
 

@@ -39,11 +39,14 @@ logger = logging.getLogger(__name__)
 
 _GATE_RECOVERY_QUERY_HINTS = (
     "attach",
+    "arc",
     "contact",
+    "curve",
     "deadlock",
     "floating",
     "gap",
     "gate",
+    "profile",
     "repair",
     "reset goal",
     "seam",

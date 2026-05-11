@@ -111,6 +111,9 @@ Rules:
   references, provide them through `router_set_goal(..., gate_proposal={...})`
   using gate types such as `required_part`, `attachment_seam`,
   `symmetry_pair`, `proportion_ratio`, or `shape_profile`
+- for curved, arched, curled, or bushy tails, use a normal `shape_profile`
+  gate such as `target_label="tail_profile"`; do not invent tail-only gate
+  fields for segment counts or profile kind
 - a gate proposal may name expected parts such as `eye_pair`, `ear_pair`, or a
   `tail_body` seam, but it must use declaration statuses like `proposed` or
   `requested`; never claim `passed`, `failed`, `waived`, or `stale`
@@ -125,6 +128,9 @@ Rules:
 - after staged compare/iterate, consume top-level `completion_blockers`,
   `next_gate_actions`, and `recommended_bounded_tools` first; they are the
   checkpoint-facing projection of the same active gate plan
+- when a tail-profile blocker names `macro_adjust_segment_chain_arc`, build or
+  select an ordered root/mid/tip chain first, keep the root seated to the body,
+  then arc the chain and rerun the staged checkpoint
 - for failed seam/support blockers, expect guided visibility/search to return
   bounded relation, measure/assert, and macro repair tools before refinement or
   finish tools
@@ -279,7 +285,9 @@ Workflow:
 21. do not mark the creature complete while required visual-role gates remain
     missing; common quadruped runs need body, head, tail, snout, ears, eyes,
     forelegs, and hindlegs unless a gate is explicitly waived
-22. treat `eye_pair` as a quality gate in this slice, not as a guided role that
+22. do not treat one vertical oval as a completed squirrel-like tail when the
+    active gate plan carries a curved-tail `shape_profile` blocker
+23. treat `eye_pair` as a quality gate in this slice, not as a guided role that
     changes `guided_flow_state.allowed_roles`
 
 At the end of each stage, return only:

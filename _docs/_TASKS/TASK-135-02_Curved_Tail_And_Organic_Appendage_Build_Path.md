@@ -1,6 +1,6 @@
 # TASK-135-02: Curved Tail And Organic Appendage Build Path
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-135](./TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md)
 **Category:** Reconstruction / Guided Creature Tooling
@@ -215,13 +215,45 @@ if creature_profile.tail_shape in {"curved", "bushy", "arched"}:
 
 ## Status / Board Update
 
-- When this direct child ships, update its task status, refresh the parent
-  `TASK-135` execution notes if tail-chain scope or ordering changed, and record
-  whether `_docs/_TASKS/README.md` board wording also changed.
-- Record whether the `pre-commit` lane, owner-lane pytest commands, full unit
-  pass, and full Blender E2E pass ran or were intentionally skipped.
-- If a later `macro_build_curved_tail_chain` follow-on remains necessary, track
-  it explicitly instead of implying it in the closed status text.
+- `TASK-135-02` is closed as the curved-tail / organic appendage gate slice.
+- Parent `TASK-135` remains open for the `TASK-135-03*` low-poly refinement
+  stage family.
+- `_docs/_TASKS/README.md` board wording did not change because the promoted
+  umbrella row remains open.
+- No new `macro_build_curved_tail_chain` follow-on is opened from this slice:
+  the shipped path deliberately uses generic `shape_profile` blockers plus the
+  existing `macro_adjust_segment_chain_arc(...)` macro after an ordered
+  root/mid/tip chain exists.
+
+## Completion Summary
+
+- 2026-05-11: Reference-understanding can derive a normal
+  `shape_profile` quality gate for curved, arched, curled, or bushy tail cues
+  without adding tail-specific schema fields.
+- `shape_profile` blockers now recommend bounded profile/arc tooling,
+  including `macro_adjust_segment_chain_arc(...)`, while visibility still waits
+  behind unresolved required seam/support blockers.
+- Guided search recovery recognizes profile/arc/curve blockers and can surface
+  the existing arc macro instead of pushing the model toward goal reset or
+  broad discovery.
+- Blender-backed macro proof now covers the real creature-tail sequence:
+  `TailRoot` is seated to `Body`, then `TailMid` / `TailTip` are arced while
+  `TailRoot` remains in contact.
+- Prompt, MCP, tool-summary, vision, test, changelog, and task docs now describe
+  the shipped generic-gate tail-profile path.
+
+## Validation Results
+
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_intake.py::test_shape_profile_gate_recommends_bounded_profile_and_arc_tools tests/unit/adapters/mcp/test_search_surface.py::test_failed_tail_profile_gate_search_surfaces_arc_repair_tool tests/unit/adapters/mcp/test_reference_images.py::test_refresh_reference_understanding_summary_derives_curved_tail_shape_profile_gate -q`
+  - passed outside sandbox, `3 passed`
+- `PYTEST_ADDOPTS='-k macro_adjust_segment_chain_arc' poetry run python scripts/run_e2e_tests.py --skip-build`
+  - passed outside sandbox, `2 passed, 472 deselected`
+- `poetry run ruff check server/adapters/mcp/contracts/quality_gates.py server/adapters/mcp/discovery/search_surface.py server/adapters/mcp/vision/parsing.py server/adapters/mcp/vision/reference_gates.py server/adapters/mcp/areas/reference_understanding.py tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/e2e/tools/macro/test_macro_adjust_segment_chain_arc.py`
+  - passed
+- `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure`
+  - passed after rerun; first run reformatted one file through `ruff format`
+- `git diff --check`
+  - passed
 
 ## Acceptance Criteria
 
