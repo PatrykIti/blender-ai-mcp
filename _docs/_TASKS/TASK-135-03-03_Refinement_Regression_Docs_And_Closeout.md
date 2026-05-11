@@ -5,8 +5,24 @@
 **Parent:** [TASK-135-03](./TASK-135-03_Low_Poly_Form_Refinement_Mesh_Window_And_Profile_Macros.md)
 **Depends On:** [TASK-135-03-01](./TASK-135-03-01_Refinement_Stage_State_And_Visibility_Gate.md), [TASK-135-03-02](./TASK-135-03-02_Bounded_Profile_Tools_And_Optional_Macro_Wave.md)
 **Objective:** Lock the new refinement stage with owner-lane regression, Blender-backed proof, and docs that describe the shipped bounded creature refinement path accurately.
-**Repository Touchpoints:** `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_planner.py`, `server/adapters/mcp/areas/reference_feedback.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/unit/adapters/mcp/test_context_bridge.py`, `tests/unit/adapters/mcp/test_guided_mode.py`, `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`, `tests/unit/adapters/mcp/test_public_surface_docs.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/integration/test_guided_surface_contract_parity.py`, `tests/e2e/integration/test_guided_streamable_spatial_support.py`, `tests/e2e/vision/test_goal_derived_gate_creature_completion.py`, `tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py`, `tests/e2e/vision/test_reference_stage_truth_handoff.py`, `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_TESTS/README.md`, `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/`
 **Acceptance Criteria:** primitive-only creature runs cannot complete past the new refinement gate without the required profile work; transport and checkpoint surfaces describe the same stage/blocker semantics; docs and changelog record the shipped behavior and validation lanes accurately.
+
+## Repository Touchpoints
+
+| Path / Module | Owner Seam / Current Lines | Closeout Responsibility |
+|---------------|----------------------------|-------------------------|
+| `server/adapters/mcp/areas/reference.py` | checkpoint route/handoff projection around `reference.py:1490` | Verify staged compare/iterate envelopes report shipped refinement blockers and handoff state |
+| `server/adapters/mcp/areas/reference_planner.py` | `select_refinement_route(...)` at `reference_planner.py:542`; `build_refinement_handoff(...)` at `reference_planner.py:672` | Verify planner route/handoff semantics match docs and tests |
+| `server/adapters/mcp/areas/reference_feedback.py` | orchestrator feedback projection | Verify selected family, next actions, and loop disposition mirror checkpoint state |
+| `server/adapters/mcp/contracts/guided_flow.py` | `GuidedFlowStepLiteral` / `GuidedFlowStateContract` | Verify public contract includes only shipped step/family semantics |
+| `server/adapters/mcp/transforms/visibility_policy.py` | `build_visibility_rules(...)`; `visible_tools_for_gate_plan(...)` | Verify public visible-tool behavior matches the final task docs |
+| `tests/unit/adapters/mcp/test_reference_images.py` | checkpoint fixtures | Owner lane for checkpoint, route, handoff, and feedback semantics |
+| `tests/unit/adapters/mcp/test_contract_payload_parity.py` | public payload parity | Verify response schemas remain stable across direct and transported surfaces |
+| `tests/unit/adapters/mcp/test_context_bridge.py` | guided execution enforcement | Verify mapped mutators are accepted and unmapped mutators remain blocked |
+| `tests/unit/adapters/mcp/test_guided_mode.py`, `test_guided_surface_benchmarks.py`, `test_public_surface_docs.py` | guided/public documentation parity | Verify docs and visible surface describe the same shipped behavior |
+| `tests/e2e/integration/test_guided_gate_state_transport.py`, `test_guided_surface_contract_parity.py`, `test_guided_streamable_spatial_support.py` | stdio/Streamable proof | Verify transport-visible state, visibility, and gate payloads align |
+| `tests/e2e/vision/test_goal_derived_gate_creature_completion.py`, `test_reference_stage_assembled_creature_attachment_truth.py`, `test_reference_stage_truth_handoff.py` | Blender/vision regression proof | Verify primitive-only creature, assembled seams, and refinement handoff behavior in runtime scenarios |
+| `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_TESTS/README.md`, `_docs/_CHANGELOG/` | docs/changelog closeout | Record exact shipped behavior, validation commands, and remaining follow-ons |
 
 ## Implementation Notes
 
@@ -25,6 +41,41 @@
 - record whether the relevant `pre-commit` lane ran or was intentionally skipped,
   and record the parent/child status sync plus `_docs/_TASKS/README.md` board
   update proof when this closeout leaf actually ships
+
+## Pseudocode
+
+```python
+owner_lanes = [
+    "checkpoint_route_handoff",
+    "guided_visibility_and_context_bridge",
+    "payload_contract_parity",
+    "stdio_streamable_transport",
+    "blender_geometry_runtime",
+    "public_docs_and_changelog",
+]
+
+for lane in owner_lanes:
+    result = run_or_record_skip(lane.validation_command)
+    if result.failed:
+        keep_task_open(result.failure_summary)
+
+assert task_statuses_are_consistent(
+    parent="TASK-135-03",
+    children=[
+        "TASK-135-03-01",
+        "TASK-135-03-02",
+        "TASK-135-03-02-01",
+        "TASK-135-03-02-02",
+        "TASK-135-03-02-03",
+        "TASK-135-03-03",
+    ],
+)
+assert every_direct_or_nested_child_is_closed_done_superseded_or_cancelled(
+    before_closing_parent="TASK-135-03",
+)
+assert docs_match_runtime_surface()
+close_leaf_and_parent_only_if_no_follow_on_remains()
+```
 
 ## Runtime / Security Contract Notes
 
@@ -54,18 +105,19 @@
 
 ## Tests To Add/Update
 
-- `tests/unit/adapters/mcp/test_reference_images.py`
-- `tests/unit/adapters/mcp/test_contract_payload_parity.py`
-- `tests/unit/adapters/mcp/test_context_bridge.py`
-- `tests/unit/adapters/mcp/test_guided_mode.py`
-- `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
-- `tests/unit/adapters/mcp/test_public_surface_docs.py`
-- `tests/e2e/integration/test_guided_gate_state_transport.py`
-- `tests/e2e/integration/test_guided_surface_contract_parity.py`
-- `tests/e2e/integration/test_guided_streamable_spatial_support.py`
-- `tests/e2e/vision/test_goal_derived_gate_creature_completion.py`
-- `tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py`
-- `tests/e2e/vision/test_reference_stage_truth_handoff.py`
+| Test File | Cases / Assertions |
+|-----------|--------------------|
+| `tests/unit/adapters/mcp/test_reference_images.py` | primitive-only creature reports refinement blocker; route/handoff/feedback selected family remain aligned after checkpoint and iterate |
+| `tests/unit/adapters/mcp/test_contract_payload_parity.py` | public checkpoint/status payload shape includes shipped refinement fields without unknown extras |
+| `tests/unit/adapters/mcp/test_context_bridge.py` | refinement-visible mutators pass guided enforcement; unrelated hidden mutators remain blocked |
+| `tests/unit/adapters/mcp/test_guided_mode.py` and `test_guided_surface_benchmarks.py` | guided visible capability list and benchmark expectations include only shipped refinement tools |
+| `tests/unit/adapters/mcp/test_public_surface_docs.py` | prompt/MCP/test docs mention only shipped refinement behavior and explicit limitations |
+| `tests/e2e/integration/test_guided_gate_state_transport.py` | active gate/refinement state serializes through transport envelopes |
+| `tests/e2e/integration/test_guided_surface_contract_parity.py` | stdio live tool surface matches contract expectations |
+| `tests/e2e/integration/test_guided_streamable_spatial_support.py` | Streamable HTTP visible tools and guided state match stdio for the same scenario |
+| `tests/e2e/vision/test_goal_derived_gate_creature_completion.py` | primitive-only creature cannot pass final completion before profile/refinement blockers clear |
+| `tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py` | required seams and refinement blockers remain visible in truth/follow-up payloads |
+| `tests/e2e/vision/test_reference_stage_truth_handoff.py` | refinement route/handoff survives real staged truth handoff |
 
 ## Docs To Update
 

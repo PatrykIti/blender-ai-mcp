@@ -280,6 +280,25 @@ This umbrella does **not** cover:
 - `TASK-128` closure is no longer implicitly treated as equivalent to
   anatomy-aware creature reconstruction delivery
 
+### Observable Runtime Acceptance
+
+The umbrella is complete only when the shipped runtime proves these concrete
+outcomes, not only when the documentation describes them:
+
+- A primitive-only quadruped creature with named body parts but missing eyes,
+  unresolved required seams, or an unprofiled dominant tail reports blocking
+  `active_gate_plan.completion_blockers` on the staged checkpoint surface.
+- `reference_iterate_stage_checkpoint(...)` and `router_get_status(...)` expose
+  the same required-part, seam, and refinement blockers for the active session.
+- Bounded repair recommendations prefer existing attachment, alignment,
+  tail-arc, modeling, or mesh tools for the active blocker family and do not
+  expose broad sculpt by default for low-poly/faceted references.
+- Representative front/side creature scenarios include at least squirrel,
+  beaver, dog, and cat-style quadruped profiles so the contract stays generic
+  across common mammals instead of hardcoding one squirrel checklist.
+- Stdio and Streamable HTTP guided surfaces agree on visible tools,
+  `guided_flow_state.current_step`, and gate/blocker payload shape.
+
 ## Repository Touchpoints
 
 - `server/adapters/mcp/prompts/prompt_catalog.py`
@@ -328,56 +347,55 @@ separate follow-on explicitly reopens those closed surfaces.
 
 ## Repository Touchpoint Table
 
-| Path / Module | Scope | Expected Work |
-|---------------|-------|---------------|
-| `server/adapters/mcp/contracts/reference.py` | Reference loop contracts | Reuse the existing `TASK-157` gate-summary, completion-blocker, and `TASK-163` linkage fields for creature-specific semantics instead of inventing new checkpoint envelopes |
-| `server/adapters/mcp/contracts/quality_gates.py` | Generic dependency | Consume normalized gate types for creature-specific templates |
-| `server/adapters/mcp/contracts/guided_flow.py` | Public guided-flow contract | Add any new creature refinement step literals while keeping the existing guided family vocabulary strict and machine-readable on checkpoint/router surfaces |
-| `server/adapters/mcp/areas/reference.py` | Checkpoint facade | Keep the public staged compare/iterate surface aligned while delegating planner and feedback details to the split owner modules below |
-| `server/adapters/mcp/areas/reference_planner.py` | Planner policy | Keep `refinement_route` / `refinement_handoff` selection aligned with creature refinement and assembly blockers |
-| `server/adapters/mcp/areas/reference_feedback.py` | Orchestrator read model | Keep `reference_orchestrator_feedback` aligned with gate status, planner family, next actions, and loop disposition when creature blocker semantics change |
-| `server/adapters/mcp/areas/reference_truth.py` | Truth bundle and follow-up assembly | Keep creature seam/profile failures aligned with the staged truth/follow-up payloads that already feed checkpoint decisions |
-| `server/adapters/mcp/session_capabilities.py` | Stable facade | Keep the public session-capability API stable while new creature state/gate fields route through the split session-capability modules below |
-| `server/adapters/mcp/session_capabilities_registry.py` | Guided step advancement | Advance creature steps from part-registration and checkpoint outcomes once a refinement stage becomes explicit, while keeping the public facade stable |
-| `server/adapters/mcp/session_capabilities_state.py` | Session state model | Persist creature gate plan, role cardinality, stale gate versions, and next gate actions in the canonical session state |
-| `server/adapters/mcp/session_capabilities_flow.py` | Guided step/domain policy | Extend creature step progression and role-group expectations for reconstruction-oriented flow stages |
-| `server/adapters/mcp/session_capabilities_runtime_glue.py` | Gate projection and stale marking | Apply gate-plan updates, guided-state refresh, and visibility sync on the runtime path |
-| `server/application/services/spatial_graph.py` | Truth mapping | Map creature seam relations to `attachment_seam` and `support_contact` gate evidence |
-| `server/adapters/mcp/transforms/quality_gate_verifier.py` | Gate authority | Keep creature completion and refinement blockers grounded in verifier-owned pass/fail logic instead of prose or perception confidence |
-| `server/adapters/mcp/areas/scene.py` | Bounded macros | Use attach/align/arc/profile macros as gate repair tools |
-| `server/adapters/mcp/areas/mesh.py` | Form refinement | Expose bounded mesh tools during the creature refinement gate window |
-| `server/adapters/mcp/areas/modeling.py` | Primitive and transform | Keep primary/secondary creation role-aware and mark affected gates stale |
-| `server/adapters/mcp/discovery/search_documents.py` and `server/adapters/mcp/discovery/search_surface.py` | Search shaping | Bias creature gate blockers toward attachment, arc-tail, eye/detail, and mesh-profile tools on the current runtime search surface |
-| `server/router/infrastructure/tools_metadata/` | Metadata | Add gate-oriented hints for creature repair/refinement tools |
-| `server/adapters/mcp/prompts/prompt_catalog.py`, `server/adapters/mcp/prompts/provider.py`, and `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md` | Prompt assets | Keep the current prompt-asset surface aligned with creature reconstruction sequencing instead of inventing a second prompt path |
-| `blender_addon/application/handlers/mesh.py` | E2E-backed behavior | Update only if mesh refinement gates require new Blender operations |
-| `blender_addon/application/handlers/modeling.py` | E2E-backed behavior | Update only if profile/appendage macros need new primitive or transform support |
-| `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md` | Prompt guidance | Teach dynamic gates, required seams, eyes/detail, tail chain, and refinement window |
-| `_docs/_MCP_SERVER/README.md` | Public contract | Document creature gate status and repair recommendations |
-| `_docs/_TESTS/README.md` | Test lanes | Document creature gate unit/E2E regression commands |
+| Path / Module | Owner Seam / Current Lines | Expected Ownership | Why In Scope |
+|---------------|----------------------------|--------------------|--------------|
+| `server/adapters/mcp/contracts/quality_gates.py` | `DomainQualityGateTemplateContract`, creature templates around `quality_gates.py:409` | Normalize creature-specific roles into generic `required_part`, `attachment_seam`, `shape_profile`, `refinement_stage`, and `final_completion` gates | Keeps squirrel, beaver, dog, cat, and other mammal cases on one typed gate vocabulary |
+| `server/adapters/mcp/transforms/quality_gate_verifier.py` | `_verify_required_part_gate(...)` at `quality_gate_verifier.py:131`, `_verify_refinement_stage_gate(...)` at `quality_gate_verifier.py:495`, `_apply_final_completion_status(...)` at `quality_gate_verifier.py:380` | Own deterministic pass/fail/block status for required parts, seams, refinement, and final completion | Prevents prose confidence, semantic similarity, or vision-only claims from becoming completion authority |
+| `server/adapters/mcp/contracts/guided_flow.py` | `GuidedFlowStepLiteral` at `guided_flow.py:24`, `GuidedFlowFamilyLiteral` at `guided_flow.py:13` | Add/refine step literals without expanding family literals unless a public contract change is required | Defines the public guided state shape that clients and transport tests must agree on |
+| `server/adapters/mcp/session_capabilities_flow.py` | `_build_allowed_families(...)` at `session_capabilities_flow.py:480`, `_flow_state_for_current_step(...)` at `session_capabilities_flow.py:634`, `_apply_spatial_refresh_gate(...)` at `session_capabilities_flow.py:690` | Own guided step policy, family visibility, role summaries, and stale spatial refresh behavior | Ensures refinement can open bounded tools only after prerequisite roles/seams are stable |
+| `server/adapters/mcp/session_capabilities_registry.py` | `_maybe_advance_guided_flow_from_part_registry_dict(...)` at `session_capabilities_registry.py:60`, registration helpers at `session_capabilities_registry.py:108` | Own role-registration-driven step advancement and any checkpoint-driven transition into refinement | Keeps guided state advancement server-owned instead of client-prose-driven |
+| `server/adapters/mcp/session_capabilities_state.py` | `SessionCapabilityState` and serialization helpers | Persist guided flow, gate plan, stale versions, and active role/cardinality data | Required for stdio/Streamable parity and session recovery |
+| `server/adapters/mcp/session_capabilities_runtime_glue.py` | gate-plan refresh and visibility sync helpers | Project gate updates back into session state and current visibility | Prevents stale gate success after mutating scene/modeling/mesh operations |
+| `server/adapters/mcp/areas/reference.py` | checkpoint assembly and route projection around `reference.py:1490` | Keep staged compare/iterate response envelopes aligned with active gate plan, `refinement_route`, and `refinement_handoff` | Public checkpoint surface must report the same blockers future implementers test |
+| `server/adapters/mcp/areas/reference_truth.py` | required creature seam and truth-follow-up builders | Convert assembled-scene truth into gate proposals and follow-up evidence | Keeps relation/seam failures deterministic and inspectable |
+| `server/adapters/mcp/areas/reference_planner.py` | `select_refinement_route(...)` at `reference_planner.py:542`, `build_refinement_handoff(...)` at `reference_planner.py:672` | Select `macro`, `modeling_mesh`, `sculpt_region`, or `inspect_only` from current blockers and low-poly intent | Low-poly creature refinement must prefer bounded modeling/mesh unless deterministic conditions justify another family |
+| `server/adapters/mcp/areas/reference_feedback.py` | `reference_orchestrator_feedback` assembly | Keep client-facing next actions, selected family, and loop disposition aligned with checkpoint blockers | Prevents planner/checkpoint/feedback drift |
+| `server/adapters/mcp/transforms/visibility_policy.py` | `build_visibility_rules(...)` at `visibility_policy.py:591`, `visible_tools_for_gate_plan(...)` at `visibility_policy.py:702` | Expose only bounded tools implied by current guided step and gate blockers | Avoids broad catalog exposure during creature refinement |
+| `server/adapters/mcp/discovery/search_surface.py` and `search_documents.py` | `build_search_transform(...)` at `search_surface.py:435`, discovery entries | Rank bounded repair/refinement tools for blocker-specific searches | Makes tool discovery match the active gate state |
+| `server/adapters/mcp/areas/scene.py` | `macro_adjust_segment_chain_arc(...)` at `scene.py:881`, attach/align macro wrappers | Keep tail-chain and attachment repairs on the existing macro surface | Reuses shipped deterministic macros before proposing new ones |
+| `server/application/tool_handlers/macro_handler.py` and `server/domain/tools/macro.py` | macro handler/interface methods such as `adjust_segment_chain_arc(...)` | Extend only if a leaf proves existing mesh/modeling tools are insufficient | Keeps optional macro promotion bounded and cross-layer complete |
+| `server/adapters/mcp/areas/mesh.py` and `server/adapters/mcp/areas/modeling.py` | bounded mesh/modeling action wrappers | Provide the first-line profile/refinement operations | Main write-side surface for low-poly faceting and profile adjustment |
+| `server/router/infrastructure/tools_metadata/**` | metadata JSON for mesh/modeling/scene/macro tools | Add gate/search hints only when corresponding runtime visibility/search behavior ships | Keeps router metadata, schema checks, and discovery aligned |
+| `blender_addon/application/handlers/mesh.py` and `modeling.py` | addon-side handlers for changed mutators only | Update only for new Blender behavior; do not touch for server-composed macros | Preserves Clean Architecture and avoids unnecessary addon churn |
+| `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_TESTS/README.md` | public prompt/MCP/test docs | Document shipped behavior, validation lanes, and limitations after each implementation slice | Keeps docs aligned with runtime and task closeout |
 
 ## First Execution Slices
 
 | Order | Subtask | Purpose |
 |------|---------|---------|
 | 1 | [TASK-135-01](./TASK-135-01_Creature_Blockout_Completion_Contract_And_Required_Detail_Gates.md) | ✅ Closed: primitive-only creature runs cannot complete when required visual details or seated required seams are missing |
-| 2 | [TASK-135-02](./TASK-135-02_Curved_Tail_And_Organic_Appendage_Build_Path.md) | Turn curved/bushy tails into an explicit tail-chain and arc-building path instead of one detached oval |
-| 3 | [TASK-135-03](./TASK-135-03_Low_Poly_Form_Refinement_Mesh_Window_And_Profile_Macros.md) | Add a bounded mesh/modeling refinement window after primitive placement so low-poly forms can be profiled instead of left as blobs |
+| 2A | [TASK-135-02](./TASK-135-02_Curved_Tail_And_Organic_Appendage_Build_Path.md) | Add tail-chain/arc policy on top of existing `macro_adjust_segment_chain_arc(...)`; may run after `TASK-135-01` without waiting for `TASK-135-03` |
+| 2B | [TASK-135-03](./TASK-135-03_Low_Poly_Form_Refinement_Mesh_Window_And_Profile_Macros.md) | Add a bounded mesh/modeling refinement window after primitive placement; may run after `TASK-135-01` in parallel with `TASK-135-02` if ownership stays disjoint |
+
+`TASK-135-02` and `TASK-135-03` are parallel follow-on branches after
+`TASK-135-01`, not a strict serial dependency. If a future implementation makes
+tail-chain policy depend on the explicit refinement stage, update both task
+files and this table in the same branch.
 
 ## Test Matrix
 
-| Layer | Tests To Add / Update |
-|-------|------------------------|
-| Unit gate templates | Creature template adds required roles and seams for common quadruped mammals |
-| Unit role/cardinality | `eye_pair`, `ear_pair`, `foreleg_pair`, and `hindleg_pair` require complete pairs |
-| Unit seam verification | `floating_gap` blocks completion for required creature seams |
-| Unit search/visibility | Active creature gate exposes only bounded relevant repair/refinement tools |
-| Unit reference loop | `reference_iterate_stage_checkpoint(...)` reports gate blockers and refuses completion |
-| Unit macro contracts | Attach/align/arc/profile macros expose structured gate-repair evidence |
-| E2E macro | Tail/body, limb/body, snout/head, and eye/head seam repairs satisfy gate checks |
-| E2E vision creature | Primitive-only squirrel without eyes, seated seams, and curved tail fails final completion |
-| E2E guided runtime | Creature flow advances from primitive placement to refinement gate without broad catalog exposure |
-| Docs tests | Prompt/MCP/test docs describe the same creature gate semantics |
+| Layer | Tests / Fixtures To Add Or Update |
+|-------|-----------------------------------|
+| Unit gate templates | `tests/unit/adapters/mcp/test_quality_gate_intake.py`: common quadruped templates normalize body/head/tail/snout/ears/eyes/forelegs/hindlegs without species-specific gate schema |
+| Unit verifier | `tests/unit/adapters/mcp/test_quality_gate_verifier.py`: missing pairs, stale gates, `floating_gap`, and refinement-stage blockers fail final completion deterministically |
+| Unit guided state | `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`: `refine_low_poly_forms` persists, restores, and blocks on stale spatial/gate evidence |
+| Unit visibility/search | `test_visibility_policy.py`, `test_search_surface.py`, `test_guided_mode.py`: active blocker exposes bounded attachment/tail/profile tools only, with sculpt hidden for low-poly default |
+| Unit reference loop | `tests/unit/adapters/mcp/test_reference_images.py`: checkpoint and iterate payloads carry the same gate blockers, route, handoff, and feedback selected family |
+| Unit context bridge | `tests/unit/adapters/mcp/test_context_bridge.py`: guided execution enforcement accepts only mapped mutators for the active refinement/tail branch |
+| Router/transport integration | `tests/e2e/integration/test_guided_gate_state_transport.py`, `test_guided_surface_contract_parity.py`, `test_guided_streamable_spatial_support.py`: stdio and Streamable agree on guided state, visible tools, and gate payloads |
+| Blender E2E macro/mesh | `tests/e2e/tools/macro/` and `tests/e2e/tools/mesh/`: real geometry stays attached/seated and mode/selection are restored after tail/profile repairs |
+| Vision/regression fixtures | `tests/e2e/vision/` plus fixture/golden data for squirrel, beaver, dog, and cat front/side profiles: primitive-only or name-only builds fail required blockers |
+| Docs tests | `tests/unit/adapters/mcp/test_public_surface_docs.py`: prompt/MCP/test docs describe the same shipped gate, refinement, and limitation semantics |
 
 ## Docs To Update
 

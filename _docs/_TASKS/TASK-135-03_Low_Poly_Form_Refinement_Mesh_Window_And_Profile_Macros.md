@@ -50,34 +50,23 @@ of creating a second refinement recommendation path.
 
 ## Repository Touchpoints
 
-| Path / Module | Expected Change |
-|---------------|-----------------|
-| `server/adapters/mcp/session_capabilities.py` | Keep the public session-capability facade stable while refinement-stage state routes through the split modules below |
-| `server/adapters/mcp/contracts/guided_flow.py` | Add the explicit refinement step literal and keep the existing guided family vocabulary strict on public router/reference payloads |
-| `server/adapters/mcp/session_capabilities_registry.py` | Advance into and out of the refinement step from role registration and checkpoint outcomes on the current split guided runtime |
-| `server/adapters/mcp/session_capabilities_state.py` | Persist the updated guided flow state, gate plan, and stale markers for the refinement step in the canonical session state |
-| `server/adapters/mcp/session_capabilities_flow.py` | Extend creature step sequencing and role-group policy for the refinement stage |
-| `server/adapters/mcp/session_capabilities_runtime_glue.py` | Keep gate-plan refresh, stale marking, and visibility sync aligned with the new refinement stage |
-| `server/adapters/mcp/transforms/visibility_policy.py` | Open bounded mesh/modeling tools only when refinement prerequisites pass |
-| `server/adapters/mcp/discovery/search_documents.py` and `server/adapters/mcp/discovery/search_surface.py` | Add low-poly profile/refinement search cues on the live discovery surface |
-| `server/adapters/mcp/areas/reference.py` | Keep the public staged compare/iterate surface aligned while the split planner/feedback owners below project refinement details |
-| `server/adapters/mcp/areas/reference_planner.py` | Keep `refinement_route` / `refinement_handoff` aligned with the explicit refinement step and current candidate ranking logic |
-| `server/adapters/mcp/areas/reference_feedback.py` | Keep `reference_orchestrator_feedback` aligned when refinement changes selected family, blockers, next actions, or checkpoint advice |
-| `server/adapters/mcp/areas/mesh.py` | Ensure selected mesh tools work in the guided refinement window |
-| `server/adapters/mcp/areas/modeling.py` | Keep bounded transforms available for part profiling |
-| `server/adapters/mcp/areas/scene.py` | Add or expose profile macros if needed |
-| `server/router/infrastructure/tools_metadata/` | Add gate metadata for refinement tools and macros |
-| `server/application/tool_handlers/macro_handler.py` | Add optional profile macros only when existing mesh tools are insufficient |
-| `blender_addon/application/handlers/mesh.py` | Update if new mesh operations are required |
-| `blender_addon/application/handlers/modeling.py` | Update if profile macros need addon support |
-| `tests/unit/adapters/mcp/` | Visibility, checkpoint, gate prerequisite tests |
-| `tests/unit/tools/macro/` | Profile macro tests if macros are introduced |
-| `tests/e2e/tools/mesh/` | Blender-backed mesh refinement tests |
-| `tests/unit/adapters/mcp/test_reference_images.py` | Keep low-poly refinement-family routing aligned with the checkpoint planner surfaces |
-| `tests/e2e/vision/test_reference_stage_truth_handoff.py` | Prove the staged refinement route/handoff stays aligned with the explicit refinement step |
-| `tests/e2e/vision/` | Primitive-only creature cannot complete before refinement gate |
-| `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md` | Document refinement window and completion blockers |
-| `_docs/_MCP_SERVER/README.md` | Document gated mesh visibility and profile gate semantics |
+| Path / Module | Owner Seam / Current Lines | Expected Change |
+|---------------|----------------------------|-----------------|
+| `server/adapters/mcp/contracts/guided_flow.py` | `GuidedFlowStepLiteral` at `guided_flow.py:24`; `GuidedFlowFamilyLiteral` at `guided_flow.py:13` | Add one explicit refinement step while preserving the current family vocabulary unless a public contract delta is unavoidable |
+| `server/adapters/mcp/session_capabilities_flow.py` | `_build_allowed_families(...)` at `session_capabilities_flow.py:480`; `_flow_state_for_current_step(...)` at `session_capabilities_flow.py:634`; `_apply_spatial_refresh_gate(...)` at `session_capabilities_flow.py:690` | Own refinement-step allowed families, next actions, stale-state blocking, and role summaries |
+| `server/adapters/mcp/session_capabilities_registry.py` | `_maybe_advance_guided_flow_from_part_registry_dict(...)` at `session_capabilities_registry.py:60` | Advance only after required roles and required seams are stable; do not advance from part names alone |
+| `server/adapters/mcp/session_capabilities_state.py` | `SessionCapabilityState` serialization | Persist the new step, gate plan, stale markers, and role summaries for stdio/Streamable parity |
+| `server/adapters/mcp/session_capabilities_runtime_glue.py` | gate-plan refresh and visibility projection helpers | Keep session state, gate state, and visibility synchronized after mutations |
+| `server/adapters/mcp/transforms/visibility_policy.py` | `build_visibility_rules(...)` at `visibility_policy.py:591`; `visible_tools_for_gate_plan(...)` at `visibility_policy.py:702` | Open bounded mesh/modeling/profile tools only when refinement blockers require them |
+| `server/adapters/mcp/discovery/search_surface.py` and `search_documents.py` | `build_search_transform(...)` at `search_surface.py:435`; discovery entries | Make "profile low-poly body/ears/limbs/tail" resolve to bounded tools on the current guided surface |
+| `server/adapters/mcp/areas/reference.py` | checkpoint route/handoff projection around `reference.py:1490` | Keep compare/iterate payloads aligned with refinement step and blockers |
+| `server/adapters/mcp/areas/reference_planner.py` | `select_refinement_route(...)` at `reference_planner.py:542`; `build_refinement_handoff(...)` at `reference_planner.py:672` | Keep low-poly/faceted refs on `modeling_mesh` unless deterministic macro or inspect blockers dominate |
+| `server/adapters/mcp/areas/reference_feedback.py` | orchestrator feedback projection | Keep selected family, next actions, and loop disposition aligned with refinement state |
+| `server/adapters/mcp/areas/mesh.py` and `modeling.py` | bounded mesh/modeling wrappers | Provide the first implementation lane for profile changes without adding broad sculpt |
+| `server/adapters/mcp/areas/scene.py` | `macro_adjust_segment_chain_arc(...)` at `scene.py:881`; attach/align macros | Reuse existing macro tools for tail/attachment refinements before adding profile-specific macros |
+| `server/application/tool_handlers/macro_handler.py`, `server/domain/tools/macro.py`, `server/adapters/mcp/dispatcher.py` | macro interface/handler/dispatcher seams | Touch only in optional macro-promotion leaves after existing tools prove insufficient |
+| `blender_addon/application/handlers/mesh.py` and `modeling.py` | addon-side mutators | Touch only when a new Blender operation is required and prove it with E2E |
+| `tests/unit/adapters/mcp/**`, `tests/e2e/integration/**`, `tests/e2e/vision/**`, `tests/e2e/tools/**` | owner-lane regression files | Add exact state, visibility, route, transport, and Blender geometry assertions listed in the child leaves |
 
 ## Implementation Notes
 
@@ -165,7 +154,10 @@ if current_step == "refine_low_poly_forms":
 | Order | Leaf | Purpose |
 |------|------|---------|
 | 1 | [TASK-135-03-01](./TASK-135-03-01_Refinement_Stage_State_And_Visibility_Gate.md) | Add the explicit refinement stage to guided state, gate policy, and visibility shaping |
-| 2 | [TASK-135-03-02](./TASK-135-03-02_Bounded_Profile_Tools_And_Optional_Macro_Wave.md) | Make the refinement stage operational with bounded profile tools and only the smallest necessary macro additions |
+| 2 | [TASK-135-03-02](./TASK-135-03-02_Bounded_Profile_Tools_And_Optional_Macro_Wave.md) | Decomposition anchor for the bounded profile-tool wave; do not implement as one oversized leaf |
+| 2.1 | [TASK-135-03-02-01](./TASK-135-03-02-01_Refinement_Visibility_Search_And_Planner_Routing.md) | Wire refinement blockers to visibility, discovery, and planner routing with existing tools only |
+| 2.2 | [TASK-135-03-02-02](./TASK-135-03-02-02_Existing_Profile_Tool_Proof_And_Geometry_Cases.md) | Prove selected mesh/modeling/macro operations can profile creature parts without new public macros |
+| 2.3 | [TASK-135-03-02-03](./TASK-135-03-02-03_Optional_Profile_Macro_Promotion.md) | Promote a new macro only if 2.2 proves repeated unsafe choreography remains |
 | 3 | [TASK-135-03-03](./TASK-135-03-03_Refinement_Regression_Docs_And_Closeout.md) | Lock the new refinement path with transport/Blender-backed proof and final docs/changelog alignment |
 
 ## Runtime / Security Contract Notes

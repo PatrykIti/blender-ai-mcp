@@ -247,6 +247,10 @@ return maybe_complete()
   - passed outside sandbox, `1 passed, 470 deselected`
 - `poetry run python -u scripts/run_e2e_tests.py`
   - passed outside sandbox, `468 passed, 3 skipped`
+- `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure`
+  - not recorded in the original closeout; do not infer that it ran. If
+    `TASK-135-01` is reopened for code-level review, rerun the pre-commit lane
+    or record an explicit skip with rationale in the follow-up closeout.
 - `git diff --check`
   - passed
 

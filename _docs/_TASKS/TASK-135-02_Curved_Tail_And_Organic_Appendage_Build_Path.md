@@ -33,38 +33,24 @@ front/side reference proportions are partially followed.
 
 ## Repository Touchpoints
 
-| Path / Module | Expected Change |
-|---------------|-----------------|
-| `server/adapters/mcp/contracts/quality_gates.py` | Keep the curved-tail gate on the existing `allowed_correction_families` plus `recommended_bounded_tools` contract shape |
-| `server/adapters/mcp/contracts/reference.py` | Reuse the existing staged checkpoint fields when curved-tail blockers need to surface on compare/iterate responses |
-| `server/adapters/mcp/areas/reference.py` | Keep the public staged compare/iterate surface aligned while the split planner/feedback owners below project curved-tail blockers |
-| `server/adapters/mcp/areas/reference_planner.py` | Keep curved-tail blocker routing aligned with the live `refinement_route` / `refinement_handoff` owner logic |
-| `server/adapters/mcp/areas/reference_feedback.py` | Keep `reference_orchestrator_feedback` aligned when curved-tail blockers change selected family, next actions, or checkpoint advice |
-| `server/adapters/mcp/areas/reference_truth.py` | Keep tail-root seating and curved-tail truth findings aligned with existing staged truth/follow-up assembly |
-| `server/adapters/mcp/transforms/quality_gate_verifier.py` | Verify curved-tail blockers on the existing `shape_profile` plus attachment-gate path instead of introducing ad hoc gate fields |
-| `server/adapters/mcp/areas/scene.py` | Keep `macro_adjust_segment_chain_arc(...)` visible/recommended for appendage-chain gates |
-| `server/domain/tools/macro.py` | Extend the macro interface only if a promoted `macro_build_curved_tail_chain` is unavoidable on the existing public macro surface |
-| `server/application/tool_handlers/macro_handler.py` | Extend only if a new `macro_build_curved_tail_chain` becomes necessary |
-| `server/adapters/mcp/dispatcher.py` | Register a promoted tail-chain macro only if it becomes a real public macro on the current scene/macro surface |
-| `server/adapters/mcp/transforms/visibility_policy.py` | Keep any promoted tail-chain macro visible only through the guided tool sets that already gate mutators by phase and blocker state |
-| `server/adapters/mcp/router_helper.py` | Map any promoted tail-chain macro into guided family enforcement so `llm-guided` does not hard-block it as an unmapped mutator |
-| `server/adapters/mcp/discovery/search_documents.py` and `server/adapters/mcp/discovery/search_surface.py` | Add search cues for curved/bushy/arched appendage chains on the live discovery surface |
-| `server/router/infrastructure/tools_metadata/` | Add metadata linking tail profile gates to arc and attachment macros |
-| `server/adapters/mcp/prompts/prompt_catalog.py`, `server/adapters/mcp/prompts/provider.py`, and `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md` | Teach multi-segment tail creation before arc adjustment on the current prompt-asset surface |
-| `tests/unit/adapters/mcp/test_contract_payload_parity.py` | Keep staged checkpoint payload wording aligned if curved-tail blockers surface on compare/iterate envelopes |
-| `tests/unit/adapters/mcp/test_visibility_policy.py` | Keep guided visibility and blocker-driven tool exposure aligned if a tail-chain macro becomes part of the guided surface |
-| `tests/unit/adapters/mcp/test_context_bridge.py` | Keep guided execution enforcement aligned if a promoted tail-chain macro becomes a visible mutator on `llm-guided` |
-| `tests/unit/adapters/mcp/test_guided_mode.py` and `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py` | Keep guided search/visibility exposure aligned if curved-tail guidance becomes client-visible on the default guided surface |
-| `tests/unit/adapters/mcp/test_public_surface_docs.py` | Keep public checkpoint and macro docs aligned if this leaf changes the client-visible contract |
-| `tests/unit/adapters/mcp/test_prompt_catalog.py` and `tests/unit/adapters/mcp/test_prompt_provider.py` | Keep native prompt-surface exposure aligned if this leaf really changes prompt catalog/provider output instead of docs only |
-| `tests/unit/tools/macro/test_macro_adjust_segment_chain_arc.py` | Add appendage-chain arc cases |
-| `tests/unit/tools/scene/test_macro_adjust_segment_chain_arc_mcp.py` | Add MCP structured contract cases |
-| `tests/e2e/integration/test_guided_streamable_spatial_support.py` | Prove the same guided macro exposure and enforcement still behaves on the Streamable HTTP path |
-| `tests/e2e/integration/test_guided_surface_contract_parity.py` | Prove that any guided-surface macro exposure actually appears on the live stdio surface and is not hidden or hard-blocked |
-| `tests/e2e/tools/macro/test_macro_adjust_segment_chain_arc.py` | Add Blender-backed tail-chain arc case |
-| `tests/e2e/vision/` | Add squirrel-tail profile gate scenario |
-| `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md` | Document tail chain and arc gate flow |
-| `_docs/_MCP_SERVER/README.md` | Document appendage-chain use of existing macro |
+| Path / Module | Owner Seam / Current Lines | Expected Change |
+|---------------|----------------------------|-----------------|
+| `server/adapters/mcp/contracts/quality_gates.py` | `shape_profile`, `attachment_seam`, `recommended_bounded_tools`, creature templates around `quality_gates.py:409` | Keep curved-tail semantics on existing gate vocabulary; do not add tail-specific gate schema fields |
+| `server/adapters/mcp/transforms/quality_gate_verifier.py` | `_verify_refinement_stage_gate(...)` at `quality_gate_verifier.py:495`, mesh-metric follow-up around `quality_gate_verifier.py:112` | Block curved-tail completion until shape/profile evidence exists; do not pass from prose or species names |
+| `server/adapters/mcp/areas/reference.py` | staged checkpoint route projection around `reference.py:1490` | Surface curved-tail blockers through existing compare/iterate envelopes |
+| `server/adapters/mcp/areas/reference_truth.py` | required creature seam and truth-follow-up assembly | Attach `TailRoot`/body seating truth to the same follow-up path as other creature seams |
+| `server/adapters/mcp/areas/reference_planner.py` | `select_refinement_route(...)` at `reference_planner.py:542` | Route detached tail-root blockers to `macro`; route tail profile drift to `modeling_mesh` or existing arc macro recommendations |
+| `server/adapters/mcp/areas/reference_feedback.py` | `reference_orchestrator_feedback` projection | Keep selected family, next action, and loop disposition aligned with curved-tail blockers |
+| `server/adapters/mcp/areas/scene.py` | `macro_adjust_segment_chain_arc(...)` at `scene.py:881` | Reuse the shipped appendage-chain arc macro as the first repair primitive |
+| `server/application/tool_handlers/macro_handler.py` | `adjust_segment_chain_arc(...)` handler around `macro_handler.py:1771` | Extend only if an explicit tail-builder macro is promoted after proof that current primitives are insufficient |
+| `server/domain/tools/macro.py` | macro interface methods | Add new macro contract only for a promoted tail-builder follow-on |
+| `server/adapters/mcp/dispatcher.py` | macro dispatcher mapping around `dispatcher.py:174` | Register a promoted tail-chain macro only if it becomes a real public macro |
+| `server/adapters/mcp/transforms/visibility_policy.py` | `build_visibility_rules(...)` at `visibility_policy.py:591`, `visible_tools_for_gate_plan(...)` at `visibility_policy.py:702` | Expose arc/attachment tools only when gate blockers justify them |
+| `server/adapters/mcp/router_helper.py` | guided execution-policy decision around `router_helper.py:757` | Map any promoted tail-chain mutator into guided enforcement before exposing it |
+| `server/adapters/mcp/discovery/search_surface.py` and `search_documents.py` | `build_search_transform(...)` at `search_surface.py:435`, discovery entries | Add curved/bushy/arched appendage search cues to the live discovery surface |
+| `server/router/infrastructure/tools_metadata/**` | scene/macro metadata JSON | Add metadata only for shipped visible tools or promoted macros |
+| Prompt/docs surfaces | `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`, `_docs/_MCP_SERVER/README.md` | Document tail chain and arc gate flow after runtime behavior ships |
+| Test lanes | `test_macro_adjust_segment_chain_arc.py`, `test_macro_adjust_segment_chain_arc_mcp.py`, guided visibility/search/context tests, E2E macro/vision tests | Add explicit chain, root seating, visibility, and Streamable parity assertions |
 
 ## Implementation Notes
 
