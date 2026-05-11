@@ -1929,7 +1929,7 @@ def test_guided_surface_fails_closed_for_non_bypassed_direct_and_discovered_call
     direct, discovered = asyncio.run(run())
 
     direct_text = "".join(getattr(block, "text", "") for block in direct.content)
-    discovered_text = "".join(getattr(block, "text", "") for block in discovered.content)
+    discovered_payload = _decode_tool_result(discovered)
 
     assert "Router processing failed" in direct_text
-    assert discovered_text == direct_text
+    assert discovered_payload == direct_text

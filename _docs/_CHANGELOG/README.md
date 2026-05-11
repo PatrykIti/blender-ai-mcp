@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [343](./343-2026-05-11-streamable-call-tool-proxy-result.md) | 2026-05-11 | **Streamable call_tool proxy result unwrap** | - |
 | [342](./342-2026-05-11-task-166-ranking-downgrade-actionability.md) | 2026-05-11 | **TASK-166 ranking downgrade actionability** | - |
 | [341](./341-2026-05-11-task-166-final-drift-cleanup.md) | 2026-05-11 | **TASK-166 final drift cleanup** | - |
 | [340](./340-2026-05-10-task-166-post-review-drift-repairs.md) | 2026-05-10 | **TASK-166 post-review drift repairs** | - |

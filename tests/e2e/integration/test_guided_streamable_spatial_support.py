@@ -321,6 +321,14 @@ def test_streamable_guided_session_expands_visible_tools_after_goal_handoff(tmp_
             collection_names = {item["name"] for item in collection_search}
             assert "collection_manage" in collection_names
 
+            collection_result = result_payload(
+                await client.call_tool(
+                    "call_tool",
+                    {"name": "collection_manage", "arguments": {"action": "create", "collection_name": "Squirrel"}},
+                )
+            )
+            assert collection_result == "Created collection 'Squirrel' under Scene Collection"
+
     with run_streamable_server(script_path) as url:
         asyncio.run(run(url))
 

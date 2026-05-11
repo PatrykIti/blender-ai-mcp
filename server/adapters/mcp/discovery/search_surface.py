@@ -59,6 +59,25 @@ def _unknown_tool_error_message(tool_name: str) -> str:
     )
 
 
+def _proxied_tool_payload(result: ToolResult) -> Any:
+    """Return the client-facing payload from an in-process FastMCP tool call."""
+
+    structured = getattr(result, "structured_content", None)
+    if structured is not None:
+        if isinstance(structured, dict) and "result" in structured:
+            return structured["result"]
+        return structured
+
+    blocks = getattr(result, "content", []) or []
+    text = "".join(getattr(block, "text", "") for block in blocks).strip()
+    if not text:
+        return None
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        return text
+
+
 def _pending_required_check_names(guided_flow_state: dict[str, Any] | None) -> list[str]:
     if not isinstance(guided_flow_state, dict):
         return []
@@ -381,7 +400,9 @@ class BlenderDiscoverySearchTransform(BM25SearchTransform):
                     )
                 )
             try:
-                return await ctx.fastmcp.call_tool(resolved_name, canonical_arguments)
+                return {
+                    "result": _proxied_tool_payload(await ctx.fastmcp.call_tool(resolved_name, canonical_arguments))
+                }
             except NotFoundError as exc:
                 tool_is_visible = (
                     tool_is_visible
