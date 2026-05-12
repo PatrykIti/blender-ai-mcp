@@ -383,7 +383,10 @@ def test_router_goal_building_initializes_guided_flow_state():
 
     assert state.guided_flow_state is not None
     assert state.guided_flow_state["domain_profile"] == "building"
-    assert state.guided_flow_state["required_prompts"] == ["guided_session_start"]
+    assert state.guided_flow_state["required_prompts"] == [
+        "guided_session_start",
+        "reference_guided_architecture_build",
+    ]
     assert [check["tool_name"] for check in state.guided_flow_state["required_checks"]] == [
         "scene_scope_graph",
         "scene_view_diagnostics",
