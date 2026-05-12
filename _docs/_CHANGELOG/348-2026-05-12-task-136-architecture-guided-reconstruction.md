@@ -35,3 +35,5 @@ workflow, or verifier system.
 ## Validation
 
 - `poetry run pytest tests/unit/adapters/mcp/test_quality_gate_contracts.py tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py tests/unit/adapters/mcp/test_prompt_catalog.py tests/unit/adapters/mcp/test_prompt_provider.py tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py tests/unit/adapters/mcp/test_prompts_bridge.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/router/application/test_router_handler_parameters.py tests/unit/tools/scene/test_spatial_graph_service.py tests/unit/adapters/mcp/test_reference_compare_packets.py -q` (`183 passed`)
+- `poetry run pytest ./tests/unit` (`3382 passed`)
+- `poetry run python scripts/run_e2e_tests.py` (`476 passed, 3 skipped`; log: `tests/e2e/e2e_test_PASSED_20260513_011104.log`)

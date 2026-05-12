@@ -144,6 +144,10 @@ update_docs_and_board_after_runtime_proof()
   together on 2026-05-12
 - moved `TASK-136` from To Do to Done in `_docs/_TASKS/README.md`
 - added changelog entry `348-2026-05-12-task-136-architecture-guided-reconstruction.md`
+- refreshed final validation on 2026-05-13:
+  - `poetry run pytest ./tests/unit` (`3382 passed`)
+  - `poetry run python scripts/run_e2e_tests.py` (`476 passed, 3 skipped`; log:
+    `tests/e2e/e2e_test_PASSED_20260513_011104.log`)
 - no direct open child remains under the closed parent; broader future
   architecture generators or module-array macros should be tracked as explicit
   follow-on tasks if/when they become active
