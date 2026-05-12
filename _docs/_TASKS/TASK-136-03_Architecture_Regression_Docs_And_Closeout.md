@@ -1,6 +1,6 @@
 # TASK-136-03: Architecture Regression, Docs, And Closeout
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-136](./TASK-136_Reference_Guided_Architecture_And_Building_Reconstruction.md)
 **Depends On:** [TASK-136-01](./TASK-136-01_Building_Contract_Vocabulary_And_Gate_Templates.md), [TASK-136-02](./TASK-136-02_Guided_Building_Handoff_Search_And_Bounded_Surface.md)
@@ -35,6 +35,19 @@
 - update `_docs/_TESTS/README.md` only after the new owner lanes stabilize
 - run repo-wide unit and Blender-backed E2E validation outside the sandbox
   before closeout, using the repo-supported commands from `AGENTS.md`
+
+## Completion Summary
+
+Completed on 2026-05-12. This closeout updated the public docs, prompt library,
+test strategy, board, and changelog for the architecture path and added
+regression coverage for:
+
+- architecture prompt catalog/provider/bridge exposure
+- building guided role sequencing and prompt bundles
+- architecture guided handoff, search, and visibility shaping
+- quality-gate building templates and spatial relation truth
+- architecture packet scope labels
+- Blender-backed guided handoff and building gate behavior
 
 ## Pseudocode
 
@@ -127,13 +140,10 @@ update_docs_and_board_after_runtime_proof()
 
 ## Status / Board Update
 
-- before this subtask closes, verify `TASK-136-01` and `TASK-136-02` are already
-  `✅ Done`; then close `TASK-136-03` and `TASK-136` together, or move remaining
-  scope to explicit follow-on tasks before closing the parent
-- update `_docs/_TASKS/README.md` if the umbrella or any explicit follow-on
-  changes promoted board state
-- add or refresh the task completion summary and record which docs, unit
-  tests, E2E lanes, pre-commit checks, and changelog updates/decisions were
-  run or intentionally skipped
-- if scope remains after umbrella closeout, record it as an explicit follow-on
-  task instead of leaving open child drift under a closed parent
+- closed `TASK-136-01`, `TASK-136-02`, `TASK-136-03`, and parent `TASK-136`
+  together on 2026-05-12
+- moved `TASK-136` from To Do to Done in `_docs/_TASKS/README.md`
+- added changelog entry `348-2026-05-12-task-136-architecture-guided-reconstruction.md`
+- no direct open child remains under the closed parent; broader future
+  architecture generators or module-array macros should be tracked as explicit
+  follow-on tasks if/when they become active

@@ -59,6 +59,13 @@ class RouterToolHandler(IRouterTool):
         ),
         re.compile(r"\b(animal|creature|character)\b.*\b(low[- ]poly|blockout|head|face|body)\b", re.IGNORECASE),
     )
+    _ARCHITECTURE_BUILD_PATTERNS: tuple[re.Pattern[str], ...] = (
+        re.compile(
+            r"\b(architecture|building|facade|house|tower|wall|roof|window|door|opening|column|post|support)\b",
+            re.IGNORECASE,
+        ),
+        re.compile(r"\b(floor plan|front elevation|side elevation|section|roofline|bay rhythm)\b", re.IGNORECASE),
+    )
     _REFERENCE_GUIDED_HINT_PATTERNS: tuple[re.Pattern[str], ...] = (
         re.compile(r"\breference images?\b", re.IGNORECASE),
         re.compile(r"\breference image\b", re.IGNORECASE),
@@ -66,6 +73,14 @@ class RouterToolHandler(IRouterTool):
         re.compile(r"\bfront and side reference images\b", re.IGNORECASE),
         re.compile(r"\bfront/side reference\b", re.IGNORECASE),
         re.compile(r"\bmatching .*reference", re.IGNORECASE),
+        re.compile(
+            r"\b("
+            r"floor plan|site plan|architectural plan|building plan|plan reference|plans? reference|"
+            r"from (?:a |the )?plans?|using (?:a |the )?plans?|"
+            r"elevations?|sections?|facade reference|front reference|side reference"
+            r")\b",
+            re.IGNORECASE,
+        ),
     )
     _GUIDED_MANUAL_BUILD_DECLINE_VALUES: tuple[str, ...] = (
         "guided_manual_build",
@@ -138,6 +153,17 @@ class RouterToolHandler(IRouterTool):
             return False
         has_reference_guidance = any(pattern.search(normalized_goal) for pattern in cls._REFERENCE_GUIDED_HINT_PATTERNS)
         return has_reference_guidance and cls._looks_like_guided_manual_build_goal(normalized_goal)
+
+    @classmethod
+    def _looks_like_reference_guided_architecture_goal(cls, goal: str) -> bool:
+        """Return True for plan/elevation/facade reference reconstruction goals."""
+
+        normalized_goal = goal.strip()
+        if not normalized_goal:
+            return False
+        has_architecture_goal = any(pattern.search(normalized_goal) for pattern in cls._ARCHITECTURE_BUILD_PATTERNS)
+        has_reference_guidance = any(pattern.search(normalized_goal) for pattern in cls._REFERENCE_GUIDED_HINT_PATTERNS)
+        return has_architecture_goal and has_reference_guidance
 
     @staticmethod
     def _no_match_response(
@@ -348,6 +374,23 @@ class RouterToolHandler(IRouterTool):
                 message=(
                     f"'{goal}' looks like a guided manual-build / capture-test scenario rather than a reusable workflow goal. "
                     "Continue on the guided build surface with visible build tools/macros and use utility capture tools separately."
+                ),
+            )
+
+        if self._looks_like_reference_guided_architecture_goal(goal):
+            try:
+                router.clear_goal()
+            except Exception:
+                pass
+            return self._no_match_response(
+                goal=goal,
+                phase_hint=BUILD_PHASE_HINT,
+                continuation_mode="guided_manual_build",
+                message=(
+                    f"'{goal}' looks like a reference-guided architecture reconstruction request rather than a "
+                    "generic reusable workflow goal. Continue on the guided architecture build surface, attach or "
+                    "reuse references through reference_images, and use guided_reference_readiness before staged "
+                    "compare/iterate."
                 ),
             )
 

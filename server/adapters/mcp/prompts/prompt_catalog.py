@@ -59,12 +59,36 @@ _LOW_POLY_GOAL_HINTS: tuple[str, ...] = (
 )
 _REFERENCE_GOAL_HINTS: tuple[str, ...] = (
     "front and side",
+    "front elevation",
     "front reference",
     "front/side",
+    "floor plan",
     "matching reference",
+    "plan reference",
     "reference image",
     "reference images",
+    "section reference",
+    "side elevation",
     "side reference",
+)
+_ARCHITECTURE_GOAL_HINTS: tuple[str, ...] = (
+    "architecture",
+    "building",
+    "facade",
+    "floor plan",
+    "front elevation",
+    "side elevation",
+    "section",
+    "roof",
+    "roofline",
+    "wall",
+    "window",
+    "door",
+    "opening",
+    "column",
+    "post",
+    "support",
+    "tower",
 )
 
 
@@ -89,10 +113,14 @@ def derive_prompt_goal_tags(
         tags.add("goal:low_poly")
     if any(_goal_contains_phrase(normalized_goal, token) for token in _REFERENCE_GOAL_HINTS):
         tags.add("goal:reference_guided")
+    if any(_goal_contains_phrase(normalized_goal, token) for token in _ARCHITECTURE_GOAL_HINTS):
+        tags.add("goal:architecture")
 
     recipe_id = str((guided_handoff or {}).get("recipe_id") or "").strip().lower()
     if recipe_id == "low_poly_creature_blockout":
         tags.update({"goal:creature", "goal:low_poly"})
+    if recipe_id == "reference_guided_architecture_build":
+        tags.update({"goal:architecture", "goal:reference_guided"})
 
     return tuple(sorted(tags))
 
@@ -171,6 +199,21 @@ PROMPT_CATALOG: tuple[PromptCatalogEntry, ...] = (
         phase_tags=("phase:planning", "phase:build"),
         profile_tags=("profile:llm-guided",),
         goal_tags=("goal:creature",),
+    ),
+    PromptCatalogEntry(
+        name="reference_guided_architecture_build",
+        title="Reference Guided Architecture Build",
+        description=(
+            "Architecture reconstruction guidance for llm-guided sessions using plans, elevations, facade references, "
+            "staged checkpoints, and bounded shell/opening/roof/support loops."
+        ),
+        source_path=PROMPTS_DIR / "REFERENCE_GUIDED_ARCHITECTURE_BUILD.md",
+        tags=("mode:guided-reference", "audience:guided", "domain:architecture", "domain:building"),
+        operating_mode="guided-reference",
+        audience="guided",
+        phase_tags=("phase:planning", "phase:build"),
+        profile_tags=("profile:llm-guided",),
+        goal_tags=("goal:architecture",),
     ),
     PromptCatalogEntry(
         name="recommended_prompts",

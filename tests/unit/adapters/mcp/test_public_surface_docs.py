@@ -325,7 +325,7 @@ def test_reference_guided_creature_test_prompt_doc_exists():
         "Reference-Guided Creature Test Prompt",
         "outside `_docs/_PROMPTS/`",
         "blender-ai-mcp-guided-docker-openrouter",
-        "`reference_iterate_stage_checkpoint(...)`",
+        "`reference_iterate_stage_checkpoint",
         "`scene_get_viewport(...)`",
         "`guided_reference_readiness`",
         "`correction_candidates`",
@@ -582,3 +582,30 @@ def test_reference_guided_creature_prompt_stays_english():
     assert re.search(r"[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]", creature_prompt) is None
     for unexpected in ("Zasady:", "Na końcu", "wyczyść", "dołącz", "wiewiór"):
         assert unexpected not in creature_prompt
+
+
+def test_reference_guided_architecture_prompt_stays_english_and_documents_contract():
+    """The architecture prompt should describe the bounded guided building path."""
+
+    architecture_prompt = (REPO_ROOT / "_docs" / "_PROMPTS" / "REFERENCE_GUIDED_ARCHITECTURE_BUILD.md").read_text(
+        encoding="utf-8"
+    )
+    prompts_readme = (REPO_ROOT / "_docs" / "_PROMPTS" / "README.md").read_text(encoding="utf-8")
+    tools_summary = (REPO_ROOT / "_docs" / "AVAILABLE_TOOLS_SUMMARY.md").read_text(encoding="utf-8")
+
+    assert re.search(r"[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]", architecture_prompt) is None
+    for expected in (
+        "reference_guided_architecture_build",
+        "`footprint_mass`",
+        "`wall_shell`",
+        "`facade_opening`",
+        "`opening_grid`",
+        "`roof_wall`",
+        "`opening_wall`",
+        "`scene_relation_graph(...)`",
+        "`reference_iterate_stage_checkpoint",
+    ):
+        assert expected in architecture_prompt
+
+    assert "REFERENCE_GUIDED_ARCHITECTURE_BUILD.md" in prompts_readme
+    assert "`reference_guided_architecture_build`" in tools_summary

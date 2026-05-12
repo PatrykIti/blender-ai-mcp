@@ -85,6 +85,39 @@ def test_creature_flow_bundle_includes_creature_prompt():
     assert state.guided_flow_state["preferred_prompts"] == ["workflow_router_first"]
 
 
+def test_building_flow_bundle_includes_architecture_prompt():
+    ctx = FakeContext()
+
+    state = update_session_from_router_goal(
+        ctx,
+        "rebuild a facade from front elevation and floor plan references",
+        {
+            "status": "ready",
+            "phase_hint": "build",
+            "guided_handoff": {
+                "kind": "guided_manual_build",
+                "recipe_id": "reference_guided_architecture_build",
+                "target_phase": "build",
+                "surface_profile": "llm-guided",
+                "direct_tools": ["modeling_create_primitive"],
+                "supporting_tools": ["scene_scope_graph", "scene_view_diagnostics"],
+                "discovery_tools": ["search_tools", "call_tool"],
+                "workflow_import_recommended": False,
+                "message": "Continue on the guided architecture reconstruction surface.",
+            },
+        },
+        surface_profile="llm-guided",
+    )
+
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["domain_profile"] == "building"
+    assert state.guided_flow_state["required_prompts"] == [
+        "guided_session_start",
+        "reference_guided_architecture_build",
+    ]
+    assert state.guided_flow_state["preferred_prompts"] == ["workflow_router_first"]
+
+
 def test_understand_goal_step_adds_recommended_prompts_as_preferred_bundle():
     ctx = FakeContext()
 

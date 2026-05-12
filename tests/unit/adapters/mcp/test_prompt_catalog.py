@@ -21,6 +21,7 @@ def test_prompt_catalog_exposes_curated_prompt_assets():
         "demo_low_poly_medieval_well",
         "demo_generic_modeling",
         "reference_guided_creature_build",
+        "reference_guided_architecture_build",
         "recommended_prompts",
     }
 
@@ -31,6 +32,10 @@ def test_prompt_catalog_exposes_curated_prompt_assets():
     creature_entry = get_prompt_catalog_entry("reference_guided_creature_build")
     assert creature_entry.goal_tags == ("goal:creature",)
     assert creature_entry.profile_tags == ("profile:llm-guided",)
+
+    architecture_entry = get_prompt_catalog_entry("reference_guided_architecture_build")
+    assert architecture_entry.goal_tags == ("goal:architecture",)
+    assert architecture_entry.profile_tags == ("profile:llm-guided",)
 
 
 def test_recommended_prompt_entries_change_by_profile_and_phase():
@@ -70,6 +75,20 @@ def test_recommended_prompt_entries_can_use_active_goal_context():
     assert creature_planning[0] == "reference_guided_creature_build"
     assert "reference_guided_creature_build" in creature_planning
     assert "reference_guided_creature_build" not in generic_planning
+
+
+def test_recommended_prompt_entries_can_use_architecture_goal_context():
+    architecture_planning = [
+        entry.name
+        for entry in get_recommended_prompt_entries(
+            surface_profile="llm-guided",
+            phase="planning",
+            goal="rebuild a tower facade from front elevation and floor plan references",
+        )
+    ]
+
+    assert architecture_planning[0] == "reference_guided_architecture_build"
+    assert "reference_guided_architecture_build" in architecture_planning
 
 
 @pytest.mark.parametrize(

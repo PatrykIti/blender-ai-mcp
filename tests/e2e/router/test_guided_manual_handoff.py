@@ -50,6 +50,21 @@ def test_router_set_goal_reference_guided_squirrel_returns_guided_manual_no_matc
     assert router.get_pending_workflow() is None
 
 
+def test_router_set_goal_reference_guided_architecture_returns_guided_manual_no_match(router, clean_scene):
+    """Plan/elevation architecture reconstruction should enter the bounded architecture handoff."""
+
+    handler = RouterToolHandler(router=router, enabled=True)
+
+    result = handler.set_goal("rebuild a tower facade from the front elevation and floor plan references")
+
+    assert result["status"] == "no_match"
+    assert result["continuation_mode"] == "guided_manual_build"
+    assert result["workflow"] is None
+    assert result["phase_hint"] == "build"
+    assert "reference-guided architecture reconstruction request" in result["message"]
+    assert router.get_pending_workflow() is None
+
+
 def test_guided_manual_goal_suppresses_heuristic_workflow_trigger_for_direct_transform(router, clean_scene):
     """A no-match guided manual goal should not let ordinary direct transforms trigger unrelated workflows."""
 
@@ -201,3 +216,58 @@ def test_router_area_reference_guided_creature_goal_persists_creature_recipe_han
         for rule in stale_status.visibility_rules or []
         if rule.get("components") == {"tool"}
     )
+
+
+def test_router_area_reference_guided_architecture_goal_persists_architecture_recipe_handoff(
+    router, clean_scene, monkeypatch
+):
+    """The MCP-area goal flow should persist the architecture recipe and building guided flow profile."""
+
+    ctx = FakeAsyncContext()
+    handler = RouterToolHandler(router=router, enabled=True)
+
+    monkeypatch.setattr("server.adapters.mcp.areas.router.get_router_handler", lambda: handler)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.router.get_config",
+        lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})(),
+    )
+    monkeypatch.setattr("server.adapters.mcp.areas.router._should_attach_repair_suggestion", lambda payload: False)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.router.run_repair_suggestion_assistant",
+        lambda ctx, diagnostics: AssistantRunResult(
+            status="unavailable",
+            assistant_name="repair_suggester",
+            message="disabled in test",
+            budget=AssistantBudgetContract(max_input_chars=1, max_messages=1, max_tokens=1, tool_budget=0),
+            capability_source="unavailable",
+            result=RepairSuggestionContract(summary="n/a", actions=[]),
+        ),
+    )
+
+    result = asyncio.run(
+        router_set_goal(
+            ctx,
+            goal="rebuild a tower facade from the front elevation and floor plan references",
+        )
+    )
+
+    assert result.status == "no_match"
+    assert result.guided_handoff is not None
+    assert result.guided_handoff.recipe_id == "reference_guided_architecture_build"
+    assert "macro_cutout_recess" in result.guided_handoff.direct_tools
+    assert "macro_place_supported_pair" in result.guided_handoff.direct_tools
+    assert result.guided_flow_state is not None
+    assert result.guided_flow_state.domain_profile == "building"
+    assert result.guided_flow_state.required_prompts == [
+        "guided_session_start",
+        "reference_guided_architecture_build",
+    ]
+
+    status = asyncio.run(router_get_status(ctx))
+
+    assert status.current_goal == "rebuild a tower facade from the front elevation and floor plan references"
+    assert status.current_phase == "build"
+    assert status.guided_handoff is not None
+    assert status.guided_handoff.recipe_id == "reference_guided_architecture_build"
+    assert status.guided_flow_state is not None
+    assert status.guided_flow_state.domain_profile == "building"

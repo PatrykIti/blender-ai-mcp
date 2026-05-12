@@ -24,6 +24,7 @@ def test_prompt_provider_lists_curated_prompt_assets():
     assert "guided_session_start" in names
     assert "workflow_router_first" in names
     assert "reference_guided_creature_build" in names
+    assert "reference_guided_architecture_build" in names
     assert "recommended_prompts" in names
 
 
@@ -42,3 +43,15 @@ def test_recommended_prompts_renderer_reflects_phase_and_profile():
     assert "guided_session_start" in message
     assert "workflow_router_first" in message
     assert "llm-guided" in message
+
+
+def test_recommended_prompts_renderer_reflects_architecture_context():
+    result = render_recommended_prompts(
+        surface_profile="llm-guided",
+        phase="planning",
+        goal="rebuild a facade from a floor plan and front elevation reference",
+    )
+
+    message = result.messages[0].content.text
+    assert "reference_guided_architecture_build" in message
+    assert "goal:architecture" in message

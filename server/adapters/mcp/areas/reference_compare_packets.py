@@ -53,9 +53,15 @@ from server.adapters.mcp.vision import (
 from server.adapters.mcp.vision.config import VisionSegmentationSidecarConfig
 
 _VIEW_TOKEN_ALIASES: dict[str, str] = {
+    "plan": "top",
+    "floor": "top",
+    "site": "top",
     "front": "front",
+    "facade": "front",
+    "elevation": "front",
     "side": "side",
     "profile": "side",
+    "section": "side",
     "top": "top",
     "back": "back",
     "rear": "back",
@@ -71,6 +77,10 @@ _HEAD_HINTS: tuple[str, ...] = ("head", "skull", "face")
 _BODY_HINTS: tuple[str, ...] = ("body", "torso", "trunk", "chest", "abdomen", "pelvis", "hip")
 _TAIL_HINTS: tuple[str, ...] = ("tail",)
 _EAR_HINTS: tuple[str, ...] = ("ear",)
+_ROOF_HINTS: tuple[str, ...] = ("roof", "gable", "ridge", "roofline")
+_OPENING_HINTS: tuple[str, ...] = ("opening", "window", "door", "cutout", "portal", "arch")
+_SUPPORT_HINTS: tuple[str, ...] = ("support", "post", "column", "pillar", "buttress", "beam")
+_BUILDING_MASS_HINTS: tuple[str, ...] = ("facade", "wall", "shell", "volume", "main", "footprint", "tower")
 
 
 @dataclass(frozen=True)
@@ -306,6 +316,27 @@ def _normalize_compare_part_segmentation_payload(
 
 
 def _packet_question_for_view(view_id: str | None, *, scope_label: str | None = None) -> str:
+    normalized_scope = str(scope_label or "").strip().lower()
+    if scope_label and any(token in normalized_scope for token in ("facade", "opening", "bay", "window", "door")):
+        return (
+            f"Compare the {scope_label} architecture scope against the references. "
+            "Focus on opening count, spacing, floor-band rhythm, centerline drift, and bounded facade corrections."
+        )
+    if scope_label and any(token in normalized_scope for token in ("roof", "ridge", "roofline")):
+        return (
+            f"Compare the {scope_label} architecture scope against the references. "
+            "Focus on roof pitch, ridge height, overhang, roof-wall seating, and upper silhouette drift."
+        )
+    if scope_label and any(token in normalized_scope for token in ("support", "post", "column", "beam", "buttress")):
+        return (
+            f"Compare the {scope_label} architecture scope against the references. "
+            "Focus on support spacing, seated contact, beam/post alignment, and unsupported or floating elements."
+        )
+    if view_id == "top":
+        return (
+            "Compare the plan/top view against the references. "
+            "Focus on footprint ratio, depth/width drift, wall-shell alignment, and modular grid placement."
+        )
     if scope_label and view_id == "side":
         return (
             f"Compare the side/profile silhouette for the {scope_label} scope. "
@@ -368,7 +399,29 @@ def _is_ear_like(object_name: str) -> bool:
     return _has_name_hint(object_name, _EAR_HINTS)
 
 
+def _is_roof_like(object_name: str) -> bool:
+    return _has_name_hint(object_name, _ROOF_HINTS)
+
+
+def _is_opening_like(object_name: str) -> bool:
+    return _has_name_hint(object_name, _OPENING_HINTS)
+
+
+def _is_support_like(object_name: str) -> bool:
+    return _has_name_hint(object_name, _SUPPORT_HINTS)
+
+
+def _is_building_mass_like(object_name: str) -> bool:
+    return _has_name_hint(object_name, _BUILDING_MASS_HINTS)
+
+
 def _semantic_scope_label(part_object: str, anchor_object: str) -> str:
+    if _is_opening_like(part_object) and _is_building_mass_like(anchor_object):
+        return "Facade + Openings"
+    if _is_roof_like(part_object) and _is_building_mass_like(anchor_object):
+        return "Roofline"
+    if _is_support_like(part_object) or _is_support_like(anchor_object):
+        return "Supports"
     if _is_head_like(part_object) and _is_body_like(anchor_object):
         return "Body + Head"
     if _is_tail_like(part_object):
@@ -449,11 +502,43 @@ def _scope_clusters_from_target_scope(
     bodies = [name for name in object_names if _is_body_like(name)]
     tails = [name for name in object_names if _is_tail_like(name)]
     ears = [name for name in object_names if _is_ear_like(name)]
+    roofs = [name for name in object_names if _is_roof_like(name)]
+    openings = [name for name in object_names if _is_opening_like(name)]
+    supports = [name for name in object_names if _is_support_like(name)]
+    building_masses = [name for name in object_names if _is_building_mass_like(name)]
     anchor_body = bodies[0] if bodies else primary_target
     head_anchor = heads[0] if heads else primary_target
+    building_anchor = building_masses[0] if building_masses else primary_target
 
     clusters: OrderedDict[str, _ScopeCluster] = OrderedDict()
     consumed: set[str] = {primary_target}
+
+    if building_masses and openings:
+        _append_scope_cluster(
+            clusters,
+            scope_label="Facade + Openings",
+            target_objects=(building_anchor, *openings),
+        )
+        consumed.update(openings)
+        consumed.add(building_anchor)
+
+    if building_masses and roofs:
+        _append_scope_cluster(
+            clusters,
+            scope_label="Roofline",
+            target_objects=(building_anchor, *roofs),
+        )
+        consumed.update(roofs)
+        consumed.add(building_anchor)
+
+    if supports:
+        _append_scope_cluster(
+            clusters,
+            scope_label="Supports",
+            target_objects=(building_anchor, *supports),
+        )
+        consumed.update(supports)
+        consumed.add(building_anchor)
 
     if heads and anchor_body:
         _append_scope_cluster(

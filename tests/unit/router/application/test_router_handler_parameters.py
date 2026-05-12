@@ -329,6 +329,32 @@ class TestSetGoalUnified:
         assert "attach/use reference_images" not in result["message"]
         assert mock_router.get_pending_workflow() is None
 
+    def test_set_goal_treats_reference_guided_architecture_as_guided_manual_build_no_match(self, handler, mock_router):
+        """Plan/elevation architecture reconstruction should not silently import simple_house_workflow."""
+
+        mock_router._pending_workflow = "simple_house_workflow"
+
+        result = handler.set_goal("rebuild a tower facade from the front elevation and floor plan references")
+
+        assert result["status"] == "no_match"
+        assert result["continuation_mode"] == "guided_manual_build"
+        assert result["workflow"] is None
+        assert result["phase_hint"] == "build"
+        assert "reference-guided architecture reconstruction request" in result["message"]
+        assert "guided_reference_readiness" in result["message"]
+        assert mock_router.get_pending_workflow() is None
+
+    def test_set_goal_does_not_treat_plan_verb_as_reference_guided_architecture(self, handler, mock_router):
+        """Plain planning language should not trigger the reference architecture handoff."""
+
+        result = handler.set_goal("plan a simple house massing exercise")
+
+        assert result["status"] == "no_match"
+        assert result["continuation_mode"] == "guided_manual_build"
+        assert result["workflow"] is None
+        assert "reference-guided architecture reconstruction request" not in result["message"]
+        assert "No workflow matched" in result["message"]
+
     def test_set_goal_with_workflow_no_params(self, handler, mock_loader):
         """Test when workflow matches but has no parameters."""
         # Add workflow without parameters

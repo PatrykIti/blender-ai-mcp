@@ -21,6 +21,8 @@ from server.adapters.mcp.transforms import build_surface_transform_pipeline, mat
 from server.adapters.mcp.transforms.discovery import build_discovery_transform
 from server.adapters.mcp.transforms.prompts_bridge import build_prompts_bridge_transform
 from server.adapters.mcp.transforms.visibility_policy import (
+    ARCHITECTURE_BUILD_DIRECT_TOOLS,
+    ARCHITECTURE_BUILD_SUPPORTING_TOOLS,
     CREATURE_LOW_POLY_BLOCKOUT_DIRECT_TOOLS,
     CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS,
     build_visibility_rules,
@@ -640,6 +642,36 @@ def test_creature_handoff_search_hides_noise_tools_and_keeps_blockout_surface_sm
     assert "mesh_create_vertex_group" not in names
     assert "mesh_assign_to_group" not in names
     assert "mesh_remove_from_group" not in names
+
+
+def test_architecture_handoff_search_prefers_bounded_shell_opening_roof_support_tools():
+    """Architecture handoff search should stay on the bounded reconstruction recipe."""
+
+    server = _build_handoff_search_server(
+        SessionPhase.BUILD,
+        guided_handoff={
+            "kind": "guided_manual_build",
+            "recipe_id": "reference_guided_architecture_build",
+            "direct_tools": list(ARCHITECTURE_BUILD_DIRECT_TOOLS),
+            "supporting_tools": list(ARCHITECTURE_BUILD_SUPPORTING_TOOLS),
+        },
+    )
+
+    async def run():
+        result = await server.call_tool(
+            "search_tools",
+            {"query": "facade opening grid roof wall support column floor plan elevation reconstruction"},
+        )
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+    names = {tool["name"] for tool in payload}
+
+    assert "macro_cutout_recess" in names
+    assert "macro_relative_layout" in names or "macro_place_supported_pair" in names
+    assert "modeling_create_primitive" in names or "mesh_loop_cut" in names
+    assert "macro_finish_form" not in names
+    assert "mesh_randomize" not in names
 
 
 def test_spatial_context_flow_list_tools_stays_bounded_to_required_checks():

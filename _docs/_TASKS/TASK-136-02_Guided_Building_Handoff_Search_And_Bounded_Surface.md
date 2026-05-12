@@ -1,6 +1,6 @@
 # TASK-136-02: Guided Building Handoff, Search, And Bounded Surface
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-136](./TASK-136_Reference_Guided_Architecture_And_Building_Reconstruction.md)
 **Depends On:** [TASK-136-01](./TASK-136-01_Building_Contract_Vocabulary_And_Gate_Templates.md)
@@ -45,6 +45,21 @@
 - prefer existing bounded layout/cutout/support tools first; new macros or tools
   should appear only when a concrete repeated building operation cannot be
   expressed safely enough otherwise
+
+## Completion Summary
+
+Completed on 2026-05-12. The guided architecture path now uses the live
+`llm-guided` seams:
+
+- added `reference_guided_architecture_build` to the prompt catalog/provider,
+  prompt bridge, guided-flow prompt bundles, and router handoff contract
+- added architecture no-match handling so plan/elevation/facade/reference
+  reconstruction remains guided manual build instead of importing
+  `simple_house_workflow`
+- narrowed architecture handoff visibility/search to the existing bounded
+  spatial, layout, cutout, attachment, support, mesh, and staged-reference tools
+- extended building guided role sequencing to require wall shell before opening
+  /support/roof work
 
 ## Intended Owner Flow
 
@@ -167,11 +182,6 @@ transport/public-surface behavior:
 
 ## Status / Board Update
 
-- keep `_docs/_TASKS/README.md` unchanged while this subtask remains open unless
-  the architecture guided surface itself becomes a promoted board milestone
-- when this subtask lands, update `TASK-136-02` and the parent `TASK-136`
-  progress notes together so the next closeout subtask inherits the corrected
-  guided/runtime owner mapping
-- add or refresh the completion summary and record which docs, unit tests,
-  E2E lanes, pre-commit checks, and changelog updates were run or
-  intentionally skipped
+- closed with parent `TASK-136` on 2026-05-12
+- validation is recorded in `TASK-136-03` and changelog entry
+  `348-2026-05-12-task-136-architecture-guided-reconstruction.md`

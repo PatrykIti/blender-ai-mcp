@@ -76,6 +76,11 @@ On `llm-guided`, runtime visibility should have one clear authority:
 - the current session phase / `guided_handoff`
 - the current `guided_flow_state`
 
+Recipe ids such as `low_poly_creature_blockout` and
+`reference_guided_architecture_build` are visibility/search shaping metadata on
+that same path. They are not separate discovery catalogs, workflow import
+rules, or router safety authorities.
+
 Capability tags and the capability manifest are allowed to carry coarse
 metadata for:
 
@@ -248,6 +253,9 @@ Goal-derived quality gates follow the same split:
   bounded evidence refs
 - the MCP/session layer normalizes those proposals into `active_gate_plan` and
   starts every gate as `pending`
+- architecture-specific labels such as `wall_shell`, `opening_wall`, or
+  `roof_wall` stay verifier inputs and relation-truth semantics; they do not
+  let the router or semantic layer decide pass/fail without scene evidence
 - scene, spatial, mesh, and assertion verifiers own later `passed`, `failed`,
   `blocked`, `stale`, or `waived` status transitions
 - the first shipped verifier transition is relation-graph based:

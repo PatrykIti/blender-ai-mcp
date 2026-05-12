@@ -156,6 +156,47 @@ CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS: tuple[str, ...] = (
     *GUIDED_SPATIAL_SUPPORT_TOOLS,
 )
 
+ARCHITECTURE_BUILD_DIRECT_TOOLS: tuple[str, ...] = (
+    "check_scene",
+    "inspect_scene",
+    "collection_manage",
+    "scene_set_active_object",
+    "scene_get_viewport",
+    "scene_measure_dimensions",
+    "scene_measure_gap",
+    "scene_measure_alignment",
+    "scene_assert_contact",
+    "scene_assert_proportion",
+    "modeling_create_primitive",
+    "modeling_transform_object",
+    "mesh_select",
+    "mesh_select_targeted",
+    "mesh_extrude_region",
+    "mesh_loop_cut",
+    "mesh_bevel",
+    "mesh_merge_by_distance",
+    "mesh_dissolve",
+    "macro_relative_layout",
+    "macro_cutout_recess",
+    "macro_place_supported_pair",
+    "macro_attach_part_to_surface",
+    "macro_align_part_with_contact",
+    "macro_cleanup_part_intersections",
+    "macro_adjust_relative_proportion",
+)
+
+ARCHITECTURE_BUILD_SUPPORTING_TOOLS: tuple[str, ...] = (
+    "reference_images",
+    "guided_register_part",
+    "scene_clean_scene",
+    "reference_compare_checkpoint",
+    "reference_compare_current_view",
+    "reference_compare_stage_checkpoint",
+    "reference_iterate_stage_checkpoint",
+    "router_get_status",
+    *GUIDED_SPATIAL_SUPPORT_TOOLS,
+)
+
 GUIDED_REFINEMENT_STEP_DIRECT_TOOLS: tuple[str, ...] = (
     "mesh_select",
     "mesh_select_targeted",
@@ -323,6 +364,51 @@ _CREATURE_GOAL_HINTS: tuple[str, ...] = (
     "tail",
 )
 _LOW_POLY_GOAL_HINTS: tuple[str, ...] = ("blockout", "low poly", "low-poly")
+_ARCHITECTURE_GOAL_HINTS: tuple[str, ...] = (
+    "architecture",
+    "building",
+    "facade",
+    "front elevation",
+    "side elevation",
+    "elevation",
+    "floor plan",
+    "plan",
+    "section",
+    "roof",
+    "roofline",
+    "wall",
+    "window",
+    "door",
+    "opening",
+    "bay",
+    "column",
+    "post",
+    "support",
+)
+_ARCHITECTURE_REFERENCE_HINTS: tuple[str, ...] = (
+    "reference",
+    "floor plan",
+    "site plan",
+    "architectural plan",
+    "building plan",
+    "plan reference",
+    "plans reference",
+    "from a plan",
+    "from the plan",
+    "from plan",
+    "from plans",
+    "from the plans",
+    "using a plan",
+    "using the plan",
+    "using plan",
+    "using plans",
+    "using the plans",
+    "elevation",
+    "facade",
+    "front reference",
+    "side reference",
+    "section",
+)
 
 GUIDED_BUILD_ESCAPE_HATCH_TOOLS: tuple[str, ...] = (
     "guided_register_part",
@@ -523,7 +609,33 @@ def build_guided_handoff_payload(
             re.search(rf"(?<![a-z0-9]){re.escape(token)}(?![a-z0-9])", normalized_goal)
             for token in _LOW_POLY_GOAL_HINTS
         )
+        is_architecture_goal = any(
+            re.search(rf"(?<![a-z0-9]){re.escape(token)}(?![a-z0-9])", normalized_goal)
+            for token in _ARCHITECTURE_GOAL_HINTS
+        )
+        has_architecture_reference_cue = any(
+            re.search(rf"(?<![a-z0-9]){re.escape(token)}(?![a-z0-9])", normalized_goal)
+            for token in _ARCHITECTURE_REFERENCE_HINTS
+        )
         target_phase: SessionPhase = resolved_phase if resolved_phase == SessionPhase.BUILD else SessionPhase.BUILD
+        if is_architecture_goal and has_architecture_reference_cue:
+            return {
+                "kind": "guided_manual_build",
+                "recipe_id": "reference_guided_architecture_build",
+                "target_phase": target_phase.value,
+                "surface_profile": resolved_surface,
+                "direct_tools": list(ARCHITECTURE_BUILD_DIRECT_TOOLS),
+                "supporting_tools": list(ARCHITECTURE_BUILD_SUPPORTING_TOOLS),
+                "discovery_tools": list(GUIDED_DISCOVERY_TOOLS),
+                "workflow_import_recommended": False,
+                "message": (
+                    "Continue on the guided architecture reconstruction surface. "
+                    "Build footprint and wall shell first, add opening/support rhythm, seat the roof after shell "
+                    "stability, then use staged compare/iterate plus spatial checks for final facade and roofline "
+                    "validation. Treat guided_handoff as continuation context, and trust live visibility_rules plus "
+                    "required_checks after refresh barriers."
+                ),
+            }
         if is_creature_goal and is_low_poly_goal:
             return {
                 "kind": "guided_manual_build",
@@ -591,6 +703,14 @@ def _is_creature_blockout_handoff(guided_handoff: dict[str, Any] | None) -> bool
     )
 
 
+def _is_architecture_build_handoff(guided_handoff: dict[str, Any] | None) -> bool:
+    return (
+        isinstance(guided_handoff, dict)
+        and guided_handoff.get("kind") == "guided_manual_build"
+        and guided_handoff.get("recipe_id") == "reference_guided_architecture_build"
+    )
+
+
 def _guided_handoff_visible_tools(guided_handoff: dict[str, Any] | None) -> set[str]:
     if not isinstance(guided_handoff, dict):
         return set()
@@ -655,6 +775,7 @@ def build_visibility_rules(
                     "workflow_router_first",
                     "manual_tools_no_router",
                     "reference_guided_creature_build",
+                    "reference_guided_architecture_build",
                     "recommended_prompts",
                 },
             },
@@ -691,6 +812,7 @@ def build_visibility_rules(
                     "demo_low_poly_medieval_well",
                     "demo_generic_modeling",
                     "reference_guided_creature_build",
+                    "reference_guided_architecture_build",
                     "recommended_prompts",
                 },
             },
@@ -710,7 +832,7 @@ def build_visibility_rules(
         else:
             build_tools = (
                 _guided_handoff_visible_tools(guided_handoff)
-                if _is_creature_blockout_handoff(guided_handoff)
+                if _is_creature_blockout_handoff(guided_handoff) or _is_architecture_build_handoff(guided_handoff)
                 else set(GUIDED_BUILD_ESCAPE_HATCH_TOOLS)
             )
         build_tools = set(build_tools) | gate_visible_tools

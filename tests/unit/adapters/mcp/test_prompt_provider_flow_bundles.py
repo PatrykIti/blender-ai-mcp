@@ -58,7 +58,7 @@ def test_recommended_prompts_provider_reads_guided_flow_state_from_session(monke
                 "current_step": "establish_spatial_context",
                 "completed_steps": [],
                 "required_checks": [],
-                "required_prompts": ["guided_session_start"],
+                "required_prompts": ["guided_session_start", "reference_guided_architecture_build"],
                 "preferred_prompts": ["workflow_router_first"],
                 "next_actions": ["run_required_checks"],
                 "blocked_families": ["build"],
@@ -75,4 +75,4 @@ def test_recommended_prompts_provider_reads_guided_flow_state_from_session(monke
     assert "domain `building`" in message
     assert "step `establish_spatial_context`" in message
     assert result.meta["domain_profile"] == "building"
-    assert result.meta["required_prompt_names"] == ["guided_session_start"]
+    assert result.meta["required_prompt_names"] == ["guided_session_start", "reference_guided_architecture_build"]

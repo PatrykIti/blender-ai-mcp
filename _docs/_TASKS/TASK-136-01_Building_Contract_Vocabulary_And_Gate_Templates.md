@@ -1,6 +1,6 @@
 # TASK-136-01: Building Contract, Vocabulary, And Gate Templates
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-136](./TASK-136_Reference_Guided_Architecture_And_Building_Reconstruction.md)
 **Objective:** Extend the shipped generic building gate/reference substrate with architecture-specific target classes, vocabulary, stage vocabulary, and gate templates for shell, openings, supports, roof form, and facade rhythm on top of the existing `TASK-157` substrate.
@@ -48,6 +48,20 @@
   packet path by extending `server/adapters/mcp/areas/reference_compare_packets.py`
   and staged `compare_diagnostics` only when architecture changes affect packet
   planning, evidence refs, or synthesis
+
+## Completion Summary
+
+Completed on 2026-05-12. The shipped slice keeps architecture vocabulary on the
+existing building/gate/truth seams:
+
+- added building templates for `wall_shell`, `roof_wall`, facade openings,
+  facade rhythm, and optional support contact in `quality_gates.py`
+- extended guided naming for `wall_shell`, `opening_grid`, expanded roof
+  wording, and architecture support terms
+- added `opening_wall` to the scene contract and to spatial/staged truth
+  attachment semantics
+- extended architecture packet labels for facade/opening, roofline, and support
+  scopes on `reference_compare_packets.py`
 
 ## Intended Owner Flow
 
@@ -123,10 +137,6 @@ in `guided_naming_policy.py`, and relation/truth helpers in
 
 ## Status / Board Update
 
-- keep `_docs/_TASKS/README.md` unchanged while this subtask remains open
-- when this subtask lands, update `TASK-136-01` and the parent `TASK-136`
-  progress notes/status summary together so later subtasks inherit the corrected
-  contract baseline
-- add or refresh the completion summary and record which docs, unit tests,
-  E2E lanes, pre-commit checks, and changelog updates were run or
-  intentionally skipped
+- closed with parent `TASK-136` on 2026-05-12
+- validation is recorded in `TASK-136-03` and changelog entry
+  `348-2026-05-12-task-136-architecture-guided-reconstruction.md`

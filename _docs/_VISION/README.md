@@ -78,6 +78,9 @@ The repo now has the first implementation scaffolding for the vision layer:
   multi-view stage capture + compare during staged manual/reference-guided work
 - bounded `reference_iterate_stage_checkpoint(...)` surface for session-aware
   staged correction loops with repeated-focus detection and continuation hints
+- architecture scopes now reuse the staged compare packet path with
+  architecture labels such as `Facade + Openings`, `Roofline`, and `Supports`
+  when building masses, openings, roofs, or support elements are present
 - pending references can now stay staged until the goal session is actually
   ready, then adopt automatically on the active guided goal
 - blocked same-goal sessions now keep newly staged refs separate from the

@@ -115,6 +115,7 @@ Native prompt products:
 - `workflow_router_first`
 - `manual_tools_no_router`
 - `reference_guided_creature_build`
+- `reference_guided_architecture_build`
 - `demo_low_poly_medieval_well`
 - `demo_generic_modeling`
 - `recommended_prompts`
@@ -123,8 +124,9 @@ Prompt recommendation notes:
 
 - `recommended_prompts` now reacts to active goal/session context, not only
   phase/profile
-- creature-oriented guided goals can surface the native
-  `reference_guided_creature_build` asset directly
+- creature- and architecture-oriented guided goals can surface the native
+  `reference_guided_creature_build` or `reference_guided_architecture_build`
+  asset directly
 - `list_prompts` and `get_prompt` are optional prompt-bridge tools. Prompt-capable
   clients can disable them with `MCP_PROMPTS_AS_TOOLS_ENABLED=false` and use
   native MCP prompts instead.
@@ -200,7 +202,7 @@ The current structured-contract baseline covers:
 These tools are intended to expose stable machine-readable payloads rather than prose-first JSON strings.
 That matters because grouped tools, macro tools, router entrypoints, and truth-layer checks all compose better when results are typed and auditable.
 
-For guided fallback paths, `router_set_goal` now also emits typed `guided_handoff` metadata so `no_match` continuation is an explicit product contract instead of a message-only hint.
+For guided fallback paths, `router_set_goal` now also emits typed `guided_handoff` metadata so `no_match` continuation is an explicit product contract instead of a message-only hint. Reference-guided architecture requests use the `reference_guided_architecture_build` recipe to keep plan/elevation/facade reconstruction on the bounded building surface instead of importing the generic simple-house workflow.
 
 ## Server-Side Sampling Assistants
 
@@ -279,7 +281,7 @@ None.
 | `reference_images` | `action`, `source_path`, `reference_id`, `label`, `notes`, `target_object`, `target_view` | Goal-scoped reference image lifecycle surface. `attach` can now also stage pending references before the goal exists or while the goal is blocked; staged refs stay separate from already-active goal refs until the next ready/no-match `router_set_goal(...)` adopts them automatically, and merged visible refs now stay consistent across list/remove/clear even when explicit pending refs for another goal still exist. | ✅ Done |
 | `reference_compare_checkpoint` | `checkpoint_path`, `checkpoint_label`, `target_object`, `target_view`, `goal_override`, `prompt_hint` | Compares one current checkpoint image against the active goal plus attached references and returns bounded vision interpretation for the next correction step. | ✅ Done |
 | `reference_compare_current_view` | `checkpoint_label`, `target_object`, `target_view`, `goal_override`, `prompt_hint`, viewport/camera args | Captures one current viewport/camera checkpoint using bounded `scene_get_viewport` semantics, then compares it against the active goal plus attached references. | ✅ Done |
-| `reference_compare_stage_checkpoint` | `target_object`, `target_objects`, `collection_name`, `checkpoint_label`, `target_view`, `goal_override`, `prompt_hint`, `preset_profile` | Captures one deterministic multi-view stage checkpoint for a target object, object set, collection, or full assembled scene using the `compact` or `rich` preset profile, then compares that checkpoint set against the active goal plus attached references and echoes any normalized `active_gate_plan` plus top-level gate statuses, blockers, next actions, and bounded tool hints. The internal staged compare path now decomposes the run into bounded view/scope packets, slices super-complex same-view reference sets to stay within effective `VISION_MAX_IMAGES`, keeps compare-time `support_evidence` packet-local and typed, projects additive `compare_diagnostics` on rich or uncertainty paths, exposes configured/effective budget limits with fail-safe clipping details through `budget_control`, and can attach bounded `packet_evidence_refs` to visual correction candidates for join-back to packet provenance. | ✅ Done |
+| `reference_compare_stage_checkpoint` | `target_object`, `target_objects`, `collection_name`, `checkpoint_label`, `target_view`, `goal_override`, `prompt_hint`, `preset_profile` | Captures one deterministic multi-view stage checkpoint for a target object, object set, collection, or full assembled scene using the `compact` or `rich` preset profile, then compares that checkpoint set against the active goal plus attached references and echoes any normalized `active_gate_plan` plus top-level gate statuses, blockers, next actions, and bounded tool hints. The internal staged compare path now decomposes the run into bounded view/scope packets, slices super-complex same-view reference sets to stay within effective `VISION_MAX_IMAGES`, keeps compare-time `support_evidence` packet-local and typed, projects additive `compare_diagnostics` on rich or uncertainty paths, exposes configured/effective budget limits with fail-safe clipping details through `budget_control`, can attach bounded `packet_evidence_refs` to visual correction candidates for join-back to packet provenance, and labels building packet clusters such as `Facade + Openings`, `Roofline`, and `Supports` when architecture scopes are present. | ✅ Done |
 | `reference_iterate_stage_checkpoint` | `target_object`, `target_objects`, `collection_name`, `checkpoint_label`, `target_view`, `goal_override`, `prompt_hint`, `preset_profile` | Runs one session-aware correction-loop step: capture a deterministic stage checkpoint for one object, many objects, a collection, or the full assembled scene, compare it to attached references, remember the previous correction focus, echo any normalized `active_gate_plan` plus top-level gate summaries, and return whether to continue building, inspect/validate, or stop. Top-level `compare_diagnostics` remains the public packet-uncertainty path even when compact nested `compare_result` debug detail is omitted, while `reference_orchestrator_feedback` carries the compact next-step summary. | ✅ Done |
 | `scene_snapshot_state` | `include_mesh_stats`, `include_materials` | Captures a JSON snapshot of scene state with SHA256 hash. | ✅ Done |
 | `scene_compare_snapshot` | `baseline_snapshot`, `target_snapshot`, `ignore_minor_transforms` | Compares two snapshots and returns diff summary. | ✅ Done |

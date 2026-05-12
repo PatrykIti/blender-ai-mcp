@@ -161,6 +161,29 @@ Operational prerequisites still matter for reruns:
   creature/building gate tests
 - local socket binding is required for the Streamable HTTP transport lane
 
+## TASK-136 Architecture Reconstruction Lanes
+
+`TASK-136` extends the existing building/gate/guided surfaces rather than
+creating a parallel architecture harness. The focused owner lanes are:
+
+- building gate templates, prompt catalog/provider, guided flow, handoff,
+  search/visibility, packet labels, and spatial relation semantics:
+  `poetry run pytest tests/unit/adapters/mcp/test_quality_gate_contracts.py tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py tests/unit/adapters/mcp/test_prompt_catalog.py tests/unit/adapters/mcp/test_prompt_provider.py tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py tests/unit/adapters/mcp/test_prompts_bridge.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/router/application/test_router_handler_parameters.py tests/unit/tools/scene/test_spatial_graph_service.py tests/unit/adapters/mcp/test_reference_compare_packets.py -q`
+- Blender-backed architecture proof uses the repo runner with `PYTEST_ADDOPTS`
+  while iterating, then the full runner before closeout:
+  `PYTEST_ADDOPTS="-k 'guided_manual_handoff or goal_derived_gate_building_completion'" poetry run python scripts/run_e2e_tests.py --skip-build`
+
+The architecture-specific assertions cover:
+
+- `reference_guided_architecture_build` prompt and guided-handoff recipe
+- `footprint_mass`, `main_volume`, `wall_shell`, `facade_opening`,
+  `opening_grid`, `support_element`, and `roof_mass` guided roles
+- building gate templates for wall shell, roof/wall seam, facade openings,
+  facade rhythm, and optional support contact
+- `opening_wall` and `roof_wall` relation truth semantics
+- architecture packet labels such as `Facade + Openings`, `Roofline`, and
+  `Supports`
+
 ## Historical TASK-158 Scope B Lanes
 
 `TASK-158` is closed. The lane map below records where the old Scope B planning

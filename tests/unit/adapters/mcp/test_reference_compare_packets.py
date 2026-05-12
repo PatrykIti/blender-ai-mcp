@@ -224,6 +224,58 @@ def test_build_compare_packets_complex_focus_clusters_keep_view_and_scope_slices
     assert all(packet.packet_kind == "view_scope" for packet in packets.packets)
 
 
+def test_build_compare_packets_clusters_architecture_facade_roof_and_support_scopes():
+    scope = SceneAssembledTargetScopeContract(
+        scope_kind="collection",
+        primary_target="FacadeMainVolume",
+        object_names=[
+            "FacadeMainVolume",
+            "WindowOpening_A",
+            "DoorOpening_A",
+            "FacadeRoofMass",
+            "ColumnSupport_A",
+        ],
+        object_count=5,
+        collection_name="Architecture",
+    )
+    packets = build_compare_packets(
+        target_view=None,
+        captures=[
+            _capture("context_wide_after", preset_name="context_wide", view_kind="wide"),
+            _capture("target_front_after", preset_name="target_front"),
+            _capture("target_top_after", preset_name="target_top"),
+        ],
+        reference_records=[
+            _reference("ref_front", label="front_elevation_ref", target_view="front").model_copy(
+                update={"target_object": None}
+            ),
+            _reference("ref_plan", label="floor_plan_ref", target_view="plan").model_copy(
+                update={"target_object": None}
+            ),
+        ],
+        assembled_target_scope=scope,
+        truth_followup=SceneTruthFollowupContract(
+            scope=scope,
+            continue_recommended=True,
+            message="Facade openings, roofline, and supports need staged review.",
+        ),
+    )
+
+    assert packets.complexity_tier == "complex"
+    assert {packet.scope_label for packet in packets.packets} == {
+        "Facade + Openings",
+        "Roofline",
+        "Supports",
+    }
+    assert {"front", "top"}.issubset({packet.target_view for packet in packets.packets})
+    facade_packet = next(packet for packet in packets.packets if packet.scope_label == "Facade + Openings")
+    roof_packet = next(packet for packet in packets.packets if packet.scope_label == "Roofline")
+    assert "opening count" in facade_packet.compare_question
+    assert "roof pitch" in roof_packet.compare_question
+    assert "WindowOpening_A" in facade_packet.target_objects
+    assert "FacadeRoofMass" in roof_packet.target_objects
+
+
 def test_build_compare_packets_super_complex_slices_references_to_runtime_image_budget():
     packets = build_compare_packets(
         target_view="front",

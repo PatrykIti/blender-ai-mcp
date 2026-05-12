@@ -1,6 +1,6 @@
 # TASK-136: Reference-Guided Architecture and Building Reconstruction
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** Reconstruction / Architecture and Hard Surface
 **Estimated Effort:** Large
@@ -13,6 +13,30 @@ reconstruction-grade architecture path, so an LLM operating the MCP server can
 rebuild small and medium structures from plans, elevations, sections, or photo
 references while preserving footprint, openings, structural rhythm, roof form,
 and major proportions.
+
+## Completion Summary
+
+Closed on 2026-05-12. The implementation extends the existing building/guided
+surface rather than adding a parallel architecture path:
+
+- added `reference_guided_architecture_build` to the native prompt catalog,
+  prompt recommendation flow, guided handoff contract, and public prompt docs
+- extended the building guided role sequence to require
+  `footprint_mass`, `main_volume`, and `wall_shell` before secondary
+  `facade_opening`, `opening_grid`, `support_element`, `roof_mass`, and
+  `detail_element` roles
+- expanded building gate templates with wall shell, roof/wall seam,
+  facade-opening, facade-rhythm, and optional support-contact gates on the
+  existing generic quality-gate contract
+- added building relation truth for `opening_wall` and strengthened
+  `roof_wall` behavior on the existing spatial graph and staged truth seams
+- shaped guided handoff/search/visibility so plan/elevation/section/facade
+  reference goals continue as bounded architecture guided builds instead of
+  silently importing `simple_house_workflow`
+- extended staged packet labels for architecture scopes with
+  `Facade + Openings`, `Roofline`, and `Supports`
+- updated docs, task board, changelog, unit lanes, and Blender-backed proof
+  planning for the shipped architecture path
 
 ## Business Problem
 
@@ -115,8 +139,8 @@ Today the product can support:
 
 - bounded hard-surface prop work
 - isolated openings or placement repairs
-- a generic building overlay with `footprint_mass`, `main_volume`, `roof_mass`,
-  `facade_opening`, and `support_element` roles
+- a building overlay with `footprint_mass`, `main_volume`, `wall_shell`,
+  `facade_opening`, `opening_grid`, `support_element`, and `roof_mass` roles
 - building gate blockers such as `roof_wall` seams and `opening_or_cut`
   failures on the staged checkpoint path
 - manual low-poly architecture tasks when the operator already knows the tool
@@ -503,13 +527,8 @@ transport/public-surface behavior:
 
 ## Status / Board Update
 
-- promote this as a board-level umbrella under reconstruction work
-- keep it separate from creature/anatomy tracks so architecture can evolve
-  around its own vision, loop, and tool-surface requirements
-- do not treat current hard-surface or demo-prompt coverage as equivalent to
-  delivered architecture reconstruction behavior
-- keep `_docs/_TASKS/README.md` aligned with the strategic RU roadmap linkages
-  while this umbrella stays promoted
-- when any child slice closes, record the completion summary, docs updated,
-  tests/pre-commit lanes run or intentionally skipped, and changelog decision
-  alongside the status update
+- moved `TASK-136` from To Do to Done in `_docs/_TASKS/README.md`
+- closed `TASK-136-01`, `TASK-136-02`, and `TASK-136-03` together; no direct
+  open child remains under this closed parent
+- added changelog entry `348-2026-05-12-task-136-architecture-guided-reconstruction.md`
+- validation evidence is recorded in the child closeout notes and changelog

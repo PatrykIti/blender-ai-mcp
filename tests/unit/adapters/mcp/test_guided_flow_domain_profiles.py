@@ -57,6 +57,33 @@ def test_generic_goal_uses_generic_flow_profile():
     assert state.guided_flow_state["required_role_groups"] == ["spatial_context"]
 
 
+def test_generic_goal_with_plan_verb_does_not_select_building_profile():
+    ctx = FakeContext()
+
+    state = update_session_from_router_goal(
+        ctx,
+        "plan a simple desk lamp housing",
+        {
+            "status": "ready",
+            "phase_hint": "build",
+            "guided_handoff": {
+                "kind": "guided_manual_build",
+                "target_phase": "build",
+                "surface_profile": "llm-guided",
+                "direct_tools": ["scene_create"],
+                "supporting_tools": ["scene_scope_graph", "scene_relation_graph", "scene_view_diagnostics"],
+                "discovery_tools": ["search_tools", "call_tool"],
+                "workflow_import_recommended": False,
+                "message": "Continue on the guided build surface.",
+            },
+        },
+        surface_profile="llm-guided",
+    )
+
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["domain_profile"] == "generic"
+
+
 def test_creature_recipe_forces_creature_profile_even_without_goal_keywords():
     ctx = FakeContext()
 
@@ -122,7 +149,7 @@ def test_building_goal_uses_building_overlay_specific_checks():
     assert state.guided_flow_state["required_role_groups"] == ["spatial_context"]
 
 
-def test_building_flow_primary_roles_require_footprint_and_main_volume_before_advancing():
+def test_building_flow_primary_roles_require_footprint_main_volume_and_wall_shell_before_advancing():
     ctx = FakeContext()
     set_session_capability_state(
         ctx,
@@ -135,14 +162,14 @@ def test_building_flow_primary_roles_require_footprint_and_main_volume_before_ad
                 "current_step": "create_primary_masses",
                 "completed_steps": ["understand_goal", "establish_spatial_context"],
                 "required_checks": [],
-                "required_prompts": ["guided_session_start"],
+                "required_prompts": ["guided_session_start", "reference_guided_architecture_build"],
                 "preferred_prompts": ["workflow_router_first"],
                 "next_actions": ["begin_primary_masses"],
                 "blocked_families": [],
                 "allowed_families": ["primary_masses"],
-                "allowed_roles": ["footprint_mass", "main_volume", "roof_mass"],
+                "allowed_roles": ["footprint_mass", "main_volume", "wall_shell"],
                 "completed_roles": [],
-                "missing_roles": ["footprint_mass", "main_volume", "roof_mass"],
+                "missing_roles": ["footprint_mass", "main_volume", "wall_shell"],
                 "required_role_groups": ["primary_masses"],
                 "step_status": "ready",
             },
@@ -151,26 +178,32 @@ def test_building_flow_primary_roles_require_footprint_and_main_volume_before_ad
 
     first = register_guided_part_role(ctx, object_name="Tower_Footprint", role="footprint_mass")
     second = register_guided_part_role(ctx, object_name="Tower_MainVolume", role="main_volume")
+    third = register_guided_part_role(ctx, object_name="Tower_WallShell", role="wall_shell")
 
     assert first.guided_flow_state is not None
     assert first.guided_flow_state["current_step"] == "create_primary_masses"
-    assert first.guided_flow_state["missing_roles"] == ["main_volume", "roof_mass"]
+    assert first.guided_flow_state["missing_roles"] == ["main_volume", "wall_shell"]
 
     assert second.guided_flow_state is not None
-    assert second.guided_flow_state["current_step"] == "place_secondary_parts"
-    assert second.guided_flow_state["required_role_groups"] == ["secondary_parts"]
-    assert second.guided_flow_state["spatial_refresh_required"] is True
-    assert second.guided_flow_state["step_status"] == "blocked"
-    assert second.guided_flow_state["allowed_families"] == ["spatial_context"]
-    assert [check["tool_name"] for check in second.guided_flow_state["required_checks"]] == [
+    assert second.guided_flow_state["current_step"] == "create_primary_masses"
+    assert second.guided_flow_state["missing_roles"] == ["wall_shell"]
+
+    assert third.guided_flow_state is not None
+    assert third.guided_flow_state["current_step"] == "place_secondary_parts"
+    assert third.guided_flow_state["required_role_groups"] == ["secondary_parts"]
+    assert third.guided_flow_state["spatial_refresh_required"] is True
+    assert third.guided_flow_state["step_status"] == "blocked"
+    assert third.guided_flow_state["allowed_families"] == ["spatial_context"]
+    assert [check["tool_name"] for check in third.guided_flow_state["required_checks"]] == [
         "scene_scope_graph",
         "scene_view_diagnostics",
     ]
-    assert second.guided_flow_state["next_actions"] == ["refresh_spatial_context"]
-    assert second.guided_flow_state["allowed_roles"] == [
-        "roof_mass",
+    assert third.guided_flow_state["next_actions"] == ["refresh_spatial_context"]
+    assert third.guided_flow_state["allowed_roles"] == [
         "facade_opening",
+        "opening_grid",
         "support_element",
+        "roof_mass",
         "detail_element",
     ]
 
@@ -188,14 +221,14 @@ def test_building_flow_secondary_roles_advance_to_checkpoint_iterate():
                 "current_step": "place_secondary_parts",
                 "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
                 "required_checks": [],
-                "required_prompts": ["guided_session_start"],
+                "required_prompts": ["guided_session_start", "reference_guided_architecture_build"],
                 "preferred_prompts": ["workflow_router_first"],
                 "next_actions": ["begin_secondary_parts"],
                 "blocked_families": [],
                 "allowed_families": ["secondary_parts"],
-                "allowed_roles": ["facade_opening", "support_element", "detail_element"],
-                "completed_roles": ["footprint_mass", "main_volume"],
-                "missing_roles": ["facade_opening", "support_element", "detail_element"],
+                "allowed_roles": ["facade_opening", "opening_grid", "support_element", "roof_mass", "detail_element"],
+                "completed_roles": ["footprint_mass", "main_volume", "wall_shell"],
+                "missing_roles": ["facade_opening", "opening_grid", "support_element", "roof_mass", "detail_element"],
                 "required_role_groups": ["secondary_parts"],
                 "step_status": "ready",
             },
@@ -203,7 +236,8 @@ def test_building_flow_secondary_roles_advance_to_checkpoint_iterate():
     )
 
     register_guided_part_role(ctx, object_name="Tower_WindowCuts", role="facade_opening")
-    state = register_guided_part_role(ctx, object_name="Tower_Buttresses", role="support_element")
+    register_guided_part_role(ctx, object_name="Tower_Buttresses", role="support_element")
+    state = register_guided_part_role(ctx, object_name="Tower_Roof", role="roof_mass")
 
     assert state.guided_flow_state is not None
     assert state.guided_flow_state["current_step"] == "checkpoint_iterate"

@@ -122,6 +122,7 @@ Model a smartphone with separate parts: body, screen, camera bump, 3 lenses, pow
 - **Short fail-safe starter for `llm-guided`** → [`GUIDED_SESSION_START.md`](./GUIDED_SESSION_START.md)
 - **Workflow-first (Router Supervisor)** → [`WORKFLOW_ROUTER_FIRST.md`](./WORKFLOW_ROUTER_FIRST.md)
 - **Reference-guided creature build** → [`REFERENCE_GUIDED_CREATURE_BUILD.md`](./REFERENCE_GUIDED_CREATURE_BUILD.md)
+- **Reference-guided architecture build** → [`REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`](./REFERENCE_GUIDED_ARCHITECTURE_BUILD.md)
 - **Demo task: low-poly medieval well** → [`DEMO_TASK_LOW_POLY_MEDIEVAL_WELL.md`](./DEMO_TASK_LOW_POLY_MEDIEVAL_WELL.md)
 - **Demo task: generic modeling template** → [`DEMO_TASK_GENERIC_MODELING.md`](./DEMO_TASK_GENERIC_MODELING.md)
 
@@ -133,8 +134,9 @@ Interpretation:
   asset for the shaped surface
 - manual/no-router mode is an explicit exception, not the default product model
 - `recommended_prompts` now uses the active phase/profile plus explicit
-  session goal context, so creature-oriented guided goals can surface the
-  native `reference_guided_creature_build` prompt asset without separate docs-only lookup
+  session goal context, so creature- and architecture-oriented guided goals can
+  surface the native `reference_guided_creature_build` or
+  `reference_guided_architecture_build` prompt asset without separate docs-only lookup
 - practical `llm-guided` operating model:
   - build/workflow goal:
     `router_get_status(...)` -> `router_set_goal(...)` -> handle typed `needs_input` if present -> use visible build tools / macros
@@ -205,7 +207,7 @@ Interpretation:
   - `guided_flow_state.next_actions`
 - if `reference_images(...)` are already attached for the active guided goal,
   treat them as the primary grounding input before deciding the initial masses,
-  silhouette, and rough placement
+  silhouette, wall shell, opening rhythm, and rough placement
 - prefer full semantic object names such as `ForeLeg_L`, `ForeLeg_R`,
   `HindLeg_L`, `HindLeg_R` over opaque abbreviations like `ForeL` / `HindR`
 - the guided runtime can now warn on weak role-sensitive names and block
@@ -232,6 +234,14 @@ Interpretation:
   - `generic`
   - `creature`
   - `building`
+- current building overlay role sequence is:
+  - primary roles: `footprint_mass`, `main_volume`, `wall_shell`
+  - secondary roles: `facade_opening`, `opening_grid`, `support_element`,
+    `roof_mass`, and `detail_element`
+- for architecture runs, `opening_wall` is an embedded/cut interface and
+  `roof_wall` is a seated interface; use bounded cutout/attachment/support
+  macros and deterministic relation checks instead of treating those interfaces
+  as generic overlap
 
 ## `llm-guided` Flow Summary
 
@@ -255,6 +265,10 @@ guided surface:
    Use `guided_handoff.direct_tools` first and only fall back to `guided_handoff.discovery_tools` when direct tools are insufficient.
    If `guided_handoff.recipe_id == "low_poly_creature_blockout"`, treat that as
    a smaller modeling/mesh-first creature blockout surface rather than the broad generic build phase.
+   If `guided_handoff.recipe_id == "reference_guided_architecture_build"`, treat
+   the request as a bounded building/facade reconstruction run: establish
+   footprint/main-volume/wall-shell roles first, then openings/supports, then
+   roof form and final dimensional checks.
 6. If vision should support the build, attach `reference_images(...)`, prefer
    macro paths that emit `capture_bundle`, and treat inspection/measure/assert
    as the truth layer after visual interpretation.

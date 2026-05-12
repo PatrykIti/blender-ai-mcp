@@ -28,9 +28,15 @@ from server.adapters.mcp.contracts.scene import (
 from server.infrastructure.di import get_scene_handler
 
 ANCHOR_ROLE_HINTS: tuple[tuple[str, int], ...] = (
+    ("facade", 55),
     ("body", 50),
+    ("wall", 50),
+    ("shell", 48),
     ("torso", 45),
     ("trunk", 45),
+    ("volume", 44),
+    ("main", 42),
+    ("footprint", 35),
     ("head", 40),
     ("skull", 35),
     ("core", 30),
@@ -45,6 +51,10 @@ ACCESSORY_ROLE_HINTS: tuple[str, ...] = (
     "paw",
     "foot",
     "tail",
+    "roof",
+    "window",
+    "door",
+    "opening",
     "horn",
     "antler",
     "whisker",
@@ -56,8 +66,18 @@ NOSE_ROLE_HINTS: tuple[str, ...] = ("nose", "nostril")
 EYE_ROLE_HINTS: tuple[str, ...] = ("eye",)
 FACE_ATTACHMENT_HINTS: tuple[str, ...] = ("ear", "eye", "nose", "snout", "whisker")
 TAIL_ROLE_HINTS: tuple[str, ...] = ("tail",)
-ROOF_ROLE_HINTS: tuple[str, ...] = ("roof",)
-BUILDING_MASS_HINTS: tuple[str, ...] = ("wall", "facade", "volume", "shell")
+ROOF_ROLE_HINTS: tuple[str, ...] = ("roof", "gable", "ridge", "roofline")
+OPENING_ROLE_HINTS: tuple[str, ...] = ("opening", "window", "door", "arch", "portal", "cutout")
+BUILDING_MASS_HINTS: tuple[str, ...] = (
+    "wall",
+    "facade",
+    "volume",
+    "shell",
+    "main",
+    "footprint",
+    "tower",
+    "building",
+)
 LIMB_ROLE_HINTS: tuple[str, ...] = (
     "limb",
     "leg",
@@ -84,7 +104,14 @@ PROXIMAL_LIMB_HINTS: tuple[str, ...] = ("upperarm", "upperleg", "thigh", "arm", 
 
 _CreatureRelationKind = Literal["embedded_attachment", "seated_attachment", "segment_attachment"]
 _CreatureSeamKind = Literal[
-    "face_head", "nose_snout", "head_body", "tail_body", "limb_body", "limb_segment", "roof_wall"
+    "face_head",
+    "nose_snout",
+    "head_body",
+    "tail_body",
+    "limb_body",
+    "limb_segment",
+    "roof_wall",
+    "opening_wall",
 ]
 
 
@@ -156,6 +183,10 @@ def _is_tail_like(object_name: str) -> bool:
 
 def _is_roof_like(object_name: str) -> bool:
     return _has_name_hint(object_name, ROOF_ROLE_HINTS)
+
+
+def _is_opening_like(object_name: str) -> bool:
+    return _has_name_hint(object_name, OPENING_ROLE_HINTS)
 
 
 def _is_building_mass_like(object_name: str) -> bool:
@@ -440,6 +471,10 @@ def _attachment_relation(
         return "seated_attachment", from_object, to_object
     if _is_roof_like(to_object) and _is_building_mass_like(from_object):
         return "seated_attachment", to_object, from_object
+    if _is_opening_like(from_object) and _is_building_mass_like(to_object):
+        return "embedded_attachment", from_object, to_object
+    if _is_opening_like(to_object) and _is_building_mass_like(from_object):
+        return "embedded_attachment", to_object, from_object
     if _is_limb_like(from_object) and (_is_body_like(to_object) or _is_limb_like(to_object)):
         return "segment_attachment", from_object, to_object
     if _is_limb_like(to_object) and (_is_body_like(from_object) or _is_limb_like(from_object)):
@@ -458,6 +493,8 @@ def _attachment_seam_kind(part_object: str, anchor_object: str) -> _CreatureSeam
         return "tail_body"
     if _is_roof_like(part_object) and _is_building_mass_like(anchor_object):
         return "roof_wall"
+    if _is_opening_like(part_object) and _is_building_mass_like(anchor_object):
+        return "opening_wall"
     if _is_limb_like(part_object) and _is_limb_like(anchor_object):
         return "limb_segment"
     if _is_limb_like(part_object) and _is_body_like(anchor_object):
@@ -468,12 +505,35 @@ def _attachment_seam_kind(part_object: str, anchor_object: str) -> _CreatureSeam
 def _attachment_item_summary(
     *,
     pair_label: str,
+    seam_kind: _CreatureSeamKind | None = None,
     relation_kind: Literal["embedded_attachment", "seated_attachment", "segment_attachment"],
     has_overlap: bool,
     has_gap: bool,
     has_contact_failure: bool,
     has_alignment_issue: bool,
 ) -> str:
+    if seam_kind == "opening_wall":
+        if has_overlap:
+            return (
+                f"{pair_label} is an opening cut into a wall shell; treat it as an intentional recess/cutout "
+                "relation and repair the bounded opening shape instead of generic collision cleanup."
+            )
+        if has_gap or has_contact_failure:
+            return f"{pair_label} is an opening-wall relation that is detached from the wall shell."
+        if has_alignment_issue:
+            return f"{pair_label} is an opening-wall relation that is off the facade grid or wall plane."
+        return f"{pair_label} still has wrong opening-wall semantics."
+    if seam_kind == "roof_wall":
+        if has_overlap:
+            return (
+                f"{pair_label} is a roof seated on a wall/shell relation; keep the roof seated while repairing "
+                "excess penetration or roofline drift."
+            )
+        if has_gap or has_contact_failure:
+            return f"{pair_label} is still floating above the wall/shell for this roof seating relation."
+        if has_alignment_issue:
+            return f"{pair_label} is seated on the wrong wall/shell line for this roof relation."
+        return f"{pair_label} still has wrong roof-wall seating semantics."
     if has_overlap:
         if relation_kind == "embedded_attachment":
             return (
@@ -1151,6 +1211,7 @@ def build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTru
                         kind="attachment",
                         summary=_attachment_item_summary(
                             pair_label=current_pair_label,
+                            seam_kind=attachment_semantics.seam_kind,
                             relation_kind=attachment_semantics.relation_kind,
                             has_overlap=has_overlap,
                             has_gap=has_gap,

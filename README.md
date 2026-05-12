@@ -78,7 +78,8 @@ When a bounded modeling intent matches, the default public working layer should 
 - `macro_finish_form` for preset-driven bevel/subdivision/solidify finishing
 - `reference_images` for goal-scoped reference intake before bounded visual comparison
 - `reference_guided_creature_build` as a native prompt asset for staged generic creature work on `llm-guided`
-- `recommended_prompts` can now steer creature-oriented guided sessions toward that prompt path by using active goal/session context
+- `reference_guided_architecture_build` as a native prompt asset for staged building/facade reconstruction from plans, elevations, sections, and photo references
+- `recommended_prompts` can now steer creature- and architecture-oriented guided sessions toward those prompt paths by using active goal/session context
 - `guided_reference_readiness` on `router_set_goal`, `router_get_status`, and staged reference compare/iterate payloads so clients can see whether reference-driven stage work is actually ready
 - `reference_orchestrator_feedback` on `reference_images`, `router_*`, and staged reference compare/iterate payloads so clients can read one compact next-step contract instead of stitching together RU, gate, and planner fields by hand
 - `reference_compare_stage_checkpoint` for deterministic multi-view stage comparison against attached references during manual iterative work
@@ -304,6 +305,7 @@ The guided surface now treats workflow fallback as an explicit typed contract in
 
 - `router_set_goal(...)` returns `guided_handoff` on bounded continuation paths such as `continuation_mode="guided_manual_build"` and `continuation_mode="guided_utility"`.
 - `guided_handoff` names the `target_phase`, `direct_tools`, `supporting_tools`, and `discovery_tools` for the next step on `llm-guided`, but it is continuation context rather than a permanent visibility guarantee.
+- reference-guided architecture no-match handoffs use the stable `reference_guided_architecture_build` recipe so plan/elevation/facade reconstruction continues on the bounded guided building surface instead of silently importing the generic simple-house workflow.
 - `workflow_import_recommended` stays `False` on these fallback paths unless the user explicitly asks for workflow import/create behavior.
 - `router_get_status(...)` preserves the active `guided_handoff` in session diagnostics so clients can recover the intended continuation path, while the live `visibility_rules` remain the authoritative current surface after later refresh barriers or phase transitions.
 
@@ -351,8 +353,8 @@ contract in addition to `guided_handoff`.
   `scene_view_diagnostics(target_object="Camera", ...)` do not satisfy a
   creature/building spatial check by themselves
 - if reference images are attached for the active guided goal, treat them as
-  the primary grounding input before deciding the first body/head/tail masses
-  and rough silhouette
+  the primary grounding input before deciding the first creature body/head/tail
+  masses or building footprint/main-volume/wall-shell roles
 - use full semantic object names such as `Body`, `Head`, `Tail`,
   `ForeLeg_L`, and `HindLeg_R` instead of opaque abbreviations like `ForeL`
   / `HindR`, because guided seam/role heuristics are more reliable on readable
@@ -675,6 +677,9 @@ hidden ordering assumptions.
   with authoritative evidence refs, status reasons, completion blockers, and
   bounded repair-tool hints; later guided scene mutations mark the affected
   verifier-backed statuses `stale` through the existing spatial dirtying path.
+- building relation truth now includes `roof_wall` seating and `opening_wall`
+  embedded/cut semantics, so roof gaps and floating facade openings surface as
+  typed blockers with bounded cutout/attachment repair hints.
 - active gate blockers narrow guided visibility/search toward existing
   verifier and repair tools; a failed seam gate should lead to relation
   graph/measure/assert/macro repair tools, not a broad catalog or goal reset.

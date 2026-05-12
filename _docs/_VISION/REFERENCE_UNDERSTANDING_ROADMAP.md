@@ -71,7 +71,7 @@ Hard rules:
 | `TASK-166` | Staged compare/RU consumer that packetizes compare evidence, keeps packet provenance on additive `compare_diagnostics`, and feeds compact packet uncertainty into `reference_orchestrator_feedback` |
 | `TASK-135` | First creature consumer of the gate substrate |
 | `TASK-135-03` | First low-poly form-refinement consumer; owns the faceted refinement stage and any creature profile macros |
-| `TASK-136` | Architecture/building domain consumer for `architectural_mass` references, plan/elevation/facade interpretation, and bounded building reconstruction on the existing RU/gate/packet surfaces |
+| `TASK-136` | Closed architecture/building domain consumer for `architectural_mass` references, plan/elevation/facade interpretation, and bounded building reconstruction on the existing RU/gate/packet surfaces |
 | `TASK-137` | Organ/anatomy domain consumer for educational visualization reconstruction with medical-scope guardrails on the existing RU/gate/feedback surfaces |
 | `TASK-138` | Biped/fantasy-character domain consumer for humanoid structure, body-part staging, and future rig-handoff boundaries on the existing RU/gate/feedback surfaces |
 | `TASK-140` | External VLM model-family profile reliability; owns `vision_contract_profile` expansion, not quality-gate authority |
@@ -257,9 +257,11 @@ Initial policy:
 | `unknown` | `inspect_only` | `inspect_only`, possibly safe `macro` | hidden |
 
 `TASK-136` owns architecture-specific consumption of `architectural_mass`,
-including plan/elevation/facade prompts, packet inputs, and guided handoff. It
-must translate planner families into existing guided families instead of adding
-new planner families.
+including plan/elevation/facade prompts, packet labels, gate vocabulary, and
+guided handoff. It translates planner families into existing guided families
+through `reference_guided_architecture_build`, building roles such as
+`wall_shell` / `facade_opening`, and relation semantics such as `opening_wall`
+and `roof_wall` instead of adding new planner families.
 
 This policy must remain subordinate to active gate status. For example, a
 `shape_profile` gate should not open mesh refinement while required seam gates

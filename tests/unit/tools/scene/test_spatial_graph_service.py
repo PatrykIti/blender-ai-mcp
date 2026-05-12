@@ -55,6 +55,18 @@ class FakeReader:
                 "center": [0.0, 0.0, 3.125],
                 "dimensions": [4.0, 2.4, 0.25],
             },
+            "WindowOpening_A": {
+                "min": [-0.6, -1.05, 1.0],
+                "max": [-0.1, -0.95, 1.6],
+                "center": [-0.35, -1.0, 1.3],
+                "dimensions": [0.5, 0.1, 0.6],
+            },
+            "ColumnSupport_A": {
+                "min": [-1.7, -1.1, 0.0],
+                "max": [-1.45, -0.9, 2.2],
+                "center": [-1.575, -1.0, 1.1],
+                "dimensions": [0.25, 0.2, 2.2],
+            },
         }
 
     def get_bounding_box(self, object_name: str, world_space: bool = True) -> dict:
@@ -344,6 +356,60 @@ def test_relation_graph_infers_building_roof_wall_attachment_semantics():
     assert relation_graph["pairs"][0]["attachment_semantics"]["part_object"] == "FacadeRoofMass"
     assert relation_graph["pairs"][0]["attachment_semantics"]["anchor_object"] == "FacadeMainVolume"
     assert relation_graph["pairs"][0]["attachment_semantics"]["attachment_verdict"] == "floating_gap"
+
+
+def test_relation_graph_infers_architecture_opening_wall_attachment_semantics():
+    service = SpatialGraphService()
+    reader = FakeReader()
+
+    relation_graph = service.build_relation_graph(
+        reader=reader,
+        scope_graph={
+            "scope_kind": "object_set",
+            "primary_target": "FacadeMainVolume",
+            "object_names": ["FacadeMainVolume", "WindowOpening_A"],
+            "object_count": 2,
+            "object_roles": [
+                {"object_name": "FacadeMainVolume", "role": "anchor_core"},
+                {"object_name": "WindowOpening_A", "role": "accessory_feature"},
+            ],
+        },
+        goal_hint="facade opening cut into wall shell",
+        include_truth_payloads=False,
+        include_guided_pairs=True,
+    )
+
+    assert relation_graph["summary"]["attachment_pairs"] == 1
+    assert relation_graph["pairs"][0]["attachment_semantics"] is not None
+    assert relation_graph["pairs"][0]["attachment_semantics"]["seam_kind"] == "opening_wall"
+    assert relation_graph["pairs"][0]["attachment_semantics"]["relation_kind"] == "embedded_attachment"
+    assert relation_graph["pairs"][0]["attachment_semantics"]["part_object"] == "WindowOpening_A"
+    assert relation_graph["pairs"][0]["attachment_semantics"]["anchor_object"] == "FacadeMainVolume"
+
+
+def test_relation_graph_infers_architecture_support_contact_semantics():
+    service = SpatialGraphService()
+    reader = FakeReader()
+
+    scope = service.build_scope_graph(
+        reader=reader,
+        target_object="FacadeMainVolume",
+        target_objects=["ColumnSupport_A"],
+        collection_name=None,
+    )
+    relation_graph = service.build_relation_graph(
+        reader=reader,
+        scope_graph=scope,
+        goal_hint="support columns carry the facade mass",
+        include_truth_payloads=False,
+        include_guided_pairs=True,
+    )
+
+    assert relation_graph["summary"]["support_pairs"] == 1
+    assert relation_graph["pairs"][0]["support_semantics"] is not None
+    assert relation_graph["pairs"][0]["support_semantics"]["supported_object"] == "FacadeMainVolume"
+    assert relation_graph["pairs"][0]["support_semantics"]["support_object"] == "ColumnSupport_A"
+    assert relation_graph["pairs"][0]["support_semantics"]["verdict"] == "unsupported"
 
 
 def test_relation_graph_still_treats_bare_fore_side_name_as_limb():

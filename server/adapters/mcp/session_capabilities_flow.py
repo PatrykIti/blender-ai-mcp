@@ -45,9 +45,17 @@ _BUILDING_GOAL_HINTS: tuple[str, ...] = (
     "balcony",
     "building",
     "castle",
+    "column",
+    "door",
+    "elevation",
     "facade",
+    "floor plan",
     "house",
+    "opening",
+    "post",
     "roof",
+    "section",
+    "site plan",
     "temple",
     "tower",
     "wall",
@@ -170,17 +178,17 @@ _GUIDED_ROLE_SUMMARY_PLAN: dict[str, dict[GuidedFlowStepLiteral, dict[str, list[
     "building": {
         "understand_goal": {"allowed_roles": [], "required_role_groups": []},
         "bootstrap_primary_workset": {
-            "allowed_roles": ["footprint_mass", "main_volume", "roof_mass"],
+            "allowed_roles": ["footprint_mass", "main_volume", "wall_shell"],
             "required_role_groups": ["primary_masses"],
         },
         "establish_spatial_context": {"allowed_roles": [], "required_role_groups": ["spatial_context"]},
         "establish_reference_context": {"allowed_roles": [], "required_role_groups": ["reference_context"]},
         "create_primary_masses": {
-            "allowed_roles": ["footprint_mass", "main_volume", "roof_mass"],
+            "allowed_roles": ["footprint_mass", "main_volume", "wall_shell"],
             "required_role_groups": ["primary_masses"],
         },
         "place_secondary_parts": {
-            "allowed_roles": ["facade_opening", "support_element", "detail_element"],
+            "allowed_roles": ["facade_opening", "opening_grid", "support_element", "roof_mass", "detail_element"],
             "required_role_groups": ["secondary_parts"],
         },
         "refine_low_poly_forms": {"allowed_roles": [], "required_role_groups": ["refinement_stage"]},
@@ -209,9 +217,11 @@ _GUIDED_ROLE_GROUP_BY_ROLE: dict[str, dict[str, str]] = {
     "building": {
         "footprint_mass": "primary_masses",
         "main_volume": "primary_masses",
-        "roof_mass": "primary_masses",
+        "wall_shell": "primary_masses",
         "facade_opening": "secondary_parts",
+        "opening_grid": "secondary_parts",
         "support_element": "secondary_parts",
+        "roof_mass": "secondary_parts",
         "detail_element": "secondary_parts",
     },
 }
@@ -227,12 +237,12 @@ _GUIDED_ROLE_CARDINALITY: dict[str, dict[str, int]] = {
 _GUIDED_PRIMARY_REQUIRED_ROLES: dict[str, tuple[str, ...]] = {
     "generic": ("anchor_core", "primary_mass"),
     "creature": ("body_core", "head_mass"),
-    "building": ("footprint_mass", "main_volume"),
+    "building": ("footprint_mass", "main_volume", "wall_shell"),
 }
 _GUIDED_SECONDARY_REQUIRED_ROLES: dict[str, tuple[str, ...]] = {
     "generic": ("secondary_mass", "support_part"),
     "creature": ("ear_pair", "foreleg_pair", "hindleg_pair"),
-    "building": ("facade_opening", "support_element"),
+    "building": ("facade_opening", "support_element", "roof_mass"),
 }
 
 
@@ -458,6 +468,8 @@ def _build_required_prompt_bundle(
 
     if domain_profile == "creature":
         required_prompts.append("reference_guided_creature_build")
+    elif domain_profile == "building":
+        required_prompts.append("reference_guided_architecture_build")
     elif current_step == "understand_goal":
         preferred_prompts.append("recommended_prompts")
 
@@ -756,6 +768,8 @@ def _select_guided_flow_domain_profile(
     recipe_id = str((guided_handoff or {}).get("recipe_id") or "").strip().lower()
     normalized_goal = str(goal or "").strip().lower()
 
+    if recipe_id == "reference_guided_architecture_build":
+        return "building"
     if recipe_id == "low_poly_creature_blockout" or any(
         _goal_contains_hint(normalized_goal, hint) for hint in _CREATURE_GOAL_HINTS
     ):

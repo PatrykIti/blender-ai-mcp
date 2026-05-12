@@ -45,7 +45,14 @@ class RouterGuidedHandoffContract(MCPContract):
     """Explicit guided-surface continuation contract after router handoff states."""
 
     kind: Literal["guided_manual_build", "guided_utility"]
-    recipe_id: Literal["low_poly_creature_blockout", "mid_poly_organic_refine"] | None = None
+    recipe_id: (
+        Literal[
+            "low_poly_creature_blockout",
+            "mid_poly_organic_refine",
+            "reference_guided_architecture_build",
+        ]
+        | None
+    ) = None
     target_phase: Literal["planning", "build", "inspect_validate"]
     surface_profile: str
     direct_tools: list[str]

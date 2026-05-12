@@ -538,6 +538,10 @@ On `llm-guided`, `router_set_goal()` now exposes explicit typed continuation met
   `recipe_id`, currently `low_poly_creature_blockout`, so session visibility
   and search shaping can narrow to the smaller creature recipe instead of the
   broad generic build surface
+- reference-guided architecture handoffs expose
+  `recipe_id="reference_guided_architecture_build"` for plan/elevation/section
+  /facade reconstruction so the session stays on the bounded building surface
+  instead of silently importing `simple_house_workflow`
 - `workflow_import_recommended` remains `false` on these paths unless the user explicitly asks for workflow import/create behavior
 - `router_get_status()` re-exposes the active `guided_handoff` from session state for recovery/debugging
 
@@ -604,9 +608,10 @@ Current guided-flow behavior:
   `attachment_seam`, `support_contact`, and `symmetry_pair`; verifier output
   persists evidence refs, `status_reason`, `completion_blockers`, status
   summaries, and bounded repair-tool hints on `active_gate_plan`
-- the attachment-semantics slice now covers both creature seams and the first
-  building structural seam `roof_wall`, so a floating roof over a wall/main
-  volume can degrade to `failed / relation_floating_gap` instead of stopping at
+- the attachment-semantics slice now covers creature seams plus building
+  structural seams such as `roof_wall` and `opening_wall`, so a floating roof
+  over a wall/main volume or an unembedded facade opening can degrade to
+  `failed / relation_floating_gap` instead of stopping at
   `blocked / missing_relation_pair`
 - guided scene mutations reuse the existing spatial dirtying path to mark
   the affected evidence-backed gate statuses `stale`; final completion remains
@@ -757,7 +762,8 @@ Current guided-flow behavior:
   available until both left/right sibling objects are registered
 - `guided_register_part(object_name=..., role=...)` is the canonical guided
   surface for telling the server that an existing object now counts as one
-  semantic role such as `body_core`, `head_mass`, or `roof_mass`
+  semantic role such as `body_core`, `head_mass`, `wall_shell`,
+  `facade_opening`, or `roof_mass`
 - `guided_register_part(...)` now validates that the named Blender object
   actually exists before updating guided role completion; a typo does not
   populate `completed_roles`
@@ -1050,8 +1056,11 @@ The prompt layer is now part of the MCP product surface:
 - prompt-capable clients should prefer native MCP prompts and may disable the
   bridge to keep Streamable HTTP tool catalogs smaller
 - native prompt asset names now include `reference_guided_creature_build`
+- native prompt asset names now also include
+  `reference_guided_architecture_build`
 - `recommended_prompts` now uses phase/profile plus explicit session goal and
-  guided-handoff context to steer creature sessions toward the creature prompt path
+  guided-handoff context to steer creature and architecture sessions toward the
+  matching reference-guided prompt path
 
 ## Deterministic Silhouette Guidance
 
@@ -1250,7 +1259,7 @@ Managing objects at the scene level.
 | `scene_compare_snapshot` | `baseline_snapshot` (str), `target_snapshot` (str), `ignore_minor_transforms` (float) | Compares two snapshots and returns diff summary (added/removed/modified objects). |
 | `reference_compare_checkpoint` | `checkpoint_path` (str), `checkpoint_label` (str, optional), `target_object` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional) | Compares one current checkpoint image against the active goal plus attached reference images and returns bounded vision interpretation for the next correction step. |
 | `reference_compare_current_view` | `checkpoint_label` (str, optional), `target_object` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional), viewport/camera args | Captures one current viewport/camera checkpoint using the bounded `scene_get_viewport` semantics, then compares it against the active goal plus attached reference images. |
-| `reference_compare_stage_checkpoint` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional), `checkpoint_label` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional), `preset_profile` (`compact`/`rich`) | Captures one deterministic multi-view stage checkpoint for a target object, object set, collection, or full assembled scene, then compares that view-set against the active goal plus attached reference images. The public tool name stays the same, but the staged compare path may now decompose the run into bounded packet-local view/scope compares, slice super-complex same-view reference sets to stay within the effective `VISION_MAX_IMAGES` limit, and project additive top-level `compare_diagnostics` on rich or uncertainty paths with packet ids, pass status, packet-local `support_evidence`, conflict notes, and `budget_control` limits. Fails fast when `guided_reference_readiness.compare_ready` is false. |
+| `reference_compare_stage_checkpoint` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional), `checkpoint_label` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional), `preset_profile` (`compact`/`rich`) | Captures one deterministic multi-view stage checkpoint for a target object, object set, collection, or full assembled scene, then compares that view-set against the active goal plus attached reference images. The public tool name stays the same, but the staged compare path may now decompose the run into bounded packet-local view/scope compares, slice super-complex same-view reference sets to stay within the effective `VISION_MAX_IMAGES` limit, project additive top-level `compare_diagnostics` on rich or uncertainty paths with packet ids, pass status, packet-local `support_evidence`, conflict notes, and `budget_control` limits, and cluster architecture scopes into facade/opening, roofline, and support packets when those roles are present. Fails fast when `guided_reference_readiness.compare_ready` is false. |
 | `reference_iterate_stage_checkpoint` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional), `checkpoint_label` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional), `preset_profile` (`compact`/`rich`) | Runs one session-aware checkpoint iteration: capture deterministic stage views, compare them to the references, remember the previous correction focus, and return whether to continue building, inspect/validate, or stop. Top-level `compare_diagnostics` is the public packet-uncertainty path even when compact nested `compare_result` debug detail is omitted, while `reference_orchestrator_feedback` remains the compact next-step owner seam. Fails fast when `guided_reference_readiness.iterate_ready` is false. |
 Invalid target-scope inputs such as an unavailable `collection_name` now return
 structured error payloads on the stage-compare path instead of failing again
@@ -1375,7 +1384,7 @@ contact success/failure phrase.
 | `scene_assert_proportion` | `object_name` (str), `axis_a` (str), `expected_ratio` (float), `axis_b` (str), `reference_object` (str), `reference_axis` (str), `tolerance` (float), `world_space` (bool) | Asserts pass/fail ratio/proportion against the expected value. |
 | `reference_compare_checkpoint` | `checkpoint_path` (str), `checkpoint_label` (str, optional), `target_object` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional) | Compares one current checkpoint image against the active goal plus attached reference images and returns bounded vision interpretation for the next correction step. |
 | `reference_compare_current_view` | `checkpoint_label` (str, optional), `target_object` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional), viewport/camera args | Captures one current viewport/camera checkpoint using the bounded `scene_get_viewport` semantics, then compares it against the active goal plus attached reference images. |
-| `reference_compare_stage_checkpoint` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional), `checkpoint_label` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional), `preset_profile` (`compact`/`rich`) | Captures one deterministic multi-view stage checkpoint for a target object, object set, collection, or full assembled scene, then compares that view-set against the active goal plus attached reference images. May expose additive `compare_diagnostics`, packet-local `support_evidence`, and `budget_control` detail on rich or uncertainty paths. |
+| `reference_compare_stage_checkpoint` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional), `checkpoint_label` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional), `preset_profile` (`compact`/`rich`) | Captures one deterministic multi-view stage checkpoint for a target object, object set, collection, or full assembled scene, then compares that view-set against the active goal plus attached reference images. May expose additive `compare_diagnostics`, packet-local `support_evidence`, `budget_control` detail, and architecture packet scope labels such as `Facade + Openings`, `Roofline`, and `Supports` on rich or uncertainty paths. |
 | `reference_iterate_stage_checkpoint` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional), `checkpoint_label` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional), `preset_profile` (`compact`/`rich`) | Runs one session-aware checkpoint iteration: capture deterministic stage views, compare them to the references, remember the previous correction focus, and return whether to continue building, inspect/validate, or stop. Top-level `compare_diagnostics` remains available for packet uncertainty even when compact nested debug detail is omitted. |
 > **Note:** Tools like `scene_get_mode`, `scene_list_selection`, `scene_inspect_*`, and `scene_create_*` have been consolidated into grouped public tools. Use `scene_context`, `scene_inspect`, and `scene_create` instead.
 > `scene_get_constraints` is now internal to `scene_inspect(action="constraints")` for MCP clients.

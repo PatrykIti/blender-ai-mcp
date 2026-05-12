@@ -156,7 +156,28 @@ def test_domain_templates_merge_required_gates(domain_profile, expected_template
     templates = templates_for_domain_profile(domain_profile)
     plan = normalize_gate_plan({"source": "llm_goal", "gates": []}, domain_profile=domain_profile)
 
-    assert plan.required_gate_count == len(templates)
+    assert plan.required_gate_count == sum(1 for template in templates if template.required)
+    assert plan.optional_gate_count == sum(1 for template in templates if not template.required)
     assert any(gate.gate_type == "final_completion" for gate in plan.gates)
     if expected_template_target:
         assert any(gate.target_label == expected_template_target for gate in plan.gates)
+
+
+def test_building_templates_cover_architecture_shell_opening_roof_and_support_contract():
+    plan = normalize_gate_plan({"source": "llm_goal", "gates": []}, domain_profile="building")
+    gates_by_id = {gate.gate_id: gate for gate in plan.gates}
+
+    assert gates_by_id["building_footprint_mass_required"].target_label == "footprint_mass"
+    assert gates_by_id["building_wall_shell_required"].target_label == "wall_shell"
+    assert gates_by_id["building_roof_mass_required"].target_label == "roof_mass"
+    assert gates_by_id["building_roof_wall_seam"].gate_type == "attachment_seam"
+    assert gates_by_id["building_roof_wall_seam"].target_label == "roof_wall"
+    assert gates_by_id["building_opening_grid_required"].gate_type == "opening_or_cut"
+    assert gates_by_id["building_opening_grid_required"].target_label == "facade_opening"
+    assert gates_by_id["building_opening_grid_required"].allow_embedded_intersection is True
+    assert gates_by_id["building_facade_rhythm_profile"].gate_type == "shape_profile"
+    assert gates_by_id["building_facade_rhythm_profile"].target_label == "opening_grid"
+    assert gates_by_id["building_support_contact"].gate_type == "support_contact"
+    assert gates_by_id["building_support_contact"].required is False
+    assert "macro_cutout_recess" in gates_by_id["building_opening_grid_required"].recommended_bounded_tools
+    assert "macro_attach_part_to_surface" in gates_by_id["building_roof_wall_seam"].recommended_bounded_tools

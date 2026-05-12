@@ -79,6 +79,12 @@ flow has `allowed_families`; this includes `modeling_`, `mesh_`, `macro_`,
 recommendation-only unless the bounded sculpt subset is explicitly mapped and
 allowed by the same guided execution policy.
 
+Architecture reconstruction uses the same policy path. A plan/elevation/facade
+reference goal may receive a `reference_guided_architecture_build` handoff, but
+that recipe only shapes the current guided families, prompt recommendation, and
+search ranking. It does not create a separate workflow-import path or bypass the
+guided family gate.
+
 ---
 
 ## Components

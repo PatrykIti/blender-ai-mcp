@@ -34,6 +34,7 @@ def test_native_prompt_components_are_available_on_built_server():
     names, rendered = asyncio.run(run())
 
     assert "reference_guided_creature_build" in names
+    assert "reference_guided_architecture_build" in names
     assert "workflow_router_first" in names
     assert "recommended_prompts" in names
     assert "reference_guided_creature_build" in rendered.messages[0].content.text
@@ -59,6 +60,7 @@ def test_prompt_bridge_tools_are_visible_on_guided_surface():
     prompts_payload = _decode_text_tool_result(prompts)
     assert any(prompt["name"] == "workflow_router_first" for prompt in prompts_payload)
     assert any(prompt["name"] == "reference_guided_creature_build" for prompt in prompts_payload)
+    assert any(prompt["name"] == "reference_guided_architecture_build" for prompt in prompts_payload)
 
     rendered_payload = _decode_text_tool_result(rendered)
     assert rendered_payload["messages"]
@@ -81,3 +83,4 @@ def test_prompt_bridge_tools_can_be_disabled_for_native_prompt_clients(monkeypat
     assert "get_prompt" not in tool_names
     assert "guided_session_start" in prompt_names
     assert "reference_guided_creature_build" in prompt_names
+    assert "reference_guided_architecture_build" in prompt_names

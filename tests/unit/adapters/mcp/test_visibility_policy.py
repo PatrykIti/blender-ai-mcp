@@ -12,6 +12,8 @@ from server.adapters.mcp.session_phase import SessionPhase
 from server.adapters.mcp.surfaces import get_surface_profile
 from server.adapters.mcp.transforms import materialize_transforms
 from server.adapters.mcp.transforms.visibility_policy import (
+    ARCHITECTURE_BUILD_DIRECT_TOOLS,
+    ARCHITECTURE_BUILD_SUPPORTING_TOOLS,
     CREATURE_LOW_POLY_BLOCKOUT_DIRECT_TOOLS,
     CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS,
     GUIDED_ATTACHMENT_ALIGNMENT_TOOLS,
@@ -261,6 +263,41 @@ def test_guided_handoff_payloads_stay_explicit_and_bounded():
     assert utility["discovery_tools"] == list(GUIDED_DISCOVERY_TOOLS)
     assert utility["workflow_import_recommended"] is False
     assert "visibility_rules" in utility["message"]
+
+
+def test_guided_handoff_payload_recognizes_reference_guided_architecture_goals():
+    manual = build_guided_handoff_payload(
+        "guided_manual_build",
+        surface_profile="llm-guided",
+        phase=SessionPhase.BUILD,
+        goal="rebuild a tower facade from the front elevation and floor plan references",
+    )
+
+    assert manual is not None
+    assert manual["recipe_id"] == "reference_guided_architecture_build"
+    assert manual["target_phase"] == "build"
+    assert manual["direct_tools"] == list(ARCHITECTURE_BUILD_DIRECT_TOOLS)
+    assert manual["supporting_tools"] == list(ARCHITECTURE_BUILD_SUPPORTING_TOOLS)
+    assert "macro_cutout_recess" in manual["direct_tools"]
+    assert "macro_place_supported_pair" in manual["direct_tools"]
+    assert set(GUIDED_SPATIAL_GRAPH_TOOLS).issubset(manual["supporting_tools"])
+    assert set(GUIDED_VIEW_DIAGNOSTIC_TOOLS).issubset(manual["supporting_tools"])
+    assert manual["workflow_import_recommended"] is False
+    assert "architecture reconstruction surface" in manual["message"]
+    assert "visibility_rules" in manual["message"]
+
+
+def test_guided_handoff_payload_does_not_treat_plan_verb_as_architecture_reference():
+    manual = build_guided_handoff_payload(
+        "guided_manual_build",
+        surface_profile="llm-guided",
+        phase=SessionPhase.BUILD,
+        goal="plan a simple house massing exercise",
+    )
+
+    assert manual is not None
+    assert manual["recipe_id"] is None
+    assert "architecture reconstruction surface" not in manual["message"]
 
 
 @pytest.mark.parametrize(

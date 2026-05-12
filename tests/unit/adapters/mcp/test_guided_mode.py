@@ -7,6 +7,8 @@ import asyncio
 from server.adapters.mcp.guided_mode import apply_session_visibility, build_visibility_diagnostics
 from server.adapters.mcp.session_phase import SessionPhase
 from server.adapters.mcp.transforms.visibility_policy import (
+    ARCHITECTURE_BUILD_DIRECT_TOOLS,
+    ARCHITECTURE_BUILD_SUPPORTING_TOOLS,
     CREATURE_LOW_POLY_BLOCKOUT_DIRECT_TOOLS,
     CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS,
     GUIDED_DISCOVERY_TOOLS,
@@ -102,6 +104,29 @@ def test_guided_mode_can_narrow_build_visibility_for_creature_handoff():
         "reference_iterate_stage_checkpoint",
         "router_get_status",
     }
+
+
+def test_guided_mode_can_narrow_build_visibility_for_architecture_handoff():
+    """Architecture handoff should keep shell/opening/roof/support tools bounded."""
+
+    diagnostics = build_visibility_diagnostics(
+        "llm-guided",
+        SessionPhase.BUILD,
+        guided_handoff={
+            "kind": "guided_manual_build",
+            "recipe_id": "reference_guided_architecture_build",
+            "direct_tools": list(ARCHITECTURE_BUILD_DIRECT_TOOLS),
+            "supporting_tools": list(ARCHITECTURE_BUILD_SUPPORTING_TOOLS),
+        },
+    )
+
+    names = diagnostics.rules[-1]["names"]
+
+    assert "macro_cutout_recess" in names
+    assert "macro_place_supported_pair" in names
+    assert "mesh_loop_cut" in names
+    assert "macro_finish_form" not in names
+    assert "mesh_randomize" not in names
 
 
 def test_guided_mode_can_gate_build_visibility_by_guided_flow_step():

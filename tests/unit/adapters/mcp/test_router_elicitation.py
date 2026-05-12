@@ -611,7 +611,7 @@ def test_router_get_status_returns_guided_flow_state(monkeypatch):
         "current_step": "establish_spatial_context",
         "completed_steps": [],
         "required_checks": [],
-        "required_prompts": ["guided_session_start"],
+        "required_prompts": ["guided_session_start", "reference_guided_architecture_build"],
         "preferred_prompts": ["workflow_router_first"],
         "next_actions": ["run_required_checks"],
         "blocked_families": ["build"],
