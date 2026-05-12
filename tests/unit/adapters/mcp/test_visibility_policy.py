@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import pytest
 from server.adapters.mcp.areas.router import register_router_tools
 from server.adapters.mcp.areas.scene import register_scene_tools
 from server.adapters.mcp.platform.capability_manifest import get_capability_manifest
@@ -252,7 +253,6 @@ def test_guided_handoff_payloads_stay_explicit_and_bounded():
     assert "continuation context" in manual["message"]
     assert "visibility_rules" in manual["message"]
     assert "required_checks" in manual["message"]
-
     assert utility is not None
     assert utility["recipe_id"] is None
     assert utility["target_phase"] == "planning"
@@ -261,6 +261,33 @@ def test_guided_handoff_payloads_stay_explicit_and_bounded():
     assert utility["discovery_tools"] == list(GUIDED_DISCOVERY_TOOLS)
     assert utility["workflow_import_recommended"] is False
     assert "visibility_rules" in utility["message"]
+
+
+@pytest.mark.parametrize(
+    "goal",
+    [
+        "create a low-poly beaver matching front and side reference images",
+        "create a low-poly dog matching front and side reference images",
+        "create a low-poly cat matching front and side reference images",
+    ],
+)
+def test_guided_handoff_payload_recognizes_common_quadruped_mammal_goals(goal: str):
+    """Common quadruped mammals should stay on the creature handoff recipe, not fall back to generic build."""
+
+    manual = build_guided_handoff_payload(
+        "guided_manual_build",
+        surface_profile="llm-guided",
+        phase=SessionPhase.BUILD,
+        goal=goal,
+    )
+
+    assert manual is not None
+    assert manual["recipe_id"] == "low_poly_creature_blockout"
+    assert manual["direct_tools"] == list(CREATURE_LOW_POLY_BLOCKOUT_DIRECT_TOOLS)
+    assert manual["workflow_import_recommended"] is False
+    assert "continuation context" in manual["message"]
+    assert "visibility_rules" in manual["message"]
+    assert "required_checks" in manual["message"]
 
 
 def test_gate_blocker_visibility_exposes_bounded_attachment_repair_tools():

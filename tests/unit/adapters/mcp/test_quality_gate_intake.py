@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
+from typing import cast
 
+import pytest
+from fastmcp import Context
 from server.adapters.mcp.contracts.quality_gates import normalize_gate_plan
 from server.adapters.mcp.session_capabilities import (
     SessionCapabilityState,
@@ -12,6 +15,7 @@ from server.adapters.mcp.session_capabilities import (
     mark_guided_spatial_state_stale,
     set_session_capability_state,
     update_quality_gate_plan_from_relation_graph,
+    update_session_from_router_goal,
 )
 from server.adapters.mcp.session_phase import SessionPhase
 
@@ -195,6 +199,50 @@ def test_gate_proposal_intake_adds_creature_required_visual_role_templates():
     eye_gate = next(gate for gate in result.gate_plan.gates if gate.target_label == "eye_pair")
     assert eye_gate.target_kind == "reference_part"
     assert eye_gate.proposal_sources == ["domain_template"]
+
+
+@pytest.mark.parametrize(
+    "goal",
+    [
+        "create a low-poly beaver matching front and side reference images",
+        "create a low-poly dog matching front and side reference images",
+        "create a low-poly cat matching front and side reference images",
+    ],
+)
+def test_gate_proposal_intake_keeps_common_quadruped_templates_generic_across_species(goal: str):
+    ctx = FakeContext()
+    update_session_from_router_goal(
+        cast(Context, ctx),
+        goal,
+        {
+            "status": "no_match",
+            "phase_hint": "build",
+        },
+        surface_profile="llm-guided",
+    )
+
+    result = ingest_quality_gate_proposal(
+        cast(Context, ctx),
+        {
+            "proposal_id": "quadruped-gates",
+            "source": "llm_goal",
+            "gates": [],
+        },
+    )
+
+    assert result.status == "accepted"
+    assert result.gate_plan is not None
+    required_labels = {gate.target_label for gate in result.gate_plan.gates if gate.gate_type == "required_part"}
+    assert {
+        "body_core",
+        "head_mass",
+        "tail_mass",
+        "snout_mass",
+        "ear_pair",
+        "eye_pair",
+        "foreleg_pair",
+        "hindleg_pair",
+    }.issubset(required_labels)
 
 
 def test_gate_proposal_intake_rejects_unknown_payload_fields():

@@ -1,6 +1,6 @@
 # TASK-135: Anatomy-Aware Reference-Guided Low-Poly Creature Reconstruction
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** Reconstruction / Guided Creature Reliability
 **Estimated Effort:** Large
@@ -486,10 +486,38 @@ files and this table in the same branch.
 
 ## Status / Board Update
 
-- promote this as a board-level follow-on after `TASK-128`
-- this umbrella now has first execution slices for completion gates, curved
-  tail/appendage construction, and low-poly form refinement
-- use `TASK-157` as the generic gate substrate and keep this task focused on
-  creature-specific templates, evidence, and tooling
-- use this umbrella to separate "generic creature blockout reliability" from
-  "anatomy-aware low-poly reconstruction from realistic references"
+- `TASK-135` moved from the board's open reconstruction queue to the completed
+  milestones list on 2026-05-11.
+- All direct children under `TASK-135` are now closed:
+  - `TASK-135-01` ✅ Done
+  - `TASK-135-02` ✅ Done
+  - `TASK-135-03` ✅ Done
+
+## Completion Summary
+
+- 2026-05-10: `TASK-135-01` is closed:
+  - creature gate templates now include required visual roles for body, head,
+    tail, snout, ears, eyes, forelegs, and hindlegs
+  - staged checkpoint truth now materializes required creature seams into the
+    active quality-gate plan, keeping final completion blocked on unresolved
+    `floating_gap` seams
+  - `TASK-135` remained open for `TASK-135-02` and `TASK-135-03`
+- 2026-05-11: `TASK-135-02` is closed:
+  - curved or bushy tail cues from reference understanding now become generic
+    `shape_profile` gates rather than a creature-only gate schema
+  - `shape_profile` blockers recommend bounded profile/arc tooling including
+    `macro_adjust_segment_chain_arc(...)`
+  - Blender-backed proof covers `TailRoot` seated to `Body` while `TailMid` and
+    `TailTip` are arced
+  - `TASK-135` remained open for the `TASK-135-03*` refinement-stage family
+- 2026-05-12: `TASK-135-03` is closed:
+  - `refine_low_poly_forms` is now an explicit guided refinement step with
+    bounded visibility, search, and planner routing on the shipped public
+    surface
+  - Blender-backed proof covers the first body, ear, snout, limb, and tail
+  profile cases without promoting a new public profile macro
+  - common quadruped mammals such as squirrel, beaver, dog, and cat now stay
+    on the same creature handoff, prompt, and gate-template path instead of
+    depending on squirrel-specific hints
+  - the final repo-supported full runner now also passes after the validation
+    tooling fix path stabilized addon reinstall and per-run RPC port selection

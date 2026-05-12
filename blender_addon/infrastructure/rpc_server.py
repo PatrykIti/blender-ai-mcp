@@ -21,8 +21,8 @@ try:
 except ImportError:
     bpy = None
 
-HOST = "0.0.0.0"  # Listen on all interfaces within container
-PORT = 8765
+HOST = os.environ.get("BLENDER_RPC_HOST", "0.0.0.0")  # Listen on all interfaces within container
+PORT = int(os.environ.get("BLENDER_RPC_PORT", "8765"))
 DEFAULT_EXECUTION_TIMEOUT_SECONDS = float(os.environ.get("ADDON_EXECUTION_TIMEOUT_SECONDS", "30.0"))
 DEFAULT_WATCHDOG_INTERVAL_SECONDS = float(os.environ.get("BLENDER_AI_MCP_RPC_WATCHDOG_INTERVAL_SECONDS", "5.0"))
 RPC_TRACE_DIR = Path(os.environ.get("BLENDER_AI_MCP_TRACE_DIR", Path(tempfile.gettempdir()) / "blender-ai-mcp"))
@@ -210,20 +210,20 @@ class BackgroundJob:
 
 
 class BlenderRpcServer:
-    def __init__(self, host=HOST, port=PORT):
-        self.host = host
-        self.port = port
+    def __init__(self, host: str | None = None, port: int | None = None):
+        self.host = HOST if host is None else host
+        self.port = PORT if port is None else port
         self.server_socket = None
         self.server_thread = None
         self.running = False
-        self.command_registry = {}
-        self.background_command_registry = {}
+        self.command_registry: Dict[str, Callable[..., Any]] = {}
+        self.background_command_registry: Dict[str, Callable[..., Any]] = {}
         self.watchdog_interval_seconds = DEFAULT_WATCHDOG_INTERVAL_SECONDS
         self._watchdog_callback: Callable[[], float | None] | None = None
         self._watchdog_enabled = False
 
         # Queue for results from main thread
-        self.result_queues = {}  # request_id -> Queue
+        self.result_queues: Dict[str, queue.Queue[Dict[str, Any]]] = {}  # request_id -> Queue
         self.background_jobs: Dict[str, BackgroundJob] = {}
         self._jobs_lock = threading.Lock()
         self.trace_file_path: Path | None = self._create_trace_file_path()

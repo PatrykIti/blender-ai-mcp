@@ -1,6 +1,6 @@
 # TASK-135-03-03: Refinement Regression Docs And Closeout
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-135-03](./TASK-135-03_Low_Poly_Form_Refinement_Mesh_Window_And_Profile_Macros.md)
 **Depends On:** [TASK-135-03-01](./TASK-135-03-01_Refinement_Stage_State_And_Visibility_Gate.md), [TASK-135-03-02](./TASK-135-03-02_Bounded_Profile_Tools_And_Optional_Macro_Wave.md)
@@ -154,12 +154,23 @@ close_leaf_and_parent_only_if_no_follow_on_remains()
 
 ## Status / Board Update
 
-- When this closeout leaf ships, update its task status plus the parent
-  `TASK-135-03` status, confirm the sibling leaf statuses under
-  `TASK-135-03-*`, and record whether `_docs/_TASKS/README.md` and the umbrella
-  `TASK-135` execution notes changed.
-- Record whether the `pre-commit` lane, owner-lane pytest commands, full unit
-  pass, full Blender E2E pass, and stdio/Streamable parity lanes ran or were
-  intentionally skipped.
-- If follow-on work remains, track it explicitly as a new leaf or follow-on
-  task rather than implying it in the completion prose.
+- `TASK-135-03-03` is closed.
+- The parent `TASK-135-03`, the umbrella `TASK-135`, and `_docs/_TASKS/README.md`
+  all changed in the same branch so nested task state and board state do not
+  drift.
+
+## Completion Summary
+
+- 2026-05-11: The refinement-stage closeout now includes owner-lane unit
+  coverage, Blender-backed proof for the first body/ear/snout profile cases,
+  and task/changelog/test-doc sync.
+- The generic creature path is no longer squirrel-only at the goal-classifier /
+  prompt-recommendation / gate-template layer: common quadruped mammals such as
+  beaver, dog, and cat now resolve to the same creature handoff and required
+  gate template path as squirrel runs.
+- The bounded refinement wave is implemented on the existing mesh/macro
+  surface, with `TASK-135-03-02-03` superseded and no remaining implementation
+  follow-on leaf under `TASK-135-03`.
+- The repo-supported full runner now also passed after the validation tooling
+  fix path moved addon reinstall off the crash-prone background lane and
+  allowed per-run RPC port fallback when `8765` is already occupied.

@@ -1,6 +1,6 @@
 # TASK-135-03-02-03: Optional Profile Macro Promotion
 
-**Status:** ⏳ To Do
+**Status:** ⏭️ Superseded
 **Priority:** 🔴 High
 **Parent:** [TASK-135-03-02](./TASK-135-03-02_Bounded_Profile_Tools_And_Optional_Macro_Wave.md)
 **Depends On:** [TASK-135-03-02-02](./TASK-135-03-02-02_Existing_Profile_Tool_Proof_And_Geometry_Cases.md)
@@ -110,6 +110,14 @@ return MacroExecutionReportContract(
 
 ## Status / Board Update
 
-- When this leaf ships or is superseded, update `TASK-135-03-02`,
-  `TASK-135-03`, and the umbrella progress notes if the remaining refinement
-  path changes.
+- `TASK-135-03-02-03` is superseded by the existing-tool proof from
+  `TASK-135-03-02-02`.
+- `TASK-135-03-02`, `TASK-135-03`, and the umbrella `TASK-135` now close on
+  the shipped bounded mesh/macro surface instead of promoting a new macro.
+
+## Completion Summary
+
+- 2026-05-11: The bounded proof wave did not expose any repeated unsafe
+  selection/setup choreography across more than one creature part class.
+- Because body, ear, snout, limb, and tail cases are already expressible on the
+  shipped surface, no new profile macro was added under this task family.

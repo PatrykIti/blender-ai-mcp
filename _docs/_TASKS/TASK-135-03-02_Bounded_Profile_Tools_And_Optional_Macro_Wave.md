@@ -1,6 +1,6 @@
 # TASK-135-03-02: Bounded Profile Tools And Optional Macro Wave
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-135-03](./TASK-135-03_Low_Poly_Form_Refinement_Mesh_Window_And_Profile_Macros.md)
 **Depends On:** [TASK-135-03-01](./TASK-135-03-01_Refinement_Stage_State_And_Visibility_Gate.md)
@@ -26,9 +26,9 @@
 
 | Order | Leaf | Purpose |
 |------|------|---------|
-| 1 | [TASK-135-03-02-01](./TASK-135-03-02-01_Refinement_Visibility_Search_And_Planner_Routing.md) | Make the refinement step discover and expose the correct bounded existing tools |
-| 2 | [TASK-135-03-02-02](./TASK-135-03-02-02_Existing_Profile_Tool_Proof_And_Geometry_Cases.md) | Prove existing mesh/modeling/macro tools can handle the first profile cases in Blender |
-| 3 | [TASK-135-03-02-03](./TASK-135-03-02-03_Optional_Profile_Macro_Promotion.md) | Add a new profile macro only if the proof leaf records a repeated unsafe or unbounded choreography gap |
+| 1 | [TASK-135-03-02-01](./TASK-135-03-02-01_Refinement_Visibility_Search_And_Planner_Routing.md) | ✅ Closed: refinement visibility/search/planner routing now stays on the bounded existing-tool surface |
+| 2 | [TASK-135-03-02-02](./TASK-135-03-02-02_Existing_Profile_Tool_Proof_And_Geometry_Cases.md) | ✅ Closed: Blender-backed proof covers body, ear, snout, limb, and tail profile cases without a new macro |
+| 3 | [TASK-135-03-02-03](./TASK-135-03-02-03_Optional_Profile_Macro_Promotion.md) | ⏭️ Superseded: no repeated unsafe choreography remained after the existing-tool proof wave |
 
 ## Implementation Notes
 
@@ -168,12 +168,17 @@ else:
 
 ## Status / Board Update
 
-- When this profile-tool wave ships or all direct child leaves resolve, update
-  this subtask status plus the parent `TASK-135-03` execution structure and
-  note whether public guided-surface wording changed in `_docs/_TASKS/README.md`
-  or the parent task files.
-- Record whether the `pre-commit` lane, owner-lane pytest commands, full unit
-  pass, and full Blender E2E pass ran or were intentionally skipped.
-- If the bounded-tool slice still leaves a promoted macro or extra runtime lane
-  open, track that as a separate follow-on leaf rather than leaving the current
-  status partially implied.
+- `TASK-135-03-02` is closed after both direct implementation leaves shipped
+  and the optional macro leaf was superseded.
+- No `_docs/_TASKS/README.md` board wording change was required for this nested
+  subtask because only the board-level umbrella row tracks `TASK-135`.
+
+## Completion Summary
+
+- 2026-05-11: The refinement step now discovers bounded mesh/profile tools for
+  low-poly creature body, ear, limb, snout, and tail work without widening the
+  public surface.
+- Blender-backed proof confirms that the shipped mesh and macro tools are
+  enough for the first representative creature profile cases.
+- The profile-tool wave closed without a new public macro; the existing bounded
+  surface remained sufficient.

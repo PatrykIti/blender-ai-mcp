@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import sys
 import tomllib
 import types
@@ -350,6 +351,32 @@ def test_wait_for_rpc_server_retries_until_ready(monkeypatch):
     assert module.wait_for_rpc_server(timeout=3) is True
 
 
+def test_select_rpc_port_for_run_uses_fallback_when_default_is_busy(monkeypatch):
+    module = _load_script("run_e2e_tests")
+
+    monkeypatch.setattr(module, "_port_is_listening", lambda host, port: True)
+
+    class FakeSocket:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def bind(self, address):
+            self._address = address
+
+        def setsockopt(self, *_args):
+            return None
+
+        def getsockname(self):
+            return ("127.0.0.1", 9123)
+
+    monkeypatch.setattr(module.socket, "socket", lambda *args, **kwargs: FakeSocket())
+
+    assert module.select_rpc_port_for_run() == 9123
+
+
 def test_find_blender_path_uses_custom_and_path_lookup(tmp_path, monkeypatch):
     module = _load_script("run_e2e_tests")
 
@@ -367,24 +394,23 @@ def test_find_blender_path_uses_custom_and_path_lookup(tmp_path, monkeypatch):
     assert module.find_blender_path() == "/usr/local/bin/blender"
 
 
-def test_check_install_uninstall_helpers_use_subprocess(monkeypatch):
+def test_check_install_uninstall_helpers_use_subprocess(tmp_path, monkeypatch):
     module = _load_script("run_e2e_tests")
+    addons_dir = tmp_path / "_tmp_addons"
+    addon_dir = addons_dir / module.ADDON_NAME
+    addons_dir.mkdir(parents=True)
+    addon_dir.mkdir()
+    (addon_dir / "__init__.py").write_text("# test addon\n", encoding="utf-8")
 
-    monkeypatch.setattr(
-        module.subprocess,
-        "run",
-        MagicMock(
-            side_effect=[
-                types.SimpleNamespace(stdout="ADDON_STATUS: INSTALLED", stderr=""),
-                types.SimpleNamespace(stdout="UNINSTALL_STATUS: SUCCESS", stderr=""),
-                types.SimpleNamespace(stdout="INSTALL_STATUS: SUCCESS", stderr=""),
-            ]
-        ),
-    )
+    monkeypatch.setattr(module, "resolve_blender_addons_dir", lambda _path: addons_dir)
 
     assert module.check_addon_installed("/Applications/Blender") is True
     assert module.uninstall_addon("/Applications/Blender") is True
+    assert addon_dir.exists() is False
+
+    module.ADDON_OUTPUT = REPO_ROOT / "outputs" / "blender_ai_mcp.zip"
     assert module.install_addon("/Applications/Blender") is True
+    assert (addons_dir / module.ADDON_NAME / "__init__.py").exists() is True
 
 
 def test_run_blender_with_rpc_and_kill_process(monkeypatch):
@@ -394,7 +420,8 @@ def test_run_blender_with_rpc_and_kill_process(monkeypatch):
     process.pid = 123
     process.wait.return_value = 0
 
-    monkeypatch.setattr(module.subprocess, "Popen", lambda *args, **kwargs: process)
+    popen = MagicMock(return_value=process)
+    monkeypatch.setattr(module.subprocess, "Popen", popen)
     monkeypatch.setattr(module, "wait_for_rpc_server", lambda timeout=module.RPC_TIMEOUT: True)
     monkeypatch.setattr(module.os, "getpgid", lambda pid: pid)
     kill_calls = []
@@ -405,6 +432,11 @@ def test_run_blender_with_rpc_and_kill_process(monkeypatch):
     assert ready is True
     assert runtime_log_path.name.startswith("blender_runtime_")
     assert runtime_log_path.exists()
+    bootstrap_script_path = runtime_log_path.with_suffix(".bootstrap.py")
+    command = popen.call_args.args[0]
+    assert command == ["/Applications/Blender", "--python", str(bootstrap_script_path)]
+    assert popen.call_args.kwargs["env"]["BLENDER_RPC_PORT"] == str(module.RPC_PORT)
+    assert bootstrap_script_path.exists() is False
 
     module.kill_blender_process(process)
     assert kill_calls
@@ -422,6 +454,7 @@ def test_save_test_log_and_main_happy_path(tmp_path, monkeypatch):
     monkeypatch.setattr(module, "ADDON_OUTPUT", addon_output)
     monkeypatch.setattr(module, "E2E_TESTS_DIR", e2e_dir)
     monkeypatch.setattr(module, "find_blender_path", lambda _path=None: "/Applications/Blender")
+    monkeypatch.setattr(module, "select_rpc_port_for_run", lambda: 9911)
     monkeypatch.setattr(module, "check_addon_installed", lambda _path: False)
     monkeypatch.setattr(module, "install_addon", lambda _path: True)
     runtime_log = e2e_dir / "blender_runtime_test.log"
@@ -433,6 +466,8 @@ def test_save_test_log_and_main_happy_path(tmp_path, monkeypatch):
 
     result = module.main()
     assert result == 0
+    assert module.RPC_PORT == 9911
+    assert os.environ["BLENDER_RPC_PORT"] == "9911"
 
     logs = sorted(e2e_dir.glob("e2e_test_PASSED_*.log"))
     assert logs

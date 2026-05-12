@@ -1,6 +1,6 @@
 # TASK-135-03-02-01: Refinement Visibility Search And Planner Routing
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-135-03-02](./TASK-135-03-02_Bounded_Profile_Tools_And_Optional_Macro_Wave.md)
 **Depends On:** [TASK-135-03-01](./TASK-135-03-01_Refinement_Stage_State_And_Visibility_Gate.md)
@@ -122,6 +122,20 @@ search_index = rank_only_visible_refinement_tools(visible_tools)
 
 ## Status / Board Update
 
-- When this leaf ships, update its status plus the parent
-  `TASK-135-03-02` execution structure and record whether `_docs/_TASKS/README.md`
-  board wording changed.
+- `TASK-135-03-02-01` is closed after the refinement step, guided search, and
+  planner route/handoff all stayed on the bounded existing-tool surface.
+- The parent `TASK-135-03-02` now depends only on the existing-tool proof and
+  closeout slices.
+
+## Completion Summary
+
+- 2026-05-11: `refine_low_poly_forms` now exposes the bounded mesh/profile tool
+  window on the existing guided visibility surface without reopening
+  `modeling_create_primitive`, `modeling_transform_object`, or sculpt by
+  default.
+- Guided search now recovers bounded profile tools for low-poly body, ear,
+  limb, snout, and tail refinement queries, including
+  `macro_adjust_segment_chain_arc(...)` for tail-shape blockers.
+- The staged planner keeps low-poly/faceted creature refinement on
+  `modeling_mesh` or `macro`, while truth/assembly blockers still override to
+  deterministic macro repair when needed.

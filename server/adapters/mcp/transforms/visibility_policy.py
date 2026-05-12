@@ -305,12 +305,18 @@ GUIDED_OVERLAY_FAMILY_ORDER: dict[str, tuple[GuidedFlowFamilyLiteral, ...]] = {
 
 _CREATURE_GOAL_HINTS: tuple[str, ...] = (
     "animal",
+    "beaver",
     "bird",
+    "canine",
+    "cat",
     "creature",
     "ears",
+    "feline",
     "fox",
     "owl",
     "paw",
+    "dog",
+    "quadruped",
     "rabbit",
     "snout",
     "squirrel",

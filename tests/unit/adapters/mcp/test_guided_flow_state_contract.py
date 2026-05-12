@@ -328,6 +328,36 @@ def test_router_goal_creature_initializes_guided_flow_state():
     assert state.guided_flow_state["required_role_groups"] == ["spatial_context"]
 
 
+@pytest.mark.parametrize(
+    "goal",
+    [
+        "create a low-poly beaver matching front and side reference images",
+        "create a low-poly dog matching front and side reference images",
+        "create a low-poly cat matching front and side reference images",
+    ],
+)
+def test_router_goal_common_quadruped_mammals_initialize_creature_guided_flow_state(goal: str):
+    ctx = FakeContext()
+
+    state = update_session_from_router_goal(
+        cast(Context, ctx),
+        goal,
+        {
+            "status": "no_match",
+            "phase_hint": "build",
+        },
+        surface_profile="llm-guided",
+    )
+
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["domain_profile"] == "creature"
+    assert state.guided_flow_state["current_step"] == "establish_spatial_context"
+    assert state.guided_flow_state["required_prompts"] == [
+        "guided_session_start",
+        "reference_guided_creature_build",
+    ]
+
+
 def test_router_goal_building_initializes_guided_flow_state():
     ctx = FakeContext()
 

@@ -1,6 +1,6 @@
 # TASK-135-03: Low-Poly Form Refinement Mesh Window And Profile Macros
 
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-135](./TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md)
 **Category:** Reconstruction / Guided Mesh Refinement
@@ -154,11 +154,11 @@ if current_step == "refine_low_poly_forms":
 | Order | Leaf | Purpose |
 |------|------|---------|
 | 1 | [TASK-135-03-01](./TASK-135-03-01_Refinement_Stage_State_And_Visibility_Gate.md) | ✅ Closed: `refine_low_poly_forms` is now an explicit guided step, gated by normalized profile/refinement blockers after role/seam/stale prerequisites clear |
-| 2 | [TASK-135-03-02](./TASK-135-03-02_Bounded_Profile_Tools_And_Optional_Macro_Wave.md) | Decomposition anchor for the bounded profile-tool wave; do not implement as one oversized leaf |
-| 2.1 | [TASK-135-03-02-01](./TASK-135-03-02-01_Refinement_Visibility_Search_And_Planner_Routing.md) | Wire refinement blockers to visibility, discovery, and planner routing with existing tools only |
-| 2.2 | [TASK-135-03-02-02](./TASK-135-03-02-02_Existing_Profile_Tool_Proof_And_Geometry_Cases.md) | Prove selected mesh/modeling/macro operations can profile creature parts without new public macros |
-| 2.3 | [TASK-135-03-02-03](./TASK-135-03-02-03_Optional_Profile_Macro_Promotion.md) | Promote a new macro only if 2.2 proves repeated unsafe choreography remains |
-| 3 | [TASK-135-03-03](./TASK-135-03-03_Refinement_Regression_Docs_And_Closeout.md) | Lock the new refinement path with transport/Blender-backed proof and final docs/changelog alignment |
+| 2 | [TASK-135-03-02](./TASK-135-03-02_Bounded_Profile_Tools_And_Optional_Macro_Wave.md) | ✅ Closed: the bounded profile-tool wave shipped on existing visibility/search/planner seams and Blender-backed proof |
+| 2.1 | [TASK-135-03-02-01](./TASK-135-03-02-01_Refinement_Visibility_Search_And_Planner_Routing.md) | ✅ Closed: refinement blockers now surface the correct bounded existing tools |
+| 2.2 | [TASK-135-03-02-02](./TASK-135-03-02-02_Existing_Profile_Tool_Proof_And_Geometry_Cases.md) | ✅ Closed: body, ear, snout, limb, and tail profile cases now have existing-tool proof |
+| 2.3 | [TASK-135-03-02-03](./TASK-135-03-02-03_Optional_Profile_Macro_Promotion.md) | ⏭️ Superseded: no new profile macro was needed after the proof wave |
+| 3 | [TASK-135-03-03](./TASK-135-03-03_Refinement_Regression_Docs_And_Closeout.md) | ✅ Closed: docs/changelog/task/board closeout now reflect the shipped bounded refinement path |
 
 ## Runtime / Security Contract Notes
 
@@ -247,16 +247,23 @@ if current_step == "refine_low_poly_forms":
 
 ## Status / Board Update
 
-- When this refinement parent ships, update its task status plus the child leaf
-  statuses under `TASK-135-03`, refresh the umbrella `TASK-135` execution
-  structure if ordering or remaining follow-ons changed, and record whether
-  `_docs/_TASKS/README.md` board wording also changed.
-- Record whether the `pre-commit` lane, owner-lane pytest commands, full unit
-  pass, full Blender E2E pass, and any Streamable/stdio parity lanes ran or
-  were intentionally skipped.
-- If follow-on refinement work remains after the first bounded wave, track it as
-  an explicit new leaf or follow-on task instead of burying it in the status
-  field.
+- `TASK-135-03` is closed.
+- All implementation and closeout leaves under `TASK-135-03` are now resolved:
+  - `TASK-135-03-01` ✅ Done
+  - `TASK-135-03-02` ✅ Done
+  - `TASK-135-03-02-03` ⏭️ Superseded
+  - `TASK-135-03-03` ✅ Done
+
+## Completion Summary
+
+- 2026-05-11: `refine_low_poly_forms` is now a fully closed bounded refinement
+  path on the current guided surface.
+- The refinement stage exposes bounded mesh/profile tooling when the staged
+  blockers justify it, keeps broad sculpt hidden by default for low-poly
+  creature work, and proves representative body, ear, snout, limb, and tail
+  profile cases on the shipped surface.
+- No profile macro promotion was required after the first proof wave.
+- The full closeout pack now includes the repo-supported Blender runner pass.
 
 ## Acceptance Criteria
 

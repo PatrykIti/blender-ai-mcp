@@ -1,6 +1,6 @@
 # TASK-135-03-02-02: Existing Profile Tool Proof And Geometry Cases
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-135-03-02](./TASK-135-03-02_Bounded_Profile_Tools_And_Optional_Macro_Wave.md)
 **Depends On:** [TASK-135-03-02-01](./TASK-135-03-02-01_Refinement_Visibility_Search_And_Planner_Routing.md)
@@ -109,5 +109,19 @@ else:
 
 ## Status / Board Update
 
-- When this leaf ships, update its status and record whether `TASK-135-03-02-03`
-  remains necessary or is superseded by existing-tool proof.
+- `TASK-135-03-02-02` is closed with Blender-backed proof on the shipped tool
+  surface.
+- `TASK-135-03-02-03` is superseded because the existing bounded mesh/macro
+  surface proved sufficient for the first creature profile cases.
+
+## Completion Summary
+
+- 2026-05-11: Added `tests/e2e/tools/mesh/test_creature_profile_cases.py` to
+  prove body-mass profiling, ear pointing, and snout wedging with the existing
+  mesh tool surface only.
+- Existing Blender-backed macro proof already covers forelimb/body seating on
+  `macro_align_part_with_contact(...)` and tail-chain arcing on
+  `macro_adjust_segment_chain_arc(...)`, so the representative body, ear, limb,
+  snout, and tail cases now all have runtime proof.
+- No repeated multi-part choreography gap remained across those profile cases,
+  so the task family did not promote a new profile macro.

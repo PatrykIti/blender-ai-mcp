@@ -22,12 +22,18 @@ from server.adapters.mcp.transforms.visibility_policy import get_guided_overlay_
 
 _CREATURE_GOAL_HINTS: tuple[str, ...] = (
     "animal",
+    "beaver",
     "bird",
+    "canine",
+    "cat",
     "creature",
     "ears",
+    "feline",
     "fox",
     "owl",
     "paw",
+    "dog",
+    "quadruped",
     "rabbit",
     "snout",
     "squirrel",

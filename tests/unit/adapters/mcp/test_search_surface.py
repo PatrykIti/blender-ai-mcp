@@ -812,6 +812,60 @@ def test_failed_tail_profile_gate_search_surfaces_arc_repair_tool():
     assert "macro_finish_form" not in names
 
 
+def test_refinement_profile_search_surfaces_bounded_mesh_tools_for_low_poly_creature_queries():
+    """Refinement-stage creature profile queries should stay on bounded mesh/profile tools."""
+
+    server = _build_flow_search_server(
+        SessionPhase.BUILD,
+        {
+            "flow_id": "guided_creature_flow",
+            "domain_profile": "creature",
+            "current_step": "refine_low_poly_forms",
+            "allowed_families": ["secondary_parts", "attachment_alignment", "reference_context"],
+        },
+        guided_handoff={
+            "kind": "guided_manual_build",
+            "recipe_id": "low_poly_creature_blockout",
+            "direct_tools": list(CREATURE_LOW_POLY_BLOCKOUT_DIRECT_TOOLS),
+            "supporting_tools": list(CREATURE_LOW_POLY_BLOCKOUT_SUPPORTING_TOOLS),
+        },
+        gate_plan={
+            "plan_id": "creature_refinement_gate_plan",
+            "domain_profile": "creature",
+            "completion_blockers": [
+                {
+                    "gate_id": "shape_profile_body_profile",
+                    "gate_type": "shape_profile",
+                    "label": "Body silhouette still needs low-poly profile refinement.",
+                    "status": "blocked",
+                    "reason_code": "missing_required_evidence",
+                    "target_kind": "reference_part",
+                    "target_label": "body_profile",
+                    "recommended_bounded_tools": ["mesh_inspect", "scene_view_diagnostics"],
+                    "message": "Body profile still needs bounded refinement.",
+                }
+            ],
+            "gates": [],
+        },
+    )
+
+    async def run():
+        result = await server.call_tool(
+            "search_tools",
+            {"query": "profile low-poly body ear limb snout tail silhouette"},
+        )
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+    names = {tool["name"] for tool in payload}
+
+    assert {"mesh_extrude_region", "mesh_loop_cut", "mesh_bevel"}.intersection(names)
+    assert "macro_adjust_segment_chain_arc" in names
+    assert "modeling_create_primitive" not in names
+    assert "modeling_transform_object" not in names
+    assert "macro_finish_form" not in names
+
+
 def test_active_gate_recovery_search_does_not_recommend_goal_reset(monkeypatch):
     """Reset-style recovery queries should prefer active gate repair tools."""
 

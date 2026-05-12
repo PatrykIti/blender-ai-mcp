@@ -19,11 +19,14 @@ Usage:
 
 import argparse
 import os
+import re
+import shutil
 import signal
 import socket
 import subprocess
 import sys
 import time
+import zipfile
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Tuple
@@ -33,6 +36,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 ADDON_OUTPUT = PROJECT_ROOT / "outputs" / "blender_ai_mcp.zip"
 E2E_TESTS_DIR = PROJECT_ROOT / "tests" / "e2e"
 BUILD_SCRIPT = PROJECT_ROOT / "scripts" / "build_addon.py"
+ADDON_NAME = "blender_ai_mcp"
 
 # Blender paths (platform-specific)
 BLENDER_PATHS = {
@@ -42,8 +46,8 @@ BLENDER_PATHS = {
 }
 
 # RPC Config
-RPC_HOST = "127.0.0.1"
-RPC_PORT = 8765
+RPC_HOST = os.environ.get("BLENDER_RPC_HOST", "127.0.0.1")
+RPC_PORT = int(os.environ.get("BLENDER_RPC_PORT", "8765"))
 RPC_TIMEOUT = 30  # seconds to wait for Blender RPC server
 
 
@@ -133,49 +137,69 @@ def wait_for_rpc_server(timeout: int = RPC_TIMEOUT) -> bool:
     return False
 
 
+def _port_is_listening(host: str, port: int) -> bool:
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(1)
+        result = sock.connect_ex((host, port))
+        sock.close()
+        return result == 0
+    except Exception:
+        return False
+
+
+def select_rpc_port_for_run() -> int:
+    """Return the preferred RPC port, or a temporary free port when it is already occupied."""
+
+    if not _port_is_listening(RPC_HOST, RPC_PORT):
+        return RPC_PORT
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind((RPC_HOST, 0))
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        selected_port = int(sock.getsockname()[1])
+
+    log(
+        f"Preferred RPC port {RPC_PORT} is already in use; falling back to free port {selected_port}.",
+        "WARN",
+    )
+    return selected_port
+
+
+def detect_blender_version_series(blender_path: str) -> str:
+    """Return the Blender major.minor version for one executable path."""
+
+    result = subprocess.run([blender_path, "--version"], capture_output=True, text=True, timeout=30)
+    version_output = f"{result.stdout}\n{result.stderr}"
+    match = re.search(r"Blender\s+(\d+\.\d+)", version_output)
+    if match is None:
+        raise RuntimeError(f"Could not determine Blender version from: {version_output.strip()}")
+    return match.group(1)
+
+
+def resolve_blender_addons_dir(blender_path: str) -> Path:
+    """Resolve the per-version Blender addons directory without launching background Python."""
+
+    version_series = detect_blender_version_series(blender_path)
+    if sys.platform == "darwin":
+        root = Path.home() / "Library" / "Application Support" / "Blender" / version_series
+    elif sys.platform == "linux":
+        root = Path.home() / ".config" / "blender" / version_series
+    elif sys.platform == "win32":
+        appdata = os.getenv("APPDATA")
+        if not appdata:
+            raise RuntimeError("APPDATA is not set, cannot resolve Blender addons directory on Windows.")
+        root = Path(appdata) / "Blender Foundation" / "Blender" / version_series
+    else:
+        raise RuntimeError(f"Unsupported platform for Blender addons directory resolution: {sys.platform}")
+    return root / "scripts" / "addons"
+
+
 def check_addon_installed(blender_path: str) -> bool:
     """Check if blender_ai_mcp addon is installed."""
     log("Checking if addon is installed...")
-
-    check_script = """
-import bpy
-import sys
-import addon_utils
-import os
-
-addon_name = "blender_ai_mcp"
-
-# Check if addon module exists in available addons
-is_installed = False
-addon_path = None
-
-for mod in addon_utils.modules():
-    if mod.__name__ == addon_name:
-        is_installed = True
-        addon_path = os.path.dirname(mod.__file__)
-        break
-
-# Also check preferences
-is_enabled = addon_name in bpy.context.preferences.addons
-
-print(f"Addon module found: {is_installed}")
-print(f"Addon enabled in prefs: {is_enabled}")
-if addon_path:
-    print(f"Addon path: {addon_path}")
-
-if is_installed or is_enabled:
-    print("ADDON_STATUS: INSTALLED")
-    sys.exit(0)
-else:
-    print("ADDON_STATUS: NOT_INSTALLED")
-    sys.exit(1)
-"""
-
-    result = subprocess.run(
-        [blender_path, "--background", "--python-expr", check_script], capture_output=True, text=True, timeout=30
-    )
-
-    is_installed = "ADDON_STATUS: INSTALLED" in result.stdout
+    addon_dir = resolve_blender_addons_dir(blender_path) / ADDON_NAME
+    is_installed = addon_dir.is_dir() and (addon_dir / "__init__.py").exists()
     log(f"Addon installed: {is_installed}", "OK" if is_installed else "INFO")
     return is_installed
 
@@ -183,134 +207,40 @@ else:
 def uninstall_addon(blender_path: str) -> bool:
     """Uninstall the blender_ai_mcp addon."""
     log("Uninstalling old addon...", "RUN")
-
-    # Use addon_utils instead of bpy.ops to avoid UI context issues in --background mode
-    uninstall_script = """
-import bpy
-import sys
-import shutil
-import os
-import addon_utils
-
-addon_name = "blender_ai_mcp"
-
-try:
-    # Disable addon using addon_utils (no UI context needed)
-    addon_utils.disable(addon_name, default_set=True)
-    print(f"Disabled {addon_name}")
-
-    # Find and remove addon directory
-    addon_path = None
-    for mod in addon_utils.modules():
-        if mod.__name__ == addon_name:
-            addon_path = os.path.dirname(mod.__file__)
-            break
-
-    if addon_path and os.path.exists(addon_path):
-        shutil.rmtree(addon_path)
-        print(f"Removed addon directory: {addon_path}")
-    else:
-        # Try standard location
-        scripts_path = bpy.utils.user_resource('SCRIPTS')
-        addon_dir = os.path.join(scripts_path, "addons", addon_name)
-        if os.path.exists(addon_dir):
+    try:
+        addon_dir = resolve_blender_addons_dir(blender_path) / ADDON_NAME
+        if addon_dir.exists():
             shutil.rmtree(addon_dir)
-            print(f"Removed addon directory: {addon_dir}")
-
-    # Save preferences
-    bpy.ops.wm.save_userpref()
-    print("Preferences saved")
-
-    print("UNINSTALL_STATUS: SUCCESS")
-    sys.exit(0)
-except Exception as e:
-    import traceback
-    traceback.print_exc()
-    print(f"UNINSTALL_STATUS: FAILED - {e}")
-    sys.exit(1)
-"""
-
-    result = subprocess.run(
-        [blender_path, "--background", "--python-expr", uninstall_script], capture_output=True, text=True, timeout=60
-    )
-
-    success = "UNINSTALL_STATUS: SUCCESS" in result.stdout
-    if success:
+            log(f"Removed addon directory: {addon_dir}", "INFO")
         log("Addon uninstalled successfully", "OK")
-    else:
-        log(f"Uninstall failed: {result.stdout}\n{result.stderr}", "ERR")
-
-    return success
+        return True
+    except Exception as e:
+        log(f"Uninstall failed: {e}", "ERR")
+        return False
 
 
 def install_addon(blender_path: str) -> bool:
-    """Install and enable the blender_ai_mcp addon."""
+    """Install the blender_ai_mcp addon files into the user addons directory."""
     log(f"Installing addon from {ADDON_OUTPUT}...", "RUN")
+    try:
+        addons_dir = resolve_blender_addons_dir(blender_path)
+        addons_dir.mkdir(parents=True, exist_ok=True)
+        addon_dir = addons_dir / ADDON_NAME
+        if addon_dir.exists():
+            shutil.rmtree(addon_dir)
 
-    addon_path = str(ADDON_OUTPUT).replace("\\", "/")
+        with zipfile.ZipFile(ADDON_OUTPUT, "r") as zip_ref:
+            zip_ref.extractall(addons_dir)
 
-    # Use addon_utils for enabling to avoid UI context issues
-    install_script = f'''
-import bpy
-import sys
-import addon_utils
-import zipfile
-import os
-
-addon_zip = "{addon_path}"
-addon_name = "blender_ai_mcp"
-
-try:
-    # Get addons directory
-    scripts_path = bpy.utils.user_resource('SCRIPTS')
-    addons_dir = os.path.join(scripts_path, "addons")
-    os.makedirs(addons_dir, exist_ok=True)
-
-    # Extract addon from ZIP
-    with zipfile.ZipFile(addon_zip, 'r') as zip_ref:
-        zip_ref.extractall(addons_dir)
-    print(f"Extracted addon to {{addons_dir}}")
-
-    # Refresh addon list
-    addon_utils.modules_refresh()
-
-    # Enable the addon using addon_utils (works in background mode)
-    addon_utils.enable(addon_name, default_set=True, persistent=True)
-    print(f"Enabled {{addon_name}}")
-
-    # Save preferences
-    bpy.ops.wm.save_userpref()
-    print("Preferences saved")
-
-    # Verify installation
-    enabled_addons = [mod.__name__ for mod in addon_utils.modules()
-                      if addon_utils.check(mod.__name__)[0]]
-
-    if addon_name in enabled_addons or addon_name in bpy.context.preferences.addons:
-        print("INSTALL_STATUS: SUCCESS")
-        sys.exit(0)
-    else:
-        print(f"INSTALL_STATUS: FAILED - Addon not enabled. Available: {{enabled_addons}}")
-        sys.exit(1)
-
-except Exception as e:
-    import traceback
-    traceback.print_exc()
-    print(f"INSTALL_STATUS: FAILED - {{e}}")
-    sys.exit(1)
-'''
-
-    result = subprocess.run(
-        [blender_path, "--background", "--python-expr", install_script], capture_output=True, text=True, timeout=120
-    )
-
-    success = "INSTALL_STATUS: SUCCESS" in result.stdout
-    if success:
-        log("Addon installed and enabled successfully", "OK")
-    else:
-        log(f"Install failed:\nSTDOUT: {result.stdout}\nSTDERR: {result.stderr}", "ERR")
-
-    return success
+        success = addon_dir.is_dir() and (addon_dir / "__init__.py").exists()
+        if success:
+            log("Addon files installed successfully", "OK")
+        else:
+            log(f"Install failed: extracted addon directory missing at {addon_dir}", "ERR")
+        return success
+    except Exception as e:
+        log(f"Install failed: {e}", "ERR")
+        return False
 
 
 def run_blender_with_rpc(blender_path: str) -> Tuple[subprocess.Popen, bool, Path]:
@@ -331,19 +261,49 @@ def run_blender_with_rpc(blender_path: str) -> Tuple[subprocess.Popen, bool, Pat
         encoding="utf-8",
     )
     log(f"Blender runtime log: {runtime_log_path}", "INFO")
+    bootstrap_script_path = runtime_log_path.with_suffix(".bootstrap.py")
+    bootstrap_script_path.write_text(
+        "\n".join(
+            (
+                "import addon_utils",
+                "",
+                f"addon_name = {ADDON_NAME!r}",
+                "print(f'[E2E bootstrap] enabling {addon_name}')",
+                "enabled, loaded = addon_utils.check(addon_name)",
+                "print(f'[E2E bootstrap] before enable: enabled={enabled} loaded={loaded}')",
+                "if not enabled:",
+                "    addon_utils.enable(addon_name, default_set=False, persistent=False)",
+                "enabled, loaded = addon_utils.check(addon_name)",
+                "print(f'[E2E bootstrap] after enable: enabled={enabled} loaded={loaded}')",
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
 
     # Start Blender normally - the addon will auto-start its RPC server
-    # We just open a new file to have a clean scene for testing
+    # The addon is enabled for this session via a one-shot bootstrap script to
+    # avoid depending on background preference writes during install helpers.
+    blender_env = {
+        **os.environ,
+        "BLENDER_RPC_HOST": RPC_HOST,
+        "BLENDER_RPC_PORT": str(RPC_PORT),
+    }
     with runtime_log_path.open("ab") as runtime_log_handle:
         process = subprocess.Popen(
-            [blender_path],
+            [blender_path, "--python", str(bootstrap_script_path)],
             stdout=runtime_log_handle,
             stderr=subprocess.STDOUT,
             preexec_fn=os.setsid if sys.platform != "win32" else None,
+            env=blender_env,
         )
 
     # Wait for RPC server
     rpc_ready = wait_for_rpc_server()
+    try:
+        bootstrap_script_path.unlink(missing_ok=True)
+    except Exception:
+        pass
     if not rpc_ready and process.poll() is not None:
         log(f"Blender exited before RPC became ready. See runtime log: {runtime_log_path}", "ERR")
         tail = tail_log_file(runtime_log_path, max_lines=40)
@@ -478,6 +438,11 @@ def main():
         # Find Blender
         blender_path = find_blender_path(args.blender_path)
         log(f"Using Blender: {blender_path}", "OK")
+
+        selected_rpc_port = select_rpc_port_for_run()
+        os.environ["BLENDER_RPC_HOST"] = RPC_HOST
+        os.environ["BLENDER_RPC_PORT"] = str(selected_rpc_port)
+        globals()["RPC_PORT"] = selected_rpc_port
 
         # Step 1: Build addon
         if not args.skip_build:

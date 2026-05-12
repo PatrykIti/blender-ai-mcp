@@ -1,5 +1,6 @@
 """Tests for TASK-090 prompt catalog and recommendations."""
 
+import pytest
 from server.adapters.mcp.prompts.prompt_catalog import (
     get_prompt_catalog,
     get_prompt_catalog_entry,
@@ -69,3 +70,27 @@ def test_recommended_prompt_entries_can_use_active_goal_context():
     assert creature_planning[0] == "reference_guided_creature_build"
     assert "reference_guided_creature_build" in creature_planning
     assert "reference_guided_creature_build" not in generic_planning
+
+
+@pytest.mark.parametrize(
+    "goal",
+    [
+        "create a low-poly beaver matching front and side reference images",
+        "create a low-poly dog matching front and side reference images",
+        "create a low-poly cat matching front and side reference images",
+    ],
+)
+def test_recommended_prompt_entries_cover_common_quadruped_mammals(goal: str):
+    """The creature prompt should stay recommended across the common mammal targets called out by TASK-135."""
+
+    planning = [
+        entry.name
+        for entry in get_recommended_prompt_entries(
+            surface_profile="llm-guided",
+            phase="planning",
+            goal=goal,
+        )
+    ]
+
+    assert planning[0] == "reference_guided_creature_build"
+    assert "reference_guided_creature_build" in planning

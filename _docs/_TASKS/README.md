@@ -3,9 +3,9 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 6 tasks
+- **To Do:** 5 tasks
 - **In Progress:** 2 tasks
-- **Done:** 95
+- **Done:** 96
 - **Superseded:** 162
 
 ## 📐 Board Scope
@@ -22,7 +22,7 @@ flight.
 
 | Area | Document | Owner Tasks |
 |------|----------|-------------|
-| Vision / Reference Understanding | [Reference Understanding Roadmap](../_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md) | [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md), [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md), [TASK-164](./TASK-164_Local_SigLIP2_Reference_Classifier_Sidecar_And_Operator_Scripts.md), [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md), [TASK-135](./TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md), [TASK-136](./TASK-136_Reference_Guided_Architecture_And_Building_Reconstruction.md), [TASK-137](./TASK-137_Anatomy_Aware_Reference_Guided_Organ_Reconstruction.md), [TASK-138](./TASK-138_Anatomy_Aware_Reference_Guided_Biped_And_Fantasy_Character_Reconstruction.md), [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) |
+| Vision / Reference Understanding | [Reference Understanding Roadmap](../_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md) | [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md), [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md), [TASK-164](./TASK-164_Local_SigLIP2_Reference_Classifier_Sidecar_And_Operator_Scripts.md), [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md), [TASK-136](./TASK-136_Reference_Guided_Architecture_And_Building_Reconstruction.md), [TASK-137](./TASK-137_Anatomy_Aware_Reference_Guided_Organ_Reconstruction.md), [TASK-138](./TASK-138_Anatomy_Aware_Reference_Guided_Biped_And_Fantasy_Character_Reconstruction.md), [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) |
 
 ## 🧱 Hierarchy Rules
 
@@ -75,7 +75,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Reconstruction (Mesh, Material, Scene)
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-135](./TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md) | **Anatomy-Aware Reference-Guided Low-Poly Creature Reconstruction** | 🔴 High | Board-level follow-on after TASK-128 and first domain consumer of TASK-157; completion gates, curved-tail profile gates, and the explicit `refine_low_poly_forms` state/visibility gate are shipped, with bounded search/planner/profile-tool proof still active under `TASK-135-03`. |
 | [TASK-136](./TASK-136_Reference_Guided_Architecture_And_Building_Reconstruction.md) | **Reference-Guided Architecture and Building Reconstruction** | 🔴 High | Board-level architecture umbrella for turning plans/elevations/photo refs into bounded reconstruction sessions for buildings, facades, and modular structures on `llm-guided`. |
 | [TASK-137](./TASK-137_Anatomy_Aware_Reference_Guided_Organ_Reconstruction.md) | **Anatomy-Aware Reference-Guided Organ Reconstruction** | 🟠 High | Board-level organic-anatomy umbrella for bounded organ reconstruction from references with explicit medical-scope guardrails and anatomy-aware loop design. |
 | [TASK-138](./TASK-138_Anatomy_Aware_Reference_Guided_Biped_And_Fantasy_Character_Reconstruction.md) | **Anatomy-Aware Reference-Guided Biped and Fantasy Character Reconstruction** | 🔴 High | Board-level character umbrella for reference-guided humanoid and fantasy-character reconstruction with explicit body-part, symmetry, appendage, garment, and rig-handoff boundaries. |
@@ -90,6 +89,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-135](./TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md) | **Anatomy-Aware Reference-Guided Low-Poly Creature Reconstruction** | 🔴 High | 2026-05-12 |
 | [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md) | **Hierarchical Reference Compare, Perceived Evidence, And Budget Control** | 🔴 High | 2026-05-10 |
 | [TASK-164](./TASK-164_Local_SigLIP2_Reference_Classifier_Sidecar_And_Operator_Scripts.md) | **Local SigLIP2 Reference Classifier Sidecar And Operator Scripts** | 🔴 High | 2026-05-07 |
 | [TASK-162](./TASK-162_Guided_Hidden_Tool_Error_Semantics_And_Recovery_Clarity.md) | **Guided Hidden-Tool Error Semantics And Recovery Clarity** | 🔴 High | 2026-05-06 |

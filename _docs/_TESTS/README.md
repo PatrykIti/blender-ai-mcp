@@ -479,6 +479,10 @@ Hybrid-loop assembled-creature regression pack:
   understanding derives a generic `shape_profile` blocker plus Blender-backed
   proof that `TailRoot` stays seated to `Body` while `TailMid` / `TailTip` arc
   through `macro_adjust_segment_chain_arc`
+- the bounded refinement proof pack now also includes
+  `tests/e2e/tools/mesh/test_creature_profile_cases.py` for body-mass profile
+  extension, ear pointing, and snout wedging on the shipped mesh tool surface,
+  while existing macro E2E lanes keep limb seating and tail-arc proof live
 
 Focused unit coverage now also protects:
 
@@ -501,6 +505,12 @@ Focused unit coverage now also protects:
 - gate-driven guided visibility/search coverage on:
   - `tests/unit/adapters/mcp/test_visibility_policy.py`
   - `tests/unit/adapters/mcp/test_search_surface.py`
+- common quadruped creature genericity across squirrel, beaver, dog, and cat
+  goal wording on:
+  - `tests/unit/adapters/mcp/test_visibility_policy.py`
+  - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
+  - `tests/unit/adapters/mcp/test_prompt_catalog.py`
+  - `tests/unit/adapters/mcp/test_quality_gate_intake.py`
 - reference checkpoint gate summary projection coverage on:
   - `tests/unit/adapters/mcp/test_reference_images.py`
 - reference strategy-state persistence, RU view/visual-metric augmentation, and
@@ -560,14 +570,14 @@ Camera-faithful viewport capture regression coverage now also includes:
 │    python scripts/build_addon.py → outputs/blender_ai_mcp.zip│
 ├─────────────────────────────────────────────────────────────┤
 │ 2. CHECK & UNINSTALL OLD ADDON                              │
-│    Blender --background → addon_utils.disable + rmtree      │
+│    Resolve per-version addons dir → remove addon folder     │
 ├─────────────────────────────────────────────────────────────┤
 │ 3. INSTALL NEW ADDON                                        │
-│    Blender --background → extract ZIP + addon_utils.enable  │
+│    Extract ZIP into Blender user addons dir                 │
 ├─────────────────────────────────────────────────────────────┤
 │ 4. START BLENDER WITH RPC                                   │
-│    Blender (GUI mode) - RPC server requires main event loop │
-│    Wait for port 8765...                                    │
+│    Blender (GUI mode) + bootstrap script enables addon      │
+│    Wait for preferred port or one free fallback port        │
 ├─────────────────────────────────────────────────────────────┤
 │ 5. RUN E2E TESTS                                            │
 │    poetry run pytest tests/e2e/ -v --tb=short               │
