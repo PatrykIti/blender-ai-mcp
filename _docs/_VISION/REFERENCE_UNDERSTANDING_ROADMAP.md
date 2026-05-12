@@ -71,6 +71,9 @@ Hard rules:
 | `TASK-166` | Staged compare/RU consumer that packetizes compare evidence, keeps packet provenance on additive `compare_diagnostics`, and feeds compact packet uncertainty into `reference_orchestrator_feedback` |
 | `TASK-135` | First creature consumer of the gate substrate |
 | `TASK-135-03` | First low-poly form-refinement consumer; owns the faceted refinement stage and any creature profile macros |
+| `TASK-136` | Architecture/building domain consumer for `architectural_mass` references, plan/elevation/facade interpretation, and bounded building reconstruction on the existing RU/gate/packet surfaces |
+| `TASK-137` | Organ/anatomy domain consumer for educational visualization reconstruction with medical-scope guardrails on the existing RU/gate/feedback surfaces |
+| `TASK-138` | Biped/fantasy-character domain consumer for humanoid structure, body-part staging, and future rig-handoff boundaries on the existing RU/gate/feedback surfaces |
 | `TASK-140` | External VLM model-family profile reliability; owns `vision_contract_profile` expansion, not quality-gate authority |
 
 When follow-on tasks consume `TASK-140` payloads through the closed
@@ -80,9 +83,13 @@ may become proposal/support refs, but the quality-gate verifier still owns
 pass/fail status.
 
 Do not create a third parallel task family that duplicates these owners.
-`TASK-158` and `TASK-163` are closed. New work should land under
-`TASK-135-03`, `TASK-140`, or a new explicit follow-on task when the remaining
-adapter/runtime work no longer fits those existing owners.
+`TASK-158`, `TASK-163`, and `TASK-166` are closed substrate owners. Domain
+consumer work should land under the promoted consumer umbrellas (`TASK-135`,
+`TASK-136`, `TASK-137`, `TASK-138`) or a new explicit follow-on task when the
+remaining adapter/runtime work no longer fits those existing owners. Those
+consumer umbrellas may specialize vocabulary, prompts, staged packet inputs, and
+regression fixtures, but they must not introduce a second RU path, second staged
+compare path, or second quality-gate verifier.
 
 ## Target Flow
 
@@ -199,7 +206,7 @@ Suggested `construction_path` values:
 | `organic_sculpt` | Soft organic shape where bounded local sculpt may be primary |
 | `creature_blockout` | Generic assembled creature blockout without a stronger style cue |
 | `dental_surface` | Dental visualization/mockup support, with explicit medical guardrails |
-| `architectural_mass` | Building/facade/massing reference |
+| `architectural_mass` | Building/facade/massing reference consumed by `TASK-136` |
 | `unknown` | Insufficient confidence; fall back to inspect-safe behavior |
 
 Current canonical refinement families are:
@@ -248,6 +255,11 @@ Initial policy:
 | `dental_surface` | `inspect_only` or `modeling_mesh` | `inspect_only`, `modeling_mesh` | local-only, no clinical authority |
 | `architectural_mass` | `modeling_mesh` | `macro`, `modeling_mesh`, `inspect_only` | forbidden by default |
 | `unknown` | `inspect_only` | `inspect_only`, possibly safe `macro` | hidden |
+
+`TASK-136` owns architecture-specific consumption of `architectural_mass`,
+including plan/elevation/facade prompts, packet inputs, and guided handoff. It
+must translate planner families into existing guided families instead of adding
+new planner families.
 
 This policy must remain subordinate to active gate status. For example, a
 `shape_profile` gate should not open mesh refinement while required seam gates
@@ -366,7 +378,7 @@ Golden scenarios:
 - low-poly squirrel front/side
 - smooth organic creature
 - hard-surface product
-- architectural facade
+- architectural facade (`TASK-136`)
 - dental crown mockup with visualization-only guardrails
 
 The harness score should include:

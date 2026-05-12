@@ -4,7 +4,7 @@
 **Priority:** 🔴 High
 **Category:** Reconstruction / Architecture and Hard Surface
 **Estimated Effort:** Large
-**Follow-on After:** [TASK-118](./TASK-118_Scene_Render_World_And_Configuration_Wave.md), [TASK-120](./TASK-120_Macro_Tool_Layer_And_Guided_Surface_Collapse.md), [TASK-122](./TASK-122_Hybrid_Vision_Truth_And_Correction_Macro_Wave.md), [TASK-124](./TASK-124_Guided_Session_Goal_And_Reference_Orchestration.md), [TASK-130](./TASK-130_Default_Guided_Surface_Bootstrap_Consistency.md), [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md)
+**Follow-on After:** [TASK-118](./TASK-118_Scene_Render_World_And_Configuration_Wave.md), [TASK-120](./TASK-120_Macro_Tool_Layer_And_Guided_Surface_Collapse.md), [TASK-122](./TASK-122_Hybrid_Vision_Truth_And_Correction_Macro_Wave.md), [TASK-124](./TASK-124_Guided_Session_Goal_And_Reference_Orchestration.md), [TASK-130](./TASK-130_Default_Guided_Surface_Bootstrap_Consistency.md), [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md), [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md), [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md)
 
 ## Objective
 
@@ -58,6 +58,10 @@ The repo already has strong foundations this umbrella should build on:
   building `attachment_seam` / `opening_or_cut` behavior
 - closed `TASK-163` reference-understanding and orchestrator-feedback seams on
   the existing `reference_images(...)`, `router_*`, and checkpoint surfaces
+- closed `TASK-166` packeted compare substrate, including
+  `server/adapters/mcp/areas/reference_compare_packets.py`, additive
+  `compare_diagnostics`, and compact `reference_orchestrator_feedback`
+  projection on the existing staged compare/iterate response family
 - grouped scene inspection/configuration from `TASK-118`
 - bounded hard-surface and layout macros such as cutout, placement, contact,
   and proportion repair
@@ -68,6 +72,32 @@ The repo already has strong foundations this umbrella should build on:
 The follow-on should extend that product foundation into the architecture
 domain. It should not reopen the old flat-catalog model or bypass the guided
 surface.
+
+## Substrate Ownership And Adjacent Tracks
+
+This umbrella is a domain consumer of already-landed guided/runtime substrates,
+not a place to reopen them:
+
+- consume the closed `TASK-157` gate/verifier substrate for gate intake,
+  normalization, evidence refs, status reasons, transport, and deterministic
+  completion blocking
+- consume the closed `TASK-158` RU contract/handoff alignment as the historical
+  reference-understanding boundary substrate
+- consume the closed `TASK-163` strategy/orchestrator seams for
+  `reference_understanding_summary`, `reference_strategy_state`,
+  `reference_orchestrator_feedback`, optional support evidence, and existing
+  transport projections
+- consume the closed `TASK-166` staged packet-compare substrate for
+  view/scope/reference packet planning, packet-local evidence, additive
+  `compare_diagnostics`, and compact staged-response projection
+- keep architecture-specific plan, elevation, section, facade-rhythm, and roof
+  profile needs as inputs to those generic owners instead of creating a second
+  compare path, second RU path, or second gate verifier
+- stay separate from domain-consumer siblings:
+  - `TASK-135` low-poly creatures
+  - `TASK-137` organs
+  - `TASK-138` bipeds and fantasy characters
+  - `TASK-140` external vision profile reliability
 
 ## Generic Gate Dependency
 
@@ -199,6 +229,9 @@ If this umbrella is done correctly, the repo gains:
   - side elevation
   - roofline/upper silhouette
   - opening grid / facade checkpoint views
+- Treat those profiles as domain-specific inputs to the closed `TASK-166`
+  packet planner and existing staged compare/iterate contracts, not as a new
+  capture or compare surface.
 
 ### Loop System
 
@@ -210,7 +243,8 @@ If this umbrella is done correctly, the repo gains:
   - trim/modular detail
   - final dimensional validation
 - Extend the loop contract so it can surface building-specific reconstruction
-  findings instead of only generic mismatch prose
+  findings on the existing staged compare/iterate and packet diagnostics
+  surfaces instead of only generic mismatch prose
 - Add relation-aware loop findings so architectural corrections can distinguish:
   - missing opening vs bad floating window object
   - intended roof seating vs collision cleanup
@@ -250,8 +284,9 @@ If this umbrella is done correctly, the repo gains:
 ### Tool Surface
 
 - Evaluate which existing tools already cover the domain well and which gaps
-  need new bounded surfaces
-- Likely architectural tool-surface gaps include bounded support for:
+  need guided-step-only bounded actions or macros on existing grouped/mega
+  surfaces or hidden internal surfaces.
+- Candidate architectural gaps include bounded support for:
   - repeated opening placement
   - modular facade grids
   - roof primitives / roof profile reconstruction
@@ -261,8 +296,9 @@ If this umbrella is done correctly, the repo gains:
 - Define a relation-aware macro/tool selection policy so architectural
   correction can choose between cutout/layout/attach/support/cleanup operations
   from explicit interface intent rather than raw overlap alone
-- Keep new tools bounded and domain-shaped rather than reopening unrestricted
-  modeling exposure
+- Keep any new tool or macro bounded, domain-shaped, and step-gated. Public
+  exposure is not implied by the gap list; it must go through the normal
+  `AGENTS.md` tool playbook, router metadata, and guided visibility policy.
 
 ## Scope
 
@@ -309,6 +345,7 @@ This umbrella does **not** cover:
 - likely new `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`
 - `_docs/_PROMPTS/README.md`
 - `server/adapters/mcp/guided_mode.py`
+- `server/adapters/mcp/guided_naming_policy.py`
 - `server/adapters/mcp/contracts/guided_flow.py`
 - `server/adapters/mcp/contracts/router.py`
 - `server/adapters/mcp/session_capabilities.py`
@@ -326,6 +363,7 @@ This umbrella does **not** cover:
 - `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/contracts/quality_gates.py`
 - `server/adapters/mcp/areas/reference.py`
+- `server/adapters/mcp/areas/reference_compare_packets.py`
 - `server/adapters/mcp/areas/reference_checkpoint_compare.py`
 - `server/adapters/mcp/areas/reference_images_runtime.py`
 - `server/adapters/mcp/areas/reference_planner.py`
@@ -340,6 +378,7 @@ This umbrella does **not** cover:
 - `server/adapters/mcp/areas/scene_spatial_graph.py`
 - `server/application/services/spatial_graph.py`
 - `server/application/tool_handlers/router_handler.py`
+- `server/router/application/workflows/custom/simple_house.yaml`
 - `server/router/infrastructure/tools_metadata/`
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
 - `tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py`
@@ -350,7 +389,9 @@ This umbrella does **not** cover:
 - `tests/unit/adapters/mcp/test_scene_guided_scope_requirements.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
+- `tests/unit/adapters/mcp/test_guided_naming_policy.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_reference_compare_packets.py`
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/unit/adapters/mcp/`
 - `tests/unit/tools/scene/`
@@ -367,12 +408,13 @@ This umbrella does **not** cover:
 | Path / Module | Scope | Expected Work |
 |---------------|-------|---------------|
 | `server/adapters/mcp/contracts/quality_gates.py` and `server/adapters/mcp/contracts/reference.py` | MCP/public contract | Extend the shipped building gate/reference vocabulary on the existing adapter-layer contract path without leaking FastMCP or router policy into `server/domain/` |
-| `server/adapters/mcp/areas/reference.py`, `reference_checkpoint_compare.py`, `reference_feedback.py`, `reference_images_runtime.py`, `reference_planner.py`, `reference_truth.py`, `reference_understanding.py`, and `reference_view_diagnostics.py` | Reference/checkpoint assembly | Treat `reference.py` as the thin orchestration facade and update the split owner seams that actually shape checkpoint, RU, orchestrator follow-up, planner guidance, and staged feedback payloads |
+| `server/adapters/mcp/areas/reference.py`, `reference_compare_packets.py`, `reference_checkpoint_compare.py`, `reference_feedback.py`, `reference_images_runtime.py`, `reference_planner.py`, `reference_truth.py`, `reference_understanding.py`, and `reference_view_diagnostics.py` | Reference/checkpoint assembly | Treat `reference.py` as the thin orchestration facade; keep packet planning, packet-local evidence, and synthesis policy in `reference_compare_packets.py`; update the split owner seams that shape checkpoint, RU, orchestrator follow-up, planner guidance, staged feedback payloads, and additive `compare_diagnostics` |
 | `server/adapters/mcp/contracts/guided_flow.py`, `session_capabilities.py`, `session_capabilities_bootstrap.py`, `session_capabilities_registry.py`, `session_capabilities_state.py`, `session_capabilities_flow.py`, and `session_capabilities_runtime_glue.py` | Guided state/control plane | Extend the shipped building domain profile, bootstrap/readiness carry-forward, registry-driven role advancement, required checks, prompt requirements, and stale refresh behavior without inventing a second guided flow system |
-| `server/adapters/mcp/contracts/router.py`, `server/adapters/mcp/platform/capability_manifest.py`, `server/adapters/mcp/platform/public_contracts.py`, `server/adapters/mcp/transforms/prompts_bridge.py`, `server/adapters/mcp/transforms/visibility_policy.py`, `server/adapters/mcp/discovery/search_documents.py`, `server/adapters/mcp/discovery/tool_inventory.py`, `server/adapters/mcp/discovery/search_surface.py`, `server/adapters/mcp/areas/router.py`, and `server/application/tool_handlers/router_handler.py` | Guided handoff/search/visibility | Shape the bounded architecture handoff contract, public-surface prompt exposure, searchable prompt/tool cues, and step-gated visibility on the live runtime surface |
+| `server/adapters/mcp/contracts/router.py`, `server/adapters/mcp/platform/capability_manifest.py`, `server/adapters/mcp/platform/public_contracts.py`, `server/adapters/mcp/transforms/prompts_bridge.py`, `server/adapters/mcp/transforms/visibility_policy.py`, `server/adapters/mcp/discovery/search_documents.py`, `server/adapters/mcp/discovery/tool_inventory.py`, `server/adapters/mcp/discovery/search_surface.py`, `server/adapters/mcp/areas/router.py`, `server/application/tool_handlers/router_handler.py`, and `server/router/application/workflows/custom/simple_house.yaml` | Guided handoff/search/visibility | Shape the bounded `reference_guided_architecture_build` handoff contract, public-surface prompt exposure, searchable prompt/tool cues, step-gated visibility, and workflow-vs-guided boundary on the live runtime surface so reference/plan/elevation/facade reconstruction does not silently fall into the generic or `simple_house_workflow` path |
 | `server/adapters/mcp/areas/scene.py`, `scene_guided_runtime.py`, `modeling.py`, and `mesh.py` | Bounded build surface | Keep `scene.py` as the MCP facade, update guided runtime glue where scoped enforcement lives today, and reuse or extend bounded layout/opening/support/roof tools only where the architecture flow actually needs them |
 | `server/adapters/mcp/vision/` and `server/adapters/mcp/areas/reference_understanding.py` | Advisory support evidence | Consume the closed `TASK-163` RU/session seams for architecture hints without changing verifier authority |
-| `server/application/services/spatial_graph.py` and `server/adapters/mcp/areas/scene_spatial_graph.py` | Relation semantics | Model wall/opening, roof/wall, beam/support, and facade rhythm interfaces in a way the verifier and staged truth surface can consume |
+| `server/application/services/spatial_graph.py`, `server/adapters/mcp/areas/scene_spatial_graph.py`, and `server/adapters/mcp/areas/reference_truth.py` | Relation semantics | Model wall/opening, roof/wall, beam/support, and facade rhythm interfaces in a way the verifier and staged truth surface can consume; either update both spatial graph and staged truth heuristics together or first centralize duplicated relation vocabulary before adding new semantics |
+| `server/adapters/mcp/guided_naming_policy.py` | Guided naming and role vocabulary | Keep shell/opening/support/roof role names, suggested object names, and role-sensitive naming warnings aligned with any expanded building vocabulary |
 | `server/adapters/mcp/prompts/prompt_catalog.py`, `provider.py`, `rendering.py`, `_docs/_PROMPTS/README.md`, and a future architecture prompt asset | Prompt assets | Expose and teach an architecture-oriented guided story on the current MCP prompt surface, then keep prompt inventory docs aligned; treat `DEMO_TASK_LOW_POLY_MEDIEVAL_WELL.md` only as an optional adjacent bounded-example reference if wording or sequencing is intentionally reused |
 | `tests/unit/adapters/mcp/`, `tests/unit/router/application/`, `tests/unit/tools/scene/`, `tests/e2e/router/`, `tests/e2e/integration/`, and `tests/e2e/vision/` | Proof lanes | Prove architecture-domain state, prompt/handoff/search behavior, truth/transport shaping, and Blender-backed reconstruction behavior on the current owner seams instead of re-planning already-shipped building lanes |
 
@@ -390,13 +432,16 @@ This umbrella does **not** cover:
 |------|--------------------------|-----|
 | building gate contract and vocabulary | unit quality-gate/reference lanes plus scene/spatial unit seams | shell/opening/roof/support semantics must remain normalized and verifier-owned |
 | guided building flow/search/visibility | unit guided-flow, search, visibility, and prompt lanes | architecture discoverability must land on the current `llm-guided` surface |
-| staged building truth and transport | integration gate-transport lane plus Blender-backed building E2E | blockers and recommendations must survive the real staged response path |
+| staged building truth, packet diagnostics, and transport | unit packet/reference lanes plus integration gate-transport lane and Blender-backed building E2E | blockers, packet provenance, and recommendations must survive the real staged response path |
 | docs and operator guidance | prompt/public-surface/test-doc audits | architecture docs must describe the same bounded product path the runtime emits |
 
 ## Runtime / Security Contract Notes
 
 - consume the existing `reference_images(...)`, `router_*`, and staged
   checkpoint surfaces; do not add a new public architecture-only MCP tool
+- consume the existing `TASK-166` packeted compare path for architecture
+  plan/elevation/facade checkpoint shaping; do not add a parallel architecture
+  compare path
 - keep `reference_understanding`, `classification_scores`, silhouette metrics,
   and segmentation artifacts advisory-only; gate pass/fail authority remains on
   the `TASK-157` verifier path
@@ -411,6 +456,7 @@ This umbrella does **not** cover:
 - optional adjacent example if wording/sequencing is intentionally reused:
   `_docs/_PROMPTS/DEMO_TASK_LOW_POLY_MEDIEVAL_WELL.md`
 - likely new `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`
+- `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md`
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/_ROUTER/README.md`
@@ -430,14 +476,17 @@ This umbrella does **not** cover:
 - `tests/unit/adapters/mcp/test_quality_gate_intake.py`
 - `tests/unit/adapters/mcp/test_quality_gate_verifier.py`
 - `tests/unit/adapters/mcp/test_scene_guided_scope_requirements.py`
+- `tests/unit/adapters/mcp/test_reference_compare_packets.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/unit/adapters/mcp/test_router_elicitation.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
+- `tests/unit/adapters/mcp/test_guided_naming_policy.py`
 - `tests/unit/tools/scene/test_scene_contracts.py`
 - `tests/unit/tools/scene/test_spatial_graph_service.py`
 - `tests/e2e/integration/test_guided_gate_state_transport.py`
+- `tests/e2e/vision/test_reference_stage_multi_reference_scaling.py`
 - `tests/e2e/vision/test_goal_derived_gate_building_completion.py`
 - `tests/e2e/vision/test_goal_derived_gate_support_symmetry_surfaces.py`
 

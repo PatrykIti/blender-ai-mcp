@@ -4,7 +4,7 @@
 **Priority:** 🔴 High
 **Parent:** [TASK-136](./TASK-136_Reference_Guided_Architecture_And_Building_Reconstruction.md)
 **Objective:** Extend the shipped generic building gate/reference substrate with architecture-specific target classes, vocabulary, stage vocabulary, and gate templates for shell, openings, supports, roof form, and facade rhythm on top of the existing `TASK-157` substrate.
-**Repository Touchpoints:** `server/adapters/mcp/contracts/quality_gates.py`, `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/contracts/scene.py`, `server/adapters/mcp/transforms/quality_gate_verifier.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_checkpoint_compare.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/areas/reference_images_runtime.py`, `server/adapters/mcp/areas/reference_silhouette.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/reference_truth.py`, `server/adapters/mcp/session_capabilities_bootstrap.py`, `server/adapters/mcp/session_capabilities_state.py`, `server/adapters/mcp/session_capabilities_runtime_glue.py`, `server/application/services/spatial_graph.py`, `server/adapters/mcp/areas/scene_spatial_graph.py`, `_docs/_PROMPTS/README.md`, likely new `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`, `tests/unit/adapters/mcp/test_quality_gate_contracts.py`, `tests/unit/adapters/mcp/test_quality_gate_intake.py`, `tests/unit/adapters/mcp/test_quality_gate_verifier.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`, `tests/e2e/vision/test_reference_stage_truth_handoff.py`, `tests/e2e/vision/test_reference_stage_silhouette_contract.py`, `tests/unit/tools/scene/test_scene_contracts.py`, `tests/unit/tools/scene/test_spatial_graph_service.py`
+**Repository Touchpoints:** `server/adapters/mcp/contracts/quality_gates.py`, `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/contracts/scene.py`, `server/adapters/mcp/guided_naming_policy.py`, `server/adapters/mcp/transforms/quality_gate_verifier.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `server/adapters/mcp/areas/reference_checkpoint_compare.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/areas/reference_images_runtime.py`, `server/adapters/mcp/areas/reference_silhouette.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/reference_truth.py`, `server/adapters/mcp/session_capabilities_bootstrap.py`, `server/adapters/mcp/session_capabilities_state.py`, `server/adapters/mcp/session_capabilities_runtime_glue.py`, `server/application/services/spatial_graph.py`, `server/adapters/mcp/areas/scene_spatial_graph.py`, `_docs/_PROMPTS/README.md`, likely new `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`, `tests/unit/adapters/mcp/test_quality_gate_contracts.py`, `tests/unit/adapters/mcp/test_quality_gate_intake.py`, `tests/unit/adapters/mcp/test_quality_gate_verifier.py`, `tests/unit/adapters/mcp/test_guided_naming_policy.py`, `tests/unit/adapters/mcp/test_reference_compare_packets.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`, `tests/e2e/vision/test_reference_stage_truth_handoff.py`, `tests/e2e/vision/test_reference_stage_silhouette_contract.py`, `tests/e2e/vision/test_reference_stage_multi_reference_scaling.py`, `tests/unit/tools/scene/test_scene_contracts.py`, `tests/unit/tools/scene/test_spatial_graph_service.py`
 **Acceptance Criteria:**
 - building-oriented goal or RU intake can normalize shell/opening/roof/support/facade-rhythm expectations onto the existing generic gate vocabulary without inventing an architecture-only gate system
 - the architecture templates explicitly reuse current gate types such as `required_part`, `attachment_seam`, `support_contact`, `opening_or_cut`, `shape_profile`, and `refinement_stage` where they already match the shipped verifier substrate
@@ -39,22 +39,35 @@
 - keep building-specific findings on the existing staged truth/checkpoint
   surfaces
 - treat the current building templates and `opening_or_cut` verifier path as
-  the baseline; this leaf extends and specializes them instead of replacing
+  the baseline; this subtask extends and specializes them instead of replacing
   them with a parallel architecture-only contract
+- keep guided naming in sync when adding or renaming shell/opening/support/roof
+  roles by updating `server/adapters/mcp/guided_naming_policy.py` and
+  `tests/unit/adapters/mcp/test_guided_naming_policy.py`
+- keep plan/elevation/facade checkpoint evidence on the existing `TASK-166`
+  packet path by extending `server/adapters/mcp/areas/reference_compare_packets.py`
+  and staged `compare_diagnostics` only when architecture changes affect packet
+  planning, evidence refs, or synthesis
 
-## Pseudocode
+## Intended Owner Flow
 
 ```python
-target_class = select_building_target_class(goal, references)
-building_vocab = build_architecture_vocabulary(target_class)
-gate_templates = derive_building_gate_templates(building_vocab)
+templates = templates_for_domain_profile("building")
+templates.extend(architecture_domain_templates_for_target_class(target_class))
 
-checkpoint_contract = extend_reference_checkpoint_contract(
-    required_parts=gate_templates.required_parts,
-    interface_relations=gate_templates.interface_relations,
-    staged_blockers=gate_templates.stage_blockers,
+plan = normalize_gate_plan(proposal, domain_profile="building", templates=templates)
+verified_plan = verify_gate_plan_with_relation_graph(
+    plan,
+    scene_relation_graph_payload,
+    guided_part_registry=session.guided_part_registry,
 )
 ```
+
+If this slice needs new helper functions, define them in the owning modules above
+instead of introducing prose-only helper names. Likely additions are a small
+architecture template builder in `quality_gates.py`, building-role naming specs
+in `guided_naming_policy.py`, and relation/truth helpers in
+`spatial_graph.py` / `reference_truth.py`.
 
 ## Runtime / Security Contract Notes
 
@@ -74,11 +87,14 @@ checkpoint_contract = extend_reference_checkpoint_contract(
 - `tests/unit/adapters/mcp/test_quality_gate_contracts.py`
 - `tests/unit/adapters/mcp/test_quality_gate_intake.py`
 - `tests/unit/adapters/mcp/test_quality_gate_verifier.py`
+- `tests/unit/adapters/mcp/test_guided_naming_policy.py`
+- `tests/unit/adapters/mcp/test_reference_compare_packets.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/e2e/vision/test_reference_understanding_runtime_surface.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 - `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
+- `tests/e2e/vision/test_reference_stage_multi_reference_scaling.py`
 - `tests/unit/tools/scene/test_scene_contracts.py`
 - `tests/unit/tools/scene/test_spatial_graph_service.py`
 
@@ -107,9 +123,9 @@ checkpoint_contract = extend_reference_checkpoint_contract(
 
 ## Status / Board Update
 
-- keep `_docs/_TASKS/README.md` unchanged while this leaf remains open
-- when this leaf lands, update `TASK-136-01` and the parent `TASK-136`
-  progress notes/status summary together so later leaves inherit the corrected
+- keep `_docs/_TASKS/README.md` unchanged while this subtask remains open
+- when this subtask lands, update `TASK-136-01` and the parent `TASK-136`
+  progress notes/status summary together so later subtasks inherit the corrected
   contract baseline
 - add or refresh the completion summary and record which docs, unit tests,
   E2E lanes, pre-commit checks, and changelog updates were run or
