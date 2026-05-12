@@ -584,6 +584,13 @@ def _advance_guided_flow_for_iteration_dict(
                 _apply_spatial_refresh_gate(contract, part_registry=part_registry, force=True)
             return contract.model_dump(mode="json")
 
+    if loop_disposition == "continue_build" and current_step == "refine_low_poly_forms":
+        _flow_state_for_current_step(contract, part_registry=part_registry)
+        contract.blocked_families = []
+        if contract.spatial_state_stale:
+            _apply_spatial_refresh_gate(contract, part_registry=part_registry, force=True)
+        return contract.model_dump(mode="json")
+
     if current_step not in contract.completed_steps and current_step not in _GUIDED_FLOW_STOPPED_STEPS:
         contract.completed_steps.append(current_step)
 

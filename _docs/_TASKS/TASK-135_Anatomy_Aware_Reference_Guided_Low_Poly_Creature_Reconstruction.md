@@ -358,10 +358,10 @@ separate follow-on explicitly reopens those closed surfaces.
 | `server/adapters/mcp/session_capabilities_runtime_glue.py` | gate-plan refresh and visibility sync helpers | Project gate updates back into session state and current visibility | Prevents stale gate success after mutating scene/modeling/mesh operations |
 | `server/adapters/mcp/areas/reference.py` | checkpoint assembly and route projection around `reference.py:1490` | Keep staged compare/iterate response envelopes aligned with active gate plan, `refinement_route`, and `refinement_handoff` | Public checkpoint surface must report the same blockers future implementers test |
 | `server/adapters/mcp/areas/reference_truth.py` | required creature seam and truth-follow-up builders | Convert assembled-scene truth into gate proposals and follow-up evidence | Keeps relation/seam failures deterministic and inspectable |
-| `server/adapters/mcp/areas/reference_planner.py` | `select_refinement_route(...)` at `reference_planner.py:542`, `build_refinement_handoff(...)` at `reference_planner.py:672` | Select `macro`, `modeling_mesh`, `sculpt_region`, or `inspect_only` from current blockers and low-poly intent | Low-poly creature refinement must prefer bounded modeling/mesh unless deterministic conditions justify another family |
+| `server/adapters/mcp/areas/reference_planner.py` | `select_refinement_route(...)` at `reference_planner.py:619`, `build_refinement_handoff(...)` at `reference_planner.py:783` | Select `macro`, `modeling_mesh`, `sculpt_region`, or `inspect_only` from current blockers and low-poly intent, using finalized active-gate blockers when they change the live refinement lane | Low-poly creature refinement must prefer bounded modeling/mesh unless deterministic conditions justify another family |
 | `server/adapters/mcp/areas/reference_feedback.py` | `reference_orchestrator_feedback` assembly | Keep client-facing next actions, selected family, and loop disposition aligned with checkpoint blockers | Prevents planner/checkpoint/feedback drift |
-| `server/adapters/mcp/transforms/visibility_policy.py` | `build_visibility_rules(...)` at `visibility_policy.py:591`, `visible_tools_for_gate_plan(...)` at `visibility_policy.py:702` | Expose only bounded tools implied by current guided step and gate blockers | Avoids broad catalog exposure during creature refinement |
-| `server/adapters/mcp/discovery/search_surface.py` and `search_documents.py` | `build_search_transform(...)` at `search_surface.py:435`, discovery entries | Rank bounded repair/refinement tools for blocker-specific searches | Makes tool discovery match the active gate state |
+| `server/adapters/mcp/transforms/visibility_policy.py` | `build_visibility_rules(...)` at `visibility_policy.py:622`, `visible_tools_for_gate_plan(...)` at `visibility_policy.py:735` | Expose the step-driven bounded refinement window, with gate blockers adding only bounded repair/support tools | Avoids broad catalog exposure during creature refinement |
+| `server/adapters/mcp/discovery/search_surface.py` and `search_documents.py` | `build_search_transform(...)` at `search_surface.py:438`, discovery entries | Rank bounded repair/refinement tools for blocker-specific searches on the live guided surface rather than coupling search visibility to checkpoint-local planner-family routing | Makes tool discovery match the active gate state |
 | `server/adapters/mcp/areas/scene.py` | `macro_adjust_segment_chain_arc(...)` at `scene.py:881`, attach/align macro wrappers | Keep tail-chain and attachment repairs on the existing macro surface | Reuses shipped deterministic macros before proposing new ones |
 | `server/application/tool_handlers/macro_handler.py` and `server/domain/tools/macro.py` | macro handler/interface methods such as `adjust_segment_chain_arc(...)` | Extend only if a leaf proves existing mesh/modeling tools are insufficient | Keeps optional macro promotion bounded and cross-layer complete |
 | `server/adapters/mcp/areas/mesh.py` and `server/adapters/mcp/areas/modeling.py` | bounded mesh/modeling action wrappers | Provide the first-line profile/refinement operations | Main write-side surface for low-poly faceting and profile adjustment |
@@ -375,7 +375,7 @@ separate follow-on explicitly reopens those closed surfaces.
 |------|---------|---------|
 | 1 | [TASK-135-01](./TASK-135-01_Creature_Blockout_Completion_Contract_And_Required_Detail_Gates.md) | ✅ Closed: primitive-only creature runs cannot complete when required visual details or seated required seams are missing |
 | 2A | [TASK-135-02](./TASK-135-02_Curved_Tail_And_Organic_Appendage_Build_Path.md) | ✅ Closed: curved-tail cues seed generic `shape_profile` gates and recommend the existing ordered-chain arc macro with Blender-backed root-seating proof |
-| 2B | [TASK-135-03](./TASK-135-03_Low_Poly_Form_Refinement_Mesh_Window_And_Profile_Macros.md) | 🚧 In progress: `TASK-135-03-01` closed the explicit `refine_low_poly_forms` state/visibility gate; bounded search/planner/profile-tool proof remains under `TASK-135-03-02*` |
+| 2B | [TASK-135-03](./TASK-135-03_Low_Poly_Form_Refinement_Mesh_Window_And_Profile_Macros.md) | ✅ Closed: `refine_low_poly_forms` shipped as the bounded refinement stage with live visibility/search/planner wiring, existing-tool Blender proof, and closeout sync |
 
 `TASK-135-02` and `TASK-135-03` are parallel follow-on branches after
 `TASK-135-01`, not a strict serial dependency. If a future implementation makes
@@ -487,7 +487,7 @@ files and this table in the same branch.
 ## Status / Board Update
 
 - `TASK-135` moved from the board's open reconstruction queue to the completed
-  milestones list on 2026-05-11.
+  milestones list on 2026-05-12.
 - All direct children under `TASK-135` are now closed:
   - `TASK-135-01` ✅ Done
   - `TASK-135-02` ✅ Done

@@ -16,13 +16,13 @@
 | `server/adapters/mcp/session_capabilities_registry.py` | `_maybe_advance_guided_flow_from_part_registry_dict(...)` at `session_capabilities_registry.py:60`; current signature receives `flow_state` and `part_registry` only | Advance from `place_secondary_parts` to `refine_low_poly_forms` only after required roles are complete and required gate blockers are clear; either extend the call site to pass a normalized gate-blocker summary from session state or keep the gate check in a caller that already owns `active_gate_plan` |
 | `server/adapters/mcp/session_capabilities_state.py` | `SessionCapabilityState` guided-flow serialization | Round-trip the new step, completed steps, gate plan, and stale markers |
 | `server/adapters/mcp/session_capabilities_runtime_glue.py` | gate refresh / stale marking helpers | Ensure scene mutations make refinement evidence stale and do not preserve old pass states |
-| `server/adapters/mcp/transforms/visibility_policy.py` | `build_visibility_rules(...)` at `visibility_policy.py:591`; `visible_tools_for_gate_plan(...)` at `visibility_policy.py:702` | Keep visibility bounded to refinement-safe families and gate-visible tools |
+| `server/adapters/mcp/transforms/visibility_policy.py` | `build_visibility_rules(...)` at `visibility_policy.py:622`; `visible_tools_for_gate_plan(...)` at `visibility_policy.py:735` | Keep visibility bounded to the refinement-safe base window plus blocker-driven repair/support tools |
 | `server/adapters/mcp/contracts/quality_gates.py` | `refinement_stage` vocabulary and default tools around `quality_gates.py:15` and `quality_gates.py:170` | Keep refinement as a generic gate type, not a creature-only status field |
 | `server/adapters/mcp/areas/reference.py` | checkpoint route projection around `reference.py:1490` | Project the new step through staged checkpoint/iterate payloads without a parallel envelope |
 | `tests/unit/adapters/mcp/test_guided_flow_state_contract.py` | guided state contract fixtures | Add round-trip, advancement, and stale-blocking cases |
 | `tests/unit/adapters/mcp/test_visibility_policy.py` and `test_guided_mode.py` | guided visibility assertions | Assert mesh/modeling families are visible only for the refinement step and not while seam blockers remain |
-| `tests/unit/adapters/mcp/test_reference_images.py` | checkpoint fixtures | Assert checkpoint/iterate outputs expose the refinement blocker/step consistently |
-| `tests/e2e/integration/test_guided_gate_state_transport.py` and `tests/e2e/vision/test_reference_stage_truth_handoff.py` | transport/runtime proof | Prove stdio/Streamable payloads and staged truth handoff preserve the new step |
+| `tests/unit/adapters/mcp/test_reference_images.py` | checkpoint fixtures | Assert checkpoint/iterate outputs expose the refinement blocker/step consistently and keep `shape_profile` / `refinement_stage` blockers on `continue_build` inside the refinement lane |
+| `tests/e2e/integration/test_guided_gate_state_transport.py` and `tests/e2e/vision/test_reference_stage_truth_handoff.py` | transport/runtime proof | Prove stdio/Streamable payloads and staged truth handoff preserve the new step/gate state, while the dedicated refinement visible-tool window stays covered on unit guided-mode/visibility lanes |
 
 ## Implementation Notes
 
@@ -94,6 +94,7 @@ if current_step == "refine_low_poly_forms":
     planner_selected_family = "modeling_mesh"
     planner_blocked_families = ["sculpt_region"]
     visible_tools = visible_tools_for_gate_plan(active_gate_plan) | refinement_safe_tools
+    iterate_loop_disposition = "continue_build"  # while blockers stay inside the refinement/profile gate set
     persist_session_state(current_step, completed_steps, active_gate_plan)
 ```
 
@@ -135,9 +136,9 @@ if current_step == "refine_low_poly_forms":
 | `tests/unit/adapters/mcp/test_guided_flow_state_contract.py` | stale spatial state or unresolved required seam keeps the flow in `checkpoint_iterate` / `inspect_validate`, not refinement |
 | `tests/unit/adapters/mcp/test_visibility_policy.py` | refinement step exposes bounded mesh/modeling/search tools, while broad sculpt remains hidden without explicit `TASK-145` handoff |
 | `tests/unit/adapters/mcp/test_guided_mode.py` and `test_guided_surface_benchmarks.py` | guided-mode diagnostics and benchmark-visible tools stay aligned with the new step |
-| `tests/unit/adapters/mcp/test_reference_images.py` | checkpoint and iterate responses project the same refinement step/blocker state into `guided_flow_state`, `active_gate_plan`, `refinement_route`, and `refinement_handoff` |
+| `tests/unit/adapters/mcp/test_reference_images.py` | checkpoint and iterate responses project the same refinement step/blocker state into `guided_flow_state`, `active_gate_plan`, `refinement_route`, and `refinement_handoff`, and keep `shape_profile` / `refinement_stage` blockers on `continue_build` inside the refinement step |
 | `tests/unit/adapters/mcp/test_public_surface_docs.py` | public prompt/MCP docs mention the new step only after runtime behavior ships |
-| `tests/e2e/integration/test_guided_gate_state_transport.py` | stdio/Streamable payloads carry identical `guided_flow_state.current_step` and gate blockers |
+| `tests/e2e/integration/test_guided_gate_state_transport.py` | stdio/Streamable payloads carry identical `guided_flow_state.current_step` and gate blockers for the shipped refinement-state transport contract |
 | `tests/e2e/vision/test_reference_stage_truth_handoff.py` | primitive-only low-poly creature with stable parts but unprofiled forms reaches refinement blockers, not final completion |
 
 ## Docs To Update

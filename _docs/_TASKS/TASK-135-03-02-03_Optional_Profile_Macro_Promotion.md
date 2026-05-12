@@ -15,7 +15,7 @@
 | `server/application/tool_handlers/macro_handler.py` | `MacroToolHandler` at `macro_handler.py:27`; existing `adjust_segment_chain_arc(...)` pattern at `macro_handler.py:1751`; `_make_capture_bundle_id(...)` at `macro_handler.py:2309` | Implement bounded deterministic orchestration over existing scene/modeling/mesh operations where possible |
 | `server/adapters/mcp/areas/scene.py` | public macro wrapper near existing macro tools such as `scene.py:881` | Expose the macro on the current scene/macro surface, not a creature-only parallel tool |
 | `server/adapters/mcp/dispatcher.py` | macro dispatcher mapping around `dispatcher.py:174` | Register the macro for routed/internal execution if needed |
-| `server/adapters/mcp/router_helper.py` | guided execution-policy decision around `router_helper.py:757` | Map the macro to an allowed guided family before visibility exposes it |
+| `server/adapters/mcp/router_helper.py` | guided execution-policy decision around `router_helper.py:667` | Map the macro to an allowed guided family before visibility exposes it |
 | `server/adapters/mcp/transforms/visibility_policy.py` | `build_visibility_rules(...)` and `visible_tools_for_gate_plan(...)` | Expose the macro only for active refinement/profile blockers |
 | `server/router/infrastructure/tools_metadata/scene/` | metadata JSON and schema checks for current scene/macro-surface tools | Add search/gate metadata for the promoted macro on the existing scene metadata surface; do not invent a separate macro metadata area unless the runtime tool area is split in the same task |
 | `blender_addon/application/handlers/mesh.py` or `modeling.py` | addon-side operation only if server composition is insufficient | Touch addon only for unavoidable new Blender behavior |

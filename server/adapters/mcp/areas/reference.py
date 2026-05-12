@@ -725,6 +725,46 @@ def _should_hold_guided_build_loop_in_build(
     return current_step in {"create_primary_masses", "place_secondary_parts"} and bool(missing_roles)
 
 
+_REFINEMENT_CONTINUE_BUILD_GATE_TYPES: frozenset[str] = frozenset(
+    {"shape_profile", "proportion_ratio", "opening_or_cut", "refinement_stage"}
+)
+
+
+def _completion_blocker_gate_type(blocker: Any) -> str:
+    if isinstance(blocker, dict):
+        return str(blocker.get("gate_type") or "").strip()
+    return str(getattr(blocker, "gate_type", "") or "").strip()
+
+
+def _should_continue_refinement_build(
+    guided_flow_state: dict[str, Any] | None,
+    completion_blockers: list[Any] | None,
+) -> bool:
+    if guided_flow_state is None:
+        return False
+
+    if hasattr(guided_flow_state, "model_dump"):
+        try:
+            guided_flow_state = guided_flow_state.model_dump(mode="json")
+        except Exception:
+            return False
+
+    if not isinstance(guided_flow_state, dict):
+        return False
+
+    current_step = str(guided_flow_state.get("current_step") or "").strip().lower()
+    if current_step != "refine_low_poly_forms":
+        return False
+
+    blockers = list(completion_blockers or [])
+    if not blockers:
+        return False
+
+    blocker_types = {_completion_blocker_gate_type(blocker) for blocker in blockers}
+    blocker_types.discard("")
+    return bool(blocker_types) and blocker_types.issubset(_REFINEMENT_CONTINUE_BUILD_GATE_TYPES)
+
+
 def _guided_stage_reference_error(readiness: GuidedReferenceReadinessState) -> str:
     """Return one deterministic fail-fast error for staged guided reference flows."""
 
@@ -1487,24 +1527,6 @@ async def _run_stage_checkpoint_compare(
         action_hints=action_hints,
         part_segmentation=part_segmentation,
     )
-    refinement_route = _select_refinement_route(staged_compare_contract)
-    refinement_handoff = _build_refinement_handoff(staged_compare_contract, refinement_route)
-    planner_summary = _build_repair_planner_summary(
-        staged_compare_contract,
-        route=refinement_route,
-        handoff=refinement_handoff,
-    )
-    planner_detail = (
-        _build_repair_planner_detail(
-            staged_compare_contract,
-            summary=planner_summary,
-            route=refinement_route,
-            handoff=refinement_handoff,
-            detail_trimmed=scope_trimmed or candidate_detail_trimmed,
-        )
-        if preset_profile == "rich"
-        else None
-    )
     active_gate_plan = session.gate_plan
     if session.gate_plan is not None:
         gate_relation_graph = get_spatial_graph_service().build_relation_graph(
@@ -1530,6 +1552,28 @@ async def _run_stage_checkpoint_compare(
         await set_session_capability_state_async(ctx, session)
         await apply_visibility_for_session_state(ctx, session)
         active_gate_plan = session.gate_plan
+
+    refinement_route = _select_refinement_route(
+        staged_compare_contract,
+        active_gate_plan=active_gate_plan,
+    )
+    refinement_handoff = _build_refinement_handoff(staged_compare_contract, refinement_route)
+    planner_summary = _build_repair_planner_summary(
+        staged_compare_contract,
+        route=refinement_route,
+        handoff=refinement_handoff,
+    )
+    planner_detail = (
+        _build_repair_planner_detail(
+            staged_compare_contract,
+            summary=planner_summary,
+            route=refinement_route,
+            handoff=refinement_handoff,
+            detail_trimmed=scope_trimmed or candidate_detail_trimmed,
+        )
+        if preset_profile == "rich"
+        else None
+    )
 
     return _stage_compare_response(
         session_id=session_id,
@@ -1771,9 +1815,13 @@ async def reference_iterate_stage_checkpoint(
         correction_focus = _resolve_gate_blocker_focus(compare_result)
     action_hints = list(compare_result.action_hints or [])
     gate_blockers_present = bool(compare_result.completion_blockers)
+    refinement_build_continue = _should_continue_refinement_build(
+        session.guided_flow_state,
+        list(compare_result.completion_blockers or []),
+    )
     continue_recommended = bool(correction_focus or action_hints or gate_blockers_present)
     inspect_from_truth_signal = _should_inspect_from_truth_signal(compare_result.correction_candidates)
-    inspect_from_gate_blockers = gate_blockers_present
+    inspect_from_gate_blockers = gate_blockers_present and not refinement_build_continue
     loop_disposition: Literal["continue_build", "inspect_validate", "stop"] = (
         "inspect_validate"
         if inspect_from_truth_signal or inspect_from_gate_blockers
@@ -1910,6 +1958,11 @@ async def reference_iterate_stage_checkpoint(
                 "Guided governor is holding the session in the current build stage until the required role/workset "
                 "slice is complete. Continue the bounded build loop on the active workset before escalating to "
                 "inspect/measure/assert."
+            )
+        elif refinement_build_continue:
+            message = (
+                "Refinement-stage profile blockers remain active. Continue the bounded mesh/profile lane on the "
+                "current workset before escalating to inspect/measure/assert."
             )
         elif correction_focus:
             message = "Continue the guided build loop using correction_focus first."

@@ -46,6 +46,7 @@ from server.adapters.mcp.areas.reference_truth import build_truth_followup as _b
 from server.adapters.mcp.areas.reference_truth import (
     trim_truth_bundle_to_budget as _trim_truth_bundle_to_budget,
 )
+from server.adapters.mcp.contracts.quality_gates import normalize_gate_plan
 from server.adapters.mcp.contracts.reference import (
     ReferenceCompareDiagnosticsContract,
     ReferenceComparePacketContract,
@@ -5236,6 +5237,92 @@ def test_select_refinement_route_keeps_low_poly_creature_on_modeling_mesh():
 
     assert route.domain_classification == "organic_form"
     assert route.selected_family == "modeling_mesh"
+
+
+def test_select_refinement_route_uses_active_gate_plan_relation_blockers_without_candidates():
+    compare = ReferenceCompareStageCheckpointResponseContract.model_validate(
+        {
+            "action": "compare_stage_checkpoint",
+            "goal": "low poly creature",
+            "target_object": "Creature",
+            "target_objects": ["Creature"],
+            "checkpoint_id": "checkpoint_gate_relation",
+            "checkpoint_label": "stage_gate_relation",
+            "preset_profile": "compact",
+            "preset_names": [],
+            "capture_count": 0,
+            "captures": [],
+            "reference_count": 0,
+            "reference_ids": [],
+            "reference_labels": [],
+            "correction_candidates": [],
+        }
+    )
+    active_gate_plan = normalize_gate_plan(
+        {
+            "source": "llm_goal",
+            "gates": [
+                {
+                    "gate_id": "tail_body_seam",
+                    "gate_type": "attachment_seam",
+                    "label": "tail seated on body",
+                    "target_kind": "object_pair",
+                    "target_objects": ["Tail", "Body"],
+                }
+            ],
+        },
+        domain_profile="creature",
+        templates=[],
+    ).model_dump(mode="json")
+
+    route = _select_refinement_route(compare, active_gate_plan=active_gate_plan)
+
+    assert route.selected_family == "macro"
+    assert route.blockers
+    assert route.blockers[0].blocker_id == "tail_body_seam"
+
+
+def test_select_refinement_route_uses_active_gate_plan_profile_blockers_without_candidates():
+    compare = ReferenceCompareStageCheckpointResponseContract.model_validate(
+        {
+            "action": "compare_stage_checkpoint",
+            "goal": "refine the low-poly squirrel silhouette",
+            "target_object": "Creature",
+            "target_objects": ["Creature"],
+            "checkpoint_id": "checkpoint_gate_profile",
+            "checkpoint_label": "stage_gate_profile",
+            "preset_profile": "compact",
+            "preset_names": [],
+            "capture_count": 0,
+            "captures": [],
+            "reference_count": 0,
+            "reference_ids": [],
+            "reference_labels": [],
+            "correction_candidates": [],
+        }
+    )
+    active_gate_plan = normalize_gate_plan(
+        {
+            "source": "llm_goal",
+            "gates": [
+                {
+                    "gate_id": "tail_shape_profile",
+                    "gate_type": "shape_profile",
+                    "label": "tail follows the reference arc profile",
+                    "target_kind": "reference_part",
+                    "target_label": "tail_profile",
+                }
+            ],
+        },
+        domain_profile="creature",
+        templates=[],
+    ).model_dump(mode="json")
+
+    route = _select_refinement_route(compare, active_gate_plan=active_gate_plan)
+
+    assert route.selected_family == "modeling_mesh"
+    assert route.blockers
+    assert route.blockers[0].blocker_id == "tail_shape_profile"
 
 
 def test_reference_compare_stage_checkpoint_exposes_sculpt_handoff_without_visibility_unlock(tmp_path, monkeypatch):
@@ -10847,6 +10934,86 @@ def test_reference_iterate_stage_checkpoint_escalates_when_required_gate_blocker
     assert result.reference_orchestrator_feedback.next_checkpoint_tool is None
 
 
+def test_reference_iterate_stage_checkpoint_keeps_refinement_stage_for_profile_blockers(monkeypatch):
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="low poly creature",
+            surface_profile="llm-guided",
+            guided_flow_state=_guided_refinement_flow_state(),
+        ),
+    )
+
+    compare = ReferenceCompareStageCheckpointResponseContract.model_validate(
+        {
+            "action": "compare_stage_checkpoint",
+            "goal": "low poly creature",
+            "target_object": "Creature",
+            "target_objects": ["Creature"],
+            "checkpoint_id": "checkpoint_refinement_profile",
+            "checkpoint_label": "stage_refinement_profile",
+            "preset_profile": "compact",
+            "preset_names": ["context_wide"],
+            "capture_count": 1,
+            "captures": [],
+            "reference_count": 0,
+            "reference_ids": [],
+            "reference_labels": [],
+            "completion_blockers": [
+                {
+                    "gate_id": "tail_shape_profile",
+                    "gate_type": "shape_profile",
+                    "label": "tail follows the reference arc profile",
+                    "status": "failed",
+                    "reason_code": "missing_required_evidence",
+                    "target_kind": "reference_part",
+                    "target_label": "tail_profile",
+                    "required_evidence_kinds": ["silhouette_analysis"],
+                    "allowed_correction_families": ["secondary_parts"],
+                    "recommended_bounded_tools": [
+                        "mesh_inspect",
+                        "scene_view_diagnostics",
+                        "macro_adjust_segment_chain_arc",
+                    ],
+                    "message": "Tail profile still needs bounded refinement.",
+                }
+            ],
+            "next_gate_actions": ["resolve_quality_gate_blockers"],
+            "recommended_bounded_tools": [
+                "mesh_inspect",
+                "scene_view_diagnostics",
+                "macro_adjust_segment_chain_arc",
+            ],
+        }
+    )
+
+    async def _fake_reference_compare_stage_checkpoint(*args, **kwargs):
+        return compare
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.reference_compare_stage_checkpoint",
+        _fake_reference_compare_stage_checkpoint,
+    )
+
+    result = asyncio.run(
+        reference_iterate_stage_checkpoint(
+            ctx,
+            target_object="Creature",
+            target_objects=["Creature"],
+            checkpoint_label="stage_refinement_profile",
+        )
+    )
+
+    assert result.loop_disposition == "continue_build"
+    assert result.guided_flow_state is not None
+    assert result.guided_flow_state.current_step == "refine_low_poly_forms"
+    assert result.reference_orchestrator_feedback is not None
+    assert result.reference_orchestrator_feedback.next_checkpoint_tool == "reference_iterate_stage_checkpoint"
+    assert "bounded mesh/profile lane" in (result.message or "")
+
+
 def _guided_incomplete_secondary_flow_state() -> dict[str, object]:
     return {
         "flow_id": "guided_creature_flow",
@@ -10895,6 +11062,31 @@ def _guided_checkpoint_iterate_flow_state() -> dict[str, object]:
         "missing_roles": [],
         "required_role_groups": ["checkpoint_iterate"],
         "step_status": "needs_checkpoint",
+    }
+
+
+def _guided_refinement_flow_state() -> dict[str, object]:
+    return {
+        "flow_id": "guided_creature_flow",
+        "domain_profile": "creature",
+        "current_step": "refine_low_poly_forms",
+        "completed_steps": [
+            "understand_goal",
+            "establish_spatial_context",
+            "create_primary_masses",
+            "place_secondary_parts",
+        ],
+        "required_checks": [],
+        "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+        "preferred_prompts": ["workflow_router_first"],
+        "next_actions": ["refine_low_poly_forms"],
+        "blocked_families": [],
+        "allowed_families": ["secondary_parts", "attachment_alignment", "reference_context"],
+        "allowed_roles": [],
+        "completed_roles": ["body_core", "head_mass", "snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+        "missing_roles": [],
+        "required_role_groups": ["refinement_stage"],
+        "step_status": "ready",
     }
 
 

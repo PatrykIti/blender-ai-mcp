@@ -11,12 +11,12 @@
 
 | Path / Module | Owner Seam / Current Lines | Change Contract |
 |---------------|----------------------------|-----------------|
-| `server/adapters/mcp/transforms/visibility_policy.py` | `build_visibility_rules(...)` at `visibility_policy.py:591`; `visible_tools_for_gate_plan(...)` at `visibility_policy.py:702` | Child `03-02-01` owns refinement blocker visibility with existing tools only |
-| `server/adapters/mcp/discovery/search_surface.py` and `search_documents.py` | `build_search_transform(...)` at `search_surface.py:435`; discovery entries | Child `03-02-01` owns low-poly profile search results |
-| `server/adapters/mcp/areas/reference_planner.py` | `select_refinement_route(...)` at `reference_planner.py:542`; `build_refinement_handoff(...)` at `reference_planner.py:672` | Child `03-02-01` owns `modeling_mesh` / `macro` / `inspect_only` route alignment |
+| `server/adapters/mcp/transforms/visibility_policy.py` | `build_visibility_rules(...)` at `visibility_policy.py:622`; `visible_tools_for_gate_plan(...)` at `visibility_policy.py:735` | Child `03-02-01` owns the step-driven refinement window plus blocker-driven repair/support additions on existing tools only |
+| `server/adapters/mcp/discovery/search_surface.py` and `search_documents.py` | `build_search_transform(...)` at `search_surface.py:438`; discovery entries | Child `03-02-01` owns low-poly profile search results on the live guided surface |
+| `server/adapters/mcp/areas/reference_planner.py` | `select_refinement_route(...)` at `reference_planner.py:619`; `build_refinement_handoff(...)` at `reference_planner.py:783` | Child `03-02-01` owns checkpoint-local `modeling_mesh` / `macro` / `inspect_only` route alignment after active-gate verification |
 | `server/adapters/mcp/areas/mesh.py` and `modeling.py` | bounded mesh/modeling wrappers | Child `03-02-02` owns proof that existing tools can profile body, ears, limbs, snout, and tail candidates |
 | `server/adapters/mcp/areas/scene.py` | `macro_adjust_segment_chain_arc(...)` at `scene.py:881`; attach/align macros | Child `03-02-02` owns reuse proof; child `03-02-03` touches only if a new macro is promoted |
-| `server/adapters/mcp/router_helper.py` | guided execution-policy decision around `router_helper.py:757` | Child `03-02-01` / `03-02-03` owns mutator family mapping when visible tools change |
+| `server/adapters/mcp/router_helper.py` | guided execution-policy decision around `router_helper.py:667` | Child `03-02-01` / `03-02-03` owns mutator family mapping when visible tools change |
 | `server/router/infrastructure/tools_metadata/**` | mesh/modeling/scene metadata JSON | Child leaves update metadata only for shipped visible tools or promoted macros |
 | `server/domain/tools/macro.py`, `server/application/tool_handlers/macro_handler.py`, `server/adapters/mcp/dispatcher.py` | macro interface/handler/dispatcher seams | Child `03-02-03` owns optional profile macro promotion only |
 | `blender_addon/application/handlers/mesh.py` and `modeling.py` | addon-side handlers | Child `03-02-02` or `03-02-03` touches only when new Blender behavior is required |
@@ -81,11 +81,8 @@
 if current_step != "refine_low_poly_forms":
     return current_visibility_and_search_surface()
 
-route = select_refinement_route(checkpoint_result)
-if route.blockers:
-    expose_tools = visible_tools_for_gate_plan(active_gate_plan)
-else:
-    expose_tools = bounded_profile_tools_for(route.selected_family)
+expose_tools = bounded_refinement_tools | visible_tools_for_gate_plan(active_gate_plan)
+route = select_refinement_route(checkpoint_result, active_gate_plan=active_gate_plan)
 
 search_documents = rank_profile_tools(
     query_terms=["low-poly", "profile", "ear", "limb", "snout", "tail"],

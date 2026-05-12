@@ -11,12 +11,12 @@
 
 | Path / Module | Owner Seam / Current Lines | Change Contract |
 |---------------|----------------------------|-----------------|
-| `server/adapters/mcp/transforms/visibility_policy.py` | `build_visibility_rules(...)` at `visibility_policy.py:591`; `visible_tools_for_gate_plan(...)` at `visibility_policy.py:702`; `GUIDED_TOOL_FAMILY_MAP` around `visibility_policy.py:167` | Map `refine_low_poly_forms` blockers to existing bounded mesh/modeling/macro tools without broad sculpt exposure; resolve any tool whose current guided family is not allowed before exposing it |
-| `server/adapters/mcp/discovery/search_surface.py` | `BlenderDiscoverySearchTransform._search(...)` at `search_surface.py:210`; `_active_gate_recovery_tools(...)` at `search_surface.py:263`; `search_tools(...)` closure at `search_surface.py:308`; `build_search_transform(...)` at `search_surface.py:435` | Keep guided search constrained to currently visible/refinement-safe tools and active-gate recovery hints |
+| `server/adapters/mcp/transforms/visibility_policy.py` | `build_visibility_rules(...)` at `visibility_policy.py:622`; `visible_tools_for_gate_plan(...)` at `visibility_policy.py:735`; `GUIDED_TOOL_FAMILY_MAP` around `visibility_policy.py:185` | Keep a fixed bounded refinement window on `refine_low_poly_forms`, then add blocker-driven mesh/modeling/macro repair/support tools without broad sculpt exposure; resolve any tool whose current guided family is not allowed before exposing it |
+| `server/adapters/mcp/discovery/search_surface.py` | `BlenderDiscoverySearchTransform._search(...)` at `search_surface.py:213`; `_active_gate_recovery_tools(...)` at `search_surface.py:266`; `search_tools(...)` closure at `search_surface.py:311`; `build_search_transform(...)` at `search_surface.py:438` | Keep guided search constrained to currently visible/refinement-safe tools and active-gate recovery hints on the live surface |
 | `server/adapters/mcp/discovery/search_documents.py` | discovery entries for mesh/modeling/scene macro tools | Add low-poly profile, facet, ear, limb, snout, and tail search cues for shipped tools |
-| `server/adapters/mcp/areas/reference_planner.py` | `select_refinement_route(...)` at `reference_planner.py:542`; `build_refinement_handoff(...)` at `reference_planner.py:672`; `LOW_POLY_HINTS` at `reference_planner.py:60` | Keep low-poly/faceted profile work on `modeling_mesh`; prefer `macro` only for assembly/truth blockers |
+| `server/adapters/mcp/areas/reference_planner.py` | `select_refinement_route(...)` at `reference_planner.py:619`; `build_refinement_handoff(...)` at `reference_planner.py:783`; `LOW_POLY_HINTS` at `reference_planner.py:65` | Keep low-poly/faceted profile work on `modeling_mesh`; prefer `macro` only for assembly/truth blockers, and recalculate route/handoff after active-gate verification when blocker classes change |
 | `server/adapters/mcp/areas/reference.py` | checkpoint route/handoff projection around `reference.py:1490` | Surface route/handoff details on staged checkpoint and iterate responses |
-| `server/adapters/mcp/router_helper.py` | guided execution-policy decision around `router_helper.py:757` | Ensure newly visible refinement mutators are mapped to allowed guided families before exposure |
+| `server/adapters/mcp/router_helper.py` | guided execution-policy decision around `router_helper.py:667` | Ensure newly visible refinement mutators are mapped to allowed guided families before exposure |
 | `server/router/infrastructure/tools_metadata/**` | mesh/modeling/scene metadata JSON | Add or update hints only for tools actually exposed by this leaf |
 | `tests/unit/adapters/mcp/test_visibility_policy.py` | visibility fixtures | Assert active refinement blockers expose bounded tools and keep sculpt hidden |
 | `tests/unit/adapters/mcp/test_search_surface.py` | discovery/search assertions | Assert low-poly profile queries return the same bounded tools as visibility allows |
@@ -27,8 +27,9 @@
 ## Implementation Notes
 
 - Do not introduce new public tools in this leaf.
-- Treat `refine_low_poly_forms` as a visibility/search/planner state over the
-  existing public surface.
+- Treat `refine_low_poly_forms` as a step-driven visibility/search state over
+  the existing public surface, with checkpoint-local planner-family routing
+  projected separately on staged compare responses.
 - Keep `ReferencePlannerFamilyLiteral` values separate from
   `GuidedFlowFamilyLiteral`; planner route may say `modeling_mesh`, while
   guided visibility still uses existing guided families.
@@ -46,27 +47,22 @@
 if guided_flow_state.current_step != "refine_low_poly_forms":
     return build_visibility_rules_without_refinement_override()
 
-route = select_refinement_route(checkpoint_result)
 gate_tools = visible_tools_for_gate_plan(active_gate_plan)
-
-if route.selected_family == "modeling_mesh":
-    refinement_tools = {
-        "mesh_select",
-        "mesh_select_targeted",
-        "mesh_extrude_region",
-        "mesh_loop_cut",
-        "mesh_bevel",
-        "mesh_symmetrize",
-        "mesh_transform_selected",
-    }
-    if guided_family_allows("modeling_transform_object"):
-        refinement_tools.add("modeling_transform_object")
-elif route.selected_family == "macro":
-    refinement_tools = gate_tools | {"macro_adjust_segment_chain_arc"}
-else:
-    refinement_tools = gate_tools
-
-visible_tools = refinement_tools & tools_allowed_by_guided_family_policy()
+refinement_tools = {
+    "mesh_select",
+    "mesh_select_targeted",
+    "mesh_extrude_region",
+    "mesh_loop_cut",
+    "mesh_bevel",
+    "mesh_symmetrize",
+    "mesh_merge_by_distance",
+    "mesh_dissolve",
+    "macro_adjust_relative_proportion",
+    "macro_adjust_segment_chain_arc",
+    "macro_align_part_with_contact",
+    "macro_cleanup_part_intersections",
+}
+visible_tools = refinement_tools | gate_tools
 search_index = rank_only_visible_refinement_tools(visible_tools)
 ```
 

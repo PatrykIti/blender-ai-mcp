@@ -1592,6 +1592,49 @@ def test_checkpoint_iteration_can_enter_refinement_for_unblocked_profile_gate():
     assert state.guided_flow_state["required_role_groups"] == ["refinement_stage"]
 
 
+def test_refinement_iteration_continue_build_keeps_refinement_step_active():
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "refine_low_poly_forms",
+                "completed_steps": [
+                    "understand_goal",
+                    "establish_spatial_context",
+                    "create_primary_masses",
+                    "place_secondary_parts",
+                ],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["refine_low_poly_forms"],
+                "blocked_families": [],
+                "allowed_families": ["secondary_parts", "attachment_alignment", "reference_context"],
+                "completed_roles": ["body_core", "head_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["refinement_stage"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    state = asyncio.run(
+        advance_guided_flow_from_iteration_async(
+            ctx,
+            loop_disposition="continue_build",
+        )
+    )
+
+    assert state.phase == SessionPhase.BUILD
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["current_step"] == "refine_low_poly_forms"
+    assert state.guided_flow_state["next_actions"] == ["refine_low_poly_forms"]
+    assert state.guided_flow_state["step_status"] == "ready"
+
+
 def test_clear_session_goal_state_clears_guided_part_registry():
     ctx = FakeContext()
     set_session_capability_state(

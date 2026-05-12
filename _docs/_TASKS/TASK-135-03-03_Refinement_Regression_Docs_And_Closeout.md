@@ -12,7 +12,7 @@
 | Path / Module | Owner Seam / Current Lines | Closeout Responsibility |
 |---------------|----------------------------|-------------------------|
 | `server/adapters/mcp/areas/reference.py` | checkpoint route/handoff projection around `reference.py:1490` | Verify staged compare/iterate envelopes report shipped refinement blockers and handoff state |
-| `server/adapters/mcp/areas/reference_planner.py` | `select_refinement_route(...)` at `reference_planner.py:542`; `build_refinement_handoff(...)` at `reference_planner.py:672` | Verify planner route/handoff semantics match docs and tests |
+| `server/adapters/mcp/areas/reference_planner.py` | `select_refinement_route(...)` at `reference_planner.py:619`; `build_refinement_handoff(...)` at `reference_planner.py:783` | Verify planner route/handoff semantics match docs and tests after active-gate verification |
 | `server/adapters/mcp/areas/reference_feedback.py` | orchestrator feedback projection | Verify selected family, next actions, and loop disposition mirror checkpoint state |
 | `server/adapters/mcp/contracts/guided_flow.py` | `GuidedFlowStepLiteral` / `GuidedFlowStateContract` | Verify public contract includes only shipped step/family semantics |
 | `server/adapters/mcp/transforms/visibility_policy.py` | `build_visibility_rules(...)`; `visible_tools_for_gate_plan(...)` | Verify public visible-tool behavior matches the final task docs |
@@ -20,7 +20,7 @@
 | `tests/unit/adapters/mcp/test_contract_payload_parity.py` | public payload parity | Verify response schemas remain stable across direct and transported surfaces |
 | `tests/unit/adapters/mcp/test_context_bridge.py` | guided execution enforcement | Verify mapped mutators are accepted and unmapped mutators remain blocked |
 | `tests/unit/adapters/mcp/test_guided_mode.py`, `test_guided_surface_benchmarks.py`, `test_public_surface_docs.py` | guided/public documentation parity | Verify docs and visible surface describe the same shipped behavior |
-| `tests/e2e/integration/test_guided_gate_state_transport.py`, `test_guided_surface_contract_parity.py`, `test_guided_streamable_spatial_support.py` | stdio/Streamable proof | Verify transport-visible state, visibility, and gate payloads align |
+| `tests/e2e/integration/test_guided_gate_state_transport.py`, `test_guided_surface_contract_parity.py`, `test_guided_streamable_spatial_support.py` | stdio/Streamable proof | Verify transport-visible state and gate payloads align; keep the dedicated refinement visible-tool window on the unit guided-mode/visibility proof lane unless a transport-specific refinement test is added |
 | `tests/e2e/vision/test_goal_derived_gate_creature_completion.py`, `test_reference_stage_assembled_creature_attachment_truth.py`, `test_reference_stage_truth_handoff.py` | Blender/vision regression proof | Verify primitive-only creature, assembled seams, and refinement handoff behavior in runtime scenarios |
 | `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_TESTS/README.md`, `_docs/_CHANGELOG/` | docs/changelog closeout | Record exact shipped behavior, validation commands, and remaining follow-ons |
 
@@ -107,14 +107,14 @@ close_leaf_and_parent_only_if_no_follow_on_remains()
 
 | Test File | Cases / Assertions |
 |-----------|--------------------|
-| `tests/unit/adapters/mcp/test_reference_images.py` | primitive-only creature reports refinement blocker; route/handoff/feedback selected family remain aligned after checkpoint and iterate |
+| `tests/unit/adapters/mcp/test_reference_images.py` | primitive-only creature reports refinement blocker; route/handoff/feedback selected family remain aligned after checkpoint and iterate; `shape_profile` blockers keep `refine_low_poly_forms` on `continue_build` |
 | `tests/unit/adapters/mcp/test_contract_payload_parity.py` | public checkpoint/status payload shape includes shipped refinement fields without unknown extras |
 | `tests/unit/adapters/mcp/test_context_bridge.py` | refinement-visible mutators pass guided enforcement; unrelated hidden mutators remain blocked |
 | `tests/unit/adapters/mcp/test_guided_mode.py` and `test_guided_surface_benchmarks.py` | guided visible capability list and benchmark expectations include only shipped refinement tools |
 | `tests/unit/adapters/mcp/test_public_surface_docs.py` | prompt/MCP/test docs mention only shipped refinement behavior and explicit limitations |
 | `tests/e2e/integration/test_guided_gate_state_transport.py` | active gate/refinement state serializes through transport envelopes |
-| `tests/e2e/integration/test_guided_surface_contract_parity.py` | stdio live tool surface matches contract expectations |
-| `tests/e2e/integration/test_guided_streamable_spatial_support.py` | Streamable HTTP visible tools and guided state match stdio for the same scenario |
+| `tests/e2e/integration/test_guided_surface_contract_parity.py` | stdio live tool surface remains aligned with the documented guided creature contract |
+| `tests/e2e/integration/test_guided_streamable_spatial_support.py` | Streamable HTTP guided state and visible-tool recovery match stdio for the same scenario |
 | `tests/e2e/vision/test_goal_derived_gate_creature_completion.py` | primitive-only creature cannot pass final completion before profile/refinement blockers clear |
 | `tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py` | required seams and refinement blockers remain visible in truth/follow-up payloads |
 | `tests/e2e/vision/test_reference_stage_truth_handoff.py` | refinement route/handoff survives real staged truth handoff |
@@ -161,7 +161,7 @@ close_leaf_and_parent_only_if_no_follow_on_remains()
 
 ## Completion Summary
 
-- 2026-05-11: The refinement-stage closeout now includes owner-lane unit
+- 2026-05-12: The refinement-stage closeout now includes owner-lane unit
   coverage, Blender-backed proof for the first body/ear/snout profile cases,
   and task/changelog/test-doc sync.
 - The generic creature path is no longer squirrel-only at the goal-classifier /

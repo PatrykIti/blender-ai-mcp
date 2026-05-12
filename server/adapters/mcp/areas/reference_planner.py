@@ -20,6 +20,11 @@ from server.adapters.mcp.areas.reference_compare_packets import (
     synthesize_packet_vision_result as _service_synthesize_packet_vision_result,
 )
 from server.adapters.mcp.areas.reference_truth import dedupe_names, pair_label
+from server.adapters.mcp.contracts.quality_gates import (
+    GateCompletionBlockerContract,
+    GatePlanContract,
+    completion_blockers_for_gate_plan,
+)
 from server.adapters.mcp.contracts.reference import (
     ReferenceCompareComplexityTierLiteral,
     ReferenceCompareDiagnosticsContract,
@@ -137,6 +142,10 @@ _STRUCTURAL_RELATION_BLOCKER_KINDS: frozenset[str] = frozenset(
     {"contact_failure", "gap", "overlap", "attachment", "support", "symmetry", "measurement_error"}
 )
 _PROPORTION_BLOCKING_HINT_TYPES: frozenset[str] = frozenset({"rebalance_proportion"})
+_GATE_PLAN_RELATION_BLOCKER_TYPES: frozenset[str] = frozenset({"attachment_seam", "support_contact", "symmetry_pair"})
+_GATE_PLAN_MODELING_BLOCKER_TYPES: frozenset[str] = frozenset(
+    {"shape_profile", "proportion_ratio", "opening_or_cut", "refinement_stage"}
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -545,13 +554,109 @@ def _support_tools_from_blockers(
     return tools
 
 
+def _gate_plan_completion_blockers(
+    active_gate_plan: GatePlanContract | dict[str, Any] | None,
+) -> list[GateCompletionBlockerContract]:
+    if active_gate_plan is None:
+        return []
+
+    try:
+        plan = (
+            active_gate_plan
+            if isinstance(active_gate_plan, GatePlanContract)
+            else GatePlanContract.model_validate(active_gate_plan)
+        )
+    except Exception:
+        return []
+
+    return list(plan.completion_blockers) or completion_blockers_for_gate_plan(plan)
+
+
+def _planner_blocker_from_gate_completion_blocker(
+    blocker: GateCompletionBlockerContract,
+    *,
+    category: Literal["relation", "view", "proportion", "scope", "budget", "policy"],
+) -> ReferencePlannerBlockerContract:
+    recommended_tools = [
+        str(name).strip() for name in list(blocker.recommended_bounded_tools or []) if str(name).strip()
+    ]
+    return ReferencePlannerBlockerContract(
+        blocker_id=blocker.gate_id,
+        category=category,
+        severity="blocking",
+        reason=blocker.message,
+        recommended_tool=recommended_tools[0] if recommended_tools else None,
+    )
+
+
+def _gate_plan_relation_blockers(
+    active_gate_plan: GatePlanContract | dict[str, Any] | None,
+) -> list[ReferencePlannerBlockerContract]:
+    return [
+        _planner_blocker_from_gate_completion_blocker(blocker, category="relation")
+        for blocker in _gate_plan_completion_blockers(active_gate_plan)
+        if blocker.gate_type in _GATE_PLAN_RELATION_BLOCKER_TYPES
+    ]
+
+
+def _gate_plan_modeling_blockers(
+    active_gate_plan: GatePlanContract | dict[str, Any] | None,
+) -> list[ReferencePlannerBlockerContract]:
+    modeling_blockers: list[ReferencePlannerBlockerContract] = []
+    for blocker in _gate_plan_completion_blockers(active_gate_plan):
+        if blocker.gate_type not in _GATE_PLAN_MODELING_BLOCKER_TYPES:
+            continue
+        category: Literal["relation", "view", "proportion", "scope", "budget", "policy"] = (
+            "view" if blocker.gate_type == "opening_or_cut" else "proportion"
+        )
+        modeling_blockers.append(
+            _planner_blocker_from_gate_completion_blocker(
+                blocker,
+                category=category,
+            )
+        )
+    return modeling_blockers
+
+
 def select_refinement_route(
     compare_result: ReferenceCompareStageCheckpointResponseContract,
+    *,
+    active_gate_plan: GatePlanContract | dict[str, Any] | None = None,
 ) -> ReferenceRefinementRouteContract:
     candidates = list(compare_result.correction_candidates or [])
     domain = _classify_refinement_domain(compare_result)
     target_scope = _planner_target_scope(compare_result)
+    gate_relation_blockers = _gate_plan_relation_blockers(active_gate_plan)
+    gate_modeling_blockers = _gate_plan_modeling_blockers(active_gate_plan)
     if not candidates:
+        if gate_relation_blockers or domain == "assembly":
+            return ReferenceRefinementRouteContract(
+                domain_classification=domain,
+                selected_family="macro",
+                reason=(
+                    "Active gate blockers still require deterministic relation/support repair, so bounded macro "
+                    "correction remains the primary refinement family."
+                ),
+                source_signals=[],
+                candidate_ids=[],
+                target_scope=target_scope,
+                blockers=gate_relation_blockers,
+                detail_available=bool(gate_relation_blockers),
+            )
+        if gate_modeling_blockers:
+            return ReferenceRefinementRouteContract(
+                domain_classification=domain,
+                selected_family="modeling_mesh",
+                reason=(
+                    "Active gate blockers still require bounded profile/refinement work, so modeling/mesh remains "
+                    "the safer default family."
+                ),
+                source_signals=[],
+                candidate_ids=[],
+                target_scope=target_scope,
+                blockers=gate_modeling_blockers,
+                detail_available=True,
+            )
         return ReferenceRefinementRouteContract(
             domain_classification=domain,
             selected_family="inspect_only",
@@ -573,7 +678,8 @@ def select_refinement_route(
     relation_blockers = _relation_planner_blockers(candidates)
     proportion_blockers = _proportion_planner_blockers(compare_result, low_poly_intent=low_poly_intent)
 
-    if relation_blockers or has_macro or domain == "assembly":
+    route_relation_blockers = relation_blockers or gate_relation_blockers
+    if route_relation_blockers or has_macro or domain == "assembly":
         return ReferenceRefinementRouteContract(
             domain_classification=domain,
             selected_family="macro",
@@ -584,7 +690,7 @@ def select_refinement_route(
             source_signals=source_signals,
             candidate_ids=candidate_ids,
             target_scope=target_scope,
-            blockers=relation_blockers,
+            blockers=route_relation_blockers,
             detail_available=True,
         )
 
@@ -605,7 +711,8 @@ def select_refinement_route(
         )
 
     blocking_proportion = [blocker for blocker in proportion_blockers if blocker.severity == "blocking"]
-    if blocking_proportion:
+    route_modeling_blockers = proportion_blockers or gate_modeling_blockers
+    if blocking_proportion or gate_modeling_blockers:
         return ReferenceRefinementRouteContract(
             domain_classification=domain,
             selected_family="modeling_mesh",
@@ -616,7 +723,7 @@ def select_refinement_route(
             source_signals=source_signals,
             candidate_ids=candidate_ids,
             target_scope=target_scope,
-            blockers=proportion_blockers,
+            blockers=route_modeling_blockers,
             detail_available=True,
         )
 
@@ -660,7 +767,7 @@ def select_refinement_route(
             source_signals=source_signals,
             candidate_ids=candidate_ids,
             target_scope=target_scope,
-            blockers=proportion_blockers,
+            blockers=route_modeling_blockers,
             detail_available=True,
         )
 

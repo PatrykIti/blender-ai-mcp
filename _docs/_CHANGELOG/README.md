@@ -6,7 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
-| [347](./347-2026-05-11-task-135-refinement-closeout-and-quadruped-genericity.md) | 2026-05-11 | **TASK-135 refinement closeout and quadruped genericity** | - |
+| [347](./347-2026-05-12-task-135-refinement-closeout-and-quadruped-genericity.md) | 2026-05-12 | **TASK-135 refinement closeout and quadruped genericity** | - |
 | [346](./346-2026-05-11-task-135-refinement-step-gate.md) | 2026-05-11 | **TASK-135 refinement step gate** | - |
 | [345](./345-2026-05-11-task-135-curved-tail-profile-gates.md) | 2026-05-11 | **TASK-135 curved-tail profile gates** | - |
 | [344](./344-2026-05-11-task-135-creature-gate-contract-hardening.md) | 2026-05-11 | **TASK-135 creature gate contract hardening** | - |

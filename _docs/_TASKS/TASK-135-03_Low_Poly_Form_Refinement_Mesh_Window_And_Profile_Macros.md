@@ -57,10 +57,10 @@ of creating a second refinement recommendation path.
 | `server/adapters/mcp/session_capabilities_registry.py` | `_maybe_advance_guided_flow_from_part_registry_dict(...)` at `session_capabilities_registry.py:60` | Advance only after required roles and required seams are stable; do not advance from part names alone |
 | `server/adapters/mcp/session_capabilities_state.py` | `SessionCapabilityState` serialization | Persist the new step, gate plan, stale markers, and role summaries for stdio/Streamable parity |
 | `server/adapters/mcp/session_capabilities_runtime_glue.py` | gate-plan refresh and visibility projection helpers | Keep session state, gate state, and visibility synchronized after mutations |
-| `server/adapters/mcp/transforms/visibility_policy.py` | `build_visibility_rules(...)` at `visibility_policy.py:591`; `visible_tools_for_gate_plan(...)` at `visibility_policy.py:702` | Open bounded mesh/modeling/profile tools only when refinement blockers require them |
-| `server/adapters/mcp/discovery/search_surface.py` and `search_documents.py` | `build_search_transform(...)` at `search_surface.py:435`; discovery entries | Make "profile low-poly body/ears/limbs/tail" resolve to bounded tools on the current guided surface |
+| `server/adapters/mcp/transforms/visibility_policy.py` | `build_visibility_rules(...)` at `visibility_policy.py:622`; `visible_tools_for_gate_plan(...)` at `visibility_policy.py:735` | Keep one bounded step-driven mesh/profile window on the guided surface, with gate blockers adding only bounded repair/support tools |
+| `server/adapters/mcp/discovery/search_surface.py` and `search_documents.py` | `build_search_transform(...)` at `search_surface.py:438`; discovery entries | Make "profile low-poly body/ears/limbs/tail" resolve to bounded tools on the current guided surface instead of coupling search visibility to checkpoint-local planner-family routing |
 | `server/adapters/mcp/areas/reference.py` | checkpoint route/handoff projection around `reference.py:1490` | Keep compare/iterate payloads aligned with refinement step and blockers |
-| `server/adapters/mcp/areas/reference_planner.py` | `select_refinement_route(...)` at `reference_planner.py:542`; `build_refinement_handoff(...)` at `reference_planner.py:672` | Keep low-poly/faceted refs on `modeling_mesh` unless deterministic macro or inspect blockers dominate |
+| `server/adapters/mcp/areas/reference_planner.py` | `select_refinement_route(...)` at `reference_planner.py:619`; `build_refinement_handoff(...)` at `reference_planner.py:783` | Keep low-poly/faceted refs on `modeling_mesh` unless deterministic macro or inspect blockers dominate, and recompute route/handoff from the finalized active-gate blockers before emitting the checkpoint response |
 | `server/adapters/mcp/areas/reference_feedback.py` | orchestrator feedback projection | Keep selected family, next actions, and loop disposition aligned with refinement state |
 | `server/adapters/mcp/areas/mesh.py` and `modeling.py` | bounded mesh/modeling wrappers | Provide the first implementation lane for profile changes without adding broad sculpt |
 | `server/adapters/mcp/areas/scene.py` | `macro_adjust_segment_chain_arc(...)` at `scene.py:881`; attach/align macros | Reuse existing macro tools for tail/attachment refinements before adding profile-specific macros |
@@ -79,9 +79,14 @@ of creating a second refinement recommendation path.
   - `mesh_loop_cut`
   - `mesh_bevel`
   - `mesh_symmetrize`
-  - bounded modeling transforms
+  - `mesh_merge_by_distance`
+  - `mesh_dissolve`
   - selected creature macros
 - Do not unlock broad sculpt by default for this stage.
+- Entering `refine_low_poly_forms` opens that bounded mesh/profile window on the
+  existing guided surface even before blocker-specific recovery kicks in; active
+  gate blockers may add bounded repair/support tools, but they do not decide
+  whether the baseline refinement window exists.
 - Prefer reusable bounded macros only when repeated primitive-to-form
   refinement cannot be expressed safely enough with the bounded mesh/modeling
   window.
@@ -136,17 +141,20 @@ if current_step == "refine_low_poly_forms":
         "attachment_alignment",
         "reference_context",
     ]
-    planner_allowed_families = ["modeling_mesh", "macro"]
-    visible_tool_targets = [
+    refinement_safe_tools = [
         "mesh_select",
         "mesh_select_targeted",
         "mesh_extrude_region",
         "mesh_loop_cut",
         "mesh_bevel",
         "mesh_symmetrize",
-        # Optional profile macros may join later if bounded mesh/modeling tools
-        # are not sufficient for the first slice.
+        "mesh_merge_by_distance",
+        "mesh_dissolve",
     ]
+    visible_tools = refinement_safe_tools | visible_tools_for_gate_plan(active_gate_plan)
+    planner_route = select_refinement_route(checkpoint_result, active_gate_plan=active_gate_plan)
+    if planner_route.selected_family in {"modeling_mesh", "macro"}:
+        keep_loop_disposition = "continue_build"
 ```
 
 ## Execution Structure
@@ -256,12 +264,13 @@ if current_step == "refine_low_poly_forms":
 
 ## Completion Summary
 
-- 2026-05-11: `refine_low_poly_forms` is now a fully closed bounded refinement
+- 2026-05-12: `refine_low_poly_forms` is now a fully closed bounded refinement
   path on the current guided surface.
-- The refinement stage exposes bounded mesh/profile tooling when the staged
-  blockers justify it, keeps broad sculpt hidden by default for low-poly
-  creature work, and proves representative body, ear, snout, limb, and tail
-  profile cases on the shipped surface.
+- The refinement step keeps a bounded mesh/profile window on the guided
+  surface, adds only bounded repair/support tools from active blockers, keeps
+  broad sculpt hidden by default for low-poly creature work, and proves
+  representative body, ear, snout, limb, and tail profile cases on the shipped
+  surface.
 - No profile macro promotion was required after the first proof wave.
 - The full closeout pack now includes the repo-supported Blender runner pass.
 
