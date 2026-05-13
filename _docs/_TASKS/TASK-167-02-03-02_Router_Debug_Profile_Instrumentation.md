@@ -65,7 +65,8 @@ if debug_scope_enabled("router"):
 - `tests/unit/adapters/mcp/test_router_elicitation.py`
 - `tests/unit/router/application/test_router_handler_parameters.py`
 - `tests/unit/router/infrastructure/test_logger.py`
-- `tests/unit/router/application/matcher/test_ensemble_matcher.py`
+- extend `tests/unit/router/application/matcher/test_ensemble_matcher.py` with
+  direct ensemble-classification logger assertions
 - `tests/unit/router/application/test_supervisor_router.py`
 - `tests/unit/router/application/test_router_contracts.py`
 - `tests/unit/router/application/test_correction_audit.py`
@@ -93,11 +94,13 @@ if debug_scope_enabled("router"):
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_router_elicitation.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_handler_parameters.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/router/infrastructure/test_logger.py -q`
-- `PYTHONPATH=. poetry run pytest tests/unit/router/application/matcher/test_ensemble_matcher.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_supervisor_router.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_correction_audit.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_context_bridge.py -q`
+- after implementation extends the ensemble matcher lane with direct router
+  logger assertions, also run:
+  - `PYTHONPATH=. poetry run pytest tests/unit/router/application/matcher/test_ensemble_matcher.py -q`
 - final E2E/runtime proof for this leaf should be exercised through the
   repo-supported runner and the relevant updated integration coverage:
   - `poetry run python scripts/run_e2e_tests.py`
