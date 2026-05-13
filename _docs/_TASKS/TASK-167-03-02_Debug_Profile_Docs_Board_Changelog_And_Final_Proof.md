@@ -65,9 +65,9 @@
 
 - `git diff --check`
 - `bash -n scripts/run_streamable_openrouter.sh scripts/run_mcp_server.sh scripts/run_reference_classifier_sidecar.sh`
-- `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure`
-- `PYTHONPATH=. poetry run pytest ./tests/unit`
-- `poetry run python scripts/run_e2e_tests.py`
+- `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure` (outside sandbox)
+- `PYTHONPATH=. poetry run pytest ./tests/unit` (outside sandbox)
+- `poetry run python scripts/run_e2e_tests.py` (outside sandbox)
 - targeted grep/audit for accepted profile names across:
   - `README.md`
   - `_docs/_MCP_SERVER/README.md`

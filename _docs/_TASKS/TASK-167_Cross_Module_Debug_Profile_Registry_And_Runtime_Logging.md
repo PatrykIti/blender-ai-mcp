@@ -106,8 +106,8 @@ selector, for example:
 - `BLENDER_AI_DEBUG=tools`
 - `BLENDER_AI_DEBUG=vision,reference,transport`
 
-The exact env name can still be refined during implementation, but the shipped
-contract must satisfy these requirements:
+The shipped selector contract is `BLENDER_AI_DEBUG`, and it must satisfy these
+requirements:
 
 - one central selector instead of many unrelated debug env vars
 - `all` means repo-owned debug scopes, not every third-party library at maximum
