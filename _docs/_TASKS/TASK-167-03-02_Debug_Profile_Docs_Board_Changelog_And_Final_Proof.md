@@ -106,11 +106,14 @@
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_server_transport_mode.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/scripts/test_script_tooling.py -q`
 - `bash -n scripts/run_streamable_openrouter.sh scripts/run_mcp_server.sh scripts/run_reference_classifier_sidecar.sh`
-- prove the focused runtime lanes with the repo-supported E2E command:
-  - `poetry run python scripts/run_e2e_tests.py` for `tests/e2e/integration/test_guided_gate_state_transport.py`
-  - `poetry run python scripts/run_e2e_tests.py` for `tests/e2e/integration/test_guided_streamable_spatial_support.py`
-  - `poetry run python scripts/run_e2e_tests.py` for `tests/e2e/integration/test_guided_surface_contract_parity.py`
-  - `poetry run python scripts/run_e2e_tests.py` for `tests/e2e/integration/test_mcp_transport_modes.py`
+- prove the focused runtime proof surfaces via the single repo-supported E2E
+  runner command:
+  - `poetry run python scripts/run_e2e_tests.py`
+  - required proof surfaces covered by that run:
+    - `tests/e2e/integration/test_guided_gate_state_transport.py`
+    - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
+    - `tests/e2e/integration/test_guided_surface_contract_parity.py`
+    - `tests/e2e/integration/test_mcp_transport_modes.py`
 - `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure` (outside sandbox)
 - `PYTHONPATH=. poetry run pytest ./tests/unit` (outside sandbox)
 - `poetry run python scripts/run_e2e_tests.py` (outside sandbox; required repo

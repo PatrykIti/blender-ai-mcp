@@ -26,7 +26,7 @@
 | `tests/unit/adapters/mcp/test_router_elicitation.py` | router goal/status proof lane | current router-facing contract tests | router debug profile proof belongs on the router owner lane |
 | `tests/unit/router/application/test_router_handler_parameters.py` | router handler owner lane | current goal-shape/handler tests | direct handler proof belongs here |
 | `tests/unit/router/infrastructure/test_logger.py` | router logger owner lane | current RouterLogger tests | direct router logger proof belongs here |
-| `tests/unit/router/application/matcher/test_ensemble_matcher.py` | ensemble router-logger lane | current ensemble matcher tests | direct ensemble-classification logging proof belongs here too |
+| `tests/unit/router/application/matcher/test_ensemble_matcher.py` | planned ensemble router-logger lane | current ensemble matcher tests to extend | direct ensemble-classification logging proof should be added here when this leaf lands |
 | `tests/unit/router/application/test_supervisor_router.py` | router integration lane | current supervisor/router tests | router debug changes should still prove the integrated router path |
 | `tests/unit/router/application/test_router_contracts.py` | router MCP response owner lane | current router contract tests | direct `areas/router.py` proof belongs here too |
 | `tests/unit/router/application/test_correction_audit.py` | correction-audit owner lane | current audit contract tests | direct `router_helper.py` and audit exposure proof belongs here |

@@ -38,6 +38,8 @@
 |------|--------------------|---------------------|-----------------------|
 | `scripts/run_streamable_openrouter.sh` | Docker-guided Streamable launcher | lines 12-186 | the central debug selector must be forwarded through the current Docker runtime path here |
 | `scripts/run_mcp_server.py` | interactive launcher plan/env handoff | lines 282-360 | the macOS-first launcher should expose the same selector instead of inventing a second debug path |
+| `scripts/run_mcp_server.sh` | operator shell entrypoint | current wrapper seam | the shared launcher branch still terminates at the real shell entrypoint operators run |
+| `scripts/RUN_MCP_SERVER.md` | local launcher runbook | current operator doc seam | the colocated launcher runbook is part of the live shared launcher surface |
 | `scripts/run_reference_classifier_sidecar.sh` | sidecar operator wrapper | current startup/env surface | sidecar-local guidance should stay aligned with the central selector story where applicable |
 | `tests/unit/scripts/test_script_tooling.py` | launcher/script contract lane | existing script env tests | forwarding and help/usage examples should be proven here |
 | `README.md` | top-level operator entry docs | current Docker/OpenRouter instructions | the primary operator docs must show the selector clearly |
@@ -45,6 +47,7 @@
 | `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md` | copy-paste env examples | current client/operator config examples | shipped selector/env examples must stay aligned here too |
 | `scripts/_RUN_DOCKER_MCP.md` | launcher snippets/runbook | current Docker helper snippets | examples must stay aligned with the shipped env name and scope list |
 | `_docs/_DEV/README.md` | developer workflow docs | runtime/dev debugging guidance | future implementers need one canonical debug-profile explanation here |
+| `_docs/_VISION/README.md` | sidecar/operator guidance | current classifier-sidecar docs | the shared launcher branch also owns the user-facing sidecar/debug guidance surface |
 | `_docs/_ROUTER/README.md` | router behavior docs | current router-facing runtime docs | router-facing debug behavior must be documented where router runtime changes are explained |
 
 ## Pseudocode
