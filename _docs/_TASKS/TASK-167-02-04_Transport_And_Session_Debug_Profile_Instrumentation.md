@@ -75,6 +75,8 @@ if debug_scope_enabled("transport"):
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_server_transport_mode.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_router_elicitation.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
 - final E2E/runtime proof for this leaf should be exercised through the
   repo-supported runner and the relevant updated transport integration coverage:
   - `poetry run python scripts/run_e2e_tests.py`

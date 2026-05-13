@@ -4,7 +4,7 @@
 **Priority:** 🔴 High
 **Parent:** [TASK-167-02-03](./TASK-167-02-03_Guided_Flow_And_Router_Debug_Profile_Instrumentation.md)
 **Objective:** Add bounded `guided_flow` debug instrumentation to the current guided-flow state-shaping and persistence seams so operators can trace step changes, refresh barriers, required checks, and allowed-family changes directly from the Docker/server terminal.
-**Repository Touchpoints:** `server/adapters/mcp/session_capabilities_flow.py`, `server/adapters/mcp/session_capabilities_registry.py`, `server/adapters/mcp/session_capabilities_bootstrap.py`, `server/adapters/mcp/session_capabilities_runtime_glue.py`, `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`, `tests/e2e/integration/test_guided_streamable_spatial_support.py`
+**Repository Touchpoints:** `server/adapters/mcp/session_capabilities_flow.py`, `server/adapters/mcp/session_capabilities_registry.py`, `server/adapters/mcp/session_capabilities_bootstrap.py`, `server/adapters/mcp/session_capabilities_runtime_glue.py`, `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`, `tests/unit/adapters/mcp/test_session_phase.py`, `tests/e2e/integration/test_guided_streamable_spatial_support.py`
 **Acceptance Criteria:**
 - `debug=guided_flow` surfaces step changes, `next_actions`, refresh barrier set/cleared moments, and allowed-family changes without printing large state dumps
 - guided-flow transition logs are anchored to the real state-shaping and persistence owners, not only the default-value helper layer
@@ -19,6 +19,7 @@
 | `server/adapters/mcp/session_capabilities_bootstrap.py` | `update_session_from_router_goal(...)`, `update_session_from_router_goal_async(...)` | lines 279 and 375 | initial guided-flow state and pending-reference adoption are bootstrapped here |
 | `server/adapters/mcp/session_capabilities_runtime_glue.py` | `record_router_execution_outcome(...)`, `mark_guided_spatial_state_stale(...)`, `mark_guided_spatial_state_stale_async(...)` | lines 403, 483, and 531 | guided-flow rearm and persistence are applied here |
 | `tests/unit/adapters/mcp/test_guided_flow_state_contract.py` | guided-flow state proof lane | current step/refresh tests | guided-flow debug profile proof belongs on the state-contract owner lane |
+| `tests/unit/adapters/mcp/test_session_phase.py` | bootstrap/persistence owner lane | current session bootstrap/update tests | direct bootstrap/persistence proof belongs here too |
 | `tests/e2e/integration/test_guided_streamable_spatial_support.py` | Streamable guided runtime proof lane | current refresh-barrier transport surface | integration proof for transition diagnostics lives here |
 
 ## Implementation Notes
@@ -58,6 +59,7 @@ if debug_scope_enabled("guided_flow"):
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
+- `tests/unit/adapters/mcp/test_session_phase.py`
 - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
 
 ## Docs To Update
@@ -78,6 +80,7 @@ if debug_scope_enabled("guided_flow"):
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_session_phase.py -q`
 - final E2E/runtime proof for this leaf should be exercised through the
   repo-supported runner and the relevant updated integration coverage:
   - `poetry run python scripts/run_e2e_tests.py`

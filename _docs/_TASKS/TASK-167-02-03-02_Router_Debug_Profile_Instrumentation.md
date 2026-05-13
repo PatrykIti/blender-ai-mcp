@@ -4,7 +4,7 @@
 **Priority:** 🔴 High
 **Parent:** [TASK-167-02-03](./TASK-167-02-03_Guided_Flow_And_Router_Debug_Profile_Instrumentation.md)
 **Objective:** Add bounded `router` debug instrumentation to the current router goal/status/logger/audit seams so operators can trace goal classification, no-match/needs-input/ready transitions, and router execution summaries directly from the Docker/server terminal.
-**Repository Touchpoints:** `server/adapters/mcp/areas/router.py`, `server/router/application/router.py`, `server/router/infrastructure/logger.py`, `server/adapters/mcp/router_helper.py`, `server/application/tool_handlers/router_handler.py`, `tests/unit/adapters/mcp/test_router_elicitation.py`, `tests/unit/router/application/test_router_handler_parameters.py`, `tests/unit/router/infrastructure/test_logger.py`, `tests/e2e/integration/test_guided_streamable_spatial_support.py`
+**Repository Touchpoints:** `server/adapters/mcp/areas/router.py`, `server/router/application/router.py`, `server/router/infrastructure/logger.py`, `server/adapters/mcp/router_helper.py`, `server/application/tool_handlers/router_handler.py`, `tests/unit/adapters/mcp/test_router_elicitation.py`, `tests/unit/router/application/test_router_handler_parameters.py`, `tests/unit/router/infrastructure/test_logger.py`, `tests/unit/router/application/test_router_contracts.py`, `tests/unit/adapters/mcp/test_context_bridge.py`, `tests/unit/router/application/test_correction_audit.py`, `tests/e2e/integration/test_guided_streamable_spatial_support.py`
 **Acceptance Criteria:**
 - `debug=router` surfaces goal classification/no-match/needs-input/ready transitions and bounded router logger summaries through the existing router owner seams
 - router debug logs are anchored to the live logger/audit path and do not rely only on client-facing `ctx_info(...)`
@@ -22,6 +22,9 @@
 | `tests/unit/adapters/mcp/test_router_elicitation.py` | router goal/status proof lane | current router-facing contract tests | router debug profile proof belongs on the router owner lane |
 | `tests/unit/router/application/test_router_handler_parameters.py` | router handler owner lane | current goal-shape/handler tests | direct handler proof belongs here |
 | `tests/unit/router/infrastructure/test_logger.py` | router logger owner lane | current RouterLogger tests | direct router logger proof belongs here |
+| `tests/unit/router/application/test_router_contracts.py` | router MCP response owner lane | current router contract tests | direct `areas/router.py` proof belongs here too |
+| `tests/unit/adapters/mcp/test_context_bridge.py` | MCP-side audit exposure lane | current audit/log bridge tests | direct `router_helper.py` proof belongs here |
+| `tests/unit/router/application/test_correction_audit.py` | correction-audit owner lane | current audit contract tests | direct audit exposure proof belongs here |
 | `tests/e2e/integration/test_guided_streamable_spatial_support.py` | Streamable runtime proof lane | current router-status transport surface | integration proof for router diagnostics lives here |
 
 ## Implementation Notes
@@ -56,6 +59,9 @@ if debug_scope_enabled("router"):
 - `tests/unit/adapters/mcp/test_router_elicitation.py`
 - `tests/unit/router/application/test_router_handler_parameters.py`
 - `tests/unit/router/infrastructure/test_logger.py`
+- `tests/unit/router/application/test_router_contracts.py`
+- `tests/unit/adapters/mcp/test_context_bridge.py`
+- `tests/unit/router/application/test_correction_audit.py`
 - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
 
 ## Docs To Update
@@ -78,6 +84,9 @@ if debug_scope_enabled("router"):
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_router_elicitation.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_handler_parameters.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/router/infrastructure/test_logger.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_context_bridge.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_correction_audit.py -q`
 - final E2E/runtime proof for this leaf should be exercised through the
   repo-supported runner and the relevant updated integration coverage:
   - `poetry run python scripts/run_e2e_tests.py`

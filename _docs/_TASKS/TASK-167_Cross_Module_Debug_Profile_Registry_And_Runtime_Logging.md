@@ -113,7 +113,7 @@ contract must satisfy these requirements:
 - `all` means repo-owned debug scopes, not every third-party library at maximum
   verbosity
 - one profile can be enabled alone
-- multiple profiles may be enabled together if the implementation supports it
+- multiple profiles can be enabled together through one comma-separated selector
 - invalid profile names fail clearly and list the accepted values
 
 ## Current Runtime Sources To Consolidate
@@ -185,7 +185,7 @@ with a blind repo-wide search.
 | `server/adapters/mcp/session_capabilities_registry.py` | `record_guided_flow_spatial_check_completion(...)`, `advance_guided_flow_from_iteration_async(...)` | lines 504-645 | live guided-flow completion and iteration transitions are applied here |
 | `server/adapters/mcp/session_capabilities_bootstrap.py` | router-goal bootstrap and ready-session reference adoption | live router-goal/update seams | initial guided-flow state and pending-reference adoption are bootstrapped here |
 | `server/adapters/mcp/session_capabilities_runtime_glue.py` | stale-state rearm and state persistence glue | current visibility/gate/runtime glue seams | guided-flow rearm and runtime state persistence are applied here |
-| `server/adapters/mcp/areas/router.py` | `router_set_goal(...)`, `router_get_status(...)` | lines 364-552 | router goal/status MCP responses and `ctx_info(...)` summaries are assembled here |
+| `server/adapters/mcp/areas/router.py` | `router_set_goal(...)`, `router_get_status(...)` | lines 364-648 | router goal/status MCP responses and `ctx_info(...)` summaries are assembled here |
 | `server/application/tool_handlers/router_handler.py` | `set_goal(...)` and goal-shape classification path | lines 304+ | the live application-layer goal resolution path starts here, not only in the earlier regex helper block |
 | `server/router/application/router.py` | live router logger usage | lines 114 and 1177-1207 | router-terminal summaries are emitted from the real router instance here |
 | `server/router/infrastructure/logger.py` | `RouterLogger`, especially `log_info(...)` / `log_execution_audit(...)` | lines 80-220 and 368-426 | router logging already has a dedicated owner, but the relevant summary methods extend past the earlier narrow line window |
