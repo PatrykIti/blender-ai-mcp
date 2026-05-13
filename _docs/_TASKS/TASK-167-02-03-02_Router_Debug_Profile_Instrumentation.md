@@ -8,6 +8,9 @@
 **Acceptance Criteria:**
 - `debug=router` surfaces goal classification/no-match/needs-input/ready transitions and bounded router logger summaries through the existing router owner seams
 - router debug logs are anchored to the live logger/audit path and do not rely only on client-facing `ctx_info(...)`
+- `debug=router` also surfaces bounded execution-audit and correction-audit
+  summaries through the existing `router_helper.py` and `RouterLogger` owner
+  seams without dumping full payloads
 - operators can correlate router goal/status logs with guided-flow transitions from the same terminal output
 
 ## Current Owner / Likely Edit Map
@@ -26,8 +29,8 @@
 | `tests/unit/router/application/matcher/test_ensemble_matcher.py` | ensemble router-logger lane | current ensemble matcher tests | direct ensemble-classification logging proof belongs here too |
 | `tests/unit/router/application/test_supervisor_router.py` | router integration lane | current supervisor/router tests | router debug changes should still prove the integrated router path |
 | `tests/unit/router/application/test_router_contracts.py` | router MCP response owner lane | current router contract tests | direct `areas/router.py` proof belongs here too |
-| `tests/unit/adapters/mcp/test_context_bridge.py` | MCP-side audit exposure lane | current audit/log bridge tests | direct `router_helper.py` proof belongs here |
-| `tests/unit/router/application/test_correction_audit.py` | correction-audit owner lane | current audit contract tests | direct audit exposure proof belongs here |
+| `tests/unit/router/application/test_correction_audit.py` | correction-audit owner lane | current audit contract tests | direct `router_helper.py` and audit exposure proof belongs here |
+| `tests/unit/adapters/mcp/test_context_bridge.py` | MCP-side bridge/report-shape lane | current audit/log bridge tests | bridge/report-shape regressions still belong here after the direct owner lane |
 | `tests/e2e/integration/test_guided_streamable_spatial_support.py` | Streamable runtime proof lane | current router-status transport surface | integration proof for router diagnostics lives here |
 
 ## Implementation Notes
@@ -65,8 +68,8 @@ if debug_scope_enabled("router"):
 - `tests/unit/router/application/matcher/test_ensemble_matcher.py`
 - `tests/unit/router/application/test_supervisor_router.py`
 - `tests/unit/router/application/test_router_contracts.py`
-- `tests/unit/adapters/mcp/test_context_bridge.py`
 - `tests/unit/router/application/test_correction_audit.py`
+- `tests/unit/adapters/mcp/test_context_bridge.py`
 - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
 
 ## Docs To Update
@@ -92,9 +95,9 @@ if debug_scope_enabled("router"):
 - `PYTHONPATH=. poetry run pytest tests/unit/router/infrastructure/test_logger.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/router/application/matcher/test_ensemble_matcher.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_supervisor_router.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_correction_audit.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_context_bridge.py -q`
-- `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_correction_audit.py -q`
 - final E2E/runtime proof for this leaf should be exercised through the
   repo-supported runner and the relevant updated integration coverage:
   - `poetry run python scripts/run_e2e_tests.py`

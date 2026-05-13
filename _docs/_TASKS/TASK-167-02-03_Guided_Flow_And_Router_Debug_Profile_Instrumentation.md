@@ -34,6 +34,27 @@
 - guided-flow and router share adjacent seams, but they are different execution
   tracks and should be proved separately
 
+## Runtime / Security Contract Notes
+
+- no direct runtime behavior ships from this parent; runtime/security ownership
+  is delegated to `TASK-167-02-03-01` and `TASK-167-02-03-02`
+- this parent must not introduce shared logging behavior outside the two child
+  leaves
+
+## Tests To Add/Update
+
+- no direct implementation tests are owned here
+- proof ownership is delegated to:
+  - `TASK-167-02-03-01`
+  - `TASK-167-02-03-02`
+
+## Docs To Update
+
+- no direct product-doc surface is owned here
+- task-tree decomposition and close-condition wording stays in this parent,
+  while product/runtime docs remain with the child leaves and
+  `TASK-167-03-02`
+
 ## Changelog Impact
 
 - historical closeout entry ownership belongs to

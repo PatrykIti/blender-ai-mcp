@@ -234,7 +234,8 @@ with a blind repo-wide search.
   and does not silently make unrelated modules noisy
 - current Docker/server terminal output becomes sufficient to trace common
   runtime problems such as RU latency, proxy contract mismatches, visibility
-  churn, and guided-flow step transitions
+  churn, guided-flow step transitions, and transport bootstrap or surfaced
+  session-identity drift
 - a future module can register its own debug scope by following one documented
   registry/onboarding pattern instead of creating a new ad hoc env contract
 - debug output is bounded and redacted: no provider secrets, raw image bytes,

@@ -17,7 +17,7 @@
 | `server/adapters/mcp/session_capabilities_flow.py` | `_default_next_actions_for_step(...)`, `_apply_spatial_refresh_gate(...)`, `_clear_spatial_refresh_gate(...)`, `describe_guided_flow_feedback(...)` | lines 249-312 and 633-760 | guided-flow default step, refresh semantics, and bounded delta formatting are computed here |
 | `server/adapters/mcp/session_capabilities_registry.py` | `record_guided_flow_spatial_check_completion(...)`, `advance_guided_flow_from_iteration_async(...)` | lines 504-645 | live guided-flow completion and iteration transitions are applied here |
 | `server/adapters/mcp/session_capabilities_bootstrap.py` | `update_session_from_router_goal(...)`, `update_session_from_router_goal_async(...)` | lines 279 and 375 | initial guided-flow state and pending-reference adoption are bootstrapped here |
-| `server/adapters/mcp/session_capabilities_runtime_glue.py` | `record_router_execution_outcome(...)`, `mark_guided_spatial_state_stale(...)`, `mark_guided_spatial_state_stale_async(...)` | lines 403, 483, and 531 | guided-flow rearm and persistence are applied here |
+| `server/adapters/mcp/session_capabilities_runtime_glue.py` | `mark_guided_spatial_state_stale(...)`, `mark_guided_spatial_state_stale_async(...)` | lines 483 and 531 | guided-flow rearm and persistence are applied here |
 | `tests/unit/adapters/mcp/test_guided_flow_state_contract.py` | guided-flow state proof lane | current step/refresh tests | guided-flow debug profile proof belongs on the state-contract owner lane |
 | `tests/unit/adapters/mcp/test_session_phase.py` | bootstrap/persistence owner lane | current session bootstrap/update tests | direct bootstrap/persistence proof belongs here too |
 | `tests/e2e/integration/test_guided_streamable_spatial_support.py` | Streamable guided runtime proof lane | current refresh-barrier transport surface | integration proof for transition diagnostics lives here |
@@ -36,7 +36,6 @@
   helper layer:
   - `update_session_from_router_goal(...)`
   - `update_session_from_router_goal_async(...)`
-  - `record_router_execution_outcome(...)`
   - `mark_guided_spatial_state_stale(...)`
   - `mark_guided_spatial_state_stale_async(...)`
 - do not dump full session-state blobs into normal operator logs

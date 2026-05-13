@@ -10,6 +10,9 @@
 - `debug=reference` surfaces attach/list/remove/clear plus compare/iterate readiness transitions and key reference-id counts
 - `debug=tools` surfaces `call_tool(...)` proxy resolution, argument canonicalization, and public-tool contract mismatches
 - `debug=visibility`, `debug=guided_flow`, and `debug=router` each emit their own bounded runtime transitions without turning every other subsystem noisy
+- `debug=transport` surfaces bounded bootstrap, reconnect, and surfaced
+  session/transport identity diagnostics on the repo-owned `stdio` and
+  Streamable seams
 - the selected profiles write to the normal Docker/server terminal path so operators do not need a second custom log collector for standard debugging
 
 ## Execution Structure

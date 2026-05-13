@@ -10,6 +10,9 @@
   comma-separated named debug scopes such as `vision`, `reference`, `tools`,
   `transport`, `visibility`, `guided_flow`, and `router`
 - invalid names fail with a clear operator-facing message that lists supported scopes
+- when `BLENDER_AI_DEBUG` is set it is authoritative for repo-owned debug
+  scopes, `ROUTER_LOG_DECISIONS` remains compatibility-only when the selector
+  is unset, and `BLENDER_AI_DEBUG=off` suppresses repo-owned debug scopes
 - the registry maps one stable scope name to the repo-owned logger namespaces and helper hooks it owns
 - the onboarding rules for future modules are documented in code comments and task/docs so new owners can register a scope without creating a separate env contract
 
@@ -87,6 +90,8 @@ def debug_scope_enabled(scope_name: str) -> bool:
 
 - focused selector-registry proof plus the direct config/runtime consumer lanes,
   including:
+  - `tests/unit/infrastructure/test_debug_profile_config.py`
+  - `tests/unit/infrastructure/test_debug_profile_registry.py`
   - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
   - `tests/unit/infrastructure/test_vision_di.py`
   - `tests/unit/router/infrastructure/test_config.py`
@@ -111,15 +116,10 @@ def debug_scope_enabled(scope_name: str) -> bool:
 ## Validation Commands
 
 - `git diff --check`
-- create and run a focused config/registry lane such as:
+- after implementation adds the new focused config/registry tests above, run a
+  lane such as:
   - `PYTHONPATH=. poetry run pytest tests/unit/infrastructure/test_debug_profile_config.py -q`
   - `PYTHONPATH=. poetry run pytest tests/unit/infrastructure/test_debug_profile_registry.py -q`
-- run the direct config/runtime consumer lanes too:
-  - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py -q`
-  - `PYTHONPATH=. poetry run pytest tests/unit/infrastructure/test_vision_di.py -q`
-  - `PYTHONPATH=. poetry run pytest tests/unit/router/infrastructure/test_config.py -q`
-  - `PYTHONPATH=. poetry run pytest tests/unit/router/infrastructure/test_logger.py -q`
-  - `PYTHONPATH=. poetry run pytest tests/unit/router/application/matcher/test_ensemble_matcher.py -q`
 - run the direct config/runtime consumer lanes too:
   - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py -q`
   - `PYTHONPATH=. poetry run pytest tests/unit/infrastructure/test_vision_di.py -q`

@@ -53,7 +53,6 @@
 
 ## Docs To Update
 
-- final closeout/harmonization docs:
 - `README.md`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
@@ -63,6 +62,8 @@
 - `_docs/_VISION/README.md`
 - `_docs/_ROUTER/README.md`
 - `_docs/_TASKS/README.md`
+- `_docs/_TASKS/TASK-167*.md`
+- `_docs/_TASKS/TASK-165-02-01_Interactive_Profile_Selection_And_Runtime_Wiring.md`
 - `_docs/_CHANGELOG/README.md`
 - new `_docs/_CHANGELOG/*`
 
@@ -81,8 +82,6 @@
 - `git diff --check`
 - run the focused owner-lane commands from the child leaves before the broad
   repo bundle, including at minimum:
-  - `PYTHONPATH=. poetry run pytest tests/unit/infrastructure/test_debug_profile_config.py -q`
-  - `PYTHONPATH=. poetry run pytest tests/unit/infrastructure/test_debug_profile_registry.py -q`
   - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py -q`
   - `PYTHONPATH=. poetry run pytest tests/unit/infrastructure/test_vision_di.py -q`
   - `PYTHONPATH=. poetry run pytest tests/unit/router/infrastructure/test_config.py -q`
@@ -103,9 +102,15 @@
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_server_transport_mode.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/scripts/test_script_tooling.py -q`
 - `bash -n scripts/run_streamable_openrouter.sh scripts/run_mcp_server.sh scripts/run_reference_classifier_sidecar.sh`
+- make the focused runtime proof surfaces explicit before the broad repo runner:
+  - `tests/e2e/integration/test_guided_gate_state_transport.py`
+  - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
+  - `tests/e2e/integration/test_guided_surface_contract_parity.py`
+  - `tests/e2e/integration/test_mcp_transport_modes.py`
 - `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure` (outside sandbox)
 - `PYTHONPATH=. poetry run pytest ./tests/unit` (outside sandbox)
-- `poetry run python scripts/run_e2e_tests.py` (outside sandbox)
+- `poetry run python scripts/run_e2e_tests.py` (outside sandbox; this is the
+  required repo-supported runner for the focused runtime proof surfaces above)
 - targeted grep/audit for accepted profile names across:
   - `README.md`
   - `_docs/_MCP_SERVER/README.md`
@@ -113,8 +118,11 @@
   - `scripts/_RUN_DOCKER_MCP.md`
   - `scripts/RUN_MCP_SERVER.md`
   - `_docs/_DEV/README.md`
+  - `_docs/_VISION/README.md`
   - `_docs/_ROUTER/README.md`
   - `_docs/_TASKS/README.md`
+  - `_docs/_TASKS/TASK-167*.md`
+  - `_docs/_TASKS/TASK-165-02-01_Interactive_Profile_Selection_And_Runtime_Wiring.md`
   - `_docs/_CHANGELOG/README.md`
   - the new `_docs/_CHANGELOG/*.md` entry added by this family
 
