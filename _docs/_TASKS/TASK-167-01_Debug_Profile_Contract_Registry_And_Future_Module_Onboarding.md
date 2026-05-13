@@ -87,6 +87,12 @@ def debug_scope_enabled(scope_name: str) -> bool:
 - registry tests proving scope names and namespace ownership stay deterministic
 - onboarding tests showing a new scope can be registered without changing the
   public selector contract shape
+- direct config/runtime consumers too, including:
+  - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
+  - `tests/unit/infrastructure/test_vision_di.py`
+  - `tests/unit/router/infrastructure/test_config.py`
+  - `tests/unit/router/infrastructure/test_logger.py`
+  - `tests/unit/router/application/matcher/test_ensemble_matcher.py`
 
 ## Docs To Update
 
@@ -109,6 +115,12 @@ def debug_scope_enabled(scope_name: str) -> bool:
 - create and run a focused config/registry lane such as:
   - `PYTHONPATH=. poetry run pytest tests/unit/infrastructure/test_debug_profile_config.py -q`
   - `PYTHONPATH=. poetry run pytest tests/unit/infrastructure/test_debug_profile_registry.py -q`
+- run the direct config/runtime consumer lanes too:
+  - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/infrastructure/test_vision_di.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/router/infrastructure/test_config.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/router/infrastructure/test_logger.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/router/application/matcher/test_ensemble_matcher.py -q`
 
 ## Validation Category
 

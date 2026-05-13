@@ -40,6 +40,14 @@
 ## Tests To Add/Update
 
 - docs/grep audits only as a supplement to the final runtime proof bundle
+- final closeout must inherit the focused owner-lane commands from:
+  - `TASK-167-01`
+  - `TASK-167-02-01`
+  - `TASK-167-02-02`
+  - `TASK-167-02-03-01`
+  - `TASK-167-02-03-02`
+  - `TASK-167-02-04`
+  - `TASK-167-03-01`
 
 ## Docs To Update
 
@@ -68,6 +76,28 @@
 ## Validation Commands
 
 - `git diff --check`
+- run the focused owner-lane commands from the child leaves before the broad
+  repo bundle, including at minimum:
+  - `PYTHONPATH=. poetry run pytest tests/unit/infrastructure/test_debug_profile_config.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/infrastructure/test_debug_profile_registry.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/infrastructure/test_vision_di.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/router/infrastructure/test_config.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/router/infrastructure/test_logger.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/router/application/matcher/test_ensemble_matcher.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_compare_packets.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_search_surface.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_runtime.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_session_phase.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_router_elicitation.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_handler_parameters.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_supervisor_router.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_context_bridge.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_correction_audit.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_server_transport_mode.py -q`
 - `bash -n scripts/run_streamable_openrouter.sh scripts/run_mcp_server.sh scripts/run_reference_classifier_sidecar.sh`
 - `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure` (outside sandbox)
 - `PYTHONPATH=. poetry run pytest ./tests/unit` (outside sandbox)
@@ -82,6 +112,7 @@
   - `_docs/_ROUTER/README.md`
   - `_docs/_TASKS/README.md`
   - `_docs/_CHANGELOG/README.md`
+  - the new `_docs/_CHANGELOG/*.md` entry added by this family
 
 ## Validation Category
 
