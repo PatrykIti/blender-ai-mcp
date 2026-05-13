@@ -4505,6 +4505,82 @@ def test_truth_followup_uses_neutral_wording_for_roof_wall_attachment():
     assert "creature" not in followup.macro_candidates[0].reason.lower()
 
 
+def test_trim_truth_bundle_prioritizes_architecture_opening_wall_attachment():
+    opening_check = SceneCorrectionTruthPairContract(
+        from_object="WindowOpening_A",
+        to_object="FacadeWallShell",
+        relation_pair_id="windowopening_a__facadewallshell",
+        relation_kinds=["contact", "gap", "alignment", "attachment"],
+        relation_verdicts=["separated", "floating_gap"],
+        gap={"relation": "separated", "gap": 0.2, "axis_gap": {"x": 0.2, "y": 0.0, "z": 0.0}},
+        alignment={"is_aligned": True, "deltas": {"x": 0.0, "y": 0.0, "z": 0.0}},
+        overlap={"overlaps": False, "relation": "disjoint"},
+        contact_assertion=SceneAssertionPayloadContract(
+            assertion="scene_assert_contact",
+            passed=False,
+            subject="WindowOpening_A",
+            target="FacadeWallShell",
+            expected={"max_gap": 0.0001},
+            actual={"gap": 0.2, "relation": "separated"},
+        ),
+        attachment_semantics=SceneAttachmentSemanticsContract(
+            relation_kind="embedded_attachment",
+            seam_kind="opening_wall",
+            part_object="WindowOpening_A",
+            anchor_object="FacadeWallShell",
+            required_seam=True,
+            preferred_macro="macro_attach_part_to_surface",
+            attachment_verdict="floating_gap",
+        ),
+    )
+    generic_check = SceneCorrectionTruthPairContract(
+        from_object="ZLooseTrim",
+        to_object="FacadeWallShell",
+        relation_pair_id="zloosetrim__facadewallshell",
+        relation_kinds=["contact", "gap"],
+        relation_verdicts=["separated"],
+        gap={"relation": "separated", "gap": 0.2, "axis_gap": {"x": 0.2, "y": 0.0, "z": 0.0}},
+        overlap={"overlaps": False, "relation": "disjoint"},
+        contact_assertion=SceneAssertionPayloadContract(
+            assertion="scene_assert_contact",
+            passed=False,
+            subject="ZLooseTrim",
+            target="FacadeWallShell",
+            expected={"max_gap": 0.0001},
+            actual={"gap": 0.2, "relation": "separated"},
+        ),
+    )
+    bundle = SceneCorrectionTruthBundleContract(
+        scope=SceneAssembledTargetScopeContract(
+            scope_kind="object_set",
+            primary_target="FacadeWallShell",
+            object_names=["FacadeWallShell", "WindowOpening_A", "ZLooseTrim"],
+            object_count=3,
+        ),
+        summary=SceneCorrectionTruthSummaryContract(
+            pairing_strategy="guided_spatial_pairs",
+            pair_count=2,
+            evaluated_pairs=2,
+            contact_failures=2,
+            separated_pairs=2,
+        ),
+        checks=[generic_check, opening_check],
+    )
+
+    trimmed, was_trimmed = _trim_truth_bundle_to_budget(
+        truth_bundle=bundle,
+        pair_budget=1,
+        max_truth_chars=100_000,
+    )
+    followup = _build_truth_followup(trimmed)
+
+    assert was_trimmed is True
+    assert [check.relation_pair_id for check in trimmed.checks] == ["windowopening_a__facadewallshell"]
+    assert followup.focus_pairs == ["WindowOpening_A -> FacadeWallShell"]
+    assert "opening-wall relation" in followup.items[0].summary
+    assert followup.macro_candidates[0].macro_name == "macro_attach_part_to_surface"
+
+
 def test_truth_followup_emits_support_and_symmetry_macro_candidates():
     bundle = SceneCorrectionTruthBundleContract(
         scope=SceneAssembledTargetScopeContract(

@@ -24,23 +24,23 @@ short of the stronger user outcome:
 - deterministic silhouette metrics
 - optional coarse part-aware perception
 
-That improves generic creature blockout, but it does not yet close the gap for
-requests such as:
+At the time this umbrella was opened, that improved generic creature blockout,
+but it did not yet close the gap for requests such as:
 
 - "recreate this realistic animal as low poly"
 - "keep the real-world proportions"
 - "preserve limb structure, not just one leg blob"
 - "keep recognizable forelimb/hindlimb segmentation and major joints"
 
-The current product ceiling is therefore still too low for anatomy-aware
-reference-driven reconstruction:
+The product ceiling at planning time was therefore still too low for
+anatomy-aware reference-driven reconstruction:
 
-- the guided story remains blockout-oriented rather than reconstruction-oriented
-- planned `TASK-128` metrics are still focused on coarse silhouette and a small
+- the guided story remained blockout-oriented rather than reconstruction-oriented
+- planned `TASK-128` metrics were still focused on coarse silhouette and a small
   first-pass body-part vocabulary
-- there is no explicit product contract for what counts as a successful
+- there was no explicit product contract for what counts as a successful
   low-poly anatomical reconstruction
-- there is no promoted runtime path that ties bounded
+- there was no promoted runtime path that tied bounded
   perception/reference-understanding support evidence, through the closed
   `TASK-157` substrate and current guided/reference seams, to a
   reconstruction-grade write-side build strategy
@@ -93,45 +93,33 @@ If `TASK-128` lands completely, the product should be materially better at:
 - coarse part-aware hints for areas such as head, ear, snout, torso, tail, and
   paw
 
-But that is still below the desired bar for anatomy-aware low-poly
-reconstruction from realistic references. The missing capability is not
-"realism" in shading/detail. The missing capability is structurally preserving
-how the animal is put together at low-poly fidelity.
+At planning time, that was still below the desired bar for anatomy-aware
+low-poly reconstruction from realistic references. The missing capability was
+not "realism" in shading/detail. The missing capability was structurally
+preserving how the animal is put together at low-poly fidelity.
 
-## Current Drift To Resolve
+## Closed Drift
 
-The follow-on gap to close is:
+This umbrella closed the following follow-on gaps:
 
-- real guided squirrel runs can still finish as primitive-only blockouts that
-  contain the expected object names but lack key visual details such as eyes,
-  visible part seating, and a curved tail silhouette
-- the public guided story does not yet promise or define anatomy-aware
-  reconstruction for common creature builds
-- the expected fidelity bar is not yet explicit:
-  - preserve major masses only
-  - versus preserve major anatomical segments and joints at low-poly fidelity
-- the current and planned creature vocabularies are still too coarse for limb
-  structure, such as upper/lower forelimb and upper/lower hindlimb segments
-- the current and planned metric bundles are still too coarse for segment-level
-  proportion drift, limb placement, and joint-band placement
-- the guided/reference loop still lacks explicit relation semantics for common
-  creature attachments and body-part seating, such as:
-  - ear to head
-  - eye to head
-  - snout to head
-  - tail to torso/back
-  - forelimb to torso
-  - hindlimb to pelvis/torso
-- the current corrective path does not yet clearly distinguish:
-  - intentional organic attachment or seating
-  - expected embedded/transition zones
-  - bad floating gaps
-  - bad free intersections that really should be cleaned up
-- the write-side build story is still framed as bounded guided modeling, not as
-  a reconstruction-oriented contract with a clear "all required body parts are
-  present and proportionally plausible" completion bar
-- evaluation/regression planning does not yet define representative
-  anatomy-aware front/side creature scenarios as a shipped product target
+- real guided squirrel and common quadruped runs no longer rely on
+  primitive-only blockout completion when required visual details, visible part
+  seating, or curved-tail silhouette gates remain unresolved
+- the public guided story now defines anatomy-aware low-poly reconstruction for
+  common creature builds
+- the fidelity bar now distinguishes major-mass preservation from low-poly
+  anatomical segment and joint preservation
+- creature role vocabulary now covers required body, head, tail, snout, ears,
+  eyes, foreleg, and hindleg roles at the shipped low-poly fidelity level
+- staged gate and relation semantics now cover common creature attachments and
+  body-part seating such as ear/head, snout/head, tail/body, forelimb/body, and
+  hindlimb/body
+- the corrective path now distinguishes intentional organic seating, expected
+  embedded transition zones, bad floating gaps, and bad free intersections
+- the write-side build story now uses bounded guided modeling with an explicit
+  completion bar for required body parts and proportionally plausible forms
+- regression planning now includes representative front/side creature and
+  Blender-backed profile cases
 
 ## Business Outcome
 
@@ -463,8 +451,11 @@ files and this table in the same branch.
 
 ## Changelog Impact
 
-- add a dedicated `_docs/_CHANGELOG/*` entry when the first meaningful
-  implementation slice under this umbrella ships
+- Historical implementation entries were added and indexed for the shipped
+  slices, including final closeout entry
+  `_docs/_CHANGELOG/347-2026-05-12-task-135-refinement-closeout-and-quadruped-genericity.md`.
+- Root `CHANGELOG.md` was not updated because the work did not change
+  semantic-release output.
 
 ## Progress Notes
 
@@ -492,6 +483,8 @@ files and this table in the same branch.
   - `TASK-135-01` ✅ Done
   - `TASK-135-02` ✅ Done
   - `TASK-135-03` ✅ Done
+- 2026-05-13 post-closeout audit repairs are tracked in
+  `_docs/_CHANGELOG/349-2026-05-13-task-135-136-post-closeout-drift-repairs.md`.
 
 ## Completion Summary
 
@@ -521,3 +514,14 @@ files and this table in the same branch.
     depending on squirrel-specific hints
   - the final repo-supported full runner now also passes after the validation
     tooling fix path stabilized addon reinstall and per-run RPC port selection
+- 2026-05-13: post-closeout drift audit repairs are closed:
+  - `refine_low_poly_forms` keeps the existing reference-image and staged
+    checkpoint surfaces visible while staying bounded away from primary-mass
+    and finish-heavy tools
+  - profile/refinement recovery recommendations stay blocked behind unresolved
+    attachment seam or support-contact failures
+  - refinement-stage creature profile search still surfaces
+    `macro_adjust_segment_chain_arc(...)` after the staged checkpoint surfaces
+    remain visible
+  - successful `modeling_convert_to_mesh(...)` and `modeling_set_origin(...)`
+    calls now mark guided spatial state stale for later reinspection

@@ -287,6 +287,28 @@ def test_guided_handoff_payload_recognizes_reference_guided_architecture_goals()
     assert "visibility_rules" in manual["message"]
 
 
+@pytest.mark.parametrize(
+    "goal",
+    [
+        "rebuild a small building from photo references",
+        "rebuild a facade from a photo-reference",
+        "rebuild a facade from a reference-photo",
+    ],
+)
+def test_guided_handoff_payload_recognizes_architecture_photo_reference_goals(goal):
+    manual = build_guided_handoff_payload(
+        "guided_manual_build",
+        surface_profile="llm-guided",
+        phase=SessionPhase.BUILD,
+        goal=goal,
+    )
+
+    assert manual is not None
+    assert manual["recipe_id"] == "reference_guided_architecture_build"
+    assert manual["direct_tools"] == list(ARCHITECTURE_BUILD_DIRECT_TOOLS)
+    assert manual["workflow_import_recommended"] is False
+
+
 def test_guided_handoff_payload_does_not_treat_plan_verb_as_architecture_reference():
     manual = build_guided_handoff_payload(
         "guided_manual_build",
@@ -385,7 +407,21 @@ def test_gate_blocker_visibility_exposes_bounded_attachment_repair_tools():
     assert "macro_finish_form" in visible
 
 
-def test_shape_profile_gate_waits_behind_unresolved_seam_gate():
+@pytest.mark.parametrize("barrier_gate_type", ["attachment_seam", "support_contact"])
+@pytest.mark.parametrize(
+    ("recovery_gate_type", "recovery_tool"),
+    [
+        ("shape_profile", "macro_adjust_segment_chain_arc"),
+        ("proportion_ratio", "macro_adjust_relative_proportion"),
+        ("refinement_stage", "macro_adjust_segment_chain_arc"),
+        ("opening_or_cut", "macro_cutout_recess"),
+    ],
+)
+def test_profile_recovery_gates_wait_behind_unresolved_seam_or_support_gate(
+    barrier_gate_type,
+    recovery_gate_type,
+    recovery_tool,
+):
     """Profile/refinement tools should not open while required seam gates are failing."""
 
     rule_inputs = {
@@ -410,8 +446,8 @@ def test_shape_profile_gate_waits_behind_unresolved_seam_gate():
             "domain_profile": "creature",
             "completion_blockers": [
                 {
-                    "gate_id": "tail_body_seam",
-                    "gate_type": "attachment_seam",
+                    "gate_id": f"tail_{barrier_gate_type}",
+                    "gate_type": barrier_gate_type,
                     "label": "tail seated on body",
                     "status": "failed",
                     "reason_code": "relation_floating_gap",
@@ -419,10 +455,11 @@ def test_shape_profile_gate_waits_behind_unresolved_seam_gate():
                 },
                 {
                     "gate_id": "tail_profile",
-                    "gate_type": "shape_profile",
+                    "gate_type": recovery_gate_type,
                     "label": "tail arc profile",
                     "status": "failed",
                     "reason_code": "missing_authoritative_evidence",
+                    "recommended_bounded_tools": ["mesh_inspect", recovery_tool],
                     "message": "Tail profile is not verified.",
                 },
             ],
@@ -437,7 +474,7 @@ def test_shape_profile_gate_waits_behind_unresolved_seam_gate():
             "completion_blockers": [
                 {
                     "gate_id": "tail_profile",
-                    "gate_type": "shape_profile",
+                    "gate_type": recovery_gate_type,
                     "label": "tail arc profile",
                     "status": "failed",
                     "reason_code": "missing_authoritative_evidence",
@@ -447,15 +484,21 @@ def test_shape_profile_gate_waits_behind_unresolved_seam_gate():
             "gates": [],
         },
     )
-    tool_names = {"mesh_inspect", "macro_adjust_segment_chain_arc", "scene_view_diagnostics"}
+    tool_names = {
+        "mesh_inspect",
+        "macro_adjust_relative_proportion",
+        "macro_adjust_segment_chain_arc",
+        "macro_cutout_recess",
+        "scene_view_diagnostics",
+    }
 
     blocked_visible = set(materialize_visible_tool_names(tool_names, blocked_rules))
     profile_visible = set(materialize_visible_tool_names(tool_names, profile_rules))
 
     assert "mesh_inspect" not in blocked_visible
-    assert "macro_adjust_segment_chain_arc" not in blocked_visible
+    assert recovery_tool not in blocked_visible
     assert "mesh_inspect" in profile_visible
-    assert "macro_adjust_segment_chain_arc" in profile_visible
+    assert recovery_tool in profile_visible
 
 
 def test_symmetry_gate_visibility_exposes_bounded_symmetry_tools():
@@ -713,6 +756,9 @@ def test_refinement_step_limits_creature_handoff_to_bounded_profile_tools():
 
     assert "mesh_extrude_region" in names
     assert "mesh_loop_cut" in names
+    assert "reference_images" in names
+    assert "reference_compare_stage_checkpoint" in names
+    assert "reference_iterate_stage_checkpoint" in names
     assert "macro_adjust_relative_proportion" in names
     assert "macro_adjust_segment_chain_arc" in names
     assert "mesh_inspect" in names

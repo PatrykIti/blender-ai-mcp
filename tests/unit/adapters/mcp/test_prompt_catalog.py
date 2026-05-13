@@ -2,6 +2,7 @@
 
 import pytest
 from server.adapters.mcp.prompts.prompt_catalog import (
+    derive_prompt_goal_tags,
     get_prompt_catalog,
     get_prompt_catalog_entry,
     get_recommended_prompt_entries,
@@ -84,6 +85,33 @@ def test_recommended_prompt_entries_can_use_architecture_goal_context():
             surface_profile="llm-guided",
             phase="planning",
             goal="rebuild a tower facade from front elevation and floor plan references",
+        )
+    ]
+
+    assert architecture_planning[0] == "reference_guided_architecture_build"
+    assert "reference_guided_architecture_build" in architecture_planning
+
+
+@pytest.mark.parametrize(
+    "goal",
+    [
+        "rebuild a small building from photo references",
+        "rebuild a facade from a photo-reference",
+        "rebuild a facade from a reference-photo",
+    ],
+)
+def test_recommended_prompt_entries_can_use_architecture_photo_reference_context(goal):
+    tags = derive_prompt_goal_tags(goal=goal)
+
+    assert "goal:reference_guided" in tags
+    assert "goal:architecture" in tags
+
+    architecture_planning = [
+        entry.name
+        for entry in get_recommended_prompt_entries(
+            surface_profile="llm-guided",
+            phase="planning",
+            goal=goal,
         )
     ]
 

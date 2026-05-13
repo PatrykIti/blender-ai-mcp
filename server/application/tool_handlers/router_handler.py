@@ -69,6 +69,8 @@ class RouterToolHandler(IRouterTool):
     _REFERENCE_GUIDED_HINT_PATTERNS: tuple[re.Pattern[str], ...] = (
         re.compile(r"\breference images?\b", re.IGNORECASE),
         re.compile(r"\breference image\b", re.IGNORECASE),
+        re.compile(r"\bphoto references?\b", re.IGNORECASE),
+        re.compile(r"\breference photos?\b", re.IGNORECASE),
         re.compile(r"\bfront and side reference\b", re.IGNORECASE),
         re.compile(r"\bfront and side reference images\b", re.IGNORECASE),
         re.compile(r"\bfront/side reference\b", re.IGNORECASE),
@@ -77,7 +79,7 @@ class RouterToolHandler(IRouterTool):
             r"\b("
             r"floor plan|site plan|architectural plan|building plan|plan reference|plans? reference|"
             r"from (?:a |the )?plans?|using (?:a |the )?plans?|"
-            r"elevations?|sections?|facade reference|front reference|side reference"
+            r"elevations?|sections?|facade reference|front reference|side reference|references?"
             r")\b",
             re.IGNORECASE,
         ),

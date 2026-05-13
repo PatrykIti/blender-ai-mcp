@@ -198,6 +198,9 @@ ARCHITECTURE_BUILD_SUPPORTING_TOOLS: tuple[str, ...] = (
 )
 
 GUIDED_REFINEMENT_STEP_DIRECT_TOOLS: tuple[str, ...] = (
+    "reference_images",
+    "reference_compare_stage_checkpoint",
+    "reference_iterate_stage_checkpoint",
     "mesh_select",
     "mesh_select_targeted",
     "mesh_extrude_region",
@@ -387,6 +390,11 @@ _ARCHITECTURE_GOAL_HINTS: tuple[str, ...] = (
 )
 _ARCHITECTURE_REFERENCE_HINTS: tuple[str, ...] = (
     "reference",
+    "references",
+    "photo reference",
+    "photo references",
+    "reference photo",
+    "reference photos",
     "floor plan",
     "site plan",
     "architectural plan",
@@ -881,7 +889,14 @@ def visible_tools_for_gate_plan(gate_plan: dict[str, Any] | None) -> set[str]:
         recommended_tools = {str(name) for name in blocker.get("recommended_bounded_tools") or [] if str(name).strip()}
         if gate_type == "required_part" and str(blocker.get("target_kind") or "") == "reference_part":
             recommended_tools.discard("guided_register_part")
-        visible_tools.update(recommended_tools)
+        profile_recovery_waits_on_seam = has_unresolved_seam_or_support and gate_type in {
+            "shape_profile",
+            "proportion_ratio",
+            "refinement_stage",
+            "opening_or_cut",
+        }
+        if not profile_recovery_waits_on_seam:
+            visible_tools.update(recommended_tools)
         if gate_type == "attachment_seam":
             visible_tools.update(GUIDED_ATTACHMENT_GATE_TOOLS)
         elif gate_type == "support_contact":

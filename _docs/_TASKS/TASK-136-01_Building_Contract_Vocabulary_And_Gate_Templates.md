@@ -4,7 +4,7 @@
 **Priority:** 🔴 High
 **Parent:** [TASK-136](./TASK-136_Reference_Guided_Architecture_And_Building_Reconstruction.md)
 **Objective:** Extend the shipped generic building gate/reference substrate with architecture-specific target classes, vocabulary, stage vocabulary, and gate templates for shell, openings, supports, roof form, and facade rhythm on top of the existing `TASK-157` substrate.
-**Repository Touchpoints:** `server/adapters/mcp/contracts/quality_gates.py`, `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/contracts/scene.py`, `server/adapters/mcp/guided_naming_policy.py`, `server/adapters/mcp/transforms/quality_gate_verifier.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `server/adapters/mcp/areas/reference_checkpoint_compare.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/areas/reference_images_runtime.py`, `server/adapters/mcp/areas/reference_silhouette.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/reference_truth.py`, `server/adapters/mcp/session_capabilities_bootstrap.py`, `server/adapters/mcp/session_capabilities_state.py`, `server/adapters/mcp/session_capabilities_runtime_glue.py`, `server/application/services/spatial_graph.py`, `server/adapters/mcp/areas/scene_spatial_graph.py`, `_docs/_PROMPTS/README.md`, likely new `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`, `tests/unit/adapters/mcp/test_quality_gate_contracts.py`, `tests/unit/adapters/mcp/test_quality_gate_intake.py`, `tests/unit/adapters/mcp/test_quality_gate_verifier.py`, `tests/unit/adapters/mcp/test_guided_naming_policy.py`, `tests/unit/adapters/mcp/test_reference_compare_packets.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`, `tests/e2e/vision/test_reference_stage_truth_handoff.py`, `tests/e2e/vision/test_reference_stage_silhouette_contract.py`, `tests/e2e/vision/test_reference_stage_multi_reference_scaling.py`, `tests/unit/tools/scene/test_scene_contracts.py`, `tests/unit/tools/scene/test_spatial_graph_service.py`
+**Repository Touchpoints:** `server/adapters/mcp/contracts/quality_gates.py`, `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/contracts/scene.py`, `server/adapters/mcp/guided_naming_policy.py`, `server/adapters/mcp/transforms/quality_gate_verifier.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `server/adapters/mcp/areas/reference_checkpoint_compare.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/areas/reference_images_runtime.py`, `server/adapters/mcp/areas/reference_silhouette.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/reference_truth.py`, `server/adapters/mcp/session_capabilities_bootstrap.py`, `server/adapters/mcp/session_capabilities_state.py`, `server/adapters/mcp/session_capabilities_runtime_glue.py`, `server/application/services/spatial_graph.py`, `server/adapters/mcp/areas/scene_spatial_graph.py`, `_docs/_PROMPTS/README.md`, `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`, `tests/unit/adapters/mcp/test_quality_gate_contracts.py`, `tests/unit/adapters/mcp/test_quality_gate_intake.py`, `tests/unit/adapters/mcp/test_quality_gate_verifier.py`, `tests/unit/adapters/mcp/test_guided_naming_policy.py`, `tests/unit/adapters/mcp/test_reference_compare_packets.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`, `tests/e2e/vision/test_reference_stage_truth_handoff.py`, `tests/e2e/vision/test_reference_stage_silhouette_contract.py`, `tests/e2e/vision/test_reference_stage_multi_reference_scaling.py`, `tests/unit/tools/scene/test_scene_contracts.py`, `tests/unit/tools/scene/test_spatial_graph_service.py`
 **Acceptance Criteria:**
 - building-oriented goal or RU intake can normalize shell/opening/roof/support/facade-rhythm expectations onto the existing generic gate vocabulary without inventing an architecture-only gate system
 - the architecture templates explicitly reuse current gate types such as `required_part`, `attachment_seam`, `support_contact`, `opening_or_cut`, `shape_profile`, and `refinement_stage` where they already match the shipped verifier substrate
@@ -115,16 +115,16 @@ in `guided_naming_policy.py`, and relation/truth helpers in
 ## Docs To Update
 
 - `_docs/_PROMPTS/README.md`
-- likely new `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`
+- `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/_TESTS/README.md`
 - `_docs/_CHANGELOG/README.md`
 
 ## Changelog Impact
 
-- Add a `_docs/_CHANGELOG/*` entry when the first architecture contract slice
-  ships.
-- Update `_docs/_CHANGELOG/README.md` when that historical entry is added.
+- Historical closeout entry
+  `_docs/_CHANGELOG/348-2026-05-12-task-136-architecture-guided-reconstruction.md`
+  was added and indexed.
 
 ## Validation Commands
 

@@ -5,7 +5,7 @@
 **Parent:** [TASK-136](./TASK-136_Reference_Guided_Architecture_And_Building_Reconstruction.md)
 **Depends On:** [TASK-136-01](./TASK-136-01_Building_Contract_Vocabulary_And_Gate_Templates.md), [TASK-136-02](./TASK-136-02_Guided_Building_Handoff_Search_And_Bounded_Surface.md)
 **Objective:** Lock the architecture follow-on slice by extending the existing building owner lanes with architecture-specific regression, Blender-backed proof, and docs that describe the shipped bounded building path accurately.
-**Repository Touchpoints:** `server/adapters/mcp/contracts/scene.py`, `server/adapters/mcp/contracts/router.py`, `server/adapters/mcp/guided_naming_policy.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `server/adapters/mcp/areas/reference_checkpoint_compare.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/areas/reference_images_runtime.py`, `server/adapters/mcp/areas/reference_silhouette.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/reference_truth.py`, `server/adapters/mcp/areas/router.py`, `server/application/tool_handlers/router_handler.py`, `server/router/application/workflows/custom/simple_house.yaml`, `server/adapters/mcp/session_capabilities_bootstrap.py`, `server/adapters/mcp/session_capabilities_state.py`, `server/adapters/mcp/session_capabilities_runtime_glue.py`, `tests/unit/adapters/mcp/test_quality_gate_contracts.py`, `tests/unit/adapters/mcp/test_quality_gate_intake.py`, `tests/unit/adapters/mcp/test_quality_gate_verifier.py`, `tests/unit/adapters/mcp/test_guided_mode.py`, `tests/unit/adapters/mcp/test_guided_naming_policy.py`, `tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py`, `tests/unit/adapters/mcp/test_visibility_policy.py`, `tests/unit/adapters/mcp/test_search_surface.py`, `tests/unit/adapters/mcp/test_reference_compare_packets.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`, `tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py`, `tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py`, `tests/unit/router/application/test_router_contracts.py`, `tests/unit/adapters/mcp/test_router_elicitation.py`, `tests/unit/adapters/mcp/test_scene_guided_scope_requirements.py`, `tests/unit/tools/scene/test_scene_contracts.py`, `tests/unit/tools/scene/test_spatial_graph_service.py`, `tests/e2e/router/test_guided_manual_handoff.py`, `tests/e2e/router/test_guided_direct_calls_do_not_trigger_workflows.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/integration/test_guided_search_first_call_tool_boundary.py`, `tests/e2e/integration/test_guided_streamable_spatial_support.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`, `tests/e2e/vision/test_reference_stage_truth_handoff.py`, `tests/e2e/vision/test_reference_stage_silhouette_contract.py`, `tests/e2e/vision/test_reference_stage_multi_reference_scaling.py`, `tests/e2e/vision/test_goal_derived_gate_building_completion.py`, `tests/e2e/vision/test_goal_derived_gate_support_symmetry_surfaces.py`, likely new `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`, `README.md`, `_docs/_PROMPTS/README.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_ROUTER/README.md`, `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md`, `_docs/_VISION/README.md`, `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md`, `_docs/AVAILABLE_TOOLS_SUMMARY.md`, `_docs/_TESTS/README.md`, `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/`
+**Repository Touchpoints:** `server/adapters/mcp/contracts/scene.py`, `server/adapters/mcp/contracts/router.py`, `server/adapters/mcp/guided_naming_policy.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `server/adapters/mcp/areas/reference_checkpoint_compare.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/areas/reference_images_runtime.py`, `server/adapters/mcp/areas/reference_silhouette.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/reference_truth.py`, `server/adapters/mcp/areas/router.py`, `server/application/tool_handlers/router_handler.py`, `server/router/application/workflows/custom/simple_house.yaml`, `server/adapters/mcp/session_capabilities_bootstrap.py`, `server/adapters/mcp/session_capabilities_state.py`, `server/adapters/mcp/session_capabilities_runtime_glue.py`, `tests/unit/adapters/mcp/test_quality_gate_contracts.py`, `tests/unit/adapters/mcp/test_quality_gate_intake.py`, `tests/unit/adapters/mcp/test_quality_gate_verifier.py`, `tests/unit/adapters/mcp/test_guided_mode.py`, `tests/unit/adapters/mcp/test_guided_naming_policy.py`, `tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py`, `tests/unit/adapters/mcp/test_visibility_policy.py`, `tests/unit/adapters/mcp/test_search_surface.py`, `tests/unit/adapters/mcp/test_reference_compare_packets.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`, `tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py`, `tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py`, `tests/unit/router/application/test_router_contracts.py`, `tests/unit/adapters/mcp/test_router_elicitation.py`, `tests/unit/adapters/mcp/test_scene_guided_scope_requirements.py`, `tests/unit/tools/scene/test_scene_contracts.py`, `tests/unit/tools/scene/test_spatial_graph_service.py`, `tests/e2e/router/test_guided_manual_handoff.py`, `tests/e2e/router/test_guided_direct_calls_do_not_trigger_workflows.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/integration/test_guided_search_first_call_tool_boundary.py`, `tests/e2e/integration/test_guided_streamable_spatial_support.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`, `tests/e2e/vision/test_reference_stage_truth_handoff.py`, `tests/e2e/vision/test_reference_stage_silhouette_contract.py`, `tests/e2e/vision/test_reference_stage_multi_reference_scaling.py`, `tests/e2e/vision/test_goal_derived_gate_building_completion.py`, `tests/e2e/vision/test_goal_derived_gate_support_symmetry_surfaces.py`, `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`, `README.md`, `_docs/_PROMPTS/README.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_ROUTER/README.md`, `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md`, `_docs/_VISION/README.md`, `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md`, `_docs/AVAILABLE_TOOLS_SUMMARY.md`, `_docs/_TESTS/README.md`, `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/`
 **Acceptance Criteria:**
 - architecture-specific building blockers survive the current checkpoint, gate, and transport envelopes with typed ids, status reasons, and recommended bounded follow-up tools
 - architecture-specific plan/elevation/facade packet evidence survives the
@@ -107,7 +107,7 @@ update_docs_and_board_after_runtime_proof()
 
 - `README.md`
 - `_docs/_PROMPTS/README.md`
-- likely new `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`
+- `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/_ROUTER/README.md`
 - `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md`
@@ -120,9 +120,11 @@ update_docs_and_board_after_runtime_proof()
 
 ## Changelog Impact
 
-- Add a `_docs/_CHANGELOG/*` entry when the first architecture regression pack
-  and docs closeout ship.
-- Update `_docs/_CHANGELOG/README.md` when that historical entry is added.
+- Historical closeout entry
+  `_docs/_CHANGELOG/348-2026-05-12-task-136-architecture-guided-reconstruction.md`
+  was added and indexed.
+- Root `CHANGELOG.md` was not updated because the work did not change
+  semantic-release output.
 
 ## Validation Commands
 
@@ -148,6 +150,9 @@ update_docs_and_board_after_runtime_proof()
   - `poetry run pytest ./tests/unit` (`3382 passed`)
   - `poetry run python scripts/run_e2e_tests.py` (`476 passed, 3 skipped`; log:
     `tests/e2e/e2e_test_PASSED_20260513_011104.log`)
+  - `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure`
+    (`passed`)
+  - `git diff --check` (`passed`)
 - no direct open child remains under the closed parent; broader future
   architecture generators or module-array macros should be tracked as explicit
   follow-on tasks if/when they become active

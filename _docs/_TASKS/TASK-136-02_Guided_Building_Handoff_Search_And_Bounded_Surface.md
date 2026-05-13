@@ -149,7 +149,7 @@ helper names.
 ## Docs To Update
 
 - `_docs/_PROMPTS/README.md`
-- likely new `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`
+- `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/_ROUTER/README.md`
 - `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md`
@@ -158,9 +158,9 @@ helper names.
 
 ## Changelog Impact
 
-- Add a `_docs/_CHANGELOG/*` entry when the first architecture guided-surface
-  slice ships.
-- Update `_docs/_CHANGELOG/README.md` when that historical entry is added.
+- Historical closeout entry
+  `_docs/_CHANGELOG/348-2026-05-12-task-136-architecture-guided-reconstruction.md`
+  was added and indexed.
 
 ## Validation Commands
 

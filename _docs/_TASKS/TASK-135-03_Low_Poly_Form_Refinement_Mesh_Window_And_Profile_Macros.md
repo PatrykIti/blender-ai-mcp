@@ -259,6 +259,8 @@ if current_step == "refine_low_poly_forms":
 - All implementation and closeout leaves under `TASK-135-03` are now resolved:
   - `TASK-135-03-01` ✅ Done
   - `TASK-135-03-02` ✅ Done
+  - `TASK-135-03-02-01` ✅ Done
+  - `TASK-135-03-02-02` ✅ Done
   - `TASK-135-03-02-03` ⏭️ Superseded
   - `TASK-135-03-03` ✅ Done
 

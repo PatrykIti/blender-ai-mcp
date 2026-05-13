@@ -1802,3 +1802,91 @@ def test_route_tool_call_marks_guided_spatial_state_stale_after_successful_mesh_
     assert state.guided_flow_state["spatial_state_version"] == 1
     assert state.guided_flow_state["spatial_state_stale"] is True
     assert state.guided_flow_state["spatial_refresh_required"] is True
+
+
+@pytest.mark.parametrize(
+    ("tool_name", "params", "result_text"),
+    [
+        (
+            "modeling_convert_to_mesh",
+            {"name": "Squirrel_Tail"},
+            "Object 'Squirrel_Tail' converted to mesh (or was already mesh). Status: converted",
+        ),
+        (
+            "modeling_set_origin",
+            {"name": "Squirrel_Tail", "type": "ORIGIN_GEOMETRY"},
+            "Origin for object 'Squirrel_Tail' set to type 'ORIGIN_GEOMETRY' (Status: success)",
+        ),
+    ],
+)
+def test_route_tool_call_marks_guided_spatial_state_stale_after_modeling_refinement_success(
+    monkeypatch,
+    tool_name,
+    params,
+    result_text,
+):
+    """Refinement modeling operations should re-arm spatial inspection after successful mutation."""
+
+    from fastmcp.server.context import _current_context
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            surface_profile="llm-guided",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "refine_low_poly_forms",
+                "completed_steps": [
+                    "understand_goal",
+                    "establish_spatial_context",
+                    "create_primary_masses",
+                    "place_secondary_parts",
+                ],
+                "active_target_scope": {
+                    "scope_kind": "object_set",
+                    "primary_target": "Squirrel_Body",
+                    "object_names": ["Squirrel_Body", "Squirrel_Head", "Squirrel_Tail"],
+                    "object_count": 3,
+                },
+                "spatial_scope_fingerprint": "scope_1",
+                "spatial_state_version": 0,
+                "last_spatial_check_version": 0,
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["refine_low_poly_forms"],
+                "blocked_families": [],
+                "allowed_families": ["secondary_parts", "attachment_alignment", "reference_context"],
+                "allowed_roles": ["tail_mass", "snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass", "tail_mass"],
+                "missing_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    token = _current_context.set(ctx)
+    try:
+        result = route_tool_call(
+            tool_name=tool_name,
+            params=params,
+            direct_executor=lambda: result_text,
+        )
+    finally:
+        _current_context.reset(token)
+
+    state = get_session_capability_state(ctx)
+
+    assert result == result_text
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["spatial_state_version"] == 1
+    assert state.guided_flow_state["spatial_state_stale"] is True
+    assert state.guided_flow_state["spatial_refresh_required"] is True

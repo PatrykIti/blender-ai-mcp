@@ -48,26 +48,27 @@ generic `building` overlay:
 - dimension checks and grouped scene inspection
 - low-level modeling and mesh editing
 
-That shipped substrate is useful, but it does not yet add up to a
-reconstruction-grade product path for architecture-specific reference work.
+At the time this task was opened, that shipped substrate was useful, but it did
+not yet add up to a reconstruction-grade product path for
+architecture-specific reference work.
 
 The missing business capability is not "can Blender do hard-surface work?" but
 "can the guided MCP product help the model rebuild buildings and architectural
 modules from references without rediscovering the whole strategy each time?"
 
-Current limitations are:
+At planning time, the limitations were:
 
 - no dedicated architecture prompt asset or architecture-specific prompt
   recommendation path on `llm-guided`
 - no explicit product contract for architectural reconstruction fidelity
-- the current building guided flow is still coarse relative to the intended
-  architecture sequence, because it stops at generic building masses and
+- the building guided flow was still coarse relative to the intended
+  architecture sequence, because it stopped at generic building masses and
   secondary parts instead of explicitly modeling shell/opening/roof/support
   phases
-- relation semantics, facade rhythm, and opening-grid expectations are still
+- relation semantics, facade rhythm, and opening-grid expectations were still
   too generic for reconstruction from plans/elevations
-- the owner-lane docs and regression plan do not yet point cleanly at the
-  current building runtime seams that already ship
+- the owner-lane docs and regression plan did not yet point cleanly at the
+  current building runtime seams that already shipped
 
 ## Current Runtime Baseline
 
@@ -146,56 +147,44 @@ Today the product can support:
 - manual low-poly architecture tasks when the operator already knows the tool
   path
 
-That is still below the desired outcome for architecture reconstruction from
-references. What is missing is a domain contract that understands buildings as
-structured systems:
+Before this umbrella, that was below the desired outcome for architecture
+reconstruction from references. The missing domain contract needed to understand
+buildings as structured systems:
 
 - footprint and vertical massing
 - repeated bays/modules
 - walls, openings, supports, and roof form
 - dimensional rhythm and alignment
 
-## Current Drift To Resolve
+## Closed Drift
 
-The follow-on gap to close is:
+This umbrella closed the following follow-on gaps:
 
-- the public guided story still treats architecture as a first-pass building
-  overlay instead of an explicit reconstruction-grade domain
-- the repo still lacks a dedicated architecture prompt asset and
+- the public guided story now treats architecture as an explicit bounded
+  reconstruction domain instead of only a first-pass building overlay
+- the repo now has a dedicated architecture prompt asset plus
   recommendation/handoff wording for plans, elevations, sections, and facade
   rhythm
-- current vision/reference handling still needs architecture-specific
-  interpretation for plan/elevation/section reasoning, opening grids, and roof
-  profiles on top of the closed RU substrate
-- the current building flow/control plane is too coarse for the intended
-  shell/openings/roof/support sequencing, so this umbrella must extend the
-  existing guided-step model instead of pretending it does not exist
-- the loop output does not yet express enough building-specific failures such
-  as:
-  - missing or duplicated openings
-  - wrong bay spacing
-  - floor-height drift
-  - roof pitch or roofline mismatch
-  - support misplacement
-- the guided/reference loop does not yet encode relation semantics for common
-  architectural attachments and interfaces, such as:
-  - opening cut into wall shell
-  - roof seated on wall mass
-  - beam supported by posts/columns
-  - stair/arch element meeting its support
-- the current corrective path does not yet clearly distinguish:
-  - intentional boolean penetration / cutout
-  - expected seated/support contact
-  - acceptable modular interface contact
-  - bad overlap or floating separation that really needs cleanup
-- `llm-guided` does not yet have a dedicated architecture-specific prompt
-  asset, recommendation path, handoff wording, and search-bias behavior
-- there is no explicit tool-surface roadmap for reconstruction-heavy
-  architecture tasks such as opening grids, repeated supports, roof generators,
-  facade rhythm, and modular structural rebuilds
-- the current task docs and proof lanes do not yet cleanly map to the shipped
-  owner seams that now own building guided flow, session control, reference
-  checkpoint shaping, and architecture-adjacent regression
+- vision/reference handling can express architecture-specific interpretation for
+  plan/elevation/section reasoning, opening grids, roof profiles, and packet
+  labels on top of the closed RU and packet substrates
+- the building flow/control plane now requires `wall_shell` before secondary
+  opening/support/roof work on the existing guided-step model
+- loop output can express building-specific failures such as missing or
+  duplicated openings, bay spacing drift, roof/wall seam failure, facade rhythm
+  mismatch, and support-contact gaps
+- guided/reference relation semantics now cover common architectural
+  attachments and interfaces such as opening/wall, roof/wall, and
+  support/contact relations
+- the corrective path now distinguishes intentional boolean/cutout behavior,
+  expected seated/support contact, acceptable modular interface contact, and bad
+  overlap or floating separation
+- `llm-guided` now has a dedicated architecture-specific prompt asset,
+  recommendation path, handoff wording, and search-bias behavior
+- the tool-surface roadmap remains explicit for future architecture generators
+  while this closure keeps the shipped path on bounded existing tools
+- the task docs and proof lanes now map to the shipped owner seams for building
+  guided flow, session control, reference checkpoint shaping, and regression
 
 ## Business Outcome
 
@@ -366,7 +355,7 @@ This umbrella does **not** cover:
 - `server/adapters/mcp/prompts/rendering.py`
 - `server/adapters/mcp/platform/capability_manifest.py`
 - `server/adapters/mcp/platform/public_contracts.py`
-- likely new `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`
+- `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`
 - `_docs/_PROMPTS/README.md`
 - `server/adapters/mcp/guided_mode.py`
 - `server/adapters/mcp/guided_naming_policy.py`
@@ -439,16 +428,16 @@ This umbrella does **not** cover:
 | `server/adapters/mcp/vision/` and `server/adapters/mcp/areas/reference_understanding.py` | Advisory support evidence | Consume the closed `TASK-163` RU/session seams for architecture hints without changing verifier authority |
 | `server/application/services/spatial_graph.py`, `server/adapters/mcp/areas/scene_spatial_graph.py`, and `server/adapters/mcp/areas/reference_truth.py` | Relation semantics | Model wall/opening, roof/wall, beam/support, and facade rhythm interfaces in a way the verifier and staged truth surface can consume; either update both spatial graph and staged truth heuristics together or first centralize duplicated relation vocabulary before adding new semantics |
 | `server/adapters/mcp/guided_naming_policy.py` | Guided naming and role vocabulary | Keep shell/opening/support/roof role names, suggested object names, and role-sensitive naming warnings aligned with any expanded building vocabulary |
-| `server/adapters/mcp/prompts/prompt_catalog.py`, `provider.py`, `rendering.py`, `_docs/_PROMPTS/README.md`, and a future architecture prompt asset | Prompt assets | Expose and teach an architecture-oriented guided story on the current MCP prompt surface, then keep prompt inventory docs aligned; treat `DEMO_TASK_LOW_POLY_MEDIEVAL_WELL.md` only as an optional adjacent bounded-example reference if wording or sequencing is intentionally reused |
+| `server/adapters/mcp/prompts/prompt_catalog.py`, `provider.py`, `rendering.py`, `_docs/_PROMPTS/README.md`, and `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md` | Prompt assets | Expose and teach an architecture-oriented guided story on the current MCP prompt surface, then keep prompt inventory docs aligned; treat `DEMO_TASK_LOW_POLY_MEDIEVAL_WELL.md` only as an optional adjacent bounded-example reference if wording or sequencing is intentionally reused |
 | `tests/unit/adapters/mcp/`, `tests/unit/router/application/`, `tests/unit/tools/scene/`, `tests/e2e/router/`, `tests/e2e/integration/`, and `tests/e2e/vision/` | Proof lanes | Prove architecture-domain state, prompt/handoff/search behavior, truth/transport shaping, and Blender-backed reconstruction behavior on the current owner seams instead of re-planning already-shipped building lanes |
 
 ## Execution Structure
 
 | Order | Subtask | Purpose |
 |------|---------|---------|
-| 1 | [TASK-136-01](./TASK-136-01_Building_Contract_Vocabulary_And_Gate_Templates.md) | Define the first architecture target class, vocabulary, gate templates, and staged shell/opening/roof contract |
-| 2 | [TASK-136-02](./TASK-136-02_Guided_Building_Handoff_Search_And_Bounded_Surface.md) | Shape the guided building handoff, search, visibility, and bounded tool surface on current seams |
-| 3 | [TASK-136-03](./TASK-136-03_Architecture_Regression_Docs_And_Closeout.md) | Lock the new architecture path with owner-lane regression, docs, and board/changelog closeout |
+| 1 | [TASK-136-01](./TASK-136-01_Building_Contract_Vocabulary_And_Gate_Templates.md) | ✅ Closed: building templates, role vocabulary, staged relation truth, and architecture packet labels shipped on the existing gate/truth seams |
+| 2 | [TASK-136-02](./TASK-136-02_Guided_Building_Handoff_Search_And_Bounded_Surface.md) | ✅ Closed: `reference_guided_architecture_build` now owns prompt, handoff, search, visibility, and bounded tool-surface shaping for plan/elevation/facade goals |
+| 3 | [TASK-136-03](./TASK-136-03_Architecture_Regression_Docs_And_Closeout.md) | ✅ Closed: owner-lane regression, docs, board, changelog, and final validation evidence are recorded |
 
 ## Test Matrix
 
@@ -479,7 +468,7 @@ This umbrella does **not** cover:
 - `_docs/_PROMPTS/README.md`
 - optional adjacent example if wording/sequencing is intentionally reused:
   `_docs/_PROMPTS/DEMO_TASK_LOW_POLY_MEDIEVAL_WELL.md`
-- likely new `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`
+- `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`
 - `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md`
 - `_docs/_VISION/README.md`
 - `_docs/_MCP_SERVER/README.md`
@@ -521,9 +510,11 @@ transport/public-surface behavior:
 
 ## Changelog Impact
 
-- add a dedicated `_docs/_CHANGELOG/*` entry when the first meaningful
-  implementation slice under this umbrella ships
-- update `_docs/_CHANGELOG/README.md` whenever that historical entry is added
+- Historical closeout entry
+  `_docs/_CHANGELOG/348-2026-05-12-task-136-architecture-guided-reconstruction.md`
+  was added and indexed.
+- Root `CHANGELOG.md` was not updated because the work did not change
+  semantic-release output.
 
 ## Status / Board Update
 
@@ -531,4 +522,9 @@ transport/public-surface behavior:
 - closed `TASK-136-01`, `TASK-136-02`, and `TASK-136-03` together; no direct
   open child remains under this closed parent
 - added changelog entry `348-2026-05-12-task-136-architecture-guided-reconstruction.md`
-- validation evidence is recorded in the child closeout notes and changelog
+- validation evidence, including pre-commit, full unit, full E2E, and
+  diff-check follow-up, is recorded in the child closeout notes and changelog
+- 2026-05-13 post-closeout audit repairs are tracked in
+  `_docs/_CHANGELOG/349-2026-05-13-task-135-136-post-closeout-drift-repairs.md`.
+  They close photo-reference wording drift and prioritize `opening_wall`
+  staged truth for facade-opening gate evidence.

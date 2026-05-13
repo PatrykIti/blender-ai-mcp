@@ -139,6 +139,12 @@ def _result_represents_success(tool_name: str, result: Any) -> bool:
             except (SyntaxError, ValueError):
                 return False
             return isinstance(parsed, list) and all(isinstance(item, str) for item in parsed)
+        if tool_name == "modeling_convert_to_mesh":
+            lowered = text.lower()
+            return lowered.startswith("object '") and " converted to mesh " in lowered and "status:" in lowered
+        if tool_name == "modeling_set_origin":
+            lowered = text.lower()
+            return lowered.startswith("origin for object '") and " set to type " in lowered and "status:" in lowered
         mesh_success_prefixes = {
             "mesh_extrude_region": ("extruded region",),
             "mesh_loop_cut": ("subdivided selected geometry",),

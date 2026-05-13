@@ -344,6 +344,33 @@ class TestSetGoalUnified:
         assert "guided_reference_readiness" in result["message"]
         assert mock_router.get_pending_workflow() is None
 
+    @pytest.mark.parametrize(
+        "goal",
+        [
+            "rebuild a small building from photo references",
+            "rebuild a facade from a photo-reference",
+            "rebuild a facade from a reference-photo",
+        ],
+    )
+    def test_set_goal_treats_architecture_photo_references_as_guided_manual_build_no_match(
+        self,
+        handler,
+        mock_router,
+        goal,
+    ):
+        """Photo-reference architecture goals should enter the bounded architecture handoff."""
+
+        mock_router._pending_workflow = "simple_house_workflow"
+
+        result = handler.set_goal(goal)
+
+        assert result["status"] == "no_match"
+        assert result["continuation_mode"] == "guided_manual_build"
+        assert result["workflow"] is None
+        assert result["phase_hint"] == "build"
+        assert "reference-guided architecture reconstruction request" in result["message"]
+        assert mock_router.get_pending_workflow() is None
+
     def test_set_goal_does_not_treat_plan_verb_as_reference_guided_architecture(self, handler, mock_router):
         """Plain planning language should not trigger the reference architecture handoff."""
 
