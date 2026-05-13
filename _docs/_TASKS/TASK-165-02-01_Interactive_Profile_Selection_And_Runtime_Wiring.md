@@ -5,7 +5,7 @@
 **Parent:** [TASK-165-02](./TASK-165-02_Interactive_Run_MCP_Server_Wizard_And_Script_Modularization.md)
 **Related:** [TASK-167](./TASK-167_Cross_Module_Debug_Profile_Registry_And_Runtime_Logging.md)
 **Objective:** Implement the interactive prompts that decide which runtime/profile paths the current launcher should wire together, starting from the shipped `run_mcp_server.py` seam and its current Docker-guided OpenRouter plus optional classifier-sidecar path.
-**Repository Touchpoints:** `scripts/run_mcp_server.sh`, `scripts/run_mcp_server.py`, `scripts/RUN_MCP_SERVER.md`, script helper modules under `scripts/`, `tests/unit/scripts/test_script_tooling.py`
+**Repository Touchpoints:** `scripts/run_mcp_server.sh`, `scripts/run_mcp_server.py`, `scripts/run_streamable_openrouter.sh`, `scripts/RUN_MCP_SERVER.md`, script helper modules under `scripts/`, `tests/unit/scripts/test_script_tooling.py`
 **Acceptance Criteria:** the launcher can guide the operator through the current supported macOS-first runtime path, derive a concrete final launch plan from the real `run_mcp_server.py` owner seam, and remain extensible for adjacent selector/runtime follow-ons without inventing a parallel prompt/plan surface.
 
 ## Implementation Notes
@@ -33,7 +33,8 @@
 
 ## Docs To Update
 
-- `scripts/` local operator docs
+- `scripts/RUN_MCP_SERVER.md`
+- `scripts/_RUN_DOCKER_MCP.md`
 
 ## Changelog Impact
 

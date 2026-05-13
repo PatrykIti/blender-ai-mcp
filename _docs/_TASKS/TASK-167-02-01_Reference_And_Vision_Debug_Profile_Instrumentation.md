@@ -105,6 +105,10 @@ if debug_scope_enabled("vision"):
 - final E2E/runtime proof for this leaf should be exercised through the
   repo-supported runner and the relevant updated integration coverage:
   - `poetry run python scripts/run_e2e_tests.py`
+- if this leaf lands independently instead of only through family closeout,
+  also run:
+  - `PYTHONPATH=. poetry run pytest ./tests/unit`
+  - `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure`
 
 ## Validation Category
 

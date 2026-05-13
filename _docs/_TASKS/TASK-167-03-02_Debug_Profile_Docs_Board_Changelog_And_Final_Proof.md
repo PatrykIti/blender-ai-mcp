@@ -4,7 +4,7 @@
 **Priority:** 🔴 High
 **Parent:** [TASK-167-03](./TASK-167-03_Docker_Launcher_Docs_Validation_And_Closeout_For_Debug_Profiles.md)
 **Objective:** Close the `TASK-167` family only after docs, board/changelog sync, and the final repo-standard proof bundle confirm that the shipped debug profiles are visible on the promised runtime surfaces.
-**Repository Touchpoints:** `README.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`, `scripts/_RUN_DOCKER_MCP.md`, `scripts/RUN_MCP_SERVER.md`, `_docs/_DEV/README.md`, `_docs/_ROUTER/README.md`, `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/README.md`, new `_docs/_CHANGELOG/*`
+**Repository Touchpoints:** `README.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`, `scripts/_RUN_DOCKER_MCP.md`, `scripts/RUN_MCP_SERVER.md`, `_docs/_DEV/README.md`, `_docs/_VISION/README.md`, `_docs/_ROUTER/README.md`, `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/README.md`, new `_docs/_CHANGELOG/*`
 **Acceptance Criteria:**
 - operator docs explain `all` vs targeted scopes and match the shipped selector vocabulary
 - board and changelog state are synchronized with the final implementation status
@@ -20,6 +20,7 @@
 | `scripts/_RUN_DOCKER_MCP.md` | launcher snippets/runbook | current Docker helper snippets | examples must match the shipped selector names and launcher contract |
 | `scripts/RUN_MCP_SERVER.md` | local launcher runbook | current interactive launcher docs | local launcher guidance must match the same shipped selector vocabulary |
 | `_docs/_DEV/README.md` | developer workflow docs | runtime/dev debugging guidance | future implementers need one canonical debug-profile explanation here |
+| `_docs/_VISION/README.md` | sidecar/operator guidance | current classifier-sidecar docs | sidecar/operator guidance must stay aligned with the shipped selector and launcher story |
 | `_docs/_ROUTER/README.md` | router behavior docs | current router-facing runtime docs | router-facing debug behavior must be documented where router runtime changes are explained |
 | `_docs/_TASKS/README.md` | board state | current promoted rows | board state must match the family closeout |
 | `_docs/_CHANGELOG/README.md` and new `_docs/_CHANGELOG/*` | historical tracking | new final family entry | runtime-contract work needs proper historical closeout |
@@ -58,6 +59,7 @@
 - `scripts/_RUN_DOCKER_MCP.md`
 - `scripts/RUN_MCP_SERVER.md`
 - `_docs/_DEV/README.md`
+- `_docs/_VISION/README.md`
 - `_docs/_ROUTER/README.md`
 - `_docs/_TASKS/README.md`
 - `_docs/_CHANGELOG/README.md`

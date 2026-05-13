@@ -65,6 +65,10 @@
 - `git diff --check`
 - `bash -n scripts/run_streamable_openrouter.sh scripts/run_mcp_server.sh`
 - `PYTHONPATH=. poetry run pytest tests/unit/scripts/test_script_tooling.py -q`
+- if this leaf lands independently instead of only through family closeout,
+  also run:
+  - `PYTHONPATH=. poetry run pytest ./tests/unit`
+  - `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure`
 
 ## Validation Category
 
