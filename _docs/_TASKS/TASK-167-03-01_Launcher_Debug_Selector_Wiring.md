@@ -26,7 +26,9 @@
   incompatible debug-launch path
 - if [TASK-165-02-01](./TASK-165-02-01_Interactive_Profile_Selection_And_Runtime_Wiring.md)
   is still open, patch that launcher/runtime prompt seam in sympathy rather
-  than creating a parallel launcher-specific path
+  than creating a parallel launcher-specific path; the implementing agent is
+  expected to advance the overlapping `TASK-165-02-01` launcher seam in the
+  same branch when needed instead of waiting for a separate family to land
 - keep the operator contract centered on the shared debug selector from
   `TASK-167-01`
 

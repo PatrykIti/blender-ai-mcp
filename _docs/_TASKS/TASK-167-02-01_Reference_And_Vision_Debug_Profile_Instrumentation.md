@@ -4,7 +4,7 @@
 **Priority:** 🔴 High
 **Parent:** [TASK-167-02](./TASK-167-02_Runtime_Instrumentation_And_Targeted_Log_Routing.md)
 **Objective:** Add bounded `reference` and `vision` debug instrumentation to the existing reference attach/RU/compare/iterate/optional-support seams so operators can attribute slow attach paths, blocked readiness, checkpoint compare/iterate timing, backend selection, and optional classifier/segmentation follow-ons directly from the Docker/server terminal.
-**Repository Touchpoints:** `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_images_runtime.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/vision/reference_support.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`
+**Repository Touchpoints:** `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_images_runtime.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `server/adapters/mcp/vision/reference_support.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_reference_compare_packets.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`
 **Acceptance Criteria:**
 - `debug=reference` emits attach/list/remove/clear lifecycle events, active vs pending reference counts, and RU refresh start/finish summaries without dumping raw image payloads
 - `debug=reference` also emits bounded compare/iterate start/finish summaries,
@@ -20,8 +20,10 @@
 | `server/adapters/mcp/areas/reference.py` | `reference_images(...)`, `reference_compare_stage_checkpoint(...)`, `reference_iterate_stage_checkpoint(...)` public facade | lines 1629-1656 and 1745-1780 | compare/iterate public seams stay here even though attach lifecycle moved into the runtime helper |
 | `server/adapters/mcp/areas/reference_images_runtime.py` | `handle_reference_images(...)`, `_attach_reference_image(...)`, `_remove_reference_image(...)`, `_clear_reference_images(...)` | lines 228-427 | active vs pending reference adoption and RU refresh triggering are owned here, not in the thin facade |
 | `server/adapters/mcp/areas/reference_understanding.py` | `refresh_reference_understanding_summary(...)` | lines 252-487 | RU backend invocation, cached-summary reuse, blocked/unavailable states, optional-support merge, and final persistence converge here |
+| `server/adapters/mcp/areas/reference_compare_packets.py` | packet planning/execution seam | current stage-compare packet engine | compare/iterate timing and packet diagnostics ultimately flow through this owner, not only the facade |
 | `server/adapters/mcp/vision/reference_support.py` | `_collect_classifier_support(...)`, `_collect_segmentation_support(...)`, `augment_reference_understanding_optional_support(...)` | lines 347-545 | optional support timing/unavailable behavior is owned here |
 | `tests/unit/adapters/mcp/test_reference_images.py` | reference/RU proof lane | current attach/RU suites around lines 2940-3005 and related refresh tests | unit proof for attach/RU instrumentation belongs here |
+| `tests/unit/adapters/mcp/test_reference_compare_packets.py` | packet-owner proof lane | current packet planning/execution tests | compare/iterate debug instrumentation should prove itself here too |
 | `tests/e2e/integration/test_guided_gate_state_transport.py` | transport/runtime proof lane | current attach/list/remove/clear transport path | transport-visible reference/RU logging must not contradict the shipped runtime flow |
 
 ## Implementation Notes
@@ -78,6 +80,7 @@ if debug_scope_enabled("vision"):
 - unit tests proving profile-gated emission on attach and RU refresh paths
 - unit tests proving optional classifier/segmentation unavailability is logged
   as bounded summary-only data
+- `tests/unit/adapters/mcp/test_reference_compare_packets.py`
 - `tests/e2e/integration/test_guided_gate_state_transport.py`
 
 ## Docs To Update
@@ -98,6 +101,7 @@ if debug_scope_enabled("vision"):
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_compare_packets.py -q`
 - final E2E/runtime proof for this leaf should be exercised through the
   repo-supported runner and the relevant updated integration coverage:
   - `poetry run python scripts/run_e2e_tests.py`
