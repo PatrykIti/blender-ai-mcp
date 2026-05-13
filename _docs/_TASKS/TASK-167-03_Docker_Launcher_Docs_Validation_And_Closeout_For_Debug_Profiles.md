@@ -4,7 +4,7 @@
 **Priority:** 🔴 High
 **Parent:** [TASK-167](./TASK-167_Cross_Module_Debug_Profile_Registry_And_Runtime_Logging.md)
 **Objective:** Own the launcher/docs/closeout branch for the debug-profile family and keep the implementation split into focused leaves rather than one oversized final-pass task.
-**Repository Touchpoints:** `scripts/run_streamable_openrouter.sh`, `scripts/run_mcp_server.py`, `scripts/run_mcp_server.sh`, `scripts/RUN_MCP_SERVER.md`, `scripts/run_reference_classifier_sidecar.sh`, `README.md`, `_docs/_MCP_SERVER/README.md`, `scripts/_RUN_DOCKER_MCP.md`, `_docs/_DEV/README.md`, `_docs/_VISION/README.md`, `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/`
+**Repository Touchpoints:** `scripts/run_streamable_openrouter.sh`, `scripts/run_mcp_server.py`, `scripts/run_mcp_server.sh`, `scripts/RUN_MCP_SERVER.md`, `scripts/run_reference_classifier_sidecar.sh`, `README.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`, `scripts/_RUN_DOCKER_MCP.md`, `_docs/_DEV/README.md`, `_docs/_VISION/README.md`, `_docs/_ROUTER/README.md`, `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/`
 **Acceptance Criteria:**
 - launcher/runtime wiring is isolated in its own implementation leaf
 - docs plus board/changelog/final proof are isolated in their own closeout leaf
@@ -42,8 +42,10 @@
 | `tests/unit/scripts/test_script_tooling.py` | launcher/script contract lane | existing script env tests | forwarding and help/usage examples should be proven here |
 | `README.md` | top-level operator entry docs | current Docker/OpenRouter instructions | the primary operator docs must show the selector clearly |
 | `_docs/_MCP_SERVER/README.md` | MCP server operator docs | current Streamable/Docker sections | the detailed operator/debug contract belongs here |
+| `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md` | copy-paste env examples | current client/operator config examples | shipped selector/env examples must stay aligned here too |
 | `scripts/_RUN_DOCKER_MCP.md` | launcher snippets/runbook | current Docker helper snippets | examples must stay aligned with the shipped env name and scope list |
 | `_docs/_DEV/README.md` | developer workflow docs | runtime/dev debugging guidance | future implementers need one canonical debug-profile explanation here |
+| `_docs/_ROUTER/README.md` | router behavior docs | current router-facing runtime docs | router-facing debug behavior must be documented where router runtime changes are explained |
 
 ## Pseudocode
 
@@ -80,10 +82,12 @@ export BLENDER_AI_DEBUG=tools
 
 - `README.md`
 - `_docs/_MCP_SERVER/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - `scripts/_RUN_DOCKER_MCP.md`
 - `scripts/RUN_MCP_SERVER.md`
 - `_docs/_DEV/README.md`
 - `_docs/_VISION/README.md`
+- `_docs/_ROUTER/README.md`
 - `_docs/_TASKS/README.md`
 
 ## Changelog Impact
