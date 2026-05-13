@@ -17,7 +17,7 @@
 |------|--------------------|---------------------|-----------------------|
 | `server/adapters/mcp/discovery/search_surface.py` | `BlenderDiscoverySearchTransform._make_call_tool()` | lines 329-430 | call-tool proxy behavior and current log markers already live here |
 | `server/adapters/mcp/visibility_runtime.py` | `run_visibility_transaction(...)`, `audit_list_tools_snapshot(...)` | lines 137-229 | visibility txn/audit summaries are already owned here |
-| `server/adapters/mcp/guided_contract.py` | guided argument canonicalization helpers | current compatibility shim owners | tool-profile diagnostics need to classify compatibility normalization against the real canonicalization owner |
+| `server/adapters/mcp/guided_contract.py` | `canonicalize_guided_tool_arguments(...)` and tool-specific compatibility shims | lines around the public dispatcher and per-tool canonicalizers | tool-profile diagnostics need to classify compatibility normalization against the real canonicalization owner |
 | `tests/unit/adapters/mcp/test_search_surface.py` | proxy proof lane | current proxy log assertion around line 1153 and hidden-tool recovery around lines 1903-2032 | unit proof for proxy/visibility debug belongs here |
 | `tests/unit/adapters/mcp/test_visibility_runtime.py` | visibility owner lane | current transaction/audit tests | direct visibility-profile proof belongs here too |
 | `tests/e2e/integration/test_guided_streamable_spatial_support.py` | Streamable guided proof lane | current hidden-tool / refresh-barrier transport surface | integration proof for visibility churn and hidden-tool diagnosis lives here |

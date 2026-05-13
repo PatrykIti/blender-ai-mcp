@@ -4,7 +4,7 @@
 **Priority:** 🔴 High
 **Parent:** [TASK-167-02](./TASK-167-02_Runtime_Instrumentation_And_Targeted_Log_Routing.md)
 **Objective:** Add bounded `transport` debug instrumentation to the repo-owned `stdio` and Streamable HTTP bootstrap/session seams so operators can trace server startup, transport selection, session creation/reconnect behavior, and transport-mode mismatch issues from the normal Docker/server terminal.
-**Repository Touchpoints:** `server/adapters/mcp/server.py`, `server/adapters/mcp/context_utils.py`, `server/adapters/mcp/areas/router.py`, `server/adapters/mcp/areas/reference.py`, `tests/unit/adapters/mcp/test_server_transport_mode.py`, `tests/e2e/integration/test_mcp_transport_modes.py`
+**Repository Touchpoints:** `server/adapters/mcp/server.py`, `server/adapters/mcp/context_utils.py`, `server/adapters/mcp/areas/router.py`, `server/adapters/mcp/areas/reference.py`, `tests/unit/adapters/mcp/test_server_transport_mode.py`, `tests/unit/adapters/mcp/test_router_elicitation.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/e2e/integration/test_mcp_transport_modes.py`
 **Acceptance Criteria:**
 - `debug=transport` emits bounded transport bootstrap summaries for `stdio` and Streamable HTTP from the repo-owned MCP server entrypoint
 - `debug=transport` emits bounded session/reconnect diagnostics that help explain transport churn without dumping unrelated runtime state
@@ -17,8 +17,11 @@
 |------|--------------------|---------------------|-----------------------|
 | `server/adapters/mcp/server.py` | `run(...)` | lines 34-75 | transport selection, startup logging, and reconnect-related top-level diagnostics are owned here |
 | `server/adapters/mcp/context_utils.py` | `ctx_session_id(...)`, `ctx_transport_type(...)` | current response identity helpers | live session/transport identity also flows through these response-side helpers |
-| `server/adapters/mcp/areas/router.py`, `server/adapters/mcp/areas/reference.py` | transport/session response surfaces | current session/transport response seams | transport diagnostics are also visible through current response builders here |
+| `server/adapters/mcp/areas/router.py` | `router_set_goal(...)`, `router_get_status(...)` response identity fields | lines 576-577 and current response assembly seams | transport/session diagnostics are also visible through current router response builders here |
+| `server/adapters/mcp/areas/reference.py` | `reference_compare_stage_checkpoint(...)`, `reference_iterate_stage_checkpoint(...)` response identity fields | lines 1114-1115, 1745, and 1780 | transport/session diagnostics are also visible through current reference response builders here |
 | `tests/unit/adapters/mcp/test_server_transport_mode.py` | transport bootstrap proof lane | lines 19-75 | direct unit lane for transport bootstrap ownership |
+| `tests/unit/adapters/mcp/test_router_elicitation.py` | router transport-adjacent response lane | current router response tests | direct router response proof belongs here too |
+| `tests/unit/adapters/mcp/test_reference_images.py` | reference transport-adjacent response lane | current reference response tests | direct reference response proof belongs here too |
 | `tests/e2e/integration/test_mcp_transport_modes.py` | transport runtime proof lane | lines 24-180 | direct runtime lane for `stdio` / Streamable session behavior |
 
 ## Implementation Notes

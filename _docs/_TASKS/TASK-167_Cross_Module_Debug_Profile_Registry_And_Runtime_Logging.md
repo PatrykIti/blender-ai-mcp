@@ -238,9 +238,11 @@ with a blind repo-wide search.
 
 - `README.md`
 - `_docs/_MCP_SERVER/README.md`
+- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - `scripts/_RUN_DOCKER_MCP.md`
 - `scripts/RUN_MCP_SERVER.md`
 - `_docs/_DEV/README.md`
+- `_docs/_ROUTER/README.md`
 - `_docs/_TASKS/README.md`
 
 ## Changelog Impact

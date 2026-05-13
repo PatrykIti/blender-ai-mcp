@@ -73,6 +73,7 @@ if debug_scope_enabled("router"):
 
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/_DEV/README.md`
+- `_docs/_ROUTER/README.md`
 
 ## Changelog Impact
 

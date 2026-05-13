@@ -23,6 +23,9 @@
 - keep the runtime/profile wiring extensible enough that the central `TASK-167`
   debug selector can be passed through this same launcher seam instead of
   inventing a parallel launcher-specific debug contract
+- if the debug-selector seam is advanced here while `TASK-167-03-01` is still
+  open, update both task files in the same branch so the shared launcher seam
+  does not drift across families
 
 ## Tests To Add/Update
 
