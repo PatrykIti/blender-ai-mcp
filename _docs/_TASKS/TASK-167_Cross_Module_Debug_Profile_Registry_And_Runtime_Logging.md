@@ -64,6 +64,21 @@ After this umbrella lands:
 - logs remain safe for ordinary operator use: no secrets, raw image bytes, or
   accidental full local path dumps
 
+## Relationship To Existing Board Items
+
+`TASK-167` is a generic runtime/operator substrate, not a new domain consumer.
+It should be implemented once and then reused by the current guided/reference,
+router, Streamable HTTP, and launcher families already on the board:
+
+- `TASK-160` owns guided client feedback and Streamable HTTP recovery UX
+- `TASK-163`, `TASK-164`, and `TASK-166` own RU/orchestrator/classifier/compare
+  runtime behavior that needs better operator diagnosis
+- `TASK-165` owns launcher/operator wiring that should expose the same central
+  debug selector rather than inventing its own logging knobs
+
+This umbrella must extend those existing owners. It must not create a parallel
+debug-only runtime surface or a second operator launch model.
+
 ## Non-Goals
 
 - do not make `debug=all` the default runtime behavior
@@ -114,8 +129,11 @@ repo-owned seams already visible in current debugging sessions:
 | Order | Task | Purpose |
 |------|------|---------|
 | 1 | [TASK-167-01](./TASK-167-01_Debug_Profile_Contract_Registry_And_Future_Module_Onboarding.md) | Define the central debug selector contract, profile registry, validation rules, and future-module onboarding seam |
-| 2 | [TASK-167-02](./TASK-167-02_Runtime_Instrumentation_And_Targeted_Log_Routing.md) | Wire the shared debug registry into current runtime owners such as vision, reference, tools/proxy, visibility, guided flow, router, and transport-adjacent seams |
-| 3 | [TASK-167-03](./TASK-167-03_Docker_Launcher_Docs_Validation_And_Closeout_For_Debug_Profiles.md) | Expose the selector through Docker/operator launch paths, document how to use it, and prove the profiles stay bounded and useful |
+| 2 | [TASK-167-02](./TASK-167-02_Runtime_Instrumentation_And_Targeted_Log_Routing.md) | Own the runtime instrumentation branch and keep the logger/debug profile behavior split by current owner seam rather than one large implementation pass |
+| 3 | [TASK-167-02-01](./TASK-167-02-01_Reference_And_Vision_Debug_Profile_Instrumentation.md) | Instrument `reference_images`, RU refresh, and optional classifier/segmentation support timing and failure summaries |
+| 4 | [TASK-167-02-02](./TASK-167-02-02_Tool_Proxy_And_Visibility_Debug_Profile_Instrumentation.md) | Instrument `call_tool(...)` proxy, argument canonicalization, hidden-tool recovery, and visibility transaction/audit paths |
+| 5 | [TASK-167-02-03](./TASK-167-02-03_Guided_Flow_And_Router_Debug_Profile_Instrumentation.md) | Instrument guided-flow step transitions, spatial-refresh barriers, and router goal/status/runtime summaries |
+| 6 | [TASK-167-03](./TASK-167-03_Docker_Launcher_Docs_Validation_And_Closeout_For_Debug_Profiles.md) | Expose the selector through Docker/operator launch paths, document how to use it, and prove the profiles stay bounded and useful |
 
 ## Repository Touchpoints
 
@@ -134,6 +152,32 @@ repo-owned seams already visible in current debugging sessions:
 | `tests/unit/**` and `tests/e2e/integration/**` | Validation lanes | The logging contract should be tested for profile selection, bounded output, and non-regression |
 | `README.md`, `_docs/_MCP_SERVER/README.md`, `scripts/_RUN_DOCKER_MCP.md`, `_docs/_DEV/README.md` | Operator/dev docs | The contract must be discoverable and reproducible outside conversation history |
 
+## Current Owner / Likely Edit Map
+
+This umbrella is meant to be implementation-ready. The table below points at
+the current owner seams and the live line anchors that are most likely to move
+when the family is implemented. Line numbers must be rechecked before coding,
+but they are intentionally concrete enough to keep the next agent from starting
+with a blind repo-wide search.
+
+| Path | Current owner seam | Likely edit anchors | Why this owner is the real edit surface |
+|------|--------------------|---------------------|-----------------------------------------|
+| `server/infrastructure/config.py` | `Config` runtime env contract | lines 23-43 | current MCP/factory env vocabulary already lives here; the central debug selector belongs beside transport/surface/runtime config |
+| `server/infrastructure/debug_logging.py` or `server/infrastructure/debug_profiles.py` | new shared registry module | new file | central profile parsing, validation, and per-scope registry should not be scattered across existing owners |
+| `server/adapters/mcp/discovery/search_surface.py` | `BlenderDiscoverySearchTransform._make_call_tool()` | lines 329-430 | current `call_tool(...)` proxy canonicalization and compatibility/error semantics already live here |
+| `server/adapters/mcp/visibility_runtime.py` | `run_visibility_transaction(...)` and `audit_list_tools_snapshot(...)` | lines 137-229 | current visibility txn/audit markers already exist here and should move under the shared debug selector |
+| `server/adapters/mcp/areas/reference.py` | `reference_images(...)` wrapper | lines 1629-1656 | reference attach/list/remove/clear enters RU refresh through this public MCP seam |
+| `server/adapters/mcp/areas/reference_understanding.py` | `refresh_reference_understanding_summary(...)` | lines 252-397 | RU refresh, cache-hit reuse, blocked/unavailable status, and backend invocation already converge here |
+| `server/adapters/mcp/vision/reference_support.py` | `_collect_classifier_support(...)`, `_collect_segmentation_support(...)`, `augment_reference_understanding_optional_support(...)` | lines 347-545 | optional classifier/segmentation support timing, availability, and summary generation already live here |
+| `server/adapters/mcp/session_capabilities_flow.py` | `_default_next_actions_for_step(...)`, `_apply_spatial_refresh_gate(...)`, `_clear_spatial_refresh_gate(...)` | lines 633-760 | guided-flow step changes and refresh barrier semantics are currently computed here |
+| `server/adapters/mcp/areas/router.py` | `router_set_goal(...)`, `router_get_status(...)` | lines 424-552 | router goal/status MCP responses and `ctx_info(...)` summaries already assemble guided/reference runtime status here |
+| `server/router/infrastructure/logger.py` | `RouterLogger` | lines 80-220 | router logging already has a dedicated owner instead of generic module-level logging |
+| `scripts/run_streamable_openrouter.sh` | Docker-guided operator launcher | lines 12-186 | current Streamable Docker launch envs and sidecar wiring are passed through here |
+| `scripts/run_mcp_server.py` | interactive launcher plan | lines 282-360 | the macOS-first launcher already gathers runtime choices here and will need the same debug selector passthrough |
+| `tests/unit/adapters/mcp/test_search_surface.py` | `call_tool(...)` proxy regression lane | existing compatibility tests around lines 1368-1465 | tools/proxy debug profile proof should stay anchored to the current proxy owner lane |
+| `tests/unit/adapters/mcp/test_reference_images.py` | RU/reference lifecycle proof lane | existing attach/RU tests around lines 2940-3005 and 8440+ | reference/RU debug scopes need proof on the current reference lifecycle owner lane |
+| `tests/unit/scripts/test_script_tooling.py` | launcher/script contract lane | existing script env/launcher tests | Docker/local launcher forwarding belongs on the script owner lane first |
+
 ## Test Matrix
 
 | Slice | Primary Validation Lane | Why |
@@ -142,6 +186,7 @@ repo-owned seams already visible in current debugging sessions:
 | profile registry and module onboarding | unit tests | the shared registry must stay deterministic and future-proof |
 | targeted runtime instrumentation | unit tests plus focused integration tests | log emission should prove owner seams without needing full Blender runs for every case |
 | Docker/operator wiring | unit script tests and shell syntax checks | launch paths must pass the debug selector through correctly |
+| real runtime smoke when needed | focused integration or existing Streamable/transport proof lanes | this work is not Blender-geometry-first, but selected scopes still need proof on the live runtime path when unit coverage alone would miss wiring drift |
 | bounded output / redaction | unit tests | secrets, raw image bytes, and private paths must stay out of normal debug output |
 | docs/operator guidance | `git diff --check` plus targeted grep/audit | examples and accepted profiles must match the live contract |
 

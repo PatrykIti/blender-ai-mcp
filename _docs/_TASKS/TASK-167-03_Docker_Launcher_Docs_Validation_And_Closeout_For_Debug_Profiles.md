@@ -26,6 +26,19 @@
   clear which diagnostics should now appear directly in the Docker/server
   terminal
 
+## Current Owner / Likely Edit Map
+
+| Path | Current owner seam | Likely edit anchors | Why this leaf owns it |
+|------|--------------------|---------------------|-----------------------|
+| `scripts/run_streamable_openrouter.sh` | Docker-guided Streamable launcher | lines 12-186 | the central debug selector must be forwarded through the current Docker runtime path here |
+| `scripts/run_mcp_server.py` | interactive launcher plan/env handoff | lines 282-360 | the macOS-first launcher should expose the same selector instead of inventing a second debug path |
+| `scripts/run_reference_classifier_sidecar.sh` | sidecar operator wrapper | current startup/env surface | sidecar-local guidance should stay aligned with the central selector story where applicable |
+| `tests/unit/scripts/test_script_tooling.py` | launcher/script contract lane | existing script env tests | forwarding and help/usage examples should be proven here |
+| `README.md` | top-level operator entry docs | current Docker/OpenRouter instructions | the primary operator docs must show the selector clearly |
+| `_docs/_MCP_SERVER/README.md` | MCP server operator docs | current Streamable/Docker sections | the detailed operator/debug contract belongs here |
+| `scripts/_RUN_DOCKER_MCP.md` | launcher snippets/runbook | current Docker helper snippets | examples must stay aligned with the shipped env name and scope list |
+| `_docs/_DEV/README.md` | developer workflow docs | runtime/dev debugging guidance | future implementers need one canonical debug-profile explanation here |
+
 ## Pseudocode
 
 ```bash
@@ -43,6 +56,13 @@ export BLENDER_AI_DEBUG=tools
 - examples must not encourage logging secrets or copying raw sensitive payloads
 - Docker/local launch examples must preserve the current supported runtime paths
   instead of inventing a new unsupported operator entrypoint
+
+## Error Cases To Cover
+
+- selector passed through the Docker launcher but missing in the container env
+- selector shown in docs with names that do not exist in the central registry
+- sidecar-specific guidance that contradicts the central Docker/server terminal
+  story
 
 ## Tests To Add/Update
 
@@ -62,6 +82,22 @@ export BLENDER_AI_DEBUG=tools
 
 - add the historical `_docs/_CHANGELOG/*` entry when the first `TASK-167`
   implementation slice ships and index it in `_docs/_CHANGELOG/README.md`
+
+## Status / Board Update
+
+- remains nested under `TASK-167`
+- owns the final board/changelog/docs closeout once the implementation leaves
+  are green
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/scripts/test_script_tooling.py -q`
+- targeted grep/audit for accepted profile names across:
+  - `README.md`
+  - `_docs/_MCP_SERVER/README.md`
+  - `scripts/_RUN_DOCKER_MCP.md`
+  - `_docs/_DEV/README.md`
 
 ## Validation Category
 

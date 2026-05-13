@@ -27,6 +27,16 @@
 - decide whether the selector is one enum or a comma-separated set, but keep the
   public operator shape simple and documented
 
+## Current Owner / Likely Edit Map
+
+| Path | Current owner seam | Likely edit anchors | Why this leaf owns it |
+|------|--------------------|---------------------|-----------------------|
+| `server/infrastructure/config.py` | `Config` env/runtime contract | lines 23-43 | the central debug selector belongs with current MCP transport/surface runtime config |
+| `server/infrastructure/debug_logging.py` or `server/infrastructure/debug_profiles.py` | new shared registry module | new file | this is the correct place for selector parsing, registry state, and future-module onboarding helpers |
+| `server/adapters/mcp/discovery/search_surface.py` | `BlenderDiscoverySearchTransform._canonicalize_call_arguments()` call chain | lines 329-371 | the registry contract must be consumable from current guided proxy owners rather than designed in isolation |
+| `server/adapters/mcp/visibility_runtime.py` | logger-driven visibility audit owner | lines 137-229 | existing logging seams here should consume the same registry contract, which constrains the shared interface shape |
+| `tests/unit/infrastructure/` | config/registry proof lane | new tests | selector parsing and invalid-name failures should be proven at the infrastructure owner layer first |
+
 ## Pseudocode
 
 ```python
@@ -48,6 +58,14 @@ def debug_scope_enabled(scope_name: str) -> bool:
 - future-module onboarding must remain additive and explicit; unknown names must
   fail closed
 
+## Error Cases To Cover
+
+- invalid profile names such as `vison` or `router_debug`
+- duplicate profile names in a comma-separated selector
+- empty items such as `vision,,tools`
+- mixed `all` plus specific scopes
+- future-module registration collisions on one scope name
+
 ## Tests To Add/Update
 
 - config parsing tests for valid and invalid selector values
@@ -64,6 +82,18 @@ def debug_scope_enabled(scope_name: str) -> bool:
 
 - covered by the first `_docs/_CHANGELOG/*` entry that ships the `TASK-167`
   implementation family
+
+## Status / Board Update
+
+- remains nested under `TASK-167`
+- should close before runtime instrumentation leaves start broad logger wiring
+
+## Validation Commands
+
+- `git diff --check`
+- create and run a focused config/registry lane such as:
+  - `PYTHONPATH=. poetry run pytest tests/unit/infrastructure/test_debug_profile_config.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/infrastructure/test_debug_profile_registry.py -q`
 
 ## Validation Category
 
