@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import inspect
+import logging
 
 from fastmcp import Context
 from mcp.types import ClientCapabilities, SamplingCapability, SamplingToolsCapability
@@ -14,6 +15,9 @@ from server.adapters.mcp.session_state import (
     set_session_phase,
     set_session_value,
 )
+from server.infrastructure.debug_profiles import emit_debug_log
+
+logger = logging.getLogger(__name__)
 
 
 def _fire_and_forget(result) -> None:
@@ -150,6 +154,32 @@ def ctx_transport_type(ctx: Context) -> str | None:
     return value or None
 
 
+def log_transport_context(
+    ctx: Context,
+    *,
+    operation: str,
+    extra: dict[str, object] | None = None,
+) -> None:
+    """Emit one bounded transport/session diagnostic when transport debug is enabled."""
+
+    detail_items = []
+    for key, value in (extra or {}).items():
+        if value is None:
+            continue
+        detail_items.append(f"{key}={value}")
+    details = " ".join(detail_items) if detail_items else "-"
+    emit_debug_log(
+        "transport",
+        logger,
+        "operation=%s session_id=%s transport=%s request_id=%s details=%s",
+        operation,
+        ctx_session_id(ctx) or "-",
+        ctx_transport_type(ctx) or "-",
+        ctx_request_id(ctx) or "-",
+        details,
+    )
+
+
 def ctx_sampling_capability(
     ctx: Context,
     *,
@@ -212,6 +242,7 @@ __all__ = [
     "ctx_sampling_capability",
     "ctx_transport_type",
     "ctx_warning",
+    "log_transport_context",
     "get_session_phase",
     "get_session_value",
     "set_session_phase",

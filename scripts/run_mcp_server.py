@@ -13,6 +13,8 @@ import webbrowser
 from dataclasses import dataclass
 from pathlib import Path
 
+from server.infrastructure.debug_profiles import parse_debug_selector, supported_debug_selector_values
+
 DOCKER_MAC_INSTALL_DOC_URL = "https://docs.docker.com/desktop/setup/install/mac-install/"
 APPLE_MACOS_UPDATE_URL = "x-apple.systempreferences:com.apple.Software-Update-Settings.extension"
 POETRY_INSTALLER_COMMAND = "curl -sSL https://install.python-poetry.org | python3 -"
@@ -53,6 +55,7 @@ class LauncherPlan:
     classifier_model: str | None
     openrouter_model: str
     openrouter_api_key: str
+    debug_selector: str | None
     install_mlx: bool
     install_vision: bool
 
@@ -101,12 +104,36 @@ def _ask_text(prompt: str, *, default: str | None = None) -> str:
     return _ask_text(prompt, default=default)
 
 
+def _ask_optional_text(prompt: str, *, default: str | None = None) -> str | None:
+    suffix = f" [{default}]" if default else ""
+    raw = input(f"{prompt}{suffix}: ").strip()
+    if raw:
+        return raw
+    return default
+
+
 def _ask_secret(prompt: str) -> str:
     value = getpass.getpass(f"{prompt}: ").strip()
     if value:
         return value
     print("This value cannot be empty.")
     return _ask_secret(prompt)
+
+
+def _ask_debug_selector() -> str | None:
+    accepted = ", ".join(supported_debug_selector_values())
+    selector = _ask_optional_text(
+        f"Optional BLENDER_AI_DEBUG selector ({accepted}; blank leaves repo-owned debug scopes at runtime defaults)",
+        default=os.getenv("BLENDER_AI_DEBUG") or None,
+    )
+    if selector is None:
+        return None
+    try:
+        parse_debug_selector(selector)
+    except ValueError as exc:
+        print(str(exc))
+        return _ask_debug_selector()
+    return selector
 
 
 def _open_path_or_url(target: str) -> None:
@@ -313,6 +340,7 @@ def _collect_launch_plan() -> LauncherPlan:
         default=os.getenv("VISION_OPENROUTER_MODEL") or "openai/gpt-5.4-mini",
     )
     openrouter_api_key = os.getenv("OPENROUTER_API_KEY") or _ask_secret("Paste OPENROUTER_API_KEY for this launch")
+    debug_selector = _ask_debug_selector()
 
     install_mlx, install_vision = _ensure_optional_runtime_groups()
     return LauncherPlan(
@@ -322,6 +350,7 @@ def _collect_launch_plan() -> LauncherPlan:
         classifier_model=classifier_model,
         openrouter_model=openrouter_model,
         openrouter_api_key=openrouter_api_key,
+        debug_selector=debug_selector,
         install_mlx=install_mlx,
         install_vision=install_vision,
     )
@@ -332,6 +361,10 @@ def _run_streamable_openrouter(plan: LauncherPlan) -> int:
     env["OPENROUTER_API_KEY"] = plan.openrouter_api_key
     env["VISION_OPENROUTER_MODEL"] = plan.openrouter_model
     env["VISION_REFERENCE_CLASSIFIER_ENABLED"] = "true" if plan.enable_classifier else "false"
+    if plan.debug_selector is not None:
+        env["BLENDER_AI_DEBUG"] = plan.debug_selector
+    else:
+        env.pop("BLENDER_AI_DEBUG", None)
     if plan.enable_classifier:
         env["VISION_REFERENCE_CLASSIFIER_PROVIDER"] = "generic_sidecar"
         if plan.classifier_model:
@@ -345,6 +378,7 @@ def _run_streamable_openrouter(plan: LauncherPlan) -> int:
     print("\nFinal launch plan:")
     print(f"- OpenRouter model: {plan.openrouter_model}")
     print(f"- Reference classifier enabled: {plan.enable_classifier}")
+    print(f"- Debug selector: {plan.debug_selector or 'off (unset)'}")
     if plan.enable_classifier:
         if plan.auto_start_classifier:
             print("- Classifier sidecar: auto-start local")

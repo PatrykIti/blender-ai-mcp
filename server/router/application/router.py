@@ -111,7 +111,7 @@ class SupervisorRouter:
         self.firewall = ErrorFirewall(config=self.config)
         self.classifier = classifier or IntentClassifier(config=self.config)
         self.triggerer = WorkflowTriggerer()
-        self.logger = RouterLogger()
+        self.logger = RouterLogger(enabled=self.config.log_decisions)
 
         # Tracking
         self._last_context: Optional[SceneContext] = None

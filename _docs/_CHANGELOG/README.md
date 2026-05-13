@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [350](./350-2026-05-13-task-167-debug-profiles-and-runtime-logging.md) | 2026-05-13 | **TASK-167 debug profiles and runtime logging** | - |
 | [349](./349-2026-05-13-task-135-136-post-closeout-drift-repairs.md) | 2026-05-13 | **TASK-135/TASK-136 post-closeout drift repairs** | - |
 | [348](./348-2026-05-12-task-136-architecture-guided-reconstruction.md) | 2026-05-12 | **TASK-136 architecture guided reconstruction** | - |
 | [347](./347-2026-05-12-task-135-refinement-closeout-and-quadruped-genericity.md) | 2026-05-12 | **TASK-135 refinement closeout and quadruped genericity** | - |

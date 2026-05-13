@@ -95,6 +95,16 @@ class TestRouterLoggerInit:
         logger = RouterLogger(max_events=50)
         assert logger.max_events == 50
 
+    def test_disabled_logger_suppresses_console_output(self, caplog):
+        """Disabled router logger should not emit console diagnostics."""
+
+        logger = RouterLogger(enabled=False)
+
+        with caplog.at_level("INFO", logger="router"):
+            logger.log_info("suppressed message")
+
+        assert "suppressed message" not in caplog.text
+
 
 # ============================================================================
 # Log Intercept Tests

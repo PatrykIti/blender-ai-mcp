@@ -1207,6 +1207,16 @@ For `streamable`, the current supported knobs are:
   this enabled for tool-only clients. For prompt-capable Streamable HTTP clients
   that repeatedly fetch large prompt assets as normal tool calls, set it to
   `false` and use native MCP prompts instead.
+- `BLENDER_AI_DEBUG` controls bounded repo-owned runtime diagnostics:
+  - `off`
+  - `all`
+  - one or more of `vision`, `reference`, `tools`, `transport`, `visibility`,
+    `guided_flow`, `router`
+  - examples: `BLENDER_AI_DEBUG=vision,reference`,
+    `BLENDER_AI_DEBUG=router,guided_flow,transport`
+- `ROUTER_LOG_DECISIONS` remains a compatibility-only router summary flag when
+  `BLENDER_AI_DEBUG` is unset; explicit `BLENDER_AI_DEBUG=off` suppresses those
+  repo-owned debug summaries too
 
 Example Streamable HTTP Docker run:
 
@@ -1218,6 +1228,7 @@ docker run --rm \
   -e MCP_HTTP_PORT=8000 \
   -e MCP_STREAMABLE_HTTP_PATH=/mcp \
   -e MCP_PROMPTS_AS_TOOLS_ENABLED=false \
+  -e BLENDER_AI_DEBUG=router,guided_flow,transport \
   -e BLENDER_RPC_HOST=host.docker.internal \
   blender-ai-mcp
 ```

@@ -1177,6 +1177,7 @@ def test_call_tool_logs_proxied_tool_name_and_canonical_argument_keys(monkeypatc
         "server.adapters.mcp.discovery.search_surface.apply_visibility_for_session_state",
         fake_apply_visibility_for_session_state,
     )
+    monkeypatch.setenv("BLENDER_AI_DEBUG", "tools")
 
     call_tool = transform._make_call_tool().fn  # type: ignore[attr-defined]
 
@@ -1190,7 +1191,7 @@ def test_call_tool_logs_proxied_tool_name_and_canonical_argument_keys(monkeypatc
         )
 
     log_text = "\n".join(caplog.messages)
-    assert "[CALL_TOOL_PROXY] name=modeling_transform_object" in log_text
+    assert "[TOOLS_DEBUG] [CALL_TOOL_PROXY] name=modeling_transform_object" in log_text
     assert "canonical_arg_keys=['name', 'scale']" in log_text
 
 

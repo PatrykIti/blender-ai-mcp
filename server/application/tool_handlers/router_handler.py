@@ -8,10 +8,12 @@ TASK-046: Extended with semantic matching methods.
 TASK-055: Extended with parameter resolution methods.
 """
 
+import logging
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
 from server.domain.tools.router import IRouterTool
+from server.infrastructure.debug_profiles import emit_debug_log
 from server.router.application.confidence_normalization import (
     normalize_ensemble_result,
     normalize_workflow_match_confidence,
@@ -25,6 +27,8 @@ from server.router.application.session_phase_hints import (
     PLANNING_PHASE_HINT,
     derive_phase_hint_from_router_result,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class RouterToolHandler(IRouterTool):
@@ -175,6 +179,14 @@ class RouterToolHandler(IRouterTool):
         phase_hint: str,
         continuation_mode: str,
     ) -> Dict[str, Any]:
+        emit_debug_log(
+            "router",
+            logger,
+            "handler_no_match continuation_mode=%s phase_hint=%s goal_len=%d",
+            continuation_mode,
+            phase_hint,
+            len(goal),
+        )
         return {
             "status": "no_match",
             "continuation_mode": continuation_mode,
@@ -210,6 +222,14 @@ class RouterToolHandler(IRouterTool):
     ) -> dict[str, Any]:
         """Build the explicit workflow-confirmation clarification payload."""
 
+        emit_debug_log(
+            "router",
+            logger,
+            "handler_confirmation_needed workflow=%s goal_len=%d error_present=%s",
+            matched_workflow,
+            len(goal),
+            bool(error),
+        )
         return {
             "status": "needs_input",
             "continuation_mode": "workflow",
@@ -326,6 +346,7 @@ class RouterToolHandler(IRouterTool):
             - message: human-readable status message
         """
         if not self._enabled:
+            emit_debug_log("router", logger, "handler_disabled goal_len=%d", len(goal))
             return {
                 "status": "disabled",
                 "workflow": None,
@@ -338,6 +359,7 @@ class RouterToolHandler(IRouterTool):
 
         router = self._router
         if router is None:
+            emit_debug_log("router", logger, "handler_router_missing goal_len=%d", len(goal))
             return {
                 "status": "disabled",
                 "workflow": None,
@@ -431,6 +453,14 @@ class RouterToolHandler(IRouterTool):
         try:
             matched_workflow = router.set_current_goal(goal)
         except Exception as e:
+            emit_debug_log(
+                "router",
+                logger,
+                "handler_match_error goal_len=%d error_type=%s",
+                len(goal),
+                type(e).__name__,
+                level=logging.WARNING,
+            )
             return {
                 "status": "error",
                 "workflow": None,
@@ -534,7 +564,7 @@ class RouterToolHandler(IRouterTool):
         if not workflow or not workflow.parameters:
             # Workflow has no parameters - execute directly
             execution_results = router.execute_pending_workflow({})
-            return {
+            response = {
                 "status": "ready",
                 "continuation_mode": "workflow",
                 "workflow": matched_workflow,
@@ -545,6 +575,15 @@ class RouterToolHandler(IRouterTool):
                 "executed": len(execution_results),
                 "message": f"Workflow '{matched_workflow}' executed ({len(execution_results)} tool calls).",
             }
+            emit_debug_log(
+                "router",
+                logger,
+                "handler_ready workflow=%s executed=%d resolved_count=%d",
+                matched_workflow,
+                len(execution_results),
+                0,
+            )
+            return response
 
         # Convert workflow.parameters to ParameterSchema objects if needed
         from server.router.domain.entities.parameter import ParameterSchema
@@ -657,7 +696,7 @@ class RouterToolHandler(IRouterTool):
         if resolver is None:
             # Fallback: use only YAML modifiers and execute
             if invalid_params:
-                return {
+                response = {
                     "status": "needs_input",
                     "continuation_mode": "workflow",
                     "workflow": matched_workflow,
@@ -667,9 +706,18 @@ class RouterToolHandler(IRouterTool):
                     "phase_hint": derive_phase_hint_from_router_result({"status": "needs_input"}),
                     "message": "Some provided parameter values are invalid. Please correct them and try again.",
                 }
+                emit_debug_log(
+                    "router",
+                    logger,
+                    "handler_needs_input workflow=%s unresolved_count=%d invalid_params=%d",
+                    matched_workflow,
+                    len(response["unresolved"]),
+                    len(invalid_params),
+                )
+                return response
 
             execution_results = router.execute_pending_workflow(merged_modifiers)
-            return {
+            response = {
                 "status": "ready",
                 "continuation_mode": "workflow",
                 "workflow": matched_workflow,
@@ -683,6 +731,15 @@ class RouterToolHandler(IRouterTool):
                 "executed": len(execution_results),
                 "message": f"Workflow '{matched_workflow}' executed with modifiers ({len(execution_results)} tool calls).",
             }
+            emit_debug_log(
+                "router",
+                logger,
+                "handler_ready workflow=%s executed=%d resolved_count=%d",
+                matched_workflow,
+                len(execution_results),
+                len(merged_modifiers),
+            )
+            return response
 
         # Resolve parameters
         result = resolver.resolve(
@@ -721,7 +778,7 @@ class RouterToolHandler(IRouterTool):
                 unresolved_list = [u for u in unresolved_list if u.get("param") not in invalid_names]
                 unresolved_list = invalid_params + unresolved_list
 
-            return {
+            response = {
                 "status": "needs_input",
                 "continuation_mode": "workflow",
                 "workflow": matched_workflow,
@@ -735,11 +792,20 @@ class RouterToolHandler(IRouterTool):
                     else f"Workflow '{matched_workflow}' needs parameter input. Please provide values for unresolved parameters."
                 ),
             }
+            emit_debug_log(
+                "router",
+                logger,
+                "handler_needs_input workflow=%s unresolved_count=%d invalid_params=%d",
+                matched_workflow,
+                len(unresolved_list),
+                len(invalid_params),
+            )
+            return response
 
         # Step 7: All resolved - execute workflow
         execution_results = router.execute_pending_workflow(result.resolved)
 
-        return {
+        response = {
             "status": "ready",
             "continuation_mode": "workflow",
             "workflow": matched_workflow,
@@ -750,6 +816,15 @@ class RouterToolHandler(IRouterTool):
             "executed": len(execution_results),
             "message": f"Workflow '{matched_workflow}' executed with {len(result.resolved)} parameters ({len(execution_results)} tool calls).",
         }
+        emit_debug_log(
+            "router",
+            logger,
+            "handler_ready workflow=%s executed=%d resolved_count=%d",
+            matched_workflow,
+            len(execution_results),
+            len(result.resolved),
+        )
+        return response
 
     def _extract_context_for_param(
         self,

@@ -1,6 +1,6 @@
 # TASK-167-02-03-02: Router Debug Profile Instrumentation
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-167-02-03](./TASK-167-02-03_Guided_Flow_And_Router_Debug_Profile_Instrumentation.md)
 **Objective:** Add bounded `router` debug instrumentation to the current router goal/status/logger/audit seams so operators can trace goal classification, no-match/needs-input/ready transitions, and router execution summaries directly from the Docker/server terminal.

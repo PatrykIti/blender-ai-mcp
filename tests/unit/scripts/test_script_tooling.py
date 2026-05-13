@@ -35,6 +35,7 @@ def test_streamable_openrouter_shell_script_contains_required_runtime_env():
         "MCP_HTTP_PORT",
         "MCP_STREAMABLE_HTTP_PATH",
         "BLENDER_RPC_HOST",
+        "BLENDER_AI_DEBUG",
         "VISION_EXTERNAL_PROVIDER=openrouter",
         'VISION_EXTERNAL_CONTRACT_PROFILE="${VISION_EXTERNAL_CONTRACT_PROFILE}"',
         'VISION_OPENROUTER_MODEL="${VISION_OPENROUTER_MODEL}"',
@@ -118,6 +119,7 @@ def test_run_mcp_server_launch_env_wires_classifier_plan(monkeypatch):
         classifier_model="google/siglip2-base-patch16-224",
         openrouter_model="openai/gpt-5.4-mini",
         openrouter_api_key="secret",
+        debug_selector="tools,transport",
         install_mlx=False,
         install_vision=True,
     )
@@ -133,6 +135,7 @@ def test_run_mcp_server_launch_env_wires_classifier_plan(monkeypatch):
     assert env["VISION_REFERENCE_CLASSIFIER_ENABLED"] == "true"
     assert env["REFERENCE_CLASSIFIER_AUTO_START"] == "true"
     assert env["VISION_REFERENCE_CLASSIFIER_MODEL"] == "google/siglip2-base-patch16-224"
+    assert env["BLENDER_AI_DEBUG"] == "tools,transport"
 
 
 def test_reference_classifier_sidecar_parser_and_service_contract(tmp_path, monkeypatch):

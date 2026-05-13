@@ -1,6 +1,6 @@
 # TASK-167-02-04: Transport And Session Debug Profile Instrumentation
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-167-02](./TASK-167-02_Runtime_Instrumentation_And_Targeted_Log_Routing.md)
 **Objective:** Add bounded `transport` debug instrumentation to the repo-owned `stdio` and Streamable HTTP bootstrap plus surfaced session/transport identity seams so operators can trace server startup, transport selection, echoed session identity, and transport-mode mismatch issues from the normal Docker/server terminal.

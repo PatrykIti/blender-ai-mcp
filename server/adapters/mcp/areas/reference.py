@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import logging
 import re
 from dataclasses import replace
 from datetime import datetime
@@ -161,8 +162,11 @@ from server.adapters.mcp.vision import (
     select_reference_records_for_target,
 )
 from server.application.services.spatial_graph import get_spatial_graph_service
+from server.infrastructure.debug_profiles import emit_debug_log
 from server.infrastructure.di import get_collection_handler, get_scene_handler, get_vision_backend_resolver
 from server.infrastructure.tmp_paths import get_viewport_output_paths
+
+logger = logging.getLogger(__name__)
 
 REFERENCE_PUBLIC_TOOL_NAMES = (
     "reference_images",
@@ -1125,7 +1129,25 @@ async def _run_stage_checkpoint_compare(
     reference_understanding_gate_ids = _effective_reference_understanding_gate_ids_from_session(session)
     reference_strategy_state = session.reference_strategy_state
     goal = session.goal
+    emit_debug_log(
+        "reference",
+        logger,
+        "stage_compare_start checkpoint_id=%s preset_profile=%s goal_present=%s reference_count=%d",
+        checkpoint_id,
+        preset_profile,
+        goal is not None,
+        len(session.reference_images or []),
+    )
     if not readiness.compare_ready or goal is None:
+        emit_debug_log(
+            "reference",
+            logger,
+            "stage_compare_blocked checkpoint_id=%s readiness_status=%s next_action=%s",
+            checkpoint_id,
+            readiness.status,
+            readiness.next_action,
+            level=logging.WARNING,
+        )
         return _stage_compare_response(
             session_id=session_id,
             transport=transport,
@@ -1225,6 +1247,15 @@ async def _run_stage_checkpoint_compare(
         target_view=target_view,
     )
     if not selected_reference_records:
+        emit_debug_log(
+            "reference",
+            logger,
+            "stage_compare_no_matching_references checkpoint_id=%s target_object=%s target_count=%d",
+            checkpoint_id,
+            resolved_target_object,
+            len(resolved_target_objects),
+            level=logging.WARNING,
+        )
         return _stage_compare_response(
             session_id=session_id,
             transport=transport,
@@ -1261,6 +1292,14 @@ async def _run_stage_checkpoint_compare(
             preset_profile=preset_profile,
         )
     except RuntimeError as exc:
+        emit_debug_log(
+            "reference",
+            logger,
+            "stage_compare_capture_error checkpoint_id=%s error=%s",
+            checkpoint_id,
+            exc,
+            level=logging.WARNING,
+        )
         return _stage_compare_response(
             session_id=session_id,
             transport=transport,
@@ -1575,7 +1614,7 @@ async def _run_stage_checkpoint_compare(
         else None
     )
 
-    return _stage_compare_response(
+    response = _stage_compare_response(
         session_id=session_id,
         transport=transport,
         guided_flow_state=session.guided_flow_state,
@@ -1624,6 +1663,18 @@ async def _run_stage_checkpoint_compare(
             else None
         ),
     )
+    emit_debug_log(
+        "reference",
+        logger,
+        "stage_compare_finish checkpoint_id=%s packet_count=%d capture_count=%d reference_count=%d vision_status=%s compare_error=%s",
+        checkpoint_id,
+        compare_diagnostics.packet_count,
+        len(captures),
+        len(selected_reference_records),
+        vision_assistant.status if vision_assistant is not None else None,
+        response.error,
+    )
+    return response
 
 
 async def reference_images(
@@ -1848,7 +1899,7 @@ async def reference_iterate_stage_checkpoint(
             "continue_build" if recoverable_setup_error else ("inspect_validate" if truth_only_handoff else "stop")
         )
         error_continue_recommended = error_loop_disposition != "stop"
-        return _iterate_stage_response(
+        response = _iterate_stage_response(
             session_id=compare_result.session_id,
             transport=compare_result.transport,
             goal=goal,
@@ -1888,6 +1939,17 @@ async def reference_iterate_stage_checkpoint(
             ),
             error=compare_result.error,
         )
+        emit_debug_log(
+            "reference",
+            logger,
+            "stage_iterate_finish checkpoint_id=%s loop_disposition=%s continue_recommended=%s error=%s",
+            compare_result.checkpoint_id,
+            error_loop_disposition,
+            error_continue_recommended,
+            compare_result.error,
+            level=logging.WARNING if compare_result.error else logging.INFO,
+        )
+        return response
 
     prior_state = await get_session_value_async(ctx, _REFERENCE_CORRECTION_LOOP_STATE_KEY, None)
     if not isinstance(prior_state, dict):
@@ -1977,7 +2039,7 @@ async def reference_iterate_stage_checkpoint(
     )
     await apply_visibility_for_session_state(ctx, advanced_state)
 
-    return _iterate_stage_response(
+    response = _iterate_stage_response(
         session_id=compare_result.session_id,
         transport=compare_result.transport,
         goal=goal,
@@ -2007,3 +2069,15 @@ async def reference_iterate_stage_checkpoint(
         stop_reason=stop_reason,
         message=message,
     )
+    emit_debug_log(
+        "reference",
+        logger,
+        "stage_iterate_finish checkpoint_id=%s loop_disposition=%s continue_recommended=%s correction_focus=%d blockers=%d stagnation_count=%d",
+        compare_result.checkpoint_id,
+        loop_disposition,
+        continue_recommended,
+        len(correction_focus),
+        len(compare_result.completion_blockers or []),
+        stagnation_count,
+    )
+    return response

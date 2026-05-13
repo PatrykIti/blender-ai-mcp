@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import replace
 from typing import TYPE_CHECKING, Any, Callable, Mapping, Sequence, cast
 
@@ -46,6 +47,9 @@ from server.adapters.mcp.session_capabilities_state import (
 )
 from server.adapters.mcp.session_state import set_session_value
 from server.adapters.mcp.transforms.quality_gate_verifier import verify_gate_plan_with_relation_graph
+from server.infrastructure.debug_profiles import emit_debug_log
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from server.adapters.mcp.guided_mode import VisibilityDiagnostics
@@ -516,6 +520,12 @@ def mark_guided_spatial_state_stale(
         if current.gate_plan is not None
         else None
     )
+    if (
+        updated_flow_state == current.guided_flow_state
+        and updated_gate_plan == current.gate_plan
+        and updated_registry == current.guided_part_registry
+    ):
+        return current
     state = replace(
         current,
         guided_flow_state=updated_flow_state,
@@ -525,6 +535,18 @@ def mark_guided_spatial_state_stale(
     set_session_capability_state(ctx, state)
     if refresh_visibility is not None:
         refresh_visibility(ctx, state)
+    updated_contract = GuidedFlowStateContract.model_validate(updated_flow_state)
+    emit_debug_log(
+        "guided_flow",
+        logger,
+        "spatial_state_stale tool=%s family=%s reason=%s current_step=%s spatial_state_version=%s refresh_required=%s",
+        tool_name,
+        family,
+        reason or tool_name,
+        updated_contract.current_step,
+        updated_contract.spatial_state_version,
+        updated_contract.spatial_refresh_required,
+    )
     return state
 
 
@@ -563,6 +585,12 @@ async def mark_guided_spatial_state_stale_async(
         if current.gate_plan is not None
         else None
     )
+    if (
+        updated_flow_state == current.guided_flow_state
+        and updated_gate_plan == current.gate_plan
+        and updated_registry == current.guided_part_registry
+    ):
+        return current
     state = replace(
         current,
         guided_flow_state=updated_flow_state,
@@ -571,4 +599,16 @@ async def mark_guided_spatial_state_stale_async(
     )
     await set_session_capability_state_async(ctx, state)
     await apply_visibility_for_session_state(ctx, state)
+    updated_contract = GuidedFlowStateContract.model_validate(updated_flow_state)
+    emit_debug_log(
+        "guided_flow",
+        logger,
+        "spatial_state_stale tool=%s family=%s reason=%s current_step=%s spatial_state_version=%s refresh_required=%s",
+        tool_name,
+        family,
+        reason or tool_name,
+        updated_contract.current_step,
+        updated_contract.spatial_state_version,
+        updated_contract.spatial_refresh_required,
+    )
     return state

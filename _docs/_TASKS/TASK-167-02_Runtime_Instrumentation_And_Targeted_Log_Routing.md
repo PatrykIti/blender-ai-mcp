@@ -1,6 +1,6 @@
 # TASK-167-02: Runtime Instrumentation And Targeted Log Routing
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-167](./TASK-167_Cross_Module_Debug_Profile_Registry_And_Runtime_Logging.md)
 **Objective:** Wire the shared debug profile registry into the current MCP runtime owners so each selected scope emits useful, bounded diagnostics to the Docker/server terminal for the exact repo-owned seams an operator is trying to debug.

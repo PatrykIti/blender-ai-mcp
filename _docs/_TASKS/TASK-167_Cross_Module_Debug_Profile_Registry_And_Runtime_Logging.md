@@ -1,13 +1,24 @@
 # TASK-167: Cross-Module Debug Profile Registry And Runtime Logging
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** Operator Diagnostics / Runtime Debugging / Maintainability
 **Estimated Effort:** Large
 **Follow-on After:** [TASK-125](./TASK-125_MCP_Transport_Mode_Switching_And_Session_Diagnostics.md), [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md), [TASK-164](./TASK-164_Local_SigLIP2_Reference_Classifier_Sidecar_And_Operator_Scripts.md), [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md)
 **Related:** [TASK-148](./TASK-148_No_Auth_HTTP_MCP_Client_Compatibility_And_Auth_Misclassification_Recovery.md), [TASK-160](./TASK-160_Guided_Client_Feedback_And_Streamable_HTTP_Recovery_UX.md), [TASK-165](./TASK-165_Mac_First_Interactive_MCP_Server_Installer_And_Launcher.md), [TASK-165-02-01](./TASK-165-02-01_Interactive_Profile_Selection_And_Runtime_Wiring.md)
+**Context Anchor:** [350. TASK-167 debug profiles and runtime logging](../_CHANGELOG/350-2026-05-13-task-167-debug-profiles-and-runtime-logging.md)
 
 ## Objective
+
+Shipped on 2026-05-13:
+
+- one central `BLENDER_AI_DEBUG` selector with strict parsing, additive
+  comma-separated scope support, `all` / `off`, and compatibility-only router
+  fallback when unset
+- bounded repo-owned diagnostics for `vision`, `reference`, `tools`,
+  `transport`, `visibility`, `guided_flow`, and `router`
+- launcher passthrough on the supported Docker/macOS seams plus aligned
+  operator docs and changelog/task closeout
 
 Create one central debug/logging module for the MCP server so operators can
 select bounded runtime debug profiles such as:

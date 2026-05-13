@@ -859,6 +859,14 @@ Network notes:
 - `MCP_TRANSPORT_MODE=streamable` starts a stateful Streamable HTTP MCP server
 - `MCP_PROMPTS_AS_TOOLS_ENABLED=false` disables the tool-compatible prompt bridge
   for prompt-capable clients; native MCP prompts remain available
+- `BLENDER_AI_DEBUG` enables bounded repo-owned runtime diagnostics:
+  - `off`
+  - `all`
+  - `vision`, `reference`, `tools`, `transport`, `visibility`, `guided_flow`, `router`
+  - comma-separated combinations such as `vision,reference` or `router,guided_flow,transport`
+- when `BLENDER_AI_DEBUG` is unset, legacy router decision summaries still
+  follow `ROUTER_LOG_DECISIONS`; when `BLENDER_AI_DEBUG=off`, repo-owned debug
+  scopes are suppressed explicitly
 
 For broader profile/config examples, use:
 
@@ -877,6 +885,10 @@ Optional local reference-classifier sidecar:
 - for the Docker-guided MCP helper on macOS/Windows point
   `VISION_REFERENCE_CLASSIFIER_ENDPOINT` at
   `http://host.docker.internal:9200/classify`
+- for RU/reference troubleshooting, start with
+  `BLENDER_AI_DEBUG=vision,reference`
+- for guided/router/transport troubleshooting, start with
+  `BLENDER_AI_DEBUG=router,guided_flow,transport`
 - [`.env.example`](./.env.example) for the full tracked runtime/config variable set
 
 ## Testing

@@ -1,6 +1,6 @@
 # TASK-167-02-03-01: Guided Flow Debug Profile Instrumentation
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-167-02-03](./TASK-167-02-03_Guided_Flow_And_Router_Debug_Profile_Instrumentation.md)
 **Objective:** Add bounded `guided_flow` debug instrumentation to the current guided-flow state-shaping and persistence seams so operators can trace step changes, refresh barriers, required checks, and allowed-family changes directly from the Docker/server terminal.

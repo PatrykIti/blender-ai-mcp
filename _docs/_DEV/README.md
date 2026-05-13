@@ -40,6 +40,10 @@ Useful environment variables:
 - `LOG_LEVEL=DEBUG`
 - `ROUTER_ENABLED=true`
 - `BLENDER_RPC_HOST=host.docker.internal` (when running the server in Docker on macOS/Windows)
+- `BLENDER_AI_DEBUG=vision,reference` for RU/reference troubleshooting
+- `BLENDER_AI_DEBUG=router,guided_flow,transport` for guided/router/transport troubleshooting
+- `BLENDER_AI_DEBUG=off` to suppress repo-owned debug scopes explicitly even when
+  legacy router summaries would otherwise still be enabled
 
 For ready-to-paste local client/MCP profile examples, use:
 

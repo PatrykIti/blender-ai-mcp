@@ -1,6 +1,7 @@
 # TASK-167-03-01: Launcher Debug Selector Wiring
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Context Anchor:** [350. TASK-167 debug profiles and runtime logging](../_CHANGELOG/350-2026-05-13-task-167-debug-profiles-and-runtime-logging.md)
 **Priority:** 🔴 High
 **Parent:** [TASK-167-03](./TASK-167-03_Docker_Launcher_Docs_Validation_And_Closeout_For_Debug_Profiles.md)
 **Objective:** Wire the central debug selector through the supported Docker/local launcher seams, extending the current open TASK-165 launcher ownership instead of inventing a parallel launch contract.

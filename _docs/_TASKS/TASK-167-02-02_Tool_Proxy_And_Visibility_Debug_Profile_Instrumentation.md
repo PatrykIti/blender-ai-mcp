@@ -1,6 +1,6 @@
 # TASK-167-02-02: Tool Proxy And Visibility Debug Profile Instrumentation
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-167-02](./TASK-167-02_Runtime_Instrumentation_And_Targeted_Log_Routing.md)
 **Objective:** Add bounded `tools` and `visibility` debug instrumentation to the existing `call_tool(...)` proxy and visibility transaction/audit seams so operators can diagnose contract mismatches, hidden-tool recovery, and visibility churn directly from the Docker/server terminal.

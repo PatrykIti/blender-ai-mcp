@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Awaitable
 from dataclasses import asdict, replace
 from typing import Any, Callable
@@ -40,10 +41,12 @@ from server.adapters.mcp.session_capabilities_state import (
     set_session_capability_state_async,
 )
 from server.adapters.mcp.session_phase import SessionPhase
+from server.infrastructure.debug_profiles import emit_debug_log
 
 _REFINEMENT_ENTRY_GATE_TYPES = {"shape_profile", "proportion_ratio", "opening_or_cut", "refinement_stage"}
 _REFINEMENT_PREREQUISITE_GATE_TYPES = {"attachment_seam", "support_contact"}
 _REFINEMENT_ENTRY_STATUSES = {"pending", "blocked", "failed"}
+logger = logging.getLogger(__name__)
 
 
 def _update_guided_flow_role_summary_dict(
@@ -545,6 +548,7 @@ async def record_guided_flow_spatial_check_completion_async(
     current = await get_session_capability_state_async(ctx)
     if current.guided_flow_state is None:
         return current
+    previous_flow = GuidedFlowStateContract.model_validate(current.guided_flow_state)
 
     updated_flow_state = _mark_guided_flow_check_completed_dict(
         current.guided_flow_state,
@@ -558,6 +562,17 @@ async def record_guided_flow_spatial_check_completion_async(
         await apply_visibility_for_session_state(ctx, state)
     else:
         await apply_visibility(ctx, state)
+    updated_flow = GuidedFlowStateContract.model_validate(updated_flow_state)
+    emit_debug_log(
+        "guided_flow",
+        logger,
+        "spatial_check_completed tool=%s previous_step=%s current_step=%s spatial_refresh_required=%s pending_checks=%d",
+        tool_name,
+        previous_flow.current_step,
+        updated_flow.current_step,
+        updated_flow.spatial_refresh_required,
+        len([check for check in updated_flow.required_checks if check.status != "completed"]),
+    )
     return state
 
 
@@ -628,6 +643,7 @@ async def advance_guided_flow_from_iteration_async(
     current = await get_session_capability_state_async(ctx)
     if current.guided_flow_state is None:
         return current
+    previous_flow = GuidedFlowStateContract.model_validate(current.guided_flow_state)
 
     updated_flow_state = _advance_guided_flow_for_iteration_dict(
         current.guided_flow_state,
@@ -642,4 +658,15 @@ async def advance_guided_flow_from_iteration_async(
         next_phase = SessionPhase.BUILD
     state = replace(current, phase=next_phase, guided_flow_state=updated_flow_state)
     await set_session_capability_state_async(ctx, state)
+    updated_flow = GuidedFlowStateContract.model_validate(updated_flow_state)
+    emit_debug_log(
+        "guided_flow",
+        logger,
+        "iteration_advance disposition=%s previous_step=%s current_step=%s phase=%s blocked_families=%s",
+        loop_disposition,
+        previous_flow.current_step,
+        updated_flow.current_step,
+        next_phase.value,
+        updated_flow.blocked_families,
+    )
     return state

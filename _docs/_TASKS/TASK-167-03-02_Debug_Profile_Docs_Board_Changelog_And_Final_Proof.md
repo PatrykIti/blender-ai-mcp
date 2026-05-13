@@ -1,8 +1,9 @@
 # TASK-167-03-02: Debug Profile Docs, Board, Changelog, And Final Proof
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-167-03](./TASK-167-03_Docker_Launcher_Docs_Validation_And_Closeout_For_Debug_Profiles.md)
+**Context Anchor:** [350. TASK-167 debug profiles and runtime logging](../_CHANGELOG/350-2026-05-13-task-167-debug-profiles-and-runtime-logging.md)
 **Objective:** Close the `TASK-167` family only after docs, board/changelog sync, and the final repo-standard proof bundle confirm that the shipped debug profiles are visible on the promised runtime surfaces.
 **Repository Touchpoints:** `README.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`, `scripts/_RUN_DOCKER_MCP.md`, `scripts/RUN_MCP_SERVER.md`, `_docs/_DEV/README.md`, `_docs/_VISION/README.md`, `_docs/_ROUTER/README.md`, `_docs/_TASKS/README.md`, `_docs/_TASKS/TASK-167*.md`, `_docs/_TASKS/TASK-165-02-01_Interactive_Profile_Selection_And_Runtime_Wiring.md`, `_docs/_CHANGELOG/README.md`, new `_docs/_CHANGELOG/*`
 **Acceptance Criteria:**
@@ -32,6 +33,10 @@
   include the runtime lanes required to trust the shipped selector behavior
 - use this leaf as the single closeout owner so board/changelog/docs do not
   drift across multiple branches
+- shipped closeout on 2026-05-13 with the shared selector, owner-lane unit
+  coverage, launcher passthrough, and aligned operator docs; the broad repo and
+  E2E proof bundle remains the required final validation lane for this runtime
+  contract family
 
 ## Runtime / Security Contract Notes
 

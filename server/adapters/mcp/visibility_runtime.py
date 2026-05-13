@@ -18,6 +18,7 @@ from fastmcp.tools.tool import Tool
 
 from server.adapters.mcp.session_capabilities import get_session_capability_state_async
 from server.adapters.mcp.transforms.visibility_policy import GUIDED_DISCOVERY_TOOLS
+from server.infrastructure.debug_profiles import emit_debug_log
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +105,14 @@ async def _run_session_visibility_operation(
                 break
 
         if not wait_logged:
-            logger.debug("[VISIBILITY_TXN] session=%s operation=%s wait_for_lock", session_id, operation)
+            emit_debug_log(
+                "visibility",
+                logger,
+                "[VISIBILITY_TXN] session=%s operation=%s wait_for_lock",
+                session_id,
+                operation,
+                level=logging.DEBUG,
+            )
             wait_logged = True
         await asyncio.sleep(_TRACKER_WAIT_POLL_SECONDS)
 
@@ -147,7 +155,9 @@ async def run_visibility_transaction(
 
     async def _apply(_tracker: _SessionVisibilityTracker | None) -> _T:
         session_id = _safe_session_id(ctx)
-        logger.info(
+        emit_debug_log(
+            "visibility",
+            logger,
             "[VISIBILITY_TXN] session=%s phase=%s step=%s spatial_refresh_required=%s expected_tool_count=%d expected_tools=%s",
             session_id or "-",
             phase,
@@ -202,7 +212,9 @@ async def audit_list_tools_snapshot(
     missing = sorted(set(expected_tool_names).difference(tool_names))
     unexpected = sorted(set(tool_names).difference(expected_tool_names))
     if missing or unexpected:
-        logger.warning(
+        emit_debug_log(
+            "visibility",
+            logger,
             "[VISIBILITY_AUDIT] session=%s source=%s phase=%s step=%s observed_tool_count=%d expected_tool_count=%d missing=%s unexpected=%s",
             session_id,
             source,
@@ -212,13 +224,16 @@ async def audit_list_tools_snapshot(
             len(expected_tool_names),
             _limited_tool_list(missing),
             _limited_tool_list(unexpected),
+            level=logging.WARNING,
         )
         return
 
     if previous_tool_names != tool_names:
         added = sorted(set(tool_names).difference(previous_tool_names))
         removed = sorted(set(previous_tool_names).difference(tool_names))
-        logger.info(
+        emit_debug_log(
+            "visibility",
+            logger,
             "[VISIBILITY_AUDIT] session=%s source=%s tool_count=%d added=%s removed=%s",
             session_id,
             source,

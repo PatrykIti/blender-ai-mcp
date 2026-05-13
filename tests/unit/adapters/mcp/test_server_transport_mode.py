@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from types import SimpleNamespace
 
 from server.adapters.mcp import server as server_module
@@ -73,3 +74,30 @@ def test_server_run_uses_streamable_http_transport_mode(monkeypatch):
             },
         )
     ]
+
+
+def test_server_run_emits_transport_debug_when_scope_enabled(monkeypatch, caplog):
+    fake_server = _FakeServer()
+
+    monkeypatch.setattr(server_module, "build_server", lambda surface_profile=None: fake_server)
+    monkeypatch.setattr(server_module, "is_router_enabled", lambda: True)
+    monkeypatch.setattr(server_module.signal, "signal", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        server_module,
+        "get_config",
+        lambda: SimpleNamespace(
+            MCP_SURFACE_PROFILE="llm-guided",
+            MCP_TRANSPORT_MODE="stdio",
+            MCP_HTTP_HOST="127.0.0.1",
+            MCP_HTTP_PORT=8000,
+            MCP_STREAMABLE_HTTP_PATH="/mcp",
+            MCP_PROMPTS_AS_TOOLS_ENABLED=True,
+            BLENDER_AI_DEBUG=frozenset({"transport"}),
+            ROUTER_LOG_DECISIONS=True,
+        ),
+    )
+
+    with caplog.at_level(logging.INFO, logger="server.adapters.mcp.server"):
+        server_module.run()
+
+    assert "[TRANSPORT_DEBUG] bootstrap surface=llm-guided transport=stdio" in caplog.text

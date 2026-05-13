@@ -1,7 +1,9 @@
 import os
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from server.infrastructure.debug_profiles import parse_debug_selector
 
 
 class Config(BaseSettings):
@@ -16,6 +18,12 @@ class Config(BaseSettings):
     # Router Supervisor
     ROUTER_ENABLED: bool = Field(default=True, description="Enable Router Supervisor for LLM tool calls")
     ROUTER_LOG_DECISIONS: bool = Field(default=True, description="Log router decisions")
+    BLENDER_AI_DEBUG: frozenset[str] | None = Field(
+        default=None,
+        description=(
+            "Central repo-owned debug selector: off|all|vision|reference|tools|transport|visibility|guided_flow|router"
+        ),
+    )
     OTEL_ENABLED: bool = Field(default=False, description="Enable OpenTelemetry bootstrap")
     OTEL_EXPORTER: str = Field(default="none", description="OpenTelemetry exporter: none|console|memory")
     OTEL_SERVICE_NAME: str = Field(default="blender-ai-mcp", description="OpenTelemetry service.name")
@@ -191,6 +199,13 @@ class Config(BaseSettings):
         description="Maximum part outputs accepted from the optional segmentation sidecar",
     )
 
+    @field_validator("BLENDER_AI_DEBUG", mode="before")
+    @classmethod
+    def validate_blender_ai_debug(cls, value: object) -> frozenset[str] | None:
+        """Keep the shipped debug-selector vocabulary explicit and fail closed."""
+
+        return parse_debug_selector(value)  # type: ignore[arg-type]
+
     @model_validator(mode="after")
     def validate_timeout_hierarchy(self):
         """Validate deterministic timeout hierarchy across runtime boundaries."""
@@ -246,6 +261,7 @@ def get_config() -> Config:
         BLENDER_RPC_PORT=int(os.getenv("BLENDER_RPC_PORT", 8765)),
         ROUTER_ENABLED=os.getenv("ROUTER_ENABLED", "true").lower() in ("true", "1", "yes"),
         ROUTER_LOG_DECISIONS=os.getenv("ROUTER_LOG_DECISIONS", "true").lower() in ("true", "1", "yes"),
+        BLENDER_AI_DEBUG=parse_debug_selector(os.getenv("BLENDER_AI_DEBUG") or None),
         OTEL_ENABLED=os.getenv("OTEL_ENABLED", "false").lower() in ("true", "1", "yes"),
         OTEL_EXPORTER=os.getenv("OTEL_EXPORTER", "none"),
         OTEL_SERVICE_NAME=os.getenv("OTEL_SERVICE_NAME", "blender-ai-mcp"),

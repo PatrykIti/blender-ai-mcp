@@ -13,6 +13,7 @@ import sys
 
 from server.adapters.mcp.factory import build_server
 from server.infrastructure.config import get_config
+from server.infrastructure.debug_profiles import describe_debug_profile_state, emit_debug_log
 from server.infrastructure.di import is_router_enabled
 
 logger = logging.getLogger(__name__)
@@ -52,11 +53,40 @@ def run(surface_profile: str | None = None):
     logger.info("MCP transport mode: %s", transport_mode)
     prompts_bridge_enabled = getattr(config, "MCP_PROMPTS_AS_TOOLS_ENABLED", True)
     logger.info("MCP prompts-as-tools bridge: %s", "enabled" if prompts_bridge_enabled else "disabled")
+    emit_debug_log(
+        "transport",
+        logger,
+        "bootstrap surface=%s transport=%s http_host=%s http_port=%s http_path=%s %s",
+        selected_surface,
+        transport_mode,
+        config.MCP_HTTP_HOST,
+        config.MCP_HTTP_PORT,
+        config.MCP_STREAMABLE_HTTP_PATH,
+        describe_debug_profile_state(config),
+        config=config,
+    )
 
     try:
         if transport_mode == "stdio":
+            emit_debug_log(
+                "transport",
+                logger,
+                "starting stdio server %s",
+                describe_debug_profile_state(config),
+                config=config,
+            )
             server.run(transport="stdio")
         elif transport_mode == "streamable":
+            emit_debug_log(
+                "transport",
+                logger,
+                "starting streamable-http host=%s port=%s path=%s %s",
+                config.MCP_HTTP_HOST,
+                config.MCP_HTTP_PORT,
+                config.MCP_STREAMABLE_HTTP_PATH,
+                describe_debug_profile_state(config),
+                config=config,
+            )
             server.run(
                 transport="streamable-http",
                 host=config.MCP_HTTP_HOST,
@@ -70,6 +100,22 @@ def run(surface_profile: str | None = None):
         # This is expected during client disconnect/reconnect cycles
         if not _shutdown_requested:
             logger.debug("Client disconnected (probe/healthcheck cycle)")
+            emit_debug_log(
+                "transport",
+                logger,
+                "keyboard_interrupt without shutdown_request transport=%s",
+                transport_mode,
+                config=config,
+            )
     except Exception as e:
+        emit_debug_log(
+            "transport",
+            logger,
+            "server_error transport=%s error=%s",
+            transport_mode,
+            e,
+            level=logging.ERROR,
+            config=config,
+        )
         logger.error(f"MCP server error: {e}")
         raise

@@ -5,8 +5,10 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import re
+import time
 from collections.abc import Sequence
 from typing import Any, Literal, cast
 
@@ -19,6 +21,7 @@ from server.adapters.mcp.contracts.reference import (
     ReferenceUnderstandingSummaryContract,
     ReferenceUnderstandingVisualEvidenceRefContract,
 )
+from server.infrastructure.debug_profiles import emit_debug_log
 
 from . import OpenAICompatibleVisionBackend
 from .backend import VisionImageInput, VisionRequest
@@ -30,6 +33,7 @@ from .config import (
 )
 
 _SEGMENTATION_ARTIFACT_KINDS = {"mask", "crop", "box"}
+logger = logging.getLogger(__name__)
 
 
 def _resolve_api_key(*, inline_key: str | None, env_name: str | None) -> str | None:
@@ -356,12 +360,26 @@ async def _collect_classifier_support(
     GateSourceProvenanceContract | None,
 ]:
     if config is None or not config.enabled or not config.endpoint:
+        emit_debug_log(
+            "vision",
+            logger,
+            "optional_classifier skipped enabled=%s endpoint_configured=%s",
+            bool(getattr(config, "enabled", False)),
+            bool(getattr(config, "endpoint", None)),
+        )
         return [], [], None
 
     reference_ids = [item["reference_id"] for item in request_payload.get("references", []) if item.get("reference_id")]
     if not reference_ids:
+        emit_debug_log(
+            "vision",
+            logger,
+            "optional_classifier skipped enabled=%s reason=no_reference_ids",
+            True,
+        )
         return [], [], None
 
+    started = time.perf_counter()
     try:
         if config.provider_name == "generic_sidecar":
             payload = await _post_sidecar_payload(
@@ -387,7 +405,27 @@ async def _collect_classifier_support(
             )
         else:
             summary_text = "Optional reference classifier returned no bounded scores."
+        emit_debug_log(
+            "vision",
+            logger,
+            "optional_classifier success provider=%s model=%s elapsed_ms=%.1f score_count=%d",
+            config.provider_name,
+            config.model,
+            (time.perf_counter() - started) * 1000.0,
+            len(scores),
+        )
     except Exception as exc:
+        sanitized_error = _redact_local_paths(str(exc)) or "unknown_error"
+        emit_debug_log(
+            "vision",
+            logger,
+            "optional_classifier unavailable provider=%s model=%s elapsed_ms=%.1f reason=%s",
+            config.provider_name,
+            config.model,
+            (time.perf_counter() - started) * 1000.0,
+            sanitized_error,
+            level=logging.WARNING,
+        )
         return (
             [],
             [],
@@ -433,12 +471,26 @@ async def _collect_segmentation_support(
     GateSourceProvenanceContract | None,
 ]:
     if config is None or not config.enabled or not config.endpoint:
+        emit_debug_log(
+            "vision",
+            logger,
+            "optional_segmentation skipped enabled=%s endpoint_configured=%s",
+            bool(getattr(config, "enabled", False)),
+            bool(getattr(config, "endpoint", None)),
+        )
         return [], [], None
 
     reference_ids = [item["reference_id"] for item in request_payload.get("references", []) if item.get("reference_id")]
     if not reference_ids:
+        emit_debug_log(
+            "vision",
+            logger,
+            "optional_segmentation skipped enabled=%s reason=no_reference_ids",
+            True,
+        )
         return [], [], None
 
+    started = time.perf_counter()
     try:
         payload = await _post_sidecar_payload(
             endpoint=config.endpoint,
@@ -455,7 +507,27 @@ async def _collect_segmentation_support(
             summary_text = f"Optional segmentation sidecar returned {len(artifacts)} artifact link(s)."
         else:
             summary_text = "Optional segmentation sidecar returned no bounded artifact links."
+        emit_debug_log(
+            "vision",
+            logger,
+            "optional_segmentation success provider=%s model=%s elapsed_ms=%.1f artifact_count=%d",
+            config.provider_name,
+            config.model,
+            (time.perf_counter() - started) * 1000.0,
+            len(artifacts),
+        )
     except Exception as exc:
+        sanitized_error = _redact_local_paths(str(exc)) or "unknown_error"
+        emit_debug_log(
+            "vision",
+            logger,
+            "optional_segmentation unavailable provider=%s model=%s elapsed_ms=%.1f reason=%s",
+            config.provider_name,
+            config.model,
+            (time.perf_counter() - started) * 1000.0,
+            sanitized_error,
+            level=logging.WARNING,
+        )
         return (
             [],
             [],

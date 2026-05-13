@@ -70,6 +70,15 @@ The current router safety baseline separates decision policy, audit trail, and v
 - inconclusive verification is surfaced explicitly and must not be treated as silent success
 - router telemetry/logs carry the same `audit_ids` so operator traces can be correlated with MCP responses
 
+For bounded operator diagnostics on the normal Docker/server terminal, use the
+shared selector instead of one-off logger edits:
+
+- `BLENDER_AI_DEBUG=router` for router goal/status, handler, and execution-audit summaries
+- `BLENDER_AI_DEBUG=router,guided_flow` when the issue crosses goal routing and
+  guided-flow state transitions
+- `BLENDER_AI_DEBUG=router,guided_flow,transport` when a Streamable/stdio
+  bootstrap or surfaced session-identity problem is mixed into the same trace
+
 ## Guided Execution Gate
 
 On `llm-guided`, mutating tool calls must resolve to an allowed guided family

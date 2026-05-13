@@ -1,6 +1,6 @@
 # TASK-167-02-03: Guided Flow And Router Debug Profile Instrumentation
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-167-02](./TASK-167-02_Runtime_Instrumentation_And_Targeted_Log_Routing.md)
 **Objective:** Own the combined `guided_flow` / `router` branch only as a decomposition parent, then split the actual implementation into two focused leaves so guided-flow state shaping and router/runtime summaries do not get implemented in one oversized pass.

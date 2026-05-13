@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -217,6 +218,36 @@ def test_silhouette_analysis_produces_metrics_and_upper_profile_action_hint(tmp_
     hint_types = {hint.hint_type for hint in action_hints}
 
     assert "widen_upper_profile" in hint_types
+
+
+def test_reference_images_list_emits_reference_debug_log(monkeypatch, caplog):
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="low poly creature",
+            reference_images=[
+                {
+                    "reference_id": "ref_front",
+                    "goal": "low poly creature",
+                    "label": "front_ref",
+                    "media_type": "image/png",
+                    "original_path": "/tmp/front.png",
+                    "stored_path": "/tmp/front.png",
+                    "host_visible_path": "/tmp/front.png",
+                    "added_at": "2026-05-13T10:00:00Z",
+                }
+            ],
+        ),
+    )
+    monkeypatch.setenv("BLENDER_AI_DEBUG", "reference")
+
+    with caplog.at_level(logging.INFO, logger="server.adapters.mcp.areas.reference_images_runtime"):
+        result = asyncio.run(reference_images(ctx, action="list"))
+
+    assert result.action == "list"
+    assert "[REFERENCE_DEBUG] list goal_present=True visible_count=1" in caplog.text
 
 
 def test_silhouette_analysis_selects_matching_focus_capture(tmp_path: Path):

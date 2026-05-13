@@ -1,6 +1,6 @@
 # TASK-167-02-01: Reference And Vision Debug Profile Instrumentation
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-167-02](./TASK-167-02_Runtime_Instrumentation_And_Targeted_Log_Routing.md)
 **Objective:** Add bounded `reference` and `vision` debug instrumentation to the existing reference attach/RU/compare/iterate/optional-support seams so operators can attribute slow attach paths, blocked readiness, checkpoint compare/iterate timing, backend selection, and optional classifier/segmentation follow-ons directly from the Docker/server terminal.

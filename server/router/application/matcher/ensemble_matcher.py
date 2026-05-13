@@ -62,7 +62,7 @@ class EnsembleMatcher:
         self._matchers: List[IMatcher] = [keyword_matcher, semantic_matcher, pattern_matcher]
         self._aggregator = aggregator
         self._config = config or RouterConfig()
-        self._router_logger = RouterLogger()
+        self._router_logger = RouterLogger(enabled=self._config.log_decisions)
         self._is_initialized = False
 
     def initialize(self, registry: "WorkflowRegistry") -> None:

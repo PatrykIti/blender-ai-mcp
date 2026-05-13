@@ -5,6 +5,7 @@ TASK-055-5, TASK-055-6
 TASK-055-FIX: Updated for unified set_goal interface.
 """
 
+import logging
 from typing import Any, Dict, List, Optional
 from unittest.mock import MagicMock
 
@@ -254,6 +255,15 @@ class TestSetGoalUnified:
         assert result["unresolved"] == []
         assert result["phase_hint"] == "build"
         assert "guided build surface" in result["message"]
+
+    def test_set_goal_no_match_emits_router_debug_log(self, handler, monkeypatch, caplog):
+        monkeypatch.setenv("BLENDER_AI_DEBUG", "router")
+
+        with caplog.at_level(logging.INFO, logger="server.application.tool_handlers.router_handler"):
+            result = handler.set_goal("random unmatched goal")
+
+        assert result["status"] == "no_match"
+        assert "[ROUTER_DEBUG] handler_no_match continuation_mode=guided_manual_build" in caplog.text
 
     def test_set_goal_treats_viewport_capture_request_as_utility_no_match(self, handler, mock_router):
         """Utility/capture requests should not be routed into build workflows."""

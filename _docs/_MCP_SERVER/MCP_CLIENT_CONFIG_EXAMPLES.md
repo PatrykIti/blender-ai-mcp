@@ -113,6 +113,7 @@ Uses the external-runtime path with OpenRouter-specific config aliases:
         "VISION_OPENROUTER_REQUIRE_PARAMETERS": "false",
         "VISION_OPENROUTER_ENABLE_RESPONSE_HEALING": "true",
         "VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN": "true",
+        "BLENDER_AI_DEBUG": "vision,reference",
         "VISION_MAX_IMAGES": "8",
         "VISION_MAX_INPUT_CHARS": "12000",
         "VISION_MAX_TOKENS": "600",
@@ -258,6 +259,7 @@ docker run --rm \
   -e MCP_HTTP_PORT=8000 \
   -e MCP_STREAMABLE_HTTP_PATH=/mcp \
   -e MCP_PROMPTS_AS_TOOLS_ENABLED=false \
+  -e BLENDER_AI_DEBUG=router,guided_flow,transport \
   -e BLENDER_RPC_HOST=host.docker.internal \
   -e PYTHONUNBUFFERED=1 \
   ghcr.io/patrykiti/blender-ai-mcp:latest
@@ -313,6 +315,7 @@ Set it to `true` only for clients that cannot consume native prompt components.
         "-e", "VISION_OPENROUTER_REQUIRE_PARAMETERS=false",
         "-e", "VISION_OPENROUTER_ENABLE_RESPONSE_HEALING=true",
         "-e", "VISION_OPENROUTER_PREFER_JSON_OBJECT_FOR_QWEN=true",
+        "-e", "BLENDER_AI_DEBUG=vision,reference,transport",
         "-e", "VISION_MAX_IMAGES=8",
         "-e", "VISION_MAX_INPUT_CHARS=12000",
         "-e", "VISION_MAX_TOKENS=600",

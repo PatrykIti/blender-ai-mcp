@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import logging
 import mimetypes
 import shutil
 from collections.abc import Awaitable, Callable
@@ -36,7 +37,10 @@ from server.adapters.mcp.session_capabilities import (
     replace_session_reference_images_async,
     session_has_ready_guided_reference_goal,
 )
+from server.infrastructure.debug_profiles import emit_debug_log
 from server.infrastructure.tmp_paths import get_reference_image_storage_path
+
+logger = logging.getLogger(__name__)
 
 _ALLOWED_IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}
 
@@ -253,6 +257,16 @@ async def _clear_reference_images(
         ctx_info(ctx, "[REFERENCE] Cleared visible session reference images")
     else:
         ctx_info(ctx, "[REFERENCE] Cleared session reference images")
+    emit_debug_log(
+        "reference",
+        logger,
+        "clear goal_present=%s active_before=%d pending_before=%d visible_after=%d staged=%s",
+        session.goal is not None,
+        len(store.active_references),
+        len(store.pending_references),
+        len(session.reference_images or []),
+        store.stage_for_later_adoption,
+    )
     return _as_response(action="clear", goal=session.goal, references=[], session_state=session, message=message)
 
 
@@ -288,6 +302,16 @@ async def _remove_reference_image(
         remaining_pending.append(item)
 
     if not removed_records:
+        emit_debug_log(
+            "reference",
+            logger,
+            "remove_missing goal_present=%s reference_id=%s active_count=%d pending_count=%d",
+            session.goal is not None,
+            reference_id,
+            len(store.active_references),
+            len(store.pending_references),
+            level=logging.WARNING,
+        )
         return _as_response(
             action="remove",
             goal=session.goal,
@@ -312,6 +336,16 @@ async def _remove_reference_image(
         ctx_info(ctx, f"[REFERENCE] Removed visible session reference image {reference_id}")
     else:
         ctx_info(ctx, f"[REFERENCE] Removed reference image {reference_id}")
+    emit_debug_log(
+        "reference",
+        logger,
+        "remove reference_id=%s removed=%d active_after=%d pending_after=%d staged=%s",
+        reference_id,
+        len(removed_records),
+        len(remaining),
+        len(remaining_pending),
+        store.stage_for_later_adoption,
+    )
     return _as_response(
         action="remove",
         goal=session.goal,
@@ -359,6 +393,14 @@ async def _attach_reference_image(
 
     resolved_source_path = cast(str | None, canonical_arguments.get("source_path"))
     if not resolved_source_path:
+        emit_debug_log(
+            "reference",
+            logger,
+            "attach_rejected reason=missing_source_path goal_present=%s staged=%s",
+            store.session.goal is not None,
+            store.stage_for_later_adoption,
+            level=logging.WARNING,
+        )
         return _as_response(
             action="attach",
             goal=store.session.goal,
@@ -389,6 +431,19 @@ async def _attach_reference_image(
         target_object=target_object,
         target_view=target_view,
     )
+    emit_debug_log(
+        "reference",
+        logger,
+        "attach_start goal_present=%s active_before=%d pending_before=%d has_label=%s has_notes=%s target_object=%s target_view=%s staged=%s",
+        store.session.goal is not None,
+        len(store.active_references),
+        len(store.pending_references),
+        bool(label),
+        bool(notes),
+        bool(target_object),
+        bool(target_view),
+        store.stage_for_later_adoption,
+    )
 
     if store.stage_for_later_adoption:
         pending_updated = [*store.pending_references, reference]
@@ -400,6 +455,14 @@ async def _attach_reference_image(
         )
         session = await get_session_capability_state_async(ctx)
         ctx_info(ctx, f"[REFERENCE] Attached pending reference image {reference['reference_id']}")
+        emit_debug_log(
+            "reference",
+            logger,
+            "attach_pending reference_id=%s pending_after=%d visible_after=%d",
+            reference["reference_id"],
+            len(pending_updated),
+            len(visible_updated),
+        )
         return _as_response(
             action="attach",
             goal=session.goal,
@@ -415,6 +478,14 @@ async def _attach_reference_image(
     session = await replace_session_reference_images_async(ctx, updated_active)
     session = await refresh_reference_understanding(ctx, session)
     ctx_info(ctx, f"[REFERENCE] Attached reference image {reference['reference_id']} for goal '{session.goal}'")
+    emit_debug_log(
+        "reference",
+        logger,
+        "attach_active reference_id=%s active_after=%d goal_present=%s",
+        reference["reference_id"],
+        len(updated_active),
+        session.goal is not None,
+    )
     return _as_response(
         action="attach",
         goal=session.goal,
@@ -442,6 +513,13 @@ async def handle_reference_images(
 
     normalized_action = str(action).lower()
     if normalized_action not in {"attach", "list", "remove", "clear"}:
+        emit_debug_log(
+            "reference",
+            logger,
+            "invalid_action action=%s",
+            normalized_action,
+            level=logging.WARNING,
+        )
         return _as_response(
             action="list",
             goal=None,
@@ -452,6 +530,16 @@ async def handle_reference_images(
     store = _reference_store(await get_session_capability_state_async(ctx))
 
     if normalized_action == "list":
+        emit_debug_log(
+            "reference",
+            logger,
+            "list goal_present=%s visible_count=%d active_count=%d pending_count=%d staged=%s",
+            store.session.goal is not None,
+            len(store.visible_references),
+            len(store.active_references),
+            len(store.pending_references),
+            store.stage_for_later_adoption,
+        )
         return _as_response(
             action="list",
             goal=store.session.goal,

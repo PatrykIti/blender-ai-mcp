@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import re
 from typing import Any, Literal
 
@@ -19,6 +20,9 @@ from server.adapters.mcp.contracts.guided_flow import (
 )
 from server.adapters.mcp.session_capabilities_state import SessionCapabilityState
 from server.adapters.mcp.transforms.visibility_policy import get_guided_overlay_family_order
+from server.infrastructure.debug_profiles import emit_debug_log
+
+logger = logging.getLogger(__name__)
 
 _CREATURE_GOAL_HINTS: tuple[str, ...] = (
     "animal",
@@ -684,6 +688,14 @@ def _flow_state_for_current_step(
     contract.next_actions = _default_next_actions_for_step(contract.current_step)
     contract.step_status = _default_step_status_for_step(contract.current_step)
     contract.required_checks = []
+    emit_debug_log(
+        "guided_flow",
+        logger,
+        "step_shape current_step=%s next_actions=%s allowed_family_count=%d",
+        contract.current_step,
+        contract.next_actions,
+        len(contract.allowed_families),
+    )
 
 
 def _should_rearm_spatial_gate(contract: GuidedFlowStateContract, *, force: bool = False) -> bool:
@@ -747,6 +759,14 @@ def _apply_spatial_refresh_gate(
         completed_role_hints=contract.completed_roles,
     )
     _apply_role_summary(contract, role_summary)
+    emit_debug_log(
+        "guided_flow",
+        logger,
+        "spatial_refresh_set current_step=%s required_checks=%s allowed_families=%s",
+        contract.current_step,
+        [check.tool_name for check in contract.required_checks],
+        contract.allowed_families,
+    )
 
 
 def _clear_spatial_refresh_gate(
@@ -758,6 +778,13 @@ def _clear_spatial_refresh_gate(
     contract.spatial_state_stale = False
     contract.last_spatial_check_version = contract.spatial_state_version
     _flow_state_for_current_step(contract, part_registry=part_registry)
+    emit_debug_log(
+        "guided_flow",
+        logger,
+        "spatial_refresh_cleared current_step=%s spatial_state_version=%s",
+        contract.current_step,
+        contract.spatial_state_version,
+    )
 
 
 def _select_guided_flow_domain_profile(

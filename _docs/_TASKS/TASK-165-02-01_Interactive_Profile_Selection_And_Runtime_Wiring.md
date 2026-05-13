@@ -23,6 +23,9 @@
 - keep the runtime/profile wiring extensible enough that the central `TASK-167`
   debug selector can be passed through this same launcher seam instead of
   inventing a parallel launcher-specific debug contract
+- the shared debug-selector overlap landed on 2026-05-13 under
+  [TASK-167](./TASK-167_Cross_Module_Debug_Profile_Registry_And_Runtime_Logging.md);
+  the remaining launcher-family work here stays open
 - if the debug-selector seam is advanced here while `TASK-167-03-01` is still
   open, update both task files in the same branch so the shared launcher seam
   does not drift across families

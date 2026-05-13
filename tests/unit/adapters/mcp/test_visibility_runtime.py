@@ -222,6 +222,7 @@ def test_tracker_lookup_prunes_only_stale_idle_sessions(monkeypatch):
 
 def test_audit_list_tools_snapshot_logs_visibility_mismatch(monkeypatch, caplog):
     ctx = _FakeContext()
+    monkeypatch.setenv("BLENDER_AI_DEBUG", "visibility")
 
     async def fake_state(_ctx: _FakeContext) -> SimpleNamespace:
         return SimpleNamespace(
@@ -256,6 +257,7 @@ def test_audit_list_tools_snapshot_logs_visibility_mismatch(monkeypatch, caplog)
 
 def test_audit_list_tools_snapshot_accepts_shaped_public_names(monkeypatch, caplog):
     ctx = _FakeContext()
+    monkeypatch.setenv("BLENDER_AI_DEBUG", "visibility")
 
     async def fake_state(_ctx: _FakeContext) -> SimpleNamespace:
         return SimpleNamespace(

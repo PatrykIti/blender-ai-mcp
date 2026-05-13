@@ -494,6 +494,15 @@ The harness is intended for:
   - `vision_contract_profile`: resolved external compare-contract selection
 - catching prompt/parse failures before they are hidden inside a larger MCP flow
 
+For normal MCP/runtime troubleshooting, use the shared debug selector instead of
+ad hoc logger changes:
+
+- `BLENDER_AI_DEBUG=vision,reference` for RU backend timing, optional classifier
+  / segmentation support timing, reference attach/list/remove/clear, and staged
+  compare / iterate summaries
+- `BLENDER_AI_DEBUG=transport` when the failure looks like startup or surfaced
+  session/transport identity churn rather than vision logic itself
+
 OpenRouter can now be used through the same `openai_compatible_external` path.
 
 Minimal setup:

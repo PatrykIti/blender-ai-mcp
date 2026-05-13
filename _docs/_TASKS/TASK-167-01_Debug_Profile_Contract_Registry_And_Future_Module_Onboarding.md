@@ -1,6 +1,6 @@
 # TASK-167-01: Debug Profile Contract, Registry, And Future Module Onboarding
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-167](./TASK-167_Cross_Module_Debug_Profile_Registry_And_Runtime_Logging.md)
 **Objective:** Define one central debug selector contract plus a shared registry module so current and future repo-owned modules can opt into bounded debug scopes without inventing their own env vars or logger naming rules.

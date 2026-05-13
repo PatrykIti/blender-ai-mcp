@@ -63,7 +63,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Internal Architecture & Maintainability
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-167](./TASK-167_Cross_Module_Debug_Profile_Registry_And_Runtime_Logging.md) | **Cross-Module Debug Profile Registry And Runtime Logging** | 🔴 High | Board-level follow-on after the current guided/reference/transport runtime waves for introducing one central debug selector such as `all` / `vision` / `tools` / `reference` and routing bounded diagnostics from current and future modules into the normal Docker/server terminal. |
+| [TASK-167](./TASK-167_Cross_Module_Debug_Profile_Registry_And_Runtime_Logging.md) | **Cross-Module Debug Profile Registry And Runtime Logging** | 🔴 High | 2026-05-13: shipped the central `BLENDER_AI_DEBUG` selector, bounded repo-owned debug scopes (`vision`, `reference`, `tools`, `transport`, `visibility`, `guided_flow`, `router`), launcher passthrough, and aligned operator docs/changelog closeout. |
 
 ### Mesh Introspection
 | ID | Title | Priority | Notes |

@@ -8,6 +8,7 @@ MCP_HTTP_HOST="${MCP_HTTP_HOST:-0.0.0.0}"
 MCP_HTTP_PORT="${MCP_HTTP_PORT:-8000}"
 MCP_STREAMABLE_HTTP_PATH="${MCP_STREAMABLE_HTTP_PATH:-/mcp}"
 BLENDER_RPC_HOST="${BLENDER_RPC_HOST:-host.docker.internal}"
+BLENDER_AI_DEBUG="${BLENDER_AI_DEBUG:-}"
 
 VISION_OPENROUTER_MODEL="${VISION_OPENROUTER_MODEL:-x-ai/grok-4.3}"
 VISION_OPENROUTER_SITE_URL="${VISION_OPENROUTER_SITE_URL:-https://example.com}"
@@ -131,6 +132,7 @@ fi
 
 echo "Starting ${IMAGE} in stateful Streamable HTTP mode on http://127.0.0.1:${MCP_HTTP_PORT}${MCP_STREAMABLE_HTTP_PATH}"
 echo "Blender RPC host: ${BLENDER_RPC_HOST}"
+echo "Debug selector: ${BLENDER_AI_DEBUG:-off (unset)}"
 echo "Prompt bridge tools: ${MCP_PROMPTS_AS_TOOLS_ENABLED}"
 echo "Reference classifier enabled: ${VISION_REFERENCE_CLASSIFIER_ENABLED}"
 echo "Reference classifier model override: ${VISION_REFERENCE_CLASSIFIER_MODEL:-<inherits from VISION_OPENROUTER_MODEL>}"
@@ -147,6 +149,7 @@ exec docker run --rm \
   -e MCP_STREAMABLE_HTTP_PATH="${MCP_STREAMABLE_HTTP_PATH}" \
   -e MCP_PROMPTS_AS_TOOLS_ENABLED="${MCP_PROMPTS_AS_TOOLS_ENABLED}" \
   -e BLENDER_RPC_HOST="${BLENDER_RPC_HOST}" \
+  -e BLENDER_AI_DEBUG="${BLENDER_AI_DEBUG}" \
   -e ROUTER_ENABLED=true \
   -e MCP_SURFACE_PROFILE=llm-guided \
   -e VISION_ENABLED=true \

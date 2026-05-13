@@ -40,10 +40,11 @@ Current flow:
 5. Optionally install `vision` dependencies for the local classifier sidecar
 6. Ask for runtime/profile choices
 7. Ask for OpenRouter model / API key if needed
-8. Ask whether to enable the optional classifier and whether it should
+8. Ask for an optional `BLENDER_AI_DEBUG` selector
+9. Ask whether to enable the optional classifier and whether it should
    auto-start locally
-9. Show the final launch plan
-10. Start the Docker-guided MCP profile
+10. Show the final launch plan
+11. Start the Docker-guided MCP profile
 
 ## First Run
 
@@ -62,6 +63,22 @@ The launcher is interactive. It will prompt before:
 - running the Poetry installer
 - running `poetry install --with ...`
 - launching the final MCP server
+
+## Debug Selector
+
+The launcher now forwards the shared `BLENDER_AI_DEBUG` contract through the
+same supported Docker/OpenRouter seam.
+
+Accepted values:
+
+- `off`
+- `all`
+- `vision`, `reference`, `tools`, `transport`, `visibility`, `guided_flow`, `router`
+- comma-separated combinations such as `vision,reference` or `router,guided_flow,transport`
+
+If you leave the prompt blank and `BLENDER_AI_DEBUG` is unset in your shell, the
+launcher keeps the current runtime defaults. If you enter `off`, it explicitly
+suppresses repo-owned debug scopes for that run.
 
 ## Docker On macOS
 

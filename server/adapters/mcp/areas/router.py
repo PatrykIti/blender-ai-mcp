@@ -13,12 +13,19 @@ TASK-046: Extended with semantic matching tools.
 TASK-055-FIX: Unified parameter resolution through single router_set_goal tool.
 """
 
+import logging
 from typing import Any, Dict, List, Optional, cast
 
 from fastmcp import Context
 
 from server.adapters.mcp.areas.reference_feedback import build_reference_orchestrator_feedback
-from server.adapters.mcp.context_utils import ctx_info, ctx_session_id, ctx_transport_type, ctx_warning
+from server.adapters.mcp.context_utils import (
+    ctx_info,
+    ctx_session_id,
+    ctx_transport_type,
+    ctx_warning,
+    log_transport_context,
+)
 from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract
 from server.adapters.mcp.contracts.quality_gates import GatePlanContract
 from server.adapters.mcp.contracts.reference import (
@@ -57,8 +64,11 @@ from server.adapters.mcp.tasks.job_registry import get_background_job_registry
 from server.adapters.mcp.transforms.visibility_policy import build_guided_handoff_payload
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.infrastructure.config import get_config
+from server.infrastructure.debug_profiles import emit_debug_log
 from server.infrastructure.di import get_router_handler, get_scene_handler
 from server.infrastructure.telemetry import get_telemetry_state
+
+logger = logging.getLogger(__name__)
 
 ROUTER_PUBLIC_TOOL_NAMES = (
     "router_set_goal",
@@ -531,6 +541,24 @@ async def router_set_goal(
             diagnostics=_build_repair_diagnostics(result, source="router_set_goal"),
         )
         result["repair_suggestion"] = to_repair_assistant_contract(repair_outcome).model_dump()
+    emit_debug_log(
+        "router",
+        logger,
+        "router_set_goal status=%s workflow=%s unresolved_count=%d phase=%s",
+        result.get("status"),
+        result.get("workflow"),
+        len(result.get("unresolved", []) or []),
+        state.phase.value,
+    )
+    log_transport_context(
+        ctx,
+        operation="router_set_goal",
+        extra={
+            "status": result.get("status"),
+            "workflow": result.get("workflow"),
+            "phase": state.phase.value,
+        },
+    )
 
     return RouterGoalResponseContract.model_validate(result)
 
@@ -645,6 +673,24 @@ async def router_get_status(ctx: Context) -> RouterStatusContract:
             diagnostics=_build_repair_diagnostics(status_payload, source="router_get_status"),
         )
         status_payload["repair_suggestion"] = to_repair_assistant_contract(repair_outcome).model_dump()
+    emit_debug_log(
+        "router",
+        logger,
+        "router_get_status phase=%s last_router_status=%s visible_capability_count=%d hidden_capability_count=%d",
+        session.phase.value,
+        session.last_router_status,
+        len(diagnostics.visible_capability_ids),
+        len(diagnostics.hidden_capability_ids),
+    )
+    log_transport_context(
+        ctx,
+        operation="router_get_status",
+        extra={
+            "phase": session.phase.value,
+            "last_router_status": session.last_router_status,
+            "surface_profile": surface_profile,
+        },
+    )
     return RouterStatusContract.model_validate(status_payload)
 
 
@@ -720,6 +766,8 @@ async def router_clear_goal(ctx: Context) -> str:
     )
     await apply_visibility_for_session_state(ctx, state)
     ctx_info(ctx, "[ROUTER] Goal cleared")
+    emit_debug_log("router", logger, "router_clear_goal phase=%s", state.phase.value)
+    log_transport_context(ctx, operation="router_clear_goal", extra={"phase": state.phase.value})
     return result
 
 

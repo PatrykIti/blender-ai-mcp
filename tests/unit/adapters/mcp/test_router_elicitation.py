@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from dataclasses import dataclass, field
 from types import SimpleNamespace
 
@@ -98,9 +99,10 @@ def test_maybe_elicit_router_answers_keeps_workflow_confirmation_model_facing(mo
     assert "elicitation_action" not in result
 
 
-def test_router_set_goal_needs_input_is_model_facing_on_llm_guided(monkeypatch):
+def test_router_set_goal_needs_input_is_model_facing_on_llm_guided(monkeypatch, caplog):
     """llm-guided should persist pending clarification without human-first elicitation."""
 
+    monkeypatch.setenv("BLENDER_AI_DEBUG", "router,transport")
     monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
 
     class Handler:
@@ -120,7 +122,8 @@ def test_router_set_goal_needs_input_is_model_facing_on_llm_guided(monkeypatch):
     monkeypatch.setattr(router_area, "get_router_handler", lambda: Handler())
 
     ctx = FakeContext(response=object())
-    result = asyncio.run(router_area.router_set_goal(ctx, goal="chair"))
+    with caplog.at_level(logging.INFO):
+        result = asyncio.run(router_area.router_set_goal(ctx, goal="chair"))
 
     session = get_session_capability_state(ctx)
     assert result.status == "needs_input"
@@ -133,6 +136,8 @@ def test_router_set_goal_needs_input_is_model_facing_on_llm_guided(monkeypatch):
     assert session.pending_question_set_id is not None
     assert session.pending_workflow_name == "chair_workflow"
     assert session.last_elicitation_action is None
+    assert "[ROUTER_DEBUG] router_set_goal status=needs_input workflow=chair_workflow" in caplog.text
+    assert "[TRANSPORT_DEBUG] operation=router_set_goal session_id=sess_test transport=stdio" in caplog.text
 
 
 def test_router_set_goal_merges_partial_answers_on_followup(monkeypatch):

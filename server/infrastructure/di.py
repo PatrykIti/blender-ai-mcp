@@ -37,6 +37,7 @@ from server.domain.tools.text import ITextTool
 from server.domain.tools.uv import IUVTool
 from server.domain.tools.workflow_catalog import IWorkflowCatalogTool
 from server.infrastructure.config import get_config
+from server.infrastructure.debug_profiles import debug_scope_enabled
 from server.router.application.policy.correction_policy_engine import CorrectionPolicyEngine
 from server.router.application.policy.postcondition_registry import PostconditionRegistry
 from server.router.infrastructure.workflow_loader import get_workflow_loader
@@ -216,7 +217,7 @@ def get_router_config():
     from server.router.infrastructure.config import RouterConfig
 
     config = get_config()
-    return RouterConfig(log_decisions=config.ROUTER_LOG_DECISIONS)
+    return RouterConfig(log_decisions=debug_scope_enabled("router", config=config))
 
 
 def get_correction_policy_engine() -> CorrectionPolicyEngine:

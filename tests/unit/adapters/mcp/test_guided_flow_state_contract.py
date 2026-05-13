@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from dataclasses import dataclass, field
 from typing import Any, cast
 
@@ -2186,3 +2187,46 @@ def test_checkpoint_iterate_role_summary_keeps_missing_build_roles_visible():
     assert state.guided_flow_state["spatial_state_stale"] is True
     assert state.guided_flow_state["spatial_refresh_required"] is False
     assert state.guided_flow_state["allowed_roles"] == ["tail_mass", "snout_mass"]
+
+
+def test_mark_guided_spatial_state_stale_emits_guided_flow_debug(monkeypatch, caplog):
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "active_target_scope": _scope("Creature"),
+                "spatial_scope_fingerprint": "scope_1",
+                "required_checks": [],
+                "required_prompts": ["guided_session_start"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["secondary_parts", "reference_context"],
+                "step_status": "ready",
+                "spatial_state_version": 0,
+                "last_spatial_check_version": 0,
+                "spatial_state_stale": False,
+                "spatial_refresh_required": False,
+                "completed_roles": [],
+                "missing_roles": [],
+                "required_role_groups": [],
+                "role_counts": {},
+                "role_cardinality": {},
+                "role_objects": {},
+            },
+        ),
+    )
+    monkeypatch.setenv("BLENDER_AI_DEBUG", "guided_flow")
+
+    with caplog.at_level(logging.INFO, logger="server.adapters.mcp.session_capabilities_runtime_glue"):
+        state = mark_guided_spatial_state_stale(ctx, tool_name="modeling_transform_object")
+
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["spatial_state_stale"] is True
+    assert "[GUIDED_FLOW_DEBUG] spatial_state_stale tool=modeling_transform_object" in caplog.text

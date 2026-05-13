@@ -31,6 +31,7 @@ from server.adapters.mcp.transforms.visibility_policy import (
 )
 from server.adapters.mcp.version_policy import CONTRACT_LINE_LLM_GUIDED_V2
 from server.adapters.mcp.visibility_runtime import run_visibility_observation
+from server.infrastructure.debug_profiles import emit_debug_log
 
 from .search_documents import build_search_documents
 from .tool_inventory import build_discovery_entry_map, get_pinned_public_tools
@@ -369,17 +370,22 @@ class BlenderDiscoverySearchTransform(BM25SearchTransform):
                     raise ValueError("call_tool(..., arguments=...) JSON string must decode to an object/dict.")
                 resolved_arguments = parsed_arguments
             canonical_arguments = transform._canonicalize_call_arguments(resolved_name, resolved_arguments)
-            logger.info(
+            emit_debug_log(
+                "tools",
+                logger,
                 "[CALL_TOOL_PROXY] name=%s canonical_arg_keys=%s",
                 resolved_name,
                 sorted(canonical_arguments.keys()) if isinstance(canonical_arguments, dict) else [],
             )
             entry = transform._entry_map.get(resolved_name)
             if entry is None:
-                logger.warning(
+                emit_debug_log(
+                    "tools",
+                    logger,
                     "[CALL_TOOL_PROXY] unknown_tool name=%s canonical_arg_keys=%s",
                     resolved_name,
                     sorted(canonical_arguments.keys()) if isinstance(canonical_arguments, dict) else [],
+                    level=logging.WARNING,
                 )
                 raise ToolError(_unknown_tool_error_message(resolved_name))
 
@@ -390,10 +396,13 @@ class BlenderDiscoverySearchTransform(BM25SearchTransform):
                 session_state=session_state,
             )
             if tool_is_visible is False:
-                logger.warning(
+                emit_debug_log(
+                    "tools",
+                    logger,
                     "[CALL_TOOL_PROXY] hidden_tool name=%s spatial_refresh_required=%s",
                     resolved_name,
                     hidden_due_to_spatial_refresh,
+                    level=logging.WARNING,
                 )
                 raise ToolError(
                     _guided_hidden_tool_error_message(
@@ -413,10 +422,13 @@ class BlenderDiscoverySearchTransform(BM25SearchTransform):
                     else await transform._is_tool_currently_visible_safe(ctx, resolved_name)
                 )
                 if tool_is_visible is False:
-                    logger.warning(
+                    emit_debug_log(
+                        "tools",
+                        logger,
                         "[CALL_TOOL_PROXY] hidden_tool_after_not_found name=%s spatial_refresh_required=%s",
                         resolved_name,
                         hidden_due_to_spatial_refresh,
+                        level=logging.WARNING,
                     )
                     raise ToolError(
                         _guided_hidden_tool_error_message(
@@ -425,10 +437,13 @@ class BlenderDiscoverySearchTransform(BM25SearchTransform):
                             hidden_due_to_spatial_refresh=hidden_due_to_spatial_refresh,
                         )
                     ) from exc
-                logger.warning(
+                emit_debug_log(
+                    "tools",
+                    logger,
                     "[CALL_TOOL_PROXY] unknown_tool name=%s canonical_arg_keys=%s",
                     resolved_name,
                     sorted(canonical_arguments.keys()) if isinstance(canonical_arguments, dict) else [],
+                    level=logging.WARNING,
                 )
                 raise ToolError(_unknown_tool_error_message(resolved_name)) from exc
 

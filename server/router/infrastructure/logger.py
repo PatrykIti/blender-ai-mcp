@@ -109,6 +109,13 @@ class RouterLogger:
             "errors": 0,
         }
 
+    def _emit(self, level: int, message: str) -> None:
+        """Write one console log only when router diagnostics are enabled."""
+
+        if not self.enabled:
+            return
+        self.logger.log(level, message)
+
     def set_session_id(self, session_id: str) -> None:
         """Set current session ID for event grouping.
 
@@ -165,7 +172,7 @@ class RouterLogger:
         )
         self._add_event(event)
 
-        self.logger.info(f"[ROUTER] Intercepted: {tool_name} params={json.dumps(params, default=str)}")
+        self._emit(logging.INFO, f"[ROUTER] Intercepted: {tool_name} params={json.dumps(params, default=str)}")
 
     def log_context_analyzed(
         self,
@@ -193,8 +200,9 @@ class RouterLogger:
         )
         self._add_event(event)
 
-        self.logger.info(
-            f"[ROUTER] Context: mode={mode}, active={active_object}, selection={has_selection}, objects={object_count}"
+        self._emit(
+            logging.INFO,
+            f"[ROUTER] Context: mode={mode}, active={active_object}, selection={has_selection}, objects={object_count}",
         )
 
     def log_pattern_detected(
@@ -220,7 +228,7 @@ class RouterLogger:
         )
         self._add_event(event)
 
-        self.logger.info(f"[ROUTER] Pattern: {pattern_name} (confidence={confidence:.2f})")
+        self._emit(logging.INFO, f"[ROUTER] Pattern: {pattern_name} (confidence={confidence:.2f})")
 
     def log_correction(
         self,
@@ -247,7 +255,7 @@ class RouterLogger:
         )
         self._add_event(event)
 
-        self.logger.info(f"[ROUTER] Correction: {original_tool} → {', '.join(corrections)}")
+        self._emit(logging.INFO, f"[ROUTER] Correction: {original_tool} → {', '.join(corrections)}")
 
     def log_override(
         self,
@@ -275,7 +283,7 @@ class RouterLogger:
         self._add_event(event)
 
         replacement_names = [t.get("tool", "unknown") for t in replacement_tools]
-        self.logger.info(f"[ROUTER] Override: {original_tool} → {', '.join(replacement_names)} ({reason})")
+        self._emit(logging.INFO, f"[ROUTER] Override: {original_tool} → {', '.join(replacement_names)} ({reason})")
 
     def log_workflow_expanded(
         self,
@@ -302,7 +310,7 @@ class RouterLogger:
         )
         self._add_event(event)
 
-        self.logger.info(f"[ROUTER] Workflow: {workflow_name} ({step_count} steps)")
+        self._emit(logging.INFO, f"[ROUTER] Workflow: {workflow_name} ({step_count} steps)")
 
     def log_firewall(
         self,
@@ -332,7 +340,7 @@ class RouterLogger:
         )
         self._add_event(event)
 
-        self.logger.info(f"[ROUTER] Firewall: {tool_name} → {action}: {message}")
+        self._emit(logging.INFO, f"[ROUTER] Firewall: {tool_name} → {action}: {message}")
 
     def log_execution_complete(
         self,
@@ -361,8 +369,9 @@ class RouterLogger:
         self._add_event(event)
 
         status = "OK" if success else "FAILED"
-        self.logger.info(
-            f"[ROUTER] Done: {original_tool} → {len(executed_tools)} tools ({duration_ms:.1f}ms) [{status}]"
+        self._emit(
+            logging.INFO,
+            f"[ROUTER] Done: {original_tool} → {len(executed_tools)} tools ({duration_ms:.1f}ms) [{status}]",
         )
 
     def log_execution_audit(
@@ -386,8 +395,9 @@ class RouterLogger:
         self._add_event(event)
 
         ids = ",".join(audit_ids) if audit_ids else "-"
-        self.logger.info(
-            f"[ROUTER] Audit: {tool_name} disposition={disposition} verification={verification_status} audit_ids={ids}"
+        self._emit(
+            logging.INFO,
+            f"[ROUTER] Audit: {tool_name} disposition={disposition} verification={verification_status} audit_ids={ids}",
         )
 
     def log_error(
@@ -415,7 +425,7 @@ class RouterLogger:
         )
         self._add_event(event)
 
-        self.logger.error(f"[ROUTER] Error: {tool_name}: {error}")
+        self._emit(logging.ERROR, f"[ROUTER] Error: {tool_name}: {error}")
 
     def log_info(self, message: str) -> None:
         """Log an info message.
@@ -423,7 +433,7 @@ class RouterLogger:
         Args:
             message: Message to log.
         """
-        self.logger.info(f"[ROUTER] {message}")
+        self._emit(logging.INFO, f"[ROUTER] {message}")
 
     def get_events(
         self,

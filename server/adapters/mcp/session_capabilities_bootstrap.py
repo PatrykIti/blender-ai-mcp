@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import asdict, replace
 from typing import Any
 
@@ -37,7 +38,10 @@ from server.adapters.mcp.session_capabilities_state import (
     set_session_capability_state_async,
 )
 from server.adapters.mcp.session_phase import SessionPhase, coerce_session_phase
+from server.infrastructure.debug_profiles import emit_debug_log
 from server.router.application.session_phase_hints import derive_phase_hint_from_router_result
+
+logger = logging.getLogger(__name__)
 
 
 def infer_phase_from_router_status(
@@ -159,6 +163,13 @@ async def bootstrap_guided_empty_scene_primary_workset_async(ctx: Context) -> Se
 
     state = replace(current, guided_flow_state=contract.model_dump(mode="json"))
     await set_session_capability_state_async(ctx, state)
+    emit_debug_log(
+        "guided_flow",
+        logger,
+        "empty_scene_bootstrap current_step=%s next_actions=%s",
+        contract.current_step,
+        contract.next_actions,
+    )
     return state
 
 
@@ -465,6 +476,22 @@ async def update_session_from_router_goal_async(
     if gate_proposal is not None:
         state, _ = ingest_quality_gate_proposal_for_state(state, gate_proposal)
     await set_session_capability_state_async(ctx, state)
+    emit_debug_log(
+        "guided_flow",
+        logger,
+        "router_goal_state_update status=%s phase=%s same_goal=%s goal_ready=%s pending_refs=%d active_refs=%d current_step=%s",
+        status,
+        phase.value,
+        same_goal,
+        goal_ready,
+        len(pending_reference_images or []),
+        len(reference_images or []),
+        (
+            GuidedFlowStateContract.model_validate(guided_flow_state).current_step
+            if guided_flow_state is not None
+            else None
+        ),
+    )
     return state
 
 
@@ -539,6 +566,13 @@ async def clear_session_goal_state_async(
         pending_reference_images=None,
     )
     await set_session_capability_state_async(ctx, state)
+    emit_debug_log(
+        "guided_flow",
+        logger,
+        "goal_state_cleared phase=%s surface_profile=%s",
+        state.phase.value,
+        state.surface_profile,
+    )
     return state
 
 

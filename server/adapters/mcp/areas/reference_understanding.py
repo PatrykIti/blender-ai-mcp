@@ -5,7 +5,9 @@
 
 from __future__ import annotations
 
+import logging
 import re
+import time
 from collections.abc import Awaitable, Callable
 from dataclasses import replace
 from typing import Any, Literal
@@ -31,6 +33,9 @@ from server.adapters.mcp.session_capabilities import SessionCapabilityState
 from server.adapters.mcp.vision import VisionBackendUnavailableError, VisionImageInput, VisionRequest
 from server.adapters.mcp.vision.reference_gates import derive_tail_profile_gate_proposals
 from server.adapters.mcp.vision.reference_support import augment_reference_understanding_optional_support
+from server.infrastructure.debug_profiles import emit_debug_log
+
+logger = logging.getLogger(__name__)
 
 
 def blocked_reference_understanding_summary(
@@ -269,6 +274,12 @@ async def refresh_reference_understanding_summary(
         tracked_gate_ids=current.reference_understanding_gate_ids,
     )
     if not current.goal:
+        emit_debug_log(
+            "vision",
+            logger,
+            "ru_skip reason=goal_required active_reference_count=%d",
+            len(current.reference_images or []),
+        )
         cleared = replace(
             current,
             gate_plan=None if base_gate_plan is None else base_gate_plan.model_dump(mode="json", exclude_none=True),
@@ -286,6 +297,13 @@ async def refresh_reference_understanding_summary(
     reference_records = _active_reference_records(current)
     reference_ids = [record.reference_id for record in reference_records]
     if not reference_records:
+        emit_debug_log(
+            "vision",
+            logger,
+            "ru_blocked reason=reference_images_required goal_present=%s",
+            current.goal is not None,
+            level=logging.WARNING,
+        )
         blocked = blocked_reference_understanding_summary(
             goal=current.goal,
             reason="reference_images_required",
@@ -323,6 +341,13 @@ async def refresh_reference_understanding_summary(
             else current.reference_understanding_gate_ids
         )
         if _optional_support_needs_refresh(summary, runtime_config=runtime_config):
+            emit_debug_log(
+                "vision",
+                logger,
+                "ru_cached_optional_support_refresh reference_count=%d model=%s",
+                len(reference_records),
+                getattr(runtime_config, "active_model_name", None) if runtime_config is not None else None,
+            )
             refreshed_summary = await augment_reference_understanding_optional_support(
                 summary,
                 goal=current.goal,
@@ -352,6 +377,13 @@ async def refresh_reference_understanding_summary(
                     apply_visibility_for_session_state=apply_visibility_for_session_state,
                 )
 
+        emit_debug_log(
+            "vision",
+            logger,
+            "ru_cached_reuse reference_count=%d model=%s",
+            len(reference_records),
+            getattr(runtime_config, "active_model_name", None) if runtime_config is not None else None,
+        )
         if current.reference_strategy_state is None:
             rebuilt_strategy = build_reference_strategy_state(summary)
             if rebuilt_strategy is not None:
@@ -382,24 +414,59 @@ async def refresh_reference_understanding_summary(
         build_reference_capture_images=build_reference_capture_images,
     )
     resolver = get_vision_backend_resolver()
+    runtime_config = getattr(resolver, "runtime_config", None)
+    provider_name = getattr(runtime_config, "provider", None) if runtime_config is not None else None
+    model_name = getattr(runtime_config, "active_model_name", None) if runtime_config is not None else None
+    started = time.perf_counter()
+    emit_debug_log(
+        "vision",
+        logger,
+        "ru_start reference_count=%d provider=%s model=%s goal_present=%s",
+        len(reference_records),
+        provider_name,
+        model_name,
+        current.goal is not None,
+    )
     try:
         backend = resolver.resolve_default()
         payload = await backend.analyze(request)
         summary = ReferenceUnderstandingSummaryContract.model_validate(payload)
         summary = augment_reference_understanding_summary(summary, reference_records=reference_records)
         summary = _with_reference_understanding_profile_gate_defaults(summary)
-        runtime_config = getattr(resolver, "runtime_config", None)
         summary = await augment_reference_understanding_optional_support(
             summary,
             goal=current.goal,
             reference_records=reference_records,
             runtime_config=runtime_config,
         )
+        emit_debug_log(
+            "vision",
+            logger,
+            "ru_finish reference_count=%d elapsed_ms=%.1f provider=%s model=%s status=%s",
+            len(reference_records),
+            (time.perf_counter() - started) * 1000.0,
+            provider_name,
+            model_name,
+            summary.status,
+        )
     except VisionBackendUnavailableError as exc:
+        elapsed_ms = (time.perf_counter() - started) * 1000.0
+        sanitized_error = _sanitize_reference_understanding_error_message(str(exc))
+        emit_debug_log(
+            "vision",
+            logger,
+            "ru_unavailable reference_count=%d elapsed_ms=%.1f provider=%s model=%s reason=%s",
+            len(reference_records),
+            elapsed_ms,
+            provider_name,
+            model_name,
+            sanitized_error,
+            level=logging.WARNING,
+        )
         unavailable = blocked_reference_understanding_summary(
             goal=current.goal,
             reason="vision_backend_unavailable",
-            message=_sanitize_reference_understanding_error_message(str(exc)),
+            message=sanitized_error,
             reference_ids=reference_ids,
         )
         unavailable_strategy = build_reference_strategy_state(unavailable)
@@ -421,12 +488,25 @@ async def refresh_reference_understanding_summary(
             apply_visibility_for_session_state=apply_visibility_for_session_state,
         )
     except Exception as exc:
+        elapsed_ms = (time.perf_counter() - started) * 1000.0
+        sanitized_error = _sanitize_reference_understanding_error_message(
+            f"Reference understanding could not complete: {exc}"
+        )
+        emit_debug_log(
+            "vision",
+            logger,
+            "ru_error reference_count=%d elapsed_ms=%.1f provider=%s model=%s reason=%s",
+            len(reference_records),
+            elapsed_ms,
+            provider_name,
+            model_name,
+            sanitized_error,
+            level=logging.WARNING,
+        )
         unavailable = blocked_reference_understanding_summary(
             goal=current.goal,
             reason="vision_backend_unavailable",
-            message=_sanitize_reference_understanding_error_message(
-                f"Reference understanding could not complete: {exc}"
-            ),
+            message=sanitized_error,
             reference_ids=reference_ids,
         )
         unavailable_strategy = build_reference_strategy_state(unavailable)

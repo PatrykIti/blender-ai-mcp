@@ -23,6 +23,7 @@ export OPENROUTER_API_KEY=...
 export VISION_REFERENCE_CLASSIFIER_ENABLED=true
 export VISION_REFERENCE_CLASSIFIER_PROVIDER=generic_sidecar
 export VISION_REFERENCE_CLASSIFIER_MODEL=google/siglip2-base-patch16-224
+export BLENDER_AI_DEBUG=vision,reference,transport
 ./scripts/run_streamable_openrouter.sh
 ```
 
@@ -34,6 +35,7 @@ export VISION_REFERENCE_CLASSIFIER_ENABLED=true
 export VISION_REFERENCE_CLASSIFIER_PROVIDER=generic_sidecar
 export REFERENCE_CLASSIFIER_AUTO_START=false
 export VISION_REFERENCE_CLASSIFIER_ENDPOINT=http://my-remote-host:9200/classify
+export BLENDER_AI_DEBUG=router,guided_flow,transport
 ./scripts/run_streamable_openrouter.sh
 ```
 
@@ -43,3 +45,6 @@ export VISION_REFERENCE_CLASSIFIER_ENDPOINT=http://my-remote-host:9200/classify
 - The initial implementation targets local SigLIP2 via `transformers` + `torch`.
 - If you want to experiment with a different model, override
   `REFERENCE_CLASSIFIER_MODEL` or `VISION_REFERENCE_CLASSIFIER_MODEL`.
+- `BLENDER_AI_DEBUG` accepts `off`, `all`, or one or more of
+  `vision`, `reference`, `tools`, `transport`, `visibility`, `guided_flow`,
+  `router`.
