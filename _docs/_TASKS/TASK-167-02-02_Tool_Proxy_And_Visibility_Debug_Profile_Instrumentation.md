@@ -95,5 +95,5 @@ if debug_scope_enabled("visibility"):
 
 ## Validation Category
 
-- focused unit and transport integration tests
+- focused unit plus guided transport/surface-parity integration tests
 - `git diff --check`

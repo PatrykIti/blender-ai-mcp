@@ -34,6 +34,14 @@
 - guided-flow and router share adjacent seams, but they are different execution
   tracks and should be proved separately
 
+## Pseudocode
+
+```text
+delegate guided_flow state-shaping work -> TASK-167-02-03-01
+delegate router/logger/audit work -> TASK-167-02-03-02
+close this parent only after both children are green on their owned seams
+```
+
 ## Runtime / Security Contract Notes
 
 - no direct runtime behavior ships from this parent; runtime/security ownership

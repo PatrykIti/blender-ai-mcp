@@ -50,6 +50,8 @@
 
 - `scripts/RUN_MCP_SERVER.md`
 - `scripts/_RUN_DOCKER_MCP.md`
+- if the shared debug-selector launcher seam is touched here, update
+  `TASK-165-02-01` in the same branch
 
 ## Changelog Impact
 
@@ -59,6 +61,9 @@
 ## Status / Board Update
 
 - remains nested under `TASK-167-03`
+- if the shared launcher seam changes here, update `TASK-165-02-01` in the
+  same branch and update `_docs/_TASKS/README.md` only if promoted board state
+  changes
 
 ## Validation Commands
 

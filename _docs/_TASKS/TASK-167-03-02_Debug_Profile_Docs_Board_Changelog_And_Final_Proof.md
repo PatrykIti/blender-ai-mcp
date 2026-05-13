@@ -80,6 +80,10 @@
 ## Validation Commands
 
 - `git diff --check`
+- after implementation adds the dedicated selector-registry proof lanes from
+  `TASK-167-01`, include and run:
+  - `PYTHONPATH=. poetry run pytest tests/unit/infrastructure/test_debug_profile_config.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/infrastructure/test_debug_profile_registry.py -q`
 - run the focused owner-lane commands from the child leaves before the broad
   repo bundle, including at minimum:
   - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py -q`
@@ -102,15 +106,15 @@
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_server_transport_mode.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/scripts/test_script_tooling.py -q`
 - `bash -n scripts/run_streamable_openrouter.sh scripts/run_mcp_server.sh scripts/run_reference_classifier_sidecar.sh`
-- make the focused runtime proof surfaces explicit before the broad repo runner:
-  - `tests/e2e/integration/test_guided_gate_state_transport.py`
-  - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
-  - `tests/e2e/integration/test_guided_surface_contract_parity.py`
-  - `tests/e2e/integration/test_mcp_transport_modes.py`
+- prove the focused runtime lanes with the repo-supported E2E command:
+  - `poetry run python scripts/run_e2e_tests.py` for `tests/e2e/integration/test_guided_gate_state_transport.py`
+  - `poetry run python scripts/run_e2e_tests.py` for `tests/e2e/integration/test_guided_streamable_spatial_support.py`
+  - `poetry run python scripts/run_e2e_tests.py` for `tests/e2e/integration/test_guided_surface_contract_parity.py`
+  - `poetry run python scripts/run_e2e_tests.py` for `tests/e2e/integration/test_mcp_transport_modes.py`
 - `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure` (outside sandbox)
 - `PYTHONPATH=. poetry run pytest ./tests/unit` (outside sandbox)
-- `poetry run python scripts/run_e2e_tests.py` (outside sandbox; this is the
-  required repo-supported runner for the focused runtime proof surfaces above)
+- `poetry run python scripts/run_e2e_tests.py` (outside sandbox; required repo
+  runner for the focused runtime proof surfaces above)
 - targeted grep/audit for accepted profile names across:
   - `README.md`
   - `_docs/_MCP_SERVER/README.md`
