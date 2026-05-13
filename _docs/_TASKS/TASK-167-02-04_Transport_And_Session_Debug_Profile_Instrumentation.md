@@ -17,12 +17,12 @@
 |------|--------------------|---------------------|-----------------------|
 | `server/adapters/mcp/server.py` | `run(...)` | lines 34-75 | transport selection, startup logging, and reconnect-related top-level diagnostics are owned here |
 | `server/adapters/mcp/context_utils.py` | `ctx_session_id(...)`, `ctx_transport_type(...)` | current response identity helpers | live session/transport identity also flows through these response-side helpers |
-| `server/adapters/mcp/areas/router.py` | `router_set_goal(...)`, `router_get_status(...)` response identity fields | lines 576-577 and current response assembly seams | transport/session diagnostics are also visible through current router response builders here |
-| `server/adapters/mcp/areas/reference.py` | `reference_compare_stage_checkpoint(...)`, `reference_iterate_stage_checkpoint(...)` response identity fields | lines 1114-1115, 1745, and 1780 | transport/session diagnostics are also visible through current reference response builders here |
+| `server/adapters/mcp/areas/router.py` | `router_set_goal(...)`, `router_get_status(...)` response identity fields | lines 477-478 and 576-577 plus current response assembly seams | transport/session diagnostics are also visible through current router response builders here |
+| `server/adapters/mcp/areas/reference.py` | compare/iterate response identity fields | lines 1114-1115 plus public wrappers at 1745 and 1780 | transport/session diagnostics are also visible through current reference response builders here |
 | `tests/unit/adapters/mcp/test_server_transport_mode.py` | transport bootstrap proof lane | lines 19-75 | direct unit lane for transport bootstrap ownership |
 | `tests/unit/adapters/mcp/test_router_elicitation.py` | router transport-adjacent response lane | current router response tests | direct router response proof belongs here too |
 | `tests/unit/adapters/mcp/test_reference_images.py` | reference transport-adjacent response lane | current reference response tests | direct reference response proof belongs here too |
-| `tests/e2e/integration/test_mcp_transport_modes.py` | transport runtime proof lane | lines 24-180 | direct runtime lane for `stdio` / Streamable session behavior |
+| `tests/e2e/integration/test_mcp_transport_modes.py` | transport runtime proof lane | lines 24-192 | direct runtime lane for `stdio` / Streamable session behavior |
 
 ## Implementation Notes
 

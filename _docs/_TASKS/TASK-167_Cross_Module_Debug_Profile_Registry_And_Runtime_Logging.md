@@ -200,11 +200,11 @@ with a blind repo-wide search.
 | `server/adapters/mcp/router_helper.py` | correction-audit exposure | lines 559-570 | terminal-side audit exposure also flows through this MCP-side seam |
 | `server/adapters/mcp/server.py` | `run(...)` | lines 34-75 | transport-mode bootstrap, reconnect, and top-level runtime diagnostics already converge here |
 | `scripts/run_streamable_openrouter.sh` | Docker-guided operator launcher | lines 12-186 | current Streamable Docker launch envs and sidecar wiring are passed through here |
-| `scripts/run_mcp_server.py` | interactive launcher plan | lines 282-360 | the macOS-first launcher already gathers runtime choices here and will need the same debug selector passthrough |
+| `scripts/run_mcp_server.py` | interactive launcher plan | lines 282-362 | the macOS-first launcher already gathers runtime choices here and will need the same debug selector passthrough |
 | `tests/unit/adapters/mcp/test_search_surface.py` | `call_tool(...)` proxy regression lane | current proxy log assertion around line 1153 and hidden-tool recovery around lines 1903-2032 | tools/proxy debug profile proof should stay anchored to the current proxy owner lane |
 | `tests/unit/adapters/mcp/test_reference_images.py` | RU/reference lifecycle proof lane | existing attach/RU tests around lines 2940-3005 and 8440+ | reference/RU debug scopes need proof on the current reference lifecycle owner lane |
 | `tests/unit/adapters/mcp/test_server_transport_mode.py` | transport bootstrap proof lane | lines 19-75 | transport debug/profile wiring should prove itself on the current transport-mode owner lane |
-| `tests/e2e/integration/test_mcp_transport_modes.py` | transport reconnect/runtime proof lane | lines 24-180 | `debug=transport` needs an explicit runtime proof surface |
+| `tests/e2e/integration/test_mcp_transport_modes.py` | transport reconnect/runtime proof lane | lines 24-192 | `debug=transport` needs an explicit runtime proof surface |
 | `tests/unit/adapters/mcp/test_visibility_runtime.py` | visibility audit owner lane | current visibility txn/audit tests | visibility-profile proof should include the direct owner lane, not only proxy-heavy suites |
 | `tests/unit/router/infrastructure/test_logger.py` | router logger owner lane | current RouterLogger tests | router-profile proof should include the direct logger owner lane |
 | `tests/unit/router/application/test_router_handler_parameters.py` | router goal-handler owner lane | current goal-shape/unit tests | router-profile proof should include the direct handler lane |

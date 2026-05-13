@@ -4,7 +4,7 @@
 **Priority:** 🔴 High
 **Parent:** [TASK-167](./TASK-167_Cross_Module_Debug_Profile_Registry_And_Runtime_Logging.md)
 **Objective:** Define one central debug selector contract plus a shared registry module so current and future repo-owned modules can opt into bounded debug scopes without inventing their own env vars or logger naming rules.
-**Repository Touchpoints:** `server/infrastructure/config.py`, `server/main.py`, `server/infrastructure/di.py`, `server/router/infrastructure/config.py`, `server/router/application/router.py`, `server/router/infrastructure/logger.py`, new shared debug module under `server/infrastructure/`, `server/adapters/mcp/discovery/search_surface.py`, `server/adapters/mcp/visibility_runtime.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/vision/reference_support.py`, `tests/unit/infrastructure/`, `tests/unit/adapters/mcp/`
+**Repository Touchpoints:** `server/infrastructure/config.py`, `server/main.py`, `server/infrastructure/di.py`, `server/router/infrastructure/config.py`, `server/router/application/router.py`, `server/router/application/matcher/ensemble_matcher.py`, `server/router/infrastructure/logger.py`, new shared debug module under `server/infrastructure/`, `server/adapters/mcp/discovery/search_surface.py`, `server/adapters/mcp/visibility_runtime.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/vision/reference_support.py`, `tests/unit/infrastructure/`, `tests/unit/adapters/mcp/`
 **Acceptance Criteria:**
 - one typed config surface parses `off`, `all`, and one or more
   comma-separated named debug scopes such as `vision`, `reference`, `tools`,
@@ -43,6 +43,7 @@
 | `server/infrastructure/di.py` | router config injection | lines 214-220 | one existing router config seam enters through DI here, so the shared selector contract must reconcile with it |
 | `server/router/infrastructure/config.py` | `RouterConfig.log_decisions` seam | lines 78-82 | an existing router logging/config flag already exists here and should be reconciled with the central selector |
 | `server/router/application/router.py` | live `RouterLogger` instantiation | current router construction seam | real router logger instances are created here, so selector wiring must acknowledge this owner |
+| `server/router/application/matcher/ensemble_matcher.py` | live `RouterLogger` instantiation inside ensemble classification | current ensemble seam | the central selector must also govern router summaries emitted from ensemble classification |
 | `server/router/infrastructure/logger.py` | router logger singleton/helper seam | current router logger owner | the central selector contract must fit both direct router instances and the shared helper logger path |
 | `server/infrastructure/debug_logging.py` or `server/infrastructure/debug_profiles.py` | new shared registry module | new file | this is the correct place for selector parsing, registry state, and future-module onboarding helpers |
 | `server/adapters/mcp/discovery/search_surface.py` | `BlenderDiscoverySearchTransform._canonicalize_call_arguments()` call chain | lines 329-371 | the registry contract must be consumable from current guided proxy owners rather than designed in isolation |
