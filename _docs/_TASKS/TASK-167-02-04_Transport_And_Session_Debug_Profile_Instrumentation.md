@@ -54,6 +54,8 @@ if debug_scope_enabled("transport"):
 
 - `tests/unit/adapters/mcp/test_server_transport_mode.py`
 - `tests/e2e/integration/test_mcp_transport_modes.py`
+- `tests/unit/adapters/mcp/test_router_elicitation.py`
+- `tests/unit/adapters/mcp/test_reference_images.py`
 
 ## Docs To Update
 

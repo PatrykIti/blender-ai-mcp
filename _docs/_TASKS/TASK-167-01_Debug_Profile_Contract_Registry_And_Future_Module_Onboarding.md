@@ -29,6 +29,10 @@
 - keep the public selector as one comma-separated set contract from the start;
   single-scope values like `vision` remain valid degenerate cases of the same
   grammar
+- define explicit compatibility/precedence for existing knobs such as
+  `ROUTER_LOG_DECISIONS`: the new selector must either subsume that seam or
+  document a deterministic precedence rule so operators do not end up with two
+  competing router-log controls
 
 ## Current Owner / Likely Edit Map
 
@@ -72,6 +76,8 @@ def debug_scope_enabled(scope_name: str) -> bool:
 - duplicate profile names in a comma-separated selector
 - empty items such as `vision,,tools`
 - mixed `all` plus specific scopes
+- conflicting old-vs-new logging knobs such as `ROUTER_LOG_DECISIONS` together
+  with the central debug selector
 - future-module registration collisions on one scope name
 
 ## Tests To Add/Update

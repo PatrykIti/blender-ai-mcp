@@ -5,7 +5,7 @@
 **Parent:** [TASK-165-02](./TASK-165-02_Interactive_Run_MCP_Server_Wizard_And_Script_Modularization.md)
 **Related:** [TASK-167](./TASK-167_Cross_Module_Debug_Profile_Registry_And_Runtime_Logging.md)
 **Objective:** Implement the interactive prompts that decide which runtime/profile paths the launcher should wire together.
-**Repository Touchpoints:** `scripts/run_mcp_server.sh`, script helper modules under `scripts/`, `tests/unit/scripts/test_script_tooling.py`
+**Repository Touchpoints:** `scripts/run_mcp_server.sh`, `scripts/run_mcp_server.py`, script helper modules under `scripts/`, `tests/unit/scripts/test_script_tooling.py`
 **Acceptance Criteria:** the launcher can guide the operator through profile selection and derive a concrete final launch plan for the supported macOS-first runtime combinations.
 
 ## Implementation Notes

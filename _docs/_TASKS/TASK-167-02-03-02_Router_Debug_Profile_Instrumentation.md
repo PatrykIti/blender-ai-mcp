@@ -14,7 +14,7 @@
 
 | Path | Current owner seam | Likely edit anchors | Why this leaf owns it |
 |------|--------------------|---------------------|-----------------------|
-| `server/adapters/mcp/areas/router.py` | `router_set_goal(...)`, `router_get_status(...)` | lines 364-552 | guided/reference state summaries are assembled here for MCP clients |
+| `server/adapters/mcp/areas/router.py` | `router_set_goal(...)`, `router_get_status(...)` | lines 364-648 | guided/reference state summaries are assembled here for MCP clients |
 | `server/router/application/router.py` | live router logger usage | lines 114 and 1177-1207 | terminal-side router summaries are emitted from the real router instance here |
 | `server/router/infrastructure/logger.py` | `RouterLogger`, especially `log_info(...)` and `log_execution_audit(...)` | lines 80-220 and 368-426 | router-owned console/event logging converges here, but relevant methods extend beyond the earlier narrow window |
 | `server/adapters/mcp/router_helper.py` | execution-audit exposure | lines 559-570 | MCP-side audit exposure also contributes to terminal diagnostics |

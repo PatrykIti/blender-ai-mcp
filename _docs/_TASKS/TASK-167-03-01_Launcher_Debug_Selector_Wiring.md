@@ -3,7 +3,6 @@
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
 **Parent:** [TASK-167-03](./TASK-167-03_Docker_Launcher_Docs_Validation_And_Closeout_For_Debug_Profiles.md)
-**Depends On:** [TASK-165-02-01](./TASK-165-02-01_Interactive_Profile_Selection_And_Runtime_Wiring.md)
 **Objective:** Wire the central debug selector through the supported Docker/local launcher seams, extending the current open TASK-165 launcher ownership instead of inventing a parallel launch contract.
 **Repository Touchpoints:** `scripts/run_streamable_openrouter.sh`, `scripts/run_mcp_server.py`, `scripts/run_mcp_server.sh`, `scripts/RUN_MCP_SERVER.md`, `scripts/run_reference_classifier_sidecar.sh`, `tests/unit/scripts/test_script_tooling.py`
 **Acceptance Criteria:**
@@ -26,10 +25,9 @@
 
 - extend the current launcher seam under `TASK-165`; do not create a second
   incompatible debug-launch path
-- do not start implementation of this leaf before
-  [TASK-165-02-01](./TASK-165-02-01_Interactive_Profile_Selection_And_Runtime_Wiring.md)
-  closes; this leaf is a follow-on on top of that launcher/runtime prompt seam,
-  not an override of it
+- if [TASK-165-02-01](./TASK-165-02-01_Interactive_Profile_Selection_And_Runtime_Wiring.md)
+  is still open, patch that launcher/runtime prompt seam in sympathy rather
+  than creating a parallel launcher-specific path
 - keep the operator contract centered on the shared debug selector from
   `TASK-167-01`
 
@@ -45,6 +43,7 @@
 
 ## Docs To Update
 
+- implementation-slice launcher docs only:
 - `scripts/RUN_MCP_SERVER.md`
 - `scripts/_RUN_DOCKER_MCP.md`
 

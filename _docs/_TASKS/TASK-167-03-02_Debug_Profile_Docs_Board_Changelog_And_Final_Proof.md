@@ -41,6 +41,7 @@
 
 ## Docs To Update
 
+- final closeout/harmonization docs:
 - `README.md`
 - `_docs/_MCP_SERVER/README.md`
 - `scripts/_RUN_DOCKER_MCP.md`
