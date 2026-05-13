@@ -63,7 +63,8 @@ if debug_scope_enabled("visibility"):
 
 - unit tests for profile-gated proxy and visibility log emission
 - `tests/unit/adapters/mcp/test_visibility_runtime.py`
-- focused integration coverage for hidden-tool and refresh-barrier diagnosis
+- `tests/e2e/integration/test_guided_streamable_spatial_support.py`
+- `tests/e2e/integration/test_guided_surface_contract_parity.py`
 
 ## Docs To Update
 

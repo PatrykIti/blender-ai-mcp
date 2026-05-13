@@ -78,8 +78,7 @@ if debug_scope_enabled("vision"):
 - unit tests proving profile-gated emission on attach and RU refresh paths
 - unit tests proving optional classifier/segmentation unavailability is logged
   as bounded summary-only data
-- focused integration coverage only if the transport/runtime surface needs to
-  prove that debug output does not mutate the attach lifecycle
+- `tests/e2e/integration/test_guided_gate_state_transport.py`
 
 ## Docs To Update
 

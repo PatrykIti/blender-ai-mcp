@@ -56,7 +56,7 @@ if debug_scope_enabled("router"):
 - `tests/unit/adapters/mcp/test_router_elicitation.py`
 - `tests/unit/router/application/test_router_handler_parameters.py`
 - `tests/unit/router/infrastructure/test_logger.py`
-- focused integration coverage for router status summaries over Streamable HTTP
+- `tests/e2e/integration/test_guided_streamable_spatial_support.py`
 
 ## Docs To Update
 

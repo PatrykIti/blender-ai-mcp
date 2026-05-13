@@ -6,7 +6,9 @@
 **Objective:** Define one central debug selector contract plus a shared registry module so current and future repo-owned modules can opt into bounded debug scopes without inventing their own env vars or logger naming rules.
 **Repository Touchpoints:** `server/infrastructure/config.py`, `server/main.py`, `server/infrastructure/di.py`, `server/router/infrastructure/config.py`, `server/router/application/router.py`, `server/router/infrastructure/logger.py`, new shared debug module under `server/infrastructure/`, `server/adapters/mcp/discovery/search_surface.py`, `server/adapters/mcp/visibility_runtime.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/vision/reference_support.py`, `tests/unit/infrastructure/`, `tests/unit/adapters/mcp/`
 **Acceptance Criteria:**
-- one typed config surface parses `off`, `all`, and named debug scopes such as `vision`, `reference`, `tools`, `transport`, `visibility`, `guided_flow`, and `router`
+- one typed config surface parses `off`, `all`, and one or more
+  comma-separated named debug scopes such as `vision`, `reference`, `tools`,
+  `transport`, `visibility`, `guided_flow`, and `router`
 - invalid names fail with a clear operator-facing message that lists supported scopes
 - the registry maps one stable scope name to the repo-owned logger namespaces and helper hooks it owns
 - the onboarding rules for future modules are documented in code comments and task/docs so new owners can register a scope without creating a separate env contract
@@ -24,8 +26,9 @@
 - define a stable profile vocabulary early and reuse it everywhere:
   `all`, `vision`, `reference`, `tools`, `transport`, `visibility`,
   `guided_flow`, `router`, plus future additions
-- decide whether the selector is one enum or a comma-separated set, but keep the
-  public operator shape simple and documented
+- keep the public selector as one comma-separated set contract from the start;
+  single-scope values like `vision` remain valid degenerate cases of the same
+  grammar
 
 ## Current Owner / Likely Edit Map
 

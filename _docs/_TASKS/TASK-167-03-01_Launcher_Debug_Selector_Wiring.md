@@ -26,6 +26,10 @@
 
 - extend the current launcher seam under `TASK-165`; do not create a second
   incompatible debug-launch path
+- do not start implementation of this leaf before
+  [TASK-165-02-01](./TASK-165-02-01_Interactive_Profile_Selection_And_Runtime_Wiring.md)
+  closes; this leaf is a follow-on on top of that launcher/runtime prompt seam,
+  not an override of it
 - keep the operator contract centered on the shared debug selector from
   `TASK-167-01`
 

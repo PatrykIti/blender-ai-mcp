@@ -51,8 +51,7 @@ if debug_scope_enabled("guided_flow"):
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
-- focused integration coverage for refresh-barrier step changes over Streamable
-  HTTP
+- `tests/e2e/integration/test_guided_streamable_spatial_support.py`
 
 ## Docs To Update
 
