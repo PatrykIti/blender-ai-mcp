@@ -231,6 +231,28 @@ def canonicalize_scene_assert_proportion_arguments(arguments: dict[str, Any]) ->
     return canonical_arguments
 
 
+def canonicalize_scene_get_viewport_arguments(arguments: dict[str, Any]) -> dict[str, Any]:
+    """Normalize common legacy viewport aliases into the public contract."""
+
+    canonical_arguments = dict(arguments)
+    legacy_shading_mode = canonical_arguments.pop("shading_mode", None)
+    if legacy_shading_mode is not None:
+        if canonical_arguments.get("shading") not in {None, legacy_shading_mode}:
+            raise ValueError(
+                "scene_get_viewport(...) uses `shading`; legacy `shading_mode` is accepted "
+                "only when it matches `shading`."
+            )
+        canonical_arguments["shading"] = legacy_shading_mode
+
+    output_mode = canonical_arguments.get("output_mode")
+    if isinstance(output_mode, str):
+        normalized_mode = output_mode.strip().upper()
+        if normalized_mode == "PATH":
+            canonical_arguments["output_mode"] = "FILE"
+
+    return canonical_arguments
+
+
 def canonicalize_guided_tool_arguments(
     name: str,
     arguments: dict[str, Any] | None,
@@ -259,4 +281,6 @@ def canonicalize_guided_tool_arguments(
         return canonicalize_macro_align_part_with_contact_arguments(arguments)
     if canonical_name == "scene_assert_proportion":
         return canonicalize_scene_assert_proportion_arguments(arguments)
+    if canonical_name == "scene_get_viewport":
+        return canonicalize_scene_get_viewport_arguments(arguments)
     return arguments
