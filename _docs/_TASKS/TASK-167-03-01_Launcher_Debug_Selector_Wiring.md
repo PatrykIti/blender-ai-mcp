@@ -29,6 +29,9 @@
   than creating a parallel launcher-specific path; the implementing agent is
   expected to advance the overlapping `TASK-165-02-01` launcher seam in the
   same branch when needed instead of waiting for a separate family to land
+- when that overlap is exercised, update both `TASK-167-03-01` and
+  `TASK-165-02-01` in the same branch so the shared launcher seam does not
+  drift across task families
 - keep the operator contract centered on the shared debug selector from
   `TASK-167-01`
 
