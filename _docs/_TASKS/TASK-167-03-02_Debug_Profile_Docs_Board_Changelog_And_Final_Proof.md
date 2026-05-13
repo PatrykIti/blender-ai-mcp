@@ -90,7 +90,6 @@
   - `PYTHONPATH=. poetry run pytest tests/unit/infrastructure/test_vision_di.py -q`
   - `PYTHONPATH=. poetry run pytest tests/unit/router/infrastructure/test_config.py -q`
   - `PYTHONPATH=. poetry run pytest tests/unit/router/infrastructure/test_logger.py -q`
-  - `PYTHONPATH=. poetry run pytest tests/unit/router/application/matcher/test_ensemble_matcher.py -q`
   - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
   - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_compare_packets.py -q`
   - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_search_surface.py -q`
@@ -105,6 +104,9 @@
 - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_correction_audit.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_server_transport_mode.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/scripts/test_script_tooling.py -q`
+- after implementation extends the ensemble matcher lane with direct router
+  logger assertions, also run:
+  - `PYTHONPATH=. poetry run pytest tests/unit/router/application/matcher/test_ensemble_matcher.py -q`
 - `bash -n scripts/run_streamable_openrouter.sh scripts/run_mcp_server.sh scripts/run_reference_classifier_sidecar.sh`
 - prove the focused runtime proof surfaces via the single repo-supported E2E
   runner command:

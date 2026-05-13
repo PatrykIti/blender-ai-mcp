@@ -96,7 +96,8 @@ def debug_scope_enabled(scope_name: str) -> bool:
   - `tests/unit/infrastructure/test_vision_di.py`
   - `tests/unit/router/infrastructure/test_config.py`
   - `tests/unit/router/infrastructure/test_logger.py`
-  - `tests/unit/router/application/matcher/test_ensemble_matcher.py`
+  - extend `tests/unit/router/application/matcher/test_ensemble_matcher.py`
+    with direct ensemble-classification logger assertions
 
 ## Docs To Update
 
@@ -125,6 +126,8 @@ def debug_scope_enabled(scope_name: str) -> bool:
   - `PYTHONPATH=. poetry run pytest tests/unit/infrastructure/test_vision_di.py -q`
   - `PYTHONPATH=. poetry run pytest tests/unit/router/infrastructure/test_config.py -q`
   - `PYTHONPATH=. poetry run pytest tests/unit/router/infrastructure/test_logger.py -q`
+- after implementation extends the ensemble matcher lane above with direct
+  logger assertions, also run:
   - `PYTHONPATH=. poetry run pytest tests/unit/router/application/matcher/test_ensemble_matcher.py -q`
 
 ## Validation Category
