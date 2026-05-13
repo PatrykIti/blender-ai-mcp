@@ -4,7 +4,7 @@
 **Priority:** 🔴 High
 **Parent:** [TASK-167-02](./TASK-167-02_Runtime_Instrumentation_And_Targeted_Log_Routing.md)
 **Objective:** Add bounded `guided_flow` and `router` debug instrumentation to the current guided-flow transition and router goal/status/logger seams so operators can trace step changes, refresh barriers, allowed-family changes, and router decision summaries directly from the Docker/server terminal.
-**Repository Touchpoints:** `server/adapters/mcp/session_capabilities_flow.py`, `server/adapters/mcp/areas/router.py`, `server/router/infrastructure/logger.py`, `server/application/tool_handlers/router_handler.py`, `tests/unit/adapters/mcp/test_router_elicitation.py`, `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`, `tests/e2e/integration/test_guided_streamable_spatial_support.py`
+**Repository Touchpoints:** `server/adapters/mcp/session_capabilities_flow.py`, `server/adapters/mcp/session_capabilities_registry.py`, `server/adapters/mcp/session_capabilities_bootstrap.py`, `server/adapters/mcp/session_capabilities_runtime_glue.py`, `server/adapters/mcp/areas/router.py`, `server/router/application/router.py`, `server/router/infrastructure/logger.py`, `server/adapters/mcp/router_helper.py`, `server/application/tool_handlers/router_handler.py`, `tests/unit/adapters/mcp/test_router_elicitation.py`, `tests/unit/adapters/mcp/test_router_handler_parameters.py`, `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`, `tests/unit/router/infrastructure/test_logger.py`, `tests/e2e/integration/test_guided_streamable_spatial_support.py`
 **Acceptance Criteria:**
 - `debug=guided_flow` surfaces step changes, `next_actions`, refresh barrier set/cleared moments, and allowed-family changes without printing large state dumps
 - `debug=router` surfaces goal classification/no-match/needs-input/ready transitions and bounded router logger summaries through the existing router owner seams
@@ -15,12 +15,19 @@
 
 | Path | Current owner seam | Likely edit anchors | Why this leaf owns it |
 |------|--------------------|---------------------|-----------------------|
-| `server/adapters/mcp/session_capabilities_flow.py` | `_default_next_actions_for_step(...)`, `_apply_spatial_refresh_gate(...)`, `_clear_spatial_refresh_gate(...)` | lines 633-760 | guided-flow step and refresh-barrier semantics are computed here |
-| `server/adapters/mcp/areas/router.py` | `router_set_goal(...)`, `router_get_status(...)` | lines 424-552 | guided/reference state summaries are assembled here for MCP clients |
-| `server/router/infrastructure/logger.py` | `RouterLogger` | lines 80-220 | router-owned console/event logging already converges here |
-| `server/application/tool_handlers/router_handler.py` | goal classification helpers | lines 41-168 | router-side classification seams may need bounded debug markers at the application owner level |
+| `server/adapters/mcp/session_capabilities_flow.py` | `_default_next_actions_for_step(...)`, `_apply_spatial_refresh_gate(...)`, `_clear_spatial_refresh_gate(...)` | lines 633-760 | guided-flow default step and refresh semantics are computed here |
+| `server/adapters/mcp/session_capabilities_registry.py` | `record_guided_flow_spatial_check_completion(...)`, `advance_guided_flow_from_iteration_async(...)` | lines 504-645 | live guided-flow completion and iteration transitions are applied here |
+| `server/adapters/mcp/session_capabilities_bootstrap.py` | router-goal bootstrap and ready-session reference adoption | current router-goal/update seams | initial guided-flow state and pending-reference adoption are bootstrapped here |
+| `server/adapters/mcp/session_capabilities_runtime_glue.py` | stale-state rearm and runtime persistence glue | current runtime-glue seams | guided-flow rearm and persistence are applied here |
+| `server/adapters/mcp/areas/router.py` | `router_set_goal(...)`, `router_get_status(...)` | lines 364-552 | guided/reference state summaries are assembled here for MCP clients |
+| `server/router/application/router.py` | live router logger usage | lines 114 and 1177-1207 | terminal-side router summaries are emitted from the real router instance here |
+| `server/router/infrastructure/logger.py` | `RouterLogger`, especially `log_info(...)` and `log_execution_audit(...)` | lines 80-220 and 368-426 | router-owned console/event logging converges here, but relevant methods extend beyond the earlier narrow window |
+| `server/adapters/mcp/router_helper.py` | execution-audit exposure | lines 559-570 | MCP-side audit exposure also contributes to terminal diagnostics |
+| `server/application/tool_handlers/router_handler.py` | `set_goal(...)` and goal-shape classification path | lines 304+ | router-side application owner for goal resolution starts here, not only in the earlier regex helper block |
 | `tests/unit/adapters/mcp/test_guided_flow_state_contract.py` | guided-flow state proof lane | current step/refresh tests | guided-flow debug profile proof belongs on the state-contract owner lane |
 | `tests/unit/adapters/mcp/test_router_elicitation.py` | router goal/status proof lane | current router-facing contract tests | router debug profile proof belongs on the router owner lane |
+| `tests/unit/adapters/mcp/test_router_handler_parameters.py` | router handler owner lane | current goal-shape/handler tests | direct handler proof belongs here |
+| `tests/unit/router/infrastructure/test_logger.py` | router logger owner lane | current RouterLogger tests | direct router logger proof belongs here |
 | `tests/e2e/integration/test_guided_streamable_spatial_support.py` | Streamable guided runtime proof lane | current refresh-barrier / router-status transport surface | integration proof for transition diagnostics lives here |
 
 ## Implementation Notes
@@ -63,6 +70,8 @@ if debug_scope_enabled("router"):
 ## Tests To Add/Update
 
 - unit tests for profile-gated guided-flow and router summary markers
+- `tests/unit/adapters/mcp/test_router_handler_parameters.py`
+- `tests/unit/router/infrastructure/test_logger.py`
 - focused integration coverage for refresh-barrier step changes over Streamable
   HTTP
 
@@ -85,8 +94,11 @@ if debug_scope_enabled("router"):
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_router_elicitation.py -q`
-- targeted Streamable proof after implementation where needed:
-  - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_streamable_spatial_support.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_router_handler_parameters.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/router/infrastructure/test_logger.py -q`
+- final E2E/runtime proof for this leaf should be exercised through the
+  repo-supported runner and the relevant updated integration coverage:
+  - `poetry run python scripts/run_e2e_tests.py`
 
 ## Validation Category
 

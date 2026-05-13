@@ -3,10 +3,12 @@
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
 **Parent:** [TASK-167-02](./TASK-167-02_Runtime_Instrumentation_And_Targeted_Log_Routing.md)
-**Objective:** Add bounded `reference` and `vision` debug instrumentation to the existing reference attach/RU/optional-support seams so operators can attribute slow attach paths, blocked readiness, backend selection, and optional classifier/segmentation follow-ons directly from the Docker/server terminal.
-**Repository Touchpoints:** `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/vision/reference_support.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`
+**Objective:** Add bounded `reference` and `vision` debug instrumentation to the existing reference attach/RU/compare/iterate/optional-support seams so operators can attribute slow attach paths, blocked readiness, checkpoint compare/iterate timing, backend selection, and optional classifier/segmentation follow-ons directly from the Docker/server terminal.
+**Repository Touchpoints:** `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_images_runtime.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/vision/reference_support.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`
 **Acceptance Criteria:**
 - `debug=reference` emits attach/list/remove/clear lifecycle events, active vs pending reference counts, and RU refresh start/finish summaries without dumping raw image payloads
+- `debug=reference` also emits bounded compare/iterate start/finish summaries,
+  checkpoint labels or target-scope summaries, and key readiness transitions
 - `debug=vision` emits RU backend provider/model selection, elapsed time, optional classifier/segmentation invoked vs skipped vs unavailable, and bounded failure reasons
 - slow attach/RU sequences can be attributed to RU backend work versus optional support sidecars from the normal Docker/server terminal
 - logs stay redacted: no provider secrets, raw image bytes, or unconstrained private paths
@@ -15,8 +17,9 @@
 
 | Path | Current owner seam | Likely edit anchors | Why this leaf owns it |
 |------|--------------------|---------------------|-----------------------|
-| `server/adapters/mcp/areas/reference.py` | `reference_images(...)` | lines 1629-1656 | reference attach currently enters RU refresh here |
-| `server/adapters/mcp/areas/reference_understanding.py` | `refresh_reference_understanding_summary(...)` | lines 252-397 | RU backend invocation, cached-summary reuse, blocked states, and optional-support merge converge here |
+| `server/adapters/mcp/areas/reference.py` | `reference_images(...)`, `reference_compare_stage_checkpoint(...)`, `reference_iterate_stage_checkpoint(...)` public facade | lines 1629-1656 and 1745-1780 | compare/iterate public seams stay here even though attach lifecycle moved into the runtime helper |
+| `server/adapters/mcp/areas/reference_images_runtime.py` | `handle_reference_images(...)`, `_attach_reference_image(...)`, `_remove_reference_image(...)`, `_clear_reference_images(...)` | lines 228-427 | active vs pending reference adoption and RU refresh triggering are owned here, not in the thin facade |
+| `server/adapters/mcp/areas/reference_understanding.py` | `refresh_reference_understanding_summary(...)` | lines 252-487 | RU backend invocation, cached-summary reuse, blocked/unavailable states, optional-support merge, and final persistence converge here |
 | `server/adapters/mcp/vision/reference_support.py` | `_collect_classifier_support(...)`, `_collect_segmentation_support(...)`, `augment_reference_understanding_optional_support(...)` | lines 347-545 | optional support timing/unavailable behavior is owned here |
 | `tests/unit/adapters/mcp/test_reference_images.py` | reference/RU proof lane | current attach/RU suites around lines 2940-3005 and related refresh tests | unit proof for attach/RU instrumentation belongs here |
 | `tests/e2e/integration/test_guided_gate_state_transport.py` | transport/runtime proof lane | current attach/list/remove/clear transport path | transport-visible reference/RU logging must not contradict the shipped runtime flow |
@@ -29,8 +32,12 @@
   - RU refresh start
   - RU backend returned cached/blocked/available/unavailable
   - optional classifier/segmentation follow-on start/finish
+- instrument compare/iterate in the same bounded `reference` scope:
+  - compare/iterate call start
+  - compact target/checkpoint identity
+  - compare/iterate end state and elapsed time
 - log elapsed durations for RU backend and optional support separately so slow
-  attach paths can be broken down without packet dumps
+  attach or compare/iterate paths can be broken down without packet dumps
 - keep the log surface observational; do not change attach/RU behavior in this
   leaf
 
@@ -64,6 +71,7 @@ if debug_scope_enabled("vision"):
 - RU backend unavailable/error
 - classifier timeout/unavailable
 - segmentation timeout/unavailable
+- compare/iterate success vs blocked/unavailable vs degraded-assist paths
 
 ## Tests To Add/Update
 
@@ -91,8 +99,9 @@ if debug_scope_enabled("vision"):
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
-- targeted transport proof after implementation where needed:
-  - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
+- final E2E/runtime proof for this leaf should be exercised through the
+  repo-supported runner and the relevant updated integration coverage:
+  - `poetry run python scripts/run_e2e_tests.py`
 
 ## Validation Category
 

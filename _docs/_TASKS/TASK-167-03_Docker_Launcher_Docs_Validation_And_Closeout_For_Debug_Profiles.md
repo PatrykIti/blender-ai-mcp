@@ -3,13 +3,19 @@
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
 **Parent:** [TASK-167](./TASK-167_Cross_Module_Debug_Profile_Registry_And_Runtime_Logging.md)
-**Objective:** Expose the central debug selector through the supported Docker/local operator launch paths, document how each profile should be used, and close the family only after the examples, launcher wiring, and validation evidence all match the shipped contract.
-**Repository Touchpoints:** `scripts/run_streamable_openrouter.sh`, `scripts/run_mcp_server.py`, `scripts/run_reference_classifier_sidecar.sh`, `README.md`, `_docs/_MCP_SERVER/README.md`, `scripts/_RUN_DOCKER_MCP.md`, `_docs/_DEV/README.md`, `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/`
+**Objective:** Own the launcher/docs/closeout branch for the debug-profile family and keep the implementation split into focused leaves rather than one oversized final-pass task.
+**Repository Touchpoints:** `scripts/run_streamable_openrouter.sh`, `scripts/run_mcp_server.py`, `scripts/run_mcp_server.sh`, `scripts/RUN_MCP_SERVER.md`, `scripts/run_reference_classifier_sidecar.sh`, `README.md`, `_docs/_MCP_SERVER/README.md`, `scripts/_RUN_DOCKER_MCP.md`, `_docs/_DEV/README.md`, `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/`
 **Acceptance Criteria:**
-- Docker and local launcher paths can forward the central debug selector without custom patching by operators
-- docs explain when to use `all` versus targeted scopes such as `vision`, `reference`, `tools`, `visibility`, `guided_flow`, and `router`
-- operator examples show the debug selector appearing in the same terminal that already streams Docker/server logs
-- final closeout records the exact proof lane used for the selected profiles and keeps board/changelog/docs in sync
+- launcher/runtime wiring is isolated in its own implementation leaf
+- docs plus board/changelog/final proof are isolated in their own closeout leaf
+- the parent closeout branch cannot be marked complete before both children are implemented and validated
+
+## Execution Structure
+
+| Order | Task | Purpose |
+|------|------|---------|
+| 1 | [TASK-167-03-01](./TASK-167-03-01_Launcher_Debug_Selector_Wiring.md) | Wire the central selector through the supported Docker/local launchers, including the current TASK-165 launcher seam |
+| 2 | [TASK-167-03-02](./TASK-167-03-02_Debug_Profile_Docs_Board_Changelog_And_Final_Proof.md) | Finalize docs, board/changelog sync, and the repo-standard proof bundle for the whole family |
 
 ## Implementation Notes
 
@@ -92,12 +98,8 @@ export BLENDER_AI_DEBUG=tools
 ## Validation Commands
 
 - `git diff --check`
-- `PYTHONPATH=. poetry run pytest tests/unit/scripts/test_script_tooling.py -q`
-- targeted grep/audit for accepted profile names across:
-  - `README.md`
-  - `_docs/_MCP_SERVER/README.md`
-  - `scripts/_RUN_DOCKER_MCP.md`
-  - `_docs/_DEV/README.md`
+- the parent should close only after `TASK-167-03-01` and `TASK-167-03-02`
+  are implemented and validated
 
 ## Validation Category
 

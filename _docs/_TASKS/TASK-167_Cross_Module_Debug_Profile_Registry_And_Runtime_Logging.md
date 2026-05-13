@@ -133,7 +133,10 @@ repo-owned seams already visible in current debugging sessions:
 | 3 | [TASK-167-02-01](./TASK-167-02-01_Reference_And_Vision_Debug_Profile_Instrumentation.md) | Instrument `reference_images`, RU refresh, and optional classifier/segmentation support timing and failure summaries |
 | 4 | [TASK-167-02-02](./TASK-167-02-02_Tool_Proxy_And_Visibility_Debug_Profile_Instrumentation.md) | Instrument `call_tool(...)` proxy, argument canonicalization, hidden-tool recovery, and visibility transaction/audit paths |
 | 5 | [TASK-167-02-03](./TASK-167-02-03_Guided_Flow_And_Router_Debug_Profile_Instrumentation.md) | Instrument guided-flow step transitions, spatial-refresh barriers, and router goal/status/runtime summaries |
-| 6 | [TASK-167-03](./TASK-167-03_Docker_Launcher_Docs_Validation_And_Closeout_For_Debug_Profiles.md) | Expose the selector through Docker/operator launch paths, document how to use it, and prove the profiles stay bounded and useful |
+| 6 | [TASK-167-02-04](./TASK-167-02-04_Transport_And_Session_Debug_Profile_Instrumentation.md) | Instrument transport/session bootstrap and reconnect diagnostics for `stdio` and Streamable HTTP so `debug=transport` has a real runtime owner |
+| 7 | [TASK-167-03](./TASK-167-03_Docker_Launcher_Docs_Validation_And_Closeout_For_Debug_Profiles.md) | Own the launcher/docs/closeout branch and keep operator wiring, docs, and final validation split into focused leaves instead of one oversized closeout pass |
+| 8 | [TASK-167-03-01](./TASK-167-03-01_Launcher_Debug_Selector_Wiring.md) | Wire the central selector through the supported Docker/local launcher seams |
+| 9 | [TASK-167-03-02](./TASK-167-03-02_Debug_Profile_Docs_Board_Changelog_And_Final_Proof.md) | Finish docs, board/changelog sync, and the final repo-standard proof bundle for the whole family |
 
 ## Repository Touchpoints
 
@@ -141,13 +144,14 @@ repo-owned seams already visible in current debugging sessions:
 |---------------|--------------------|--------------------|
 | `server/infrastructure/config.py` | Runtime config owner | The central debug selector needs a typed config seam |
 | `server/infrastructure/` new debug module | New shared owner | This umbrella should create one reusable registry/filter/helper layer instead of duplicating logger logic |
-| `server/adapters/mcp/areas/reference.py` | Reference public surface | Attach/compare/iterate debug is one of the main operator pain points |
+| `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_images_runtime.py` | Reference public facade plus lifecycle owner | Attach/list/remove/clear lives in the runtime helper while compare/iterate entrypoints stay on the public facade |
 | `server/adapters/mcp/areas/reference_understanding.py` | RU orchestration seam | RU latency and blocked/available transitions must be attributable in logs |
 | `server/adapters/mcp/vision/reference_support.py` | Optional classifier/segmentation support seam | The operator needs to see whether optional support is running, timing out, or unavailable |
 | `server/adapters/mcp/discovery/search_surface.py` | `call_tool(...)` proxy seam | Tool/proxy compatibility and hidden-tool recovery need one stable debug channel |
 | `server/adapters/mcp/visibility_runtime.py` | Visibility txn/audit owner | Visibility churn is already useful in logs and should move under the shared selector |
-| `server/adapters/mcp/session_capabilities*.py` | Guided-flow runtime state | Guided transitions and spatial refresh state need targeted logging rather than scattered messages |
-| `server/application/tool_handlers/router_handler.py`, `server/adapters/mcp/areas/router.py`, `server/router/**` | Router/runtime policy seams | Goal routing, no-match transitions, and firewall/correction summaries are part of runtime diagnosis |
+| `server/adapters/mcp/session_capabilities_flow.py`, `server/adapters/mcp/session_capabilities_registry.py`, `server/adapters/mcp/session_capabilities_bootstrap.py`, `server/adapters/mcp/session_capabilities_runtime_glue.py` | Guided-flow state shaping and persistence seams | Guided transitions are computed, applied, bootstrapped, and rearmed across these owner modules |
+| `server/application/tool_handlers/router_handler.py`, `server/adapters/mcp/areas/router.py`, `server/router/application/router.py`, `server/router/infrastructure/logger.py`, `server/adapters/mcp/router_helper.py` | Router/runtime policy plus audit exposure seams | Goal routing, no-match transitions, router logger output, and execution-audit exposure all contribute to runtime diagnosis |
+| `server/adapters/mcp/server.py` | MCP transport bootstrap seam | `debug=transport` needs one runtime owner for transport-mode start/reconnect diagnostics |
 | `scripts/run_streamable_openrouter.sh`, `scripts/run_mcp_server.py`, `scripts/run_reference_classifier_sidecar.sh` | Operator launch surface | The selector must be easy to use from the supported Docker/local launch paths |
 | `tests/unit/**` and `tests/e2e/integration/**` | Validation lanes | The logging contract should be tested for profile selection, bounded output, and non-regression |
 | `README.md`, `_docs/_MCP_SERVER/README.md`, `scripts/_RUN_DOCKER_MCP.md`, `_docs/_DEV/README.md` | Operator/dev docs | The contract must be discoverable and reproducible outside conversation history |
@@ -162,21 +166,34 @@ with a blind repo-wide search.
 
 | Path | Current owner seam | Likely edit anchors | Why this owner is the real edit surface |
 |------|--------------------|---------------------|-----------------------------------------|
-| `server/infrastructure/config.py` | `Config` runtime env contract | lines 23-43 | current MCP/factory env vocabulary already lives here; the central debug selector belongs beside transport/surface/runtime config |
+| `server/infrastructure/config.py` | `Config` runtime env contract plus `get_config()` env ingestion | lines 23-43 and 242-325 | current MCP/factory env vocabulary, validation, and env ingestion already live here; the central debug selector belongs beside transport/surface/runtime config |
 | `server/infrastructure/debug_logging.py` or `server/infrastructure/debug_profiles.py` | new shared registry module | new file | central profile parsing, validation, and per-scope registry should not be scattered across existing owners |
 | `server/adapters/mcp/discovery/search_surface.py` | `BlenderDiscoverySearchTransform._make_call_tool()` | lines 329-430 | current `call_tool(...)` proxy canonicalization and compatibility/error semantics already live here |
 | `server/adapters/mcp/visibility_runtime.py` | `run_visibility_transaction(...)` and `audit_list_tools_snapshot(...)` | lines 137-229 | current visibility txn/audit markers already exist here and should move under the shared debug selector |
-| `server/adapters/mcp/areas/reference.py` | `reference_images(...)` wrapper | lines 1629-1656 | reference attach/list/remove/clear enters RU refresh through this public MCP seam |
-| `server/adapters/mcp/areas/reference_understanding.py` | `refresh_reference_understanding_summary(...)` | lines 252-397 | RU refresh, cache-hit reuse, blocked/unavailable status, and backend invocation already converge here |
+| `server/adapters/mcp/areas/reference.py` | `reference_images(...)`, `reference_compare_stage_checkpoint(...)`, `reference_iterate_stage_checkpoint(...)` public facade | lines 1629-1656 and 1745-1780 | compare/iterate public seams stay here even though attach lifecycle moved into the runtime helper |
+| `server/adapters/mcp/areas/reference_images_runtime.py` | `handle_reference_images(...)`, `_attach_reference_image(...)`, `_remove_reference_image(...)`, `_clear_reference_images(...)` | lines 228-427 | active vs pending reference adoption and RU refresh triggering are owned here, not in the thin facade |
+| `server/adapters/mcp/areas/reference_understanding.py` | `refresh_reference_understanding_summary(...)` | lines 252-487 | RU refresh, cache-hit reuse, blocked/unavailable status, backend invocation, and final persistence all converge here |
 | `server/adapters/mcp/vision/reference_support.py` | `_collect_classifier_support(...)`, `_collect_segmentation_support(...)`, `augment_reference_understanding_optional_support(...)` | lines 347-545 | optional classifier/segmentation support timing, availability, and summary generation already live here |
-| `server/adapters/mcp/session_capabilities_flow.py` | `_default_next_actions_for_step(...)`, `_apply_spatial_refresh_gate(...)`, `_clear_spatial_refresh_gate(...)` | lines 633-760 | guided-flow step changes and refresh barrier semantics are currently computed here |
-| `server/adapters/mcp/areas/router.py` | `router_set_goal(...)`, `router_get_status(...)` | lines 424-552 | router goal/status MCP responses and `ctx_info(...)` summaries already assemble guided/reference runtime status here |
-| `server/router/infrastructure/logger.py` | `RouterLogger` | lines 80-220 | router logging already has a dedicated owner instead of generic module-level logging |
+| `server/adapters/mcp/session_capabilities_flow.py` | `_default_next_actions_for_step(...)`, `_apply_spatial_refresh_gate(...)`, `_clear_spatial_refresh_gate(...)` | lines 633-760 | guided-flow default step and refresh semantics are computed here |
+| `server/adapters/mcp/session_capabilities_registry.py` | `record_guided_flow_spatial_check_completion(...)`, `advance_guided_flow_from_iteration_async(...)` | lines 504-645 | live guided-flow completion and iteration transitions are applied here |
+| `server/adapters/mcp/session_capabilities_bootstrap.py` | router-goal bootstrap and ready-session reference adoption | live router-goal/update seams | initial guided-flow state and pending-reference adoption are bootstrapped here |
+| `server/adapters/mcp/session_capabilities_runtime_glue.py` | stale-state rearm and state persistence glue | current visibility/gate/runtime glue seams | guided-flow rearm and runtime state persistence are applied here |
+| `server/adapters/mcp/areas/router.py` | `router_set_goal(...)`, `router_get_status(...)` | lines 364-552 | router goal/status MCP responses and `ctx_info(...)` summaries are assembled here |
+| `server/application/tool_handlers/router_handler.py` | `set_goal(...)` and goal-shape classification path | lines 304+ | the live application-layer goal resolution path starts here, not only in the earlier regex helper block |
+| `server/router/application/router.py` | live router logger usage | lines 114 and 1177-1207 | router-terminal summaries are emitted from the real router instance here |
+| `server/router/infrastructure/logger.py` | `RouterLogger`, especially `log_info(...)` / `log_execution_audit(...)` | lines 80-220 and 368-426 | router logging already has a dedicated owner, but the relevant summary methods extend past the earlier narrow line window |
+| `server/adapters/mcp/router_helper.py` | correction-audit exposure | lines 559-570 | terminal-side audit exposure also flows through this MCP-side seam |
+| `server/adapters/mcp/server.py` | `run(...)` | lines 34-75 | transport-mode bootstrap, reconnect, and top-level runtime diagnostics already converge here |
 | `scripts/run_streamable_openrouter.sh` | Docker-guided operator launcher | lines 12-186 | current Streamable Docker launch envs and sidecar wiring are passed through here |
 | `scripts/run_mcp_server.py` | interactive launcher plan | lines 282-360 | the macOS-first launcher already gathers runtime choices here and will need the same debug selector passthrough |
-| `tests/unit/adapters/mcp/test_search_surface.py` | `call_tool(...)` proxy regression lane | existing compatibility tests around lines 1368-1465 | tools/proxy debug profile proof should stay anchored to the current proxy owner lane |
+| `tests/unit/adapters/mcp/test_search_surface.py` | `call_tool(...)` proxy regression lane | current proxy log assertion around line 1153 and hidden-tool recovery around lines 1903-2032 | tools/proxy debug profile proof should stay anchored to the current proxy owner lane |
 | `tests/unit/adapters/mcp/test_reference_images.py` | RU/reference lifecycle proof lane | existing attach/RU tests around lines 2940-3005 and 8440+ | reference/RU debug scopes need proof on the current reference lifecycle owner lane |
-| `tests/unit/scripts/test_script_tooling.py` | launcher/script contract lane | existing script env/launcher tests | Docker/local launcher forwarding belongs on the script owner lane first |
+| `tests/unit/adapters/mcp/test_server_transport_mode.py` | transport bootstrap proof lane | lines 19-75 | transport debug/profile wiring should prove itself on the current transport-mode owner lane |
+| `tests/e2e/integration/test_mcp_transport_modes.py` | transport reconnect/runtime proof lane | lines 24-180 | `debug=transport` needs an explicit runtime proof surface |
+| `tests/unit/adapters/mcp/test_visibility_runtime.py` | visibility audit owner lane | current visibility txn/audit tests | visibility-profile proof should include the direct owner lane, not only proxy-heavy suites |
+| `tests/unit/router/infrastructure/test_logger.py` | router logger owner lane | current RouterLogger tests | router-profile proof should include the direct logger owner lane |
+| `tests/unit/adapters/mcp/test_router_handler_parameters.py` | router goal-handler owner lane | current goal-shape/unit tests | router-profile proof should include the direct handler lane |
+| `tests/unit/scripts/test_script_tooling.py` | launcher/script contract lane | existing script env/launcher tests plus `run_mcp_server.sh` / `RUN_MCP_SERVER.md` coverage | Docker/local launcher forwarding belongs on the script owner lane first |
 
 ## Test Matrix
 
@@ -186,6 +203,7 @@ with a blind repo-wide search.
 | profile registry and module onboarding | unit tests | the shared registry must stay deterministic and future-proof |
 | targeted runtime instrumentation | unit tests plus focused integration tests | log emission should prove owner seams without needing full Blender runs for every case |
 | Docker/operator wiring | unit script tests and shell syntax checks | launch paths must pass the debug selector through correctly |
+| transport/session debug | unit transport bootstrap tests plus existing transport integration proof | `debug=transport` must be observable on the current `stdio` and Streamable seams |
 | real runtime smoke when needed | focused integration or existing Streamable/transport proof lanes | this work is not Blender-geometry-first, but selected scopes still need proof on the live runtime path when unit coverage alone would miss wiring drift |
 | bounded output / redaction | unit tests | secrets, raw image bytes, and private paths must stay out of normal debug output |
 | docs/operator guidance | `git diff --check` plus targeted grep/audit | examples and accepted profiles must match the live contract |

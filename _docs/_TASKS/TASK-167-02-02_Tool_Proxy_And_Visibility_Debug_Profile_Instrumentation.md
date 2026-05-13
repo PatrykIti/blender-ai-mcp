@@ -4,7 +4,7 @@
 **Priority:** 🔴 High
 **Parent:** [TASK-167-02](./TASK-167-02_Runtime_Instrumentation_And_Targeted_Log_Routing.md)
 **Objective:** Add bounded `tools` and `visibility` debug instrumentation to the existing `call_tool(...)` proxy and visibility transaction/audit seams so operators can diagnose contract mismatches, hidden-tool recovery, and visibility churn directly from the Docker/server terminal.
-**Repository Touchpoints:** `server/adapters/mcp/discovery/search_surface.py`, `server/adapters/mcp/visibility_runtime.py`, `server/adapters/mcp/guided_contract.py`, `tests/unit/adapters/mcp/test_search_surface.py`, `tests/e2e/integration/test_guided_streamable_spatial_support.py`, `tests/e2e/integration/test_guided_surface_contract_parity.py`
+**Repository Touchpoints:** `server/adapters/mcp/discovery/search_surface.py`, `server/adapters/mcp/visibility_runtime.py`, `server/adapters/mcp/guided_contract.py`, `tests/unit/adapters/mcp/test_search_surface.py`, `tests/unit/adapters/mcp/test_visibility_runtime.py`, `tests/e2e/integration/test_guided_streamable_spatial_support.py`, `tests/e2e/integration/test_guided_surface_contract_parity.py`
 **Acceptance Criteria:**
 - `debug=tools` surfaces proxy name resolution, canonical argument keys, compatibility normalization, and hidden-tool recovery classification without logging raw sensitive payloads
 - `debug=visibility` surfaces visibility txn start/finish, expected vs observed tool-set summaries, and audit drift in one consistent scope
@@ -18,7 +18,8 @@
 | `server/adapters/mcp/discovery/search_surface.py` | `BlenderDiscoverySearchTransform._make_call_tool()` | lines 329-430 | call-tool proxy behavior and current log markers already live here |
 | `server/adapters/mcp/visibility_runtime.py` | `run_visibility_transaction(...)`, `audit_list_tools_snapshot(...)` | lines 137-229 | visibility txn/audit summaries are already owned here |
 | `server/adapters/mcp/guided_contract.py` | guided argument canonicalization helpers | current compatibility shim owners | tool-profile diagnostics need to classify compatibility normalization against the real canonicalization owner |
-| `tests/unit/adapters/mcp/test_search_surface.py` | proxy proof lane | lines 1368-1465 and existing proxy tests | unit proof for proxy/visibility debug belongs here |
+| `tests/unit/adapters/mcp/test_search_surface.py` | proxy proof lane | current proxy log assertion around line 1153 and hidden-tool recovery around lines 1903-2032 | unit proof for proxy/visibility debug belongs here |
+| `tests/unit/adapters/mcp/test_visibility_runtime.py` | visibility owner lane | current transaction/audit tests | direct visibility-profile proof belongs here too |
 | `tests/e2e/integration/test_guided_streamable_spatial_support.py` | Streamable guided proof lane | current hidden-tool / refresh-barrier transport surface | integration proof for visibility churn and hidden-tool diagnosis lives here |
 | `tests/e2e/integration/test_guided_surface_contract_parity.py` | surface parity proof lane | current visible-vs-usable drift surface | ensures debug output does not contradict the shaped guided contract |
 
@@ -61,6 +62,7 @@ if debug_scope_enabled("visibility"):
 ## Tests To Add/Update
 
 - unit tests for profile-gated proxy and visibility log emission
+- `tests/unit/adapters/mcp/test_visibility_runtime.py`
 - focused integration coverage for hidden-tool and refresh-barrier diagnosis
 
 ## Docs To Update
@@ -80,9 +82,10 @@ if debug_scope_enabled("visibility"):
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_search_surface.py -q`
-- targeted transport proof after implementation where needed:
-  - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_streamable_spatial_support.py -q`
-  - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_visibility_runtime.py -q`
+- final E2E/runtime proof for this leaf should be exercised through the
+  repo-supported runner and the relevant updated integration coverage:
+  - `poetry run python scripts/run_e2e_tests.py`
 
 ## Validation Category
 
