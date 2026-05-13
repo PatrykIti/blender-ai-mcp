@@ -83,16 +83,8 @@ def debug_scope_enabled(scope_name: str) -> bool:
 
 ## Tests To Add/Update
 
-- config parsing tests for valid and invalid selector values
-- registry tests proving scope names and namespace ownership stay deterministic
-- onboarding tests showing a new scope can be registered without changing the
-  public selector contract shape
-- direct config/runtime consumers too, including:
-  - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
-  - `tests/unit/infrastructure/test_vision_di.py`
-  - `tests/unit/router/infrastructure/test_config.py`
-  - `tests/unit/router/infrastructure/test_logger.py`
-  - `tests/unit/router/application/matcher/test_ensemble_matcher.py`
+- focused selector-registry proof plus the direct config/runtime consumer lanes
+  listed in `Validation Commands` below
 - direct config/runtime consumers too, including:
   - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
   - `tests/unit/infrastructure/test_vision_di.py`

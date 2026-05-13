@@ -4,7 +4,7 @@
 **Priority:** 🔴 High
 **Parent:** [TASK-167-03](./TASK-167-03_Docker_Launcher_Docs_Validation_And_Closeout_For_Debug_Profiles.md)
 **Objective:** Close the `TASK-167` family only after docs, board/changelog sync, and the final repo-standard proof bundle confirm that the shipped debug profiles are visible on the promised runtime surfaces.
-**Repository Touchpoints:** `README.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`, `scripts/_RUN_DOCKER_MCP.md`, `scripts/RUN_MCP_SERVER.md`, `_docs/_DEV/README.md`, `_docs/_VISION/README.md`, `_docs/_ROUTER/README.md`, `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/README.md`, new `_docs/_CHANGELOG/*`
+**Repository Touchpoints:** `README.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`, `scripts/_RUN_DOCKER_MCP.md`, `scripts/RUN_MCP_SERVER.md`, `_docs/_DEV/README.md`, `_docs/_VISION/README.md`, `_docs/_ROUTER/README.md`, `_docs/_TASKS/README.md`, `_docs/_TASKS/TASK-167*.md`, `_docs/_TASKS/TASK-165-02-01_Interactive_Profile_Selection_And_Runtime_Wiring.md`, `_docs/_CHANGELOG/README.md`, new `_docs/_CHANGELOG/*`
 **Acceptance Criteria:**
 - operator docs explain `all` vs targeted scopes and match the shipped selector vocabulary
 - board and changelog state are synchronized with the final implementation status
@@ -23,6 +23,7 @@
 | `_docs/_VISION/README.md` | sidecar/operator guidance | current classifier-sidecar docs | sidecar/operator guidance must stay aligned with the shipped selector and launcher story |
 | `_docs/_ROUTER/README.md` | router behavior docs | current router-facing runtime docs | router-facing debug behavior must be documented where router runtime changes are explained |
 | `_docs/_TASKS/README.md` | board state | current promoted rows | board state must match the family closeout |
+| `_docs/_TASKS/TASK-167*.md`, `_docs/_TASKS/TASK-165-02-01_Interactive_Profile_Selection_And_Runtime_Wiring.md` | task-family governance | current task files for the family and the overlapping launcher seam | final closeout must update the affected task files, not only the board row |
 | `_docs/_CHANGELOG/README.md` and new `_docs/_CHANGELOG/*` | historical tracking | new final family entry | runtime-contract work needs proper historical closeout |
 
 ## Implementation Notes
@@ -96,10 +97,11 @@
   - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_router_elicitation.py -q`
   - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_handler_parameters.py -q`
   - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`
-  - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_supervisor_router.py -q`
-  - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_context_bridge.py -q`
-  - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_correction_audit.py -q`
-  - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_server_transport_mode.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_supervisor_router.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_context_bridge.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_correction_audit.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_server_transport_mode.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/scripts/test_script_tooling.py -q`
 - `bash -n scripts/run_streamable_openrouter.sh scripts/run_mcp_server.sh scripts/run_reference_classifier_sidecar.sh`
 - `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure` (outside sandbox)
 - `PYTHONPATH=. poetry run pytest ./tests/unit` (outside sandbox)
