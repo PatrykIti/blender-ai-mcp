@@ -168,7 +168,7 @@ repo-owned seams already visible in current debugging sessions:
 | `server/adapters/mcp/discovery/search_surface.py` | `call_tool(...)` proxy seam | Tool/proxy compatibility and hidden-tool recovery need one stable debug channel |
 | `server/adapters/mcp/visibility_runtime.py` | Visibility txn/audit owner | Visibility churn is already useful in logs and should move under the shared selector |
 | `server/adapters/mcp/session_capabilities_flow.py`, `server/adapters/mcp/session_capabilities_registry.py`, `server/adapters/mcp/session_capabilities_bootstrap.py`, `server/adapters/mcp/session_capabilities_runtime_glue.py` | Guided-flow state shaping and persistence seams | Guided transitions are computed, applied, bootstrapped, and rearmed across these owner modules |
-| `server/application/tool_handlers/router_handler.py`, `server/adapters/mcp/areas/router.py`, `server/router/application/router.py`, `server/router/infrastructure/logger.py`, `server/adapters/mcp/router_helper.py` | Router/runtime policy plus audit exposure seams | Goal routing, no-match transitions, router logger output, and execution-audit exposure all contribute to runtime diagnosis |
+| `server/application/tool_handlers/router_handler.py`, `server/adapters/mcp/areas/router.py`, `server/router/application/router.py`, `server/router/application/matcher/ensemble_matcher.py`, `server/router/infrastructure/logger.py`, `server/adapters/mcp/router_helper.py` | Router/runtime policy plus audit exposure seams | Goal routing, no-match transitions, router logger output including ensemble-classification summaries, and execution-audit exposure all contribute to runtime diagnosis |
 | `server/adapters/mcp/server.py` | MCP transport bootstrap seam | `debug=transport` needs one runtime owner for transport-mode start/reconnect diagnostics |
 | `scripts/run_streamable_openrouter.sh`, `scripts/run_mcp_server.py`, `scripts/run_mcp_server.sh`, `scripts/RUN_MCP_SERVER.md`, `scripts/run_reference_classifier_sidecar.sh` | Operator launch surface | The selector must be easy to use from the supported Docker/local launch paths |
 | `tests/unit/**` and `tests/e2e/integration/**` | Validation lanes | The logging contract should be tested for profile selection, bounded output, and non-regression |
@@ -248,6 +248,7 @@ with a blind repo-wide search.
 - `scripts/_RUN_DOCKER_MCP.md`
 - `scripts/RUN_MCP_SERVER.md`
 - `_docs/_DEV/README.md`
+- `_docs/_VISION/README.md`
 - `_docs/_ROUTER/README.md`
 - `_docs/_TASKS/README.md`
 

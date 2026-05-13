@@ -61,6 +61,7 @@ if debug_scope_enabled("visibility"):
 
 ## Tests To Add/Update
 
+- `tests/unit/adapters/mcp/test_search_surface.py`
 - unit tests for profile-gated proxy and visibility log emission
 - `tests/unit/adapters/mcp/test_visibility_runtime.py`
 - `tests/e2e/integration/test_guided_streamable_spatial_support.py`

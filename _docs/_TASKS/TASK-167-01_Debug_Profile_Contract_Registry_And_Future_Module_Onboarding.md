@@ -85,9 +85,8 @@ def debug_scope_enabled(scope_name: str) -> bool:
 
 ## Tests To Add/Update
 
-- focused selector-registry proof plus the direct config/runtime consumer lanes
-  listed in `Validation Commands` below
-- direct config/runtime consumers too, including:
+- focused selector-registry proof plus the direct config/runtime consumer lanes,
+  including:
   - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
   - `tests/unit/infrastructure/test_vision_di.py`
   - `tests/unit/router/infrastructure/test_config.py`

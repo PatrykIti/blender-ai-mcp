@@ -77,6 +77,7 @@ if debug_scope_enabled("vision"):
 
 ## Tests To Add/Update
 
+- `tests/unit/adapters/mcp/test_reference_images.py`
 - unit tests proving profile-gated emission on attach and RU refresh paths
 - unit tests proving optional classifier/segmentation unavailability is logged
   as bounded summary-only data
