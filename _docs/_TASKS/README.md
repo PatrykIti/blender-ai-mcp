@@ -3,7 +3,7 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 4 tasks
+- **To Do:** 5 tasks
 - **In Progress:** 2 tasks
 - **Done:** 97
 - **Superseded:** 162
@@ -63,6 +63,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Internal Architecture & Maintainability
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-167](./TASK-167_Cross_Module_Debug_Profile_Registry_And_Runtime_Logging.md) | **Cross-Module Debug Profile Registry And Runtime Logging** | 🔴 High | Board-level follow-on after the current guided/reference/transport runtime waves for introducing one central debug selector such as `all` / `vision` / `tools` / `reference` and routing bounded diagnostics from current and future modules into the normal Docker/server terminal. |
 
 ### Mesh Introspection
 | ID | Title | Priority | Notes |
