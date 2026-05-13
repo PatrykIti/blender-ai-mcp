@@ -5,7 +5,7 @@
 **Category:** Operator Diagnostics / Runtime Debugging / Maintainability
 **Estimated Effort:** Large
 **Follow-on After:** [TASK-125](./TASK-125_MCP_Transport_Mode_Switching_And_Session_Diagnostics.md), [TASK-160](./TASK-160_Guided_Client_Feedback_And_Streamable_HTTP_Recovery_UX.md), [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md), [TASK-164](./TASK-164_Local_SigLIP2_Reference_Classifier_Sidecar_And_Operator_Scripts.md), [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md)
-**Related:** [TASK-148](./TASK-148_No_Auth_HTTP_MCP_Client_Compatibility_And_Auth_Misclassification_Recovery.md), [TASK-165](./TASK-165_Mac_First_Interactive_MCP_Server_Installer_And_Launcher.md)
+**Related:** [TASK-148](./TASK-148_No_Auth_HTTP_MCP_Client_Compatibility_And_Auth_Misclassification_Recovery.md), [TASK-165](./TASK-165_Mac_First_Interactive_MCP_Server_Installer_And_Launcher.md), [TASK-165-02-01](./TASK-165-02-01_Interactive_Profile_Selection_And_Runtime_Wiring.md)
 
 ## Objective
 
@@ -75,6 +75,11 @@ router, Streamable HTTP, and launcher families already on the board:
   runtime behavior that needs better operator diagnosis
 - `TASK-165` owns launcher/operator wiring that should expose the same central
   debug selector rather than inventing its own logging knobs
+- the concrete overlap is with
+  [TASK-165-02-01](./TASK-165-02-01_Interactive_Profile_Selection_And_Runtime_Wiring.md),
+  which already owns profile/runtime prompt wiring for the interactive launcher;
+  `TASK-167` should extend that seam instead of creating a parallel launcher
+  contract
 
 This umbrella must extend those existing owners. It must not create a parallel
 debug-only runtime surface or a second operator launch model.
@@ -132,11 +137,13 @@ repo-owned seams already visible in current debugging sessions:
 | 2 | [TASK-167-02](./TASK-167-02_Runtime_Instrumentation_And_Targeted_Log_Routing.md) | Own the runtime instrumentation branch and keep the logger/debug profile behavior split by current owner seam rather than one large implementation pass |
 | 3 | [TASK-167-02-01](./TASK-167-02-01_Reference_And_Vision_Debug_Profile_Instrumentation.md) | Instrument `reference_images`, RU refresh, and optional classifier/segmentation support timing and failure summaries |
 | 4 | [TASK-167-02-02](./TASK-167-02-02_Tool_Proxy_And_Visibility_Debug_Profile_Instrumentation.md) | Instrument `call_tool(...)` proxy, argument canonicalization, hidden-tool recovery, and visibility transaction/audit paths |
-| 5 | [TASK-167-02-03](./TASK-167-02-03_Guided_Flow_And_Router_Debug_Profile_Instrumentation.md) | Instrument guided-flow step transitions, spatial-refresh barriers, and router goal/status/runtime summaries |
-| 6 | [TASK-167-02-04](./TASK-167-02-04_Transport_And_Session_Debug_Profile_Instrumentation.md) | Instrument transport/session bootstrap and reconnect diagnostics for `stdio` and Streamable HTTP so `debug=transport` has a real runtime owner |
-| 7 | [TASK-167-03](./TASK-167-03_Docker_Launcher_Docs_Validation_And_Closeout_For_Debug_Profiles.md) | Own the launcher/docs/closeout branch and keep operator wiring, docs, and final validation split into focused leaves instead of one oversized closeout pass |
-| 8 | [TASK-167-03-01](./TASK-167-03-01_Launcher_Debug_Selector_Wiring.md) | Wire the central selector through the supported Docker/local launcher seams |
-| 9 | [TASK-167-03-02](./TASK-167-03-02_Debug_Profile_Docs_Board_Changelog_And_Final_Proof.md) | Finish docs, board/changelog sync, and the final repo-standard proof bundle for the whole family |
+| 5 | [TASK-167-02-03](./TASK-167-02-03_Guided_Flow_And_Router_Debug_Profile_Instrumentation.md) | Own the guided-flow/router branch and keep it split by current owner seam instead of one oversized implementation pass |
+| 6 | [TASK-167-02-03-01](./TASK-167-02-03-01_Guided_Flow_Debug_Profile_Instrumentation.md) | Instrument guided-flow step transitions, spatial-refresh barriers, and state-shaping seams |
+| 7 | [TASK-167-02-03-02](./TASK-167-02-03-02_Router_Debug_Profile_Instrumentation.md) | Instrument router goal/status/logger/audit seams |
+| 8 | [TASK-167-02-04](./TASK-167-02-04_Transport_And_Session_Debug_Profile_Instrumentation.md) | Instrument transport/session bootstrap and reconnect diagnostics for `stdio` and Streamable HTTP so `debug=transport` has a real runtime owner |
+| 9 | [TASK-167-03](./TASK-167-03_Docker_Launcher_Docs_Validation_And_Closeout_For_Debug_Profiles.md) | Own the launcher/docs/closeout branch and keep operator wiring, docs, and final validation split into focused leaves instead of one oversized closeout pass |
+| 10 | [TASK-167-03-01](./TASK-167-03-01_Launcher_Debug_Selector_Wiring.md) | Wire the central selector through the supported Docker/local launcher seams |
+| 11 | [TASK-167-03-02](./TASK-167-03-02_Debug_Profile_Docs_Board_Changelog_And_Final_Proof.md) | Finish docs, board/changelog sync, and the final repo-standard proof bundle for the whole family |
 
 ## Repository Touchpoints
 
@@ -152,7 +159,7 @@ repo-owned seams already visible in current debugging sessions:
 | `server/adapters/mcp/session_capabilities_flow.py`, `server/adapters/mcp/session_capabilities_registry.py`, `server/adapters/mcp/session_capabilities_bootstrap.py`, `server/adapters/mcp/session_capabilities_runtime_glue.py` | Guided-flow state shaping and persistence seams | Guided transitions are computed, applied, bootstrapped, and rearmed across these owner modules |
 | `server/application/tool_handlers/router_handler.py`, `server/adapters/mcp/areas/router.py`, `server/router/application/router.py`, `server/router/infrastructure/logger.py`, `server/adapters/mcp/router_helper.py` | Router/runtime policy plus audit exposure seams | Goal routing, no-match transitions, router logger output, and execution-audit exposure all contribute to runtime diagnosis |
 | `server/adapters/mcp/server.py` | MCP transport bootstrap seam | `debug=transport` needs one runtime owner for transport-mode start/reconnect diagnostics |
-| `scripts/run_streamable_openrouter.sh`, `scripts/run_mcp_server.py`, `scripts/run_reference_classifier_sidecar.sh` | Operator launch surface | The selector must be easy to use from the supported Docker/local launch paths |
+| `scripts/run_streamable_openrouter.sh`, `scripts/run_mcp_server.py`, `scripts/run_mcp_server.sh`, `scripts/RUN_MCP_SERVER.md`, `scripts/run_reference_classifier_sidecar.sh` | Operator launch surface | The selector must be easy to use from the supported Docker/local launch paths |
 | `tests/unit/**` and `tests/e2e/integration/**` | Validation lanes | The logging contract should be tested for profile selection, bounded output, and non-regression |
 | `README.md`, `_docs/_MCP_SERVER/README.md`, `scripts/_RUN_DOCKER_MCP.md`, `_docs/_DEV/README.md` | Operator/dev docs | The contract must be discoverable and reproducible outside conversation history |
 
@@ -192,7 +199,7 @@ with a blind repo-wide search.
 | `tests/e2e/integration/test_mcp_transport_modes.py` | transport reconnect/runtime proof lane | lines 24-180 | `debug=transport` needs an explicit runtime proof surface |
 | `tests/unit/adapters/mcp/test_visibility_runtime.py` | visibility audit owner lane | current visibility txn/audit tests | visibility-profile proof should include the direct owner lane, not only proxy-heavy suites |
 | `tests/unit/router/infrastructure/test_logger.py` | router logger owner lane | current RouterLogger tests | router-profile proof should include the direct logger owner lane |
-| `tests/unit/adapters/mcp/test_router_handler_parameters.py` | router goal-handler owner lane | current goal-shape/unit tests | router-profile proof should include the direct handler lane |
+| `tests/unit/router/application/test_router_handler_parameters.py` | router goal-handler owner lane | current goal-shape/unit tests | router-profile proof should include the direct handler lane |
 | `tests/unit/scripts/test_script_tooling.py` | launcher/script contract lane | existing script env/launcher tests plus `run_mcp_server.sh` / `RUN_MCP_SERVER.md` coverage | Docker/local launcher forwarding belongs on the script owner lane first |
 
 ## Test Matrix
@@ -227,14 +234,16 @@ with a blind repo-wide search.
 - `README.md`
 - `_docs/_MCP_SERVER/README.md`
 - `scripts/_RUN_DOCKER_MCP.md`
+- `scripts/RUN_MCP_SERVER.md`
 - `_docs/_DEV/README.md`
 - `_docs/_TASKS/README.md`
 
 ## Changelog Impact
 
-- add a `_docs/_CHANGELOG/*` entry when the first implementation slice under
-  this umbrella ships
-- update `_docs/_CHANGELOG/README.md` when that entry is added
+- final historical entry ownership belongs to
+  [TASK-167-03-02](./TASK-167-03-02_Debug_Profile_Docs_Board_Changelog_And_Final_Proof.md)
+- implementation leaves under this umbrella should not close family history
+  independently
 
 ## Status / Board Update
 

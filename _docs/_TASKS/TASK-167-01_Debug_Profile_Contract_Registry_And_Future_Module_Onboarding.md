@@ -4,7 +4,7 @@
 **Priority:** 🔴 High
 **Parent:** [TASK-167](./TASK-167_Cross_Module_Debug_Profile_Registry_And_Runtime_Logging.md)
 **Objective:** Define one central debug selector contract plus a shared registry module so current and future repo-owned modules can opt into bounded debug scopes without inventing their own env vars or logger naming rules.
-**Repository Touchpoints:** `server/infrastructure/config.py`, `server/main.py`, `server/infrastructure/di.py`, `server/router/infrastructure/config.py`, new shared debug module under `server/infrastructure/`, `server/adapters/mcp/discovery/search_surface.py`, `server/adapters/mcp/visibility_runtime.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/vision/reference_support.py`, `server/router/**`, `tests/unit/infrastructure/`, `tests/unit/adapters/mcp/`
+**Repository Touchpoints:** `server/infrastructure/config.py`, `server/main.py`, `server/infrastructure/di.py`, `server/router/infrastructure/config.py`, `server/router/application/router.py`, `server/router/infrastructure/logger.py`, new shared debug module under `server/infrastructure/`, `server/adapters/mcp/discovery/search_surface.py`, `server/adapters/mcp/visibility_runtime.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/vision/reference_support.py`, `tests/unit/infrastructure/`, `tests/unit/adapters/mcp/`
 **Acceptance Criteria:**
 - one typed config surface parses `off`, `all`, and named debug scopes such as `vision`, `reference`, `tools`, `transport`, `visibility`, `guided_flow`, and `router`
 - invalid names fail with a clear operator-facing message that lists supported scopes
@@ -33,8 +33,10 @@
 |------|--------------------|---------------------|-----------------------|
 | `server/infrastructure/config.py` | `Config` env/runtime contract plus `get_config()` env ingestion | lines 23-43 and 242-325 | the central debug selector belongs with current MCP transport/surface runtime config, env ingestion, and validation |
 | `server/main.py` | logging bootstrap | lines 15-20 | terminal logging is bootstrapped here, so the selector contract must fit the live logging entrypoint |
-| `server/infrastructure/di.py` | router config injection | lines 214-220 | router-specific logging already flows through DI, so the shared selector contract must fit that path |
-| `server/router/infrastructure/config.py` | `RouterConfig.log_decisions` seam | lines 78-82 | router-specific logging config already exists here and should be reconciled with the central selector |
+| `server/infrastructure/di.py` | router config injection | lines 214-220 | one existing router config seam enters through DI here, so the shared selector contract must reconcile with it |
+| `server/router/infrastructure/config.py` | `RouterConfig.log_decisions` seam | lines 78-82 | an existing router logging/config flag already exists here and should be reconciled with the central selector |
+| `server/router/application/router.py` | live `RouterLogger` instantiation | current router construction seam | real router logger instances are created here, so selector wiring must acknowledge this owner |
+| `server/router/infrastructure/logger.py` | router logger singleton/helper seam | current router logger owner | the central selector contract must fit both direct router instances and the shared helper logger path |
 | `server/infrastructure/debug_logging.py` or `server/infrastructure/debug_profiles.py` | new shared registry module | new file | this is the correct place for selector parsing, registry state, and future-module onboarding helpers |
 | `server/adapters/mcp/discovery/search_surface.py` | `BlenderDiscoverySearchTransform._canonicalize_call_arguments()` call chain | lines 329-371 | the registry contract must be consumable from current guided proxy owners rather than designed in isolation |
 | `server/adapters/mcp/visibility_runtime.py` | logger-driven visibility audit owner | lines 137-229 | existing logging seams here should consume the same registry contract, which constrains the shared interface shape |
@@ -83,8 +85,8 @@ def debug_scope_enabled(scope_name: str) -> bool:
 
 ## Changelog Impact
 
-- covered by the first `_docs/_CHANGELOG/*` entry that ships the `TASK-167`
-  implementation family
+- historical closeout entry ownership belongs to
+  [TASK-167-03-02](./TASK-167-03-02_Debug_Profile_Docs_Board_Changelog_And_Final_Proof.md)
 
 ## Status / Board Update
 

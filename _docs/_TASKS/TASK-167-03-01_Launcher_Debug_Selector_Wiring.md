@@ -3,7 +3,7 @@
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
 **Parent:** [TASK-167-03](./TASK-167-03_Docker_Launcher_Docs_Validation_And_Closeout_For_Debug_Profiles.md)
-**Depends On:** [TASK-165](./TASK-165_Mac_First_Interactive_MCP_Server_Installer_And_Launcher.md)
+**Depends On:** [TASK-165-02-01](./TASK-165-02-01_Interactive_Profile_Selection_And_Runtime_Wiring.md)
 **Objective:** Wire the central debug selector through the supported Docker/local launcher seams, extending the current open TASK-165 launcher ownership instead of inventing a parallel launch contract.
 **Repository Touchpoints:** `scripts/run_streamable_openrouter.sh`, `scripts/run_mcp_server.py`, `scripts/run_mcp_server.sh`, `scripts/RUN_MCP_SERVER.md`, `scripts/run_reference_classifier_sidecar.sh`, `tests/unit/scripts/test_script_tooling.py`
 **Acceptance Criteria:**
@@ -41,12 +41,13 @@
 
 ## Docs To Update
 
+- `scripts/RUN_MCP_SERVER.md`
 - `scripts/_RUN_DOCKER_MCP.md`
 
 ## Changelog Impact
 
-- covered by the first `_docs/_CHANGELOG/*` entry that ships the `TASK-167`
-  implementation family
+- historical closeout entry ownership belongs to
+  [TASK-167-03-02](./TASK-167-03-02_Debug_Profile_Docs_Board_Changelog_And_Final_Proof.md)
 
 ## Status / Board Update
 
@@ -55,6 +56,7 @@
 ## Validation Commands
 
 - `git diff --check`
+- `bash -n scripts/run_streamable_openrouter.sh scripts/run_mcp_server.sh scripts/run_reference_classifier_sidecar.sh`
 - `PYTHONPATH=. poetry run pytest tests/unit/scripts/test_script_tooling.py -q`
 
 ## Validation Category

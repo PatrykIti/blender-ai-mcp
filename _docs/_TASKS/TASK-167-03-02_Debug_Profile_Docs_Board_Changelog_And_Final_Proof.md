@@ -4,7 +4,7 @@
 **Priority:** 🔴 High
 **Parent:** [TASK-167-03](./TASK-167-03_Docker_Launcher_Docs_Validation_And_Closeout_For_Debug_Profiles.md)
 **Objective:** Close the `TASK-167` family only after docs, board/changelog sync, and the final repo-standard proof bundle confirm that the shipped debug profiles are visible on the promised runtime surfaces.
-**Repository Touchpoints:** `README.md`, `_docs/_MCP_SERVER/README.md`, `scripts/_RUN_DOCKER_MCP.md`, `_docs/_DEV/README.md`, `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/README.md`, new `_docs/_CHANGELOG/*`
+**Repository Touchpoints:** `README.md`, `_docs/_MCP_SERVER/README.md`, `scripts/_RUN_DOCKER_MCP.md`, `scripts/RUN_MCP_SERVER.md`, `_docs/_DEV/README.md`, `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/README.md`, new `_docs/_CHANGELOG/*`
 **Acceptance Criteria:**
 - operator docs explain `all` vs targeted scopes and match the shipped selector vocabulary
 - board and changelog state are synchronized with the final implementation status
@@ -17,6 +17,7 @@
 | `README.md` | top-level operator docs | current Docker/OpenRouter sections | top-level operator guidance must expose the selector clearly |
 | `_docs/_MCP_SERVER/README.md` | detailed MCP/operator docs | current Streamable/Docker sections | detailed selector/profile guidance belongs here |
 | `scripts/_RUN_DOCKER_MCP.md` | launcher snippets/runbook | current Docker helper snippets | examples must match the shipped selector names and launcher contract |
+| `scripts/RUN_MCP_SERVER.md` | local launcher runbook | current interactive launcher docs | local launcher guidance must match the same shipped selector vocabulary |
 | `_docs/_DEV/README.md` | developer workflow docs | runtime/dev debugging guidance | future implementers need one canonical debug-profile explanation here |
 | `_docs/_TASKS/README.md` | board state | current promoted rows | board state must match the family closeout |
 | `_docs/_CHANGELOG/README.md` and new `_docs/_CHANGELOG/*` | historical tracking | new final family entry | runtime-contract work needs proper historical closeout |
@@ -43,6 +44,7 @@
 - `README.md`
 - `_docs/_MCP_SERVER/README.md`
 - `scripts/_RUN_DOCKER_MCP.md`
+- `scripts/RUN_MCP_SERVER.md`
 - `_docs/_DEV/README.md`
 - `_docs/_TASKS/README.md`
 - `_docs/_CHANGELOG/README.md`
@@ -50,8 +52,8 @@
 
 ## Changelog Impact
 
-- add the historical `_docs/_CHANGELOG/*` entry when the first `TASK-167`
-  implementation slice ships and index it in `_docs/_CHANGELOG/README.md`
+- add the historical `_docs/_CHANGELOG/*` entry when the family is ready to
+  close and index it in `_docs/_CHANGELOG/README.md`
 
 ## Status / Board Update
 
@@ -69,6 +71,7 @@
   - `README.md`
   - `_docs/_MCP_SERVER/README.md`
   - `scripts/_RUN_DOCKER_MCP.md`
+  - `scripts/RUN_MCP_SERVER.md`
   - `_docs/_DEV/README.md`
   - `_docs/_TASKS/README.md`
   - `_docs/_CHANGELOG/README.md`

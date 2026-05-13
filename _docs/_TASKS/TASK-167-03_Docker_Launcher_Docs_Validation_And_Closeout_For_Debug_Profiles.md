@@ -81,13 +81,14 @@ export BLENDER_AI_DEBUG=tools
 - `README.md`
 - `_docs/_MCP_SERVER/README.md`
 - `scripts/_RUN_DOCKER_MCP.md`
+- `scripts/RUN_MCP_SERVER.md`
 - `_docs/_DEV/README.md`
 - `_docs/_TASKS/README.md`
 
 ## Changelog Impact
 
-- add the historical `_docs/_CHANGELOG/*` entry when the first `TASK-167`
-  implementation slice ships and index it in `_docs/_CHANGELOG/README.md`
+- final historical entry ownership belongs to
+  [TASK-167-03-02](./TASK-167-03-02_Debug_Profile_Docs_Board_Changelog_And_Final_Proof.md)
 
 ## Status / Board Update
 

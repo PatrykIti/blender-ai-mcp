@@ -88,8 +88,8 @@ if debug_scope_enabled("vision"):
 
 ## Changelog Impact
 
-- covered by the first `_docs/_CHANGELOG/*` entry that ships the `TASK-167`
-  implementation family
+- historical closeout entry ownership belongs to
+  [TASK-167-03-02](./TASK-167-03-02_Debug_Profile_Docs_Board_Changelog_And_Final_Proof.md)
 
 ## Status / Board Update
 

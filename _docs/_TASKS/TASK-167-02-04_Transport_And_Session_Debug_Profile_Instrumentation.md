@@ -4,7 +4,7 @@
 **Priority:** 🔴 High
 **Parent:** [TASK-167-02](./TASK-167-02_Runtime_Instrumentation_And_Targeted_Log_Routing.md)
 **Objective:** Add bounded `transport` debug instrumentation to the repo-owned `stdio` and Streamable HTTP bootstrap/session seams so operators can trace server startup, transport selection, session creation/reconnect behavior, and transport-mode mismatch issues from the normal Docker/server terminal.
-**Repository Touchpoints:** `server/adapters/mcp/server.py`, `tests/unit/adapters/mcp/test_server_transport_mode.py`, `tests/e2e/integration/test_mcp_transport_modes.py`
+**Repository Touchpoints:** `server/adapters/mcp/server.py`, `server/adapters/mcp/context_utils.py`, `server/adapters/mcp/areas/router.py`, `server/adapters/mcp/areas/reference.py`, `tests/unit/adapters/mcp/test_server_transport_mode.py`, `tests/e2e/integration/test_mcp_transport_modes.py`
 **Acceptance Criteria:**
 - `debug=transport` emits bounded transport bootstrap summaries for `stdio` and Streamable HTTP from the repo-owned MCP server entrypoint
 - `debug=transport` emits bounded session/reconnect diagnostics that help explain transport churn without dumping unrelated runtime state
@@ -16,6 +16,8 @@
 | Path | Current owner seam | Likely edit anchors | Why this leaf owns it |
 |------|--------------------|---------------------|-----------------------|
 | `server/adapters/mcp/server.py` | `run(...)` | lines 34-75 | transport selection, startup logging, and reconnect-related top-level diagnostics are owned here |
+| `server/adapters/mcp/context_utils.py` | `ctx_session_id(...)`, `ctx_transport_type(...)` | current response identity helpers | live session/transport identity also flows through these response-side helpers |
+| `server/adapters/mcp/areas/router.py`, `server/adapters/mcp/areas/reference.py` | transport/session response surfaces | current session/transport response seams | transport diagnostics are also visible through current response builders here |
 | `tests/unit/adapters/mcp/test_server_transport_mode.py` | transport bootstrap proof lane | lines 19-75 | direct unit lane for transport bootstrap ownership |
 | `tests/e2e/integration/test_mcp_transport_modes.py` | transport runtime proof lane | lines 24-180 | direct runtime lane for `stdio` / Streamable session behavior |
 
@@ -60,8 +62,8 @@ if debug_scope_enabled("transport"):
 
 ## Changelog Impact
 
-- covered by the first `_docs/_CHANGELOG/*` entry that ships the `TASK-167`
-  implementation family
+- historical closeout entry ownership belongs to
+  [TASK-167-03-02](./TASK-167-03-02_Debug_Profile_Docs_Board_Changelog_And_Final_Proof.md)
 
 ## Status / Board Update
 
