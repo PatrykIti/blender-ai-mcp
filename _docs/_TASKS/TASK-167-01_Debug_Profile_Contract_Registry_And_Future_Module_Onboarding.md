@@ -32,7 +32,9 @@
 - define explicit compatibility/precedence for existing knobs such as
   `ROUTER_LOG_DECISIONS`: when `BLENDER_AI_DEBUG` is explicitly set, it must be
   authoritative for repo-owned debug scopes; `ROUTER_LOG_DECISIONS` should
-  remain only as a compatibility shim when the new selector is unset
+  remain only as a compatibility shim when the new selector is unset; current
+  router-decision behavior stays legacy-default only in that unset case, while
+  `BLENDER_AI_DEBUG=off` suppresses repo-owned debug scopes
 
 ## Current Owner / Likely Edit Map
 

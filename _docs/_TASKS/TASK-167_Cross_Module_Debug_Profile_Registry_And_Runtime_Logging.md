@@ -122,6 +122,9 @@ requirements:
 - when `BLENDER_AI_DEBUG` is set, it is the authoritative selector for
   repo-owned debug scopes; legacy knobs like `ROUTER_LOG_DECISIONS` become
   compatibility-only and must not silently override it
+- when `BLENDER_AI_DEBUG` is unset, preserve the current legacy router-decision
+  behavior through `ROUTER_LOG_DECISIONS`; when `BLENDER_AI_DEBUG=off`, suppress
+  repo-owned debug scopes including router decision summaries
 - invalid profile names fail clearly and list the accepted values
 
 ## Current Runtime Sources To Consolidate
