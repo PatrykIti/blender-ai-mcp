@@ -3,11 +3,11 @@
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
 **Parent:** [TASK-167-02](./TASK-167-02_Runtime_Instrumentation_And_Targeted_Log_Routing.md)
-**Objective:** Add bounded `transport` debug instrumentation to the repo-owned `stdio` and Streamable HTTP bootstrap/session seams so operators can trace server startup, transport selection, session creation/reconnect behavior, and transport-mode mismatch issues from the normal Docker/server terminal.
+**Objective:** Add bounded `transport` debug instrumentation to the repo-owned `stdio` and Streamable HTTP bootstrap plus surfaced session/transport identity seams so operators can trace server startup, transport selection, echoed session identity, and transport-mode mismatch issues from the normal Docker/server terminal.
 **Repository Touchpoints:** `server/adapters/mcp/server.py`, `server/adapters/mcp/context_utils.py`, `server/adapters/mcp/areas/router.py`, `server/adapters/mcp/areas/reference.py`, `tests/unit/adapters/mcp/test_server_transport_mode.py`, `tests/unit/adapters/mcp/test_router_elicitation.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/e2e/integration/test_mcp_transport_modes.py`
 **Acceptance Criteria:**
 - `debug=transport` emits bounded transport bootstrap summaries for `stdio` and Streamable HTTP from the repo-owned MCP server entrypoint
-- `debug=transport` emits bounded session/reconnect diagnostics that help explain transport churn without dumping unrelated runtime state
+- `debug=transport` emits bounded surfaced session/transport identity diagnostics that help explain transport churn without dumping unrelated runtime state
 - the transport debug profile has explicit owner test lanes for unit bootstrap and runtime session behavior
 - logs stay bounded and do not expose secrets or unbounded request payloads
 
@@ -29,10 +29,12 @@
 - keep `transport` narrow to repo-owned transport/session summaries:
   - selected transport mode
   - streamable host/port/path summary
-  - session id creation/reconnect lifecycle where the repo already owns the seam
+  - surfaced session id / transport identity where the repo already owns the seam
 - do not turn this leaf into generic HTTP or third-party library tracing
 - keep it compatible with the shared registry from `TASK-167-01` rather than
   adding separate transport-specific env vars
+- treat deeper connection/session manager internals as FastMCP platform-layer
+  behavior unless a repo-owned shim or lifecycle hook is introduced explicitly
 
 ## Pseudocode
 
@@ -51,7 +53,7 @@ if debug_scope_enabled("transport"):
 
 - invalid configured transport mode
 - streamable bootstrap path mismatch
-- session creation/reconnect transitions that need operator diagnosis
+- surfaced session id / transport identity changes that need operator diagnosis
 
 ## Tests To Add/Update
 

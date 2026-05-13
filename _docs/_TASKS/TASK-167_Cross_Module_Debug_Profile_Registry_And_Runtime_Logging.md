@@ -119,6 +119,9 @@ requirements:
   verbosity
 - one profile can be enabled alone
 - multiple profiles can be enabled together through one comma-separated selector
+- when `BLENDER_AI_DEBUG` is set, it is the authoritative selector for
+  repo-owned debug scopes; legacy knobs like `ROUTER_LOG_DECISIONS` become
+  compatibility-only and must not silently override it
 - invalid profile names fail clearly and list the accepted values
 
 ## Current Runtime Sources To Consolidate
