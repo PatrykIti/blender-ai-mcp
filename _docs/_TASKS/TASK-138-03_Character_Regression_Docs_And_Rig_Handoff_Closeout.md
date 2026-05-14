@@ -90,15 +90,15 @@ verify_docs_keep_rig_handoff_separate_from_body_reconstruction()
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_guided_naming_policy.py tests/unit/adapters/mcp/test_prompt_catalog.py tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py tests/unit/adapters/mcp/test_prompt_provider.py tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py tests/unit/adapters/mcp/test_prompts_bridge.py tests/unit/adapters/mcp/test_router_elicitation.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/router/application/test_router_contracts.py tests/unit/tools/modeling/test_modeling_tools.py -q`
-- `poetry run pytest ./tests/unit`
+- `Outside sandbox before closeout: poetry run pytest ./tests/unit`
 - `PYTHONPATH=. poetry run pytest tests/unit/router/infrastructure/test_mcp_tools_metadata_alignment.py -q`
-- `poetry run pytest tests/e2e/router/test_guided_manual_handoff.py -q`
-- `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
-- `poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py -q`
-- `poetry run pytest tests/e2e/integration/test_guided_streamable_spatial_support.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_understanding_runtime_surface.py tests/e2e/vision/test_reference_stage_truth_handoff.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_guided_character_reconstruction.py -q`
-- `poetry run python scripts/run_e2e_tests.py`
+- `Supplemental focused lane while iterating: poetry run pytest tests/e2e/router/test_guided_manual_handoff.py -q`
+- `Supplemental focused lane while iterating: poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
+- `Supplemental focused lane while iterating: poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py -q`
+- `Supplemental focused lane while iterating: poetry run pytest tests/e2e/integration/test_guided_streamable_spatial_support.py -q`
+- `Supplemental focused lane while iterating: PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_understanding_runtime_surface.py tests/e2e/vision/test_reference_stage_truth_handoff.py -q`
+- `Supplemental future dedicated character lane once the file exists: PYTHONPATH=. poetry run pytest tests/e2e/vision/test_guided_character_reconstruction.py -q`
+- `Outside sandbox before closeout: poetry run python scripts/run_e2e_tests.py`
 
 ## Status / Board Update
 

@@ -85,12 +85,12 @@ audit_docs_for_non_clinical_boundary_consistency()
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/scene/test_spatial_graph_service.py -q`
 - `Outside sandbox before closeout: PYTHONPATH=. poetry run pytest ./tests/unit -q`
-- `poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
-- `poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py -q`
-- `poetry run pytest tests/e2e/integration/test_mcp_transport_modes.py -q`
-- `poetry run pytest tests/e2e/vision/test_reference_stage_truth_handoff.py -q`
-- `poetry run pytest tests/e2e/vision/test_guided_organ_reconstruction.py -q`
-- `poetry run pytest tests/e2e/vision/test_reference_understanding_runtime_surface.py -q`
+- `Supplemental focused lane while iterating: poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
+- `Supplemental focused lane while iterating: poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py -q`
+- `Supplemental focused lane while iterating: poetry run pytest tests/e2e/integration/test_mcp_transport_modes.py -q`
+- `Supplemental focused lane while iterating: poetry run pytest tests/e2e/vision/test_reference_stage_truth_handoff.py -q`
+- `Supplemental future dedicated organ lane once the file exists: poetry run pytest tests/e2e/vision/test_guided_organ_reconstruction.py -q`
+- `Supplemental focused lane while iterating: poetry run pytest tests/e2e/vision/test_reference_understanding_runtime_surface.py -q`
 - `Outside sandbox before closeout: poetry run python scripts/run_e2e_tests.py`
 
 ## Status / Board Update

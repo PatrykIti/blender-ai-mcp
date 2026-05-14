@@ -97,10 +97,10 @@ if guided_handoff.recipe_id == "low_poly_character_blockout":
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_guided_naming_policy.py tests/unit/adapters/mcp/test_prompt_catalog.py tests/unit/adapters/mcp/test_prompt_catalog_flow_mapping.py tests/unit/adapters/mcp/test_prompt_provider.py tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py tests/unit/adapters/mcp/test_prompts_bridge.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_router_elicitation.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_session_phase.py tests/unit/router/application/test_router_contracts.py tests/unit/tools/modeling/test_modeling_tools.py -q`
-- `poetry run pytest ./tests/unit`
+- `Outside sandbox before closeout: poetry run pytest ./tests/unit`
 - `PYTHONPATH=. poetry run pytest tests/unit/router/infrastructure/test_mcp_tools_metadata_alignment.py -q`
 - `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run check-router-tool-metadata --all-files`
-- `poetry run python scripts/run_e2e_tests.py`
+- `Outside sandbox before closeout: poetry run python scripts/run_e2e_tests.py`
 
 ## Status / Board Update
 

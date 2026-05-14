@@ -85,8 +85,8 @@ gate_templates = derive_character_gate_templates(
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_parsing.py tests/unit/adapters/mcp/test_quality_gate_contracts.py tests/unit/adapters/mcp/test_quality_gate_intake.py tests/unit/adapters/mcp/test_reference_images.py -q`
-- `poetry run pytest ./tests/unit`
-- `poetry run python scripts/run_e2e_tests.py`
+- `Outside sandbox before closeout: poetry run pytest ./tests/unit`
+- `Outside sandbox before closeout: poetry run python scripts/run_e2e_tests.py`
   Covers the runtime-surface lane including `tests/e2e/vision/test_reference_understanding_runtime_surface.py`.
 
 ## Status / Board Update
