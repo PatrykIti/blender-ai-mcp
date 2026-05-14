@@ -125,6 +125,10 @@ feedback = ReferenceOrchestratorFeedback(
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`
 - `PYTHONPATH=. poetry run pytest ./tests/unit`
+- focused Blender-backed owner lanes to cover under the repo-supported runner:
+  - `tests/e2e/integration/test_guided_gate_state_transport.py`
+  - `tests/e2e/integration/test_guided_surface_contract_parity.py`
+  - `tests/e2e/vision/test_reference_understanding_runtime_surface.py`
 - `poetry run python scripts/run_e2e_tests.py`
 
 ## Validation Category

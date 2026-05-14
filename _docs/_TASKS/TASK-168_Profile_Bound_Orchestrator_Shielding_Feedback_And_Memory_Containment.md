@@ -31,8 +31,12 @@ The desired end state is not “write better prompts and hope.” It is:
 - one coarse-to-fine compare/verify policy that escalates only when local evidence is insufficient
 - one compact `reference_orchestrator_feedback`-based contract on the existing
   guided public seams
-- one selective-disclosure response policy where the controller reads a short control payload first and only expands into packet detail on demand
-- one runtime-owned profile/session manifest that outranks stale external memory
+- one selective-disclosure response policy where the controller stays on the
+  additive compact path by default and only receives heavier packet detail when
+  `preset_profile="rich"` or uncertainty requires it
+- one runtime-owned profile/session authority line on the existing
+  router-status / guided-flow / feedback seams that outranks stale external
+  memory
 - one validation bundle proving the server can keep external agents inside the
   current public surface contract
 
@@ -113,8 +117,8 @@ After this umbrella lands:
 | 1 | [TASK-168-01](./TASK-168-01_Guided_State_Graph_And_Pre_Dispatch_Action_Shields.md) | Define the hard guided phase graph plus pre-dispatch action shields for profile-bound tool use |
 | 2 | [TASK-168-02](./TASK-168-02_Typed_Orchestrator_Feedback_Contract_And_Emission_Points.md) | Add one compact typed feedback contract that tells controllers what to do, not do, and what will fail |
 | 3 | [TASK-168-02-01](./TASK-168-02-01_Active_Workset_Compare_Scope_And_Coarse_To_Fine_Iteration.md) | Make compare/iterate target the active fragment/workset first, then escalate only when needed |
-| 4 | [TASK-168-02-02](./TASK-168-02-02_Selective_Disclosure_Minimal_Control_Payloads_And_Gist_Followups.md) | Keep controller-facing outputs short by default and expose heavy packet detail only on demand |
-| 5 | [TASK-168-03](./TASK-168-03_Session_Manifest_Prompt_Priority_And_Memory_Drift_Containment.md) | Surface a runtime-owned profile/session manifest and prompt-priority model that outranks stale external memory |
+| 4 | [TASK-168-02-02](./TASK-168-02-02_Selective_Disclosure_Minimal_Control_Payloads_And_Gist_Followups.md) | Keep controller-facing outputs short by default and expose heavier packet detail only when rich mode or uncertainty requires it |
+| 5 | [TASK-168-03](./TASK-168-03_Session_Manifest_Prompt_Priority_And_Memory_Drift_Containment.md) | Surface a runtime-owned profile/session authority line on the existing status and feedback seams plus a prompt-priority model that outranks stale external memory |
 | 6 | [TASK-168-04](./TASK-168-04_Profile_Contract_Rewrite_Validation_And_Closeout.md) | Rewrite the relevant prompt/surface docs and close with focused plus repo-standard proof lanes |
 
 ## Repository Touchpoints
@@ -141,7 +145,7 @@ After this umbrella lands:
 | typed orchestrator feedback | unit router/reference/scene guided lanes plus transport integration proof | clients need machine-readable “do/don't/won't/unblock” guidance on existing public seams |
 | active workset / fragment compare | unit reference packet/planner lanes plus guided vision/runtime E2E | this is where huge whole-model outputs must become local, blocker-scoped compares |
 | selective disclosure / minimal payloads | unit reference contract/planner lanes plus client-surface parity tests | compact mode must become truly compact for external controllers |
-| prompt-priority and session manifest | session/router contract tests plus prompt/provider/rendering tests | this is the repo-owned answer to stale `memory.md` and old prompt drift, and the session-owned contract already lives on router/session state seams |
+| prompt-priority and status authority projection | session/router contract tests plus prompt/provider/rendering tests | this is the repo-owned answer to stale `memory.md` and old prompt drift, and the session-owned contract already lives on router/session state seams |
 | squirrel regression cases | guided manual handoff E2E plus reference-guided vision/runtime surfaces | the motivating failures must become pinned regressions |
 | full profile closeout | pre-commit, repo-wide unit suite, repo-supported Blender E2E runner | the confinement layer is cross-cutting and must prove itself end to end |
 
@@ -193,7 +197,8 @@ After this umbrella lands:
   - `guided_flow_state`
   - `checkpoint_iterate`
   - `reference_orchestrator_feedback`
-  - `session_manifest`
+  - `contract_version`
+  - `surface_profile`
   - `guided_manual_build`
 - after implementation, inherit the focused proof lanes from the child tasks
 

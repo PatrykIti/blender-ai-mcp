@@ -114,6 +114,8 @@ status_authority = {
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`
 - `PYTHONPATH=. poetry run pytest ./tests/unit`
+- focused Blender-backed owner lanes to cover under the repo-supported runner:
+  - `tests/e2e/integration/test_guided_surface_contract_parity.py`
 - `poetry run python scripts/run_e2e_tests.py`
 
 ## Validation Category

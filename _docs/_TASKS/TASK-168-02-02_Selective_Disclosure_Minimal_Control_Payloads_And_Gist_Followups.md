@@ -1,4 +1,4 @@
-# TASK-168-02-02: Selective Disclosure, Minimal Control Payloads, And Gist Followups
+# TASK-168-02-02: Selective Disclosure, Minimal Control Payloads, And Additive Detail Followups
 
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
@@ -22,7 +22,8 @@
 ## Implementation Notes
 
 - keep the public surface additive and top-level; do not invent a wrapper such
-  as `control` / `gist` / `detail` around the shipped compare/iterate payload
+  as `control` / `summary` / `detail` around the shipped compare/iterate
+  payload
 - compact mode should keep `reference_orchestrator_feedback` as the control
   owner seam and `compare_diagnostics` as the public uncertainty path while
   omitting heavy nested compare/truth/planner detail unless rich mode or
@@ -33,7 +34,7 @@
   - `uncertainty_notes`
 - if a richer detail-followup path is still needed later, it must land as an
   additive extension on the current public surface rather than a parallel
-  wrapper or gist handle
+  wrapper or summary handle
 - this task should make `compact` mean "controller-sized," not just "smaller
   than rich"
 
@@ -55,8 +56,8 @@ return payload
 
 - compact payload must not depend on the client parsing human prose
 - heavy detail should remain bounded and redacted
-- gist must not become stale hidden state; it should be recomputed from the
-  authoritative compare/runtime result each iteration
+- any carry-forward summary must not become stale hidden state; it should be
+  recomputed from the authoritative compare/runtime result each iteration
 
 ## Tests To Add/Update
 
@@ -86,6 +87,9 @@ return payload
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
 - `PYTHONPATH=. poetry run pytest ./tests/unit`
+- focused Blender-backed owner lanes to cover under the repo-supported runner:
+  - `tests/e2e/integration/test_guided_surface_contract_parity.py`
+  - `tests/e2e/vision/test_reference_understanding_runtime_surface.py`
 - `poetry run python scripts/run_e2e_tests.py`
 
 ## Validation Category

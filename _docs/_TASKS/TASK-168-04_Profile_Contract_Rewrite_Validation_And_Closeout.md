@@ -4,7 +4,7 @@
 **Priority:** 🔴 High
 **Parent:** [TASK-168](./TASK-168_Profile_Bound_Orchestrator_Shielding_Feedback_And_Memory_Containment.md)
 **Objective:** Close the confinement umbrella only after the `llm-guided` contract, prompt assets, docs, board/changelog state, and proof lanes confirm that external controllers are held inside the current profile boundaries.
-**Repository Touchpoints:** `README.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_PROMPTS/README.md`, `_docs/_PROMPTS/GUIDED_SESSION_START.md`, `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`, `_docs/_ROUTER/README.md`, `_docs/_TASKS/README.md`, `_docs/_TASKS/TASK-168*.md`, `_docs/_CHANGELOG/README.md`, new `_docs/_CHANGELOG/*`, `tests/unit/`, `tests/e2e/integration/`, `tests/e2e/router/`, `tests/e2e/vision/`
+**Repository Touchpoints:** `README.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_PROMPTS/README.md`, `_docs/_PROMPTS/GUIDED_SESSION_START.md`, `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`, `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`, `_docs/_ROUTER/README.md`, `_docs/_TASKS/README.md`, `_docs/_TASKS/TASK-168*.md`, `_docs/_CHANGELOG/README.md`, new `_docs/_CHANGELOG/*`, `tests/unit/`, `tests/e2e/integration/`, `tests/e2e/router/`, `tests/e2e/vision/`
 **Acceptance Criteria:**
 - docs explain the hard profile contract and the compact feedback semantics consistently
 - the board and changelog state match the final implementation status
@@ -44,6 +44,7 @@
 - `_docs/_PROMPTS/README.md`
 - `_docs/_PROMPTS/GUIDED_SESSION_START.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
+- `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`
 - `_docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md`
 - `_docs/_ROUTER/README.md`
 - `_docs/_TASKS/README.md`
@@ -79,6 +80,14 @@
   - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_prompt_provider.py -q`
   - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py -q`
   - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- focused Blender-backed owner lanes to cover under the repo-supported runner:
+  - `tests/e2e/router/test_guided_manual_handoff.py`
+  - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
+  - `tests/e2e/integration/test_guided_gate_state_transport.py`
+  - `tests/e2e/integration/test_guided_surface_contract_parity.py`
+  - `tests/e2e/vision/test_reference_understanding_runtime_surface.py`
+  - `tests/e2e/vision/test_reference_stage_multi_reference_scaling.py`
+  - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 - repo-standard proof bundle:
   - `PYTHONPATH=. poetry run pytest ./tests/unit`
   - `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure`

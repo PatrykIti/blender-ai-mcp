@@ -105,6 +105,9 @@ dispatch(...)
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_context_bridge.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_supervisor_router.py -q`
 - `PYTHONPATH=. poetry run pytest ./tests/unit`
+- focused Blender-backed owner lanes to cover under the repo-supported runner:
+  - `tests/e2e/router/test_guided_manual_handoff.py`
+  - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
 - `poetry run python scripts/run_e2e_tests.py`
 
 ## Validation Category
