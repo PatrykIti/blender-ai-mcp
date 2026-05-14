@@ -3,8 +3,8 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 5 tasks
-- **In Progress:** 2 tasks
+- **To Do:** 4 tasks
+- **In Progress:** 3 tasks
 - **Done:** 98
 - **Superseded:** 0
 
@@ -46,6 +46,7 @@ flight.
 |----|-------|----------|-------|
 | [TASK-165](./TASK-165_Mac_First_Interactive_MCP_Server_Installer_And_Launcher.md) | **macOS-First Interactive MCP Server Installer And Launcher** | 🔴 High | In progress after the first `run_mcp_server.sh` / `run_mcp_server.py` launcher landed; the remaining work is to tighten prerequisite/runtime flow, align docs with the shipped operator path, and close the family with the correct validation lane. |
 | [TASK-160](./TASK-160_Guided_Client_Feedback_And_Streamable_HTTP_Recovery_UX.md) | **Guided Client Feedback And Streamable HTTP Recovery UX** | 🔴 High | In progress after TASK-160-01 closed the Streamable visibility serialization slice; the umbrella still owns the broader guided client-feedback contract and follow-on surface decisions. |
+| [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) | **Expand External Vision Contract Profiles Across Qwen, Anthropic, OpenAI, and NVIDIA** | 🔴 High | In progress after `TASK-140-06` opened the capability-aware OpenRouter runtime track and already landed `TASK-140-06-01` plus `TASK-140-06-03`; the remaining family-contract and closeout branches stay under the same umbrella. |
 
 ## 🚨 To Do
 
@@ -82,7 +83,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Vision & Hybrid Loop
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) | **Expand External Vision Contract Profiles Across Qwen, Anthropic, OpenAI, and NVIDIA** | 🔴 High | Board-level follow-on after TASK-139 for extending the external `vision_contract_profile` architecture across additional multimodal families on the existing provider surface, including OpenRouter model capability resolution and no new provider branches under this umbrella. |
+
 ---
 
 ## ✅ Done

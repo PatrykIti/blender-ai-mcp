@@ -1,6 +1,6 @@
 # TASK-140: Expand External Vision Contract Profiles Across Qwen, Anthropic, OpenAI, and NVIDIA
 
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
 **Priority:** 🔴 High
 **Category:** Vision Runtime / External Model-Family Reliability
 **Estimated Effort:** Large
