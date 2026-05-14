@@ -24,6 +24,7 @@ Fail-safe rules:
 - Cleanup rule: prefer `scene_clean_scene(...)` before `router_set_goal(...)`, but if scene drift is discovered after entering build phase, the same tool is an allowed recovery hatch on the guided build surface.
 - If the router returns `needs_input`, answer it with a follow-up `router_set_goal(..., resolved_params={...})`.
 - If `guided_flow_state` is present, treat `current_step`, `allowed_families`, `allowed_roles`, `missing_roles`, and `next_actions` as the active execution contract.
+- If `guided_flow_state.current_step == "checkpoint_iterate"`, do not keep creating new semantic parts by default. Run the staged compare loop or the explicitly visible support tools first unless the same state still reports unresolved required roles for the active workset.
 - If `reference_images(...)` are attached for the active guided goal, treat them as the primary grounding input before deciding the first primary masses, silhouette, and placement.
 - Use full semantic object names such as `Body`, `Head`, `Tail`, `ForeLeg_L`, and `HindLeg_R`; avoid opaque abbreviations like `ForeL` / `HindR`.
 - On `llm-guided`, the server may warn on weak role-sensitive names and block clearly opaque placeholder names such as `Sphere` / `Object`; when that happens, rename or create the object using one of the suggested semantic names.
@@ -37,9 +38,20 @@ Fail-safe rules:
 - For role-sensitive build calls, use either `guided_register_part(object_name=..., role=...)` or `guided_role=...` on the build tool call.
 - Treat `guided_role=...` as a convenience path only after an active guided
   flow already exists; it is not a substitute for goal/session initialization.
+- Use `guided_role=...` only when that role is currently exposed in
+  `guided_flow_state.allowed_roles`.
 - Treat pair roles such as `ear_pair`, `foreleg_pair`, and `hindleg_pair` as
   requiring left/right siblings. If `role_counts` / `role_cardinality` are
   present, use them before deciding whether the next sibling is still allowed.
+- On the creature flow, `eye_pair` is a quality-gate target, not a guided
+  execution role. Do not send `guided_role="eye_pair"` on build calls.
+- `reference_compare_stage_checkpoint(...)` and
+  `reference_iterate_stage_checkpoint(...)` use `checkpoint_label`; do not send
+  legacy `label` or `notes`.
+- `macro_align_part_with_contact(...)` uses `reference_object`,
+  `target_relation`, `gap`, `align_mode`, and optional `normal_axis` with only
+  `X`, `Y`, or `Z`. Do not invent `contact_axis`, `contact_side`, or signed
+  axes such as `-Y`.
 - If the session has already moved to a later guided step, the server may still allow bounded refinement of already-created primary masses or utility/workset operations when they remain part of the same active workset.
 - If a spatial graph/view response says it was read-only but did not satisfy
   the active guided scope, rerun that same check with the expected scope from

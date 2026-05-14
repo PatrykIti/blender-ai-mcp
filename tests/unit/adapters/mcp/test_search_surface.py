@@ -1480,6 +1480,22 @@ def test_guided_call_argument_canonicalization_accepts_viewport_legacy_aliases()
     }
 
 
+def test_guided_call_argument_canonicalization_accepts_stage_checkpoint_legacy_label():
+    payload = canonicalize_guided_tool_arguments(
+        "reference_compare_stage_checkpoint",
+        {
+            "label": "primary_masses_complete",
+            "notes": "Body, Head, Tail created",
+            "target_object": "Creature",
+        },
+    )
+
+    assert payload == {
+        "checkpoint_label": "primary_masses_complete",
+        "target_object": "Creature",
+    }
+
+
 def test_call_tool_accepts_viewport_legacy_aliases(monkeypatch):
     async def fake_route_scene_get_viewport(
         ctx,

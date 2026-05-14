@@ -88,6 +88,28 @@ def test_guided_manual_goal_suppresses_heuristic_workflow_trigger_for_direct_tra
     ]
 
 
+def test_guided_manual_creature_goal_suppresses_tower_heuristic_for_tall_leg_transform(router, clean_scene):
+    """A no-match creature manual goal should still suppress tall-scale tower heuristics."""
+
+    handler = RouterToolHandler(router=router, enabled=True)
+    result = handler.set_goal("create a low-poly squirrel matching front and side reference images")
+
+    assert result["status"] == "no_match"
+    assert result["continuation_mode"] == "guided_manual_build"
+
+    corrected = router.process_llm_tool_call(
+        "modeling_transform_object",
+        {"name": "ForeLeg_L", "scale": [0.7, 0.7, 2.5]},
+    )
+
+    assert corrected == [
+        {
+            "tool": "modeling_transform_object",
+            "params": {"name": "ForeLeg_L", "scale": [0.7, 0.7, 2.5]},
+        }
+    ]
+
+
 @dataclass
 class FakeAsyncContext:
     state: dict[str, object] = field(default_factory=dict)

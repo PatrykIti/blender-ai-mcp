@@ -46,7 +46,7 @@ asset as the generic search-first operating baseline.
    - body + head primary masses
    - tail mass
    - snout + ears
-   - forelegs + hindlegs + final proportion cleanup
+   - forelegs + hindlegs + eyes + final proportion cleanup
 9. after each stage run:
    - `reference_iterate_stage_checkpoint(target_object="Creature", checkpoint_label="<stage>", preset_profile="compact")`
 10. use the response in this order:
@@ -82,6 +82,10 @@ Rules:
   creature goal
 - if the server exposes `guided_flow_state.required_prompts` or
   `guided_flow_state.preferred_prompts`, treat those as the current required prompt bundle and preferred prompt bundle for the creature flow
+- treat the live guided flow as the primary execution contract; if the server
+  exposes `allowed_roles`, `missing_roles`, `next_actions`, or
+  `current_step="checkpoint_iterate"`, follow that state literally instead of
+  improvising a new stage order
 - do not assume MLX-only or provider-specific compare behavior; follow the
   runtime that is actually configured for this server
 - do not guess hidden/internal tool names
@@ -163,11 +167,26 @@ Rules:
 - during `checkpoint_iterate`, the server may keep bounded initial transforms
   available for a newly created part before the next checkpoint; do not use
   that as permission for broad free-form edits outside the active workset
+- if `guided_flow_state.current_step == "checkpoint_iterate"` and
+  `guided_flow_state.allowed_roles` is empty, do not create new semantic parts;
+  run `reference_iterate_stage_checkpoint(...)` or the explicitly visible
+  support tools first
+- `reference_compare_stage_checkpoint(...)` and
+  `reference_iterate_stage_checkpoint(...)` use `checkpoint_label`; do not send
+  legacy `label` or `notes`
+- `macro_align_part_with_contact(...)` uses `reference_object`,
+  `target_relation`, `gap`, `align_mode`, and optional `normal_axis` with only
+  `X`, `Y`, or `Z`; do not invent `contact_axis`, `contact_side`, or signed
+  axes such as `-Y`
 - when the server needs semantic part roles for build enforcement, use the
   canonical `guided_register_part(object_name=..., role=...)` path
 - optional `guided_role=...` on `modeling_create_primitive(...)` or
   `modeling_transform_object(...)` is a convenience path only; do not rely on
   it as a substitute for reading the active guided flow state
+- only use `guided_role=...` when the same role is currently exposed in
+  `guided_flow_state.allowed_roles`
+- `eye_pair` is a quality-gate target in this slice, not a guided role; do not
+  send `guided_role="eye_pair"`
 - if the guided flow is not active yet, do not assume a successful
   `guided_role=...` create/transform call persisted role state; initialize the
   guided session first, then use the canonical registration path when needed
@@ -226,7 +245,7 @@ Workflow:
    - stage 1: body + head primary masses
    - stage 2: tail mass
    - stage 3: snout + ears
-   - stage 4: forelegs + hindlegs + final proportion cleanup
+   - stage 4: forelegs + hindlegs + eyes + final proportion cleanup
 9. during the primary-mass stages, do not jump early to ears or legs
    - if the server reports `guided_flow_state.allowed_roles=["body_core","head_mass","tail_mass"]`, stay inside that role set
    - read `allowed_roles` and `missing_roles` literally from the active guided flow state before creating the next creature part
@@ -294,8 +313,8 @@ Workflow:
     forelegs, and hindlegs unless a gate is explicitly waived
 22. do not treat one vertical oval as a completed squirrel-like tail when the
     active gate plan carries a curved-tail `shape_profile` blocker
-23. treat `eye_pair` as a quality gate in this slice, not as a guided role that
-    changes `guided_flow_state.allowed_roles`
+23. place the eyes only after the major secondary masses are stable, and treat
+    `eye_pair` as a quality-gate target rather than a guided execution role
 
 At the end of each stage, return only:
 - what was done

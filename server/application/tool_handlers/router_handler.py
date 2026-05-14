@@ -388,7 +388,7 @@ class RouterToolHandler(IRouterTool):
 
         if self._looks_like_meta_capture_build_goal(goal):
             try:
-                router.clear_goal()
+                router.set_manual_goal_context(goal)
             except Exception:
                 pass
             return self._no_match_response(
@@ -403,7 +403,7 @@ class RouterToolHandler(IRouterTool):
 
         if self._looks_like_reference_guided_architecture_goal(goal):
             try:
-                router.clear_goal()
+                router.set_manual_goal_context(goal)
             except Exception:
                 pass
             return self._no_match_response(
@@ -420,7 +420,7 @@ class RouterToolHandler(IRouterTool):
 
         if self._looks_like_reference_guided_manual_build_goal(goal):
             try:
-                router.clear_goal()
+                router.set_manual_goal_context(goal)
             except Exception:
                 pass
             return self._no_match_response(
@@ -436,7 +436,7 @@ class RouterToolHandler(IRouterTool):
 
         if self._looks_like_guided_manual_build_goal(goal):
             try:
-                router.clear_goal()
+                router.set_manual_goal_context(goal)
             except Exception:
                 pass
             return self._no_match_response(

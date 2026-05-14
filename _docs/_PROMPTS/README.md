@@ -183,6 +183,8 @@ Interpretation:
   split `keep_lights` / `keep_cameras` form is legacy compatibility only
 - use one `reference_images(action="attach", source_path=...)` call per
   reference image; do not send `images=[...]` batches on the guided surface
+- staged compare tools use `checkpoint_label`; do not send legacy `label` or
+  `notes` fields
 - use `collection_manage(action=..., collection_name=...)`, not
   `collection_manage(..., name=...)`, as the canonical public form
 - use `modeling_create_primitive(primitive_type=..., radius|size=..., location=..., rotation=..., name=...)`
@@ -222,6 +224,8 @@ Interpretation:
 - optional `guided_role=...` hints on `modeling_create_primitive(...)` or
   `modeling_transform_object(...)` are only a convenience path; keep
   `guided_register_part(...)` as the canonical explicit registration surface
+- use `guided_role=...` only when that role is currently exposed in
+  `guided_flow_state.allowed_roles`
 - those convenience hints only auto-register while an active guided flow
   exists; if there is no active guided flow yet, do not assume a role hint on
   a successful create/transform call created persistent guided role state

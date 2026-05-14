@@ -103,6 +103,22 @@ class WorkflowTriggerer:
 
         return workflow_name
 
+    def set_explicit_goal_context(
+        self,
+        *,
+        goal: str,
+        workflow_name: str | None,
+    ) -> None:
+        """Persist explicit goal context without rerunning legacy keyword matching.
+
+        This lets the router preserve goal-aware heuristic suppression on
+        guided manual-build continuations even when no workflow should be
+        pending for execution.
+        """
+
+        self._explicit_goal = goal
+        self._explicit_workflow = workflow_name
+
     def get_explicit_goal(self) -> Optional[str]:
         """Get current explicit goal."""
         return self._explicit_goal

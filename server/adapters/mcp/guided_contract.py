@@ -59,6 +59,27 @@ def canonicalize_reference_images_arguments(arguments: dict[str, Any]) -> dict[s
     return canonical_arguments
 
 
+def canonicalize_reference_stage_checkpoint_arguments(arguments: dict[str, Any]) -> dict[str, Any]:
+    """Normalize guided staged-compare aliases into the public contract."""
+
+    canonical_arguments = dict(arguments)
+
+    legacy_label = canonical_arguments.pop("label", None)
+    if legacy_label is not None:
+        if canonical_arguments.get("checkpoint_label") not in {None, legacy_label}:
+            raise ValueError(
+                "reference_compare_stage_checkpoint(...) and reference_iterate_stage_checkpoint(...) use "
+                "`checkpoint_label`; legacy `label` is accepted only when it matches `checkpoint_label`."
+            )
+        canonical_arguments["checkpoint_label"] = legacy_label
+
+    # Older controller prompts sometimes attach human notes to the compare call.
+    # The staged compare surface does not consume them, so drop them instead of
+    # failing the entire checkpoint attempt.
+    canonical_arguments.pop("notes", None)
+    return canonical_arguments
+
+
 def canonicalize_modeling_create_primitive_arguments(arguments: dict[str, Any]) -> dict[str, Any]:
     """Normalize guided `modeling_create_primitive(...)` args or raise guidance."""
 
@@ -269,6 +290,8 @@ def canonicalize_guided_tool_arguments(
         return canonicalize_collection_manage_arguments(arguments)
     if canonical_name == "reference_images":
         return canonicalize_reference_images_arguments(arguments)
+    if canonical_name in {"reference_compare_stage_checkpoint", "reference_iterate_stage_checkpoint"}:
+        return canonicalize_reference_stage_checkpoint_arguments(arguments)
     if canonical_name == "modeling_create_primitive":
         return canonicalize_modeling_create_primitive_arguments(arguments)
     if canonical_name == "modeling_transform_object":

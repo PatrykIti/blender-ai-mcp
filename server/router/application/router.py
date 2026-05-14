@@ -1163,6 +1163,7 @@ class SupervisorRouter:
             self._pending_workflow = result.workflow_name
             self._last_ensemble_result = result
             self._pending_modifiers = result.modifiers  # CRITICAL: Store modifiers
+            self.triggerer.set_explicit_goal_context(goal=goal, workflow_name=result.workflow_name)
 
             # Also store as MatchResult for WorkflowAdapter compatibility
             self._last_match_result = MatchResult(
@@ -1204,8 +1205,18 @@ class SupervisorRouter:
 
         self._pending_workflow = None
         self._pending_modifiers = {}
+        self.triggerer.set_explicit_goal_context(goal=goal, workflow_name=None)
         self.logger.log_info(f"Goal '{goal}' set (no matching workflow)")
         return None
+
+    def set_manual_goal_context(self, goal: str) -> None:
+        """Preserve explicit guided-manual goal context without a pending workflow."""
+
+        self._current_goal = goal
+        self._pending_workflow = None
+        self._pending_modifiers = {}
+        self.triggerer.set_explicit_goal_context(goal=goal, workflow_name=None)
+        self.logger.log_info(f"Manual guided goal context preserved: {goal}")
 
     def get_current_goal(self) -> Optional[str]:
         """Get current modeling goal.
@@ -1228,6 +1239,7 @@ class SupervisorRouter:
         self._current_goal = None
         self._pending_workflow = None
         self._pending_modifiers = {}
+        self.triggerer.clear_goal()
         self.logger.log_info("Goal cleared")
 
     def execute_pending_workflow(

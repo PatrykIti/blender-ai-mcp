@@ -199,6 +199,11 @@ class MockRouter:
         self.clear_goal()
         return []
 
+    def set_manual_goal_context(self, goal: str) -> None:
+        self._current_goal = goal
+        self._pending_workflow = None
+        self._pending_modifiers = {}
+
     def clear_goal(self):
         self._current_goal = None
         self._pending_workflow = None
@@ -338,6 +343,15 @@ class TestSetGoalUnified:
         assert "guided_reference_readiness" in result["message"]
         assert "attach/use reference_images" not in result["message"]
         assert mock_router.get_pending_workflow() is None
+
+    def test_reference_guided_manual_build_preserves_manual_goal_context(self, handler, mock_router):
+        goal = "create a low-poly squirrel matching front and side reference images"
+
+        result = handler.set_goal(goal)
+
+        assert result["status"] == "no_match"
+        assert result["continuation_mode"] == "guided_manual_build"
+        assert mock_router.get_current_goal() == goal
 
     def test_set_goal_treats_reference_guided_architecture_as_guided_manual_build_no_match(self, handler, mock_router):
         """Plan/elevation architecture reconstruction should not silently import simple_house_workflow."""
