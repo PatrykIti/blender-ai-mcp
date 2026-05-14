@@ -38,6 +38,25 @@ heuristics.
 - the final decision is logged with the selected capability source and request
   cap
 
+## Implementation Notes
+
+- keep this leaf focused on turning resolved capability data into bounded
+  request-policy choices on the existing runtime/backend/prompting seams
+- cover:
+  - output budget selection
+  - `json_schema` versus `json_object`
+  - `response-healing` plugin use
+  - reasoning-related parameters
+  - modality gating
+- preserve the existing precedence order: env override, live metadata,
+  fallback registry, then conservative default behavior
+
+## Runtime / Security Contract Notes
+
+- capability-driven request policy must stay bounded and deterministic
+- do not let provider-specific heuristics bypass the typed capability contract
+- logs should explain the final request posture without exposing secrets
+
 ## Tests To Add/Update
 
 - Unit:
@@ -52,3 +71,14 @@ heuristics.
 ## Changelog Impact
 
 - include in the TASK-140-06 changelog entry
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_external_backend.py tests/unit/adapters/mcp/test_vision_prompting.py -q`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+
+## Status / Board Update
+
+- remains nested under `TASK-140-06`
+- should close before diagnostics/closeout claim capability-aware policy is complete

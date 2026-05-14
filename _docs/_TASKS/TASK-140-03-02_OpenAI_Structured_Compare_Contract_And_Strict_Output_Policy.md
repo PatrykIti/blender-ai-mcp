@@ -44,6 +44,21 @@ This leaf does not introduce a new backend/provider path.
 - backend changes, if needed, stay bounded to shared-path request/schema logic
   and do not add an OpenAI-specific transport branch
 
+## Implementation Notes
+
+- use this leaf to decide whether OpenAI families need a stricter structured
+  compare contract than `generic_full`
+- keep prompting, backend request shape, and parsing behavior aligned around
+  one explicit OpenAI policy decision
+- let the later regression leaf lock the chosen behavior once this contract is
+  explicit
+
+## Runtime / Security Contract Notes
+
+- do not add an OpenAI-specific transport path
+- if smaller OpenAI tiers cannot support the stricter contract, make that
+  limitation explicit in the chosen profile policy
+
 ## Docs To Update
 
 - `_docs/_VISION/README.md`
@@ -58,3 +73,15 @@ This leaf does not introduce a new backend/provider path.
 ## Changelog Impact
 
 - include in the parent slice changelog entry when shipped
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_parsing.py tests/unit/adapters/mcp/test_vision_external_backend.py tests/unit/adapters/mcp/test_vision_result_types.py -q`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+
+## Status / Board Update
+
+- remains nested under `TASK-140-03`
+- should close before the OpenAI regression/failure-surface leaf is considered
+  final

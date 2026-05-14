@@ -49,6 +49,21 @@ typing.
   provider enum expansion; if the current provider surface is insufficient,
   record that as follow-on work instead
 
+## Implementation Notes
+
+- keep Anthropic-family work on typed contract vocabulary and runtime routing,
+  not on provider expansion
+- centralize family matching in runtime/config owners and keep public
+  `VisionAssistContract` typing aligned with any new Claude-specific profiles
+- let later child leaves own request-assembly and parse/diagnostic policy once
+  the typed contract vocabulary exists
+
+## Runtime / Security Contract Notes
+
+- do not add a first-class Anthropic provider alias here
+- if the current provider surface proves insufficient, record that explicitly
+  as a bounded follow-on instead of widening scope inside this leaf
+
 ## Docs To Update
 
 - `.env.example`
@@ -62,3 +77,15 @@ typing.
 ## Changelog Impact
 
 - include in the parent slice changelog entry when shipped
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_result_types.py -q`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+
+## Status / Board Update
+
+- remains nested under `TASK-140-02`
+- should close before request-assembly or parse-policy leaves depend on the new
+  Claude profile vocabulary

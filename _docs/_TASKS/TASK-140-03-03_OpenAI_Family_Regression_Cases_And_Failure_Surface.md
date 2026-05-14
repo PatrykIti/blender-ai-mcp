@@ -26,6 +26,22 @@ diagnostic/error surface so support decisions stay reproducible.
 - the repo can distinguish "supported by transport" from "supported as a
   staged compare default"
 
+## Implementation Notes
+
+- use this leaf to lock the chosen OpenAI routing/profile behavior behind
+  repeatable regression cases and operator-facing failure diagnostics
+- keep targeted `tests/e2e/vision/` evidence aligned with the unit/runtime
+  owner lanes instead of inventing a separate support matrix
+- make failure reporting explicit enough that operators can tell whether they
+  hit transport support, contract support, or a structured-output boundary
+
+## Runtime / Security Contract Notes
+
+- diagnostics must remain bounded and should not expose raw secrets or full
+  provider payloads
+- negative-path coverage should make unsupported structured-compare behavior
+  obvious instead of silently degrading to generic success
+
 ## Docs To Update
 
 - `_docs/_VISION/README.md`
@@ -40,3 +56,15 @@ diagnostic/error surface so support decisions stay reproducible.
 ## Changelog Impact
 
 - include in the parent slice changelog entry when shipped
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_parsing.py tests/unit/adapters/mcp/test_vision_external_backend.py -q`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+
+## Status / Board Update
+
+- remains nested under `TASK-140-03`
+- should close only after the OpenAI routing and structured compare leaves are
+  both settled

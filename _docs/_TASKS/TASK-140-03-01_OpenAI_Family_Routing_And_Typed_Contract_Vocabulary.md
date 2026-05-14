@@ -47,6 +47,20 @@ contract-profile layer.
   typed in public `VisionAssistContract.vision_contract_profile` result surfaces
 - `VISION_EXTERNAL_PROVIDER` vocabulary remains unchanged
 
+## Implementation Notes
+
+- keep this leaf on contract-profile vocabulary and runtime/config routing only
+- centralize OpenAI-family recognition in runtime owners and keep public result
+  typing aligned with any new OpenAI-specific profiles
+- let later child leaves own the actual structured compare policy and
+  regression/failure-surface proof once routing exists
+
+## Runtime / Security Contract Notes
+
+- do not broaden the provider inventory here
+- if OpenAI-family ids remain correctly served by `generic_full`, make that an
+  explicit outcome instead of forcing profile churn
+
 ## Docs To Update
 
 - `.env.example`
@@ -60,3 +74,15 @@ contract-profile layer.
 ## Changelog Impact
 
 - include in the parent slice changelog entry when shipped
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_result_types.py -q`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+
+## Status / Board Update
+
+- remains nested under `TASK-140-03`
+- should close before structured compare policy or regression leaves depend on
+  new OpenAI profile ids

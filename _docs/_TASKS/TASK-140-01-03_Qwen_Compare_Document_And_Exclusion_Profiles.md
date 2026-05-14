@@ -52,6 +52,24 @@ Qwen profile work stays inside the current shared external backend seam.
 - families that are not yet explicitly classified still fall back to
   `generic_full` under the `TASK-139` precedence model
 
+## Implementation Notes
+
+- keep Qwen profile behavior on the current shared external backend seam and
+  let the child leaves separate:
+  - legacy Qwen-VL decisions
+  - Qwen2.5/Qwen3 profile behavior
+  - document/OCR exclusion semantics
+- treat prompting, backend request shape, and parsing/diagnostics as one
+  bounded contract decision instead of three drifting heuristics
+
+## Runtime / Security Contract Notes
+
+- do not add a Qwen-specific provider branch
+- document/OCR-oriented Qwen models must fail or route explicitly instead of
+  silently inheriting compare behavior
+- keep any new profile names and exclusions visible in typed runtime behavior
+  and docs
+
 ## Docs To Update
 
 - `_docs/_VISION/README.md`
@@ -73,3 +91,15 @@ Qwen profile work stays inside the current shared external backend seam.
 | 1 | [TASK-140-01-03-01](./TASK-140-01-03-01_Legacy_Qwen_VL_Plus_And_Max_Profile_Decisions.md) | Decide how legacy `qwen-vl-plus` / `qwen-vl-max` map into compare-capable or generic profiles |
 | 2 | [TASK-140-01-03-02](./TASK-140-01-03-02_Qwen2_5_VL_And_Qwen3_VL_Profile_Decisions.md) | Define compare-profile behavior for Qwen2.5-VL and Qwen3-VL lines without collapsing them into the legacy path |
 | 3 | [TASK-140-01-03-03](./TASK-140-01-03-03_Qwen_Document_And_OCR_Exclusion_Boundary.md) | Decide which Qwen document/OCR-oriented variants get a separate profile or an explicit compare exclusion |
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_parsing.py tests/unit/adapters/mcp/test_vision_external_backend.py -q`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+
+## Status / Board Update
+
+- remains nested under `TASK-140-01`
+- should close only after all three physical child leaves land with aligned
+  runtime/docs evidence

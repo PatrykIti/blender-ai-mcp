@@ -36,6 +36,18 @@ quality gate pass without the `TASK-157` verifier layer.
   context to be reproduced later
 - provider notes no longer blur operator folklore with harness-ranked support
 
+## Implementation Notes
+
+- keep this leaf policy/docs-owned: it defines how the repo records and
+  promotes support claims after the runtime/profile work lands
+- separate:
+  - docs-reviewed support
+  - automated coverage
+  - harness evidence
+  - operator-reported observations
+- make the selected `vision_contract_profile` part of the minimum evidence
+  payload for future operator reports and promotion notes
+
 ## Docs To Update
 
 - `README.md`
@@ -51,3 +63,15 @@ quality gate pass without the `TASK-157` verifier layer.
 ## Changelog Impact
 
 - include in the parent slice changelog entry when shipped
+
+## Validation Commands
+
+- `git diff --check`
+- targeted consistency audit across README plus the referenced `_docs/_VISION/*`
+  evidence docs
+
+## Status / Board Update
+
+- remains nested under `TASK-140-05`
+- should close only after the runtime matrix and provider-note leaves are both
+  stable enough to govern promotion decisions

@@ -29,6 +29,20 @@ schema / parser handling.
 - structured compare support is documented per family rather than per vague
   "Qwen" label
 
+## Implementation Notes
+
+- use this leaf to decide whether Qwen2.5-VL and Qwen3-VL can share one
+  compare contract or need narrower behavior in prompting/backend/parsing
+- keep the result grounded in explicit family ids and variant groupings
+  instead of a generic “newer Qwen” bucket
+- thread the resulting behavior back into the shared Qwen parent leaf so later
+  docs/runtime owners stay aligned
+
+## Runtime / Security Contract Notes
+
+- do not let newer Qwen families inherit legacy behavior without evidence
+- if Qwen3 variants diverge, keep the split explicit in diagnostics and docs
+
 ## Docs To Update
 
 - `_docs/_VISION/README.md`
@@ -42,3 +56,13 @@ schema / parser handling.
 ## Changelog Impact
 
 - include in the parent slice changelog entry when shipped
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_parsing.py tests/unit/adapters/mcp/test_vision_external_backend.py -q`
+
+## Status / Board Update
+
+- remains nested under `TASK-140-01-03`
+- should close before the parent Qwen behavior leaf is considered complete

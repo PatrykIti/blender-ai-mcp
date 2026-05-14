@@ -29,6 +29,22 @@ decision under `TASK-140` is backed by repeatable automated evidence.
   loops when that difference matters
 - unsupported/excluded families also have negative-path coverage where useful
 
+## Implementation Notes
+
+- use this leaf to align automated evidence with every promoted
+  family/profile decision under `TASK-140`
+- keep unit/runtime coverage and targeted `tests/e2e/vision/` harness evidence
+  separate but mutually reinforcing
+- include negative-path coverage for excluded or unsupported families so docs
+  and runtime support claims stay reproducible
+
+## Runtime / Security Contract Notes
+
+- live/provider-backed harness evidence must stay behind explicit env flags and
+  API keys
+- harness output should stay bounded and avoid leaking raw credentials or
+  oversized provider payloads
+
 ## Docs To Update
 
 - `_docs/_VISION/README.md`
@@ -45,3 +61,14 @@ decision under `TASK-140` is backed by repeatable automated evidence.
 ## Changelog Impact
 
 - include in the parent slice changelog entry when shipped
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_parsing.py tests/unit/adapters/mcp/test_vision_external_backend.py tests/unit/adapters/mcp/test_vision_result_types.py -q`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+
+## Status / Board Update
+
+- remains nested under `TASK-140-05`
+- should close before docs/operator guidance claims expanded family coverage

@@ -30,6 +30,22 @@ runtime.
 - launcher scripts do not hard-code stale profile assumptions after runtime
   expansion
 
+## Implementation Notes
+
+- keep `.env.example`, launcher helpers, and MCP client examples aligned with
+  the same `vision_contract_profile` vocabulary exposed by runtime
+- treat launcher/client config wording as documentation of the current matrix,
+  not as a place to invent unsupported profile combinations
+- coordinate this leaf with the coverage/evidence leaf so docs only promote
+  profile paths backed by actual runtime evidence
+
+## Runtime / Security Contract Notes
+
+- do not let env examples or launcher helpers imply support that runtime has
+  not actually earned
+- keep provider/api-key examples bounded and avoid teaching unsafe inline
+  secret handling patterns
+
 ## Docs To Update
 
 - `.env.example`
@@ -45,3 +61,15 @@ runtime.
 ## Changelog Impact
 
 - include in the parent slice changelog entry when shipped
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/scripts/test_script_tooling.py -q`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+
+## Status / Board Update
+
+- remains nested under `TASK-140-05`
+- should close before provider notes or launch helpers are treated as current
+  support truth

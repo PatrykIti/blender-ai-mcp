@@ -28,6 +28,21 @@ and docs so non-compare models do not appear "partially supported" by accident.
 - the repo does not conflate document/retrieval capability with compare
   capability
 
+## Implementation Notes
+
+- use this leaf to make non-compare NVIDIA behavior explicit in runtime
+  selection, diagnostics, and docs
+- keep exclusions and fallback diagnostics aligned so operators can distinguish
+  “generic fallback” from “known non-compare family”
+- coordinate the final wording with the selected-family routing leaf so the
+  support matrix remains coherent
+
+## Runtime / Security Contract Notes
+
+- excluded NVIDIA families must not appear partially supported by accident
+- diagnostics should stay bounded and explicit without surfacing raw provider
+  payloads unnecessarily
+
 ## Docs To Update
 
 - `_docs/_VISION/README.md`
@@ -40,3 +55,14 @@ and docs so non-compare models do not appear "partially supported" by accident.
 ## Changelog Impact
 
 - include in the parent slice changelog entry when shipped
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_parsing.py -q`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+
+## Status / Board Update
+
+- remains nested under `TASK-140-04`
+- should close only after selected-family routing is explicit

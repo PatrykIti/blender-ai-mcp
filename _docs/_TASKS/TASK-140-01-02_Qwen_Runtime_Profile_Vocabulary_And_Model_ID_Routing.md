@@ -62,6 +62,24 @@ This leaf extends the contract-profile layer, not the provider layer.
   explicit override, deterministic family match, then fallback to
   `generic_full`
 
+## Implementation Notes
+
+- keep routing ownership centralized in `vision/runtime.py` and
+  `VisionContractProfile` typing rather than scattering Qwen-family checks
+  across prompting/backend/parsing call sites
+- let the docs-reviewed matrix from `TASK-140-01-01` drive the family ids and
+  aliases this leaf recognizes
+- preserve the `TASK-139` precedence order: explicit override, deterministic
+  family match, then `generic_full`
+
+## Runtime / Security Contract Notes
+
+- do not widen `VISION_EXTERNAL_PROVIDER` vocabulary here
+- keep newly introduced Qwen profile values typed in both config/runtime and
+  public result contracts
+- unknown Qwen-family ids must degrade to the existing fallback instead of
+  permissive ad hoc matches
+
 ## Docs To Update
 
 - `_docs/_VISION/README.md`
@@ -74,3 +92,15 @@ This leaf extends the contract-profile layer, not the provider layer.
 ## Changelog Impact
 
 - include in the parent slice changelog entry when shipped
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_result_types.py -q`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+
+## Status / Board Update
+
+- remains nested under `TASK-140-01`
+- should close before prompting/backend/parsing leaves start depending on new
+  Qwen profile ids

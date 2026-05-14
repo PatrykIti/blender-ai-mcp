@@ -28,6 +28,23 @@ deliberate, tested decision.
 - runtime selection does not silently auto-match document models into a
   compare-capable profile
 
+## Implementation Notes
+
+- use this leaf to make the Qwen document/OCR boundary explicit in runtime
+  selection, docs, and diagnostics
+- keep the outcome bounded to:
+  - explicit exclusion
+  - separate document profile
+  - or an intentionally deferred follow-on
+- coordinate the result with the shared Qwen behavior leaf so compare-capable
+  families and excluded families do not overlap ambiguously
+
+## Runtime / Security Contract Notes
+
+- document/OCR families must never silently enter staged compare flows
+- if a separate document profile is chosen later, keep it explicit and typed
+  rather than piggybacking on compare defaults
+
 ## Docs To Update
 
 - `_docs/_VISION/README.md`
@@ -40,3 +57,13 @@ deliberate, tested decision.
 ## Changelog Impact
 
 - include in the parent slice changelog entry when shipped
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_external_backend.py -q`
+
+## Status / Board Update
+
+- remains nested under `TASK-140-01-03`
+- should close before the parent Qwen behavior leaf is considered complete

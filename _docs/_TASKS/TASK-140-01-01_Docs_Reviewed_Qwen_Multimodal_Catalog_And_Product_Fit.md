@@ -36,6 +36,16 @@ down the external family space from official docs and then answer:
 - the matrix records stable family names and notable aliases/snapshots where
   they affect runtime routing
 
+## Implementation Notes
+
+- use official Qwen/OpenRouter model docs as the primary evidence source for
+  family names, aliases, and intended product fit
+- keep this leaf docs-first: it should produce a stable matrix the later
+  runtime/profile leaves can implement without rediscovering scope
+- record compare-capable, document/OCR-oriented, and out-of-scope families in
+  a way that the later routing leaves can map directly into typed
+  `vision_contract_profile` decisions
+
 ## Docs To Update
 
 - `_docs/_VISION/README.md`
@@ -47,3 +57,13 @@ down the external family space from official docs and then answer:
 ## Changelog Impact
 
 - include in the parent slice changelog entry when shipped
+
+## Validation Commands
+
+- `git diff --check`
+- targeted consistency audit between this leaf and `_docs/_VISION/README.md`
+
+## Status / Board Update
+
+- remains nested under `TASK-140-01`
+- should close before the runtime-routing leaves claim a stable Qwen matrix

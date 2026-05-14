@@ -61,6 +61,23 @@ result-contract inventory.
 - backend changes, if needed, stay bounded to shared-path request/schema logic
   and do not add a NVIDIA-specific transport branch
 
+## Implementation Notes
+
+- keep this leaf on family/profile routing within the current provider surface
+  only
+- use the triage shortlist from `TASK-140-04-01` to decide which NVIDIA
+  families are eligible for compare routing
+- align runtime/config typing, shared-backend behavior, and public result
+  contracts before the exclusion leaf finalizes diagnostics for non-compare
+  families
+
+## Runtime / Security Contract Notes
+
+- do not imply support for excluded NVIDIA families through fallback routing or
+  docs wording
+- if the current provider surface is insufficient for the selected subset,
+  record that explicitly rather than silently widening transport scope
+
 ## Docs To Update
 
 - `.env.example`
@@ -76,3 +93,14 @@ result-contract inventory.
 ## Changelog Impact
 
 - include in the parent slice changelog entry when shipped
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_external_backend.py tests/unit/adapters/mcp/test_vision_result_types.py -q`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+
+## Status / Board Update
+
+- remains nested under `TASK-140-04`
+- should close before the exclusion/diagnostics leaf is considered final

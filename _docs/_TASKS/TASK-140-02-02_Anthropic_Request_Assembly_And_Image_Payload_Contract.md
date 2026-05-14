@@ -41,6 +41,21 @@ This leaf works inside the backend seam already present in
   task records that gap explicitly instead of silently adding a new provider
   branch or transport path
 
+## Implementation Notes
+
+- keep this leaf on `vision/backends.py` and the current shared request seam
+  only
+- validate whether Claude-family ids need bounded request-shape adjustments
+  without changing who owns family selection or profile vocabulary
+- coordinate the result with the routing leaf and the later parse/diagnostic
+  leaf so request behavior does not drift from documented contract choices
+
+## Runtime / Security Contract Notes
+
+- do not add a dedicated Anthropic transport branch
+- if request differences are required, keep them explicitly profile-aware and
+  bounded to the shared backend path
+
 ## Docs To Update
 
 - `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
@@ -53,3 +68,15 @@ This leaf works inside the backend seam already present in
 ## Changelog Impact
 
 - include in the parent slice changelog entry when shipped
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_external_backend.py -q`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+
+## Status / Board Update
+
+- remains nested under `TASK-140-02`
+- should close before parse/diagnostic policy is finalized for Claude-family
+  ids

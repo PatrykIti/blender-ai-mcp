@@ -25,6 +25,15 @@ Create one explicit NVIDIA family matrix that separates:
   classes when that is the right product boundary
 - later implementation leaves can work from a stable shortlist
 
+## Implementation Notes
+
+- use official NVIDIA family docs and current operator evidence to separate:
+  - compare-capable generative VLMs
+  - document parsers
+  - retrieval/embedding/reranking families
+- keep this leaf docs-first so later runtime-routing leaves can implement from
+  a stable shortlist instead of rediscovering family scope
+
 ## Docs To Update
 
 - `_docs/_VISION/README.md`
@@ -36,3 +45,13 @@ Create one explicit NVIDIA family matrix that separates:
 ## Changelog Impact
 
 - include in the parent slice changelog entry when shipped
+
+## Validation Commands
+
+- `git diff --check`
+- targeted consistency audit between this leaf and `_docs/_VISION/README.md`
+
+## Status / Board Update
+
+- remains nested under `TASK-140-04`
+- should close before routing or exclusion leaves claim a stable NVIDIA matrix

@@ -27,6 +27,23 @@ operator candidates.
 - operator-note instability and actual profile support are documented
   separately
 
+## Implementation Notes
+
+- keep this leaf limited to legacy `qwen-vl-plus` / `qwen-vl-max` behavior
+  instead of collapsing it into the newer Qwen2.5/Qwen3 matrix
+- use the existing prompting/parsing seams to decide whether legacy support is:
+  - compare-capable
+  - generic-only
+  - unstable/operator-only
+- record instability separately from true product support so later docs do not
+  overclaim these legacy families
+
+## Runtime / Security Contract Notes
+
+- do not let legacy-family support become the default for newer Qwen lines
+- if legacy models remain unstable, keep diagnostics explicit instead of
+  treating them as normal compare defaults
+
 ## Docs To Update
 
 - `_docs/_VISION/README.md`
@@ -39,3 +56,13 @@ operator candidates.
 ## Changelog Impact
 
 - include in the parent slice changelog entry when shipped
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_parsing.py -q`
+
+## Status / Board Update
+
+- remains nested under `TASK-140-01-03`
+- should close before the parent Qwen behavior leaf is considered complete

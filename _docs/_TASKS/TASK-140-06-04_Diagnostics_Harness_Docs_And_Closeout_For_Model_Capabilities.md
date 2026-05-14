@@ -39,6 +39,26 @@ updating harness/docs, and recording validation/changelog results.
   versus env overrides
 - TASK-140-06 descendants are closed consistently and the changelog is indexed
 
+## Implementation Notes
+
+- use this leaf to expose the capability-aware runtime in bounded operator
+  diagnostics, harness output, and closeout docs
+- keep diagnostics aligned across:
+  - runtime/result contracts
+  - logs
+  - `scripts/vision_harness.py`
+  - docs/changelog closeout
+- close the family only after the already-landed metadata/fallback leaves and
+  the request-policy leaf point at one coherent capability story
+
+## Runtime / Security Contract Notes
+
+- diagnostics must remain non-secret and bounded in size
+- harness output should explain capability source and request cap without
+  dumping raw provider payloads unnecessarily
+- docs must keep API-first metadata, fallback registry, and env override
+  precedence explicit
+
 ## Tests To Add/Update
 
 - Unit:
@@ -52,3 +72,17 @@ updating harness/docs, and recording validation/changelog results.
 ## Changelog Impact
 
 - add and index a dedicated `_docs/_CHANGELOG/*` entry during closeout
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_result_types.py -q`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+- opt-in OpenRouter live capability smoke under `tests/e2e/vision/` when
+  explicit env flags and API keys are available
+
+## Status / Board Update
+
+- remains nested under `TASK-140-06`
+- should close only after `TASK-140-06-02` and the docs/harness updates agree
+  on one capability-aware runtime story

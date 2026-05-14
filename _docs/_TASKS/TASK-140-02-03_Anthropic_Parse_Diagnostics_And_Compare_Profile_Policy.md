@@ -34,6 +34,24 @@ needed to keep Claude failures explainable and bounded.
 - parser/repair policy does not silently accept prose just because Claude can
   reason well over images
 
+## Implementation Notes
+
+- keep this leaf focused on parser/diagnostic behavior and explicit
+  compare-profile policy once routing and request-shape work are known
+- make Claude-family diagnostics explain:
+  - chosen profile
+  - fallback path
+  - contract mismatch versus plain model failure
+- keep result-contract typing aligned when a Claude-specific profile becomes
+  visible to operators
+
+## Runtime / Security Contract Notes
+
+- parser/repair policy must stay strict enough that prose reasoning is not
+  mistaken for contract success
+- diagnostics should surface bounded failure reasons without leaking raw
+  provider payloads or secrets
+
 ## Docs To Update
 
 - `_docs/_VISION/README.md`
@@ -48,3 +66,15 @@ needed to keep Claude failures explainable and bounded.
 ## Changelog Impact
 
 - include in the parent slice changelog entry when shipped
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_parsing.py tests/unit/adapters/mcp/test_vision_external_backend.py tests/unit/adapters/mcp/test_vision_result_types.py -q`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+
+## Status / Board Update
+
+- remains nested under `TASK-140-02`
+- should close only after routing and request-assembly decisions are reflected
+  in parser/diagnostic behavior
