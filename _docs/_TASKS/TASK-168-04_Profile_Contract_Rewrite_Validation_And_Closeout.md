@@ -32,6 +32,12 @@
   - `TASK-168-02-01`
   - `TASK-168-02-02`
   - `TASK-168-03`
+- keep the adjacent controller-regression guardrails that protect the same
+  no-match / guided-handoff / discovery boundary discussed across this family:
+  - `tests/unit/router/application/test_router_handler_parameters.py`
+  - `tests/unit/router/application/test_workflow_triggerer.py`
+  - `tests/unit/adapters/mcp/test_search_surface.py`
+  - `tests/unit/adapters/mcp/test_router_elicitation.py`
 - plus the broad repo bundle:
   - `PYTHONPATH=. poetry run pytest ./tests/unit`
   - `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure`
