@@ -68,6 +68,29 @@ Claude-family work under `TASK-140` is evaluated on the current shared
 - Anthropic failures can be diagnosed without pretending they are
   generic external contract failures
 
+## Implementation Notes
+
+- keep Claude-family work on the existing `openai_compatible_external` seam
+  unless the leaf evidence proves that the current provider surface is
+  insufficient
+- ground the work in:
+  - `vision/runtime.py` and `vision/config.py` for typed routing
+  - `vision/prompting.py` and `vision/parsing.py` for family-specific contract
+    behavior
+  - `vision/backends.py` only for bounded shared-backend request adjustments
+- let the current three physical leaves own:
+  - routing and contract vocabulary
+  - request/image payload behavior
+  - parse/diagnostic/compare-profile policy
+
+## Runtime / Security Contract Notes
+
+- do not introduce a first-class Anthropic transport branch under this subtask
+- keep any family-specific contract additions typed and visible in public result
+  surfaces
+- if the current provider surface cannot support the intended Claude behavior,
+  record that explicitly instead of papering it over with generic fallbacks
+
 ## Docs To Update
 
 - `_docs/_VISION/README.md`
@@ -92,3 +115,14 @@ Claude-family work under `TASK-140` is evaluated on the current shared
 | 1 | [TASK-140-02-01](./TASK-140-02-01_Anthropic_Family_Routing_And_Typed_Contract_Vocabulary.md) | Add Claude-family routing and typed contract vocabulary on the existing provider surface |
 | 2 | [TASK-140-02-02](./TASK-140-02-02_Anthropic_Request_Assembly_And_Image_Payload_Contract.md) | Decide whether the existing shared backend request assembly is sufficient for Claude-family ids or needs bounded contract-aware adjustments |
 | 3 | [TASK-140-02-03](./TASK-140-02-03_Anthropic_Parse_Diagnostics_And_Compare_Profile_Policy.md) | Define Claude compare-profile behavior plus contract-aware diagnostics and repair policy |
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_external_backend.py tests/unit/adapters/mcp/test_vision_parsing.py tests/unit/adapters/mcp/test_vision_result_types.py -q`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+
+## Status / Board Update
+
+- remains nested under `TASK-140`
+- should close only after all three physical child leaves land with aligned runtime/docs evidence

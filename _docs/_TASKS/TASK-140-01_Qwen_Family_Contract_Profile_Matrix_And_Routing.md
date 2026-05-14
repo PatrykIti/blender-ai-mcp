@@ -74,6 +74,27 @@ That makes Qwen the clearest next wave after `TASK-139`:
   - explicit compare/document/exclusion decisions
   - `generic_full` fallback for unknown or not-yet-classified families
 
+## Implementation Notes
+
+- keep all family selection on the current `VisionContractProfile` and
+  `VisionAssistContract` vocabulary instead of adding new provider branches
+- ground the routing work in:
+  - `vision/runtime.py` for profile selection
+  - `vision/prompting.py` and `vision/parsing.py` for profile behavior
+  - `vision/backends.py` for shared-backend request shaping only when the
+    chosen Qwen family contract truly needs it
+- let the docs-reviewed leaf define the family matrix first, then keep
+  runtime/model-id routing and compare/document/exclusion behavior in the
+  existing physical child leaves under this subtask
+
+## Runtime / Security Contract Notes
+
+- do not turn Qwen-family work into provider expansion or a new backend kind
+- keep unknown Qwen ids on the existing fallback policy instead of inventing
+  permissive best guesses
+- if OCR/document-only families are excluded, surface that as an explicit typed
+  contract decision rather than a silent runtime failure
+
 ## Docs To Update
 
 - `_docs/_VISION/README.md`
@@ -98,3 +119,14 @@ That makes Qwen the clearest next wave after `TASK-139`:
 | 1 | [TASK-140-01-01](./TASK-140-01-01_Docs_Reviewed_Qwen_Multimodal_Catalog_And_Product_Fit.md) | Build the docs-reviewed Qwen family matrix and classify product fit before coding routing rules |
 | 2 | [TASK-140-01-02](./TASK-140-01-02_Qwen_Runtime_Profile_Vocabulary_And_Model_ID_Routing.md) | Expand runtime profile vocabulary and deterministic model-id routing for Qwen families |
 | 3 | [TASK-140-01-03](./TASK-140-01-03_Qwen_Compare_Document_And_Exclusion_Profiles.md) | Define the concrete Qwen compare/document/exclusion profile behavior in prompting, backend, and parsing layers |
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_parsing.py tests/unit/adapters/mcp/test_vision_external_backend.py tests/unit/adapters/mcp/test_vision_result_types.py -q`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+
+## Status / Board Update
+
+- remains nested under `TASK-140`
+- should close only after all three physical child leaves land with aligned runtime/docs evidence

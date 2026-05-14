@@ -1,7 +1,7 @@
 # TASK-140-06: OpenRouter Model-Capability-Aware Vision Runtime
 
 **Parent:** [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md)
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
 **Priority:** 🔴 High
 
 ## Objective
@@ -68,6 +68,28 @@ resolution:
 - explicit env overrides still win when an operator intentionally forces a
   profile or cap
 
+## Implementation Notes
+
+- this slice already has landed progress under:
+  - `TASK-140-06-01` for the bounded `/models` metadata client
+  - `TASK-140-06-03` for the first fallback capability registry entries
+- the remaining work stays focused on:
+  - capability-driven request policy in `vision/runtime.py`,
+    `vision/backends.py`, and `vision/prompting.py`
+  - diagnostics and closeout in the existing runtime/docs seams
+- keep OpenRouter capability handling API-first when available, but preserve
+  the current typed fallback/override precedence instead of rebuilding the
+  capability contract ad hoc at each call site
+
+## Runtime / Security Contract Notes
+
+- do not make the runtime dependent on live OpenRouter metadata availability;
+  fallback registry and explicit overrides must remain bounded and typed
+- keep capability diagnostics free of secrets while still explaining the source
+  of the chosen budget/profile posture
+- if request-policy tightening narrows structured-output behavior, document the
+  operator-visible change in both runtime diagnostics and docs
+
 ## Tests To Add/Update
 
 - Unit:
@@ -106,3 +128,15 @@ resolution:
 - Richer request-policy use of the capability object, env override taxonomy,
   harness diagnostics, and final closeout remain open under the other
   `TASK-140-06` leaves
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_external_backend.py tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_runner.py -q`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+- opt-in OpenRouter live coverage under `tests/e2e/vision/` when explicit env flags and API keys are available
+
+## Status / Board Update
+
+- remains nested under `TASK-140`
+- stays `🚧 In Progress` while `TASK-140-06-02` and `TASK-140-06-04` remain open after the already-landed `06-01` and `06-03` slices

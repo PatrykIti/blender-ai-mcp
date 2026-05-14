@@ -49,6 +49,32 @@ which contract/profile assumptions actually hold.
 - `.env.example`, launcher scripts, and MCP client examples reflect the same
   profile matrix as runtime/docs
 
+## Implementation Notes
+
+- treat this slice as the cross-family closeout seam for evidence and operator
+  guidance rather than as a place to redefine family routing itself
+- keep the evidence model split explicit:
+  - automated unit coverage
+  - targeted `tests/e2e/vision/` or harness evidence
+  - docs-reviewed provider notes
+  - operator-reported observations
+- align `.env.example`, launcher helpers, and MCP client examples with the same
+  `vision_contract_profile` vocabulary exposed by runtime and public result
+  surfaces
+- use the three physical child leaves to keep:
+  - automated coverage
+  - provider/docs alignment
+  - evidence taxonomy and promotion criteria
+  as separately reviewable slices
+
+## Runtime / Security Contract Notes
+
+- do not let launcher or `.env.example` examples imply support that the runtime
+  matrix has not actually earned
+- keep live/e2e provider evidence gated behind explicit env flags and API keys
+- when profile support remains partial, document that limitation instead of
+  smoothing it over with generic examples
+
 ## Docs To Update
 
 - `.env.example`
@@ -81,3 +107,14 @@ which contract/profile assumptions actually hold.
 | 1 | [TASK-140-05-01](./TASK-140-05-01_Automated_Coverage_And_Harness_Scenario_Expansion.md) | Expand automated regression and harness scenarios to cover the broader external family matrix |
 | 2 | [TASK-140-05-02](./TASK-140-05-02_Provider_Notes_Env_Example_And_Launcher_Client_Config_Alignment.md) | Keep docs, `.env.example`, launch helpers, and client configs aligned with the expanded profile matrix |
 | 3 | [TASK-140-05-03](./TASK-140-05-03_Evidence_Taxonomy_Promotion_Criteria_And_Operator_Reporting.md) | Formalize the evidence model so support and promotion decisions stay reproducible |
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_parsing.py tests/unit/adapters/mcp/test_vision_external_backend.py tests/unit/adapters/mcp/test_vision_result_types.py tests/unit/scripts/test_script_tooling.py -q`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+
+## Status / Board Update
+
+- remains nested under `TASK-140`
+- should close only after all three physical child leaves land with aligned runtime/docs evidence

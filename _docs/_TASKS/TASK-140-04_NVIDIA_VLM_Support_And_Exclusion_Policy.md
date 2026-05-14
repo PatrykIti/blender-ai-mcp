@@ -61,6 +61,30 @@ NVIDIA-family work under `TASK-140` stays inside the current shared
   `openai_compatible_external` path and do not become NVIDIA provider
   integration
 
+## Implementation Notes
+
+- keep this slice focused on explicit compare-versus-non-compare policy for the
+  NVIDIA family surface, not on NVIDIA provider integration
+- ground the work in:
+  - `vision/runtime.py` and `vision/config.py` for family selection
+  - `vision/backends.py` and `vision/parsing.py` for shared-backend behavior
+    and diagnostics
+  - `sampling/result_types.py` for typed result-surface exposure when a
+    selected NVIDIA family becomes compare-capable
+- let the current physical leaves own:
+  - docs-reviewed family triage
+  - selected-family routing
+  - explicit exclusion and diagnostics policy
+
+## Runtime / Security Contract Notes
+
+- do not silently route document, retrieval, or reranking NVIDIA models into
+  staged compare flows
+- keep compare-capable versus excluded families explicit in typed runtime
+  behavior and docs
+- if no NVIDIA subset proves compare-suitable on the current provider surface,
+  record that as the bounded outcome instead of forcing support
+
 ## Docs To Update
 
 - `_docs/_VISION/README.md`
@@ -84,3 +108,14 @@ NVIDIA-family work under `TASK-140` stays inside the current shared
 | 1 | [TASK-140-04-01](./TASK-140-04-01_NVIDIA_VLM_Family_Triage_Compare_Vs_Document_And_Retrieval.md) | Build the docs-reviewed NVIDIA VLM triage matrix |
 | 2 | [TASK-140-04-02](./TASK-140-04-02_Selected_NVIDIA_Family_Routing_And_Compare_Path.md) | Add family/profile routing only for the selected compare-capable NVIDIA subset on the existing provider surface |
 | 3 | [TASK-140-04-03](./TASK-140-04-03_NVIDIA_Non_Compare_Exclusion_Contracts_And_Diagnostics.md) | Make exclusions and diagnostics explicit so non-compare NVIDIA models are not mistaken for supported compare paths |
+
+## Validation Commands
+
+- `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_external_backend.py tests/unit/adapters/mcp/test_vision_parsing.py tests/unit/adapters/mcp/test_vision_result_types.py -q`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+
+## Status / Board Update
+
+- remains nested under `TASK-140`
+- should close only after all three physical child leaves land with aligned runtime/docs evidence
