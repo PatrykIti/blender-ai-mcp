@@ -9,10 +9,10 @@
 
 ## Objective
 
-Replace the current narrow `scripts/run_streamable_openrouter.sh` helper with a
-more complete `run_mcp_server.sh` launcher that can guide a first-time operator
-through installing prerequisites, validating runtime state, and starting the
-repo on macOS.
+Advance the shipped `run_mcp_server.sh` / `run_mcp_server.py` launcher from its
+current Docker-guided OpenRouter path into a well-scoped macOS-first operator
+flow that keeps prerequisite checks, runtime wiring, docs, and closeout aligned
+with the live repo.
 
 Version 1 is explicitly macOS-first. Linux and Windows should be anticipated in
 structure and script layout, but not treated as required implementation scope
@@ -63,20 +63,23 @@ After this umbrella lands:
 
 | Path / Module | Expected Ownership | Why It Is In Scope |
 |---------------|--------------------|--------------------|
-| `scripts/run_streamable_openrouter.sh` | Current operator launcher seam | This is the script being superseded/reworked into a broader launcher |
+| `scripts/run_mcp_server.py` | Interactive launcher owner | This is the live prompt/plan orchestration seam the remaining task family must refine |
+| `scripts/run_mcp_server.sh` | Shell entrypoint wrapper | Operators launch through this wrapper, so final docs and validation must keep it honest |
+| `scripts/RUN_MCP_SERVER.md`, `scripts/_RUN_DOCKER_MCP.md` | Colocated operator docs | The shipped launcher flow and lower-level Docker helper are documented here now, not only in generic `_docs/` pages |
+| `scripts/run_streamable_openrouter.sh` | Lower-level Docker/OpenRouter helper | The launcher still terminates at this narrower helper for the current supported profile, so its contract remains in scope |
 | `scripts/run_reference_classifier_sidecar.sh` | Existing sidecar runner | The new launcher should orchestrate, not replace, this helper |
 | `scripts/reference_classifier_sidecar.py` | Existing optional classifier runtime | The launcher must be able to detect and wire this path when enabled |
-| `scripts/vision_harness.py` | Existing operator/runtime helper | Reuse current repo script patterns and argument ergonomics where possible |
+| `pyproject.toml` | Python/dependency baseline | The launcher must stay aligned with the repo's `3.11+` baseline and optional dependency groups |
 | `tests/unit/scripts/test_script_tooling.py` | Script owner lane | All launcher/operator script contract changes must be covered here first |
-| `README.md`, `_docs/_VISION/README.md`, `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md` | Operator docs | Current operator guidance must match the new launcher flow |
+| `README.md`, `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md` | Operator docs | Current operator guidance must match the shipped launcher flow |
 | `scripts/` subdirectories introduced by this umbrella | New script layout owner | The macOS-first installer can split helpers into clearer modules/files if needed |
 
 ## Test Matrix
 
 | Slice | Primary Validation Lane | Why |
 |------|--------------------------|-----|
-| prerequisite detection and prompt flow | unit script tests | install/update decisions are script-owned logic |
-| launcher modularization and profile wiring | unit script tests plus shell syntax checks | command construction and prompt routing live in `scripts/` |
+| prerequisite detection and prompt flow | `tests/unit/scripts/test_script_tooling.py` plus `pytest ./tests/unit` | install/update decisions are script-owned logic, but repo guidance now requires the full unit pass for implementation work |
+| launcher modularization and profile wiring | `tests/unit/scripts/test_script_tooling.py`, `bash -n scripts/run_mcp_server.sh`, and `pytest ./tests/unit` | command construction and prompt routing live in `scripts/`, but the family is client-facing enough that the broader unit lane must stay green |
 | docs/operator examples | diff checks plus targeted grep/audit | the installer only helps if docs and prompts stay aligned |
 | live operator smoke | optional manual macOS runbook lane | this wave is macOS-first and user-facing |
 

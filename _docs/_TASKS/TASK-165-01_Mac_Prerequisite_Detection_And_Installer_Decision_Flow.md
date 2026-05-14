@@ -1,14 +1,18 @@
 # TASK-165-01: Mac Prerequisite Detection And Installer Decision Flow
 
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
 **Priority:** 🔴 High
 **Parent:** [TASK-165](./TASK-165_Mac_First_Interactive_MCP_Server_Installer_And_Launcher.md)
-**Objective:** Define and implement the macOS-first prerequisite checks and the interactive install/update/skip decisions that gate the launcher flow.
-**Repository Touchpoints:** `scripts/run_mcp_server.sh`, `scripts/` helper modules introduced by this umbrella, `tests/unit/scripts/test_script_tooling.py`
-**Acceptance Criteria:** the launcher detects prerequisite state in a deterministic order, prints clear operator messages, and offers explicit install/update/skip decisions without silently mutating the system.
+**Objective:** Tighten the shipped macOS-first prerequisite checks and interactive install/update/skip decisions on the live `run_mcp_server.py` launcher seam, keeping the documented flow aligned with what the current launcher really does.
+**Repository Touchpoints:** `scripts/run_mcp_server.py`, `scripts/run_mcp_server.sh`, `scripts/RUN_MCP_SERVER.md`, `pyproject.toml`, `tests/unit/scripts/test_script_tooling.py`
+**Acceptance Criteria:** the launcher detects prerequisite state in the same order the live wizard uses, prints clear operator messages, and offers explicit install/update/skip decisions without silently mutating the system.
 
 ## Implementation Notes
 
+- current live baseline:
+  - Python / Poetry / Docker are checked before runtime selection
+  - optional MLX / vision install prompts happen after the runtime/profile
+    choices are collected
 - the first release only needs to support macOS checks as first-class paths
 - prerequisite checks should include at least:
   - OS / architecture
@@ -28,7 +32,8 @@ detect_os()
 assert_macos_first_support()
 check_docker_desktop()
 check_python_and_poetry()
-check_optional_mlx_and_vision()
+collect_runtime_profile_choices()
+check_optional_mlx_and_vision_after_profile_selection()
 check_optional_classifier_sidecar_path()
 for each missing_or_outdated_item:
     explain_status()
@@ -59,8 +64,10 @@ for each missing_or_outdated_item:
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/scripts/test_script_tooling.py -q`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
 
 ## Status / Board Update
 
 - stays nested under `TASK-165`
 - no standalone board row unless this prerequisite flow expands beyond the launcher umbrella
+- tracks the remaining delta on the shipped launcher rather than a greenfield installer

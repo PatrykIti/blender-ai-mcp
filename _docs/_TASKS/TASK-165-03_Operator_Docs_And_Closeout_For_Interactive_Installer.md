@@ -4,13 +4,13 @@
 **Priority:** 🔴 High
 **Parent:** [TASK-165](./TASK-165_Mac_First_Interactive_MCP_Server_Installer_And_Launcher.md)
 **Objective:** Document the macOS-first interactive installer/launcher, record the supported first-time setup path, and close the umbrella with synchronized docs/board/changelog state.
-**Repository Touchpoints:** `README.md`, `scripts/` operator docs, `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`, `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/`
+**Repository Touchpoints:** `README.md`, `scripts/RUN_MCP_SERVER.md`, `scripts/_RUN_DOCKER_MCP.md`, `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`, `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/`
 **Acceptance Criteria:** a first-time macOS operator can follow the docs that match the launcher exactly; closeout records the supported scope and any explicit non-goals for Linux/Windows parity.
 
 ## Implementation Notes
 
 - document the launcher in the same place where operators will look first:
-  `scripts/` and `README.md`
+  `scripts/RUN_MCP_SERVER.md`, `scripts/_RUN_DOCKER_MCP.md`, and `README.md`
 - keep macOS-first scope explicit; do not imply full Linux/Windows parity if
   those paths are still future work
 - record the exact final launch paths and prerequisite flows that were
@@ -19,11 +19,14 @@
 ## Tests To Add/Update
 
 - `tests/unit/scripts/test_script_tooling.py`
+- `pytest ./tests/unit`
+- `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure`
 
 ## Docs To Update
 
 - `README.md`
-- `scripts/` local operator docs
+- `scripts/RUN_MCP_SERVER.md`
+- `scripts/_RUN_DOCKER_MCP.md`
 - `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 - `_docs/_TASKS/README.md`
 
@@ -35,6 +38,9 @@
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/scripts/test_script_tooling.py -q`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+- `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure`
+- `bash -n scripts/run_mcp_server.sh`
 
 ## Status / Board Update
 

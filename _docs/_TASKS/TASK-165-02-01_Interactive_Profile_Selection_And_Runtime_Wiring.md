@@ -1,6 +1,6 @@
 # TASK-165-02-01: Interactive Profile Selection And Runtime Wiring
 
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
 **Priority:** 🔴 High
 **Parent:** [TASK-165-02](./TASK-165-02_Interactive_Run_MCP_Server_Wizard_And_Script_Modularization.md)
 **Related:** [TASK-167](./TASK-167_Cross_Module_Debug_Profile_Registry_And_Runtime_Logging.md)
@@ -26,9 +26,8 @@
 - the shared debug-selector overlap landed on 2026-05-13 under
   [TASK-167](./TASK-167_Cross_Module_Debug_Profile_Registry_And_Runtime_Logging.md);
   the remaining launcher-family work here stays open
-- if the debug-selector seam is advanced here while `TASK-167-03-01` is still
-  open, update both task files in the same branch so the shared launcher seam
-  does not drift across families
+- if the shared debug-selector pass-through changes again here, preserve the
+  landed `TASK-167` contract instead of reopening a launcher-only variant
 
 ## Current Owner / Likely Edit Map
 
@@ -71,8 +70,8 @@ launch(plan)
 
 - `scripts/RUN_MCP_SERVER.md`
 - `scripts/_RUN_DOCKER_MCP.md`
-- if the shared debug-selector launcher seam is touched here, update
-  `TASK-167-03-01` in the same branch
+- if the shared debug-selector launcher seam changes materially, update the
+  `TASK-167` family docs in the same branch
 
 ## Changelog Impact
 
@@ -87,14 +86,12 @@ launch(plan)
 - `git diff --check`
 - `bash -n scripts/run_streamable_openrouter.sh scripts/run_mcp_server.sh`
 - `PYTHONPATH=. poetry run pytest tests/unit/scripts/test_script_tooling.py -q`
-- if this leaf advances the shared debug-selector seam or lands independently,
-  also run:
-  - `PYTHONPATH=. poetry run pytest ./tests/unit`
-  - `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+- `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure`
 
 ## Status / Board Update
 
 - stays nested under `TASK-165-02`
-- if the shared launcher seam changes here, update `TASK-167-03-01` in the
-  same branch and update `_docs/_TASKS/README.md` only if promoted board state
-  changes
+- if the shared launcher seam changes here, keep the landed `TASK-167` debug
+  contract aligned and update `_docs/_TASKS/README.md` only if promoted board
+  state changes

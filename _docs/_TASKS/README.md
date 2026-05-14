@@ -44,7 +44,7 @@ flight.
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-165](./TASK-165_Mac_First_Interactive_MCP_Server_Installer_And_Launcher.md) | **macOS-First Interactive MCP Server Installer And Launcher** | 🔴 High | Board-level follow-on after TASK-164 for replacing the narrow Streamable helper with a macOS-first interactive launcher that checks prerequisites, offers explicit install/update/skip decisions, and wires the supported MCP + classifier runtime combinations together. |
+| [TASK-165](./TASK-165_Mac_First_Interactive_MCP_Server_Installer_And_Launcher.md) | **macOS-First Interactive MCP Server Installer And Launcher** | 🔴 High | In progress after the first `run_mcp_server.sh` / `run_mcp_server.py` launcher landed; the remaining work is to tighten prerequisite/runtime flow, align docs with the shipped operator path, and close the family with the correct validation lane. |
 | [TASK-160](./TASK-160_Guided_Client_Feedback_And_Streamable_HTTP_Recovery_UX.md) | **Guided Client Feedback And Streamable HTTP Recovery UX** | 🔴 High | In progress after TASK-160-01 closed the Streamable visibility serialization slice; the umbrella still owns the broader guided client-feedback contract and follow-on surface decisions. |
 
 ## 🚨 To Do
