@@ -4,8 +4,8 @@
 **Priority:** 🔴 High
 **Category:** Guided Runtime / FastMCP Platform / External Agent Safety
 **Estimated Effort:** Large
-**Follow-on After:** [TASK-160](./TASK-160_Guided_Client_Feedback_And_Streamable_HTTP_Recovery_UX.md), [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md), [TASK-167](./TASK-167_Cross_Module_Debug_Profile_Registry_And_Runtime_Logging.md)
-**Related:** [TASK-148](./TASK-148_No_Auth_HTTP_MCP_Client_Compatibility_And_Auth_Misclassification_Recovery.md), [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-165](./TASK-165_Mac_First_Interactive_MCP_Server_Installer_And_Launcher.md), [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md)
+**Follow-on After:** [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md), [TASK-167](./TASK-167_Cross_Module_Debug_Profile_Registry_And_Runtime_Logging.md)
+**Related:** [TASK-148](./TASK-148_No_Auth_HTTP_MCP_Client_Compatibility_And_Auth_Misclassification_Recovery.md), [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-160](./TASK-160_Guided_Client_Feedback_And_Streamable_HTTP_Recovery_UX.md), [TASK-165](./TASK-165_Mac_First_Interactive_MCP_Server_Installer_And_Launcher.md), [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md)
 
 ## Objective
 
@@ -29,7 +29,8 @@ The desired end state is not “write better prompts and hope.” It is:
 - one pre-dispatch action shield
 - one active-workset / fragment-scoped compare strategy instead of defaulting to whole-model payloads
 - one coarse-to-fine compare/verify policy that escalates only when local evidence is insufficient
-- one compact orchestrator feedback contract
+- one compact `reference_orchestrator_feedback`-based contract on the existing
+  guided public seams
 - one selective-disclosure response policy where the controller reads a short control payload first and only expands into packet detail on demand
 - one runtime-owned profile/session manifest that outranks stale external memory
 - one validation bundle proving the server can keep external agents inside the
@@ -118,13 +119,13 @@ After this umbrella lands:
 
 | Path / Module | Expected Ownership | Why It Is In Scope |
 |---------------|--------------------|--------------------|
-| `server/adapters/mcp/surfaces.py` | profile instruction owner | `llm-guided` surface instructions are the first runtime-owned contract many external agents ever read |
+| `server/adapters/mcp/session_capabilities_state.py`, `server/adapters/mcp/areas/router.py`, `server/adapters/mcp/surfaces.py` | session contract, status surface, and static profile instruction owners | session-owned contract fields live in typed session/router state, while `surfaces.py` still shapes the static profile instructions many external agents read first |
 | `server/adapters/mcp/transforms/visibility_policy.py` | profile visibility owner | visibility shaping already does action masking and is the natural place for phase-bound tool exposure rules |
 | `server/adapters/mcp/guided_mode.py` | visibility diagnostics owner | it already computes the live visible surface and can expose the authoritative state snapshot |
 | `server/adapters/mcp/router_helper.py` | routed execution and guard owner | corrected calls, deferred finalizers, and guided mutation tracking already converge here |
 | `server/adapters/mcp/session_capabilities_flow.py`, `session_capabilities_registry.py`, `session_capabilities_runtime_glue.py`, `session_capabilities_bootstrap.py` | guided state machine owners | they already own current_step, required_checks, allowed_families, allowed_roles, and state transitions |
-| `server/adapters/mcp/contracts/router.py`, `contracts/reference.py`, `contracts/guided_flow.py` | typed response owners | the new orchestrator-facing feedback and manifest fields belong in typed contracts, not ad hoc prose |
-| `server/adapters/mcp/areas/router.py`, `areas/reference.py`, `areas/scene_guided_runtime.py` | user-facing guided response owners | these are the current public seams where controllers need immediate next-step guidance |
+| `server/adapters/mcp/contracts/router.py`, `contracts/reference.py`, `contracts/guided_flow.py` | typed response owners | `reference_orchestrator_feedback`, router status contracts, and guided flow state must stay on typed owner seams rather than ad hoc prose |
+| `server/adapters/mcp/areas/reference_feedback.py`, `areas/reference_images_runtime.py`, `areas/router.py`, `areas/scene_guided_runtime.py` | user-facing guided response owners | these are the current public seams where controllers already receive compact next-step guidance and where the confinement family must extend the live contract |
 | `server/adapters/mcp/guided_contract.py` | call-shape normalization owner | this is the current contract-hardening seam for legacy aliases and actionable failures |
 | `server/adapters/mcp/prompts/*`, `_docs/_PROMPTS/*` | prompt asset owners | prompt assets must reinforce the runtime contract and stop teaching stale patterns |
 | `tests/unit/adapters/mcp/`, `tests/unit/router/application/`, `tests/e2e/integration/`, `tests/e2e/router/`, `tests/e2e/vision/` | proof lanes | the confinement stack must prove itself on the real guided/reference/runtime paths, not only in prose |
@@ -138,7 +139,7 @@ After this umbrella lands:
 | typed orchestrator feedback | unit router/reference/scene guided lanes plus transport integration proof | clients need machine-readable “do/don't/won't/unblock” guidance on existing public seams |
 | active workset / fragment compare | unit reference packet/planner lanes plus guided vision/runtime E2E | this is where huge whole-model outputs must become local, blocker-scoped compares |
 | selective disclosure / minimal payloads | unit reference contract/planner lanes plus client-surface parity tests | compact mode must become truly compact for external controllers |
-| prompt-priority and session manifest | unit prompt/provider/rendering tests plus guided surface contract tests | this is the repo-owned answer to stale `memory.md` and old prompt drift |
+| prompt-priority and session manifest | session/router contract tests plus prompt/provider/rendering tests | this is the repo-owned answer to stale `memory.md` and old prompt drift, and the session-owned contract already lives on router/session state seams |
 | squirrel regression cases | guided manual handoff E2E plus reference-guided vision/runtime surfaces | the motivating failures must become pinned regressions |
 | full profile closeout | pre-commit, repo-wide unit suite, repo-supported Blender E2E runner | the confinement layer is cross-cutting and must prove itself end to end |
 
@@ -175,7 +176,11 @@ After this umbrella lands:
 
 ## Status / Board Update
 
-- promote `TASK-168` as a new board-level `⏳ To Do` follow-on
+- promote `TASK-168` as a new board-level `⏳ To Do` guided-runtime family
+- keep the overlap boundary with in-progress `TASK-160` explicit: `TASK-160`
+  owns adjacent client-feedback/recovery UX, while `TASK-168` owns the
+  profile-bound confinement contract on top of the already-shipped
+  `reference_orchestrator_feedback` seam
 - keep descendants nested under the umbrella until concrete execution slices are complete
 
 ## Validation Commands
@@ -184,7 +189,7 @@ After this umbrella lands:
 - targeted consistency grep for:
   - `guided_flow_state`
   - `checkpoint_iterate`
-  - `orchestrator_feedback`
+  - `reference_orchestrator_feedback`
   - `session_manifest`
   - `guided_manual_build`
 - after implementation, inherit the focused proof lanes from the child tasks

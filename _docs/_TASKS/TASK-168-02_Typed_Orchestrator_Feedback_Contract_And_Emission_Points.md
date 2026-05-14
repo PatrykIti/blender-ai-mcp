@@ -3,10 +3,11 @@
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
 **Parent:** [TASK-168](./TASK-168_Profile_Bound_Orchestrator_Shielding_Feedback_And_Memory_Containment.md)
-**Objective:** Add one compact, machine-readable feedback contract on the existing guided public seams so external controllers are told exactly what to do now, not do now, and what will fail now.
-**Repository Touchpoints:** `server/adapters/mcp/contracts/router.py`, `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/contracts/guided_flow.py`, `server/adapters/mcp/areas/router.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/scene_guided_runtime.py`, `server/adapters/mcp/guided_mode.py`, `server/adapters/mcp/context_utils.py`, `tests/unit/adapters/mcp/test_router_elicitation.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`, `tests/e2e/integration/test_guided_surface_contract_parity.py`
+**Objective:** Extend the existing `reference_orchestrator_feedback` public seam so external controllers are told exactly what to do now, not do now, and what will fail now without inventing a parallel public feedback contract.
+**Repository Touchpoints:** `server/adapters/mcp/contracts/router.py`, `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/contracts/guided_flow.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/areas/reference_images_runtime.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/router.py`, `server/adapters/mcp/areas/scene_guided_runtime.py`, `server/adapters/mcp/guided_mode.py`, `server/adapters/mcp/context_utils.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/router/application/test_router_contracts.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/integration/test_guided_surface_contract_parity.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`
 **Acceptance Criteria:**
-- existing guided public responses can carry one short typed contract such as `orchestrator_feedback`
+- existing guided public responses can carry one short typed
+  `reference_orchestrator_feedback` contract
 - the contract includes at minimum:
   - `do_now`
   - `dont_do`
@@ -24,6 +25,8 @@
 
 ## Implementation Notes
 
+- build on the current `reference_orchestrator_feedback` owner seam instead of
+  introducing a second public `orchestrator_feedback` field
 - keep the field short and deterministic; do not turn it into a second essay surface
 - build the feedback from runtime state and policy decisions, not from prompt text
 - emission points should be explicit and few:
@@ -51,7 +54,7 @@
 ## Pseudocode
 
 ```python
-feedback = OrchestratorFeedback(
+feedback = ReferenceOrchestratorFeedback(
     phase=current_phase,
     do_now=["reference_iterate_stage_checkpoint(checkpoint_label='legs_stage')"],
     dont_do=["modeling_create_primitive", "guided_role='eye_pair'"],
@@ -69,10 +72,11 @@ feedback = OrchestratorFeedback(
 
 ## Tests To Add/Update
 
-- `tests/unit/adapters/mcp/test_router_elicitation.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
-- `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
+- `tests/unit/router/application/test_router_contracts.py`
+- `tests/e2e/integration/test_guided_gate_state_transport.py`
 - `tests/e2e/integration/test_guided_surface_contract_parity.py`
+- `tests/e2e/vision/test_reference_understanding_runtime_surface.py`
 
 ## Docs To Update
 
@@ -95,10 +99,11 @@ feedback = OrchestratorFeedback(
 ## Validation Commands
 
 - `git diff --check`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_router_elicitation.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_understanding_runtime_surface.py -q`
 
 ## Validation Category
 

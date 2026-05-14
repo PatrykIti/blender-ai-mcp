@@ -4,7 +4,7 @@
 **Priority:** 🔴 High
 **Parent:** [TASK-168](./TASK-168_Profile_Bound_Orchestrator_Shielding_Feedback_And_Memory_Containment.md)
 **Objective:** Surface one runtime-owned profile/session manifest and prompt-priority model that can outweigh stale external `memory.md`, old prompt stacks, and inherited tool-schema drift on `llm-guided`.
-**Repository Touchpoints:** `server/adapters/mcp/surfaces.py`, `server/adapters/mcp/prompts/prompt_catalog.py`, `server/adapters/mcp/prompts/rendering.py`, `server/adapters/mcp/prompts/provider.py`, `server/adapters/mcp/contracts/router.py`, `server/adapters/mcp/contracts/reference.py`, `_docs/_PROMPTS/README.md`, `_docs/_PROMPTS/GUIDED_SESSION_START.md`, `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`, `_docs/_MCP_SERVER/README.md`, `tests/unit/adapters/mcp/test_prompt_catalog.py`, `tests/unit/adapters/mcp/test_prompt_provider.py`, `tests/unit/adapters/mcp/test_public_surface_docs.py`
+**Repository Touchpoints:** `server/adapters/mcp/session_capabilities_state.py`, `server/adapters/mcp/areas/router.py`, `server/adapters/mcp/contracts/router.py`, `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/prompts/prompt_catalog.py`, `server/adapters/mcp/prompts/rendering.py`, `server/adapters/mcp/prompts/provider.py`, `_docs/_PROMPTS/README.md`, `_docs/_PROMPTS/GUIDED_SESSION_START.md`, `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`, `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`, `_docs/_MCP_SERVER/README.md`, `tests/unit/adapters/mcp/test_prompt_catalog.py`, `tests/unit/adapters/mcp/test_prompt_provider.py`, `tests/unit/adapters/mcp/test_public_surface_docs.py`, `tests/unit/router/application/test_router_contracts.py`, `tests/e2e/integration/test_guided_surface_contract_parity.py`
 **Acceptance Criteria:**
 - the server can expose one compact runtime-owned profile/session contract that says what surface, phase, and guardrails are currently authoritative
 - prompt assets and dynamic recommendations explicitly say that live runtime/profile contract outranks stale external memory and old tool schemas
@@ -34,6 +34,9 @@
   - `guided_role="eye_pair"`
   - legacy `label` / `notes` on staged compare
   - `contact_axis` / `contact_side` / signed `normal_axis`
+- keep the live session-owned fields on `SessionCapabilityState` and the
+  surfaced `router_get_status(...)` contract as the runtime authority; prompt
+  assets only reinforce that authority
 
 ## Pseudocode
 
@@ -62,12 +65,15 @@ session_manifest = {
 - `tests/unit/adapters/mcp/test_prompt_catalog.py`
 - `tests/unit/adapters/mcp/test_prompt_provider.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
+- `tests/unit/router/application/test_router_contracts.py`
+- `tests/e2e/integration/test_guided_surface_contract_parity.py`
 
 ## Docs To Update
 
 - `_docs/_PROMPTS/README.md`
 - `_docs/_PROMPTS/GUIDED_SESSION_START.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
+- `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`
 - `_docs/_MCP_SERVER/README.md`
 
 ## Changelog Impact
@@ -86,6 +92,8 @@ session_manifest = {
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_prompt_catalog.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_prompt_provider.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py -q`
 
 ## Validation Category
 
