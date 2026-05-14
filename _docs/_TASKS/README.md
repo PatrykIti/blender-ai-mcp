@@ -3,9 +3,9 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 6 tasks
+- **To Do:** 5 tasks
 - **In Progress:** 2 tasks
-- **Done:** 97
+- **Done:** 98
 - **Superseded:** 0
 
 ## 📐 Board Scope
@@ -64,7 +64,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Internal Architecture & Maintainability
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-167](./TASK-167_Cross_Module_Debug_Profile_Registry_And_Runtime_Logging.md) | **Cross-Module Debug Profile Registry And Runtime Logging** | 🔴 High | 2026-05-13: shipped the central `BLENDER_AI_DEBUG` selector, bounded repo-owned debug scopes (`vision`, `reference`, `tools`, `transport`, `visibility`, `guided_flow`, `router`), launcher passthrough, and aligned operator docs/changelog closeout. |
 
 ### Mesh Introspection
 | ID | Title | Priority | Notes |
@@ -90,6 +89,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-167](./TASK-167_Cross_Module_Debug_Profile_Registry_And_Runtime_Logging.md) | **Cross-Module Debug Profile Registry And Runtime Logging** | 🔴 High | 2026-05-13 |
 | [TASK-136](./TASK-136_Reference_Guided_Architecture_And_Building_Reconstruction.md) | **Reference-Guided Architecture and Building Reconstruction** | 🔴 High | 2026-05-12 |
 | [TASK-135](./TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md) | **Anatomy-Aware Reference-Guided Low-Poly Creature Reconstruction** | 🔴 High | 2026-05-12 |
 | [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md) | **Hierarchical Reference Compare, Perceived Evidence, And Budget Control** | 🔴 High | 2026-05-10 |
