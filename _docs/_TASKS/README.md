@@ -6,7 +6,7 @@ Curated task board for promoted active work, promoted follow-on work, and select
 - **To Do:** 4 tasks
 - **In Progress:** 3 tasks
 - **Done:** 98
-- **Superseded:** 0
+- **Superseded:** 162
 
 ## 📐 Board Scope
 
@@ -191,7 +191,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 ---
 
-## ⛔ Superseded
+## ⏭️ Superseded
 
 | ID | Title | Replaced By | Notes |
 |----|-------|-------------|-------|
