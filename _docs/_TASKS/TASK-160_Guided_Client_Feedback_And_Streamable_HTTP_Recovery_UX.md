@@ -328,7 +328,9 @@ only after this umbrella's option analysis is accepted.
 
 - `_docs/_TASKS/README.md`
 - `_docs/_CHANGELOG/README.md`
-- one new `_docs/_CHANGELOG/*.md` entry for the already-landed stopgap plus this umbrella
+- the umbrella-history entry and the `TASK-160-01` follow-on entry already
+  exist; future implementation follow-ups should update or extend that indexed
+  changelog trail instead of planning a duplicate “first” entry
 - future implementation follow-ups should also update:
   - `_docs/_MCP_SERVER/README.md`
   - `_docs/_PROMPTS/README.md`

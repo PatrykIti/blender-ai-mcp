@@ -46,7 +46,7 @@ flight.
 |----|-------|----------|-------|
 | [TASK-165](./TASK-165_Mac_First_Interactive_MCP_Server_Installer_And_Launcher.md) | **macOS-First Interactive MCP Server Installer And Launcher** | 🔴 High | In progress after the first `run_mcp_server.sh` / `run_mcp_server.py` launcher landed; the remaining work is to tighten prerequisite/runtime flow, align docs with the shipped operator path, and close the family with the correct validation lane. |
 | [TASK-160](./TASK-160_Guided_Client_Feedback_And_Streamable_HTTP_Recovery_UX.md) | **Guided Client Feedback And Streamable HTTP Recovery UX** | 🔴 High | In progress after TASK-160-01 closed the Streamable visibility serialization slice; the umbrella still owns the broader guided client-feedback contract and follow-on surface decisions. |
-| [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) | **Expand External Vision Contract Profiles Across Qwen, Anthropic, OpenAI, and NVIDIA** | 🔴 High | In progress after `TASK-140-06` opened the capability-aware OpenRouter runtime track and already landed `TASK-140-06-01` plus `TASK-140-06-03`; the remaining family-contract and closeout branches stay under the same umbrella. |
+| [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) | **Expand External Vision Contract Profiles Across Qwen, Anthropic, OpenAI, and NVIDIA** | 🔴 High | In progress after `TASK-140-06` opened the capability-aware OpenRouter runtime track and already landed `TASK-140-06-01` plus `TASK-140-06-03`; the remaining work now spans both family-contract branches and the still-open capability-policy/closeout leaves under `TASK-140-06`. |
 
 ## 🚨 To Do
 
@@ -77,7 +77,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Reconstruction (Mesh, Material, Scene)
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-137](./TASK-137_Anatomy_Aware_Reference_Guided_Organ_Reconstruction.md) | **Anatomy-Aware Reference-Guided Organ Reconstruction** | 🟠 High | Board-level organic-anatomy umbrella for bounded organ reconstruction from references with explicit medical-scope guardrails and anatomy-aware loop design. |
+| [TASK-137](./TASK-137_Anatomy_Aware_Reference_Guided_Organ_Reconstruction.md) | **Anatomy-Aware Reference-Guided Organ Reconstruction** | 🔴 High | Board-level organic-anatomy umbrella for bounded organ reconstruction from references with explicit medical-scope guardrails and anatomy-aware loop design. |
 | [TASK-138](./TASK-138_Anatomy_Aware_Reference_Guided_Biped_And_Fantasy_Character_Reconstruction.md) | **Anatomy-Aware Reference-Guided Biped and Fantasy Character Reconstruction** | 🔴 High | Board-level character umbrella for reference-guided humanoid and fantasy-character reconstruction with explicit body-part, symmetry, appendage, garment, and rig-handoff boundaries. |
 
 ### Vision & Hybrid Loop

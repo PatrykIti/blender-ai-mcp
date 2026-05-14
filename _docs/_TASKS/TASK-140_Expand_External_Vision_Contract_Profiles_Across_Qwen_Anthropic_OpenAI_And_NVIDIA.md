@@ -42,7 +42,9 @@ Do not collapse those two concepts again.
 
 ## Execution Guardrail
 
-`TASK-140` is about model-family contract selection only.
+`TASK-140` is primarily about model-family contract selection on the current
+provider surface, with one active bounded follow-on branch for capability-aware
+OpenRouter request policy under `TASK-140-06`.
 
 This umbrella may:
 
@@ -108,10 +110,12 @@ Current external backend wiring is also intentionally narrow:
 - the current tests in `tests/unit/adapters/mcp/test_vision_external_backend.py`
   already lock that boundary in place
 
-Therefore `TASK-140` backend work is limited to:
+Therefore `TASK-140` backend/runtime work is limited to:
 
 - profile-aware prompt/schema/request behavior inside the current backend seam
 - parser/diagnostic behavior keyed by `vision_contract_profile`
+- bounded capability-aware runtime policy for OpenRouter-backed external
+  requests inside the same shared seam
 - family-specific evidence that a model/profile combination works or fails on
   the current shared backend path
 
@@ -309,13 +313,16 @@ This umbrella does **not** cover:
 - `server/adapters/mcp/vision/runtime.py`
 - `server/adapters/mcp/vision/prompting.py`
 - `server/adapters/mcp/vision/backends.py`
+- `server/adapters/mcp/vision/openrouter_models.py`
 - `server/adapters/mcp/vision/parsing.py`
 - `server/adapters/mcp/sampling/result_types.py`
+- `tests/unit/adapters/mcp/test_openrouter_model_capabilities.py`
 - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
 - `tests/unit/adapters/mcp/test_vision_prompting.py`
 - `tests/unit/adapters/mcp/test_vision_parsing.py`
 - `tests/unit/adapters/mcp/test_vision_external_backend.py`
 - `tests/unit/adapters/mcp/test_vision_result_types.py`
+- `tests/unit/adapters/mcp/test_vision_runner.py`
 - `tests/e2e/vision/`
 - `scripts/vision_harness.py`
 - `scripts/run_streamable_openrouter.sh`
@@ -328,6 +335,7 @@ This umbrella does **not** cover:
 - `_docs/_VISION/CROSS_DOMAIN_REFINEMENT_ROUTING_EVAL.md`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
+- `_docs/_CHANGELOG/README.md`
 - `_docs/_TASKS/README.md`
 
 ## Docs To Update
@@ -349,6 +357,8 @@ This umbrella does **not** cover:
 - `tests/unit/adapters/mcp/test_vision_parsing.py`
 - `tests/unit/adapters/mcp/test_vision_external_backend.py`
 - `tests/unit/adapters/mcp/test_vision_result_types.py`
+- `tests/unit/adapters/mcp/test_openrouter_model_capabilities.py`
+- `tests/unit/adapters/mcp/test_vision_runner.py`
 - `tests/unit/scripts/test_script_tooling.py`
 - targeted `tests/e2e/vision/` coverage for each promoted external family
 

@@ -20,15 +20,19 @@ for the first ship.
 
 ## Business Problem
 
-Today the repo assumes a lot of operator context:
+The shipped launcher solved the first entrypoint problem, but the family still
+has an operator-trust gap:
 
-- Docker Desktop may or may not be installed
+- Docker Desktop may or may not be installed or reachable
 - Apple Silicon / Rosetta / native Python / MLX support may or may not be ready
-- optional classifier sidecar, OpenRouter envs, and MCP transport choices all
-  require manual wiring across several documents and scripts
+- optional classifier sidecar, OpenRouter envs, and MCP transport choices are
+  now gathered by the launcher, but the remaining task family still needs to
+  keep that live flow, validation lane, and operator docs aligned
 
-That is workable for maintainers, but not for a new macOS user who has never
-configured Docker, MLX, or a Streamable MCP runtime before.
+The repo is no longer missing an entrypoint; the remaining problem is making
+the shipped macOS-first flow trustworthy enough that a new operator is not
+forced to reverse-engineer what the launcher already does versus what still
+needs manual follow-up.
 
 ## Business Outcome
 
