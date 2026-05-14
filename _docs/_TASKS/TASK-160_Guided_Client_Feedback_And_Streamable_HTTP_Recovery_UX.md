@@ -35,18 +35,25 @@ follow only after the option analysis is chosen.
 The repo already has a partial stopgap for the immediate client-feedback gap:
 
 - [server/adapters/mcp/session_capabilities.py](/Users/pciechanski/Documents/_moje_projekty/blender-ai-mcp/server/adapters/mcp/session_capabilities.py)
+  - stable facade for the session-capability helpers
+- [server/adapters/mcp/session_capabilities_flow.py](/Users/pciechanski/Documents/_moje_projekty/blender-ai-mcp/server/adapters/mcp/session_capabilities_flow.py)
   - `describe_guided_flow_feedback(...)`
-  - generates a concise summary when `current_step`,
+  - owns the concise summary when `current_step`,
     `spatial_refresh_required`, `next_actions`, `required_checks`, or
     `allowed_families` changed materially
+- [server/adapters/mcp/session_capabilities_state.py](/Users/pciechanski/Documents/_moje_projekty/blender-ai-mcp/server/adapters/mcp/session_capabilities_state.py)
+  - owns the typed guided/session state consumed by the feedback formatter
 - [server/adapters/mcp/areas/modeling.py](/Users/pciechanski/Documents/_moje_projekty/blender-ai-mcp/server/adapters/mcp/areas/modeling.py)
   - async `modeling_create_primitive(...)`
   - async `modeling_transform_object(...)`
   - both now emit immediate `ctx_info(...)` feedback when a guided-flow update
     was just triggered by the mutation
 - [server/adapters/mcp/areas/scene.py](/Users/pciechanski/Documents/_moje_projekty/blender-ai-mcp/server/adapters/mcp/areas/scene.py)
+  - stable facade/wiring layer for the scene area
+- [server/adapters/mcp/areas/scene_spatial_graph.py](/Users/pciechanski/Documents/_moje_projekty/blender-ai-mcp/server/adapters/mcp/areas/scene_spatial_graph.py)
   - async `scene_scope_graph(...)`
   - async `scene_relation_graph(...)`
+- [server/adapters/mcp/areas/scene_view_diagnostics.py](/Users/pciechanski/Documents/_moje_projekty/blender-ai-mcp/server/adapters/mcp/areas/scene_view_diagnostics.py)
   - async `scene_view_diagnostics(...)`
   - these now append the same guided-flow feedback to `payload.message` and emit
     `ctx_info(...)` when a required spatial-check transition was actually
@@ -266,21 +273,20 @@ This umbrella deliberately does not:
 
 ## Execution Structure
 
-| Order | Workstream | Purpose |
-|-------|------------|---------|
-| 1 | Current Baseline | Record what already landed and where the tactical stopgap now lives |
-| 2 | Failure Taxonomy | Separate harness disconnects, stale-surface client behavior, and real repo-side runtime faults |
-| 3 | Contract Direction | Choose whether the next repo-owned step is message-only, structured `guided_flow_update`, or both |
-| 4 | Apps Evaluation | Decide whether richer FastMCP app surfaces are an optional enhancement worth adding after the base contract is stable |
-| 5 | Validation Strategy | Define the unit/integration/Streamable HTTP proof pack that future implementation work must satisfy |
+| Order | Task | Purpose |
+|------|------|---------|
+| 1 | [TASK-160-01](./TASK-160-01_Streamable_HTTP_Visibility_Transaction_Audit_And_Discovery_Churn_Regression.md) | Completed narrow runtime slice that locked Streamable visibility transactions and captured the current evidence anchor for this umbrella |
+
+No broader physical child subtree exists yet. Create the next execution leaves
+only after this umbrella's option analysis is accepted.
 
 ## Repository Touchpoint Table
 
 | Path / Module | Expected Ownership | Why It Is In Scope |
 |---------------|--------------------|--------------------|
-| `server/adapters/mcp/session_capabilities.py` | Guided session state | Owns `guided_flow_state`, `next_actions`, `allowed_families`, and the new concise feedback formatter |
+| `server/adapters/mcp/session_capabilities_flow.py`, `session_capabilities_state.py`, `session_capabilities.py` | Guided session state and stable facade | `session_capabilities.py` is now the stable facade, while the live feedback formatter and typed state owners live in the modular flow/state files |
 | `server/adapters/mcp/areas/modeling.py` | Guided build mutations | Current place where create/transform mutations can emit immediate guided-flow feedback |
-| `server/adapters/mcp/areas/scene.py` | Spatial support tools | Current place where successful required spatial checks can surface immediate guided-flow transition feedback |
+| `server/adapters/mcp/areas/scene_spatial_graph.py`, `scene_view_diagnostics.py`, `scene.py` | Spatial support tools and facade | the scene facade remains the public area seam, but the actual spatial-check feedback logic now lives in the modular scene area owners |
 | `server/adapters/mcp/router_helper.py` | Routed execution / policy context | Candidate owner if a future structured `guided_flow_update` should be attached generically to routed tool results |
 | `server/adapters/mcp/guided_mode.py` | FastMCP visibility | Defines what the visible guided surface actually is at each step |
 | `server/adapters/mcp/execution_report.py` | Routed result envelope | Candidate owner if future structured transition metadata should ride on existing routed reports |
@@ -288,7 +294,7 @@ This umbrella deliberately does not:
 | `tests/unit/adapters/mcp/test_guided_flow_state_contract.py` | Session-state proof | Owns exact expectations for feedback text and guided step transitions |
 | `tests/unit/tools/test_mcp_area_main_paths.py` | Async tool finalizer proof | Owns exact expectations for feedback emitted after async modeling mutations |
 | `_docs/_MCP_SERVER/README.md` | Public transport/client guidance | Must stay aligned with any future structured feedback contract or app-surface recommendation |
-| `_docs/_PROMPTS/README.md` and `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md` | Operator guidance | Already explain some of the sequencing constraints; future guidance should match the chosen contract direction |
+| `_docs/_PROMPTS/README.md`, `_docs/_PROMPTS/GUIDED_SESSION_START.md`, `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`, `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md` | Operator guidance across guided domains | this umbrella is generic guided-client substrate work, so creature and architecture prompt guidance must stay aligned with the chosen recovery contract |
 | `_docs/_TASKS/README.md` | Board | Track this work as one promoted umbrella until the option analysis is chosen |
 | `_docs/_CHANGELOG/` | Historical record | Record the already-landed stopgap and the umbrella creation in the same historical trail |
 
@@ -326,7 +332,9 @@ This umbrella deliberately does not:
 - future implementation follow-ups should also update:
   - `_docs/_MCP_SERVER/README.md`
   - `_docs/_PROMPTS/README.md`
+  - `_docs/_PROMPTS/GUIDED_SESSION_START.md`
   - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
+  - `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`
 
 ## Changelog Impact
 
