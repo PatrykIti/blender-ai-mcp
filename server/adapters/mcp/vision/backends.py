@@ -53,6 +53,37 @@ def _looks_like_qwen_family_model(model_name: str | None) -> bool:
     return any(marker in normalized for marker in _QWEN_MODEL_MARKERS)
 
 
+def _normalized_modalities(values: list[str] | None) -> set[str]:
+    return {str(value).strip().lower() for value in values or [] if str(value).strip()}
+
+
+def _supported_parameter_set(capabilities: Any) -> set[str]:
+    if capabilities is None:
+        return set()
+    return {str(value).strip().lower() for value in capabilities.supported_parameters or [] if str(value).strip()}
+
+
+def _supports_parameter(capabilities: Any, parameter_name: str) -> bool | None:
+    supported_parameters = _supported_parameter_set(capabilities)
+    if not supported_parameters:
+        return None
+    return parameter_name.strip().lower() in supported_parameters
+
+
+def _supports_image_input(capabilities: Any) -> bool | None:
+    modalities = _normalized_modalities(getattr(capabilities, "input_modalities", []))
+    if not modalities:
+        return None
+    return "image" in modalities
+
+
+def _supports_text_output(capabilities: Any) -> bool | None:
+    modalities = _normalized_modalities(getattr(capabilities, "output_modalities", []))
+    if not modalities:
+        return None
+    return "text" in modalities
+
+
 def _extract_message_text(payload: dict[str, Any]) -> str:
     choices = payload.get("choices")
     if not isinstance(choices, list) or not choices:
@@ -224,6 +255,10 @@ def _request_payload_summary(
 ) -> dict[str, Any]:
     response_format = payload.get("response_format")
     generation_config = payload.get("generationConfig")
+    requested_max_tokens = payload.get("max_tokens")
+    if not isinstance(requested_max_tokens, int) and isinstance(generation_config, dict):
+        generation_max = generation_config.get("maxOutputTokens")
+        requested_max_tokens = generation_max if isinstance(generation_max, int) else None
     user_content = []
     messages = payload.get("messages")
     if isinstance(messages, list) and len(messages) >= 2:
@@ -254,6 +289,7 @@ def _request_payload_summary(
         "effective_max_input_chars": runtime_config.effective_max_input_chars,
         "max_tokens": runtime_config.max_tokens,
         "effective_max_tokens": runtime_config.effective_max_tokens,
+        "requested_max_tokens": requested_max_tokens,
         "budget_clip_fields": runtime_config.budget_clip_fields,
         "prompt_hint": _truncate_text(request.prompt_hint, limit=240),
     }
@@ -729,6 +765,78 @@ class OpenAICompatibleVisionBackend(VisionBackend):
 
     async def prepare_for_request(self, request: VisionRequest) -> None:
         await self._refresh_openrouter_model_capabilities()
+        model_capabilities = self._external_config.model_capabilities
+        if not request.images or model_capabilities is None:
+            return
+
+        if _supports_image_input(model_capabilities) is False:
+            raise VisionBackendUnavailableError(
+                "Vision model does not advertise image input support for this request. "
+                f"model='{self.model_name}' capability_source='{model_capabilities.capability_source}'"
+            )
+        if _supports_text_output(model_capabilities) is False:
+            raise VisionBackendUnavailableError(
+                "Vision model does not advertise text output support for this request. "
+                f"model='{self.model_name}' capability_source='{model_capabilities.capability_source}'"
+            )
+
+    def _build_openrouter_response_format(self, request: VisionRequest) -> dict[str, Any] | None:
+        model_capabilities = self._external_config.model_capabilities
+        capability_source = getattr(model_capabilities, "capability_source", "unknown")
+        supports_response_format = _supports_parameter(model_capabilities, "response_format")
+        supports_structured_outputs = _supports_parameter(model_capabilities, "structured_outputs")
+
+        if (
+            self._external_config.prefer_json_object_for_qwen
+            and _looks_like_qwen_family_model(self.model_name)
+            and supports_response_format is not False
+        ):
+            return {"type": "json_object"}
+
+        if supports_structured_outputs is True and supports_response_format is not False:
+            return {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "vision_assist",
+                    "strict": True,
+                    "schema": build_vision_response_json_schema(
+                        vision_contract_profile=self._external_config.vision_contract_profile,
+                        provider_name=self._external_config.provider_name,
+                        request=request,
+                    ),
+                },
+            }
+
+        if capability_source == "openrouter_api" and supports_response_format is True:
+            return {"type": "json_object"}
+
+        if supports_response_format is False:
+            return None
+
+        return {
+            "type": "json_schema",
+            "json_schema": {
+                "name": "vision_assist",
+                "strict": True,
+                "schema": build_vision_response_json_schema(
+                    vision_contract_profile=self._external_config.vision_contract_profile,
+                    provider_name=self._external_config.provider_name,
+                    request=request,
+                ),
+            },
+        }
+
+    def _should_enable_response_healing_plugin(self, response_format: dict[str, Any] | None) -> bool:
+        if self._external_config.provider_name != "openrouter" or not self._external_config.enable_response_healing:
+            return False
+        model_capabilities = self._external_config.model_capabilities
+        if response_format is None:
+            return True
+        if getattr(model_capabilities, "capability_source", "unknown") != "openrouter_api":
+            return True
+        if _supports_parameter(model_capabilities, "structured_outputs") is True:
+            return response_format.get("type") != "json_schema"
+        return True
 
     def _build_request_payload(self, request: VisionRequest) -> dict[str, Any]:
         vision_contract_profile = self._external_config.vision_contract_profile
@@ -770,7 +878,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
                 "contents": [{"parts": parts}],
                 "generationConfig": {
                     "temperature": 0.0,
-                    "maxOutputTokens": self._runtime_config.effective_max_tokens,
+                    "maxOutputTokens": _output_token_cap(runtime_config=self._runtime_config, request=request),
                     "responseMimeType": "application/json",
                     "responseJsonSchema": build_vision_response_json_schema(
                         vision_contract_profile=vision_contract_profile,
@@ -802,33 +910,17 @@ class OpenAICompatibleVisionBackend(VisionBackend):
                 }
             )
 
-        response_format: dict[str, Any]
-        if (
-            self._external_config.provider_name == "openrouter"
-            and self._external_config.prefer_json_object_for_qwen
-            and _looks_like_qwen_family_model(self.model_name)
-        ):
-            response_format = {"type": "json_object"}
-        elif self._external_config.provider_name == "openrouter":
-            response_format = {
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "vision_assist",
-                    "strict": True,
-                    "schema": build_vision_response_json_schema(
-                        vision_contract_profile=vision_contract_profile,
-                        provider_name=self._external_config.provider_name,
-                        request=request,
-                    ),
-                },
-            }
+        response_format: dict[str, Any] | None
+        if self._external_config.provider_name == "openrouter":
+            response_format = self._build_openrouter_response_format(request)
+            include_response_format = response_format is not None
         else:
+            include_response_format = True
             response_format = {"type": "json_object"}
         payload = {
             "model": self.model_name,
             "temperature": 0.0,
-            "max_tokens": self._runtime_config.effective_max_tokens,
-            "response_format": response_format,
+            "max_tokens": _output_token_cap(runtime_config=self._runtime_config, request=request),
             "messages": [
                 {
                     "role": "system",
@@ -842,9 +934,11 @@ class OpenAICompatibleVisionBackend(VisionBackend):
                 {"role": "user", "content": content},
             ],
         }
+        if include_response_format:
+            payload["response_format"] = response_format
         if self._external_config.provider_name == "openrouter":
             payload["provider"] = {"require_parameters": self._external_config.require_parameters}
-            if self._external_config.enable_response_healing:
+            if self._should_enable_response_healing_plugin(response_format if include_response_format else None):
                 payload["plugins"] = [{"id": "response-healing"}]
         return payload
 
@@ -870,6 +964,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
             model_name=self.model_name,
             vision_contract_profile=self._external_config.vision_contract_profile,
         )
+        logger.info("External vision request policy resolved. payload_summary=%s", payload_summary)
 
         try:
             async with httpx.AsyncClient(timeout=timeout) as client:

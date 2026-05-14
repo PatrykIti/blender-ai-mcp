@@ -70,6 +70,14 @@ def _config(**overrides) -> Config:
     return Config(**payload)
 
 
+def _runtime_with_capabilities(runtime, capabilities: VisionModelCapabilities):
+    external = runtime.openai_compatible_external
+    assert external is not None
+    return runtime.model_copy(
+        update={"openai_compatible_external": external.model_copy(update={"model_capabilities": capabilities})}
+    )
+
+
 class _FakeResponse:
     def __init__(self, payload: dict, status_code: int = 200, headers: dict[str, str] | None = None) -> None:
         self._payload = payload
@@ -520,6 +528,136 @@ def test_openrouter_metadata_failure_keeps_reviewed_fallback_policy(monkeypatch,
     assert captured["json"]["max_tokens"] == 4096
 
 
+def test_openrouter_capability_policy_uses_json_schema_only_with_structured_outputs(monkeypatch, tmp_path):
+    image_path = tmp_path / "after.png"
+    image_path.write_bytes(b"fake-png")
+
+    runtime = _runtime_with_capabilities(
+        build_vision_runtime_config(
+            _config(
+                VISION_EXTERNAL_PROVIDER="openrouter",
+                VISION_OPENROUTER_MODEL="google/gemma-3-27b-it:free",
+                VISION_OPENROUTER_API_KEY="openrouter-secret",
+            )
+        ),
+        VisionModelCapabilities(
+            model_id="google/gemma-3-27b-it:free",
+            capability_source="openrouter_api",
+            context_length=128_000,
+            max_completion_tokens=8_192,
+            input_modalities=["text", "image"],
+            output_modalities=["text"],
+            supported_parameters=["max_tokens", "response_format", "structured_outputs"],
+        ),
+    )
+    backend = OpenAICompatibleVisionBackend(runtime)
+    request = VisionRequest(goal="goal", images=(VisionImageInput(path=str(image_path), role="after"),))
+
+    captured: dict = {}
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda timeout=None: _FakeAsyncClient(
+            response=_FakeResponse(
+                {"choices": [{"message": {"content": '{"goal_summary":"ok","visible_changes":[]}'}}]}
+            ),
+            captured=captured,
+        ),
+    )
+
+    asyncio.run(backend.analyze(request))
+
+    assert captured["json"]["response_format"]["type"] == "json_schema"
+    assert "plugins" not in captured["json"]
+
+
+def test_openrouter_capability_policy_falls_back_to_json_object_without_structured_outputs(monkeypatch, tmp_path):
+    image_path = tmp_path / "after.png"
+    image_path.write_bytes(b"fake-png")
+
+    runtime = _runtime_with_capabilities(
+        build_vision_runtime_config(
+            _config(
+                VISION_EXTERNAL_PROVIDER="openrouter",
+                VISION_OPENROUTER_MODEL="google/gemma-3-27b-it:free",
+                VISION_OPENROUTER_API_KEY="openrouter-secret",
+            )
+        ),
+        VisionModelCapabilities(
+            model_id="google/gemma-3-27b-it:free",
+            capability_source="openrouter_api",
+            context_length=128_000,
+            max_completion_tokens=8_192,
+            input_modalities=["text", "image"],
+            output_modalities=["text"],
+            supported_parameters=["max_tokens", "response_format"],
+        ),
+    )
+    backend = OpenAICompatibleVisionBackend(runtime)
+    request = VisionRequest(goal="goal", images=(VisionImageInput(path=str(image_path), role="after"),))
+
+    captured: dict = {}
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda timeout=None: _FakeAsyncClient(
+            response=_FakeResponse(
+                {"choices": [{"message": {"content": '{"goal_summary":"ok","visible_changes":[]}'}}]}
+            ),
+            captured=captured,
+        ),
+    )
+
+    asyncio.run(backend.analyze(request))
+
+    assert captured["json"]["response_format"] == {"type": "json_object"}
+    assert captured["json"]["plugins"] == [{"id": "response-healing"}]
+
+
+def test_openrouter_capability_policy_rejects_missing_image_modality(monkeypatch, tmp_path):
+    image_path = tmp_path / "after.png"
+    image_path.write_bytes(b"fake-png")
+
+    runtime = _runtime_with_capabilities(
+        build_vision_runtime_config(
+            _config(
+                VISION_EXTERNAL_PROVIDER="openrouter",
+                VISION_OPENROUTER_MODEL="openai/gpt-5.4-nano",
+                VISION_OPENROUTER_API_KEY="openrouter-secret",
+            )
+        ),
+        VisionModelCapabilities(
+            model_id="openai/gpt-5.4-nano",
+            capability_source="openrouter_api",
+            context_length=400_000,
+            max_completion_tokens=8_192,
+            input_modalities=["text"],
+            output_modalities=["text"],
+            supported_parameters=["max_tokens", "response_format", "structured_outputs"],
+        ),
+    )
+    backend = OpenAICompatibleVisionBackend(runtime)
+    request = VisionRequest(goal="goal", images=(VisionImageInput(path=str(image_path), role="after"),))
+
+    captured: dict = {}
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda timeout=None: _FakeAsyncClient(
+            response=_FakeResponse(
+                {"choices": [{"message": {"content": '{"goal_summary":"ok","visible_changes":[]}'}}]}
+            ),
+            captured=captured,
+        ),
+    )
+
+    with pytest.raises(VisionBackendUnavailableError, match="openrouter_api") as excinfo:
+        asyncio.run(backend.analyze(request))
+
+    assert "image" in str(excinfo.value).lower()
+    assert captured == {}
+
+
 def test_external_backend_uses_json_object_for_qwen_family_on_openrouter(monkeypatch, tmp_path):
     image_path = tmp_path / "after.png"
     image_path.write_bytes(b"fake-png")
@@ -877,3 +1015,58 @@ def test_openrouter_http_error_logs_payload_summary_and_response_preview(monkeyp
     assert "https://openrouter.ai/api/v1/chat/completions" in log_text
     assert "json_schema" in log_text
     assert "Provider rejected json_schema for this model." in log_text
+
+
+def test_openrouter_http_error_logs_capability_source_and_effective_output_cap(monkeypatch, tmp_path, caplog):
+    image_path = tmp_path / "reference.png"
+    image_path.write_bytes(b"fake-png")
+
+    runtime = _runtime_with_capabilities(
+        build_vision_runtime_config(
+            _config(
+                VISION_EXTERNAL_PROVIDER="openrouter",
+                VISION_OPENROUTER_MODEL="openai/gpt-5.4-nano",
+                VISION_OPENROUTER_API_KEY="openrouter-secret",
+                VISION_MAX_TOKENS=5_000,
+            )
+        ),
+        VisionModelCapabilities(
+            model_id="openai/gpt-5.4-nano",
+            capability_source="openrouter_api",
+            context_length=400_000,
+            max_completion_tokens=3_000,
+            input_modalities=["text", "image"],
+            output_modalities=["text"],
+            supported_parameters=["max_tokens", "response_format"],
+        ),
+    )
+    backend = OpenAICompatibleVisionBackend(runtime)
+    request = VisionRequest(
+        goal="low poly squirrel",
+        target_object="Head",
+        images=(VisionImageInput(path=str(image_path), role="reference", label="front_ref"),),
+        prompt_hint="comparison_mode=stage_checkpoint_vs_reference",
+    )
+
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda timeout=None: _FakeAsyncClient(
+            response=_FakeResponse(
+                {"error": {"message": "Provider rejected json_schema for this model."}},
+                status_code=400,
+                headers={"x-request-id": "req_live_cap", "content-type": "application/json"},
+            ),
+            captured={},
+        ),
+    )
+
+    with caplog.at_level("ERROR"):
+        with pytest.raises(VisionBackendUnavailableError, match="Provider rejected json_schema"):
+            asyncio.run(backend.analyze(request))
+
+    log_text = "\n".join(caplog.messages)
+    assert "model_capability_source" in log_text
+    assert "openrouter_api" in log_text
+    assert "effective_max_tokens" in log_text
+    assert "3000" in log_text

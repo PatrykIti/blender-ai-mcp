@@ -17,6 +17,7 @@ from server.adapters.mcp.vision import (
     VisionRequest,
     build_vision_runtime_config,
 )
+from server.adapters.mcp.vision.config import VisionModelCapabilities
 from server.adapters.mcp.vision.model_profiles import resolve_fallback_model_capabilities
 from server.infrastructure.config import Config
 
@@ -88,6 +89,14 @@ def _base_config(**overrides) -> Config:
     }
     data.update(overrides)
     return Config(**data)
+
+
+def _runtime_with_capabilities(runtime, capabilities: VisionModelCapabilities):
+    external = runtime.openai_compatible_external
+    assert external is not None
+    return runtime.model_copy(
+        update={"openai_compatible_external": external.model_copy(update={"model_capabilities": capabilities})}
+    )
 
 
 def test_build_vision_runtime_config_supports_local_transformers_backend():
@@ -324,6 +333,52 @@ def test_openrouter_openai_fallback_profile_resolves_from_family_registry():
     assert capabilities.context_length == 400_000
     assert capabilities.max_completion_tokens == 128_000
     assert {"text", "image"}.issubset(capabilities.input_modalities)
+
+
+def test_effective_max_tokens_preserves_explicit_operator_cap_when_known_model_allows_more():
+    runtime = build_vision_runtime_config(
+        _base_config(
+            VISION_ENABLED=True,
+            VISION_PROVIDER="openai_compatible_external",
+            VISION_EXTERNAL_PROVIDER="openrouter",
+            VISION_OPENROUTER_MODEL="openai/gpt-5.4-nano",
+            VISION_MAX_TOKENS=5_000,
+        )
+    )
+
+    assert runtime.openai_compatible_external is not None
+    assert runtime.openai_compatible_external.model_capabilities is not None
+    assert runtime.openai_compatible_external.model_capabilities.capability_source == "fallback_registry"
+    assert runtime.effective_max_tokens == 5_000
+
+
+def test_effective_max_tokens_prefers_live_api_cap_over_reviewed_fallback_profile():
+    runtime = build_vision_runtime_config(
+        _base_config(
+            VISION_ENABLED=True,
+            VISION_PROVIDER="openai_compatible_external",
+            VISION_EXTERNAL_PROVIDER="openrouter",
+            VISION_OPENROUTER_MODEL="openai/gpt-5.4-nano",
+            VISION_MAX_TOKENS=5_000,
+        )
+    )
+    runtime = _runtime_with_capabilities(
+        runtime,
+        VisionModelCapabilities(
+            model_id="openai/gpt-5.4-nano",
+            capability_source="openrouter_api",
+            context_length=400_000,
+            max_completion_tokens=3_000,
+            input_modalities=["text", "image"],
+            output_modalities=["text"],
+            supported_parameters=["max_tokens", "response_format"],
+        ),
+    )
+
+    assert runtime.openai_compatible_external is not None
+    assert runtime.openai_compatible_external.model_capabilities is not None
+    assert runtime.openai_compatible_external.model_capabilities.capability_source == "openrouter_api"
+    assert runtime.effective_max_tokens == 3_000
 
 
 def test_generic_external_provider_defaults_to_generic_full_contract_profile():

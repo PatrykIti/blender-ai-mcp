@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import pytest
 from server.adapters.mcp.vision.backend import VisionImageInput, VisionRequest
 from server.adapters.mcp.vision.prompting import (
     build_local_vision_payload_text,
     build_vision_payload_text,
     build_vision_response_json_schema,
     build_vision_system_prompt,
+    expected_json_keys,
 )
 
 
@@ -128,6 +130,18 @@ def _packet_ranking_request() -> VisionRequest:
     )
 
 
+def _checkpoint_compare_request() -> VisionRequest:
+    return VisionRequest(
+        goal="low poly squirrel",
+        target_object="Squirrel",
+        images=(
+            VisionImageInput(path="/tmp/front.png", role="after", label="target_front_after"),
+            VisionImageInput(path="/tmp/ref_front.png", role="reference", label="ref_front"),
+        ),
+        prompt_hint="comparison_mode=stage_checkpoint_vs_reference",
+    )
+
+
 def test_local_prompt_payload_is_more_compact_and_task_focused():
     text = build_local_vision_payload_text(_request())
 
@@ -188,6 +202,25 @@ def test_local_prompt_adds_reference_guided_checkpoint_guidance_when_requested()
 
     assert "Because this is a reference-guided checkpoint comparison:" in local_prompt
     assert "correction_focus should rank the most important fixes first" in local_prompt
+
+
+@pytest.mark.parametrize(
+    ("vision_request", "kwargs"),
+    [
+        (_request(), {}),
+        (
+            _checkpoint_compare_request(),
+            {"vision_contract_profile": "google_family_compare", "provider_name": "openrouter"},
+        ),
+        (_packet_compare_request(), {}),
+        (_reference_understanding_request(), {}),
+        (_reference_classification_request(), {}),
+    ],
+)
+def test_expected_json_keys_match_schema_properties_for_repairable_contracts(vision_request, kwargs):
+    schema = build_vision_response_json_schema(request=vision_request, **kwargs)
+
+    assert tuple(schema["properties"]) == expected_json_keys(request=vision_request, **kwargs)
 
 
 def test_packet_compare_request_uses_packet_specific_prompt_payload_and_schema():
