@@ -49,7 +49,8 @@ external controllers:
 - the controller reused stale tool-shape memories such as `label` / `notes` on
   `reference_compare_stage_checkpoint(...)`
 - the controller invented role/tool arguments like `guided_role="eye_pair"` or
-  `contact_axis` / `contact_side`
+  passed `macro_align_part_with_contact(...)` arguments such as
+  `contact_axis` / `contact_side` or signed `normal_axis` values like `-Y`
 - low-confidence heuristics or stale mental models could still re-open
   irrelevant workflow paths during guided manual builds
 
@@ -80,8 +81,9 @@ After this umbrella lands:
   blocker cluster instead of forcing the controller to read whole-model detail
 - compare/iterate can stay coarse and compact by default, then escalate to
   larger scope or richer detail only when the current blocker remains ambiguous
-- external controllers receive one compact typed feedback contract instead of
-  reconstructing policy from prose, stale memory, or hidden-tool errors
+- external controllers receive one compact typed
+  `reference_orchestrator_feedback`-based contract instead of reconstructing
+  policy from prose, stale memory, or hidden-tool errors
 - no-match guided manual sessions preserve explicit goal context strongly enough
   that unrelated workflow heuristics stay suppressed until the goal is cleared
 - staged compare / iterate phases can insist on compare/support actions before
@@ -150,12 +152,13 @@ After this umbrella lands:
 - a no-match guided manual goal can suppress unrelated workflow heuristics until
   the goal is cleared
 - external controllers receive one short typed feedback contract on the
-  relevant guided public seams with:
-  - what to do now
-  - what not to do now
-  - what will not work now
-  - why the session is blocked
-  - what exact action unblocks progress
+  relevant guided public seams that extends the shipped
+  `reference_orchestrator_feedback` vocabulary instead of replacing it
+- the feedback stays machine-readable and compact while still surfacing:
+  - blocking reasons
+  - next actions
+  - next checkpoint / support path
+  - exact unblock guidance
 - staged compare / iterate phases can require compare/support actions before
   more modeling
 - staged compare / iterate can stay local to the active fragment/workset by

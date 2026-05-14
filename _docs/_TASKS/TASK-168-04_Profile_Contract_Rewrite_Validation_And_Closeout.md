@@ -29,6 +29,8 @@
 - final closeout must inherit the focused owner-lane commands from:
   - `TASK-168-01`
   - `TASK-168-02`
+  - `TASK-168-02-01`
+  - `TASK-168-02-02`
   - `TASK-168-03`
 - plus the broad repo bundle:
   - `PYTHONPATH=. poetry run pytest ./tests/unit`
@@ -42,6 +44,7 @@
 - `_docs/_PROMPTS/README.md`
 - `_docs/_PROMPTS/GUIDED_SESSION_START.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
+- `_docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md`
 - `_docs/_ROUTER/README.md`
 - `_docs/_TASKS/README.md`
 - `_docs/_TASKS/TASK-168*.md`
@@ -60,16 +63,22 @@
 ## Validation Commands
 
 - `git diff --check`
-- focused controller-regression lanes after implementation:
+- focused owner-lane unit tests after implementation:
   - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_handler_parameters.py -q`
   - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_workflow_triggerer.py -q`
   - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_search_surface.py -q`
   - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_router_elicitation.py -q`
   - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py -q`
   - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_context_bridge.py -q`
-  - `PYTHONPATH=. poetry run pytest tests/e2e/router/test_guided_manual_handoff.py -q`
-  - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_streamable_spatial_support.py -q`
-  - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_supervisor_router.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_compare_packets.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_contracts.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_prompt_catalog.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_prompt_provider.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
 - repo-standard proof bundle:
   - `PYTHONPATH=. poetry run pytest ./tests/unit`
   - `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure`

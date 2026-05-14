@@ -4,7 +4,7 @@
 **Priority:** 🔴 High
 **Parent:** [TASK-168-02](./TASK-168-02_Typed_Orchestrator_Feedback_Contract_And_Emission_Points.md)
 **Objective:** Make staged compare / iterate default to the active fragment, blocker cluster, or focus pair instead of pushing whole-model output into the controller by default.
-**Repository Touchpoints:** `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `server/adapters/mcp/areas/reference_planner.py`, `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/contracts/guided_flow.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/e2e/vision/test_reference_stage_multi_reference_scaling.py`, `tests/e2e/vision/test_reference_stage_truth_handoff.py`
+**Repository Touchpoints:** `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `server/adapters/mcp/areas/reference_planner.py`, `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/contracts/guided_flow.py`, `tests/unit/adapters/mcp/test_reference_compare_packets.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/e2e/vision/test_reference_stage_multi_reference_scaling.py`, `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 **Acceptance Criteria:**
 - compare/iterate can resolve one active compare scope from:
   - current guided step
@@ -61,6 +61,7 @@ if packets.returned_uncertain:
 
 ## Tests To Add/Update
 
+- `tests/unit/adapters/mcp/test_reference_compare_packets.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/e2e/vision/test_reference_stage_multi_reference_scaling.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
@@ -83,11 +84,12 @@ if packets.returned_uncertain:
 ## Validation Commands
 
 - `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_compare_packets.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_multi_reference_scaling.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_truth_handoff.py -q`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+- `poetry run python scripts/run_e2e_tests.py`
 
 ## Validation Category
 
-- focused reference packet/planner tests
+- focused reference packet/planner tests plus repo-supported Blender E2E proof
 - `git diff --check`

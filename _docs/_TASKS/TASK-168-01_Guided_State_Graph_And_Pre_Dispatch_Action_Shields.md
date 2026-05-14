@@ -104,10 +104,10 @@ dispatch(...)
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_context_bridge.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_supervisor_router.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/router/test_guided_manual_handoff.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_streamable_spatial_support.py -q`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+- `poetry run python scripts/run_e2e_tests.py`
 
 ## Validation Category
 
-- focused unit and guided runtime integration tests
+- focused unit coverage plus repo-supported Blender E2E proof
 - `git diff --check`

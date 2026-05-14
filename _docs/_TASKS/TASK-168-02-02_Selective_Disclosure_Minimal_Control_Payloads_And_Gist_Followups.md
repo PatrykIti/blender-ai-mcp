@@ -3,57 +3,52 @@
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
 **Parent:** [TASK-168-02](./TASK-168-02_Typed_Orchestrator_Feedback_Contract_And_Emission_Points.md)
-**Objective:** Make compact compare/iterate outputs truly compact for external controllers by separating a tiny control payload from heavy packet/truth detail and by carrying only short gist/state between iterations.
-**Repository Touchpoints:** `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_planner.py`, `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/contracts/router.py`, `server/adapters/mcp/areas/reference_feedback.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/e2e/integration/test_guided_surface_contract_parity.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`
+**Objective:** Make compact compare/iterate outputs truly compact for external controllers while preserving the current additive top-level public shape and keeping heavy packet/truth detail out of the default compact path.
+**Repository Touchpoints:** `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_planner.py`, `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/contracts/router.py`, `server/adapters/mcp/areas/reference_feedback.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/e2e/integration/test_guided_surface_contract_parity.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`
 **Acceptance Criteria:**
-- compact mode returns one small controller-facing payload first
-- heavy packet/truth/planner detail is omitted from the default controller path unless:
+- compact mode keeps the existing top-level surface additive and returns a
+  controller-sized payload anchored on `reference_orchestrator_feedback`,
+  `compare_diagnostics`, and other existing public fields first
+- heavy packet/truth/planner detail is omitted from the default compact path unless:
   - uncertainty
   - hard failure
-  - explicit rich mode
-  - explicit follow-up detail request
-- compare/iterate can carry one short gist / summary of unresolved packet state between iterations instead of replaying the whole detail blob
+  - explicit rich mode via `preset_profile="rich"`
+- compare/iterate can carry one short bounded summary of unresolved packet
+  state between iterations by reusing existing additive fields such as
+  `correction_focus`, `evidence_summary`, and `uncertainty_notes` instead of
+  replaying the whole detail blob
 - external controllers can keep driving the current workstep without reading a giant txt/json dump
 
 ## Implementation Notes
 
-- keep existing public contracts when possible, but split fields conceptually:
-  - `control`
-  - `detail`
-- likely compact-control fields:
-  - `active_scope`
+- keep the public surface additive and top-level; do not invent a wrapper such
+  as `control` / `gist` / `detail` around the shipped compare/iterate payload
+- compact mode should keep `reference_orchestrator_feedback` as the control
+  owner seam and `compare_diagnostics` as the public uncertainty path while
+  omitting heavy nested compare/truth/planner detail unless rich mode or
+  uncertainty requires it
+- bounded carry-forward state should reuse existing additive fields such as:
   - `correction_focus`
-  - `top_blockers`
-  - `best_next_action`
-  - `do_now`
-  - `dont_do`
-  - `wont_work`
-  - `next_compare_args`
-- likely detail-on-demand fields:
-  - packet diagnostics
-  - expanded truth bundle
-  - full planner detail
-  - expanded evidence refs
-- gist carry-forward should summarize:
-  - which packet/scope is unresolved
-  - what changed since the last checkpoint
-  - whether escalation is required
-- this task should make `compact` mean “controller-sized,” not just “smaller than rich”
+  - `evidence_summary`
+  - `uncertainty_notes`
+- if a richer detail-followup path is still needed later, it must land as an
+  additive extension on the current public surface rather than a parallel
+  wrapper or gist handle
+- this task should make `compact` mean "controller-sized," not just "smaller
+  than rich"
 
 ## Pseudocode
 
 ```python
-if preset_profile == "compact" and not uncertainty and not explicit_detail:
-    return {
-        "control": build_compact_control_payload(...),
-        "gist": build_checkpoint_gist(...),
-    }
-
-return {
-    "control": build_compact_control_payload(...),
-    "gist": build_checkpoint_gist(...),
-    "detail": build_compare_detail_payload(...),
+payload = {
+    "reference_orchestrator_feedback": build_reference_orchestrator_feedback(...),
+    "compare_diagnostics": build_compare_diagnostics(...),
 }
+
+if preset_profile == "rich" or uncertainty or hard_failure:
+    payload["compare_result"] = build_compare_detail_payload(...)
+
+return payload
 ```
 
 ## Runtime / Security Contract Notes
@@ -66,6 +61,7 @@ return {
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/e2e/integration/test_guided_surface_contract_parity.py`
 - `tests/e2e/vision/test_reference_understanding_runtime_surface.py`
 
@@ -88,10 +84,11 @@ return {
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_surface_contract_parity.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_understanding_runtime_surface.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+- `poetry run python scripts/run_e2e_tests.py`
 
 ## Validation Category
 
-- compact-output contract tests
+- compact-output contract tests plus repo-supported Blender E2E proof
 - `git diff --check`
