@@ -27,9 +27,11 @@ resolution:
 - `server/adapters/mcp/vision/runtime.py`
 - `server/adapters/mcp/vision/config.py`
 - `server/adapters/mcp/vision/backends.py`
+- `server/adapters/mcp/vision/openrouter_models.py`
 - `server/adapters/mcp/vision/prompting.py`
 - `server/adapters/mcp/vision/runner.py`
 - `server/infrastructure/config.py`
+- `tests/unit/adapters/mcp/test_openrouter_model_capabilities.py`
 - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
 - `tests/unit/adapters/mcp/test_vision_external_backend.py`
 - `tests/unit/adapters/mcp/test_vision_prompting.py`
@@ -133,6 +135,7 @@ resolution:
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_external_backend.py tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_runner.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_openrouter_model_capabilities.py -q`
 - `PYTHONPATH=. poetry run pytest ./tests/unit`
 - opt-in OpenRouter live coverage under `tests/e2e/vision/` when explicit env flags and API keys are available
 

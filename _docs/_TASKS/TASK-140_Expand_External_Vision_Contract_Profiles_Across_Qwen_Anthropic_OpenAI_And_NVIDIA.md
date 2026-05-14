@@ -101,8 +101,10 @@ Current external backend wiring is also intentionally narrow:
   `openai_compatible_external` backend path
 - `google_ai_studio` is the only current dedicated transport/request branch in
   `server/adapters/mcp/vision/backends.py`
-- `openrouter` stays on the same shared backend path and only adds
-  provider-scoped headers plus strict JSON-schema response formatting
+- `openrouter` stays on the same shared backend path and adds
+  provider-scoped headers plus bounded profile-aware request shaping such as
+  strict JSON-schema formatting, Qwen-family `json_object` fallback, and the
+  optional `response-healing` plugin
 - the current tests in `tests/unit/adapters/mcp/test_vision_external_backend.py`
   already lock that boundary in place
 

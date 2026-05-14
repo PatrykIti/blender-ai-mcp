@@ -15,10 +15,12 @@ supported parameters, and provider output limits when present.
 
 ## Repository Touchpoints
 
-- `server/adapters/mcp/vision/runtime.py`
+- `server/adapters/mcp/vision/openrouter_models.py`
 - `server/adapters/mcp/vision/config.py`
 - `server/adapters/mcp/vision/backends.py`
+- `server/adapters/mcp/vision/runtime.py`
 - `server/infrastructure/config.py`
+- `tests/unit/adapters/mcp/test_openrouter_model_capabilities.py`
 - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
 - `tests/unit/adapters/mcp/test_vision_external_backend.py`
 

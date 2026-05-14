@@ -14,6 +14,9 @@ source of truth.
 
 - `server/adapters/mcp/vision/runtime.py`
 - `server/adapters/mcp/vision/config.py`
+- `server/adapters/mcp/vision/model_profiles/types.py`
+- `server/adapters/mcp/vision/model_profiles/registry.py`
+- `server/adapters/mcp/vision/model_profiles/openrouter_openai.py`
 - `server/infrastructure/config.py`
 - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
 - `_docs/_VISION/README.md`
@@ -60,8 +63,9 @@ source of truth.
 - implemented the fallback as a reviewed family-profile module under
   `server/adapters/mcp/vision/model_profiles/openrouter_openai.py`, with a
   central registry resolver instead of keeping the data inline in runtime
-- full OpenRouter API-first metadata lookup remains tracked under
-  [TASK-140-06-01](./TASK-140-06-01_OpenRouter_Model_Metadata_Client_And_Capability_Contract.md)
+- the API-first OpenRouter metadata lookup landed under
+  [TASK-140-06-01](./TASK-140-06-01_OpenRouter_Model_Metadata_Client_And_Capability_Contract.md);
+  this leaf keeps the fallback side of that contract aligned
 
 ## Follow-up Design Note
 
