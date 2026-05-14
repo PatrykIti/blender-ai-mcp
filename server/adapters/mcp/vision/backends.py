@@ -694,6 +694,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
         self._runtime_config = runtime_config
         self._external_config = runtime_config.openai_compatible_external
         self._last_output_diagnostics: dict[str, Any] | None = None
+        self._last_request_policy_summary: dict[str, Any] | None = None
         self._openrouter_capability_lookup_attempted = False
 
     @property
@@ -707,6 +708,10 @@ class OpenAICompatibleVisionBackend(VisionBackend):
     @property
     def last_output_diagnostics(self) -> dict[str, Any] | None:
         return self._last_output_diagnostics
+
+    @property
+    def last_request_policy_summary(self) -> dict[str, Any] | None:
+        return self._last_request_policy_summary
 
     def _endpoint_url(self) -> str:
         base_url = (self._external_config.base_url or "").rstrip("/")
@@ -964,6 +969,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
             model_name=self.model_name,
             vision_contract_profile=self._external_config.vision_contract_profile,
         )
+        self._last_request_policy_summary = payload_summary
         logger.info("External vision request policy resolved. payload_summary=%s", payload_summary)
 
         try:

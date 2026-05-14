@@ -1,7 +1,7 @@
 # TASK-140-06-04: Diagnostics, Harness, Docs, And Closeout For Model Capabilities
 
 **Parent:** [TASK-140-06](./TASK-140-06_OpenRouter_Model_Capability_Aware_Vision_Runtime.md)
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
 **Priority:** 🟠 High
 
 ## Objective

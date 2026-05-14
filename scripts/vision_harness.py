@@ -361,6 +361,29 @@ async def _run_backend(
         "status": "success",
         "result": result,
     }
+    if (
+        runtime.openai_compatible_external is not None
+        and runtime.openai_compatible_external.model_capabilities is not None
+    ):
+        capabilities = runtime.openai_compatible_external.model_capabilities
+        capability_summary: dict[str, Any] = {
+            "model_id": capabilities.model_id,
+            "capability_source": capabilities.capability_source,
+            "context_length": capabilities.context_length,
+            "max_completion_tokens": capabilities.max_completion_tokens,
+            "input_modalities": list(capabilities.input_modalities),
+            "output_modalities": list(capabilities.output_modalities),
+            "supported_parameters": list(capabilities.supported_parameters),
+        }
+        request_policy = getattr(backend, "last_request_policy_summary", None)
+        if isinstance(request_policy, dict):
+            if isinstance(request_policy.get("requested_max_tokens"), int):
+                capability_summary["requested_max_tokens"] = request_policy["requested_max_tokens"]
+            if isinstance(request_policy.get("response_format_type"), str):
+                capability_summary["request_mode"] = request_policy["response_format_type"]
+            if isinstance(request_policy.get("plugins"), list):
+                capability_summary["response_healing_enabled"] = "response-healing" in request_policy["plugins"]
+        entry["capability_summary"] = capability_summary
     diagnostics = getattr(backend, "last_output_diagnostics", None)
     if diagnostics is not None:
         entry["diagnostics"] = diagnostics

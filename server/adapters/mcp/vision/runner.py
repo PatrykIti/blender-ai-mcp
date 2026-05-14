@@ -19,10 +19,11 @@ from server.adapters.mcp.sampling.result_types import (
     AssistantPolicy,
     AssistantRunResult,
     VisionAssistContract,
+    VisionCapabilitySummaryContract,
 )
 from server.adapters.mcp.tasks.task_bridge import is_background_task_context
 
-from .backend import VisionBackendUnavailableError, VisionRequest
+from .backend import VisionBackend, VisionBackendUnavailableError, VisionRequest
 from .config import (
     VISION_FAIL_SAFE_MAX_IMAGES,
     VISION_FAIL_SAFE_MAX_INPUT_CHARS,
@@ -72,6 +73,45 @@ def _vision_assist_budget_contract(runtime: VisionRuntimeConfig, policy: Assista
 def _project_runtime_budget(runtime: VisionRuntimeConfig) -> tuple[AssistantPolicy, AssistantBudgetContract]:
     policy = _resolve_vision_assist_policy(runtime)
     return policy, _vision_assist_budget_contract(runtime, policy)
+
+
+def _bounded_capability_summary(
+    runtime: VisionRuntimeConfig,
+    backend: VisionBackend,
+) -> dict[str, object] | None:
+    external = runtime.openai_compatible_external
+    if external is None or external.model_capabilities is None:
+        return None
+
+    model_capabilities = external.model_capabilities
+    payload_summary = getattr(backend, "last_request_policy_summary", None)
+    requested_max_tokens = (
+        payload_summary.get("requested_max_tokens")
+        if isinstance(payload_summary, dict) and isinstance(payload_summary.get("requested_max_tokens"), int)
+        else None
+    )
+    request_mode = (
+        str(payload_summary.get("response_format_type"))
+        if isinstance(payload_summary, dict) and isinstance(payload_summary.get("response_format_type"), str)
+        else None
+    )
+    response_healing_enabled = None
+    if isinstance(payload_summary, dict) and isinstance(payload_summary.get("plugins"), list):
+        response_healing_enabled = "response-healing" in payload_summary["plugins"]
+
+    summary = VisionCapabilitySummaryContract(
+        model_id=model_capabilities.model_id or runtime.active_model_name,
+        capability_source=model_capabilities.capability_source,
+        context_length=model_capabilities.context_length,
+        max_completion_tokens=model_capabilities.max_completion_tokens,
+        input_modalities=list(model_capabilities.input_modalities),
+        output_modalities=list(model_capabilities.output_modalities),
+        supported_parameters=list(model_capabilities.supported_parameters),
+        requested_max_tokens=requested_max_tokens,
+        request_mode=request_mode,
+        response_healing_enabled=response_healing_enabled,
+    )
+    return summary.model_dump(mode="json", exclude_none=True)
 
 
 def _estimate_request_chars(request: VisionRequest) -> int:
@@ -220,5 +260,15 @@ async def run_vision_assist(
         budget=budget,
         request_id=request_id,
         capability_source=capability_source,
-        result=to_contract(VisionAssistContract, payload),
+        result=to_contract(
+            VisionAssistContract,
+            {
+                **payload,
+                **(
+                    {"capability_summary": capability_summary}
+                    if (capability_summary := _bounded_capability_summary(runtime, backend)) is not None
+                    else {}
+                ),
+            },
+        ),
     )

@@ -106,6 +106,11 @@ class _PreparedBudgetBackend(_SuccessBackend):
         super().__init__("openai_compatible_external", "openai/gpt-5.4-nano")
         assert runtime_config.openai_compatible_external is not None
         self._runtime_config = runtime_config
+        self.last_request_policy_summary = {
+            "requested_max_tokens": 3_000,
+            "response_format_type": "json_schema",
+            "plugins": ["response-healing"],
+        }
         self._prepared_runtime_config = runtime_config.model_copy(
             update={
                 "openai_compatible_external": runtime_config.openai_compatible_external.model_copy(
@@ -244,6 +249,15 @@ def test_runner_projects_backend_prepared_runtime_budget(monkeypatch):
     assert result.budget.effective_max_tokens == 3_000
     assert result.budget.budget_clipped is True
     assert resolver.runtime_config.effective_max_tokens == 3_000
+    assert result.result is not None
+    assert result.result.capability_summary is not None
+    assert result.result.capability_summary.capability_source == "openrouter_api"
+    assert result.result.capability_summary.model_id == "openai/gpt-5.4-nano"
+    assert result.result.capability_summary.max_completion_tokens == 3_000
+    assert result.result.capability_summary.requested_max_tokens == 3_000
+    assert result.result.capability_summary.request_mode == "json_schema"
+    assert result.result.capability_summary.response_healing_enabled is True
+    assert result.result.capability_summary.supported_parameters == ["max_tokens", "response_format"]
 
 
 def test_runner_returns_unavailable_when_backend_is_disabled():
@@ -272,6 +286,7 @@ def test_runner_returns_success_for_local_backend(monkeypatch):
     assert result.result is not None
     assert result.result.backend_kind == "transformers_local"
     assert result.result.backend_name == "transformers_local"
+    assert result.result.capability_summary is None
     assert result.result.boundary_policy is not None
     assert result.result.boundary_policy.requires_deterministic_checks_for_correctness is True
 

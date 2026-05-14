@@ -6,6 +6,7 @@ from server.adapters.mcp.sampling.result_types import (
     AssistantBudgetContract,
     AssistantRunResult,
     VisionAssistContract,
+    VisionCapabilitySummaryContract,
     VisionPacketStatusContract,
     to_vision_assistant_contract,
 )
@@ -41,6 +42,18 @@ def test_vision_assistant_contract_wraps_structured_result():
                 status_reason=None,
                 ranking_recommendation="rank",
             ),
+            capability_summary=VisionCapabilitySummaryContract(
+                model_id="Qwen/Qwen3-VL-4B-Instruct",
+                capability_source="fallback_registry",
+                context_length=128_000,
+                max_completion_tokens=8_192,
+                input_modalities=["image", "text"],
+                output_modalities=["text"],
+                supported_parameters=["max_tokens", "response_format"],
+                requested_max_tokens=4_096,
+                request_mode="json_object",
+                response_healing_enabled=True,
+            ),
             confidence=0.61,
             captures_used=["front_before", "front_after", "reference_main"],
         ),
@@ -59,5 +72,16 @@ def test_vision_assistant_contract_wraps_structured_result():
     assert contract.result.packet_guidance is not None
     assert contract.result.packet_guidance.packet_status == "ready"
     assert contract.result.packet_guidance.ranking_recommendation == "rank"
+    assert contract.result.capability_summary is not None
+    assert contract.result.capability_summary.model_id == "Qwen/Qwen3-VL-4B-Instruct"
+    assert contract.result.capability_summary.capability_source == "fallback_registry"
+    assert contract.result.capability_summary.context_length == 128_000
+    assert contract.result.capability_summary.max_completion_tokens == 8_192
+    assert contract.result.capability_summary.input_modalities == ["image", "text"]
+    assert contract.result.capability_summary.output_modalities == ["text"]
+    assert contract.result.capability_summary.supported_parameters == ["max_tokens", "response_format"]
+    assert contract.result.capability_summary.requested_max_tokens == 4_096
+    assert contract.result.capability_summary.request_mode == "json_object"
+    assert contract.result.capability_summary.response_healing_enabled is True
     assert contract.result.boundary_policy is not None
     assert contract.result.boundary_policy.not_truth_source is True

@@ -25,6 +25,7 @@ AssistantCapabilitySource = Literal[
     "unknown",
 ]
 AssistantResponsibility = Literal["inspection_summary", "repair_suggestion", "diagnostic_summary", "vision_assist"]
+VisionCapabilitySource = Literal["fallback_registry", "openrouter_api", "env_override", "unknown", "unavailable"]
 
 
 class AssistantBudgetContract(MCPContract):
@@ -130,6 +131,21 @@ class VisionPacketStatusContract(MCPContract):
     ranking_recommendation: Literal["rank", "skip_clean", "skip_low_information", "skip_blocked"] | None = None
 
 
+class VisionCapabilitySummaryContract(MCPContract):
+    """Bounded runtime/request capability summary for one vision execution."""
+
+    model_id: str | None = None
+    capability_source: VisionCapabilitySource | None = None
+    context_length: int | None = None
+    max_completion_tokens: int | None = None
+    input_modalities: list[str] = []
+    output_modalities: list[str] = []
+    supported_parameters: list[str] = []
+    requested_max_tokens: int | None = None
+    request_mode: str | None = None
+    response_healing_enabled: bool | None = None
+
+
 class VisionAssistContract(MCPContract):
     """Structured bounded vision result for macro/workflow reporting."""
 
@@ -147,6 +163,7 @@ class VisionAssistContract(MCPContract):
     next_corrections: list[str] = []
     recommended_checks: list[VisionRecommendedCheckContract] = []
     packet_guidance: VisionPacketStatusContract | None = None
+    capability_summary: VisionCapabilitySummaryContract | None = None
     confidence: float | None = None
     captures_used: list[str] = []
     input_summary: VisionInputSummaryContract | None = None
@@ -300,6 +317,8 @@ __all__ = [
     "RepairSuggestionContract",
     "VisionAssistantContract",
     "VisionAssistContract",
+    "VisionCapabilitySummaryContract",
+    "VisionCapabilitySource",
     "VisionInputSummaryContract",
     "VisionIssueContract",
     "VisionRecommendedCheckContract",
