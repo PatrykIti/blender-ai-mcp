@@ -39,6 +39,8 @@ SESSION_PENDING_QUESTION_SET_ID_KEY = "pending_question_set_id"
 SESSION_LAST_ELICITATION_ACTION_KEY = "last_elicitation_action"
 SESSION_LAST_ROUTER_DISPOSITION_KEY = "last_router_disposition"
 SESSION_LAST_ROUTER_ERROR_KEY = "last_router_error"
+SESSION_LAST_GUIDED_ACTION_BLOCK_KEY = "last_guided_action_block"
+SESSION_LAST_GUIDED_AFFECTED_OBJECTS_KEY = "last_guided_affected_objects"
 SESSION_REFERENCE_IMAGES_KEY = "reference_images"
 SESSION_GUIDED_HANDOFF_KEY = "guided_handoff"
 SESSION_GUIDED_FLOW_STATE_KEY = "guided_flow_state"
@@ -81,6 +83,8 @@ class SessionCapabilityState:
     last_elicitation_action: str | None = None
     last_router_disposition: str | None = None
     last_router_error: str | None = None
+    last_guided_action_block: dict[str, Any] | None = None
+    last_guided_affected_objects: list[str] | None = None
     reference_images: list[dict[str, Any]] | None = None
     guided_handoff: dict[str, Any] | None = None
     guided_flow_state: dict[str, Any] | None = None
@@ -169,6 +173,23 @@ def _normalize_reference_strategy_state(value: Any) -> dict[str, Any] | None:
         return ReferenceStrategyStateContract.model_validate(value).model_dump(mode="json", exclude_none=True)
     except Exception:
         return None
+
+
+def _normalize_last_guided_action_block(value: Any) -> dict[str, Any] | None:
+    if value is None:
+        return None
+    if not isinstance(value, dict):
+        return None
+    return {str(key): item for key, item in value.items()}
+
+
+def _normalize_guided_object_names(value: Any) -> list[str] | None:
+    if value is None:
+        return None
+    if not isinstance(value, list):
+        return None
+    normalized = [str(item).strip() for item in value if isinstance(item, str) and str(item).strip()]
+    return normalized or None
 
 
 def _looks_like_local_path(value: str) -> bool:
@@ -302,6 +323,12 @@ def get_session_capability_state(ctx: Context) -> SessionCapabilityState:
         last_elicitation_action=get_session_value(ctx, SESSION_LAST_ELICITATION_ACTION_KEY),
         last_router_disposition=get_session_value(ctx, SESSION_LAST_ROUTER_DISPOSITION_KEY),
         last_router_error=get_session_value(ctx, SESSION_LAST_ROUTER_ERROR_KEY),
+        last_guided_action_block=_normalize_last_guided_action_block(
+            get_session_value(ctx, SESSION_LAST_GUIDED_ACTION_BLOCK_KEY)
+        ),
+        last_guided_affected_objects=_normalize_guided_object_names(
+            get_session_value(ctx, SESSION_LAST_GUIDED_AFFECTED_OBJECTS_KEY)
+        ),
         reference_images=get_session_value(ctx, SESSION_REFERENCE_IMAGES_KEY),
         guided_handoff=get_session_value(ctx, SESSION_GUIDED_HANDOFF_KEY),
         guided_flow_state=_normalize_guided_flow_state(get_session_value(ctx, SESSION_GUIDED_FLOW_STATE_KEY)),
@@ -338,6 +365,12 @@ async def get_session_capability_state_async(ctx: Context) -> SessionCapabilityS
         last_elicitation_action=await get_session_value_async(ctx, SESSION_LAST_ELICITATION_ACTION_KEY),
         last_router_disposition=await get_session_value_async(ctx, SESSION_LAST_ROUTER_DISPOSITION_KEY),
         last_router_error=await get_session_value_async(ctx, SESSION_LAST_ROUTER_ERROR_KEY),
+        last_guided_action_block=_normalize_last_guided_action_block(
+            await get_session_value_async(ctx, SESSION_LAST_GUIDED_ACTION_BLOCK_KEY)
+        ),
+        last_guided_affected_objects=_normalize_guided_object_names(
+            await get_session_value_async(ctx, SESSION_LAST_GUIDED_AFFECTED_OBJECTS_KEY)
+        ),
         reference_images=await get_session_value_async(ctx, SESSION_REFERENCE_IMAGES_KEY),
         guided_handoff=await get_session_value_async(ctx, SESSION_GUIDED_HANDOFF_KEY),
         guided_flow_state=_normalize_guided_flow_state(
@@ -377,6 +410,8 @@ def set_session_capability_state(ctx: Context, state: SessionCapabilityState) ->
     set_session_value(ctx, SESSION_LAST_ELICITATION_ACTION_KEY, state.last_elicitation_action)
     set_session_value(ctx, SESSION_LAST_ROUTER_DISPOSITION_KEY, state.last_router_disposition)
     set_session_value(ctx, SESSION_LAST_ROUTER_ERROR_KEY, state.last_router_error)
+    set_session_value(ctx, SESSION_LAST_GUIDED_ACTION_BLOCK_KEY, state.last_guided_action_block)
+    set_session_value(ctx, SESSION_LAST_GUIDED_AFFECTED_OBJECTS_KEY, state.last_guided_affected_objects)
     set_session_value(ctx, SESSION_REFERENCE_IMAGES_KEY, state.reference_images)
     set_session_value(ctx, SESSION_GUIDED_HANDOFF_KEY, state.guided_handoff)
     set_session_value(ctx, SESSION_GUIDED_FLOW_STATE_KEY, state.guided_flow_state)
@@ -405,6 +440,8 @@ async def set_session_capability_state_async(ctx: Context, state: SessionCapabil
     await set_session_value_async(ctx, SESSION_LAST_ELICITATION_ACTION_KEY, state.last_elicitation_action)
     await set_session_value_async(ctx, SESSION_LAST_ROUTER_DISPOSITION_KEY, state.last_router_disposition)
     await set_session_value_async(ctx, SESSION_LAST_ROUTER_ERROR_KEY, state.last_router_error)
+    await set_session_value_async(ctx, SESSION_LAST_GUIDED_ACTION_BLOCK_KEY, state.last_guided_action_block)
+    await set_session_value_async(ctx, SESSION_LAST_GUIDED_AFFECTED_OBJECTS_KEY, state.last_guided_affected_objects)
     await set_session_value_async(ctx, SESSION_REFERENCE_IMAGES_KEY, state.reference_images)
     await set_session_value_async(ctx, SESSION_GUIDED_HANDOFF_KEY, state.guided_handoff)
     await set_session_value_async(ctx, SESSION_GUIDED_FLOW_STATE_KEY, state.guided_flow_state)

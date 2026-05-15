@@ -953,6 +953,136 @@ def test_route_tool_call_report_fail_closes_when_guided_role_is_not_allowed(monk
     assert report.context.guided_role == "ear_pair"
 
 
+def test_route_tool_call_report_fail_closes_unknown_guided_role_eye_pair(monkeypatch):
+    """Quality-gate labels such as eye_pair must not pass as guided build roles."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "secondary_parts", "attachment_alignment", "reference_context"],
+                "allowed_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass"],
+                "missing_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="modeling_create_primitive",
+        params={"primitive_type": "Sphere", "name": "Eyes", "guided_role": "eye_pair"},
+        direct_executor=lambda: "should not run",
+    )
+
+    assert report.router_disposition == "failed_closed_error"
+    assert "Unknown guided part role 'eye_pair'" in str(report.error)
+    assert report.context.guided_role == "eye_pair"
+
+
+def test_route_tool_call_report_checkpoint_iterate_fail_closes_new_mutator_without_missing_role_exception(monkeypatch):
+    """checkpoint_iterate should default to compare/support unless a missing guided role is still open."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "checkpoint_iterate",
+                "completed_steps": [
+                    "understand_goal",
+                    "establish_spatial_context",
+                    "create_primary_masses",
+                    "place_secondary_parts",
+                ],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["run_checkpoint_iterate"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "secondary_parts", "checkpoint_iterate"],
+                "allowed_roles": [],
+                "completed_roles": ["body_core", "head_mass", "tail_mass", "snout_mass", "ear_pair"],
+                "missing_roles": [],
+                "required_role_groups": ["checkpoint_iterate"],
+                "step_status": "needs_checkpoint",
+            },
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="modeling_create_primitive",
+        params={"primitive_type": "Sphere", "name": "Tail", "guided_role": "tail_mass"},
+        direct_executor=lambda: "should not run",
+    )
+
+    assert report.router_disposition == "failed_closed_error"
+    assert "checkpoint_iterate" in str(report.error)
+    assert report.policy_context is not None
+    assert report.policy_context["next_checkpoint_tool"] == "reference_iterate_stage_checkpoint"
+
+
+def test_route_tool_call_report_checkpoint_iterate_allows_missing_role_exception(monkeypatch):
+    """checkpoint_iterate may reopen bounded modeling only for explicitly missing active-workset roles."""
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "checkpoint_iterate",
+                "completed_steps": [
+                    "understand_goal",
+                    "establish_spatial_context",
+                    "create_primary_masses",
+                    "place_secondary_parts",
+                ],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["run_checkpoint_iterate"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "secondary_parts", "checkpoint_iterate"],
+                "allowed_roles": ["tail_mass"],
+                "completed_roles": ["body_core", "head_mass", "snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "missing_roles": ["tail_mass"],
+                "required_role_groups": ["checkpoint_iterate"],
+                "step_status": "needs_checkpoint",
+            },
+        ),
+    )
+
+    report = route_tool_call_report(
+        tool_name="modeling_create_primitive",
+        params={"primitive_type": "Sphere", "name": "Tail", "guided_role": "tail_mass"},
+        direct_executor=lambda: "Created Sphere named 'Tail'",
+    )
+
+    assert report.router_disposition == "bypassed"
+    assert report.error is None
+
+
 def test_route_tool_call_report_fail_closes_when_guided_role_is_missing_for_build_family(monkeypatch):
     """Primary/secondary build tools should require semantic part roles on guided surfaces."""
 
@@ -1036,7 +1166,7 @@ def test_route_tool_call_report_records_guided_naming_warning_for_weak_abbreviat
 
 
 def test_route_tool_call_report_blocks_third_object_for_completed_pair_role(monkeypatch):
-    """Pair roles should allow two siblings but block over-cardinality calls."""
+    """checkpoint_iterate should fail closed before over-cardinality repair attempts reopen modeling."""
 
     monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
     monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
@@ -1079,7 +1209,7 @@ def test_route_tool_call_report_blocks_third_object_for_completed_pair_role(monk
     )
 
     assert report.router_disposition == "failed_closed_error"
-    assert "Guided execution blocked role 'ear_pair'" in str(report.error)
+    assert "checkpoint_iterate" in str(report.error)
     assert report.context.guided_role == "ear_pair"
 
 

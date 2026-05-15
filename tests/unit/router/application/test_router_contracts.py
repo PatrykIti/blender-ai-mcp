@@ -339,6 +339,61 @@ def test_router_get_status_exposes_reference_understanding_summary(monkeypatch):
     assert result.reference_orchestrator_feedback.selected_family == "modeling_mesh"
 
 
+def test_router_get_status_projects_last_guided_action_block_into_feedback(monkeypatch):
+    class Handler:
+        def set_goal(self, goal, resolved_params=None):
+            return {
+                "status": "ready",
+                "workflow": "chair_workflow",
+                "resolved": {},
+                "unresolved": [],
+                "resolution_sources": {},
+                "message": "ok",
+            }
+
+    monkeypatch.setattr("server.adapters.mcp.areas.router.get_router_handler", lambda: Handler())
+
+    ctx = DummyContext()
+    ctx.state["phase"] = "build"
+    ctx.state["goal"] = "create a low-poly squirrel"
+    ctx.state["surface_profile"] = "llm-guided"
+    ctx.state["contract_version"] = "2026-05-14"
+    ctx.state["last_router_disposition"] = "failed_closed_error"
+    ctx.state["last_router_error"] = (
+        "Guided execution blocked new mutating build work while checkpoint_iterate is active."
+    )
+    ctx.state["last_guided_action_block"] = {
+        "blocking_reasons": ["Guided execution blocked new mutating build work while checkpoint_iterate is active."],
+        "next_actions": ["run_checkpoint_iterate"],
+        "next_checkpoint_tool": "reference_iterate_stage_checkpoint",
+        "recommended_support_tools": ["scene_view_diagnostics"],
+        "message": "Run compare/support first.",
+    }
+    ctx.state["guided_flow_state"] = {
+        "flow_id": "guided_creature_flow",
+        "domain_profile": "creature",
+        "current_step": "checkpoint_iterate",
+        "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+        "required_checks": [],
+        "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+        "preferred_prompts": ["workflow_router_first"],
+        "next_actions": ["run_checkpoint_iterate"],
+        "blocked_families": [],
+        "allowed_families": ["checkpoint_iterate"],
+        "allowed_roles": [],
+        "missing_roles": [],
+        "required_role_groups": ["checkpoint_iterate"],
+        "step_status": "needs_checkpoint",
+    }
+
+    result = asyncio.run(router_get_status(ctx))
+
+    assert result.reference_orchestrator_feedback is not None
+    assert "Run compare/support first." in result.reference_orchestrator_feedback.blocking_reasons
+    assert "run_checkpoint_iterate" in result.reference_orchestrator_feedback.next_actions
+    assert result.reference_orchestrator_feedback.next_checkpoint_tool == "reference_iterate_stage_checkpoint"
+
+
 def test_router_get_status_preserves_absent_reference_understanding_gate_ids(monkeypatch):
     class Handler:
         def set_goal(self, goal, resolved_params=None):

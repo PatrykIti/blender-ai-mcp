@@ -37,6 +37,8 @@ from server.adapters.mcp.session_capabilities_flow import (
     _flow_state_for_current_step,
 )
 from server.adapters.mcp.session_capabilities_state import (
+    SESSION_LAST_GUIDED_ACTION_BLOCK_KEY,
+    SESSION_LAST_GUIDED_AFFECTED_OBJECTS_KEY,
     SESSION_LAST_ROUTER_DISPOSITION_KEY,
     SESSION_LAST_ROUTER_ERROR_KEY,
     SessionCapabilityState,
@@ -409,16 +411,28 @@ def record_router_execution_outcome(
     *,
     router_disposition: str,
     error: str | None = None,
+    guided_action_block: dict[str, Any] | None = None,
 ) -> SessionCapabilityState:
     """Persist the last router execution outcome for diagnostics surfaces."""
 
     set_session_value(ctx, SESSION_LAST_ROUTER_DISPOSITION_KEY, router_disposition)
     set_session_value(ctx, SESSION_LAST_ROUTER_ERROR_KEY, error)
+    persisted_block = guided_action_block if router_disposition == "failed_closed_error" else None
+    set_session_value(ctx, SESSION_LAST_GUIDED_ACTION_BLOCK_KEY, persisted_block)
 
     current = get_session_capability_state(ctx)
-    if current.last_router_disposition == router_disposition and current.last_router_error == error:
+    if (
+        current.last_router_disposition == router_disposition
+        and current.last_router_error == error
+        and current.last_guided_action_block == persisted_block
+    ):
         return current
-    return replace(current, last_router_disposition=router_disposition, last_router_error=error)
+    return replace(
+        current,
+        last_router_disposition=router_disposition,
+        last_router_error=error,
+        last_guided_action_block=persisted_block,
+    )
 
 
 def _mark_guided_spatial_state_stale_dict(
@@ -526,13 +540,18 @@ def mark_guided_spatial_state_stale(
         and updated_registry == current.guided_part_registry
     ):
         return current
+    normalized_affected_objects = [
+        name for name in list(affected_objects or []) if isinstance(name, str) and name.strip()
+    ]
     state = replace(
         current,
         guided_flow_state=updated_flow_state,
         gate_plan=updated_gate_plan,
         guided_part_registry=updated_registry,
+        last_guided_affected_objects=normalized_affected_objects or None,
     )
     set_session_capability_state(ctx, state)
+    set_session_value(ctx, SESSION_LAST_GUIDED_AFFECTED_OBJECTS_KEY, state.last_guided_affected_objects)
     if refresh_visibility is not None:
         refresh_visibility(ctx, state)
     updated_contract = GuidedFlowStateContract.model_validate(updated_flow_state)
@@ -591,11 +610,15 @@ async def mark_guided_spatial_state_stale_async(
         and updated_registry == current.guided_part_registry
     ):
         return current
+    normalized_affected_objects = [
+        name for name in list(affected_objects or []) if isinstance(name, str) and name.strip()
+    ]
     state = replace(
         current,
         guided_flow_state=updated_flow_state,
         gate_plan=updated_gate_plan,
         guided_part_registry=updated_registry,
+        last_guided_affected_objects=normalized_affected_objects or None,
     )
     await set_session_capability_state_async(ctx, state)
     await apply_visibility_for_session_state(ctx, state)

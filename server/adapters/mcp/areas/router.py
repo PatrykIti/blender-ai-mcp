@@ -660,6 +660,11 @@ async def router_get_status(ctx: Context) -> RouterStatusContract:
                         guided_reference_readiness=GuidedReferenceReadinessContract.model_validate(
                             build_guided_reference_readiness_payload(session)
                         ),
+                        runtime_policy_block=(
+                            session.last_guided_action_block
+                            if session.last_router_disposition == "failed_closed_error"
+                            else None
+                        ),
                     )
                 )
                 is None
@@ -713,6 +718,11 @@ async def guided_register_part(
     current_step = str(guided_flow_state.get("current_step") or "").strip() or None
     naming_decision = None
     if domain_profile in {"generic", "creature", "building"}:
+        resolve_guided_role_group_for_domain(
+            cast(Any, domain_profile),
+            role,
+            role_group,
+        )
         naming_decision = evaluate_guided_object_name(
             object_name=object_name,
             role=role,
@@ -725,11 +735,6 @@ async def guided_register_part(
             payload["message"] = naming_decision.message
             payload["guided_naming"] = naming_decision.model_dump(mode="json")
             return RouterStatusContract.model_validate(payload)
-        resolve_guided_role_group_for_domain(
-            cast(Any, domain_profile),
-            role,
-            role_group,
-        )
 
     require_existing_scene_object_name(object_name)
 

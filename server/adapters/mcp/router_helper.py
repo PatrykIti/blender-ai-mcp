@@ -103,6 +103,14 @@ def _is_unmapped_guided_mutating_tool(tool_name: str) -> bool:
     return tool_name.startswith(_GUIDED_UNMAPPED_MUTATING_PREFIXES)
 
 
+def _is_guided_mutating_tool(tool_name: str, family: str | None) -> bool:
+    """Return True when one guided tool invocation can mutate modeled scene state."""
+
+    return is_guided_spatial_state_dirtying_operation(
+        tool_name=tool_name, family=family
+    ) or _is_unmapped_guided_mutating_tool(tool_name)
+
+
 def _strip_guided_policy_params_for_dispatch(params: Dict[str, Any]) -> Dict[str, Any]:
     """Remove MCP guided policy-only fields before application-handler dispatch."""
 
@@ -588,6 +596,7 @@ def _record_router_execution_report(report: MCPExecutionReport) -> None:
             current_ctx,
             router_disposition=report.router_disposition,
             error=report.error,
+            guided_action_block=report.policy_context if report.router_disposition == "failed_closed_error" else None,
         )
     except Exception:
         try:
@@ -704,8 +713,6 @@ def _evaluate_explicit_guided_role_group_policy(
     explicit_role_group = params.get("role_group")
     if not isinstance(explicit_role, str) or not explicit_role.strip():
         return None
-    if not isinstance(explicit_role_group, str) or not explicit_role_group.strip():
-        return None
 
     domain_profile = str(flow_state.get("domain_profile") or "").strip()
     if domain_profile not in {"generic", "creature", "building"}:
@@ -713,7 +720,7 @@ def _evaluate_explicit_guided_role_group_policy(
 
     typed_domain_profile = cast(Literal["generic", "creature", "building"], domain_profile)
     role = explicit_role.strip()
-    supplied_role_group = explicit_role_group.strip()
+    supplied_role_group = explicit_role_group.strip() if isinstance(explicit_role_group, str) else None
     try:
         expected_role_group = resolve_guided_role_group_for_domain(
             typed_domain_profile,
@@ -732,7 +739,7 @@ def _evaluate_explicit_guided_role_group_policy(
             "message": str(exc),
         }
 
-    if supplied_role_group == expected_role_group:
+    if supplied_role_group is None or supplied_role_group == expected_role_group:
         return None
 
     return {
@@ -778,6 +785,9 @@ def _evaluate_guided_execution_policy(
     }
     allowed_roles = {
         str(role) for role in (flow_state.get("allowed_roles") or []) if isinstance(role, str) and role.strip()
+    }
+    missing_roles = {
+        str(role) for role in (flow_state.get("missing_roles") or []) if isinstance(role, str) and role.strip()
     }
     role_group_policy = _evaluate_explicit_guided_role_group_policy(
         flow_state=flow_state,
@@ -844,6 +854,31 @@ def _evaluate_guided_execution_policy(
                 "`guided_register_part(object_name=..., role=...)`."
             ),
         }
+
+    if current_step == "checkpoint_iterate" and _is_guided_mutating_tool(tool_name, family):
+        checkpoint_exception_open = (
+            family in {"primary_masses", "secondary_parts", "attachment_alignment"}
+            and role is not None
+            and role in missing_roles
+        )
+        if not checkpoint_exception_open:
+            return {
+                "status": "blocked",
+                "current_step": current_step,
+                "family": family,
+                "role": role,
+                "role_group": role_group,
+                "tool_name": tool_name,
+                "allowed_families": sorted(allowed_families),
+                "allowed_roles": sorted(allowed_roles),
+                "missing_roles": sorted(missing_roles),
+                "required_role_groups": list(flow_state.get("required_role_groups") or []),
+                "message": (
+                    "Guided execution blocked new mutating build work while 'checkpoint_iterate' is active. "
+                    "Run the staged compare/support loop first unless the same guided state still exposes a missing "
+                    "role exception for the active workset."
+                ),
+            }
 
     if family is not None and allowed_families and family not in allowed_families:
         return {
@@ -941,6 +976,93 @@ def _evaluate_guided_naming_policy(
     }
 
 
+def _guided_policy_next_checkpoint_tool(flow_state: dict[str, Any]) -> str | None:
+    current_step = str(flow_state.get("current_step") or "").strip()
+    next_actions = [str(item).strip() for item in flow_state.get("next_actions") or [] if str(item).strip()]
+    if current_step == "checkpoint_iterate" or "run_checkpoint_iterate" in next_actions:
+        return "reference_iterate_stage_checkpoint"
+    return None
+
+
+def _guided_policy_support_tools(flow_state: dict[str, Any]) -> list[str]:
+    required_checks = [
+        str(item.get("tool_name")).strip()
+        for item in flow_state.get("required_checks") or []
+        if isinstance(item, dict) and str(item.get("tool_name") or "").strip()
+    ]
+    next_checkpoint_tool = _guided_policy_next_checkpoint_tool(flow_state)
+    support_tools = list(dict.fromkeys(required_checks))
+    if next_checkpoint_tool == "reference_iterate_stage_checkpoint":
+        support_tools.extend(
+            tool for tool in ("scene_view_diagnostics", "scene_relation_graph") if tool not in support_tools
+        )
+    return support_tools[:6]
+
+
+def _attach_guided_policy_feedback(
+    payload: dict[str, Any],
+    *,
+    flow_state: dict[str, Any],
+    message: str,
+) -> dict[str, Any]:
+    next_actions = [str(item).strip() for item in flow_state.get("next_actions") or [] if str(item).strip()]
+    payload["blocking_reasons"] = [message]
+    payload["next_actions"] = next_actions[:6]
+    payload["next_checkpoint_tool"] = _guided_policy_next_checkpoint_tool(flow_state)
+    payload["recommended_support_tools"] = _guided_policy_support_tools(flow_state)
+    payload["source"] = "guided_action_policy"
+    return payload
+
+
+def evaluate_guided_action_policy(
+    *,
+    surface_profile: str,
+    tool_name: str,
+    params: Dict[str, Any],
+) -> dict[str, Any] | None:
+    """Evaluate one server-owned guided action decision before dispatch."""
+
+    guided_policy = _evaluate_guided_execution_policy(
+        surface_profile=surface_profile,
+        tool_name=tool_name,
+        params=params,
+    )
+    session = _get_active_session_state()
+    flow_state = session.guided_flow_state if session is not None else None
+    if guided_policy is not None and guided_policy.get("status") == "blocked":
+        if isinstance(flow_state, dict):
+            guided_policy = _attach_guided_policy_feedback(
+                guided_policy,
+                flow_state=flow_state,
+                message=str(guided_policy.get("message") or "Guided execution blocked."),
+            )
+        return {"kind": "deny", **guided_policy}
+
+    naming_policy = _evaluate_guided_naming_policy(
+        surface_profile=surface_profile,
+        tool_name=tool_name,
+        params=params,
+    )
+    if naming_policy is not None and naming_policy.get("status") == "blocked":
+        combined_naming_policy = dict(guided_policy or {})
+        combined_naming_policy.update(naming_policy)
+        if isinstance(flow_state, dict):
+            combined_naming_policy = _attach_guided_policy_feedback(
+                combined_naming_policy,
+                flow_state=flow_state,
+                message=str(naming_policy.get("message") or "Guided naming blocked."),
+            )
+        return {"kind": "deny", "source": "guided_naming_policy", **combined_naming_policy}
+
+    if naming_policy is not None:
+        combined_naming_policy = dict(guided_policy or {})
+        combined_naming_policy.update(naming_policy)
+        return {"kind": "allow", "source": "guided_naming_policy", **combined_naming_policy}
+    if guided_policy is not None:
+        return {"kind": "allow", "source": "guided_action_policy", **guided_policy}
+    return None
+
+
 def _apply_postcondition_verification(
     audit_events: tuple[CorrectionAuditEventContract, ...],
 ) -> tuple[tuple[CorrectionAuditEventContract, ...], str]:
@@ -1033,33 +1155,38 @@ def route_tool_call_report(
         context.session_phase = session_state.phase.value
     context.guided_tool_family = _resolve_guided_effective_family(tool_name, params)
     context.guided_role, context.guided_role_group = _resolve_guided_role_context(tool_name, params)
-    guided_policy = _evaluate_guided_execution_policy(
+    action_policy = evaluate_guided_action_policy(
         surface_profile=surface_profile,
         tool_name=tool_name,
         params=params,
     )
-    if guided_policy is not None:
-        context.guided_tool_family = guided_policy.get("family")
-        context.guided_role = guided_policy.get("role")
-        context.guided_role_group = guided_policy.get("role_group")
-        if guided_policy.get("status") == "blocked":
+    naming_policy = None
+    if action_policy is not None:
+        context.guided_tool_family = action_policy.get("family", context.guided_tool_family)
+        context.guided_role = action_policy.get("role", context.guided_role)
+        context.guided_role_group = action_policy.get("role_group", context.guided_role_group)
+        if action_policy.get("kind") == "deny":
             report = MCPExecutionReport(
                 context=context,
                 router_enabled=is_router_enabled(),
                 router_applied=False,
                 router_disposition="failed_closed_error",
-                error=str(guided_policy.get("message") or "Guided execution blocked."),
-                policy_context=guided_policy,
+                error=str(action_policy.get("message") or "Guided execution blocked."),
+                policy_context=action_policy,
                 audit_ids=(),
             )
             _record_router_execution_report(report)
             _log_audit_exposure(report)
             return report
-    naming_policy = _evaluate_guided_naming_policy(
-        surface_profile=surface_profile,
-        tool_name=tool_name,
-        params=params,
-    )
+        if isinstance(action_policy.get("guided_naming"), dict):
+            naming_policy = action_policy
+
+    if naming_policy is None:
+        naming_policy = _evaluate_guided_naming_policy(
+            surface_profile=surface_profile,
+            tool_name=tool_name,
+            params=params,
+        )
     if naming_policy is not None and naming_policy.get("status") == "blocked":
         report = MCPExecutionReport(
             context=context,
@@ -1140,54 +1267,30 @@ def route_tool_call_report(
             for index, corrected_tool in enumerate(corrected_tools):
                 corrected_tool_name = corrected_tool["tool"]
                 corrected_tool_params = corrected_tool["params"]
-                step_guided_policy = _evaluate_guided_execution_policy(
+                step_action_policy = evaluate_guided_action_policy(
                     surface_profile=surface_profile,
                     tool_name=corrected_tool_name,
                     params=corrected_tool_params,
                 )
-                if step_guided_policy is not None:
+                if step_action_policy is not None:
                     if index == len(corrected_tools) - 1:
-                        final_guided_policy = step_guided_policy
-                    if step_guided_policy.get("status") == "blocked":
-                        context.guided_tool_family = step_guided_policy.get("family")
-                        context.guided_role = step_guided_policy.get("role")
-                        context.guided_role_group = step_guided_policy.get("role_group")
+                        final_guided_policy = step_action_policy
+                        if isinstance(step_action_policy.get("guided_naming"), dict):
+                            final_naming_policy = step_action_policy
+                    if step_action_policy.get("kind") == "deny":
+                        context.guided_tool_family = step_action_policy.get(
+                            "family",
+                            _resolve_guided_effective_family(corrected_tool_name, corrected_tool_params),
+                        )
+                        context.guided_role = step_action_policy.get("role")
+                        context.guided_role_group = step_action_policy.get("role_group")
                         report = MCPExecutionReport(
                             context=context,
                             router_enabled=True,
                             router_applied=False,
                             router_disposition="failed_closed_error",
-                            error=str(step_guided_policy.get("message") or "Guided execution blocked."),
-                            policy_context=step_guided_policy,
-                            audit_ids=(),
-                        )
-                        _record_router_execution_report(report)
-                        _log_audit_exposure(report)
-                        return report
-                step_naming_policy = _evaluate_guided_naming_policy(
-                    surface_profile=surface_profile,
-                    tool_name=corrected_tool_name,
-                    params=corrected_tool_params,
-                )
-                if step_naming_policy is not None:
-                    if index == len(corrected_tools) - 1:
-                        final_naming_policy = step_naming_policy
-                    if step_naming_policy.get("status") == "blocked":
-                        context.guided_tool_family = _resolve_guided_effective_family(
-                            corrected_tool_name,
-                            corrected_tool_params,
-                        )
-                        context.guided_role, context.guided_role_group = _resolve_guided_role_context(
-                            corrected_tool_name,
-                            corrected_tool_params,
-                        )
-                        report = MCPExecutionReport(
-                            context=context,
-                            router_enabled=True,
-                            router_applied=False,
-                            router_disposition="failed_closed_error",
-                            error=str(step_naming_policy.get("message") or "Guided naming blocked."),
-                            policy_context=step_naming_policy,
+                            error=str(step_action_policy.get("message") or "Guided execution blocked."),
+                            policy_context=step_action_policy,
                             audit_ids=(),
                         )
                         _record_router_execution_report(report)

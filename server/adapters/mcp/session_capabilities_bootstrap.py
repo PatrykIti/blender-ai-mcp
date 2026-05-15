@@ -367,6 +367,7 @@ def update_session_from_router_goal(
         partial_answers=partial_answers,
         pending_question_set_id=pending_question_set_id,
         last_elicitation_action=last_elicitation_action,
+        last_guided_action_block=None,
         reference_images=reference_images,
         guided_handoff=router_result.get("guided_handoff"),
         guided_flow_state=guided_flow_state,
@@ -375,6 +376,7 @@ def update_session_from_router_goal(
         reference_understanding_gate_ids=current.reference_understanding_gate_ids if same_goal else None,
         reference_strategy_state=current.reference_strategy_state if same_goal else None,
         guided_part_registry=retained_guided_part_registry,
+        last_guided_affected_objects=None if not same_goal else current.last_guided_affected_objects,
         pending_reference_images=pending_reference_images,
     )
     if gate_proposal is not None:
@@ -463,6 +465,7 @@ async def update_session_from_router_goal_async(
         partial_answers=partial_answers,
         pending_question_set_id=pending_question_set_id,
         last_elicitation_action=last_elicitation_action,
+        last_guided_action_block=None,
         reference_images=reference_images,
         guided_handoff=router_result.get("guided_handoff"),
         guided_flow_state=guided_flow_state,
@@ -471,6 +474,7 @@ async def update_session_from_router_goal_async(
         reference_understanding_gate_ids=current.reference_understanding_gate_ids if same_goal else None,
         reference_strategy_state=current.reference_strategy_state if same_goal else None,
         guided_part_registry=retained_guided_part_registry,
+        last_guided_affected_objects=None if not same_goal else current.last_guided_affected_objects,
         pending_reference_images=pending_reference_images,
     )
     if gate_proposal is not None:
@@ -518,6 +522,8 @@ def clear_session_goal_state(
         partial_answers=None,
         pending_question_set_id=None,
         last_elicitation_action=None,
+        last_guided_action_block=None,
+        last_guided_affected_objects=None,
         reference_images=None,
         guided_handoff=None,
         guided_flow_state=None,
@@ -555,6 +561,8 @@ async def clear_session_goal_state_async(
         partial_answers=None,
         pending_question_set_id=None,
         last_elicitation_action=None,
+        last_guided_action_block=None,
+        last_guided_affected_objects=None,
         reference_images=None,
         guided_handoff=None,
         guided_flow_state=None,

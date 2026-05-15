@@ -359,8 +359,17 @@ def build_reference_orchestrator_feedback(
     recommended_bounded_tools: list[str] | None = None,
     correction_focus: list[str] | None = None,
     loop_disposition: str | None = None,
+    runtime_policy_block: dict[str, object] | None = None,
 ) -> ReferenceOrchestratorFeedbackContract | None:
     """Project one compact read model for LLM orchestrators."""
+
+    def _policy_block_strings(key: str) -> list[str]:
+        if not isinstance(runtime_policy_block, dict):
+            return []
+        raw_value = runtime_policy_block.get(key)
+        if not isinstance(raw_value, list):
+            return []
+        return [str(item).strip() for item in raw_value if str(item).strip()]
 
     if (
         summary is None
@@ -376,6 +385,7 @@ def build_reference_orchestrator_feedback(
         and not recommended_bounded_tools
         and not correction_focus
         and loop_disposition is None
+        and runtime_policy_block is None
     ):
         return None
 
@@ -407,6 +417,8 @@ def build_reference_orchestrator_feedback(
     support_tools = list(recommended_bounded_tools or [])
     if planner_summary is not None:
         support_tools.extend(item.tool_name for item in planner_summary.required_support_tools)
+    if isinstance(runtime_policy_block, dict):
+        support_tools.extend(_policy_block_strings("recommended_support_tools"))
     support_tools = _dedupe_strings(support_tools)[:6]
 
     evidence_summary: list[str] = []
@@ -493,6 +505,34 @@ def build_reference_orchestrator_feedback(
     focus = list(correction_focus or [])
     if not focus and correction_candidates:
         focus = [candidate.summary for candidate in list(correction_candidates)[:3]]
+    if isinstance(runtime_policy_block, dict):
+        blockers = _dedupe_strings(
+            [
+                *blockers,
+                *_policy_block_strings("blocking_reasons"),
+                str(runtime_policy_block.get("message") or "").strip(),
+            ]
+        )[:6]
+        actions = _dedupe_strings(
+            [
+                *actions,
+                *_policy_block_strings("next_actions"),
+            ]
+        )[:6]
+        uncertainty_notes = _dedupe_strings(
+            [
+                *uncertainty_notes,
+                *_policy_block_strings("uncertainty_notes"),
+            ]
+        )[:6]
+        focus = _dedupe_strings(
+            [
+                *focus,
+                *_policy_block_strings("correction_focus"),
+            ]
+        )[:3]
+        if next_checkpoint_tool is None:
+            next_checkpoint_tool = cast(_CHECKPOINT_TOOLS | None, runtime_policy_block.get("next_checkpoint_tool"))
 
     return ReferenceOrchestratorFeedbackContract(
         status=effective_status,
@@ -522,6 +562,16 @@ def build_reference_orchestrator_feedback(
         correction_focus=focus[:3],
         loop_disposition=loop_disposition,  # type: ignore[arg-type]
         message=(
-            strategy_state.message if strategy_state is not None else (summary.message if summary is not None else None)
+            strategy_state.message
+            if strategy_state is not None
+            else (
+                summary.message
+                if summary is not None
+                else (
+                    str(runtime_policy_block.get("message") or "").strip()
+                    if isinstance(runtime_policy_block, dict)
+                    else None
+                )
+            )
         ),
     )

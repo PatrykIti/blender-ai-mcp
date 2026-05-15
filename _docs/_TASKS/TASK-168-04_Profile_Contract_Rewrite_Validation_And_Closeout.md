@@ -3,7 +3,7 @@
 **Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-168](./TASK-168_Profile_Bound_Orchestrator_Shielding_Feedback_And_Memory_Containment.md)
-**Context Anchor:** [351. TASK-168 orchestrator confinement closeout](../_CHANGELOG/351-2026-05-14-task-168-orchestrator-confinement-closeout.md)
+**Context Anchor:** [352. TASK-168 runtime confinement reopen and closeout](../_CHANGELOG/352-2026-05-15-task-168-runtime-confinement-reopen-and-closeout.md)
 **Objective:** Close the confinement umbrella only after the `llm-guided` contract, prompt assets, docs, board/changelog state, and proof lanes confirm that external controllers are held inside the current profile boundaries.
 **Repository Touchpoints:** `README.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_PROMPTS/README.md`, `_docs/_PROMPTS/GUIDED_SESSION_START.md`, `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`, `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`, `_docs/_ROUTER/README.md`, `_docs/_TASKS/README.md`, `_docs/_TASKS/TASK-168*.md`, `_docs/_CHANGELOG/README.md`, new `_docs/_CHANGELOG/*`, `tests/unit/`, `tests/e2e/integration/`, `tests/e2e/router/`, `tests/e2e/vision/`
 **Acceptance Criteria:**

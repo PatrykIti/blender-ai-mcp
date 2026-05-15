@@ -302,8 +302,14 @@ def evaluate_guided_object_name(
     normalized_name = object_name.strip()
     spec = _get_role_naming_spec(domain_profile, role)
     if spec is None:
+        known_roles = sorted(_ROLE_NAMING_SPECS.get(domain_profile, {}).keys())
+        known_suffix = f" Expected one of: {', '.join(known_roles)}." if known_roles else ""
         return GuidedNamingDecisionContract(
-            status="allowed",
+            status="blocked",
+            reason_code="unknown_role",
+            message=(
+                f"Guided naming blocked unknown role '{role}' for domain profile '{domain_profile}'.{known_suffix}"
+            ),
             role=role,
             domain_profile=domain_profile,
             current_step=current_step,

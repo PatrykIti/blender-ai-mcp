@@ -123,6 +123,7 @@ from server.adapters.mcp.contracts.reference import (
     ReferenceImagesResponseContract,
     ReferenceIterateStageCheckpointResponseContract,
     ReferencePartSegmentationContract,
+    ReferencePlannerTargetScopeContract,
     ReferenceRefinementHandoffContract,
     ReferenceRefinementRouteContract,
     ReferenceRepairPlannerDetailContract,
@@ -228,6 +229,133 @@ def _resolve_capture_scope(
         collection_name=collection_name,
         get_collection_handler=get_collection_handler,
     )
+
+
+def resolve_active_compare_scope(
+    *,
+    guided_flow_state: dict[str, Any] | None,
+    gate_plan: dict[str, Any] | None,
+    guided_part_registry: list[dict[str, Any]] | None,
+    last_guided_affected_objects: list[str] | None,
+    target_object: str | None,
+    target_objects: list[str] | None,
+    collection_name: str | None,
+) -> ReferencePlannerTargetScopeContract | None:
+    """Resolve one runtime-owned compare scope when the client omits explicit targets."""
+
+    if target_object or target_objects or collection_name:
+        explicit_objects = _dedupe_names([*(target_objects or []), *([target_object] if target_object else [])])
+        scope_kind: Literal["single_object", "object_set", "collection", "scene", "unknown"]
+        if collection_name:
+            scope_kind = "collection"
+        elif len(explicit_objects) == 1:
+            scope_kind = "single_object"
+        elif explicit_objects:
+            scope_kind = "object_set"
+        else:
+            scope_kind = "unknown"
+        return ReferencePlannerTargetScopeContract(
+            scope_kind=scope_kind,
+            target_object=target_object or (explicit_objects[0] if len(explicit_objects) == 1 else None),
+            target_objects=explicit_objects,
+            collection_name=collection_name,
+        )
+
+    if not guided_flow_state:
+        return None
+    try:
+        flow_state = GuidedFlowStateContract.model_validate(guided_flow_state)
+    except Exception:
+        return None
+
+    active_scope = flow_state.active_target_scope
+    if active_scope is None:
+        return None
+
+    active_scope_names = _dedupe_names(
+        [
+            *(list(active_scope.object_names or [])),
+            *([active_scope.primary_target] if active_scope.primary_target else []),
+        ]
+    )
+    active_scope_name_keys = {name.lower(): name for name in active_scope_names}
+
+    blocker_target_objects: list[str] = []
+    if gate_plan is not None:
+        try:
+            gate_plan_contract = GatePlanContract.model_validate(gate_plan)
+        except Exception:
+            gate_plan_contract = None
+        if gate_plan_contract is not None:
+            role_to_objects: dict[str, list[str]] = {}
+            for item in list(guided_part_registry or []):
+                if not isinstance(item, dict):
+                    continue
+                role = str(item.get("role") or "").strip().lower()
+                object_name = str(item.get("object_name") or "").strip()
+                if not role or not object_name:
+                    continue
+                role_to_objects.setdefault(role, [])
+                if object_name not in role_to_objects[role]:
+                    role_to_objects[role].append(object_name)
+            for blocker in list(gate_plan_contract.completion_blockers or []):
+                blocker_target_objects.extend(
+                    str(name).strip() for name in list(blocker.target_objects or []) if str(name).strip()
+                )
+                target_label = str(blocker.target_label or "").strip().lower()
+                if target_label:
+                    blocker_target_objects.extend(role_to_objects.get(target_label, []))
+
+    resolved_blocker_objects = _dedupe_names(
+        [
+            active_scope_name_keys[name.lower()]
+            for name in blocker_target_objects
+            if name.lower() in active_scope_name_keys
+        ]
+    )
+    if resolved_blocker_objects:
+        return ReferencePlannerTargetScopeContract(
+            scope_kind="single_object" if len(resolved_blocker_objects) == 1 else "object_set",
+            target_object=resolved_blocker_objects[0] if len(resolved_blocker_objects) == 1 else None,
+            target_objects=resolved_blocker_objects,
+            collection_name=None,
+            local_region_hint="gate_blocker_cluster",
+        )
+
+    resolved_affected_objects = _dedupe_names(
+        [
+            active_scope_name_keys[name.lower()]
+            for name in list(last_guided_affected_objects or [])
+            if isinstance(name, str) and name.strip() and name.lower() in active_scope_name_keys
+        ]
+    )
+    if resolved_affected_objects:
+        return ReferencePlannerTargetScopeContract(
+            scope_kind="single_object" if len(resolved_affected_objects) == 1 else "object_set",
+            target_object=resolved_affected_objects[0] if len(resolved_affected_objects) == 1 else None,
+            target_objects=resolved_affected_objects,
+            collection_name=None,
+            local_region_hint="last_mutation",
+        )
+
+    if active_scope.collection_name:
+        return ReferencePlannerTargetScopeContract(
+            scope_kind="collection",
+            target_object=active_scope.primary_target,
+            target_objects=active_scope_names,
+            collection_name=active_scope.collection_name,
+            local_region_hint="active_workset",
+        )
+    if active_scope_names:
+        return ReferencePlannerTargetScopeContract(
+            scope_kind="single_object" if len(active_scope_names) == 1 else "object_set",
+            target_object=active_scope.primary_target
+            or (active_scope_names[0] if len(active_scope_names) == 1 else None),
+            target_objects=active_scope_names,
+            collection_name=None,
+            local_region_hint="active_workset",
+        )
+    return None
 
 
 def _assembled_target_scope(
@@ -1177,11 +1305,24 @@ async def _run_stage_checkpoint_compare(
             ),
         )
 
+    runtime_scope = resolve_active_compare_scope(
+        guided_flow_state=session.guided_flow_state,
+        gate_plan=session.gate_plan,
+        guided_part_registry=session.guided_part_registry,
+        last_guided_affected_objects=session.last_guided_affected_objects,
+        target_object=target_object,
+        target_objects=target_objects,
+        collection_name=collection_name,
+    )
+    runtime_scope_selected = (
+        runtime_scope is not None and not target_object and not target_objects and not collection_name
+    )
+
     try:
         resolved_target_object, resolved_target_objects, resolved_collection_name = _resolve_capture_scope(
-            target_object=target_object,
-            target_objects=target_objects,
-            collection_name=collection_name,
+            target_object=runtime_scope.target_object if runtime_scope is not None else target_object,
+            target_objects=runtime_scope.target_objects if runtime_scope is not None else target_objects,
+            collection_name=runtime_scope.collection_name if runtime_scope is not None else collection_name,
         )
     except RuntimeError as exc:
         return _stage_compare_response(
@@ -1213,7 +1354,11 @@ async def _run_stage_checkpoint_compare(
         collection_name=resolved_collection_name,
     )
     capture_target_object = resolved_target_object or assembled_target_scope.primary_target
-    scope_error = _guided_checkpoint_scope_error(session.guided_flow_state, assembled_target_scope)
+    scope_error = (
+        None
+        if runtime_scope_selected
+        else _guided_checkpoint_scope_error(session.guided_flow_state, assembled_target_scope)
+    )
     if scope_error:
         return _stage_compare_response(
             session_id=session_id,

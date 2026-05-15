@@ -24,6 +24,7 @@ from server.adapters.mcp.areas.reference import (
     reference_images,
     reference_iterate_stage_checkpoint,
     refresh_reference_understanding_summary_async,
+    resolve_active_compare_scope,
 )
 from server.adapters.mcp.areas.reference_feedback import build_reference_orchestrator_feedback
 from server.adapters.mcp.areas.reference_planner import (
@@ -655,6 +656,80 @@ def test_reference_orchestrator_feedback_projects_compare_diagnostics_without_ru
     assert feedback.status == "blocked"
     assert "Compare used 1 packet(s) in the complex tier." in feedback.evidence_summary
     assert "No packet-local staged captures were available." in feedback.uncertainty_notes
+
+
+def test_reference_orchestrator_feedback_projects_runtime_policy_block():
+    feedback = build_reference_orchestrator_feedback(
+        goal="low poly creature",
+        summary=None,
+        strategy_state=None,
+        runtime_policy_block={
+            "blocking_reasons": [
+                "Guided execution blocked new mutating build work while checkpoint_iterate is active."
+            ],
+            "next_actions": ["run_checkpoint_iterate"],
+            "next_checkpoint_tool": "reference_iterate_stage_checkpoint",
+            "recommended_support_tools": ["scene_view_diagnostics"],
+            "message": "Run compare/support first.",
+        },
+    )
+
+    assert feedback is not None
+    assert feedback.status == "blocked"
+    assert "Run compare/support first." in feedback.blocking_reasons
+    assert feedback.next_actions == ["run_checkpoint_iterate"]
+    assert feedback.next_checkpoint_tool == "reference_iterate_stage_checkpoint"
+    assert feedback.recommended_support_tools == ["scene_view_diagnostics"]
+
+
+def test_resolve_active_compare_scope_prefers_gate_blocker_cluster_over_full_active_workset():
+    scope = resolve_active_compare_scope(
+        guided_flow_state={
+            "flow_id": "guided_creature_flow",
+            "domain_profile": "creature",
+            "current_step": "checkpoint_iterate",
+            "active_target_scope": {
+                "scope_kind": "object_set",
+                "primary_target": "Body",
+                "object_names": ["Body", "Head", "Tail"],
+                "object_count": 3,
+            },
+        },
+        gate_plan={
+            "plan_id": "plan_creature",
+            "domain_profile": "creature",
+            "gates": [],
+            "completion_blockers": [
+                {
+                    "gate_id": "tail_profile",
+                    "gate_type": "shape_profile",
+                    "label": "Tail profile remains unresolved",
+                    "status": "pending",
+                    "reason_code": "required_gate_unresolved",
+                    "target_kind": "object_role",
+                    "target_label": "tail_mass",
+                    "target_objects": [],
+                    "required_evidence_kinds": [],
+                    "allowed_correction_families": ["secondary_parts"],
+                    "recommended_bounded_tools": ["scene_view_diagnostics"],
+                    "message": "Tail profile remains unresolved",
+                }
+            ],
+        },
+        guided_part_registry=[
+            {"object_name": "Body", "role": "body_core", "role_group": "primary_masses"},
+            {"object_name": "Head", "role": "head_mass", "role_group": "primary_masses"},
+            {"object_name": "Tail", "role": "tail_mass", "role_group": "primary_masses"},
+        ],
+        last_guided_affected_objects=["Head"],
+        target_object=None,
+        target_objects=None,
+        collection_name=None,
+    )
+
+    assert scope is not None
+    assert scope.target_objects == ["Tail"]
+    assert scope.local_region_hint == "gate_blocker_cluster"
 
 
 def test_refresh_reference_understanding_summary_persists_summary_and_gate_ids(tmp_path, monkeypatch):
