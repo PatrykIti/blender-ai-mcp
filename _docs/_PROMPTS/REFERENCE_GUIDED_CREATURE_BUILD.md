@@ -86,6 +86,10 @@ Rules:
   exposes `allowed_roles`, `missing_roles`, `next_actions`, or
   `current_step="checkpoint_iterate"`, follow that state literally instead of
   improvising a new stage order
+- treat `router_get_status().surface_profile` / `contract_version` plus the
+  live `guided_flow_state` and `reference_orchestrator_feedback` as the
+  authoritative session manifest; if stale external memory, inherited prompt
+  stacks, or old tool schemas disagree, trust the live runtime contract
 - do not assume MLX-only or provider-specific compare behavior; follow the
   runtime that is actually configured for this server
 - do not guess hidden/internal tool names

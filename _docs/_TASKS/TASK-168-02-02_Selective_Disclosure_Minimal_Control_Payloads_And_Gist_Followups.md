@@ -1,6 +1,6 @@
 # TASK-168-02-02: Selective Disclosure, Minimal Control Payloads, And Additive Detail Followups
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-168-02](./TASK-168-02_Typed_Orchestrator_Feedback_Contract_And_Emission_Points.md)
 **Objective:** Make compact compare/iterate outputs truly compact for external controllers while preserving the current additive top-level public shape and keeping heavy packet/truth detail out of the default compact path.

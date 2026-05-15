@@ -86,6 +86,10 @@ def test_readme_documents_llm_guided_public_aliases():
         "staged refs stay separate from the already-active goal",
         "ready session still carries explicit pending refs for another goal",
         "build-phase cleanup is still allowed when recovery is needed",
+        "surface_profile",
+        "contract_version",
+        "stale external memory",
+        "old tool schemas",
     ):
         assert expected in text
 
@@ -186,6 +190,10 @@ def test_mcp_docs_describe_aliases_and_hidden_arguments():
         "`build_visibility_rules(...)` plus session state are now the single runtime",
         "capability tags and `capability_manifest` remain coarse metadata",
         "same runtime-visible tool membership",
+        "surface_profile",
+        "contract_version",
+        "stale external memory",
+        "old tool schemas",
         "Current hidden/expert-only arguments on `llm-guided` include:",
         "`inspect_scene`",
         "`mesh_inspect`",
@@ -379,6 +387,9 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     creature_prompt = (REPO_ROOT / "_docs" / "_PROMPTS" / "REFERENCE_GUIDED_CREATURE_BUILD.md").read_text(
         encoding="utf-8"
     )
+    architecture_prompt = (REPO_ROOT / "_docs" / "_PROMPTS" / "REFERENCE_GUIDED_ARCHITECTURE_BUILD.md").read_text(
+        encoding="utf-8"
+    )
 
     assert "check_scene" in prompt_readme
     assert "inspect_scene" in prompt_readme
@@ -410,6 +421,10 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "spatial_state_version" in prompt_readme
     assert "last_spatial_check_version" in prompt_readme
     assert "spatial_refresh_required" in prompt_readme
+    assert "surface_profile" in prompt_readme
+    assert "contract_version" in prompt_readme
+    assert "stale external memory" in prompt_readme
+    assert "old tool schemas" in prompt_readme
     assert "required prompt bundle" in prompt_readme
     assert "preferred prompt bundle" in prompt_readme
     assert "refresh_spatial_context" in prompt_readme
@@ -459,6 +474,10 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "ready session still lists explicit pending refs for another goal" in prompt_readme
     assert "refinement_route" in prompt_readme
     assert "refinement_handoff" in prompt_readme
+    assert "surface_profile" in guided_start_prompt
+    assert "contract_version" in guided_start_prompt
+    assert "stale external memory" in guided_start_prompt
+    assert "cached tool schemas" in guided_start_prompt
 
     assert 'browse_workflows(action="search", search_query="<user prompt>")' in workflow_prompt
     assert 'browse_workflows(action="get", name="<workflow_name>")' in workflow_prompt
@@ -482,6 +501,10 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "`guided_role=...`" in workflow_prompt
     assert "active guided flow exists" in workflow_prompt
     assert "`workflow_import_recommended=false`" in workflow_prompt
+    assert "surface_profile" in workflow_prompt
+    assert "contract_version" in workflow_prompt
+    assert "stale external memory" in workflow_prompt
+    assert "old tool schemas" in workflow_prompt
     assert "Do not guess hidden internal tool names and feed them into `call_tool(...)`." in workflow_prompt
     assert "If a needed tool is not already directly visible, run `search_tools(...)`" in workflow_prompt
     assert "drift away from the current `visibility_rules`" in workflow_prompt
@@ -503,7 +526,15 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "HindLeg_R" in creature_prompt
     assert "weak role-sensitive names can now produce explicit server" in creature_prompt
     assert "opaque placeholder names such as `Sphere` / `Object`" in creature_prompt
+    assert "surface_profile" in creature_prompt
+    assert "contract_version" in creature_prompt
+    assert "stale external memory" in creature_prompt
+    assert "old tool schemas" in creature_prompt
     assert "floating_gap" in creature_prompt
+    assert "surface_profile" in architecture_prompt
+    assert "contract_version" in architecture_prompt
+    assert "stale external memory" in architecture_prompt
+    assert "old tool schemas" in architecture_prompt
     assert 'search_tools(query="align panel housing gap contact placement")' in workflow_prompt
     assert (
         'call_tool(name="macro_relative_layout", arguments={"moving_object":"Panel","reference_object":"Housing","x_mode":"center","y_mode":"center","contact_axis":"Z","contact_side":"positive","gap":0.002})'

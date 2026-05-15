@@ -1,6 +1,6 @@
 # TASK-168-02-01: Active Workset Compare Scope And Coarse-To-Fine Iteration
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-168-02](./TASK-168-02_Typed_Orchestrator_Feedback_Contract_And_Emission_Points.md)
 **Objective:** Make staged compare / iterate default to the active fragment, blocker cluster, or focus pair instead of pushing whole-model output into the controller by default.

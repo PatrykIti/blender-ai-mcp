@@ -3,9 +3,9 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 4 tasks
+- **To Do:** 3 tasks
 - **In Progress:** 3 tasks
-- **Done:** 98
+- **Done:** 99
 - **Superseded:** 162
 
 ## 📐 Board Scope
@@ -56,7 +56,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-148](./TASK-148_No_Auth_HTTP_MCP_Client_Compatibility_And_Auth_Misclassification_Recovery.md) | **No-Auth HTTP MCP Client Compatibility And Auth Misclassification Recovery** | 🔴 High | Board-level follow-on after TASK-125 for hardening the no-auth Streamable HTTP path across Claude, Codex, Gemini, and similar MCP clients without falsely advertising OAuth support, while keeping guided visibility-churn diagnosis on the adjacent `TASK-160` track. |
-| [TASK-168](./TASK-168_Profile_Bound_Orchestrator_Shielding_Feedback_And_Memory_Containment.md) | **Profile-Bound Orchestrator Shielding, Feedback, And Memory Containment** | 🔴 High | Board-level guided-runtime confinement family that builds on closed `TASK-163` and `TASK-167` while coordinating in parallel with the still-open `TASK-160` client-feedback track. |
 
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
@@ -90,6 +89,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-168](./TASK-168_Profile_Bound_Orchestrator_Shielding_Feedback_And_Memory_Containment.md) | **Profile-Bound Orchestrator Shielding, Feedback, And Memory Containment** | 🔴 High | 2026-05-14 |
 | [TASK-167](./TASK-167_Cross_Module_Debug_Profile_Registry_And_Runtime_Logging.md) | **Cross-Module Debug Profile Registry And Runtime Logging** | 🔴 High | 2026-05-13 |
 | [TASK-136](./TASK-136_Reference_Guided_Architecture_And_Building_Reconstruction.md) | **Reference-Guided Architecture and Building Reconstruction** | 🔴 High | 2026-05-12 |
 | [TASK-135](./TASK-135_Anatomy_Aware_Reference_Guided_Low_Poly_Creature_Reconstruction.md) | **Anatomy-Aware Reference-Guided Low-Poly Creature Reconstruction** | 🔴 High | 2026-05-12 |

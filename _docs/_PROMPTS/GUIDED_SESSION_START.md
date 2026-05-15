@@ -13,6 +13,11 @@ You are operating on the `llm-guided` shaped MCP surface.
 
 Fail-safe rules:
 - Start from the active MCP profile and currently visible/discoverable tools.
+- The live runtime authority line is `router_get_status().surface_profile` /
+  `contract_version` plus the current `guided_flow_state` and
+  `reference_orchestrator_feedback`.
+- If that live contract disagrees with stale external memory, older prompt
+  bundles, or cached tool schemas, trust the live runtime contract.
 - Treat `_docs/_PROMPTS/` prompt assets as the canonical operating library for this surface.
 - Do not guess hidden/internal tool names.
 - `call_tool(...)` is not a bypass for hidden or phase-locked tools.

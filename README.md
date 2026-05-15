@@ -318,6 +318,10 @@ contract in addition to `guided_handoff`.
   `reference_compare_stage_checkpoint(...)`, and
   `reference_iterate_stage_checkpoint(...)` can expose `guided_flow_state`
   for the active `llm-guided` session
+- the live `llm-guided` authority line is
+  `router_get_status().surface_profile` / `contract_version` plus the current
+  `guided_flow_state` and `reference_orchestrator_feedback`; if stale external memory
+  or old tool schemas disagree, trust the live runtime contract
 - `guided_flow_state` reports:
   - `flow_id`
   - `domain_profile`

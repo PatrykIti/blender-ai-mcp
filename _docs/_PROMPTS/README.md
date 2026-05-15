@@ -200,6 +200,11 @@ Interpretation:
   on macro/modeling/mesh or move into a narrow sculpt-region path
 - `guided_flow_state` is the server-driven guided flow contract for the active
   session; prompts support it, but do not replace it
+- the live `llm-guided` authority line is
+  `router_get_status().surface_profile` / `contract_version` plus the current
+  `guided_flow_state` and `reference_orchestrator_feedback`
+- if stale external memory, inherited prompt stacks, or old tool schemas
+  disagree with those live fields, trust the live runtime contract
 - before broad build actions, inspect:
   - `guided_flow_state.domain_profile`
   - `guided_flow_state.current_step`

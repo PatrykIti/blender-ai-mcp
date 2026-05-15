@@ -1,6 +1,6 @@
 # TASK-168-03: Session Manifest, Prompt Priority, And Memory Drift Containment
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-168](./TASK-168_Profile_Bound_Orchestrator_Shielding_Feedback_And_Memory_Containment.md)
 **Objective:** Surface one runtime-owned profile/session authority line through the existing `router_get_status(...)`, `guided_flow_state`, `reference_orchestrator_feedback`, and prompt surfaces so live runtime state can outweigh stale external `memory.md`, old prompt stacks, and inherited tool-schema drift on `llm-guided`.

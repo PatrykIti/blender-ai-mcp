@@ -104,6 +104,10 @@ Reference files:
 
 Rules:
 - work on the active `llm-guided` shaped surface
+- treat `router_get_status().surface_profile` / `contract_version` plus the
+  live `guided_flow_state` and `reference_orchestrator_feedback` as the active
+  session authority line; if stale external memory or old tool schemas
+  disagree, trust the live runtime contract
 - prefer `reference_guided_architecture_build` when `recommended_prompts` or
   `guided_flow_state.required_prompts` names it for the active building goal
 - do not use raw Blender Python or hidden/internal tools

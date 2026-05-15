@@ -1,13 +1,29 @@
 # TASK-168: Profile-Bound Orchestrator Shielding, Feedback, And Memory Containment
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** Guided Runtime / FastMCP Platform / External Agent Safety
 **Estimated Effort:** Large
 **Follow-on After:** [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md), [TASK-167](./TASK-167_Cross_Module_Debug_Profile_Registry_And_Runtime_Logging.md)
 **Related:** [TASK-148](./TASK-148_No_Auth_HTTP_MCP_Client_Compatibility_And_Auth_Misclassification_Recovery.md), [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-160](./TASK-160_Guided_Client_Feedback_And_Streamable_HTTP_Recovery_UX.md), [TASK-165](./TASK-165_Mac_First_Interactive_MCP_Server_Installer_And_Launcher.md), [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md)
+**Context Anchor:** [351. TASK-168 orchestrator confinement closeout](../_CHANGELOG/351-2026-05-14-task-168-orchestrator-confinement-closeout.md)
 
 ## Objective
+
+Shipped on 2026-05-14:
+
+- `llm-guided` now enforces one fail-closed runtime contract across direct and
+  router-corrected mutators: explicit phase/state gating, role/role-group
+  validation, `checkpoint_iterate` mutation shields, and no-match guided-manual
+  heuristic suppression
+- staged compare / iterate now stay controller-sized by default through the
+  existing packet scope, `compare_diagnostics`, and
+  `reference_orchestrator_feedback` seams, escalating only when richer detail
+  or wider scope is actually needed
+- `router_get_status().surface_profile` / `contract_version` plus the live
+  `guided_flow_state` / `reference_orchestrator_feedback` projection are now
+  documented as the runtime authority line over stale external memory and old
+  tool schemas, and the full closeout proof bundle is green
 
 Turn `llm-guided` from a prompt-soft operating mode into a runtime-hard
 orchestration contract for external controllers such as Claude Code, Codex,
@@ -183,12 +199,13 @@ After this umbrella lands:
 
 ## Status / Board Update
 
-- promote `TASK-168` as a new board-level `⏳ To Do` guided-runtime family
-- keep the overlap boundary with in-progress `TASK-160` explicit: `TASK-160`
-  owns adjacent client-feedback/recovery UX, while `TASK-168` owns the
-  profile-bound confinement contract on top of the already-shipped
+- move `TASK-168` from `⏳ To Do` to `✅ Done` on the promoted board
+- close the nested `TASK-168-*` execution slices administratively with this
+  umbrella closeout
+- keep the overlap boundary with still-open `TASK-160` historical: `TASK-160`
+  continues to own adjacent client-feedback/recovery UX, while `TASK-168`
+  closed the profile-bound confinement contract layered on the shipped
   `reference_orchestrator_feedback` seam
-- keep descendants nested under the umbrella until concrete execution slices are complete
 
 ## Validation Commands
 

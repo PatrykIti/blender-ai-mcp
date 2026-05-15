@@ -582,6 +582,10 @@ Current guided-flow behavior:
   `guided_register_part()`,
   `reference_compare_stage_checkpoint()`, and
   `reference_iterate_stage_checkpoint()` can expose `guided_flow_state`
+- the live `llm-guided` authority line is
+  `router_get_status().surface_profile` / `contract_version` plus the current
+  `guided_flow_state` and `reference_orchestrator_feedback`; if stale external memory
+  or old tool schemas disagree, trust the live runtime contract
 - `router_set_goal(..., gate_proposal={...})` can ingest an optional
   client/model quality-gate proposal for the active guided goal; the server
   normalizes it into the session-scoped `active_gate_plan` and returns
