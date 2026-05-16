@@ -852,6 +852,80 @@ def test_route_tool_call_marks_spatial_stale_after_partial_corrected_dispatch(mo
     assert state.last_guided_affected_objects == ["Snout_A"]
 
 
+def test_guided_registry_syncs_identity_step_from_failed_corrected_report(monkeypatch):
+    """Successful identity mutations should sync even when a later corrected step failed closed."""
+
+    from fastmcp.server.context import _current_context
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.session_capabilities._scene_object_names",
+        lambda: {"Squirrel_Cranium"},
+    )
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            surface_profile="llm-guided",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "checkpoint_iterate",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["run_checkpoint_iterate"],
+                "blocked_families": ["primary_masses", "secondary_parts", "attachment_alignment"],
+                "allowed_families": ["checkpoint_iterate", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": ["body_core", "head_mass", "tail_mass"],
+                "missing_roles": [],
+                "required_role_groups": [],
+                "role_objects": {"head_mass": ["Squirrel_Head"]},
+                "step_status": "needs_checkpoint",
+            },
+            guided_part_registry=[
+                {
+                    "object_name": "Squirrel_Head",
+                    "role": "head_mass",
+                    "role_group": "primary_masses",
+                    "status": "registered",
+                    "created_in_step": "create_primary_masses",
+                }
+            ],
+        ),
+    )
+    report = MCPExecutionReport(
+        context=MCPExecutionContext(tool_name="modeling_create_primitive", params={}),
+        router_enabled=True,
+        router_applied=True,
+        router_disposition="failed_closed_error",
+        steps=(
+            ExecutionStep(
+                tool_name="scene_rename_object",
+                params={"old_name": "Squirrel_Head", "new_name": "Squirrel_Cranium"},
+                result="Renamed 'Squirrel_Head' to 'Squirrel_Cranium'",
+            ),
+        ),
+        error="Guided execution blocked later corrected step.",
+    )
+
+    token = _current_context.set(ctx)
+    try:
+        router_helper._maybe_sync_guided_part_registry_from_report(report)
+    finally:
+        _current_context.reset(token)
+
+    state = get_session_capability_state(ctx)
+
+    assert state.guided_part_registry is not None
+    assert state.guided_part_registry[0]["object_name"] == "Squirrel_Cranium"
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["role_objects"]["head_mass"] == ["Squirrel_Cranium"]
+
+
 def test_route_tool_call_report_fail_closes_when_guided_family_is_not_allowed(monkeypatch):
     """Guided execution policy should block a disallowed family even before direct execution runs."""
 

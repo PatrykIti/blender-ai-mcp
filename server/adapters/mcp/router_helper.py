@@ -62,6 +62,13 @@ _GUIDED_ROLE_GROUP_FAMILY_OVERRIDE_TOOLS: tuple[str, ...] = (
     "scene_duplicate_object",
     "scene_rename_object",
 )
+_GUIDED_IDENTITY_MUTATION_TOOLS: frozenset[str] = frozenset(
+    {
+        "scene_rename_object",
+        "modeling_join_objects",
+        "modeling_separate_object",
+    }
+)
 _GUIDED_UNMAPPED_MUTATING_PREFIXES: tuple[str, ...] = (
     "modeling_",
     "mesh_",
@@ -395,26 +402,41 @@ def _maybe_register_guided_role_from_corrected_step(
 
 
 def _maybe_sync_guided_part_registry_from_report(report: MCPExecutionReport) -> None:
-    """Update guided part registration after successful scene-identity mutations."""
+    """Update guided part registration after successful scene-identity mutation steps."""
 
-    if report.error is not None or not report.steps:
+    if not report.steps:
         return
 
-    final_step = report.steps[-1]
-    if final_step.tool_name not in {"scene_rename_object", "modeling_join_objects", "modeling_separate_object"}:
-        return
-    if final_step.error is not None:
-        return
-    if not _result_represents_success(final_step.tool_name, final_step.result):
+    identity_steps = _successful_guided_identity_steps(report)
+    if not identity_steps:
         return
 
     current_ctx = _get_active_context()
     if current_ctx is None:
         return
 
-    if final_step.tool_name == "scene_rename_object":
-        old_name = final_step.params.get("old_name")
-        new_name = _renamed_object_name_from_result(final_step.result) or final_step.params.get("new_name")
+    for step in identity_steps:
+        _sync_guided_part_registry_from_step(current_ctx, step)
+
+
+def _successful_guided_identity_steps(report: MCPExecutionReport) -> tuple[ExecutionStep, ...]:
+    """Return successful identity-mutation steps even when a later step failed closed."""
+
+    return tuple(
+        step
+        for step in report.steps
+        if step.tool_name in _GUIDED_IDENTITY_MUTATION_TOOLS
+        and step.error is None
+        and _result_represents_success(step.tool_name, step.result)
+    )
+
+
+def _sync_guided_part_registry_from_step(ctx: Context, step: ExecutionStep) -> None:
+    """Apply one successful scene identity mutation to the guided part registry."""
+
+    if step.tool_name == "scene_rename_object":
+        old_name = step.params.get("old_name")
+        new_name = _renamed_object_name_from_result(step.result) or step.params.get("new_name")
         if not isinstance(old_name, str) or not old_name.strip():
             return
         if not isinstance(new_name, str) or not new_name.strip():
@@ -422,7 +444,7 @@ def _maybe_sync_guided_part_registry_from_report(report: MCPExecutionReport) -> 
 
         try:
             rename_guided_part_registration(
-                current_ctx,
+                ctx,
                 old_name=old_name,
                 new_name=new_name,
             )
@@ -430,25 +452,25 @@ def _maybe_sync_guided_part_registry_from_report(report: MCPExecutionReport) -> 
             return
         return
 
-    if final_step.tool_name == "modeling_join_objects":
-        object_names = final_step.params.get("object_names")
+    if step.tool_name == "modeling_join_objects":
+        object_names = step.params.get("object_names")
         if not isinstance(object_names, list):
             return
         try:
             remove_guided_part_registrations(
-                current_ctx,
+                ctx,
                 object_names=[str(name) for name in object_names if str(name).strip()],
             )
         except Exception:
             return
         return
 
-    source_name = final_step.params.get("name")
+    source_name = step.params.get("name")
     if not isinstance(source_name, str) or not source_name.strip():
         return
     try:
         remove_guided_part_registrations(
-            current_ctx,
+            ctx,
             object_names=[source_name],
         )
     except Exception:
@@ -458,20 +480,23 @@ def _maybe_sync_guided_part_registry_from_report(report: MCPExecutionReport) -> 
 async def _maybe_sync_guided_part_registry_from_report_async(ctx: Context, report: MCPExecutionReport) -> None:
     """Async variant of guided part registry identity cleanup."""
 
-    if report.error is not None or not report.steps:
+    if not report.steps:
         return
 
-    final_step = report.steps[-1]
-    if final_step.tool_name not in {"scene_rename_object", "modeling_join_objects", "modeling_separate_object"}:
-        return
-    if final_step.error is not None:
-        return
-    if not _result_represents_success(final_step.tool_name, final_step.result):
+    identity_steps = _successful_guided_identity_steps(report)
+    if not identity_steps:
         return
 
-    if final_step.tool_name == "scene_rename_object":
-        old_name = final_step.params.get("old_name")
-        new_name = _renamed_object_name_from_result(final_step.result) or final_step.params.get("new_name")
+    for step in identity_steps:
+        await _sync_guided_part_registry_from_step_async(ctx, step)
+
+
+async def _sync_guided_part_registry_from_step_async(ctx: Context, step: ExecutionStep) -> None:
+    """Async variant for one successful scene identity mutation."""
+
+    if step.tool_name == "scene_rename_object":
+        old_name = step.params.get("old_name")
+        new_name = _renamed_object_name_from_result(step.result) or step.params.get("new_name")
         if not isinstance(old_name, str) or not old_name.strip():
             return
         if not isinstance(new_name, str) or not new_name.strip():
@@ -487,8 +512,8 @@ async def _maybe_sync_guided_part_registry_from_report_async(ctx: Context, repor
             return
         return
 
-    if final_step.tool_name == "modeling_join_objects":
-        object_names = final_step.params.get("object_names")
+    if step.tool_name == "modeling_join_objects":
+        object_names = step.params.get("object_names")
         if not isinstance(object_names, list):
             return
         try:
@@ -500,7 +525,7 @@ async def _maybe_sync_guided_part_registry_from_report_async(ctx: Context, repor
             return
         return
 
-    source_name = final_step.params.get("name")
+    source_name = step.params.get("name")
     if not isinstance(source_name, str) or not source_name.strip():
         return
     try:

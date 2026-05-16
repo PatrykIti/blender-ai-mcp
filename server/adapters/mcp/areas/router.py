@@ -189,11 +189,12 @@ async def _guided_register_part_blocked_status(
 ) -> RouterStatusContract:
     """Persist a typed fail-closed guided registration block and return refreshed status."""
 
-    flow_contract = (
-        GuidedFlowStateContract.model_validate(session.guided_flow_state)
-        if session.guided_flow_state is not None
-        else None
-    )
+    flow_state = session.guided_flow_state
+    try:
+        flow_contract = GuidedFlowStateContract.model_validate(flow_state) if flow_state is not None else None
+    except ValueError:
+        flow_contract = None
+        flow_state = None
     runtime_policy_block = {
         "message": message,
         "blocking_reasons": [message],
@@ -210,6 +211,7 @@ async def _guided_register_part_blocked_status(
         ctx,
         replace(
             session,
+            guided_flow_state=flow_state,
             last_router_disposition="failed_closed_error",
             last_router_error=message,
             last_guided_action_block=runtime_policy_block,
@@ -758,9 +760,23 @@ async def guided_register_part(
     `roof_mass`, without introducing a separate build tool per domain part.
     """
     session = await get_session_capability_state_async(ctx)
-    guided_flow_state = session.guided_flow_state or {}
-    domain_profile = str(guided_flow_state.get("domain_profile") or "").strip()
-    current_step = str(guided_flow_state.get("current_step") or "").strip() or None
+    if session.guided_flow_state is None:
+        return await _guided_register_part_blocked_status(
+            ctx,
+            session,
+            message="guided_register_part(...) requires an active guided flow session.",
+        )
+    try:
+        guided_flow_contract = GuidedFlowStateContract.model_validate(session.guided_flow_state)
+    except ValueError as exc:
+        return await _guided_register_part_blocked_status(
+            ctx,
+            session,
+            message=f"guided_register_part(...) requires a valid active guided flow session: {exc}",
+        )
+
+    domain_profile = guided_flow_contract.domain_profile
+    current_step = guided_flow_contract.current_step
     naming_decision = None
     if domain_profile in {"generic", "creature", "building"}:
         try:
@@ -800,12 +816,20 @@ async def guided_register_part(
             message=str(exc),
         )
 
-    await register_guided_part_role_async(
-        ctx,
-        object_name=object_name,
-        role=role,
-        role_group=role_group,
-    )
+    try:
+        await register_guided_part_role_async(
+            ctx,
+            object_name=object_name,
+            role=role,
+            role_group=role_group,
+        )
+    except ValueError as exc:
+        return await _guided_register_part_blocked_status(
+            ctx,
+            session,
+            message=str(exc),
+            guided_naming=naming_decision,
+        )
     status = await router_get_status(ctx)
     payload = status.model_dump(mode="json", exclude_none=True)
     payload["message"] = f"Registered guided role '{role}' for '{object_name}'."

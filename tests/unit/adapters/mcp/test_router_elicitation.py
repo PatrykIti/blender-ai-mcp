@@ -52,6 +52,30 @@ class FakeContext:
         return None
 
 
+def _patch_router_status_dependencies(monkeypatch):
+    monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
+    monkeypatch.setattr(router_area, "get_router_status", lambda: {"enabled": True})
+    monkeypatch.setattr(router_area, "_build_background_job_diagnostics", lambda: (0, {}, []))
+    monkeypatch.setattr(router_area, "_build_timeout_policy_diagnostics", lambda _ctx: None)
+    monkeypatch.setattr(router_area, "_build_task_runtime_diagnostics", lambda _ctx: None)
+    monkeypatch.setattr(router_area, "_build_telemetry_diagnostics", lambda: None)
+    monkeypatch.setattr(router_area, "_get_list_page_size", lambda _ctx: 50)
+    monkeypatch.setattr(router_area, "run_repair_suggestion_assistant", lambda *args, **kwargs: None)
+    monkeypatch.setattr(router_area, "to_repair_assistant_contract", lambda *args, **kwargs: None)
+    monkeypatch.setattr(router_area, "_should_attach_repair_suggestion", lambda _payload: False)
+    monkeypatch.setattr(
+        router_area,
+        "build_visibility_diagnostics",
+        lambda surface_profile, phase, guided_handoff=None, guided_flow_state=None, gate_plan=None: SimpleNamespace(
+            rules=(),
+            visible_capability_ids=("router",),
+            visible_entry_capability_ids=("router",),
+            hidden_capability_ids=(),
+            hidden_category_counts={},
+        ),
+    )
+
+
 def test_maybe_elicit_router_answers_returns_typed_clarification_without_human_prompt(monkeypatch):
     """llm-guided should keep missing workflow params model-facing by default."""
 
@@ -756,6 +780,73 @@ def test_guided_register_part_updates_session_role_summary(monkeypatch):
     assert session.guided_part_registry[0]["object_name"] == "Squirrel_Body"
     assert result.guided_naming is not None
     assert result.guided_naming.status == "allowed"
+
+
+def test_guided_register_part_blocks_without_active_guided_flow(monkeypatch):
+    """guided_register_part should return typed fail-closed status when no guided flow is active."""
+
+    _patch_router_status_dependencies(monkeypatch)
+    monkeypatch.setattr(
+        "server.adapters.mcp.session_capabilities._scene_object_names",
+        lambda: (_ for _ in ()).throw(AssertionError("scene validation should not run without guided flow")),
+    )
+
+    ctx = FakeContext(response=object())
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="manual build without guided flow",
+            surface_profile="llm-guided",
+        ),
+    )
+
+    result = asyncio.run(router_area.guided_register_part(ctx, object_name="Squirrel_Body", role="body_core"))
+    status = asyncio.run(router_area.router_get_status(ctx))
+    session = get_session_capability_state(ctx)
+
+    assert result.last_router_disposition == "failed_closed_error"
+    assert result.last_router_error == "guided_register_part(...) requires an active guided flow session."
+    assert status.last_router_error == result.last_router_error
+    assert result.reference_orchestrator_feedback is not None
+    assert result.reference_orchestrator_feedback.status == "blocked"
+    assert any(
+        "active guided flow session" in reason for reason in result.reference_orchestrator_feedback.blocking_reasons
+    )
+    assert session.guided_part_registry is None
+
+
+def test_guided_register_part_blocks_normalized_malformed_guided_flow(monkeypatch):
+    """guided_register_part should typed-block malformed guided state after session normalization."""
+
+    _patch_router_status_dependencies(monkeypatch)
+    monkeypatch.setattr(
+        "server.adapters.mcp.session_capabilities._scene_object_names",
+        lambda: (_ for _ in ()).throw(AssertionError("scene validation should not run for malformed flow")),
+    )
+
+    ctx = FakeContext(response=object())
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            surface_profile="llm-guided",
+            guided_flow_state={"domain_profile": "creature"},
+        ),
+    )
+
+    result = asyncio.run(router_area.guided_register_part(ctx, object_name="Squirrel_Body", role="body_core"))
+    status = asyncio.run(router_area.router_get_status(ctx))
+    session = get_session_capability_state(ctx)
+
+    assert result.last_router_disposition == "failed_closed_error"
+    assert result.last_router_error == "guided_register_part(...) requires an active guided flow session."
+    assert status.last_router_error == result.last_router_error
+    assert result.reference_orchestrator_feedback is not None
+    assert result.reference_orchestrator_feedback.status == "blocked"
+    assert session.guided_flow_state is None
+    assert session.guided_part_registry is None
 
 
 def test_guided_register_part_returns_naming_warning_for_weak_abbreviation(monkeypatch):
