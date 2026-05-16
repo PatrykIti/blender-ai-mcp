@@ -58,7 +58,7 @@ asset as the generic search-first operating baseline.
    - `action_hints`
    - `compare_diagnostics`
    - `silhouette_analysis`
-   - rich-only or uncertainty-only `truth_followup` /
+   - rich/error/hard-failure/uncertainty detail such as `truth_followup` /
      `correction_candidates` when the response actually includes them
 
 ## Gate Proposal Shape

@@ -11,6 +11,7 @@
   `compare_diagnostics`, and other existing public fields first
 - heavy packet/truth/planner detail is omitted from the default compact path unless:
   - uncertainty
+  - error
   - hard failure
   - explicit rich mode via `preset_profile="rich"`
 - compare/iterate can carry one short bounded summary of unresolved packet

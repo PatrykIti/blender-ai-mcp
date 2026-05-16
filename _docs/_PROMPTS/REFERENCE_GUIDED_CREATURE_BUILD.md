@@ -63,8 +63,9 @@ asset as the generic search-first operating baseline.
    - `vision_assistant.result.shape_mismatches`
    - `vision_assistant.result.proportion_mismatches`
    - `vision_assistant.result.next_corrections`
-   - rich-only or uncertainty-only `correction_candidates` / `truth_followup`
-     when the response actually includes them
+   - rich/error/hard-failure/uncertainty detail such as
+     `correction_candidates` / `truth_followup` when the response actually
+     includes them
 11. repeat the next stage or correction step
 
 ## Prompt Template
@@ -273,8 +274,9 @@ Workflow:
    - then `vision_assistant.result.shape_mismatches`
    - then `vision_assistant.result.proportion_mismatches`
    - then `vision_assistant.result.next_corrections`
-   - then rich-only or uncertainty-only `correction_candidates` /
-     `truth_followup.*` when the response actually includes them
+   - then rich/error/hard-failure/uncertainty detail such as
+     `correction_candidates` / `truth_followup.*` when the response actually
+     includes them
 12. if `guided_reference_readiness.compare_ready == false`, execute
     `guided_reference_readiness.next_action` instead of trying to recover the
     session with `goal_override`
@@ -360,8 +362,8 @@ At the end of each stage, return only:
 - `loop_disposition="inspect_validate"` means the system is detecting repeated
   focus or a high-priority truth signal, so it is better to pause free-form
   correction and switch briefly to truth-layer verification
-- when emitted, `correction_candidates` is the rich/uncertainty ranked handoff
-  for the hybrid loop:
+- when emitted, `correction_candidates` is the rich/error/hard-failure/uncertainty
+  ranked handoff for the hybrid loop:
   - `vision_only` means the issue is visible mainly on the vision side
   - `truth_only` means the issue is deterministically confirmed by truth tools
   - `hybrid` means vision and truth signals converge on the same issue
