@@ -1,4 +1,4 @@
-"""Blender-backed E2E checks for stage compare truth bundle / followup handoff."""
+"""Blender-backed E2E checks for compact/rich stage compare truth handoff."""
 
 from __future__ import annotations
 

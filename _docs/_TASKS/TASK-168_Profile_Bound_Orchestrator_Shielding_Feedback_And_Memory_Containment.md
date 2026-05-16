@@ -54,7 +54,7 @@ The desired end state is not “write better prompts and hope.” It is:
   guided public seams
 - one selective-disclosure response policy where the controller stays on the
   additive compact path by default and only receives heavier packet detail when
-  `preset_profile="rich"` or uncertainty requires it
+  `preset_profile="rich"`, uncertainty, error, or hard-failure handling requires it
 - one runtime-owned profile/session authority line on the existing
   router-status / guided-flow / feedback seams that outranks stale external
   memory
@@ -138,7 +138,7 @@ After this umbrella lands:
 | 1 | [TASK-168-01](./TASK-168-01_Guided_State_Graph_And_Pre_Dispatch_Action_Shields.md) | Define the hard guided phase graph plus pre-dispatch action shields for profile-bound tool use |
 | 2 | [TASK-168-02](./TASK-168-02_Typed_Orchestrator_Feedback_Contract_And_Emission_Points.md) | Add one compact typed feedback contract that tells controllers what to do, not do, and what will fail |
 | 3 | [TASK-168-02-01](./TASK-168-02-01_Active_Workset_Compare_Scope_And_Coarse_To_Fine_Iteration.md) | Make compare/iterate target the active fragment/workset first, then escalate only when needed |
-| 4 | [TASK-168-02-02](./TASK-168-02-02_Selective_Disclosure_Minimal_Control_Payloads_And_Gist_Followups.md) | Keep controller-facing outputs short by default and expose heavier packet detail only when rich mode or uncertainty requires it |
+| 4 | [TASK-168-02-02](./TASK-168-02-02_Selective_Disclosure_Minimal_Control_Payloads_And_Gist_Followups.md) | Keep controller-facing outputs short by default and expose heavier packet detail only when rich mode, uncertainty, error, or hard-failure handling requires it |
 | 5 | [TASK-168-03](./TASK-168-03_Session_Manifest_Prompt_Priority_And_Memory_Drift_Containment.md) | Surface a runtime-owned profile/session authority line on the existing status and feedback seams plus a prompt-priority model that outranks stale external memory |
 | 6 | [TASK-168-04](./TASK-168-04_Profile_Contract_Rewrite_Validation_And_Closeout.md) | Rewrite the relevant prompt/surface docs and close with focused plus repo-standard proof lanes |
 

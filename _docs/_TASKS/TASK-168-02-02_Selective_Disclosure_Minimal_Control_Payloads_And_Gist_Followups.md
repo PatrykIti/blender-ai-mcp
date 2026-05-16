@@ -26,8 +26,8 @@
   payload
 - compact mode should keep `reference_orchestrator_feedback` as the control
   owner seam and `compare_diagnostics` as the public uncertainty path while
-  omitting heavy nested compare/truth/planner detail unless rich mode or
-  uncertainty requires it
+  omitting heavy nested compare/truth/planner detail unless rich mode,
+  uncertainty, error, or hard-failure handling requires it
 - bounded carry-forward state should reuse existing additive fields such as:
   - `correction_focus`
   - `evidence_summary`
