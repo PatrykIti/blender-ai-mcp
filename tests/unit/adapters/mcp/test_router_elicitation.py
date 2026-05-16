@@ -876,10 +876,19 @@ def test_guided_register_part_blocks_placeholder_name_without_mutating_registry(
 
     result = asyncio.run(router_area.guided_register_part(ctx, object_name="Sphere", role="body_core"))
     session = get_session_capability_state(ctx)
+    status = asyncio.run(router_area.router_get_status(ctx))
 
     assert result.guided_naming is not None
     assert result.guided_naming.status == "blocked"
     assert "Body" in result.message
+    assert result.last_router_disposition == "failed_closed_error"
+    assert result.last_router_error is not None
+    assert "Body" in result.last_router_error
+    assert status.last_router_disposition == "failed_closed_error"
+    assert status.last_router_error == result.last_router_error
+    assert status.reference_orchestrator_feedback is not None
+    assert status.reference_orchestrator_feedback.status == "blocked"
+    assert any("Body" in reason for reason in status.reference_orchestrator_feedback.blocking_reasons)
     assert session.guided_part_registry is None
 
 
@@ -937,15 +946,24 @@ def test_guided_register_part_rejects_invalid_role_for_domain(monkeypatch):
 
     result = asyncio.run(router_area.guided_register_part(ctx, object_name="Squirrel_Roof", role="roof_mass"))
     session = get_session_capability_state(ctx)
+    status = asyncio.run(router_area.router_get_status(ctx))
 
     assert result.last_router_disposition == "failed_closed_error"
     assert result.last_router_error is not None
     assert "Unknown guided part role 'roof_mass'" in result.last_router_error
+    assert status.last_router_disposition == "failed_closed_error"
+    assert status.last_router_error == result.last_router_error
     assert result.reference_orchestrator_feedback is not None
     assert result.reference_orchestrator_feedback.status == "blocked"
     assert any(
         "Unknown guided part role 'roof_mass'" in reason
         for reason in result.reference_orchestrator_feedback.blocking_reasons
+    )
+    assert status.reference_orchestrator_feedback is not None
+    assert status.reference_orchestrator_feedback.status == "blocked"
+    assert any(
+        "Unknown guided part role 'roof_mass'" in reason
+        for reason in status.reference_orchestrator_feedback.blocking_reasons
     )
     assert session.guided_part_registry is None
 

@@ -57,6 +57,11 @@ _GUIDED_ROLE_REQUIRED_TOOLS: tuple[str, ...] = (
     "modeling_create_primitive",
     "modeling_transform_object",
 )
+_GUIDED_ROLE_GROUP_FAMILY_OVERRIDE_TOOLS: tuple[str, ...] = (
+    *_GUIDED_ROLE_REQUIRED_TOOLS,
+    "scene_duplicate_object",
+    "scene_rename_object",
+)
 _GUIDED_UNMAPPED_MUTATING_PREFIXES: tuple[str, ...] = (
     "modeling_",
     "mesh_",
@@ -225,7 +230,7 @@ def _maybe_mark_guided_spatial_state_stale_from_report(report: MCPExecutionRepor
 def _guided_dirty_steps(report: MCPExecutionReport) -> list[tuple[ExecutionStep, str | None]]:
     """Return every successful step that invalidates guided spatial facts."""
 
-    if report.error is not None or not report.steps:
+    if not report.steps:
         return []
 
     dirty_steps: list[tuple[ExecutionStep, str | None]] = []
@@ -701,7 +706,7 @@ def _resolve_guided_role_context(tool_name: str, params: Dict[str, Any]) -> tupl
     if session is None or not session.guided_part_registry:
         return None, None
 
-    object_name = params.get("name") or params.get("object_name")
+    object_name = params.get("name") or params.get("object_name") or params.get("old_name")
     if not isinstance(object_name, str) or not object_name.strip():
         return None, None
 
@@ -724,7 +729,7 @@ def _resolve_guided_effective_family(tool_name: str, params: Dict[str, Any]) -> 
 
     base_family = resolve_guided_tool_family(tool_name)
     _role, role_group = _resolve_guided_role_context(tool_name, params)
-    if tool_name in _GUIDED_ROLE_REQUIRED_TOOLS and role_group in {
+    if tool_name in _GUIDED_ROLE_GROUP_FAMILY_OVERRIDE_TOOLS and role_group in {
         "spatial_context",
         "reference_context",
         "primary_masses",

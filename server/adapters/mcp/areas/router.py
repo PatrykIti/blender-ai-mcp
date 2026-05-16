@@ -14,6 +14,7 @@ TASK-055-FIX: Unified parameter resolution through single router_set_goal tool.
 """
 
 import logging
+from dataclasses import replace
 from typing import Any, Dict, List, Optional, cast
 
 from fastmcp import Context
@@ -725,50 +726,36 @@ async def guided_register_part(
                 role_group,
             )
         except ValueError as exc:
-            status = await router_get_status(ctx)
-            payload = status.model_dump(mode="json", exclude_none=True)
             message = str(exc)
             flow_contract = (
                 GuidedFlowStateContract.model_validate(session.guided_flow_state)
                 if session.guided_flow_state is not None
                 else None
             )
-            feedback = build_reference_orchestrator_feedback(
-                goal=session.goal,
-                summary=(
-                    ReferenceUnderstandingSummaryContract.model_validate(session.reference_understanding_summary)
-                    if session.reference_understanding_summary is not None
+            runtime_policy_block = {
+                "message": message,
+                "blocking_reasons": [message],
+                "next_actions": list(flow_contract.next_actions if flow_contract is not None else []),
+                "next_checkpoint_tool": (
+                    "reference_iterate_stage_checkpoint"
+                    if flow_contract is not None and flow_contract.current_step == "checkpoint_iterate"
                     else None
                 ),
-                strategy_state=(
-                    ReferenceStrategyStateContract.model_validate(session.reference_strategy_state)
-                    if session.reference_strategy_state is not None
-                    else None
+                "recommended_support_tools": [],
+                "source": "guided_register_part",
+            }
+            await set_session_capability_state_async(
+                ctx,
+                replace(
+                    session,
+                    last_router_disposition="failed_closed_error",
+                    last_router_error=message,
+                    last_guided_action_block=runtime_policy_block,
                 ),
-                guided_flow_state=flow_contract,
-                gate_plan=GatePlanContract.model_validate(session.gate_plan) if session.gate_plan is not None else None,
-                guided_reference_readiness=GuidedReferenceReadinessContract.model_validate(
-                    build_guided_reference_readiness_payload(session)
-                ),
-                runtime_policy_block={
-                    "message": message,
-                    "blocking_reasons": [message],
-                    "next_actions": list(flow_contract.next_actions if flow_contract is not None else []),
-                    "next_checkpoint_tool": (
-                        "reference_iterate_stage_checkpoint"
-                        if flow_contract is not None and flow_contract.current_step == "checkpoint_iterate"
-                        else None
-                    ),
-                    "recommended_support_tools": [],
-                    "source": "guided_register_part",
-                },
             )
+            status = await router_get_status(ctx)
+            payload = status.model_dump(mode="json", exclude_none=True)
             payload["message"] = message
-            payload["last_router_disposition"] = "failed_closed_error"
-            payload["last_router_error"] = message
-            payload["reference_orchestrator_feedback"] = (
-                None if feedback is None else feedback.model_dump(mode="json", exclude_none=True)
-            )
             return RouterStatusContract.model_validate(payload)
         naming_decision = evaluate_guided_object_name(
             object_name=object_name,
@@ -777,9 +764,36 @@ async def guided_register_part(
             current_step=current_step,
         )
         if naming_decision.status == "blocked":
+            message = naming_decision.message or "Guided object naming policy blocked registration."
+            flow_contract = (
+                GuidedFlowStateContract.model_validate(session.guided_flow_state)
+                if session.guided_flow_state is not None
+                else None
+            )
+            runtime_policy_block = {
+                "message": message,
+                "blocking_reasons": [message],
+                "next_actions": list(flow_contract.next_actions if flow_contract is not None else []),
+                "next_checkpoint_tool": (
+                    "reference_iterate_stage_checkpoint"
+                    if flow_contract is not None and flow_contract.current_step == "checkpoint_iterate"
+                    else None
+                ),
+                "recommended_support_tools": [],
+                "source": "guided_register_part",
+            }
+            await set_session_capability_state_async(
+                ctx,
+                replace(
+                    session,
+                    last_router_disposition="failed_closed_error",
+                    last_router_error=message,
+                    last_guided_action_block=runtime_policy_block,
+                ),
+            )
             status = await router_get_status(ctx)
             payload = status.model_dump(mode="json", exclude_none=True)
-            payload["message"] = naming_decision.message
+            payload["message"] = message
             payload["guided_naming"] = naming_decision.model_dump(mode="json")
             return RouterStatusContract.model_validate(payload)
 
