@@ -349,8 +349,10 @@ At the end of each stage, return only:
   from provider name alone
 - `correction_focus` should be treated as the compact action list after checking
   whether `planner_summary`, `refinement_route`, `refinement_handoff`, or typed
-  `action_hints` carry a stronger bounded signal; do not wait for rich-only
+  `action_hints` carry a stronger bounded signal; do not wait for
   `correction_candidates` or `truth_followup` on normal clean compact paths
+  unless the response explicitly emits those rich/error/hard-failure/uncertainty
+  details
 - `silhouette_analysis` is deterministic perception evidence:
   - use it for contour/ratio drift, not for scene truth
   - read it as target/focus-view evidence when a matching focus capture exists;

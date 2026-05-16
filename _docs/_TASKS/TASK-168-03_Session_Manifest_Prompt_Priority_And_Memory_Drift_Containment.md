@@ -101,8 +101,11 @@ status_authority = {
 
 ## Status / Board Update
 
-- remains nested under `TASK-168`
-- should close before final docs/closeout claims a stable anti-drift controller contract
+- closed administratively under the completed `TASK-168` umbrella on 2026-05-16
+- the final family proof is recorded in
+  [TASK-168-04](./TASK-168-04_Profile_Contract_Rewrite_Validation_And_Closeout.md)
+  and
+  [355. TASK-168 guided registry final drift repair](../_CHANGELOG/355-2026-05-16-task-168-guided-registry-final-drift-repair.md)
 
 ## Validation Commands
 

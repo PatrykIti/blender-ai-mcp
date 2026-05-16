@@ -501,7 +501,7 @@ def test_async_modeling_transform_finalizes_corrected_result_name_and_warning(mo
         get_session_capability_state_async,
     )
     monkeypatch.setattr(
-        "server.adapters.mcp.areas.modeling.mark_guided_spatial_state_stale_async",
+        "server.adapters.mcp.router_helper.mark_guided_spatial_state_stale_async",
         mark_guided_spatial_state_stale_async,
     )
     monkeypatch.setattr(
@@ -590,7 +590,7 @@ def test_async_modeling_transform_finalizes_from_report_steps_when_legacy_text_i
         get_session_capability_state_async,
     )
     monkeypatch.setattr(
-        "server.adapters.mcp.areas.modeling.mark_guided_spatial_state_stale_async",
+        "server.adapters.mcp.router_helper.mark_guided_spatial_state_stale_async",
         mark_guided_spatial_state_stale_async,
     )
     monkeypatch.setattr(
@@ -616,7 +616,7 @@ def test_async_modeling_transform_finalizes_from_report_steps_when_legacy_text_i
 
 def test_async_modeling_create_offloads_routed_sync_execution(monkeypatch):
     recorded_roles: list[tuple[str, str, str | None]] = []
-    stale_calls: list[tuple[str, str | None, str | None]] = []
+    stale_calls: list[tuple[str, str | None, str | None, tuple[str, ...] | None]] = []
     offloaded_calls: list[tuple[object, tuple[object, ...], dict[str, object]]] = []
 
     async def hydrate(ctx):
@@ -629,7 +629,15 @@ def test_async_modeling_create_offloads_routed_sync_execution(monkeypatch):
         )
 
     async def mark_guided_spatial_state_stale_async(ctx, **kwargs):
-        stale_calls.append((kwargs["tool_name"], kwargs.get("family"), kwargs.get("reason")))
+        affected_objects = kwargs.get("affected_objects")
+        stale_calls.append(
+            (
+                kwargs["tool_name"],
+                kwargs.get("family"),
+                kwargs.get("reason"),
+                tuple(affected_objects) if affected_objects is not None else None,
+            )
+        )
         return await get_session_capability_state_async(ctx)
 
     async def register_guided_part_role_async(ctx, **kwargs):
@@ -672,7 +680,7 @@ def test_async_modeling_create_offloads_routed_sync_execution(monkeypatch):
         get_session_capability_state_async,
     )
     monkeypatch.setattr(
-        "server.adapters.mcp.areas.modeling.mark_guided_spatial_state_stale_async",
+        "server.adapters.mcp.router_helper.mark_guided_spatial_state_stale_async",
         mark_guided_spatial_state_stale_async,
     )
     monkeypatch.setattr(
@@ -695,7 +703,7 @@ def test_async_modeling_create_offloads_routed_sync_execution(monkeypatch):
     assert result == "Created Sphere named 'Body'"
     assert offloaded_calls
     assert offloaded_calls[0][2]["tool_name"] == "modeling_create_primitive"
-    assert stale_calls == [("modeling_create_primitive", "primary_masses", "modeling_create_primitive")]
+    assert stale_calls == [("modeling_create_primitive", "primary_masses", "modeling_create_primitive", ("Body",))]
     assert recorded_roles == [("Body", "body_core", None)]
 
 
@@ -760,7 +768,7 @@ def test_async_modeling_create_finalizes_partial_failed_report(monkeypatch):
         get_session_capability_state_async,
     )
     monkeypatch.setattr(
-        "server.adapters.mcp.areas.modeling.mark_guided_spatial_state_stale_async",
+        "server.adapters.mcp.router_helper.mark_guided_spatial_state_stale_async",
         mark_guided_spatial_state_stale_async,
     )
     monkeypatch.setattr(
@@ -882,7 +890,7 @@ def test_async_modeling_create_emits_guided_flow_feedback_when_refresh_rearms(mo
         get_session_capability_state_async,
     )
     monkeypatch.setattr(
-        "server.adapters.mcp.areas.modeling.mark_guided_spatial_state_stale_async",
+        "server.adapters.mcp.router_helper.mark_guided_spatial_state_stale_async",
         mark_guided_spatial_state_stale_async,
     )
     monkeypatch.setattr(
@@ -911,7 +919,7 @@ def test_async_modeling_create_emits_guided_flow_feedback_when_refresh_rearms(mo
 
 def test_async_modeling_create_finalizes_from_report_steps_when_legacy_text_is_not_parseable(monkeypatch):
     recorded_roles: list[tuple[str, str, str | None]] = []
-    stale_calls: list[tuple[str, str | None, str | None]] = []
+    stale_calls: list[tuple[str, str | None, str | None, tuple[str, ...] | None]] = []
 
     async def hydrate(ctx):
         return None
@@ -923,7 +931,15 @@ def test_async_modeling_create_finalizes_from_report_steps_when_legacy_text_is_n
         )
 
     async def mark_guided_spatial_state_stale_async(ctx, **kwargs):
-        stale_calls.append((kwargs["tool_name"], kwargs.get("family"), kwargs.get("reason")))
+        affected_objects = kwargs.get("affected_objects")
+        stale_calls.append(
+            (
+                kwargs["tool_name"],
+                kwargs.get("family"),
+                kwargs.get("reason"),
+                tuple(affected_objects) if affected_objects is not None else None,
+            )
+        )
         return await get_session_capability_state_async(ctx)
 
     async def register_guided_part_role_async(ctx, **kwargs):
@@ -949,6 +965,11 @@ def test_async_modeling_create_finalizes_from_report_steps_when_legacy_text_is_n
                 params={"primitive_type": "Sphere", "name": "Body"},
                 result="Created Sphere named 'Body'",
             ),
+            ExecutionStep(
+                tool_name="modeling_transform_object",
+                params={"name": "Tail", "scale": [1.0, 1.0, 1.2]},
+                result="Transformed object 'Tail'",
+            ),
         ),
     )
 
@@ -970,7 +991,7 @@ def test_async_modeling_create_finalizes_from_report_steps_when_legacy_text_is_n
         get_session_capability_state_async,
     )
     monkeypatch.setattr(
-        "server.adapters.mcp.areas.modeling.mark_guided_spatial_state_stale_async",
+        "server.adapters.mcp.router_helper.mark_guided_spatial_state_stale_async",
         mark_guided_spatial_state_stale_async,
     )
     monkeypatch.setattr(
@@ -991,7 +1012,9 @@ def test_async_modeling_create_finalizes_from_report_steps_when_legacy_text_is_n
     )
 
     assert result == "Corrected route completed."
-    assert stale_calls == [("modeling_create_primitive", "primary_masses", "modeling_create_primitive")]
+    assert stale_calls == [
+        ("modeling_create_primitive", "primary_masses", "modeling_create_primitive", ("Body", "Tail"))
+    ]
     assert recorded_roles == []
 
 

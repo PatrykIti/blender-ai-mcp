@@ -163,6 +163,40 @@ def test_router_set_goal_needs_input_is_model_facing_on_llm_guided(monkeypatch, 
     assert "[TRANSPORT_DEBUG] operation=router_set_goal session_id=sess_test transport=stdio" in caplog.text
 
 
+def test_router_set_goal_uses_runtime_surface_profile_over_config(monkeypatch):
+    """Factory-selected FastMCP surface should drive goal bootstrap even when config is stale."""
+
+    monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "legacy-flat"})())
+
+    class Handler:
+        def set_goal(self, goal, resolved_params=None):
+            return {
+                "status": "needs_input",
+                "workflow": "chair_workflow",
+                "resolved": {},
+                "unresolved": [{"param": "height", "type": "float", "description": "Overall height"}],
+                "resolution_sources": {},
+                "message": "need height",
+            }
+
+        def clear_goal(self):
+            return "cleared"
+
+    monkeypatch.setattr(router_area, "get_router_handler", lambda: Handler())
+
+    ctx = FakeContext(response=object())
+    ctx.fastmcp = SimpleNamespace(_bam_surface_profile="llm-guided", _bam_contract_line="guided-v1")
+
+    result = asyncio.run(router_area.router_set_goal(ctx, goal="chair"))
+    session = get_session_capability_state(ctx)
+
+    assert result.status == "needs_input"
+    assert result.clarification is not None
+    assert session.surface_profile == "llm-guided"
+    assert session.contract_version == "guided-v1"
+    assert session.pending_question_set_id is not None
+
+
 def test_router_set_goal_merges_partial_answers_on_followup(monkeypatch):
     """Persisted partial answers should be merged with the next resolved_params call."""
 
@@ -607,6 +641,53 @@ def test_router_get_status_exposes_session_id_and_transport(monkeypatch):
     assert result.transport == "stdio"
 
 
+def test_router_get_status_uses_runtime_surface_profile_over_stale_session(monkeypatch):
+    """Status diagnostics should reflect the running FastMCP surface as the runtime authority."""
+
+    monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "legacy-flat"})())
+    monkeypatch.setattr(router_area, "get_router_status", lambda: {"enabled": True})
+    monkeypatch.setattr(router_area, "_build_background_job_diagnostics", lambda: (0, {}, []))
+    monkeypatch.setattr(router_area, "_build_timeout_policy_diagnostics", lambda _ctx: None)
+    monkeypatch.setattr(router_area, "_build_task_runtime_diagnostics", lambda _ctx: None)
+    monkeypatch.setattr(router_area, "_build_telemetry_diagnostics", lambda: None)
+    monkeypatch.setattr(router_area, "_get_list_page_size", lambda _ctx: 50)
+    monkeypatch.setattr(router_area, "run_repair_suggestion_assistant", lambda *args, **kwargs: None)
+    monkeypatch.setattr(router_area, "to_repair_assistant_contract", lambda *args, **kwargs: None)
+    monkeypatch.setattr(router_area, "_should_attach_repair_suggestion", lambda _payload: False)
+    captured: dict[str, object] = {}
+
+    def build_diagnostics(surface_profile, phase, guided_handoff=None, guided_flow_state=None, gate_plan=None):
+        captured["surface_profile"] = surface_profile
+        return SimpleNamespace(
+            rules=(),
+            visible_capability_ids=("router",),
+            visible_entry_capability_ids=("router",),
+            hidden_capability_ids=(),
+            hidden_category_counts={},
+        )
+
+    monkeypatch.setattr(router_area, "build_visibility_diagnostics", build_diagnostics)
+
+    ctx = FakeContext(response=object())
+    ctx.fastmcp = SimpleNamespace(_bam_surface_profile="llm-guided", _bam_contract_line="guided-v1")
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.PLANNING,
+            surface_profile="legacy-flat",
+            contract_version="legacy-v1",
+        ),
+    )
+
+    result = asyncio.run(router_area.router_get_status(ctx))
+
+    assert result.surface_profile == "llm-guided"
+    assert result.contract_version == "guided-v1"
+    assert result.router_failure_policy == "fail_closed"
+    assert captured["surface_profile"] == "llm-guided"
+    assert get_session_capability_state(ctx).surface_profile == "llm-guided"
+
+
 def test_router_get_status_returns_guided_flow_state(monkeypatch):
     """router_get_status should mirror the active guided flow envelope from session state."""
 
@@ -749,6 +830,14 @@ def test_guided_register_part_updates_session_role_summary(monkeypatch):
             phase=SessionPhase.BUILD,
             goal="create a low-poly squirrel matching front and side reference images",
             surface_profile="llm-guided",
+            last_router_disposition="failed_closed_error",
+            last_router_error="previous guided registration block",
+            last_guided_action_block={
+                "message": "previous guided registration block",
+                "blocking_reasons": ["previous guided registration block"],
+                "next_actions": ["begin_primary_masses"],
+                "source": "guided_register_part",
+            },
             guided_flow_state={
                 "flow_id": "guided_creature_flow",
                 "domain_profile": "creature",
@@ -778,6 +867,9 @@ def test_guided_register_part_updates_session_role_summary(monkeypatch):
     assert result.message == "Registered guided role 'body_core' for 'Squirrel_Body'."
     assert session.guided_part_registry is not None
     assert session.guided_part_registry[0]["object_name"] == "Squirrel_Body"
+    assert result.last_router_disposition is None
+    assert result.last_router_error is None
+    assert session.last_guided_action_block is None
     assert result.guided_naming is not None
     assert result.guided_naming.status == "allowed"
 

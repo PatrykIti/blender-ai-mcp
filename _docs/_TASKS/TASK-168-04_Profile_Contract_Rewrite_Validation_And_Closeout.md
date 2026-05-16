@@ -33,7 +33,7 @@
   - refreshed proof recorded `3447` passing repo-wide unit tests, clean
     repo-wide `pre-commit`, and the repo-supported Blender E2E runner
     (`477 passed, 3 skipped`)
-  - final drift proof recorded `3452` passing repo-wide unit tests, clean
+  - final drift proof recorded `3457` passing repo-wide unit tests, clean
     repo-wide `pre-commit`, and the repo-supported Blender E2E runner
     (`477 passed, 3 skipped`)
 - use squirrel/controller regressions as explicit proof surfaces:
@@ -83,17 +83,23 @@
 
 ## Changelog Impact
 
-- add the historical `_docs/_CHANGELOG/*` entry when the family is ready to close
+- final family closeout and post-closeout drift repair are tracked through:
+  [352. TASK-168 runtime confinement reopen and closeout](../_CHANGELOG/352-2026-05-15-task-168-runtime-confinement-reopen-and-closeout.md),
+  [353. TASK-168 post-closeout drift repair](../_CHANGELOG/353-2026-05-16-task-168-post-closeout-drift-repair.md),
+  [354. TASK-168 compact-boundary post-commit repair](../_CHANGELOG/354-2026-05-16-task-168-compact-boundary-post-commit-repair.md),
+  and
+  [355. TASK-168 guided registry final drift repair](../_CHANGELOG/355-2026-05-16-task-168-guided-registry-final-drift-repair.md)
 
 ## Status / Board Update
 
-- remains nested under `TASK-168`
-- owns the final promotion/closure bookkeeping for this confinement umbrella
+- closed administratively under the completed `TASK-168` umbrella on 2026-05-16
+- owns the final promotion/closure bookkeeping for this confinement umbrella;
+  the promoted board already lists `TASK-168` under `✅ Done`
 
 ## Validation Commands
 
 - `git diff --check`
-- focused owner-lane unit tests after implementation:
+- focused owner-lane unit tests used by the final proof:
   - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_router_handler_parameters.py -q`
   - `PYTHONPATH=. poetry run pytest tests/unit/router/application/test_workflow_triggerer.py -q`
   - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_search_surface.py -q`

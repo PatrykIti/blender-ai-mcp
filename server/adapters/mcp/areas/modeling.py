@@ -20,7 +20,6 @@ from server.adapters.mcp.session_capabilities import (
     describe_guided_flow_feedback,
     get_session_capability_state,
     get_session_capability_state_async,
-    mark_guided_spatial_state_stale_async,
     register_guided_part_role,
     register_guided_part_role_async,
     set_session_capability_state_async,
@@ -731,18 +730,9 @@ async def _modeling_create_primitive_impl_async(
         direct_executor=execute,
     )
     _emit_guided_naming_warning_from_report(ctx, report)
-    if report.error is not None:
-        await finalize_route_tool_call_report_async(ctx, report)
+    await finalize_route_tool_call_report_async(ctx, report)
     result = _legacy_route_report_result(report)
     created_object_name = _extract_created_object_name_from_report_steps(report)
-    if report.error is None and created_object_name is not None:
-        await mark_guided_spatial_state_stale_async(
-            ctx,
-            tool_name="modeling_create_primitive",
-            family="primary_masses" if guided_role in {"body_core", "head_mass", "tail_mass"} else None,
-            reason="modeling_create_primitive",
-            affected_objects=[created_object_name],
-        )
     if created_object_name is not None:
         await _maybe_register_guided_role_async(
             ctx,
@@ -899,17 +889,9 @@ async def _modeling_transform_object_impl_async(
         direct_executor=execute,
     )
     _emit_guided_naming_warning_from_report(ctx, report)
-    if report.error is not None:
-        await finalize_route_tool_call_report_async(ctx, report)
+    await finalize_route_tool_call_report_async(ctx, report)
     result = _legacy_route_report_result(report)
     transformed_object_name = _extract_transformed_object_name_from_report_steps(report)
-    if report.error is None and transformed_object_name is not None:
-        await mark_guided_spatial_state_stale_async(
-            ctx,
-            tool_name="modeling_transform_object",
-            reason="modeling_transform_object",
-            affected_objects=[transformed_object_name],
-        )
     if transformed_object_name is not None:
         await _maybe_register_guided_role_async(
             ctx,

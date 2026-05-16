@@ -804,6 +804,78 @@ def test_resolve_active_compare_scope_prefers_focus_pair_over_last_mutation():
     assert scope.local_region_hint == "focus_pair"
 
 
+def test_resolve_active_compare_scope_uses_last_mutation_before_active_workset():
+    scope = resolve_active_compare_scope(
+        guided_flow_state={
+            "flow_id": "guided_creature_flow",
+            "domain_profile": "creature",
+            "current_step": "checkpoint_iterate",
+            "active_target_scope": {
+                "scope_kind": "object_set",
+                "primary_target": "Body",
+                "object_names": ["Body", "Head", "Tail"],
+                "object_count": 3,
+            },
+        },
+        gate_plan={
+            "plan_id": "plan_creature",
+            "domain_profile": "creature",
+            "gates": [],
+            "completion_blockers": [],
+        },
+        guided_part_registry=[
+            {"object_name": "Body", "role": "body_core", "role_group": "primary_masses"},
+            {"object_name": "Head", "role": "head_mass", "role_group": "primary_masses"},
+            {"object_name": "Tail", "role": "tail_mass", "role_group": "primary_masses"},
+        ],
+        last_guided_affected_objects=["Tail"],
+        target_object=None,
+        target_objects=None,
+        collection_name=None,
+    )
+
+    assert scope is not None
+    assert scope.target_object == "Tail"
+    assert scope.target_objects == ["Tail"]
+    assert scope.local_region_hint == "last_mutation"
+
+
+def test_resolve_active_compare_scope_falls_back_to_active_workset():
+    scope = resolve_active_compare_scope(
+        guided_flow_state={
+            "flow_id": "guided_creature_flow",
+            "domain_profile": "creature",
+            "current_step": "checkpoint_iterate",
+            "active_target_scope": {
+                "scope_kind": "object_set",
+                "primary_target": "Body",
+                "object_names": ["Body", "Head", "Tail"],
+                "object_count": 3,
+            },
+        },
+        gate_plan={
+            "plan_id": "plan_creature",
+            "domain_profile": "creature",
+            "gates": [],
+            "completion_blockers": [],
+        },
+        guided_part_registry=[
+            {"object_name": "Body", "role": "body_core", "role_group": "primary_masses"},
+            {"object_name": "Head", "role": "head_mass", "role_group": "primary_masses"},
+            {"object_name": "Tail", "role": "tail_mass", "role_group": "primary_masses"},
+        ],
+        last_guided_affected_objects=[],
+        target_object=None,
+        target_objects=None,
+        collection_name=None,
+    )
+
+    assert scope is not None
+    assert scope.target_object == "Body"
+    assert scope.target_objects == ["Body", "Head", "Tail"]
+    assert scope.local_region_hint == "active_workset"
+
+
 def test_select_reference_records_keeps_generic_same_view_before_targeted_any_view():
     selected = _select_reference_records_for_scope(
         [
@@ -8770,6 +8842,133 @@ def test_reference_compare_stage_checkpoint_can_compare_full_scene_when_target_o
     assert result.correction_candidates == []
     assert result.planner_detail is None
     assert captured["request"].target_object is None
+
+
+def test_reference_compare_stage_checkpoint_uses_last_mutation_scope_when_target_is_omitted(tmp_path, monkeypatch):
+    image_front = tmp_path / "front.png"
+    image_front.write_bytes(b"front")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly squirrel", {"status": "no_match"})
+    asyncio.run(reference_images(ctx, action="attach", source_path=str(image_front), label="front_ref"))
+    previous_state = get_session_capability_state(ctx)
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=previous_state.phase,
+            goal=previous_state.goal,
+            last_router_status=previous_state.last_router_status,
+            surface_profile="llm-guided",
+            reference_images=previous_state.reference_images,
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "checkpoint_iterate",
+                "active_target_scope": {
+                    "scope_kind": "object_set",
+                    "primary_target": "Body",
+                    "object_names": ["Body", "Head", "Tail"],
+                    "object_count": 3,
+                },
+                "required_checks": [],
+                "next_actions": ["run_checkpoint_iterate"],
+                "allowed_families": ["checkpoint_iterate", "reference_context"],
+                "allowed_roles": [],
+                "completed_roles": ["body_core", "head_mass", "tail_mass"],
+                "missing_roles": [],
+                "required_role_groups": ["checkpoint_iterate"],
+                "step_status": "needs_checkpoint",
+            },
+            gate_plan={
+                "plan_id": "plan_creature",
+                "domain_profile": "creature",
+                "gates": [],
+                "completion_blockers": [],
+            },
+            guided_part_registry=[
+                {"object_name": "Body", "role": "body_core", "role_group": "primary_masses"},
+                {"object_name": "Head", "role": "head_mass", "role_group": "primary_masses"},
+                {"object_name": "Tail", "role": "tail_mass", "role_group": "primary_masses"},
+            ],
+            last_guided_affected_objects=["Tail"],
+        ),
+    )
+
+    captured: dict[str, object] = {}
+
+    class SceneHandler:
+        def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            raise AssertionError("single-object last-mutation scope should not measure object pairs")
+
+        def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
+            raise AssertionError("single-object last-mutation scope should not measure object pairs")
+
+        def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            raise AssertionError("single-object last-mutation scope should not measure object pairs")
+
+        def assert_contact(
+            self, from_object: str, to_object: str, max_gap: float = 0.0001, allow_overlap: bool = False
+        ):
+            raise AssertionError("single-object last-mutation scope should not measure object pairs")
+
+    class CollectionHandler:
+        def list_objects(self, collection_name: str, recursive: bool = True, include_hidden: bool = False):
+            return {"objects": []}
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        captured["request"] = request
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="The last edited tail part is closer to the reference.",
+                visible_changes=["The tail is visible in the target view."],
+                correction_focus=["Tail arc visibility"],
+            ),
+        )
+
+    def _fake_capture_stage_images(*args, **kwargs):
+        captured["capture_kwargs"] = kwargs
+        return [
+            VisionCaptureImageContract(
+                label="target_front_after",
+                image_path=str(tmp_path / "tail_front.jpg"),
+                host_visible_path=str(tmp_path / "tail_front.jpg"),
+                preset_name="target_front",
+                media_type="image/jpeg",
+                view_kind="focus",
+            )
+        ]
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_collection_handler", lambda: CollectionHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: object())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.capture_stage_images", _fake_capture_stage_images)
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            checkpoint_label="stage_last_mutation",
+            preset_profile="compact",
+        )
+    )
+
+    assert result.error is None
+    assert result.target_object == "Tail"
+    assert result.target_objects == ["Tail"]
+    assert result.assembled_target_scope is not None
+    assert result.assembled_target_scope.scope_kind == "single_object"
+    assert result.assembled_target_scope.object_names == ["Tail"]
+    assert captured["capture_kwargs"]["target_object"] == "Tail"
+    assert captured["request"].target_object == "Tail"
 
 
 def test_reference_compare_stage_checkpoint_can_expand_collection_scope(tmp_path, monkeypatch):

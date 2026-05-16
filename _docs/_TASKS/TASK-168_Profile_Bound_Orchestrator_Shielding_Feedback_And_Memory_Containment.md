@@ -206,9 +206,10 @@ After this umbrella lands:
 
 ## Status / Board Update
 
-- move `TASK-168` from `⏳ To Do` to `✅ Done` on the promoted board
-- close the nested `TASK-168-*` execution slices administratively with this
-  umbrella closeout
+- `TASK-168` is closed as `✅ Done` on the promoted board
+- nested `TASK-168-*` execution slices are closed administratively under this
+  umbrella closeout; any future work must be tracked as standalone follow-on
+  tasks rather than reopened child leaves under the closed parent
 - keep the overlap boundary with still-open `TASK-160` historical: `TASK-160`
   continues to own adjacent client-feedback/recovery UX, while `TASK-168`
   closed the profile-bound confinement contract layered on the shipped
@@ -216,17 +217,22 @@ After this umbrella lands:
 
 ## Validation Commands
 
-- `git diff --check`
-- targeted consistency grep for:
-  - `guided_flow_state`
-  - `checkpoint_iterate`
-  - `reference_orchestrator_feedback`
-  - `contract_version`
-  - `surface_profile`
-  - `guided_manual_build`
-- after implementation, inherit the focused proof lanes from the child tasks
+- focused owner-lane unit proof:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_context_bridge.py tests/unit/tools/test_mcp_area_main_paths.py tests/unit/adapters/mcp/test_router_elicitation.py -q`
+  (`108 passed`)
+- repo-wide unit proof:
+  `PYTHONPATH=. poetry run pytest ./tests/unit` (`3457 passed`)
+- repo-wide pre-commit proof:
+  `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure`
+  (passed)
+- repo-supported Blender E2E proof:
+  `poetry run python scripts/run_e2e_tests.py` (`477 passed, 3 skipped`)
+- docs-only post-pass drift validation:
+  `git diff --check` plus targeted consistency grep for stale
+  legacy detail-disclosure wording and stale closeout text
 
 ## Validation Category
 
-- docs-only task-family creation and board sync
-- `git diff --check`
+- runtime confinement repair with focused owner-lane, repo-wide unit,
+  pre-commit, and Blender-backed E2E proof
+- docs-only post-pass closeout wording validation

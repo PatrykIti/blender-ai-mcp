@@ -145,6 +145,20 @@ def _get_runtime_contract_line(ctx: Context) -> str | None:
         return None
 
 
+def _get_runtime_surface_profile(ctx: Context, session: SessionCapabilityState | None = None) -> str:
+    """Return the active FastMCP surface, falling back only when runtime metadata is unavailable."""
+
+    try:
+        surface_profile = getattr(ctx.fastmcp, "_bam_surface_profile", None)
+    except Exception:
+        surface_profile = None
+    if isinstance(surface_profile, str) and surface_profile.strip():
+        return surface_profile.strip()
+    if session is not None and isinstance(session.surface_profile, str) and session.surface_profile.strip():
+        return session.surface_profile.strip()
+    return get_config().MCP_SURFACE_PROFILE
+
+
 def _scene_has_meaningful_guided_objects() -> bool:
     """Return True when the scene already has operator-meaningful objects to inspect."""
 
@@ -378,7 +392,7 @@ async def _maybe_elicit_router_answers(
     first response path.
     """
 
-    if get_config().MCP_SURFACE_PROFILE != "llm-guided":
+    if _get_runtime_surface_profile(ctx) != "llm-guided":
         return result
 
     if result.get("status") != "needs_input":
@@ -479,7 +493,7 @@ async def router_set_goal(
         -> {"status": "ready", ...}  # Learned from previous interaction
     """
     handler = get_router_handler()
-    surface_profile = get_config().MCP_SURFACE_PROFILE
+    surface_profile = _get_runtime_surface_profile(ctx)
     merged_resolved_params = await merge_resolved_params_with_session_answers_async(ctx, resolved_params)
     result = handler.set_goal(goal, merged_resolved_params)
 
@@ -622,8 +636,11 @@ async def router_get_status(ctx: Context) -> RouterStatusContract:
     - Bounded repair guidance when the latest router state indicates a failure/recovery path
     """
     session = await get_session_capability_state_async(ctx)
-    surface_profile = session.surface_profile or get_config().MCP_SURFACE_PROFILE
-    contract_line = session.contract_version or _get_runtime_contract_line(ctx)
+    surface_profile = _get_runtime_surface_profile(ctx, session)
+    contract_line = _get_runtime_contract_line(ctx) or session.contract_version
+    if session.surface_profile != surface_profile or session.contract_version != contract_line:
+        session = replace(session, surface_profile=surface_profile, contract_version=contract_line)
+        await set_session_capability_state_async(ctx, session)
     await apply_visibility_for_session_state(ctx, session)
     diagnostics = build_visibility_diagnostics(
         surface_profile,
@@ -817,7 +834,7 @@ async def guided_register_part(
         )
 
     try:
-        await register_guided_part_role_async(
+        state = await register_guided_part_role_async(
             ctx,
             object_name=object_name,
             role=role,
@@ -830,6 +847,15 @@ async def guided_register_part(
             message=str(exc),
             guided_naming=naming_decision,
         )
+    await set_session_capability_state_async(
+        ctx,
+        replace(
+            state,
+            last_router_disposition=None,
+            last_router_error=None,
+            last_guided_action_block=None,
+        ),
+    )
     status = await router_get_status(ctx)
     payload = status.model_dump(mode="json", exclude_none=True)
     payload["message"] = f"Registered guided role '{role}' for '{object_name}'."
@@ -852,7 +878,7 @@ async def router_clear_goal(ctx: Context) -> str:
     result = handler.clear_goal()
     state = await clear_session_goal_state_async(
         ctx,
-        surface_profile=get_config().MCP_SURFACE_PROFILE,
+        surface_profile=_get_runtime_surface_profile(ctx),
         contract_version=_get_runtime_contract_line(ctx),
     )
     await apply_visibility_for_session_state(ctx, state)
