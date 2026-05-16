@@ -7,7 +7,6 @@ import logging
 from dataclasses import dataclass, field
 from types import SimpleNamespace
 
-import pytest
 from server.adapters.mcp.areas import router as router_area
 from server.adapters.mcp.session_capabilities import (
     SessionCapabilityState,
@@ -972,6 +971,26 @@ def test_guided_register_part_rejects_missing_scene_object(monkeypatch):
     """guided_register_part should fail clearly when the requested object does not exist in Blender."""
 
     monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
+    monkeypatch.setattr(router_area, "get_router_status", lambda: {"enabled": True})
+    monkeypatch.setattr(router_area, "_build_background_job_diagnostics", lambda: (0, {}, []))
+    monkeypatch.setattr(router_area, "_build_timeout_policy_diagnostics", lambda _ctx: None)
+    monkeypatch.setattr(router_area, "_build_task_runtime_diagnostics", lambda _ctx: None)
+    monkeypatch.setattr(router_area, "_build_telemetry_diagnostics", lambda: None)
+    monkeypatch.setattr(router_area, "_get_list_page_size", lambda _ctx: 50)
+    monkeypatch.setattr(router_area, "run_repair_suggestion_assistant", lambda *args, **kwargs: None)
+    monkeypatch.setattr(router_area, "to_repair_assistant_contract", lambda *args, **kwargs: None)
+    monkeypatch.setattr(router_area, "_should_attach_repair_suggestion", lambda _payload: False)
+    monkeypatch.setattr(
+        router_area,
+        "build_visibility_diagnostics",
+        lambda surface_profile, phase, guided_handoff=None, guided_flow_state=None, gate_plan=None: SimpleNamespace(
+            rules=(),
+            visible_capability_ids=("router",),
+            visible_entry_capability_ids=("router",),
+            hidden_capability_ids=(),
+            hidden_category_counts={},
+        ),
+    )
     monkeypatch.setattr("server.adapters.mcp.session_capabilities._scene_object_names", lambda: {"Squirrel_Body"})
 
     ctx = FakeContext(response=object())
@@ -1001,14 +1020,48 @@ def test_guided_register_part_rejects_missing_scene_object(monkeypatch):
         ),
     )
 
-    with pytest.raises(ValueError, match="requires an existing Blender object named 'MissingHead'"):
-        asyncio.run(router_area.guided_register_part(ctx, object_name="MissingHead", role="head_mass"))
+    result = asyncio.run(router_area.guided_register_part(ctx, object_name="MissingHead", role="head_mass"))
+    status = asyncio.run(router_area.router_get_status(ctx))
+    session = get_session_capability_state(ctx)
+
+    assert result.last_router_disposition == "failed_closed_error"
+    assert result.last_router_error is not None
+    assert "requires an existing Blender object named 'MissingHead'" in result.last_router_error
+    assert status.last_router_disposition == "failed_closed_error"
+    assert status.last_router_error == result.last_router_error
+    assert result.reference_orchestrator_feedback is not None
+    assert result.reference_orchestrator_feedback.status == "blocked"
+    assert any("MissingHead" in reason for reason in result.reference_orchestrator_feedback.blocking_reasons)
+    assert status.reference_orchestrator_feedback is not None
+    assert status.reference_orchestrator_feedback.status == "blocked"
+    assert any("MissingHead" in reason for reason in status.reference_orchestrator_feedback.blocking_reasons)
+    assert session.guided_part_registry is None
 
 
 def test_guided_register_part_fails_when_scene_validation_is_unavailable(monkeypatch):
     """guided_register_part should fail clearly when Blender scene validation is unavailable."""
 
     monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
+    monkeypatch.setattr(router_area, "get_router_status", lambda: {"enabled": True})
+    monkeypatch.setattr(router_area, "_build_background_job_diagnostics", lambda: (0, {}, []))
+    monkeypatch.setattr(router_area, "_build_timeout_policy_diagnostics", lambda _ctx: None)
+    monkeypatch.setattr(router_area, "_build_task_runtime_diagnostics", lambda _ctx: None)
+    monkeypatch.setattr(router_area, "_build_telemetry_diagnostics", lambda: None)
+    monkeypatch.setattr(router_area, "_get_list_page_size", lambda _ctx: 50)
+    monkeypatch.setattr(router_area, "run_repair_suggestion_assistant", lambda *args, **kwargs: None)
+    monkeypatch.setattr(router_area, "to_repair_assistant_contract", lambda *args, **kwargs: None)
+    monkeypatch.setattr(router_area, "_should_attach_repair_suggestion", lambda _payload: False)
+    monkeypatch.setattr(
+        router_area,
+        "build_visibility_diagnostics",
+        lambda surface_profile, phase, guided_handoff=None, guided_flow_state=None, gate_plan=None: SimpleNamespace(
+            rules=(),
+            visible_capability_ids=("router",),
+            visible_entry_capability_ids=("router",),
+            hidden_capability_ids=(),
+            hidden_category_counts={},
+        ),
+    )
     monkeypatch.setattr(
         "server.adapters.mcp.session_capabilities._scene_object_names",
         lambda: (_ for _ in ()).throw(
@@ -1045,5 +1098,19 @@ def test_guided_register_part_fails_when_scene_validation_is_unavailable(monkeyp
         ),
     )
 
-    with pytest.raises(ValueError, match="could not validate object 'Squirrel_Body' against the Blender scene"):
-        asyncio.run(router_area.guided_register_part(ctx, object_name="Squirrel_Body", role="body_core"))
+    result = asyncio.run(router_area.guided_register_part(ctx, object_name="Squirrel_Body", role="body_core"))
+    status = asyncio.run(router_area.router_get_status(ctx))
+    session = get_session_capability_state(ctx)
+
+    assert result.last_router_disposition == "failed_closed_error"
+    assert result.last_router_error is not None
+    assert "could not validate object 'Squirrel_Body' against the Blender scene" in result.last_router_error
+    assert status.last_router_disposition == "failed_closed_error"
+    assert status.last_router_error == result.last_router_error
+    assert result.reference_orchestrator_feedback is not None
+    assert result.reference_orchestrator_feedback.status == "blocked"
+    assert any("Squirrel_Body" in reason for reason in result.reference_orchestrator_feedback.blocking_reasons)
+    assert status.reference_orchestrator_feedback is not None
+    assert status.reference_orchestrator_feedback.status == "blocked"
+    assert any("Squirrel_Body" in reason for reason in status.reference_orchestrator_feedback.blocking_reasons)
+    assert session.guided_part_registry is None

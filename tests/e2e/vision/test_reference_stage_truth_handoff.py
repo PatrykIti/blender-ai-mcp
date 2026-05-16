@@ -143,21 +143,14 @@ def test_reference_compare_stage_checkpoint_exposes_truth_bundle_and_followup(
             item.object_name == body_name and item.role == "anchor_core"
             for item in result.assembled_target_scope.object_roles
         )
-        assert result.truth_bundle is not None
-        assert result.truth_bundle.summary.pairing_strategy == "required_creature_seams"
-        assert result.truth_bundle.summary.pair_count == 1
-        assert result.truth_bundle.summary.contact_failures == 1
-        assert result.truth_bundle.summary.separated_pairs == 1
-        assert result.truth_bundle.checks[0].relation_pair_id is not None
-        assert "attachment" in result.truth_bundle.checks[0].relation_kinds
-        assert result.truth_followup is not None
-        assert result.truth_followup.continue_recommended is True
-        assert result.truth_followup.focus_pairs == [f"{head_name} -> {body_name}"]
-        assert any(item.tool_name == "scene_assert_contact" for item in result.truth_followup.items)
-        assert any(item.tool_name == "scene_measure_gap" for item in result.truth_followup.items)
-        assert result.correction_candidates
-        assert result.correction_candidates[0].focus_pairs == [f"{head_name} -> {body_name}"]
-        assert "truth" in result.correction_candidates[0].source_signals
+        assert result.truth_bundle is None
+        assert result.truth_followup is None
+        assert result.correction_candidates == []
+        assert result.planner_detail is None
+        assert result.reference_orchestrator_feedback is not None
+        assert any(
+            f"{head_name} -> {body_name}" in focus for focus in result.reference_orchestrator_feedback.correction_focus
+        )
         assert result.refinement_route is not None
         assert result.refinement_route.selected_family == "macro"
         assert result.refinement_route.blockers
@@ -244,16 +237,12 @@ def test_reference_compare_stage_checkpoint_prefers_body_anchor_for_multi_part_c
             item.object_name == tail_name and item.role == "attached_appendage"
             for item in result.assembled_target_scope.object_roles
         )
-        assert result.truth_bundle is not None
-        assert result.truth_bundle.summary.pairing_strategy == "required_creature_seams"
-        assert result.truth_bundle.summary.pair_count == 2
-        assert result.truth_followup is not None
-        assert result.truth_followup.focus_pairs == [
-            f"{head_name} -> {body_name}",
-            f"{tail_name} -> {body_name}",
-        ]
-        assert result.correction_candidates
-        assert result.correction_candidates[0].focus_pairs[0].endswith(f"-> {body_name}")
+        assert result.truth_bundle is None
+        assert result.truth_followup is None
+        assert result.correction_candidates == []
+        assert result.planner_detail is None
+        assert result.reference_orchestrator_feedback is not None
+        assert any(f"-> {body_name}" in focus for focus in result.reference_orchestrator_feedback.correction_focus)
     except RuntimeError as e:
         _skip_if_blender_unavailable(e)
 

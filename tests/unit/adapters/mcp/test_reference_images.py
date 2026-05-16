@@ -6849,10 +6849,10 @@ def test_reference_compare_stage_checkpoint_captures_deterministic_stage_set(tmp
     assert result.assembled_target_scope.scope_kind == "single_object"
     assert result.assembled_target_scope.primary_target == "Squirrel"
     assert result.assembled_target_scope.object_names == ["Squirrel"]
-    assert result.truth_bundle is not None
-    assert result.truth_bundle.summary.pairing_strategy == "none"
-    assert result.truth_followup is not None
-    assert result.truth_followup.continue_recommended is False
+    assert result.truth_bundle is None
+    assert result.truth_followup is None
+    assert result.correction_candidates == []
+    assert result.planner_detail is None
     assert result.compare_diagnostics is not None
     assert result.compare_diagnostics.packet_count == 2
     assert [packet.target_view for packet in result.compare_diagnostics.packets] == ["front", "side"]
@@ -8066,7 +8066,9 @@ def test_reference_compare_stage_checkpoint_omits_compare_diagnostics_on_clean_c
     assert result.planner_detail is None
 
 
-def test_reference_compare_stage_checkpoint_emits_compact_diagnostics_for_packet_evidence_refs(tmp_path, monkeypatch):
+def test_reference_compare_stage_checkpoint_keeps_packet_diagnostics_without_heavy_candidates_on_compact_path(
+    tmp_path, monkeypatch
+):
     image_front = tmp_path / "front.png"
     image_front.write_bytes(b"front")
     monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
@@ -8189,11 +8191,14 @@ def test_reference_compare_stage_checkpoint_emits_compact_diagnostics_for_packet
     assert result.error is None
     assert calls == ["packet_extraction", "packet_ranking"]
     assert result.compare_diagnostics is not None
-    assert result.correction_candidates
     packet_id = result.compare_diagnostics.packets[0].packet_id
-    assert result.correction_candidates[0].vision_evidence is not None
-    assert result.correction_candidates[0].vision_evidence.packet_evidence_refs
-    assert result.correction_candidates[0].vision_evidence.packet_evidence_refs[0].packet_id == packet_id
+    assert packet_id
+    assert result.correction_candidates == []
+    assert result.truth_bundle is None
+    assert result.truth_followup is None
+    assert result.planner_detail is None
+    assert result.reference_orchestrator_feedback is not None
+    assert "Head silhouette" in result.reference_orchestrator_feedback.correction_focus
 
 
 def test_reference_compare_stage_checkpoint_preserves_extraction_when_packet_ranking_fails(tmp_path, monkeypatch):
@@ -8760,10 +8765,10 @@ def test_reference_compare_stage_checkpoint_can_compare_full_scene_when_target_o
     assert result.assembled_target_scope is not None
     assert result.assembled_target_scope.scope_kind == "scene"
     assert result.assembled_target_scope.object_names == []
-    assert result.truth_bundle is not None
-    assert result.truth_bundle.summary.pairing_strategy == "none"
-    assert result.truth_followup is not None
-    assert result.truth_followup.continue_recommended is False
+    assert result.truth_bundle is None
+    assert result.truth_followup is None
+    assert result.correction_candidates == []
+    assert result.planner_detail is None
     assert captured["request"].target_object is None
 
 
@@ -8874,23 +8879,10 @@ def test_reference_compare_stage_checkpoint_can_expand_collection_scope(tmp_path
     assert result.assembled_target_scope.scope_kind == "collection"
     assert result.assembled_target_scope.collection_name == "Squirrel"
     assert result.assembled_target_scope.object_count == 3
-    assert result.truth_bundle is not None
-    assert result.truth_bundle.summary.pairing_strategy == "required_creature_seams"
-    assert result.truth_bundle.summary.pair_count == 2
-    assert result.truth_followup is not None
-    assert result.truth_followup.continue_recommended is True
-    assert result.truth_followup.focus_pairs == [
-        "Squirrel_Head -> Squirrel_Body",
-        "Squirrel_Tail -> Squirrel_Body",
-    ]
-    assert result.truth_followup.macro_candidates
-    assert result.truth_followup.macro_candidates[0].macro_name == "macro_align_part_with_contact"
-    assert result.truth_followup.macro_candidates[0].arguments_hint is not None
-    assert result.truth_followup.macro_candidates[0].arguments_hint["reference_object"] == "Squirrel_Body"
-    assert result.correction_candidates
-    assert result.correction_candidates[0].priority_rank == 1
-    assert result.correction_candidates[0].candidate_kind == "truth_only"
-    assert result.correction_candidates[0].truth_evidence is not None
+    assert result.truth_bundle is None
+    assert result.truth_followup is None
+    assert result.correction_candidates == []
+    assert result.planner_detail is None
     assert result.compare_diagnostics is not None
     assert result.compare_diagnostics.complexity_tier == "complex"
     assert result.compare_diagnostics.packet_count == 2
@@ -9359,11 +9351,9 @@ def test_reference_compare_stage_checkpoint_can_track_explicit_object_set_scope(
     assert result.assembled_target_scope.scope_kind == "object_set"
     assert result.assembled_target_scope.object_names == ["Squirrel_Head", "Squirrel_Tail"]
     assert result.assembled_target_scope.object_count == 2
-    assert result.truth_bundle is not None
-    assert result.truth_bundle.summary.pairing_strategy == "primary_to_others"
-    assert result.truth_bundle.summary.pair_count == 1
-    assert result.truth_followup is not None
-    assert result.truth_followup.continue_recommended is False
+    assert result.truth_bundle is None
+    assert result.truth_followup is None
+    assert result.planner_detail is None
     assert result.correction_candidates == []
     assert captured["capture_kwargs"]["target_object"] == result.assembled_target_scope.primary_target
 
@@ -9538,8 +9528,10 @@ def test_reference_compare_stage_checkpoint_preserves_required_creature_seams_un
     assert result.capture_count == 1
     assert result.captures == []
     assert result.budget_control.detail_trimmed is True
-    assert result.truth_bundle is not None
-    assert result.truth_bundle.summary.pair_count == 4
+    assert result.truth_bundle is None
+    assert result.truth_followup is None
+    assert result.correction_candidates == []
+    assert result.planner_detail is None
 
 
 def test_reference_compare_stage_checkpoint_marks_rich_planner_detail_as_trimmed_when_budget_limited(

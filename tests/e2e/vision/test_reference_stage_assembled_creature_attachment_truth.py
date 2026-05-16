@@ -149,45 +149,26 @@ def test_reference_compare_stage_checkpoint_surfaces_required_creature_seams_tog
         )
 
         assert result.error is None
-        assert result.truth_bundle is not None
-        assert result.truth_bundle.summary.pairing_strategy == "required_creature_seams"
-        assert result.truth_bundle.summary.pair_count == 5
-
-        pair_labels = [f"{item.from_object} -> {item.to_object}" for item in result.truth_bundle.checks]
-        assert pair_labels == [
+        pair_labels = [
             f"{head_name} -> {body_name}",
             f"{tail_name} -> {body_name}",
             f"{forelimb_name} -> {body_name}",
             f"{snout_name} -> {head_name}",
             f"{nose_name} -> {snout_name}",
         ]
+        assert result.truth_bundle is None
+        assert result.truth_followup is None
+        assert result.correction_candidates == []
+        assert result.planner_detail is None
+        assert result.compare_diagnostics is not None
+        diagnostic_pairs = [pair for packet in result.compare_diagnostics.packets for pair in packet.truth_pairs]
+        assert diagnostic_pairs == pair_labels
 
-        semantics_by_pair = {
-            f"{item.from_object} -> {item.to_object}": item.attachment_semantics for item in result.truth_bundle.checks
-        }
-        assert semantics_by_pair[f"{head_name} -> {body_name}"] is not None
-        assert semantics_by_pair[f"{head_name} -> {body_name}"].preferred_macro == "macro_align_part_with_contact"
-        assert semantics_by_pair[f"{forelimb_name} -> {body_name}"] is not None
-        assert semantics_by_pair[f"{forelimb_name} -> {body_name}"].seam_kind == "limb_body"
-        assert semantics_by_pair[f"{snout_name} -> {head_name}"] is not None
-        assert semantics_by_pair[f"{snout_name} -> {head_name}"].preferred_macro == "macro_attach_part_to_surface"
-        assert semantics_by_pair[f"{nose_name} -> {snout_name}"] is not None
-        assert semantics_by_pair[f"{nose_name} -> {snout_name}"].seam_kind == "nose_snout"
-
-        assert result.truth_followup is not None
-        assert result.truth_followup.focus_pairs == pair_labels
-        assert [candidate.macro_name for candidate in result.truth_followup.macro_candidates] == [
-            "macro_align_part_with_contact",
-            "macro_align_part_with_contact",
-            "macro_align_part_with_contact",
-            "macro_attach_part_to_surface",
-            "macro_attach_part_to_surface",
-        ]
-
-        assert result.correction_candidates
-        assert [candidate.focus_pairs[0] for candidate in result.correction_candidates] == pair_labels
-        assert any(pair.endswith(f"-> {body_name}") for pair in result.truth_followup.focus_pairs)
-        assert any(pair.endswith(f"-> {head_name}") for pair in result.truth_followup.focus_pairs)
-        assert any(pair.startswith(f"{forelimb_name} -> ") for pair in result.truth_followup.focus_pairs)
+        assert result.reference_orchestrator_feedback is not None
+        assert any(f"-> {body_name}" in focus for focus in result.reference_orchestrator_feedback.correction_focus)
+        assert any(
+            focus.startswith(f"{forelimb_name} -> ")
+            for focus in result.reference_orchestrator_feedback.correction_focus
+        )
     except RuntimeError as e:
         _skip_if_blender_unavailable(e)

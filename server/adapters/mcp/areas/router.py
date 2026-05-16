@@ -48,6 +48,7 @@ from server.adapters.mcp.router_helper import get_router_status
 from server.adapters.mcp.sampling.assistant_runner import run_repair_suggestion_assistant
 from server.adapters.mcp.sampling.result_types import to_repair_assistant_contract
 from server.adapters.mcp.session_capabilities import (
+    SessionCapabilityState,
     apply_visibility_for_session_state,
     bootstrap_guided_empty_scene_primary_workset_async,
     build_guided_reference_readiness_payload,
@@ -177,6 +178,49 @@ def _scene_has_meaningful_guided_objects() -> bool:
     if helper_object_count > 0 and names_set <= _GUIDED_STARTUP_SCENE_OBJECT_NAMES:
         return False
     return True
+
+
+async def _guided_register_part_blocked_status(
+    ctx: Context,
+    session: SessionCapabilityState,
+    *,
+    message: str,
+    guided_naming: Any | None = None,
+) -> RouterStatusContract:
+    """Persist a typed fail-closed guided registration block and return refreshed status."""
+
+    flow_contract = (
+        GuidedFlowStateContract.model_validate(session.guided_flow_state)
+        if session.guided_flow_state is not None
+        else None
+    )
+    runtime_policy_block = {
+        "message": message,
+        "blocking_reasons": [message],
+        "next_actions": list(flow_contract.next_actions if flow_contract is not None else []),
+        "next_checkpoint_tool": (
+            "reference_iterate_stage_checkpoint"
+            if flow_contract is not None and flow_contract.current_step == "checkpoint_iterate"
+            else None
+        ),
+        "recommended_support_tools": [],
+        "source": "guided_register_part",
+    }
+    await set_session_capability_state_async(
+        ctx,
+        replace(
+            session,
+            last_router_disposition="failed_closed_error",
+            last_router_error=message,
+            last_guided_action_block=runtime_policy_block,
+        ),
+    )
+    status = await router_get_status(ctx)
+    payload = status.model_dump(mode="json", exclude_none=True)
+    payload["message"] = message
+    if guided_naming is not None:
+        payload["guided_naming"] = guided_naming.model_dump(mode="json")
+    return RouterStatusContract.model_validate(payload)
 
 
 def _build_background_job_diagnostics() -> tuple[int, dict[str, int], list[dict[str, Any]]]:
@@ -727,36 +771,11 @@ async def guided_register_part(
             )
         except ValueError as exc:
             message = str(exc)
-            flow_contract = (
-                GuidedFlowStateContract.model_validate(session.guided_flow_state)
-                if session.guided_flow_state is not None
-                else None
-            )
-            runtime_policy_block = {
-                "message": message,
-                "blocking_reasons": [message],
-                "next_actions": list(flow_contract.next_actions if flow_contract is not None else []),
-                "next_checkpoint_tool": (
-                    "reference_iterate_stage_checkpoint"
-                    if flow_contract is not None and flow_contract.current_step == "checkpoint_iterate"
-                    else None
-                ),
-                "recommended_support_tools": [],
-                "source": "guided_register_part",
-            }
-            await set_session_capability_state_async(
+            return await _guided_register_part_blocked_status(
                 ctx,
-                replace(
-                    session,
-                    last_router_disposition="failed_closed_error",
-                    last_router_error=message,
-                    last_guided_action_block=runtime_policy_block,
-                ),
+                session,
+                message=message,
             )
-            status = await router_get_status(ctx)
-            payload = status.model_dump(mode="json", exclude_none=True)
-            payload["message"] = message
-            return RouterStatusContract.model_validate(payload)
         naming_decision = evaluate_guided_object_name(
             object_name=object_name,
             role=role,
@@ -765,39 +784,21 @@ async def guided_register_part(
         )
         if naming_decision.status == "blocked":
             message = naming_decision.message or "Guided object naming policy blocked registration."
-            flow_contract = (
-                GuidedFlowStateContract.model_validate(session.guided_flow_state)
-                if session.guided_flow_state is not None
-                else None
-            )
-            runtime_policy_block = {
-                "message": message,
-                "blocking_reasons": [message],
-                "next_actions": list(flow_contract.next_actions if flow_contract is not None else []),
-                "next_checkpoint_tool": (
-                    "reference_iterate_stage_checkpoint"
-                    if flow_contract is not None and flow_contract.current_step == "checkpoint_iterate"
-                    else None
-                ),
-                "recommended_support_tools": [],
-                "source": "guided_register_part",
-            }
-            await set_session_capability_state_async(
+            return await _guided_register_part_blocked_status(
                 ctx,
-                replace(
-                    session,
-                    last_router_disposition="failed_closed_error",
-                    last_router_error=message,
-                    last_guided_action_block=runtime_policy_block,
-                ),
+                session,
+                message=message,
+                guided_naming=naming_decision,
             )
-            status = await router_get_status(ctx)
-            payload = status.model_dump(mode="json", exclude_none=True)
-            payload["message"] = message
-            payload["guided_naming"] = naming_decision.model_dump(mode="json")
-            return RouterStatusContract.model_validate(payload)
 
-    require_existing_scene_object_name(object_name)
+    try:
+        require_existing_scene_object_name(object_name)
+    except ValueError as exc:
+        return await _guided_register_part_blocked_status(
+            ctx,
+            session,
+            message=str(exc),
+        )
 
     await register_guided_part_role_async(
         ctx,

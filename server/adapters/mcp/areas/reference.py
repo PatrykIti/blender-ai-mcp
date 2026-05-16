@@ -26,6 +26,9 @@ from server.adapters.mcp.areas.reference_compare_packets import (
     execute_compare_packets as _execute_compare_packets,
 )
 from server.adapters.mcp.areas.reference_compare_packets import (
+    has_compare_uncertainty as _has_compare_uncertainty,
+)
+from server.adapters.mcp.areas.reference_compare_packets import (
     should_emit_compare_diagnostics as _should_emit_compare_diagnostics,
 )
 from server.adapters.mcp.areas.reference_current_view import (
@@ -553,6 +556,37 @@ def _compare_response(
     )
 
 
+def _compact_compare_detail_allowed(
+    *,
+    preset_profile: CapturePresetProfile,
+    error: str | None,
+    compare_diagnostics: ReferenceCompareDiagnosticsContract | None,
+    hard_failure: bool = False,
+    emit_compact_detail: bool = False,
+) -> bool:
+    """Return True when compact output may include heavy truth/candidate/planner detail."""
+
+    if emit_compact_detail or preset_profile != "compact" or error is not None or hard_failure:
+        return True
+    if compare_diagnostics is None:
+        return False
+    return bool(
+        compare_diagnostics.synthesis_status == "error"
+        or bool(compare_diagnostics.conflict_notes)
+        or _has_compare_uncertainty(compare_diagnostics)
+    )
+
+
+def _gate_fields_have_hard_failure(gate_fields: Mapping[str, Any]) -> bool:
+    """Return True when gate state has a concrete failed runtime assertion."""
+
+    for field_name in ("gate_statuses", "completion_blockers"):
+        for item in list(gate_fields.get(field_name) or []):
+            if getattr(item, "status", None) == "failed":
+                return True
+    return False
+
+
 def _gate_checkpoint_fields(active_gate_plan: dict[str, Any] | None) -> dict[str, Any]:
     """Project active gate plan details into strict checkpoint response fields."""
 
@@ -635,10 +669,14 @@ def _stage_compare_response(
     error: str | None = None,
 ) -> ReferenceCompareStageCheckpointResponseContract:
     emitted_captures = list(captures) if include_captures else []
-    heavy_detail_allowed = bool(
-        emit_compact_detail or preset_profile != "compact" or error is not None or compare_diagnostics is not None
-    )
     gate_fields = _gate_checkpoint_fields(active_gate_plan)
+    heavy_detail_allowed = _compact_compare_detail_allowed(
+        preset_profile=preset_profile,
+        error=error,
+        compare_diagnostics=compare_diagnostics,
+        hard_failure=_gate_fields_have_hard_failure(gate_fields),
+        emit_compact_detail=emit_compact_detail,
+    )
     guided_flow_contract = (
         GuidedFlowStateContract.model_validate(guided_flow_state) if guided_flow_state is not None else None
     )
@@ -794,10 +832,11 @@ def _iterate_stage_response(
         correction_focus=correction_focus,
         loop_disposition=loop_disposition,
     )
-    heavy_detail_allowed = bool(
-        compare_result.preset_profile != "compact"
-        or error is not None
-        or compare_result.compare_diagnostics is not None
+    heavy_detail_allowed = _compact_compare_detail_allowed(
+        preset_profile=compare_result.preset_profile,
+        error=error,
+        compare_diagnostics=compare_result.compare_diagnostics,
+        hard_failure=_gate_fields_have_hard_failure(gate_fields),
     )
     return ReferenceIterateStageCheckpointResponseContract(
         action="iterate_stage_checkpoint",
