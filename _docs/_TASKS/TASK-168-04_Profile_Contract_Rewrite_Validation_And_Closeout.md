@@ -115,7 +115,7 @@
   - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_prompt_provider.py -q`
   - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_prompt_provider_flow_bundles.py -q`
   - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_public_surface_docs.py -q`
-- focused Blender-backed owner lanes to cover under the repo-supported runner:
+- focused Blender-backed owner lanes covered by the final repo-supported runner:
   - `tests/e2e/router/test_guided_manual_handoff.py`
   - `tests/e2e/integration/test_guided_streamable_spatial_support.py`
   - `tests/e2e/integration/test_guided_gate_state_transport.py`

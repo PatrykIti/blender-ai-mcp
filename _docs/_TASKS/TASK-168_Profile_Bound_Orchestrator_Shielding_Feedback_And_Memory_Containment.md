@@ -217,9 +217,12 @@ After this umbrella lands:
 
 ## Validation Commands
 
-- focused owner-lane unit proof:
+- initial focused owner-lane unit proof:
   `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_context_bridge.py tests/unit/tools/test_mcp_area_main_paths.py tests/unit/adapters/mcp/test_router_elicitation.py -q`
   (`108 passed`)
+- post-agent targeted owner-lane unit proof:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_router_elicitation.py tests/unit/tools/test_mcp_area_main_paths.py tests/unit/adapters/mcp/test_reference_images.py -q`
+  (`192 passed`)
 - repo-wide unit proof:
   `PYTHONPATH=. poetry run pytest ./tests/unit` (`3457 passed`)
 - repo-wide pre-commit proof:

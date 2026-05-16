@@ -99,7 +99,7 @@ if packets.returned_uncertain:
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_compare_packets.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
 - `PYTHONPATH=. poetry run pytest ./tests/unit`
-- focused Blender-backed owner lanes to cover under the repo-supported runner:
+- focused Blender-backed owner lanes covered by the final repo-supported runner:
   - `tests/e2e/vision/test_reference_stage_multi_reference_scaling.py`
   - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 - `poetry run python scripts/run_e2e_tests.py`
