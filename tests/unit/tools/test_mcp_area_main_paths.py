@@ -787,7 +787,7 @@ def test_async_modeling_create_finalizes_partial_failed_report(monkeypatch):
     assert "Guided execution blocked later corrected step." in result
     assert finalized_reports == [report]
     assert stale_calls == []
-    assert recorded_roles == [("Body", "body_core", None)]
+    assert recorded_roles == []
 
 
 def test_async_modeling_create_emits_guided_flow_feedback_when_refresh_rearms(monkeypatch):
@@ -992,7 +992,7 @@ def test_async_modeling_create_finalizes_from_report_steps_when_legacy_text_is_n
 
     assert result == "Corrected route completed."
     assert stale_calls == [("modeling_create_primitive", "primary_masses", "modeling_create_primitive")]
-    assert recorded_roles == [("Body", "body_core", None)]
+    assert recorded_roles == []
 
 
 def test_async_scene_clean_marks_spatial_state_stale_from_report_steps_after_correction(monkeypatch):

@@ -747,7 +747,7 @@ async def _modeling_create_primitive_impl_async(
         await _maybe_register_guided_role_async(
             ctx,
             object_name=created_object_name,
-            guided_role=guided_role,
+            guided_role=guided_role if report.error is None and not report.router_applied else None,
             role_group=role_group,
         )
     feedback = describe_guided_flow_feedback(previous_state, await get_session_capability_state_async(ctx))
