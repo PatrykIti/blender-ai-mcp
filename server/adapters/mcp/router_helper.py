@@ -1347,7 +1347,7 @@ def route_tool_call_report(
                         final_guided_policy = step_action_policy
                         if isinstance(step_action_policy.get("guided_naming"), dict):
                             final_naming_policy = step_action_policy
-                    if step_action_policy.get("kind") == "deny":
+                    if len(corrected_tools) == 1 and step_action_policy.get("kind") == "deny":
                         context.guided_tool_family = step_action_policy.get(
                             "family",
                             _resolve_guided_effective_family(corrected_tool_name, corrected_tool_params),

@@ -10,6 +10,7 @@ from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
 from server.adapters.mcp.guided_contract import canonicalize_modeling_create_primitive_arguments
 from server.adapters.mcp.guided_naming_policy import evaluate_guided_object_name
 from server.adapters.mcp.router_helper import (
+    finalize_route_tool_call_report_async,
     route_tool_call,
     route_tool_call_async,
     route_tool_call_report,
@@ -82,9 +83,6 @@ def _extract_transformed_object_name(result: str) -> str | None:
 def _extract_created_object_name_from_report_steps(report: Any) -> str | None:
     """Return the created object name from successful routed create steps."""
 
-    if getattr(report, "error", None) is not None:
-        return None
-
     for step in reversed(tuple(getattr(report, "steps", ()) or ())):
         if getattr(step, "tool_name", None) != "modeling_create_primitive":
             continue
@@ -101,9 +99,6 @@ def _extract_created_object_name_from_report_steps(report: Any) -> str | None:
 
 def _extract_transformed_object_name_from_report_steps(report: Any) -> str | None:
     """Return the transformed object name from successful routed transform steps."""
-
-    if getattr(report, "error", None) is not None:
-        return None
 
     for step in reversed(tuple(getattr(report, "steps", ()) or ())):
         if getattr(step, "tool_name", None) != "modeling_transform_object":
@@ -736,9 +731,11 @@ async def _modeling_create_primitive_impl_async(
         direct_executor=execute,
     )
     _emit_guided_naming_warning_from_report(ctx, report)
+    if report.error is not None:
+        await finalize_route_tool_call_report_async(ctx, report)
     result = _legacy_route_report_result(report)
     created_object_name = _extract_created_object_name_from_report_steps(report)
-    if created_object_name is not None:
+    if report.error is None and created_object_name is not None:
         await mark_guided_spatial_state_stale_async(
             ctx,
             tool_name="modeling_create_primitive",
@@ -902,9 +899,11 @@ async def _modeling_transform_object_impl_async(
         direct_executor=execute,
     )
     _emit_guided_naming_warning_from_report(ctx, report)
+    if report.error is not None:
+        await finalize_route_tool_call_report_async(ctx, report)
     result = _legacy_route_report_result(report)
     transformed_object_name = _extract_transformed_object_name_from_report_steps(report)
-    if transformed_object_name is not None:
+    if report.error is None and transformed_object_name is not None:
         await mark_guided_spatial_state_stale_async(
             ctx,
             tool_name="modeling_transform_object",

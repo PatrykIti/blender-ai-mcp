@@ -741,6 +741,96 @@ def test_route_tool_call_report_rechecks_corrected_steps_after_guided_registrati
     assert report.policy_context["kind"] == "deny"
 
 
+def test_route_tool_call_report_allows_corrected_transform_after_create_registration(monkeypatch):
+    """Corrected create-then-transform should not preflight-block before the create registers its role."""
+
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            surface_profile="llm-guided",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_primary_masses"],
+                "blocked_families": [],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": [],
+                "missing_roles": ["body_core", "head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    class Router:
+        def process_llm_tool_call(self, tool_name, params, prompt):
+            return [
+                {
+                    "tool": "modeling_create_primitive",
+                    "params": {
+                        "primitive_type": "Sphere",
+                        "name": "Squirrel_Body",
+                        "guided_role": "body_core",
+                    },
+                },
+                {
+                    "tool": "modeling_transform_object",
+                    "params": {
+                        "name": "Squirrel_Body",
+                        "scale": [1.4, 1.0, 0.9],
+                    },
+                },
+            ]
+
+    dispatched: list[tuple[str, dict[str, object]]] = []
+
+    class Dispatcher:
+        def execute(self, tool_name, params):
+            dispatched.append((tool_name, dict(params)))
+            if tool_name == "modeling_create_primitive":
+                return "Created Sphere named 'Squirrel_Body'"
+            if tool_name == "modeling_transform_object":
+                return "Transformed object 'Squirrel_Body'"
+            raise AssertionError(f"unexpected tool {tool_name}")
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: True)
+    monkeypatch.setattr("server.adapters.mcp.router_helper.get_router", lambda: Router())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.get_dispatcher", lambda: Dispatcher())
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_context", lambda: ctx)
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: get_session_capability_state(ctx),
+    )
+
+    report = route_tool_call_report(
+        tool_name="modeling_create_primitive",
+        params={"primitive_type": "Sphere", "name": "Squirrel_Body", "guided_role": "body_core"},
+        direct_executor=lambda: "should not run",
+    )
+    state = get_session_capability_state(ctx)
+
+    assert report.router_disposition == "corrected"
+    assert report.error is None
+    assert [tool_name for tool_name, _params in dispatched] == [
+        "modeling_create_primitive",
+        "modeling_transform_object",
+    ]
+    assert state.guided_part_registry is not None
+    assert state.guided_part_registry[0]["object_name"] == "Squirrel_Body"
+    assert state.guided_flow_state is not None
+    assert "body_core" not in state.guided_flow_state["missing_roles"]
+
+
 def test_route_tool_call_marks_spatial_stale_after_partial_corrected_dispatch(monkeypatch):
     """A corrected dispatch that mutates before fail-closing still invalidates guided spatial facts."""
 

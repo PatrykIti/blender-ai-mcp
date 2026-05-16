@@ -699,6 +699,97 @@ def test_async_modeling_create_offloads_routed_sync_execution(monkeypatch):
     assert recorded_roles == [("Body", "body_core", None)]
 
 
+def test_async_modeling_create_finalizes_partial_failed_report(monkeypatch):
+    recorded_roles: list[tuple[str, str, str | None]] = []
+    stale_calls: list[tuple[str, str | None, str | None]] = []
+    finalized_reports: list[MCPExecutionReport] = []
+
+    async def hydrate(ctx):
+        return None
+
+    async def get_session_capability_state_async(ctx):
+        return SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            guided_flow_state={"flow_id": "guided_creature_flow"},
+        )
+
+    async def mark_guided_spatial_state_stale_async(ctx, **kwargs):
+        stale_calls.append((kwargs["tool_name"], kwargs.get("family"), kwargs.get("reason")))
+        return await get_session_capability_state_async(ctx)
+
+    async def register_guided_part_role_async(ctx, **kwargs):
+        recorded_roles.append((kwargs["object_name"], kwargs["role"], kwargs.get("role_group")))
+        return await get_session_capability_state_async(ctx)
+
+    async def finalize_route_tool_call_report_async(ctx, report):
+        finalized_reports.append(report)
+
+    report = MCPExecutionReport(
+        context=MCPExecutionContext(
+            tool_name="modeling_create_primitive",
+            params={"primitive_type": "Sphere", "name": "Body", "guided_role": "body_core"},
+            session_phase="build",
+            surface_profile="llm-guided",
+            guided_tool_family="primary_masses",
+            guided_role="body_core",
+        ),
+        router_enabled=True,
+        router_applied=True,
+        router_disposition="failed_closed_error",
+        steps=(
+            ExecutionStep(
+                tool_name="modeling_create_primitive",
+                params={"primitive_type": "Sphere", "name": "Body"},
+                result="Created Sphere named 'Body'",
+            ),
+        ),
+        error="Guided execution blocked later corrected step.",
+    )
+
+    async def to_thread(fn, /, *args, **kwargs):
+        return fn(*args, **kwargs)
+
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling._hydrate_sync_route_session", hydrate)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling._route_tool_call_report_for_context",
+        lambda *args, **kwargs: report,
+    )
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.asyncio.to_thread", to_thread)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.get_session_capability_state_async",
+        get_session_capability_state_async,
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.mark_guided_spatial_state_stale_async",
+        mark_guided_spatial_state_stale_async,
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.register_guided_part_role_async",
+        register_guided_part_role_async,
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling.finalize_route_tool_call_report_async",
+        finalize_route_tool_call_report_async,
+    )
+
+    from server.adapters.mcp.areas.modeling import _modeling_create_primitive_impl_async
+
+    result = asyncio.run(
+        _modeling_create_primitive_impl_async(
+            MagicMock(),
+            primitive_type="Sphere",
+            radius=0.5,
+            name="Body",
+            guided_role="body_core",
+        )
+    )
+
+    assert "Guided execution blocked later corrected step." in result
+    assert finalized_reports == [report]
+    assert stale_calls == []
+    assert recorded_roles == [("Body", "body_core", None)]
+
+
 def test_async_modeling_create_emits_guided_flow_feedback_when_refresh_rearms(monkeypatch):
     infos: list[str] = []
 
