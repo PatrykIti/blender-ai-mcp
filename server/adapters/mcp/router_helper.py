@@ -33,6 +33,7 @@ from server.adapters.mcp.session_capabilities import (
     mark_guided_spatial_state_stale,
     mark_guided_spatial_state_stale_async,
     record_router_execution_outcome,
+    register_guided_part_role,
     remove_guided_part_registrations,
     remove_guided_part_registrations_async,
     rename_guided_part_registration,
@@ -347,6 +348,45 @@ def _renamed_object_name_from_result(result: Any) -> str | None:
         return None
     object_name = match.group(1).strip()
     return object_name or None
+
+
+def _created_object_name_from_result(result: Any) -> str | None:
+    if not isinstance(result, str):
+        return None
+    match = _CREATED_OBJECT_RESULT_PATTERN.fullmatch(result.strip())
+    if match is None:
+        return None
+    object_name = match.group(1).strip()
+    return object_name or None
+
+
+def _maybe_register_guided_role_from_corrected_step(
+    ctx: Context,
+    *,
+    tool_name: str,
+    original_params: Dict[str, Any],
+    result: Any,
+) -> None:
+    """Apply guided role registration for dispatcher-executed corrected build steps."""
+
+    if tool_name != "modeling_create_primitive":
+        return
+    role = original_params.get("guided_role")
+    if not isinstance(role, str) or not role.strip():
+        return
+    object_name = _created_object_name_from_result(result)
+    if object_name is None:
+        return
+    role_group = original_params.get("role_group")
+    try:
+        register_guided_part_role(
+            ctx,
+            object_name=object_name,
+            role=role.strip(),
+            role_group=role_group.strip() if isinstance(role_group, str) and role_group.strip() else None,
+        )
+    except Exception:
+        return
 
 
 def _maybe_sync_guided_part_registry_from_report(report: MCPExecutionReport) -> None:
@@ -1333,6 +1373,34 @@ def route_tool_call_report(
         for index, tool in enumerate(corrected_tools):
             tool_to_execute = tool["tool"]
             tool_params = tool["params"]
+            step_action_policy = evaluate_guided_action_policy(
+                surface_profile=surface_profile,
+                tool_name=tool_to_execute,
+                params=tool_params,
+            )
+            if step_action_policy is not None:
+                context.guided_tool_family = step_action_policy.get(
+                    "family",
+                    _resolve_guided_effective_family(tool_to_execute, tool_params),
+                )
+                context.guided_role = step_action_policy.get("role")
+                context.guided_role_group = step_action_policy.get("role_group")
+                if isinstance(step_action_policy.get("guided_naming"), dict):
+                    naming_policy = step_action_policy
+                if step_action_policy.get("kind") == "deny":
+                    report = MCPExecutionReport(
+                        context=context,
+                        router_enabled=True,
+                        router_applied=bool(steps),
+                        router_disposition="failed_closed_error",
+                        steps=tuple(steps),
+                        error=str(step_action_policy.get("message") or "Guided execution blocked."),
+                        policy_context=step_action_policy,
+                        audit_ids=(),
+                    )
+                    _record_router_execution_report(report)
+                    _log_audit_exposure(report)
+                    return report
             dispatch_params = _strip_guided_policy_params_for_dispatch(tool_params)
 
             logger.debug(
@@ -1350,6 +1418,14 @@ def route_tool_call_report(
                 result = dispatcher.execute(tool_to_execute, dispatch_params)
 
             steps.append(ExecutionStep(tool_name=tool_to_execute, params=dispatch_params, result=result))
+            current_ctx = _get_active_context()
+            if current_ctx is not None and _result_represents_success(tool_to_execute, result):
+                _maybe_register_guided_role_from_corrected_step(
+                    current_ctx,
+                    tool_name=tool_to_execute,
+                    original_params=tool_params,
+                    result=result,
+                )
 
         audit_events = _build_correction_audit_events(
             original_tool_name=tool_name,

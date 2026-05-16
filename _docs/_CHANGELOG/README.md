@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [353](./353-2026-05-16-task-168-post-closeout-drift-repair.md) | 2026-05-16 | **TASK-168 post-closeout drift repair** | - |
 | [352](./352-2026-05-15-task-168-runtime-confinement-reopen-and-closeout.md) | 2026-05-15 | **TASK-168 runtime confinement reopen and closeout** | - |
 | [351](./351-2026-05-14-task-168-orchestrator-confinement-closeout.md) | 2026-05-14 | **TASK-168 orchestrator confinement closeout** | - |
 | [350](./350-2026-05-13-task-167-debug-profiles-and-runtime-logging.md) | 2026-05-13 | **TASK-167 debug profiles and runtime logging** | - |

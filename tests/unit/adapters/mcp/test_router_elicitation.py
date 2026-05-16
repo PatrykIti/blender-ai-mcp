@@ -887,6 +887,26 @@ def test_guided_register_part_rejects_invalid_role_for_domain(monkeypatch):
     """guided_register_part should fail clearly when the requested role does not belong to the current overlay."""
 
     monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
+    monkeypatch.setattr(router_area, "get_router_status", lambda: {"enabled": True})
+    monkeypatch.setattr(router_area, "_build_background_job_diagnostics", lambda: (0, {}, []))
+    monkeypatch.setattr(router_area, "_build_timeout_policy_diagnostics", lambda _ctx: None)
+    monkeypatch.setattr(router_area, "_build_task_runtime_diagnostics", lambda _ctx: None)
+    monkeypatch.setattr(router_area, "_build_telemetry_diagnostics", lambda: None)
+    monkeypatch.setattr(router_area, "_get_list_page_size", lambda _ctx: 50)
+    monkeypatch.setattr(router_area, "run_repair_suggestion_assistant", lambda *args, **kwargs: None)
+    monkeypatch.setattr(router_area, "to_repair_assistant_contract", lambda *args, **kwargs: None)
+    monkeypatch.setattr(router_area, "_should_attach_repair_suggestion", lambda _payload: False)
+    monkeypatch.setattr(
+        router_area,
+        "build_visibility_diagnostics",
+        lambda surface_profile, phase, guided_handoff=None, guided_flow_state=None, gate_plan=None: SimpleNamespace(
+            rules=(),
+            visible_capability_ids=("router",),
+            visible_entry_capability_ids=("router",),
+            hidden_capability_ids=(),
+            hidden_category_counts={},
+        ),
+    )
 
     ctx = FakeContext(response=object())
     set_session_capability_state(
@@ -915,8 +935,19 @@ def test_guided_register_part_rejects_invalid_role_for_domain(monkeypatch):
         ),
     )
 
-    with pytest.raises(ValueError, match="Unknown guided part role 'roof_mass'"):
-        asyncio.run(router_area.guided_register_part(ctx, object_name="Squirrel_Roof", role="roof_mass"))
+    result = asyncio.run(router_area.guided_register_part(ctx, object_name="Squirrel_Roof", role="roof_mass"))
+    session = get_session_capability_state(ctx)
+
+    assert result.last_router_disposition == "failed_closed_error"
+    assert result.last_router_error is not None
+    assert "Unknown guided part role 'roof_mass'" in result.last_router_error
+    assert result.reference_orchestrator_feedback is not None
+    assert result.reference_orchestrator_feedback.status == "blocked"
+    assert any(
+        "Unknown guided part role 'roof_mass'" in reason
+        for reason in result.reference_orchestrator_feedback.blocking_reasons
+    )
+    assert session.guided_part_registry is None
 
 
 def test_guided_register_part_rejects_missing_scene_object(monkeypatch):

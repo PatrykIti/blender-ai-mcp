@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import contextvars
 import logging
 import re
 from dataclasses import replace
@@ -178,6 +179,10 @@ REFERENCE_PUBLIC_TOOL_NAMES = (
 )
 _REFERENCE_CORRECTION_LOOP_STATE_KEY = "reference_correction_loop"
 _REFERENCE_CORRECTION_STAGNATION_THRESHOLD = 2
+_REFERENCE_COMPARE_EMIT_COMPACT_DETAIL: contextvars.ContextVar[bool] = contextvars.ContextVar(
+    "reference_compare_emit_compact_detail",
+    default=False,
+)
 
 
 def _normalize_focus_key(value: str) -> str:
@@ -240,6 +245,7 @@ def resolve_active_compare_scope(
     target_object: str | None,
     target_objects: list[str] | None,
     collection_name: str | None,
+    focus_pairs: list[str] | None = None,
 ) -> ReferencePlannerTargetScopeContract | None:
     """Resolve one runtime-owned compare scope when the client omits explicit targets."""
 
@@ -320,6 +326,26 @@ def resolve_active_compare_scope(
             target_objects=resolved_blocker_objects,
             collection_name=None,
             local_region_hint="gate_blocker_cluster",
+        )
+
+    focus_pair_objects: list[str] = []
+    for focus_pair in list(focus_pairs or []):
+        if not isinstance(focus_pair, str):
+            continue
+        for raw_name in re.split(r"\s*->\s*|\s*<->\s*", focus_pair):
+            object_name = raw_name.strip()
+            if object_name:
+                focus_pair_objects.append(object_name)
+    resolved_focus_pair_objects = _dedupe_names(
+        [active_scope_name_keys[name.lower()] for name in focus_pair_objects if name.lower() in active_scope_name_keys]
+    )
+    if resolved_focus_pair_objects:
+        return ReferencePlannerTargetScopeContract(
+            scope_kind="single_object" if len(resolved_focus_pair_objects) == 1 else "object_set",
+            target_object=resolved_focus_pair_objects[0] if len(resolved_focus_pair_objects) == 1 else None,
+            target_objects=resolved_focus_pair_objects,
+            collection_name=None,
+            local_region_hint="focus_pair",
         )
 
     resolved_affected_objects = _dedupe_names(
@@ -433,29 +459,37 @@ def _select_reference_records_for_scope(
     ]
 
     def _strict_scope_selection(scope_target: str) -> tuple[ReferenceImageRecordContract, ...]:
+        selected: list[ReferenceImageRecordContract] = []
+        seen_ids: set[str] = set()
+
+        def _append(records: Sequence[ReferenceImageRecordContract]) -> None:
+            for record in records:
+                if record.reference_id in seen_ids:
+                    continue
+                seen_ids.add(record.reference_id)
+                selected.append(record)
+
         if target_view is not None:
             targeted_view = tuple(
                 record
                 for record in resolved_reference_records
                 if record.target_object == scope_target and record.target_view == target_view
             )
-            if targeted_view:
-                return targeted_view
+            _append(targeted_view)
 
-        targeted = tuple(record for record in resolved_reference_records if record.target_object == scope_target)
-        if targeted:
-            return targeted
-
-        if target_view is not None:
             generic_view = tuple(
                 record
                 for record in resolved_reference_records
                 if record.target_object is None and record.target_view == target_view
             )
-            if generic_view:
-                return generic_view
+            _append(generic_view)
 
-        return tuple(record for record in resolved_reference_records if record.target_object is None)
+        targeted = tuple(record for record in resolved_reference_records if record.target_object == scope_target)
+        _append(targeted)
+
+        generic = tuple(record for record in resolved_reference_records if record.target_object is None)
+        _append(generic)
+        return tuple(selected)
 
     scoped_targets = _dedupe_preserving_order(
         [
@@ -596,10 +630,14 @@ def _stage_compare_response(
     part_segmentation: ReferencePartSegmentationContract | None = None,
     view_diagnostics_hints: list[ReferenceViewDiagnosticsHintContract] | None = None,
     include_captures: bool = True,
+    emit_compact_detail: bool = False,
     message: str | None = None,
     error: str | None = None,
 ) -> ReferenceCompareStageCheckpointResponseContract:
     emitted_captures = list(captures) if include_captures else []
+    heavy_detail_allowed = bool(
+        emit_compact_detail or preset_profile != "compact" or error is not None or compare_diagnostics is not None
+    )
     gate_fields = _gate_checkpoint_fields(active_gate_plan)
     guided_flow_contract = (
         GuidedFlowStateContract.model_validate(guided_flow_state) if guided_flow_state is not None else None
@@ -645,15 +683,15 @@ def _stage_compare_response(
         target_objects=target_objects,
         collection_name=collection_name,
         assembled_target_scope=assembled_target_scope,
-        truth_bundle=truth_bundle,
-        truth_followup=truth_followup,
+        truth_bundle=truth_bundle if heavy_detail_allowed else None,
+        truth_followup=truth_followup if heavy_detail_allowed else None,
         compare_diagnostics=compare_diagnostics,
-        correction_candidates=list(correction_candidates or []),
+        correction_candidates=list(correction_candidates or []) if heavy_detail_allowed else [],
         budget_control=budget_control,
         refinement_route=refinement_route,
         refinement_handoff=refinement_handoff,
         planner_summary=planner_summary,
-        planner_detail=planner_detail,
+        planner_detail=planner_detail if heavy_detail_allowed else None,
         silhouette_analysis=silhouette_analysis,
         action_hints=list(action_hints or []),
         part_segmentation=part_segmentation or _disabled_part_segmentation(),
@@ -756,6 +794,11 @@ def _iterate_stage_response(
         correction_focus=correction_focus,
         loop_disposition=loop_disposition,
     )
+    heavy_detail_allowed = bool(
+        compare_result.preset_profile != "compact"
+        or error is not None
+        or compare_result.compare_diagnostics is not None
+    )
     return ReferenceIterateStageCheckpointResponseContract(
         action="iterate_stage_checkpoint",
         session_id=session_id,
@@ -780,15 +823,15 @@ def _iterate_stage_response(
         target_objects=target_objects,
         collection_name=collection_name,
         assembled_target_scope=compare_result.assembled_target_scope,
-        truth_bundle=compare_result.truth_bundle,
-        truth_followup=compare_result.truth_followup,
+        truth_bundle=compare_result.truth_bundle if heavy_detail_allowed else None,
+        truth_followup=compare_result.truth_followup if heavy_detail_allowed else None,
         compare_diagnostics=compare_result.compare_diagnostics,
-        correction_candidates=resolved_correction_candidates,
+        correction_candidates=resolved_correction_candidates if heavy_detail_allowed else [],
         budget_control=budget_control or compare_result.budget_control,
         refinement_route=refinement_route or compare_result.refinement_route,
         refinement_handoff=refinement_handoff or compare_result.refinement_handoff,
         planner_summary=planner_summary or compare_result.planner_summary,
-        planner_detail=planner_detail or compare_result.planner_detail,
+        planner_detail=(planner_detail or compare_result.planner_detail) if heavy_detail_allowed else None,
         silhouette_analysis=silhouette_analysis or compare_result.silhouette_analysis,
         action_hints=list(action_hints or compare_result.action_hints or []),
         part_segmentation=part_segmentation or compare_result.part_segmentation or _disabled_part_segmentation(),
@@ -1239,6 +1282,7 @@ async def _run_stage_checkpoint_compare(
     preset_profile: CapturePresetProfile,
     goal_override: str | None,
     prompt_hint: str | None,
+    emit_compact_detail: bool = False,
 ) -> ReferenceCompareStageCheckpointResponseContract:
     """Capture one deterministic stage view-set, then compare it against references."""
 
@@ -1305,6 +1349,17 @@ async def _run_stage_checkpoint_compare(
             ),
         )
 
+    prior_loop_state = await get_session_value_async(ctx, _REFERENCE_CORRECTION_LOOP_STATE_KEY, None)
+    prior_focus_pairs = (
+        list(prior_loop_state.get("last_focus_pairs") or [])
+        if isinstance(prior_loop_state, dict)
+        and prior_loop_state.get("goal") == goal
+        and prior_loop_state.get("preset_profile") == preset_profile
+        and not target_object
+        and not target_objects
+        and not collection_name
+        else []
+    )
     runtime_scope = resolve_active_compare_scope(
         guided_flow_state=session.guided_flow_state,
         gate_plan=session.gate_plan,
@@ -1313,6 +1368,7 @@ async def _run_stage_checkpoint_compare(
         target_object=target_object,
         target_objects=target_objects,
         collection_name=collection_name,
+        focus_pairs=prior_focus_pairs,
     )
     runtime_scope_selected = (
         runtime_scope is not None and not target_object and not target_objects and not collection_name
@@ -1796,6 +1852,7 @@ async def _run_stage_checkpoint_compare(
         part_segmentation=part_segmentation,
         view_diagnostics_hints=view_diagnostics_hints,
         include_captures=preset_profile != "compact",
+        emit_compact_detail=emit_compact_detail,
         message=(
             f"Captured and compared stage checkpoint '{checkpoint_label or checkpoint_id}' across "
             f"{compare_diagnostics.packet_count} packet(s) using {len(captures)} deterministic view(s)."
@@ -1970,6 +2027,7 @@ async def reference_compare_stage_checkpoint(
         preset_profile=preset_profile,
         goal_override=goal_override,
         prompt_hint=prompt_hint,
+        emit_compact_detail=_REFERENCE_COMPARE_EMIT_COMPACT_DETAIL.get(),
     )
 
 
@@ -1991,17 +2049,21 @@ async def reference_iterate_stage_checkpoint(
     for packet uncertainty even when the nested compact compare_result is slimmed.
     """
 
-    compare_result = await reference_compare_stage_checkpoint(
-        ctx,
-        target_object=target_object,
-        target_objects=target_objects,
-        collection_name=collection_name,
-        checkpoint_label=checkpoint_label,
-        target_view=target_view,
-        goal_override=goal_override,
-        prompt_hint=prompt_hint,
-        preset_profile=preset_profile,
-    )
+    token = _REFERENCE_COMPARE_EMIT_COMPACT_DETAIL.set(True)
+    try:
+        compare_result = await reference_compare_stage_checkpoint(
+            ctx,
+            target_object=target_object,
+            target_objects=target_objects,
+            collection_name=collection_name,
+            checkpoint_label=checkpoint_label,
+            target_view=target_view,
+            goal_override=goal_override,
+            prompt_hint=prompt_hint,
+            preset_profile=preset_profile,
+        )
+    finally:
+        _REFERENCE_COMPARE_EMIT_COMPACT_DETAIL.reset(token)
     session = await get_session_capability_state_async(ctx)
     hold_in_build = _should_hold_guided_build_loop_in_build(session.guided_flow_state)
     readiness = compare_result.guided_reference_readiness
@@ -2138,6 +2200,9 @@ async def reference_iterate_stage_checkpoint(
             "last_checkpoint_id": compare_result.checkpoint_id,
             "last_checkpoint_label": checkpoint_label,
             "last_correction_focus": correction_focus,
+            "last_focus_pairs": list(
+                compare_result.truth_followup.focus_pairs if compare_result.truth_followup else []
+            ),
             "iteration_index": iteration_index,
             "stagnation_count": stagnation_count,
         },

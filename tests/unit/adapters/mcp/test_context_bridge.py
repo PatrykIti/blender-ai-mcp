@@ -473,6 +473,62 @@ def test_route_tool_call_report_exposes_guided_family_and_role_for_direct_call(m
     assert report.context.guided_role_group is None
 
 
+@pytest.mark.parametrize(
+    ("tool_name", "params"),
+    [
+        ("scene_rename_object", {"old_name": "Body", "new_name": "BodyRenamed"}),
+        ("scene_duplicate_object", {"name": "Body", "translation": [0.5, 0.0, 0.0]}),
+    ],
+)
+def test_route_tool_call_report_blocks_scene_identity_mutations_out_of_guided_phase(
+    monkeypatch,
+    tool_name,
+    params,
+):
+    """Scene identity mutations are build mutations and must fail closed outside allowed guided families."""
+
+    executed = False
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            surface_profile="llm-guided",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "establish_spatial_context",
+                "completed_steps": ["understand_goal"],
+                "required_checks": ["scene_scope_graph"],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["inspect_spatial_context"],
+                "blocked_families": ["primary_masses", "secondary_parts"],
+                "allowed_families": ["spatial_context", "reference_context"],
+                "allowed_roles": [],
+                "completed_roles": [],
+                "missing_roles": ["body_core", "head_mass", "tail_mass"],
+                "required_role_groups": ["spatial_context"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    def _executor():
+        nonlocal executed
+        executed = True
+        return "should not execute"
+
+    report = route_tool_call_report(tool_name=tool_name, params=params, direct_executor=_executor)
+
+    assert executed is False
+    assert report.router_disposition == "failed_closed_error"
+    assert report.steps == ()
+    assert report.policy_context is not None
+    assert report.policy_context["family"] == "secondary_parts"
+
+
 def test_route_tool_call_report_uses_final_corrected_tool_for_guided_family_metadata(monkeypatch):
     """Corrected guided calls should resolve family metadata from the final effective tool call."""
 
@@ -587,6 +643,102 @@ def test_route_tool_call_report_strips_guided_policy_params_before_corrected_dis
     assert report.context.guided_role_group == "primary_masses"
     assert "guided_role" not in report.steps[0].params
     assert "role_group" not in report.steps[0].params
+
+
+def test_route_tool_call_report_rechecks_corrected_steps_after_guided_registration(monkeypatch):
+    """Corrected multi-step dispatch should validate each step against the latest guided session state."""
+
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            surface_profile="llm-guided",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "checkpoint_iterate",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["run_checkpoint_iterate"],
+                "blocked_families": ["primary_masses", "secondary_parts", "attachment_alignment"],
+                "allowed_families": [
+                    "primary_masses",
+                    "secondary_parts",
+                    "attachment_alignment",
+                    "checkpoint_iterate",
+                    "reference_context",
+                ],
+                "allowed_roles": ["snout_mass"],
+                "completed_roles": ["body_core", "head_mass", "tail_mass"],
+                "missing_roles": ["snout_mass"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "needs_checkpoint",
+            },
+        ),
+    )
+
+    class Router:
+        def process_llm_tool_call(self, tool_name, params, prompt):
+            return [
+                {
+                    "tool": "modeling_create_primitive",
+                    "params": {
+                        "primitive_type": "Sphere",
+                        "name": "Snout_A",
+                        "guided_role": "snout_mass",
+                    },
+                },
+                {
+                    "tool": "modeling_create_primitive",
+                    "params": {
+                        "primitive_type": "Sphere",
+                        "name": "Snout_B",
+                        "guided_role": "snout_mass",
+                    },
+                },
+            ]
+
+    dispatched: list[tuple[str, dict[str, object]]] = []
+
+    class Dispatcher:
+        def execute(self, tool_name, params):
+            dispatched.append((tool_name, dict(params)))
+            if len(dispatched) > 1:
+                raise AssertionError("second corrected step should fail closed before dispatch")
+            return "Created Sphere named 'Snout_A'"
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: True)
+    monkeypatch.setattr("server.adapters.mcp.router_helper.get_router", lambda: Router())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.get_dispatcher", lambda: Dispatcher())
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_surface_profile", lambda: "llm-guided")
+    monkeypatch.setattr("server.adapters.mcp.router_helper._get_active_context", lambda: ctx)
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper._get_active_session_state",
+        lambda: get_session_capability_state(ctx),
+    )
+
+    report = route_tool_call_report(
+        tool_name="modeling_create_primitive",
+        params={"primitive_type": "Sphere", "name": "Snout_A", "guided_role": "snout_mass"},
+        direct_executor=lambda: "should not run",
+    )
+    state = get_session_capability_state(ctx)
+
+    assert report.router_disposition == "failed_closed_error"
+    assert report.router_applied is True
+    assert len(report.steps) == 1
+    assert dispatched == [("modeling_create_primitive", {"primitive_type": "Sphere", "name": "Snout_A"})]
+    assert state.guided_part_registry is not None
+    assert state.guided_part_registry[0]["object_name"] == "Snout_A"
+    assert state.guided_part_registry[0]["role"] == "snout_mass"
+    assert state.guided_flow_state is not None
+    assert "snout_mass" not in state.guided_flow_state["missing_roles"]
+    assert report.policy_context is not None
+    assert report.policy_context["kind"] == "deny"
 
 
 def test_route_tool_call_report_fail_closes_when_guided_family_is_not_allowed(monkeypatch):
@@ -1770,7 +1922,7 @@ def test_route_tool_call_marks_guided_spatial_state_stale_after_successful_visib
                 "preferred_prompts": ["workflow_router_first"],
                 "next_actions": ["begin_primary_masses"],
                 "blocked_families": [],
-                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_families": ["primary_masses", "secondary_parts", "reference_context"],
                 "allowed_roles": ["body_core", "head_mass", "tail_mass"],
                 "completed_roles": ["body_core"],
                 "missing_roles": ["head_mass", "tail_mass"],

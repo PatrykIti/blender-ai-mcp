@@ -17,6 +17,7 @@ from server.adapters.mcp.areas.reference import (
     _build_silhouette_analysis_payload,
     _guided_checkpoint_scope_error,
     _iterate_stage_response,
+    _select_reference_records_for_scope,
     _stage_compare_response,
     reference_compare_checkpoint,
     reference_compare_current_view,
@@ -55,6 +56,7 @@ from server.adapters.mcp.contracts.reference import (
     ReferenceCompareStageCheckpointResponseContract,
     ReferenceHybridBudgetControlContract,
     ReferenceImageRecordContract,
+    ReferenceStrategyStateContract,
 )
 from server.adapters.mcp.contracts.scene import (
     SceneAssembledTargetScopeContract,
@@ -492,9 +494,13 @@ def test_iterate_stage_response_carries_silhouette_analysis_and_action_hints():
     assert result.silhouette_analysis.status == "available"
     assert result.action_hints
     assert result.action_hints[0].hint_type == "inspect_before_edit"
-    assert result.truth_bundle is not None
-    assert result.truth_followup is not None
-    assert result.correction_candidates
+    assert result.truth_bundle is None
+    assert result.truth_followup is None
+    assert result.correction_candidates == []
+    assert result.reference_orchestrator_feedback is not None
+    assert (
+        "Creature -> Ground still has measurable separation." in result.reference_orchestrator_feedback.correction_focus
+    )
     assert result.debug_payload_omitted is True
     assert result.compare_result.truth_bundle is None
     assert result.compare_result.truth_followup is None
@@ -682,6 +688,36 @@ def test_reference_orchestrator_feedback_projects_runtime_policy_block():
     assert feedback.recommended_support_tools == ["scene_view_diagnostics"]
 
 
+def test_reference_orchestrator_feedback_runtime_block_overrides_strategy_checkpoint():
+    feedback = build_reference_orchestrator_feedback(
+        goal="low poly creature",
+        summary=None,
+        strategy_state=ReferenceStrategyStateContract(
+            status="available",
+            construction_path="creature_blockout",
+            primary_family="modeling_mesh",
+            allowed_families=["modeling_mesh"],
+            blocked_families=["macro", "sculpt_region", "inspect_only"],
+            sculpt_policy="hidden",
+            finish_policy="inspect_first",
+            recommended_next_checkpoint="reference_compare_stage_checkpoint",
+            message="Strategy ready for compare.",
+        ),
+        runtime_policy_block={
+            "blocking_reasons": ["Checkpoint loop must run before more build mutations."],
+            "next_actions": ["run_checkpoint_iterate"],
+            "next_checkpoint_tool": "reference_iterate_stage_checkpoint",
+            "message": "Run iterate before adding parts.",
+        },
+    )
+
+    assert feedback is not None
+    assert feedback.status == "blocked"
+    assert feedback.next_checkpoint_tool == "reference_iterate_stage_checkpoint"
+    assert feedback.message == "Run iterate before adding parts."
+    assert "Run iterate before adding parts." in feedback.blocking_reasons
+
+
 def test_resolve_active_compare_scope_prefers_gate_blocker_cluster_over_full_active_workset():
     scope = resolve_active_compare_scope(
         guided_flow_state={
@@ -730,6 +766,80 @@ def test_resolve_active_compare_scope_prefers_gate_blocker_cluster_over_full_act
     assert scope is not None
     assert scope.target_objects == ["Tail"]
     assert scope.local_region_hint == "gate_blocker_cluster"
+
+
+def test_resolve_active_compare_scope_prefers_focus_pair_over_last_mutation():
+    scope = resolve_active_compare_scope(
+        guided_flow_state={
+            "flow_id": "guided_creature_flow",
+            "domain_profile": "creature",
+            "current_step": "checkpoint_iterate",
+            "active_target_scope": {
+                "scope_kind": "object_set",
+                "primary_target": "Body",
+                "object_names": ["Body", "Head", "Tail"],
+                "object_count": 3,
+            },
+        },
+        gate_plan={
+            "plan_id": "plan_creature",
+            "domain_profile": "creature",
+            "gates": [],
+            "completion_blockers": [],
+        },
+        guided_part_registry=[
+            {"object_name": "Body", "role": "body_core", "role_group": "primary_masses"},
+            {"object_name": "Head", "role": "head_mass", "role_group": "primary_masses"},
+            {"object_name": "Tail", "role": "tail_mass", "role_group": "primary_masses"},
+        ],
+        last_guided_affected_objects=["Tail"],
+        target_object=None,
+        target_objects=None,
+        collection_name=None,
+        focus_pairs=["Body -> Head"],
+    )
+
+    assert scope is not None
+    assert scope.target_objects == ["Body", "Head"]
+    assert scope.local_region_hint == "focus_pair"
+
+
+def test_select_reference_records_keeps_generic_same_view_before_targeted_any_view():
+    selected = _select_reference_records_for_scope(
+        [
+            ReferenceImageRecordContract(
+                reference_id="ref_target_side",
+                goal="low poly creature",
+                label="target side",
+                target_object="Squirrel",
+                target_view="side",
+                media_type="image/png",
+                original_path="/tmp/target_side.png",
+                stored_path="/tmp/target_side.png",
+                added_at="2026-05-16T00:00:00Z",
+            ),
+            ReferenceImageRecordContract(
+                reference_id="ref_generic_front",
+                goal="low poly creature",
+                label="generic front",
+                target_view="front",
+                media_type="image/png",
+                original_path="/tmp/generic_front.png",
+                stored_path="/tmp/generic_front.png",
+                added_at="2026-05-16T00:00:00Z",
+            ),
+        ],
+        resolved_target_object="Squirrel",
+        assembled_target_scope=SceneAssembledTargetScopeContract(
+            scope_kind="single_object",
+            primary_target="Squirrel",
+            object_names=["Squirrel"],
+            object_count=1,
+        ),
+        target_view="front",
+    )
+
+    assert [record.reference_id for record in selected] == ["ref_generic_front", "ref_target_side"]
 
 
 def test_refresh_reference_understanding_summary_persists_summary_and_gate_ids(tmp_path, monkeypatch):
@@ -7950,6 +8060,10 @@ def test_reference_compare_stage_checkpoint_omits_compare_diagnostics_on_clean_c
     assert result.compare_diagnostics is None
     assert result.budget_control is not None
     assert result.budget_control.trim_reason == "compact_checkpoint_payload"
+    assert result.truth_bundle is None
+    assert result.truth_followup is None
+    assert result.correction_candidates == []
+    assert result.planner_detail is None
 
 
 def test_reference_compare_stage_checkpoint_emits_compact_diagnostics_for_packet_evidence_refs(tmp_path, monkeypatch):
@@ -10223,7 +10337,7 @@ def test_reference_compare_stage_checkpoint_propagates_goal_hint_for_support_gat
             target_object="Body",
             target_objects=["Base"],
             checkpoint_label="stage_support_gate",
-            preset_profile="compact",
+            preset_profile="rich",
         )
     )
 
@@ -10757,8 +10871,9 @@ def test_reference_iterate_stage_checkpoint_tracks_previous_focus_and_iteration(
     assert first.iteration_index == 1
     assert first.loop_disposition == "continue_build"
     assert first.prior_correction_focus == []
-    assert first.correction_candidates
-    assert first.correction_candidates[0].summary == "Head silhouette"
+    assert first.correction_candidates == []
+    assert first.reference_orchestrator_feedback is not None
+    assert first.reference_orchestrator_feedback.correction_focus == ["Head silhouette"]
     assert second.iteration_index == 2
     assert second.prior_checkpoint_id == "checkpoint_1"
     assert second.prior_correction_focus == ["Head silhouette"]
@@ -10949,8 +11064,11 @@ def test_reference_iterate_stage_checkpoint_uses_truth_integrated_candidates_for
 
     assert result.correction_focus == ["TruthHead -> TruthBody still has measurable separation."]
     assert result.loop_disposition == "continue_build"
-    assert result.correction_candidates
-    assert result.correction_candidates[0].candidate_kind == "truth_only"
+    assert result.correction_candidates == []
+    assert result.reference_orchestrator_feedback is not None
+    assert result.reference_orchestrator_feedback.correction_focus == [
+        "TruthHead -> TruthBody still has measurable separation."
+    ]
     assert result.budget_control is not None
     assert result.budget_control.selected_focus_pairs == ["TruthHead -> TruthBody"]
 

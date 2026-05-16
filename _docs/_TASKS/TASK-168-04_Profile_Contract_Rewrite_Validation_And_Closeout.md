@@ -14,9 +14,10 @@
 ## Implementation Notes
 
 - do not close this family on prompt edits alone; runtime enforcement and proof must both be real
-- shipped on 2026-05-14 with green focused owner lanes, `3432` passing
-  repo-wide unit tests, clean repo-wide `pre-commit`, and the repo-supported
-  Blender E2E runner (`477 passed, 3 skipped`)
+- initially closed on 2026-05-14, then reopened and reclosed on 2026-05-15
+  after runtime-confinement drift was repaired; the reclose proof recorded
+  `3438` passing repo-wide unit tests, clean repo-wide `pre-commit`, and the
+  repo-supported Blender E2E runner (`477 passed, 3 skipped`)
 - use squirrel/controller regressions as explicit proof surfaces:
   - no false workflow heuristic under guided manual no-match
   - no late/stale compare payload contract failures

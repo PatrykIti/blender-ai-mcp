@@ -46,11 +46,16 @@ def test_recommended_prompt_entries_change_by_profile_and_phase():
     inspect_validate = {
         entry.name for entry in get_recommended_prompt_entries(surface_profile="llm-guided", phase="inspect_validate")
     }
+    legacy_manual_inspect = {
+        entry.name
+        for entry in get_recommended_prompt_entries(surface_profile="legacy-manual", phase="inspect_validate")
+    }
 
     assert "workflow_router_first" in planning
     assert "guided_session_start" in planning
     assert "manual_tools_no_router" not in planning
-    assert "manual_tools_no_router" in inspect_validate
+    assert "manual_tools_no_router" not in inspect_validate
+    assert "manual_tools_no_router" in legacy_manual_inspect
 
 
 def test_recommended_prompt_entries_can_use_active_goal_context():

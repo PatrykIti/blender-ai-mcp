@@ -176,6 +176,7 @@ PROMPT_CATALOG: tuple[PromptCatalogEntry, ...] = (
         operating_mode="manual-tools",
         audience="all",
         phase_tags=("phase:build", "phase:inspect_validate"),
+        profile_tags=("profile:legacy-manual",),
     ),
     PromptCatalogEntry(
         name="demo_low_poly_medieval_well",

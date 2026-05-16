@@ -235,6 +235,8 @@ GUIDED_TOOL_FAMILY_MAP: dict[str, GuidedFlowFamilyLiteral] = {
     "reference_compare_current_view": "checkpoint_iterate",
     "reference_compare_stage_checkpoint": "checkpoint_iterate",
     "reference_iterate_stage_checkpoint": "checkpoint_iterate",
+    "scene_duplicate_object": "secondary_parts",
+    "scene_rename_object": "secondary_parts",
     "modeling_create_primitive": "primary_masses",
     "modeling_transform_object": "primary_masses",
     "modeling_add_modifier": "finish",

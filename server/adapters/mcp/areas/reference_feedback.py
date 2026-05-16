@@ -22,6 +22,7 @@ from server.adapters.mcp.contracts.reference import (
     ReferencePlannerFamilyLiteral,
     ReferenceRepairPlannerSummaryContract,
     ReferenceStrategyStateContract,
+    ReferenceUnderstandingStatusLiteral,
     ReferenceUnderstandingSummaryContract,
     ReferenceUnderstandingViewContract,
     ReferenceUnderstandingVisualEvidenceRefContract,
@@ -392,7 +393,12 @@ def build_reference_orchestrator_feedback(
     if strategy_state is None and summary is not None:
         strategy_state = build_reference_strategy_state(summary)
 
-    if strategy_state is not None:
+    runtime_policy_block_active = isinstance(runtime_policy_block, dict)
+
+    effective_status: ReferenceUnderstandingStatusLiteral
+    if runtime_policy_block_active:
+        effective_status = "blocked"
+    elif strategy_state is not None:
         effective_status = strategy_state.status
     elif summary is not None:
         effective_status = summary.status
@@ -531,8 +537,9 @@ def build_reference_orchestrator_feedback(
                 *_policy_block_strings("correction_focus"),
             ]
         )[:3]
-        if next_checkpoint_tool is None:
-            next_checkpoint_tool = cast(_CHECKPOINT_TOOLS | None, runtime_policy_block.get("next_checkpoint_tool"))
+        policy_checkpoint_tool = runtime_policy_block.get("next_checkpoint_tool")
+        if policy_checkpoint_tool:
+            next_checkpoint_tool = cast(_CHECKPOINT_TOOLS | None, policy_checkpoint_tool)
 
     return ReferenceOrchestratorFeedbackContract(
         status=effective_status,
@@ -562,16 +569,12 @@ def build_reference_orchestrator_feedback(
         correction_focus=focus[:3],
         loop_disposition=loop_disposition,  # type: ignore[arg-type]
         message=(
-            strategy_state.message
-            if strategy_state is not None
+            str(runtime_policy_block.get("message") or "").strip()
+            if isinstance(runtime_policy_block, dict) and str(runtime_policy_block.get("message") or "").strip()
             else (
-                summary.message
-                if summary is not None
-                else (
-                    str(runtime_policy_block.get("message") or "").strip()
-                    if isinstance(runtime_policy_block, dict)
-                    else None
-                )
+                strategy_state.message
+                if strategy_state is not None
+                else (summary.message if summary is not None else None)
             )
         ),
     )
