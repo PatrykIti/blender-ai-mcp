@@ -73,7 +73,7 @@ def clean_scene(scene_handler):
         pass
 
 
-def test_reference_compare_stage_checkpoint_exposes_truth_bundle_and_followup(
+def test_reference_compare_stage_checkpoint_uses_compact_feedback_without_heavy_truth_detail(
     clean_scene,
     scene_handler,
     modeling_handler,

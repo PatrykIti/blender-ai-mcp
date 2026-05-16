@@ -147,7 +147,8 @@ Interpretation:
 - staged manual/reference-guided build:
     checkpoint capture -> `reference_compare_checkpoint(...)`, `reference_compare_current_view(...)`, `reference_compare_stage_checkpoint(...)`, or `reference_iterate_stage_checkpoint(...)` -> use bounded mismatch/correction hints for the next iteration
     only call staged compare/iterate when `guided_reference_readiness.compare_ready == true`
-    prioritize `loop_disposition`, then `planner_summary`, then `refinement_route`, then `refinement_handoff`, then `correction_candidates`, then `truth_followup`, then `action_hints`, then `correction_focus`, then `silhouette_analysis`
+    prioritize `loop_disposition`, then `guided_reference_readiness`, then `reference_orchestrator_feedback`, then `planner_summary`, then `refinement_route`, then `refinement_handoff`, then top-level `correction_focus`, then `action_hints`, then `compare_diagnostics`, then `silhouette_analysis`
+    normal clean `preset_profile="compact"` responses intentionally omit heavy `truth_followup`, `correction_candidates`, `truth_bundle`, and rich `planner_detail`; use those only when they are explicitly present on rich, hard-failure, error, or uncertainty paths
     treat `planner_summary.blockers` and `planner_summary.required_support_tools` as deterministic preconditions before lower-level edits; when staged sculpt handoff is blocked by missing view evidence, call `scene_view_diagnostics(...)` before using sculpt tools
     keep `scene_scope_graph(...)`, `scene_relation_graph(...)`, and `scene_view_diagnostics(...)` in the normal working set for 3D orientation during active guided goals
     if the next correction still depends on knowing the structural anchor or explicit pair relations, call `scene_scope_graph(...)` and/or `scene_relation_graph(...)` instead of overloading the checkpoint payload

@@ -3,7 +3,7 @@
 **Status:** ✅ Done
 **Priority:** 🔴 High
 **Parent:** [TASK-168](./TASK-168_Profile_Bound_Orchestrator_Shielding_Feedback_And_Memory_Containment.md)
-**Context Anchor:** [352. TASK-168 runtime confinement reopen and closeout](../_CHANGELOG/352-2026-05-15-task-168-runtime-confinement-reopen-and-closeout.md)
+**Context Anchor:** [354. TASK-168 compact-boundary post-commit repair](../_CHANGELOG/354-2026-05-16-task-168-compact-boundary-post-commit-repair.md)
 **Objective:** Close the confinement umbrella only after the `llm-guided` contract, prompt assets, docs, board/changelog state, and proof lanes confirm that external controllers are held inside the current profile boundaries.
 **Repository Touchpoints:** `README.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_PROMPTS/README.md`, `_docs/_PROMPTS/GUIDED_SESSION_START.md`, `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`, `_docs/_PROMPTS/REFERENCE_GUIDED_ARCHITECTURE_BUILD.md`, `_docs/_ROUTER/README.md`, `_docs/_TASKS/README.md`, `_docs/_TASKS/TASK-168*.md`, `_docs/_CHANGELOG/README.md`, new `_docs/_CHANGELOG/*`, `tests/unit/`, `tests/e2e/integration/`, `tests/e2e/router/`, `tests/e2e/vision/`
 **Acceptance Criteria:**
@@ -18,6 +18,21 @@
   after runtime-confinement drift was repaired; the reclose proof recorded
   `3438` passing repo-wide unit tests, clean repo-wide `pre-commit`, and the
   repo-supported Blender E2E runner (`477 passed, 3 skipped`)
+- post-closeout drift passes on 2026-05-16 repaired remaining compact-boundary
+  and typed-registration gaps:
+  - successful earlier mutating steps in a partially failed corrected dispatch
+    still mark guided context dirty
+  - role-group family lookup covers rename/duplicate identity mutations
+  - `guided_register_part(...)` invalid-role, naming-policy, and scene-object
+    validation failures persist typed fail-closed status instead of surfacing
+    raw exceptions
+  - normal clean compact staged compare/iterate omits `truth_bundle`,
+    `truth_followup`, `correction_candidates`, and rich `planner_detail` while
+    keeping `reference_orchestrator_feedback`, top-level focus/planner summaries,
+    and additive `compare_diagnostics` when packet provenance is useful
+  - refreshed proof recorded `3447` passing repo-wide unit tests, clean
+    repo-wide `pre-commit`, and the repo-supported Blender E2E runner
+    (`477 passed, 3 skipped`)
 - use squirrel/controller regressions as explicit proof surfaces:
   - no false workflow heuristic under guided manual no-match
   - no late/stale compare payload contract failures

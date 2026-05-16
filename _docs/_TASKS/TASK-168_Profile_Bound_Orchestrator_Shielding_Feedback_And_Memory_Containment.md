@@ -6,11 +6,12 @@
 **Estimated Effort:** Large
 **Follow-on After:** [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md), [TASK-167](./TASK-167_Cross_Module_Debug_Profile_Registry_And_Runtime_Logging.md)
 **Related:** [TASK-148](./TASK-148_No_Auth_HTTP_MCP_Client_Compatibility_And_Auth_Misclassification_Recovery.md), [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-160](./TASK-160_Guided_Client_Feedback_And_Streamable_HTTP_Recovery_UX.md), [TASK-165](./TASK-165_Mac_First_Interactive_MCP_Server_Installer_And_Launcher.md), [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md)
-**Context Anchor:** [352. TASK-168 runtime confinement reopen and closeout](../_CHANGELOG/352-2026-05-15-task-168-runtime-confinement-reopen-and-closeout.md)
+**Context Anchor:** [354. TASK-168 compact-boundary post-commit repair](../_CHANGELOG/354-2026-05-16-task-168-compact-boundary-post-commit-repair.md)
 
 ## Objective
 
-Shipped on 2026-05-14:
+Closed on 2026-05-14, reclosed after runtime drift repair on 2026-05-15,
+and repaired through the 2026-05-16 post-commit drift passes:
 
 - `llm-guided` now enforces one fail-closed runtime contract across direct and
   router-corrected mutators: explicit phase/state gating, role/role-group
@@ -24,6 +25,10 @@ Shipped on 2026-05-14:
   `guided_flow_state` / `reference_orchestrator_feedback` projection are now
   documented as the runtime authority line over stale external memory and old
   tool schemas, and the full closeout proof bundle is green
+- compact staged compare/iterate now keeps heavy truth/candidate/planner detail
+  out of normal controller payloads while still allowing additive
+  `compare_diagnostics` for packet provenance, multi-packet synthesis,
+  model-budget pressure, uncertainty, hard failures, or rich delivery
 
 Turn `llm-guided` from a prompt-soft operating mode into a runtime-hard
 orchestration contract for external controllers such as Claude Code, Codex,
@@ -196,6 +201,8 @@ After this umbrella lands:
 
 - historical closeout entry ownership belongs to
   [TASK-168-04](./TASK-168-04_Profile_Contract_Rewrite_Validation_And_Closeout.md)
+- latest post-closeout drift repair is tracked in
+  [354. TASK-168 compact-boundary post-commit repair](../_CHANGELOG/354-2026-05-16-task-168-compact-boundary-post-commit-repair.md)
 
 ## Status / Board Update
 

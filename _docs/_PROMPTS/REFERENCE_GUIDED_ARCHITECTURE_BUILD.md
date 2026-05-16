@@ -47,14 +47,19 @@ asset as the generic search-first operating baseline.
 9. use the response in this order:
    - `loop_disposition`
    - `guided_reference_readiness`
+   - `reference_orchestrator_feedback`
    - `active_gate_plan`
    - `completion_blockers`
    - `recommended_bounded_tools`
-   - `compare_diagnostics`
-   - `truth_followup`
-   - `correction_candidates`
+   - `planner_summary`
+   - `refinement_route`
+   - `refinement_handoff`
+   - top-level `correction_focus`
    - `action_hints`
+   - `compare_diagnostics`
    - `silhouette_analysis`
+   - rich-only or uncertainty-only `truth_followup` /
+     `correction_candidates` when the response actually includes them
 
 ## Gate Proposal Shape
 

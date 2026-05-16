@@ -2048,9 +2048,10 @@ async def reference_compare_stage_checkpoint(
     """Capture deterministic stage views and run packeted reference compare.
 
     The public tool name stays stable while the server may split the compare into
-    bounded view/scope packets. Rich responses and compact uncertainty paths can
-    expose additive top-level compare_diagnostics with packet ids, pass status,
-    support evidence, conflict notes, and budget_control details.
+    bounded view/scope packets. Rich delivery, multi-packet synthesis,
+    model-aware budget pressure, and packet uncertainty can expose additive
+    top-level compare_diagnostics with packet ids, pass status, support evidence,
+    conflict notes, and budget_control details.
     """
 
     checkpoint_target = _safe_checkpoint_token(collection_name or target_object or "scene")
@@ -2085,7 +2086,8 @@ async def reference_iterate_stage_checkpoint(
 
     Returns loop_disposition and compact reference_orchestrator_feedback for the
     next safe step. Top-level compare_diagnostics remains the public access path
-    for packet uncertainty even when the nested compact compare_result is slimmed.
+    for rich delivery, multi-packet synthesis, model-budget pressure, or packet
+    uncertainty even when the nested compact compare_result is slimmed.
     """
 
     token = _REFERENCE_COMPARE_EMIT_COMPACT_DETAIL.set(True)

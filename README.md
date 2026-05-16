@@ -83,7 +83,7 @@ When a bounded modeling intent matches, the default public working layer should 
 - `guided_reference_readiness` on `router_set_goal`, `router_get_status`, and staged reference compare/iterate payloads so clients can see whether reference-driven stage work is actually ready
 - `reference_orchestrator_feedback` on `reference_images`, `router_*`, and staged reference compare/iterate payloads so clients can read one compact next-step contract instead of stitching together RU, gate, and planner fields by hand
 - `reference_compare_stage_checkpoint` for deterministic multi-view stage comparison against attached references during manual iterative work
-- staged reference compare now decomposes bounded stage requests into packet-local view/scope compares internally and can expose additive `compare_diagnostics` on rich or uncertainty paths without creating a second public tool family
+- staged reference compare now decomposes bounded stage requests into packet-local view/scope compares internally and can expose additive `compare_diagnostics` on rich delivery, multi-packet synthesis, model-budget pressure, or packet-uncertainty paths without creating a second public tool family
 - `correction_candidates[*].vision_evidence.packet_evidence_refs` can point back to the packet ids that produced an actionable visual correction, while full packet provenance remains owned by `compare_diagnostics`
 - super-complex staged compare keeps 6-12 image runs bounded by slicing large same-view reference sets into packet-local chunks that respect the effective `VISION_MAX_IMAGES` runtime limit
 - packet-local staged compare now runs extraction first and ranking second only when extraction warrants it, so ranking failure no longer erases usable packet evidence and ranking downgrades stay diagnostic instead of producing correction candidates
@@ -658,17 +658,18 @@ hidden ordering assumptions.
   `next_gate_actions`, and `recommended_bounded_tools`, so clients do not need
   to infer the immediate repair path from the nested plan shape.
 - staged reference compare/iterate may now also expose additive
-  `compare_diagnostics` when the run uses multi-packet synthesis, hits packet
-  uncertainty/failure, or the caller requests `preset_profile="rich"`; that
+  `compare_diagnostics` when the run uses rich delivery, multi-packet synthesis,
+  model-aware trimming/budget pressure, or packet uncertainty/failure; that
   diagnostics layer names packet ids, packet-local view/scope slices, packet
-  status, typed packet-local `support_evidence`, and budget/conflict notes
-  while leaving the existing staged compare fields in place; `budget_control`
-  now also reports configured and effective runtime limits so fail-safe clipping
-  is visible without parsing runner internals
-- `correction_candidates` stay the compact ranked action list; when a candidate
-  comes from visual packet evidence, its `vision_evidence.packet_evidence_refs`
-  carries bounded packet ids/statuses so clients can join back to
-  `compare_diagnostics` without parsing raw packet details from every candidate
+  status, typed packet-local `support_evidence`, and budget/conflict notes while
+  leaving the existing staged compare fields in place; `budget_control` now also
+  reports configured and effective runtime limits so fail-safe clipping is
+  visible without parsing runner internals
+- when emitted, `correction_candidates` stay the ranked rich/uncertainty action
+  list; when a candidate comes from visual packet evidence, its
+  `vision_evidence.packet_evidence_refs` carries bounded packet ids/statuses so
+  clients can join back to `compare_diagnostics` without parsing raw packet
+  details from every candidate
 - ranking-pass downgrades to `low_information` or `blocked` remain visible
   through packet diagnostics and orchestrator uncertainty, but they do not
   promote extraction-only focus into actionable `correction_candidates`

@@ -19,7 +19,9 @@
 
 - reuse current substrate instead of inventing a second scope system:
   - `assembled_target_scope`
-  - `truth_followup.focus_pairs`
+  - `reference_orchestrator_feedback` and top-level `correction_focus`
+  - additive `compare_diagnostics` truth pairs when compact packet diagnostics
+    are present
   - scope clusters in `reference_compare_packets.py`
   - `planner_summary.blockers`
   - `refinement_route.target_scope`
@@ -42,7 +44,12 @@
 active_scope = resolve_active_compare_scope(
     guided_flow_state=session.guided_flow_state,
     blockers=planner_summary.blockers,
-    focus_pairs=truth_followup.focus_pairs,
+    focus_pairs=reference_orchestrator_feedback.correction_focus,
+    diagnostic_truth_pairs=[
+        pair
+        for packet in compare_diagnostics.packets
+        for pair in packet.truth_pairs
+    ],
     last_mutation=current_mutation_hint,
     assembled_target_scope=assembled_target_scope,
 )

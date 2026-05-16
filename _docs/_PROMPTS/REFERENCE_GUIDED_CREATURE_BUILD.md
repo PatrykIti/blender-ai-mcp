@@ -52,17 +52,19 @@ asset as the generic search-first operating baseline.
 10. use the response in this order:
    - `loop_disposition`
    - `guided_reference_readiness`
+   - `reference_orchestrator_feedback`
    - `planner_summary`
    - `refinement_route`
    - `refinement_handoff`
-   - `correction_candidates`
-   - `truth_followup`
+   - top-level `correction_focus`
    - `action_hints`
-   - `correction_focus`
+   - `compare_diagnostics`
    - `silhouette_analysis.metrics`
    - `vision_assistant.result.shape_mismatches`
    - `vision_assistant.result.proportion_mismatches`
    - `vision_assistant.result.next_corrections`
+   - rich-only or uncertainty-only `correction_candidates` / `truth_followup`
+     when the response actually includes them
 11. repeat the next stage or correction step
 
 ## Prompt Template
@@ -211,9 +213,10 @@ Rules:
 - for a full assembled silhouette use:
   - `target_objects=[...]`
   - or `collection_name="Squirrel"`
-- on full assembled-creature checkpoints, treat `truth_followup.focus_pairs`
-  as the required creature seam set for the current scope; one improved local
-  pair does not mean the whole creature stage is done
+- on full assembled-creature checkpoints, treat `compare_diagnostics` truth
+  pairs and top-level feedback/focus fields as the required creature seam set
+  for the current compact scope; one improved local pair does not mean the
+  whole creature stage is done
 - do not narrow an assembled-creature checkpoint to a single safe object when
   the active workset has multiple required seams; use the active
   `target_objects=[...]` or `collection_name=...`
@@ -259,18 +262,19 @@ Workflow:
 11. on the next iteration prioritize:
    - `loop_disposition`
    - `guided_reference_readiness`
+   - `reference_orchestrator_feedback`
    - `planner_summary`
    - `refinement_route`
    - `refinement_handoff`
-   - `correction_candidates`
-   - `truth_followup.focus_pairs`
-   - `truth_followup.macro_candidates`
+   - top-level `correction_focus`
    - `action_hints`
-   - `correction_focus`
+   - `compare_diagnostics`
    - then `silhouette_analysis.metrics`
    - then `vision_assistant.result.shape_mismatches`
    - then `vision_assistant.result.proportion_mismatches`
    - then `vision_assistant.result.next_corrections`
+   - then rich-only or uncertainty-only `correction_candidates` /
+     `truth_followup.*` when the response actually includes them
 12. if `guided_reference_readiness.compare_ready == false`, execute
     `guided_reference_readiness.next_action` instead of trying to recover the
     session with `goal_override`
@@ -341,10 +345,10 @@ At the end of each stage, return only:
   compare path is using the narrow Google-family compare contract or the full
   generic contract; use that field for diagnosis instead of inferring behavior
   from provider name alone
-- `correction_focus` should be treated as an action list only after checking
-  whether `planner_summary`, `refinement_route`, `refinement_handoff`,
-  `correction_candidates`, `truth_followup`, or typed `action_hints` carry a
-  stronger bounded signal
+- `correction_focus` should be treated as the compact action list after checking
+  whether `planner_summary`, `refinement_route`, `refinement_handoff`, or typed
+  `action_hints` carry a stronger bounded signal; do not wait for rich-only
+  `correction_candidates` or `truth_followup` on normal clean compact paths
 - `silhouette_analysis` is deterministic perception evidence:
   - use it for contour/ratio drift, not for scene truth
   - read it as target/focus-view evidence when a matching focus capture exists;
@@ -356,13 +360,14 @@ At the end of each stage, return only:
 - `loop_disposition="inspect_validate"` means the system is detecting repeated
   focus or a high-priority truth signal, so it is better to pause free-form
   correction and switch briefly to truth-layer verification
-- `correction_candidates` is the primary ranked handoff for the hybrid loop:
+- when emitted, `correction_candidates` is the rich/uncertainty ranked handoff
+  for the hybrid loop:
   - `vision_only` means the issue is visible mainly on the vision side
   - `truth_only` means the issue is deterministically confirmed by truth tools
   - `hybrid` means vision and truth signals converge on the same issue
-- `truth_followup.focus_pairs` and `truth_followup.macro_candidates` still
-  carry the detailed context when you need to understand which object pair and
-  which bounded macro should be the next move
+- when emitted, `truth_followup.focus_pairs` and
+  `truth_followup.macro_candidates` still carry the detailed context for which
+  object pair and bounded macro should be the next move
 - for assembled creatures, the seam set should cover at least face/head,
   torso/body, and limb attachments when those masses are present in the
   current target scope
