@@ -4,10 +4,10 @@
 **Status:** ✅ Done
 **Completed:** 2026-05-19
 **Priority:** 🟠 High
-**Objective:** Restore reliable viewport-based verification for guided creature runs by hardening safe client alias recovery and clarifying the canonical `scene_get_viewport(...)` contract.
+**Objective:** Restore reliable guided viewport-based verification for creature runs by hardening safe client alias recovery on the guided proxy path and clarifying the canonical `scene_get_viewport(...)` contract.
 **Repository Touchpoints:** `server/adapters/mcp/areas/scene.py`, `server/adapters/mcp/areas/scene_viewport.py`, `server/adapters/mcp/guided_contract.py`, `server/adapters/mcp/discovery/search_surface.py`, `server/router/infrastructure/tools_metadata/scene/scene_get_viewport.json`, `tests/unit/tools/scene/test_mcp_viewport_output.py`, `tests/unit/adapters/mcp/test_search_surface.py`, `tests/e2e/tools/scene/test_scene_get_viewport.py`, `tests/e2e/tools/scene/test_scene_get_viewport_camera.py`
 **Acceptance Criteria:**
-- common safe client drift such as `output_mode=\"IMAGE_PATH\"` no longer breaks viewport verification when the recovery path is unambiguous
+- common safe client drift such as `output_mode=\"IMAGE_PATH\"` no longer breaks guided proxy viewport verification when the recovery path is unambiguous
 - unrecoverable drift still fails with one explicit correction path using the canonical public field names and values
 - prompt/docs/examples stop teaching stale viewport arguments on the guided/reference surfaces
 
@@ -23,6 +23,11 @@
 - today alias tolerance is narrow and proxy-only:
   - `guided_contract.py` hardens guided `call_tool(...)` calls
   - direct visible-tool calls still hit the strict FastMCP/Pydantic signature
+- the final landed posture keeps that split explicit:
+  - guided `call_tool(name="scene_get_viewport", ...)` and the search-first
+    surface normalize safe aliases such as `PATH` / `IMAGE_PATH`
+  - direct visible `scene_get_viewport(...)` remains strict on the canonical
+    public enum values
 - do not introduce broad or ambiguous aliases such as `view=\"perspective\"`
   unless they map deterministically to an existing public contract
 - keep the recovery logic on the current `guided_contract.py` / scene facade
@@ -50,8 +55,9 @@ elif mode and mode not in {"IMAGE", "BASE64", "FILE", "MARKDOWN"}:
 
 - `tests/unit/tools/scene/test_mcp_viewport_output.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
-- `tests/e2e/tools/scene/test_scene_get_viewport.py`
-- `tests/e2e/tools/scene/test_scene_get_viewport_camera.py`
+- direct visible-tool scene E2E remains unchanged because the shipped alias
+  recovery lands on guided `call_tool(...)` / search-surface canonicalization,
+  not on the strict visible-tool signature
 
 ## Docs To Update
 
@@ -66,10 +72,13 @@ elif mode and mode not in {"IMAGE", "BASE64", "FILE", "MARKDOWN"}:
 ## Completion Summary
 
 - guided contract hardening now accepts safe viewport aliases such as legacy
-  `shading_mode` and `output_mode=\"PATH\"` while keeping the public canonical
-  surface on `shading` and `output_mode=\"FILE\"`
+  `shading_mode`, `output_mode=\"PATH\"`, and `output_mode=\"IMAGE_PATH\"` on
+  guided `call_tool(...)` / search-surface execution while keeping the public
+  canonical visible-tool surface on `shading` and `output_mode=\"FILE\"`
 - the regression is pinned on the current guided call-tool/search-surface
-  tests instead of relying on operator memory
+  tests instead of relying on operator memory, while direct visible
+  `scene_get_viewport(...)` continues to fail loudly on non-canonical enum
+  values
 
 ## Status / Board Update
 

@@ -243,6 +243,7 @@ _CREATURE_BROAD_FIRST_STEPS: frozenset[str] = frozenset(
     {"establish_spatial_context", "bootstrap_primary_workset", "create_primary_masses", "place_secondary_parts"}
 )
 _CREATURE_PRIMARY_MASS_ROLES: tuple[str, ...] = ("body_core", "head_mass", "tail_mass")
+_CREATURE_LOCAL_DETAIL_ROLES: frozenset[str] = frozenset({"ear_pair", "eye_pair"})
 
 
 def _guided_role_to_objects(guided_part_registry: list[dict[str, Any]] | None) -> dict[str, list[str]]:
@@ -275,6 +276,22 @@ def _resolved_active_scope_role_objects(
     return resolved
 
 
+def _should_keep_creature_compare_scope_broad(
+    flow_state: GuidedFlowStateContract,
+) -> bool:
+    """Keep early creature compare broad only while coarse silhouette work is still unresolved."""
+
+    if flow_state.current_step in {"establish_spatial_context", "bootstrap_primary_workset", "create_primary_masses"}:
+        return True
+    if flow_state.current_step != "place_secondary_parts":
+        return False
+
+    missing_roles = {str(role).strip().lower() for role in list(flow_state.missing_roles or []) if str(role).strip()}
+    if not missing_roles:
+        return False
+    return bool(missing_roles - _CREATURE_LOCAL_DETAIL_ROLES)
+
+
 def _early_creature_primary_mass_scope(
     *,
     flow_state: GuidedFlowStateContract,
@@ -285,6 +302,7 @@ def _early_creature_primary_mass_scope(
     if (
         flow_state.domain_profile != "creature"
         or flow_state.current_step not in _CREATURE_BROAD_FIRST_STEPS
+        or not _should_keep_creature_compare_scope_broad(flow_state)
         or flow_state.active_target_scope is None
     ):
         return None

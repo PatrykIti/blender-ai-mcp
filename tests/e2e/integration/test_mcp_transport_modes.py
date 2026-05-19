@@ -19,6 +19,8 @@ from fastmcp.client.transports.http import StreamableHttpTransport
 from fastmcp.client.transports.stdio import StdioTransport
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
+_STDIO_CLIENT_TIMEOUT_SECONDS = 20
+_STDIO_READY_DEADLINE_SECONDS = 30
 
 
 def _base_env(*, transport_mode: str, extra: dict[str, str] | None = None) -> dict[str, str]:
@@ -66,12 +68,16 @@ async def _run_stdio_client(callback) -> tuple[str | None, str | None] | tuple[s
         keep_alive=False,
         log_file=log_path,
     )
-    async with Client(transport, timeout=10, init_timeout=10) as client:
+    async with Client(
+        transport,
+        timeout=_STDIO_CLIENT_TIMEOUT_SECONDS,
+        init_timeout=_STDIO_CLIENT_TIMEOUT_SECONDS,
+    ) as client:
         return await callback(client)
 
 
 def _run_stdio_with_retry(callback):
-    deadline = time.time() + 20
+    deadline = time.time() + _STDIO_READY_DEADLINE_SECONDS
     last_error: Exception | None = None
     last_log_text = ""
     while time.time() < deadline:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
@@ -774,6 +774,7 @@ def test_resolve_active_compare_scope_prefers_primary_mass_workset_over_stale_fo
             "flow_id": "guided_creature_flow",
             "domain_profile": "creature",
             "current_step": "place_secondary_parts",
+            "missing_roles": ["snout_mass", "ear_pair"],
             "active_target_scope": {
                 "scope_kind": "object_set",
                 "primary_target": "SquirrelBody",
@@ -804,6 +805,44 @@ def test_resolve_active_compare_scope_prefers_primary_mass_workset_over_stale_fo
     assert scope.target_object == "SquirrelBody"
     assert scope.target_objects == ["SquirrelBody", "SquirrelHead", "SquirrelTail"]
     assert scope.local_region_hint == "primary_mass_workset"
+
+
+def test_resolve_active_compare_scope_releases_broad_first_when_only_local_detail_roles_remain():
+    scope = resolve_active_compare_scope(
+        guided_flow_state={
+            "flow_id": "guided_creature_flow",
+            "domain_profile": "creature",
+            "current_step": "place_secondary_parts",
+            "missing_roles": ["ear_pair"],
+            "active_target_scope": {
+                "scope_kind": "object_set",
+                "primary_target": "SquirrelBody",
+                "object_names": ["SquirrelBody", "SquirrelHead", "SquirrelTail", "SquirrelEar_L"],
+                "object_count": 4,
+            },
+        },
+        gate_plan={
+            "plan_id": "plan_creature",
+            "domain_profile": "creature",
+            "gates": [],
+            "completion_blockers": [],
+        },
+        guided_part_registry=[
+            {"object_name": "SquirrelBody", "role": "body_core", "role_group": "primary_masses"},
+            {"object_name": "SquirrelHead", "role": "head_mass", "role_group": "primary_masses"},
+            {"object_name": "SquirrelTail", "role": "tail_mass", "role_group": "primary_masses"},
+            {"object_name": "SquirrelEar_L", "role": "ear_pair", "role_group": "secondary_parts"},
+        ],
+        last_guided_affected_objects=["SquirrelEar_L"],
+        target_object=None,
+        target_objects=None,
+        collection_name=None,
+        focus_pairs=["SquirrelEar_L -> SquirrelHead"],
+    )
+
+    assert scope is not None
+    assert scope.target_objects == ["SquirrelEar_L", "SquirrelHead"]
+    assert scope.local_region_hint == "focus_pair"
 
 
 def test_resolve_active_compare_scope_prefers_primary_mass_workset_over_gate_blocker_cluster_during_primary_mass_stage():
@@ -3456,6 +3495,140 @@ def test_reference_understanding_refresh_merges_existing_view_with_live_referenc
     assert updated.reference_understanding_summary is not None
     assert updated.reference_understanding_summary["views"][0]["view_id"] == "front"
     assert updated.reference_understanding_summary["views"][0]["reference_ids"] == ["ref_front"]
+
+
+def test_refresh_reference_understanding_summary_retries_when_reference_ids_change_during_refresh(
+    tmp_path, monkeypatch
+):
+    ctx = FakeContext()
+    front_path = tmp_path / "front.png"
+    side_path = tmp_path / "side.png"
+    _write_test_silhouette(front_path, with_ears=True)
+    _write_test_silhouette(side_path, with_ears=True)
+
+    front_reference = {
+        "reference_id": "ref_front",
+        "goal": "create a low-poly squirrel",
+        "label": "front_ref",
+        "target_view": "front",
+        "media_type": "image/png",
+        "source_kind": "local_path",
+        "original_path": str(front_path),
+        "stored_path": str(front_path),
+        "added_at": "2026-05-19T00:00:00Z",
+    }
+    side_reference = {
+        "reference_id": "ref_side",
+        "goal": "create a low-poly squirrel",
+        "label": "side_ref",
+        "target_view": "side",
+        "media_type": "image/png",
+        "source_kind": "local_path",
+        "original_path": str(side_path),
+        "stored_path": str(side_path),
+        "added_at": "2026-05-19T00:00:01Z",
+    }
+
+    initial_state = SessionCapabilityState(
+        phase=SessionPhase.BUILD,
+        goal="create a low-poly squirrel",
+        surface_profile="llm-guided",
+        guided_flow_state=_guided_reference_flow_state(),
+        reference_images=[front_reference],
+    )
+    set_session_capability_state(ctx, initial_state)
+
+    analyze_reference_ids: list[list[str]] = []
+
+    def _payload(reference_ids: list[str], *, understanding_id: str) -> dict[str, Any]:
+        return {
+            "status": "available",
+            "understanding_id": understanding_id,
+            "goal": "create a low-poly squirrel",
+            "reference_ids": list(reference_ids),
+            "subject": {
+                "label": "low poly squirrel",
+                "category": "creature",
+                "confidence": 0.85,
+                "uncertainty_notes": [],
+            },
+            "style": {
+                "style_label": "low_poly_faceted",
+                "confidence": 0.82,
+                "notes": [],
+            },
+            "views": [
+                {
+                    "view_id": "front",
+                    "detected": True,
+                    "confidence": 0.8,
+                    "reference_ids": ["ref_front"],
+                    "key_features": ["triangular ears"],
+                },
+                {
+                    "view_id": "side",
+                    "detected": "ref_side" in reference_ids,
+                    "confidence": 0.76 if "ref_side" in reference_ids else 0.0,
+                    "reference_ids": ["ref_side"] if "ref_side" in reference_ids else [],
+                    "key_features": ["curved tail"] if "ref_side" in reference_ids else [],
+                },
+            ],
+            "required_parts": [],
+            "non_goals": [],
+            "construction_strategy": {
+                "construction_path": "low_poly_facet",
+                "primary_family": "modeling_mesh",
+                "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+                "stage_sequence": ["primary_masses", "secondary_parts"],
+                "finish_policy": "preserve_facets",
+            },
+            "router_handoff_hints": {
+                "preferred_family": "modeling_mesh",
+                "allowed_guided_families": ["reference_context", "primary_masses", "secondary_parts"],
+                "sculpt_policy": "hidden",
+            },
+            "gate_proposals": [],
+            "visual_evidence_refs": [],
+            "verification_requirements": [],
+            "classification_scores": [],
+            "segmentation_artifacts": [],
+            "source_provenance": [{"source": "reference_understanding"}],
+            "boundary_policy": {
+                "advisory_only": True,
+                "not_truth_source": True,
+                "may_unlock_tools": False,
+                "may_pass_gates": False,
+                "may_propose_gates": True,
+            },
+        }
+
+    class Backend:
+        async def analyze(self, request):
+            reference_ids = list(request.metadata.get("reference_ids") or [])
+            analyze_reference_ids.append(reference_ids)
+            if len(analyze_reference_ids) == 1:
+                set_session_capability_state(
+                    ctx,
+                    replace(get_session_capability_state(ctx), reference_images=[front_reference, side_reference]),
+                )
+                return _payload(reference_ids, understanding_id="understanding_single_view")
+            return _payload(reference_ids, understanding_id="understanding_dual_view")
+
+    class Resolver:
+        def resolve_default(self):
+            return Backend()
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: Resolver())
+
+    updated = asyncio.run(refresh_reference_understanding_summary_async(ctx, session=initial_state))
+
+    assert analyze_reference_ids == [["ref_front"], ["ref_front", "ref_side"]]
+    assert updated.reference_images is not None
+    assert [item["reference_id"] for item in updated.reference_images] == ["ref_front", "ref_side"]
+    assert updated.reference_understanding_summary is not None
+    assert updated.reference_understanding_summary["understanding_id"] == "understanding_dual_view"
+    assert updated.reference_understanding_summary["reference_ids"] == ["ref_front", "ref_side"]
+    assert updated.reference_understanding_summary["views"][1]["reference_ids"] == ["ref_side"]
 
 
 def test_reference_images_attach_returns_orchestrator_feedback(tmp_path, monkeypatch):

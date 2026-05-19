@@ -93,6 +93,24 @@ def _active_reference_records(session: SessionCapabilityState) -> tuple[Referenc
     return tuple(ReferenceImageRecordContract.model_validate(item) for item in list(session.reference_images or []))
 
 
+def _active_reference_ids(session: SessionCapabilityState) -> list[str]:
+    return [record.reference_id for record in _active_reference_records(session)]
+
+
+def _session_has_material_reference_state(session: SessionCapabilityState) -> bool:
+    return any(
+        (
+            session.goal,
+            session.reference_images,
+            session.pending_reference_images,
+            session.reference_understanding_summary,
+            session.gate_plan,
+            session.reference_strategy_state,
+            session.guided_flow_state,
+        )
+    )
+
+
 def reference_understanding_request(
     *,
     goal: str,
@@ -264,6 +282,7 @@ async def refresh_reference_understanding_summary(
     build_reference_capture_images: Callable[..., tuple[Any, ...]],
     get_vision_backend_resolver: Callable[[], Any],
     ingest_quality_gate_proposal_async: Callable[[Context, dict[str, Any]], Awaitable[Any]],
+    retry_on_reference_drift: bool = True,
 ) -> SessionCapabilityState:
     """Refresh session-scoped reference understanding from active references when possible."""
 
@@ -296,6 +315,45 @@ async def refresh_reference_understanding_summary(
 
     reference_records = _active_reference_records(current)
     reference_ids = [record.reference_id for record in reference_records]
+
+    async def _persist_refresh_state(
+        state: SessionCapabilityState,
+    ) -> SessionCapabilityState:
+        latest = await get_session_capability_state_async(ctx)
+        if session is not None and not _session_has_material_reference_state(latest):
+            latest = current
+        latest_reference_ids = _active_reference_ids(latest)
+        if latest.goal != current.goal or latest_reference_ids != reference_ids:
+            emit_debug_log(
+                "vision",
+                logger,
+                "ru_retry_on_reference_drift goal_changed=%s reference_ids_before=%s reference_ids_after=%s retry=%s",
+                latest.goal != current.goal,
+                reference_ids,
+                latest_reference_ids,
+                retry_on_reference_drift,
+                level=logging.WARNING,
+            )
+            if retry_on_reference_drift:
+                return await refresh_reference_understanding_summary(
+                    ctx,
+                    session=latest,
+                    get_session_capability_state_async=get_session_capability_state_async,
+                    set_session_capability_state_async=set_session_capability_state_async,
+                    apply_visibility_for_session_state=apply_visibility_for_session_state,
+                    build_reference_capture_images=build_reference_capture_images,
+                    get_vision_backend_resolver=get_vision_backend_resolver,
+                    ingest_quality_gate_proposal_async=ingest_quality_gate_proposal_async,
+                    retry_on_reference_drift=False,
+                )
+            return latest
+        return await _persist_reference_understanding_state_async(
+            ctx,
+            state,
+            set_session_capability_state_async=set_session_capability_state_async,
+            apply_visibility_for_session_state=apply_visibility_for_session_state,
+        )
+
     if not reference_records:
         emit_debug_log(
             "vision",
@@ -370,12 +428,7 @@ async def refresh_reference_understanding_summary(
                         else current.reference_strategy_state
                     ),
                 )
-                return await _persist_reference_understanding_state_async(
-                    ctx,
-                    updated,
-                    set_session_capability_state_async=set_session_capability_state_async,
-                    apply_visibility_for_session_state=apply_visibility_for_session_state,
-                )
+                return await _persist_refresh_state(updated)
 
         emit_debug_log(
             "vision",
@@ -392,20 +445,10 @@ async def refresh_reference_understanding_summary(
                     reference_understanding_gate_ids=rebuilt_gate_ids,
                     reference_strategy_state=rebuilt_strategy.model_dump(mode="json", exclude_none=True),
                 )
-                return await _persist_reference_understanding_state_async(
-                    ctx,
-                    repaired,
-                    set_session_capability_state_async=set_session_capability_state_async,
-                    apply_visibility_for_session_state=apply_visibility_for_session_state,
-                )
+                return await _persist_refresh_state(repaired)
         if current.reference_understanding_gate_ids is None and rebuilt_gate_ids is not None:
             repaired = replace(current, reference_understanding_gate_ids=rebuilt_gate_ids)
-            return await _persist_reference_understanding_state_async(
-                ctx,
-                repaired,
-                set_session_capability_state_async=set_session_capability_state_async,
-                apply_visibility_for_session_state=apply_visibility_for_session_state,
-            )
+            return await _persist_refresh_state(repaired)
         return current
 
     request = reference_understanding_request(
@@ -481,12 +524,7 @@ async def refresh_reference_understanding_summary(
                 else unavailable_strategy.model_dump(mode="json", exclude_none=True)
             ),
         )
-        return await _persist_reference_understanding_state_async(
-            ctx,
-            updated,
-            set_session_capability_state_async=set_session_capability_state_async,
-            apply_visibility_for_session_state=apply_visibility_for_session_state,
-        )
+        return await _persist_refresh_state(updated)
     except Exception as exc:
         elapsed_ms = (time.perf_counter() - started) * 1000.0
         sanitized_error = _sanitize_reference_understanding_error_message(
@@ -521,12 +559,7 @@ async def refresh_reference_understanding_summary(
                 else unavailable_strategy.model_dump(mode="json", exclude_none=True)
             ),
         )
-        return await _persist_reference_understanding_state_async(
-            ctx,
-            updated,
-            set_session_capability_state_async=set_session_capability_state_async,
-            apply_visibility_for_session_state=apply_visibility_for_session_state,
-        )
+        return await _persist_refresh_state(updated)
 
     accepted_gate_ids: list[str] | None = None
     updated_session = replace(
@@ -564,9 +597,4 @@ async def refresh_reference_understanding_summary(
         if final_strategy is None
         else final_strategy.model_dump(mode="json", exclude_none=True),
     )
-    return await _persist_reference_understanding_state_async(
-        ctx,
-        final_state,
-        set_session_capability_state_async=set_session_capability_state_async,
-        apply_visibility_for_session_state=apply_visibility_for_session_state,
-    )
+    return await _persist_refresh_state(final_state)
