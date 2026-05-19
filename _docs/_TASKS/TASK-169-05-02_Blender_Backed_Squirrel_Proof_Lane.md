@@ -4,7 +4,7 @@
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
 **Objective:** Add one Blender-backed front+side squirrel proof lane that fails the current vertical-blockout class and proves the repaired runtime on the real guided/reference path.
-**Repository Touchpoints:** `tests/e2e/vision/test_reference_guided_squirrel_quality_regression.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/scene.py`, `_docs/_TEST_IMAGES/squirrel-front.png`, `_docs/_TEST_IMAGES/squirrel-side.png`
+**Repository Touchpoints:** `tests/e2e/vision/test_reference_guided_squirrel_quality_regression.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/scene.py`, `_docs/_TEST_IMAGES/squirrel-front.png`, `_docs/_TEST_IMAGES/`
 **Acceptance Criteria:**
 - the repo has one explicit Blender-backed squirrel proof lane using front+side references
 - the lane distinguishes gate progress from overall creature readability
@@ -16,7 +16,8 @@
   runner
 - the proof should check more than “did compare run?” or “did some gates pass?”
 - reuse the current repo squirrel front fixture and add one repo-owned side
-  fixture if it still does not exist when implementation starts
+  fixture under `_docs/_TEST_IMAGES/squirrel-side.png` if it still does not
+  exist when implementation starts
 - keep the deterministic oracle on current helper seams rather than prose:
   - `scene_measure_dimensions(...)`
   - `scene_assert_proportion(...)`
