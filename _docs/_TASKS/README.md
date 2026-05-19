@@ -82,7 +82,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Vision & Hybrid Loop
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-169](./TASK-169_Reference_Guided_Quality_Drift_Regression_And_Runtime_Authority.md) | **Reference-Guided Quality Drift Regression And Runtime Authority** | 🔴 High | Board-level follow-on after `TASK-135`, `TASK-166`, and `TASK-168` for real creature-quality regressions where references are attached and read, but the runtime still descends into local packet repair and gate progress before the whole squirrel silhouette converges. |
+| [TASK-169](./TASK-169_Reference_Guided_Quality_Drift_Regression_And_Runtime_Authority.md) | **Reference-Guided Quality Drift Regression And Runtime Authority** | 🔴 High | Board-level follow-on after `TASK-135`, `TASK-166`, and `TASK-168` for common quadruped creature-quality regressions where references are attached and read, but the runtime still descends into local packet repair and gate progress before the whole-animal silhouette converges; squirrel is the regression anchor, not the only scope. |
 
 ---
 

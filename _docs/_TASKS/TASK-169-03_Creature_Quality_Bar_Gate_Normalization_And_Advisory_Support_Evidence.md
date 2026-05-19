@@ -10,17 +10,21 @@
 - reference-target drift such as `ears` vs `ear_pair` is normalized on current owner seams instead of leaking into runtime ambiguity
 - optional classifier/segmentation evidence remains advisory-only and default-off, but the task documents and tests when that support should improve creature localization
 
+## Execution Structure
+
+| Order | Task | Purpose |
+|------|------|---------|
+| 1 | [TASK-169-03-01](./TASK-169-03-01_Creature_Global_Quality_Hold_And_Final_Completion_Semantics.md) | Hold final-completion and top-level success projection on a stronger whole-creature quality bar |
+| 2 | [TASK-169-03-02](./TASK-169-03-02_Creature_Reference_Target_Normalization_For_Paired_Details.md) | Normalize frequent creature reference targets such as `ears` into the shipped role/gate vocabulary |
+| 3 | [TASK-169-03-03](./TASK-169-03-03_Advisory_Support_Evidence_Projection_For_Creature_Localization.md) | Clarify where optional classifier and segmentation support can improve creature localization without becoming authority |
+
 ## Implementation Notes
 
 - reuse the shipped gate owners from `TASK-157` and the creature consumer path
   from `TASK-135`; do not invent a second completion rubric
-- likely work items:
-  - normalize frequent creature target labels from RU/reference proposals into
-    the current role/gate vocabulary
-  - ensure final-completion and top-level blocker projection still reflect
-    whole-creature unreadability when only local detail/seam gates improved
-  - decide where an optional advisory silhouette/profile gate or broad
-    proportion gate belongs on the current generic gate vocabulary
+- this subtask is now the small execution umbrella for three narrower seams:
+  global-quality hold semantics, paired-detail target normalization, and
+  advisory support-evidence projection
 - keep optional support evidence on existing seams:
   - RU-side classifier/segmentation support from `reference_support.py`
   - compare-time `part_segmentation` from staged compare packets
@@ -47,9 +51,7 @@ if global_creature_readability_unresolved(gate_plan, truth_followup, compare_res
 
 ## Tests To Add/Update
 
-- `tests/unit/adapters/mcp/test_quality_gate_verifier.py`
-- `tests/unit/adapters/mcp/test_reference_images.py`
-- `tests/e2e/vision/test_goal_derived_gate_creature_completion.py`
+- proof ownership is split across the child tasks below
 
 ## Docs To Update
 
@@ -68,8 +70,7 @@ if global_creature_readability_unresolved(gate_plan, truth_followup, compare_res
 ## Validation Commands
 
 - `git diff --check`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/adapters/mcp/test_reference_images.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_goal_derived_gate_creature_completion.py -q`
+- focused validation is owned by the child tasks below
 
 ## Validation Category
 

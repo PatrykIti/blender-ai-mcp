@@ -4,7 +4,7 @@
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
 **Objective:** Turn the recent low-poly squirrel failure into one explicit regression family spanning transcript-state, packet-priority, and Blender-backed proof lanes.
-**Repository Touchpoints:** `tests/unit/adapters/mcp/`, `tests/e2e/integration/`, `tests/e2e/router/`, `tests/e2e/vision/`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/application/tool_handlers/router_handler.py`, `_docs/_TEST_IMAGES/`
+**Repository Touchpoints:** `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_reference_compare_packets.py`, `tests/unit/adapters/mcp/test_quality_gate_verifier.py`, `tests/unit/adapters/mcp/test_search_surface.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/router/test_guided_manual_handoff.py`, `tests/e2e/vision/`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/application/tool_handlers/router_handler.py`, `_docs/_TEST_IMAGES/squirrel-front.png`
 **Acceptance Criteria:**
 - the observed squirrel drift is encoded as executable regression cases rather than operator memory
 - the family covers both state/contract drift and Blender-backed visual-quality drift
@@ -23,6 +23,16 @@
   and guided/reference seams
 - prefer typed session/packet assertions first, then a Blender-backed visual
   proof lane for the whole result
+
+## Tests To Add/Update
+
+- `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_reference_compare_packets.py`
+- `tests/unit/adapters/mcp/test_quality_gate_verifier.py`
+- `tests/unit/adapters/mcp/test_search_surface.py`
+- `tests/e2e/integration/test_guided_gate_state_transport.py`
+- `tests/e2e/router/test_guided_manual_handoff.py`
+- one new Blender-backed squirrel proof lane under `tests/e2e/vision/`
 
 ## Docs To Update
 

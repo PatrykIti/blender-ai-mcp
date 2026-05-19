@@ -4,7 +4,7 @@
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
 **Objective:** Add one Blender-backed front+side squirrel proof lane that fails the current vertical-blockout class and proves the repaired runtime on the real guided/reference path.
-**Repository Touchpoints:** `tests/e2e/vision/`, `tests/e2e/integration/`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/scene.py`, `_docs/_TEST_IMAGES/`
+**Repository Touchpoints:** `tests/e2e/vision/test_reference_guided_squirrel_quality_regression.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/scene.py`, `_docs/_TEST_IMAGES/squirrel-front.png`, `_docs/_TEST_IMAGES/squirrel-side.png`
 **Acceptance Criteria:**
 - the repo has one explicit Blender-backed squirrel proof lane using front+side references
 - the lane distinguishes gate progress from overall creature readability
@@ -15,12 +15,26 @@
 - keep the lane bounded and deterministic enough for the repo-supported Blender
   runner
 - the proof should check more than “did compare run?” or “did some gates pass?”
+- reuse the current repo squirrel front fixture and add one repo-owned side
+  fixture if it still does not exist when implementation starts
 - likely assertions:
-  - broad body/head/tail silhouette checkpoint was taken before later local
+  - a broad body/head/tail silhouette checkpoint was taken before later local
     repair dominates
-  - final result is not a tall stacked blockout class
-  - required creature details and dominant tail/head proportions remain
-    materially closer to the references than the observed failure anchor
+  - deterministic bounding-box / proportion checks reject the tall stacked
+    blockout class:
+    - body_core height-to-depth ratio stays within one seated-creature range
+    - head mass does not tower vertically above body_core beyond one bounded
+      ratio
+    - tail mass keeps one rear/upward placement relation relative to body_core
+  - required creature relation checks such as tail/body and head/body remain
+    seated while the whole-model proportions still satisfy the proof bar
+
+## Runtime / Security Contract Notes
+
+- the proof lane must rely on deterministic inspection/assertion and bounded
+  staged compare evidence, not on a human prose verdict over screenshots
+- any new squirrel side fixture added to the repo must stay within the current
+  test-image/documentation policy and avoid private temp-path dependencies
 
 ## Tests To Add/Update
 
@@ -45,7 +59,7 @@
 
 - `git diff --check`
 - focused owner lane first:
-  - `PYTHONPATH=. poetry run pytest tests/e2e/vision/<new_squirrel_proof_test>.py -q`
+  - `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_guided_squirrel_quality_regression.py -q`
 - repo-supported Blender proof:
   - `poetry run python scripts/run_e2e_tests.py`
 

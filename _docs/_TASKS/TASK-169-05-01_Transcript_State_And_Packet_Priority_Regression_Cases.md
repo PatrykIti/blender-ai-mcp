@@ -4,7 +4,7 @@
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
 **Objective:** Encode the observed squirrel session as typed regressions for goal/no-match, one-ref then two-ref RU refresh, packet-local compare narrowing, `eye_pair` misuse, and viewport alias drift.
-**Repository Touchpoints:** `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_reference_compare_packets.py`, `tests/unit/adapters/mcp/test_quality_gate_verifier.py`, `tests/unit/adapters/mcp/test_search_surface.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/router/test_guided_manual_handoff.py`
+**Repository Touchpoints:** `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_reference_compare_packets.py`, `tests/unit/adapters/mcp/test_quality_gate_verifier.py`, `tests/unit/adapters/mcp/test_search_surface.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/router/test_guided_manual_handoff.py`, `server/application/tool_handlers/router_handler.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/guided_contract.py`, `_docs/_TEST_IMAGES/squirrel-front.png`, `_docs/_TEST_IMAGES/squirrel-side.png`
 **Acceptance Criteria:**
 - the squirrel regression facts are encoded as deterministic tests
 - packet-local compare narrowing can be asserted separately from Blender visual quality
@@ -24,6 +24,19 @@
   - gate-only `eye_pair` no longer tempts the public guided role path
   - `IMAGE_PATH` fails safe or normalizes to `FILE`, depending on the final
     slice decision
+- keep the leaf anchored on current helpers/contracts rather than a prose-only
+  session reenactment:
+  - `RouterToolHandler._no_match_response(...)`
+  - `refresh_reference_understanding_summary(...)`
+  - `resolve_active_compare_scope(...)`
+  - `canonicalize_scene_get_viewport_arguments(...)`
+
+## Runtime / Security Contract Notes
+
+- public MCP/runtime contract drift should be asserted on typed responses and
+  canonicalization errors, not on informal text-only checks
+- repo-owned squirrel fixtures should be used instead of ad hoc operator temp
+  files where a deterministic regression can be pinned locally
 
 ## Tests To Add/Update
 
