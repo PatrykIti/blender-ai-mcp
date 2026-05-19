@@ -24,6 +24,13 @@
 - prefer typed session/packet assertions first, then a Blender-backed visual
   proof lane for the whole result
 
+## Runtime / Security Contract Notes
+
+- regression coverage must stay on existing public/runtime seams instead of
+  inventing squirrel-only hidden tools or alternate guided paths
+- repo-owned squirrel fixtures should be preferred over ad hoc temp-path
+  operator inputs whenever a deterministic regression can be pinned locally
+
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_reference_images.py`

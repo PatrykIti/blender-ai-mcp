@@ -17,6 +17,11 @@
 - the proof should check more than “did compare run?” or “did some gates pass?”
 - reuse the current repo squirrel front fixture and add one repo-owned side
   fixture if it still does not exist when implementation starts
+- keep the deterministic oracle on current helper seams rather than prose:
+  - `scene_measure_dimensions(...)`
+  - `scene_assert_proportion(...)`
+  - `scene_relation_graph(...)`
+  - bounded stage compare evidence from `reference_compare_stage_checkpoint(...)`
 - likely assertions:
   - a broad body/head/tail silhouette checkpoint was taken before later local
     repair dominates
