@@ -1480,6 +1480,23 @@ def test_guided_call_argument_canonicalization_accepts_viewport_legacy_aliases()
     }
 
 
+def test_guided_call_argument_canonicalization_accepts_viewport_image_path_alias():
+    payload = canonicalize_guided_tool_arguments(
+        "scene_get_viewport",
+        {
+            "shading_mode": "WIRE",
+            "output_mode": "IMAGE_PATH",
+            "focus_target": "Squirrel",
+        },
+    )
+
+    assert payload == {
+        "shading": "WIRE",
+        "output_mode": "FILE",
+        "focus_target": "Squirrel",
+    }
+
+
 def test_guided_call_argument_canonicalization_accepts_stage_checkpoint_legacy_label():
     payload = canonicalize_guided_tool_arguments(
         "reference_compare_stage_checkpoint",
@@ -1541,6 +1558,53 @@ def test_call_tool_accepts_viewport_legacy_aliases(monkeypatch):
         return _decode_tool_result(result)
 
     assert asyncio.run(run()) == "viewport:SOLID:FILE:Squirrel"
+
+
+def test_call_tool_accepts_image_path_alias(monkeypatch):
+    async def fake_route_scene_get_viewport(
+        ctx,
+        *,
+        width,
+        height,
+        shading,
+        camera_name,
+        focus_target,
+        view_name,
+        orbit_horizontal,
+        orbit_vertical,
+        zoom_factor,
+        persist_view,
+        output_mode,
+        get_scene_handler_fn,
+        is_background_task_context_fn,
+        run_rpc_background_job_fn,
+        route_tool_call_fn,
+        format_viewport_output_fn,
+    ):
+        return f"viewport:{shading}:{output_mode}:{focus_target}"
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.scene._route_scene_get_viewport",
+        fake_route_scene_get_viewport,
+    )
+
+    server = build_server("llm-guided")
+
+    async def run():
+        result = await server.call_tool(
+            "call_tool",
+            {
+                "name": "scene_get_viewport",
+                "arguments": {
+                    "shading_mode": "WIREFRAME",
+                    "output_mode": "IMAGE_PATH",
+                    "focus_target": "Squirrel",
+                },
+            },
+        )
+        return _decode_tool_result(result)
+
+    assert asyncio.run(run()) == "viewport:WIREFRAME:FILE:Squirrel"
 
 
 def test_direct_modeling_create_primitive_rejects_non_public_shape_with_actionable_guidance(monkeypatch):

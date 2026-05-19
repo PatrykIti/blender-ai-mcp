@@ -268,7 +268,7 @@ def canonicalize_scene_get_viewport_arguments(arguments: dict[str, Any]) -> dict
     output_mode = canonical_arguments.get("output_mode")
     if isinstance(output_mode, str):
         normalized_mode = output_mode.strip().upper()
-        if normalized_mode == "PATH":
+        if normalized_mode in {"PATH", "IMAGE_PATH"}:
             canonical_arguments["output_mode"] = "FILE"
 
     return canonical_arguments
