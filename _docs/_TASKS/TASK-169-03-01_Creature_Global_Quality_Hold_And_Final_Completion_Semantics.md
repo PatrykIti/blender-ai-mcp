@@ -1,7 +1,8 @@
 # TASK-169-03-01: Creature Global Quality Hold And Final Completion Semantics
 
 **Parent:** [TASK-169-03](./TASK-169-03_Creature_Quality_Bar_Gate_Normalization_And_Advisory_Support_Evidence.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-19
 **Priority:** 🔴 High
 **Objective:** Ensure a creature run cannot present near-complete success when gate progress improved locally but the whole-animal silhouette is still globally wrong.
 **Repository Touchpoints:** `server/adapters/mcp/contracts/quality_gates.py`, `server/adapters/mcp/transforms/quality_gate_verifier.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/areas/reference_truth.py`, `tests/unit/adapters/mcp/test_quality_gate_verifier.py`, `tests/e2e/vision/test_goal_derived_gate_creature_completion.py`
@@ -47,9 +48,18 @@ if local_gate_progress_high(gate_plan) and global_creature_readability_unresolve
 
 - add/update the historical `_docs/_CHANGELOG/*` entry when this slice lands
 
+## Completion Summary
+
+- final creature completion remains blocked on unresolved required creature
+  gates and seam/profile blockers instead of overclaiming success from local
+  gate progress alone
+- deterministic verifier and Blender-backed creature completion proof already
+  keep the whole-model state visible through `completion_blockers` and
+  `final_completion`
+
 ## Status / Board Update
 
-- keep nested under `TASK-169-03`
+- closed with parent `TASK-169-03`
 
 ## Validation Commands
 

@@ -1,7 +1,8 @@
 # TASK-169-03: Creature Quality Bar, Gate Normalization, And Advisory Support Evidence
 
 **Parent:** [TASK-169](./TASK-169_Reference_Guided_Quality_Drift_Regression_And_Runtime_Authority.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-19
 **Priority:** 🔴 High
 **Objective:** Align creature gate progress, reference-part normalization, and optional support evidence so visually bad blockouts cannot present as nearly complete runs.
 **Repository Touchpoints:** `server/adapters/mcp/contracts/quality_gates.py`, `server/adapters/mcp/transforms/quality_gate_verifier.py`, `server/adapters/mcp/vision/reference_gates.py`, `server/adapters/mcp/vision/parsing.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/areas/reference_truth.py`, `server/adapters/mcp/vision/reference_support.py`, `tests/unit/adapters/mcp/test_quality_gate_verifier.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/e2e/vision/test_goal_derived_gate_creature_completion.py`
@@ -63,9 +64,19 @@ if global_creature_readability_unresolved(gate_plan, truth_followup, compare_res
 
 - add/update the historical `_docs/_CHANGELOG/*` entry when this slice lands
 
+## Completion Summary
+
+- creature completion stays blocked on the shipped deterministic gate/truth
+  path when required creature roles or seam/profile conditions remain
+  unresolved
+- paired-detail target labels and gate-only `eye_pair` semantics are already
+  normalized on the current guided/reference surfaces
+- optional classifier and segmentation support remain default-off and
+  advisory-only across RU-side and compare-time projection
+
 ## Status / Board Update
 
-- keep nested under `TASK-169`
+- closed with parent `TASK-169`
 
 ## Validation Commands
 

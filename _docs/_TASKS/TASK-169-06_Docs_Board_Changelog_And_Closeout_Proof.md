@@ -1,7 +1,8 @@
 # TASK-169-06: Docs, Board, Changelog, And Closeout Proof
 
 **Parent:** [TASK-169](./TASK-169_Reference_Guided_Quality_Drift_Regression_And_Runtime_Authority.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-19
 **Priority:** 🟠 High
 **Objective:** Close the family only after prompt/docs wording, board state, changelog history, and the final validation bundle all agree on the shipped runtime behavior.
 **Repository Touchpoints:** `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/README.md`, `_docs/_CHANGELOG/*`, `_docs/_PROMPTS/GUIDED_SESSION_START.md`, `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_VISION/README.md`, `_docs/_TESTS/README.md`
@@ -33,10 +34,17 @@
 
 - this task owns the family closeout historical entry
 
+## Completion Summary
+
+- prompt docs, MCP docs, vision docs, and test docs now describe the shipped
+  broad-first creature compare behavior and the squirrel regression proof lane
+- the board, task family, and changelog surfaces close together under the
+  current-state TASK-169 audit instead of leaving planning docs behind the
+  runtime
+
 ## Status / Board Update
 
-- close `TASK-169` and its nested children in the same branch when the proof is
-  real
+- `TASK-169` and all direct descendants close together in this branch
 
 ## Validation Commands
 

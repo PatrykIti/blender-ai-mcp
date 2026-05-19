@@ -836,6 +836,7 @@ def build_compare_packets(
     assembled_target_scope: SceneAssembledTargetScopeContract | None,
     truth_followup: SceneTruthFollowupContract | None,
     max_images_per_packet: int | None = None,
+    prefer_target_scope_clusters: bool = False,
 ) -> ReferenceCompareDiagnosticsContract:
     capture_labels_by_view: dict[str, list[str]] = {}
     context_capture_labels: list[str] = []
@@ -927,7 +928,7 @@ def build_compare_packets(
                 focus_pairs,
                 primary_target=assembled_target_scope.primary_target if assembled_target_scope is not None else None,
             )
-            if focus_pairs
+            if focus_pairs and not prefer_target_scope_clusters
             else _scope_clusters_from_target_scope(assembled_target_scope)
         )
         if scope_clusters:

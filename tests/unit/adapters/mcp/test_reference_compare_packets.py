@@ -224,6 +224,38 @@ def test_build_compare_packets_complex_focus_clusters_keep_view_and_scope_slices
     assert all(packet.packet_kind == "view_scope" for packet in packets.packets)
 
 
+def test_build_compare_packets_can_prefer_primary_mass_scope_clusters_over_focus_pairs():
+    scope = SceneAssembledTargetScopeContract(
+        scope_kind="collection",
+        primary_target="Squirrel_Body",
+        object_names=["Squirrel_Head", "Squirrel_Body", "Squirrel_Tail"],
+        object_count=3,
+        collection_name="Squirrel",
+    )
+    packets = build_compare_packets(
+        target_view=None,
+        captures=[
+            _capture("target_front_after", preset_name="target_front"),
+            _capture("target_side_after", preset_name="target_side"),
+        ],
+        reference_records=[
+            _reference("ref_front", label="front_ref", target_view="front"),
+            _reference("ref_side", label="side_ref", target_view="side"),
+        ],
+        assembled_target_scope=scope,
+        truth_followup=SceneTruthFollowupContract(
+            scope=scope,
+            continue_recommended=True,
+            message="Tail and head seams still need work.",
+            focus_pairs=["Squirrel_Tail -> Squirrel_Body"],
+        ),
+        prefer_target_scope_clusters=True,
+    )
+
+    assert {packet.scope_label for packet in packets.packets} == {"Body + Head", "Tail"}
+    assert {packet.target_view for packet in packets.packets} == {"front", "side"}
+
+
 def test_build_compare_packets_clusters_architecture_facade_roof_and_support_scopes():
     scope = SceneAssembledTargetScopeContract(
         scope_kind="collection",

@@ -1,7 +1,8 @@
 # TASK-169-05-02: Blender-Backed Squirrel Proof Lane
 
 **Parent:** [TASK-169-05](./TASK-169-05_Squirrel_Reference_Guided_Drift_Regression_Pack.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-19
 **Priority:** 🔴 High
 **Objective:** Add one Blender-backed front+side squirrel proof lane that fails the current vertical-blockout class and proves the repaired runtime on the real guided/reference path.
 **Repository Touchpoints:** `tests/e2e/vision/test_reference_guided_squirrel_quality_regression.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/scene.py`, `_docs/_TEST_IMAGES/squirrel-front.png`, `_docs/_TEST_IMAGES/`
@@ -57,9 +58,17 @@
 
 - covered by the umbrella closeout entry when the proof lane lands
 
+## Completion Summary
+
+- `tests/e2e/vision/test_reference_guided_squirrel_quality_regression.py`
+  now adds the repo-owned squirrel proof lane requested by this leaf
+- the lane rejects the old vertical stack class with deterministic proportion,
+  bounding-box, and relation checks, and proves the repaired broad-first
+  primary-mass compare scope on the guided/reference checkpoint path
+
 ## Status / Board Update
 
-- keep nested under `TASK-169-05`
+- closed with parent `TASK-169-05`
 
 ## Validation Commands
 

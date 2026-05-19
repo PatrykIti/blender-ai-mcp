@@ -1,6 +1,7 @@
 # TASK-169: Reference-Guided Quality Drift Regression And Runtime Authority
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-19
 **Priority:** 🔴 High
 **Category:** Guided Runtime / Vision / Reconstruction Reliability
 **Estimated Effort:** Large
@@ -202,12 +203,23 @@ After this umbrella lands:
 - add one `_docs/_CHANGELOG/*` entry when the family closes or when a major
   runtime slice lands
 
+## Completion Summary
+
+- current-state audit confirmed the family had already landed most of its
+  runtime contract across the existing guided/reference, gate, support
+  evidence, and viewport-alias seams
+- this closeout branch finished the remaining gap by adding an explicit
+  broad-first creature compare override for early body/head/tail stages plus a
+  deterministic Blender-backed squirrel regression proof lane
+- prompt docs, vision docs, MCP docs, and test docs now describe the shipped
+  primary-mass-first behavior and the repo-owned squirrel proof surface
+
 ## Status / Board Update
 
-- promote `TASK-169` as one board-level `⏳ To Do` follow-on
-- keep `TASK-169-*` nested under this umbrella until execution starts
-- do not reopen `TASK-135`, `TASK-166`, or `TASK-168`; record the lineage
-  through `Follow-on After` / `Related`
+- `_docs/_TASKS/README.md` moves `TASK-169` from the promoted To Do queue into
+  the completed milestones list with completion date `2026-05-19`
+- all direct `TASK-169-*` children close with this umbrella; no open child or
+  standalone follow-on remains under `TASK-169`
 
 ## Validation Commands
 

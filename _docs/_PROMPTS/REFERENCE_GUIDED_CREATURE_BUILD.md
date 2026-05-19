@@ -258,6 +258,9 @@ Workflow:
    - if the server reports `guided_flow_state.allowed_roles=["body_core","head_mass","tail_mass"]`, stay inside that role set
    - read `allowed_roles` and `missing_roles` literally from the active guided flow state before creating the next creature part
    - register semantic part roles with `guided_register_part(...)` or use the convenience hint `guided_role=...` on the build call
+   - if the previous checkpoint or loop state still names one local ear/limb
+     focus, keep the next compare broad on body/head/tail primary masses until
+     the whole-creature silhouette reads plausibly
 10. after each stage call:
    `reference_iterate_stage_checkpoint(target_object="Creature", checkpoint_label="<stage_name>", preset_profile="compact")`
 11. on the next iteration prioritize:

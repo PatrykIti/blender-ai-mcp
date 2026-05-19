@@ -768,6 +768,97 @@ def test_resolve_active_compare_scope_prefers_gate_blocker_cluster_over_full_act
     assert scope.local_region_hint == "gate_blocker_cluster"
 
 
+def test_resolve_active_compare_scope_prefers_primary_mass_workset_over_stale_focus_pair_during_secondary_build():
+    scope = resolve_active_compare_scope(
+        guided_flow_state={
+            "flow_id": "guided_creature_flow",
+            "domain_profile": "creature",
+            "current_step": "place_secondary_parts",
+            "active_target_scope": {
+                "scope_kind": "object_set",
+                "primary_target": "SquirrelBody",
+                "object_names": ["SquirrelBody", "SquirrelHead", "SquirrelTail", "SquirrelEar_L"],
+                "object_count": 4,
+            },
+        },
+        gate_plan={
+            "plan_id": "plan_creature",
+            "domain_profile": "creature",
+            "gates": [],
+            "completion_blockers": [],
+        },
+        guided_part_registry=[
+            {"object_name": "SquirrelBody", "role": "body_core", "role_group": "primary_masses"},
+            {"object_name": "SquirrelHead", "role": "head_mass", "role_group": "primary_masses"},
+            {"object_name": "SquirrelTail", "role": "tail_mass", "role_group": "primary_masses"},
+            {"object_name": "SquirrelEar_L", "role": "ear_pair", "role_group": "secondary_parts"},
+        ],
+        last_guided_affected_objects=["SquirrelEar_L"],
+        target_object=None,
+        target_objects=None,
+        collection_name=None,
+        focus_pairs=["SquirrelEar_L -> SquirrelHead"],
+    )
+
+    assert scope is not None
+    assert scope.target_object == "SquirrelBody"
+    assert scope.target_objects == ["SquirrelBody", "SquirrelHead", "SquirrelTail"]
+    assert scope.local_region_hint == "primary_mass_workset"
+
+
+def test_resolve_active_compare_scope_prefers_primary_mass_workset_over_gate_blocker_cluster_during_primary_mass_stage():
+    scope = resolve_active_compare_scope(
+        guided_flow_state={
+            "flow_id": "guided_creature_flow",
+            "domain_profile": "creature",
+            "current_step": "create_primary_masses",
+            "active_target_scope": {
+                "scope_kind": "object_set",
+                "primary_target": "SquirrelBody",
+                "object_names": ["SquirrelBody", "SquirrelHead", "SquirrelTail", "SquirrelEar_L"],
+                "object_count": 4,
+            },
+        },
+        gate_plan={
+            "plan_id": "plan_creature",
+            "domain_profile": "creature",
+            "gates": [],
+            "completion_blockers": [
+                {
+                    "gate_id": "creature_ear_pair_required",
+                    "gate_type": "required_part",
+                    "label": "Ear pair is present",
+                    "status": "failed",
+                    "reason_code": "missing_required_part",
+                    "target_kind": "object_role",
+                    "target_label": "ear_pair",
+                    "target_objects": [],
+                    "required_evidence_kinds": ["scene_truth"],
+                    "allowed_correction_families": ["secondary_parts"],
+                    "recommended_bounded_tools": ["modeling_create_primitive"],
+                    "message": "Ear pair is still missing.",
+                }
+            ],
+        },
+        guided_part_registry=[
+            {"object_name": "SquirrelBody", "role": "body_core", "role_group": "primary_masses"},
+            {"object_name": "SquirrelHead", "role": "head_mass", "role_group": "primary_masses"},
+            {"object_name": "SquirrelTail", "role": "tail_mass", "role_group": "primary_masses"},
+            {"object_name": "SquirrelEar_L", "role": "ear_pair", "role_group": "secondary_parts"},
+        ],
+        last_guided_affected_objects=["SquirrelEar_L"],
+        target_object=None,
+        target_objects=None,
+        collection_name=None,
+        focus_pairs=["SquirrelEar_L -> SquirrelHead"],
+    )
+
+    assert scope is not None
+    assert scope.target_object == "SquirrelBody"
+    assert scope.target_objects == ["SquirrelBody", "SquirrelHead", "SquirrelTail"]
+    assert scope.local_region_hint == "primary_mass_workset"
+
+
 def test_resolve_active_compare_scope_prefers_focus_pair_over_last_mutation():
     scope = resolve_active_compare_scope(
         guided_flow_state={

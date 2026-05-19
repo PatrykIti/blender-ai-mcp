@@ -1,7 +1,8 @@
 # TASK-169-05-01: Transcript-State And Packet-Priority Regression Cases
 
 **Parent:** [TASK-169-05](./TASK-169-05_Squirrel_Reference_Guided_Drift_Regression_Pack.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-19
 **Priority:** 🔴 High
 **Objective:** Encode the observed squirrel session as typed regressions for goal/no-match, one-ref then two-ref RU refresh, packet-local compare narrowing, `eye_pair` misuse, and viewport alias drift.
 **Repository Touchpoints:** `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_reference_compare_packets.py`, `tests/unit/adapters/mcp/test_quality_gate_verifier.py`, `tests/unit/adapters/mcp/test_search_surface.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/router/test_guided_manual_handoff.py`, `server/application/tool_handlers/router_handler.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/guided_contract.py`, `_docs/_TEST_IMAGES/squirrel-front.png`, `_docs/_TEST_IMAGES/squirrel-side.png`
@@ -55,9 +56,17 @@
 
 - covered by the umbrella closeout entry when the regression pack lands
 
+## Completion Summary
+
+- the squirrel no-match handoff, front/side RU refresh, gate-only `eye_pair`,
+  and viewport alias drift are already pinned on the current unit/integration
+  lanes
+- broad-first compare scope now has explicit unit coverage so stale local
+  focus cannot silently retake control during early creature shaping
+
 ## Status / Board Update
 
-- keep nested under `TASK-169-05`
+- closed with parent `TASK-169-05`
 
 ## Validation Commands
 

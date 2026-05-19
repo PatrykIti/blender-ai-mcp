@@ -1,7 +1,8 @@
 # TASK-169-02: Global-First Creature Compare Priority And Local Packet Escalation
 
 **Parent:** [TASK-169](./TASK-169_Reference_Guided_Quality_Drift_Regression_And_Runtime_Authority.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-19
 **Priority:** 🔴 High
 **Objective:** Keep early creature compare global enough to fix body/head/tail silhouette before the loop collapses into limb-, ear-, or seam-local packets.
 **Repository Touchpoints:** `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `server/adapters/mcp/areas/reference_planner.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/contracts/reference.py`, `tests/unit/adapters/mcp/test_reference_compare_packets.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/e2e/vision/test_reference_stage_multi_reference_scaling.py`, `tests/e2e/vision/test_reference_stage_truth_handoff.py`
@@ -70,9 +71,20 @@ if packets.returned_uncertain:
 
 - add/update the historical `_docs/_CHANGELOG/*` entry when this slice lands
 
+## Completion Summary
+
+- early creature compare scope now stays broad on body/head/tail primary
+  masses during the current guided primary/secondary build stages instead of
+  reusing stale ear/limb-local focus too early
+- later checkpoint/refinement stages still keep the existing blocker/focus
+  pair priority, so the broad-first rule remains scoped to the early
+  silhouette-forming window
+- unit coverage plus the Blender-backed squirrel regression lane now pin that
+  runtime-owned broad-first behavior on the current compare path
+
 ## Status / Board Update
 
-- keep nested under `TASK-169`
+- closed with parent `TASK-169`
 
 ## Validation Commands
 

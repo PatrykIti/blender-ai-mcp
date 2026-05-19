@@ -1,7 +1,8 @@
 # TASK-169-03-03: Advisory Support Evidence Projection For Creature Localization
 
 **Parent:** [TASK-169-03](./TASK-169-03_Creature_Quality_Bar_Gate_Normalization_And_Advisory_Support_Evidence.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-19
 **Priority:** 🟠 High
 **Objective:** Clarify and tighten where optional classifier and segmentation support may improve creature localization while remaining advisory-only on the current RU and compare seams.
 **Repository Touchpoints:** `server/adapters/mcp/vision/reference_support.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/vision/runtime.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_reference_compare_packets.py`, `tests/unit/adapters/mcp/test_vision_runtime_config.py`
@@ -41,9 +42,16 @@
 
 - add/update the historical `_docs/_CHANGELOG/*` entry when this slice lands
 
+## Completion Summary
+
+- RU-side classifier scores and compare-time segmentation support remain
+  explicitly advisory-only and non-fatal when unavailable
+- the shipped support-evidence surfaces keep those optional signals bounded and
+  machine-readable without turning them into gate authority
+
 ## Status / Board Update
 
-- keep nested under `TASK-169-03`
+- closed with parent `TASK-169-03`
 
 ## Validation Commands
 

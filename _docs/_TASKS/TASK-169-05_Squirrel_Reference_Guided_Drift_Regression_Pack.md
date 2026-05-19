@@ -1,7 +1,8 @@
 # TASK-169-05: Squirrel Reference-Guided Drift Regression Pack
 
 **Parent:** [TASK-169](./TASK-169_Reference_Guided_Quality_Drift_Regression_And_Runtime_Authority.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-19
 **Priority:** 🔴 High
 **Objective:** Turn the recent low-poly squirrel failure into one explicit regression family spanning transcript-state, packet-priority, and Blender-backed proof lanes.
 **Repository Touchpoints:** `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_reference_compare_packets.py`, `tests/unit/adapters/mcp/test_quality_gate_verifier.py`, `tests/unit/adapters/mcp/test_search_surface.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/router/test_guided_manual_handoff.py`, `tests/e2e/vision/`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/application/tool_handlers/router_handler.py`, `_docs/_TEST_IMAGES/squirrel-front.png`
@@ -50,9 +51,17 @@
 
 - add/update the historical `_docs/_CHANGELOG/*` entry when this slice lands
 
+## Completion Summary
+
+- the squirrel regression now has both typed state/contract coverage and one
+  deterministic Blender-backed proof lane on the current guided/reference path
+- the repo-owned proof lane distinguishes early broad silhouette authority
+  from the old vertical primitive-stack failure class with deterministic scene
+  assertions
+
 ## Status / Board Update
 
-- keep nested under `TASK-169`
+- closed with parent `TASK-169`
 
 ## Validation Commands
 

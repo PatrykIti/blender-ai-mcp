@@ -167,6 +167,10 @@ The repo now has the first implementation scaffolding for the vision layer:
 - `truth_followup` and ranked `correction_candidates` now keep multiple failing
   required creature seams visible together, so one repaired local pair no
   longer implies that the assembled creature stage is globally acceptable
+- early creature-stage compare scope now keeps body/head/tail primary masses
+  broad-first even when the previous loop remembered one local ear/limb focus,
+  so common squirrel/quadruped runs do not descend into accessory repair
+  before the whole-animal silhouette stabilizes
 - embedded organic seams such as snout/head or nose/snout now favor
   `macro_attach_part_to_surface`, while segment/contact seams such as
   head/body, tail/body, and limb/body continue to favor

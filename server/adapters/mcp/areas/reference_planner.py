@@ -192,6 +192,7 @@ def build_compare_packets(
     assembled_target_scope: SceneAssembledTargetScopeContract | None,
     truth_followup: SceneTruthFollowupContract | None,
     max_images_per_packet: int | None = None,
+    prefer_target_scope_clusters: bool = False,
 ) -> ReferenceCompareDiagnosticsContract:
     return _service_build_compare_packets(
         target_view=target_view,
@@ -200,6 +201,7 @@ def build_compare_packets(
         assembled_target_scope=assembled_target_scope,
         truth_followup=truth_followup,
         max_images_per_packet=max_images_per_packet,
+        prefer_target_scope_clusters=prefer_target_scope_clusters,
     )
 
 

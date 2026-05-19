@@ -1,7 +1,8 @@
 # TASK-169-03-02: Creature Reference Target Normalization For Paired Details
 
 **Parent:** [TASK-169-03](./TASK-169-03_Creature_Quality_Bar_Gate_Normalization_And_Advisory_Support_Evidence.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-19
 **Priority:** 🟠 High
 **Objective:** Normalize frequent creature reference targets such as `ears` into the shipped role/gate vocabulary so paired-detail gates and verifier scope matching stay coherent.
 **Repository Touchpoints:** `server/adapters/mcp/vision/reference_gates.py`, `server/adapters/mcp/vision/parsing.py`, `server/adapters/mcp/transforms/quality_gate_verifier.py`, `server/adapters/mcp/contracts/quality_gates.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_quality_gate_verifier.py`
@@ -45,9 +46,17 @@ proposal = proposal.model_copy(update={"target_label": target_label})
 
 - add/update the historical `_docs/_CHANGELOG/*` entry when this slice lands
 
+## Completion Summary
+
+- paired-detail vocabulary such as `ear_pair` and gate-only `eye_pair`
+  already stays normalized on the current reference-understanding, gate, and
+  guided execution seams
+- existing transport/runtime tests cover the front/side squirrel refresh path
+  that motivated this normalization slice
+
 ## Status / Board Update
 
-- keep nested under `TASK-169-03`
+- closed with parent `TASK-169-03`
 
 ## Validation Commands
 

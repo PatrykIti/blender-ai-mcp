@@ -161,6 +161,31 @@ Operational prerequisites still matter for reruns:
   creature/building gate tests
 - local socket binding is required for the Streamable HTTP transport lane
 
+## TASK-169 Quality Drift Lanes
+
+`TASK-169` closes the remaining squirrel/common-quadruped quality-drift gap on
+top of the shipped TASK-135, TASK-166, and TASK-168 seams instead of opening a
+parallel harness. The focused owner lanes are:
+
+- early compare-scope priority, same-session RU refresh, and contract
+  regressions:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_reference_compare_packets.py tests/unit/adapters/mcp/test_quality_gate_verifier.py tests/unit/adapters/mcp/test_search_surface.py -q`
+- guided handoff and gate/runtime transport proof for the squirrel no-match +
+  front/side reference path:
+  `PYTHONPATH=. poetry run pytest tests/e2e/router/test_guided_manual_handoff.py tests/e2e/integration/test_guided_gate_state_transport.py -q`
+- deterministic Blender-backed squirrel proof lane:
+  `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_guided_squirrel_quality_regression.py -q`
+
+The squirrel proof lane is repo-owned and bounded:
+
+- it uses `_docs/_TEST_IMAGES/squirrel-front.png` plus
+  `_docs/_TEST_IMAGES/squirrel-side.png`
+- it rejects the old vertical primitive-stack class with deterministic
+  proportion/bounding-box assertions
+- it proves the repaired guided/reference path keeps early creature compare
+  broad on body/head/tail primary masses instead of reusing stale local
+  ear/limb focus too early
+
 ## TASK-136 Architecture Reconstruction Lanes
 
 `TASK-136` extends the existing building/gate/guided surfaces rather than

@@ -1,7 +1,8 @@
 # TASK-169-01: Guided Manual Build Entry And Multi-Reference Stabilization
 
 **Parent:** [TASK-169](./TASK-169_Reference_Guided_Quality_Drift_Regression_And_Runtime_Authority.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-19
 **Priority:** 🔴 High
 **Objective:** Stabilize the no-match creature handoff plus same-session multi-reference understanding refresh so early creature build decisions do not rely on a stale one-reference state.
 **Repository Touchpoints:** `server/application/tool_handlers/router_handler.py`, `server/adapters/mcp/areas/router.py`, `server/adapters/mcp/transforms/visibility_policy.py`, `server/adapters/mcp/session_capabilities_bootstrap.py`, `server/adapters/mcp/session_capabilities_state.py`, `server/adapters/mcp/areas/reference_images_runtime.py`, `server/adapters/mcp/areas/reference_understanding.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_router_elicitation.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/router/test_guided_manual_handoff.py`
@@ -67,11 +68,20 @@ if action == "attach":
 
 - add/update the historical `_docs/_CHANGELOG/*` entry when this slice lands
 
+## Completion Summary
+
+- no-match creature handoff now preserves the guided manual-build reference
+  context instead of dropping back to an unrelated workflow route
+- same-session front+side reference attach flows refresh one shared
+  reference-understanding summary and gate-id set instead of leaving the
+  session on a stale one-reference state
+- transport and unit coverage already pin the squirrel front/side readiness
+  flow through the current `reference_images(...)`, router, and gate-state
+  seams
+
 ## Status / Board Update
 
-- keep nested under `TASK-169` until implementation closes
-- no standalone board row unless the family later splits for independent
-  scheduling
+- closed with parent `TASK-169`; no standalone board row is needed
 
 ## Validation Commands
 

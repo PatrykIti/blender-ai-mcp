@@ -239,6 +239,96 @@ def _resolve_capture_scope(
     )
 
 
+_CREATURE_BROAD_FIRST_STEPS: frozenset[str] = frozenset(
+    {"establish_spatial_context", "bootstrap_primary_workset", "create_primary_masses", "place_secondary_parts"}
+)
+_CREATURE_PRIMARY_MASS_ROLES: tuple[str, ...] = ("body_core", "head_mass", "tail_mass")
+
+
+def _guided_role_to_objects(guided_part_registry: list[dict[str, Any]] | None) -> dict[str, list[str]]:
+    role_to_objects: dict[str, list[str]] = {}
+    for item in list(guided_part_registry or []):
+        if not isinstance(item, dict):
+            continue
+        role = str(item.get("role") or "").strip().lower()
+        object_name = str(item.get("object_name") or "").strip()
+        if not role or not object_name:
+            continue
+        role_to_objects.setdefault(role, [])
+        if object_name not in role_to_objects[role]:
+            role_to_objects[role].append(object_name)
+    return role_to_objects
+
+
+def _resolved_active_scope_role_objects(
+    *,
+    role_to_objects: Mapping[str, Sequence[str]],
+    active_scope_name_keys: Mapping[str, str],
+    roles: Sequence[str],
+) -> list[str]:
+    resolved: list[str] = []
+    for role in roles:
+        for object_name in role_to_objects.get(role, ()):
+            active_scope_name = active_scope_name_keys.get(object_name.lower())
+            if active_scope_name and active_scope_name not in resolved:
+                resolved.append(active_scope_name)
+    return resolved
+
+
+def _early_creature_primary_mass_scope(
+    *,
+    flow_state: GuidedFlowStateContract,
+    active_scope_name_keys: Mapping[str, str],
+    active_scope_names: Sequence[str],
+    role_to_objects: Mapping[str, Sequence[str]],
+) -> ReferencePlannerTargetScopeContract | None:
+    if (
+        flow_state.domain_profile != "creature"
+        or flow_state.current_step not in _CREATURE_BROAD_FIRST_STEPS
+        or flow_state.active_target_scope is None
+    ):
+        return None
+
+    active_scope = flow_state.active_target_scope
+    primary_mass_objects = _resolved_active_scope_role_objects(
+        role_to_objects=role_to_objects,
+        active_scope_name_keys=active_scope_name_keys,
+        roles=_CREATURE_PRIMARY_MASS_ROLES,
+    )
+    if len(primary_mass_objects) >= 2:
+        primary_target = (
+            active_scope.primary_target
+            if active_scope.primary_target in primary_mass_objects
+            else primary_mass_objects[0]
+        )
+        return ReferencePlannerTargetScopeContract(
+            scope_kind="single_object" if len(primary_mass_objects) == 1 else "object_set",
+            target_object=primary_target if len(primary_mass_objects) == 1 else primary_target,
+            target_objects=primary_mass_objects,
+            collection_name=None,
+            local_region_hint="primary_mass_workset",
+        )
+
+    if active_scope.collection_name:
+        return ReferencePlannerTargetScopeContract(
+            scope_kind="collection",
+            target_object=active_scope.primary_target,
+            target_objects=list(active_scope_names),
+            collection_name=active_scope.collection_name,
+            local_region_hint="active_workset",
+        )
+    if active_scope_names:
+        return ReferencePlannerTargetScopeContract(
+            scope_kind="single_object" if len(active_scope_names) == 1 else "object_set",
+            target_object=active_scope.primary_target
+            or (active_scope_names[0] if len(active_scope_names) == 1 else None),
+            target_objects=list(active_scope_names),
+            collection_name=None,
+            local_region_hint="active_workset",
+        )
+    return None
+
+
 def resolve_active_compare_scope(
     *,
     guided_flow_state: dict[str, Any] | None,
@@ -288,6 +378,16 @@ def resolve_active_compare_scope(
         ]
     )
     active_scope_name_keys = {name.lower(): name for name in active_scope_names}
+    role_to_objects = _guided_role_to_objects(guided_part_registry)
+
+    early_creature_scope = _early_creature_primary_mass_scope(
+        flow_state=flow_state,
+        active_scope_name_keys=active_scope_name_keys,
+        active_scope_names=active_scope_names,
+        role_to_objects=role_to_objects,
+    )
+    if early_creature_scope is not None:
+        return early_creature_scope
 
     blocker_target_objects: list[str] = []
     if gate_plan is not None:
@@ -296,17 +396,6 @@ def resolve_active_compare_scope(
         except Exception:
             gate_plan_contract = None
         if gate_plan_contract is not None:
-            role_to_objects: dict[str, list[str]] = {}
-            for item in list(guided_part_registry or []):
-                if not isinstance(item, dict):
-                    continue
-                role = str(item.get("role") or "").strip().lower()
-                object_name = str(item.get("object_name") or "").strip()
-                if not role or not object_name:
-                    continue
-                role_to_objects.setdefault(role, [])
-                if object_name not in role_to_objects[role]:
-                    role_to_objects[role].append(object_name)
             for blocker in list(gate_plan_contract.completion_blockers or []):
                 blocker_target_objects.extend(
                     str(name).strip() for name in list(blocker.target_objects or []) if str(name).strip()
@@ -1642,6 +1731,9 @@ async def _run_stage_checkpoint_compare(
         assembled_target_scope=assembled_target_scope,
         truth_followup=truth_followup,
         max_images_per_packet=runtime_max_images,
+        prefer_target_scope_clusters=(runtime_scope.local_region_hint == "primary_mass_workset")
+        if runtime_scope is not None
+        else False,
     )
     packet_execution = await _execute_compare_packets(
         ctx=ctx,

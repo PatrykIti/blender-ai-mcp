@@ -1,7 +1,8 @@
 # TASK-169-04: Viewport Verification Contract Recovery And Client Alias Hardening
 
 **Parent:** [TASK-169](./TASK-169_Reference_Guided_Quality_Drift_Regression_And_Runtime_Authority.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-19
 **Priority:** 🟠 High
 **Objective:** Restore reliable viewport-based verification for guided creature runs by hardening safe client alias recovery and clarifying the canonical `scene_get_viewport(...)` contract.
 **Repository Touchpoints:** `server/adapters/mcp/areas/scene.py`, `server/adapters/mcp/areas/scene_viewport.py`, `server/adapters/mcp/guided_contract.py`, `server/adapters/mcp/discovery/search_surface.py`, `server/router/infrastructure/tools_metadata/scene/scene_get_viewport.json`, `tests/unit/tools/scene/test_mcp_viewport_output.py`, `tests/unit/adapters/mcp/test_search_surface.py`, `tests/e2e/tools/scene/test_scene_get_viewport.py`, `tests/e2e/tools/scene/test_scene_get_viewport_camera.py`
@@ -62,9 +63,17 @@ elif mode and mode not in {"IMAGE", "BASE64", "FILE", "MARKDOWN"}:
 
 - add/update the historical `_docs/_CHANGELOG/*` entry when this slice lands
 
+## Completion Summary
+
+- guided contract hardening now accepts safe viewport aliases such as legacy
+  `shading_mode` and `output_mode=\"PATH\"` while keeping the public canonical
+  surface on `shading` and `output_mode=\"FILE\"`
+- the regression is pinned on the current guided call-tool/search-surface
+  tests instead of relying on operator memory
+
 ## Status / Board Update
 
-- keep nested under `TASK-169`
+- closed with parent `TASK-169`
 
 ## Validation Commands
 

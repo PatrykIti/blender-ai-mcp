@@ -3,9 +3,9 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 4 tasks
+- **To Do:** 3 tasks
 - **In Progress:** 3 tasks
-- **Done:** 99
+- **Done:** 100
 - **Superseded:** 162
 
 ## 📐 Board Scope
@@ -82,7 +82,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Vision & Hybrid Loop
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-169](./TASK-169_Reference_Guided_Quality_Drift_Regression_And_Runtime_Authority.md) | **Reference-Guided Quality Drift Regression And Runtime Authority** | 🔴 High | Board-level follow-on after `TASK-135`, `TASK-166`, and `TASK-168` for common quadruped creature-quality regressions where references are attached and read, but the runtime still descends into local packet repair and gate progress before the whole-animal silhouette converges; squirrel is the regression anchor, not the only scope. |
 
 ---
 
@@ -90,6 +89,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-169](./TASK-169_Reference_Guided_Quality_Drift_Regression_And_Runtime_Authority.md) | **Reference-Guided Quality Drift Regression And Runtime Authority** | 🔴 High | 2026-05-19 |
 | [TASK-168](./TASK-168_Profile_Bound_Orchestrator_Shielding_Feedback_And_Memory_Containment.md) | **Profile-Bound Orchestrator Shielding, Feedback, And Memory Containment** | 🔴 High | 2026-05-16 |
 | [TASK-167](./TASK-167_Cross_Module_Debug_Profile_Registry_And_Runtime_Logging.md) | **Cross-Module Debug Profile Registry And Runtime Logging** | 🔴 High | 2026-05-13 |
 | [TASK-136](./TASK-136_Reference_Guided_Architecture_And_Building_Reconstruction.md) | **Reference-Guided Architecture and Building Reconstruction** | 🔴 High | 2026-05-12 |
