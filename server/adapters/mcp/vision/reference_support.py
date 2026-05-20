@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import re
@@ -582,15 +583,28 @@ async def augment_reference_understanding_optional_support(
     classifier_config = getattr(runtime_config, "active_reference_classifier", None)
     segmentation_config = getattr(runtime_config, "active_segmentation_sidecar", None)
 
-    classifier_scores, classifier_evidence, classifier_provenance = await _collect_classifier_support(
-        config=classifier_config,
-        summary=summary,
-        reference_records=reference_records,
-        request_payload=request_payload,
-    )
-    segmentation_artifacts, segmentation_evidence, segmentation_provenance = await _collect_segmentation_support(
-        config=segmentation_config,
-        request_payload=request_payload,
+    (
+        (
+            classifier_scores,
+            classifier_evidence,
+            classifier_provenance,
+        ),
+        (
+            segmentation_artifacts,
+            segmentation_evidence,
+            segmentation_provenance,
+        ),
+    ) = await asyncio.gather(
+        _collect_classifier_support(
+            config=classifier_config,
+            summary=summary,
+            reference_records=reference_records,
+            request_payload=request_payload,
+        ),
+        _collect_segmentation_support(
+            config=segmentation_config,
+            request_payload=request_payload,
+        ),
     )
     evidence_limit = max(
         16,

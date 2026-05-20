@@ -43,6 +43,9 @@ export BLENDER_AI_DEBUG=router,guided_flow,transport
 
 - The sidecar is support-only. It does not become gate or tool-unlock authority.
 - The initial implementation targets local SigLIP2 via `transformers` + `torch`.
+- With `REFERENCE_CLASSIFIER_AUTO_START=true`, the sidecar now preloads the
+  classifier pipeline before the MCP container is treated as ready, so the
+  first live reference attach does not absorb model cold-start time.
 - If you want to experiment with a different model, override
   `REFERENCE_CLASSIFIER_MODEL` or `VISION_REFERENCE_CLASSIFIER_MODEL`.
 - `BLENDER_AI_DEBUG` accepts `off`, `all`, or one or more of

@@ -67,6 +67,10 @@ The repo now has the first implementation scaffolding for the vision layer:
   `reference_iterate_stage_checkpoint(...)`
 - session-scoped `reference_strategy_state` derived from the active
   `reference_understanding_summary`
+- creature-oriented RU labels now normalize to the repo-owned creature
+  vocabulary before gate intake and guided feedback consume them, so common
+  aliases such as `head`, `ears`, and `tail` land as `head_mass`,
+  `ear_pair`, and `tail_mass`
 - compact `reference_orchestrator_feedback` on `reference_images(...)`,
   `router_*`, and staged checkpoint surfaces so clients can read one bounded
   next-step contract without rebuilding it from several payload fragments
@@ -762,6 +766,10 @@ Current RU behavior:
   authority
 - classifier failures degrade to provenance notes plus an empty score list
   instead of breaking guided/reference sessions
+- auto-started local classifier sidecars now preload their zero-shot image
+  pipeline before the MCP launcher reports ready, so the first live
+  `reference_images(action="attach")` request does not pay classifier cold
+  start
 
 Local operator path:
 

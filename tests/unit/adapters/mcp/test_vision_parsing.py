@@ -455,6 +455,8 @@ def test_parse_reference_understanding_payload_normalizes_aliases_and_derives_de
     assert parsed["status"] == "available"
     assert parsed["understanding_id"].startswith("understanding_")
     assert parsed["reference_ids"] == ["ref_front", "ref_side"]
+    assert parsed["required_parts"][0]["target_label"] == "tail_mass"
+    assert parsed["gate_proposals"][0]["target_label"] == "tail_mass"
     assert parsed["construction_strategy"]["primary_family"] == "modeling_mesh"
     assert parsed["construction_strategy"]["allowed_families"] == ["modeling_mesh", "inspect_only"]
     assert parsed["router_handoff_hints"]["preferred_family"] == "modeling_mesh"
@@ -465,6 +467,86 @@ def test_parse_reference_understanding_payload_normalizes_aliases_and_derives_de
     ]
     assert parsed["gate_proposals"][0]["allowed_correction_families"] == ["secondary_parts", "inspect_validate"]
     assert parsed["verification_requirements"][0]["tool_name"] == "scene_measure_alignment"
+
+
+def test_parse_reference_understanding_payload_canonicalizes_common_creature_part_labels():
+    text = json.dumps(
+        {
+            "subject": {
+                "label": "Low poly squirrel",
+                "category": "creature",
+                "confidence": 0.9,
+                "uncertainty_notes": [],
+            },
+            "style": {"style_label": "low_poly_faceted", "confidence": 0.8, "notes": []},
+            "views": [],
+            "required_parts": [
+                {
+                    "part_label": "body core",
+                    "target_label": "body",
+                    "priority": "high",
+                    "source_reference_ids": [],
+                },
+                {
+                    "part_label": "head",
+                    "target_label": "head",
+                    "priority": "high",
+                    "source_reference_ids": [],
+                },
+                {
+                    "part_label": "ears",
+                    "target_label": "ears",
+                    "priority": "normal",
+                    "source_reference_ids": [],
+                },
+                {
+                    "part_label": "tail",
+                    "target_label": "tail",
+                    "priority": "normal",
+                    "source_reference_ids": [],
+                },
+                {
+                    "part_label": "front legs",
+                    "target_label": "front legs",
+                    "priority": "normal",
+                    "source_reference_ids": [],
+                },
+            ],
+            "non_goals": [],
+            "construction_strategy": {
+                "construction_path": "low_poly_facet",
+                "primary_family": "modeling_mesh",
+                "allowed_families": ["modeling_mesh", "inspect_only"],
+                "stage_sequence": ["primary_masses", "secondary_parts"],
+                "finish_policy": "preserve_facets",
+            },
+            "router_handoff_hints": {
+                "preferred_family": "modeling_mesh",
+                "allowed_guided_families": ["reference_context", "primary_masses", "secondary_parts"],
+                "sculpt_policy": "hidden",
+            },
+            "gate_proposals": [],
+            "visual_evidence_refs": [],
+            "verification_requirements": [],
+        }
+    )
+
+    parsed = parse_vision_output_text(text, _reference_understanding_request())
+
+    assert [item["target_label"] for item in parsed["required_parts"]] == [
+        "body_core",
+        "head_mass",
+        "ear_pair",
+        "tail_mass",
+        "foreleg_pair",
+    ]
+    assert [item["target_label"] for item in parsed["gate_proposals"][:5]] == [
+        "body_core",
+        "head_mass",
+        "ear_pair",
+        "tail_mass",
+        "foreleg_pair",
+    ]
 
 
 def test_parse_reference_understanding_payload_rejects_missing_required_top_level_fields():

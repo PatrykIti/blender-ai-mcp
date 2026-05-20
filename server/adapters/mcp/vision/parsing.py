@@ -570,7 +570,133 @@ def _normalize_reference_understanding_style(parsed: dict[str, Any]) -> dict[str
     }
 
 
-def _normalize_reference_understanding_parts(parsed: dict[str, Any]) -> list[dict[str, Any]]:
+def _normalize_creature_reference_target_label(
+    target_label: str,
+    *,
+    part_label: str,
+) -> str:
+    normalized = target_label.strip().lower().replace(" ", "_")
+    if not normalized:
+        return normalized
+    target_tokens = {token for token in re.split(r"[^a-z0-9]+", normalized) if token}
+    part_tokens = {token for token in re.split(r"[^a-z0-9]+", part_label.strip().lower()) if token}
+    combined_tokens = target_tokens | part_tokens
+
+    def _looks_generic(tokens: set[str], *, allowed: set[str]) -> bool:
+        return bool(tokens) and tokens <= allowed
+
+    if normalized in {"body", "body_core", "body_mass", "torso", "torso_mass"} or _looks_generic(
+        combined_tokens,
+        allowed={"body", "core", "mass", "torso", "main"},
+    ):
+        return "body_core"
+    if normalized in {"head", "head_mass", "head_core"} or _looks_generic(
+        combined_tokens,
+        allowed={"head", "mass", "core"},
+    ):
+        return "head_mass"
+    if normalized in {"tail", "tail_mass", "tail_core"} or _looks_generic(
+        combined_tokens,
+        allowed={"tail", "mass", "core", "silhouette", "profile"},
+    ):
+        return "tail_mass"
+    if normalized in {"snout", "snout_mass", "muzzle", "nose"} or _looks_generic(
+        combined_tokens,
+        allowed={"snout", "mass", "muzzle", "nose", "core"},
+    ):
+        return "snout_mass"
+    if normalized in {"ear", "ears", "ear_pair", "earpair"} or _looks_generic(
+        combined_tokens,
+        allowed={"ear", "ears", "pair", "silhouette"},
+    ):
+        return "ear_pair"
+    if normalized in {"eye", "eyes", "eye_pair", "eyepair"} or _looks_generic(
+        combined_tokens,
+        allowed={"eye", "eyes", "pair", "visible", "readable"},
+    ):
+        return "eye_pair"
+    if normalized in {
+        "foreleg",
+        "forelegs",
+        "front_leg",
+        "front_legs",
+        "frontleg",
+        "frontlegs",
+        "forelimb",
+        "forelimbs",
+        "foreleg_pair",
+        "forelegpair",
+    } or _looks_generic(
+        combined_tokens,
+        allowed={
+            "foreleg",
+            "forelegs",
+            "front",
+            "frontleg",
+            "frontlegs",
+            "forelimb",
+            "forelimbs",
+            "legs",
+            "leg",
+            "pair",
+        },
+    ):
+        return "foreleg_pair"
+    if normalized in {
+        "hindleg",
+        "hindlegs",
+        "back_leg",
+        "back_legs",
+        "backleg",
+        "backlegs",
+        "rear_leg",
+        "rear_legs",
+        "hindlimb",
+        "hindlimbs",
+        "hindleg_pair",
+        "hindlegpair",
+    } or _looks_generic(
+        combined_tokens,
+        allowed={
+            "hindleg",
+            "hindlegs",
+            "back",
+            "backleg",
+            "backlegs",
+            "rear",
+            "rearleg",
+            "rearlegs",
+            "hindlimb",
+            "hindlimbs",
+            "legs",
+            "leg",
+            "pair",
+        },
+    ):
+        return "hindleg_pair"
+    return normalized
+
+
+def _normalize_reference_part_target_label(
+    target_label: str,
+    *,
+    part_label: str,
+    subject_category: str,
+) -> str:
+    normalized = target_label.strip().lower().replace(" ", "_")
+    if subject_category == "creature":
+        return _normalize_creature_reference_target_label(
+            normalized,
+            part_label=part_label,
+        )
+    return normalized
+
+
+def _normalize_reference_understanding_parts(
+    parsed: dict[str, Any],
+    *,
+    subject_category: str,
+) -> list[dict[str, Any]]:
     value = parsed.get("required_parts")
     if not isinstance(value, list):
         return []
@@ -581,7 +707,11 @@ def _normalize_reference_understanding_parts(parsed: dict[str, Any]) -> list[dic
             items.append(
                 {
                     "part_label": label,
-                    "target_label": label.lower().replace(" ", "_"),
+                    "target_label": _normalize_reference_part_target_label(
+                        label,
+                        part_label=label,
+                        subject_category=subject_category,
+                    ),
                     "construction_hint": None,
                     "priority": "normal",
                     "source_reference_ids": [],
@@ -596,7 +726,12 @@ def _normalize_reference_understanding_parts(parsed: dict[str, Any]) -> list[dic
         priority = str(raw_item.get("priority") or "normal").strip().lower()
         if priority not in {"high", "normal"}:
             priority = "normal"
-        target_label = str(raw_item.get("target_label") or "").strip() or label.lower().replace(" ", "_")
+        raw_target_label = str(raw_item.get("target_label") or "").strip() or label.lower().replace(" ", "_")
+        target_label = _normalize_reference_part_target_label(
+            raw_target_label,
+            part_label=label,
+            subject_category=subject_category,
+        )
         items.append(
             {
                 "part_label": label,
@@ -698,7 +833,12 @@ def _normalize_reference_understanding_hints(parsed: dict[str, Any], *, strategy
     }
 
 
-def _normalize_reference_gate_proposals(parsed: dict[str, Any], *, parts: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _normalize_reference_gate_proposals(
+    parsed: dict[str, Any],
+    *,
+    parts: list[dict[str, Any]],
+    subject_category: str,
+) -> list[dict[str, Any]]:
     value = parsed.get("gate_proposals")
     proposals: list[dict[str, Any]] = []
     if isinstance(value, list):
@@ -722,6 +862,12 @@ def _normalize_reference_gate_proposals(parsed: dict[str, Any], *, parts: list[d
             ):
                 if key in raw_item:
                     normalized[key] = raw_item.get(key)
+            if normalized.get("target_label"):
+                normalized["target_label"] = _normalize_reference_part_target_label(
+                    str(normalized["target_label"]),
+                    part_label=str(raw_item.get("label") or raw_item.get("part_label") or normalized["target_label"]),
+                    subject_category=subject_category,
+                )
             if "target_objects" in raw_item and isinstance(raw_item.get("target_objects"), list):
                 normalized["target_objects"] = [
                     str(item).strip() for item in raw_item["target_objects"] if str(item).strip()
@@ -862,8 +1008,12 @@ def _build_reference_understanding_id(request: VisionRequest) -> str:
 
 
 def _normalize_reference_understanding_payload(parsed: dict[str, Any], request: VisionRequest) -> dict[str, Any]:
+    subject = _normalize_reference_understanding_subject(parsed)
     strategy = _normalize_reference_understanding_strategy(parsed)
-    parts = _normalize_reference_understanding_parts(parsed)
+    parts = _normalize_reference_understanding_parts(
+        parsed,
+        subject_category=subject["category"],
+    )
     views = _normalize_reference_understanding_views(parsed)
     return {
         "status": "available",
@@ -872,14 +1022,18 @@ def _normalize_reference_understanding_payload(parsed: dict[str, Any], request: 
         "reference_ids": [
             str(item).strip() for item in request.metadata.get("reference_ids") or [] if str(item).strip()
         ],
-        "subject": _normalize_reference_understanding_subject(parsed),
+        "subject": subject,
         "style": _normalize_reference_understanding_style(parsed),
         "views": views,
         "required_parts": parts,
         "non_goals": _bounded_string_list(_coerce_string_list(parsed.get("non_goals")), max_items=8),
         "construction_strategy": {key: value for key, value in strategy.items() if not key.startswith("_")},
         "router_handoff_hints": _normalize_reference_understanding_hints(parsed, strategy=strategy),
-        "gate_proposals": _normalize_reference_gate_proposals(parsed, parts=parts),
+        "gate_proposals": _normalize_reference_gate_proposals(
+            parsed,
+            parts=parts,
+            subject_category=subject["category"],
+        ),
         "visual_evidence_refs": _normalize_reference_visual_evidence_refs(parsed),
         "verification_requirements": _normalize_reference_verification_requirements(parsed),
         "boundary_policy": {

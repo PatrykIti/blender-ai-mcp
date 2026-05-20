@@ -125,6 +125,11 @@ class ReferenceClassifierService:
             )
         return self._pipeline
 
+    def warmup(self) -> None:
+        """Load the zero-shot pipeline before the first live RU request."""
+
+        self._ensure_pipeline()
+
     def classify_payload(self, payload: dict[str, Any]) -> dict[str, Any]:
         image_paths = _iter_reference_image_paths(payload)
         if not image_paths:
@@ -183,6 +188,7 @@ class ReferenceClassifierRequestHandler(BaseHTTPRequestHandler):
             status=HTTPStatus.OK,
             payload={
                 "status": "ok",
+                "pipeline_loaded": service._pipeline is not None,
                 "model_name": service.model_name,
                 "device_name": service.device_name,
                 "label_space": service.labels,
@@ -236,6 +242,7 @@ def main(argv: list[str] | None = None) -> int:
         device_name=_resolve_device_name(args.device),
         top_k=args.top_k,
     )
+    service.warmup()
     ReferenceClassifierRequestHandler.service = service
     server = ThreadingHTTPServer((args.host, args.port), ReferenceClassifierRequestHandler)
     print(

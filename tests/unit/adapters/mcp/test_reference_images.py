@@ -1316,7 +1316,32 @@ def test_refresh_reference_understanding_summary_merges_optional_support_evidenc
                     "allowed_guided_families": ["reference_context", "primary_masses", "secondary_parts"],
                     "sculpt_policy": "hidden",
                 },
-                "gate_proposals": [],
+                "gate_proposals": [
+                    {
+                        "gate_type": "required_part",
+                        "label": "body core is represented",
+                        "target_kind": "reference_part",
+                        "target_label": "body",
+                    },
+                    {
+                        "gate_type": "required_part",
+                        "label": "head is represented",
+                        "target_kind": "reference_part",
+                        "target_label": "head",
+                    },
+                    {
+                        "gate_type": "required_part",
+                        "label": "ears is represented",
+                        "target_kind": "reference_part",
+                        "target_label": "ears",
+                    },
+                    {
+                        "gate_type": "required_part",
+                        "label": "tail is represented",
+                        "target_kind": "reference_part",
+                        "target_label": "tail",
+                    },
+                ],
                 "visual_evidence_refs": [],
                 "verification_requirements": [],
                 "classification_scores": [],
@@ -1628,7 +1653,32 @@ def test_refresh_reference_understanding_summary_keeps_optional_support_failures
                     "allowed_guided_families": ["reference_context", "primary_masses", "secondary_parts"],
                     "sculpt_policy": "hidden",
                 },
-                "gate_proposals": [],
+                "gate_proposals": [
+                    {
+                        "gate_type": "required_part",
+                        "label": "body core is represented",
+                        "target_kind": "reference_part",
+                        "target_label": "body",
+                    },
+                    {
+                        "gate_type": "required_part",
+                        "label": "head is represented",
+                        "target_kind": "reference_part",
+                        "target_label": "head",
+                    },
+                    {
+                        "gate_type": "required_part",
+                        "label": "ears is represented",
+                        "target_kind": "reference_part",
+                        "target_label": "ears",
+                    },
+                    {
+                        "gate_type": "required_part",
+                        "label": "tail is represented",
+                        "target_kind": "reference_part",
+                        "target_label": "tail",
+                    },
+                ],
                 "visual_evidence_refs": [],
                 "verification_requirements": [],
                 "classification_scores": [],
@@ -1864,7 +1914,32 @@ def test_refresh_reference_understanding_summary_can_use_openai_compatible_class
                     "allowed_guided_families": ["reference_context", "primary_masses", "secondary_parts"],
                     "sculpt_policy": "hidden",
                 },
-                "gate_proposals": [],
+                "gate_proposals": [
+                    {
+                        "gate_type": "required_part",
+                        "label": "body core is represented",
+                        "target_kind": "reference_part",
+                        "target_label": "body",
+                    },
+                    {
+                        "gate_type": "required_part",
+                        "label": "head is represented",
+                        "target_kind": "reference_part",
+                        "target_label": "head",
+                    },
+                    {
+                        "gate_type": "required_part",
+                        "label": "ears is represented",
+                        "target_kind": "reference_part",
+                        "target_label": "ears",
+                    },
+                    {
+                        "gate_type": "required_part",
+                        "label": "tail is represented",
+                        "target_kind": "reference_part",
+                        "target_label": "tail",
+                    },
+                ],
                 "visual_evidence_refs": [],
                 "verification_requirements": [],
                 "classification_scores": [],
@@ -3469,7 +3544,32 @@ def test_reference_understanding_refresh_merges_existing_view_with_live_referenc
                     "allowed_guided_families": ["reference_context", "primary_masses", "secondary_parts"],
                     "sculpt_policy": "hidden",
                 },
-                "gate_proposals": [],
+                "gate_proposals": [
+                    {
+                        "gate_type": "required_part",
+                        "label": "body core is represented",
+                        "target_kind": "reference_part",
+                        "target_label": "body",
+                    },
+                    {
+                        "gate_type": "required_part",
+                        "label": "head is represented",
+                        "target_kind": "reference_part",
+                        "target_label": "head",
+                    },
+                    {
+                        "gate_type": "required_part",
+                        "label": "ears is represented",
+                        "target_kind": "reference_part",
+                        "target_label": "ears",
+                    },
+                    {
+                        "gate_type": "required_part",
+                        "label": "tail is represented",
+                        "target_kind": "reference_part",
+                        "target_label": "tail",
+                    },
+                ],
                 "visual_evidence_refs": [],
                 "verification_requirements": [],
                 "classification_scores": [],
@@ -3495,6 +3595,144 @@ def test_reference_understanding_refresh_merges_existing_view_with_live_referenc
     assert updated.reference_understanding_summary is not None
     assert updated.reference_understanding_summary["views"][0]["view_id"] == "front"
     assert updated.reference_understanding_summary["views"][0]["reference_ids"] == ["ref_front"]
+
+
+def test_refresh_reference_understanding_summary_canonicalizes_common_creature_part_labels(tmp_path, monkeypatch):
+    ctx = FakeContext()
+    reference_path = tmp_path / "front.png"
+    _write_test_silhouette(reference_path, with_ears=True)
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel",
+            surface_profile="llm-guided",
+            guided_flow_state=_guided_reference_flow_state(),
+            reference_images=[
+                {
+                    "reference_id": "ref_front",
+                    "goal": "create a low-poly squirrel",
+                    "label": "front_ref",
+                    "target_view": "front",
+                    "media_type": "image/png",
+                    "source_kind": "local_path",
+                    "original_path": str(reference_path),
+                    "stored_path": str(reference_path),
+                    "added_at": "2026-05-20T00:00:00Z",
+                }
+            ],
+        ),
+    )
+
+    class Backend:
+        async def analyze(self, request):
+            return {
+                "status": "available",
+                "understanding_id": "understanding_creature_part_aliases",
+                "goal": request.goal,
+                "reference_ids": ["ref_front"],
+                "subject": {
+                    "label": "low poly squirrel",
+                    "category": "creature",
+                    "confidence": 0.9,
+                    "uncertainty_notes": [],
+                },
+                "style": {
+                    "style_label": "low_poly_faceted",
+                    "confidence": 0.9,
+                    "notes": [],
+                },
+                "views": [],
+                "required_parts": [
+                    {"part_label": "body core", "target_label": "body", "priority": "high"},
+                    {"part_label": "head", "target_label": "head", "priority": "high"},
+                    {"part_label": "ears", "target_label": "ears", "priority": "normal"},
+                    {"part_label": "tail", "target_label": "tail", "priority": "normal"},
+                ],
+                "non_goals": [],
+                "construction_strategy": {
+                    "construction_path": "low_poly_facet",
+                    "primary_family": "modeling_mesh",
+                    "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+                    "stage_sequence": ["primary_masses", "secondary_parts"],
+                    "finish_policy": "preserve_facets",
+                },
+                "router_handoff_hints": {
+                    "preferred_family": "modeling_mesh",
+                    "allowed_guided_families": ["reference_context", "primary_masses", "secondary_parts"],
+                    "sculpt_policy": "hidden",
+                },
+                "gate_proposals": [
+                    {
+                        "gate_type": "required_part",
+                        "label": "body core is represented",
+                        "target_kind": "reference_part",
+                        "target_label": "body",
+                    },
+                    {
+                        "gate_type": "required_part",
+                        "label": "head is represented",
+                        "target_kind": "reference_part",
+                        "target_label": "head",
+                    },
+                    {
+                        "gate_type": "required_part",
+                        "label": "ears is represented",
+                        "target_kind": "reference_part",
+                        "target_label": "ears",
+                    },
+                    {
+                        "gate_type": "required_part",
+                        "label": "tail is represented",
+                        "target_kind": "reference_part",
+                        "target_label": "tail",
+                    },
+                ],
+                "visual_evidence_refs": [],
+                "verification_requirements": [],
+                "classification_scores": [],
+                "segmentation_artifacts": [],
+                "source_provenance": [{"source": "reference_understanding"}],
+                "boundary_policy": {
+                    "advisory_only": True,
+                    "not_truth_source": True,
+                    "may_unlock_tools": False,
+                    "may_pass_gates": False,
+                    "may_propose_gates": True,
+                },
+            }
+
+    class Resolver:
+        def resolve_default(self):
+            return Backend()
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: Resolver())
+
+    updated = asyncio.run(refresh_reference_understanding_summary_async(ctx))
+
+    assert updated.reference_understanding_summary is not None
+    assert [item["target_label"] for item in updated.reference_understanding_summary["required_parts"]] == [
+        "body_core",
+        "head_mass",
+        "ear_pair",
+        "tail_mass",
+    ]
+    assert sorted(updated.reference_understanding_gate_ids or []) == [
+        "required_part_body_core",
+        "required_part_ear_pair",
+        "required_part_head_mass",
+        "required_part_tail_mass",
+    ]
+    assert updated.gate_plan is not None
+    ru_gates = [
+        gate for gate in updated.gate_plan["gates"] if "reference_understanding" in gate.get("proposal_sources", [])
+    ]
+    assert sorted(gate["target_label"] for gate in ru_gates) == [
+        "body_core",
+        "ear_pair",
+        "head_mass",
+        "tail_mass",
+    ]
 
 
 def test_refresh_reference_understanding_summary_retries_when_reference_ids_change_during_refresh(

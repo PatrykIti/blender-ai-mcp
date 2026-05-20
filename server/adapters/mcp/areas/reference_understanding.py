@@ -38,6 +38,144 @@ from server.infrastructure.debug_profiles import emit_debug_log
 logger = logging.getLogger(__name__)
 
 
+def _canonicalize_creature_reference_target_label(
+    target_label: str,
+    *,
+    part_label: str,
+) -> str:
+    normalized = target_label.strip().lower().replace(" ", "_")
+    if not normalized:
+        return normalized
+    target_tokens = {token for token in re.split(r"[^a-z0-9]+", normalized) if token}
+    part_tokens = {token for token in re.split(r"[^a-z0-9]+", part_label.strip().lower()) if token}
+    combined_tokens = target_tokens | part_tokens
+
+    def _looks_generic(tokens: set[str], *, allowed: set[str]) -> bool:
+        return bool(tokens) and tokens <= allowed
+
+    if normalized in {"body", "body_core", "body_mass", "torso", "torso_mass"} or _looks_generic(
+        combined_tokens,
+        allowed={"body", "core", "mass", "torso", "main"},
+    ):
+        return "body_core"
+    if normalized in {"head", "head_mass", "head_core"} or _looks_generic(
+        combined_tokens,
+        allowed={"head", "mass", "core"},
+    ):
+        return "head_mass"
+    if normalized in {"tail", "tail_mass", "tail_core"} or _looks_generic(
+        combined_tokens,
+        allowed={"tail", "mass", "core", "silhouette", "profile"},
+    ):
+        return "tail_mass"
+    if normalized in {"snout", "snout_mass", "muzzle", "nose"} or _looks_generic(
+        combined_tokens,
+        allowed={"snout", "mass", "muzzle", "nose", "core"},
+    ):
+        return "snout_mass"
+    if normalized in {"ear", "ears", "ear_pair", "earpair"} or _looks_generic(
+        combined_tokens,
+        allowed={"ear", "ears", "pair", "silhouette"},
+    ):
+        return "ear_pair"
+    if normalized in {"eye", "eyes", "eye_pair", "eyepair"} or _looks_generic(
+        combined_tokens,
+        allowed={"eye", "eyes", "pair", "visible", "readable"},
+    ):
+        return "eye_pair"
+    if normalized in {
+        "foreleg",
+        "forelegs",
+        "front_leg",
+        "front_legs",
+        "frontleg",
+        "frontlegs",
+        "forelimb",
+        "forelimbs",
+        "foreleg_pair",
+        "forelegpair",
+    } or _looks_generic(
+        combined_tokens,
+        allowed={
+            "foreleg",
+            "forelegs",
+            "front",
+            "frontleg",
+            "frontlegs",
+            "forelimb",
+            "forelimbs",
+            "legs",
+            "leg",
+            "pair",
+        },
+    ):
+        return "foreleg_pair"
+    if normalized in {
+        "hindleg",
+        "hindlegs",
+        "back_leg",
+        "back_legs",
+        "backleg",
+        "backlegs",
+        "rear_leg",
+        "rear_legs",
+        "hindlimb",
+        "hindlimbs",
+        "hindleg_pair",
+        "hindlegpair",
+    } or _looks_generic(
+        combined_tokens,
+        allowed={
+            "hindleg",
+            "hindlegs",
+            "back",
+            "backleg",
+            "backlegs",
+            "rear",
+            "rearleg",
+            "rearlegs",
+            "hindlimb",
+            "hindlimbs",
+            "legs",
+            "leg",
+            "pair",
+        },
+    ):
+        return "hindleg_pair"
+    return normalized
+
+
+def _canonicalize_reference_understanding_summary_targets(
+    summary: ReferenceUnderstandingSummaryContract,
+) -> ReferenceUnderstandingSummaryContract:
+    if summary.status != "available" or summary.subject is None or summary.subject.category != "creature":
+        return summary
+
+    required_parts = [
+        part.model_copy(
+            update={
+                "target_label": _canonicalize_creature_reference_target_label(
+                    str(part.target_label or part.part_label),
+                    part_label=part.part_label,
+                )
+            }
+        )
+        for part in list(summary.required_parts or [])
+    ]
+    gate_proposals = [
+        gate.model_copy(
+            update={
+                "target_label": _canonicalize_creature_reference_target_label(
+                    str(gate.target_label or gate.label),
+                    part_label=str(gate.label or gate.target_label or ""),
+                )
+            }
+        )
+        for gate in list(summary.gate_proposals or [])
+    ]
+    return summary.model_copy(update={"required_parts": required_parts, "gate_proposals": gate_proposals})
+
+
 def blocked_reference_understanding_summary(
     *,
     goal: str | None,
@@ -474,6 +612,7 @@ async def refresh_reference_understanding_summary(
         backend = resolver.resolve_default()
         payload = await backend.analyze(request)
         summary = ReferenceUnderstandingSummaryContract.model_validate(payload)
+        summary = _canonicalize_reference_understanding_summary_targets(summary)
         summary = augment_reference_understanding_summary(summary, reference_records=reference_records)
         summary = _with_reference_understanding_profile_gate_defaults(summary)
         summary = await augment_reference_understanding_optional_support(

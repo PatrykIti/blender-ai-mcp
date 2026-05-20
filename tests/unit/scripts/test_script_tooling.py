@@ -185,6 +185,9 @@ def test_reference_classifier_sidecar_parser_and_service_contract(tmp_path, monk
         device_name="cpu",
         top_k=2,
     )
+    assert service._pipeline is None
+    service.warmup()
+    assert service._pipeline is _fake_pipeline
     response = service.classify_payload(
         {
             "goal": "classify the attached squirrel reference",
