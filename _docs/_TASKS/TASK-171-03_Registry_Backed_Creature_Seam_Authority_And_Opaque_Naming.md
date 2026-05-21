@@ -72,7 +72,12 @@ gate_match = resolve_gate_targets_with_registry_first(required_seams, gate_plan)
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_spatial_graph_service.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_quality_gate_verifier.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_router_elicitation.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/test_handler_rpc_alignment.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/tools/scene/test_scene_measure_tools.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py -q`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+- `poetry run python scripts/run_e2e_tests.py`
 
 ## Validation Category
 

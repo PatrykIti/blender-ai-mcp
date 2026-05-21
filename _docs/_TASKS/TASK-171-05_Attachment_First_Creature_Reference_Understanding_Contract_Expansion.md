@@ -3,8 +3,8 @@
 **Parent:** [TASK-171](./TASK-171_Creature_Attachment_First_Build_Contract_And_Structured_Vision_Handoff.md)
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
-**Objective:** Expand the strict RU contract with typed creature assembly fields such as `mass_recipe`, `attachment_plan`, `contact_expectations`, `shape_profile_hints`, `silhouette_landmarks`, `support_surface_candidates`, `anchor_object_candidates`, `part_order`, and `must_seat_before_next_stage`, while keeping the output advisory-only and on the existing RU surfaces.
-**Repository Touchpoints:** `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/areas/router.py`, `server/adapters/mcp/vision/prompting.py`, `server/adapters/mcp/vision/parsing.py`, `server/adapters/mcp/vision/reference_support.py`, `tests/unit/adapters/mcp/test_vision_prompting.py`, `tests/unit/adapters/mcp/test_vision_parsing.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`, `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md`
+**Objective:** Expand the strict RU contract with typed creature assembly fields such as `mass_recipe`, `attachment_plan`, `contact_expectations`, `shape_profile_hints`, `silhouette_landmarks`, `support_surface_candidates`, `anchor_role_candidates`, `part_order`, and `must_seat_before_next_stage`, while keeping the output advisory-only and on the existing RU surfaces.
+**Repository Touchpoints:** `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/areas/reference_images_runtime.py`, `server/adapters/mcp/areas/router.py`, `server/adapters/mcp/session_capabilities_state.py`, `server/adapters/mcp/vision/prompting.py`, `server/adapters/mcp/vision/parsing.py`, `server/adapters/mcp/vision/reference_support.py`, `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`, `tests/unit/adapters/mcp/test_vision_prompting.py`, `tests/unit/adapters/mcp/test_vision_parsing.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`, `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md`
 **Acceptance Criteria:**
 - the RU contract can express creature assembly structure beyond `required_parts` without weakening strict schema validation
 - the new fields are clearly documented as semantic/advisory RU outputs rather than live Blender-scene truth
@@ -24,12 +24,12 @@
   - optional support evidence
 - the actual missing piece is deeper attachment-first creature assembly
   structure
-- the contract must make one explicit meaning decision for object-sounding
-  fields such as `anchor_object_candidates` and
-  `support_surface_candidates`:
-  - either they are semantic role/part anchors at RU time
-  - or they are later-resolved placeholders that the runtime binds after scene
-    objects exist
+- normalize the earlier planning alias `anchor_object_candidates` into
+  `anchor_role_candidates` so the RU contract stays clearly in semantic
+  role/reference space rather than implying live Blender object identity
+- `anchor_role_candidates` and `support_surface_candidates` should be defined as
+  semantic role/reference-surface hints at RU time, not later-bound scene
+  object placeholders
 - prefer canonical creature role labels such as `body_core`, `head_mass`,
   `tail_mass`, `snout_mass`, and pair roles inside these new RU structures
 - keep unknown-field rejection intact; this slice must update contract,
@@ -42,7 +42,7 @@
 class ReferenceUnderstandingAssemblyPartContract(...):
     target_label: str
     geometry_family: str
-    anchor_object_candidates: list[str]
+    anchor_role_candidates: list[str]
     required_relation: str | None
     forbid: list[str]
 
@@ -86,9 +86,14 @@ summary = ReferenceUnderstandingSummaryContract(
 ## Validation Commands
 
 - `git diff --check`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_guided_flow_state_contract.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_parsing.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_understanding_runtime_surface.py -q`
+- `PYTHONPATH=. poetry run pytest ./tests/unit`
+- `poetry run python scripts/run_e2e_tests.py`
 
 ## Validation Category
 

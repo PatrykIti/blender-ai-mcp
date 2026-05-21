@@ -121,10 +121,10 @@ After this family lands:
 | Path / Module | Expected Ownership | Why It Is In Scope |
 |---------------|--------------------|--------------------|
 | `server/adapters/mcp/session_capabilities_flow.py`, `server/adapters/mcp/session_capabilities_registry.py`, `server/adapters/mcp/session_capabilities_runtime_glue.py` | guided stage, role-summary, and active-scope owners | stage prerequisites, part registration, stale workset widening, and spatial refresh/rebind rules live here |
-| `server/adapters/mcp/areas/reference.py`, `reference_feedback.py`, `reference_truth.py`, `reference_planner.py` | compare/iterate, compact feedback, truth, and repair-planner owners | iterate escalation, compare precedence, bounded repair-plan projection, and truth-derived seam candidates all converge here |
+| `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/areas/reference_truth.py`, `server/adapters/mcp/areas/reference_planner.py`, `server/adapters/mcp/areas/reference_images_runtime.py` | compare/iterate, compact feedback, truth, repair-planner, and transport owners | iterate escalation, compare precedence, bounded repair-plan projection, truth-derived seam candidates, and feedback transport projection all converge here |
 | `server/application/services/spatial_graph.py` | deterministic creature seam owner | required creature seams still classify head/body/snout/tail/limb mostly from object names here |
-| `server/adapters/mcp/contracts/reference.py`, `contracts/quality_gates.py`, `transforms/quality_gate_verifier.py` | typed contracts and gate/verifier owners | buildable gate blockers, compact feedback shape, and registry-backed gate/seam matching belong on these seams |
-| `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/vision/prompting.py`, `server/adapters/mcp/vision/parsing.py` | RU runtime, prompt/schema, and parser owners | the new attachment-first handoff fields must be added end to end under the existing strict RU contract |
+| `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/contracts/quality_gates.py`, `server/adapters/mcp/transforms/quality_gate_verifier.py` | typed contracts and gate/verifier owners | buildable gate blockers, compact feedback shape, and registry-backed gate/seam matching belong on these seams |
+| `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/reference_images_runtime.py`, `server/adapters/mcp/areas/router.py`, `server/adapters/mcp/session_capabilities_state.py`, `server/adapters/mcp/vision/prompting.py`, `server/adapters/mcp/vision/parsing.py`, `server/adapters/mcp/vision/reference_support.py` | RU runtime, transport, session-state, prompt/schema, parser, and support owners | the new attachment-first handoff fields must be added end to end under the existing strict RU contract and stay aligned across persistence plus transport projection |
 | `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`, `_docs/_PROMPTS/GUIDED_SESSION_START.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md` | canonical prompt/runtime docs | the public controller guidance must match the new runtime contract and RU vocabulary |
 | `tests/unit/adapters/mcp/`, `tests/unit/tools/scene/`, `tests/e2e/integration/`, `tests/e2e/vision/` | proof lanes | this family changes stage flow, scope, gate semantics, seam inference, compact feedback, and RU payload shape |
 
@@ -135,8 +135,8 @@ After this family lands:
 | stage prerequisite and buildable gate escalation repair | `test_guided_flow_state_contract.py`, `test_context_bridge.py`, `test_visibility_policy.py`, `test_reference_images.py`, `tests/e2e/integration/test_guided_gate_state_transport.py` | stage advancement and build-vs-inspect policy live on guided session/runtime seams |
 | active workset expansion and secondary compare precedence | `test_guided_flow_state_contract.py`, `test_reference_images.py`, `tests/e2e/vision/test_reference_guided_squirrel_quality_regression.py` | omitted-target compare must start seeing newly registered parts and secondary blocker/focus state |
 | registry-backed seam authority | `test_quality_gate_verifier.py`, `test_spatial_graph_service.py`, `tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py` | deterministic seam generation must keep working even when lexical names are weak |
-| compact repair-plan feedback | `test_contract_payload_parity.py`, `tests/e2e/integration/test_guided_inspect_validate_handoff.py`, `tests/e2e/vision/test_reference_stage_truth_handoff.py` | compact feedback is client-facing and must remain typed, bounded, and actionable |
-| RU contract expansion | `test_vision_prompting.py`, `test_vision_parsing.py`, `test_reference_understanding_runtime_surface.py` | the RU path is strict-schema validated and must reject drift cleanly |
+| compact repair-plan feedback | `test_contract_payload_parity.py`, `test_guided_gate_state_transport.py`, `tests/e2e/integration/test_guided_inspect_validate_handoff.py`, `tests/e2e/vision/test_reference_stage_truth_handoff.py` | compact feedback is client-facing and must remain typed, bounded, actionable, and correctly transported |
+| RU contract expansion | `test_guided_flow_state_contract.py`, `test_vision_prompting.py`, `test_vision_parsing.py`, `test_reference_images.py`, `test_guided_gate_state_transport.py`, `test_reference_understanding_runtime_surface.py` | the RU path is strict-schema validated, session-persisted, and transported on existing public seams |
 | closeout regression bundle | repo-standard targeted owner lanes plus the Blender-backed squirrel flow | this family must prove the live registration and attachment-first follow-on, not only unit-level wording |
 
 ## Acceptance Criteria
@@ -193,7 +193,7 @@ After this family lands:
 ## Validation Commands
 
 - `git diff --check`
-- `rg -n "TASK-171|TASK-171-0[1-6]|Creature Attachment-First Build Contract And Structured Vision Handoff|guided_register_part|recommended_repair|anchor_object_candidates" _docs/_TASKS/README.md _docs/_TASKS/TASK-171*.md`
+- `rg -n "TASK-171|TASK-171-0[1-6]|Creature Attachment-First Build Contract And Structured Vision Handoff|guided_register_part|recommended_repair|anchor_role_candidates" _docs/_TASKS/README.md _docs/_TASKS/TASK-171*.md`
 
 ## Validation Category
 
