@@ -218,8 +218,11 @@ After this umbrella lands:
 
 - `_docs/_TASKS/README.md` moves `TASK-169` from the promoted To Do queue into
   the completed milestones list with completion date `2026-05-19`
-- all direct `TASK-169-*` children close with this umbrella; no open child or
-  standalone follow-on remains under `TASK-169`
+- all direct `TASK-169-*` children close with this umbrella
+- later standalone follow-on work discovered after the `TASK-169` closeout is
+  tracked explicitly under [TASK-170](./TASK-170_Reference_Target_Canonicalization_And_Support_Latency_Stabilization.md)
+  and [TASK-171](./TASK-171_Creature_Attachment_First_Build_Contract_And_Structured_Vision_Handoff.md)
+  rather than as reopened `TASK-169-*` children
 
 ## Validation Commands
 

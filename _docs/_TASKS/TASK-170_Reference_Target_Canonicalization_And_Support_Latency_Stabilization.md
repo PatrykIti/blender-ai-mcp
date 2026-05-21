@@ -129,6 +129,8 @@ After this follow-on:
 
 - `_docs/_TASKS/README.md` tracks `TASK-170` as a completed follow-on milestone
   after `TASK-169`
+- any remaining creature-runtime and RU follow-on after `TASK-170` is tracked
+  explicitly under [TASK-171](./TASK-171_Creature_Attachment_First_Build_Contract_And_Structured_Vision_Handoff.md)
 
 ## Validation Commands
 

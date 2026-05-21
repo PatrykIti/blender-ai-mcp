@@ -66,6 +66,7 @@ summary = ReferenceUnderstandingSummaryContract(
 
 ## Tests To Add/Update
 
+- `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`
 - `tests/unit/adapters/mcp/test_vision_prompting.py`
 - `tests/unit/adapters/mcp/test_vision_parsing.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
