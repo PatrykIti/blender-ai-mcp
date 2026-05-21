@@ -82,6 +82,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Vision & Hybrid Loop
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md) | **Optional Vision Capability Runtime And Localized Perception** | 🔴 High | Board-level umbrella for the post-`TASK-171` vision-extension wave: complete capability-aware runtime follow-ons on existing seams, add packet-bounded GroundingDINO/OWL localization plus SAM/SAM2 support, and plan reusable heavy-local adapter lifecycle without weakening advisory-only boundaries. |
 
 ---
 
