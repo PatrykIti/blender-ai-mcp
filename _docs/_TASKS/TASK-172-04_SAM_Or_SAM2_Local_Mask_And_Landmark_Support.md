@@ -4,7 +4,7 @@
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
 **Objective:** Extend the optional segmentation lane so localized SAM / SAM2-style masks and landmarks can support packet-bounded creature/reference ambiguity without becoming a default full-image heavy pass.
-**Repository Touchpoints:** `server/adapters/mcp/vision/reference_support.py`, `server/adapters/mcp/vision/config.py`, `server/adapters/mcp/vision/runtime.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/contracts/reference.py`, `server/infrastructure/config.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_public_surface_docs.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `_docs/_VISION/README.md`
+**Repository Touchpoints:** `server/adapters/mcp/vision/reference_support.py`, `server/adapters/mcp/vision/config.py`, `server/adapters/mcp/vision/runtime.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/contracts/reference.py`, `server/infrastructure/config.py`, `tests/unit/adapters/mcp/test_reference_compare_packets.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_public_surface_docs.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `_docs/_VISION/README.md`
 **Acceptance Criteria:**
 - packet-bounded localized masks/landmarks can be returned through the existing segmentation/public support seams
 - segmentation stays `advisory_only=True` and failure/absence still degrades to `disabled` or `unavailable`
@@ -14,6 +14,12 @@
 
 - build on the existing segmentation sidecar seam rather than inventing a
   parallel mask runtime
+- concrete owner seams for this leaf:
+  - `ReferencePartSegmentationLandmarkContract`
+  - `ReferencePartSegmentationContract`
+  - `collect_compare_time_segmentation_support(...)`
+  - `merge_compare_time_part_segmentation(...)`
+  - staged response projection in `reference.py`
 - acceptable first support shapes:
   - packet-local mask refs
   - crop refs
@@ -51,6 +57,7 @@ return ReferencePartSegmentationContract(
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_reference_compare_packets.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
 - `tests/e2e/integration/test_guided_gate_state_transport.py`
@@ -74,7 +81,7 @@ return ReferencePartSegmentationContract(
 ## Validation Commands
 
 - `git diff --check`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/adapters/mcp/test_vision_runtime_config.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_compare_packets.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/adapters/mcp/test_vision_runtime_config.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
 - `PYTHONPATH=. poetry run pytest ./tests/unit`
 

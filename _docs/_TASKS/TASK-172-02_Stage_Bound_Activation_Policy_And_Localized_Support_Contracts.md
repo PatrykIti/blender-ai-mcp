@@ -4,11 +4,13 @@
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
 **Objective:** Define exactly when RU refresh and staged compare/iterate may invoke localized optional perception, and keep that support packet-bounded, advisory-only, and on the current public surfaces.
-**Repository Touchpoints:** `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/vision/reference_support.py`, `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/contracts/quality_gates.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/unit/adapters/mcp/test_public_surface_docs.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md`
+**Repository Touchpoints:** `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/reference_images_runtime.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/vision/reference_support.py`, `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/contracts/quality_gates.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/unit/adapters/mcp/test_public_surface_docs.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md`
 **Acceptance Criteria:**
 - heavy optional perception is not invoked by default for every reference or packet
 - each localized invocation path names one bounded reason such as missing part ambiguity, anchor ambiguity, seam uncertainty, or local mask need
 - emitted contracts remain additive support evidence and do not become a second truth or gate authority path
+- unit coverage proves the no-invocation default on at least one RU refresh path
+  and one compare-packet path when no localized trigger reason exists
 
 ## Implementation Notes
 
@@ -17,6 +19,18 @@
   - `reference_images(...)` / RU refresh
   - staged compare packet planning
   - staged iterate follow-up
+- this leaf owns policy and support-contract vocabulary only; concrete adapter
+  work for localization and segmentation lands in `TASK-172-03` and
+  `TASK-172-04`
+- likely owner functions/classes:
+  - `refresh_reference_understanding_summary(...)`
+  - `_optional_support_needs_refresh(...)`
+  - `build_compare_packets(...)`
+  - `execute_compare_packets(...)`
+  - `resolve_active_compare_scope(...)`
+- invocation reasons should land on an existing typed seam such as packet policy,
+  packet-local support request state, or another declared runtime contract; do
+  not leave them as free-form ad hoc fields
 - define one small normalized vocabulary for invocation reasons, for example:
   - `part_missing_ambiguity`
   - `anchor_ambiguity`
@@ -52,6 +66,7 @@ if packet.reason in {"seam_unclear", "part_missing_ambiguity"}:
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_reference_compare_packets.py`
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/e2e/integration/test_guided_gate_state_transport.py`
@@ -74,7 +89,7 @@ if packet.reason in {"seam_unclear", "part_missing_ambiguity"}:
 ## Validation Commands
 
 - `git diff --check`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_reference_compare_packets.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
 - `PYTHONPATH=. poetry run pytest ./tests/unit`
 

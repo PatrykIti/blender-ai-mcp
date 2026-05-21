@@ -3,17 +3,34 @@
 **Parent:** [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md)
 **Status:** ⏳ To Do
 **Priority:** 🟠 High
-**Objective:** Introduce one explicit lifecycle owner for reusable heavy local optional adapters, including TTL/unload where it reduces resource retention without adding unnecessary cold-start penalties to cheap or per-request branches.
-**Repository Touchpoints:** `server/adapters/mcp/vision/runtime.py`, `server/adapters/mcp/vision/backends.py`, `server/adapters/mcp/vision/config.py`, `server/adapters/mcp/vision/runner.py`, `server/infrastructure/config.py`, `tests/unit/adapters/mcp/test_vision_runtime_config.py`, `tests/unit/adapters/mcp/test_vision_runner.py`, `tests/unit/adapters/mcp/test_vision_external_backend.py`, `_docs/_VISION/README.md`
+**Objective:** Introduce one explicit shared-owner lifecycle policy for reusable heavy in-process local optional adapters, and add TTL/unload only if this leaf first establishes real shared backend reuse worth managing.
+**Repository Touchpoints:** `server/adapters/mcp/vision/runtime.py`, `server/adapters/mcp/vision/backends.py`, `server/adapters/mcp/vision/config.py`, `server/adapters/mcp/vision/runner.py`, `server/infrastructure/config.py`, `server/infrastructure/di.py`, `tests/unit/adapters/mcp/test_vision_runtime_config.py`, `tests/unit/adapters/mcp/test_vision_runner.py`, `tests/unit/adapters/mcp/test_vision_external_backend.py`, `tests/unit/adapters/mcp/test_vision_local_backend.py`, `_docs/_VISION/README.md`
 **Acceptance Criteria:**
-- TTL/unload policy is defined only for shared local heavy adapters with real reuse and real memory cost
-- cheap, lightweight, or naturally per-request branches are not slowed down by unnecessary lifecycle machinery
-- unload behavior is best-effort, bounded, and safe when adapters are idle or the guided session ends
+- this leaf names one concrete first shipping owner class for heavy in-process
+  optional adapters, or explicitly closes with a documented
+  `request_scoped_only` verdict if no such owner is justified yet
+- TTL/unload is introduced only when that first owner actually reuses loaded
+  adapter state across requests or packets
+- cheap, lightweight, or naturally per-request branches are not routed through
+  the shared-owner lifecycle path
+- unload behavior, when implemented, is best-effort, bounded, and safe when the
+  chosen shared owner is idle or the guided session ends
 
 ## Implementation Notes
 
 - the current repo already avoids eager bootstrap loads; the missing gap is
   reusable heavy-adapter ownership, not "add TTL everywhere"
+- first concrete ownership decision must choose one of:
+  - `request_scoped_only`
+  - `resolver_owned_shared_local`
+- likely owner seam if shared reuse is justified:
+  - `LazyVisionBackendResolver.resolve(...)`
+  - `LazyVisionBackendResolver.resolve_default(...)`
+  - a sibling helper owned by `vision/runtime.py` plus DI wiring in
+    `server/infrastructure/di.py`
+- if the runtime remains request-scoped for the relevant heavy adapter family,
+  this leaf should close as policy/owner clarification plus docs/tests rather
+  than forcing artificial TTL state into per-request code
 - add lifecycle policy only where all of the following are true:
   - adapter load cost is material
   - adapter instances are reused across requests or packets
@@ -34,12 +51,16 @@
 ## Pseudocode
 
 ```python
-adapter = manager.acquire("sam_local")
+owner = resolve_shared_optional_adapter_owner("sam_local")
+if owner.mode == "request_scoped_only":
+    return run_request_scoped(payload)
+
+lease = owner.acquire()
 try:
-    return adapter.run(payload)
+    return lease.backend.run(payload)
 finally:
-    manager.mark_used("sam_local")
-    manager.release_if_idle("sam_local")
+    owner.mark_used()
+    owner.release_if_idle()
 ```
 
 ## Runtime / Security Contract Notes
@@ -55,6 +76,8 @@ finally:
 - `tests/unit/adapters/mcp/test_vision_runner.py`
 - `tests/unit/adapters/mcp/test_vision_external_backend.py` when shared
   lifecycle logic touches external/runtime selection seams
+- `tests/unit/adapters/mcp/test_vision_local_backend.py` when shared local
+  backend ownership or reset semantics change
 - targeted backend/unit tests for manager behavior if a dedicated lifecycle
   helper is introduced
 
@@ -77,6 +100,7 @@ finally:
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_runner.py tests/unit/adapters/mcp/test_vision_external_backend.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_local_backend.py -q`
 - `PYTHONPATH=. poetry run pytest ./tests/unit`
 
 ## Validation Category

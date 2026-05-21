@@ -98,20 +98,21 @@ After this family lands:
 |------|------|---------|
 | 1 | [TASK-172-01](./TASK-172-01_Internal_Vision_Capability_Inventory_And_Prerequisite_Diagnostics.md) | Add one internal typed capability inventory and consistent optional-capability diagnostics on existing runtime surfaces |
 | 2 | [TASK-172-02](./TASK-172-02_Stage_Bound_Activation_Policy_And_Localized_Support_Contracts.md) | Define when RU and staged compare may invoke localized optional perception and how that support remains packet-bounded and advisory-only |
-| 3 | [TASK-172-03](./TASK-172-03_GroundingDINO_Or_OWL_Localization_For_Packet_Bounded_Part_Ambiguity.md) | Add one optional text-conditioned part-localization adapter for ambiguous creature/reference regions |
-| 4 | [TASK-172-04](./TASK-172-04_SAM_Or_SAM2_Local_Mask_And_Landmark_Support.md) | Extend optional segmentation into localized masks and landmarks that pair cleanly with bounded staged-compare support |
-| 5 | [TASK-172-05](./TASK-172-05_Heavy_Local_Adapter_Lifecycle_TTL_And_Unload_Policy.md) | Add reusable heavy-local-adapter lifecycle ownership, including TTL/unload only where reuse and resource cost justify it |
-| 6 | [TASK-172-06](./TASK-172-06_Docs_Eval_Harness_And_Closeout_For_Optional_Vision_Runtime.md) | Close the family with docs, harness/eval coverage, negative coverage, and board/changelog sync |
+| 3 | [TASK-172-03](./TASK-172-03_GroundingDINO_Or_OWL_Localization_For_Packet_Bounded_Part_Ambiguity.md) | Add one optional packet-bounded text-conditioned part-localization adapter for ambiguous creature/reference regions |
+| 4 | [TASK-172-04](./TASK-172-04_SAM_Or_SAM2_Local_Mask_And_Landmark_Support.md) | Extend optional segmentation into packet-bounded localized masks and landmarks that pair cleanly with staged-compare support |
+| 5 | [TASK-172-05](./TASK-172-05_Heavy_Local_Adapter_Lifecycle_TTL_And_Unload_Policy.md) | Decide and implement shared-owner heavy-local lifecycle only for the first in-process adapter family that actually benefits from reuse and TTL/unload |
+| 6 | [TASK-172-06](./TASK-172-06_Harness_Negative_Coverage_And_Operator_Docs_For_Optional_Vision_Runtime.md) | Add harness mode updates, negative coverage, and operator-facing docs for localized optional perception paths |
+| 7 | [TASK-172-07](./TASK-172-07_Board_Changelog_And_Closeout_Proof_For_Optional_Vision_Runtime.md) | Close the family with board/changelog sync and explicit proof-lane accounting after the implementation leaves land |
 
 ## Repository Touchpoints
 
 | Path / Module | Expected Ownership | Why It Is In Scope |
 |---------------|--------------------|--------------------|
-| `server/adapters/mcp/vision/runtime.py`, `server/adapters/mcp/vision/backends.py`, `server/adapters/mcp/vision/config.py`, `server/adapters/mcp/vision/runner.py` | runtime config, backend resolution, request policy, and lifecycle owners | capability-aware runtime posture, optional adapter inventory, and lifecycle/reuse behavior belong here |
+| `server/adapters/mcp/vision/runtime.py`, `server/adapters/mcp/vision/backends.py`, `server/adapters/mcp/vision/config.py`, `server/adapters/mcp/vision/runner.py`, `server/infrastructure/di.py` | runtime config, backend resolution, request policy, lifecycle, and shared-owner wiring | capability-aware runtime posture, optional adapter inventory, and lifecycle/reuse behavior belong here |
 | `server/adapters/mcp/vision/reference_support.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/reference.py` | RU refresh, packet compare, optional support merge, and staged public surface owners | localized perception must plug into existing RU/packet seams instead of inventing a second phase engine |
 | `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/contracts/quality_gates.py` | typed client-facing and support-evidence contracts | optional adapters need bounded typed payloads with explicit advisory-only limits |
 | `server/infrastructure/config.py`, `server/infrastructure/di.py` | env/config and runtime wiring owners | optional adapters, lifecycle controls, and reuse policy must stay on shared DI/runtime seams |
-| `tests/unit/adapters/mcp/`, `tests/unit/router/application/`, `tests/e2e/integration/`, `tests/e2e/vision/`, `scripts/vision_harness.py` | validation and harness owners | this family changes runtime diagnostics, compare support contracts, optional sidecar behavior, and operator guidance |
+| `tests/unit/adapters/mcp/`, `tests/e2e/integration/`, `tests/e2e/vision/`, `scripts/vision_harness.py` | validation and harness owners | this family changes runtime diagnostics, compare support contracts, optional sidecar behavior, and operator guidance |
 | `_docs/_VISION/README.md`, `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md` | canonical docs | docs must describe the optional-capability boundary, deployment posture, and operator-visible diagnostics consistently |
 
 ## Test Matrix
@@ -119,16 +120,16 @@ After this family lands:
 | Slice | Primary Validation Lane | Why |
 |------|--------------------------|-----|
 | capability inventory and prerequisite diagnostics | `test_vision_runtime_config.py`, `test_vision_runner.py`, `test_vision_external_backend.py` | typed runtime state and public diagnostics must stay bounded and non-fatal |
-| stage-bound activation policy and support-only localization hooks | `test_reference_images.py`, `test_contract_payload_parity.py`, `test_guided_gate_state_transport.py` | localized optional perception must remain packet-bounded and transport-safe |
-| part localization adapter | `test_reference_images.py`, targeted adapter/runtime tests, optional harness/eval coverage | text-conditioned boxes must surface as advisory support only |
-| SAM/SAM2 localized masks and landmarks | `test_reference_images.py`, `test_public_surface_docs.py`, `test_guided_gate_state_transport.py` | localized segmentation support must project through existing public envelopes |
+| stage-bound activation policy and support-only localization hooks | `test_reference_compare_packets.py`, `test_reference_images.py`, `test_contract_payload_parity.py`, `test_guided_gate_state_transport.py` | localized optional perception must remain packet-bounded and transport-safe |
+| part localization adapter | `test_reference_compare_packets.py`, `test_reference_images.py`, targeted adapter/runtime tests, optional harness/eval coverage | text-conditioned boxes must surface as advisory support only |
+| SAM/SAM2 localized masks and landmarks | `test_reference_compare_packets.py`, `test_reference_images.py`, `test_public_surface_docs.py`, `test_guided_gate_state_transport.py` | localized segmentation support must project through existing public envelopes |
 | heavy local lifecycle / TTL / unload | `test_vision_runtime_config.py`, `test_vision_runner.py`, targeted backend tests | lifecycle policy must avoid eager bootstrap loads and avoid slowing cheap branches |
 | docs / harness / closeout | `git diff --check`, targeted consistency grep, `test_script_tooling.py`, optional live/eval lanes | closeout must prove docs and harness semantics stay aligned with shipped runtime boundaries |
 
 ## Acceptance Criteria
 
-- the repo has one internal typed optional-capability inventory or equivalent
-  typed diagnostics seam that covers at least:
+- the repo has one internal typed optional-capability inventory model that
+  covers at least:
   - external model capabilities
   - reference classifier support
   - packet-local segmentation support
@@ -166,8 +167,8 @@ After this family lands:
 
 ## Status / Board Update
 
-- add `TASK-172` to the `Vision & Hybrid Loop` open board section in
-  `_docs/_TASKS/README.md`
+- keep the promoted `TASK-172` board row and strategic-doc ownership entries in
+  `_docs/_TASKS/README.md` aligned with the active umbrella
 - keep the `TASK-172-0*.md` child files nested under the umbrella while this
   parent remains open
 
