@@ -551,9 +551,9 @@ def test_guided_role_hint_registration_reapplies_visibility(monkeypatch):
                 "next_actions": ["begin_primary_masses"],
                 "blocked_families": [],
                 "allowed_families": ["primary_masses", "reference_context"],
-                "allowed_roles": ["body_core", "head_mass"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
                 "completed_roles": [],
-                "missing_roles": ["body_core", "head_mass"],
+                "missing_roles": ["body_core", "head_mass", "tail_mass"],
                 "required_role_groups": ["primary_masses"],
                 "step_status": "ready",
             },
@@ -576,12 +576,14 @@ def test_guided_role_hint_registration_reapplies_visibility(monkeypatch):
     )
 
     register_guided_part_role(ctx, object_name="Squirrel_Body", role="body_core")
-    state = register_guided_part_role(ctx, object_name="Squirrel_Head", role="head_mass")
+    register_guided_part_role(ctx, object_name="Squirrel_Head", role="head_mass")
+    state = register_guided_part_role(ctx, object_name="Squirrel_Tail", role="tail_mass")
 
     assert state.guided_flow_state is not None
     assert state.guided_flow_state["current_step"] == "place_secondary_parts"
     assert state.guided_flow_state["spatial_refresh_required"] is True
     assert events == [
+        ("create_primary_masses", False, ["primary_masses", "reference_context"]),
         ("create_primary_masses", False, ["primary_masses", "reference_context"]),
         ("place_secondary_parts", True, ["spatial_context", "reference_context"]),
     ]
@@ -605,9 +607,9 @@ def test_async_guided_role_hint_registration_reapplies_visibility(monkeypatch):
                 "next_actions": ["begin_primary_masses"],
                 "blocked_families": [],
                 "allowed_families": ["primary_masses", "reference_context"],
-                "allowed_roles": ["body_core", "head_mass"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
                 "completed_roles": [],
-                "missing_roles": ["body_core", "head_mass"],
+                "missing_roles": ["body_core", "head_mass", "tail_mass"],
                 "required_role_groups": ["primary_masses"],
                 "step_status": "ready",
             },
@@ -631,7 +633,8 @@ def test_async_guided_role_hint_registration_reapplies_visibility(monkeypatch):
 
     async def run():
         await register_guided_part_role_async(ctx, object_name="Squirrel_Body", role="body_core")
-        return await register_guided_part_role_async(ctx, object_name="Squirrel_Head", role="head_mass")
+        await register_guided_part_role_async(ctx, object_name="Squirrel_Head", role="head_mass")
+        return await register_guided_part_role_async(ctx, object_name="Squirrel_Tail", role="tail_mass")
 
     state = asyncio.run(run())
 
@@ -640,7 +643,52 @@ def test_async_guided_role_hint_registration_reapplies_visibility(monkeypatch):
     assert state.guided_flow_state["spatial_refresh_required"] is True
     assert events == [
         ("create_primary_masses", False, ["primary_masses", "reference_context"]),
+        ("create_primary_masses", False, ["primary_masses", "reference_context"]),
         ("place_secondary_parts", True, ["spatial_context", "reference_context"]),
+    ]
+
+
+def test_register_guided_part_role_expands_active_target_scope_for_new_workset_member():
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="create a low-poly squirrel matching front and side reference images",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "active_target_scope": _scope("Squirrel_Body", "Squirrel_Head", "Squirrel_Tail"),
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["secondary_parts", "attachment_alignment"],
+                "allowed_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "completed_roles": ["body_core", "head_mass", "tail_mass"],
+                "missing_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+            guided_part_registry=[
+                {"object_name": "Squirrel_Body", "role": "body_core", "role_group": "primary_masses"},
+                {"object_name": "Squirrel_Head", "role": "head_mass", "role_group": "primary_masses"},
+                {"object_name": "Squirrel_Tail", "role": "tail_mass", "role_group": "primary_masses"},
+            ],
+        ),
+    )
+
+    state = register_guided_part_role(ctx, object_name="Squirrel_Snout", role="snout_mass")
+
+    assert state.guided_flow_state is not None
+    assert state.guided_flow_state["active_target_scope"]["object_names"] == [
+        "Squirrel_Body",
+        "Squirrel_Head",
+        "Squirrel_Snout",
+        "Squirrel_Tail",
     ]
 
 
@@ -1693,22 +1741,26 @@ def test_primary_mass_role_registration_advances_creature_flow_after_required_ro
 
     first = register_guided_part_role(ctx, object_name="Squirrel_Body", role="body_core")
     second = register_guided_part_role(ctx, object_name="Squirrel_Head", role="head_mass")
+    third = register_guided_part_role(ctx, object_name="Squirrel_Tail", role="tail_mass")
 
     assert first.guided_flow_state is not None
     assert first.guided_flow_state["current_step"] == "create_primary_masses"
     assert first.guided_flow_state["missing_roles"] == ["head_mass", "tail_mass"]
 
     assert second.guided_flow_state is not None
-    assert second.guided_flow_state["current_step"] == "place_secondary_parts"
-    assert second.guided_flow_state["required_role_groups"] == ["secondary_parts"]
-    assert second.guided_flow_state["spatial_refresh_required"] is True
-    assert second.guided_flow_state["step_status"] == "blocked"
-    assert second.guided_flow_state["allowed_families"] == [
+    assert second.guided_flow_state["current_step"] == "create_primary_masses"
+    assert second.guided_flow_state["missing_roles"] == ["tail_mass"]
+
+    assert third.guided_flow_state is not None
+    assert third.guided_flow_state["current_step"] == "place_secondary_parts"
+    assert third.guided_flow_state["required_role_groups"] == ["secondary_parts"]
+    assert third.guided_flow_state["spatial_refresh_required"] is True
+    assert third.guided_flow_state["step_status"] == "blocked"
+    assert third.guided_flow_state["allowed_families"] == [
         "spatial_context",
         "reference_context",
     ]
-    assert second.guided_flow_state["allowed_roles"] == [
-        "tail_mass",
+    assert third.guided_flow_state["allowed_roles"] == [
         "snout_mass",
         "ear_pair",
         "foreleg_pair",
@@ -1783,6 +1835,7 @@ def test_secondary_role_registration_advances_creature_flow_to_checkpoint_iterat
         ),
     )
 
+    register_guided_part_role(ctx, object_name="Squirrel_Snout", role="snout_mass")
     register_guided_part_role(ctx, object_name="Squirrel_Ears", role="ear_pair")
     register_guided_part_role(ctx, object_name="Squirrel_FrontLegs", role="foreleg_pair")
     state = register_guided_part_role(ctx, object_name="Squirrel_HindLegs", role="hindleg_pair")
@@ -1796,7 +1849,7 @@ def test_secondary_role_registration_advances_creature_flow_to_checkpoint_iterat
         "spatial_context",
         "reference_context",
     ]
-    assert state.guided_flow_state["allowed_roles"] == ["tail_mass", "snout_mass"]
+    assert state.guided_flow_state["allowed_roles"] == ["tail_mass"]
 
 
 def test_secondary_role_registration_enters_refinement_when_profile_gate_is_unblocked():
@@ -1845,6 +1898,7 @@ def test_secondary_role_registration_enters_refinement_when_profile_gate_is_unbl
         ),
     )
 
+    register_guided_part_role(ctx, object_name="Squirrel_Snout", role="snout_mass")
     register_guided_part_role(ctx, object_name="Squirrel_Ears", role="ear_pair")
     register_guided_part_role(ctx, object_name="Squirrel_FrontLegs", role="foreleg_pair")
     state = register_guided_part_role(ctx, object_name="Squirrel_HindLegs", role="hindleg_pair")
@@ -1919,6 +1973,7 @@ def test_secondary_role_registration_keeps_refinement_blocked_by_required_seam_g
         ),
     )
 
+    register_guided_part_role(ctx, object_name="Squirrel_Snout", role="snout_mass")
     register_guided_part_role(ctx, object_name="Squirrel_Ears", role="ear_pair")
     register_guided_part_role(ctx, object_name="Squirrel_FrontLegs", role="foreleg_pair")
     state = register_guided_part_role(ctx, object_name="Squirrel_HindLegs", role="hindleg_pair")
@@ -1977,6 +2032,7 @@ def test_secondary_role_registration_keeps_stale_spatial_state_out_of_refinement
         ),
     )
 
+    register_guided_part_role(ctx, object_name="Squirrel_Snout", role="snout_mass")
     register_guided_part_role(ctx, object_name="Squirrel_Ears", role="ear_pair")
     register_guided_part_role(ctx, object_name="Squirrel_FrontLegs", role="foreleg_pair")
     state = register_guided_part_role(ctx, object_name="Squirrel_HindLegs", role="hindleg_pair")

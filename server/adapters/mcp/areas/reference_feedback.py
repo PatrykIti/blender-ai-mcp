@@ -15,6 +15,7 @@ from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract
 from server.adapters.mcp.contracts.quality_gates import GatePlanContract
 from server.adapters.mcp.contracts.reference import (
     GuidedReferenceReadinessContract,
+    ReferenceCompactRepairContract,
     ReferenceCompareDiagnosticsContract,
     ReferenceCorrectionCandidateContract,
     ReferenceHybridBudgetControlContract,
@@ -344,6 +345,41 @@ def _pending_required_parts(
     return pending[:6]
 
 
+def _recommended_compact_repair(
+    *,
+    planner_summary: ReferenceRepairPlannerSummaryContract | None,
+    correction_candidates: list[ReferenceCorrectionCandidateContract] | None,
+) -> ReferenceCompactRepairContract | None:
+    if correction_candidates:
+        for candidate in correction_candidates:
+            truth_evidence = candidate.truth_evidence
+            if truth_evidence is None:
+                continue
+            for macro_candidate in list(truth_evidence.macro_candidates or []):
+                tool_name = str(macro_candidate.macro_name or "").strip()
+                reason = str(macro_candidate.reason or "").strip()
+                if not tool_name or not reason:
+                    continue
+                return ReferenceCompactRepairContract(
+                    tool_name=tool_name,
+                    reason=reason,
+                    arguments_hint=macro_candidate.arguments_hint,
+                )
+
+    if planner_summary is not None:
+        for tool_candidate in list(planner_summary.required_support_tools or []):
+            tool_name = str(tool_candidate.tool_name or "").strip()
+            reason = str(tool_candidate.reason or "").strip()
+            if not tool_name or not reason:
+                continue
+            return ReferenceCompactRepairContract(
+                tool_name=tool_name,
+                reason=reason,
+                arguments_hint=tool_candidate.arguments_hint,
+            )
+    return None
+
+
 def build_reference_orchestrator_feedback(
     *,
     goal: str | None,
@@ -541,6 +577,11 @@ def build_reference_orchestrator_feedback(
         if policy_checkpoint_tool:
             next_checkpoint_tool = cast(_CHECKPOINT_TOOLS | None, policy_checkpoint_tool)
 
+    recommended_repair = _recommended_compact_repair(
+        planner_summary=planner_summary,
+        correction_candidates=correction_candidates,
+    )
+
     return ReferenceOrchestratorFeedbackContract(
         status=effective_status,
         goal=goal or (summary.goal if summary is not None else None),
@@ -564,6 +605,7 @@ def build_reference_orchestrator_feedback(
         next_actions=actions,
         next_checkpoint_tool=next_checkpoint_tool,  # type: ignore[arg-type]
         recommended_support_tools=support_tools,
+        recommended_repair=recommended_repair,
         evidence_summary=evidence_summary,
         uncertainty_notes=uncertainty_notes,
         correction_focus=focus[:3],

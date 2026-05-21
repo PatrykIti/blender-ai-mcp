@@ -13,12 +13,14 @@ from server.adapters.mcp.contracts.scene import (
 from server.adapters.mcp.router_helper import route_tool_call, route_tool_call_async
 from server.adapters.mcp.session_capabilities import (
     describe_guided_flow_feedback,
+    get_session_capability_state,
     get_session_capability_state_async,
     record_guided_flow_spatial_check_completion,
     record_guided_flow_spatial_check_completion_async,
     update_quality_gate_plan_from_relation_graph,
     update_quality_gate_plan_from_relation_graph_async,
 )
+from server.application.services.spatial_graph import get_spatial_graph_service
 from server.infrastructure.di import get_scene_handler
 
 from .scene_guided_runtime import (
@@ -27,6 +29,11 @@ from .scene_guided_runtime import (
     hydrate_sync_route_session,
     should_require_explicit_guided_scope,
 )
+
+
+def _handler_supports_registry_backed_relation_graph(handler: object) -> bool:
+    required_methods = ("measure_gap", "measure_alignment", "measure_overlap", "assert_contact")
+    return all(callable(getattr(handler, method_name, None)) for method_name in required_methods)
 
 
 def route_scene_scope_graph(
@@ -183,6 +190,7 @@ def route_scene_relation_graph(
     guided_scope_mismatch_message_fn=guided_scope_mismatch_message,
     record_guided_flow_spatial_check_completion_fn=record_guided_flow_spatial_check_completion,
     update_quality_gate_plan_from_relation_graph_fn=update_quality_gate_plan_from_relation_graph,
+    get_session_capability_state_fn=get_session_capability_state,
 ) -> SceneRelationGraphResponseContract:
     def execute() -> SceneRelationGraphResponseContract:
         if not any([target_object, target_objects, collection_name]) and should_require_explicit_guided_scope_fn(ctx):
@@ -190,15 +198,29 @@ def route_scene_relation_graph(
 
         handler = get_scene_handler_fn()
         try:
-            payload = SceneRelationGraphPayloadContract.model_validate(
-                handler.get_relation_graph(
+            session = get_session_capability_state_fn(ctx)
+            if session.guided_part_registry and _handler_supports_registry_backed_relation_graph(handler):
+                scope_graph = handler.get_scope_graph(
+                    target_object=target_object,
+                    target_objects=target_objects,
+                    collection_name=collection_name,
+                )
+                relation_payload = get_spatial_graph_service().build_relation_graph(
+                    reader=handler,
+                    scope_graph=scope_graph,
+                    goal_hint=goal_hint,
+                    include_truth_payloads=False,
+                    guided_part_registry=session.guided_part_registry,
+                )
+            else:
+                relation_payload = handler.get_relation_graph(
                     target_object=target_object,
                     target_objects=target_objects,
                     collection_name=collection_name,
                     goal_hint=goal_hint,
                     include_truth_payloads=False,
                 )
-            )
+            payload = SceneRelationGraphPayloadContract.model_validate(relation_payload)
             mismatch_message = guided_scope_mismatch_message_fn(
                 ctx,
                 tool_name="scene_relation_graph",
@@ -257,6 +279,7 @@ async def route_scene_relation_graph_async(
     ctx_info_fn=ctx_info,
 ) -> SceneRelationGraphResponseContract:
     await hydrate_sync_route_session_fn(ctx)
+    session = await get_session_capability_state_async_fn(ctx)
 
     def execute() -> SceneRelationGraphResponseContract:
         if not any([target_object, target_objects, collection_name]) and should_require_explicit_guided_scope_fn(ctx):
@@ -264,15 +287,28 @@ async def route_scene_relation_graph_async(
 
         handler = get_scene_handler_fn()
         try:
-            payload = SceneRelationGraphPayloadContract.model_validate(
-                handler.get_relation_graph(
+            if session.guided_part_registry and _handler_supports_registry_backed_relation_graph(handler):
+                scope_graph = handler.get_scope_graph(
+                    target_object=target_object,
+                    target_objects=target_objects,
+                    collection_name=collection_name,
+                )
+                relation_payload = get_spatial_graph_service().build_relation_graph(
+                    reader=handler,
+                    scope_graph=scope_graph,
+                    goal_hint=goal_hint,
+                    include_truth_payloads=False,
+                    guided_part_registry=session.guided_part_registry,
+                )
+            else:
+                relation_payload = handler.get_relation_graph(
                     target_object=target_object,
                     target_objects=target_objects,
                     collection_name=collection_name,
                     goal_hint=goal_hint,
                     include_truth_payloads=False,
                 )
-            )
+            payload = SceneRelationGraphPayloadContract.model_validate(relation_payload)
             mismatch_message = guided_scope_mismatch_message_fn(
                 ctx,
                 tool_name="scene_relation_graph",

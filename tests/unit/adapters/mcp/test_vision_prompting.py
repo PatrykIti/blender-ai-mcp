@@ -362,6 +362,9 @@ def test_reference_understanding_prompt_and_schema_use_internal_contract():
     assert "mesh_edit -> modeling_mesh" in system_prompt
     assert "Return exactly one JSON object with only these keys:" in payload_text
     assert "- views" in payload_text
+    assert '"mass_recipe"' in payload_text
+    assert '"attachment_plan"' in payload_text
+    assert '"part_order"' in payload_text
     assert "- construction_strategy" in payload_text
     assert "- router_handoff_hints" in payload_text
     assert set(schema["properties"]) == {
@@ -369,6 +372,13 @@ def test_reference_understanding_prompt_and_schema_use_internal_contract():
         "style",
         "views",
         "required_parts",
+        "mass_recipe",
+        "attachment_plan",
+        "contact_expectations",
+        "shape_profile_hints",
+        "silhouette_landmarks",
+        "part_order",
+        "must_seat_before_next_stage",
         "non_goals",
         "construction_strategy",
         "router_handoff_hints",

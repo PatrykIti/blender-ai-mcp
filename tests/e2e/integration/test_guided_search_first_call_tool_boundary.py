@@ -196,6 +196,16 @@ def test_guided_stdio_call_tool_hidden_after_spatial_rearm_points_to_required_ch
                     "guided_role": "head_mass",
                 },
             )
+            await client.call_tool(
+                "modeling_create_primitive",
+                {
+                    "primitive_type": "Sphere",
+                    "name": "Squirrel_Tail",
+                    "location": [0.0, 0.55, 0.95],
+                    "radius": 0.18,
+                    "guided_role": "tail_mass",
+                },
+            )
 
             with pytest.raises(
                 ToolError,
@@ -216,7 +226,10 @@ def test_guided_stdio_call_tool_hidden_after_spatial_rearm_points_to_required_ch
             assert status_result["guided_flow_state"]["current_step"] == "place_secondary_parts"
             assert status_result["guided_flow_state"]["spatial_refresh_required"] is True
 
-            refresh_scope = {"target_object": "Squirrel_Body", "target_objects": ["Squirrel_Head"]}
+            refresh_scope = {
+                "target_object": "Squirrel_Body",
+                "target_objects": ["Squirrel_Head", "Squirrel_Tail"],
+            }
             scope_result = result_payload(await client.call_tool("scene_scope_graph", refresh_scope))
             assert scope_result
 

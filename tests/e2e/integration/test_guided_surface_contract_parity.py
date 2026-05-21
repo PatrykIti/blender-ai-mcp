@@ -310,6 +310,20 @@ def test_guided_surface_contract_parity_over_stdio(tmp_path: Path):
             )
             assert head_result == "Created Sphere named 'Squirrel_Head'"
 
+            tail_result = result_payload(
+                await client.call_tool(
+                    "modeling_create_primitive",
+                    {
+                        "primitive_type": "Sphere",
+                        "name": "Squirrel_Tail",
+                        "location": [0.0, 0.55, 0.95],
+                        "radius": 0.18,
+                        "guided_role": "tail_mass",
+                    },
+                )
+            )
+            assert tail_result == "Created Sphere named 'Squirrel_Tail'"
+
             role_unlocked_status = result_payload(await client.call_tool("router_get_status", {}))
             assert role_unlocked_status["guided_flow_state"]["current_step"] == "place_secondary_parts"
             assert role_unlocked_status["guided_flow_state"]["spatial_refresh_required"] is True
@@ -327,7 +341,10 @@ def test_guided_surface_contract_parity_over_stdio(tmp_path: Path):
             }
             assert "modeling_create_primitive" not in stale_visible_tool_names
 
-            refresh_scope = {"target_object": "Squirrel_Body", "target_objects": ["Squirrel_Head"]}
+            refresh_scope = {
+                "target_object": "Squirrel_Body",
+                "target_objects": ["Squirrel_Head", "Squirrel_Tail"],
+            }
             await client.call_tool("scene_scope_graph", refresh_scope)
             await client.call_tool(
                 "scene_relation_graph",
@@ -341,14 +358,12 @@ def test_guided_surface_contract_parity_over_stdio(tmp_path: Path):
             refreshed_status = result_payload(await client.call_tool("router_get_status", {}))
             assert refreshed_status["guided_flow_state"]["spatial_refresh_required"] is False
             assert refreshed_status["guided_flow_state"]["allowed_roles"] == [
-                "tail_mass",
                 "snout_mass",
                 "ear_pair",
                 "foreleg_pair",
                 "hindleg_pair",
             ]
             assert role_unlocked_status["guided_flow_state"]["allowed_roles"] == [
-                "tail_mass",
                 "snout_mass",
                 "ear_pair",
                 "foreleg_pair",

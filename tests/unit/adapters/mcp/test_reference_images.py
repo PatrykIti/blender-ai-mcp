@@ -718,6 +718,67 @@ def test_reference_orchestrator_feedback_runtime_block_overrides_strategy_checkp
     assert "Run iterate before adding parts." in feedback.blocking_reasons
 
 
+def test_reference_orchestrator_feedback_projects_compact_recommended_repair_from_truth_macro():
+    compare = ReferenceCompareStageCheckpointResponseContract.model_validate(
+        {
+            "action": "compare_stage_checkpoint",
+            "goal": "low poly creature",
+            "checkpoint_id": "checkpoint_feedback_macro",
+            "preset_profile": "compact",
+            "preset_names": [],
+            "capture_count": 0,
+            "captures": [],
+            "reference_count": 0,
+            "reference_ids": [],
+            "reference_labels": [],
+            "correction_candidates": [
+                {
+                    "candidate_id": "pair:truthhead_truthbody",
+                    "summary": "TruthHead -> TruthBody needs a bounded contact repair.",
+                    "priority_rank": 1,
+                    "priority": "high",
+                    "candidate_kind": "truth_only",
+                    "target_object": "TruthHead",
+                    "target_objects": ["TruthHead", "TruthBody"],
+                    "focus_pairs": ["TruthHead -> TruthBody"],
+                    "source_signals": ["truth", "macro"],
+                    "truth_evidence": {
+                        "focus_pairs": ["TruthHead -> TruthBody"],
+                        "item_kinds": ["contact_failure"],
+                        "items": [],
+                        "macro_candidates": [
+                            {
+                                "macro_name": "macro_align_part_with_contact",
+                                "reason": "Repair the pair with a bounded contact nudge.",
+                                "priority": "high",
+                                "arguments_hint": {
+                                    "part_object": "TruthHead",
+                                    "reference_object": "TruthBody",
+                                },
+                            }
+                        ],
+                    },
+                }
+            ],
+        }
+    )
+
+    feedback = build_reference_orchestrator_feedback(
+        goal="low poly creature",
+        summary=None,
+        strategy_state=None,
+        correction_candidates=compare.correction_candidates,
+    )
+
+    assert feedback is not None
+    assert feedback.recommended_repair is not None
+    assert feedback.recommended_repair.tool_name == "macro_align_part_with_contact"
+    assert feedback.recommended_repair.arguments_hint == {
+        "part_object": "TruthHead",
+        "reference_object": "TruthBody",
+    }
+
+
 def test_resolve_active_compare_scope_prefers_gate_blocker_cluster_over_full_active_workset():
     scope = resolve_active_compare_scope(
         guided_flow_state={
@@ -842,6 +903,44 @@ def test_resolve_active_compare_scope_releases_broad_first_when_only_local_detai
 
     assert scope is not None
     assert scope.target_objects == ["SquirrelEar_L", "SquirrelHead"]
+    assert scope.local_region_hint == "focus_pair"
+
+
+def test_resolve_active_compare_scope_prefers_registered_non_detail_secondary_focus_over_primary_mass_workset():
+    scope = resolve_active_compare_scope(
+        guided_flow_state={
+            "flow_id": "guided_creature_flow",
+            "domain_profile": "creature",
+            "current_step": "place_secondary_parts",
+            "missing_roles": ["foreleg_pair", "hindleg_pair"],
+            "active_target_scope": {
+                "scope_kind": "object_set",
+                "primary_target": "SquirrelBody",
+                "object_names": ["SquirrelBody", "SquirrelHead", "SquirrelTail", "SquirrelSnout"],
+                "object_count": 4,
+            },
+        },
+        gate_plan={
+            "plan_id": "plan_creature",
+            "domain_profile": "creature",
+            "gates": [],
+            "completion_blockers": [],
+        },
+        guided_part_registry=[
+            {"object_name": "SquirrelBody", "role": "body_core", "role_group": "primary_masses"},
+            {"object_name": "SquirrelHead", "role": "head_mass", "role_group": "primary_masses"},
+            {"object_name": "SquirrelTail", "role": "tail_mass", "role_group": "primary_masses"},
+            {"object_name": "SquirrelSnout", "role": "snout_mass", "role_group": "secondary_parts"},
+        ],
+        last_guided_affected_objects=["SquirrelSnout"],
+        target_object=None,
+        target_objects=None,
+        collection_name=None,
+        focus_pairs=["SquirrelSnout -> SquirrelHead"],
+    )
+
+    assert scope is not None
+    assert scope.target_objects == ["SquirrelSnout", "SquirrelHead"]
     assert scope.local_region_hint == "focus_pair"
 
 
@@ -12237,6 +12336,97 @@ def test_reference_iterate_stage_checkpoint_holds_incomplete_build_on_no_action_
         "foreleg_pair",
         "hindleg_pair",
     }
+
+
+def test_reference_iterate_stage_checkpoint_holds_build_for_buildable_required_part_blocker(monkeypatch):
+    ctx = FakeContext()
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="low poly creature",
+            surface_profile="llm-guided",
+            guided_flow_state={
+                "flow_id": "guided_creature_flow",
+                "domain_profile": "creature",
+                "current_step": "place_secondary_parts",
+                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "required_checks": [],
+                "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
+                "preferred_prompts": ["workflow_router_first"],
+                "next_actions": ["begin_secondary_parts"],
+                "blocked_families": [],
+                "allowed_families": ["secondary_parts", "attachment_alignment"],
+                "allowed_roles": [],
+                "completed_roles": [
+                    "body_core",
+                    "head_mass",
+                    "tail_mass",
+                    "snout_mass",
+                    "ear_pair",
+                    "foreleg_pair",
+                    "hindleg_pair",
+                ],
+                "missing_roles": [],
+                "required_role_groups": ["secondary_parts"],
+                "step_status": "ready",
+            },
+        ),
+    )
+
+    compare = ReferenceCompareStageCheckpointResponseContract.model_validate(
+        {
+            "action": "compare_stage_checkpoint",
+            "goal": "low poly creature",
+            "guided_flow_state": get_session_capability_state(ctx).guided_flow_state,
+            "checkpoint_id": "checkpoint_eye_pair_hold",
+            "checkpoint_label": "stage_eye_pair_hold",
+            "preset_profile": "compact",
+            "preset_names": ["context_wide"],
+            "capture_count": 1,
+            "captures": [],
+            "reference_count": 0,
+            "reference_ids": [],
+            "reference_labels": [],
+            "completion_blockers": [
+                {
+                    "gate_id": "creature_eye_pair_required",
+                    "gate_type": "required_part",
+                    "label": "Eye pair is present",
+                    "status": "failed",
+                    "reason_code": "missing_required_part",
+                    "target_kind": "reference_part",
+                    "target_label": "eye_pair",
+                    "target_objects": [],
+                    "required_evidence_kinds": ["scene_truth"],
+                    "allowed_correction_families": ["secondary_parts", "inspect_validate"],
+                    "recommended_bounded_tools": ["scene_create", "modeling_create_primitive"],
+                    "message": "Eye pair is still missing.",
+                }
+            ],
+        }
+    )
+
+    async def _fake_reference_compare_stage_checkpoint(*args, **kwargs):
+        return compare
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.reference_compare_stage_checkpoint",
+        _fake_reference_compare_stage_checkpoint,
+    )
+
+    result = asyncio.run(
+        reference_iterate_stage_checkpoint(
+            ctx,
+            target_object="Creature",
+            checkpoint_label="stage_eye_pair_hold",
+        )
+    )
+
+    assert result.loop_disposition == "continue_build"
+    assert result.guided_flow_state is not None
+    assert result.guided_flow_state.current_step == "place_secondary_parts"
+    assert "Buildable required-part quality gates still have a bounded create/repair lane." in (result.message or "")
 
 
 def test_reference_iterate_stage_checkpoint_falls_back_to_truth_handoff_when_vision_compare_errors(monkeypatch):

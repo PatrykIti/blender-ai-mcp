@@ -11,6 +11,22 @@ from fastmcp.exceptions import ToolError
 
 from ._guided_surface_harness import result_payload, run_streamable_server, streamable_client, write_server_script
 
+
+async def _register_primary_creature_wave(client) -> None:
+    await client.call_tool(
+        "guided_register_part",
+        {"object_name": "Squirrel_Body", "role": "body_core"},
+    )
+    await client.call_tool(
+        "guided_register_part",
+        {"object_name": "Squirrel_Head", "role": "head_mass"},
+    )
+    await client.call_tool(
+        "guided_register_part",
+        {"object_name": "Squirrel_Tail", "role": "tail_mass"},
+    )
+
+
 _PATCHED_GUIDED_STREAMABLE_SERVER = textwrap.dedent(
     """
     from server.adapters.mcp.areas import router as router_area
@@ -241,14 +257,7 @@ def test_streamable_guided_session_expands_visible_tools_after_goal_handoff(tmp_
             assert "Guided naming blocked object name 'Sphere'" in blocked_named_body
             assert "Body" in blocked_named_body
 
-            await client.call_tool(
-                "guided_register_part",
-                {"object_name": "Squirrel_Body", "role": "body_core"},
-            )
-            await client.call_tool(
-                "guided_register_part",
-                {"object_name": "Squirrel_Head", "role": "head_mass"},
-            )
+            await _register_primary_creature_wave(client)
 
             stale_status = result_payload(await client.call_tool("router_get_status", {}))
             assert stale_status["guided_flow_state"]["current_step"] == "place_secondary_parts"
@@ -259,7 +268,10 @@ def test_streamable_guided_session_expands_visible_tools_after_goal_handoff(tmp_
                 "reference_context",
             ]
 
-            refresh_scope = {"target_object": "Squirrel_Body", "target_objects": ["Squirrel_Head"]}
+            refresh_scope = {
+                "target_object": "Squirrel_Body",
+                "target_objects": ["Squirrel_Head", "Squirrel_Tail"],
+            }
             await client.call_tool("scene_scope_graph", refresh_scope)
             await client.call_tool(
                 "scene_relation_graph",
@@ -273,7 +285,6 @@ def test_streamable_guided_session_expands_visible_tools_after_goal_handoff(tmp_
             refreshed_status = result_payload(await client.call_tool("router_get_status", {}))
             assert refreshed_status["guided_flow_state"]["spatial_refresh_required"] is False
             assert refreshed_status["guided_flow_state"]["allowed_roles"] == [
-                "tail_mass",
                 "snout_mass",
                 "ear_pair",
                 "foreleg_pair",
@@ -345,17 +356,7 @@ def test_streamable_list_tools_waits_for_inflight_visibility_refresh(tmp_path: P
                 "router_set_goal",
                 {"goal": "create a low-poly squirrel matching front and side reference images"},
             )
-            await client.call_tool(
-                "guided_register_part",
-                {"object_name": "Squirrel_Body", "role": "body_core"},
-            )
-
-            body_tools_task = asyncio.create_task(
-                client.call_tool(
-                    "guided_register_part",
-                    {"object_name": "Squirrel_Head", "role": "head_mass"},
-                )
-            )
+            body_tools_task = asyncio.create_task(_register_primary_creature_wave(client))
             list_tools_task = asyncio.create_task(client.list_tools())
             await asyncio.sleep(0.01)
             assert body_tools_task.done() is False
@@ -419,15 +420,11 @@ def test_streamable_guided_dirty_mesh_tool_returns_and_rearms_spatial_context(tm
                 "router_set_goal",
                 {"goal": "create a low-poly squirrel matching front and side reference images"},
             )
-            await client.call_tool(
-                "guided_register_part",
-                {"object_name": "Squirrel_Body", "role": "body_core"},
-            )
-            await client.call_tool(
-                "guided_register_part",
-                {"object_name": "Squirrel_Head", "role": "head_mass"},
-            )
-            refresh_scope = {"target_object": "Squirrel_Body", "target_objects": ["Squirrel_Head"]}
+            await _register_primary_creature_wave(client)
+            refresh_scope = {
+                "target_object": "Squirrel_Body",
+                "target_objects": ["Squirrel_Head", "Squirrel_Tail"],
+            }
             await client.call_tool("scene_scope_graph", refresh_scope)
             await client.call_tool(
                 "scene_relation_graph",
@@ -466,19 +463,12 @@ def test_streamable_guided_view_diagnostics_requires_bound_scope_before_refresh_
                 "router_set_goal",
                 {"goal": "create a low-poly squirrel matching front and side reference images"},
             )
-            await client.call_tool(
-                "guided_register_part",
-                {"object_name": "Squirrel_Body", "role": "body_core"},
-            )
-            await client.call_tool(
-                "guided_register_part",
-                {"object_name": "Squirrel_Head", "role": "head_mass"},
-            )
+            await _register_primary_creature_wave(client)
 
             first_view = result_payload(
                 await client.call_tool(
                     "scene_view_diagnostics",
-                    {"target_objects": ["Squirrel_Body", "Squirrel_Head"], "view_name": "FRONT"},
+                    {"target_objects": ["Squirrel_Body", "Squirrel_Head", "Squirrel_Tail"], "view_name": "FRONT"},
                 )
             )
             assert first_view["payload"]["view_query"]["available"] is True
@@ -490,7 +480,10 @@ def test_streamable_guided_view_diagnostics_requires_bound_scope_before_refresh_
             assert stale_status["guided_flow_state"]["spatial_refresh_required"] is True
             assert checks_by_tool["scene_view_diagnostics"] == "pending"
 
-            refresh_scope = {"target_object": "Squirrel_Body", "target_objects": ["Squirrel_Head"]}
+            refresh_scope = {
+                "target_object": "Squirrel_Body",
+                "target_objects": ["Squirrel_Head", "Squirrel_Tail"],
+            }
             await client.call_tool("scene_scope_graph", refresh_scope)
             await client.call_tool(
                 "scene_relation_graph",
@@ -533,18 +526,11 @@ def test_streamable_wrong_scope_spatial_checks_keep_discovery_tools_visible(tmp_
                 "router_set_goal",
                 {"goal": "create a low-poly squirrel matching front and side reference images"},
             )
-            await client.call_tool(
-                "guided_register_part",
-                {"object_name": "Squirrel_Body", "role": "body_core"},
-            )
-            await client.call_tool(
-                "guided_register_part",
-                {"object_name": "Squirrel_Head", "role": "head_mass"},
-            )
+            await _register_primary_creature_wave(client)
 
-            active_scope = {"target_objects": ["Squirrel_Body", "Squirrel_Head"]}
+            active_scope = {"target_objects": ["Squirrel_Body", "Squirrel_Head", "Squirrel_Tail"]}
             await client.call_tool("scene_scope_graph", active_scope)
-            wrong_scope = {"target_objects": ["Squirrel_Body", "Squirrel_Head", "Squirrel_Tail"]}
+            wrong_scope = {"target_objects": ["Squirrel_Body", "Squirrel_Head"]}
             scope_result = result_payload(await client.call_tool("scene_scope_graph", wrong_scope))
             relation_result = result_payload(await client.call_tool("scene_relation_graph", wrong_scope))
 
@@ -600,6 +586,14 @@ def test_streamable_guided_transform_object_fails_cleanly_during_spatial_refresh
             )
             assert head_result == "Created Sphere named 'Squirrel_Head'"
 
+            tail_result = result_payload(
+                await client.call_tool(
+                    "guided_register_part",
+                    {"object_name": "Squirrel_Tail", "role": "tail_mass"},
+                )
+            )
+            assert tail_result["guided_flow_state"]["current_step"] == "place_secondary_parts"
+
             with pytest.raises(ToolError, match="Unknown tool: 'modeling_transform_object'"):
                 await client.call_tool(
                     "modeling_transform_object",
@@ -649,6 +643,10 @@ def test_streamable_guided_call_tool_hidden_during_spatial_refresh_points_to_req
                     "guided_role": "head_mass",
                 },
             )
+            await client.call_tool(
+                "guided_register_part",
+                {"object_name": "Squirrel_Tail", "role": "tail_mass"},
+            )
 
             with pytest.raises(
                 ToolError,
@@ -675,7 +673,10 @@ def test_streamable_guided_call_tool_hidden_during_spatial_refresh_points_to_req
                 "scene_view_diagnostics",
             ]
 
-            refresh_scope = {"target_object": "Squirrel_Body", "target_objects": ["Squirrel_Head"]}
+            refresh_scope = {
+                "target_object": "Squirrel_Body",
+                "target_objects": ["Squirrel_Head", "Squirrel_Tail"],
+            }
             scope_result = result_payload(await client.call_tool("scene_scope_graph", refresh_scope))
             assert scope_result
 

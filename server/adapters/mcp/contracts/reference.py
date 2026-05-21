@@ -92,6 +92,14 @@ ReferenceUnderstandingVisualMetricLiteral = Literal[
     "silhouette_aspect_ratio",
     "facet_likelihood",
 ]
+ReferenceUnderstandingAttachmentRelationLiteral = Literal[
+    "segment_attachment",
+    "seated_attachment",
+    "embedded_attachment",
+    "support_contact",
+    "symmetry_pair",
+    "unknown",
+]
 
 
 class ReferenceUnderstandingSubjectContract(MCPContract):
@@ -129,6 +137,55 @@ class ReferenceUnderstandingViewContract(MCPContract):
     confidence: float | None = None
     reference_ids: list[str] = []
     key_features: list[str] = []
+
+
+class ReferenceUnderstandingAssemblyPartContract(MCPContract):
+    """One advisory creature assembly part cue derived from references."""
+
+    target_label: str
+    geometry_family: str | None = None
+    construction_hint: str | None = None
+    anchor_role_candidates: list[str] = []
+    support_surface_candidates: list[str] = []
+    contact_expectations: list[str] = []
+    source_reference_ids: list[str] = []
+
+
+class ReferenceUnderstandingAttachmentPlanItemContract(MCPContract):
+    """One advisory attachment-first step for creature assembly sequencing."""
+
+    target_label: str
+    anchor_role_candidates: list[str] = []
+    required_relation: ReferenceUnderstandingAttachmentRelationLiteral = "unknown"
+    support_surface_candidates: list[str] = []
+    contact_expectations: list[str] = []
+    notes: list[str] = []
+
+
+class ReferenceUnderstandingContactExpectationContract(MCPContract):
+    """One advisory contact or support expectation for a creature part."""
+
+    target_label: str
+    expected_contacts: list[str] = []
+    avoid_contacts: list[str] = []
+    notes: list[str] = []
+
+
+class ReferenceUnderstandingShapeProfileHintContract(MCPContract):
+    """One advisory shape-profile cue for a target part."""
+
+    target_label: str
+    summary: str
+    reference_id: str | None = None
+
+
+class ReferenceUnderstandingSilhouetteLandmarkContract(MCPContract):
+    """One advisory silhouette landmark cue for a target part or whole form."""
+
+    landmark_id: str
+    target_label: str | None = None
+    view_id: ReferenceUnderstandingViewLiteral = "unknown"
+    summary: str
 
 
 class ReferenceUnderstandingConstructionStrategyContract(MCPContract):
@@ -213,6 +270,13 @@ class ReferenceUnderstandingSummaryContract(MCPContract):
     style: ReferenceUnderstandingStyleContract | None = None
     views: list[ReferenceUnderstandingViewContract] = []
     required_parts: list[ReferenceUnderstandingPartContract] = []
+    mass_recipe: list[ReferenceUnderstandingAssemblyPartContract] = []
+    attachment_plan: list[ReferenceUnderstandingAttachmentPlanItemContract] = []
+    contact_expectations: list[ReferenceUnderstandingContactExpectationContract] = []
+    shape_profile_hints: list[ReferenceUnderstandingShapeProfileHintContract] = []
+    silhouette_landmarks: list[ReferenceUnderstandingSilhouetteLandmarkContract] = []
+    part_order: list[str] = []
+    must_seat_before_next_stage: list[str] = []
     non_goals: list[str] = []
     construction_strategy: ReferenceUnderstandingConstructionStrategyContract | None = None
     router_handoff_hints: ReferenceUnderstandingHandoffHintsContract | None = None
@@ -254,6 +318,14 @@ class ReferenceStrategyStateContract(MCPContract):
     message: str | None = None
 
 
+class ReferenceCompactRepairContract(MCPContract):
+    """One bounded actionable repair hint projected on the compact orchestrator surface."""
+
+    tool_name: str
+    reason: str
+    arguments_hint: dict[str, object] | None = None
+
+
 class ReferenceOrchestratorFeedbackContract(MCPContract):
     """Compact orchestrator-facing read model for guided reference sessions."""
 
@@ -279,6 +351,7 @@ class ReferenceOrchestratorFeedbackContract(MCPContract):
         | None
     ) = None
     recommended_support_tools: list[str] = []
+    recommended_repair: ReferenceCompactRepairContract | None = None
     evidence_summary: list[str] = []
     uncertainty_notes: list[str] = []
     correction_focus: list[str] = []

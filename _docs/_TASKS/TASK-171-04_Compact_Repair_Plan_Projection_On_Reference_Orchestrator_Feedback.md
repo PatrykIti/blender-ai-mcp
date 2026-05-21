@@ -1,7 +1,8 @@
 # TASK-171-04: Compact Repair Plan Projection On Reference Orchestrator Feedback
 
 **Parent:** [TASK-171](./TASK-171_Creature_Attachment_First_Build_Contract_And_Structured_Vision_Handoff.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-21
 **Priority:** 🔴 High
 **Objective:** Extend compact `reference_orchestrator_feedback` with one bounded actionable repair-plan surface so the controller can receive the top repair candidate with typed `arguments_hint` instead of only flattened tool-name lists and prose `correction_focus`.
 **Repository Touchpoints:** `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_truth.py`, `server/adapters/mcp/areas/reference_planner.py`, `server/adapters/mcp/areas/reference_images_runtime.py`, `server/adapters/mcp/areas/router.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/integration/test_guided_inspect_validate_handoff.py`, `tests/e2e/vision/test_reference_stage_truth_handoff.py`
@@ -66,6 +67,15 @@ feedback = ReferenceOrchestratorFeedbackContract(
 ## Changelog Impact
 
 - add/update the historical `_docs/_CHANGELOG/*` entry when this slice lands
+
+## Completion Summary
+
+- compact `reference_orchestrator_feedback` now carries one additive
+  `recommended_repair` object with `tool_name`, `reason`, and typed
+  `arguments_hint`
+- the compact repair hint reuses existing truth macro candidates first and
+  repair-planner support tools second instead of inventing a parallel planning
+  path
 
 ## Validation Commands
 

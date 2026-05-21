@@ -681,6 +681,17 @@ def _find_relation_pair(
             if target_names.issubset(semantics_names):
                 return pair
 
+    if relation_kind == "attachment":
+        target_label = _normalize_name(gate.target_label or gate.label)
+        seam_matches = [
+            pair
+            for pair in candidates
+            if pair.attachment_semantics is not None
+            and _normalize_name(pair.attachment_semantics.seam_kind) == target_label
+        ]
+        if len(seam_matches) == 1:
+            return seam_matches[0]
+
     label_tokens = _target_tokens(gate.target_label or gate.label)
     if label_tokens:
         scored_candidates = []
@@ -901,6 +912,7 @@ def _pair_object_label_match_score(
 
 
 def _pair_object_name_token_sets(pair: SceneRelationGraphPairContract) -> list[set[str]]:
+    token_sets: list[set[str]] = []
     names: list[str] = []
     seen: set[str] = set()
     for raw_name in _pair_object_names(pair):
@@ -911,7 +923,8 @@ def _pair_object_name_token_sets(pair: SceneRelationGraphPairContract) -> list[s
         token_set = _target_tokens(raw_name)
         if token_set:
             names.append(raw_name)
-    return [_target_tokens(name) for name in names]
+            token_sets.append(token_set)
+    return token_sets
 
 
 def _pair_object_names(pair: SceneRelationGraphPairContract) -> list[str]:

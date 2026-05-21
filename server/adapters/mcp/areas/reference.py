@@ -244,6 +244,7 @@ _CREATURE_BROAD_FIRST_STEPS: frozenset[str] = frozenset(
 )
 _CREATURE_PRIMARY_MASS_ROLES: tuple[str, ...] = ("body_core", "head_mass", "tail_mass")
 _CREATURE_LOCAL_DETAIL_ROLES: frozenset[str] = frozenset({"ear_pair", "eye_pair"})
+_CREATURE_SECONDARY_LOCAL_OVERRIDE_ROLES: frozenset[str] = frozenset({"snout_mass", "foreleg_pair", "hindleg_pair"})
 
 
 def _guided_role_to_objects(guided_part_registry: list[dict[str, Any]] | None) -> dict[str, list[str]]:
@@ -259,6 +260,19 @@ def _guided_role_to_objects(guided_part_registry: list[dict[str, Any]] | None) -
         if object_name not in role_to_objects[role]:
             role_to_objects[role].append(object_name)
     return role_to_objects
+
+
+def _guided_object_to_role(guided_part_registry: list[dict[str, Any]] | None) -> dict[str, str]:
+    object_to_role: dict[str, str] = {}
+    for item in list(guided_part_registry or []):
+        if not isinstance(item, dict):
+            continue
+        role = str(item.get("role") or "").strip().lower()
+        object_name = str(item.get("object_name") or "").strip()
+        if not role or not object_name:
+            continue
+        object_to_role[object_name.lower()] = role
+    return object_to_role
 
 
 def _resolved_active_scope_role_objects(
@@ -347,6 +361,43 @@ def _early_creature_primary_mass_scope(
     return None
 
 
+def _resolved_object_roles(
+    *,
+    object_names: Sequence[str],
+    object_to_role: Mapping[str, str],
+) -> set[str]:
+    roles: set[str] = set()
+    for object_name in object_names:
+        role = object_to_role.get(str(object_name).strip().lower())
+        if role:
+            roles.add(role)
+    return roles
+
+
+def _gate_blocker_roles(
+    *,
+    gate_plan_contract: GatePlanContract | None,
+    object_to_role: Mapping[str, str],
+    active_scope_name_keys: Mapping[str, str],
+) -> set[str]:
+    if gate_plan_contract is None:
+        return set()
+
+    roles: set[str] = set()
+    for blocker in list(gate_plan_contract.completion_blockers or []):
+        target_label = str(blocker.target_label or "").strip().lower()
+        if target_label:
+            roles.add(target_label)
+        for raw_name in list(blocker.target_objects or []):
+            object_name = active_scope_name_keys.get(str(raw_name).strip().lower())
+            if not object_name:
+                continue
+            role = object_to_role.get(object_name.lower())
+            if role:
+                roles.add(role)
+    return roles
+
+
 def resolve_active_compare_scope(
     *,
     guided_flow_state: dict[str, Any] | None,
@@ -397,17 +448,10 @@ def resolve_active_compare_scope(
     )
     active_scope_name_keys = {name.lower(): name for name in active_scope_names}
     role_to_objects = _guided_role_to_objects(guided_part_registry)
-
-    early_creature_scope = _early_creature_primary_mass_scope(
-        flow_state=flow_state,
-        active_scope_name_keys=active_scope_name_keys,
-        active_scope_names=active_scope_names,
-        role_to_objects=role_to_objects,
-    )
-    if early_creature_scope is not None:
-        return early_creature_scope
+    object_to_role = _guided_object_to_role(guided_part_registry)
 
     blocker_target_objects: list[str] = []
+    gate_plan_contract: GatePlanContract | None = None
     if gate_plan is not None:
         try:
             gate_plan_contract = GatePlanContract.model_validate(gate_plan)
@@ -429,14 +473,6 @@ def resolve_active_compare_scope(
             if name.lower() in active_scope_name_keys
         ]
     )
-    if resolved_blocker_objects:
-        return ReferencePlannerTargetScopeContract(
-            scope_kind="single_object" if len(resolved_blocker_objects) == 1 else "object_set",
-            target_object=resolved_blocker_objects[0] if len(resolved_blocker_objects) == 1 else None,
-            target_objects=resolved_blocker_objects,
-            collection_name=None,
-            local_region_hint="gate_blocker_cluster",
-        )
 
     focus_pair_objects: list[str] = []
     for focus_pair in list(focus_pairs or []):
@@ -449,6 +485,57 @@ def resolve_active_compare_scope(
     resolved_focus_pair_objects = _dedupe_names(
         [active_scope_name_keys[name.lower()] for name in focus_pair_objects if name.lower() in active_scope_name_keys]
     )
+
+    resolved_affected_objects = _dedupe_names(
+        [
+            active_scope_name_keys[name.lower()]
+            for name in list(last_guided_affected_objects or [])
+            if isinstance(name, str) and name.strip() and name.lower() in active_scope_name_keys
+        ]
+    )
+
+    prefer_secondary_local_scope = (
+        flow_state.domain_profile == "creature"
+        and flow_state.current_step == "place_secondary_parts"
+        and bool(
+            (
+                _gate_blocker_roles(
+                    gate_plan_contract=gate_plan_contract,
+                    object_to_role=object_to_role,
+                    active_scope_name_keys=active_scope_name_keys,
+                )
+                | _resolved_object_roles(
+                    object_names=resolved_focus_pair_objects,
+                    object_to_role=object_to_role,
+                )
+                | _resolved_object_roles(
+                    object_names=resolved_affected_objects,
+                    object_to_role=object_to_role,
+                )
+            )
+            & _CREATURE_SECONDARY_LOCAL_OVERRIDE_ROLES
+        )
+    )
+
+    if not prefer_secondary_local_scope:
+        early_creature_scope = _early_creature_primary_mass_scope(
+            flow_state=flow_state,
+            active_scope_name_keys=active_scope_name_keys,
+            active_scope_names=active_scope_names,
+            role_to_objects=role_to_objects,
+        )
+        if early_creature_scope is not None:
+            return early_creature_scope
+
+    if resolved_blocker_objects:
+        return ReferencePlannerTargetScopeContract(
+            scope_kind="single_object" if len(resolved_blocker_objects) == 1 else "object_set",
+            target_object=resolved_blocker_objects[0] if len(resolved_blocker_objects) == 1 else None,
+            target_objects=resolved_blocker_objects,
+            collection_name=None,
+            local_region_hint="gate_blocker_cluster",
+        )
+
     if resolved_focus_pair_objects:
         return ReferencePlannerTargetScopeContract(
             scope_kind="single_object" if len(resolved_focus_pair_objects) == 1 else "object_set",
@@ -458,13 +545,6 @@ def resolve_active_compare_scope(
             local_region_hint="focus_pair",
         )
 
-    resolved_affected_objects = _dedupe_names(
-        [
-            active_scope_name_keys[name.lower()]
-            for name in list(last_guided_affected_objects or [])
-            if isinstance(name, str) and name.strip() and name.lower() in active_scope_name_keys
-        ]
-    )
     if resolved_affected_objects:
         return ReferencePlannerTargetScopeContract(
             scope_kind="single_object" if len(resolved_affected_objects) == 1 else "object_set",
@@ -515,12 +595,14 @@ def _build_correction_truth_bundle(
     scope: SceneAssembledTargetScopeContract,
     *,
     goal_hint: str | None = None,
+    guided_part_registry: list[Mapping[str, Any]] | None = None,
 ) -> tuple[SceneCorrectionTruthBundleContract, dict[str, Any]]:
     return _build_correction_truth_bundle_impl(
         scene_handler,
         scope,
         goal_hint=goal_hint,
         get_spatial_graph_service=get_spatial_graph_service,
+        guided_part_registry=guided_part_registry,
     )
 
 
@@ -1049,6 +1131,7 @@ def _should_hold_guided_build_loop_in_build(
 _REFINEMENT_CONTINUE_BUILD_GATE_TYPES: frozenset[str] = frozenset(
     {"shape_profile", "proportion_ratio", "opening_or_cut", "refinement_stage"}
 )
+_BUILD_HOLD_REQUIRED_PART_STEPS: frozenset[str] = frozenset({"create_primary_masses", "place_secondary_parts"})
 
 
 def _completion_blocker_gate_type(blocker: Any) -> str:
@@ -1084,6 +1167,50 @@ def _should_continue_refinement_build(
     blocker_types = {_completion_blocker_gate_type(blocker) for blocker in blockers}
     blocker_types.discard("")
     return bool(blocker_types) and blocker_types.issubset(_REFINEMENT_CONTINUE_BUILD_GATE_TYPES)
+
+
+def _completion_blocker_recommended_tools(blocker: Any) -> list[str]:
+    if isinstance(blocker, dict):
+        raw_tools = blocker.get("recommended_bounded_tools")
+    else:
+        raw_tools = getattr(blocker, "recommended_bounded_tools", None)
+    if not isinstance(raw_tools, list):
+        return []
+    return [str(tool_name).strip() for tool_name in raw_tools if str(tool_name).strip()]
+
+
+def _should_hold_guided_build_loop_for_required_part_blockers(
+    guided_flow_state: dict[str, Any] | None,
+    completion_blockers: list[Any] | None,
+) -> bool:
+    if guided_flow_state is None:
+        return False
+
+    if hasattr(guided_flow_state, "model_dump"):
+        try:
+            guided_flow_state = guided_flow_state.model_dump(mode="json")
+        except Exception:
+            return False
+
+    if not isinstance(guided_flow_state, dict):
+        return False
+
+    current_step = str(guided_flow_state.get("current_step") or "").strip().lower()
+    if current_step not in _BUILD_HOLD_REQUIRED_PART_STEPS:
+        return False
+
+    blockers = list(completion_blockers or [])
+    if not blockers:
+        return False
+
+    buildable_required_part_present = False
+    for blocker in blockers:
+        gate_type = _completion_blocker_gate_type(blocker)
+        if gate_type != "required_part":
+            return False
+        if _completion_blocker_recommended_tools(blocker):
+            buildable_required_part_present = True
+    return buildable_required_part_present
 
 
 def _guided_stage_reference_error(readiness: GuidedReferenceReadinessState) -> str:
@@ -1695,6 +1822,7 @@ async def _run_stage_checkpoint_compare(
         scene_handler,
         assembled_target_scope,
         goal_hint=goal,
+        guided_part_registry=cast(list[Mapping[str, Any]] | None, session.guided_part_registry),
     )
     pair_budget = _effective_pair_budget(
         max_tokens=runtime_max_tokens,
@@ -1924,6 +2052,7 @@ async def _run_stage_checkpoint_compare(
             goal_hint=goal,
             include_truth_payloads=False,
             include_guided_pairs=True,
+            guided_part_registry=cast(list[Mapping[str, Any]] | None, session.guided_part_registry),
         )
         flow_state = (
             GuidedFlowStateContract.model_validate(session.guided_flow_state)
@@ -2216,7 +2345,7 @@ async def reference_iterate_stage_checkpoint(
     finally:
         _REFERENCE_COMPARE_EMIT_COMPACT_DETAIL.reset(token)
     session = await get_session_capability_state_async(ctx)
-    hold_in_build = _should_hold_guided_build_loop_in_build(session.guided_flow_state)
+    hold_in_build_for_missing_roles = _should_hold_guided_build_loop_in_build(session.guided_flow_state)
     readiness = compare_result.guided_reference_readiness
     goal = compare_result.goal
     correction_focus = _resolve_actionable_focus(compare_result)
@@ -2224,13 +2353,20 @@ async def reference_iterate_stage_checkpoint(
         correction_focus = _resolve_gate_blocker_focus(compare_result)
     action_hints = list(compare_result.action_hints or [])
     gate_blockers_present = bool(compare_result.completion_blockers)
+    hold_in_build_for_required_part_blockers = _should_hold_guided_build_loop_for_required_part_blockers(
+        session.guided_flow_state,
+        list(compare_result.completion_blockers or []),
+    )
+    hold_in_build = hold_in_build_for_missing_roles or hold_in_build_for_required_part_blockers
     refinement_build_continue = _should_continue_refinement_build(
         session.guided_flow_state,
         list(compare_result.completion_blockers or []),
     )
     continue_recommended = bool(correction_focus or action_hints or gate_blockers_present)
     inspect_from_truth_signal = _should_inspect_from_truth_signal(compare_result.correction_candidates)
-    inspect_from_gate_blockers = gate_blockers_present and not refinement_build_continue
+    inspect_from_gate_blockers = (
+        gate_blockers_present and not refinement_build_continue and not hold_in_build_for_required_part_blockers
+    )
     loop_disposition: Literal["continue_build", "inspect_validate", "stop"] = (
         "inspect_validate"
         if inspect_from_truth_signal or inspect_from_gate_blockers
@@ -2330,11 +2466,12 @@ async def reference_iterate_stage_checkpoint(
     repeated_correction_focus = _repeated_focus(correction_focus, prior_correction_focus)
     prior_stagnation_count = int(prior_state.get("stagnation_count") or 0) if same_loop else 0
     stagnation_count = prior_stagnation_count + 1 if repeated_correction_focus and correction_focus else 0
+    stagnation_forces_inspect = continue_recommended and stagnation_count >= _REFERENCE_CORRECTION_STAGNATION_THRESHOLD
 
-    if continue_recommended and stagnation_count >= _REFERENCE_CORRECTION_STAGNATION_THRESHOLD:
+    if stagnation_forces_inspect:
         loop_disposition = "inspect_validate"
 
-    if hold_in_build and loop_disposition != "continue_build":
+    if hold_in_build and loop_disposition != "continue_build" and not stagnation_forces_inspect:
         loop_disposition = "continue_build"
         stop_reason = None
 
@@ -2376,11 +2513,16 @@ async def reference_iterate_stage_checkpoint(
                 "Stop free-form modeling and switch to inspect/measure/assert now."
             )
     elif loop_disposition == "continue_build":
-        if hold_in_build:
+        if hold_in_build_for_missing_roles:
             message = (
                 "Guided governor is holding the session in the current build stage until the required role/workset "
                 "slice is complete. Continue the bounded build loop on the active workset before escalating to "
                 "inspect/measure/assert."
+            )
+        elif hold_in_build_for_required_part_blockers:
+            message = (
+                "Buildable required-part quality gates still have a bounded create/repair lane. Continue the guided "
+                "build loop on the active workset before escalating to inspect/measure/assert."
             )
         elif refinement_build_continue:
             message = (
@@ -2394,11 +2536,18 @@ async def reference_iterate_stage_checkpoint(
     else:
         message = "No further correction loop action is recommended for this checkpoint."
 
-    advanced_state = await advance_guided_flow_from_iteration_async(
-        ctx,
-        loop_disposition=loop_disposition,
-    )
-    await apply_visibility_for_session_state(ctx, advanced_state)
+    if (
+        hold_in_build_for_required_part_blockers
+        and not hold_in_build_for_missing_roles
+        and not stagnation_forces_inspect
+    ):
+        advanced_state = await get_session_capability_state_async(ctx)
+    else:
+        advanced_state = await advance_guided_flow_from_iteration_async(
+            ctx,
+            loop_disposition=loop_disposition,
+        )
+        await apply_visibility_for_session_state(ctx, advanced_state)
 
     response = _iterate_stage_response(
         session_id=compare_result.session_id,

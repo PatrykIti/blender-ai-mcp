@@ -3,9 +3,9 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 4 tasks
+- **To Do:** 3 tasks
 - **In Progress:** 3 tasks
-- **Done:** 101
+- **Done:** 102
 - **Superseded:** 162
 
 ## 📐 Board Scope
@@ -82,7 +82,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Vision & Hybrid Loop
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-171](./TASK-171_Creature_Attachment_First_Build_Contract_And_Structured_Vision_Handoff.md) | **Creature Attachment-First Build Contract And Structured Vision Handoff** | 🔴 High | Board-level follow-on after `TASK-169` and `TASK-170` for stage-gate repair, active-workset widening, registry-backed seam authority, compact repair-plan feedback, and richer attachment-first creature RU handoff. |
 
 ---
 
@@ -90,6 +89,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-171](./TASK-171_Creature_Attachment_First_Build_Contract_And_Structured_Vision_Handoff.md) | **Creature Attachment-First Build Contract And Structured Vision Handoff** | 🔴 High | 2026-05-21 |
 | [TASK-170](./TASK-170_Reference_Target_Canonicalization_And_Support_Latency_Stabilization.md) | **Reference Target Canonicalization And Support Latency Stabilization** | 🔴 High | 2026-05-20 |
 | [TASK-169](./TASK-169_Reference_Guided_Quality_Drift_Regression_And_Runtime_Authority.md) | **Reference-Guided Quality Drift Regression And Runtime Authority** | 🔴 High | 2026-05-19 |
 | [TASK-168](./TASK-168_Profile_Bound_Orchestrator_Shielding_Feedback_And_Memory_Containment.md) | **Profile-Bound Orchestrator Shielding, Feedback, And Memory Containment** | 🔴 High | 2026-05-16 |

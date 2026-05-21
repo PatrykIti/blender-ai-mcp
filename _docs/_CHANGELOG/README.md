@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [358](./358-2026-05-21-task-171-creature-attachment-first-build-contract-closeout.md) | 2026-05-21 | **TASK-171 creature attachment-first build contract closeout** | - |
 | [357](./357-2026-05-20-task-170-reference-target-canonicalization-and-support-latency-stabilization.md) | 2026-05-20 | **TASK-170 reference target canonicalization and support latency stabilization** | - |
 | [356](./356-2026-05-19-task-169-reference-guided-quality-drift-regression-and-runtime-authority.md) | 2026-05-19 | **TASK-169 reference-guided quality drift regression and runtime authority** | - |
 | [355](./355-2026-05-16-task-168-guided-registry-final-drift-repair.md) | 2026-05-16 | **TASK-168 guided registry final drift repair** | - |

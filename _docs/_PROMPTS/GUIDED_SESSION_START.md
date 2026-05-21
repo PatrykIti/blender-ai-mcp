@@ -48,8 +48,18 @@ Fail-safe rules:
 - Treat pair roles such as `ear_pair`, `foreleg_pair`, and `hindleg_pair` as
   requiring left/right siblings. If `role_counts` / `role_cardinality` are
   present, use them before deciding whether the next sibling is still allowed.
+- On the creature flow, `tail_mass` is part of the primary-wave exit contract;
+  do not treat body/head as enough to move to the secondary wave if
+  `missing_roles` still includes `tail_mass`.
+- On the creature flow, `snout_mass` is part of the secondary-wave exit
+  contract; do not treat ears/legs as enough to leave `place_secondary_parts`
+  if `missing_roles` still includes `snout_mass`.
 - On the creature flow, `eye_pair` is a quality-gate target, not a guided
   execution role. Do not send `guided_role="eye_pair"` on build calls.
+- `guided_register_part(...)` updates the live part registry and widens the
+  current `active_target_scope` when the new object belongs to the active
+  creature workset, so the next omitted-target compare can reason over that
+  newly added part.
 - `reference_compare_stage_checkpoint(...)` and
   `reference_iterate_stage_checkpoint(...)` use `checkpoint_label`; do not send
   legacy `label` or `notes`.

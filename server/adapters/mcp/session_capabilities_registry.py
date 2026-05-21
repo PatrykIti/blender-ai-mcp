@@ -151,6 +151,66 @@ def _can_enter_refinement_stage(
     )
 
 
+def _has_buildable_required_part_blockers(
+    contract: GuidedFlowStateContract,
+    *,
+    gate_plan: dict[str, Any] | None,
+) -> bool:
+    if contract.current_step not in {"create_primary_masses", "place_secondary_parts"}:
+        return False
+    if gate_plan is None:
+        return False
+
+    try:
+        plan = GatePlanContract.model_validate(gate_plan)
+        blockers = list(plan.completion_blockers) or completion_blockers_for_gate_plan(plan)
+    except Exception:
+        return False
+
+    if not blockers:
+        return False
+
+    buildable_required_part_present = False
+    for blocker in blockers:
+        if blocker.gate_type != "required_part":
+            return False
+        if blocker.recommended_bounded_tools:
+            buildable_required_part_present = True
+    return buildable_required_part_present
+
+
+def _maybe_expand_active_target_scope_dict(
+    flow_state: dict[str, Any],
+    *,
+    object_name: str,
+) -> dict[str, Any]:
+    contract = GuidedFlowStateContract.model_validate(flow_state)
+    active_scope = contract.active_target_scope
+    normalized_object_name = str(object_name or "").strip()
+    if active_scope is None or not normalized_object_name:
+        return contract.model_dump(mode="json")
+
+    object_names = [str(name).strip() for name in list(active_scope.object_names or []) if str(name).strip()]
+    seen_names = {name.lower() for name in object_names}
+    if normalized_object_name.lower() in seen_names:
+        return contract.model_dump(mode="json")
+
+    widened_scope = {
+        "scope_kind": active_scope.scope_kind,
+        "primary_target": active_scope.primary_target or normalized_object_name,
+        "object_names": [*object_names, normalized_object_name],
+        "object_count": len(object_names) + 1,
+        "collection_name": active_scope.collection_name,
+    }
+    normalized_scope = _normalize_guided_target_scope(widened_scope)
+    if normalized_scope is None:
+        return contract.model_dump(mode="json")
+
+    contract.active_target_scope = GuidedTargetScopeContract.model_validate(normalized_scope)
+    contract.spatial_scope_fingerprint = _build_guided_target_scope_fingerprint(normalized_scope)
+    return contract.model_dump(mode="json")
+
+
 async def register_guided_part_role_async(
     ctx: Context,
     *,
@@ -194,6 +254,10 @@ async def register_guided_part_role_async(
     updated_flow_state = _update_guided_flow_role_summary_dict(
         current.guided_flow_state,
         part_registry=updated_registry,
+    )
+    updated_flow_state = _maybe_expand_active_target_scope_dict(
+        updated_flow_state,
+        object_name=normalized_object_name,
     )
     updated_flow_state = _maybe_advance_guided_flow_from_part_registry_dict(
         updated_flow_state,
@@ -252,6 +316,10 @@ def register_guided_part_role(
     updated_flow_state = _update_guided_flow_role_summary_dict(
         current.guided_flow_state,
         part_registry=updated_registry,
+    )
+    updated_flow_state = _maybe_expand_active_target_scope_dict(
+        updated_flow_state,
+        object_name=normalized_object_name,
     )
     updated_flow_state = _maybe_advance_guided_flow_from_part_registry_dict(
         updated_flow_state,
@@ -592,7 +660,10 @@ def _advance_guided_flow_for_iteration_dict(
             part_registry=part_registry,
             completed_role_hints=contract.completed_roles,
         )
-        if current_role_summary["missing_roles"]:
+        if current_role_summary["missing_roles"] or _has_buildable_required_part_blockers(
+            contract,
+            gate_plan=gate_plan,
+        ):
             _flow_state_for_current_step(contract, part_registry=part_registry)
             contract.blocked_families = []
             if contract.spatial_state_stale:

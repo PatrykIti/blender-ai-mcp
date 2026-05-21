@@ -158,6 +158,9 @@ The repo now has the first implementation scaffolding for the vision layer:
   - attachment verdict such as `seated_contact`, `floating_gap`,
     `intersecting`, or `misaligned_attachment`
   - the preferred bounded repair family for that seam
+- guided creature seam planning can now consume `guided_part_registry` roles
+  first and fall back to lexical-name heuristics only when that registry is not
+  available, so opaque object names no longer break the required-seam path
 - creature completion gates now include repo-owned required visual roles for
   body, head, tail, snout, ears, eyes, forelegs, and hindlegs. `eye_pair`
   remains gate-only in this slice, while existing guided role vocabulary keeps
@@ -175,6 +178,19 @@ The repo now has the first implementation scaffolding for the vision layer:
   broad-first even when the previous loop remembered one local ear/limb focus,
   so common squirrel/quadruped runs do not descend into accessory repair
   before the whole-animal silhouette stabilizes
+- once a registered non-detail secondary part such as `snout_mass`,
+  `foreleg_pair`, or `hindleg_pair` already exists, blocker/focus/last-mutation
+  evidence can now override that broad-first creature compare earlier than
+  before
+- `guided_register_part(...)` now widens the active creature workset when the
+  new registration belongs to that live workset, so the next omitted-target
+  compare can see the newly added part without a manual session patch
+- compact `reference_orchestrator_feedback` now carries one bounded
+  `recommended_repair` tool + `arguments_hint` handoff, and reference
+  understanding now carries typed attachment-first creature assembly cues such
+  as `mass_recipe`, `attachment_plan`, `contact_expectations`,
+  `shape_profile_hints`, `silhouette_landmarks`, `part_order`, and
+  `must_seat_before_next_stage`
 - embedded organic seams such as snout/head or nose/snout now favor
   `macro_attach_part_to_surface`, while segment/contact seams such as
   head/body, tail/body, and limb/body continue to favor

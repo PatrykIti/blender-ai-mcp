@@ -1,7 +1,8 @@
 # TASK-171-03: Registry-Backed Creature Seam Authority And Opaque Naming
 
 **Parent:** [TASK-171](./TASK-171_Creature_Attachment_First_Build_Contract_And_Structured_Vision_Handoff.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-21
 **Priority:** 🔴 High
 **Objective:** Move required creature seam inference and attachment-pair matching toward `guided_part_registry` roles so guided creature truth still works when object names are opaque, abbreviated, or drift from the current heuristics, while preserving the already-shipped registry-first required-part gate matching path.
 **Repository Touchpoints:** `server/application/services/spatial_graph.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_truth.py`, `server/adapters/mcp/transforms/quality_gate_verifier.py`, `server/adapters/mcp/guided_naming_policy.py`, `tests/unit/tools/scene/test_spatial_graph_service.py`, `tests/unit/adapters/mcp/test_quality_gate_verifier.py`, `tests/unit/adapters/mcp/test_router_elicitation.py`, `tests/unit/tools/test_handler_rpc_alignment.py`, `tests/e2e/tools/scene/test_scene_measure_tools.py`, `tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py`
@@ -66,6 +67,18 @@ gate_match = resolve_gate_targets_with_registry_first(required_seams, gate_plan)
 ## Changelog Impact
 
 - add/update the historical `_docs/_CHANGELOG/*` entry when this slice lands
+
+## Completion Summary
+
+- deterministic required creature seam planning now prefers
+  `guided_part_registry` role mappings and falls back to lexical-name
+  heuristics only when that registry evidence is absent
+- `scene_relation_graph(...)` and staged truth/compare paths stay on the old
+  handler relation-graph path when no trustworthy registry-backed role state is
+  available, but use the registry-backed seam planner when guided creature role
+  state exists
+- attachment-gate matching can now use exact `seam_kind` matches for opaque
+  object names instead of relying only on lexical object labels
 
 ## Validation Commands
 

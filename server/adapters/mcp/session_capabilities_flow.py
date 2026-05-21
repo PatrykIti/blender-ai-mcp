@@ -240,12 +240,12 @@ _GUIDED_ROLE_CARDINALITY: dict[str, dict[str, int]] = {
 }
 _GUIDED_PRIMARY_REQUIRED_ROLES: dict[str, tuple[str, ...]] = {
     "generic": ("anchor_core", "primary_mass"),
-    "creature": ("body_core", "head_mass"),
+    "creature": ("body_core", "head_mass", "tail_mass"),
     "building": ("footprint_mass", "main_volume", "wall_shell"),
 }
 _GUIDED_SECONDARY_REQUIRED_ROLES: dict[str, tuple[str, ...]] = {
     "generic": ("secondary_mass", "support_part"),
-    "creature": ("ear_pair", "foreleg_pair", "hindleg_pair"),
+    "creature": ("snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"),
     "building": ("facade_opening", "support_element", "roof_mass"),
 }
 

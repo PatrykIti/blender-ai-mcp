@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Any, Callable, Literal, Protocol
+from typing import Any, Callable, Literal, Mapping, Protocol
 
 _ANCHOR_ROLE_HINTS: tuple[tuple[str, int], ...] = (
     ("facade", 55),
@@ -450,22 +450,100 @@ def _append_creature_seam(
     )
 
 
-def _required_creature_seams(reader: _SceneSpatialReader, object_names: list[str]) -> list[_PlannedCreatureSeam]:
+def _guided_role_objects_in_scope(
+    object_names: list[str],
+    *,
+    guided_part_registry: list[Mapping[str, Any]] | None,
+    role: str,
+) -> list[str]:
+    scope_name_keys = {name.lower(): name for name in object_names}
+    matches: list[str] = []
+    for item in list(guided_part_registry or []):
+        normalized_role = str(item.get("role") or "").strip().lower()
+        if normalized_role != role:
+            continue
+        object_name = scope_name_keys.get(str(item.get("object_name") or "").strip().lower())
+        if object_name and object_name not in matches:
+            matches.append(object_name)
+    return matches
+
+
+def _merge_registry_or_lexical_matches(
+    *,
+    registry_matches: list[str],
+    lexical_matches: list[str],
+) -> list[str]:
+    merged: list[str] = []
+    for object_name in [*registry_matches, *lexical_matches]:
+        if object_name not in merged:
+            merged.append(object_name)
+    return merged
+
+
+def _required_creature_seams(
+    reader: _SceneSpatialReader,
+    object_names: list[str],
+    *,
+    guided_part_registry: list[Mapping[str, Any]] | None = None,
+) -> list[_PlannedCreatureSeam]:
     if len(object_names) < 2:
         return []
 
-    heads = [name for name in object_names if _is_head_like(name)]
-    bodies = [name for name in object_names if _is_body_like(name)]
-    snouts = [name for name in object_names if _is_snout_like(name)]
+    heads = _merge_registry_or_lexical_matches(
+        registry_matches=_guided_role_objects_in_scope(
+            object_names, guided_part_registry=guided_part_registry, role="head_mass"
+        ),
+        lexical_matches=[name for name in object_names if _is_head_like(name)],
+    )
+    bodies = _merge_registry_or_lexical_matches(
+        registry_matches=_guided_role_objects_in_scope(
+            object_names, guided_part_registry=guided_part_registry, role="body_core"
+        ),
+        lexical_matches=[name for name in object_names if _is_body_like(name)],
+    )
+    snouts = _merge_registry_or_lexical_matches(
+        registry_matches=_guided_role_objects_in_scope(
+            object_names, guided_part_registry=guided_part_registry, role="snout_mass"
+        ),
+        lexical_matches=[name for name in object_names if _is_snout_like(name)],
+    )
     noses = [name for name in object_names if _is_nose_like(name)]
-    tails = [name for name in object_names if _is_tail_like(name)]
-    eyes = [name for name in object_names if _is_eye_like(name)]
-    face_attachments = [
-        name
-        for name in object_names
-        if _is_face_attachment(name) and not _is_eye_like(name) and not _is_nose_like(name) and not _is_snout_like(name)
-    ]
-    limbs = [name for name in object_names if _is_limb_like(name)]
+    tails = _merge_registry_or_lexical_matches(
+        registry_matches=_guided_role_objects_in_scope(
+            object_names, guided_part_registry=guided_part_registry, role="tail_mass"
+        ),
+        lexical_matches=[name for name in object_names if _is_tail_like(name)],
+    )
+    eyes = _merge_registry_or_lexical_matches(
+        registry_matches=_guided_role_objects_in_scope(
+            object_names, guided_part_registry=guided_part_registry, role="eye_pair"
+        ),
+        lexical_matches=[name for name in object_names if _is_eye_like(name)],
+    )
+    face_attachments = _merge_registry_or_lexical_matches(
+        registry_matches=_guided_role_objects_in_scope(
+            object_names, guided_part_registry=guided_part_registry, role="ear_pair"
+        ),
+        lexical_matches=[
+            name
+            for name in object_names
+            if _is_face_attachment(name)
+            and not _is_eye_like(name)
+            and not _is_nose_like(name)
+            and not _is_snout_like(name)
+        ],
+    )
+    limbs = _merge_registry_or_lexical_matches(
+        registry_matches=[
+            *_guided_role_objects_in_scope(
+                object_names, guided_part_registry=guided_part_registry, role="foreleg_pair"
+            ),
+            *_guided_role_objects_in_scope(
+                object_names, guided_part_registry=guided_part_registry, role="hindleg_pair"
+            ),
+        ],
+        lexical_matches=[name for name in object_names if _is_limb_like(name)],
+    )
 
     head_anchor = _select_role_anchor(reader, heads)
     body_anchor = _select_role_anchor(reader, bodies)
@@ -1058,6 +1136,7 @@ class SpatialGraphService:
         goal_hint: str | None = None,
         include_truth_payloads: bool = False,
         include_guided_pairs: bool = True,
+        guided_part_registry: list[Mapping[str, Any]] | None = None,
     ) -> dict[str, Any]:
         object_names = list(scope_graph.get("object_names") or [])
         if len(object_names) < 2:
@@ -1077,7 +1156,11 @@ class SpatialGraphService:
 
         planned_pairs: list[_PlannedRelationPair] = []
         planned_pairs_by_key: dict[tuple[str, str], _PlannedRelationPair] = {}
-        required_seams = _required_creature_seams(reader, object_names)
+        required_seams = _required_creature_seams(
+            reader,
+            object_names,
+            guided_part_registry=guided_part_registry,
+        )
         if required_seams:
             for required_seam in required_seams:
                 pair_key = (required_seam.part_object, required_seam.anchor_object)

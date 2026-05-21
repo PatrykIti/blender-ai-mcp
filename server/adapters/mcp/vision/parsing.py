@@ -148,6 +148,14 @@ _REFERENCE_UNDERSTANDING_SOURCE_CLASS_VALUES = {
 _REFERENCE_UNDERSTANDING_VIEW_VALUES = {"front", "side", "top", "back", "three_quarter", "detail", "unknown"}
 _REFERENCE_UNDERSTANDING_SEGMENTATION_ARTIFACT_VALUES = {"mask", "crop", "box"}
 _REFERENCE_UNDERSTANDING_SCULPT_POLICY_VALUES = {"hidden", "local_detail_only", "allowed_or_primary"}
+_REFERENCE_UNDERSTANDING_ATTACHMENT_RELATION_VALUES = {
+    "segment_attachment",
+    "seated_attachment",
+    "embedded_attachment",
+    "support_contact",
+    "symmetry_pair",
+    "unknown",
+}
 
 
 def _labels_for(request: VisionRequest) -> list[str]:
@@ -692,6 +700,39 @@ def _normalize_reference_part_target_label(
     return normalized
 
 
+def _normalize_reference_role_candidate(
+    value: Any,
+    *,
+    subject_category: str,
+) -> str | None:
+    label = str(value or "").strip()
+    if not label:
+        return None
+    normalized = _normalize_reference_part_target_label(
+        label,
+        part_label=label,
+        subject_category=subject_category,
+    )
+    return normalized or None
+
+
+def _normalize_reference_role_candidate_list(
+    value: Any,
+    *,
+    subject_category: str,
+    max_items: int = 5,
+) -> list[str]:
+    items: list[str] = []
+    for raw_item in _coerce_string_list(value):
+        normalized = _normalize_reference_role_candidate(
+            raw_item,
+            subject_category=subject_category,
+        )
+        if normalized and normalized not in items:
+            items.append(normalized)
+    return items[:max_items]
+
+
 def _normalize_reference_understanding_parts(
     parsed: dict[str, Any],
     *,
@@ -831,6 +872,201 @@ def _normalize_reference_understanding_hints(parsed: dict[str, Any], *, strategy
         "allowed_guided_families": allowed_guided_families,
         "sculpt_policy": sculpt_policy,
     }
+
+
+def _normalize_reference_understanding_mass_recipe(
+    parsed: dict[str, Any],
+    *,
+    subject_category: str,
+) -> list[dict[str, Any]]:
+    value = parsed.get("mass_recipe")
+    if not isinstance(value, list):
+        return []
+    items: list[dict[str, Any]] = []
+    for raw_item in value:
+        if not isinstance(raw_item, dict):
+            continue
+        raw_target = str(raw_item.get("target_label") or raw_item.get("part_label") or "").strip()
+        if not raw_target:
+            continue
+        target_label = _normalize_reference_part_target_label(
+            raw_target,
+            part_label=raw_target,
+            subject_category=subject_category,
+        )
+        items.append(
+            {
+                "target_label": target_label,
+                "geometry_family": _truncate_text_value(raw_item.get("geometry_family"), limit=80),
+                "construction_hint": _truncate_text_value(raw_item.get("construction_hint")),
+                "anchor_role_candidates": _normalize_reference_role_candidate_list(
+                    raw_item.get("anchor_role_candidates") or raw_item.get("anchor_object_candidates"),
+                    subject_category=subject_category,
+                ),
+                "support_surface_candidates": _bounded_string_list(
+                    _coerce_string_list(raw_item.get("support_surface_candidates")),
+                    max_items=5,
+                ),
+                "contact_expectations": _bounded_string_list(
+                    _coerce_string_list(raw_item.get("contact_expectations")),
+                    max_items=5,
+                ),
+                "source_reference_ids": _coerce_string_list(raw_item.get("source_reference_ids")),
+            }
+        )
+    return items[:8]
+
+
+def _normalize_reference_understanding_attachment_plan(
+    parsed: dict[str, Any],
+    *,
+    subject_category: str,
+) -> list[dict[str, Any]]:
+    value = parsed.get("attachment_plan")
+    if not isinstance(value, list):
+        return []
+    items: list[dict[str, Any]] = []
+    for raw_item in value:
+        if not isinstance(raw_item, dict):
+            continue
+        raw_target = str(raw_item.get("target_label") or raw_item.get("part_label") or "").strip()
+        if not raw_target:
+            continue
+        target_label = _normalize_reference_part_target_label(
+            raw_target,
+            part_label=raw_target,
+            subject_category=subject_category,
+        )
+        required_relation = str(raw_item.get("required_relation") or "unknown").strip().lower()
+        if required_relation not in _REFERENCE_UNDERSTANDING_ATTACHMENT_RELATION_VALUES:
+            required_relation = "unknown"
+        items.append(
+            {
+                "target_label": target_label,
+                "anchor_role_candidates": _normalize_reference_role_candidate_list(
+                    raw_item.get("anchor_role_candidates") or raw_item.get("anchor_object_candidates"),
+                    subject_category=subject_category,
+                ),
+                "required_relation": required_relation,
+                "support_surface_candidates": _bounded_string_list(
+                    _coerce_string_list(raw_item.get("support_surface_candidates")),
+                    max_items=5,
+                ),
+                "contact_expectations": _bounded_string_list(
+                    _coerce_string_list(raw_item.get("contact_expectations")),
+                    max_items=5,
+                ),
+                "notes": _bounded_string_list(_coerce_string_list(raw_item.get("notes")), max_items=5),
+            }
+        )
+    return items[:8]
+
+
+def _normalize_reference_understanding_contact_expectations(
+    parsed: dict[str, Any],
+    *,
+    subject_category: str,
+) -> list[dict[str, Any]]:
+    value = parsed.get("contact_expectations")
+    if not isinstance(value, list):
+        return []
+    items: list[dict[str, Any]] = []
+    for raw_item in value:
+        if not isinstance(raw_item, dict):
+            continue
+        raw_target = str(raw_item.get("target_label") or raw_item.get("part_label") or "").strip()
+        if not raw_target:
+            continue
+        target_label = _normalize_reference_part_target_label(
+            raw_target,
+            part_label=raw_target,
+            subject_category=subject_category,
+        )
+        items.append(
+            {
+                "target_label": target_label,
+                "expected_contacts": _bounded_string_list(
+                    _coerce_string_list(raw_item.get("expected_contacts")),
+                    max_items=5,
+                ),
+                "avoid_contacts": _bounded_string_list(
+                    _coerce_string_list(raw_item.get("avoid_contacts")),
+                    max_items=5,
+                ),
+                "notes": _bounded_string_list(_coerce_string_list(raw_item.get("notes")), max_items=5),
+            }
+        )
+    return items[:8]
+
+
+def _normalize_reference_understanding_shape_profile_hints(
+    parsed: dict[str, Any],
+    *,
+    subject_category: str,
+) -> list[dict[str, Any]]:
+    value = parsed.get("shape_profile_hints")
+    if not isinstance(value, list):
+        return []
+    items: list[dict[str, Any]] = []
+    for raw_item in value:
+        if not isinstance(raw_item, dict):
+            continue
+        raw_target = str(raw_item.get("target_label") or raw_item.get("part_label") or "").strip()
+        summary = _truncate_text_value(raw_item.get("summary"))
+        if not raw_target or summary is None:
+            continue
+        target_label = _normalize_reference_part_target_label(
+            raw_target,
+            part_label=raw_target,
+            subject_category=subject_category,
+        )
+        items.append(
+            {
+                "target_label": target_label,
+                "summary": summary,
+                "reference_id": str(raw_item.get("reference_id") or "").strip() or None,
+            }
+        )
+    return items[:8]
+
+
+def _normalize_reference_understanding_silhouette_landmarks(
+    parsed: dict[str, Any],
+    *,
+    subject_category: str,
+) -> list[dict[str, Any]]:
+    value = parsed.get("silhouette_landmarks")
+    if not isinstance(value, list):
+        return []
+    items: list[dict[str, Any]] = []
+    for index, raw_item in enumerate(value, start=1):
+        if not isinstance(raw_item, dict):
+            continue
+        summary = _truncate_text_value(raw_item.get("summary"))
+        if summary is None:
+            continue
+        raw_target = str(raw_item.get("target_label") or raw_item.get("part_label") or "").strip()
+        target_label = (
+            _normalize_reference_part_target_label(
+                raw_target,
+                part_label=raw_target,
+                subject_category=subject_category,
+            )
+            if raw_target
+            else None
+        )
+        view_id = str(raw_item.get("view_id") or "unknown").strip().lower()
+        if view_id not in _REFERENCE_UNDERSTANDING_VIEW_VALUES:
+            view_id = "unknown"
+        items.append(
+            {
+                "landmark_id": str(raw_item.get("landmark_id") or f"landmark_{index}").strip(),
+                "target_label": target_label,
+                "view_id": view_id,
+                "summary": summary,
+            }
+        )
+    return items[:8]
 
 
 def _normalize_reference_gate_proposals(
@@ -1026,6 +1262,36 @@ def _normalize_reference_understanding_payload(parsed: dict[str, Any], request: 
         "style": _normalize_reference_understanding_style(parsed),
         "views": views,
         "required_parts": parts,
+        "mass_recipe": _normalize_reference_understanding_mass_recipe(
+            parsed,
+            subject_category=subject["category"],
+        ),
+        "attachment_plan": _normalize_reference_understanding_attachment_plan(
+            parsed,
+            subject_category=subject["category"],
+        ),
+        "contact_expectations": _normalize_reference_understanding_contact_expectations(
+            parsed,
+            subject_category=subject["category"],
+        ),
+        "shape_profile_hints": _normalize_reference_understanding_shape_profile_hints(
+            parsed,
+            subject_category=subject["category"],
+        ),
+        "silhouette_landmarks": _normalize_reference_understanding_silhouette_landmarks(
+            parsed,
+            subject_category=subject["category"],
+        ),
+        "part_order": _normalize_reference_role_candidate_list(
+            parsed.get("part_order"),
+            subject_category=subject["category"],
+            max_items=8,
+        ),
+        "must_seat_before_next_stage": _normalize_reference_role_candidate_list(
+            parsed.get("must_seat_before_next_stage"),
+            subject_category=subject["category"],
+            max_items=8,
+        ),
         "non_goals": _bounded_string_list(_coerce_string_list(parsed.get("non_goals")), max_items=8),
         "construction_strategy": {key: value for key, value in strategy.items() if not key.startswith("_")},
         "router_handoff_hints": _normalize_reference_understanding_hints(parsed, strategy=strategy),
@@ -1436,6 +1702,192 @@ def _validate_reference_understanding_contract_shape(parsed: dict[str, Any]) -> 
             field_name="required_parts.source_reference_ids",
         )
 
+    mass_recipe = parsed.get("mass_recipe")
+    if not isinstance(mass_recipe, list):
+        raise ValueError("Reference-understanding output included malformed nested section: mass_recipe")
+    for item in mass_recipe:
+        if not isinstance(item, dict):
+            raise ValueError("Reference-understanding output included malformed nested section: mass_recipe")
+        _reject_unexpected_dict_keys(
+            {str(key): value for key, value in item.items()},
+            expected_keys={
+                "target_label",
+                "geometry_family",
+                "construction_hint",
+                "anchor_role_candidates",
+                "anchor_object_candidates",
+                "support_surface_candidates",
+                "contact_expectations",
+                "source_reference_ids",
+            },
+            contract_name="Reference-understanding",
+        )
+        if not isinstance(item.get("target_label"), str):
+            raise ValueError(
+                "Reference-understanding output included malformed nested section: mass_recipe.target_label"
+            )
+        if item.get("geometry_family") is not None and not isinstance(item.get("geometry_family"), str):
+            raise ValueError(
+                "Reference-understanding output included malformed nested section: mass_recipe.geometry_family"
+            )
+        if item.get("construction_hint") is not None and not isinstance(item.get("construction_hint"), str):
+            raise ValueError(
+                "Reference-understanding output included malformed nested section: mass_recipe.construction_hint"
+            )
+        _require_str_list(
+            item.get("anchor_role_candidates")
+            if "anchor_role_candidates" in item
+            else item.get("anchor_object_candidates"),
+            contract_name="Reference-understanding",
+            field_name="mass_recipe.anchor_role_candidates",
+        )
+        _require_str_list(
+            item.get("support_surface_candidates"),
+            contract_name="Reference-understanding",
+            field_name="mass_recipe.support_surface_candidates",
+        )
+        _require_str_list(
+            item.get("contact_expectations"),
+            contract_name="Reference-understanding",
+            field_name="mass_recipe.contact_expectations",
+        )
+        _require_str_list(
+            item.get("source_reference_ids"),
+            contract_name="Reference-understanding",
+            field_name="mass_recipe.source_reference_ids",
+        )
+
+    attachment_plan = parsed.get("attachment_plan")
+    if not isinstance(attachment_plan, list):
+        raise ValueError("Reference-understanding output included malformed nested section: attachment_plan")
+    for item in attachment_plan:
+        if not isinstance(item, dict):
+            raise ValueError("Reference-understanding output included malformed nested section: attachment_plan")
+        _reject_unexpected_dict_keys(
+            {str(key): value for key, value in item.items()},
+            expected_keys={
+                "target_label",
+                "anchor_role_candidates",
+                "anchor_object_candidates",
+                "required_relation",
+                "support_surface_candidates",
+                "contact_expectations",
+                "notes",
+            },
+            contract_name="Reference-understanding",
+        )
+        if not isinstance(item.get("target_label"), str):
+            raise ValueError(
+                "Reference-understanding output included malformed nested section: attachment_plan.target_label"
+            )
+        if (
+            not isinstance(item.get("required_relation"), str)
+            or item.get("required_relation") not in _REFERENCE_UNDERSTANDING_ATTACHMENT_RELATION_VALUES
+        ):
+            raise ValueError(
+                "Reference-understanding output included malformed nested section: attachment_plan.required_relation"
+            )
+        _require_str_list(
+            item.get("anchor_role_candidates")
+            if "anchor_role_candidates" in item
+            else item.get("anchor_object_candidates"),
+            contract_name="Reference-understanding",
+            field_name="attachment_plan.anchor_role_candidates",
+        )
+        _require_str_list(
+            item.get("support_surface_candidates"),
+            contract_name="Reference-understanding",
+            field_name="attachment_plan.support_surface_candidates",
+        )
+        _require_str_list(
+            item.get("contact_expectations"),
+            contract_name="Reference-understanding",
+            field_name="attachment_plan.contact_expectations",
+        )
+        _require_str_list(
+            item.get("notes"),
+            contract_name="Reference-understanding",
+            field_name="attachment_plan.notes",
+        )
+
+    contact_expectations = parsed.get("contact_expectations")
+    if not isinstance(contact_expectations, list):
+        raise ValueError("Reference-understanding output included malformed nested section: contact_expectations")
+    for item in contact_expectations:
+        if not isinstance(item, dict):
+            raise ValueError("Reference-understanding output included malformed nested section: contact_expectations")
+        _reject_unexpected_dict_keys(
+            {str(key): value for key, value in item.items()},
+            expected_keys={"target_label", "expected_contacts", "avoid_contacts", "notes"},
+            contract_name="Reference-understanding",
+        )
+        if not isinstance(item.get("target_label"), str):
+            raise ValueError(
+                "Reference-understanding output included malformed nested section: contact_expectations.target_label"
+            )
+        _require_str_list(
+            item.get("expected_contacts"),
+            contract_name="Reference-understanding",
+            field_name="contact_expectations.expected_contacts",
+        )
+        _require_str_list(
+            item.get("avoid_contacts"),
+            contract_name="Reference-understanding",
+            field_name="contact_expectations.avoid_contacts",
+        )
+        _require_str_list(
+            item.get("notes"),
+            contract_name="Reference-understanding",
+            field_name="contact_expectations.notes",
+        )
+
+    shape_profile_hints = parsed.get("shape_profile_hints")
+    if not isinstance(shape_profile_hints, list):
+        raise ValueError("Reference-understanding output included malformed nested section: shape_profile_hints")
+    for item in shape_profile_hints:
+        if not isinstance(item, dict):
+            raise ValueError("Reference-understanding output included malformed nested section: shape_profile_hints")
+        _reject_unexpected_dict_keys(
+            {str(key): value for key, value in item.items()},
+            expected_keys={"target_label", "summary", "reference_id"},
+            contract_name="Reference-understanding",
+        )
+        if not isinstance(item.get("target_label"), str) or not isinstance(item.get("summary"), str):
+            raise ValueError("Reference-understanding output included malformed nested section: shape_profile_hints")
+        if item.get("reference_id") is not None and not isinstance(item.get("reference_id"), str):
+            raise ValueError(
+                "Reference-understanding output included malformed nested section: shape_profile_hints.reference_id"
+            )
+
+    silhouette_landmarks = parsed.get("silhouette_landmarks")
+    if not isinstance(silhouette_landmarks, list):
+        raise ValueError("Reference-understanding output included malformed nested section: silhouette_landmarks")
+    for item in silhouette_landmarks:
+        if not isinstance(item, dict):
+            raise ValueError("Reference-understanding output included malformed nested section: silhouette_landmarks")
+        _reject_unexpected_dict_keys(
+            {str(key): value for key, value in item.items()},
+            expected_keys={"landmark_id", "target_label", "view_id", "summary"},
+            contract_name="Reference-understanding",
+        )
+        if not isinstance(item.get("landmark_id"), str) or not isinstance(item.get("summary"), str):
+            raise ValueError("Reference-understanding output included malformed nested section: silhouette_landmarks")
+        if item.get("target_label") is not None and not isinstance(item.get("target_label"), str):
+            raise ValueError(
+                "Reference-understanding output included malformed nested section: silhouette_landmarks.target_label"
+            )
+        if not isinstance(item.get("view_id"), str) or item.get("view_id") not in _REFERENCE_UNDERSTANDING_VIEW_VALUES:
+            raise ValueError(
+                "Reference-understanding output included malformed nested section: silhouette_landmarks.view_id"
+            )
+
+    _require_str_list(parsed.get("part_order"), contract_name="Reference-understanding", field_name="part_order")
+    _require_str_list(
+        parsed.get("must_seat_before_next_stage"),
+        contract_name="Reference-understanding",
+        field_name="must_seat_before_next_stage",
+    )
+
     _require_str_list(parsed.get("non_goals"), contract_name="Reference-understanding", field_name="non_goals")
 
     strategy = parsed.get("construction_strategy")
@@ -1578,6 +2030,13 @@ def _reject_malformed_reference_understanding_contract(parsed: dict[str, Any]) -
         "style": dict,
         "views": list,
         "required_parts": list,
+        "mass_recipe": list,
+        "attachment_plan": list,
+        "contact_expectations": list,
+        "shape_profile_hints": list,
+        "silhouette_landmarks": list,
+        "part_order": list,
+        "must_seat_before_next_stage": list,
         "non_goals": list,
         "construction_strategy": dict,
         "router_handoff_hints": dict,

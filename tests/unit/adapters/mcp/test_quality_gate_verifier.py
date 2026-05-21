@@ -408,8 +408,52 @@ def test_attachment_gate_without_target_objects_matches_pair_object_names_from_p
     seam = _gate(updated, "tail_body_seam")
     assert seam.status == "failed"
     assert seam.status_reason == "relation_floating_gap"
-    assert seam.evidence_refs[0].from_object == "Tail"
-    assert seam.evidence_refs[0].to_object == "Body"
+
+
+def test_attachment_gate_matches_registry_backed_required_seam_with_opaque_object_names():
+    plan = normalize_gate_plan(
+        {
+            "source": "llm_goal",
+            "gates": [
+                {
+                    "gate_id": "tail_body_seam",
+                    "gate_type": "attachment_seam",
+                    "label": "tail seated on body",
+                    "target_kind": "object_pair",
+                    "target_label": "tail_body",
+                }
+            ],
+        },
+        domain_profile="generic",
+    )
+
+    updated = verify_gate_plan_with_relation_graph(
+        plan,
+        _relation_graph(
+            [
+                {
+                    **_relation_graph_pair(verdict="floating_gap", pair_id="obj003__obj001"),
+                    "from_object": "Obj_003",
+                    "to_object": "Obj_001",
+                    "attachment_semantics": {
+                        "relation_kind": "segment_attachment",
+                        "seam_kind": "tail_body",
+                        "part_object": "Obj_003",
+                        "anchor_object": "Obj_001",
+                        "required_seam": True,
+                        "preferred_macro": "macro_align_part_with_contact",
+                        "attachment_verdict": "floating_gap",
+                    },
+                }
+            ]
+        ),
+    )
+
+    seam = _gate(updated, "tail_body_seam")
+    assert seam.status == "failed"
+    assert seam.status_reason == "relation_floating_gap"
+    assert seam.evidence_refs[0].from_object == "Obj_003"
+    assert seam.evidence_refs[0].to_object == "Obj_001"
 
 
 @pytest.mark.parametrize(

@@ -1,7 +1,8 @@
 # TASK-171-05: Attachment-First Creature Reference Understanding Contract Expansion
 
 **Parent:** [TASK-171](./TASK-171_Creature_Attachment_First_Build_Contract_And_Structured_Vision_Handoff.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-21
 **Priority:** 🔴 High
 **Objective:** Expand the strict RU contract with typed creature assembly fields such as `mass_recipe`, `attachment_plan`, `contact_expectations`, `shape_profile_hints`, `silhouette_landmarks`, `support_surface_candidates`, `anchor_role_candidates`, `part_order`, and `must_seat_before_next_stage`, while keeping the output advisory-only and on the existing RU surfaces.
 **Repository Touchpoints:** `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/areas/reference_images_runtime.py`, `server/adapters/mcp/areas/router.py`, `server/adapters/mcp/session_capabilities_state.py`, `server/adapters/mcp/vision/prompting.py`, `server/adapters/mcp/vision/parsing.py`, `server/adapters/mcp/vision/reference_support.py`, `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`, `tests/unit/adapters/mcp/test_vision_prompting.py`, `tests/unit/adapters/mcp/test_vision_parsing.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`, `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md`
@@ -83,6 +84,19 @@ summary = ReferenceUnderstandingSummaryContract(
 ## Changelog Impact
 
 - add/update the historical `_docs/_CHANGELOG/*` entry when this slice lands
+
+## Completion Summary
+
+- strict RU prompt/schema/parser/runtime surfaces now carry typed attachment-
+  first creature assembly fields: `mass_recipe`, `attachment_plan`,
+  `contact_expectations`, `shape_profile_hints`, `silhouette_landmarks`,
+  `part_order`, and `must_seat_before_next_stage`
+- the parser now accepts the planning alias `anchor_object_candidates` as a
+  compatibility shim and normalizes it into canonical semantic
+  `anchor_role_candidates`
+- direct backend RU payloads are also canonicalized onto creature role labels
+  on the runtime refresh seam, so the new fields stay normalized even when a
+  backend bypasses the parse-repair path
 
 ## Validation Commands
 

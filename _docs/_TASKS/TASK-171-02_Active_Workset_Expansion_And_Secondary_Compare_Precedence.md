@@ -1,7 +1,8 @@
 # TASK-171-02: Active Workset Expansion And Secondary Compare Precedence
 
 **Parent:** [TASK-171](./TASK-171_Creature_Attachment_First_Build_Contract_And_Structured_Vision_Handoff.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-21
 **Priority:** 🔴 High
 **Objective:** Ensure `guided_register_part(...)` widens the active workset soon enough for omitted-target compare/iterate to see the new part, and let registered secondary-part blocker/focus evidence outrank broad primary-mass compare earlier during `place_secondary_parts`.
 **Repository Touchpoints:** `server/adapters/mcp/session_capabilities_registry.py`, `server/adapters/mcp/session_capabilities_flow.py`, `server/adapters/mcp/areas/reference.py`, `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/e2e/vision/test_reference_guided_squirrel_quality_regression.py`
@@ -67,6 +68,16 @@ elif coarse_primary_form_still_unresolved(scope, gate_plan):
 ## Changelog Impact
 
 - add/update the historical `_docs/_CHANGELOG/*` entry when this slice lands
+
+## Completion Summary
+
+- `guided_register_part(...)` now widens `guided_flow_state.active_target_scope`
+  for newly registered in-workset creature parts
+- omitted-target compare/iterate can now see that widened workset without a
+  manual session patch
+- during `place_secondary_parts`, registered non-detail secondary focus
+  (`snout_mass`, `foreleg_pair`, `hindleg_pair`) can now override the earlier
+  broad primary-mass scope sooner than local-detail-only `ear_pair` / `eye_pair`
 
 ## Validation Commands
 

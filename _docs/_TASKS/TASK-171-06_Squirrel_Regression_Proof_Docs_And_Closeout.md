@@ -1,7 +1,8 @@
 # TASK-171-06: Squirrel Regression Proof, Docs, And Closeout
 
 **Parent:** [TASK-171](./TASK-171_Creature_Attachment_First_Build_Contract_And_Structured_Vision_Handoff.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-21
 **Priority:** 🔴 High
 **Objective:** Close the family with live registration-backed squirrel regression proof, canonical docs updates, and board/changelog synchronization.
 **Repository Touchpoints:** `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/integration/test_guided_streamable_spatial_support.py`, `tests/e2e/integration/test_guided_surface_contract_parity.py`, `tests/e2e/vision/test_reference_guided_squirrel_quality_regression.py`, `tests/e2e/vision/test_reference_stage_truth_handoff.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`, `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`, `_docs/_PROMPTS/GUIDED_SESSION_START.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md`, `_docs/_VISION/README.md`, `_docs/_TASKS/README.md`, `_docs/_TASKS/TASK-171_Creature_Attachment_First_Build_Contract_And_Structured_Vision_Handoff.md`, `_docs/_TASKS/TASK-171-0*.md`, `_docs/_CHANGELOG/README.md`, `_docs/_CHANGELOG/*`
@@ -74,6 +75,17 @@ assert iterate.reference_orchestrator_feedback.recommended_repair is not None
 
 - add one `_docs/_CHANGELOG/*` entry when the first `TASK-171` runtime slice
   lands and extend/update it through closeout as appropriate
+
+## Completion Summary
+
+- the public registration/transport proof lanes now cover live creature role
+  registration, widened active scope behavior, and the updated tail/snout stage
+  contract
+- the squirrel regression lane no longer relies only on manually seeded
+  `guided_part_registry`; it now rebuilds the creature session through live
+  `register_guided_part_role(...)` transitions before the compare proof
+- prompt/runtime docs, board state, child-task state, and historical changelog
+  are now synchronized with the shipped runtime behavior
 
 ## Validation Commands
 

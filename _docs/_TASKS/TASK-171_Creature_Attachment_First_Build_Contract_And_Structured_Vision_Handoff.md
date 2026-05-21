@@ -1,6 +1,7 @@
 # TASK-171: Creature Attachment-First Build Contract And Structured Vision Handoff
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-21
 **Priority:** 🔴 High
 **Category:** Guided Runtime / Vision / Reconstruction Reliability
 **Estimated Effort:** Large
@@ -182,13 +183,34 @@ After this family lands:
 - update the same historical entry or add follow-on entries as the family
   closes, depending on branch size and landing cadence
 
+## Completion Summary
+
+- guided creature stage ownership now matches the documented wave contract:
+  `tail_mass` is required before leaving the primary wave and `snout_mass` is
+  required before leaving the secondary wave
+- buildable gate-only blockers such as `eye_pair` can now hold
+  `reference_iterate_stage_checkpoint(...)` in bounded `continue_build` mode
+  without prematurely advancing the guided step or forcing `inspect_validate`
+- `guided_register_part(...)` now widens `active_target_scope` for newly
+  registered in-workset creature parts, and compare scope resolution can let
+  registered non-detail secondary focus (`snout_mass`, `foreleg_pair`,
+  `hindleg_pair`) override the broad primary-mass packet earlier than before
+- required creature seams and attachment-gate matching now prefer
+  `guided_part_registry` role state and fall back to lexical heuristics only
+  when registry-backed role evidence is unavailable
+- compact `reference_orchestrator_feedback` now carries one bounded
+  `recommended_repair` handoff, and reference understanding now transports
+  typed attachment-first creature assembly fields
+- owner lanes now cover the repaired guided-flow transitions, scope widening,
+  registry-backed seam authority, compact repair-plan projection, RU contract
+  expansion, transport parity, and the live squirrel regression path
+
 ## Status / Board Update
 
-- `_docs/_TASKS/README.md` adds `TASK-171` to the promoted To Do queue under
-  `Vision & Hybrid Loop`
-- this umbrella is intentionally standalone follow-on work after the now-closed
-  `TASK-169` and `TASK-170` slices; it is not an open child under those closed
-  parents
+- `_docs/_TASKS/README.md` moves `TASK-171` from the promoted To Do queue to
+  Done on 2026-05-21
+- the `TASK-171-0*.md` child files close together with this umbrella; no open
+  child remains under the parent after closeout
 
 ## Validation Commands
 

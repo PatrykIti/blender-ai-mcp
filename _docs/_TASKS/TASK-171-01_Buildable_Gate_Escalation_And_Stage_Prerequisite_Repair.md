@@ -1,7 +1,8 @@
 # TASK-171-01: Buildable Gate Escalation And Stage Exit Prerequisite Repair
 
 **Parent:** [TASK-171](./TASK-171_Creature_Attachment_First_Build_Contract_And_Structured_Vision_Handoff.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-21
 **Priority:** 🔴 High
 **Objective:** Make creature stage-exit and iterate escalation consistent so `tail_mass` and `snout_mass` cannot silently carry forward past their intended wave-exit criteria, while buildable gate-only blockers such as `eye_pair` stay on a bounded build path until hard inspection authority is actually needed.
 **Repository Touchpoints:** `server/adapters/mcp/session_capabilities_flow.py`, `server/adapters/mcp/session_capabilities_registry.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/contracts/quality_gates.py`, `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`, `_docs/_PROMPTS/GUIDED_SESSION_START.md`, `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`, `tests/unit/adapters/mcp/test_context_bridge.py`, `tests/unit/adapters/mcp/test_visibility_policy.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`
@@ -86,6 +87,17 @@ else:
 ## Changelog Impact
 
 - add/update the historical `_docs/_CHANGELOG/*` entry when this slice lands
+
+## Completion Summary
+
+- `tail_mass` is now part of the primary-wave exit contract and `snout_mass`
+  is now part of the secondary-wave exit contract
+- buildable gate-only blockers such as `eye_pair` now keep the iterate loop in
+  bounded `continue_build` mode until hard seam/support blockers or repeated
+  stagnation justify `inspect_validate`
+- the guided-flow state machine no longer advances out of the current build
+  stage just because `loop_disposition="continue_build"` was returned while a
+  buildable required-part blocker still exists
 
 ## Validation Commands
 

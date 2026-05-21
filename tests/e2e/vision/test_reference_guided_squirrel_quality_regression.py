@@ -20,6 +20,7 @@ from server.adapters.mcp.sampling.result_types import (
 )
 from server.adapters.mcp.session_capabilities import (
     get_session_capability_state,
+    register_guided_part_role,
     set_session_capability_state,
     update_session_from_router_goal,
 )
@@ -222,35 +223,32 @@ def _seed_squirrel_secondary_state(
             guided_flow_state={
                 "flow_id": "guided_creature_flow",
                 "domain_profile": "creature",
-                "current_step": "place_secondary_parts",
-                "completed_steps": ["understand_goal", "establish_spatial_context", "create_primary_masses"],
+                "current_step": "create_primary_masses",
+                "completed_steps": ["understand_goal", "establish_spatial_context"],
                 "active_target_scope": {
                     "scope_kind": "object_set",
                     "primary_target": body_name,
-                    "object_names": [body_name, head_name, tail_name, ear_name],
-                    "object_count": 4,
+                    "object_names": [body_name, head_name, tail_name],
+                    "object_count": 3,
                 },
                 "required_checks": [],
                 "required_prompts": ["guided_session_start", "reference_guided_creature_build"],
                 "preferred_prompts": ["workflow_router_first"],
-                "next_actions": ["begin_secondary_parts"],
+                "next_actions": ["begin_primary_masses"],
                 "blocked_families": [],
-                "allowed_families": ["primary_masses", "secondary_parts", "attachment_alignment", "reference_context"],
-                "allowed_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
-                "completed_roles": ["body_core", "head_mass", "tail_mass"],
-                "missing_roles": ["snout_mass", "ear_pair", "foreleg_pair", "hindleg_pair"],
-                "required_role_groups": ["secondary_parts"],
+                "allowed_families": ["primary_masses", "reference_context"],
+                "allowed_roles": ["body_core", "head_mass", "tail_mass"],
+                "completed_roles": [],
+                "missing_roles": ["body_core", "head_mass", "tail_mass"],
+                "required_role_groups": ["primary_masses"],
                 "step_status": "ready",
             },
-            guided_part_registry=[
-                {"object_name": body_name, "role": "body_core", "role_group": "primary_masses"},
-                {"object_name": head_name, "role": "head_mass", "role_group": "primary_masses"},
-                {"object_name": tail_name, "role": "tail_mass", "role_group": "primary_masses"},
-                {"object_name": ear_name, "role": "ear_pair", "role_group": "secondary_parts"},
-            ],
-            last_guided_affected_objects=[ear_name],
         ),
     )
+    register_guided_part_role(cast(Context, ctx), object_name=body_name, role="body_core")
+    register_guided_part_role(cast(Context, ctx), object_name=head_name, role="head_mass")
+    register_guided_part_role(cast(Context, ctx), object_name=tail_name, role="tail_mass")
+    register_guided_part_role(cast(Context, ctx), object_name=ear_name, role="ear_pair")
 
 
 def test_squirrel_quality_oracle_rejects_vertical_blockout_class(clean_scene, scene_handler, modeling_handler):

@@ -173,7 +173,89 @@ def _canonicalize_reference_understanding_summary_targets(
         )
         for gate in list(summary.gate_proposals or [])
     ]
-    return summary.model_copy(update={"required_parts": required_parts, "gate_proposals": gate_proposals})
+    mass_recipe = [
+        item.model_copy(
+            update={
+                "target_label": _canonicalize_creature_reference_target_label(
+                    item.target_label,
+                    part_label=item.target_label,
+                ),
+                "anchor_role_candidates": [
+                    _canonicalize_creature_reference_target_label(candidate, part_label=candidate)
+                    for candidate in list(item.anchor_role_candidates or [])
+                ],
+            }
+        )
+        for item in list(summary.mass_recipe or [])
+    ]
+    attachment_plan = [
+        item.model_copy(
+            update={
+                "target_label": _canonicalize_creature_reference_target_label(
+                    item.target_label,
+                    part_label=item.target_label,
+                ),
+                "anchor_role_candidates": [
+                    _canonicalize_creature_reference_target_label(candidate, part_label=candidate)
+                    for candidate in list(item.anchor_role_candidates or [])
+                ],
+            }
+        )
+        for item in list(summary.attachment_plan or [])
+    ]
+    contact_expectations = [
+        item.model_copy(
+            update={
+                "target_label": _canonicalize_creature_reference_target_label(
+                    item.target_label,
+                    part_label=item.target_label,
+                ),
+            }
+        )
+        for item in list(summary.contact_expectations or [])
+    ]
+    shape_profile_hints = [
+        item.model_copy(
+            update={
+                "target_label": _canonicalize_creature_reference_target_label(
+                    item.target_label,
+                    part_label=item.target_label,
+                ),
+            }
+        )
+        for item in list(summary.shape_profile_hints or [])
+    ]
+    silhouette_landmarks = [
+        item.model_copy(
+            update={
+                "target_label": (
+                    _canonicalize_creature_reference_target_label(item.target_label, part_label=item.target_label)
+                    if item.target_label is not None
+                    else None
+                ),
+            }
+        )
+        for item in list(summary.silhouette_landmarks or [])
+    ]
+    return summary.model_copy(
+        update={
+            "required_parts": required_parts,
+            "mass_recipe": mass_recipe,
+            "attachment_plan": attachment_plan,
+            "contact_expectations": contact_expectations,
+            "shape_profile_hints": shape_profile_hints,
+            "silhouette_landmarks": silhouette_landmarks,
+            "part_order": [
+                _canonicalize_creature_reference_target_label(item, part_label=item)
+                for item in list(summary.part_order or [])
+            ],
+            "must_seat_before_next_stage": [
+                _canonicalize_creature_reference_target_label(item, part_label=item)
+                for item in list(summary.must_seat_before_next_stage or [])
+            ],
+            "gate_proposals": gate_proposals,
+        }
+    )
 
 
 def blocked_reference_understanding_summary(

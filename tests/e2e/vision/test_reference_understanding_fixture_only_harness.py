@@ -34,6 +34,7 @@ def generate(model, processor, *args, **kwargs):
         '"style":{"style_label":"low_poly_faceted","confidence":0.8,"notes":[]},'
         '"views":[{"view_id":"front","detected":true,"confidence":0.9,"reference_ids":["fixture_ref_1"],"key_features":["faceted head"]}],'
         '"required_parts":[{"part_label":"body core","target_label":"body_core","construction_hint":"Start with a simple faceted primary mass.","priority":"high","source_reference_ids":["fixture_ref_1"]}],'
+        '"mass_recipe":[],"attachment_plan":[],"contact_expectations":[],"shape_profile_hints":[],"silhouette_landmarks":[],"part_order":[],"must_seat_before_next_stage":[],'
         '"non_goals":[],"construction_strategy":{"construction_path":"low_poly_facet","primary_family":"modeling_mesh","allowed_families":["macro","modeling_mesh","inspect_only"],"stage_sequence":["primary_masses"],"finish_policy":"preserve_facets"},'
         '"router_handoff_hints":{"preferred_family":"modeling_mesh","allowed_guided_families":["reference_context","primary_masses"],"sculpt_policy":"hidden"},'
         '"gate_proposals":[],"visual_evidence_refs":[],"verification_requirements":[]}'

@@ -286,6 +286,41 @@ def test_build_scope_graph_rejects_missing_explicit_target_object():
         )
 
 
+def test_build_relation_graph_uses_guided_part_registry_for_opaque_creature_names():
+    service = SpatialGraphService()
+    reader = FakeReader()
+    reader.boxes.update(
+        {
+            "Obj_001": reader.boxes["Body"],
+            "Obj_002": reader.boxes["Head"],
+            "Obj_003": reader.boxes["Wing"],
+        }
+    )
+
+    relation_graph = service.build_relation_graph(
+        reader=reader,
+        scope_graph={
+            "scope_kind": "object_set",
+            "primary_target": "Obj_001",
+            "object_names": ["Obj_001", "Obj_002", "Obj_003"],
+            "object_count": 3,
+            "object_roles": [],
+        },
+        goal_hint="creature",
+        include_truth_payloads=False,
+        include_guided_pairs=True,
+        guided_part_registry=[
+            {"object_name": "Obj_001", "role": "body_core", "role_group": "primary_masses"},
+            {"object_name": "Obj_002", "role": "head_mass", "role_group": "primary_masses"},
+            {"object_name": "Obj_003", "role": "tail_mass", "role_group": "primary_masses"},
+        ],
+    )
+
+    relation_pairs = {(pair["from_object"], pair["to_object"]) for pair in relation_graph["pairs"]}
+    assert ("Obj_002", "Obj_001") in relation_pairs
+    assert ("Obj_003", "Obj_001") in relation_pairs
+
+
 def test_build_scope_graph_uses_normalized_single_target_as_primary():
     service = SpatialGraphService()
     reader = FakeReader()

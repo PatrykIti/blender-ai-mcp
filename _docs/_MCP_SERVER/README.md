@@ -559,7 +559,7 @@ Current machine-readable `guided_flow_state` fields:
 | `domain_profile` | Current guided overlay: `generic`, `creature`, or `building` |
 | `current_step` | Active guided step such as `understand_goal`, `establish_spatial_context`, `create_primary_masses`, `place_secondary_parts`, `refine_low_poly_forms`, `checkpoint_iterate`, or `inspect_validate` |
 | `completed_steps` | Steps already completed in the current guided run |
-| `active_target_scope` | Compact target scope identity the guided spatial checks currently apply to |
+| `active_target_scope` | Compact target scope identity the guided spatial checks currently apply to. `guided_register_part(...)` may widen it immediately for a newly registered in-workset creature part. |
 | `spatial_scope_fingerprint` | Deterministic fingerprint for the active guided target scope |
 | `spatial_state_version` | Monotonic version for scene-changing guided mutations that can stale spatial facts |
 | `spatial_state_stale` | Whether the last trusted spatial facts are stale relative to the current scene version |
@@ -768,6 +768,10 @@ Current guided-flow behavior:
   surface for telling the server that an existing object now counts as one
   semantic role such as `body_core`, `head_mass`, `wall_shell`,
   `facade_opening`, or `roof_mass`
+- when the current guided workset already exists, `guided_register_part(...)`
+  now also widens `guided_flow_state.active_target_scope` to include the newly
+  registered creature part, so the next omitted-target compare does not keep
+  looking at a stale workset
 - `guided_register_part(...)` now validates that the named Blender object
   actually exists before updating guided role completion; a typo does not
   populate `completed_roles`
@@ -1292,12 +1296,16 @@ The same reference-guided family now also exposes one compact
 `router_set_goal(...)`, `router_get_status(...)`, and staged compare/iterate
 responses. That contract summarizes the normalized construction path, selected
 family, pending required parts, active gate ids, current blockers, next
-actions, and the next checkpoint tool without replacing the richer truth or
-planner payloads. The RU summary itself now also carries typed `views` plus
-server-owned `visual_metrics` so lightweight deterministic image evidence can
-support the orchestrator without being treated as scene truth. When operators
-explicitly enable the optional support sidecars, that same RU summary may also
-carry bounded `classification_scores` and `segmentation_artifacts`; failures on
+actions, the next checkpoint tool, and one bounded `recommended_repair` tool +
+`arguments_hint` handoff without replacing the richer truth or planner
+payloads. The RU summary itself now also carries typed `views`, attachment-
+first creature assembly hints (`mass_recipe`, `attachment_plan`,
+`contact_expectations`, `shape_profile_hints`, `silhouette_landmarks`,
+`part_order`, and `must_seat_before_next_stage`), plus server-owned
+`visual_metrics` so lightweight deterministic image evidence can support the
+orchestrator without being treated as scene truth. When operators explicitly
+enable the optional support sidecars, that same RU summary may also carry
+bounded `classification_scores` and `segmentation_artifacts`; failures on
 those support paths degrade to provenance notes instead of breaking the guided
 session.
 When an active goal and attached references are present, the server may now run
@@ -1495,6 +1503,11 @@ slice; it is not a new guided build role. Staged checkpoints can materialize
 required creature seam gates from deterministic truth, so final completion
 stays blocked until those roles exist and required seams are seated or
 explicitly accepted as embedded attachments.
+`tail_mass` is part of the primary-wave exit contract, and `snout_mass` is
+part of the secondary-wave exit contract. Buildable required-part blockers such
+as `eye_pair` can keep `reference_iterate_stage_checkpoint(...)` in the bounded
+`continue_build` lane until hard seam/support blockers or repeated stagnation
+justify `inspect_validate`.
 If the main issue is cross-object size/ratio drift, prefer `macro_adjust_relative_proportion` over ad hoc scale guessing or open-ended sculpting.
 If the task is to reshape an ordered segment chain into a cleaner arc, prefer `macro_adjust_segment_chain_arc` over manual per-segment transform chaining. For creature tails, keep the root segment seated to the body with the existing attachment macro path before or after arcing the ordered root/mid/tip chain.
 If the task is bounded relative placement/alignment, prefer `macro_relative_layout` over manual transform-by-transform placement.

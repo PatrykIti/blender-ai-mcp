@@ -50,6 +50,13 @@ _REFERENCE_UNDERSTANDING_EXPECTED_KEYS = (
     "style",
     "views",
     "required_parts",
+    "mass_recipe",
+    "attachment_plan",
+    "contact_expectations",
+    "shape_profile_hints",
+    "silhouette_landmarks",
+    "part_order",
+    "must_seat_before_next_stage",
     "non_goals",
     "construction_strategy",
     "router_handoff_hints",
@@ -216,6 +223,52 @@ def _reference_understanding_output_template() -> str:
                 "source_reference_ids": [],
             }
         ],
+        "mass_recipe": [
+            {
+                "target_label": "body_core",
+                "geometry_family": "box_mass",
+                "construction_hint": "Start with the main torso block before appendages.",
+                "anchor_role_candidates": [],
+                "support_surface_candidates": [],
+                "contact_expectations": [],
+                "source_reference_ids": [],
+            }
+        ],
+        "attachment_plan": [
+            {
+                "target_label": "head_mass",
+                "anchor_role_candidates": ["body_core"],
+                "required_relation": "segment_attachment",
+                "support_surface_candidates": ["body_core_front_top"],
+                "contact_expectations": ["seat head mass flush against the body front."],
+                "notes": [],
+            }
+        ],
+        "contact_expectations": [
+            {
+                "target_label": "tail_mass",
+                "expected_contacts": ["body_core_rear"],
+                "avoid_contacts": ["ground_plane"],
+                "notes": [],
+            }
+        ],
+        "shape_profile_hints": [
+            {
+                "target_label": "tail_mass",
+                "summary": "Keep the tail arc readable as one low-poly silhouette move.",
+                "reference_id": None,
+            }
+        ],
+        "silhouette_landmarks": [
+            {
+                "landmark_id": "ear_tip_pair",
+                "target_label": "ear_pair",
+                "view_id": "front",
+                "summary": "Ear tips should stay readable above the head silhouette.",
+            }
+        ],
+        "part_order": ["body_core", "head_mass", "tail_mass", "snout_mass", "ear_pair"],
+        "must_seat_before_next_stage": ["tail_mass", "snout_mass"],
         "non_goals": [],
         "construction_strategy": {
             "construction_path": "low_poly_facet",
@@ -352,12 +405,21 @@ def build_vision_system_prompt(
             "Use only current canonical planner families: macro, modeling_mesh, sculpt_region, inspect_only.\n"
             "Use only current canonical guided families: spatial_context, reference_context, primary_masses, secondary_parts, attachment_alignment, checkpoint_iterate, inspect_validate, finish, utility.\n"
             "Normalize draft aliases: mesh_edit -> modeling_mesh. material_finish is not a canonical family. macro_create_part is historical shorthand, not a current tool. mesh_shade_flat and macro_low_poly_* are future candidates only.\n"
+            "For creature assembly cues, prefer canonical role labels such as body_core, head_mass, tail_mass, snout_mass, ear_pair, eye_pair, foreleg_pair, and hindleg_pair.\n"
+            "Use anchor_role_candidates rather than scene-object names. If you were going to say anchor_object_candidates, convert that idea into canonical semantic role labels instead.\n"
             "Do not return raw Blender code, provider secrets, hidden/internal tools, passed/final-completion status, or a public router strategy tool.\n\n"
             "Return exactly one JSON object with only these keys:\n"
             "- subject\n"
             "- style\n"
             "- views\n"
             "- required_parts\n"
+            "- mass_recipe\n"
+            "- attachment_plan\n"
+            "- contact_expectations\n"
+            "- shape_profile_hints\n"
+            "- silhouette_landmarks\n"
+            "- part_order\n"
+            "- must_seat_before_next_stage\n"
             "- non_goals\n"
             "- construction_strategy\n"
             "- router_handoff_hints\n"
@@ -902,6 +964,110 @@ def build_vision_response_json_schema(
                         ],
                     },
                 },
+                "mass_recipe": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            "target_label": {"type": "string"},
+                            "geometry_family": {"type": ["string", "null"]},
+                            "construction_hint": {"type": ["string", "null"]},
+                            "anchor_role_candidates": {"type": "array", "items": {"type": "string"}},
+                            "support_surface_candidates": {"type": "array", "items": {"type": "string"}},
+                            "contact_expectations": {"type": "array", "items": {"type": "string"}},
+                            "source_reference_ids": {"type": "array", "items": {"type": "string"}},
+                        },
+                        "required": [
+                            "target_label",
+                            "geometry_family",
+                            "construction_hint",
+                            "anchor_role_candidates",
+                            "support_surface_candidates",
+                            "contact_expectations",
+                            "source_reference_ids",
+                        ],
+                    },
+                },
+                "attachment_plan": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            "target_label": {"type": "string"},
+                            "anchor_role_candidates": {"type": "array", "items": {"type": "string"}},
+                            "required_relation": {
+                                "type": "string",
+                                "enum": [
+                                    "segment_attachment",
+                                    "seated_attachment",
+                                    "embedded_attachment",
+                                    "support_contact",
+                                    "symmetry_pair",
+                                    "unknown",
+                                ],
+                            },
+                            "support_surface_candidates": {"type": "array", "items": {"type": "string"}},
+                            "contact_expectations": {"type": "array", "items": {"type": "string"}},
+                            "notes": {"type": "array", "items": {"type": "string"}},
+                        },
+                        "required": [
+                            "target_label",
+                            "anchor_role_candidates",
+                            "required_relation",
+                            "support_surface_candidates",
+                            "contact_expectations",
+                            "notes",
+                        ],
+                    },
+                },
+                "contact_expectations": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            "target_label": {"type": "string"},
+                            "expected_contacts": {"type": "array", "items": {"type": "string"}},
+                            "avoid_contacts": {"type": "array", "items": {"type": "string"}},
+                            "notes": {"type": "array", "items": {"type": "string"}},
+                        },
+                        "required": ["target_label", "expected_contacts", "avoid_contacts", "notes"],
+                    },
+                },
+                "shape_profile_hints": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            "target_label": {"type": "string"},
+                            "summary": {"type": "string"},
+                            "reference_id": {"type": ["string", "null"]},
+                        },
+                        "required": ["target_label", "summary", "reference_id"],
+                    },
+                },
+                "silhouette_landmarks": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            "landmark_id": {"type": "string"},
+                            "target_label": {"type": ["string", "null"]},
+                            "view_id": {
+                                "type": "string",
+                                "enum": ["front", "side", "top", "back", "three_quarter", "detail", "unknown"],
+                            },
+                            "summary": {"type": "string"},
+                        },
+                        "required": ["landmark_id", "target_label", "view_id", "summary"],
+                    },
+                },
+                "part_order": {"type": "array", "items": {"type": "string"}},
+                "must_seat_before_next_stage": {"type": "array", "items": {"type": "string"}},
                 "non_goals": {"type": "array", "items": {"type": "string"}},
                 "construction_strategy": {
                     "type": "object",

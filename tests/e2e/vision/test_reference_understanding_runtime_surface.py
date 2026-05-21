@@ -128,6 +128,52 @@ class _ReferenceUnderstandingBackend:
                     "source_reference_ids": list(request.metadata.get("reference_ids") or []),
                 }
             ],
+            "mass_recipe": [
+                {
+                    "target_label": "body_core",
+                    "geometry_family": "box_mass",
+                    "construction_hint": "Start from the torso block before local detail.",
+                    "anchor_role_candidates": [],
+                    "support_surface_candidates": [],
+                    "contact_expectations": [],
+                    "source_reference_ids": list(request.metadata.get("reference_ids") or []),
+                }
+            ],
+            "attachment_plan": [
+                {
+                    "target_label": "tail_mass",
+                    "anchor_role_candidates": ["body_core"],
+                    "required_relation": "segment_attachment",
+                    "support_surface_candidates": ["body_core_rear"],
+                    "contact_expectations": ["Seat the tail on the rear body mass."],
+                    "notes": [],
+                }
+            ],
+            "contact_expectations": [
+                {
+                    "target_label": "tail_mass",
+                    "expected_contacts": ["body_core_rear"],
+                    "avoid_contacts": ["ground_plane"],
+                    "notes": [],
+                }
+            ],
+            "shape_profile_hints": [
+                {
+                    "target_label": "tail_mass",
+                    "summary": "Keep the tail arc readable from the side silhouette.",
+                    "reference_id": (request.metadata.get("reference_ids") or ["ref_front"])[0],
+                }
+            ],
+            "silhouette_landmarks": [
+                {
+                    "landmark_id": "ear_tip_pair",
+                    "target_label": "ear_pair",
+                    "view_id": "front",
+                    "summary": "Both ear tips should stay visible above the head silhouette.",
+                }
+            ],
+            "part_order": ["body_core", "head_mass", "tail_mass", "snout_mass"],
+            "must_seat_before_next_stage": ["tail_mass", "snout_mass"],
             "non_goals": ["Do not smooth the build into an organic sculpt pass."],
             "construction_strategy": {
                 "construction_path": "low_poly_facet",
@@ -302,11 +348,19 @@ def test_router_status_and_stage_checkpoint_surface_reference_understanding_with
     assert goal_result.reference_understanding_summary.understanding_id == "understanding_blender_surface"
     assert goal_result.reference_understanding_summary.construction_strategy is not None
     assert goal_result.reference_understanding_summary.construction_strategy.primary_family == "modeling_mesh"
+    assert goal_result.reference_understanding_summary.mass_recipe[0].target_label == "body_core"
+    assert goal_result.reference_understanding_summary.attachment_plan[0].target_label == "tail_mass"
     assert goal_result.reference_understanding_gate_ids
 
     status_result = asyncio.run(router_get_status(cast(Context, ctx)))
     assert status_result.reference_understanding_summary is not None
     assert status_result.reference_understanding_summary.understanding_id == "understanding_blender_surface"
+    assert status_result.reference_understanding_summary.part_order == [
+        "body_core",
+        "head_mass",
+        "tail_mass",
+        "snout_mass",
+    ]
     assert status_result.reference_understanding_gate_ids == goal_result.reference_understanding_gate_ids
 
     compare_result = asyncio.run(
@@ -321,6 +375,10 @@ def test_router_status_and_stage_checkpoint_surface_reference_understanding_with
     assert compare_result.error is None
     assert compare_result.reference_understanding_summary is not None
     assert compare_result.reference_understanding_summary.understanding_id == "understanding_blender_surface"
+    assert compare_result.reference_understanding_summary.must_seat_before_next_stage == [
+        "tail_mass",
+        "snout_mass",
+    ]
     assert compare_result.reference_understanding_gate_ids == goal_result.reference_understanding_gate_ids
     assert compare_result.part_segmentation is not None
     assert compare_result.part_segmentation.status == "disabled"
@@ -337,6 +395,7 @@ def test_router_status_and_stage_checkpoint_surface_reference_understanding_with
     assert iterate_result.error is None
     assert iterate_result.reference_understanding_summary is not None
     assert iterate_result.reference_understanding_summary.understanding_id == "understanding_blender_surface"
+    assert iterate_result.reference_understanding_summary.shape_profile_hints[0].target_label == "tail_mass"
     assert iterate_result.reference_understanding_gate_ids == goal_result.reference_understanding_gate_ids
     assert iterate_result.part_segmentation is not None
     assert iterate_result.part_segmentation.status == "disabled"

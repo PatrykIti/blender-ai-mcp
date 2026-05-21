@@ -487,6 +487,52 @@ _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
                         "source_reference_ids": list(request.metadata.get("reference_ids") or []),
                     }
                 ],
+                "mass_recipe": [
+                    {
+                        "target_label": "body_core",
+                        "geometry_family": "box_mass",
+                        "construction_hint": "Start from the torso block before details.",
+                        "anchor_role_candidates": [],
+                        "support_surface_candidates": [],
+                        "contact_expectations": [],
+                        "source_reference_ids": reference_ids,
+                    }
+                ],
+                "attachment_plan": [
+                    {
+                        "target_label": "tail_mass",
+                        "anchor_role_candidates": ["body_core"],
+                        "required_relation": "segment_attachment",
+                        "support_surface_candidates": ["body_core_rear"],
+                        "contact_expectations": ["Seat the tail on the rear body mass."],
+                        "notes": [],
+                    }
+                ],
+                "contact_expectations": [
+                    {
+                        "target_label": "tail_mass",
+                        "expected_contacts": ["body_core_rear"],
+                        "avoid_contacts": ["ground_plane"],
+                        "notes": [],
+                    }
+                ],
+                "shape_profile_hints": [
+                    {
+                        "target_label": "tail_mass",
+                        "summary": "Keep a readable tail arc from the side reference.",
+                        "reference_id": (reference_ids or ["ref_front"])[0],
+                    }
+                ],
+                "silhouette_landmarks": [
+                    {
+                        "landmark_id": "ear_tip_pair",
+                        "target_label": "ear_pair",
+                        "view_id": "front",
+                        "summary": "Both ear tips should stay visible above the head silhouette.",
+                    }
+                ],
+                "part_order": ["body_core", "head_mass", "tail_mass", "snout_mass"],
+                "must_seat_before_next_stage": ["tail_mass", "snout_mass"],
                 "non_goals": ["Do not smooth the build into an organic sculpt pass."],
                 "construction_strategy": {
                     "construction_path": "low_poly_facet",
@@ -854,6 +900,13 @@ async def _exercise_reference_understanding_refresh_replaces_gate_slice(
     )
     assert goal_result["reference_understanding_summary"]["understanding_id"] == "understanding_transport_seed"
     assert goal_result["reference_understanding_gate_ids"] == ["required_part_eye_pair"]
+    assert goal_result["reference_understanding_summary"]["part_order"] == [
+        "body_core",
+        "head_mass",
+        "tail_mass",
+        "snout_mass",
+    ]
+    assert goal_result["reference_understanding_summary"]["attachment_plan"][0]["target_label"] == "tail_mass"
 
     second_attach = result_payload(
         await client.call_tool(
@@ -896,6 +949,10 @@ async def _exercise_reference_understanding_refresh_replaces_gate_slice(
     )
     assert compare_result["reference_understanding_summary"]["understanding_id"] == "understanding_transport_refresh"
     assert compare_result["reference_understanding_gate_ids"] == ["required_part_ear_pair", "required_part_eye_pair"]
+    assert compare_result["reference_understanding_summary"]["must_seat_before_next_stage"] == [
+        "tail_mass",
+        "snout_mass",
+    ]
 
 
 async def _exercise_reference_orchestrator_feedback_transport_surface(client, reference_path: Path) -> None:
@@ -925,6 +982,8 @@ async def _exercise_reference_orchestrator_feedback_transport_surface(client, re
     assert feedback["next_checkpoint_tool"] == "reference_compare_stage_checkpoint"
     assert goal_result["reference_understanding_summary"]["views"]
     assert goal_result["reference_understanding_summary"]["visual_metrics"]
+    assert goal_result["reference_understanding_summary"]["mass_recipe"][0]["target_label"] == "body_core"
+    assert goal_result["reference_understanding_summary"]["shape_profile_hints"][0]["target_label"] == "tail_mass"
     assert goal_result["reference_understanding_summary"]["classification_scores"] == [
         {"label": "low_poly_faceted", "score": 0.94}
     ]

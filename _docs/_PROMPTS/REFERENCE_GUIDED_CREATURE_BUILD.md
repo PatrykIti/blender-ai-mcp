@@ -251,13 +251,14 @@ Workflow:
    `guided_reference_readiness.compare_ready == true`
 8. build in 4 stages:
    - stage 1: body + head primary masses
-   - stage 2: tail mass
-   - stage 3: snout + ears
+   - stage 2: finish the primary wave with `tail_mass`
+   - stage 3: secondary wave starts only after `tail_mass`; place `snout_mass` + ears
    - stage 4: forelegs + hindlegs + eyes + final proportion cleanup
 9. during the primary-mass stages, do not jump early to ears or legs
    - if the server reports `guided_flow_state.allowed_roles=["body_core","head_mass","tail_mass"]`, stay inside that role set
    - read `allowed_roles` and `missing_roles` literally from the active guided flow state before creating the next creature part
    - register semantic part roles with `guided_register_part(...)` or use the convenience hint `guided_role=...` on the build call
+   - `guided_register_part(...)` immediately widens the live `active_target_scope` when the new object belongs to the active creature workset; the next omitted-target compare should see that new part without a manual session patch
    - if the previous checkpoint or loop state still names one local ear/limb
      focus, keep the next compare broad on body/head/tail primary masses until
      the whole-creature silhouette reads plausibly
@@ -267,6 +268,7 @@ Workflow:
    - `loop_disposition`
    - `guided_reference_readiness`
    - `reference_orchestrator_feedback`
+   - `reference_orchestrator_feedback.recommended_repair`
    - `planner_summary`
    - `refinement_route`
    - `refinement_handoff`
@@ -328,6 +330,9 @@ Workflow:
     active gate plan carries a curved-tail `shape_profile` blocker
 23. place the eyes only after the major secondary masses are stable, and treat
     `eye_pair` as a quality-gate target rather than a guided execution role
+24. if `reference_orchestrator_feedback.recommended_repair` is present, treat
+    it as the compact bounded repair-plan handoff before inventing another
+    macro/tool choice from prose
 
 At the end of each stage, return only:
 - what was done

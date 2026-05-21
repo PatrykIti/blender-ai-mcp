@@ -32,6 +32,18 @@ def _reference_understanding_request() -> VisionRequest:
     )
 
 
+def _reference_understanding_contract_base() -> dict[str, object]:
+    return {
+        "mass_recipe": [],
+        "attachment_plan": [],
+        "contact_expectations": [],
+        "shape_profile_hints": [],
+        "silhouette_landmarks": [],
+        "part_order": [],
+        "must_seat_before_next_stage": [],
+    }
+
+
 def _reference_classification_request() -> VisionRequest:
     return VisionRequest(
         goal="classify the attached low-poly squirrel reference for bounded Blender planning",
@@ -393,6 +405,7 @@ def test_diagnose_vision_output_classifies_label_map_json():
 def test_parse_reference_understanding_payload_normalizes_aliases_and_derives_defaults():
     text = json.dumps(
         {
+            **_reference_understanding_contract_base(),
             "subject": {
                 "label": "Low poly squirrel",
                 "category": "creature",
@@ -472,6 +485,7 @@ def test_parse_reference_understanding_payload_normalizes_aliases_and_derives_de
 def test_parse_reference_understanding_payload_canonicalizes_common_creature_part_labels():
     text = json.dumps(
         {
+            **_reference_understanding_contract_base(),
             "subject": {
                 "label": "Low poly squirrel",
                 "category": "creature",
@@ -549,6 +563,97 @@ def test_parse_reference_understanding_payload_canonicalizes_common_creature_par
     ]
 
 
+def test_parse_reference_understanding_payload_normalizes_attachment_first_creature_fields():
+    text = json.dumps(
+        {
+            "subject": {
+                "label": "Low poly squirrel",
+                "category": "creature",
+                "confidence": 0.9,
+                "uncertainty_notes": [],
+            },
+            "style": {"style_label": "low_poly_faceted", "confidence": 0.8, "notes": []},
+            "views": [],
+            "required_parts": [],
+            "mass_recipe": [
+                {
+                    "target_label": "tail",
+                    "geometry_family": "segment_chain",
+                    "construction_hint": "Build the tail as a readable segmented arc.",
+                    "anchor_object_candidates": ["body"],
+                    "support_surface_candidates": ["body_core_rear"],
+                    "contact_expectations": ["keep the tail seated on the rear body."],
+                    "source_reference_ids": ["ref_side"],
+                }
+            ],
+            "attachment_plan": [
+                {
+                    "target_label": "snout",
+                    "anchor_object_candidates": ["head"],
+                    "required_relation": "embedded_attachment",
+                    "support_surface_candidates": ["head_mass_front"],
+                    "contact_expectations": ["seat the snout flush against the head front."],
+                    "notes": ["Do not detach the snout silhouette from the head mass."],
+                }
+            ],
+            "contact_expectations": [
+                {
+                    "target_label": "tail",
+                    "expected_contacts": ["body_core_rear"],
+                    "avoid_contacts": ["ground_plane"],
+                    "notes": ["The tail should not read as a support prop."],
+                }
+            ],
+            "shape_profile_hints": [
+                {
+                    "target_label": "tail",
+                    "summary": "Keep the tail arc readable from the side silhouette.",
+                    "reference_id": "ref_side",
+                }
+            ],
+            "silhouette_landmarks": [
+                {
+                    "landmark_id": "ear_tip_pair",
+                    "target_label": "ears",
+                    "view_id": "front",
+                    "summary": "Both ear tips should remain visible above the head silhouette.",
+                }
+            ],
+            "part_order": ["body", "head", "tail", "snout"],
+            "must_seat_before_next_stage": ["tail", "snout"],
+            "non_goals": [],
+            "construction_strategy": {
+                "construction_path": "low_poly_facet",
+                "primary_family": "modeling_mesh",
+                "allowed_families": ["modeling_mesh", "inspect_only"],
+                "stage_sequence": ["primary_masses", "secondary_parts"],
+                "finish_policy": "preserve_facets",
+            },
+            "router_handoff_hints": {
+                "preferred_family": "modeling_mesh",
+                "allowed_guided_families": ["reference_context", "primary_masses", "secondary_parts"],
+                "sculpt_policy": "hidden",
+            },
+            "gate_proposals": [],
+            "visual_evidence_refs": [],
+            "verification_requirements": [],
+        }
+    )
+
+    parsed = parse_vision_output_text(text, _reference_understanding_request())
+
+    assert parsed["mass_recipe"][0]["target_label"] == "tail_mass"
+    assert parsed["mass_recipe"][0]["anchor_role_candidates"] == ["body_core"]
+    assert parsed["attachment_plan"][0]["target_label"] == "snout_mass"
+    assert parsed["attachment_plan"][0]["anchor_role_candidates"] == ["head_mass"]
+    assert parsed["attachment_plan"][0]["required_relation"] == "embedded_attachment"
+    assert parsed["contact_expectations"][0]["target_label"] == "tail_mass"
+    assert parsed["shape_profile_hints"][0]["target_label"] == "tail_mass"
+    assert parsed["silhouette_landmarks"][0]["target_label"] == "ear_pair"
+    assert parsed["part_order"] == ["body_core", "head_mass", "tail_mass", "snout_mass"]
+    assert parsed["must_seat_before_next_stage"] == ["tail_mass", "snout_mass"]
+
+
 def test_parse_reference_understanding_payload_rejects_missing_required_top_level_fields():
     text = json.dumps(
         {
@@ -579,13 +684,14 @@ def test_parse_reference_understanding_payload_rejects_missing_required_top_leve
         }
     )
 
-    with pytest.raises(ValueError, match="omitted required top-level fields: views"):
+    with pytest.raises(ValueError, match="omitted required top-level fields: .*views"):
         parse_vision_output_text(text, _reference_understanding_request())
 
 
 def test_parse_reference_understanding_payload_rejects_malformed_top_level_sections():
     text = json.dumps(
         {
+            **_reference_understanding_contract_base(),
             "subject": "low poly squirrel",
             "style": {"style_label": "low_poly_faceted", "confidence": 0.8, "notes": ["faceted planes"]},
             "views": [],
@@ -616,6 +722,7 @@ def test_parse_reference_understanding_payload_rejects_malformed_top_level_secti
 def test_parse_reference_understanding_payload_rejects_noncanonical_nested_values():
     text = json.dumps(
         {
+            **_reference_understanding_contract_base(),
             "subject": {
                 "label": "Low poly squirrel",
                 "category": "creature",
@@ -651,6 +758,7 @@ def test_parse_reference_understanding_payload_rejects_noncanonical_nested_value
 def test_parse_reference_understanding_payload_rejects_malformed_visual_evidence_refs():
     text = json.dumps(
         {
+            **_reference_understanding_contract_base(),
             "subject": {
                 "label": "Low poly squirrel",
                 "category": "creature",
@@ -693,6 +801,7 @@ def test_parse_reference_understanding_payload_rejects_malformed_visual_evidence
 def test_parse_reference_understanding_payload_rejects_malformed_verification_requirements():
     text = json.dumps(
         {
+            **_reference_understanding_contract_base(),
             "subject": {
                 "label": "Low poly squirrel",
                 "category": "creature",

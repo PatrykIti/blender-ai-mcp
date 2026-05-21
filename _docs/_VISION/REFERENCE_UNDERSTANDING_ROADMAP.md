@@ -34,6 +34,7 @@ Reference understanding closes that gap by producing a typed pre-build summary:
 - what the references depict
 - which style and construction path they imply
 - which parts and non-goals matter
+- which attachment-first creature assembly cues matter
 - which tool families are suitable
 - which verification gates should exist later
 
@@ -135,8 +136,11 @@ guided/reference surfaces:
   reference-understanding from active references and reuses the closed
   `TASK-157` intake seam for advisory gate proposals
 - that same RU path now adds server-owned `views` and lightweight
-  `visual_metrics`, then normalizes the result into session-scoped
-  `reference_strategy_state`
+  `visual_metrics`, typed attachment-first creature assembly cues
+  (`mass_recipe`, `attachment_plan`, `contact_expectations`,
+  `shape_profile_hints`, `silhouette_landmarks`, `part_order`, and
+  `must_seat_before_next_stage`), then normalizes the result into
+  session-scoped `reference_strategy_state`
 - when operators explicitly enable optional sidecars, the same RU path can now
   merge support-only `classification_scores` and `segmentation_artifacts`
   without changing gate authority or creating a second read surface
@@ -177,6 +181,13 @@ Minimum fields:
 | `style` | Controlled style classification such as `low_poly_faceted` |
 | `views` | Detected reference views and key visual features |
 | `required_parts` | Candidate required parts with construction hints and source refs |
+| `mass_recipe` | Advisory primary/secondary creature mass recipe with canonical role labels |
+| `attachment_plan` | Advisory attachment-first seating order with anchor-role candidates |
+| `contact_expectations` | Advisory support/contact cues that remain non-authoritative |
+| `shape_profile_hints` | Advisory reference-driven profile cues for silhouette-sensitive parts |
+| `silhouette_landmarks` | Advisory landmark cues tied to reference views |
+| `part_order` | Advisory canonical creature role order for assembly |
+| `must_seat_before_next_stage` | Advisory role list that should be seated before the next stage |
 | `non_goals` | Explicit things the build should avoid |
 | `construction_strategy` | Controlled `construction_path`, stage sequence, and finish policy |
 | `router_handoff_hints` | Advisory families and constraints for guided policy normalization |
@@ -191,6 +202,11 @@ The contract should carry provenance for each important statement. A low-poly
 squirrel example may say "tail should be a curled segmented chain", but that
 statement should be tied to reference ids, view ids, or a model/provider
 provenance record.
+For creature assembly cues, prefer canonical role labels such as `body_core`,
+`head_mass`, `tail_mass`, `snout_mass`, `ear_pair`, `eye_pair`,
+`foreleg_pair`, and `hindleg_pair`. `anchor_role_candidates` and
+`support_surface_candidates` stay in semantic/reference space; they are not
+scene-object ids and they do not become truth authority.
 
 ## Controlled Vocabulary
 
