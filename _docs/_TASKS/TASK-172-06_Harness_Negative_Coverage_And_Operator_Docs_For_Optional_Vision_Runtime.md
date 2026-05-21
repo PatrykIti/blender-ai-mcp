@@ -14,6 +14,9 @@
 
 - preserve the current default harness semantics unless a new explicit opt-in
   mode is selected
+- this leaf owns only the localized-perception delta on harness/docs surfaces;
+  generic capability-aware runtime harness/docs closeout remains on
+  `TASK-140-06-04`
 - likely harness owners:
   - `_run_backend(...)`
   - `_run(...)`
@@ -51,10 +54,16 @@ elif args.localized_optional_mode == "packet_support":
 - `tests/e2e/integration/test_guided_gate_state_transport.py`
 - `tests/e2e/integration/test_mcp_transport_modes.py`
 - `tests/e2e/integration/test_guided_surface_contract_parity.py`
+- `tests/e2e/vision/test_reference_guided_creature_comparison.py` when harness
+  subprocess defaults or CLI execution semantics change
+- `tests/e2e/vision/test_real_view_variant_model_comparison.py` when harness
+  comparison subprocess semantics change
 
 ## Docs To Update
 
-- `_docs/_VISION/README.md`
+- `_docs/_VISION/README.md` only for the localized-perception delta owned by
+  `TASK-172`, not the broader capability-summary/harness closeout already owned
+  by `TASK-140-06-04`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 
@@ -72,6 +81,8 @@ elif args.localized_optional_mode == "packet_support":
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/scripts/test_script_tooling.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py tests/e2e/integration/test_mcp_transport_modes.py tests/e2e/integration/test_guided_surface_contract_parity.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_guided_creature_comparison.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_real_view_variant_model_comparison.py -q`
 - `PYTHONPATH=. poetry run pytest ./tests/unit`
 
 ## Validation Category

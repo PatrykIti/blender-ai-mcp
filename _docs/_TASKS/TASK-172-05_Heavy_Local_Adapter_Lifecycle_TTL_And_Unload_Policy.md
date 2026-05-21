@@ -14,7 +14,8 @@
 - cheap, lightweight, or naturally per-request branches are not routed through
   the shared-owner lifecycle path
 - unload behavior, when implemented, is best-effort, bounded, and safe when the
-  chosen shared owner is idle or the guided session ends
+  chosen shared owner is idle under the selected process-wide or ref-counted
+  ownership model
 
 ## Implementation Notes
 
@@ -23,6 +24,9 @@
 - first concrete ownership decision must choose one of:
   - `request_scoped_only`
   - `resolver_owned_shared_local`
+- the first concrete owner choice in this family must be limited to an
+  in-process adapter introduced by `TASK-172-03` or `TASK-172-04`; sidecar-only
+  branches do not qualify for TTL/unload ownership in this leaf
 - likely owner seam if shared reuse is justified:
   - `LazyVisionBackendResolver.resolve(...)`
   - `LazyVisionBackendResolver.resolve_default(...)`
@@ -44,7 +48,8 @@
 - expected policy controls may include:
   - `reuse_policy`
   - `ttl_seconds`
-  - `unload_on_session_end`
+  - `release_on_last_consumer`
+  - `process_idle_unload`
   - `max_memory_class`
   - `release_if_idle`
 
@@ -78,6 +83,7 @@ finally:
   lifecycle logic touches external/runtime selection seams
 - `tests/unit/adapters/mcp/test_vision_local_backend.py` when shared local
   backend ownership or reset semantics change
+- `tests/unit/infrastructure/test_vision_di.py`
 - targeted backend/unit tests for manager behavior if a dedicated lifecycle
   helper is introduced
 
@@ -101,6 +107,7 @@ finally:
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_runner.py tests/unit/adapters/mcp/test_vision_external_backend.py -q`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_local_backend.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/infrastructure/test_vision_di.py -q`
 - `PYTHONPATH=. poetry run pytest ./tests/unit`
 
 ## Validation Category

@@ -27,10 +27,16 @@
   - `_optional_support_needs_refresh(...)`
   - `build_compare_packets(...)`
   - `execute_compare_packets(...)`
+  - `ComparePacketPolicy`
+  - `ReferenceComparePacketContract`
+  - `_build_compare_segmentation_request_payload(...)`
   - `resolve_active_compare_scope(...)`
-- invocation reasons should land on an existing typed seam such as packet policy,
-  packet-local support request state, or another declared runtime contract; do
-  not leave them as free-form ad hoc fields
+- invocation reasons should land on one explicit typed seam:
+  - one additive `localized_support_reason` field on
+    `ReferenceComparePacketContract`
+  - compare policy decisions on `ComparePacketPolicy`
+  - payload builders such as `_build_compare_segmentation_request_payload(...)`
+  do not leave them as free-form ad hoc fields
 - define one small normalized vocabulary for invocation reasons, for example:
   - `part_missing_ambiguity`
   - `anchor_ambiguity`
@@ -48,11 +54,11 @@
 ## Pseudocode
 
 ```python
-if packet.reason in {"seam_unclear", "part_missing_ambiguity"}:
-    support_request = LocalizedPerceptionRequest(
-        packet_id=packet.packet_id,
-        target_roles=["tail_mass", "body_core"],
-        request_kind="mask_or_box",
+if packet.localized_support_reason in {"seam_unclear", "part_missing_ambiguity"}:
+    payload = _build_compare_segmentation_request_payload(
+        packet=packet,
+        capture_subset=captures,
+        reference_subset=references,
     )
 ```
 

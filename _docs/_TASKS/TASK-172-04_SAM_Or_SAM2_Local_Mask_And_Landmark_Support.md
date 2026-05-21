@@ -17,7 +17,9 @@
 - concrete owner seams for this leaf:
   - `ReferencePartSegmentationLandmarkContract`
   - `ReferencePartSegmentationContract`
+  - `ReferenceComparePacketContract`
   - `collect_compare_time_segmentation_support(...)`
+  - `_build_compare_segmentation_request_payload(...)`
   - `merge_compare_time_part_segmentation(...)`
   - staged response projection in `reference.py`
 - acceptable first support shapes:
@@ -37,7 +39,8 @@
 
 ```python
 segmentation = segment_local_region(
-    reference_slice=packet.reference_slice,
+    reference_ids=packet.reference_ids,
+    capture_labels=packet.capture_labels,
     seed_boxes=localization_candidates,
     max_parts=4,
 )
