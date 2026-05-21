@@ -3,19 +3,23 @@
 **Parent:** [TASK-171](./TASK-171_Creature_Attachment_First_Build_Contract_And_Structured_Vision_Handoff.md)
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
-**Objective:** Move required creature seam inference and attachment-pair matching toward `guided_part_registry` roles so guided creature truth and gate matching still work when object names are opaque, abbreviated, or drift from the current heuristics.
-**Repository Touchpoints:** `server/application/services/spatial_graph.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_truth.py`, `server/adapters/mcp/transforms/quality_gate_verifier.py`, `tests/unit/tools/scene/test_spatial_graph_service.py`, `tests/unit/adapters/mcp/test_quality_gate_verifier.py`, `tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py`
+**Objective:** Move required creature seam inference and attachment-pair matching toward `guided_part_registry` roles so guided creature truth still works when object names are opaque, abbreviated, or drift from the current heuristics, while preserving the already-shipped registry-first required-part gate matching path.
+**Repository Touchpoints:** `server/application/services/spatial_graph.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_truth.py`, `server/adapters/mcp/transforms/quality_gate_verifier.py`, `server/adapters/mcp/guided_naming_policy.py`, `tests/unit/tools/scene/test_spatial_graph_service.py`, `tests/unit/adapters/mcp/test_quality_gate_verifier.py`, `tests/unit/adapters/mcp/test_router_elicitation.py`, `tests/unit/tools/test_handler_rpc_alignment.py`, `tests/e2e/tools/scene/test_scene_measure_tools.py`, `tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py`
 **Acceptance Criteria:**
 - required creature seams can be derived from registry-backed creature roles in guided sessions
 - lexical name heuristics remain available as fallback for unguided or weakly registered scenes
+- the already-shipped registry-first required-part gate matching path remains intact while seam inference stops depending entirely on lexical names
 - gate verification and truth follow-up can still match attachment pairs correctly when object names do not spell out `head`, `body`, `tail`, `snout`, or limb names
 
 ## Implementation Notes
 
-- the current deterministic seam path still classifies most creature parts from
-  object names
-- registry-backed creature role data already exists elsewhere in guided state,
-  but required seam planning and gate matching do not consistently consume it
+- required-part gate verification is already registry-first on the current
+  verifier seam; do not reopen that landed path here
+- the still-open gap is earlier:
+  - the deterministic seam planner still classifies most creature parts from
+    object names
+  - required seam planning and attachment-pair inference do not consistently
+    consume registry-backed creature roles
 - the task should introduce one explicit precedence rule:
   1. registry-backed role/object mapping in active guided creature sessions
   2. lexical-name heuristics as fallback
@@ -49,6 +53,9 @@ gate_match = resolve_gate_targets_with_registry_first(required_seams, gate_plan)
 
 - `tests/unit/tools/scene/test_spatial_graph_service.py`
 - `tests/unit/adapters/mcp/test_quality_gate_verifier.py`
+- `tests/unit/adapters/mcp/test_router_elicitation.py`
+- `tests/unit/tools/test_handler_rpc_alignment.py`
+- `tests/e2e/tools/scene/test_scene_measure_tools.py`
 - `tests/e2e/vision/test_reference_stage_assembled_creature_attachment_truth.py`
 
 ## Docs To Update

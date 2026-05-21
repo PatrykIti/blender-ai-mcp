@@ -1,25 +1,29 @@
-# TASK-171-01: Buildable Gate Escalation And Stage Prerequisite Repair
+# TASK-171-01: Buildable Gate Escalation And Stage Exit Prerequisite Repair
 
 **Parent:** [TASK-171](./TASK-171_Creature_Attachment_First_Build_Contract_And_Structured_Vision_Handoff.md)
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
-**Objective:** Make creature stage advancement and iterate escalation consistent so `tail_mass` and `snout_mass` cannot silently fall out of their intended waves, while buildable gate-only blockers such as `eye_pair` stay on a bounded build path until hard inspection authority is actually needed.
+**Objective:** Make creature stage-exit and iterate escalation consistent so `tail_mass` and `snout_mass` cannot silently carry forward past their intended wave-exit criteria, while buildable gate-only blockers such as `eye_pair` stay on a bounded build path until hard inspection authority is actually needed.
 **Repository Touchpoints:** `server/adapters/mcp/session_capabilities_flow.py`, `server/adapters/mcp/session_capabilities_registry.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/contracts/quality_gates.py`, `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`, `_docs/_PROMPTS/GUIDED_SESSION_START.md`, `tests/unit/adapters/mcp/test_guided_flow_state_contract.py`, `tests/unit/adapters/mcp/test_context_bridge.py`, `tests/unit/adapters/mcp/test_visibility_policy.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`
 **Acceptance Criteria:**
-- the runtime makes one explicit decision about `tail_mass` ownership and keeps flow, prompt docs, and tests aligned with that decision
-- the runtime makes one explicit decision about `snout_mass` ownership and keeps flow, prompt docs, and tests aligned with that decision
+- the runtime makes one explicit decision about `tail_mass` wave-exit ownership and keeps flow, prompt docs, and tests aligned with that decision
+- the runtime makes one explicit decision about `snout_mass` wave-exit ownership and keeps flow, prompt docs, and tests aligned with that decision
 - gate-only buildable blockers such as `eye_pair` can keep `loop_disposition="continue_build"` when the runtime still has a valid bounded create/repair lane
 - hard seam/support/truth blockers, repeated stagnation, and explicit inspect-only escalations still transition into `inspect_validate`
 
 ## Implementation Notes
 
-- the current runtime has a real contract mismatch:
-  - creature gate templates still require `tail_mass`, `snout_mass`, and
-    `eye_pair`
-  - the creature prompt stages `tail_mass` before `snout + ears`
-  - the stage machine currently advances from primary to secondary after
-    `body_core + head_mass`, and from secondary to later stages after
-    `ear_pair + foreleg_pair + hindleg_pair`
+- the current runtime already exposes the intended high-level creature stage
+  order on prompt and `allowed_roles` surfaces:
+  - `body_core + head_mass + tail_mass` are already primary-wave roles
+  - `snout_mass + ear_pair + foreleg_pair + hindleg_pair` are already
+    secondary-wave roles
+- the still-open mismatch is narrower:
+  - stage-exit / build-hold decisions still treat `tail_mass` and
+    `snout_mass` as late carry-forward roles rather than explicit wave-exit
+    prerequisites
+  - gate-only buildable blockers such as `eye_pair` still do not participate in
+    the current `missing_roles`-based hold-in-build path
 - `eye_pair` is intentionally gate-only, not a guided role; do not “fix” this
   by silently making it visible in `allowed_roles`
 - the actual early-escalation issue is that build-hold logic currently keys off
@@ -38,8 +42,8 @@
 ## Pseudocode
 
 ```python
-missing_primary = required_primary_roles(contract) - completed_roles(contract)
-missing_secondary = required_secondary_roles(contract) - completed_roles(contract)
+missing_primary = required_primary_exit_roles(contract) - completed_roles(contract)
+missing_secondary = required_secondary_exit_roles(contract) - completed_roles(contract)
 buildable_part_blockers = [
     blocker
     for blocker in completion_blockers

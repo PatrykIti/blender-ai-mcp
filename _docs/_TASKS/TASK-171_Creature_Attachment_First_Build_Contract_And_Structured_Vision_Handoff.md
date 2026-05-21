@@ -46,8 +46,10 @@ The remaining squirrel failure class is subtler than “the model ignored the
 prompt.” The shipped runtime still has a few contract mismatches that can push
 the controller into the wrong loop:
 
-- the stage machine still allows creature primary/secondary transitions that do
-  not match the prompt-staged build order or the required gate set
+- the high-level creature stage order already exists on prompt and allowed-role
+  surfaces, but the stage-exit and build-hold rules still allow late
+  carry-forward of `tail_mass` / `snout_mass` and do not align cleanly with the
+  required gate set
 - `eye_pair` is intentionally gate-only rather than a guided role, but the
   compact iterate loop can still escalate to `inspect_validate` too early
   because gate-only buildable blockers do not participate in `missing_roles`
@@ -69,9 +71,10 @@ the controller into the wrong loop:
 
 After this family lands:
 
-- `tail_mass` can no longer quietly fall out of the primary wave and
-  `snout_mass` can no longer quietly fall out of the secondary wave without one
-  explicit contract decision reflected in runtime, docs, and tests
+- `tail_mass` can no longer quietly carry forward past the primary-wave exit
+  path and `snout_mass` can no longer quietly carry forward past the
+  secondary-wave exit path without one explicit contract decision reflected in
+  runtime, docs, and tests
 - gate-only but buildable blockers such as `eye_pair` can keep the session in a
   bounded build lane until hard truth blockers, seam/support failures, or
   stagnation justify `inspect_validate`
@@ -190,9 +193,7 @@ After this family lands:
 ## Validation Commands
 
 - `git diff --check`
-- targeted consistency grep over `TASK-135`, `TASK-163`, `TASK-168`,
-  `TASK-169`, `TASK-170`, `REFERENCE_GUIDED_CREATURE_BUILD.md`, and
-  `GUIDED_SESSION_START.md`
+- `rg -n "TASK-171|TASK-171-0[1-6]|Creature Attachment-First Build Contract And Structured Vision Handoff|guided_register_part|recommended_repair|anchor_object_candidates" _docs/_TASKS/README.md _docs/_TASKS/TASK-171*.md`
 
 ## Validation Category
 

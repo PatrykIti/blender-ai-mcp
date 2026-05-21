@@ -4,11 +4,11 @@
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
 **Objective:** Expand the strict RU contract with typed creature assembly fields such as `mass_recipe`, `attachment_plan`, `contact_expectations`, `shape_profile_hints`, `silhouette_landmarks`, `support_surface_candidates`, `anchor_object_candidates`, `part_order`, and `must_seat_before_next_stage`, while keeping the output advisory-only and on the existing RU surfaces.
-**Repository Touchpoints:** `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/vision/prompting.py`, `server/adapters/mcp/vision/parsing.py`, `tests/unit/adapters/mcp/test_vision_prompting.py`, `tests/unit/adapters/mcp/test_vision_parsing.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`, `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md`
+**Repository Touchpoints:** `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/areas/router.py`, `server/adapters/mcp/vision/prompting.py`, `server/adapters/mcp/vision/parsing.py`, `server/adapters/mcp/vision/reference_support.py`, `tests/unit/adapters/mcp/test_vision_prompting.py`, `tests/unit/adapters/mcp/test_vision_parsing.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`, `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md`
 **Acceptance Criteria:**
 - the RU contract can express creature assembly structure beyond `required_parts` without weakening strict schema validation
 - the new fields are clearly documented as semantic/advisory RU outputs rather than live Blender-scene truth
-- RU runtime surfaces, prompt templates, parser validation, and tests all stay in sync
+- RU runtime surfaces, session persistence, transport projection, prompt templates, parser validation, and tests all stay in sync
 
 ## Implementation Notes
 
@@ -42,7 +42,7 @@
 class ReferenceUnderstandingAssemblyPartContract(...):
     target_label: str
     geometry_family: str
-    anchor_candidates: list[str]
+    anchor_object_candidates: list[str]
     required_relation: str | None
     forbid: list[str]
 
@@ -68,6 +68,8 @@ summary = ReferenceUnderstandingSummaryContract(
 
 - `tests/unit/adapters/mcp/test_vision_prompting.py`
 - `tests/unit/adapters/mcp/test_vision_parsing.py`
+- `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/e2e/integration/test_guided_gate_state_transport.py`
 - `tests/e2e/vision/test_reference_understanding_runtime_surface.py`
 
 ## Docs To Update

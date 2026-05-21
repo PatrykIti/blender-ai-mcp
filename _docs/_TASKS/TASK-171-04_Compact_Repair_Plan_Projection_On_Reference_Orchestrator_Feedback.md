@@ -3,39 +3,42 @@
 **Parent:** [TASK-171](./TASK-171_Creature_Attachment_First_Build_Contract_And_Structured_Vision_Handoff.md)
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
-**Objective:** Extend compact `reference_orchestrator_feedback` with one bounded actionable repair-plan surface so the controller can receive a top repair candidate with typed `arguments_hint` instead of only flattened tool-name lists and prose `correction_focus`.
-**Repository Touchpoints:** `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_truth.py`, `server/adapters/mcp/areas/reference_planner.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/e2e/integration/test_guided_inspect_validate_handoff.py`, `tests/e2e/vision/test_reference_stage_truth_handoff.py`
+**Objective:** Extend compact `reference_orchestrator_feedback` with one bounded actionable repair-plan surface so the controller can receive the top repair candidate with typed `arguments_hint` instead of only flattened tool-name lists and prose `correction_focus`.
+**Repository Touchpoints:** `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_truth.py`, `server/adapters/mcp/areas/reference_planner.py`, `server/adapters/mcp/areas/router.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/integration/test_guided_inspect_validate_handoff.py`, `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 **Acceptance Criteria:**
-- compact feedback can expose 1-3 bounded repair candidates with tool name, reason, and typed `arguments_hint`
+- compact feedback can expose one bounded repair candidate with tool name, reason, and typed `arguments_hint`
 - the top candidate can be sourced from existing truth macro candidates or repair-planner tool candidates instead of inventing a second planning path
 - compact mode stays compact; full truth/planner payloads remain additive/rich surfaces rather than being duplicated wholesale
 
 ## Implementation Notes
 
-- the current compact feedback contract only exposes:
-  - `recommended_support_tools` as tool-name strings
-  - `next_actions`
-  - `correction_focus`
+- the current compact feedback contract is already broader than just three
+  fields; it still carries status/family/gate/checkpoint/evidence/uncertainty
+  data
+- the actual gap on this seam is narrower:
+  - actionable repair-tool selection collapses into flattened tool-name strings
+  - the compact surface does not preserve the top tool + `arguments_hint`
+    payload that already exists on heavier truth/planner seams
 - richer actionable hints already exist on heavier seams:
   - truth macro candidates
   - planner blockers / required support tools
   - refinement handoff candidates
 - the new compact field should reuse those existing sources and rank them, not
   regenerate separate macro advice in the feedback builder
-- prefer one small additive contract such as a compact `repair_plan` or
-  `recommended_repairs` array over unstructured prose
+- prefer one small additive contract such as a compact `recommended_repair`
+  object over unstructured prose
 
 ## Pseudocode
 
 ```python
-repair_candidates = rank_compact_repairs(
+repair_candidate = rank_compact_repairs(
     truth_macro_candidates=compare_result.correction_candidates,
     planner_tools=planner_summary.required_support_tools,
-)
+)[:1]
 
 feedback = ReferenceOrchestratorFeedbackContract(
     ...,
-    recommended_repairs=repair_candidates[:3],
+    recommended_repair=repair_candidate[0] if repair_candidate else None,
 )
 ```
 
@@ -51,6 +54,7 @@ feedback = ReferenceOrchestratorFeedbackContract(
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
+- `tests/e2e/integration/test_guided_gate_state_transport.py`
 - `tests/e2e/integration/test_guided_inspect_validate_handoff.py`
 - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
 
