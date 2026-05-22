@@ -845,6 +845,33 @@ Boundary rules:
   `localized_support_reason`, then merge the returned parts into top-level
   `part_segmentation` plus packet-local `support_evidence`
 
+## Optional Compare-Time Localization Sidecar
+
+Text-conditioned part localization also remains explicitly opt-in and stays on
+the compare-time packet seam only.
+
+Current config surface:
+
+- `VISION_LOCALIZATION_ENABLED=false` by default
+- `VISION_LOCALIZATION_PROVIDER=generic_sidecar`
+- `VISION_LOCALIZATION_ENDPOINT`
+- `VISION_LOCALIZATION_MODEL`
+- `VISION_LOCALIZATION_API_KEY` / `VISION_LOCALIZATION_API_KEY_ENV`
+- `VISION_LOCALIZATION_TIMEOUT_SECONDS`
+- `VISION_LOCALIZATION_MAX_CANDIDATES`
+
+Boundary rules:
+
+- localization runs only for packets that already carry a bounded
+  `localized_support_reason`
+- literal localization boxes stay internal
+- public transport projects only support-safe `crop_path` plus derived anchors
+  through the existing `part_segmentation` carrier
+- when the segmentation sidecar is also enabled, localization candidates may
+  seed packet-local segmentation via internal `seed_boxes`
+- localization failures or empty results degrade to additive advisory notes and
+  do not break the staged loop
+
 Current first-pass scored baseline on the synthetic repo scenarios:
 
 - `Qwen3-VL-4B-Instruct-4bit`

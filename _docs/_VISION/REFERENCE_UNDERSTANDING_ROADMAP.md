@@ -332,8 +332,11 @@ RU path, but they remain typed, bounded, advisory-only, and unavailable by
 default until operators explicitly opt in. The shipped staged compare path now
 also gates packet-local segmentation behind a normalized
 `localized_support_reason` seam, so clean packets do not auto-run the sidecar
-just because it is configured. Later adapter work must still avoid changing
-the orchestration model or verifier authority.
+just because it is configured. Phase 5 now also has the first shipped
+default-off compare-time localization seam on that same packet owner path, but
+its literal boxes stay internal and public transport still projects only
+support-safe crops/anchors through `part_segmentation`. Later adapter work
+must still avoid changing the orchestration model or verifier authority.
 
 ## Low-Poly Creature Consumer
 

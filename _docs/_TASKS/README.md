@@ -82,7 +82,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Vision & Hybrid Loop
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md) | **Optional Vision Capability Runtime And Localized Perception** | 🔴 High | Active umbrella for the post-`TASK-171` vision-extension wave. The runtime now ships the internal optional-capability inventory plus packet-local `localized_support_reason` gating on the existing advisory classifier/segmentation seams, while localization runtime/provider work, heavy-local lifecycle policy, harness coverage, and final closeout remain open under the same family. |
+| [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md) | **Optional Vision Capability Runtime And Localized Perception** | 🔴 High | Active umbrella for the post-`TASK-171` vision-extension wave. The runtime now ships the internal optional-capability inventory, packet-local `localized_support_reason` gating, the default-off localization sidecar/provider seam, and compare-time support-safe localization projection on the existing advisory classifier/segmentation carriers. The remaining open work is the localized-support harness lane plus final board/changelog closeout. |
 
 ---
 

@@ -2,7 +2,8 @@
 
 **Parent:** [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md)
 **Depends On:** [TASK-172-04](./TASK-172-04_SAM_Or_SAM2_Local_Mask_And_Landmark_Support.md), [TASK-172-03-02](./TASK-172-03-02_Compare_Time_Localization_Projection_And_Transport.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-23
 **Priority:** 🟠 High
 **Objective:** Decide whether the first shipped in-process optional adapter family justifies shared reuse on current repo seams, and add TTL/unload only if that post-integration decision proves real shared backend pressure worth managing. External-provider and sidecar-process lifecycle stays operator-managed unless a later task explicitly promotes it into the server runtime.
 **Repository Touchpoints:** `server/adapters/mcp/vision/runtime.py`, `server/adapters/mcp/vision/backends.py`, `server/adapters/mcp/vision/config.py`, `server/adapters/mcp/vision/runner.py`, `server/infrastructure/config.py`, `server/infrastructure/di.py`, `tests/unit/adapters/mcp/test_vision_runtime_config.py`, `tests/unit/adapters/mcp/test_vision_runner.py`, `tests/unit/adapters/mcp/test_vision_external_backend.py`, `tests/unit/adapters/mcp/test_vision_local_backend.py`, `_docs/_VISION/README.md`
@@ -99,6 +100,15 @@ finally:
 
 - include lifecycle/reuse policy in the `TASK-172` changelog entry when a
   shared heavy-local adapter owner actually ships
+
+## Completion Summary
+
+- current `TASK-172` ships only operator-managed sidecar/external optional
+  support branches; no reusable in-process heavy-local adapter family was
+  introduced
+- this leaf therefore closes with the explicit `request_scoped_only` verdict:
+  no shared TTL/unload owner was added, and later in-process reuse can reopen
+  as its own follow-on only if a real qualifying adapter lands
 
 ## Status / Board Update
 

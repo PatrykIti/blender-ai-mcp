@@ -1820,6 +1820,9 @@ async def _run_stage_checkpoint_compare(
 
     resolver = get_vision_backend_resolver()
     runtime_config = getattr(resolver, "runtime_config", None)
+    localization_config = (
+        getattr(runtime_config, "active_localization_config", None) if runtime_config is not None else None
+    )
     segmentation_sidecar_config = (
         getattr(runtime_config, "active_segmentation_sidecar", None) if runtime_config is not None else None
     )
@@ -1907,6 +1910,7 @@ async def _run_stage_checkpoint_compare(
         resolved_target_object=resolved_target_object,
         resolved_target_objects=resolved_target_objects,
         assembled_target_scope=assembled_target_scope,
+        localization_config=localization_config,
         segmentation_sidecar_config=segmentation_sidecar_config,
         resolver=resolver,
         run_vision_assist_fn=run_vision_assist,

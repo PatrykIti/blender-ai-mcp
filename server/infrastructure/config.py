@@ -198,6 +198,40 @@ class Config(BaseSettings):
         gt=0,
         description="Maximum part outputs accepted from the optional segmentation sidecar",
     )
+    VISION_LOCALIZATION_ENABLED: bool = Field(
+        default=False,
+        description="Enable optional compare-time localization sidecar for packet-bounded support",
+    )
+    VISION_LOCALIZATION_PROVIDER: str = Field(
+        default="generic_sidecar",
+        description="Optional localization sidecar provider: generic_sidecar",
+    )
+    VISION_LOCALIZATION_ENDPOINT: str | None = Field(
+        default=None,
+        description="Endpoint/base URL for the optional localization sidecar",
+    )
+    VISION_LOCALIZATION_MODEL: str | None = Field(
+        default=None,
+        description="Optional model identifier for the localization sidecar",
+    )
+    VISION_LOCALIZATION_API_KEY: str | None = Field(
+        default=None,
+        description="Inline API key for the localization sidecar",
+    )
+    VISION_LOCALIZATION_API_KEY_ENV: str | None = Field(
+        default=None,
+        description="Environment variable containing the localization sidecar API key",
+    )
+    VISION_LOCALIZATION_TIMEOUT_SECONDS: float = Field(
+        default=15.0,
+        gt=0,
+        description="Timeout for one optional localization sidecar request",
+    )
+    VISION_LOCALIZATION_MAX_CANDIDATES: int = Field(
+        default=8,
+        gt=0,
+        description="Maximum candidates accepted from the optional localization sidecar",
+    )
 
     @field_validator("BLENDER_AI_DEBUG", mode="before")
     @classmethod
@@ -251,6 +285,8 @@ class Config(BaseSettings):
             )
         if self.VISION_SEGMENTATION_PROVIDER not in {"generic_sidecar"}:
             raise ValueError("VISION_SEGMENTATION_PROVIDER must be one of: generic_sidecar")
+        if self.VISION_LOCALIZATION_PROVIDER not in {"generic_sidecar"}:
+            raise ValueError("VISION_LOCALIZATION_PROVIDER must be one of: generic_sidecar")
         return self
 
 
@@ -338,4 +374,12 @@ def get_config() -> Config:
         VISION_SEGMENTATION_API_KEY_ENV=os.getenv("VISION_SEGMENTATION_API_KEY_ENV") or None,
         VISION_SEGMENTATION_TIMEOUT_SECONDS=float(os.getenv("VISION_SEGMENTATION_TIMEOUT_SECONDS", 15.0)),
         VISION_SEGMENTATION_MAX_PARTS=int(os.getenv("VISION_SEGMENTATION_MAX_PARTS", 16)),
+        VISION_LOCALIZATION_ENABLED=os.getenv("VISION_LOCALIZATION_ENABLED", "false").lower() in ("true", "1", "yes"),
+        VISION_LOCALIZATION_PROVIDER=os.getenv("VISION_LOCALIZATION_PROVIDER", "generic_sidecar"),
+        VISION_LOCALIZATION_ENDPOINT=os.getenv("VISION_LOCALIZATION_ENDPOINT") or None,
+        VISION_LOCALIZATION_MODEL=os.getenv("VISION_LOCALIZATION_MODEL") or None,
+        VISION_LOCALIZATION_API_KEY=os.getenv("VISION_LOCALIZATION_API_KEY") or None,
+        VISION_LOCALIZATION_API_KEY_ENV=os.getenv("VISION_LOCALIZATION_API_KEY_ENV") or None,
+        VISION_LOCALIZATION_TIMEOUT_SECONDS=float(os.getenv("VISION_LOCALIZATION_TIMEOUT_SECONDS", 15.0)),
+        VISION_LOCALIZATION_MAX_CANDIDATES=int(os.getenv("VISION_LOCALIZATION_MAX_CANDIDATES", 8)),
     )

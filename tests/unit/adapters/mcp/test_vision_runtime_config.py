@@ -86,6 +86,14 @@ def _base_config(**overrides) -> Config:
         "VISION_SEGMENTATION_API_KEY_ENV": None,
         "VISION_SEGMENTATION_TIMEOUT_SECONDS": 15.0,
         "VISION_SEGMENTATION_MAX_PARTS": 16,
+        "VISION_LOCALIZATION_ENABLED": False,
+        "VISION_LOCALIZATION_PROVIDER": "generic_sidecar",
+        "VISION_LOCALIZATION_ENDPOINT": None,
+        "VISION_LOCALIZATION_MODEL": None,
+        "VISION_LOCALIZATION_API_KEY": None,
+        "VISION_LOCALIZATION_API_KEY_ENV": None,
+        "VISION_LOCALIZATION_TIMEOUT_SECONDS": 15.0,
+        "VISION_LOCALIZATION_MAX_CANDIDATES": 8,
     }
     data.update(overrides)
     return Config(**data)
@@ -708,7 +716,7 @@ def test_optional_capability_inventory_projects_disabled_defaults_and_planned_lo
     assert inventory.get("part_segmentation") is not None
     assert inventory.get("part_segmentation").status == "disabled"
     assert inventory.get("part_localization") is not None
-    assert inventory.get("part_localization").status == "planned"
+    assert inventory.get("part_localization").status == "disabled"
     assert inventory.get("part_localization").activation_scope == "compare_packet"
     assert inventory.get("part_localization").lifecycle_class == "request_scoped_only"
 
@@ -750,6 +758,52 @@ def test_optional_capability_inventory_projects_configured_classifier_and_segmen
     assert segmentation.model_id == "sam-sidecar-v1"
     assert segmentation.activation_scope == "compare_packet"
     assert segmentation.lifecycle_class == "sidecar_process"
+
+
+def test_optional_localization_stays_disabled_by_default():
+    runtime = build_vision_runtime_config(_base_config())
+
+    assert runtime.localization_config is None
+    assert runtime.active_localization_config is None
+
+
+def test_optional_localization_uses_separate_opt_in_config_surface():
+    runtime = build_vision_runtime_config(
+        _base_config(
+            VISION_LOCALIZATION_ENABLED=True,
+            VISION_LOCALIZATION_ENDPOINT="http://localhost:9300/localize",
+            VISION_LOCALIZATION_MODEL="grounding-sidecar-v1",
+            VISION_LOCALIZATION_API_KEY_ENV="LOCALIZATION_API_KEY",
+            VISION_LOCALIZATION_MAX_CANDIDATES=6,
+        )
+    )
+
+    assert runtime.localization_config is not None
+    assert runtime.localization_config.enabled is True
+    assert runtime.localization_config.provider_name == "generic_sidecar"
+    assert runtime.localization_config.endpoint == "http://localhost:9300/localize"
+    assert runtime.localization_config.model == "grounding-sidecar-v1"
+    assert runtime.localization_config.api_key_env == "LOCALIZATION_API_KEY"
+    assert runtime.localization_config.max_candidates == 6
+
+
+def test_optional_capability_inventory_projects_configured_localization_support():
+    runtime = build_vision_runtime_config(
+        _base_config(
+            VISION_LOCALIZATION_ENABLED=True,
+            VISION_LOCALIZATION_ENDPOINT="http://localhost:9300/localize",
+            VISION_LOCALIZATION_MODEL="grounding-sidecar-v1",
+        )
+    )
+
+    localization = runtime.optional_capability_inventory.get("part_localization")
+
+    assert localization is not None
+    assert localization.status == "available"
+    assert localization.provider_name == "generic_sidecar"
+    assert localization.model_id == "grounding-sidecar-v1"
+    assert localization.activation_scope == "compare_packet"
+    assert localization.lifecycle_class == "sidecar_process"
 
 
 def test_vision_request_carries_before_after_and_reference_images():

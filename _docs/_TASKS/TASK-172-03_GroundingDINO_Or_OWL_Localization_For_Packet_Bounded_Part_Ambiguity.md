@@ -2,7 +2,8 @@
 
 **Parent:** [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md)
 **Depends On:** [TASK-172-02](./TASK-172-02_Stage_Bound_Activation_Policy_And_Localized_Support_Contracts.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-23
 **Priority:** 🔴 High
 **Objective:** Add one optional packet-bounded text-conditioned localization adapter family that can produce bounded compare-time localization candidates for ambiguous reference regions during staged compare and iterate work, keep those candidates tied to packet/reference/view provenance, and project only support-safe crops or derived anchor hints on the current public carriers.
 **Repository Touchpoints:** `server/adapters/mcp/vision/config.py`, `server/adapters/mcp/vision/runtime.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_silhouette.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/areas/reference_planner.py`, `server/adapters/mcp/contracts/reference.py`, `server/infrastructure/config.py`, `tests/unit/adapters/mcp/test_reference_compare_packets.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_vision_runtime_config.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`, `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md`
@@ -117,6 +118,16 @@ return ReferencePartSegmentationContract(
 
 - name the chosen localization family and its advisory-only boundary when this
   leaf ships
+
+## Completion Summary
+
+- the first shipped localization family now lands as a default-off
+  `generic_sidecar` compare-time provider seam
+- compare-time localization stays packet-bounded, advisory-only, and tied to
+  `localized_support_reason`
+- public transport still projects only support-safe crops and derived anchors
+  through the existing `part_segmentation` carrier; literal boxes stay
+  internal
 
 ## Status / Board Update
 

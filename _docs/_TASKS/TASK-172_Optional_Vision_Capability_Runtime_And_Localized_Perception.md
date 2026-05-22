@@ -209,20 +209,28 @@ grounding.
 - kept packet-local segmentation advisory-only, bounded, and on the existing
   compare-time carrier, including clean degradation when no localized-support
   reason exists
-- left the remaining text-conditioned localization, lifecycle, harness, and
-  governance closeout work explicit on `TASK-172-03*`, `TASK-172-05`,
-  `TASK-172-06`, and `TASK-172-07` instead of hiding it behind stale
-  all-`To Do` planning wording
+- shipped the default-off compare-time localization provider seam plus
+  localization projection through the existing `part_segmentation` carrier,
+  while keeping literal boxes internal
+- closed the heavy-local lifecycle decision for the current family as
+  `request_scoped_only`, because the shipped adapters remain sidecar/external
+  rather than reusable in-process heavy locals
+- left the remaining harness and governance closeout work explicit on
+  `TASK-172-06` and `TASK-172-07` instead of hiding it behind stale all-`To Do`
+  planning wording
 
 ## Status / Board Update
 
 - `_docs/_TASKS/README.md` should show `TASK-172` as active work with partial
   shipped progress, not as an untouched `To Do`
 - `TASK-172-01` and `TASK-172-02` close as done from current evidence
+- `TASK-172-03`, `TASK-172-03-01`, and `TASK-172-03-02` close as done from the
+  shipped default-off localization seam and compare-time transport proof
 - `TASK-172-04` closes administratively because the compare-time segmentation
   scope is already covered by earlier shipped segmentation-sidecar owners
-- `TASK-172-03*`, `TASK-172-05`, `TASK-172-06`, and `TASK-172-07` remain the
-  open leaves for localization, lifecycle, harness, and final closeout
+- `TASK-172-05` closes as the explicit `request_scoped_only` lifecycle verdict
+- `TASK-172-06` and `TASK-172-07` remain the open leaves for harness and final
+  closeout
 
 ## Validation Commands
 

@@ -217,6 +217,138 @@ def test_localized_support_reason_uses_mask_needed_for_packet_action_hints():
     assert reason == "mask_needed"
 
 
+def test_collect_compare_time_localization_support_projects_candidates(monkeypatch):
+    sidecar = SimpleNamespace(
+        enabled=True,
+        provider_name="generic_sidecar",
+        endpoint="http://localhost:9300/localize",
+        model="grounding-sidecar-v1",
+        api_key=None,
+        api_key_env=None,
+        timeout_seconds=15.0,
+        max_candidates=4,
+    )
+    packet = ReferenceComparePacketContract(
+        packet_id="packet:tail:test",
+        packet_kind="scope",
+        packet_label="Tail",
+        target_view="front",
+        scope_label="Tail",
+        target_objects=["Squirrel_Body", "Squirrel_Tail"],
+        reference_ids=["ref_front"],
+        capture_labels=["target_front_after"],
+        compare_question="Compare the tail scope against the references.",
+        localized_support_reason="part_missing_ambiguity",
+    )
+    responses = {
+        "http://localhost:9300/localize": {
+            "candidates": [
+                {
+                    "query_label": "tail_mass",
+                    "reference_id": "ref_front",
+                    "capture_label": "target_front_after",
+                    "target_view": "front",
+                    "confidence": 0.88,
+                    "box_xyxy": [101, 44, 218, 162],
+                    "crop_path": "/tmp/localization_tail_crop.png",
+                }
+            ]
+        }
+    }
+    captured: list[dict[str, Any]] = []
+    monkeypatch.setattr(
+        compare_packets_area.httpx,
+        "AsyncClient",
+        lambda timeout=None: _FakeSupportAsyncClient(responses=responses, captured=captured),
+    )
+
+    candidates, projected = asyncio.run(
+        compare_packets_area.collect_compare_time_localization_support(
+            config=sidecar,
+            goal="low poly creature",
+            packet=packet,
+            reference_records=[_reference("ref_front", label="front_ref", target_view="front")],
+            captures=[_capture("target_front_after", preset_name="target_front")],
+        )
+    )
+
+    assert captured
+    assert captured[0]["json"]["query_labels"] == ["tail_mass"]
+    assert candidates
+    assert candidates[0].packet_id == "packet:tail:test"
+    assert candidates[0].query_label == "tail_mass"
+    assert candidates[0].box_xyxy == (101.0, 44.0, 218.0, 162.0)
+    assert projected is not None
+    assert projected.status == "available"
+    assert projected.provider_name == "generic_sidecar"
+    assert projected.parts[0].part_label == "tail_mass"
+    assert projected.parts[0].crop_path == "/tmp/localization_tail_crop.png"
+    assert projected.parts[0].landmarks[0].landmark_id == "box_center"
+
+
+def test_collect_compare_time_segmentation_support_threads_localization_seed_boxes(monkeypatch):
+    sidecar = SimpleNamespace(
+        enabled=True,
+        provider_name="generic_sidecar",
+        endpoint="http://localhost:9100/segment",
+        model="sam-sidecar-v1",
+        api_key=None,
+        api_key_env=None,
+        timeout_seconds=15.0,
+        max_parts=4,
+    )
+    responses = {
+        "http://localhost:9100/segment": {
+            "parts": [
+                {
+                    "part_label": "tail_profile",
+                    "mask_path": "/tmp/tail_profile_mask.png",
+                    "crop_path": "/tmp/tail_profile_crop.png",
+                    "confidence": 0.91,
+                }
+            ]
+        }
+    }
+    captured: list[dict[str, Any]] = []
+    monkeypatch.setattr(
+        compare_packets_area.httpx,
+        "AsyncClient",
+        lambda timeout=None: _FakeSupportAsyncClient(responses=responses, captured=captured),
+    )
+
+    result = asyncio.run(
+        compare_packets_area.collect_compare_time_segmentation_support(
+            config=sidecar,
+            goal="low poly creature",
+            packet_id="packet:tail:test",
+            packet_label="Tail",
+            target_view="front",
+            scope_label="Tail",
+            target_objects=["Squirrel_Body", "Squirrel_Tail"],
+            reference_records=[_reference("ref_front", label="front_ref", target_view="front")],
+            captures=[_capture("target_front_after", preset_name="target_front")],
+            localization_candidates=[
+                compare_packets_area.VisionLocalizationCandidate(
+                    packet_id="packet:tail:test",
+                    query_label="tail_mass",
+                    reference_id="ref_front",
+                    capture_label="target_front_after",
+                    target_view="front",
+                    confidence=0.88,
+                    box_xyxy=(101.0, 44.0, 218.0, 162.0),
+                    crop_path="/tmp/localization_tail_crop.png",
+                )
+            ],
+        )
+    )
+
+    assert captured
+    assert captured[0]["json"]["seed_boxes"][0]["query_label"] == "tail_mass"
+    assert captured[0]["json"]["seed_boxes"][0]["box_xyxy"] == [101.0, 44.0, 218.0, 162.0]
+    assert result is not None
+    assert result.status == "available"
+
+
 def test_build_compare_packets_prefers_generic_view_over_target_any_view_fallback():
     packets = build_compare_packets(
         target_view=None,

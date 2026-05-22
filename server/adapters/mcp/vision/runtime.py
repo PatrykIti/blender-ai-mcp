@@ -20,6 +20,7 @@ from .backends import create_vision_backend
 from .config import (
     VisionBackendKind,
     VisionContractProfile,
+    VisionLocalizationConfig,
     VisionMLXLocalConfig,
     VisionOpenAICompatibleConfig,
     VisionReferenceClassifierConfig,
@@ -128,6 +129,8 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
     reference_classifier_config = None
     segmentation_enabled = bool(getattr(config, "VISION_SEGMENTATION_ENABLED", False))
     segmentation_sidecar_config = None
+    localization_enabled = bool(getattr(config, "VISION_LOCALIZATION_ENABLED", False))
+    localization_config = None
     explicit_external_provider = config.VISION_EXTERNAL_PROVIDER
     if explicit_external_provider == "openrouter":
         use_openrouter_profile = True
@@ -236,6 +239,18 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
             max_parts=int(getattr(config, "VISION_SEGMENTATION_MAX_PARTS", 16)),
         )
 
+    if localization_enabled:
+        localization_config = VisionLocalizationConfig(
+            enabled=True,
+            provider_name=getattr(config, "VISION_LOCALIZATION_PROVIDER", "generic_sidecar"),
+            endpoint=getattr(config, "VISION_LOCALIZATION_ENDPOINT", None),
+            model=getattr(config, "VISION_LOCALIZATION_MODEL", None),
+            api_key=getattr(config, "VISION_LOCALIZATION_API_KEY", None),
+            api_key_env=getattr(config, "VISION_LOCALIZATION_API_KEY_ENV", None),
+            timeout_seconds=float(getattr(config, "VISION_LOCALIZATION_TIMEOUT_SECONDS", 15.0)),
+            max_candidates=int(getattr(config, "VISION_LOCALIZATION_MAX_CANDIDATES", 8)),
+        )
+
     if classifier_enabled:
         explicit_classifier_endpoint = getattr(config, "VISION_REFERENCE_CLASSIFIER_ENDPOINT", None)
         explicit_classifier_model = getattr(config, "VISION_REFERENCE_CLASSIFIER_MODEL", None)
@@ -275,6 +290,7 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
         openai_compatible_external=external_config,
         reference_classifier=reference_classifier_config,
         segmentation_sidecar=segmentation_sidecar_config,
+        localization_config=localization_config,
     )
 
 

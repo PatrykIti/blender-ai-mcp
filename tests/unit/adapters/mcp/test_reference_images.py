@@ -8214,9 +8214,347 @@ def test_reference_compare_stage_checkpoint_projects_compare_time_segmentation_s
     assert sidecar_captured
     assert sidecar_captured[0]["json"]["packet"]["packet_id"] == result.compare_diagnostics.packets[0].packet_id
     assert any(
-        "Segmentation sidecar marked tail_profile" in item
+        "Optional localized support marked tail_profile" in item
         for item in captured[0].metadata["support_evidence_summaries"]
     )
+
+
+def test_reference_compare_stage_checkpoint_projects_localization_only_support_into_part_segmentation(
+    tmp_path, monkeypatch
+):
+    reference_path = tmp_path / "reference_front.png"
+    capture_path = tmp_path / "capture_front.png"
+    _write_upper_profile_silhouette(reference_path, upper_width=110)
+    _write_upper_profile_silhouette(capture_path, upper_width=50)
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly creature", {"status": "no_match"})
+    asyncio.run(
+        reference_images(
+            ctx,
+            action="attach",
+            source_path=str(reference_path),
+            label="front_ref",
+            target_object="Squirrel_Body",
+            target_view="front",
+        )
+    )
+
+    class SceneHandler:
+        def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "relation": "contact", "gap": 0.0}
+
+        def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "is_aligned": True,
+                "axes": axes or ["X", "Y", "Z"],
+            }
+
+        def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "overlaps": False, "relation": "disjoint"}
+
+        def assert_contact(
+            self, from_object: str, to_object: str, max_gap: float = 0.0001, allow_overlap: bool = False
+        ):
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": True,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.0, "relation": "contact"},
+            }
+
+    captured: list[object] = []
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        captured.append(request)
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="Front packet still needs upper profile work.",
+                reference_match_summary="Localization support agrees that the upper profile is underbuilt.",
+                visible_changes=["Front silhouette is readable."],
+                shape_mismatches=["Upper silhouette band is still too narrow."],
+                proportion_mismatches=[],
+                correction_focus=["Upper silhouette band"],
+                likely_issues=[],
+                next_corrections=["Widen the upper profile before another broad pass."],
+                recommended_checks=[],
+                packet_guidance=VisionPacketStatusContract(
+                    packet_status="ready",
+                    status_reason=None,
+                    ranking_recommendation="skip_clean",
+                ),
+            ),
+        )
+
+    localization = SimpleNamespace(
+        enabled=True,
+        provider_name="generic_sidecar",
+        endpoint="http://localhost:9300/localize",
+        model="grounding-sidecar-v1",
+        api_key=None,
+        api_key_env=None,
+        timeout_seconds=15.0,
+        max_candidates=4,
+    )
+    resolver = SimpleNamespace(
+        runtime_config=SimpleNamespace(active_localization_config=localization, active_segmentation_sidecar=None)
+    )
+    responses = {
+        "http://localhost:9300/localize": {
+            "candidates": [
+                {
+                    "query_label": "tail_mass",
+                    "reference_id": "ref_front",
+                    "capture_label": "target_front_after",
+                    "target_view": "front",
+                    "confidence": 0.88,
+                    "box_xyxy": [101, 44, 218, 162],
+                    "crop_path": "/tmp/localization_tail_crop.png",
+                }
+            ]
+        }
+    }
+
+    localization_captured: list[dict[str, object]] = []
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: resolver)
+    monkeypatch.setattr("server.infrastructure.di.get_vision_backend_resolver", lambda: resolver)
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference_compare_packets.httpx.AsyncClient",
+        lambda timeout=None: _FakeSupportAsyncClient(responses=responses, captured=localization_captured),
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="target_front_after",
+                image_path=str(capture_path),
+                host_visible_path=str(capture_path),
+                preset_name="target_front",
+                media_type="image/png",
+                view_kind="focus",
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            target_object="Squirrel_Body",
+            target_objects=["Squirrel_Tail"],
+            checkpoint_label="stage_front_localization_only",
+            preset_profile="rich",
+            target_view="front",
+        )
+    )
+
+    assert result.error is None
+    assert result.part_segmentation is not None
+    assert result.part_segmentation.status == "available"
+    assert result.part_segmentation.provider_name == "generic_sidecar"
+    assert result.part_segmentation.parts[0].part_label == "tail_mass"
+    assert result.part_segmentation.parts[0].crop_path == "/tmp/localization_tail_crop.png"
+    assert result.part_segmentation.parts[0].landmarks[0].landmark_id == "box_center"
+    assert result.compare_diagnostics is not None
+    assert result.compare_diagnostics.packets[0].localized_support_reason == "part_missing_ambiguity"
+    assert localization_captured
+    assert localization_captured[0]["json"]["query_labels"] == ["tail_mass"]
+    assert captured
+    assert any(
+        "Optional localized support marked tail_mass" in item
+        for item in captured[0].metadata["support_evidence_summaries"]
+    )
+
+
+def test_reference_compare_stage_checkpoint_threads_localization_seed_boxes_into_segmentation_request(
+    tmp_path, monkeypatch
+):
+    reference_path = tmp_path / "reference_front.png"
+    capture_path = tmp_path / "capture_front.png"
+    _write_upper_profile_silhouette(reference_path, upper_width=110)
+    _write_upper_profile_silhouette(capture_path, upper_width=50)
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly creature", {"status": "no_match"})
+    asyncio.run(
+        reference_images(
+            ctx,
+            action="attach",
+            source_path=str(reference_path),
+            label="front_ref",
+            target_object="Squirrel_Body",
+            target_view="front",
+        )
+    )
+
+    class SceneHandler:
+        def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "relation": "contact", "gap": 0.0}
+
+        def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "is_aligned": True,
+                "axes": axes or ["X", "Y", "Z"],
+            }
+
+        def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "overlaps": False, "relation": "disjoint"}
+
+        def assert_contact(
+            self, from_object: str, to_object: str, max_gap: float = 0.0001, allow_overlap: bool = False
+        ):
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": True,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.0, "relation": "contact"},
+            }
+
+    captured: list[object] = []
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        captured.append(request)
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="Front packet still needs upper profile work.",
+                reference_match_summary="Localization-seeded segmentation agrees that the upper profile is underbuilt.",
+                visible_changes=["Front silhouette is readable."],
+                shape_mismatches=["Upper silhouette band is still too narrow."],
+                proportion_mismatches=[],
+                correction_focus=["Upper silhouette band"],
+                likely_issues=[],
+                next_corrections=["Widen the upper profile before another broad pass."],
+                recommended_checks=[],
+                packet_guidance=VisionPacketStatusContract(
+                    packet_status="ready",
+                    status_reason=None,
+                    ranking_recommendation="skip_clean",
+                ),
+            ),
+        )
+
+    localization = SimpleNamespace(
+        enabled=True,
+        provider_name="generic_sidecar",
+        endpoint="http://localhost:9300/localize",
+        model="grounding-sidecar-v1",
+        api_key=None,
+        api_key_env=None,
+        timeout_seconds=15.0,
+        max_candidates=4,
+    )
+    sidecar = SimpleNamespace(
+        enabled=True,
+        provider_name="generic_sidecar",
+        endpoint="http://localhost:9100/segment",
+        model="sam-sidecar-v1",
+        api_key=None,
+        api_key_env=None,
+        timeout_seconds=15.0,
+        max_parts=4,
+    )
+    resolver = SimpleNamespace(
+        runtime_config=SimpleNamespace(
+            active_localization_config=localization,
+            active_segmentation_sidecar=sidecar,
+        )
+    )
+    responses = {
+        "http://localhost:9300/localize": {
+            "candidates": [
+                {
+                    "query_label": "tail_mass",
+                    "reference_id": "ref_front",
+                    "capture_label": "target_front_after",
+                    "target_view": "front",
+                    "confidence": 0.88,
+                    "box_xyxy": [101, 44, 218, 162],
+                    "crop_path": "/tmp/localization_tail_crop.png",
+                }
+            ]
+        },
+        "http://localhost:9100/segment": {
+            "parts": [
+                {
+                    "part_label": "tail_profile",
+                    "mask_path": "/tmp/tail_profile_mask.png",
+                    "crop_path": "/tmp/tail_profile_crop.png",
+                    "confidence": 0.91,
+                }
+            ]
+        },
+    }
+
+    support_captured: list[dict[str, object]] = []
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: resolver)
+    monkeypatch.setattr("server.infrastructure.di.get_vision_backend_resolver", lambda: resolver)
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference_compare_packets.httpx.AsyncClient",
+        lambda timeout=None: _FakeSupportAsyncClient(responses=responses, captured=support_captured),
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="target_front_after",
+                image_path=str(capture_path),
+                host_visible_path=str(capture_path),
+                preset_name="target_front",
+                media_type="image/png",
+                view_kind="focus",
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            target_object="Squirrel_Body",
+            target_objects=["Squirrel_Tail"],
+            checkpoint_label="stage_front_localization_seeded_segmentation",
+            preset_profile="rich",
+            target_view="front",
+        )
+    )
+
+    assert result.error is None
+    assert result.part_segmentation is not None
+    assert result.part_segmentation.status == "available"
+    assert support_captured[0]["url"] == "http://localhost:9300/localize"
+    assert support_captured[1]["url"] == "http://localhost:9100/segment"
+    assert support_captured[1]["json"]["seed_boxes"][0]["query_label"] == "tail_mass"
+    assert support_captured[1]["json"]["seed_boxes"][0]["box_xyxy"] == [101.0, 44.0, 218.0, 162.0]
+    assert result.compare_diagnostics is not None
+    assert result.compare_diagnostics.packets[0].localized_support_reason == "part_missing_ambiguity"
 
 
 def test_reference_compare_stage_checkpoint_keeps_available_segmentation_sidecar_advisory_only(tmp_path, monkeypatch):

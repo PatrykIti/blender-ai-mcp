@@ -42,9 +42,10 @@
 ## Progress Summary
 
 - current code/docs evidence is sufficient to close `TASK-172-01` and
-  `TASK-172-02`, and to close `TASK-172-04` administratively
-- board/changelog sync is still incomplete because `TASK-172-03*`,
-  `TASK-172-05`, and `TASK-172-06` remain open runtime work
+  `TASK-172-02`, `TASK-172-03*`, and `TASK-172-05`, and to close
+  `TASK-172-04` administratively
+- board/changelog sync is still incomplete because `TASK-172-06` remains open
+  runtime work
 
 ## Status / Board Update
 

@@ -856,6 +856,11 @@ Current guided-flow behavior:
   failures or empty sidecar results report `part_segmentation.status="unavailable"`,
   while clean/no-trigger packets keep `part_segmentation.status="disabled"`
   instead of breaking the staged loop
+- if the optional localization sidecar is enabled on runtime config, staged
+  compare/iterate may also derive packet-local support-safe crops and anchors
+  for those same localized-support packets; literal localization boxes stay
+  internal, and the public carrier remains the existing `part_segmentation`
+  envelope
 - after newly created blockout parts during `checkpoint_iterate`, bounded
   initial transforms can remain available before the next checkpoint instead
   of immediately forcing a spatial refresh on every small adjustment

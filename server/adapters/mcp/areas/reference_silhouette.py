@@ -333,5 +333,5 @@ def summarize_compare_support_evidence(
 
 def _part_segmentation_summary(part: ReferencePartSegmentationPartContract) -> str:
     if part.confidence is not None:
-        return f"Segmentation sidecar marked {part.part_label} at {part.confidence:.2f} confidence."
-    return f"Segmentation sidecar marked {part.part_label} for advisory compare support."
+        return f"Optional localized support marked {part.part_label} at {part.confidence:.2f} confidence."
+    return f"Optional localized support marked {part.part_label} for advisory compare support."

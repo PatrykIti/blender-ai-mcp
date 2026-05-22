@@ -2,7 +2,8 @@
 
 **Parent:** [TASK-172-03](./TASK-172-03_GroundingDINO_Or_OWL_Localization_For_Packet_Bounded_Part_Ambiguity.md)
 **Depends On:** [TASK-172-02](./TASK-172-02_Stage_Bound_Activation_Policy_And_Localized_Support_Contracts.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-23
 **Priority:** 🔴 High
 **Objective:** Add one default-off runtime/config seam and provider-neutral internal candidate contract for packet-bounded text-conditioned localization, without widening public compare/iterate payloads before the projection leaf lands.
 **Repository Touchpoints:** `server/adapters/mcp/vision/config.py`, `server/adapters/mcp/vision/runtime.py`, `server/adapters/mcp/vision/reference_support.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `server/infrastructure/config.py`, `tests/unit/adapters/mcp/test_vision_runtime_config.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_reference_compare_packets.py`, `_docs/_VISION/README.md`, `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
@@ -78,6 +79,22 @@ candidate = VisionLocalizationCandidate(
 
 - include the localization config/provider boundary in the first `TASK-172`
   implementation entry that ships compare-time localization
+
+## Completion Summary
+
+- added one default-off localization config surface on the existing vision
+  runtime seam:
+  - `VISION_LOCALIZATION_ENABLED`
+  - `VISION_LOCALIZATION_PROVIDER`
+  - `VISION_LOCALIZATION_ENDPOINT`
+  - `VISION_LOCALIZATION_MODEL`
+  - `VISION_LOCALIZATION_API_KEY` / `VISION_LOCALIZATION_API_KEY_ENV`
+  - `VISION_LOCALIZATION_TIMEOUT_SECONDS`
+  - `VISION_LOCALIZATION_MAX_CANDIDATES`
+- added one provider-neutral internal `VisionLocalizationCandidate` contract
+  with packet/reference/view provenance plus literal `box_xyxy`
+- folded the localization branch into the internal optional-capability
+  inventory without widening public compare payloads yet
 
 ## Status / Board Update
 

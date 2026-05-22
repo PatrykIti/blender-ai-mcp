@@ -14,6 +14,7 @@ VisionExternalProviderName = Literal["generic", "openrouter", "google_ai_studio"
 VisionContractProfile = Literal["generic_full", "google_family_compare"]
 VisionReferenceClassifierProviderName = Literal["generic_sidecar", "generic", "openrouter", "google_ai_studio"]
 VisionSegmentationProviderName = Literal["generic_sidecar"]
+VisionLocalizationProviderName = Literal["generic_sidecar"]
 VisionOptionalCapabilityName = Literal[
     "external_model_capabilities",
     "reference_classifier",
@@ -126,6 +127,7 @@ class VisionRuntimeConfig(BaseModel):
     openai_compatible_external: VisionOpenAICompatibleConfig | None = None
     reference_classifier: "VisionReferenceClassifierConfig | None" = None
     segmentation_sidecar: "VisionSegmentationSidecarConfig | None" = None
+    localization_config: "VisionLocalizationConfig | None" = None
 
     @property
     def effective_max_images(self) -> int:
@@ -233,6 +235,12 @@ class VisionRuntimeConfig(BaseModel):
         return self.segmentation_sidecar
 
     @property
+    def active_localization_config(self) -> "VisionLocalizationConfig | None":
+        """Return the optional compare-time localization config when enabled."""
+
+        return self.localization_config
+
+    @property
     def optional_capability_inventory(self) -> "VisionOptionalCapabilityInventory":
         """Return one typed internal inventory for optional vision support branches."""
 
@@ -304,18 +312,20 @@ class VisionRuntimeConfig(BaseModel):
             )
         )
 
+        localization_config = self.active_localization_config
         capabilities.append(
             VisionOptionalCapabilityState(
                 capability_name="part_localization",
-                status="planned",
-                provider_name=None,
-                model_id=None,
+                status="available" if localization_config is not None else "disabled",
+                provider_name=localization_config.provider_name if localization_config is not None else None,
+                model_id=localization_config.model if localization_config is not None else None,
                 prerequisite_summary=(
-                    "Packet-local text-conditioned localization remains unconfigured and should degrade to current "
-                    "packet hints plus optional segmentation support."
+                    "Optional packet-local localization is configured for bounded compare-time support."
+                    if localization_config is not None
+                    else "Optional packet-local localization is disabled by default."
                 ),
                 activation_scope="compare_packet",
-                lifecycle_class="request_scoped_only",
+                lifecycle_class="sidecar_process" if localization_config is not None else "request_scoped_only",
             )
         )
 
@@ -366,6 +376,44 @@ class VisionSegmentationSidecarConfig(BaseModel):
         if self.enabled and not self.endpoint:
             raise ValueError("enabled segmentation_sidecar requires endpoint")
         return self
+
+
+class VisionLocalizationConfig(BaseModel):
+    """Configuration for the optional compare-time localization sidecar."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = False
+    provider_name: VisionLocalizationProviderName = "generic_sidecar"
+    endpoint: str | None = None
+    model: str | None = None
+    api_key: str | None = None
+    api_key_env: str | None = None
+    timeout_seconds: float = Field(default=15.0, gt=0)
+    max_candidates: int = Field(default=8, ge=1, le=32)
+
+    @model_validator(mode="after")
+    def validate_endpoint(self) -> "VisionLocalizationConfig":
+        """Require an explicit endpoint only when localization is enabled."""
+
+        if self.enabled and not self.endpoint:
+            raise ValueError("enabled localization_config requires endpoint")
+        return self
+
+
+class VisionLocalizationCandidate(BaseModel):
+    """One provider-neutral internal packet-local localization candidate."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    packet_id: str
+    query_label: str
+    reference_id: str | None = None
+    capture_label: str | None = None
+    target_view: str | None = None
+    confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+    box_xyxy: tuple[float, float, float, float]
+    crop_path: str | None = None
 
 
 class VisionOptionalCapabilityState(BaseModel):

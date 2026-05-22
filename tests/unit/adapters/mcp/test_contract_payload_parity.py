@@ -93,6 +93,7 @@ from server.adapters.mcp.contracts.workflow_catalog import WorkflowCatalogRespon
                             "ranking_status": "error",
                             "packet_status": "ready",
                             "ranking_recommendation": "rank",
+                            "localized_support_reason": "mask_needed",
                             "status_reason": None,
                             "support_evidence": [
                                 {

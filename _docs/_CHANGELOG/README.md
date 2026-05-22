@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [363](./363-2026-05-23-task-172-localization-runtime-and-transport.md) | 2026-05-23 | **TASK-172 localization runtime and transport** | - |
 | [362](./362-2026-05-22-task-172-runtime-inventory-and-localized-support-gating.md) | 2026-05-22 | **TASK-172 runtime inventory and localized support gating** | - |
 | [361](./361-2026-05-22-task-172-fresh-agent-audit-final-drift-cleanup.md) | 2026-05-22 | **TASK-172 fresh-agent audit final drift cleanup** | - |
 | [360](./360-2026-05-22-task-172-planning-audit-follow-on-drift-repair.md) | 2026-05-22 | **TASK-172 planning audit follow-on drift repair** | - |

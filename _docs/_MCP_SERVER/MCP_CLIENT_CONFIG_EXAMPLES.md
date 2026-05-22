@@ -214,6 +214,27 @@ that carry a bounded `localized_support_reason`. Clean/no-trigger runs keep
 `part_segmentation.status="disabled"` instead of forcing a whole-image support
 pass just because the endpoint is available.
 
+## Optional Localization Sidecar Add-On
+
+This sidecar also stays disabled by default and is scoped to packet-local
+compare support only.
+
+```json
+{
+  "VISION_LOCALIZATION_ENABLED": "true",
+  "VISION_LOCALIZATION_PROVIDER": "generic_sidecar",
+  "VISION_LOCALIZATION_ENDPOINT": "http://127.0.0.1:9300/localize",
+  "VISION_LOCALIZATION_MODEL": "grounding-sidecar-v1",
+  "VISION_LOCALIZATION_API_KEY_ENV": "LOCALIZATION_API_KEY",
+  "VISION_LOCALIZATION_TIMEOUT_SECONDS": "15",
+  "VISION_LOCALIZATION_MAX_CANDIDATES": "8"
+}
+```
+
+When this sidecar is enabled, staged compare still runs it only for packets
+that already carry a bounded `localized_support_reason`, and public transport
+still projects only support-safe crops/anchors through `part_segmentation`.
+
 ## Docker Guided Profile
 
 Smallest practical docker-backed guided profile:

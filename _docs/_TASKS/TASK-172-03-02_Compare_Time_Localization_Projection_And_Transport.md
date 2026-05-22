@@ -2,7 +2,8 @@
 
 **Parent:** [TASK-172-03](./TASK-172-03_GroundingDINO_Or_OWL_Localization_For_Packet_Bounded_Part_Ambiguity.md)
 **Depends On:** [TASK-172-03-01](./TASK-172-03-01_Localization_Runtime_Config_And_Provider_Boundary.md), [TASK-172-04](./TASK-172-04_SAM_Or_SAM2_Local_Mask_And_Landmark_Support.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-23
 **Priority:** 🔴 High
 **Objective:** Invoke packet-bounded localization on staged compare/iterate packets and project the resulting support only through the existing compare-time carriers, keeping literal boxes internal unless a later explicit contract leaf promotes them.
 **Repository Touchpoints:** `server/adapters/mcp/areas/reference_compare_packets.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/contracts/reference.py`, `tests/unit/adapters/mcp/test_reference_compare_packets.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/unit/adapters/mcp/test_public_surface_docs.py`, `tests/unit/router/application/test_router_contracts.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`, `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md`
@@ -77,6 +78,18 @@ if packet.localized_support_reason == "part_missing_ambiguity":
 
 - name the first compare-time localization projection path and its
   advisory-only transport boundary when this leaf ships
+
+## Completion Summary
+
+- compare-time localization now runs only on packets that already carry a
+  bounded `localized_support_reason`
+- localization candidates remain internal but can seed compare-time
+  segmentation through `seed_boxes`
+- localization-only runs project support-safe `crop_path` plus derived
+  `box_center` anchors onto the existing `part_segmentation` carrier, with no
+  public raw box field added
+- transport proof now covers localization support over the guided compare
+  transport path
 
 ## Status / Board Update
 

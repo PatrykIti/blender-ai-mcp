@@ -53,7 +53,11 @@ from server.adapters.mcp.vision import (
     build_vision_request_from_stage_captures,
     run_vision_assist,
 )
-from server.adapters.mcp.vision.config import VisionSegmentationSidecarConfig
+from server.adapters.mcp.vision.config import (
+    VisionLocalizationCandidate,
+    VisionLocalizationConfig,
+    VisionSegmentationSidecarConfig,
+)
 
 _VIEW_TOKEN_ALIASES: dict[str, str] = {
     "plan": "top",
@@ -84,6 +88,21 @@ _ROOF_HINTS: tuple[str, ...] = ("roof", "gable", "ridge", "roofline")
 _OPENING_HINTS: tuple[str, ...] = ("opening", "window", "door", "cutout", "portal", "arch")
 _SUPPORT_HINTS: tuple[str, ...] = ("support", "post", "column", "pillar", "buttress", "beam")
 _BUILDING_MASS_HINTS: tuple[str, ...] = ("facade", "wall", "shell", "volume", "main", "footprint", "tower")
+_LOCALIZATION_QUERY_HINTS: tuple[tuple[str, str], ...] = (
+    ("tail", "tail_mass"),
+    ("snout", "snout_mass"),
+    ("nose", "snout_mass"),
+    ("muzzle", "snout_mass"),
+    ("ear", "ear_pair"),
+    ("head", "head_mass"),
+    ("foreleg", "foreleg_pair"),
+    ("front_leg", "foreleg_pair"),
+    ("forelimb", "foreleg_pair"),
+    ("hindleg", "hindleg_pair"),
+    ("rear_leg", "hindleg_pair"),
+    ("back_leg", "hindleg_pair"),
+    ("hindlimb", "hindleg_pair"),
+)
 
 
 @dataclass(frozen=True)
@@ -183,6 +202,55 @@ def _append_unique_note(notes: list[str], note: str) -> None:
         notes.append(note)
 
 
+def _slug_tokenize(value: str | None) -> list[str]:
+    return [token for token in re.split(r"[^a-z0-9]+", str(value or "").strip().lower()) if token]
+
+
+def _query_labels_for_packet(packet: ReferenceComparePacketContract) -> list[str]:
+    query_labels: list[str] = []
+    sources = [packet.scope_label, packet.packet_label, *list(packet.target_objects or [])]
+    normalized_sources = ["_".join(_slug_tokenize(source)) for source in sources]
+    for normalized_source in normalized_sources:
+        for hint, query_label in _LOCALIZATION_QUERY_HINTS:
+            if hint in normalized_source and query_label not in query_labels:
+                query_labels.append(query_label)
+    if not query_labels and packet.scope_label:
+        fallback_label = "_".join(_slug_tokenize(packet.scope_label))
+        if fallback_label and fallback_label not in {
+            "single_object",
+            "object_set",
+            "collection",
+            "scene",
+            "general_packet",
+            "front_packet",
+            "side_packet",
+            "top_packet",
+            "back_packet",
+        }:
+            query_labels.append(fallback_label)
+    return query_labels[:4]
+
+
+def _normalize_box_xyxy(raw_box: Any) -> tuple[float, float, float, float] | None:
+    if not isinstance(raw_box, list | tuple) or len(raw_box) != 4:
+        return None
+    if not all(isinstance(value, int | float) for value in raw_box):
+        return None
+    x1, y1, x2, y2 = (float(value) for value in raw_box)
+    if x2 <= x1 or y2 <= y1:
+        return None
+    return x1, y1, x2, y2
+
+
+def _derive_localization_landmarks(
+    box_xyxy: tuple[float, float, float, float],
+) -> list[ReferencePartSegmentationLandmarkContract]:
+    x1, y1, x2, y2 = box_xyxy
+    center_x = (x1 + x2) / 2.0
+    center_y = (y1 + y2) / 2.0
+    return [ReferencePartSegmentationLandmarkContract(landmark_id="box_center", x=center_x, y=center_y)]
+
+
 def _resolve_localized_support_reason(
     *,
     packet: ReferenceComparePacketContract,
@@ -268,6 +336,28 @@ def _build_compare_segmentation_request_payload(
     }
 
 
+def _build_compare_localization_request_payload(
+    *,
+    goal: str | None,
+    packet: ReferenceComparePacketContract,
+    reference_records: Sequence[ReferenceImageRecordContract],
+    captures: Sequence[VisionCaptureImageContract],
+) -> dict[str, Any]:
+    payload = _build_compare_segmentation_request_payload(
+        goal=goal,
+        packet_id=packet.packet_id,
+        packet_label=packet.packet_label,
+        target_view=packet.target_view,
+        scope_label=packet.scope_label,
+        target_objects=packet.target_objects,
+        reference_records=reference_records,
+        captures=captures,
+    )
+    payload["localized_support_reason"] = packet.localized_support_reason
+    payload["query_labels"] = _query_labels_for_packet(packet)
+    return payload
+
+
 async def _post_sidecar_payload(
     *,
     endpoint: str,
@@ -312,6 +402,70 @@ def _normalize_part_segmentation_landmarks(
             )
         )
     return landmarks[:16]
+
+
+def _normalize_compare_localization_payload(
+    payload: dict[str, Any],
+    *,
+    packet_id: str,
+    max_candidates: int,
+    fallback_target_view: str | None,
+) -> list[VisionLocalizationCandidate]:
+    value = payload.get("candidates")
+    if not isinstance(value, list):
+        return []
+
+    candidates: list[VisionLocalizationCandidate] = []
+    for raw_item in value:
+        if not isinstance(raw_item, dict):
+            continue
+        query_label = _bounded_text(raw_item.get("query_label") or raw_item.get("part_label"))
+        box_xyxy = _normalize_box_xyxy(raw_item.get("box_xyxy"))
+        if query_label is None or box_xyxy is None:
+            continue
+        confidence = raw_item.get("confidence")
+        normalized_confidence = float(confidence) if isinstance(confidence, (int, float)) else None
+        if normalized_confidence is not None and not 0.0 <= normalized_confidence <= 1.0:
+            normalized_confidence = None
+        candidates.append(
+            VisionLocalizationCandidate(
+                packet_id=packet_id,
+                query_label=query_label,
+                reference_id=_bounded_text(raw_item.get("reference_id")),
+                capture_label=_bounded_text(raw_item.get("capture_label")),
+                target_view=_bounded_text(raw_item.get("target_view"), fallback=fallback_target_view),
+                confidence=normalized_confidence,
+                box_xyxy=box_xyxy,
+                crop_path=_bounded_path(raw_item.get("crop_path")),
+            )
+        )
+    return candidates[:max_candidates]
+
+
+def _project_localization_candidates_to_part_segmentation(
+    *,
+    provider_name: str | None,
+    candidates: Sequence[VisionLocalizationCandidate],
+) -> ReferencePartSegmentationContract:
+    parts = [
+        ReferencePartSegmentationPartContract(
+            part_label=item.query_label,
+            crop_path=item.crop_path,
+            confidence=item.confidence,
+            landmarks=_derive_localization_landmarks(item.box_xyxy),
+        )
+        for item in candidates
+    ]
+    return ReferencePartSegmentationContract(
+        status="available",
+        provider_name=provider_name,
+        advisory_only=True,
+        parts=parts[:16],
+        notes=[
+            f"Optional compare-time localization returned {len(parts[:16])} bounded candidate(s) for compare support.",
+            "Literal localization boxes stay internal; public payload projects only crops and derived anchors.",
+        ],
+    )
 
 
 def _normalize_compare_part_segmentation_payload(
@@ -1413,6 +1567,7 @@ async def collect_compare_time_segmentation_support(
     target_objects: Sequence[str],
     reference_records: Sequence[ReferenceImageRecordContract],
     captures: Sequence[VisionCaptureImageContract],
+    localization_candidates: Sequence[VisionLocalizationCandidate] = (),
 ) -> ReferencePartSegmentationContract | None:
     """Run the optional advisory-only segmentation sidecar for one compare packet."""
 
@@ -1429,6 +1584,19 @@ async def collect_compare_time_segmentation_support(
         reference_records=reference_records,
         captures=captures,
     )
+    if localization_candidates:
+        payload["seed_boxes"] = [
+            {
+                "query_label": item.query_label,
+                "reference_id": item.reference_id,
+                "capture_label": item.capture_label,
+                "target_view": item.target_view,
+                "confidence": item.confidence,
+                "box_xyxy": list(item.box_xyxy),
+                "crop_path": item.crop_path,
+            }
+            for item in localization_candidates
+        ]
     if not payload["references"] or not payload["captures"]:
         return ReferencePartSegmentationContract(
             status="unavailable",
@@ -1497,6 +1665,99 @@ async def collect_compare_time_segmentation_support(
     )
 
 
+async def collect_compare_time_localization_support(
+    *,
+    config: VisionLocalizationConfig | None,
+    goal: str | None,
+    packet: ReferenceComparePacketContract,
+    reference_records: Sequence[ReferenceImageRecordContract],
+    captures: Sequence[VisionCaptureImageContract],
+) -> tuple[list[VisionLocalizationCandidate], ReferencePartSegmentationContract | None]:
+    """Run the optional advisory-only localization sidecar for one compare packet."""
+
+    if config is None or not bool(getattr(config, "enabled", False)) or not getattr(config, "endpoint", None):
+        return [], None
+
+    payload = _build_compare_localization_request_payload(
+        goal=goal,
+        packet=packet,
+        reference_records=reference_records,
+        captures=captures,
+    )
+    if not payload["references"] or not payload["captures"] or not payload["query_labels"]:
+        return (
+            [],
+            ReferencePartSegmentationContract(
+                status="unavailable",
+                provider_name=config.provider_name,
+                advisory_only=True,
+                parts=[],
+                notes=[
+                    "No bounded packet-local reference/capture slice or query labels were available for optional localization.",
+                    "Literal localization boxes stay internal; public payload projects only crops and derived anchors.",
+                ],
+            ),
+        )
+
+    try:
+        response_payload = await _post_sidecar_payload(
+            endpoint=str(getattr(config, "endpoint")),
+            timeout_seconds=float(getattr(config, "timeout_seconds", 15.0)),
+            api_key=_resolve_api_key(
+                inline_key=getattr(config, "api_key", None),
+                env_name=getattr(config, "api_key_env", None),
+            ),
+            payload=payload,
+        )
+        candidates = _normalize_compare_localization_payload(
+            response_payload,
+            packet_id=packet.packet_id,
+            max_candidates=int(getattr(config, "max_candidates", 8)),
+            fallback_target_view=packet.target_view,
+        )
+    except Exception as exc:
+        return (
+            [],
+            ReferencePartSegmentationContract(
+                status="unavailable",
+                provider_name=getattr(config, "provider_name", None),
+                advisory_only=True,
+                parts=[],
+                notes=[
+                    _bounded_text(
+                        _redact_local_paths(f"Optional compare-time localization unavailable: {exc}"),
+                        fallback="Optional compare-time localization unavailable.",
+                    )
+                    or "Optional compare-time localization unavailable.",
+                    "Literal localization boxes stay internal; public payload projects only crops and derived anchors.",
+                ],
+            ),
+        )
+
+    if not candidates:
+        return (
+            [],
+            ReferencePartSegmentationContract(
+                status="unavailable",
+                provider_name=getattr(config, "provider_name", None),
+                advisory_only=True,
+                parts=[],
+                notes=[
+                    "Optional compare-time localization returned no bounded candidates for compare support.",
+                    "Literal localization boxes stay internal; public payload projects only crops and derived anchors.",
+                ],
+            ),
+        )
+
+    return (
+        candidates,
+        _project_localization_candidates_to_part_segmentation(
+            provider_name=getattr(config, "provider_name", None),
+            candidates=candidates,
+        ),
+    )
+
+
 async def execute_compare_packets(
     *,
     ctx: Any,
@@ -1514,6 +1775,7 @@ async def execute_compare_packets(
     resolved_target_object: str | None,
     resolved_target_objects: Sequence[str],
     assembled_target_scope: SceneAssembledTargetScopeContract,
+    localization_config: Any,
     segmentation_sidecar_config: Any,
     resolver: Any,
     run_vision_assist_fn=run_vision_assist,
@@ -1523,6 +1785,11 @@ async def execute_compare_packets(
     part_segmentation: ReferencePartSegmentationContract | None = None
     packet_assistants: list[tuple[ReferenceComparePacketContract, VisionAssistantContract | None]] = []
     localized_support_requested = False
+    localization_enabled = bool(
+        localization_config is not None
+        and bool(getattr(localization_config, "enabled", False))
+        and getattr(localization_config, "endpoint", None)
+    )
     sidecar_enabled = bool(
         segmentation_sidecar_config is not None
         and bool(getattr(segmentation_sidecar_config, "enabled", False))
@@ -1574,19 +1841,34 @@ async def execute_compare_packets(
             silhouette_analysis=packet_silhouette_analysis,
             action_hints=packet_action_hints,
         )
+        localization_candidates: list[VisionLocalizationCandidate] = []
         packet_part_segmentation: ReferencePartSegmentationContract | None = None
         if packet.localized_support_reason is not None:
             localized_support_requested = True
-            packet_part_segmentation = await collect_compare_time_segmentation_support(
-                config=segmentation_sidecar_config,
+            (
+                localization_candidates,
+                packet_part_segmentation,
+            ) = await collect_compare_time_localization_support(
+                config=localization_config,
                 goal=goal,
-                packet_id=packet.packet_id,
-                packet_label=packet.packet_label,
-                target_view=packet.target_view or target_view,
-                scope_label=packet.scope_label,
-                target_objects=packet.target_objects or list(resolved_target_objects),
+                packet=packet,
                 reference_records=packet_reference_records,
                 captures=packet_captures,
+            )
+            packet_part_segmentation = merge_compare_time_part_segmentation(
+                packet_part_segmentation,
+                await collect_compare_time_segmentation_support(
+                    config=segmentation_sidecar_config,
+                    goal=goal,
+                    packet_id=packet.packet_id,
+                    packet_label=packet.packet_label,
+                    target_view=packet.target_view or target_view,
+                    scope_label=packet.scope_label,
+                    target_objects=packet.target_objects or list(resolved_target_objects),
+                    reference_records=packet_reference_records,
+                    captures=packet_captures,
+                    localization_candidates=localization_candidates,
+                ),
             )
         part_segmentation = merge_compare_time_part_segmentation(part_segmentation, packet_part_segmentation)
         packet.support_evidence = build_compare_support_evidence(
@@ -1827,15 +2109,18 @@ async def execute_compare_packets(
             packet.ranking_status = "success" if packet.correction_focus else "skipped"
         packet_assistants.append((packet, effective_packet_assistant))
 
-    if part_segmentation is None and sidecar_enabled and not localized_support_requested:
+    if part_segmentation is None and (sidecar_enabled or localization_enabled) and not localized_support_requested:
         part_segmentation = ReferencePartSegmentationContract(
             status="disabled",
-            provider_name=getattr(segmentation_sidecar_config, "provider_name", None),
+            provider_name=(
+                getattr(segmentation_sidecar_config, "provider_name", None)
+                or getattr(localization_config, "provider_name", None)
+            ),
             advisory_only=True,
             parts=[],
             notes=[
-                "Optional part segmentation sidecar is enabled, but no bounded packet-local localized support reason requested it for this staged compare run.",
-                "The sidecar path is advisory-only and separate from vision_contract_profile routing.",
+                "Optional localized support is configured, but no bounded packet-local localized support reason requested it for this staged compare run.",
+                "Localized support stays advisory-only and separate from vision_contract_profile routing.",
             ],
         )
 

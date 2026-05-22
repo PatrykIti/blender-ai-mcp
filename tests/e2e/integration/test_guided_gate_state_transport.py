@@ -603,6 +603,21 @@ _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
         )
 
 
+    def _active_compare_localization_sidecar():
+        if os.environ.get("ENABLE_COMPARE_LOCALIZATION_SIDECAR") != "true":
+            return None
+        return SimpleNamespace(
+            enabled=True,
+            provider_name="generic_sidecar",
+            endpoint="http://sidecar.local/localize",
+            model="grounding-sidecar-v1",
+            api_key=None,
+            api_key_env=None,
+            timeout_seconds=15.0,
+            max_candidates=4,
+        )
+
+
     class _SidecarResponse:
         def __init__(self, payload):
             self._payload = payload
@@ -625,23 +640,42 @@ _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
             return False
 
         async def post(self, endpoint, json=None, headers=None):
-            if endpoint != "http://sidecar.local/segment":
-                raise RuntimeError(f"unexpected sidecar endpoint: {endpoint}")
-            return _SidecarResponse(
-                {
-                    "parts": [
-                        {
-                            "part_label": "tail_profile",
-                            "mask_path": "/tmp/tail_profile_mask.png",
-                            "crop_path": "/tmp/tail_profile_crop.png",
-                            "confidence": 0.91,
-                        }
-                    ]
-                }
-            )
+            if endpoint == "http://sidecar.local/segment":
+                return _SidecarResponse(
+                    {
+                        "parts": [
+                            {
+                                "part_label": "tail_profile",
+                                "mask_path": "/tmp/tail_profile_mask.png",
+                                "crop_path": "/tmp/tail_profile_crop.png",
+                                "confidence": 0.91,
+                            }
+                        ]
+                    }
+                )
+            if endpoint == "http://sidecar.local/localize":
+                return _SidecarResponse(
+                    {
+                        "candidates": [
+                            {
+                                "query_label": "tail_mass",
+                                "reference_id": "ref_front",
+                                "capture_label": "target_front_after",
+                                "target_view": "front",
+                                "confidence": 0.88,
+                                "box_xyxy": [101, 44, 218, 162],
+                                "crop_path": "/tmp/localization_tail_crop.png",
+                            }
+                        ]
+                    }
+                )
+            raise RuntimeError(f"unexpected sidecar endpoint: {endpoint}")
 
 
-    if os.environ.get("ENABLE_COMPARE_SEGMENTATION_SIDECAR") == "true":
+    if (
+        os.environ.get("ENABLE_COMPARE_SEGMENTATION_SIDECAR") == "true"
+        or os.environ.get("ENABLE_COMPARE_LOCALIZATION_SIDECAR") == "true"
+    ):
         compare_packets_area.httpx.AsyncClient = _FakeSidecarClient
 
 
@@ -651,6 +685,7 @@ _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
                 max_tokens=200,
                 max_images=8,
                 active_model_name="transport-reference-understanding-model",
+                active_localization_config=_active_compare_localization_sidecar(),
                 active_segmentation_sidecar=_active_compare_segmentation_sidecar(),
             )
 
@@ -675,7 +710,10 @@ _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
                 view_kind="wide",
             )
         ]
-        if os.environ.get("ENABLE_COMPARE_SEGMENTATION_SIDECAR") == "true":
+        if (
+            os.environ.get("ENABLE_COMPARE_SEGMENTATION_SIDECAR") == "true"
+            or os.environ.get("ENABLE_COMPARE_LOCALIZATION_SIDECAR") == "true"
+        ):
             captures.append(
                 VisionCaptureImageContract(
                     label="target_front_after",
@@ -871,6 +909,61 @@ async def _exercise_enabled_compare_segmentation_sidecar_transport(client, refer
     assert support_evidence
     assert support_evidence[0]["part_label"] == "tail_profile"
     assert support_evidence[0]["confidence"] == 0.91
+
+
+async def _exercise_enabled_compare_localization_transport(client, reference_path: Path) -> None:
+    staged_attach = result_payload(
+        await client.call_tool(
+            "reference_images",
+            {
+                "action": "attach",
+                "source_path": str(reference_path),
+                "label": "front_ref",
+                "target_object": "Squirrel_Body",
+                "target_view": "front",
+            },
+        )
+    )
+    assert staged_attach["reference_count"] == 1
+
+    goal_result = result_payload(
+        await client.call_tool(
+            "router_set_goal",
+            {"goal": "create a low-poly squirrel matching front and side reference images"},
+        )
+    )
+    assert goal_result["reference_understanding_summary"]["status"] == "available"
+
+    compare_result = result_payload(
+        await client.call_tool(
+            "reference_compare_stage_checkpoint",
+            {
+                "target_object": "Squirrel_Body",
+                "target_objects": ["Squirrel_Tail"],
+                "checkpoint_label": "reference_localization_sidecar_transport_compare",
+                "target_view": "front",
+                "preset_profile": "rich",
+            },
+        )
+    )
+
+    part_segmentation = compare_result["part_segmentation"]
+    assert part_segmentation["status"] == "available"
+    assert part_segmentation["provider_name"] == "generic_sidecar"
+    assert part_segmentation["advisory_only"] is True
+    assert part_segmentation["parts"][0]["part_label"] == "tail_mass"
+    assert part_segmentation["parts"][0]["crop_path"] == "/tmp/localization_tail_crop.png"
+    assert part_segmentation["parts"][0]["landmarks"][0]["landmark_id"] == "box_center"
+    assert compare_result["compare_diagnostics"]["packets"][0]["localized_support_reason"] == "attachment_gap"
+    support_evidence = [
+        item
+        for packet in compare_result["compare_diagnostics"]["packets"]
+        for item in packet["support_evidence"]
+        if item["evidence_kind"] == "part_segmentation"
+    ]
+    assert support_evidence
+    assert support_evidence[0]["part_label"] == "tail_mass"
+    assert support_evidence[0]["confidence"] == 0.88
 
 
 async def _exercise_reference_understanding_refresh_replaces_gate_slice(
@@ -1551,6 +1644,22 @@ def test_reference_compare_segmentation_sidecar_transport_over_stdio(tmp_path: P
 
 
 @pytest.mark.slow
+def test_reference_compare_localization_sidecar_transport_over_stdio(tmp_path: Path):
+    script_path = write_server_script(tmp_path, _PATCHED_GATE_STATE_SERVER)
+    reference_path = tmp_path / "transport_front.png"
+    reference_path.write_bytes(_TRANSPORT_REFERENCE_PNG)
+
+    async def run() -> None:
+        async with stdio_client(
+            script_path,
+            extra_env={"ENABLE_COMPARE_LOCALIZATION_SIDECAR": "true"},
+        ) as client:
+            await _exercise_enabled_compare_localization_transport(client, reference_path)
+
+    asyncio.run(run())
+
+
+@pytest.mark.slow
 def test_reference_understanding_transport_roundtrip_over_streamable(tmp_path: Path):
     script_path = write_server_script(tmp_path, _PATCHED_GATE_STATE_SERVER)
     reference_path = tmp_path / "transport_front.png"
@@ -1561,6 +1670,23 @@ def test_reference_understanding_transport_roundtrip_over_streamable(tmp_path: P
             await _exercise_reference_understanding_transport_roundtrip(client, reference_path)
 
     with run_streamable_server(script_path) as url:
+        asyncio.run(run(url))
+
+
+@pytest.mark.slow
+def test_reference_compare_localization_sidecar_transport_over_streamable(tmp_path: Path):
+    script_path = write_server_script(tmp_path, _PATCHED_GATE_STATE_SERVER)
+    reference_path = tmp_path / "transport_front.png"
+    reference_path.write_bytes(_TRANSPORT_REFERENCE_PNG)
+
+    async def run(url: str) -> None:
+        async with streamable_client(url) as client:
+            await _exercise_enabled_compare_localization_transport(client, reference_path)
+
+    with run_streamable_server(
+        script_path,
+        extra_env={"ENABLE_COMPARE_LOCALIZATION_SIDECAR": "true"},
+    ) as url:
         asyncio.run(run(url))
 
 
