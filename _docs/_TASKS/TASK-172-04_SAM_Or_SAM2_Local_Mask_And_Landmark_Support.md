@@ -1,6 +1,7 @@
 # TASK-172-04: SAM Or SAM2 Packet-Local Mask, Crop, And Derived-Anchor Support
 
 **Parent:** [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md)
+**Depends On:** [TASK-172-02](./TASK-172-02_Stage_Bound_Activation_Policy_And_Localized_Support_Contracts.md)
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
 **Objective:** Extend the optional segmentation lane so packet-local SAM-family masks, crops, and optional derived anchors can support creature/reference ambiguity without becoming a default full-image heavy pass.
@@ -14,6 +15,10 @@
 
 - build on the existing segmentation sidecar seam rather than inventing a
   parallel mask runtime
+- build directly on the shipped `TASK-128-03` generic segmentation carrier and
+  compare-time sidecar seam; do not reopen base provider packaging, part
+  vocabulary, or the original `ReferencePartSegmentationContract` ownership
+  unless a new follow-on is created explicitly
 - treat the SAM-vs-SAM2 provider choice as an implementation detail on the
   same seam; an image-packet baseline may ship on a SAM-compatible predictor,
   while SAM2 is justified when its image predictor or future tracking path

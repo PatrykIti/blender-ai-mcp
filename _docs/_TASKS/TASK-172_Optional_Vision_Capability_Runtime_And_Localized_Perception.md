@@ -6,7 +6,7 @@
 **Estimated Effort:** Large
 **Depends On:** [TASK-140-06](./TASK-140-06_OpenRouter_Model_Capability_Aware_Vision_Runtime.md)
 **Follow-on After:** [TASK-171](./TASK-171_Creature_Attachment_First_Build_Contract_And_Structured_Vision_Handoff.md), [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md), [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md)
-**Related:** [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md), [TASK-169](./TASK-169_Reference_Guided_Quality_Drift_Regression_And_Runtime_Authority.md)
+**Related:** [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md), [TASK-169](./TASK-169_Reference_Guided_Quality_Drift_Regression_And_Runtime_Authority.md), [TASK-128-03](./TASK-128-03_Optional_Part_Segmentation_Sidecar_And_Part_Aware_Perception.md), [TASK-164](./TASK-164_Local_SigLIP2_Reference_Classifier_Sidecar_And_Operator_Scripts.md)
 
 ## Relationship To Existing Board Items
 
@@ -16,6 +16,10 @@
 - `TASK-171`, `TASK-166`, and `TASK-163` are prerequisite consumer lanes whose
   staged compare, structured feedback, and optional-support seams are reused
   here.
+- `TASK-128-03` and `TASK-164` already shipped the default-off generic
+  `part_segmentation` and reference-classifier sidecar seams that this family
+  extends; `TASK-172` must reuse those carriers and opt-in boundaries instead
+  of reopening packaging, wire contracts, or baseline operator setup.
 - `TASK-172` is a domain-specific optional-vision consumer family with limited
   shared-runtime follow-ons, not a new cross-repo capability-platform umbrella.
 
@@ -133,6 +137,7 @@ grounding.
 | `server/adapters/mcp/vision/runtime.py`, `server/adapters/mcp/vision/backends.py`, `server/adapters/mcp/vision/config.py`, `server/adapters/mcp/vision/runner.py`, `server/infrastructure/di.py` | runtime config, backend resolution, request policy, lifecycle, and shared-owner wiring | capability-aware runtime posture, optional adapter inventory, and lifecycle/reuse behavior belong here |
 | `server/adapters/mcp/areas/reference_compare_packets.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_silhouette.py` | compare-time packet execution, staged public-surface projection, and support-evidence summaries | localized compare-time perception must stay on the staged compare owner seams instead of collapsing back into RU support helpers |
 | `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/vision/reference_support.py` | RU refresh and RU-only optional support merge | RU may merge already-available optional artifacts and diagnostics, but it is not the durable compare-time execution owner |
+| `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/areas/router.py` | compact guided/reference feedback and router status projection owners | optional-capability diagnostics and packet-local support notes must stay aligned on `reference_orchestrator_feedback` and `router_get_status(...)` instead of fragmenting into a parallel status surface |
 | `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/contracts/quality_gates.py` | typed client-facing and support-evidence contracts | optional adapters need bounded typed payloads with explicit advisory-only limits |
 | `server/infrastructure/config.py`, `server/infrastructure/di.py` | env/config and runtime wiring owners | optional adapters, lifecycle controls, and reuse policy must stay on shared DI/runtime seams |
 | `tests/unit/adapters/mcp/`, `tests/e2e/integration/`, `tests/e2e/vision/`, `scripts/vision_harness.py` | validation and harness owners | this family changes runtime diagnostics, compare support contracts, optional sidecar behavior, and operator guidance |
@@ -142,8 +147,8 @@ grounding.
 
 | Slice | Primary Validation Lane | Why |
 |------|--------------------------|-----|
-| capability inventory and prerequisite diagnostics | `test_vision_runtime_config.py`, `test_vision_runner.py`, `test_vision_external_backend.py` | typed runtime state and public diagnostics must stay bounded and non-fatal |
-| stage-bound activation policy and support-only localization hooks | `test_reference_compare_packets.py`, `test_reference_images.py`, `test_contract_payload_parity.py`, `test_guided_gate_state_transport.py` | localized optional perception must remain packet-bounded and transport-safe |
+| capability inventory and prerequisite diagnostics | `test_reference_images.py`, `test_vision_runtime_config.py`, `test_vision_runner.py`, `test_vision_external_backend.py`, `test_router_contracts.py` | typed runtime state and public diagnostics must stay bounded and non-fatal across RU refresh, compact feedback, and router status surfaces |
+| stage-bound activation policy and support-only localization hooks | `test_reference_compare_packets.py`, `test_reference_images.py`, `test_contract_payload_parity.py`, `test_router_contracts.py`, `test_guided_gate_state_transport.py` | localized optional perception must remain packet-bounded, feedback-safe, and transport-safe |
 | SAM-family packet-local masks/crops and optional derived anchors | `test_reference_compare_packets.py`, `test_reference_images.py`, `test_public_surface_docs.py`, `test_guided_gate_state_transport.py` | localized segmentation support must project through existing public envelopes before later grounding widens the seam |
 | text-conditioned localization seeding | `test_reference_compare_packets.py`, `test_reference_images.py`, targeted adapter/runtime tests, optional harness/eval coverage | internal candidate boxes must stay bounded and support-only while public transport remains typed |
 | heavy local lifecycle / TTL / unload | `test_vision_runtime_config.py`, `test_vision_runner.py`, targeted backend tests | lifecycle policy must avoid eager bootstrap loads and avoid slowing cheap branches |

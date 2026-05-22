@@ -1,10 +1,11 @@
 # TASK-172-06: Harness, Negative Coverage, And Operator Docs For Optional Vision Runtime
 
 **Parent:** [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md)
+**Depends On:** [TASK-172-03-02](./TASK-172-03-02_Compare_Time_Localization_Projection_And_Transport.md), [TASK-172-04](./TASK-172-04_SAM_Or_SAM2_Local_Mask_And_Landmark_Support.md)
 **Status:** ⏳ To Do
 **Priority:** 🟠 High
 **Objective:** Add explicit staged-compare/localized-support harness coverage or expand the existing `scripts/vision_harness.py` into that role, then add negative coverage and operator-facing docs for localized optional perception paths without changing default backend-running semantics or public authority boundaries.
-**Repository Touchpoints:** `scripts/vision_harness.py`, `tests/unit/scripts/test_script_tooling.py`, `tests/e2e/vision/test_reference_understanding_fixture_only_harness.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_public_surface_docs.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`, `_docs/_VISION/README.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
+**Repository Touchpoints:** `scripts/vision_harness.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `tests/unit/scripts/test_script_tooling.py`, `tests/e2e/vision/test_reference_understanding_fixture_only_harness.py`, `tests/unit/adapters/mcp/test_reference_compare_packets.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_public_surface_docs.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`, `_docs/_VISION/README.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 **Acceptance Criteria:**
 - the harness can exercise localized optional-perception paths through one explicit opt-in staged-compare/localized-support mode, or an equivalent new compare-harness subprocess suite, without changing the current default backend-running path
 - negative coverage proves disabled, unavailable, timeout, and empty-result behavior for optional adapters
@@ -21,6 +22,9 @@
   yet a staged compare packet harness; this leaf must either expand it into
   that role explicitly or introduce a dedicated compare-harness helper before
   treating it as the primary localized-support owner
+- negative coverage must exercise the current packet-local owner seam on
+  `reference_compare_packets.py`, not only the raw backend runner, so the
+  docs/harness proof matches the shipped localized-support execution path
 - likely harness owners:
   - `_run_backend(...)`
   - `_run(...)`
@@ -54,6 +58,7 @@ elif args.localized_optional_mode == "packet_support":
 
 - `tests/unit/scripts/test_script_tooling.py`
 - `tests/e2e/vision/test_reference_understanding_fixture_only_harness.py`
+- `tests/unit/adapters/mcp/test_reference_compare_packets.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/e2e/integration/test_guided_gate_state_transport.py`
@@ -87,7 +92,7 @@ elif args.localized_optional_mode == "packet_support":
 ## Validation Commands
 
 - `git diff --check`
-- `PYTHONPATH=. poetry run pytest tests/unit/scripts/test_script_tooling.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/scripts/test_script_tooling.py tests/unit/adapters/mcp/test_reference_compare_packets.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_understanding_fixture_only_harness.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_understanding_runtime_surface.py -q`

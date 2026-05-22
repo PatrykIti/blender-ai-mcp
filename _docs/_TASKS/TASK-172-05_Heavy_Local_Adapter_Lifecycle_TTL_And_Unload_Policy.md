@@ -1,7 +1,7 @@
 # TASK-172-05: Heavy Local Adapter Lifecycle, TTL, And Unload Policy
 
 **Parent:** [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md)
-**Depends On:** [TASK-172-04](./TASK-172-04_SAM_Or_SAM2_Local_Mask_And_Landmark_Support.md), [TASK-172-03](./TASK-172-03_GroundingDINO_Or_OWL_Localization_For_Packet_Bounded_Part_Ambiguity.md)
+**Depends On:** [TASK-172-04](./TASK-172-04_SAM_Or_SAM2_Local_Mask_And_Landmark_Support.md), [TASK-172-03-02](./TASK-172-03-02_Compare_Time_Localization_Projection_And_Transport.md)
 **Status:** ⏳ To Do
 **Priority:** 🟠 High
 **Objective:** Decide whether the first shipped in-process optional adapter family justifies shared reuse on current repo seams, and add TTL/unload only if that post-integration decision proves real shared backend pressure worth managing. External-provider and sidecar-process lifecycle stays operator-managed unless a later task explicitly promotes it into the server runtime.
@@ -27,8 +27,8 @@
   - `request_scoped_only`
   - `resolver_owned_shared_local`
 - the first concrete owner choice in this family must be limited to an
-  in-process adapter introduced by `TASK-172-03` or `TASK-172-04`; sidecar-only
-  branches do not qualify for TTL/unload ownership in this leaf
+  in-process adapter introduced by `TASK-172-03-02` or `TASK-172-04`;
+  sidecar-only branches do not qualify for TTL/unload ownership in this leaf
 - likely owner seam if shared reuse is justified:
   - `LazyVisionBackendResolver.resolve(...)`
   - `LazyVisionBackendResolver.resolve_default(...)`

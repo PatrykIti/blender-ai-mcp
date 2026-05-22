@@ -4,10 +4,13 @@
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
 **Objective:** Add one canonical typed internal capability-inventory model and additive prerequisite-diagnostics seam for optional perception/runtime branches without inventing a second public capability system or new MCP discovery flow.
-**Repository Touchpoints:** `server/adapters/mcp/vision/config.py`, `server/adapters/mcp/vision/runtime.py`, `server/adapters/mcp/vision/backends.py`, `server/adapters/mcp/vision/runner.py`, `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/contracts/router.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/session_capabilities_state.py`, `server/adapters/mcp/sampling/result_types.py`, `server/infrastructure/config.py`, `tests/unit/adapters/mcp/test_vision_runtime_config.py`, `tests/unit/adapters/mcp/test_vision_runner.py`, `tests/unit/adapters/mcp/test_vision_external_backend.py`, `tests/unit/adapters/mcp/test_vision_result_types.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/unit/router/application/test_router_contracts.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `_docs/_VISION/README.md`, `_docs/_MCP_SERVER/README.md`
+**Repository Touchpoints:** `server/adapters/mcp/vision/config.py`, `server/adapters/mcp/vision/runtime.py`, `server/adapters/mcp/vision/backends.py`, `server/adapters/mcp/vision/runner.py`, `server/adapters/mcp/vision/reference_support.py`, `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/contracts/router.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/areas/router.py`, `server/adapters/mcp/session_capabilities_state.py`, `server/adapters/mcp/sampling/result_types.py`, `server/infrastructure/config.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_vision_runtime_config.py`, `tests/unit/adapters/mcp/test_vision_runner.py`, `tests/unit/adapters/mcp/test_vision_external_backend.py`, `tests/unit/adapters/mcp/test_vision_result_types.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/unit/router/application/test_router_contracts.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `_docs/_VISION/README.md`, `_docs/_MCP_SERVER/README.md`
 **Acceptance Criteria:**
 - the runtime has one canonical typed internal capability-inventory model for optional capability status, provider identity, prerequisite summary, activation scope, and reuse/lifecycle class
 - operator/client-visible diagnostics remain additive on existing surfaces and do not create a new public capability tool
+- RU refresh, compact reference feedback, and `router_get_status(...)` all
+  project the same bounded optional-capability story when they surface runtime
+  availability or degradation
 - missing optional heavy capability reports enhancement/unavailable state without blocking normal guided/reference flow
 
 ## Implementation Notes
@@ -21,6 +24,12 @@
 - if readiness becomes operator-visible outside compare/iterate payloads, use
   `RouterStatusContract` / `router_get_status(...)` rather than inventing a new
   status surface
+- extend the current RU/status owners instead of bypassing them:
+  - `refresh_reference_understanding_summary(...)`
+  - `augment_reference_understanding_optional_support(...)`
+  - `blocked_reference_understanding_summary(...)`
+  - `build_reference_orchestrator_feedback(...)`
+  - `router_get_status(...)`
 - cover at least these runtime-owned capability classes:
   - external vision model capabilities
   - reference classifier
@@ -36,6 +45,8 @@
   - `VisionOptionalCapabilityState`
   - `VisionOptionalCapabilityInventory`
   - one runtime helper that renders bounded diagnostics from that inventory
+  - one RU/status projection path that reuses existing `reference_understanding`
+    and router feedback carriers
 
 ## Pseudocode
 
@@ -66,6 +77,7 @@ feedback = build_optional_capability_diagnostics(
 
 ## Tests To Add/Update
 
+- `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
 - `tests/unit/adapters/mcp/test_vision_runner.py`
 - `tests/unit/adapters/mcp/test_vision_external_backend.py`
@@ -93,7 +105,7 @@ feedback = build_optional_capability_diagnostics(
 ## Validation Commands
 
 - `git diff --check`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_runner.py tests/unit/adapters/mcp/test_vision_external_backend.py tests/unit/adapters/mcp/test_vision_result_types.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/router/application/test_router_contracts.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_runner.py tests/unit/adapters/mcp/test_vision_external_backend.py tests/unit/adapters/mcp/test_vision_result_types.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/router/application/test_router_contracts.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
 - `PYTHONPATH=. poetry run pytest ./tests/unit`
 

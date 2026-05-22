@@ -1,6 +1,7 @@
 # TASK-172-03: GroundingDINO Or OWL-ViT / OWLv2 Packet Localization For Part Ambiguity
 
 **Parent:** [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md)
+**Depends On:** [TASK-172-02](./TASK-172-02_Stage_Bound_Activation_Policy_And_Localized_Support_Contracts.md)
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
 **Objective:** Add one optional packet-bounded text-conditioned localization adapter family that can produce bounded compare-time localization candidates for ambiguous reference regions during staged compare and iterate work, keep those candidates tied to packet/reference/view provenance, and project only support-safe crops or derived anchor hints on the current public carriers.
@@ -10,17 +11,28 @@
 - localization output is tied to packet/reference/view provenance and remains advisory-only
 - the first shipped compare-time path projects localization onto the existing `part_segmentation` public carrier with no new public box field on the compare-time surface
 
+## Execution Structure
+
+| Order | Leaf | Purpose |
+|------|------|---------|
+| 1 | [TASK-172-03-01](./TASK-172-03-01_Localization_Runtime_Config_And_Provider_Boundary.md) | Add the default-off localization runtime/config seam and one internal provider-neutral candidate contract without widening public compare payloads yet |
+| 2 | [TASK-172-03-02](./TASK-172-03-02_Compare_Time_Localization_Projection_And_Transport.md) | Invoke packet-bounded localization on staged compare/iterate and project only support-safe crops/derived anchors through the existing compare-time carriers |
+
 ## Implementation Notes
 
+- keep this subtask split so the repo can land runtime/provider plumbing before
+  it widens compare-time transport; do not hide provider contract work,
+  compare-time projection, and potential operator packaging inside one
+  oversized implementation pass
 - first shipping adapter posture:
   - `generic_sidecar` provider family
   - one new dedicated config lane only if the existing segmentation/classifier
     config cannot express localization cleanly
   - vendor-specific behavior stays behind a vendor-neutral internal adapter seam
-- this first leaf is compare-time only and intentionally follows the existing
-  segmentation seam expansion from `TASK-172-04`; RU-side boxed artifact
-  linkage remains
-  on the separate RU artifact/readiness owners and is not reopened here
+- this subtask remains compare-time only; the public projection leaf
+  intentionally follows the existing segmentation seam expansion from
+  `TASK-172-04`, while RU-side boxed artifact linkage remains on the separate
+  RU artifact/readiness owners and is not reopened here
 - keep `reference_compare_packets.py` as the durable compare-time execution
   owner; do not turn the RU-specific `vision/reference_support.py` helper into
   the default packet-evidence execution seam
@@ -88,14 +100,10 @@ return ReferencePartSegmentationContract(
 
 ## Tests To Add/Update
 
-- `tests/unit/adapters/mcp/test_vision_runtime_config.py`
-- `tests/unit/adapters/mcp/test_reference_compare_packets.py`
-- `tests/unit/adapters/mcp/test_reference_images.py`
-- `tests/unit/adapters/mcp/test_contract_payload_parity.py`
-- `tests/unit/adapters/mcp/test_public_surface_docs.py`
-- `tests/e2e/integration/test_guided_gate_state_transport.py`
-- `tests/e2e/vision/test_reference_understanding_runtime_surface.py`
-- optional harness/eval coverage only behind explicit env/config flags
+- split across the execution leaves above:
+  - `TASK-172-03-01` owns runtime/config/provider tests
+  - `TASK-172-03-02` owns compare-time transport, packet, and staged-surface
+    validation
 
 ## Docs To Update
 
@@ -113,14 +121,14 @@ return ReferencePartSegmentationContract(
 ## Status / Board Update
 
 - board tracking remains on the umbrella `TASK-172`
+- keep `TASK-172-03-01` and `TASK-172-03-02` nested under this subtask while
+  the localization family stays open
 
 ## Validation Commands
 
 - `git diff --check`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_reference_compare_packets.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_understanding_runtime_surface.py -q`
-- `PYTHONPATH=. poetry run pytest ./tests/unit`
+- child leaves own the exact validation commands; run the combined `TASK-172-03`
+  proof only after both leaves land
 
 ## Validation Category
 

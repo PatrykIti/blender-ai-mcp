@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [360](./360-2026-05-22-task-172-planning-audit-follow-on-drift-repair.md) | 2026-05-22 | **TASK-172 planning audit follow-on drift repair** | - |
 | [359](./359-2026-05-22-task-172-optional-vision-runtime-planning-drift-repair.md) | 2026-05-22 | **TASK-172 optional vision runtime planning drift repair** | - |
 | [358](./358-2026-05-21-task-171-creature-attachment-first-build-contract-closeout.md) | 2026-05-21 | **TASK-171 creature attachment-first build contract closeout** | - |
 | [357](./357-2026-05-20-task-170-reference-target-canonicalization-and-support-latency-stabilization.md) | 2026-05-20 | **TASK-170 reference target canonicalization and support latency stabilization** | - |
