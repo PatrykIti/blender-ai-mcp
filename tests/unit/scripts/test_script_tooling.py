@@ -1070,3 +1070,262 @@ def test_vision_harness_reference_understanding_mode_rejects_bundle_without_refe
                 "/tmp/bundle.json",
             ]
         )
+
+
+def test_vision_harness_fixture_only_localized_support_keeps_owner_path_opt_in(capsys):
+    module = _load_script("vision_harness")
+
+    result = module.main(
+        [
+            "--backend",
+            "mlx_local",
+            "--goal",
+            "low poly squirrel",
+            "--mode",
+            "localized-support",
+            "--target-object",
+            "Squirrel_Body",
+            "--target-view",
+            "front",
+            "--localized-support-reason",
+            "part_missing_ambiguity",
+            "--localized-support-query-label",
+            "tail_mass",
+            "--after",
+            "/tmp/after.png",
+            "--reference",
+            "/tmp/ref.png",
+            "--fixture-only",
+            "localized-support",
+        ]
+    )
+
+    assert result == 0
+    output = capsys.readouterr().out
+    assert '"status": "fixture_only"' in output
+    assert '"fixture_only_mode": "localized-support"' in output
+    assert '"localized_support_reason": "part_missing_ambiguity"' in output
+    assert '"query_labels": [' in output
+    assert '"tail_mass"' in output
+
+
+def test_vision_harness_localized_support_mode_rejects_missing_query_label():
+    module = _load_script("vision_harness")
+
+    with pytest.raises(SystemExit):
+        module.main(
+            [
+                "--backend",
+                "mlx_local",
+                "--goal",
+                "low poly squirrel",
+                "--mode",
+                "localized-support",
+                "--after",
+                "/tmp/after.png",
+                "--reference",
+                "/tmp/ref.png",
+            ]
+        )
+
+
+def test_vision_harness_live_localized_support_reports_disabled_by_default(tmp_path, monkeypatch, capsys):
+    module = _load_script("vision_harness")
+    reference_path = tmp_path / "reference.png"
+    after_path = tmp_path / "after.png"
+    reference_path.write_bytes(b"ref")
+    after_path.write_bytes(b"after")
+
+    result = module.main(
+        [
+            "--backend",
+            "mlx_local",
+            "--goal",
+            "low poly squirrel",
+            "--mode",
+            "localized-support",
+            "--target-object",
+            "Squirrel_Body",
+            "--target-view",
+            "front",
+            "--localized-support-query-label",
+            "tail_mass",
+            "--after",
+            str(after_path),
+            "--reference",
+            str(reference_path),
+        ]
+    )
+
+    assert result == 0
+    payload = json.loads(capsys.readouterr().out)
+    row = payload[0]
+    assert row["status"] == "success"
+    assert row["localized_optional_mode"] == "packet_support"
+    assert row["result"]["part_segmentation"]["status"] == "disabled"
+
+
+def test_vision_harness_live_localized_support_threads_localization_candidates_into_segmentation(
+    tmp_path, monkeypatch, capsys
+):
+    module = _load_script("vision_harness")
+    reference_path = tmp_path / "reference.png"
+    after_path = tmp_path / "after.png"
+    reference_path.write_bytes(b"ref")
+    after_path.write_bytes(b"after")
+    monkeypatch.setenv("VISION_LOCALIZATION_ENABLED", "true")
+    monkeypatch.setenv("VISION_LOCALIZATION_ENDPOINT", "http://localhost:9300/localize")
+    monkeypatch.setenv("VISION_SEGMENTATION_ENABLED", "true")
+    monkeypatch.setenv("VISION_SEGMENTATION_ENDPOINT", "http://localhost:9100/segment")
+
+    captured: dict[str, object] = {}
+
+    async def _fake_localization(*, config, goal, packet, reference_records, captures):
+        return (
+            [
+                module.compare_packets_area.VisionLocalizationCandidate(
+                    packet_id=packet.packet_id,
+                    query_label="tail_mass",
+                    reference_id=reference_records[0].reference_id,
+                    capture_label=captures[0].label,
+                    target_view=packet.target_view,
+                    confidence=0.88,
+                    box_xyxy=(101.0, 44.0, 218.0, 162.0),
+                    crop_path="/tmp/localization_tail_crop.png",
+                )
+            ],
+            module.ReferencePartSegmentationContract(
+                status="available",
+                provider_name="generic_sidecar",
+                advisory_only=True,
+                parts=[
+                    {
+                        "part_label": "tail_mass",
+                        "crop_path": "/tmp/localization_tail_crop.png",
+                        "confidence": 0.88,
+                        "landmarks": [{"landmark_id": "box_center", "x": 159.5, "y": 103.0}],
+                    }
+                ],
+            ),
+        )
+
+    async def _fake_segmentation(
+        *,
+        config,
+        goal,
+        packet_id,
+        packet_label,
+        target_view,
+        scope_label,
+        target_objects,
+        reference_records,
+        captures,
+        localization_candidates,
+    ):
+        captured["seed_query_labels"] = [item.query_label for item in localization_candidates]
+        return module.ReferencePartSegmentationContract(
+            status="available",
+            provider_name="generic_sidecar",
+            advisory_only=True,
+            parts=[
+                {
+                    "part_label": "tail_profile",
+                    "crop_path": "/tmp/tail_profile_crop.png",
+                    "confidence": 0.91,
+                    "landmarks": [],
+                }
+            ],
+        )
+
+    monkeypatch.setattr(module.compare_packets_area, "collect_compare_time_localization_support", _fake_localization)
+    monkeypatch.setattr(module.compare_packets_area, "collect_compare_time_segmentation_support", _fake_segmentation)
+
+    result = module.main(
+        [
+            "--backend",
+            "mlx_local",
+            "--goal",
+            "low poly squirrel",
+            "--mode",
+            "localized-support",
+            "--target-object",
+            "Squirrel_Body",
+            "--target-view",
+            "front",
+            "--localized-support-reason",
+            "part_missing_ambiguity",
+            "--localized-support-query-label",
+            "tail_mass",
+            "--after",
+            str(after_path),
+            "--reference",
+            str(reference_path),
+        ]
+    )
+
+    assert result == 0
+    payload = json.loads(capsys.readouterr().out)
+    row = payload[0]
+    assert row["result"]["localization_candidate_count"] == 1
+    assert row["result"]["part_segmentation"]["status"] == "available"
+    assert captured["seed_query_labels"] == ["tail_mass"]
+
+
+@pytest.mark.parametrize(
+    ("notes", "expected_fragment"),
+    [
+        (["Optional compare-time localization unavailable: timeout"], "timeout"),
+        (["Optional compare-time localization returned no bounded candidates for compare support."], "no bounded"),
+    ],
+)
+def test_vision_harness_live_localized_support_surfaces_unavailable_and_empty_results(
+    tmp_path, monkeypatch, capsys, notes, expected_fragment
+):
+    module = _load_script("vision_harness")
+    reference_path = tmp_path / "reference.png"
+    after_path = tmp_path / "after.png"
+    reference_path.write_bytes(b"ref")
+    after_path.write_bytes(b"after")
+    monkeypatch.setenv("VISION_LOCALIZATION_ENABLED", "true")
+    monkeypatch.setenv("VISION_LOCALIZATION_ENDPOINT", "http://localhost:9300/localize")
+
+    async def _fake_localization(*, config, goal, packet, reference_records, captures):
+        return (
+            [],
+            module.ReferencePartSegmentationContract(
+                status="unavailable",
+                provider_name="generic_sidecar",
+                advisory_only=True,
+                parts=[],
+                notes=notes,
+            ),
+        )
+
+    monkeypatch.setattr(module.compare_packets_area, "collect_compare_time_localization_support", _fake_localization)
+
+    result = module.main(
+        [
+            "--backend",
+            "mlx_local",
+            "--goal",
+            "low poly squirrel",
+            "--mode",
+            "localized-support",
+            "--target-object",
+            "Squirrel_Body",
+            "--target-view",
+            "front",
+            "--localized-support-query-label",
+            "tail_mass",
+            "--after",
+            str(after_path),
+            "--reference",
+            str(reference_path),
+        ]
+    )
+
+    assert result == 0
+    payload = json.loads(capsys.readouterr().out)
+    row = payload[0]
+    assert row["result"]["part_segmentation"]["status"] == "unavailable"
+    assert expected_fragment in " ".join(row["result"]["part_segmentation"]["notes"])

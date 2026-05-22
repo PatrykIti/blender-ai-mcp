@@ -630,6 +630,37 @@ poetry run python scripts/vision_harness.py \
   --golden-json tests/fixtures/vision_eval/squirrel_face_to_body_camera_perspective/golden.json
 ```
 
+Localized-support harness example:
+
+```bash
+export VISION_LOCALIZATION_ENABLED=true
+export VISION_LOCALIZATION_ENDPOINT=http://127.0.0.1:9300/localize
+export VISION_SEGMENTATION_ENABLED=true
+export VISION_SEGMENTATION_ENDPOINT=http://127.0.0.1:9100/segment
+
+poetry run python scripts/vision_harness.py \
+  --backend mlx_local \
+  --goal "create a low-poly squirrel matching front and side references" \
+  --mode localized-support \
+  --target-object Squirrel_Body \
+  --target-view front \
+  --localized-support-reason part_missing_ambiguity \
+  --localized-support-query-label tail_mass \
+  --after /tmp/squirrel_front_capture.png \
+  --reference /tmp/squirrel_front_reference.png
+```
+
+That explicit mode does not run the normal bounded backend compare path. It
+exercises the current packet-local optional support owner seam directly and is
+intended for:
+
+- proving whether localization / segmentation are disabled, unavailable, or
+  returning empty support results
+- checking that localization stays support-safe and projects only crops /
+  derived anchors through `part_segmentation`
+- checking that localization candidates are passed to packet-local segmentation
+  as internal `seed_boxes` when both sidecars are enabled
+
 Opt-in real-model comparison for the new view-family variants:
 
 ```bash

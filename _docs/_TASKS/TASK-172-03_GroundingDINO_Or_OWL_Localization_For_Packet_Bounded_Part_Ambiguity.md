@@ -132,8 +132,7 @@ return ReferencePartSegmentationContract(
 ## Status / Board Update
 
 - board tracking remains on the umbrella `TASK-172`
-- keep `TASK-172-03-01` and `TASK-172-03-02` nested under this subtask while
-  the localization family stays open
+- `TASK-172-03-01` and `TASK-172-03-02` closed together with this subtask
 
 ## Validation Commands
 

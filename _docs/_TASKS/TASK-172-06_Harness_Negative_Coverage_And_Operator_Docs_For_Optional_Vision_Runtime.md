@@ -1,8 +1,9 @@
 # TASK-172-06: Harness, Negative Coverage, And Operator Docs For Optional Vision Runtime
 
 **Parent:** [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md)
-**Depends On:** [TASK-172-03-02](./TASK-172-03-02_Compare_Time_Localization_Projection_And_Transport.md), [TASK-172-04](./TASK-172-04_SAM_Or_SAM2_Local_Mask_And_Landmark_Support.md)
-**Status:** ⏳ To Do
+**Depends On:** [TASK-172-03-02](./TASK-172-03-02_Compare_Time_Localization_Projection_And_Transport.md)
+**Status:** ✅ Done
+**Completed:** 2026-05-23
 **Priority:** 🟠 High
 **Objective:** Add explicit staged-compare/localized-support harness coverage or expand the existing `scripts/vision_harness.py` into that role, then add negative coverage and operator-facing docs for localized optional perception paths without changing default backend-running semantics or public authority boundaries.
 **Repository Touchpoints:** `scripts/vision_harness.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `tests/unit/scripts/test_script_tooling.py`, `tests/e2e/vision/test_reference_understanding_fixture_only_harness.py`, `tests/unit/adapters/mcp/test_reference_compare_packets.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_public_surface_docs.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`, `_docs/_VISION/README.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
@@ -84,6 +85,18 @@ elif args.localized_optional_mode == "packet_support":
 
 - record harness mode and operator guidance changes in the first `TASK-172`
   entry that ships this leaf
+
+## Completion Summary
+
+- `scripts/vision_harness.py` now has one explicit `--mode localized-support`
+  path for the packet-local optional support owner seam
+- that mode keeps the normal backend-running path unchanged and can exercise:
+  - disabled optional support
+  - unavailable / timeout localization
+  - empty localization results
+  - localization-seeded segmentation
+- subprocess and unit coverage now prove the localized-support harness mode and
+  its degraded behavior without promoting support evidence into truth
 
 ## Status / Board Update
 

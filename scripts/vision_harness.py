@@ -18,7 +18,13 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from server.adapters.mcp.contracts.reference import ReferenceImageRecordContract
+from server.adapters.mcp.areas import reference_compare_packets as compare_packets_area
+from server.adapters.mcp.areas.reference_silhouette import build_compare_support_evidence
+from server.adapters.mcp.contracts.reference import (
+    ReferenceComparePacketContract,
+    ReferenceImageRecordContract,
+    ReferencePartSegmentationContract,
+)
 from server.adapters.mcp.contracts.vision import (
     VisionCaptureBundleContract,
     VisionCaptureImageContract,
@@ -136,6 +142,95 @@ def _effective_references_json(args: Any, golden: ResolvedVisionGoldenScenario |
     if golden is not None and golden.references_path is not None:
         return str(golden.references_path)
     return None
+
+
+def _reference_records_from_inputs(
+    *,
+    args: Any,
+    golden: ResolvedVisionGoldenScenario | None,
+    goal: str,
+) -> tuple[ReferenceImageRecordContract, ...]:
+    references_json = _effective_references_json(args, golden)
+    if references_json:
+        raw_reference_items = _resolve_reference_paths(_read_json(Path(references_json)), Path(references_json)).get(
+            "references", []
+        )
+    else:
+        raw_reference_items = [
+            {
+                "reference_id": f"cli_ref_{index}",
+                "goal": goal,
+                "label": f"reference_{index}",
+                "target_object": getattr(args, "target_object", None),
+                "target_view": getattr(args, "target_view", None),
+                "media_type": "image/png" if str(path).lower().endswith(".png") else "image/jpeg",
+                "source_kind": "local_path",
+                "original_path": str(Path(path).resolve()),
+                "stored_path": str(Path(path).resolve()),
+                "host_visible_path": str(Path(path).resolve()),
+                "added_at": "2026-05-06T00:00:00Z",
+            }
+            for index, path in enumerate(args.reference or [], start=1)
+        ]
+    return tuple(ReferenceImageRecordContract.model_validate(item) for item in raw_reference_items)
+
+
+def _localized_support_captures_from_inputs(
+    *,
+    args: Any,
+    golden: ResolvedVisionGoldenScenario | None,
+) -> tuple[VisionCaptureImageContract, ...]:
+    bundle_json = _effective_bundle_json(args, golden)
+    if bundle_json:
+        bundle_path = Path(bundle_json)
+        bundle_data = _resolve_bundle_paths(_read_json(bundle_path), bundle_path)
+        bundle = VisionCaptureBundleContract.model_validate(bundle_data)
+        return tuple(bundle.captures_after)
+
+    return tuple(
+        _capture_image(
+            path,
+            label=f"after_{index}",
+            view_kind="focus",
+        )
+        for index, path in enumerate(args.after or [], start=1)
+    )
+
+
+def _localized_support_packet(
+    *,
+    args: Any,
+    reference_records: tuple[ReferenceImageRecordContract, ...],
+    captures: tuple[VisionCaptureImageContract, ...],
+) -> ReferenceComparePacketContract:
+    query_label = str(args.localized_support_query_label).strip()
+    target_view = getattr(args, "target_view", None)
+    target_object = getattr(args, "target_object", None)
+    return ReferenceComparePacketContract(
+        packet_id="harness:localized_support",
+        packet_kind="scope",
+        packet_label=query_label,
+        target_view=target_view,
+        scope_label=query_label,
+        target_objects=[target_object] if target_object else [],
+        reference_ids=[record.reference_id for record in reference_records],
+        capture_labels=[capture.label for capture in captures],
+        compare_question="Localized support harness packet.",
+        localized_support_reason=getattr(args, "localized_support_reason", "mask_needed"),
+    )
+
+
+def _disabled_localized_support_result() -> ReferencePartSegmentationContract:
+    return ReferencePartSegmentationContract(
+        status="disabled",
+        provider_name=None,
+        advisory_only=True,
+        parts=[],
+        notes=[
+            "Optional localized support remains disabled by default.",
+            "The harness did not invoke any compare-time optional adapter.",
+        ],
+    )
 
 
 def _build_request_from_args(args: Any, golden: ResolvedVisionGoldenScenario | None = None) -> VisionRequest:
@@ -335,6 +430,24 @@ def _config_for_backend(args: Any, backend: str) -> Config:
         "VISION_GEMINI_MODEL": args.gemini_model if backend == "openai_compatible_external" else None,
         "VISION_GEMINI_API_KEY": args.gemini_api_key if backend == "openai_compatible_external" else None,
         "VISION_GEMINI_API_KEY_ENV": args.gemini_api_key_env if backend == "openai_compatible_external" else None,
+        "VISION_SEGMENTATION_ENABLED": os.getenv("VISION_SEGMENTATION_ENABLED", "false").lower()
+        in {"true", "1", "yes"},
+        "VISION_SEGMENTATION_PROVIDER": os.getenv("VISION_SEGMENTATION_PROVIDER", "generic_sidecar"),
+        "VISION_SEGMENTATION_ENDPOINT": os.getenv("VISION_SEGMENTATION_ENDPOINT") or None,
+        "VISION_SEGMENTATION_MODEL": os.getenv("VISION_SEGMENTATION_MODEL") or None,
+        "VISION_SEGMENTATION_API_KEY": os.getenv("VISION_SEGMENTATION_API_KEY") or None,
+        "VISION_SEGMENTATION_API_KEY_ENV": os.getenv("VISION_SEGMENTATION_API_KEY_ENV") or None,
+        "VISION_SEGMENTATION_TIMEOUT_SECONDS": float(os.getenv("VISION_SEGMENTATION_TIMEOUT_SECONDS", 15.0)),
+        "VISION_SEGMENTATION_MAX_PARTS": int(os.getenv("VISION_SEGMENTATION_MAX_PARTS", 16)),
+        "VISION_LOCALIZATION_ENABLED": os.getenv("VISION_LOCALIZATION_ENABLED", "false").lower()
+        in {"true", "1", "yes"},
+        "VISION_LOCALIZATION_PROVIDER": os.getenv("VISION_LOCALIZATION_PROVIDER", "generic_sidecar"),
+        "VISION_LOCALIZATION_ENDPOINT": os.getenv("VISION_LOCALIZATION_ENDPOINT") or None,
+        "VISION_LOCALIZATION_MODEL": os.getenv("VISION_LOCALIZATION_MODEL") or None,
+        "VISION_LOCALIZATION_API_KEY": os.getenv("VISION_LOCALIZATION_API_KEY") or None,
+        "VISION_LOCALIZATION_API_KEY_ENV": os.getenv("VISION_LOCALIZATION_API_KEY_ENV") or None,
+        "VISION_LOCALIZATION_TIMEOUT_SECONDS": float(os.getenv("VISION_LOCALIZATION_TIMEOUT_SECONDS", 15.0)),
+        "VISION_LOCALIZATION_MAX_CANDIDATES": int(os.getenv("VISION_LOCALIZATION_MAX_CANDIDATES", 8)),
     }
     return Config(**payload)
 
@@ -392,8 +505,102 @@ async def _run_backend(
     return entry
 
 
+async def _run_localized_support_harness(
+    args: Any,
+    *,
+    golden: ResolvedVisionGoldenScenario | None = None,
+) -> list[dict[str, Any]]:
+    goal = _effective_goal(args, golden)
+    reference_records = _reference_records_from_inputs(args=args, golden=golden, goal=goal)
+    captures = _localized_support_captures_from_inputs(args=args, golden=golden)
+    packet = _localized_support_packet(args=args, reference_records=reference_records, captures=captures)
+
+    if args.fixture_only == "localized-support":
+        return [
+            {
+                "backend": "fixture_only",
+                "status": "fixture_only",
+                "fixture_only_mode": "localized-support",
+                "result": {
+                    "goal": goal,
+                    "target_object": getattr(args, "target_object", None),
+                    "target_view": getattr(args, "target_view", None),
+                    "localized_support_reason": packet.localized_support_reason,
+                    "query_labels": compare_packets_area._query_labels_for_packet(packet),
+                    "capture_count": len(captures),
+                    "reference_count": len(reference_records),
+                    "packet": packet.model_dump(mode="json", exclude_none=True),
+                },
+            }
+        ]
+
+    backend_name = "mlx_local" if args.backend == "all" else args.backend
+    runtime = build_vision_runtime_config(_config_for_backend(args, backend_name))
+    localization_config = runtime.active_localization_config
+    segmentation_config = runtime.active_segmentation_sidecar
+    part_segmentation: ReferencePartSegmentationContract | None
+
+    if localization_config is None and segmentation_config is None:
+        part_segmentation = _disabled_localized_support_result()
+        support_evidence = build_compare_support_evidence(None, part_segmentation=part_segmentation)
+        localization_candidates_count = 0
+        query_labels = compare_packets_area._query_labels_for_packet(packet)
+    else:
+        (
+            localization_candidates,
+            localization_projection,
+        ) = await compare_packets_area.collect_compare_time_localization_support(
+            config=localization_config,
+            goal=goal,
+            packet=packet,
+            reference_records=reference_records,
+            captures=captures,
+        )
+        segmentation_projection = await compare_packets_area.collect_compare_time_segmentation_support(
+            config=segmentation_config,
+            goal=goal,
+            packet_id=packet.packet_id,
+            packet_label=packet.packet_label,
+            target_view=packet.target_view,
+            scope_label=packet.scope_label,
+            target_objects=packet.target_objects,
+            reference_records=reference_records,
+            captures=captures,
+            localization_candidates=localization_candidates,
+        )
+        part_segmentation = compare_packets_area.merge_compare_time_part_segmentation(
+            localization_projection,
+            segmentation_projection,
+        )
+        if part_segmentation is None:
+            part_segmentation = _disabled_localized_support_result()
+        support_evidence = build_compare_support_evidence(None, part_segmentation=part_segmentation)
+        localization_candidates_count = len(localization_candidates)
+        query_labels = compare_packets_area._query_labels_for_packet(packet)
+
+    return [
+        {
+            "backend": backend_name,
+            "status": "success",
+            "localized_optional_mode": "packet_support",
+            "result": {
+                "goal": goal,
+                "target_object": getattr(args, "target_object", None),
+                "target_view": getattr(args, "target_view", None),
+                "localized_support_reason": packet.localized_support_reason,
+                "query_labels": query_labels,
+                "localization_candidate_count": localization_candidates_count,
+                "part_segmentation": part_segmentation.model_dump(mode="json", exclude_none=True),
+                "support_evidence": [item.model_dump(mode="json", exclude_none=True) for item in support_evidence],
+            },
+        }
+    ]
+
+
 async def _run(args: Any) -> list[dict[str, Any]]:
     golden = _resolve_golden(args)
+    if args.mode == "localized-support":
+        return await _run_localized_support_harness(args, golden=golden)
     request = _build_request_from_args(args, golden=golden)
     if args.fixture_only:
         return [
@@ -442,10 +649,25 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--bundle-json")
     parser.add_argument("--references-json")
     parser.add_argument("--truth-json")
-    parser.add_argument("--mode", choices=["compare", "reference-understanding"], default="compare")
+    parser.add_argument(
+        "--mode", choices=["compare", "reference-understanding", "localized-support"], default="compare"
+    )
     parser.add_argument("--before", action="append")
     parser.add_argument("--after", action="append")
     parser.add_argument("--reference", action="append")
+    parser.add_argument("--target-view")
+    parser.add_argument(
+        "--localized-support-reason",
+        choices=[
+            "part_missing_ambiguity",
+            "anchor_ambiguity",
+            "attachment_gap",
+            "seam_unclear",
+            "mask_needed",
+        ],
+        default="mask_needed",
+    )
+    parser.add_argument("--localized-support-query-label")
     parser.add_argument("--max-images", type=int, default=8)
     parser.add_argument("--max-tokens", type=int, default=400)
     parser.add_argument("--timeout-seconds", type=float, default=60.0)
@@ -479,7 +701,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--gemini-api-key-env", default=os.getenv("VISION_GEMINI_API_KEY_ENV"))
     parser.add_argument("--local-device", default=os.getenv("VISION_LOCAL_DEVICE", "cpu"))
     parser.add_argument("--local-dtype", default=os.getenv("VISION_LOCAL_DTYPE", "auto"))
-    parser.add_argument("--fixture-only", choices=["reference-understanding"])
+    parser.add_argument("--fixture-only", choices=["reference-understanding", "localized-support"])
     return parser
 
 
@@ -497,6 +719,15 @@ def main(argv: list[str] | None = None) -> int:
             parser.error(
                 "Provide --references-json or --reference when --mode=reference-understanding uses --bundle-json"
             )
+    elif args.mode == "localized-support":
+        if not args.localized_support_query_label:
+            parser.error("Provide --localized-support-query-label when --mode=localized-support")
+        if args.bundle_json is None and not args.after:
+            parser.error("Provide --after or --bundle-json when --mode=localized-support")
+        if args.bundle_json is None and not args.reference:
+            parser.error("Provide --reference or --references-json when --mode=localized-support")
+        if args.bundle_json is not None and args.references_json is None and not args.reference:
+            parser.error("Provide --references-json or --reference when --mode=localized-support uses --bundle-json")
     elif args.golden_json is None and args.bundle_json is None and not any([args.before, args.after, args.reference]):
         parser.error("Provide --bundle-json or at least one of --before/--after/--reference")
 

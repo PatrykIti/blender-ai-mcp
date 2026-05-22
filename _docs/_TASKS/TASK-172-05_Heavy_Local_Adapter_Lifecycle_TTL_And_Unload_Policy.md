@@ -1,7 +1,7 @@
 # TASK-172-05: Heavy Local Adapter Lifecycle, TTL, And Unload Policy
 
 **Parent:** [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md)
-**Depends On:** [TASK-172-04](./TASK-172-04_SAM_Or_SAM2_Local_Mask_And_Landmark_Support.md), [TASK-172-03-02](./TASK-172-03-02_Compare_Time_Localization_Projection_And_Transport.md)
+**Depends On:** [TASK-172-03-02](./TASK-172-03-02_Compare_Time_Localization_Projection_And_Transport.md)
 **Status:** ✅ Done
 **Completed:** 2026-05-23
 **Priority:** 🟠 High

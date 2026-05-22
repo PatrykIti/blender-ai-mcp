@@ -861,6 +861,10 @@ Current guided-flow behavior:
   for those same localized-support packets; literal localization boxes stay
   internal, and the public carrier remains the existing `part_segmentation`
   envelope
+- for operator-only reproduction of that owner seam without a full MCP loop,
+  `scripts/vision_harness.py --mode localized-support ...` now exercises the
+  packet-local support path directly while preserving the same advisory-only
+  transport rules
 - after newly created blockout parts during `checkpoint_iterate`, bounded
   initial transforms can remain available before the next checkpoint instead
   of immediately forcing a spatial refresh on every small adjustment

@@ -349,6 +349,102 @@ def test_collect_compare_time_segmentation_support_threads_localization_seed_box
     assert result.status == "available"
 
 
+def test_collect_compare_time_localization_support_treats_empty_candidates_as_unavailable(monkeypatch):
+    sidecar = SimpleNamespace(
+        enabled=True,
+        provider_name="generic_sidecar",
+        endpoint="http://localhost:9300/localize",
+        model="grounding-sidecar-v1",
+        api_key=None,
+        api_key_env=None,
+        timeout_seconds=15.0,
+        max_candidates=4,
+    )
+    packet = ReferenceComparePacketContract(
+        packet_id="packet:tail:test",
+        packet_kind="scope",
+        packet_label="tail_mass",
+        target_view="front",
+        scope_label="tail_mass",
+        target_objects=["Squirrel_Body"],
+        reference_ids=["ref_front"],
+        capture_labels=["target_front_after"],
+        compare_question="Compare the tail scope against the references.",
+        localized_support_reason="part_missing_ambiguity",
+    )
+    responses = {"http://localhost:9300/localize": {"candidates": []}}
+    captured: list[dict[str, Any]] = []
+    monkeypatch.setattr(
+        compare_packets_area.httpx,
+        "AsyncClient",
+        lambda timeout=None: _FakeSupportAsyncClient(responses=responses, captured=captured),
+    )
+
+    candidates, projected = asyncio.run(
+        compare_packets_area.collect_compare_time_localization_support(
+            config=sidecar,
+            goal="low poly creature",
+            packet=packet,
+            reference_records=[_reference("ref_front", label="front_ref", target_view="front")],
+            captures=[_capture("target_front_after", preset_name="target_front")],
+        )
+    )
+
+    assert captured
+    assert candidates == []
+    assert projected is not None
+    assert projected.status == "unavailable"
+    assert any("no bounded candidates" in note.lower() for note in projected.notes)
+
+
+def test_collect_compare_time_localization_support_timeout_returns_unavailable(monkeypatch):
+    sidecar = SimpleNamespace(
+        enabled=True,
+        provider_name="generic_sidecar",
+        endpoint="http://localhost:9300/localize",
+        model="grounding-sidecar-v1",
+        api_key=None,
+        api_key_env=None,
+        timeout_seconds=15.0,
+        max_candidates=4,
+    )
+    packet = ReferenceComparePacketContract(
+        packet_id="packet:tail:test",
+        packet_kind="scope",
+        packet_label="tail_mass",
+        target_view="front",
+        scope_label="tail_mass",
+        target_objects=["Squirrel_Body"],
+        reference_ids=["ref_front"],
+        capture_labels=["target_front_after"],
+        compare_question="Compare the tail scope against the references.",
+        localized_support_reason="part_missing_ambiguity",
+    )
+    responses = {"http://localhost:9300/localize": RuntimeError("/private/socket timeout")}
+    captured: list[dict[str, Any]] = []
+    monkeypatch.setattr(
+        compare_packets_area.httpx,
+        "AsyncClient",
+        lambda timeout=None: _FakeSupportAsyncClient(responses=responses, captured=captured),
+    )
+
+    candidates, projected = asyncio.run(
+        compare_packets_area.collect_compare_time_localization_support(
+            config=sidecar,
+            goal="low poly creature",
+            packet=packet,
+            reference_records=[_reference("ref_front", label="front_ref", target_view="front")],
+            captures=[_capture("target_front_after", preset_name="target_front")],
+        )
+    )
+
+    assert captured
+    assert candidates == []
+    assert projected is not None
+    assert projected.status == "unavailable"
+    assert "timeout" in " ".join(projected.notes).lower()
+
+
 def test_build_compare_packets_prefers_generic_view_over_target_any_view_fallback():
     packets = build_compare_packets(
         target_view=None,

@@ -82,7 +82,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Vision & Hybrid Loop
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md) | **Optional Vision Capability Runtime And Localized Perception** | 🔴 High | Active umbrella for the post-`TASK-171` vision-extension wave. The runtime now ships the internal optional-capability inventory, packet-local `localized_support_reason` gating, the default-off localization sidecar/provider seam, and compare-time support-safe localization projection on the existing advisory classifier/segmentation carriers. The remaining open work is the localized-support harness lane plus final board/changelog closeout. |
 
 ---
 
@@ -90,6 +89,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md) | **Optional Vision Capability Runtime And Localized Perception** | 🔴 High | 2026-05-23 |
 | [TASK-171](./TASK-171_Creature_Attachment_First_Build_Contract_And_Structured_Vision_Handoff.md) | **Creature Attachment-First Build Contract And Structured Vision Handoff** | 🔴 High | 2026-05-21 |
 | [TASK-170](./TASK-170_Reference_Target_Canonicalization_And_Support_Latency_Stabilization.md) | **Reference Target Canonicalization And Support Latency Stabilization** | 🔴 High | 2026-05-20 |
 | [TASK-169](./TASK-169_Reference_Guided_Quality_Drift_Regression_And_Runtime_Authority.md) | **Reference-Guided Quality Drift Regression And Runtime Authority** | 🔴 High | 2026-05-19 |

@@ -184,6 +184,56 @@ def test_vision_harness_fixture_only_reference_understanding_bundle_subprocess(t
 
 
 @pytest.mark.e2e
+def test_vision_harness_fixture_only_localized_support_subprocess(tmp_path: Path):
+    reference_path = tmp_path / "front_ref.png"
+    after_path = tmp_path / "after.png"
+    Image.new("RGBA", (8, 8), (0, 0, 0, 255)).save(reference_path)
+    after_path.write_bytes(b"after")
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "scripts/vision_harness.py",
+            "--backend",
+            "mlx_local",
+            "--goal",
+            "create a low-poly squirrel matching front and side references",
+            "--mode",
+            "localized-support",
+            "--target-object",
+            "Squirrel_Body",
+            "--target-view",
+            "front",
+            "--localized-support-reason",
+            "part_missing_ambiguity",
+            "--localized-support-query-label",
+            "tail_mass",
+            "--after",
+            str(after_path),
+            "--reference",
+            str(reference_path),
+            "--fixture-only",
+            "localized-support",
+        ],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    payload = json.loads(completed.stdout)
+    assert isinstance(payload, list) and payload
+    row = payload[0]
+    assert row["status"] == "fixture_only"
+    assert row["fixture_only_mode"] == "localized-support"
+    assert row["result"]["localized_support_reason"] == "part_missing_ambiguity"
+    assert row["result"]["query_labels"] == ["tail_mass"]
+    assert row["result"]["capture_count"] == 1
+    assert row["result"]["reference_count"] == 1
+
+
+@pytest.mark.e2e
 def test_vision_harness_live_reference_understanding_subprocess_with_fake_mlx_backend(tmp_path: Path):
     reference_path = tmp_path / "front_ref.png"
     Image.new("RGBA", (8, 8), (0, 0, 0, 255)).save(reference_path)

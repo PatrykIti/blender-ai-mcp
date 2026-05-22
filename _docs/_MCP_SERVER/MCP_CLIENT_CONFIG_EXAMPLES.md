@@ -235,6 +235,25 @@ When this sidecar is enabled, staged compare still runs it only for packets
 that already carry a bounded `localized_support_reason`, and public transport
 still projects only support-safe crops/anchors through `part_segmentation`.
 
+Operator harness example:
+
+```bash
+VISION_LOCALIZATION_ENABLED=true \
+VISION_LOCALIZATION_ENDPOINT=http://127.0.0.1:9300/localize \
+VISION_SEGMENTATION_ENABLED=true \
+VISION_SEGMENTATION_ENDPOINT=http://127.0.0.1:9100/segment \
+poetry run python scripts/vision_harness.py \
+  --backend mlx_local \
+  --goal "create a low-poly squirrel matching front and side references" \
+  --mode localized-support \
+  --target-object Squirrel_Body \
+  --target-view front \
+  --localized-support-reason part_missing_ambiguity \
+  --localized-support-query-label tail_mass \
+  --after /tmp/squirrel_front_capture.png \
+  --reference /tmp/squirrel_front_reference.png
+```
+
 ## Docker Guided Profile
 
 Smallest practical docker-backed guided profile:

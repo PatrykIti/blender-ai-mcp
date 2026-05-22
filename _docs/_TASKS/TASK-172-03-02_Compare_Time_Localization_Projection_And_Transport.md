@@ -1,7 +1,7 @@
 # TASK-172-03-02: Compare-Time Localization Projection And Transport
 
 **Parent:** [TASK-172-03](./TASK-172-03_GroundingDINO_Or_OWL_Localization_For_Packet_Bounded_Part_Ambiguity.md)
-**Depends On:** [TASK-172-03-01](./TASK-172-03-01_Localization_Runtime_Config_And_Provider_Boundary.md), [TASK-172-04](./TASK-172-04_SAM_Or_SAM2_Local_Mask_And_Landmark_Support.md)
+**Depends On:** [TASK-172-03-01](./TASK-172-03-01_Localization_Runtime_Config_And_Provider_Boundary.md)
 **Status:** ✅ Done
 **Completed:** 2026-05-23
 **Priority:** 🔴 High
