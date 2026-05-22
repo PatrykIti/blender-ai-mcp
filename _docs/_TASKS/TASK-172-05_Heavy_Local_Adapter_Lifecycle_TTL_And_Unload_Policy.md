@@ -1,26 +1,28 @@
 # TASK-172-05: Heavy Local Adapter Lifecycle, TTL, And Unload Policy
 
 **Parent:** [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md)
+**Depends On:** [TASK-172-04](./TASK-172-04_SAM_Or_SAM2_Local_Mask_And_Landmark_Support.md), [TASK-172-03](./TASK-172-03_GroundingDINO_Or_OWL_Localization_For_Packet_Bounded_Part_Ambiguity.md)
 **Status:** ⏳ To Do
 **Priority:** 🟠 High
-**Objective:** Introduce one explicit shared-owner lifecycle policy for reusable heavy in-process local optional adapters, and add TTL/unload only if this leaf first establishes real shared backend reuse worth managing.
+**Objective:** Decide whether the first shipped in-process optional adapter family justifies shared reuse on current repo seams, and add TTL/unload only if that post-integration decision proves real shared backend pressure worth managing. External-provider and sidecar-process lifecycle stays operator-managed unless a later task explicitly promotes it into the server runtime.
 **Repository Touchpoints:** `server/adapters/mcp/vision/runtime.py`, `server/adapters/mcp/vision/backends.py`, `server/adapters/mcp/vision/config.py`, `server/adapters/mcp/vision/runner.py`, `server/infrastructure/config.py`, `server/infrastructure/di.py`, `tests/unit/adapters/mcp/test_vision_runtime_config.py`, `tests/unit/adapters/mcp/test_vision_runner.py`, `tests/unit/adapters/mcp/test_vision_external_backend.py`, `tests/unit/adapters/mcp/test_vision_local_backend.py`, `_docs/_VISION/README.md`
 **Acceptance Criteria:**
-- this leaf names one concrete first shipping owner class for heavy in-process
-  optional adapters, or explicitly closes with a documented
-  `request_scoped_only` verdict if no such owner is justified yet
-- TTL/unload is introduced only when that first owner actually reuses loaded
-  adapter state across requests or packets
-- cheap, lightweight, or naturally per-request branches are not routed through
-  the shared-owner lifecycle path
-- unload behavior, when implemented, is best-effort, bounded, and safe when the
-  chosen shared owner is idle under the selected process-wide or ref-counted
-  ownership model
+- one concrete owner mode is documented for the first reusable in-process
+  optional adapter family: `request_scoped_only` or
+  `resolver_owned_shared_local`
+- if `resolver_owned_shared_local` is selected, one shared owner exposes
+  bounded acquire/release behavior and optional TTL/unload controls
+- if `request_scoped_only` is selected, no shared lifecycle path is introduced
+  and the closeout notes explicitly record that verdict
+- cheap or per-request branches remain outside the shared-owner path
 
 ## Implementation Notes
 
 - the current repo already avoids eager bootstrap loads; the missing gap is
   reusable heavy-adapter ownership, not "add TTL everywhere"
+- this leaf is a post-provider optimization rather than a prerequisite for
+  sidecar-only shipping; external or sidecar process lifecycle remains
+  operator-managed unless a later task promotes it into the server runtime
 - first concrete ownership decision must choose one of:
   - `request_scoped_only`
   - `resolver_owned_shared_local`

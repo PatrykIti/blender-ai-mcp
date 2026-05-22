@@ -3,10 +3,10 @@
 **Parent:** [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md)
 **Status:** ⏳ To Do
 **Priority:** 🟠 High
-**Objective:** Add harness support, negative coverage, and operator-facing docs for localized optional perception paths without changing default backend-running semantics or public authority boundaries.
-**Repository Touchpoints:** `scripts/vision_harness.py`, `tests/unit/scripts/test_script_tooling.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_public_surface_docs.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/integration/test_mcp_transport_modes.py`, `tests/e2e/integration/test_guided_surface_contract_parity.py`, `_docs/_VISION/README.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
+**Objective:** Add explicit staged-compare/localized-support harness coverage or expand the existing `scripts/vision_harness.py` into that role, then add negative coverage and operator-facing docs for localized optional perception paths without changing default backend-running semantics or public authority boundaries.
+**Repository Touchpoints:** `scripts/vision_harness.py`, `tests/unit/scripts/test_script_tooling.py`, `tests/e2e/vision/test_reference_understanding_fixture_only_harness.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_public_surface_docs.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`, `_docs/_VISION/README.md`, `_docs/_MCP_SERVER/README.md`, `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 **Acceptance Criteria:**
-- the harness can exercise localized optional-perception paths through one explicit opt-in mode or flag without changing the current default backend-running path
+- the harness can exercise localized optional-perception paths through one explicit opt-in staged-compare/localized-support mode, or an equivalent new compare-harness subprocess suite, without changing the current default backend-running path
 - negative coverage proves disabled, unavailable, timeout, and empty-result behavior for optional adapters
 - operator docs describe setup, degraded behavior, and advisory-only limits without implying truth or gate authority
 
@@ -17,6 +17,10 @@
 - this leaf owns only the localized-perception delta on harness/docs surfaces;
   generic capability-aware runtime harness/docs closeout remains on
   `TASK-140-06-04`
+- the current `scripts/vision_harness.py` is a raw backend/request runner, not
+  yet a staged compare packet harness; this leaf must either expand it into
+  that role explicitly or introduce a dedicated compare-harness helper before
+  treating it as the primary localized-support owner
 - likely harness owners:
   - `_run_backend(...)`
   - `_run(...)`
@@ -49,15 +53,19 @@ elif args.localized_optional_mode == "packet_support":
 ## Tests To Add/Update
 
 - `tests/unit/scripts/test_script_tooling.py`
+- `tests/e2e/vision/test_reference_understanding_fixture_only_harness.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/e2e/integration/test_guided_gate_state_transport.py`
-- `tests/e2e/integration/test_mcp_transport_modes.py`
-- `tests/e2e/integration/test_guided_surface_contract_parity.py`
+- `tests/e2e/vision/test_reference_understanding_runtime_surface.py`
 - `tests/e2e/vision/test_reference_guided_creature_comparison.py` when harness
-  subprocess defaults or CLI execution semantics change
-- `tests/e2e/vision/test_real_view_variant_model_comparison.py` when harness
-  comparison subprocess semantics change
+  subprocess defaults, staged packet semantics, or CLI execution semantics
+  change
+- optional secondary smoke/eval lanes only when the branch widens scope beyond
+  localized-support ownership:
+  - `tests/e2e/integration/test_mcp_transport_modes.py`
+  - `tests/e2e/integration/test_guided_surface_contract_parity.py`
+  - `tests/e2e/vision/test_real_view_variant_model_comparison.py`
 
 ## Docs To Update
 
@@ -80,9 +88,10 @@ elif args.localized_optional_mode == "packet_support":
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/scripts/test_script_tooling.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py tests/e2e/integration/test_mcp_transport_modes.py tests/e2e/integration/test_guided_surface_contract_parity.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_understanding_fixture_only_harness.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_understanding_runtime_surface.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_guided_creature_comparison.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_real_view_variant_model_comparison.py -q`
 - `PYTHONPATH=. poetry run pytest ./tests/unit`
 
 ## Validation Category

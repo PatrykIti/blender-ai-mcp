@@ -1,12 +1,12 @@
-# TASK-172-04: SAM Or SAM2 Local Mask And Landmark Support
+# TASK-172-04: SAM Or SAM2 Packet-Local Mask, Crop, And Derived-Anchor Support
 
 **Parent:** [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md)
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
-**Objective:** Extend the optional segmentation lane so localized SAM / SAM2-style masks and landmarks can support packet-bounded creature/reference ambiguity without becoming a default full-image heavy pass.
-**Repository Touchpoints:** `server/adapters/mcp/vision/reference_support.py`, `server/adapters/mcp/vision/config.py`, `server/adapters/mcp/vision/runtime.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/contracts/reference.py`, `server/infrastructure/config.py`, `tests/unit/adapters/mcp/test_reference_compare_packets.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_public_surface_docs.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `_docs/_VISION/README.md`
+**Objective:** Extend the optional segmentation lane so packet-local SAM-family masks, crops, and optional derived anchors can support creature/reference ambiguity without becoming a default full-image heavy pass.
+**Repository Touchpoints:** `server/adapters/mcp/vision/config.py`, `server/adapters/mcp/vision/runtime.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_silhouette.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/contracts/reference.py`, `server/infrastructure/config.py`, `tests/unit/adapters/mcp/test_reference_compare_packets.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_public_surface_docs.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`, `_docs/_VISION/README.md`
 **Acceptance Criteria:**
-- packet-bounded localized masks/landmarks can be returned through the existing segmentation/public support seams
+- packet-bounded localized masks/crops and optional derived anchors can be returned through the existing segmentation/public support seams
 - segmentation stays `advisory_only=True` and failure/absence still degrades to `disabled` or `unavailable`
 - localized masks can pair with localization candidates or bounded region hints instead of forcing whole-reference heavy passes
 
@@ -14,6 +14,13 @@
 
 - build on the existing segmentation sidecar seam rather than inventing a
   parallel mask runtime
+- treat the SAM-vs-SAM2 provider choice as an implementation detail on the
+  same seam; an image-packet baseline may ship on a SAM-compatible predictor,
+  while SAM2 is justified when its image predictor or future tracking path
+  materially helps
+- keep `reference_compare_packets.py` as the durable compare-time execution
+  owner; do not move packet-local segmentation execution onto the RU-specific
+  `vision/reference_support.py` seam unless shared helpers are extracted first
 - concrete owner seams for this leaf:
   - `ReferencePartSegmentationLandmarkContract`
   - `ReferencePartSegmentationContract`
@@ -25,13 +32,17 @@
 - acceptable first support shapes:
   - packet-local mask refs
   - crop refs
-  - 2D landmarks for part tips, silhouette anchor points, or seam-adjacent cues
+  - optional derived 2D anchors for part tips, silhouette anchor points, or
+    seam-adjacent cues
 - preferred first use cases:
   - tail silhouette vs detached blob ambiguity
   - snout vs head seating ambiguity
   - ear/head local boundary ambiguity
   - limb/body seam-local cues where deterministic truth still lacks clean
     visual grounding
+- landmarks on the current contract are derived anchors from masks/crops unless
+  a provider already emits an equivalent bounded point set; do not require
+  SAM/SAM2-native landmark output
 - if part localization lands first, let localization boxes seed segmentation;
   otherwise keep mask requests bounded to existing packet-local hints
 
@@ -61,9 +72,11 @@ return ReferencePartSegmentationContract(
 
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_reference_compare_packets.py`
+- `tests/unit/adapters/mcp/test_contract_payload_parity.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
 - `tests/e2e/integration/test_guided_gate_state_transport.py`
+- `tests/e2e/vision/test_reference_understanding_runtime_surface.py`
 - optional harness/eval coverage behind explicit sidecar enablement
 
 ## Docs To Update
@@ -84,10 +97,11 @@ return ReferencePartSegmentationContract(
 ## Validation Commands
 
 - `git diff --check`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_compare_packets.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/adapters/mcp/test_vision_runtime_config.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_compare_packets.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/adapters/mcp/test_vision_runtime_config.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_understanding_runtime_surface.py -q`
 - `PYTHONPATH=. poetry run pytest ./tests/unit`
 
 ## Validation Category
 
-- localized segmentation sidecar and payload proof
+- localized SAM-family segmentation sidecar and payload proof

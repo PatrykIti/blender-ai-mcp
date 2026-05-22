@@ -1,14 +1,14 @@
-# TASK-172-03: GroundingDINO Or OWL Localization For Packet-Bounded Part Ambiguity
+# TASK-172-03: GroundingDINO Or OWL-ViT / OWLv2 Packet Localization For Part Ambiguity
 
 **Parent:** [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md)
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
-**Objective:** Add one optional packet-bounded text-conditioned localization adapter family that can produce bounded compare-time crop/landmark-style part cues for ambiguous reference regions during staged compare and iterate work, while reusing the existing compare-time optional-perception public carriers.
-**Repository Touchpoints:** `server/adapters/mcp/vision/reference_support.py`, `server/adapters/mcp/vision/config.py`, `server/adapters/mcp/vision/runtime.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/areas/reference_planner.py`, `server/adapters/mcp/contracts/reference.py`, `server/infrastructure/config.py`, `tests/unit/adapters/mcp/test_reference_compare_packets.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_vision_runtime_config.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md`
+**Objective:** Add one optional packet-bounded text-conditioned localization adapter family that can produce bounded compare-time localization candidates for ambiguous reference regions during staged compare and iterate work, keep those candidates tied to packet/reference/view provenance, and project only support-safe crops or derived anchor hints on the current public carriers.
+**Repository Touchpoints:** `server/adapters/mcp/vision/config.py`, `server/adapters/mcp/vision/runtime.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_silhouette.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/areas/reference_planner.py`, `server/adapters/mcp/contracts/reference.py`, `server/infrastructure/config.py`, `tests/unit/adapters/mcp/test_reference_compare_packets.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_vision_runtime_config.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`, `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md`
 **Acceptance Criteria:**
-- a default-off localization adapter can emit bounded compare-time crop/landmark-style cues for roles such as `tail_mass`, `snout_mass`, `ear_pair`, or limb roles on staged compare/iterate packets
+- a default-off localization adapter can emit bounded compare-time localization candidates for roles such as `tail_mass`, `snout_mass`, `ear_pair`, or limb roles on staged compare/iterate packets
 - localization output is tied to packet/reference/view provenance and remains advisory-only
-- the first compare-time shipping path does not add a new public box contract; it projects localization onto the existing compare-time `part_segmentation` carrier or is split into a follow-on contract leaf before implementation
+- the first shipped compare-time path projects localization onto the existing `part_segmentation` public carrier with no new public box field on the compare-time surface
 
 ## Implementation Notes
 
@@ -17,9 +17,16 @@
   - one new dedicated config lane only if the existing segmentation/classifier
     config cannot express localization cleanly
   - vendor-specific behavior stays behind a vendor-neutral internal adapter seam
-- this first leaf is compare-time only; RU-side boxed artifact linkage remains
+- this first leaf is compare-time only and intentionally follows the existing
+  segmentation seam expansion from `TASK-172-04`; RU-side boxed artifact
+  linkage remains
   on the separate RU artifact/readiness owners and is not reopened here
-- reuse the existing compare-time optional-perception public carriers:
+- keep `reference_compare_packets.py` as the durable compare-time execution
+  owner; do not turn the RU-specific `vision/reference_support.py` helper into
+  the default packet-evidence execution seam
+- internal localization candidates may keep literal box data for downstream
+  segmentation seeding, but first-wave public transport stays support-only
+  through:
   - `ReferencePartSegmentationContract`
   - existing compare-time `support_evidence` paths that already use
     `evidence_kind="part_segmentation"`
@@ -35,8 +42,8 @@
   - compare-packet-local support collection
   - planner / feedback consumers that already read support evidence
 - acceptable first adapter families:
-  - GroundingDINO-like text-conditioned boxes
-  - OWL / OWL-ViT-style text-conditioned localization
+  - GroundingDINO-like phrase-grounded boxes
+  - OWL-ViT / OWLv2-style open-vocabulary localization
 - first use cases should be narrow:
   - missing/ambiguous tail or snout region
   - ear vs eye vs face-attachment ambiguity
@@ -52,7 +59,7 @@
   existing `ReferencePartSegmentationPartContract` fields:
   - `crop_path`
   - `confidence`
-  - optional landmark anchors
+  - optional derived anchor hints
   rather than adding a new public box field in this leaf
 - keep DINOv2 dense features out of this first wave; they are not the most
   direct tool for actionable LLM-facing part feedback
@@ -60,7 +67,7 @@
 ## Pseudocode
 
 ```python
-boxes = localize_parts(
+localization_candidates = localize_parts(
     labels=["tail_mass", "body_core"],
     reference_ids=packet.reference_ids,
     capture_labels=packet.capture_labels,
@@ -68,7 +75,7 @@ boxes = localize_parts(
 return ReferencePartSegmentationContract(
     status="available",
     advisory_only=True,
-    parts=project_localization_to_crops_and_landmarks(boxes),
+    parts=project_localization_to_crops_and_landmarks(localization_candidates),
 )
 ```
 
@@ -85,7 +92,9 @@ return ReferencePartSegmentationContract(
 - `tests/unit/adapters/mcp/test_reference_compare_packets.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
 - `tests/unit/adapters/mcp/test_contract_payload_parity.py`
+- `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/e2e/integration/test_guided_gate_state_transport.py`
+- `tests/e2e/vision/test_reference_understanding_runtime_surface.py`
 - optional harness/eval coverage only behind explicit env/config flags
 
 ## Docs To Update
@@ -108,8 +117,9 @@ return ReferencePartSegmentationContract(
 ## Validation Commands
 
 - `git diff --check`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_reference_compare_packets.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_reference_compare_packets.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_public_surface_docs.py -q`
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
+- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_understanding_runtime_surface.py -q`
 - `PYTHONPATH=. poetry run pytest ./tests/unit`
 
 ## Validation Category
