@@ -38,6 +38,13 @@ ReferenceComparePacketStatusLiteral = Literal["success", "blocked", "low_informa
 ReferenceCompareRankingStatusLiteral = Literal["success", "skipped", "not_needed", "error"]
 ReferenceComparePacketGuidanceLiteral = Literal["ready", "clean", "low_information", "blocked"]
 ReferenceCompareRankingRecommendationLiteral = Literal["rank", "skip_clean", "skip_low_information", "skip_blocked"]
+ReferenceLocalizedSupportReasonLiteral = Literal[
+    "part_missing_ambiguity",
+    "anchor_ambiguity",
+    "attachment_gap",
+    "seam_unclear",
+    "mask_needed",
+]
 ReferenceCompareSupportEvidenceKindLiteral = Literal["silhouette_metric", "action_hint", "part_segmentation"]
 ReferencePlannerSourceLiteral = Literal[
     "vision",
@@ -539,6 +546,7 @@ class ReferenceComparePacketContract(MCPContract):
     ranking_status: ReferenceCompareRankingStatusLiteral = "not_needed"
     packet_status: ReferenceComparePacketGuidanceLiteral | None = None
     ranking_recommendation: ReferenceCompareRankingRecommendationLiteral | None = None
+    localized_support_reason: ReferenceLocalizedSupportReasonLiteral | None = None
     status_reason: str | None = None
     support_evidence: list[ReferenceCompareSupportEvidenceContract] = []
     evidence_summary: str | None = None

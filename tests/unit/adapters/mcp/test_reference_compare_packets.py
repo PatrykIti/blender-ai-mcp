@@ -14,11 +14,18 @@ from server.adapters.mcp.areas.reference_compare_packets import (
 from server.adapters.mcp.areas.reference_planner import build_compare_packets, synthesize_packet_vision_result
 from server.adapters.mcp.areas.reference_silhouette import build_compare_support_evidence
 from server.adapters.mcp.contracts.reference import (
+    ReferenceActionHintContract,
     ReferenceCompareDiagnosticsContract,
     ReferenceComparePacketContract,
     ReferenceImageRecordContract,
+    ReferenceSilhouetteAnalysisContract,
 )
-from server.adapters.mcp.contracts.scene import SceneAssembledTargetScopeContract, SceneTruthFollowupContract
+from server.adapters.mcp.contracts.scene import (
+    SceneAssembledTargetScopeContract,
+    SceneCorrectionTruthBundleContract,
+    SceneCorrectionTruthSummaryContract,
+    SceneTruthFollowupContract,
+)
 from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
 from server.adapters.mcp.sampling.result_types import (
     VisionAssistContract,
@@ -120,6 +127,94 @@ def test_build_compare_packets_simple_front_and_side_use_explicit_view_packets()
     assert packets.packet_count == 2
     assert [packet.target_view for packet in packets.packets] == ["front", "side"]
     assert [packet.packet_kind for packet in packets.packets] == ["view", "view"]
+
+
+def test_localized_support_reason_is_none_without_truth_or_perception_trigger():
+    packet = ReferenceComparePacketContract(
+        packet_id="packet:test:none",
+        packet_kind="view",
+        packet_label="front packet",
+        target_view="front",
+        target_objects=["Creature"],
+        reference_ids=["ref_front"],
+        capture_labels=["target_front_after"],
+        compare_question="Compare the front silhouette against the references.",
+    )
+    truth_bundle = SceneCorrectionTruthBundleContract(
+        scope=SceneAssembledTargetScopeContract(
+            scope_kind="single_object",
+            primary_target="Creature",
+            object_names=["Creature"],
+            object_count=1,
+        ),
+        summary=SceneCorrectionTruthSummaryContract(
+            pairing_strategy="none",
+            pair_count=0,
+            evaluated_pairs=0,
+            contact_failures=0,
+            overlap_pairs=0,
+            separated_pairs=0,
+            misaligned_pairs=0,
+        ),
+        checks=[],
+    )
+    silhouette = ReferenceSilhouetteAnalysisContract(status="available")
+
+    reason = compare_packets_area._resolve_localized_support_reason(
+        packet=packet,
+        packet_truth_bundle=truth_bundle,
+        silhouette_analysis=silhouette,
+        action_hints=[],
+    )
+
+    assert reason is None
+
+
+def test_localized_support_reason_uses_mask_needed_for_packet_action_hints():
+    packet = ReferenceComparePacketContract(
+        packet_id="packet:test:mask",
+        packet_kind="view",
+        packet_label="front packet",
+        target_view="front",
+        target_objects=["Creature"],
+        reference_ids=["ref_front"],
+        capture_labels=["target_front_after"],
+        compare_question="Compare the front silhouette against the references.",
+    )
+    truth_bundle = SceneCorrectionTruthBundleContract(
+        scope=SceneAssembledTargetScopeContract(
+            scope_kind="single_object",
+            primary_target="Creature",
+            object_names=["Creature"],
+            object_count=1,
+        ),
+        summary=SceneCorrectionTruthSummaryContract(
+            pairing_strategy="none",
+            pair_count=0,
+            evaluated_pairs=0,
+            contact_failures=0,
+            overlap_pairs=0,
+            separated_pairs=0,
+            misaligned_pairs=0,
+        ),
+        checks=[],
+    )
+    silhouette = ReferenceSilhouetteAnalysisContract(status="available")
+
+    reason = compare_packets_area._resolve_localized_support_reason(
+        packet=packet,
+        packet_truth_bundle=truth_bundle,
+        silhouette_analysis=silhouette,
+        action_hints=[
+            ReferenceActionHintContract(
+                hint_id="front_upper_profile",
+                hint_type="widen_upper_profile",
+                summary="Action hint: Upper silhouette band is narrower than the reference.",
+            )
+        ],
+    )
+
+    assert reason == "mask_needed"
 
 
 def test_build_compare_packets_prefers_generic_view_over_target_any_view_fallback():

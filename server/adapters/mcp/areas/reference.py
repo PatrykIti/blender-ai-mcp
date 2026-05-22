@@ -1393,16 +1393,26 @@ def _configured_part_segmentation() -> ReferencePartSegmentationContract:
 
     resolver = get_vision_backend_resolver()
     runtime_config = getattr(resolver, "runtime_config", None)
+    inventory = getattr(runtime_config, "optional_capability_inventory", None) if runtime_config is not None else None
+    sidecar_state = inventory.get("part_segmentation") if inventory is not None else None
     sidecar = getattr(runtime_config, "active_segmentation_sidecar", None) if runtime_config is not None else None
     if sidecar is None or not getattr(sidecar, "enabled", False):
         return _disabled_part_segmentation()
     return ReferencePartSegmentationContract(
         status="unavailable",
-        provider_name=getattr(sidecar, "provider_name", None),
+        provider_name=(
+            getattr(sidecar_state, "provider_name", None)
+            if sidecar_state is not None
+            else getattr(sidecar, "provider_name", None)
+        ),
         advisory_only=True,
         parts=[],
         notes=[
-            "Optional part segmentation sidecar is enabled on the runtime config.",
+            (
+                str(getattr(sidecar_state, "prerequisite_summary", "") or "")
+                if sidecar_state is not None
+                else "Optional part segmentation sidecar is enabled on the runtime config."
+            ),
             "No compare-time sidecar result was collected for this staged compare run.",
             "The sidecar path is advisory-only and separate from vision_contract_profile routing.",
         ],

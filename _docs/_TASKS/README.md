@@ -82,7 +82,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Vision & Hybrid Loop
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md) | **Optional Vision Capability Runtime And Localized Perception** | 🔴 High | Board-level umbrella for the post-`TASK-171` vision-extension wave: reuse the shipped `TASK-128-03` / `TASK-164` segmentation and classifier seams, complete capability-aware runtime follow-ons on the existing owners, extend packet-bounded SAM-family mask/crop support first, split later GroundingDINO / OWL-ViT / OWLv2 localization into runtime/provider plus compare-time projection leaves, and retrofit reusable heavy-local lifecycle only when an in-process adapter actually needs it. |
+| [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md) | **Optional Vision Capability Runtime And Localized Perception** | 🔴 High | Active umbrella for the post-`TASK-171` vision-extension wave. The runtime now ships the internal optional-capability inventory plus packet-local `localized_support_reason` gating on the existing advisory classifier/segmentation seams, while localization runtime/provider work, heavy-local lifecycle policy, harness coverage, and final closeout remain open under the same family. |
 
 ---
 

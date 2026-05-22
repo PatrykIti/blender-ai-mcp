@@ -2,7 +2,8 @@
 
 **Parent:** [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md)
 **Depends On:** [TASK-172-01](./TASK-172-01_Internal_Vision_Capability_Inventory_And_Prerequisite_Diagnostics.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-22
 **Priority:** 🔴 High
 **Objective:** Define exactly when RU refresh may merge already-available optional support artifacts and when staged compare/iterate may actively invoke localized optional perception, while keeping that support packet-bounded, advisory-only, and on the current public surfaces.
 **Repository Touchpoints:** `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/reference_images_runtime.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_silhouette.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/areas/router.py`, `server/adapters/mcp/vision/reference_support.py`, `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/contracts/quality_gates.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_reference_compare_packets.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/unit/adapters/mcp/test_public_surface_docs.py`, `tests/unit/router/application/test_router_contracts.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`, `_docs/_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md`
@@ -108,6 +109,15 @@ if packet.localized_support_reason in {"seam_unclear", "part_missing_ambiguity"}
 
 - record the new activation-policy and support-contract vocabulary in the first
   `TASK-172` runtime entry that ships this leaf
+
+## Completion Summary
+
+- normalized compare-time optional support around one packet-local
+  `localized_support_reason` field on `ReferenceComparePacketContract`
+- kept active localized support bounded to compare-time packet execution
+  instead of broad RU-time or whole-image heavy passes
+- made the optional segmentation sidecar no-op cleanly on packets that have no
+  localized-support trigger reason, even when the sidecar is configured
 
 ## Status / Board Update
 

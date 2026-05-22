@@ -1,7 +1,8 @@
 # TASK-172-01: Internal Vision Capability Inventory And Prerequisite Diagnostics
 
 **Parent:** [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-22
 **Priority:** 🔴 High
 **Objective:** Add one canonical typed internal capability-inventory model and additive prerequisite-diagnostics seam for optional perception/runtime branches without inventing a second public capability system or new MCP discovery flow.
 **Repository Touchpoints:** `server/adapters/mcp/vision/config.py`, `server/adapters/mcp/vision/runtime.py`, `server/adapters/mcp/vision/backends.py`, `server/adapters/mcp/vision/runner.py`, `server/adapters/mcp/vision/reference_support.py`, `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/contracts/router.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_understanding.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/areas/router.py`, `server/adapters/mcp/session_capabilities_state.py`, `server/adapters/mcp/sampling/result_types.py`, `server/infrastructure/config.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_vision_runtime_config.py`, `tests/unit/adapters/mcp/test_vision_runner.py`, `tests/unit/adapters/mcp/test_vision_external_backend.py`, `tests/unit/adapters/mcp/test_vision_result_types.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/unit/router/application/test_router_contracts.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `_docs/_VISION/README.md`, `_docs/_MCP_SERVER/README.md`
@@ -97,6 +98,16 @@ feedback = build_optional_capability_diagnostics(
 
 - include in the first `TASK-172` implementation changelog entry when this leaf
   lands
+
+## Completion Summary
+
+- added one internal typed optional capability inventory on the runtime config
+  seam
+- covered the external runtime capability metadata branch, optional reference
+  classifier, optional packet-local segmentation, and the planned
+  part-localization slot
+- kept operator-visible diagnostics additive on existing RU, compact feedback,
+  and router-status carriers instead of adding a new public capability tool
 
 ## Status / Board Update
 

@@ -32,5 +32,5 @@
   },
   "related_tools": ["reference_images", "reference_compare_current_view", "scene_get_viewport", "router_get_status"],
   "patterns": [],
-  "description": "Captures one deterministic multi-view stage checkpoint for a target object using the compact or rich preset profile, then compares that checkpoint set against the active goal plus attached reference images. The staged compare may split internally into bounded view/scope packets; rich responses and compact uncertainty paths can expose additive top-level compare_diagnostics with packet ids, pass status, packet-local support_evidence, conflict notes, and budget_control limits."
+  "description": "Captures one deterministic multi-view stage checkpoint for a target object using the compact or rich preset profile, then compares that checkpoint set against the active goal plus attached reference images. The staged compare may split internally into bounded view/scope packets; rich responses and compact uncertainty paths can expose additive top-level compare_diagnostics with packet ids, pass status, packet-local localized_support_reason, support_evidence, conflict notes, and budget_control limits."
 }

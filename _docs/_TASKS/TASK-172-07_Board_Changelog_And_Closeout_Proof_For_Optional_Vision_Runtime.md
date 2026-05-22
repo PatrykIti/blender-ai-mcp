@@ -1,7 +1,7 @@
 # TASK-172-07: Board, Changelog, And Closeout Proof For Optional Vision Runtime
 
 **Parent:** [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md)
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
 **Priority:** 🟠 High
 **Objective:** Close the `TASK-172` family with board/changelog synchronization and explicit proof-lane accounting after the implementation leaves have shipped.
 **Repository Touchpoints:** `_docs/_TASKS/README.md`, `_docs/_CHANGELOG/README.md`, `_docs/_CHANGELOG/*`, `_docs/_TASKS/TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md`, `_docs/_TASKS/TASK-172-0*.md`
@@ -38,6 +38,13 @@
 
 - add the historical closeout entry or entries when the first `TASK-172`
   implementation slice lands and extend them as the family closes
+
+## Progress Summary
+
+- current code/docs evidence is sufficient to close `TASK-172-01` and
+  `TASK-172-02`, and to close `TASK-172-04` administratively
+- board/changelog sync is still incomplete because `TASK-172-03*`,
+  `TASK-172-05`, and `TASK-172-06` remain open runtime work
 
 ## Status / Board Update
 

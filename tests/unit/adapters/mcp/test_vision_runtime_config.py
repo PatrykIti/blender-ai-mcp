@@ -17,7 +17,7 @@ from server.adapters.mcp.vision import (
     VisionRequest,
     build_vision_runtime_config,
 )
-from server.adapters.mcp.vision.config import VisionModelCapabilities
+from server.adapters.mcp.vision.config import VisionModelCapabilities, VisionOptionalCapabilityInventory
 from server.adapters.mcp.vision.model_profiles import resolve_fallback_model_capabilities
 from server.infrastructure.config import Config
 
@@ -693,6 +693,63 @@ def test_optional_segmentation_sidecar_uses_separate_opt_in_config_surface():
     assert runtime.segmentation_sidecar.model == "sam-sidecar-v1"
     assert runtime.segmentation_sidecar.api_key_env == "SEGMENTATION_API_KEY"
     assert runtime.segmentation_sidecar.max_parts == 12
+
+
+def test_optional_capability_inventory_projects_disabled_defaults_and_planned_localization():
+    runtime = build_vision_runtime_config(_base_config())
+
+    inventory = runtime.optional_capability_inventory
+
+    assert isinstance(inventory, VisionOptionalCapabilityInventory)
+    assert inventory.get("external_model_capabilities") is not None
+    assert inventory.get("external_model_capabilities").status == "disabled"
+    assert inventory.get("reference_classifier") is not None
+    assert inventory.get("reference_classifier").status == "disabled"
+    assert inventory.get("part_segmentation") is not None
+    assert inventory.get("part_segmentation").status == "disabled"
+    assert inventory.get("part_localization") is not None
+    assert inventory.get("part_localization").status == "planned"
+    assert inventory.get("part_localization").activation_scope == "compare_packet"
+    assert inventory.get("part_localization").lifecycle_class == "request_scoped_only"
+
+
+def test_optional_capability_inventory_projects_configured_classifier_and_segmentation_support():
+    runtime = build_vision_runtime_config(
+        _base_config(
+            VISION_ENABLED=True,
+            VISION_PROVIDER="openai_compatible_external",
+            VISION_EXTERNAL_PROVIDER="openrouter",
+            VISION_OPENROUTER_MODEL="google/gemma-3-27b-it:free",
+            VISION_OPENROUTER_API_KEY_ENV="OPENROUTER_API_KEY",
+            VISION_REFERENCE_CLASSIFIER_ENABLED=True,
+            VISION_SEGMENTATION_ENABLED=True,
+            VISION_SEGMENTATION_ENDPOINT="http://localhost:9100/segment",
+            VISION_SEGMENTATION_MODEL="sam-sidecar-v1",
+        )
+    )
+
+    inventory = runtime.optional_capability_inventory
+    external = inventory.get("external_model_capabilities")
+    classifier = inventory.get("reference_classifier")
+    segmentation = inventory.get("part_segmentation")
+
+    assert external is not None
+    assert external.status == "available"
+    assert external.provider_name == "openrouter"
+    assert external.lifecycle_class == "external_runtime"
+
+    assert classifier is not None
+    assert classifier.status == "available"
+    assert classifier.provider_name == "openrouter"
+    assert classifier.activation_scope == "reference_understanding"
+    assert classifier.lifecycle_class == "sidecar_process"
+
+    assert segmentation is not None
+    assert segmentation.status == "available"
+    assert segmentation.provider_name == "generic_sidecar"
+    assert segmentation.model_id == "sam-sidecar-v1"
+    assert segmentation.activation_scope == "compare_packet"
+    assert segmentation.lifecycle_class == "sidecar_process"
 
 
 def test_vision_request_carries_before_after_and_reference_images():

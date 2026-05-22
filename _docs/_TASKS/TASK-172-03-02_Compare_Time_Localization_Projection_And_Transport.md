@@ -18,9 +18,9 @@
 - use the expanded segmentation seam from `TASK-172-04` as the public
   projection carrier, so localization can seed or refine masks/crops without
   reopening the base `part_segmentation` contract vocabulary
-- if compare packets need one new typed reason field such as
-  `localized_support_reason`, add it here together with parity tests and
-  feedback/status projection
+- compare packets already expose the typed `localized_support_reason` seam from
+  `TASK-172-02`; this leaf should reuse that field and extend parity /
+  feedback/status projection only where localization-specific transport needs it
 - likely owner seams:
   - `build_compare_packets(...)`
   - `execute_compare_packets(...)`

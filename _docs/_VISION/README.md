@@ -740,10 +740,14 @@ Interpretation rules:
 - packet compare also receives compact silhouette/action-hint support evidence
   before the packet LLM phase runs; those CV items stay advisory-only and
   do not replace truth or gate authority
-- when the optional segmentation sidecar is enabled, packet compare may also
-  attach bounded `part_segmentation` output plus packet-local segmentation
-  support evidence; failures degrade to `status="unavailable"` notes instead of
-  breaking the staged loop
+- compare packets now also expose one normalized `localized_support_reason`
+  seam; only packets with that bounded reason may invoke optional localized
+  support such as compare-time segmentation
+- when the optional segmentation sidecar is enabled, packet compare may attach
+  bounded `part_segmentation` output plus packet-local segmentation support
+  evidence only for those localized-support packets; failures degrade to
+  `status="unavailable"` notes, while clean/no-trigger runs keep
+  `part_segmentation.status="disabled"`
 
 Current staged-loop reading order for creature work:
 
@@ -837,8 +841,9 @@ Boundary rules:
   `reference_understanding_summary` while staged compare/iterate keeps the
   separate `part_segmentation` envelope
 - staged compare/iterate may now execute one bounded packet-local advisory
-  sidecar pass and merge the returned parts into top-level `part_segmentation`
-  plus packet-local `support_evidence`
+  sidecar pass only when the packet carries a bounded
+  `localized_support_reason`, then merge the returned parts into top-level
+  `part_segmentation` plus packet-local `support_evidence`
 
 Current first-pass scored baseline on the synthetic repo scenarios:
 

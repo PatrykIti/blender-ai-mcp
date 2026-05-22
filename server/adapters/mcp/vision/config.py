@@ -14,6 +14,15 @@ VisionExternalProviderName = Literal["generic", "openrouter", "google_ai_studio"
 VisionContractProfile = Literal["generic_full", "google_family_compare"]
 VisionReferenceClassifierProviderName = Literal["generic_sidecar", "generic", "openrouter", "google_ai_studio"]
 VisionSegmentationProviderName = Literal["generic_sidecar"]
+VisionOptionalCapabilityName = Literal[
+    "external_model_capabilities",
+    "reference_classifier",
+    "part_segmentation",
+    "part_localization",
+]
+VisionOptionalCapabilityStatus = Literal["available", "disabled", "unavailable", "planned"]
+VisionOptionalCapabilityActivationScope = Literal["vision_request", "reference_understanding", "compare_packet"]
+VisionOptionalCapabilityLifecycleClass = Literal["request_scoped_only", "external_runtime", "sidecar_process"]
 VisionModelCapabilitySource = Literal["fallback_registry", "openrouter_api", "env_override", "unknown"]
 VISION_FAIL_SAFE_MAX_IMAGES = 12
 VISION_FAIL_SAFE_MAX_INPUT_CHARS = 48_000
@@ -223,6 +232,95 @@ class VisionRuntimeConfig(BaseModel):
 
         return self.segmentation_sidecar
 
+    @property
+    def optional_capability_inventory(self) -> "VisionOptionalCapabilityInventory":
+        """Return one typed internal inventory for optional vision support branches."""
+
+        capabilities: list[VisionOptionalCapabilityState] = []
+        external_config = self.openai_compatible_external
+        external_provider_name = external_config.provider_name if external_config is not None else None
+        external_model_id = external_config.model if external_config is not None else None
+        if self.provider == "openai_compatible_external" and external_config is not None:
+            external_prerequisite_summary = (
+                "External runtime capability metadata is available for bounded request policy."
+                if external_config.model_capabilities is not None
+                else "External runtime is configured, but capability metadata is not currently attached."
+            )
+            capabilities.append(
+                VisionOptionalCapabilityState(
+                    capability_name="external_model_capabilities",
+                    status="available",
+                    provider_name=external_provider_name,
+                    model_id=external_model_id,
+                    prerequisite_summary=external_prerequisite_summary,
+                    activation_scope="vision_request",
+                    lifecycle_class="external_runtime",
+                )
+            )
+        else:
+            capabilities.append(
+                VisionOptionalCapabilityState(
+                    capability_name="external_model_capabilities",
+                    status="disabled",
+                    provider_name=external_provider_name,
+                    model_id=external_model_id,
+                    prerequisite_summary="External model capability metadata is inactive on the current runtime.",
+                    activation_scope="vision_request",
+                    lifecycle_class="external_runtime",
+                )
+            )
+
+        reference_classifier = self.active_reference_classifier
+        capabilities.append(
+            VisionOptionalCapabilityState(
+                capability_name="reference_classifier",
+                status="available" if reference_classifier is not None else "disabled",
+                provider_name=reference_classifier.provider_name if reference_classifier is not None else None,
+                model_id=reference_classifier.model if reference_classifier is not None else None,
+                prerequisite_summary=(
+                    "Optional reference classifier is configured for advisory-only RU support."
+                    if reference_classifier is not None
+                    else "Optional reference classifier is disabled by default."
+                ),
+                activation_scope="reference_understanding",
+                lifecycle_class="sidecar_process",
+            )
+        )
+
+        segmentation_sidecar = self.active_segmentation_sidecar
+        capabilities.append(
+            VisionOptionalCapabilityState(
+                capability_name="part_segmentation",
+                status="available" if segmentation_sidecar is not None else "disabled",
+                provider_name=segmentation_sidecar.provider_name if segmentation_sidecar is not None else None,
+                model_id=segmentation_sidecar.model if segmentation_sidecar is not None else None,
+                prerequisite_summary=(
+                    "Optional packet-local segmentation is configured for bounded compare-time support."
+                    if segmentation_sidecar is not None
+                    else "Optional packet-local segmentation is disabled by default."
+                ),
+                activation_scope="compare_packet",
+                lifecycle_class="sidecar_process",
+            )
+        )
+
+        capabilities.append(
+            VisionOptionalCapabilityState(
+                capability_name="part_localization",
+                status="planned",
+                provider_name=None,
+                model_id=None,
+                prerequisite_summary=(
+                    "Packet-local text-conditioned localization remains unconfigured and should degrade to current "
+                    "packet hints plus optional segmentation support."
+                ),
+                activation_scope="compare_packet",
+                lifecycle_class="request_scoped_only",
+            )
+        )
+
+        return VisionOptionalCapabilityInventory(capabilities=capabilities)
+
 
 class VisionReferenceClassifierConfig(BaseModel):
     """Configuration for the optional reference-classifier sidecar."""
@@ -268,3 +366,34 @@ class VisionSegmentationSidecarConfig(BaseModel):
         if self.enabled and not self.endpoint:
             raise ValueError("enabled segmentation_sidecar requires endpoint")
         return self
+
+
+class VisionOptionalCapabilityState(BaseModel):
+    """One internal optional capability state used for additive diagnostics."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    capability_name: VisionOptionalCapabilityName
+    status: VisionOptionalCapabilityStatus
+    provider_name: str | None = None
+    model_id: str | None = None
+    prerequisite_summary: str | None = None
+    activation_scope: VisionOptionalCapabilityActivationScope
+    lifecycle_class: VisionOptionalCapabilityLifecycleClass
+    advisory_only: bool = True
+
+
+class VisionOptionalCapabilityInventory(BaseModel):
+    """Canonical typed internal inventory for optional vision capabilities."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    capabilities: list[VisionOptionalCapabilityState] = Field(default_factory=list)
+
+    def get(self, capability_name: VisionOptionalCapabilityName) -> VisionOptionalCapabilityState | None:
+        """Return one capability state by name when present."""
+
+        for item in self.capabilities:
+            if item.capability_name == capability_name:
+                return item
+        return None

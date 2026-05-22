@@ -329,8 +329,11 @@ orchestration model.
 
 Phases 3 and 4 now have the first default-off sidecar linkage on the shipped
 RU path, but they remain typed, bounded, advisory-only, and unavailable by
-default until operators explicitly opt in. Later adapter work must still avoid
-changing the orchestration model or verifier authority.
+default until operators explicitly opt in. The shipped staged compare path now
+also gates packet-local segmentation behind a normalized
+`localized_support_reason` seam, so clean packets do not auto-run the sidecar
+just because it is configured. Later adapter work must still avoid changing
+the orchestration model or verifier authority.
 
 ## Low-Poly Creature Consumer
 

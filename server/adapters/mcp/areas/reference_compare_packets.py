@@ -19,13 +19,16 @@ from server.adapters.mcp.areas.reference_silhouette import (
     summarize_compare_support_evidence,
 )
 from server.adapters.mcp.contracts.reference import (
+    ReferenceActionHintContract,
     ReferenceCompareComplexityTierLiteral,
     ReferenceCompareDiagnosticsContract,
     ReferenceComparePacketContract,
     ReferenceImageRecordContract,
+    ReferenceLocalizedSupportReasonLiteral,
     ReferencePartSegmentationContract,
     ReferencePartSegmentationLandmarkContract,
     ReferencePartSegmentationPartContract,
+    ReferenceSilhouetteAnalysisContract,
 )
 from server.adapters.mcp.contracts.scene import (
     SceneAssembledTargetScopeContract,
@@ -178,6 +181,34 @@ def _unique_preserving_order(values: Sequence[str]) -> list[str]:
 def _append_unique_note(notes: list[str], note: str) -> None:
     if note not in notes:
         notes.append(note)
+
+
+def _resolve_localized_support_reason(
+    *,
+    packet: ReferenceComparePacketContract,
+    packet_truth_bundle: SceneCorrectionTruthBundleContract,
+    silhouette_analysis: ReferenceSilhouetteAnalysisContract | None,
+    action_hints: Sequence[ReferenceActionHintContract],
+) -> ReferenceLocalizedSupportReasonLiteral | None:
+    """Resolve one normalized packet-local reason for optional localized support."""
+
+    truth_summary = packet_truth_bundle.summary
+    scope_label = str(packet.scope_label or "").strip().lower()
+    if truth_summary.contact_failures or truth_summary.separated_pairs:
+        return "attachment_gap"
+    if truth_summary.misaligned_pairs or truth_summary.overlap_pairs:
+        return "anchor_ambiguity"
+    if any(token in scope_label for token in ("body + head", "head", "snout", "ear", "tail", "limb")):
+        return "part_missing_ambiguity"
+    if any(token in scope_label for token in ("support", "roofline", "opening", "facade")):
+        return "anchor_ambiguity"
+    if action_hints:
+        return "mask_needed"
+    if silhouette_analysis is not None and any(
+        metric.severity == "high" for metric in list(silhouette_analysis.metrics)
+    ):
+        return "seam_unclear"
+    return None
 
 
 def _build_compare_segmentation_request_payload(
@@ -1491,6 +1522,12 @@ async def execute_compare_packets(
     request_goal = goal or "reference-guided staged compare"
     part_segmentation: ReferencePartSegmentationContract | None = None
     packet_assistants: list[tuple[ReferenceComparePacketContract, VisionAssistantContract | None]] = []
+    localized_support_requested = False
+    sidecar_enabled = bool(
+        segmentation_sidecar_config is not None
+        and bool(getattr(segmentation_sidecar_config, "enabled", False))
+        and getattr(segmentation_sidecar_config, "endpoint", None)
+    )
 
     for packet in compare_diagnostics.packets:
         packet_captures = _packet_capture_subset(captures, packet)
@@ -1531,17 +1568,26 @@ async def execute_compare_packets(
             if packet.target_objects
             else (resolved_target_object or assembled_target_scope.primary_target),
         )
-        packet_part_segmentation = await collect_compare_time_segmentation_support(
-            config=segmentation_sidecar_config,
-            goal=goal,
-            packet_id=packet.packet_id,
-            packet_label=packet.packet_label,
-            target_view=packet.target_view or target_view,
-            scope_label=packet.scope_label,
-            target_objects=packet.target_objects or list(resolved_target_objects),
-            reference_records=packet_reference_records,
-            captures=packet_captures,
+        packet.localized_support_reason = _resolve_localized_support_reason(
+            packet=packet,
+            packet_truth_bundle=packet_truth_bundle,
+            silhouette_analysis=packet_silhouette_analysis,
+            action_hints=packet_action_hints,
         )
+        packet_part_segmentation: ReferencePartSegmentationContract | None = None
+        if packet.localized_support_reason is not None:
+            localized_support_requested = True
+            packet_part_segmentation = await collect_compare_time_segmentation_support(
+                config=segmentation_sidecar_config,
+                goal=goal,
+                packet_id=packet.packet_id,
+                packet_label=packet.packet_label,
+                target_view=packet.target_view or target_view,
+                scope_label=packet.scope_label,
+                target_objects=packet.target_objects or list(resolved_target_objects),
+                reference_records=packet_reference_records,
+                captures=packet_captures,
+            )
         part_segmentation = merge_compare_time_part_segmentation(part_segmentation, packet_part_segmentation)
         packet.support_evidence = build_compare_support_evidence(
             packet_silhouette_analysis,
@@ -1568,6 +1614,11 @@ async def execute_compare_packets(
                     f"packet_label={packet.packet_label}",
                     f"packet_view={packet.target_view}" if packet.target_view else None,
                     f"packet_scope={packet.scope_label}" if packet.scope_label else None,
+                    (
+                        f"localized_support_reason={packet.localized_support_reason}"
+                        if packet.localized_support_reason is not None
+                        else None
+                    ),
                     f"compare_question={packet.compare_question}",
                     *[
                         f"support_evidence[{index}]={item}"
@@ -1602,6 +1653,7 @@ async def execute_compare_packets(
                 "packet_label": packet.packet_label,
                 "packet_view": packet.target_view,
                 "packet_scope": packet.scope_label,
+                "localized_support_reason": packet.localized_support_reason,
                 "packet_target_object": packet_target_object,
                 "packet_reference_ids": list(packet.reference_ids),
                 "packet_capture_labels": list(packet.capture_labels),
@@ -1676,6 +1728,11 @@ async def execute_compare_packets(
                         f"packet_label={packet.packet_label}",
                         f"packet_view={packet.target_view}" if packet.target_view else None,
                         f"packet_scope={packet.scope_label}" if packet.scope_label else None,
+                        (
+                            f"localized_support_reason={packet.localized_support_reason}"
+                            if packet.localized_support_reason is not None
+                            else None
+                        ),
                         *[
                             f"support_evidence[{index}]={item}"
                             for index, item in enumerate(packet_support_evidence_summaries, start=1)
@@ -1696,6 +1753,7 @@ async def execute_compare_packets(
                     "packet_label": packet.packet_label,
                     "packet_view": packet.target_view,
                     "packet_scope": packet.scope_label,
+                    "localized_support_reason": packet.localized_support_reason,
                     "packet_target_object": packet_target_object,
                     "packet_reference_ids": list(packet.reference_ids),
                     "packet_capture_labels": list(packet.capture_labels),
@@ -1768,6 +1826,18 @@ async def execute_compare_packets(
         else:
             packet.ranking_status = "success" if packet.correction_focus else "skipped"
         packet_assistants.append((packet, effective_packet_assistant))
+
+    if part_segmentation is None and sidecar_enabled and not localized_support_requested:
+        part_segmentation = ReferencePartSegmentationContract(
+            status="disabled",
+            provider_name=getattr(segmentation_sidecar_config, "provider_name", None),
+            advisory_only=True,
+            parts=[],
+            notes=[
+                "Optional part segmentation sidecar is enabled, but no bounded packet-local localized support reason requested it for this staged compare run.",
+                "The sidecar path is advisory-only and separate from vision_contract_profile routing.",
+            ],
+        )
 
     successful_packet_results = [
         (packet, assistant.result)

@@ -209,6 +209,11 @@ Add these env vars only when you explicitly want the advisory part-segmentation 
 }
 ```
 
+Even with the sidecar configured, staged compare only invokes it for packets
+that carry a bounded `localized_support_reason`. Clean/no-trigger runs keep
+`part_segmentation.status="disabled"` instead of forcing a whole-image support
+pass just because the endpoint is available.
+
 ## Docker Guided Profile
 
 Smallest practical docker-backed guided profile:

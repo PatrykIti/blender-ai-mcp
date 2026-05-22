@@ -1,6 +1,6 @@
 # TASK-172: Optional Vision Capability Runtime And Localized Perception
 
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
 **Priority:** 🔴 High
 **Category:** Vision Runtime / Optional Perception / Guided Reliability
 **Estimated Effort:** Large
@@ -169,9 +169,10 @@ grounding.
   diagnostics on current surfaces instead of hard build failure
 - localized optional perception is invoked only on bounded RU or compare
   contexts that name the relevant packet, target part/role, or local ambiguity
-- reference compare/iterate payloads can return bounded localization-derived
-  crop/landmark cues and localized mask/landmark support with
-  packet/reference/view provenance and explicit advisory-only markers
+- reference compare/iterate payloads return bounded packet-local
+  mask/crop/landmark support with packet/reference/view provenance and
+  advisory-only markers, while later text-conditioned localization remains
+  open work on the same family until its provider/runtime path is real
 - when shared in-process reuse is justified, runtime config exposes one
   documented reuse policy with bounded TTL/unload behavior; otherwise this
   family closes with request-scoped execution and no shared lifecycle path
@@ -196,12 +197,32 @@ grounding.
 - extend or add follow-on entries as the family closes, depending on landing
   cadence
 
+## Progress Summary
+
+- shipped one internal optional capability inventory on the current runtime
+  seams, covering external model capability metadata, the optional reference
+  classifier, packet-local segmentation, and the planned-but-unshipped
+  part-localization slot
+- normalized compare-time optional support around one packet-local
+  `localized_support_reason` seam, so clean packets do not auto-run the
+  segmentation sidecar just because it is configured
+- kept packet-local segmentation advisory-only, bounded, and on the existing
+  compare-time carrier, including clean degradation when no localized-support
+  reason exists
+- left the remaining text-conditioned localization, lifecycle, harness, and
+  governance closeout work explicit on `TASK-172-03*`, `TASK-172-05`,
+  `TASK-172-06`, and `TASK-172-07` instead of hiding it behind stale
+  all-`To Do` planning wording
+
 ## Status / Board Update
 
-- keep the promoted `TASK-172` board row and strategic-doc ownership entries in
-  `_docs/_TASKS/README.md` aligned with the active umbrella
-- keep the `TASK-172-0*.md` child files nested under the umbrella while this
-  parent remains open
+- `_docs/_TASKS/README.md` should show `TASK-172` as active work with partial
+  shipped progress, not as an untouched `To Do`
+- `TASK-172-01` and `TASK-172-02` close as done from current evidence
+- `TASK-172-04` closes administratively because the compare-time segmentation
+  scope is already covered by earlier shipped segmentation-sidecar owners
+- `TASK-172-03*`, `TASK-172-05`, `TASK-172-06`, and `TASK-172-07` remain the
+  open leaves for localization, lifecycle, harness, and final closeout
 
 ## Validation Commands
 

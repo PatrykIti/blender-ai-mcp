@@ -2,7 +2,8 @@
 
 **Parent:** [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md)
 **Depends On:** [TASK-172-02](./TASK-172-02_Stage_Bound_Activation_Policy_And_Localized_Support_Contracts.md)
-**Status:** ⏳ To Do
+**Status:** ⏭️ Superseded
+**Superseded By:** [TASK-128-03](./TASK-128-03_Optional_Part_Segmentation_Sidecar_And_Part_Aware_Perception.md), [TASK-163-06](./TASK-163-06_Default_Off_Segmentation_Sidecar_And_Artifact_Linkage.md), [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md)
 **Priority:** 🔴 High
 **Objective:** Extend the optional segmentation lane so packet-local SAM-family masks, crops, and optional derived anchors can support creature/reference ambiguity without becoming a default full-image heavy pass.
 **Repository Touchpoints:** `server/adapters/mcp/vision/config.py`, `server/adapters/mcp/vision/runtime.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_silhouette.py`, `server/adapters/mcp/areas/reference_feedback.py`, `server/adapters/mcp/contracts/reference.py`, `server/infrastructure/config.py`, `tests/unit/adapters/mcp/test_reference_compare_packets.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_public_surface_docs.py`, `tests/e2e/integration/test_guided_gate_state_transport.py`, `tests/e2e/vision/test_reference_understanding_runtime_surface.py`, `_docs/_VISION/README.md`
@@ -94,6 +95,14 @@ return ReferencePartSegmentationContract(
 
 - include segmentation-sidecar localization notes in the first `TASK-172`
   changelog entry that ships this leaf
+
+## Administrative Note
+
+- the shipped packet-local segmentation runtime is already owned historically
+  by the earlier segmentation-sidecar task family above
+- `TASK-172-04` remains as a historical planning slice only; the current
+  `TASK-172` work tightens activation policy around that shipped seam instead
+  of reopening its provider/runtime ownership
 
 ## Status / Board Update
 

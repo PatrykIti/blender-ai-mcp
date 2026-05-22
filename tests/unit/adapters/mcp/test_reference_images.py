@@ -8165,9 +8165,10 @@ def test_reference_compare_stage_checkpoint_projects_compare_time_segmentation_s
     monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: resolver)
     monkeypatch.setattr("server.infrastructure.di.get_vision_backend_resolver", lambda: resolver)
     monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    sidecar_captured: list[dict[str, object]] = []
     monkeypatch.setattr(
         "server.adapters.mcp.areas.reference_compare_packets.httpx.AsyncClient",
-        lambda timeout=None: _FakeSupportAsyncClient(responses=responses, captured=[]),
+        lambda timeout=None: _FakeSupportAsyncClient(responses=responses, captured=sidecar_captured),
     )
     monkeypatch.setattr(
         "server.adapters.mcp.areas.reference.capture_stage_images",
@@ -8200,6 +8201,7 @@ def test_reference_compare_stage_checkpoint_projects_compare_time_segmentation_s
     assert result.part_segmentation.parts[0].part_label == "tail_profile"
     assert result.part_segmentation.parts[0].confidence == 0.91
     assert result.compare_diagnostics is not None
+    assert result.compare_diagnostics.packets[0].localized_support_reason == "mask_needed"
     segmentation_evidence = [
         item
         for item in result.compare_diagnostics.packets[0].support_evidence
@@ -8209,6 +8211,8 @@ def test_reference_compare_stage_checkpoint_projects_compare_time_segmentation_s
     assert segmentation_evidence[0].part_label == "tail_profile"
     assert segmentation_evidence[0].confidence == 0.91
     assert captured
+    assert sidecar_captured
+    assert sidecar_captured[0]["json"]["packet"]["packet_id"] == result.compare_diagnostics.packets[0].packet_id
     assert any(
         "Segmentation sidecar marked tail_profile" in item
         for item in captured[0].metadata["support_evidence_summaries"]
@@ -8321,9 +8325,10 @@ def test_reference_compare_stage_checkpoint_keeps_available_segmentation_sidecar
     monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: resolver)
     monkeypatch.setattr("server.infrastructure.di.get_vision_backend_resolver", lambda: resolver)
     monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    sidecar_captured: list[dict[str, object]] = []
     monkeypatch.setattr(
         "server.adapters.mcp.areas.reference_compare_packets.httpx.AsyncClient",
-        lambda timeout=None: _FakeSupportAsyncClient(responses=responses, captured=[]),
+        lambda timeout=None: _FakeSupportAsyncClient(responses=responses, captured=sidecar_captured),
     )
     monkeypatch.setattr(
         "server.adapters.mcp.areas.reference.capture_stage_images",
@@ -8351,26 +8356,27 @@ def test_reference_compare_stage_checkpoint_keeps_available_segmentation_sidecar
 
     assert result.error is None
     assert result.part_segmentation is not None
-    assert result.part_segmentation.status == "available"
+    assert result.part_segmentation.status == "disabled"
     assert result.part_segmentation.advisory_only is True
-    assert result.part_segmentation.parts[0].part_label == "tail_profile"
+    assert result.part_segmentation.parts == []
+    assert any(
+        "no bounded packet-local localized support reason requested" in note for note in result.part_segmentation.notes
+    )
     assert result.correction_candidates == []
     assert result.completion_blockers == []
     assert result.reference_orchestrator_feedback is not None
     assert result.reference_orchestrator_feedback.correction_focus == []
     assert result.compare_diagnostics is not None
     assert result.compare_diagnostics.packets[0].packet_status == "clean"
+    assert result.compare_diagnostics.packets[0].localized_support_reason is None
     segmentation_evidence = [
         item
         for item in result.compare_diagnostics.packets[0].support_evidence
         if item.evidence_kind == "part_segmentation"
     ]
-    assert segmentation_evidence
+    assert segmentation_evidence == []
     assert captured
-    assert any(
-        "Segmentation sidecar marked tail_profile" in item
-        for item in captured[0].metadata["support_evidence_summaries"]
-    )
+    assert sidecar_captured == []
 
 
 def test_reference_compare_stage_checkpoint_keeps_support_evidence_packet_local(tmp_path, monkeypatch):
