@@ -1,4 +1,14 @@
 # TASK-171A / TASK-171B: On-Demand Vision Capabilities, Creature Runtime Repair, And Structured Vision Handoff
+
+> Historical note (2026-05-22): this document is kept as background context,
+> not as the live planning source. The old monolithic `TASK-171A`
+> capability-registry / heavy-vision framing is superseded by
+> [TASK-172](./_TASKS/TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md),
+> which reuses the shipped segmentation/classifier seams, keeps optional
+> perception packet-bounded and advisory-only, and explicitly does not open a
+> new public `vision_capability_registry(...)` surface. For current planning,
+> use `TASK-172` plus its child leaves instead of this proposal.
+
 ## Cel
 Celem nie jest wrzucenie wszystkich modeli vision do startu kontenera.
 Celem jest zbudowanie runtime, który:
@@ -186,6 +196,8 @@ Dodać testy, które potwierdzą:
 * broad-first scope odpuszcza, gdy zostają lokalne seam/contact problemy.
 ---
 # Etap 2: TASK-171A — On-Demand Vision Capability Registry And Structured Handoff
+> Historical / superseded planning slice: replaced by the `TASK-172` family.
+
 Ten etap przygotowuje architekturę pod cięższe modele bez ładowania wszystkiego na start kontenera.
 ## Problem
 Nie chcemy:
@@ -233,7 +245,7 @@ vision_capabilities:
       - local_part_ambiguity
   segmentation:
     status: available | missing | cold | loaded | failed
-    provider: sam2 | sam | none
+    provider: sam_2 | sam | none
     cost: high
     load_state: cold
     activation_triggers:
@@ -545,7 +557,7 @@ LaBSE nie powinien być używany do:
 # Co ładować leniwie
 Lazy local:
 * GroundingDINO / OWL-style grounding,
-* SAM/SAM2,
+* SAM / SAM 2,
 * DINOv2,
 * cięższy classifier typu SigLIP2.
 Te modele mogą być w obrazie albo w cache, ale nie powinny być ładowane przy starcie kontenera.
@@ -600,7 +612,7 @@ TASK-171C Optional Part Grounding And Segmentation Providers
 ```
 Czyli:
 * GroundingDINO-like provider,
-* SAM/SAM2 provider,
+* SAM / SAM 2 provider,
 * DINOv2 dense feature provider,
 * local-region-only calls,
 * no full-image heavy pass unless explicitly needed.

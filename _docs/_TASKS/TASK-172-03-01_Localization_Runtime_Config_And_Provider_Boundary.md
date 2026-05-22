@@ -5,7 +5,7 @@
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
 **Objective:** Add one default-off runtime/config seam and provider-neutral internal candidate contract for packet-bounded text-conditioned localization, without widening public compare/iterate payloads before the projection leaf lands.
-**Repository Touchpoints:** `server/adapters/mcp/vision/config.py`, `server/adapters/mcp/vision/runtime.py`, `server/adapters/mcp/vision/backends.py`, `server/infrastructure/config.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `tests/unit/adapters/mcp/test_vision_runtime_config.py`, `tests/unit/adapters/mcp/test_vision_external_backend.py`, `tests/unit/adapters/mcp/test_vision_local_backend.py`, `_docs/_VISION/README.md`, `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
+**Repository Touchpoints:** `server/adapters/mcp/vision/config.py`, `server/adapters/mcp/vision/runtime.py`, `server/adapters/mcp/vision/reference_support.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `server/infrastructure/config.py`, `tests/unit/adapters/mcp/test_vision_runtime_config.py`, `tests/unit/adapters/mcp/test_reference_images.py`, `tests/unit/adapters/mcp/test_reference_compare_packets.py`, `_docs/_VISION/README.md`, `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
 **Acceptance Criteria:**
 - the runtime exposes one default-off localization config/provider seam that does not overload `VISION_SEGMENTATION_*` or classifier env names unless an explicit compatibility choice is documented
 - one provider-neutral internal localization-candidate contract exists for packet id, reference/view provenance, label query, confidence, and literal box data needed for downstream support-only projection
@@ -63,10 +63,10 @@ candidate = VisionLocalizationCandidate(
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
-- `tests/unit/adapters/mcp/test_vision_external_backend.py`
-- `tests/unit/adapters/mcp/test_vision_local_backend.py`
-- targeted runtime/provider tests on `reference_compare_packets.py` only where
-  the new config seam is consumed
+- `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_reference_compare_packets.py`
+- add backend-test coverage only if this leaf later widens beyond the current
+  generic-sidecar optional-provider seam into the main VLM backend factory path
 
 ## Docs To Update
 
@@ -86,7 +86,7 @@ candidate = VisionLocalizationCandidate(
 ## Validation Commands
 
 - `git diff --check`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_external_backend.py tests/unit/adapters/mcp/test_vision_local_backend.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_reference_compare_packets.py -q`
 - `PYTHONPATH=. poetry run pytest ./tests/unit`
 
 ## Validation Category

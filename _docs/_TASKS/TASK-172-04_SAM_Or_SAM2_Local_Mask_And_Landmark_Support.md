@@ -1,4 +1,4 @@
-# TASK-172-04: SAM Or SAM2 Packet-Local Mask, Crop, And Derived-Anchor Support
+# TASK-172-04: SAM Or SAM 2 Packet-Local Mask, Crop, And Derived-Anchor Support
 
 **Parent:** [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md)
 **Depends On:** [TASK-172-02](./TASK-172-02_Stage_Bound_Activation_Policy_And_Localized_Support_Contracts.md)
@@ -19,9 +19,9 @@
   compare-time sidecar seam; do not reopen base provider packaging, part
   vocabulary, or the original `ReferencePartSegmentationContract` ownership
   unless a new follow-on is created explicitly
-- treat the SAM-vs-SAM2 provider choice as an implementation detail on the
+- treat the SAM-vs-SAM 2 provider choice as an implementation detail on the
   same seam; an image-packet baseline may ship on a SAM-compatible predictor,
-  while SAM2 is justified when its image predictor or future tracking path
+  while SAM 2 is justified when its image predictor or future tracking path
   materially helps
 - keep `reference_compare_packets.py` as the durable compare-time execution
   owner; do not move packet-local segmentation execution onto the RU-specific
@@ -47,7 +47,7 @@
     visual grounding
 - landmarks on the current contract are derived anchors from masks/crops unless
   a provider already emits an equivalent bounded point set; do not require
-  SAM/SAM2-native landmark output
+  SAM- or SAM 2-native landmark output
 - if part localization lands first, let localization boxes seed segmentation;
   otherwise keep mask requests bounded to existing packet-local hints
 
