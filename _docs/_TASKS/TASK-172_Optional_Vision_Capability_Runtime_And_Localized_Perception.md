@@ -5,15 +5,16 @@
 **Priority:** 🔴 High
 **Category:** Vision Runtime / Optional Perception / Guided Reliability
 **Estimated Effort:** Large
-**Depends On:** [TASK-140-06](./TASK-140-06_OpenRouter_Model_Capability_Aware_Vision_Runtime.md)
+**Depends On:** [TASK-140-06-01](./TASK-140-06-01_OpenRouter_Model_Metadata_Client_And_Capability_Contract.md), [TASK-140-06-03](./TASK-140-06-03_Static_Fallback_Model_Capability_Registry_And_Overrides.md)
 **Follow-on After:** [TASK-171](./TASK-171_Creature_Attachment_First_Build_Contract_And_Structured_Vision_Handoff.md), [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md), [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md)
 **Related:** [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md), [TASK-169](./TASK-169_Reference_Guided_Quality_Drift_Regression_And_Runtime_Authority.md), [TASK-128-03](./TASK-128-03_Optional_Part_Segmentation_Sidecar_And_Part_Aware_Perception.md), [TASK-164](./TASK-164_Local_SigLIP2_Reference_Classifier_Sidecar_And_Operator_Scripts.md)
 
 ## Relationship To Existing Board Items
 
 - `TASK-140-06` remains the generic capability-aware external-runtime
-  substrate owner; `TASK-172` consumes that substrate and must not duplicate
-  provider-capability policy or public capability-surface design.
+  substrate owner; `TASK-172` consumes the already-landed `TASK-140-06-01` /
+  `TASK-140-06-03` substrate and must not duplicate the still-open generic
+  provider-policy or closeout work that stays on the `TASK-140-06` family.
 - `TASK-171`, `TASK-166`, and `TASK-163` are prerequisite consumer lanes whose
   staged compare, structured feedback, and optional-support seams are reused
   here.
@@ -29,8 +30,9 @@
 Turn the remaining "vision extension" ideas into one current-architecture task
 family that:
 
-- finishes the capability-aware runtime posture through the existing
-  `TASK-140-06` owner lane
+- extends the capability-aware runtime posture through the existing
+  `TASK-140-06` owner lane without reopening the broader generic provider
+  policy and closeout work that remains tracked there
 - adds one internal typed capability inventory and prerequisite-diagnostics seam
   for optional perception adapters without creating a second public capability
   system
@@ -85,8 +87,10 @@ duplicate phase systems, or new advisory data being treated as authority.
 
 After this family lands:
 
-- the capability-aware external runtime started in `TASK-140-06` is finished
-  and treated as the substrate for later optional-capability work
+- the already-landed capability-aware external-runtime substrate from
+  `TASK-140-06-01` / `TASK-140-06-03` is treated as the base for later
+  optional-capability work, while the broader `TASK-140-06` family remains
+  open for its remaining generic provider-policy and closeout slices
 - clients and operators can tell when optional heavy perception is available,
   missing, disabled, or degraded without mistaking that state for a hard build
   blocker
@@ -117,19 +121,19 @@ After this family lands:
 
 ## Execution Structure
 
-Delivery order intentionally does not match leaf numbering once the existing
-segmentation seam is the lower-risk precursor to later text-conditioned
-grounding.
+The final landed sequence below reflects the post-audit family state.
+`TASK-172-04` remained a historical-only superseded planning slice because the
+segmentation-sidecar seam it assumed had already shipped on earlier owner
+tasks before this umbrella closed.
 
 | Order | Task | Purpose |
 |------|------|---------|
 | 1 | [TASK-172-01](./TASK-172-01_Internal_Vision_Capability_Inventory_And_Prerequisite_Diagnostics.md) | Add one internal typed capability inventory and consistent optional-capability diagnostics on existing runtime surfaces |
 | 2 | [TASK-172-02](./TASK-172-02_Stage_Bound_Activation_Policy_And_Localized_Support_Contracts.md) | Define when RU may merge already-available optional support artifacts and when staged compare/iterate may actively invoke localized optional perception |
-| 3 | [TASK-172-04](./TASK-172-04_SAM_Or_SAM2_Local_Mask_And_Landmark_Support.md) | Extend the shipped segmentation seam into packet-bounded SAM-family masks/crops and optional derived anchors before widening into text-conditioned grounding |
-| 4 | [TASK-172-03](./TASK-172-03_GroundingDINO_Or_OWL_Localization_For_Packet_Bounded_Part_Ambiguity.md) | Add one optional packet-bounded text-conditioned localization family that can seed or refine packet-local mask requests when existing hints remain insufficient |
-| 5 | [TASK-172-05](./TASK-172-05_Heavy_Local_Adapter_Lifecycle_TTL_And_Unload_Policy.md) | Retrofit shared-owner heavy-local lifecycle only if the shipped in-process adapter path actually benefits from reuse and TTL/unload |
-| 6 | [TASK-172-06](./TASK-172-06_Harness_Negative_Coverage_And_Operator_Docs_For_Optional_Vision_Runtime.md) | Add harness mode updates, negative coverage, and operator-facing docs for localized optional perception paths |
-| 7 | [TASK-172-07](./TASK-172-07_Board_Changelog_And_Closeout_Proof_For_Optional_Vision_Runtime.md) | Close the family with board/changelog sync and explicit proof-lane accounting after the implementation leaves land |
+| 3 | [TASK-172-03](./TASK-172-03_GroundingDINO_Or_OWL_Localization_For_Packet_Bounded_Part_Ambiguity.md) | Add one optional packet-bounded text-conditioned localization family that can seed or refine packet-local mask requests when existing hints remain insufficient |
+| 4 | [TASK-172-05](./TASK-172-05_Heavy_Local_Adapter_Lifecycle_TTL_And_Unload_Policy.md) | Retrofit shared-owner heavy-local lifecycle only if the shipped in-process adapter path actually benefits from reuse and TTL/unload |
+| 5 | [TASK-172-06](./TASK-172-06_Harness_Negative_Coverage_And_Operator_Docs_For_Optional_Vision_Runtime.md) | Add harness mode updates, negative coverage, and operator-facing docs for localized optional perception paths |
+| 6 | [TASK-172-07](./TASK-172-07_Board_Changelog_And_Closeout_Proof_For_Optional_Vision_Runtime.md) | Close the family with board/changelog sync and explicit proof-lane accounting after the implementation leaves land |
 
 ## Repository Touchpoints
 
@@ -202,8 +206,8 @@ grounding.
 
 - shipped one internal optional capability inventory on the current runtime
   seams, covering external model capability metadata, the optional reference
-  classifier, packet-local segmentation, and the planned-but-unshipped
-  part-localization slot
+  classifier, packet-local segmentation, and the default-off
+  part-localization capability entry
 - normalized compare-time optional support around one packet-local
   `localized_support_reason` seam, so clean packets do not auto-run the
   segmentation sidecar just because it is configured

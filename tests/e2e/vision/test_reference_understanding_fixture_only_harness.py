@@ -1,4 +1,4 @@
-"""Subprocess E2E coverage for the fixture-only reference-understanding harness path."""
+"""Subprocess E2E coverage for reference-understanding and localized-support harness paths."""
 
 from __future__ import annotations
 
@@ -231,6 +231,52 @@ def test_vision_harness_fixture_only_localized_support_subprocess(tmp_path: Path
     assert row["result"]["query_labels"] == ["tail_mass"]
     assert row["result"]["capture_count"] == 1
     assert row["result"]["reference_count"] == 1
+
+
+@pytest.mark.e2e
+def test_vision_harness_live_localized_support_subprocess_reports_disabled_by_default(tmp_path: Path):
+    reference_path = tmp_path / "front_ref.png"
+    after_path = tmp_path / "after.png"
+    Image.new("RGBA", (8, 8), (0, 0, 0, 255)).save(reference_path)
+    after_path.write_bytes(b"after")
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "scripts/vision_harness.py",
+            "--backend",
+            "openai_compatible_external",
+            "--goal",
+            "create a low-poly squirrel matching front and side references",
+            "--mode",
+            "localized-support",
+            "--target-object",
+            "Squirrel_Body",
+            "--target-view",
+            "front",
+            "--localized-support-query-label",
+            "tail_mass",
+            "--after",
+            str(after_path),
+            "--reference",
+            str(reference_path),
+        ],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    payload = json.loads(completed.stdout)
+    assert isinstance(payload, list) and payload
+    row = payload[0]
+    assert row["backend"] == "openai_compatible_external"
+    assert row["status"] == "success"
+    assert row["localized_optional_mode"] == "packet_support"
+    assert row["result"]["localized_support_reason"] == "mask_needed"
+    assert row["result"]["query_labels"] == ["tail_mass"]
+    assert row["result"]["part_segmentation"]["status"] == "disabled"
 
 
 @pytest.mark.e2e

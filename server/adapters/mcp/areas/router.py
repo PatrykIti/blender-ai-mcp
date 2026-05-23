@@ -67,7 +67,7 @@ from server.adapters.mcp.transforms.visibility_policy import build_guided_handof
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.infrastructure.config import get_config
 from server.infrastructure.debug_profiles import emit_debug_log
-from server.infrastructure.di import get_router_handler, get_scene_handler
+from server.infrastructure.di import get_router_handler, get_scene_handler, get_vision_backend_resolver
 from server.infrastructure.telemetry import get_telemetry_state
 
 logger = logging.getLogger(__name__)
@@ -81,6 +81,24 @@ ROUTER_PUBLIC_TOOL_NAMES = (
     "router_get_inherited_proportions",
     "router_feedback",
 )
+
+
+def _build_optional_localized_support_notes() -> list[str]:
+    resolver = get_vision_backend_resolver()
+    runtime_config = getattr(resolver, "runtime_config", None)
+    inventory = getattr(runtime_config, "optional_capability_inventory", None) if runtime_config is not None else None
+    if inventory is None:
+        return []
+
+    notes: list[str] = []
+    for capability_name in ("part_localization", "part_segmentation"):
+        state = inventory.get(capability_name)
+        if state is None or state.status != "available":
+            continue
+        summary = str(getattr(state, "prerequisite_summary", "") or "").strip()
+        if summary:
+            notes.append(summary)
+    return notes[:2]
 
 
 def _effective_reference_understanding_gate_ids(
@@ -579,6 +597,7 @@ async def router_set_goal(
         guided_reference_readiness=GuidedReferenceReadinessContract.model_validate(
             build_guided_reference_readiness_payload(state)
         ),
+        optional_support_notes=_build_optional_localized_support_notes(),
     )
     result["reference_orchestrator_feedback"] = (
         None if feedback is None else feedback.model_dump(mode="json", exclude_none=True)
@@ -729,6 +748,7 @@ async def router_get_status(ctx: Context) -> RouterStatusContract:
                             if session.last_router_disposition == "failed_closed_error"
                             else None
                         ),
+                        optional_support_notes=_build_optional_localized_support_notes(),
                     )
                 )
                 is None

@@ -20,6 +20,7 @@ from server.adapters.mcp.contracts.reference import (
     ReferenceCorrectionCandidateContract,
     ReferenceHybridBudgetControlContract,
     ReferenceOrchestratorFeedbackContract,
+    ReferencePartSegmentationContract,
     ReferencePlannerFamilyLiteral,
     ReferenceRepairPlannerSummaryContract,
     ReferenceStrategyStateContract,
@@ -397,6 +398,8 @@ def build_reference_orchestrator_feedback(
     correction_focus: list[str] | None = None,
     loop_disposition: str | None = None,
     runtime_policy_block: dict[str, object] | None = None,
+    part_segmentation: ReferencePartSegmentationContract | None = None,
+    optional_support_notes: list[str] | None = None,
 ) -> ReferenceOrchestratorFeedbackContract | None:
     """Project one compact read model for LLM orchestrators."""
 
@@ -423,6 +426,8 @@ def build_reference_orchestrator_feedback(
         and not correction_focus
         and loop_disposition is None
         and runtime_policy_block is None
+        and part_segmentation is None
+        and not optional_support_notes
     ):
         return None
 
@@ -463,6 +468,8 @@ def build_reference_orchestrator_feedback(
         support_tools.extend(_policy_block_strings("recommended_support_tools"))
     support_tools = _dedupe_strings(support_tools)[:6]
 
+    priority_evidence_summary: list[str] = []
+    priority_uncertainty_notes: list[str] = []
     evidence_summary: list[str] = []
     uncertainty_notes: list[str] = []
     if summary is not None:
@@ -490,6 +497,11 @@ def build_reference_orchestrator_feedback(
     if planner_summary is not None:
         evidence_summary.append(planner_summary.rationale)
     if compare_diagnostics is not None:
+        priority_evidence_summary.extend(
+            f"{packet.packet_label}: localized_support_reason={packet.localized_support_reason}"
+            for packet in list(compare_diagnostics.packets or [])
+            if packet.localized_support_reason is not None
+        )
         evidence_summary.extend(
             f"{packet.packet_label}: {packet.evidence_summary}"
             for packet in list(compare_diagnostics.packets or [])
@@ -511,14 +523,36 @@ def build_reference_orchestrator_feedback(
                 packet.extraction_status in {"blocked", "low_information", "error"} or packet.ranking_status == "error"
             )
         )
+    if part_segmentation is not None:
+        if part_segmentation.status == "available":
+            if part_segmentation.parts:
+                priority_evidence_summary.append(
+                    f"Localized support projected {len(part_segmentation.parts)} part hint(s) through part_segmentation."
+                )
+            priority_evidence_summary.extend(
+                str(note).strip() for note in list(part_segmentation.notes or []) if str(note).strip()
+            )
+        else:
+            priority_uncertainty_notes.extend(
+                str(note).strip() for note in list(part_segmentation.notes or []) if str(note).strip()
+            )
+    if optional_support_notes:
+        for note in optional_support_notes:
+            normalized = str(note).strip()
+            if not normalized:
+                continue
+            if "disabled" in normalized.lower() or "unavailable" in normalized.lower():
+                priority_uncertainty_notes.append(normalized)
+            else:
+                priority_evidence_summary.append(normalized)
     if budget_control is not None and budget_control.budget_clipped:
         clipped_fields = ", ".join(budget_control.budget_clip_fields or [])
         uncertainty_notes.append(
             "Configured vision budget was clipped by fail-safe caps"
             + (f" for {clipped_fields}." if clipped_fields else ".")
         )
-    evidence_summary = _dedupe_strings(evidence_summary)[:6]
-    uncertainty_notes = _dedupe_strings(uncertainty_notes)[:6]
+    evidence_summary = _dedupe_strings([*priority_evidence_summary, *evidence_summary])[:6]
+    uncertainty_notes = _dedupe_strings([*priority_uncertainty_notes, *uncertainty_notes])[:6]
 
     selected_family = (
         planner_summary.selected_family

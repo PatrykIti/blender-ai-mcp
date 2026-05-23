@@ -95,8 +95,11 @@ elif args.localized_optional_mode == "packet_support":
   - unavailable / timeout localization
   - empty localization results
   - localization-seeded segmentation
-- subprocess and unit coverage now prove the localized-support harness mode and
-  its degraded behavior without promoting support evidence into truth
+- subprocess coverage now proves both the explicit fixture-only seam and the
+  live disabled-by-default localized-support CLI path
+- unit coverage now proves unavailable / timeout localization, empty results,
+  localization-seeded segmentation, and the no-promotion boundary from support
+  evidence into truth
 
 ## Status / Board Update
 

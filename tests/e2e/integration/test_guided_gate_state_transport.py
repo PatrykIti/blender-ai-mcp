@@ -955,6 +955,11 @@ async def _exercise_enabled_compare_localization_transport(client, reference_pat
     assert part_segmentation["parts"][0]["crop_path"] == "/tmp/localization_tail_crop.png"
     assert part_segmentation["parts"][0]["landmarks"][0]["landmark_id"] == "box_center"
     assert compare_result["compare_diagnostics"]["packets"][0]["localized_support_reason"] == "attachment_gap"
+    assert compare_result["reference_orchestrator_feedback"] is not None
+    assert any(
+        "localized_support_reason=attachment_gap" in item
+        for item in compare_result["reference_orchestrator_feedback"]["evidence_summary"]
+    )
     support_evidence = [
         item
         for packet in compare_result["compare_diagnostics"]["packets"]

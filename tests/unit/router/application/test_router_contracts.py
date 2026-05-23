@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from types import SimpleNamespace
 
 import server.adapters.mcp.areas.router as router_area
 from server.adapters.mcp.areas.router import router_get_status, router_set_goal
@@ -337,6 +338,101 @@ def test_router_get_status_exposes_reference_understanding_summary(monkeypatch):
     assert result.reference_understanding_gate_ids == ["generic_seat_presence"]
     assert result.reference_orchestrator_feedback is not None
     assert result.reference_orchestrator_feedback.selected_family == "modeling_mesh"
+
+
+def test_router_get_status_projects_configured_localized_support_notes_into_feedback(monkeypatch):
+    class Handler:
+        def set_goal(self, goal, resolved_params=None):
+            return {
+                "status": "ready",
+                "workflow": "chair_workflow",
+                "resolved": {},
+                "unresolved": [],
+                "resolution_sources": {},
+                "message": "ok",
+            }
+
+    class Inventory:
+        def get(self, capability_name: str):
+            states = {
+                "part_localization": SimpleNamespace(
+                    status="available",
+                    prerequisite_summary="Optional packet-local localization is configured for bounded compare-time support.",
+                )
+            }
+            return states.get(capability_name)
+
+    monkeypatch.setattr("server.adapters.mcp.areas.router.get_router_handler", lambda: Handler())
+    monkeypatch.setattr(
+        router_area,
+        "get_vision_backend_resolver",
+        lambda: SimpleNamespace(runtime_config=SimpleNamespace(optional_capability_inventory=Inventory())),
+    )
+
+    ctx = DummyContext()
+    ctx.state["reference_understanding_summary"] = {
+        "status": "available",
+        "understanding_id": "understanding_1234567890",
+        "goal": "chair",
+        "reference_ids": ["ref_1"],
+        "subject": {
+            "label": "wooden chair",
+            "category": "hard_surface",
+            "confidence": 0.8,
+            "uncertainty_notes": [],
+        },
+        "style": {
+            "style_label": "hard_surface",
+            "confidence": 0.8,
+            "notes": [],
+        },
+        "required_parts": [],
+        "non_goals": [],
+        "construction_strategy": {
+            "construction_path": "hard_surface",
+            "primary_family": "modeling_mesh",
+            "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+            "stage_sequence": ["primary_masses"],
+            "finish_policy": "inspect_first",
+        },
+        "router_handoff_hints": {
+            "preferred_family": "modeling_mesh",
+            "allowed_guided_families": ["reference_context", "primary_masses", "secondary_parts", "inspect_validate"],
+            "sculpt_policy": "hidden",
+        },
+        "gate_proposals": [],
+        "visual_evidence_refs": [],
+        "classification_scores": [],
+        "segmentation_artifacts": [],
+        "verification_requirements": [],
+        "source_provenance": [{"source": "reference_understanding"}],
+        "boundary_policy": {
+            "advisory_only": True,
+            "not_truth_source": True,
+            "may_unlock_tools": False,
+            "may_pass_gates": False,
+            "may_propose_gates": True,
+        },
+    }
+    ctx.state["reference_strategy_state"] = {
+        "status": "available",
+        "understanding_id": "understanding_1234567890",
+        "construction_path": "hard_surface",
+        "primary_family": "modeling_mesh",
+        "allowed_families": ["macro", "modeling_mesh", "inspect_only"],
+        "blocked_families": ["sculpt_region"],
+        "sculpt_policy": "hidden",
+        "finish_policy": "inspect_first",
+        "recommended_next_checkpoint": "reference_compare_stage_checkpoint",
+    }
+
+    result = asyncio.run(router_get_status(ctx))
+
+    assert result.reference_orchestrator_feedback is not None
+    assert (
+        "Optional packet-local localization is configured for bounded compare-time support."
+        in result.reference_orchestrator_feedback.evidence_summary
+    )
 
 
 def test_router_get_status_projects_last_guided_action_block_into_feedback(monkeypatch):

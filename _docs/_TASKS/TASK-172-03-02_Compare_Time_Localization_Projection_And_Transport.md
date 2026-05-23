@@ -16,9 +16,10 @@
 
 - this leaf is the place where compare-time localization actually joins staged
   compare; do not route it through RU-only `vision/reference_support.py`
-- use the expanded segmentation seam from `TASK-172-04` as the public
-  projection carrier, so localization can seed or refine masks/crops without
-  reopening the base `part_segmentation` contract vocabulary
+- use the existing `part_segmentation` carrier already shipped on the earlier
+  segmentation-sidecar owner seam as the public projection carrier, so
+  localization can seed or refine masks/crops without reopening the base
+  `part_segmentation` contract vocabulary
 - compare packets already expose the typed `localized_support_reason` seam from
   `TASK-172-02`; this leaf should reuse that field and extend parity /
   feedback/status projection only where localization-specific transport needs it

@@ -31,9 +31,10 @@
     config cannot express localization cleanly
   - vendor-specific behavior stays behind a vendor-neutral internal adapter seam
 - this subtask remains compare-time only; the public projection leaf
-  intentionally follows the existing segmentation seam expansion from
-  `TASK-172-04`, while RU-side boxed artifact linkage remains on the separate
-  RU artifact/readiness owners and is not reopened here
+  intentionally follows the existing `part_segmentation` carrier already
+  shipped on the earlier segmentation-sidecar owner seam, while RU-side boxed
+  artifact linkage remains on the separate RU artifact/readiness owners and is
+  not reopened here
 - keep `reference_compare_packets.py` as the durable compare-time execution
   owner; do not turn the RU-specific `vision/reference_support.py` helper into
   the default packet-evidence execution seam

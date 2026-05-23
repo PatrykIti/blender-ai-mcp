@@ -382,7 +382,7 @@ def _build_request_from_args(args: Any, golden: ResolvedVisionGoldenScenario | N
     return request
 
 
-def _config_for_backend(args: Any, backend: str) -> Config:
+def _config_for_backend(args: Any, backend: str, *, vision_enabled: bool = True) -> Config:
     payload: dict[str, Any] = {
         "BLENDER_RPC_HOST": "127.0.0.1",
         "BLENDER_RPC_PORT": 8765,
@@ -398,7 +398,7 @@ def _config_for_backend(args: Any, backend: str) -> Config:
         "MCP_TASK_TIMEOUT_SECONDS": 300.0,
         "RPC_TIMEOUT_SECONDS": 30.0,
         "ADDON_EXECUTION_TIMEOUT_SECONDS": 30.0,
-        "VISION_ENABLED": True,
+        "VISION_ENABLED": vision_enabled,
         "VISION_PROVIDER": backend,
         "VISION_ALLOW_ON_GUIDED": True,
         "VISION_MAX_IMAGES": args.max_images,
@@ -535,7 +535,7 @@ async def _run_localized_support_harness(
         ]
 
     backend_name = "mlx_local" if args.backend == "all" else args.backend
-    runtime = build_vision_runtime_config(_config_for_backend(args, backend_name))
+    runtime = build_vision_runtime_config(_config_for_backend(args, backend_name, vision_enabled=False))
     localization_config = runtime.active_localization_config
     segmentation_config = runtime.active_segmentation_sidecar
     part_segmentation: ReferencePartSegmentationContract | None
@@ -724,7 +724,7 @@ def main(argv: list[str] | None = None) -> int:
             parser.error("Provide --localized-support-query-label when --mode=localized-support")
         if args.bundle_json is None and not args.after:
             parser.error("Provide --after or --bundle-json when --mode=localized-support")
-        if args.bundle_json is None and not args.reference:
+        if args.bundle_json is None and args.references_json is None and not args.reference:
             parser.error("Provide --reference or --references-json when --mode=localized-support")
         if args.bundle_json is not None and args.references_json is None and not args.reference:
             parser.error("Provide --references-json or --reference when --mode=localized-support uses --bundle-json")

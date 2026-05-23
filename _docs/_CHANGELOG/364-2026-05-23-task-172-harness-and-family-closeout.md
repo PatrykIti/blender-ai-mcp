@@ -13,7 +13,8 @@ optional-vision runtime family.
   operator path for the packet-local optional support owner seam
 - kept the normal backend-running harness path unchanged and made the new
   localized-support path opt-in only
-- added harness/subprocess proof and negative coverage for:
+- added subprocess proof for the explicit localized-support CLI path plus
+  negative coverage for:
   - disabled optional localized support
   - unavailable / timeout localization
   - empty localization results

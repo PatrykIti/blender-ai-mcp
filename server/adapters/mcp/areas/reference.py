@@ -877,6 +877,7 @@ def _stage_compare_response(
         if reference_strategy_state is not None
         else None
     )
+    effective_part_segmentation = part_segmentation or _configured_part_segmentation()
     reference_orchestrator_feedback = build_reference_orchestrator_feedback(
         goal=goal,
         summary=reference_understanding_summary,
@@ -890,6 +891,7 @@ def _stage_compare_response(
         correction_candidates=list(correction_candidates or []),
         next_gate_actions=list(gate_fields["next_gate_actions"] or []),
         recommended_bounded_tools=list(gate_fields["recommended_bounded_tools"] or []),
+        part_segmentation=effective_part_segmentation,
     )
     return ReferenceCompareStageCheckpointResponseContract(
         action="compare_stage_checkpoint",
@@ -921,7 +923,7 @@ def _stage_compare_response(
         planner_detail=planner_detail if heavy_detail_allowed else None,
         silhouette_analysis=silhouette_analysis,
         action_hints=list(action_hints or []),
-        part_segmentation=part_segmentation or _disabled_part_segmentation(),
+        part_segmentation=effective_part_segmentation,
         view_diagnostics_hints=view_diagnostics_hints,
         target_view=target_view,
         checkpoint_id=checkpoint_id,
@@ -1005,6 +1007,9 @@ def _iterate_stage_response(
         else None
     )
     resolved_correction_candidates = list(correction_candidates or compare_result.correction_candidates or [])
+    effective_part_segmentation = (
+        part_segmentation or compare_result.part_segmentation or _configured_part_segmentation()
+    )
     reference_orchestrator_feedback = build_reference_orchestrator_feedback(
         goal=goal,
         summary=reference_understanding_summary or compare_result.reference_understanding_summary,
@@ -1020,6 +1025,7 @@ def _iterate_stage_response(
         recommended_bounded_tools=list(gate_fields["recommended_bounded_tools"] or []),
         correction_focus=correction_focus,
         loop_disposition=loop_disposition,
+        part_segmentation=effective_part_segmentation,
     )
     heavy_detail_allowed = _compact_compare_detail_allowed(
         preset_profile=compare_result.preset_profile,
@@ -1062,7 +1068,7 @@ def _iterate_stage_response(
         planner_detail=(planner_detail or compare_result.planner_detail) if heavy_detail_allowed else None,
         silhouette_analysis=silhouette_analysis or compare_result.silhouette_analysis,
         action_hints=list(action_hints or compare_result.action_hints or []),
-        part_segmentation=part_segmentation or compare_result.part_segmentation or _disabled_part_segmentation(),
+        part_segmentation=effective_part_segmentation,
         view_diagnostics_hints=view_diagnostics_hints or compare_result.view_diagnostics_hints,
         target_view=target_view,
         checkpoint_id=checkpoint_id,
@@ -1382,8 +1388,8 @@ def _disabled_part_segmentation() -> ReferencePartSegmentationContract:
         advisory_only=True,
         parts=[],
         notes=[
-            "Optional part segmentation remains disabled by default.",
-            "The sidecar path is advisory-only and separate from vision_contract_profile routing.",
+            "Optional localized support remains disabled by default.",
+            "Localized support stays advisory-only and separate from vision_contract_profile routing.",
         ],
     )
 
@@ -1395,26 +1401,44 @@ def _configured_part_segmentation() -> ReferencePartSegmentationContract:
     runtime_config = getattr(resolver, "runtime_config", None)
     inventory = getattr(runtime_config, "optional_capability_inventory", None) if runtime_config is not None else None
     sidecar_state = inventory.get("part_segmentation") if inventory is not None else None
+    localization_state = inventory.get("part_localization") if inventory is not None else None
     sidecar = getattr(runtime_config, "active_segmentation_sidecar", None) if runtime_config is not None else None
-    if sidecar is None or not getattr(sidecar, "enabled", False):
+    localization = getattr(runtime_config, "active_localization_config", None) if runtime_config is not None else None
+    sidecar_enabled = sidecar is not None and bool(getattr(sidecar, "enabled", False))
+    localization_enabled = localization is not None and bool(getattr(localization, "enabled", False))
+    if not sidecar_enabled and not localization_enabled:
         return _disabled_part_segmentation()
+
+    provider_name = None
+    if localization_state is not None and getattr(localization_state, "provider_name", None):
+        provider_name = localization_state.provider_name
+    elif sidecar_state is not None and getattr(sidecar_state, "provider_name", None):
+        provider_name = sidecar_state.provider_name
+    elif localization_enabled:
+        provider_name = getattr(localization, "provider_name", None)
+    elif sidecar_enabled:
+        provider_name = getattr(sidecar, "provider_name", None)
+
+    notes: list[str] = []
+    if localization_enabled:
+        notes.append(
+            str(getattr(localization_state, "prerequisite_summary", "") or "")
+            or "Optional packet-local localization is configured for bounded compare-time support."
+        )
+    if sidecar_enabled:
+        notes.append(
+            str(getattr(sidecar_state, "prerequisite_summary", "") or "")
+            or "Optional packet-local segmentation is configured for bounded compare-time support."
+        )
     return ReferencePartSegmentationContract(
         status="unavailable",
-        provider_name=(
-            getattr(sidecar_state, "provider_name", None)
-            if sidecar_state is not None
-            else getattr(sidecar, "provider_name", None)
-        ),
+        provider_name=provider_name,
         advisory_only=True,
         parts=[],
         notes=[
-            (
-                str(getattr(sidecar_state, "prerequisite_summary", "") or "")
-                if sidecar_state is not None
-                else "Optional part segmentation sidecar is enabled on the runtime config."
-            ),
-            "No compare-time sidecar result was collected for this staged compare run.",
-            "The sidecar path is advisory-only and separate from vision_contract_profile routing.",
+            *notes,
+            "No compare-time localized support result was collected for this staged compare run.",
+            "Localized support stays advisory-only and separate from vision_contract_profile routing.",
         ],
     )
 

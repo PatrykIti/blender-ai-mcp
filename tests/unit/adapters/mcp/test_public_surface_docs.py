@@ -268,6 +268,32 @@ def test_mcp_client_config_examples_document_guided_creature_contract():
         assert expected in text
 
 
+def test_optional_localized_support_docs_and_contract_are_guarded():
+    """Localized-support operator/docs seams should stay covered by explicit assertions."""
+
+    vision_readme = (REPO_ROOT / "_docs" / "_VISION" / "README.md").read_text(encoding="utf-8")
+    mcp_readme = (REPO_ROOT / "_docs" / "_MCP_SERVER" / "README.md").read_text(encoding="utf-8")
+    client_examples = (REPO_ROOT / "_docs" / "_MCP_SERVER" / "MCP_CLIENT_CONFIG_EXAMPLES.md").read_text(
+        encoding="utf-8"
+    )
+    harness_script = (REPO_ROOT / "scripts" / "vision_harness.py").read_text(encoding="utf-8")
+    compare_packets_source = (
+        REPO_ROOT / "server" / "adapters" / "mcp" / "areas" / "reference_compare_packets.py"
+    ).read_text(encoding="utf-8")
+
+    for text in (vision_readme, mcp_readme, client_examples):
+        assert "localized_support_reason" in text
+
+    assert "VISION_LOCALIZATION_ENABLED" in vision_readme
+    assert "VISION_LOCALIZATION_ENABLED" in client_examples
+    assert "--mode localized-support" in vision_readme
+    assert "--mode localized-support" in client_examples
+    assert "seed_boxes" in vision_readme
+    assert "localized-support" in harness_script
+    assert "box_center" in compare_packets_source
+    assert "seed_boxes" in compare_packets_source
+
+
 def test_vision_docs_exist_and_describe_runtime_scope():
     text = (REPO_ROOT / "_docs" / "_VISION" / "README.md").read_text(encoding="utf-8")
 

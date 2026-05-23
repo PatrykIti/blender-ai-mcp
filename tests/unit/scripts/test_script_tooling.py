@@ -1109,6 +1109,66 @@ def test_vision_harness_fixture_only_localized_support_keeps_owner_path_opt_in(c
     assert '"tail_mass"' in output
 
 
+def test_vision_harness_fixture_only_localized_support_accepts_references_json_without_inline_reference(
+    tmp_path, capsys
+):
+    module = _load_script("vision_harness")
+    references_path = tmp_path / "references.json"
+    after_path = tmp_path / "after.png"
+    after_path.write_bytes(b"after")
+    references_path.write_text(
+        json.dumps(
+            {
+                "references": [
+                    {
+                        "reference_id": "ref_1",
+                        "goal": "low poly squirrel",
+                        "label": "front_reference",
+                        "target_object": "Squirrel_Body",
+                        "target_view": "front",
+                        "media_type": "image/png",
+                        "source_kind": "local_path",
+                        "original_path": str((tmp_path / "front_ref.png").resolve()),
+                        "stored_path": str((tmp_path / "front_ref.png").resolve()),
+                        "host_visible_path": str((tmp_path / "front_ref.png").resolve()),
+                        "added_at": "2026-05-23T00:00:00Z",
+                    }
+                ]
+            }
+        )
+    )
+
+    result = module.main(
+        [
+            "--backend",
+            "mlx_local",
+            "--goal",
+            "low poly squirrel",
+            "--mode",
+            "localized-support",
+            "--target-object",
+            "Squirrel_Body",
+            "--target-view",
+            "front",
+            "--localized-support-query-label",
+            "tail_mass",
+            "--after",
+            str(after_path),
+            "--references-json",
+            str(references_path),
+            "--fixture-only",
+            "localized-support",
+        ]
+    )
+
+    assert result == 0
+    payload = json.loads(capsys.readouterr().out)
+    row = payload[0]
+    assert row["status"] == "fixture_only"
+    assert row["result"]["reference_count"] == 1
+    assert row["result"]["query_labels"] == ["tail_mass"]
+
+
 def test_vision_harness_localized_support_mode_rejects_missing_query_label():
     module = _load_script("vision_harness")
 
@@ -1162,6 +1222,41 @@ def test_vision_harness_live_localized_support_reports_disabled_by_default(tmp_p
     row = payload[0]
     assert row["status"] == "success"
     assert row["localized_optional_mode"] == "packet_support"
+    assert row["result"]["part_segmentation"]["status"] == "disabled"
+
+
+def test_vision_harness_live_localized_support_does_not_require_primary_backend_config(tmp_path, monkeypatch, capsys):
+    module = _load_script("vision_harness")
+    reference_path = tmp_path / "reference.png"
+    after_path = tmp_path / "after.png"
+    reference_path.write_bytes(b"ref")
+    after_path.write_bytes(b"after")
+
+    result = module.main(
+        [
+            "--backend",
+            "openai_compatible_external",
+            "--goal",
+            "low poly squirrel",
+            "--mode",
+            "localized-support",
+            "--target-object",
+            "Squirrel_Body",
+            "--target-view",
+            "front",
+            "--localized-support-query-label",
+            "tail_mass",
+            "--after",
+            str(after_path),
+            "--reference",
+            str(reference_path),
+        ]
+    )
+
+    assert result == 0
+    payload = json.loads(capsys.readouterr().out)
+    row = payload[0]
+    assert row["status"] == "success"
     assert row["result"]["part_segmentation"]["status"] == "disabled"
 
 
