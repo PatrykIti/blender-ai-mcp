@@ -33,6 +33,14 @@ VISION_SEGMENTATION_API_KEY="${VISION_SEGMENTATION_API_KEY:-}"
 VISION_SEGMENTATION_API_KEY_ENV="${VISION_SEGMENTATION_API_KEY_ENV:-}"
 VISION_SEGMENTATION_TIMEOUT_SECONDS="${VISION_SEGMENTATION_TIMEOUT_SECONDS:-15.0}"
 VISION_SEGMENTATION_MAX_PARTS="${VISION_SEGMENTATION_MAX_PARTS:-16}"
+VISION_LOCALIZATION_ENABLED="${VISION_LOCALIZATION_ENABLED:-false}"
+VISION_LOCALIZATION_PROVIDER="${VISION_LOCALIZATION_PROVIDER:-generic_sidecar}"
+VISION_LOCALIZATION_ENDPOINT="${VISION_LOCALIZATION_ENDPOINT:-}"
+VISION_LOCALIZATION_MODEL="${VISION_LOCALIZATION_MODEL:-}"
+VISION_LOCALIZATION_API_KEY="${VISION_LOCALIZATION_API_KEY:-}"
+VISION_LOCALIZATION_API_KEY_ENV="${VISION_LOCALIZATION_API_KEY_ENV:-}"
+VISION_LOCALIZATION_TIMEOUT_SECONDS="${VISION_LOCALIZATION_TIMEOUT_SECONDS:-15.0}"
+VISION_LOCALIZATION_MAX_CANDIDATES="${VISION_LOCALIZATION_MAX_CANDIDATES:-8}"
 REFERENCE_CLASSIFIER_AUTO_START="${REFERENCE_CLASSIFIER_AUTO_START:-true}"
 REFERENCE_CLASSIFIER_HOST="${REFERENCE_CLASSIFIER_HOST:-0.0.0.0}"
 REFERENCE_CLASSIFIER_PORT="${REFERENCE_CLASSIFIER_PORT:-9200}"
@@ -40,6 +48,21 @@ REFERENCE_CLASSIFIER_DEVICE="${REFERENCE_CLASSIFIER_DEVICE:-auto}"
 REFERENCE_CLASSIFIER_TOP_K="${REFERENCE_CLASSIFIER_TOP_K:-${VISION_REFERENCE_CLASSIFIER_MAX_LABELS}}"
 REFERENCE_CLASSIFIER_DOCKER_HOST="${REFERENCE_CLASSIFIER_DOCKER_HOST:-host.docker.internal}"
 REFERENCE_CLASSIFIER_LOG_PATH="${REFERENCE_CLASSIFIER_LOG_PATH:-/tmp/blender-ai-reference-classifier.log}"
+SEGMENTATION_SIDECAR_AUTO_START="${SEGMENTATION_SIDECAR_AUTO_START:-true}"
+SEGMENTATION_SIDECAR_HOST="${SEGMENTATION_SIDECAR_HOST:-0.0.0.0}"
+SEGMENTATION_SIDECAR_PORT="${SEGMENTATION_SIDECAR_PORT:-9100}"
+SEGMENTATION_SIDECAR_DEVICE="${SEGMENTATION_SIDECAR_DEVICE:-auto}"
+SEGMENTATION_SIDECAR_MODEL="${SEGMENTATION_SIDECAR_MODEL:-${VISION_SEGMENTATION_MODEL:-sam-sidecar-v1}}"
+SEGMENTATION_SIDECAR_DOCKER_HOST="${SEGMENTATION_SIDECAR_DOCKER_HOST:-host.docker.internal}"
+SEGMENTATION_SIDECAR_LOG_PATH="${SEGMENTATION_SIDECAR_LOG_PATH:-/tmp/blender-ai-segmentation-sidecar.log}"
+LOCALIZATION_SIDECAR_AUTO_START="${LOCALIZATION_SIDECAR_AUTO_START:-true}"
+LOCALIZATION_SIDECAR_HOST="${LOCALIZATION_SIDECAR_HOST:-0.0.0.0}"
+LOCALIZATION_SIDECAR_PORT="${LOCALIZATION_SIDECAR_PORT:-9300}"
+LOCALIZATION_SIDECAR_DEVICE="${LOCALIZATION_SIDECAR_DEVICE:-auto}"
+LOCALIZATION_SIDECAR_MODEL="${LOCALIZATION_SIDECAR_MODEL:-${VISION_LOCALIZATION_MODEL:-grounding-sidecar-v1}}"
+LOCALIZATION_SIDECAR_THRESHOLD="${LOCALIZATION_SIDECAR_THRESHOLD:-0.1}"
+LOCALIZATION_SIDECAR_DOCKER_HOST="${LOCALIZATION_SIDECAR_DOCKER_HOST:-host.docker.internal}"
+LOCALIZATION_SIDECAR_LOG_PATH="${LOCALIZATION_SIDECAR_LOG_PATH:-/tmp/blender-ai-localization-sidecar.log}"
 VISION_MAX_IMAGES="${VISION_MAX_IMAGES:-8}"
 VISION_MAX_INPUT_CHARS="${VISION_MAX_INPUT_CHARS:-12000}"
 VISION_MAX_TOKENS="${VISION_MAX_TOKENS:-8192}"
@@ -59,14 +82,15 @@ case "${OS_NAME}" in
     ;;
 esac
 
-sidecar_pid=""
-sidecar_log=""
+sidecar_pids=()
 
 cleanup() {
-  if [[ -n "${sidecar_pid}" ]] && kill -0 "${sidecar_pid}" 2>/dev/null; then
-    kill "${sidecar_pid}" 2>/dev/null || true
-    wait "${sidecar_pid}" 2>/dev/null || true
-  fi
+  for pid in "${sidecar_pids[@]:-}"; do
+    if [[ -n "${pid}" ]] && kill -0 "${pid}" 2>/dev/null; then
+      kill "${pid}" 2>/dev/null || true
+      wait "${pid}" 2>/dev/null || true
+    fi
+  done
 }
 
 wait_for_sidecar() {
@@ -107,17 +131,18 @@ if [[ "${VISION_REFERENCE_CLASSIFIER_ENABLED}" == "true" && "${VISION_REFERENCE_
       exit 1
     fi
     VISION_REFERENCE_CLASSIFIER_ENDPOINT="${derived_classifier_endpoint}"
+    VISION_REFERENCE_CLASSIFIER_MODEL="${VISION_REFERENCE_CLASSIFIER_MODEL:-${REFERENCE_CLASSIFIER_MODEL:-google/siglip2-base-patch16-224}}"
     export REFERENCE_CLASSIFIER_HOST
     export REFERENCE_CLASSIFIER_PORT
     export REFERENCE_CLASSIFIER_DEVICE
     export REFERENCE_CLASSIFIER_TOP_K
-    export REFERENCE_CLASSIFIER_MODEL="${REFERENCE_CLASSIFIER_MODEL:-${VISION_REFERENCE_CLASSIFIER_MODEL:-google/siglip2-base-patch16-224}}"
+    export REFERENCE_CLASSIFIER_MODEL="${REFERENCE_CLASSIFIER_MODEL:-${VISION_REFERENCE_CLASSIFIER_MODEL}}"
     sidecar_log="${REFERENCE_CLASSIFIER_LOG_PATH}"
     touch "${sidecar_log}"
     echo "Starting local reference classifier sidecar before Docker MCP: ${derived_classifier_endpoint}"
     echo "Appending reference classifier sidecar logs to: ${sidecar_log}"
     bash "${SCRIPT_DIR}/run_reference_classifier_sidecar.sh" >>"${sidecar_log}" 2>&1 &
-    sidecar_pid="$!"
+    sidecar_pids+=("$!")
     trap cleanup EXIT
     if ! wait_for_sidecar "${REFERENCE_CLASSIFIER_PORT}"; then
       echo "Reference classifier sidecar did not become ready. Log: ${sidecar_log}" >&2
@@ -130,12 +155,83 @@ if [[ "${VISION_REFERENCE_CLASSIFIER_ENABLED}" == "true" && "${VISION_REFERENCE_
   fi
 fi
 
+if [[ "${VISION_SEGMENTATION_ENABLED}" == "true" && "${VISION_SEGMENTATION_PROVIDER}" == "generic_sidecar" ]]; then
+  derived_segmentation_endpoint="http://${SEGMENTATION_SIDECAR_DOCKER_HOST}:${SEGMENTATION_SIDECAR_PORT}/segment"
+  if [[ "${SEGMENTATION_SIDECAR_AUTO_START}" == "true" ]]; then
+    if [[ -n "${VISION_SEGMENTATION_ENDPOINT}" && "${VISION_SEGMENTATION_ENDPOINT}" != "${derived_segmentation_endpoint}" ]]; then
+      echo "VISION_SEGMENTATION_ENDPOINT=${VISION_SEGMENTATION_ENDPOINT} conflicts with the auto-start sidecar endpoint ${derived_segmentation_endpoint}." >&2
+      echo "Set SEGMENTATION_SIDECAR_AUTO_START=false if you want to use a remote segmentation endpoint." >&2
+      exit 1
+    fi
+    VISION_SEGMENTATION_ENDPOINT="${derived_segmentation_endpoint}"
+    VISION_SEGMENTATION_MODEL="${VISION_SEGMENTATION_MODEL:-${SEGMENTATION_SIDECAR_MODEL}}"
+    export SEGMENTATION_SIDECAR_HOST
+    export SEGMENTATION_SIDECAR_PORT
+    export SEGMENTATION_SIDECAR_DEVICE
+    export SEGMENTATION_SIDECAR_MODEL="${SEGMENTATION_SIDECAR_MODEL:-${VISION_SEGMENTATION_MODEL}}"
+    export SEGMENTATION_SIDECAR_MAX_PARTS="${SEGMENTATION_SIDECAR_MAX_PARTS:-${VISION_SEGMENTATION_MAX_PARTS}}"
+    sidecar_log="${SEGMENTATION_SIDECAR_LOG_PATH}"
+    touch "${sidecar_log}"
+    echo "Starting local segmentation sidecar before Docker MCP: ${derived_segmentation_endpoint}"
+    echo "Appending segmentation sidecar logs to: ${sidecar_log}"
+    bash "${SCRIPT_DIR}/run_segmentation_sidecar.sh" >>"${sidecar_log}" 2>&1 &
+    sidecar_pids+=("$!")
+    trap cleanup EXIT
+    if ! wait_for_sidecar "${SEGMENTATION_SIDECAR_PORT}"; then
+      echo "Segmentation sidecar did not become ready. Log: ${sidecar_log}" >&2
+      tail -n 50 "${sidecar_log}" >&2 || true
+      exit 1
+    fi
+    echo "Segmentation sidecar ready. Log: ${sidecar_log}"
+  elif [[ -z "${VISION_SEGMENTATION_ENDPOINT}" ]]; then
+    VISION_SEGMENTATION_ENDPOINT="${derived_segmentation_endpoint}"
+  fi
+fi
+
+if [[ "${VISION_LOCALIZATION_ENABLED}" == "true" && "${VISION_LOCALIZATION_PROVIDER}" == "generic_sidecar" ]]; then
+  derived_localization_endpoint="http://${LOCALIZATION_SIDECAR_DOCKER_HOST}:${LOCALIZATION_SIDECAR_PORT}/localize"
+  if [[ "${LOCALIZATION_SIDECAR_AUTO_START}" == "true" ]]; then
+    if [[ -n "${VISION_LOCALIZATION_ENDPOINT}" && "${VISION_LOCALIZATION_ENDPOINT}" != "${derived_localization_endpoint}" ]]; then
+      echo "VISION_LOCALIZATION_ENDPOINT=${VISION_LOCALIZATION_ENDPOINT} conflicts with the auto-start sidecar endpoint ${derived_localization_endpoint}." >&2
+      echo "Set LOCALIZATION_SIDECAR_AUTO_START=false if you want to use a remote localization endpoint." >&2
+      exit 1
+    fi
+    VISION_LOCALIZATION_ENDPOINT="${derived_localization_endpoint}"
+    VISION_LOCALIZATION_MODEL="${VISION_LOCALIZATION_MODEL:-${LOCALIZATION_SIDECAR_MODEL}}"
+    export LOCALIZATION_SIDECAR_HOST
+    export LOCALIZATION_SIDECAR_PORT
+    export LOCALIZATION_SIDECAR_DEVICE
+    export LOCALIZATION_SIDECAR_MODEL="${LOCALIZATION_SIDECAR_MODEL:-${VISION_LOCALIZATION_MODEL}}"
+    export LOCALIZATION_SIDECAR_MAX_CANDIDATES="${LOCALIZATION_SIDECAR_MAX_CANDIDATES:-${VISION_LOCALIZATION_MAX_CANDIDATES}}"
+    export LOCALIZATION_SIDECAR_THRESHOLD
+    sidecar_log="${LOCALIZATION_SIDECAR_LOG_PATH}"
+    touch "${sidecar_log}"
+    echo "Starting local localization sidecar before Docker MCP: ${derived_localization_endpoint}"
+    echo "Appending localization sidecar logs to: ${sidecar_log}"
+    bash "${SCRIPT_DIR}/run_localization_sidecar.sh" >>"${sidecar_log}" 2>&1 &
+    sidecar_pids+=("$!")
+    trap cleanup EXIT
+    if ! wait_for_sidecar "${LOCALIZATION_SIDECAR_PORT}"; then
+      echo "Localization sidecar did not become ready. Log: ${sidecar_log}" >&2
+      tail -n 50 "${sidecar_log}" >&2 || true
+      exit 1
+    fi
+    echo "Localization sidecar ready. Log: ${sidecar_log}"
+  elif [[ -z "${VISION_LOCALIZATION_ENDPOINT}" ]]; then
+    VISION_LOCALIZATION_ENDPOINT="${derived_localization_endpoint}"
+  fi
+fi
+
 echo "Starting ${IMAGE} in stateful Streamable HTTP mode on http://127.0.0.1:${MCP_HTTP_PORT}${MCP_STREAMABLE_HTTP_PATH}"
 echo "Blender RPC host: ${BLENDER_RPC_HOST}"
 echo "Debug selector: ${BLENDER_AI_DEBUG:-off (unset)}"
 echo "Prompt bridge tools: ${MCP_PROMPTS_AS_TOOLS_ENABLED}"
 echo "Reference classifier enabled: ${VISION_REFERENCE_CLASSIFIER_ENABLED}"
 echo "Reference classifier model override: ${VISION_REFERENCE_CLASSIFIER_MODEL:-<inherits from VISION_OPENROUTER_MODEL>}"
+echo "Segmentation sidecar enabled: ${VISION_SEGMENTATION_ENABLED}"
+echo "Segmentation sidecar model override: ${VISION_SEGMENTATION_MODEL:-sam-sidecar-v1}"
+echo "Localization sidecar enabled: ${VISION_LOCALIZATION_ENABLED}"
+echo "Localization sidecar model override: ${VISION_LOCALIZATION_MODEL:-grounding-sidecar-v1}"
 
 exec docker run --rm \
   "${DOCKER_EXTRA_HOST_ARGS[@]}" \
@@ -180,6 +276,14 @@ exec docker run --rm \
   -e VISION_SEGMENTATION_API_KEY_ENV="${VISION_SEGMENTATION_API_KEY_ENV}" \
   -e VISION_SEGMENTATION_TIMEOUT_SECONDS="${VISION_SEGMENTATION_TIMEOUT_SECONDS}" \
   -e VISION_SEGMENTATION_MAX_PARTS="${VISION_SEGMENTATION_MAX_PARTS}" \
+  -e VISION_LOCALIZATION_ENABLED="${VISION_LOCALIZATION_ENABLED}" \
+  -e VISION_LOCALIZATION_PROVIDER="${VISION_LOCALIZATION_PROVIDER}" \
+  -e VISION_LOCALIZATION_ENDPOINT="${VISION_LOCALIZATION_ENDPOINT}" \
+  -e VISION_LOCALIZATION_MODEL="${VISION_LOCALIZATION_MODEL}" \
+  -e VISION_LOCALIZATION_API_KEY="${VISION_LOCALIZATION_API_KEY}" \
+  -e VISION_LOCALIZATION_API_KEY_ENV="${VISION_LOCALIZATION_API_KEY_ENV}" \
+  -e VISION_LOCALIZATION_TIMEOUT_SECONDS="${VISION_LOCALIZATION_TIMEOUT_SECONDS}" \
+  -e VISION_LOCALIZATION_MAX_CANDIDATES="${VISION_LOCALIZATION_MAX_CANDIDATES}" \
   -e VISION_ALLOW_ON_GUIDED=true \
   -e VISION_MAX_IMAGES="${VISION_MAX_IMAGES}" \
   -e VISION_MAX_INPUT_CHARS="${VISION_MAX_INPUT_CHARS}" \

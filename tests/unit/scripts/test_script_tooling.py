@@ -46,14 +46,29 @@ def test_streamable_openrouter_shell_script_contains_required_runtime_env():
         "REFERENCE_CLASSIFIER_DOCKER_HOST",
         "REFERENCE_CLASSIFIER_LOG_PATH",
         "run_reference_classifier_sidecar.sh",
+        "SEGMENTATION_SIDECAR_AUTO_START",
+        "SEGMENTATION_SIDECAR_DOCKER_HOST",
+        "SEGMENTATION_SIDECAR_LOG_PATH",
+        "run_segmentation_sidecar.sh",
+        "LOCALIZATION_SIDECAR_AUTO_START",
+        "LOCALIZATION_SIDECAR_DOCKER_HOST",
+        "LOCALIZATION_SIDECAR_LOG_PATH",
+        "run_localization_sidecar.sh",
         "Appending reference classifier sidecar logs to:",
+        "Appending segmentation sidecar logs to:",
+        "Appending localization sidecar logs to:",
         'VISION_MAX_INPUT_CHARS="${VISION_MAX_INPUT_CHARS}"',
         'VISION_SEGMENTATION_ENABLED="${VISION_SEGMENTATION_ENABLED}"',
         'VISION_SEGMENTATION_ENDPOINT="${VISION_SEGMENTATION_ENDPOINT}"',
         'VISION_SEGMENTATION_MAX_PARTS="${VISION_SEGMENTATION_MAX_PARTS}"',
+        'VISION_LOCALIZATION_ENABLED="${VISION_LOCALIZATION_ENABLED}"',
+        'VISION_LOCALIZATION_ENDPOINT="${VISION_LOCALIZATION_ENDPOINT}"',
+        'VISION_LOCALIZATION_MAX_CANDIDATES="${VISION_LOCALIZATION_MAX_CANDIDATES}"',
         "/health",
         "host-gateway",
         "Set REFERENCE_CLASSIFIER_AUTO_START=false if you want to use a remote classifier endpoint.",
+        "Set SEGMENTATION_SIDECAR_AUTO_START=false if you want to use a remote segmentation endpoint.",
+        "Set LOCALIZATION_SIDECAR_AUTO_START=false if you want to use a remote localization endpoint.",
     ):
         assert expected in script
 
@@ -76,6 +91,44 @@ def test_reference_classifier_sidecar_shell_script_contains_operator_defaults():
         assert expected in script
 
 
+def test_segmentation_sidecar_shell_script_contains_operator_defaults():
+    script = (REPO_ROOT / "scripts" / "run_segmentation_sidecar.sh").read_text(encoding="utf-8")
+
+    for expected in (
+        "SEGMENTATION_SIDECAR_HOST",
+        "SEGMENTATION_SIDECAR_PORT",
+        "SEGMENTATION_SIDECAR_MODEL",
+        "VISION_SEGMENTATION_MODEL",
+        "foreground sidecar-only helper",
+        "does not start the FastMCP server",
+        "poetry install --with vision",
+        "Docker MCP endpoint",
+        "Local MCP endpoint",
+        "First launch downloads the configured model weights automatically.",
+        "scripts/segmentation_sidecar.py",
+    ):
+        assert expected in script
+
+
+def test_localization_sidecar_shell_script_contains_operator_defaults():
+    script = (REPO_ROOT / "scripts" / "run_localization_sidecar.sh").read_text(encoding="utf-8")
+
+    for expected in (
+        "LOCALIZATION_SIDECAR_HOST",
+        "LOCALIZATION_SIDECAR_PORT",
+        "LOCALIZATION_SIDECAR_MODEL",
+        "VISION_LOCALIZATION_MODEL",
+        "foreground sidecar-only helper",
+        "does not start the FastMCP server",
+        "poetry install --with vision",
+        "Docker MCP endpoint",
+        "Local MCP endpoint",
+        "First launch downloads the configured model weights automatically.",
+        "scripts/localization_sidecar.py",
+    ):
+        assert expected in script
+
+
 def test_run_mcp_server_shell_script_invokes_python_launcher():
     script = (REPO_ROOT / "scripts" / "run_mcp_server.sh").read_text(encoding="utf-8")
 
@@ -90,6 +143,8 @@ def test_run_mcp_server_docs_explain_macos_first_flow():
         "scripts/run_mcp_server.sh",
         "scripts/run_streamable_openrouter.sh",
         "scripts/run_reference_classifier_sidecar.sh",
+        "scripts/run_segmentation_sidecar.sh",
+        "scripts/run_localization_sidecar.sh",
         "does not launch the FastMCP server",
         "First Run",
         "Docker On macOS",
@@ -206,6 +261,154 @@ def test_reference_classifier_sidecar_parser_and_service_contract(tmp_path, monk
     ]
     assert response["model_name"] == "google/siglip2-base-patch16-224"
     assert response["device_name"] == "cpu"
+
+
+def test_localization_sidecar_parser_and_service_contract(tmp_path, monkeypatch):
+    module = _load_script("localization_sidecar")
+    image_path = tmp_path / "capture.png"
+
+    try:
+        from PIL import Image
+    except ModuleNotFoundError:
+        pytest.skip("Pillow is required for script-side image contract tests")
+
+    Image.new("RGB", (32, 24), (255, 255, 255)).save(image_path)
+
+    args = module.build_parser().parse_args(
+        [
+            "--host",
+            "127.0.0.1",
+            "--port",
+            "9300",
+            "--model",
+            "grounding-sidecar-v1",
+            "--device",
+            "cpu",
+            "--max-candidates",
+            "4",
+            "--threshold",
+            "0.2",
+        ]
+    )
+
+    assert args.host == "127.0.0.1"
+    assert args.port == 9300
+    assert args.model == "grounding-sidecar-v1"
+    assert args.device == "cpu"
+    assert args.max_candidates == 4
+    assert args.threshold == 0.2
+
+    def _fake_detector(image, candidate_labels, threshold):
+        assert candidate_labels == ["tail mass", "ear pair"]
+        assert threshold == 0.2
+        return [
+            {
+                "label": "tail mass",
+                "score": 0.91,
+                "box": {"xmin": 3, "ymin": 4, "xmax": 18, "ymax": 20},
+            }
+        ]
+
+    monkeypatch.setattr(module, "_build_localization_pipeline", lambda **kwargs: _fake_detector)
+
+    service = module.LocalizationService(
+        requested_model_name="grounding-sidecar-v1",
+        device_name="cpu",
+        max_candidates=4,
+        threshold=0.2,
+    )
+    service.warmup()
+    response = service.localize_payload(
+        {
+            "captures": [{"label": "after_1", "target_view": "front", "image_path": str(image_path)}],
+            "query_labels": ["tail_mass", "ear_pair"],
+        }
+    )
+
+    assert response["resolved_model_name"] == module.DEFAULT_LOCALIZATION_MODEL
+    assert response["device_name"] == "cpu"
+    assert len(response["candidates"]) == 1
+    assert response["candidates"][0]["query_label"] == "tail_mass"
+    assert response["candidates"][0]["capture_label"] == "after_1"
+    assert response["candidates"][0]["target_view"] == "front"
+
+
+def test_segmentation_sidecar_parser_and_service_contract(tmp_path, monkeypatch):
+    module = _load_script("segmentation_sidecar")
+    image_path = tmp_path / "capture.png"
+
+    try:
+        from PIL import Image
+    except ModuleNotFoundError:
+        pytest.skip("Pillow is required for script-side image contract tests")
+
+    Image.new("RGB", (24, 24), (255, 255, 255)).save(image_path)
+
+    args = module.build_parser().parse_args(
+        [
+            "--host",
+            "127.0.0.1",
+            "--port",
+            "9100",
+            "--model",
+            "sam-sidecar-v1",
+            "--device",
+            "cpu",
+            "--max-parts",
+            "3",
+        ]
+    )
+
+    assert args.host == "127.0.0.1"
+    assert args.port == 9100
+    assert args.model == "sam-sidecar-v1"
+    assert args.device == "cpu"
+    assert args.max_parts == 3
+
+    monkeypatch.setattr(module, "_build_segmentation_runtime", lambda **kwargs: object())
+
+    def _fake_predict(runtime, *, image, prompts):
+        assert len(prompts) == 1
+        return [
+            module.SegmentationPrediction(
+                mask=module.np.pad(module.np.ones((8, 8), dtype=bool), ((4, 12), (5, 11))),
+                confidence=0.87,
+            )
+        ]
+
+    monkeypatch.setattr(module, "_predict_segmentation", _fake_predict)
+
+    service = module.SegmentationService(
+        requested_model_name="sam-sidecar-v1",
+        device_name="cpu",
+        max_parts=3,
+    )
+    service.warmup()
+    response = service.segment_payload(
+        {
+            "packet": {
+                "packet_label": "tail packet",
+                "scope_label": "tail_mass",
+                "target_objects": ["Squirrel_Tail"],
+            },
+            "captures": [{"label": "after_1", "target_view": "front", "image_path": str(image_path)}],
+            "seed_boxes": [
+                {
+                    "query_label": "tail_mass",
+                    "capture_label": "after_1",
+                    "box_xyxy": [5, 4, 13, 12],
+                }
+            ],
+        }
+    )
+
+    assert response["resolved_model_name"] == module.DEFAULT_SEGMENTATION_MODEL
+    assert response["device_name"] == "cpu"
+    assert len(response["parts"]) == 1
+    assert response["parts"][0]["part_label"] == "tail_mass"
+    assert response["parts"][0]["confidence"] == 0.87
+    assert response["parts"][0]["mask_path"].endswith(".png")
+    assert response["parts"][0]["crop_path"].endswith(".png")
 
 
 def test_update_openrouter_model_profiles_generates_vision_candidates(tmp_path):

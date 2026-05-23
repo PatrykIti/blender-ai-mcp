@@ -28,6 +28,14 @@ planned under `TASK-165`, but they are not yet operator-supported here.
   - `scripts/run_reference_classifier_sidecar.sh`
   - this helper starts only the classifier sidecar and stays in the foreground
   - it does not launch the FastMCP server by itself
+- local segmentation sidecar helper:
+  - `scripts/run_segmentation_sidecar.sh`
+  - this helper starts only the segmentation sidecar and stays in the foreground
+  - it does not launch the FastMCP server by itself
+- local localization sidecar helper:
+  - `scripts/run_localization_sidecar.sh`
+  - this helper starts only the localization sidecar and stays in the foreground
+  - it does not launch the FastMCP server by itself
 
 ## What The Launcher Does
 
@@ -56,6 +64,11 @@ If you run `scripts/run_reference_classifier_sidecar.sh` directly, expect only
 the classifier sidecar on `:9200`. The combined FastMCP + Docker-guided launch
 belongs to `scripts/run_mcp_server.sh` or the lower-level
 `scripts/run_streamable_openrouter.sh`.
+
+If you run `scripts/run_segmentation_sidecar.sh` or
+`scripts/run_localization_sidecar.sh` directly, expect only the matching
+sidecar on `:9100` or `:9300`. The first launch downloads the configured model
+weights automatically.
 
 The launcher is interactive. It will prompt before:
 

@@ -837,6 +837,8 @@ Local operator path:
 - for the Docker-guided MCP helper use:
   - `VISION_REFERENCE_CLASSIFIER_PROVIDER=generic_sidecar`
   - `VISION_REFERENCE_CLASSIFIER_ENDPOINT=http://host.docker.internal:9200/classify`
+  - `scripts/run_streamable_openrouter.sh` can auto-start the local classifier
+    sidecar when `REFERENCE_CLASSIFIER_AUTO_START=true`
 
 ## Optional Part-Segmentation Sidecar
 
@@ -875,6 +877,10 @@ Boundary rules:
   sidecar pass only when the packet carries a bounded
   `localized_support_reason`, then merge the returned parts into top-level
   `part_segmentation` plus packet-local `support_evidence`
+- repo-local helper: `scripts/run_segmentation_sidecar.sh`
+- `scripts/run_streamable_openrouter.sh` can auto-start the local segmentation
+  sidecar when `SEGMENTATION_SIDECAR_AUTO_START=true`
+- the first local launch downloads the configured SAM-family weights
 
 ## Optional Compare-Time Localization Sidecar
 
@@ -902,6 +908,10 @@ Boundary rules:
   seed packet-local segmentation via internal `seed_boxes`
 - localization failures or empty results degrade to additive advisory notes and
   do not break the staged loop
+- repo-local helper: `scripts/run_localization_sidecar.sh`
+- `scripts/run_streamable_openrouter.sh` can auto-start the local localization
+  sidecar when `LOCALIZATION_SIDECAR_AUTO_START=true`
+- the first local launch downloads the configured localization model weights
 
 Current first-pass scored baseline on the synthetic repo scenarios:
 

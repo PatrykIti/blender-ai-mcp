@@ -214,6 +214,17 @@ that carry a bounded `localized_support_reason`. Clean/no-trigger runs keep
 `part_segmentation.status="disabled"` instead of forcing a whole-image support
 pass just because the endpoint is available.
 
+If you use `scripts/run_streamable_openrouter.sh`, you can also let the
+launcher derive and auto-start the local segmentation sidecar:
+
+```bash
+export VISION_SEGMENTATION_ENABLED=true
+export VISION_SEGMENTATION_PROVIDER=generic_sidecar
+export VISION_SEGMENTATION_MODEL=sam-sidecar-v1
+export SEGMENTATION_SIDECAR_AUTO_START=true
+./scripts/run_streamable_openrouter.sh
+```
+
 ## Optional Localization Sidecar Add-On
 
 This sidecar also stays disabled by default and is scoped to packet-local
@@ -234,6 +245,17 @@ compare support only.
 When this sidecar is enabled, staged compare still runs it only for packets
 that already carry a bounded `localized_support_reason`, and public transport
 still projects only support-safe crops/anchors through `part_segmentation`.
+
+If you use `scripts/run_streamable_openrouter.sh`, you can also let the
+launcher derive and auto-start the local localization sidecar:
+
+```bash
+export VISION_LOCALIZATION_ENABLED=true
+export VISION_LOCALIZATION_PROVIDER=generic_sidecar
+export VISION_LOCALIZATION_MODEL=grounding-sidecar-v1
+export LOCALIZATION_SIDECAR_AUTO_START=true
+./scripts/run_streamable_openrouter.sh
+```
 
 Operator harness example:
 
