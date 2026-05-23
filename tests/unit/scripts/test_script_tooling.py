@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import subprocess
 import sys
 import tomllib
 import types
@@ -127,6 +128,32 @@ def test_localization_sidecar_shell_script_contains_operator_defaults():
         "scripts/localization_sidecar.py",
     ):
         assert expected in script
+
+
+def test_localization_sidecar_script_can_run_help_via_file_path():
+    completed = subprocess.run(
+        [sys.executable, "scripts/localization_sidecar.py", "--help"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    assert "Run a local compare-time localization sidecar" in completed.stdout
+
+
+def test_segmentation_sidecar_script_can_run_help_via_file_path():
+    completed = subprocess.run(
+        [sys.executable, "scripts/segmentation_sidecar.py", "--help"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    assert "Run a local compare-time segmentation sidecar" in completed.stdout
 
 
 def test_run_mcp_server_shell_script_invokes_python_launcher():

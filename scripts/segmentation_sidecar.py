@@ -5,14 +5,20 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from dataclasses import dataclass
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from typing import Any
 
 import numpy as np
 
-from scripts.vision_sidecar_common import (
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from vision_sidecar_common import (  # noqa: E402
     PayloadImageRef,
     clamp_box_to_image,
     iter_payload_images,
