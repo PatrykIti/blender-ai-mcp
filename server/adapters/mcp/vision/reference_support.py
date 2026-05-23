@@ -360,7 +360,7 @@ async def _collect_classifier_support(
     list[ReferenceUnderstandingVisualEvidenceRefContract],
     GateSourceProvenanceContract | None,
 ]:
-    if config is None or not config.enabled or not config.endpoint:
+    if config is None or not config.enabled:
         emit_debug_log(
             "vision",
             logger,
@@ -371,6 +371,29 @@ async def _collect_classifier_support(
         return [], [], None
 
     reference_ids = [item["reference_id"] for item in request_payload.get("references", []) if item.get("reference_id")]
+    if not config.endpoint:
+        emit_debug_log(
+            "vision",
+            logger,
+            "optional_classifier unavailable provider=%s model=%s reason=missing_endpoint",
+            config.provider_name,
+            config.model,
+            level=logging.WARNING,
+        )
+        return (
+            [],
+            [],
+            GateSourceProvenanceContract(
+                source="classification_scores",
+                provider=config.provider_name,
+                model_id=config.model,
+                reference_ids=reference_ids,
+                summary=(
+                    "Optional reference classifier is enabled, but no endpoint is configured; "
+                    "set VISION_REFERENCE_CLASSIFIER_ENDPOINT or configure an external vision provider fallback."
+                ),
+            ),
+        )
     if not reference_ids:
         emit_debug_log(
             "vision",
@@ -471,7 +494,7 @@ async def _collect_segmentation_support(
     list[ReferenceUnderstandingVisualEvidenceRefContract],
     GateSourceProvenanceContract | None,
 ]:
-    if config is None or not config.enabled or not config.endpoint:
+    if config is None or not config.enabled:
         emit_debug_log(
             "vision",
             logger,
@@ -482,6 +505,29 @@ async def _collect_segmentation_support(
         return [], [], None
 
     reference_ids = [item["reference_id"] for item in request_payload.get("references", []) if item.get("reference_id")]
+    if not config.endpoint:
+        emit_debug_log(
+            "vision",
+            logger,
+            "optional_segmentation unavailable provider=%s model=%s reason=missing_endpoint",
+            config.provider_name,
+            config.model,
+            level=logging.WARNING,
+        )
+        return (
+            [],
+            [],
+            GateSourceProvenanceContract(
+                source="part_segmentation",
+                provider=config.provider_name,
+                model_id=config.model,
+                reference_ids=reference_ids,
+                summary=(
+                    "Optional packet-local segmentation is enabled, but no endpoint is configured; "
+                    "set VISION_SEGMENTATION_ENDPOINT to activate bounded compare-time support."
+                ),
+            ),
+        )
     if not reference_ids:
         emit_debug_log(
             "vision",

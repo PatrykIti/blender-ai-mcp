@@ -111,11 +111,13 @@ return ReferencePartSegmentationContract(
 ## Validation Commands
 
 - `git diff --check`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_compare_packets.py tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/adapters/mcp/test_vision_runtime_config.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_understanding_runtime_surface.py -q`
-- `PYTHONPATH=. poetry run pytest ./tests/unit`
+- no dedicated `TASK-172-04` implementation validation was run because this
+  leaf closed as a superseded historical planning slice
+- segmentation runtime proof is inherited from the earlier sidecar owner tasks
+  and from the `TASK-172-02` / `TASK-172-06` activation, harness, and transport
+  lanes that exercise the current shipped owner seam
 
 ## Validation Category
 
-- localized SAM-family segmentation sidecar and payload proof
+- superseded historical planning slice; no active payload proof is owned by
+  this leaf

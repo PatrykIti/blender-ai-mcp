@@ -349,6 +349,40 @@ def test_collect_compare_time_segmentation_support_threads_localization_seed_box
     assert result.status == "available"
 
 
+def test_collect_compare_time_segmentation_support_missing_endpoint_is_unavailable():
+    sidecar = SimpleNamespace(
+        enabled=True,
+        provider_name="generic_sidecar",
+        endpoint=None,
+        model="sam-sidecar-v1",
+        api_key=None,
+        api_key_env=None,
+        timeout_seconds=15.0,
+        max_parts=4,
+    )
+
+    result = asyncio.run(
+        compare_packets_area.collect_compare_time_segmentation_support(
+            config=sidecar,
+            goal="low poly creature",
+            packet_id="packet:tail:test",
+            packet_label="Tail",
+            target_view="front",
+            scope_label="Tail",
+            target_objects=["Squirrel_Body", "Squirrel_Tail"],
+            reference_records=[_reference("ref_front", label="front_ref", target_view="front")],
+            captures=[_capture("target_front_after", preset_name="target_front")],
+        )
+    )
+
+    assert result is not None
+    assert result.status == "unavailable"
+    assert result.provider_name == "generic_sidecar"
+    assert any("no endpoint" in note.lower() for note in result.notes)
+    assert any("VISION_SEGMENTATION_ENDPOINT" in note for note in result.notes)
+    assert build_compare_support_evidence(None, part_segmentation=result) == []
+
+
 def test_collect_compare_time_localization_support_treats_empty_candidates_as_unavailable(monkeypatch):
     sidecar = SimpleNamespace(
         enabled=True,
@@ -395,6 +429,48 @@ def test_collect_compare_time_localization_support_treats_empty_candidates_as_un
     assert projected is not None
     assert projected.status == "unavailable"
     assert any("no bounded candidates" in note.lower() for note in projected.notes)
+
+
+def test_collect_compare_time_localization_support_missing_endpoint_is_unavailable():
+    sidecar = SimpleNamespace(
+        enabled=True,
+        provider_name="generic_sidecar",
+        endpoint=None,
+        model="grounding-sidecar-v1",
+        api_key=None,
+        api_key_env=None,
+        timeout_seconds=15.0,
+        max_candidates=4,
+    )
+    packet = ReferenceComparePacketContract(
+        packet_id="packet:tail:test",
+        packet_kind="scope",
+        packet_label="tail_mass",
+        target_view="front",
+        scope_label="tail_mass",
+        target_objects=["Squirrel_Body"],
+        reference_ids=["ref_front"],
+        capture_labels=["target_front_after"],
+        compare_question="Compare the tail scope against the references.",
+        localized_support_reason="part_missing_ambiguity",
+    )
+
+    candidates, projected = asyncio.run(
+        compare_packets_area.collect_compare_time_localization_support(
+            config=sidecar,
+            goal="low poly creature",
+            packet=packet,
+            reference_records=[_reference("ref_front", label="front_ref", target_view="front")],
+            captures=[_capture("target_front_after", preset_name="target_front")],
+        )
+    )
+
+    assert candidates == []
+    assert projected is not None
+    assert projected.status == "unavailable"
+    assert projected.provider_name == "generic_sidecar"
+    assert any("no endpoint" in note.lower() for note in projected.notes)
+    assert any("VISION_LOCALIZATION_ENDPOINT" in note for note in projected.notes)
 
 
 def test_collect_compare_time_localization_support_timeout_returns_unavailable(monkeypatch):

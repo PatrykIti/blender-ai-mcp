@@ -213,6 +213,9 @@ Even with the sidecar configured, staged compare only invokes it for packets
 that carry a bounded `localized_support_reason`. Clean/no-trigger runs keep
 `part_segmentation.status="disabled"` instead of forcing a whole-image support
 pass just because the endpoint is available.
+If `VISION_SEGMENTATION_ENABLED=true` is set before
+`VISION_SEGMENTATION_ENDPOINT`, startup remains non-fatal and the capability is
+reported as unavailable with prerequisite diagnostics.
 
 If you use `scripts/run_streamable_openrouter.sh`, you can also let the
 launcher derive and auto-start the local segmentation sidecar:
@@ -245,6 +248,9 @@ compare support only.
 When this sidecar is enabled, staged compare still runs it only for packets
 that already carry a bounded `localized_support_reason`, and public transport
 still projects only support-safe crops/anchors through `part_segmentation`.
+If `VISION_LOCALIZATION_ENABLED=true` is set before
+`VISION_LOCALIZATION_ENDPOINT`, the server keeps running and reports the
+localization capability as unavailable with prerequisite diagnostics.
 
 If you use `scripts/run_streamable_openrouter.sh`, you can also let the
 launcher derive and auto-start the local localization sidecar:

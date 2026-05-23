@@ -1571,8 +1571,20 @@ async def collect_compare_time_segmentation_support(
 ) -> ReferencePartSegmentationContract | None:
     """Run the optional advisory-only segmentation sidecar for one compare packet."""
 
-    if config is None or not bool(getattr(config, "enabled", False)) or not getattr(config, "endpoint", None):
+    if config is None or not bool(getattr(config, "enabled", False)):
         return None
+    if not getattr(config, "endpoint", None):
+        return ReferencePartSegmentationContract(
+            status="unavailable",
+            provider_name=getattr(config, "provider_name", None),
+            advisory_only=True,
+            parts=[],
+            notes=[
+                "Optional compare-time part segmentation is enabled, but no endpoint is configured.",
+                "Set VISION_SEGMENTATION_ENDPOINT to activate bounded compare-time support.",
+                "The sidecar path is advisory-only and separate from vision_contract_profile routing.",
+            ],
+        )
 
     payload = _build_compare_segmentation_request_payload(
         goal=goal,
@@ -1675,8 +1687,23 @@ async def collect_compare_time_localization_support(
 ) -> tuple[list[VisionLocalizationCandidate], ReferencePartSegmentationContract | None]:
     """Run the optional advisory-only localization sidecar for one compare packet."""
 
-    if config is None or not bool(getattr(config, "enabled", False)) or not getattr(config, "endpoint", None):
+    if config is None or not bool(getattr(config, "enabled", False)):
         return [], None
+    if not getattr(config, "endpoint", None):
+        return (
+            [],
+            ReferencePartSegmentationContract(
+                status="unavailable",
+                provider_name=getattr(config, "provider_name", None),
+                advisory_only=True,
+                parts=[],
+                notes=[
+                    "Optional compare-time localization is enabled, but no endpoint is configured.",
+                    "Set VISION_LOCALIZATION_ENDPOINT to activate bounded compare-time support.",
+                    "Literal localization boxes stay internal; public payload projects only crops and derived anchors.",
+                ],
+            ),
+        )
 
     payload = _build_compare_localization_request_payload(
         goal=goal,

@@ -861,6 +861,11 @@ Current guided-flow behavior:
   for those same localized-support packets; literal localization boxes stay
   internal, and the public carrier remains the existing `part_segmentation`
   envelope
+- if localization is enabled without `VISION_LOCALIZATION_ENDPOINT`, startup
+  remains non-fatal and the optional capability reports unavailable
+  prerequisite diagnostics instead of becoming a hard guided/reference blocker
+- the optional reference classifier and segmentation sidecar use the same
+  non-fatal prerequisite behavior when enabled before their endpoint is set
 - for operator-only reproduction of that owner seam without a full MCP loop,
   `scripts/vision_harness.py --mode localized-support ...` now exercises the
   packet-local support path directly while preserving the same advisory-only

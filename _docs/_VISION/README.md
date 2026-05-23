@@ -906,6 +906,13 @@ Boundary rules:
   through the existing `part_segmentation` carrier
 - when the segmentation sidecar is also enabled, localization candidates may
   seed packet-local segmentation via internal `seed_boxes`
+- when localization is enabled but `VISION_LOCALIZATION_ENDPOINT` is missing,
+  runtime construction still succeeds and the capability reports
+  `unavailable` with a prerequisite note instead of blocking normal
+  reference/guided flow
+- classifier and segmentation optional branches follow the same prerequisite
+  posture: enabling them before setting their endpoint keeps startup non-fatal
+  and reports unavailable support with the missing env var named
 - localization failures or empty results degrade to additive advisory notes and
   do not break the staged loop
 - repo-local helper: `scripts/run_localization_sidecar.sh`

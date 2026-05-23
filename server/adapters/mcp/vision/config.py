@@ -236,7 +236,12 @@ class VisionRuntimeConfig(BaseModel):
 
     @property
     def active_localization_config(self) -> "VisionLocalizationConfig | None":
-        """Return the optional compare-time localization config when enabled."""
+        """Return the optional compare-time localization config when enabled.
+
+        The config may still be prerequisite-incomplete, for example when the
+        endpoint is missing. Call sites should surface that as unavailable
+        optional support instead of failing runtime construction.
+        """
 
         return self.localization_config
 
@@ -279,51 +284,86 @@ class VisionRuntimeConfig(BaseModel):
             )
 
         reference_classifier = self.active_reference_classifier
+        reference_classifier_lifecycle: VisionOptionalCapabilityLifecycleClass = "request_scoped_only"
+        if reference_classifier is not None:
+            reference_classifier_lifecycle = (
+                "sidecar_process" if reference_classifier.provider_name == "generic_sidecar" else "external_runtime"
+            )
+        reference_classifier_status: VisionOptionalCapabilityStatus = "disabled"
+        reference_classifier_summary = "Optional reference classifier is disabled by default."
+        if reference_classifier is not None:
+            if reference_classifier.endpoint:
+                reference_classifier_status = "available"
+                reference_classifier_summary = (
+                    "Optional reference classifier is configured for advisory-only RU support."
+                )
+            else:
+                reference_classifier_status = "unavailable"
+                reference_classifier_summary = (
+                    "Optional reference classifier is enabled, but no endpoint is configured; "
+                    "set VISION_REFERENCE_CLASSIFIER_ENDPOINT or configure an external vision provider fallback."
+                )
         capabilities.append(
             VisionOptionalCapabilityState(
                 capability_name="reference_classifier",
-                status="available" if reference_classifier is not None else "disabled",
+                status=reference_classifier_status,
                 provider_name=reference_classifier.provider_name if reference_classifier is not None else None,
                 model_id=reference_classifier.model if reference_classifier is not None else None,
-                prerequisite_summary=(
-                    "Optional reference classifier is configured for advisory-only RU support."
-                    if reference_classifier is not None
-                    else "Optional reference classifier is disabled by default."
-                ),
+                prerequisite_summary=reference_classifier_summary,
                 activation_scope="reference_understanding",
-                lifecycle_class="sidecar_process",
+                lifecycle_class=reference_classifier_lifecycle,
             )
         )
 
         segmentation_sidecar = self.active_segmentation_sidecar
+        segmentation_status: VisionOptionalCapabilityStatus = "disabled"
+        segmentation_summary = "Optional packet-local segmentation is disabled by default."
+        if segmentation_sidecar is not None:
+            if segmentation_sidecar.endpoint:
+                segmentation_status = "available"
+                segmentation_summary = (
+                    "Optional packet-local segmentation is configured for bounded compare-time support."
+                )
+            else:
+                segmentation_status = "unavailable"
+                segmentation_summary = (
+                    "Optional packet-local segmentation is enabled, but no endpoint is configured; "
+                    "set VISION_SEGMENTATION_ENDPOINT to activate bounded compare-time support."
+                )
         capabilities.append(
             VisionOptionalCapabilityState(
                 capability_name="part_segmentation",
-                status="available" if segmentation_sidecar is not None else "disabled",
+                status=segmentation_status,
                 provider_name=segmentation_sidecar.provider_name if segmentation_sidecar is not None else None,
                 model_id=segmentation_sidecar.model if segmentation_sidecar is not None else None,
-                prerequisite_summary=(
-                    "Optional packet-local segmentation is configured for bounded compare-time support."
-                    if segmentation_sidecar is not None
-                    else "Optional packet-local segmentation is disabled by default."
-                ),
+                prerequisite_summary=segmentation_summary,
                 activation_scope="compare_packet",
                 lifecycle_class="sidecar_process",
             )
         )
 
         localization_config = self.active_localization_config
+        localization_status: VisionOptionalCapabilityStatus = "disabled"
+        localization_summary = "Optional packet-local localization is disabled by default."
+        if localization_config is not None:
+            if localization_config.endpoint:
+                localization_status = "available"
+                localization_summary = (
+                    "Optional packet-local localization is configured for bounded compare-time support."
+                )
+            else:
+                localization_status = "unavailable"
+                localization_summary = (
+                    "Optional packet-local localization is enabled, but no endpoint is configured; "
+                    "set VISION_LOCALIZATION_ENDPOINT to activate bounded compare-time support."
+                )
         capabilities.append(
             VisionOptionalCapabilityState(
                 capability_name="part_localization",
-                status="available" if localization_config is not None else "disabled",
+                status=localization_status,
                 provider_name=localization_config.provider_name if localization_config is not None else None,
                 model_id=localization_config.model if localization_config is not None else None,
-                prerequisite_summary=(
-                    "Optional packet-local localization is configured for bounded compare-time support."
-                    if localization_config is not None
-                    else "Optional packet-local localization is disabled by default."
-                ),
+                prerequisite_summary=localization_summary,
                 activation_scope="compare_packet",
                 lifecycle_class="sidecar_process" if localization_config is not None else "request_scoped_only",
             )
@@ -346,14 +386,6 @@ class VisionReferenceClassifierConfig(BaseModel):
     timeout_seconds: float = Field(default=15.0, gt=0)
     max_labels: int = Field(default=5, ge=1, le=5)
 
-    @model_validator(mode="after")
-    def validate_endpoint(self) -> "VisionReferenceClassifierConfig":
-        """Require an explicit endpoint only when the classifier is enabled."""
-
-        if self.enabled and not self.endpoint:
-            raise ValueError("enabled reference_classifier requires endpoint")
-        return self
-
 
 class VisionSegmentationSidecarConfig(BaseModel):
     """Configuration for the optional part-segmentation sidecar."""
@@ -369,14 +401,6 @@ class VisionSegmentationSidecarConfig(BaseModel):
     timeout_seconds: float = Field(default=15.0, gt=0)
     max_parts: int = Field(default=16, ge=1, le=64)
 
-    @model_validator(mode="after")
-    def validate_endpoint(self) -> "VisionSegmentationSidecarConfig":
-        """Require an explicit endpoint only when the sidecar is enabled."""
-
-        if self.enabled and not self.endpoint:
-            raise ValueError("enabled segmentation_sidecar requires endpoint")
-        return self
-
 
 class VisionLocalizationConfig(BaseModel):
     """Configuration for the optional compare-time localization sidecar."""
@@ -391,14 +415,6 @@ class VisionLocalizationConfig(BaseModel):
     api_key_env: str | None = None
     timeout_seconds: float = Field(default=15.0, gt=0)
     max_candidates: int = Field(default=8, ge=1, le=32)
-
-    @model_validator(mode="after")
-    def validate_endpoint(self) -> "VisionLocalizationConfig":
-        """Require an explicit endpoint only when localization is enabled."""
-
-        if self.enabled and not self.endpoint:
-            raise ValueError("enabled localization_config requires endpoint")
-        return self
 
 
 class VisionLocalizationCandidate(BaseModel):

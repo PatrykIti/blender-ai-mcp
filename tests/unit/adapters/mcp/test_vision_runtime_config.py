@@ -615,6 +615,29 @@ def test_optional_reference_classifier_uses_separate_opt_in_config_surface():
     assert runtime.reference_classifier.max_labels == 5
 
 
+def test_optional_reference_classifier_missing_endpoint_degrades_to_unavailable_inventory():
+    runtime = build_vision_runtime_config(
+        _base_config(
+            VISION_REFERENCE_CLASSIFIER_ENABLED=True,
+            VISION_REFERENCE_CLASSIFIER_MODEL="siglip-sidecar-v1",
+        )
+    )
+
+    assert runtime.reference_classifier is not None
+    assert runtime.reference_classifier.enabled is True
+    assert runtime.reference_classifier.endpoint is None
+
+    classifier = runtime.optional_capability_inventory.get("reference_classifier")
+
+    assert classifier is not None
+    assert classifier.status == "unavailable"
+    assert classifier.provider_name == "generic_sidecar"
+    assert classifier.model_id == "siglip-sidecar-v1"
+    assert "VISION_REFERENCE_CLASSIFIER_ENDPOINT" in (classifier.prerequisite_summary or "")
+    assert classifier.activation_scope == "reference_understanding"
+    assert classifier.lifecycle_class == "sidecar_process"
+
+
 def test_optional_reference_classifier_rejects_more_than_five_labels_at_config_boundary():
     with pytest.raises(ValidationError, match="less than or equal to 5"):
         _base_config(VISION_REFERENCE_CLASSIFIER_MAX_LABELS=6)
@@ -703,6 +726,29 @@ def test_optional_segmentation_sidecar_uses_separate_opt_in_config_surface():
     assert runtime.segmentation_sidecar.max_parts == 12
 
 
+def test_optional_segmentation_missing_endpoint_degrades_to_unavailable_inventory():
+    runtime = build_vision_runtime_config(
+        _base_config(
+            VISION_SEGMENTATION_ENABLED=True,
+            VISION_SEGMENTATION_MODEL="sam-sidecar-v1",
+        )
+    )
+
+    assert runtime.segmentation_sidecar is not None
+    assert runtime.segmentation_sidecar.enabled is True
+    assert runtime.segmentation_sidecar.endpoint is None
+
+    segmentation = runtime.optional_capability_inventory.get("part_segmentation")
+
+    assert segmentation is not None
+    assert segmentation.status == "unavailable"
+    assert segmentation.provider_name == "generic_sidecar"
+    assert segmentation.model_id == "sam-sidecar-v1"
+    assert "VISION_SEGMENTATION_ENDPOINT" in (segmentation.prerequisite_summary or "")
+    assert segmentation.activation_scope == "compare_packet"
+    assert segmentation.lifecycle_class == "sidecar_process"
+
+
 def test_optional_capability_inventory_projects_disabled_defaults_and_planned_localization():
     runtime = build_vision_runtime_config(_base_config())
 
@@ -750,7 +796,7 @@ def test_optional_capability_inventory_projects_configured_classifier_and_segmen
     assert classifier.status == "available"
     assert classifier.provider_name == "openrouter"
     assert classifier.activation_scope == "reference_understanding"
-    assert classifier.lifecycle_class == "sidecar_process"
+    assert classifier.lifecycle_class == "external_runtime"
 
     assert segmentation is not None
     assert segmentation.status == "available"
@@ -758,6 +804,25 @@ def test_optional_capability_inventory_projects_configured_classifier_and_segmen
     assert segmentation.model_id == "sam-sidecar-v1"
     assert segmentation.activation_scope == "compare_packet"
     assert segmentation.lifecycle_class == "sidecar_process"
+
+
+def test_optional_capability_inventory_keeps_explicit_classifier_sidecar_lifecycle():
+    runtime = build_vision_runtime_config(
+        _base_config(
+            VISION_REFERENCE_CLASSIFIER_ENABLED=True,
+            VISION_REFERENCE_CLASSIFIER_ENDPOINT="http://localhost:9200/classify",
+            VISION_REFERENCE_CLASSIFIER_MODEL="classifier-sidecar-v1",
+        )
+    )
+
+    classifier = runtime.optional_capability_inventory.get("reference_classifier")
+
+    assert classifier is not None
+    assert classifier.status == "available"
+    assert classifier.provider_name == "generic_sidecar"
+    assert classifier.model_id == "classifier-sidecar-v1"
+    assert classifier.activation_scope == "reference_understanding"
+    assert classifier.lifecycle_class == "sidecar_process"
 
 
 def test_optional_localization_stays_disabled_by_default():
@@ -785,6 +850,29 @@ def test_optional_localization_uses_separate_opt_in_config_surface():
     assert runtime.localization_config.model == "grounding-sidecar-v1"
     assert runtime.localization_config.api_key_env == "LOCALIZATION_API_KEY"
     assert runtime.localization_config.max_candidates == 6
+
+
+def test_optional_localization_missing_endpoint_degrades_to_unavailable_inventory():
+    runtime = build_vision_runtime_config(
+        _base_config(
+            VISION_LOCALIZATION_ENABLED=True,
+            VISION_LOCALIZATION_MODEL="grounding-sidecar-v1",
+        )
+    )
+
+    assert runtime.localization_config is not None
+    assert runtime.localization_config.enabled is True
+    assert runtime.localization_config.endpoint is None
+
+    localization = runtime.optional_capability_inventory.get("part_localization")
+
+    assert localization is not None
+    assert localization.status == "unavailable"
+    assert localization.provider_name == "generic_sidecar"
+    assert localization.model_id == "grounding-sidecar-v1"
+    assert "VISION_LOCALIZATION_ENDPOINT" in (localization.prerequisite_summary or "")
+    assert localization.activation_scope == "compare_packet"
+    assert localization.lifecycle_class == "sidecar_process"
 
 
 def test_optional_capability_inventory_projects_configured_localization_support():

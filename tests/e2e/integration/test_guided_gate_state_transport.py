@@ -1665,6 +1665,23 @@ def test_reference_compare_localization_sidecar_transport_over_stdio(tmp_path: P
 
 
 @pytest.mark.slow
+def test_reference_compare_segmentation_sidecar_transport_over_streamable(tmp_path: Path):
+    script_path = write_server_script(tmp_path, _PATCHED_GATE_STATE_SERVER)
+    reference_path = tmp_path / "transport_front.png"
+    reference_path.write_bytes(_TRANSPORT_REFERENCE_PNG)
+
+    async def run(url: str) -> None:
+        async with streamable_client(url) as client:
+            await _exercise_enabled_compare_segmentation_sidecar_transport(client, reference_path)
+
+    with run_streamable_server(
+        script_path,
+        extra_env={"ENABLE_COMPARE_SEGMENTATION_SIDECAR": "true"},
+    ) as url:
+        asyncio.run(run(url))
+
+
+@pytest.mark.slow
 def test_reference_understanding_transport_roundtrip_over_streamable(tmp_path: Path):
     script_path = write_server_script(tmp_path, _PATCHED_GATE_STATE_SERVER)
     reference_path = tmp_path / "transport_front.png"

@@ -61,27 +61,24 @@ The repo already has important substrate in place:
 - capability-aware external-runtime groundwork on the OpenRouter lane
 - strict boundary rules that keep optional perception advisory-only
 
-What is still missing is not "more vision everywhere." It is the next bounded
-runtime layer for optional heavy perception:
+At kickoff, the missing layer was not "more vision everywhere." It was the next
+bounded runtime layer for optional heavy perception:
 
-- there is no single internal view of which optional perception capabilities
-  are configured, unavailable, warmable, or worth invoking
-- optional-unavailable diagnostics exist in pockets, but not as one consistent
-  prerequisite/enhancement story
-- segmentation support exists, but the next lower-risk follow-on should
-  explicitly target packet-local SAM-family masks/crops and optional derived
-  anchors for ambiguity rather than generic "turn on segmentation"
-- there is still no later-stage text-conditioned part-localization family that
-  can seed those packet-local mask requests when current hints remain
-  insufficient for ambiguous tails, ears, snouts, or limb regions
-- lifecycle policy for heavy local adapters is still under-specified: the repo
-  already avoids eager bootstrap loads, but reusable local heavy adapters do
-  not yet have one explicit TTL/unload owner lane once a concrete in-process
-  adapter path exists
+- one internal view of configured, unavailable, warmable, or invokable optional
+  perception capabilities
+- one consistent prerequisite/enhancement story for unavailable optional
+  support
+- packet-local SAM-family masks/crops and optional derived anchors for
+  ambiguity rather than generic "turn on segmentation"
+- default-off, packet-local, support-only text-conditioned part-localization
+  that can seed mask requests without turning literal boxes into public
+  authority
+- an explicit heavy-local lifecycle decision for the current sidecar/external
+  adapter family
 
-If this follow-on is not split cleanly, the repo risks reintroducing the same
-problem it just removed from `TASK-171`: expensive signals with weak ownership,
-duplicate phase systems, or new advisory data being treated as authority.
+The split kept this follow-on from reintroducing the same problem it removed
+from `TASK-171`: expensive signals with weak ownership, duplicate phase
+systems, or new advisory data being treated as authority.
 
 ## Business Outcome
 
@@ -169,15 +166,16 @@ tasks before this umbrella closed.
   - external model capabilities
   - reference classifier support
   - packet-local segmentation support
-  - planned part-localization support
+  - default-off part-localization support
 - missing optional heavy capability yields bounded unavailable/enhancement
   diagnostics on current surfaces instead of hard build failure
 - localized optional perception is invoked only on bounded RU or compare
   contexts that name the relevant packet, target part/role, or local ambiguity
 - reference compare/iterate payloads return bounded packet-local
   mask/crop/landmark support with packet/reference/view provenance and
-  advisory-only markers, while later text-conditioned localization remains
-  open work on the same family until its provider/runtime path is real
+  advisory-only markers; the shipped default-off text-conditioned localization
+  path projects only support-safe crops and derived anchors through the
+  existing `part_segmentation` carrier
 - when shared in-process reuse is justified, runtime config exposes one
   documented reuse policy with bounded TTL/unload behavior; otherwise this
   family closes with request-scoped execution and no shared lifecycle path

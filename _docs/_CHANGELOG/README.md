@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [367](./367-2026-05-23-task-172-final-audit-drift-repair.md) | 2026-05-23 | **TASK-172 final audit drift repair** | - |
 | [366](./366-2026-05-23-local-optional-vision-sidecar-launchers.md) | 2026-05-23 | **Local optional vision sidecar launchers** | - |
 | [365](./365-2026-05-23-task-172-post-closeout-drift-repair.md) | 2026-05-23 | **TASK-172 post-closeout drift repair** | - |
 | [364](./364-2026-05-23-task-172-harness-and-family-closeout.md) | 2026-05-23 | **TASK-172 harness and family closeout** | - |
