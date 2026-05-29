@@ -6,7 +6,7 @@
 **Follow-on After:** [TASK-174-01](./TASK-174-01_Caption_Interleaving_In_Both_Transmit_Paths.md)
 **Objective:** Extract a single caption-formatting helper reused by both transmit paths and the flat roster, add payload-parity unit coverage proving every image blob is immediately preceded by its caption in both providers, and document the per-image grounding convention so future capture/roster changes keep one format.
 
-**Repository Touchpoints:** `server/adapters/mcp/vision/prompting.py` (shared caption helper; `IMAGES`/`REFERENCE_IMAGES` roster lines ~`:497`, `:539`, `:586`, `:629`, `:770`), `tests/unit/adapters/mcp/test_contract_payload_parity.py` (representative payload-shape parity lane), `tests/unit/adapters/mcp/test_vision_external_backend.py` (provider payload-capture lanes), `tests/unit/adapters/mcp/test_vision_prompting.py` (roster/caption format lane), `_docs/_VISION/README.md`, `_docs/_VISION/MULTI_VIEW_CAPTURE_PLAN.md`
+**Repository Touchpoints:** `server/adapters/mcp/vision/prompting.py` (shared caption helper; `IMAGES`/`REFERENCE_IMAGES` roster lines ~`:497`, `:539`, `:586`, `:629`, `:770`), `tests/unit/adapters/mcp/test_vision_external_backend.py` (provider request-payload capture lanes; home of the caption-then-blob parity walk), `tests/unit/adapters/mcp/test_vision_prompting.py` (roster/caption format lane), `_docs/_VISION/README.md`, `_docs/_VISION/MULTI_VIEW_CAPTURE_PLAN.md`
 
 **Acceptance Criteria:**
 - A single caption-formatting helper in `server/adapters/mcp/vision/prompting.py` is the only source of the per-image caption format and is consumed by both the `google_ai_studio` and OpenAI/OpenRouter interleaving (from `TASK-174-01`) and by the flat `IMAGES`/`REFERENCE_IMAGES` roster lines.
@@ -22,7 +22,8 @@
   `_build_gemini_compare_payload_text` (`:497`),
   `_build_reference_understanding_payload_text` (`:539`), the reference-classification
   builder (`:586`), `build_vision_payload_text` packet branch (`:629`), and the
-  default payload-text builder (`:770`). Extracting one helper (for example
+  local payload-text builder `build_local_vision_payload_text` (`:770`).
+  Extracting one helper (for example
   `format_image_caption(image: VisionImageInput) -> str` plus a thin
   `format_image_roster_line(image)` wrapper) removes that duplication and lets the
   interleaved captions from `TASK-174-01` and the roster share one format.
@@ -39,9 +40,11 @@
   `contents[0]["parts"]` (Gemini) and `messages[1]["content"]` (OpenAI/OpenRouter)
   and assert that the parts after the leading text element strictly alternate
   caption-text then image-part, and that each caption references the matching
-  image label. `tests/unit/adapters/mcp/test_contract_payload_parity.py` is the
-  representative parity home; the provider-specific assertions live in
-  `tests/unit/adapters/mcp/test_vision_external_backend.py`.
+  image label. The provider-specific parity assertions live in
+  `tests/unit/adapters/mcp/test_vision_external_backend.py` (which already
+  captures the outgoing request payload); `test_contract_payload_parity.py`
+  stays scoped to Pydantic `MCPContract` construction and is not used for the
+  request-payload-shape walk.
 - Relevant techniques to cite as design basis (advisory only; re-measure on
   Blender fixtures before claiming gains):
   - Set-of-Mark Prompting (arXiv:2310.11441) — per-image marks improve
@@ -100,10 +103,9 @@ def assert_caption_then_blob(parts, *, blob_key):
 
 - `tests/unit/adapters/mcp/test_vision_prompting.py` — assert the shared helper
   is deterministic and symbolic, and that the roster line uses the helper output.
-- `tests/unit/adapters/mcp/test_contract_payload_parity.py` — add a
+- `tests/unit/adapters/mcp/test_vision_external_backend.py` — add the
   caption-then-blob parity check covering both providers for a representative
-  multi-image request.
-- `tests/unit/adapters/mcp/test_vision_external_backend.py` — keep/extend the
+  multi-image request (walking the captured request payload), and keep/extend the
   provider-specific caption-interleaving assertions added in `TASK-174-01` so the
   shared helper does not regress either branch.
 
@@ -125,7 +127,7 @@ def assert_caption_then_blob(parts, *, blob_key):
 ## Validation Commands
 
 - `git diff --check`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_vision_external_backend.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_external_backend.py -q`
 - `PYTHONPATH=. poetry run pytest ./tests/unit`
 - `poetry run python scripts/run_e2e_tests.py` (run when external transmit behavior is exercised against a live provider lane)
 

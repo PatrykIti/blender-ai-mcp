@@ -111,7 +111,7 @@ After this umbrella lands:
 | `server/adapters/mcp/vision/backends.py` | request-payload builder (`_build_request_payload` ~`:846`; Gemini parts ~`:849-868`; OpenAI/OpenRouter content ~`:896-916`) | both transmit paths append bare image blobs with no adjacent caption; this is where the caption text part must be interleaved before each blob |
 | `server/adapters/mcp/vision/prompting.py` | flat `IMAGES`/`REFERENCE_IMAGES` roster lines (~`:497`, `:539`, `:586`, `:629`, `:770`) | the roster is the only existing place the per-image identity is described; a shared caption helper extracted here keeps the roster and the interleaved captions in one format |
 | `server/adapters/mcp/vision/backend.py` | `VisionImageInput` (`path`/`role`/`label`/`media_type`, ~`:17-24`) and `VisionRequest` (~`:27-36`) | the per-image identity fields the caption is built from already exist here; no field is added |
-| `tests/unit/adapters/mcp/test_vision_external_backend.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/unit/adapters/mcp/test_vision_prompting.py` | payload-shape and roster proof lanes | these lanes already capture the outgoing `json` payload and assert roster text, so they are the realistic home for caption-interleaving and parity coverage |
+| `tests/unit/adapters/mcp/test_vision_external_backend.py`, `tests/unit/adapters/mcp/test_vision_prompting.py` | payload-shape and roster proof lanes | `test_vision_external_backend.py` already captures the outgoing `json` request payload (`captured["json"]`) and is the home for the caption-then-blob parity walk; `test_vision_prompting.py` already asserts roster text and owns the caption-format proof. `test_contract_payload_parity.py` validates Pydantic `MCPContract` construction, not request-payload shape, so it is out of scope for this slice |
 
 ## Test Matrix
 
@@ -119,7 +119,7 @@ After this umbrella lands:
 |------|--------------------------|-----|
 | Gemini inline_data caption interleaving | `tests/unit/adapters/mcp/test_vision_external_backend.py` (google_ai_studio payload capture, ~`:820-878`) | already inspects `captured["json"]["contents"][0]["parts"]`, so it can assert a caption text part directly precedes each `inline_data` part |
 | OpenAI/OpenRouter image_url caption interleaving | `tests/unit/adapters/mcp/test_vision_external_backend.py` (openrouter/openai payload capture, ~`:745-799`) | already inspects `captured["json"]["messages"][1]["content"]`, so it can assert a caption text part directly precedes each `image_url` part |
-| caption helper + roster format parity | `tests/unit/adapters/mcp/test_vision_prompting.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py` | proves the shared caption helper renders one stable format reused by both the roster and the interleaved captions |
+| caption helper + roster format parity | `tests/unit/adapters/mcp/test_vision_prompting.py` (and `tests/unit/adapters/mcp/test_vision_external_backend.py` for the interleaved captions) | proves the shared caption helper renders one stable format reused by both the roster and the interleaved captions |
 
 ## Acceptance Criteria
 

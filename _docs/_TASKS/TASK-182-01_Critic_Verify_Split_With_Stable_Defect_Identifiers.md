@@ -29,9 +29,11 @@
 ## Implementation Notes
 
 - This implements the **Critic/Verify** decomposition from **LL3M
-  (arXiv:2508.08228)**, whose Critic/Verify loop resolved 59% of edits in a
-  single pass by re-checking each prior defect after an edit rather than
-  re-describing the whole subject. The repo currently has only the "describe"
+  (arXiv:2508.08228)**, whose Critic/Verification split re-checks each prior
+  defect after an edit rather than re-describing the whole subject (the paper
+  reports a substantial one-pass edit-resolution gain from this split — an
+  upstream synthetic result, to be re-measured on `tests/fixtures/vision_eval`
+  before any gain is claimed here). The repo currently has only the "describe"
   half: `build_compare_packets(...)`
   (`areas/reference_compare_packets.py:1016`) plans packets,
   `merge_packet_phase_results(...)` (`:1213`) merges extraction + ranking, and

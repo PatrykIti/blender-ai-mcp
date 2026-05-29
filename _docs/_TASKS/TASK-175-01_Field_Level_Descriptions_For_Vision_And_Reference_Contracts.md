@@ -7,11 +7,12 @@
 **Objective:** Add concise, accurate `Field(description=...)` to every LLM-facing vision / reference result contract so the client can disambiguate near-synonymous fields and understand the advisory/authoritative posture from the schema alone, without changing any payload shape, field set, or default value.
 **Repository Touchpoints:** `server/adapters/mcp/sampling/result_types.py`, `server/adapters/mcp/contracts/reference.py`, `server/adapters/mcp/contracts/base.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/unit/adapters/mcp/test_contract_docs.py`
 **Acceptance Criteria:**
-- the ~7 near-synonymous string lists on `VisionAssistContract`
+- the five near-synonymous string lists on `VisionAssistContract`
   (`visible_changes`, `shape_mismatches`, `proportion_mismatches`,
-  `correction_focus`, `next_corrections`, plus `goal_summary` /
-  `reference_match_summary`) each carry a `Field(description=...)` that explains
-  how that field differs from its siblings
+  `correction_focus`, `next_corrections`) plus the scalar narrative fields
+  `goal_summary` (`str`) and `reference_match_summary` (`str | None`) each carry
+  a `Field(description=...)` that explains how that field differs from its
+  siblings
 - the packet status axes on `ReferenceComparePacketContract`
   (`extraction_status`, `ranking_status`, `packet_status`,
   `ranking_recommendation`, `localized_support_reason`, `status_reason`) each

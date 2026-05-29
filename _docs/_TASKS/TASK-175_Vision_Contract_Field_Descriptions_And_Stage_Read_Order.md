@@ -40,8 +40,9 @@ of inferring intent from field names. Concretely:
 - add concise, accurate `Field(description=...)` to every LLM-facing vision /
   reference result contract (`VisionAssistContract` and its nested contracts,
   `ReferenceOrchestratorFeedbackContract`, `ReferenceComparePacketContract`, the
-  silhouette / metric contracts) so the ~7 near-synonymous string lists and the
-  3-4 packet-status axes are distinguishable;
+  silhouette / metric contracts) so the ~7 near-synonymous fields (five
+  `list[str]` plus two scalar narrative summaries) and the 3-4 packet-status
+  axes are distinguishable;
 - mark `confidence` non-authoritative inline at every field where it appears,
   not only via the boolean buried in `VisionBoundaryPolicyContract`;
 - expand the reference stage / compare / iterate tool docstrings to enumerate
@@ -64,10 +65,11 @@ The grounded gap is verifiable in the current code:
   that subclasses it therefore ships to the client as a name-only schema.
 - `VisionAssistContract`
   (`server/adapters/mcp/sampling/result_types.py:149-171`) forces the
-  orchestrating LLM to disambiguate roughly seven near-synonymous `list[str]`
-  fields by name alone: `visible_changes`, `shape_mismatches`,
-  `proportion_mismatches`, `correction_focus`, `next_corrections`,
-  `goal_summary`, `reference_match_summary`. Nothing in the schema explains how
+  orchestrating LLM to disambiguate five near-synonymous `list[str]`
+  fields by name alone (`visible_changes`, `shape_mismatches`,
+  `proportion_mismatches`, `correction_focus`, `next_corrections`), plus the
+  scalar narrative summaries `goal_summary` (`str`) and `reference_match_summary`
+  (`str | None`). Nothing in the schema explains how
   `correction_focus` differs from `next_corrections`, or that
   `visible_changes` is descriptive while `shape_mismatches` /
   `proportion_mismatches` are reference-relative.
@@ -154,7 +156,7 @@ After this umbrella lands:
 | Path / Module | Expected Ownership | Why It Is In Scope |
 |---------------|--------------------|--------------------|
 | `server/adapters/mcp/contracts/base.py` | shared contract base | `MCPContract` (`:13`) is the bare `BaseModel`; the family must confirm `Field(description=...)` is compatible with `extra="forbid"` and add a docstring note that LLM-facing contracts should self-describe |
-| `server/adapters/mcp/sampling/result_types.py` | vision result contracts | `VisionAssistContract` (`:149`) plus its nested `VisionIssueContract`, `VisionRecommendedCheckContract`, `VisionInputSummaryContract`, `VisionBoundaryPolicyContract`, `VisionPacketStatusContract`, `VisionCapabilitySummaryContract` carry the ~7 near-synonymous lists and the `confidence` field that need inline descriptions |
+| `server/adapters/mcp/sampling/result_types.py` | vision result contracts | `VisionAssistContract` (`:149`) plus its nested `VisionIssueContract`, `VisionRecommendedCheckContract`, `VisionInputSummaryContract`, `VisionBoundaryPolicyContract`, `VisionPacketStatusContract`, `VisionCapabilitySummaryContract` carry the ~7 near-synonymous fields (five `list[str]` plus the scalar `goal_summary`/`reference_match_summary`) and the `confidence` field that need inline descriptions |
 | `server/adapters/mcp/contracts/reference.py` | reference result contracts | `ReferenceOrchestratorFeedbackContract` (`:336`), `ReferenceComparePacketContract` (`:532`), `ReferenceCompareSupportEvidenceContract` (`:515`), `ReferenceSilhouetteMetricContract` (`:699`), `ReferenceSilhouetteAnalysisContract` (`:748`), `ReferenceActionHintContract` (`:718`) own the status axes, silhouette/metric magnitude fields, and `confidence` fields that need inline non-authoritative wording |
 | `server/adapters/mcp/areas/reference.py` | reference stage tool docstrings | the five stage/compare/iterate tool docstrings (`:2208/2237/2284/2325/2362`) must enumerate key fields, state precedence, and instruct read-order |
 | `server/adapters/mcp/areas/reference_feedback.py` | orchestrator feedback builder | the read-order text must match what this builder actually assembles into `ReferenceOrchestratorFeedbackContract`, so the docstring guidance stays accurate |

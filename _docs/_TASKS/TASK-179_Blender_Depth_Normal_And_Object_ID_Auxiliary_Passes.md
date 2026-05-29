@@ -15,8 +15,8 @@
   adds first-party deterministic Blender render passes that need no external
   model, plus one strictly optional monocular-depth hook for the *reference*
   image that reuses the existing TASK-172 default-off sidecar boundary.
-- `TASK-173` repaired creature-scope convergence but proved the deterministic
-  evidence path is still single-view 2D silhouette only. Two solids that share a
+- `TASK-173` (still ⏳ To Do) targets creature-scope convergence, but even
+  there the deterministic evidence path remains single-view 2D silhouette only. Two solids that share a
   silhouette can read as a 3D match because the loop is blind to depth,
   concavity, occlusion, and volume. This family supplies the geometric channels
   that make per-part and depth-aware evidence possible.

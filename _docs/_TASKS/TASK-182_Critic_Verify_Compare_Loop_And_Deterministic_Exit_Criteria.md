@@ -26,9 +26,9 @@
   (localization/segmentation sidecars). This family keeps those sidecars
   advisory and packet-bounded; it does not reopen the `TASK-140-06`
   provider-capability substrate.
-- `TASK-173` repaired creature scope convergence and shape-convergence exit
+- `TASK-173` targets creature scope convergence and shape-convergence exit
   criteria. This family is the verification-loop complement: where `TASK-173`
-  decided *which scope* to keep converging, `TASK-182` decides *whether the
+  decides *which scope* to keep converging, `TASK-182` decides *whether the
   prior defects in that scope were actually resolved* before advancing.
 - This umbrella is therefore a standalone consumer follow-on. It links the
   parents above through **Follow-on After** / **Related**, and its own child

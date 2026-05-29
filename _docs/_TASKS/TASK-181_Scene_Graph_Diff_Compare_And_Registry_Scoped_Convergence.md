@@ -20,8 +20,8 @@
   narrowed toward `Body + Head` (`_semantic_scope_label(...)` clustering in
   `reference_compare_packets.py:603-616` and `_scope_clusters_from_target_scope`
   at `:676-764`) while whole-assembly convergence lost precedence. `TASK-173`
-  patched workset persistence and arbitration; this family removes the root
-  cause by making the registered part graph the comparison scope itself.
+  scopes patches to workset persistence and arbitration; this family removes the
+  root cause by making the registered part graph the comparison scope itself.
 - `TASK-166` established the hierarchical packet-compare and budget substrate
   this family extends; the new graph-diff evidence shape must stay within the
   same `VISION_MAX_IMAGES` packet budgeting (`resolve_complex_compare_policy` at

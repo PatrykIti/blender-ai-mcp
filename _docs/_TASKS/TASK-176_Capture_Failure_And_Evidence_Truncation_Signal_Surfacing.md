@@ -14,8 +14,8 @@
   reopen that substrate; it hardens the deterministic capture and parse path
   that feeds every vision invocation regardless of whether any optional sidecar
   is active.
-- `TASK-173` repaired creature-scope convergence and packet arbitration, but it
-  assumed that the captures reaching the VLM are the views they claim to be and
+- `TASK-173` targets creature-scope convergence and packet arbitration, but it
+  assumes that the captures reaching the VLM are the views they claim to be and
   that an empty evidence list means "nothing to correct". This family supplies
   the missing trust signals so that assumption is no longer silent.
 - `TASK-167` established cross-module debug-profile instrumentation; the new

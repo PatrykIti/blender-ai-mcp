@@ -13,12 +13,12 @@
   references. `TASK-140` and `TASK-172` are linked through **Follow-on After:**
   because they own upstream seams this work extends, not because this family
   lives under them. Its own subtasks use **Parent:** pointing back here.
-- `TASK-140-06` shipped the model-capability substrate
-  (`VisionModelCapabilities` at `vision/config.py:33`, the reviewed fallback
-  registry at `vision/model_profiles/openrouter_openai.py`, and capability-driven
-  request policy in `vision/backends.py`). This family is a **consumer** of that
-  substrate: it threads `model_capabilities` into the response-schema builder
-  and payload framing. It must not reopen the `TASK-140-06` provider-capability
+- `TASK-140-06` (🚧 In Progress) is landing the model-capability substrate
+  (`VisionModelCapabilities` at `vision/config.py:33` and the reviewed fallback
+  registry at `vision/model_profiles/openrouter_openai.py`). This family is a
+  **consumer** of that substrate: it threads `model_capabilities` into the
+  response-schema builder and payload framing, which the substrate does not yet
+  do. It must not reopen the `TASK-140-06` provider-capability
   substrate or add new provider catalog plumbing.
 - `TASK-172` shipped the optional-runtime seam (default-off
   classifier/localization/segmentation sidecars, e.g.
@@ -177,6 +177,7 @@ After this umbrella lands:
 | `server/adapters/mcp/vision/model_profiles/openrouter_openai.py` | reviewed fallback capability profiles | the `preferred_contract_profile` and `max_completion_tokens` fields on these profiles drive the capability gate; this family reads them, it does not add new catalog plumbing |
 | `server/adapters/mcp/vision/silhouette.py` | deterministic silhouette metrics | uncalibrated thresholds (`mask_iou` `high=0.35` at `:256`), an unattainable `reference_value=1.0` IoU ideal (`:253`), `aspect_ratio_delta` on the wrong scale (`:266-271`), and dead `mid_band`/`lower_band` metrics (`:276-277`) all live here |
 | `server/adapters/mcp/areas/reference_silhouette.py` | silhouette evidence/action-hint projection | the dead band metrics are never consumed here; `build_action_hints_from_silhouette` and `build_compare_support_evidence` must consume calibrated metrics and the new consistency score as advisory evidence |
+| `server/adapters/mcp/contracts/reference.py` | silhouette / compare-support evidence contracts | `ReferenceSilhouetteMetricContract` / `ReferenceSilhouetteAnalysisContract` / `ReferenceCompareSupportEvidenceContract` are the typed surfaces the calibrated metrics and the new consistency score project through (matches `TASK-183-02`'s touchpoint list) |
 | `server/adapters/mcp/vision/evaluation.py` | golden harness scoring | the calibration and consistency-score regression must score against `VisionGoldenScenario`/`evaluate_vision_result` golden fixtures, not against hand-picked constants |
 | `server/adapters/mcp/vision/config.py` | typed runtime/optional-sidecar config | the optional heavy render-vs-reference variant must reuse the default-off sidecar config shape (`VisionSegmentationSidecarConfig`/`VisionLocalizationConfig`) and `VisionModelCapabilities` |
 | `tests/unit/adapters/mcp/`, `tests/e2e/vision/`, `tests/fixtures/vision_eval/` | proof lanes and golden fixtures | capability-gated schema, curated payload, usage surfacing, threshold calibration, and consistency-score behavior must be proven on repo-owned fixtures |

@@ -20,8 +20,10 @@
   appends a `GuidedPartRegistryItem` (`session_capabilities_state.py:58-65`:
   `object_name` / `role` / `role_group` / `status` / `created_in_step`) and then
   calls `_maybe_expand_active_target_scope_dict(...)` (`:182-211`) which widens
-  `GuidedFlowStateContract.active_target_scope` (`contracts/guided_flow.py:39-46`)
-  and recomputes `spatial_scope_fingerprint`. The widened scope already exists;
+  `GuidedFlowStateContract.active_target_scope` (`GuidedFlowStateContract` at
+  `contracts/guided_flow.py:59`, `active_target_scope` field at `:66`; its
+  `GuidedTargetScopeContract` type is at `:39-46`) and recomputes
+  `spatial_scope_fingerprint`. The widened scope already exists;
   the gap is that compare ignores it as authority.
 - `build_compare_packets(...)` (`reference_compare_packets.py:1016-1210`) takes
   `assembled_target_scope: SceneAssembledTargetScopeContract`
