@@ -1,7 +1,8 @@
 # TASK-174-01: Caption Interleaving In Both Transmit Paths
 
 **Parent:** [TASK-174](./TASK-174_Per_Image_Caption_Interleaving_For_Vision_Payloads.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-30
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-171](./TASK-171_Creature_Attachment_First_Build_Contract_And_Structured_Vision_Handoff.md), [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md)
 **Objective:** Interleave a deterministic one-line caption text part immediately before each image part in both the `google_ai_studio` (inline_data) and the OpenAI/OpenRouter (image_url) payload branches of the external backend, so the orchestrating VLM binds each blob to its correct label/role/view/stage instead of binding it positionally against a decoupled roster.

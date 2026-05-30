@@ -7,8 +7,78 @@ from __future__ import annotations
 
 import json
 
-from .backend import VisionRequest
+from .backend import VisionImageInput, VisionRequest
 from .config import VisionContractProfile
+
+# Canonical view tokens that may appear inside a deterministic capture label
+# (e.g. ``target_front_after``). Ordered longest-first so multi-word tokens win.
+_CAPTION_VIEW_TOKENS = (
+    "oblique_left",
+    "oblique_right",
+    "overhead",
+    "front",
+    "side",
+    "back",
+    "left",
+    "right",
+    "top",
+    "bottom",
+    "detail",
+    "focus",
+    "wide",
+)
+
+
+def _derive_caption_view(label: str | None) -> str | None:
+    """Derive the canonical view hint from a deterministic capture label.
+
+    Capture labels are built upstream as ``f"{preset.name}_{stage}"`` (for
+    example ``target_front_after`` or ``context_wide_before``). The view token is
+    an advisory grounding hint only; when it cannot be derived it is omitted
+    rather than guessed. The before/after stage is intentionally not echoed: it
+    is already carried by ``role`` and by the label text itself.
+    """
+
+    if not label:
+        return None
+    lowered = label.lower()
+    for candidate in _CAPTION_VIEW_TOKENS:
+        if candidate in lowered:
+            return candidate
+    return None
+
+
+def format_image_caption(image: VisionImageInput) -> str:
+    """Return one deterministic, symbolic identity caption for an image.
+
+    This single format is reused both as the per-image caption interleaved
+    immediately before each image part in the transmitted request payload and as
+    the flat image-roster line, so the orchestrating VLM sees the same identity
+    string in both places and can bind each blob to its role/view instead of
+    guessing positionally. The caption stays symbolic: it names only the label,
+    role, and the view token derivable from the label. It never emits raw
+    coordinates, absolute metric magnitudes, or chain-of-thought.
+    """
+
+    label = image.label or image.role
+    parts = [f"image: {label}", f"role={image.role}"]
+    view = _derive_caption_view(image.label)
+    if view is not None:
+        parts.append(f"view={view}")
+    return "[" + " | ".join(parts) + "]"
+
+
+def format_image_roster_line(image: VisionImageInput) -> str:
+    """Return the flat roster line for an image, reusing the caption format."""
+
+    return f"- {format_image_caption(image)}"
+
+
+def _image_roster_lines(request: VisionRequest) -> list[str]:
+    """Return the per-image roster lines for a request's images."""
+
+    return [format_image_roster_line(image) for image in request.images]
+
 
 _EXPECTED_KEYS = (
     "goal_summary",
@@ -494,7 +564,7 @@ def build_vision_system_prompt(
 
 
 def _build_gemini_compare_payload_text(request: VisionRequest) -> str:
-    image_lines = [f"- {image.role}: {image.label or image.role}" for image in request.images]
+    image_lines = _image_roster_lines(request)
     truth_summary = request.truth_summary or {}
     truth_lines = []
     if isinstance(truth_summary, dict):
@@ -536,7 +606,7 @@ def _build_gemini_compare_payload_text(request: VisionRequest) -> str:
 
 
 def _build_reference_understanding_payload_text(request: VisionRequest) -> str:
-    image_lines = [f"- {image.role}: {image.label or image.role}" for image in request.images]
+    image_lines = _image_roster_lines(request)
     reference_ids = [str(item) for item in request.metadata.get("reference_ids") or []]
     reference_id_lines = [f"- {reference_id}" for reference_id in reference_ids]
     parts = [
@@ -583,7 +653,7 @@ def _build_reference_understanding_payload_text(request: VisionRequest) -> str:
 
 
 def _build_reference_classification_payload_text(request: VisionRequest) -> str:
-    image_lines = [f"- {image.role}: {image.label or image.role}" for image in request.images]
+    image_lines = _image_roster_lines(request)
     reference_ids = [str(item) for item in request.metadata.get("reference_ids") or []]
     reference_id_lines = [f"- {reference_id}" for reference_id in reference_ids]
     parts = [
@@ -626,7 +696,7 @@ def build_vision_payload_text(
     """Serialize the bounded vision input payload."""
 
     if _is_reference_packet_compare_request(request):
-        image_lines = [f"- {image.role}: {image.label or image.role}" for image in request.images]
+        image_lines = _image_roster_lines(request)
         packet_id = str(request.metadata.get("packet_id") or "").strip() or "packet"
         packet_kind = str(request.metadata.get("packet_kind") or "").strip() or "view"
         packet_label = str(request.metadata.get("packet_label") or "").strip() or packet_id
@@ -767,7 +837,7 @@ def build_local_vision_payload_text(request: VisionRequest) -> str:
     if _is_reference_packet_compare_request(request):
         return build_vision_payload_text(request)
 
-    image_lines = [f"- {image.role}: {image.label or image.role}" for image in request.images]
+    image_lines = _image_roster_lines(request)
     truth_summary = request.truth_summary or {}
     truth_lines = []
     if isinstance(truth_summary, dict):

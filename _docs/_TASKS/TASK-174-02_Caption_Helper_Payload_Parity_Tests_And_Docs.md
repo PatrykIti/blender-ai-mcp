@@ -1,7 +1,8 @@
 # TASK-174-02: Caption Helper, Payload Parity Tests And Docs
 
 **Parent:** [TASK-174](./TASK-174_Per_Image_Caption_Interleaving_For_Vision_Payloads.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-30
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-174-01](./TASK-174-01_Caption_Interleaving_In_Both_Transmit_Paths.md)
 **Objective:** Extract a single caption-formatting helper reused by both transmit paths and the flat roster, add payload-parity unit coverage proving every image blob is immediately preceded by its caption in both providers, and document the per-image grounding convention so future capture/roster changes keep one format.

@@ -1070,3 +1070,102 @@ def test_openrouter_http_error_logs_capability_source_and_effective_output_cap(m
     assert "openrouter_api" in log_text
     assert "effective_max_tokens" in log_text
     assert "3000" in log_text
+
+
+def _valid_compare_json() -> str:
+    return json.dumps(
+        {
+            "goal_summary": "ok",
+            "visible_changes": [],
+            "shape_mismatches": [],
+            "proportion_mismatches": [],
+            "correction_focus": [],
+            "likely_issues": [],
+            "next_corrections": [],
+            "recommended_checks": [],
+        }
+    )
+
+
+def test_openai_path_interleaves_caption_before_each_image(monkeypatch, tmp_path):
+    from server.adapters.mcp.vision.prompting import format_image_caption
+
+    img_after = tmp_path / "after.png"
+    img_after.write_bytes(b"fake-png")
+    img_ref = tmp_path / "ref.png"
+    img_ref.write_bytes(b"fake-png")
+    images = (
+        VisionImageInput(path=str(img_after), role="after", label="target_front_after"),
+        VisionImageInput(path=str(img_ref), role="reference", label="ref_front"),
+    )
+    request = VisionRequest(goal="goal", target_object="Housing", images=images)
+    runtime = build_vision_runtime_config(_config(VISION_EXTERNAL_API_KEY="secret"))
+    backend = OpenAICompatibleVisionBackend(runtime)
+
+    captured: dict = {}
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda timeout=None: _FakeAsyncClient(
+            response=_FakeResponse({"choices": [{"message": {"content": _valid_compare_json()}}]}),
+            captured=captured,
+        ),
+    )
+
+    asyncio.run(backend.analyze(request))
+
+    content = captured["json"]["messages"][1]["content"]
+    # Leading element is the bulk payload text; the rest must alternate
+    # caption-text then image_url, in image order.
+    body = content[1:]
+    assert len(body) == 2 * len(images)
+    for idx, image in enumerate(images):
+        caption_part = body[2 * idx]
+        image_part = body[2 * idx + 1]
+        assert caption_part == {"type": "text", "text": format_image_caption(image)}
+        assert image_part["type"] == "image_url"
+
+
+def test_google_path_interleaves_caption_before_each_image(monkeypatch, tmp_path):
+    from server.adapters.mcp.vision.prompting import format_image_caption
+
+    img_after = tmp_path / "after.png"
+    img_after.write_bytes(b"fake-png")
+    img_ref = tmp_path / "ref.png"
+    img_ref.write_bytes(b"fake-png")
+    images = (
+        VisionImageInput(path=str(img_after), role="after", label="target_side_after"),
+        VisionImageInput(path=str(img_ref), role="reference", label="ref_side"),
+    )
+    request = VisionRequest(goal="goal", target_object="Housing", images=images)
+    runtime = build_vision_runtime_config(
+        _config(
+            VISION_EXTERNAL_PROVIDER="google_ai_studio",
+            VISION_EXTERNAL_BASE_URL=None,
+            VISION_EXTERNAL_MODEL=None,
+            VISION_GEMINI_MODEL="gemini-2.5-flash",
+            VISION_GEMINI_API_KEY="gemini-secret",
+        )
+    )
+    backend = OpenAICompatibleVisionBackend(runtime)
+
+    captured: dict = {}
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda timeout=None: _FakeAsyncClient(
+            response=_FakeResponse({"candidates": [{"content": {"parts": [{"text": _valid_compare_json()}]}}]}),
+            captured=captured,
+        ),
+    )
+
+    asyncio.run(backend.analyze(request))
+
+    parts = captured["json"]["contents"][0]["parts"]
+    body = parts[1:]
+    assert len(body) == 2 * len(images)
+    for idx, image in enumerate(images):
+        caption_part = body[2 * idx]
+        image_part = body[2 * idx + 1]
+        assert caption_part == {"text": format_image_caption(image)}
+        assert "inline_data" in image_part

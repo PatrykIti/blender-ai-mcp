@@ -27,6 +27,7 @@ from .prompting import (
     build_vision_payload_text,
     build_vision_response_json_schema,
     build_vision_system_prompt,
+    format_image_caption,
 )
 
 logger = logging.getLogger(__name__)
@@ -858,6 +859,10 @@ class OpenAICompatibleVisionBackend(VisionBackend):
             for image in request.images:
                 media_type = _media_type_for(image.path, image.media_type)
                 encoded = base64.b64encode(Path(image.path).read_bytes()).decode("ascii")
+                # Interleave a symbolic identity caption immediately before each
+                # image so the model binds the blob to its role/view/stage rather
+                # than positionally against the decoupled IMAGES roster.
+                parts.append({"text": format_image_caption(image)})
                 parts.append(
                     {
                         "inline_data": {
@@ -906,6 +911,10 @@ class OpenAICompatibleVisionBackend(VisionBackend):
 
         for image in request.images:
             media_type = _media_type_for(image.path, image.media_type)
+            # Interleave a symbolic identity caption immediately before each image
+            # so the model binds the blob to its role/view/stage rather than
+            # positionally against the decoupled IMAGES roster.
+            content.append({"type": "text", "text": format_image_caption(image)})
             content.append(
                 {
                     "type": "image_url",

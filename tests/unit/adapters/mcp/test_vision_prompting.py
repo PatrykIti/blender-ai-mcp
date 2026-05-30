@@ -10,6 +10,8 @@ from server.adapters.mcp.vision.prompting import (
     build_vision_response_json_schema,
     build_vision_system_prompt,
     expected_json_keys,
+    format_image_caption,
+    format_image_roster_line,
 )
 
 
@@ -147,7 +149,7 @@ def test_local_prompt_payload_is_more_compact_and_task_focused():
 
     assert "TASK:" in text
     assert "IMAGES:" in text
-    assert "- before: before_1" in text
+    assert "- [image: before_1 | role=before]" in text
     assert "OUTPUT_TEMPLATE:" in text
     assert '"goal_summary"' in text
     assert '"shape_mismatches"' in text
@@ -405,3 +407,40 @@ def test_reference_classification_prompt_and_schema_use_bounded_contract():
     assert set(schema["properties"]) == {"classification_scores"}
     assert schema["properties"]["classification_scores"]["maxItems"] == 5
     _assert_strict_required_matches_properties(schema)
+
+
+def test_format_image_caption_is_symbolic_and_derives_view_stage():
+    caption = format_image_caption(VisionImageInput(path="/tmp/f.png", role="after", label="target_front_after"))
+    assert caption == "[image: target_front_after | role=after | view=front]"
+    # Symbolic only: no coordinates, absolute metrics, or chain-of-thought tokens.
+    for forbidden in ("xyxy", "bbox", "px", "mm", "cm", "because", "let's", "step "):
+        assert forbidden not in caption.lower()
+
+
+def test_format_image_caption_omits_underivable_tokens():
+    caption = format_image_caption(VisionImageInput(path="/tmp/r.png", role="reference", label="ref_front"))
+    # 'ref_front' yields a view token but no stage token; the stage token is omitted.
+    assert caption == "[image: ref_front | role=reference | view=front]"
+
+    bare = format_image_caption(VisionImageInput(path="/tmp/x.png", role="before"))
+    assert bare == "[image: before | role=before]"
+
+
+def test_roster_line_reuses_caption_format():
+    image = VisionImageInput(path="/tmp/f.png", role="after", label="target_side_after")
+    assert format_image_roster_line(image) == f"- {format_image_caption(image)}"
+
+
+def test_packet_compare_roster_uses_shared_caption_format():
+    request = VisionRequest(
+        goal="low poly squirrel",
+        target_object="Squirrel",
+        images=(
+            VisionImageInput(path="/tmp/front.png", role="after", label="target_front_after"),
+            VisionImageInput(path="/tmp/ref.png", role="reference", label="ref_front"),
+        ),
+        metadata={"mode": "reference_compare_packet", "packet_id": "p1"},
+    )
+    text = build_vision_payload_text(request)
+    assert "- [image: target_front_after | role=after | view=front]" in text
+    assert "- [image: ref_front | role=reference | view=front]" in text

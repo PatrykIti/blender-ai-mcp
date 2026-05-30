@@ -1,9 +1,11 @@
 # TASK-174: Per-Image Caption Interleaving For Vision Payloads
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-30
 **Priority:** 🔴 High
 **Category:** Vision / VLM Payload Grounding
 **Estimated Effort:** Small
+**Completion Summary:** Shipped via changelog [368](../_CHANGELOG/368-2026-05-30-task-174-per-image-caption-interleaving.md). Added the shared `format_image_caption` / `format_image_roster_line` helpers in `vision/prompting.py`, interleaved a symbolic identity caption before each image in both transmit paths in `vision/backends.py`, and de-duplicated the five roster builders. Both subtasks complete; full `tests/unit` green (3516), ruff/mypy clean.
 **Follow-on After:** [TASK-171](./TASK-171_Creature_Attachment_First_Build_Contract_And_Structured_Vision_Handoff.md), [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md)
 **Related:** [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md), [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md), [_docs/_VISION/MULTI_VIEW_CAPTURE_PLAN.md](../_VISION/MULTI_VIEW_CAPTURE_PLAN.md)
 
