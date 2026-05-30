@@ -25,3 +25,4 @@ poetry.lock
 CLAUDE.md
 .mcp.json
 *.backup
+_TMP_CLAUDE_REPORT.md
