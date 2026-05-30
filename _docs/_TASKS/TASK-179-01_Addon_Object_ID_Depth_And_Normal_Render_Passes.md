@@ -1,12 +1,14 @@
 # TASK-179-01: Addon Object-ID, Depth And Normal Render Passes
 
 **Parent:** [TASK-179](./TASK-179_Blender_Depth_Normal_And_Object_ID_Auxiliary_Passes.md)
-**Status:** 🚧 In Progress
-**Progress:** Two of the three geometric passes shipped 2026-05-30, both validated green against real Blender 4.5.1 (E2E 488 passed):
+**Status:** ✅ Done
+**Completed:** 2026-05-30
+**Completion Summary:** All three geometric render passes shipped and validated green against real Blender 4.5.1 (E2E 491 passed):
 - Z-depth pass (changelog 386): addon `scene.get_depth_pass` (compositor Z pass → normalized grayscale PNG, full save/restore), RPC both sides, server bridge, three E2E tests.
-- Object-ID mask pass (changelog 387): addon `scene.get_object_id_pass` — unique `pass_index` per object → Object Index pass → per-object ID-Mask grayscale bands → base64 PNG + index→name map (no SAM), rendered via Cycles (which reliably exposes the `IndexOB` compositor socket), fully reversible incl. each object's `pass_index`; RPC both sides, server bridge returning the dict envelope, three E2E tests. The E2E loop caught two real bugs first (render-byte reversibility check; EEVEE not exposing `IndexOB`) — both fixed.
+- Object-ID mask pass (changelog 387): addon `scene.get_object_id_pass` — unique `pass_index` per object → Object Index pass → per-object ID-Mask grayscale bands → base64 PNG + index→name map (no SAM), rendered via Cycles (which reliably exposes the `IndexOB` compositor socket), fully reversible incl. each object's `pass_index`; RPC both sides, server bridge returning the dict envelope, three E2E tests.
+- Surface-normal pass (changelog 388): addon `scene.get_normal_pass` — camera-space Normal pass remapped to viewable RGB, Cycles-rendered, fully reversible; RPC both sides, server bridge, three E2E tests.
 
-Remaining: the optional normal pass (the third geometric channel).
+The E2E loop caught three real bugs during development (render-byte reversibility check; EEVEE not exposing `IndexOB`; undefined `original_samples` in the restore block) — all fixed. Follow-on `TASK-179-03` (transmit these auxiliary images to the VLM as labelled captures) remains server-side.
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md)
 **Objective:** Add an addon-side path (compositor / render passes) that produces a deterministic per-object-ID mask image, a Z-depth image, and an optional normal image for the active camera/view, wired through RPC on both sides and fully reversible via `capture_scene_state` / `restore_scene_state` semantics. The new passes reuse the existing render context that `get_viewport(...)` already manages, do not change the default `SOLID` capture, and produce first-party deterministic masks with no external model.

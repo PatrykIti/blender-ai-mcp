@@ -91,6 +91,26 @@ class SceneToolHandler(ISceneTool):
         }
         return require_str_result(self.rpc.send_request("scene.get_depth_pass", args))
 
+    def get_normal_pass(
+        self,
+        width: int = 1024,
+        height: int = 768,
+        camera_name: Optional[str] = None,
+    ) -> str:
+        """Return a base64 RGB surface-normal pass for the active/named camera.
+
+        Advisory geometric evidence: surface orientation/curvature the flat SOLID
+        capture and silhouette cannot convey. The addon method is reversible and
+        headless-safe.
+        """
+
+        args = {
+            "width": width,
+            "height": height,
+            "camera_name": camera_name,
+        }
+        return require_str_result(self.rpc.send_request("scene.get_normal_pass", args))
+
     def get_object_id_pass(
         self,
         object_names: List[str],

@@ -1453,3 +1453,145 @@ class SceneViewportMixin:
                     bpy.ops.object.mode_set(mode=original_mode)
                 except Exception:
                     pass
+
+    def get_normal_pass(
+        self,
+        width=1024,
+        height=768,
+        camera_name=None,
+        is_cancelled: Callable[[], bool] | None = None,
+    ):
+        """Render a deterministic surface-normal pass as a base64 RGB PNG.
+
+        Maps the camera-space normal pass into viewable RGB (each axis remapped
+        from [-1, 1] to [0, 1]) so the orchestrator can read surface orientation /
+        curvature the flat SOLID capture and the silhouette cannot convey. Rendered
+        via Cycles (which reliably exposes the ``Normal`` compositor output socket).
+
+        Fully reversible: render engine, view-layer normal pass flag, compositor
+        node tree, resolution, filepath/format/color-mode, camera, cycles samples,
+        and object mode are saved/restored in a ``finally`` block. Returns a clear
+        error string (not raising) when no usable camera is available.
+        """
+
+        scene = bpy.context.scene
+        raise_if_cancelled(is_cancelled)
+
+        camera_obj = None
+        if camera_name and camera_name != "USER_PERSPECTIVE":
+            if camera_name in bpy.data.objects:
+                camera_obj = bpy.data.objects[camera_name]
+            else:
+                return f"Camera '{camera_name}' not found. Normal pass requires a valid camera."
+        else:
+            camera_obj = scene.camera
+        if camera_obj is None:
+            return "No camera available. Normal pass requires a scene camera or explicit camera_name."
+
+        temp_dir = tempfile.mkdtemp()
+        render_filepath_base = os.path.join(temp_dir, "normal_pass")
+        expected_output = render_filepath_base + ".png"
+
+        view_layer = bpy.context.view_layer
+        original_engine = scene.render.engine
+        original_res_x = scene.render.resolution_x
+        original_res_y = scene.render.resolution_y
+        original_filepath = scene.render.filepath
+        original_file_format = scene.render.image_settings.file_format
+        original_color_mode = scene.render.image_settings.color_mode
+        original_camera = scene.camera
+        original_use_pass_normal = view_layer.use_pass_normal
+        original_use_nodes = scene.use_nodes
+        original_use_compositing = scene.render.use_compositing
+        original_samples = getattr(getattr(scene, "cycles", None), "samples", None)
+
+        original_mode = None
+        if bpy.context.active_object:
+            original_mode = bpy.context.active_object.mode
+            if original_mode != "OBJECT":
+                try:
+                    bpy.ops.object.mode_set(mode="OBJECT")
+                except Exception:
+                    pass
+
+        try:
+            scene.render.resolution_x = width
+            scene.render.resolution_y = height
+            scene.render.filepath = render_filepath_base
+            scene.render.image_settings.file_format = "PNG"
+            scene.render.image_settings.color_mode = "RGB"
+            scene.camera = camera_obj
+            view_layer.use_pass_normal = True
+            scene.render.use_compositing = True
+
+            scene.render.engine = "CYCLES"
+            try:
+                scene.cycles.device = "CPU"
+                scene.cycles.samples = 1
+            except Exception:
+                pass
+
+            scene.use_nodes = True
+            tree = scene.node_tree
+            for node in list(tree.nodes):
+                tree.nodes.remove(node)
+            render_layers = tree.nodes.new(type="CompositorNodeRLayers")
+            composite = tree.nodes.new(type="CompositorNodeComposite")
+
+            normal_socket = render_layers.outputs.get("Normal")
+            if normal_socket is None:
+                return "Normal pass output not available for the active render layer."
+
+            # Remap the normal vector components from [-1, 1] to [0, 1] for a
+            # viewable RGB image: (n * 0.5) + 0.5.
+            scale = tree.nodes.new(type="CompositorNodeMixRGB")
+            scale.blend_type = "MULTIPLY"
+            scale.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
+            offset = tree.nodes.new(type="CompositorNodeMixRGB")
+            offset.blend_type = "ADD"
+            offset.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
+            tree.links.new(normal_socket, scale.inputs[1])
+            tree.links.new(scale.outputs[0], offset.inputs[1])
+            tree.links.new(offset.outputs[0], composite.inputs["Image"])
+
+            bpy.ops.render.render(write_still=True)
+            raise_if_cancelled(is_cancelled)
+
+            if not (os.path.exists(expected_output) and os.path.getsize(expected_output) > 0):
+                return "Normal pass render produced no output image."
+
+            with open(expected_output, "rb") as handle:
+                return base64.b64encode(handle.read()).decode("utf-8")
+
+        finally:
+            if os.path.exists(expected_output):
+                try:
+                    os.remove(expected_output)
+                except Exception:
+                    pass
+            try:
+                os.rmdir(temp_dir)
+            except Exception:
+                pass
+
+            scene.render.engine = original_engine
+            scene.render.resolution_x = original_res_x
+            scene.render.resolution_y = original_res_y
+            scene.render.filepath = original_filepath
+            scene.render.image_settings.file_format = original_file_format
+            scene.render.image_settings.color_mode = original_color_mode
+            scene.camera = original_camera
+            view_layer.use_pass_normal = original_use_pass_normal
+            scene.render.use_compositing = original_use_compositing
+            scene.use_nodes = original_use_nodes
+            if original_samples is not None:
+                try:
+                    scene.cycles.samples = original_samples
+                except Exception:
+                    pass
+
+            if original_mode and original_mode != "OBJECT" and bpy.context.active_object:
+                try:
+                    bpy.ops.object.mode_set(mode=original_mode)
+                except Exception:
+                    pass

@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [388](./388-2026-05-30-task-179-addon-normal-pass.md) | 2026-05-30 | **TASK-179-01 addon surface-normal render pass** | - |
 | [387](./387-2026-05-30-task-179-addon-object-id-pass.md) | 2026-05-30 | **TASK-179-01 addon object-ID mask render pass** | - |
 | [386](./386-2026-05-30-task-179-addon-depth-pass.md) | 2026-05-30 | **TASK-179-01 addon Z-depth render pass** | - |
 | [385](./385-2026-05-30-task-181-scope-drift-regression-lane.md) | 2026-05-30 | **TASK-181-04 scene-graph scope-drift regression lane** | - |
