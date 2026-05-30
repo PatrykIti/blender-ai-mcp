@@ -100,6 +100,43 @@ def build_marks_from_object_masks(
     return marks, mark_id_to_object
 
 
+def build_mark_correspondence_table(
+    findings: Sequence[dict[str, Any]],
+    mark_id_to_object: dict[int, str],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    """Resolve mark-keyed findings back to scene objects.
+
+    Returns ``(rows, validity_warnings)`` where each row maps a finding's
+    ``mark_id`` to the object it labels. A finding whose ``mark_id`` is not in the
+    overlay's id->object map is dropped from the table and recorded as a validity
+    warning (the VLM-Grounder validity guard against references to non-existent
+    marks). Findings without a ``mark_id`` are ignored here (they flow through the
+    normal finding channel). Advisory only.
+    """
+
+    rows: list[dict[str, Any]] = []
+    warnings: list[str] = []
+    for finding in findings:
+        if not isinstance(finding, dict):
+            continue
+        mark_id = finding.get("mark_id")
+        if not isinstance(mark_id, int) or isinstance(mark_id, bool):
+            continue
+        object_name = mark_id_to_object.get(mark_id)
+        if object_name is None:
+            warnings.append(f"Finding referenced mark id {mark_id}, which does not exist on the overlay.")
+            continue
+        rows.append(
+            {
+                "mark_id": mark_id,
+                "object_name": object_name,
+                "finding": str(finding.get("finding") or ""),
+                "target_label": finding.get("target_label"),
+            }
+        )
+    return rows, warnings
+
+
 def render_object_masks(
     scene_handler: Any,
     object_names: Sequence[str],

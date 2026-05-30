@@ -159,6 +159,13 @@ class VisionFindingContract(MCPContract):
             "and normalized text). Lets a Critic finding be tracked and checked off by a later Verify pass."
         ),
     )
+    mark_id: int | None = Field(
+        default=None,
+        description=(
+            "Set-of-Mark id the model keyed this finding to (the numbered overlay mark on the render), or null. "
+            "Resolved server-side back to the scene object it labels."
+        ),
+    )
 
 
 class VisionInputSummaryContract(MCPContract):

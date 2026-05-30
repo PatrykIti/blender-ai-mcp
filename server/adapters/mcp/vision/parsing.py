@@ -389,6 +389,8 @@ def _coerce_findings_list(value: Any, *, max_items: int = 8) -> list[dict[str, A
             )
         )
         defect_id = "defect_" + hashlib.sha1(defect_key.encode("utf-8")).hexdigest()[:10]
+        raw_mark = raw.get("mark_id")
+        mark_id = int(raw_mark) if isinstance(raw_mark, int) and not isinstance(raw_mark, bool) else None
         findings.append(
             {
                 "finding": finding_text.strip(),
@@ -400,6 +402,7 @@ def _coerce_findings_list(value: Any, *, max_items: int = 8) -> list[dict[str, A
                 "reference_id": _opt_str("reference_id"),
                 "confidence": _clamp_unit_interval(raw.get("confidence")),
                 "defect_id": defect_id,
+                "mark_id": mark_id,
             }
         )
         if len(findings) >= max_items:

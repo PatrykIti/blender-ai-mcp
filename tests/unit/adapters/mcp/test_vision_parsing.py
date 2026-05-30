@@ -1220,3 +1220,24 @@ def test_structured_findings_get_stable_defect_ids():
     )
     c = parse_vision_output_text(c_text, _request())["findings"]
     assert c[0]["defect_id"] != a[0]["defect_id"]
+
+
+def test_parse_vision_output_coerces_mark_id_on_findings():
+    text = json.dumps(
+        {
+            "goal_summary": "x",
+            "visible_changes": [],
+            "shape_mismatches": [],
+            "proportion_mismatches": [],
+            "correction_focus": [],
+            "next_corrections": [],
+            "recommended_checks": [],
+            "findings": [
+                {"finding": "leg 2 too short", "mark_id": 2},
+                {"finding": "no mark", "mark_id": "x"},
+            ],
+        }
+    )
+    findings = parse_vision_output_text(text, _request())["findings"]
+    assert findings[0]["mark_id"] == 2
+    assert findings[1]["mark_id"] is None  # non-int coerced to None

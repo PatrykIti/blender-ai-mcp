@@ -171,3 +171,20 @@ def test_build_object_mark_overlay_returns_none_when_no_masks(tmp_path: Path):
     )
     assert overlay_path is None
     assert mapping == {}
+
+
+def test_build_mark_correspondence_table_resolves_and_guards():
+    from server.adapters.mcp.vision.marks import build_mark_correspondence_table
+
+    mark_id_to_object = {1: "Body", 2: "Head"}
+    findings = [
+        {"finding": "head too wide", "mark_id": 2, "target_label": "head"},
+        {"finding": "body too narrow", "mark_id": 1},
+        {"finding": "ghost", "mark_id": 9},  # non-existent mark -> validity warning
+        {"finding": "no mark here"},  # no mark_id -> ignored by the table
+    ]
+    rows, warnings = build_mark_correspondence_table(findings, mark_id_to_object)
+
+    assert [(r["mark_id"], r["object_name"]) for r in rows] == [(2, "Head"), (1, "Body")]
+    assert any("mark id 9" in w for w in warnings)
+    assert len(warnings) == 1

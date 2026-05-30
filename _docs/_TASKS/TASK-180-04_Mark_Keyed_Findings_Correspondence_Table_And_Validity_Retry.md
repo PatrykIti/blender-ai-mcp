@@ -1,7 +1,9 @@
 # TASK-180-04: Mark-Keyed Findings, Correspondence Table And Validity Retry
 
 **Parent:** [TASK-180](./TASK-180_Set_Of_Mark_Object_Bound_Visual_Marks.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-30
+**Completion Note:** Server-side core shipped (changelog 381): mark_id on VisionFindingContract + parser coercion + build_mark_correspondence_table with VLM-Grounder validity guard. Live overlay wiring into the compare flow remains addon + E2E follow-on.
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-180-02](./TASK-180-02_Stable_Mark_Identifiers_Across_Views_And_Iterations.md), [TASK-180-03](./TASK-180-03_Reference_Image_Marks_Via_Optional_Grounded_SAM_Sidecar.md)
 **Objective:** Require the VLM to key its compare findings to mark IDs, parse those mark-keyed findings into an object-correspondence table mapped back to scene `object_name`s, and add a validity-retry guard that rejects findings citing marks that do not exist in the rendered mark set.
