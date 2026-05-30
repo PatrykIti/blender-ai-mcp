@@ -1,7 +1,8 @@
 # TASK-182-01: Critic/Verify Split With Stable Defect Identifiers
 
 **Parent:** [TASK-182](./TASK-182_Critic_Verify_Compare_Loop_And_Deterministic_Exit_Criteria.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-30
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-166-02](./TASK-166-02_Truth_First_Two_Pass_Compare_Execution.md), [TASK-178-01](./TASK-178-01_Structured_Vision_Finding_Contract_Model.md)
 **Objective:** Split compare into a Critic pass that emits defects with stable IDs and a Verify pass that re-renders the same views and checks off each open defect, so a scope gate only advances when its scope defects are verified-resolved or explicitly downgraded — vision stays advisory throughout.
