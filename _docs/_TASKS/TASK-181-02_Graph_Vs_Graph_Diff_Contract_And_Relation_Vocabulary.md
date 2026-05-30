@@ -1,7 +1,9 @@
 # TASK-181-02: Graph-Vs-Graph Diff Contract And Relation Vocabulary
 
 **Parent:** [TASK-181](./TASK-181_Scene_Graph_Diff_Compare_And_Registry_Scoped_Convergence.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-30
+**Completion Note:** Typed graph-vs-graph diff contract (ReferenceGraphDiffContract + node/edge deltas) and a deterministic build_reference_graph_diff builder shipped (changelog 382). Wiring into the staged-compare payload follows once TASK-181-01 (registry-as-compare-scope) lands.
 **Follow-on After:** [TASK-181-01](./TASK-181-01_Part_Registry_As_First_Class_Scene_Graph_And_Compare_Scope.md)
 **Priority:** 🔴 High
 **Objective:** Define a typed graph-vs-graph diff contract — per-node attribute deltas and per-edge relation mismatches over a fixed relation vocabulary — as the primary compare evidence shape, so compare can report a missing expected part (absent node) and a wrong part-to-part proportion (out-of-bounds edge ratio) against the expected graph derived from reference understanding. The legacy bare-string evidence fields stay populated for backward compatibility.

@@ -1,7 +1,9 @@
 # TASK-181-04: Scene-Graph Scope-Drift Regression Proof Lane
 
 **Parent:** [TASK-181](./TASK-181_Scene_Graph_Diff_Compare_And_Registry_Scoped_Convergence.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-30
+**Completion Note:** Deterministic unit-level scope-drift regression lane shipped (changelog 385). The live E2E squirrel proof lane already exists; TASK-181-01 (registry-as-compare-scope) is the deep rewrite this lane defends.
 **Follow-on After:** [TASK-181-01](./TASK-181-01_Part_Registry_As_First_Class_Scene_Graph_And_Compare_Scope.md), [TASK-181-02](./TASK-181-02_Graph_Vs_Graph_Diff_Contract_And_Relation_Vocabulary.md), [TASK-181-03](./TASK-181-03_K_Nearest_Relation_Triplet_Prompt_Serialization.md), [TASK-173-04](./TASK-173-04_Existing_Squirrel_Proof_Lane_Extension_And_Runtime_Evidence_Surfacing.md)
 **Priority:** 🔴 High
 **Objective:** Extend the existing squirrel proof lane to prove that, with the registered part graph as compare scope, the staged compare no longer drifts to a `Body + Head`-only scope, whole-assembly graph convergence keeps precedence, and a deliberately missing or over-scaled part is reported as a typed node/edge graph diff. Re-measure compare-quality direction on repo-owned golden fixtures rather than trusting external benchmark numbers.

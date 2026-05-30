@@ -389,6 +389,14 @@ class ReferenceOrchestratorFeedbackContract(MCPContract):
         default=None,
         description="Recommended loop disposition; advisory input to deterministic guided policy, not a final gate.",
     )
+    authoritative_next_actions: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Single consolidated, ranked next-step list merged from the overlapping advisory channels "
+            "(deterministic next_actions first, then correction_focus, support tools, repair). Read THIS first; "
+            "the other channels remain for detail. Deterministic guided policy still owns final gate decisions."
+        ),
+    )
     message: str | None = None
 
 
@@ -600,6 +608,55 @@ class ReferenceComparePacketContract(MCPContract):
     evidence_summary: str | None = None
     uncertainty_notes: list[str] = []
     correction_focus: list[str] = []
+
+
+class ReferenceGraphNodeDeltaContract(MCPContract):
+    """One per-node attribute mismatch in a graph-vs-graph compare diff."""
+
+    target_label: str = Field(description="Canonical part/object role this node represents.")
+    status: Literal["present", "missing", "unexpected"] = Field(
+        description="present = in both graphs; missing = expected but absent; unexpected = built but not expected.",
+    )
+    attribute_mismatches: list[str] = Field(
+        default_factory=list,
+        description="Symbolic per-attribute divergences (e.g. 'profile too round'); proportional, never coordinates.",
+    )
+
+
+class ReferenceGraphEdgeDeltaContract(MCPContract):
+    """One per-edge relation mismatch in a graph-vs-graph compare diff."""
+
+    from_label: str = Field(description="Canonical role of the relation's subject node.")
+    to_label: str = Field(description="Canonical role of the relation's object node.")
+    relation_kind: SceneRelationKindLiteral = Field(description="The expected relation kind for this edge.")
+    status: Literal["satisfied", "violated", "missing", "unknown"] = Field(
+        description="satisfied = holds; violated = present but wrong; missing = expected edge absent; unknown.",
+    )
+    detail: str | None = Field(default=None, description="Short symbolic reason for a violated/missing edge.")
+
+
+class ReferenceGraphDiffContract(MCPContract):
+    """Graph-vs-graph compare diff: expected part graph vs the built scene graph.
+
+    Advisory structural evidence parallel to the prose/finding channels: it reports
+    per-node attribute mismatches and per-edge relation mismatches over the fixed
+    relation vocabulary, so the orchestrator can see *which parts/relations* differ
+    from the expected structure rather than inferring it from prose. Not a truth
+    source; deterministic inspection/assertion still own correctness.
+    """
+
+    node_deltas: list[ReferenceGraphNodeDeltaContract] = Field(
+        default_factory=list, description="Per-node attribute/presence mismatches against the expected part graph."
+    )
+    edge_deltas: list[ReferenceGraphEdgeDeltaContract] = Field(
+        default_factory=list, description="Per-edge relation mismatches against the expected relations."
+    )
+    missing_parts: list[str] = Field(
+        default_factory=list, description="Canonical roles expected by the reference but absent from the scene."
+    )
+    unexpected_parts: list[str] = Field(
+        default_factory=list, description="Scene parts present but not in the expected part graph."
+    )
 
 
 class ReferenceCompareDiagnosticsContract(MCPContract):

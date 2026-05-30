@@ -70,6 +70,33 @@ def _dedupe_strings(values: list[str]) -> list[str]:
     return deduped
 
 
+def _consolidate_authoritative_next_actions(
+    *,
+    next_actions: list[str],
+    correction_focus: list[str],
+    recommended_support_tools: list[str],
+    recommended_repair: ReferenceCompactRepairContract | None,
+    max_items: int = 6,
+) -> list[str]:
+    """Merge the overlapping advisory channels into one ranked, deduplicated list.
+
+    Ranking is deterministic-first: the normalized guided ``next_actions`` lead,
+    then the highest-priority correction targets, then a bounded repair suggestion,
+    then support tools. Case-insensitive dedup (via ``_dedupe_strings``) preserves
+    first occurrence so the orchestrator gets one ordered to-do list instead of
+    4-6 overlapping channels.
+    """
+
+    merged: list[str] = list(next_actions)
+    merged.extend(f"Address mismatch: {focus}" for focus in correction_focus if str(focus).strip())
+    if recommended_repair is not None and getattr(recommended_repair, "tool_name", None):
+        reason = getattr(recommended_repair, "reason", None)
+        suffix = f" ({reason})" if reason else ""
+        merged.append(f"Run repair {recommended_repair.tool_name}{suffix}")
+    merged.extend(f"Run support check {tool}" for tool in recommended_support_tools if str(tool).strip())
+    return _dedupe_strings(merged)[:max_items]
+
+
 def _normalize_view_id(value: str | None) -> str:
     tokens = [token for token in re.split(r"[^a-z0-9]+", str(value or "").strip().lower()) if token]
     for token in tokens:
@@ -644,6 +671,12 @@ def build_reference_orchestrator_feedback(
         uncertainty_notes=uncertainty_notes,
         correction_focus=focus[:3],
         loop_disposition=loop_disposition,  # type: ignore[arg-type]
+        authoritative_next_actions=_consolidate_authoritative_next_actions(
+            next_actions=actions,
+            correction_focus=focus[:3],
+            recommended_support_tools=support_tools,
+            recommended_repair=recommended_repair,
+        ),
         message=(
             str(runtime_policy_block.get("message") or "").strip()
             if isinstance(runtime_policy_block, dict) and str(runtime_policy_block.get("message") or "").strip()

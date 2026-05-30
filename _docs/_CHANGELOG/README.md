@@ -6,6 +6,10 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [385](./385-2026-05-30-task-181-scope-drift-regression-lane.md) | 2026-05-30 | **TASK-181-04 scene-graph scope-drift regression lane** | - |
+| [384](./384-2026-05-30-task-177-labeled-view-grid-composite.md) | 2026-05-30 | **TASK-177-03 optional labelled multi-view grid composite** | - |
+| [383](./383-2026-05-30-task-182-authoritative-next-actions.md) | 2026-05-30 | **TASK-182-02 authoritative_next_actions channel consolidation** | - |
+| [382](./382-2026-05-30-task-181-graph-diff-contract.md) | 2026-05-30 | **TASK-181-02 graph-vs-graph diff contract and builder** | - |
 | [381](./381-2026-05-30-task-180-mark-keyed-findings-correspondence.md) | 2026-05-30 | **TASK-180-04 mark-keyed findings and correspondence table** | - |
 | [380](./380-2026-05-30-task-183-silhouette-calibration-and-convergence.md) | 2026-05-30 | **TASK-183-02 silhouette calibration and IoU convergence signal** | - |
 | [379](./379-2026-05-30-task-178-findings-reporting-propagation.md) | 2026-05-30 | **TASK-178 structured-findings reporting propagation** | - |

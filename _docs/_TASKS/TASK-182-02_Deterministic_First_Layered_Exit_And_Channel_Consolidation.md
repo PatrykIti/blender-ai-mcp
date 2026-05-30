@@ -1,7 +1,8 @@
 # TASK-182-02: Deterministic-First Layered Exit And Channel Consolidation
 
 **Parent:** [TASK-182](./TASK-182_Critic_Verify_Compare_Loop_And_Deterministic_Exit_Criteria.md)
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
+**Progress:** Channel-consolidation half shipped 2026-05-30 (changelog 383): authoritative_next_actions merges the overlapping advisory channels into one ranked deduplicated list. Remaining: the deterministic-first layered exit (hard non-VLM gate first via quality_gate_verifier + scene_assert_contact, VLM as tiebreaker) and the full TASK-182 Critic/Verify re-render loop — both need staged-compare orchestration + E2E.
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-182-01](./TASK-182-01_Critic_Verify_Split_With_Stable_Defect_Identifiers.md), [TASK-157-02](./TASK-157-02_Deterministic_Gate_Verifier_And_Status_Model.md)
 **Objective:** Formalize a layered exit where a hard non-VLM gate (registry part-count match AND required contacts via the deterministic verifier) is consulted first, the VLM verdict is used only as a tiebreaker, every claim is provenance-tagged, and the 4-6 overlapping recommendation/correction channels collapse into one ranked `authoritative_next_actions` field.
