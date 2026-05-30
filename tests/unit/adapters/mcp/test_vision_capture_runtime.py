@@ -265,3 +265,65 @@ def test_capture_stage_images_restores_state_after_capture(tmp_path, monkeypatch
         {"object_name": "Housing", "hide": False, "hide_render": False},
         {"object_name": "Panel", "hide": True, "hide_render": False},
     ]
+
+
+class _FailingViewHandler(_Handler):
+    """Handler whose set_standard_view returns a headless failure marker string."""
+
+    def set_standard_view(self, view_name: str):
+        self.standard_view_calls.append(view_name)
+        return "No 3D viewport found. Standard view requires an active 3D view."
+
+
+def test_capture_records_capture_ok_true_on_success_strings(tmp_path, monkeypatch):
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    captures = capture_stage_images(_Handler(), bundle_id="b", stage="after", target_object="Housing")
+
+    # Success-confirmation strings ("view ok"/"focus ok"/"orbit ok") are not failures.
+    assert captures, "expected at least one capture"
+    assert all(c.capture_ok is True for c in captures)
+    assert all(c.capture_warning is None for c in captures)
+
+
+def test_capture_flags_failed_view_op_without_aborting(tmp_path, monkeypatch):
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    captures = capture_stage_images(_FailingViewHandler(), bundle_id="b", stage="after", target_object="Housing")
+
+    # The capture still completes (image written) but the failed framing is recorded.
+    flagged = [c for c in captures if c.preset_name and c.preset_name.startswith("target_")]
+    assert flagged, "expected target presets that use set_standard_view"
+    for capture in flagged:
+        assert capture.capture_ok is False
+        assert capture.capture_warning is not None
+        assert "set_standard_view" in capture.capture_warning
+        assert "no 3d viewport found" in capture.capture_warning.lower()
+
+
+def test_build_capture_bundle_aggregates_capture_warnings(tmp_path, monkeypatch):
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    handler = _FailingViewHandler()
+    before = capture_stage_images(handler, bundle_id="bw", stage="before", target_object="Housing")
+    after = capture_stage_images(handler, bundle_id="bw", stage="after", target_object="Housing")
+    bundle = build_capture_bundle(
+        bundle_id="bw",
+        target_object="Housing",
+        captures_before=before,
+        captures_after=after,
+    )
+
+    assert bundle.capture_warnings, "expected aggregated capture warnings"
+    assert all("set_standard_view" in w for w in bundle.capture_warnings)
+    # Clean handler yields an empty warnings list.
+    clean_bundle = build_capture_bundle(
+        bundle_id="bc",
+        target_object="Housing",
+        captures_before=capture_stage_images(_Handler(), bundle_id="bc", stage="before", target_object="Housing"),
+        captures_after=capture_stage_images(_Handler(), bundle_id="bc", stage="after", target_object="Housing"),
+    )
+    assert clean_bundle.capture_warnings == []

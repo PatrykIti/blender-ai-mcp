@@ -20,6 +20,13 @@ class VisionCaptureImageContract(MCPContract):
     preset_name: str | None = None
     media_type: str = "image/png"
     view_kind: Literal["wide", "focus", "overlay", "reference"] = "wide"
+    capture_ok: bool = True
+    """Advisory reliability flag: ``False`` when a camera/view op for this preset
+    returned a known failure marker, so the framed view may not match its label.
+    Defaults to ``True`` so existing serialized payloads stay valid."""
+    capture_warning: str | None = None
+    """Short advisory note naming which view op failed and the preset it was
+    meant to produce; ``None`` on a clean capture."""
 
 
 class VisionCaptureBundleContract(MCPContract):
@@ -33,3 +40,6 @@ class VisionCaptureBundleContract(MCPContract):
     captures_before: list[VisionCaptureImageContract]
     captures_after: list[VisionCaptureImageContract]
     truth_summary: dict[str, Any] | None = None
+    capture_warnings: list[str] = []
+    """Advisory bundle-level summary of per-image capture failures across both
+    stages; empty when every capture in the bundle framed cleanly."""

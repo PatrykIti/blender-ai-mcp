@@ -183,6 +183,38 @@ def resolve_capture_preset_specs(profile: CapturePresetProfile = "compact") -> t
     return CAPTURE_PRESET_PROFILES[profile]
 
 
+# Bounded set of known view-op failure markers. Headless Blender returns these
+# strings instead of raising, so a failed op would otherwise be discarded and the
+# mislabeled view would reach the VLM as trustworthy. Success-confirmation
+# strings (e.g. "Set 3D viewport to FRONT view") are intentionally not markers.
+_KNOWN_VIEW_OP_FAILURE_MARKERS = (
+    "no 3d viewport found",
+    "requires an active 3d view",
+    "no active 3d view",
+    "no 3d view",
+)
+
+
+def _classify_view_op_result(op_name: str, result: object) -> str | None:
+    """Return a short failure note when a view-op result signals a known failure.
+
+    Returns ``None`` for success confirmations and non-string results so the
+    common case (handlers that return human-readable confirmation strings) is not
+    misread as a failure. Adding a new handler failure phrase is a one-line change
+    to ``_KNOWN_VIEW_OP_FAILURE_MARKERS``.
+    """
+
+    if not isinstance(result, str):
+        return None
+    lowered = result.strip().lower()
+    if not lowered:
+        return None
+    for marker in _KNOWN_VIEW_OP_FAILURE_MARKERS:
+        if marker in lowered:
+            return f"{op_name}: {result.strip()}"
+    return None
+
+
 def capture_stage_images(
     scene_handler,
     *,
@@ -203,34 +235,47 @@ def capture_stage_images(
         isolate_names = normalized_target_objects or ([target_object] if target_object else [])
         for preset in resolved_preset_specs:
             focus_target = target_object if preset.focus_target else None
+            preset_warnings: list[str] = []
             if preset is not resolved_preset_specs[0]:
                 restore_scene_state(scene_handler, original_state)
             if isolate_names and preset.isolate_target and hasattr(scene_handler, "isolate_object"):
                 try:
-                    scene_handler.isolate_object(isolate_names)
-                except Exception:
-                    pass
+                    result = scene_handler.isolate_object(isolate_names)
+                    note = _classify_view_op_result("isolate_object", result)
+                    if note is not None:
+                        preset_warnings.append(note)
+                except Exception as exc:  # keep capture reversible; record instead of discard
+                    preset_warnings.append(f"isolate_object raised: {exc!r}")
             if preset.standard_view and hasattr(scene_handler, "set_standard_view"):
                 try:
-                    scene_handler.set_standard_view(preset.standard_view)
-                except Exception:
-                    pass
+                    result = scene_handler.set_standard_view(preset.standard_view)
+                    note = _classify_view_op_result(f"set_standard_view({preset.standard_view})", result)
+                    if note is not None:
+                        preset_warnings.append(note)
+                except Exception as exc:
+                    preset_warnings.append(f"set_standard_view raised: {exc!r}")
             if focus_target and hasattr(scene_handler, "camera_focus"):
                 try:
-                    scene_handler.camera_focus(focus_target, zoom_factor=preset.focus_zoom_factor)
-                except Exception:
-                    pass
+                    result = scene_handler.camera_focus(focus_target, zoom_factor=preset.focus_zoom_factor)
+                    note = _classify_view_op_result("camera_focus", result)
+                    if note is not None:
+                        preset_warnings.append(note)
+                except Exception as exc:
+                    preset_warnings.append(f"camera_focus raised: {exc!r}")
 
             if focus_target and (preset.orbit_horizontal is not None or preset.orbit_vertical is not None):
                 if hasattr(scene_handler, "camera_orbit"):
                     try:
-                        scene_handler.camera_orbit(
+                        result = scene_handler.camera_orbit(
                             angle_horizontal=float(preset.orbit_horizontal or 0.0),
                             angle_vertical=float(preset.orbit_vertical or 0.0),
                             target_object=focus_target,
                         )
-                    except Exception:
-                        pass
+                        note = _classify_view_op_result("camera_orbit", result)
+                        if note is not None:
+                            preset_warnings.append(note)
+                    except Exception as exc:
+                        preset_warnings.append(f"camera_orbit raised: {exc!r}")
             b64_data = scene_handler.get_viewport(
                 width=preset.width,
                 height=preset.height,
@@ -246,14 +291,18 @@ def capture_stage_images(
             )
             internal_file.write_bytes(base64.b64decode(b64_data))
 
+            capture_label = f"{preset.name}_{stage}"
+            capture_warning = f"{capture_label}: " + "; ".join(preset_warnings) if preset_warnings else None
             captures.append(
                 VisionCaptureImageContract(
-                    label=f"{preset.name}_{stage}",
+                    label=capture_label,
                     image_path=str(internal_file),
                     host_visible_path=external_file,
                     preset_name=preset.name,
                     media_type="image/jpeg",
                     view_kind=preset.view_kind,
+                    capture_ok=not preset_warnings,
+                    capture_warning=capture_warning,
                 )
             )
     finally:
@@ -334,6 +383,11 @@ def build_capture_bundle(
     preset_names = sorted(
         {capture.preset_name for capture in [*captures_before, *captures_after] if capture.preset_name is not None}
     )
+    capture_warnings = [
+        capture.capture_warning
+        for capture in [*captures_before, *captures_after]
+        if capture.capture_warning is not None
+    ]
     return VisionCaptureBundleContract(
         bundle_id=bundle_id,
         goal_id=goal_id,
@@ -343,4 +397,5 @@ def build_capture_bundle(
         captures_before=captures_before,
         captures_after=captures_after,
         truth_summary=truth_summary,
+        capture_warnings=capture_warnings,
     )

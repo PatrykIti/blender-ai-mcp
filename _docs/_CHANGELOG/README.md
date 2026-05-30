@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [370](./370-2026-05-30-task-176-capture-failure-and-truncation-signals.md) | 2026-05-30 | **TASK-176 capture-failure and evidence-truncation signal surfacing** | - |
 | [369](./369-2026-05-30-task-175-vision-contract-field-descriptions.md) | 2026-05-30 | **TASK-175 vision contract field descriptions and stage read-order** | - |
 | [368](./368-2026-05-30-task-174-per-image-caption-interleaving.md) | 2026-05-30 | **TASK-174 per-image caption interleaving** | - |
 | [367](./367-2026-05-23-task-172-final-audit-drift-repair.md) | 2026-05-23 | **TASK-172 final audit drift repair** | - |

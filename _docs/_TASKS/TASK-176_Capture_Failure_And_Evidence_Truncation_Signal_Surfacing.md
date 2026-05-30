@@ -1,6 +1,7 @@
 # TASK-176: Capture-Failure And Evidence-Truncation Signal Surfacing
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-30
 **Priority:** 🔴 High
 **Category:** Vision / Reliability And Observability
 **Estimated Effort:** Medium

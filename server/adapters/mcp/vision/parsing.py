@@ -222,6 +222,7 @@ def _repair_echo_payload(parsed: dict[str, Any], request: VisionRequest) -> dict
         "recommended_checks": [],
         "confidence": 0.0,
         "captures_used": labels,
+        "analysis_unusable": True,
     }
 
 
@@ -245,6 +246,7 @@ def _repair_label_map_payload(parsed: dict[str, Any], request: VisionRequest) ->
         "recommended_checks": [],
         "confidence": 0.0,
         "captures_used": labels,
+        "analysis_unusable": True,
     }
 
 
@@ -269,6 +271,7 @@ def _repair_unrecognized_payload(parsed: dict[str, Any], request: VisionRequest)
         "recommended_checks": [],
         "confidence": 0.0,
         "captures_used": labels,
+        "analysis_unusable": True,
     }
 
 
@@ -316,10 +319,20 @@ def _looks_clean_packet_text(*values: str | None) -> bool:
 
 
 def _bounded_string_list(items: list[str], *, max_items: int = 3, prune_unhelpful: bool = False) -> list[str]:
+    bounded, _omitted = _bounded_string_list_counted(items, max_items=max_items, prune_unhelpful=prune_unhelpful)
+    return bounded
+
+
+def _bounded_string_list_counted(
+    items: list[str], *, max_items: int = 3, prune_unhelpful: bool = False
+) -> tuple[list[str], int]:
+    """Return the bounded list plus the number of items dropped by the cap."""
+
     deduped = _dedupe_string_list(items)
     if prune_unhelpful:
         deduped = _prune_unhelpful_correction_items(deduped)
-    return deduped[:max_items]
+    bounded = deduped[:max_items]
+    return bounded, max(0, len(deduped) - len(bounded))
 
 
 def _first_nonempty_value(parsed: dict[str, Any], keys: tuple[str, ...]) -> Any:
@@ -1323,19 +1336,24 @@ def _normalize_payload(parsed: dict[str, Any], request: VisionRequest) -> dict[s
         goal_summary_lower = goal_summary.lower()
         if any(hint in goal_summary_lower for hint in _VISIBLE_CHANGE_GOAL_SUMMARY_HINTS):
             visible_changes = [goal_summary]
-    visible_changes = _bounded_string_list(visible_changes)
-    shape_mismatches = _bounded_string_list(
+    omitted_total = 0
+    visible_changes, _omitted = _bounded_string_list_counted(visible_changes)
+    omitted_total += _omitted
+    shape_mismatches, _omitted = _bounded_string_list_counted(
         _coerce_string_list(_first_nonempty_value(parsed, _SHAPE_MISMATCHES_ALIASES)),
         prune_unhelpful=True,
     )
-    proportion_mismatches = _bounded_string_list(
+    omitted_total += _omitted
+    proportion_mismatches, _omitted = _bounded_string_list_counted(
         _coerce_string_list(_first_nonempty_value(parsed, _PROPORTION_MISMATCHES_ALIASES)),
         prune_unhelpful=True,
     )
-    correction_focus = _bounded_string_list(
+    omitted_total += _omitted
+    correction_focus, _omitted = _bounded_string_list_counted(
         _coerce_string_list(_first_nonempty_value(parsed, _CORRECTION_FOCUS_ALIASES)),
         prune_unhelpful=True,
     )
+    omitted_total += _omitted
 
     likely_issues = _coerce_issue_list(parsed.get("likely_issues"))
     if not likely_issues:
@@ -1352,10 +1370,11 @@ def _normalize_payload(parsed: dict[str, Any], request: VisionRequest) -> dict[s
             if recommended_checks:
                 break
     recommended_checks = _dedupe_check_list(recommended_checks)
-    next_corrections = _bounded_string_list(
+    next_corrections, _omitted = _bounded_string_list_counted(
         _coerce_string_list(_first_nonempty_value(parsed, _NEXT_CORRECTIONS_ALIASES)),
         prune_unhelpful=True,
     )
+    omitted_total += _omitted
     if not correction_focus and _is_reference_guided_checkpoint(request):
         correction_focus = _bounded_string_list(
             [*shape_mismatches, *proportion_mismatches, *next_corrections],
@@ -1425,6 +1444,9 @@ def _normalize_payload(parsed: dict[str, Any], request: VisionRequest) -> dict[s
         "packet_guidance": packet_guidance,
         "confidence": confidence,
         "captures_used": list(parsed.get("captures_used") or labels),
+        "evidence_truncated": omitted_total > 0,
+        "omitted_count": omitted_total,
+        "analysis_unusable": False,
     }
 
 

@@ -1,7 +1,8 @@
 # TASK-176-02: Evidence-Truncation And Analysis-Unusable Markers
 
 **Parent:** [TASK-176](./TASK-176_Capture_Failure_And_Evidence_Truncation_Signal_Surfacing.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-30
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-176-01](./TASK-176-01_Capture_Ok_And_Warning_Signals_For_Capture_Bundles.md)
 **Objective:** Emit `evidence_truncated` + `omitted_count` wherever finding lists are hard-sliced, and add a top-level `analysis_unusable` flag (distinct from `confidence == 0.0`) so the orchestrator can tell "empty because the comparison was clean" from "empty because the analysis failed".

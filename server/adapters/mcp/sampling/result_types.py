@@ -223,6 +223,20 @@ class VisionAssistContract(MCPContract):
     captures_used: list[str] = Field(
         default_factory=list, description="Labels of the capture/reference images the interpretation actually used."
     )
+    evidence_truncated: bool = Field(
+        default=False,
+        description="True when one or more finding lists were capped; the orchestrator may request more if needed.",
+    )
+    omitted_count: int = Field(
+        default=0, description="Total number of findings dropped by the per-list caps (0 when nothing was truncated)."
+    )
+    analysis_unusable: bool = Field(
+        default=False,
+        description=(
+            "True when this result is a recovery placeholder (model echoed input, returned labels, or off-contract "
+            "JSON), so empty finding lists mean 'analysis failed', NOT 'scene looks correct'. Distinct from confidence==0."
+        ),
+    )
     input_summary: VisionInputSummaryContract | None = Field(
         default=None, description="Compact summary of the visual inputs the backend received."
     )

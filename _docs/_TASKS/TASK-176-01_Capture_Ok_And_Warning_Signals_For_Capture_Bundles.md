@@ -1,7 +1,8 @@
 # TASK-176-01: Capture-Ok And Warning Signals For Capture Bundles
 
 **Parent:** [TASK-176](./TASK-176_Capture_Failure_And_Evidence_Truncation_Signal_Surfacing.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-30
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md)
 **Objective:** Detect when an addon camera/view operation returned an error string instead of succeeding and propagate `capture_ok=False` / `capture_warning` onto the per-image contract plus a bundle-level `capture_warnings` list, so a mislabeled or failed view never reaches the VLM as trustworthy evidence.

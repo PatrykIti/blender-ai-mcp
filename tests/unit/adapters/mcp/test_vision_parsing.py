@@ -1081,3 +1081,48 @@ def test_generic_full_contract_profile_does_not_repair_truncated_compare_json():
             vision_contract_profile="generic_full",
             provider_name="openrouter",
         )
+
+
+def test_parse_vision_output_marks_echo_payload_analysis_unusable():
+    text = json.dumps({"goal": "rounded housing", "images": [{"role": "before", "label": "b1"}], "metadata": {}})
+    parsed = parse_vision_output_text(text, _request())
+    # Empty finding lists here mean the analysis failed, not that the scene is correct.
+    assert parsed["analysis_unusable"] is True
+    assert parsed["shape_mismatches"] == []
+
+
+def test_parse_vision_output_flags_truncated_evidence_with_omitted_count():
+    text = json.dumps(
+        {
+            "goal_summary": "still diverging",
+            "visible_changes": [],
+            "shape_mismatches": [f"distinct shape problem {i}" for i in range(7)],
+            "proportion_mismatches": [],
+            "correction_focus": [],
+            "next_corrections": [],
+            "recommended_checks": [],
+        }
+    )
+    parsed = parse_vision_output_text(text, _request())
+    # The compare cap keeps 3 shape mismatches; the other 4 are reported as omitted.
+    assert len(parsed["shape_mismatches"]) == 3
+    assert parsed["evidence_truncated"] is True
+    assert parsed["omitted_count"] >= 4
+    assert parsed["analysis_unusable"] is False
+
+
+def test_parse_vision_output_not_truncated_when_within_caps():
+    text = json.dumps(
+        {
+            "goal_summary": "ok",
+            "visible_changes": ["one change"],
+            "shape_mismatches": ["one shape issue"],
+            "proportion_mismatches": [],
+            "correction_focus": [],
+            "next_corrections": [],
+            "recommended_checks": [],
+        }
+    )
+    parsed = parse_vision_output_text(text, _request())
+    assert parsed["evidence_truncated"] is False
+    assert parsed["omitted_count"] == 0
