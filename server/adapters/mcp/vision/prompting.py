@@ -69,9 +69,15 @@ def format_image_caption(image: VisionImageInput) -> str:
 
 
 def format_image_roster_line(image: VisionImageInput) -> str:
-    """Return the flat roster line for an image, reusing the caption format."""
+    """Return the flat roster line for an image.
 
-    return f"- {format_image_caption(image)}"
+    Kept deliberately lean (``- role: label``): the richer bracketed identity
+    string from ``format_image_caption`` is interleaved directly before each image
+    in the external request payload, but small local (MLX) models are sensitive to
+    the more verbose roster wording, so the roster keeps its baseline format.
+    """
+
+    return f"- {image.role}: {image.label or image.role}"
 
 
 def _image_roster_lines(request: VisionRequest) -> list[str]:

@@ -150,7 +150,7 @@ def test_local_prompt_payload_is_more_compact_and_task_focused():
 
     assert "TASK:" in text
     assert "IMAGES:" in text
-    assert "- [image: before_1 | role=before]" in text
+    assert "- before: before_1" in text
     assert "OUTPUT_TEMPLATE:" in text
     assert '"goal_summary"' in text
     assert '"shape_mismatches"' in text
@@ -438,12 +438,15 @@ def test_format_image_caption_omits_underivable_tokens():
     assert bare == "[image: before | role=before]"
 
 
-def test_roster_line_reuses_caption_format():
+def test_roster_line_keeps_lean_baseline_format():
+    # The roster stays lean (`- role: label`); the richer bracketed identity is
+    # interleaved before each image in the external payload, not in the roster,
+    # because small local (MLX) models are sensitive to verbose roster wording.
     image = VisionImageInput(path="/tmp/f.png", role="after", label="target_side_after")
-    assert format_image_roster_line(image) == f"- {format_image_caption(image)}"
+    assert format_image_roster_line(image) == "- after: target_side_after"
 
 
-def test_packet_compare_roster_uses_shared_caption_format():
+def test_packet_compare_roster_uses_lean_baseline_format():
     request = VisionRequest(
         goal="low poly squirrel",
         target_object="Squirrel",
@@ -454,8 +457,8 @@ def test_packet_compare_roster_uses_shared_caption_format():
         metadata={"mode": "reference_compare_packet", "packet_id": "p1"},
     )
     text = build_vision_payload_text(request)
-    assert "- [image: target_front_after | role=after | view=front]" in text
-    assert "- [image: ref_front | role=reference | view=front]" in text
+    assert "- after: target_front_after" in text
+    assert "- reference: ref_front" in text
 
 
 def test_serialize_relation_triplets_emits_symbolic_relations_not_coordinates():

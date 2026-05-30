@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [377](./377-2026-05-30-task-174-roster-format-e2e-regression-fix.md) | 2026-05-30 | **TASK-174 roster-format E2E regression fix** | - |
 | [376](./376-2026-05-30-task-179-per-object-mask-iou.md) | 2026-05-30 | **TASK-179 per-object mask IoU primitive** | - |
 | [375](./375-2026-05-30-task-181-relation-triplet-serialization.md) | 2026-05-30 | **TASK-181 relation-triplet prompt serialization** | - |
 | [374](./374-2026-05-30-task-183-capability-aware-schema-and-curated-payload.md) | 2026-05-30 | **TASK-183 capability-aware schema and curated payload** | - |
