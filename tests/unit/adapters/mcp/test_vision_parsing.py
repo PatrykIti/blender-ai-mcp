@@ -1183,3 +1183,40 @@ def test_parse_vision_output_defaults_findings_to_empty_list():
     )
     parsed = parse_vision_output_text(text, _request())
     assert parsed["findings"] == []
+
+
+def test_structured_findings_get_stable_defect_ids():
+    def _findings(text_variant: str):
+        text = json.dumps(
+            {
+                "goal_summary": "x",
+                "visible_changes": [],
+                "shape_mismatches": [],
+                "proportion_mismatches": [],
+                "correction_focus": [],
+                "next_corrections": [],
+                "recommended_checks": [],
+                "findings": [{"finding": text_variant, "target_label": "head", "axis": "x", "direction": "decrease"}],
+            }
+        )
+        return parse_vision_output_text(text, _request())["findings"]
+
+    a = _findings("Head is too wide")
+    b = _findings("head is too wide")  # case/whitespace-normalized -> same defect
+    assert a[0]["defect_id"] == b[0]["defect_id"]
+    assert a[0]["defect_id"].startswith("defect_")
+    # A different target yields a different defect id.
+    c_text = json.dumps(
+        {
+            "goal_summary": "x",
+            "visible_changes": [],
+            "shape_mismatches": [],
+            "proportion_mismatches": [],
+            "correction_focus": [],
+            "next_corrections": [],
+            "recommended_checks": [],
+            "findings": [{"finding": "Head is too wide", "target_label": "tail", "axis": "x", "direction": "decrease"}],
+        }
+    )
+    c = parse_vision_output_text(c_text, _request())["findings"]
+    assert c[0]["defect_id"] != a[0]["defect_id"]

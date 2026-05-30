@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [373](./373-2026-05-30-task-182-stable-defect-id-substrate.md) | 2026-05-30 | **TASK-182 stable defect-id substrate for Critic/Verify** | - |
 | [372](./372-2026-05-30-task-178-structured-per-finding-compare-schema.md) | 2026-05-30 | **TASK-178 structured per-finding compare schema** | - |
 | [371](./371-2026-05-30-task-177-budget-aware-capture-view-selection.md) | 2026-05-30 | **TASK-177 budget-aware capture view selection** | - |
 | [370](./370-2026-05-30-task-176-capture-failure-and-truncation-signals.md) | 2026-05-30 | **TASK-176 capture-failure and evidence-truncation signal surfacing** | - |

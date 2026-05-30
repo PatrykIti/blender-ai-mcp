@@ -375,16 +375,31 @@ def _coerce_findings_list(value: Any, *, max_items: int = 8) -> list[dict[str, A
         )
         if magnitude_ratio is not None and magnitude_ratio < 0:
             magnitude_ratio = None
+        target_label = _opt_str("target_label")
+        view_id = _opt_str("view_id")
+        # Stable, deterministic defect id so a Critic finding can be checked off by
+        # a later Verify pass. Keyed on the semantic anchor (target/axis/direction)
+        # plus a normalized text key so re-phrasings of the same defect collide.
+        defect_key = "|".join(
+            (
+                (target_label or "").lower(),
+                axis or "",
+                direction or "",
+                re.sub(r"\s+", " ", finding_text.strip().lower())[:80],
+            )
+        )
+        defect_id = "defect_" + hashlib.sha1(defect_key.encode("utf-8")).hexdigest()[:10]
         findings.append(
             {
                 "finding": finding_text.strip(),
-                "view_id": _opt_str("view_id"),
-                "target_label": _opt_str("target_label"),
+                "view_id": view_id,
+                "target_label": target_label,
                 "axis": axis,
                 "direction": direction,
                 "magnitude_ratio": magnitude_ratio,
                 "reference_id": _opt_str("reference_id"),
                 "confidence": _clamp_unit_interval(raw.get("confidence")),
+                "defect_id": defect_id,
             }
         )
         if len(findings) >= max_items:

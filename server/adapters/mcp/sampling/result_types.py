@@ -152,6 +152,13 @@ class VisionFindingContract(MCPContract):
     confidence: float | None = Field(
         default=None, description="Non-authoritative confidence in [0,1]; deterministic checks remain the authority."
     )
+    defect_id: str | None = Field(
+        default=None,
+        description=(
+            "Server-computed stable identifier for this defect (a deterministic hash of its target/axis/direction "
+            "and normalized text). Lets a Critic finding be tracked and checked off by a later Verify pass."
+        ),
+    )
 
 
 class VisionInputSummaryContract(MCPContract):
