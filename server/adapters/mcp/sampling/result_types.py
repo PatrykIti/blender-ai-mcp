@@ -112,6 +112,48 @@ class VisionRecommendedCheckContract(MCPContract):
     )
 
 
+VisionFindingAxisLiteral = Literal["x", "y", "z", "none"]
+VisionFindingDirectionLiteral = Literal["increase", "decrease", "none"]
+
+
+class VisionFindingContract(MCPContract):
+    """One structured per-finding compare observation (advisory).
+
+    Binds a finding to the view that revealed it, the canonical scene part/role
+    it concerns, an axis/direction, and a PROPORTIONAL magnitude ratio versus a
+    reference anchor. The magnitude is never an absolute measurement; vision
+    stays advisory and deterministic checks own correctness.
+    """
+
+    finding: str = Field(description="One-sentence reference-relative finding (what differs from the reference).")
+    view_id: str | None = Field(
+        default=None, description="Which view revealed it (e.g. front/side/top/oblique), or null if unattributable."
+    )
+    target_label: str | None = Field(
+        default=None,
+        description="Canonical part/object role this concerns (reuse the reference role vocabulary), or null.",
+    )
+    axis: VisionFindingAxisLiteral | None = Field(
+        default=None, description="Dominant axis of the divergence (x/y/z) or 'none'/null when not axis-specific."
+    )
+    direction: VisionFindingDirectionLiteral | None = Field(
+        default=None, description="Whether the target should increase or decrease along the axis, or 'none'/null."
+    )
+    magnitude_ratio: float | None = Field(
+        default=None,
+        description=(
+            "Proportional ratio vs a reference anchor (e.g. 1.4 = ~40% too large, 0.7 = ~30% too small), "
+            "NEVER an absolute measurement; null if not estimable. Advisory only."
+        ),
+    )
+    reference_id: str | None = Field(
+        default=None, description="Reference image/label this finding was compared against."
+    )
+    confidence: float | None = Field(
+        default=None, description="Non-authoritative confidence in [0,1]; deterministic checks remain the authority."
+    )
+
+
 class VisionInputSummaryContract(MCPContract):
     """Compact summary of the visual inputs used by the backend."""
 
@@ -206,6 +248,13 @@ class VisionAssistContract(MCPContract):
     recommended_checks: list[VisionRecommendedCheckContract] = Field(
         default_factory=list,
         description="Deterministic inspection/measurement tools to run to confirm visual readings before correcting.",
+    )
+    findings: list[VisionFindingContract] = Field(
+        default_factory=list,
+        description=(
+            "Structured per-finding compare observations binding each finding to a view, scene part, axis, and "
+            "proportional magnitude. Advisory and parallel to the string lists above; empty when unavailable."
+        ),
     )
     packet_guidance: VisionPacketStatusContract | None = Field(
         default=None, description="Packet-local extraction/ranking guidance for staged compare packets; null otherwise."

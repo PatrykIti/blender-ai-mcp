@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [372](./372-2026-05-30-task-178-structured-per-finding-compare-schema.md) | 2026-05-30 | **TASK-178 structured per-finding compare schema** | - |
 | [371](./371-2026-05-30-task-177-budget-aware-capture-view-selection.md) | 2026-05-30 | **TASK-177 budget-aware capture view selection** | - |
 | [370](./370-2026-05-30-task-176-capture-failure-and-truncation-signals.md) | 2026-05-30 | **TASK-176 capture-failure and evidence-truncation signal surfacing** | - |
 | [369](./369-2026-05-30-task-175-vision-contract-field-descriptions.md) | 2026-05-30 | **TASK-175 vision contract field descriptions and stage read-order** | - |

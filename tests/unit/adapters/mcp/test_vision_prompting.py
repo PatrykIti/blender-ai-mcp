@@ -248,9 +248,20 @@ def test_packet_compare_request_uses_packet_specific_prompt_payload_and_schema()
         "likely_issues",
         "next_corrections",
         "recommended_checks",
+        "findings",
         "packet_guidance",
         "confidence",
         "captures_used",
+    }
+    assert set(schema["properties"]["findings"]["items"]["properties"]) == {
+        "finding",
+        "view_id",
+        "target_label",
+        "axis",
+        "direction",
+        "magnitude_ratio",
+        "reference_id",
+        "confidence",
     }
     assert set(schema["properties"]["packet_guidance"]["properties"]) == {
         "packet_status",

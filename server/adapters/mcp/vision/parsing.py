@@ -335,6 +335,63 @@ def _bounded_string_list_counted(
     return bounded, max(0, len(deduped) - len(bounded))
 
 
+def _clamp_unit_interval(value: Any) -> float | None:
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return None
+    return max(0.0, min(1.0, float(value)))
+
+
+def _coerce_findings_list(value: Any, *, max_items: int = 8) -> list[dict[str, Any]]:
+    """Coerce model-provided structured findings into the typed finding shape.
+
+    Defensive and lossless-on-failure: drops malformed entries, clamps confidence
+    to [0,1], keeps magnitude_ratio as a non-negative proportional ratio, and
+    normalizes axis/direction to the allowed enums (or None). Advisory only.
+    """
+
+    if not isinstance(value, list):
+        return []
+    axes = {"x", "y", "z", "none"}
+    directions = {"increase", "decrease", "none"}
+    findings: list[dict[str, Any]] = []
+    for raw in value:
+        if not isinstance(raw, dict):
+            continue
+        finding_text = raw.get("finding")
+        if not isinstance(finding_text, str) or not finding_text.strip():
+            continue
+
+        def _opt_str(key: str) -> str | None:
+            candidate = raw.get(key)
+            return candidate.strip() if isinstance(candidate, str) and candidate.strip() else None
+
+        axis = _opt_str("axis")
+        axis = axis.lower() if axis and axis.lower() in axes else None
+        direction = _opt_str("direction")
+        direction = direction.lower() if direction and direction.lower() in directions else None
+        magnitude = raw.get("magnitude_ratio")
+        magnitude_ratio = (
+            float(magnitude) if isinstance(magnitude, (int, float)) and not isinstance(magnitude, bool) else None
+        )
+        if magnitude_ratio is not None and magnitude_ratio < 0:
+            magnitude_ratio = None
+        findings.append(
+            {
+                "finding": finding_text.strip(),
+                "view_id": _opt_str("view_id"),
+                "target_label": _opt_str("target_label"),
+                "axis": axis,
+                "direction": direction,
+                "magnitude_ratio": magnitude_ratio,
+                "reference_id": _opt_str("reference_id"),
+                "confidence": _clamp_unit_interval(raw.get("confidence")),
+            }
+        )
+        if len(findings) >= max_items:
+            break
+    return findings
+
+
 def _first_nonempty_value(parsed: dict[str, Any], keys: tuple[str, ...]) -> Any:
     for key in keys:
         value = parsed.get(key)
@@ -1441,6 +1498,7 @@ def _normalize_payload(parsed: dict[str, Any], request: VisionRequest) -> dict[s
         "likely_issues": likely_issues,
         "next_corrections": next_corrections,
         "recommended_checks": recommended_checks,
+        "findings": _coerce_findings_list(parsed.get("findings")),
         "packet_guidance": packet_guidance,
         "confidence": confidence,
         "captures_used": list(parsed.get("captures_used") or labels),

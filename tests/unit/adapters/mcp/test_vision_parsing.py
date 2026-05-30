@@ -1126,3 +1126,60 @@ def test_parse_vision_output_not_truncated_when_within_caps():
     parsed = parse_vision_output_text(text, _request())
     assert parsed["evidence_truncated"] is False
     assert parsed["omitted_count"] == 0
+
+
+def test_parse_vision_output_coerces_structured_findings():
+    text = json.dumps(
+        {
+            "goal_summary": "head still diverges",
+            "visible_changes": [],
+            "shape_mismatches": ["head too wide"],
+            "proportion_mismatches": [],
+            "correction_focus": [],
+            "next_corrections": [],
+            "recommended_checks": [],
+            "findings": [
+                {
+                    "finding": "head is wider than the reference",
+                    "view_id": "front",
+                    "target_label": "head",
+                    "axis": "X",
+                    "direction": "decrease",
+                    "magnitude_ratio": 1.4,
+                    "reference_id": "ref_front",
+                    "confidence": 2.0,
+                },
+                {"finding": "   ", "view_id": "side"},
+                "not-a-dict",
+                {"finding": "tail too short", "axis": "diagonal", "magnitude_ratio": -3},
+            ],
+        }
+    )
+    parsed = parse_vision_output_text(text, _request())
+    findings = parsed["findings"]
+    # The blank-finding entry and the non-dict entry are dropped.
+    assert [f["finding"] for f in findings] == ["head is wider than the reference", "tail too short"]
+    first = findings[0]
+    assert first["axis"] == "x"  # normalized to lowercase enum
+    assert first["direction"] == "decrease"
+    assert first["magnitude_ratio"] == 1.4
+    assert first["confidence"] == 1.0  # clamped into [0, 1]
+    second = findings[1]
+    assert second["axis"] is None  # 'diagonal' is not a valid axis
+    assert second["magnitude_ratio"] is None  # negative ratio dropped
+
+
+def test_parse_vision_output_defaults_findings_to_empty_list():
+    text = json.dumps(
+        {
+            "goal_summary": "ok",
+            "visible_changes": [],
+            "shape_mismatches": [],
+            "proportion_mismatches": [],
+            "correction_focus": [],
+            "next_corrections": [],
+            "recommended_checks": [],
+        }
+    )
+    parsed = parse_vision_output_text(text, _request())
+    assert parsed["findings"] == []

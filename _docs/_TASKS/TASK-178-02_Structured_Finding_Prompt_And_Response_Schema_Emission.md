@@ -1,7 +1,8 @@
 # TASK-178-02: Structured Finding Prompt And Response Schema Emission
 
 **Parent:** [TASK-178](./TASK-178_Structured_Per_Finding_Compare_Schema.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-30
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-178-01](./TASK-178-01_Structured_Vision_Finding_Contract_Model.md)
 **Objective:** Update the compare prompt text and `build_vision_response_json_schema` so the `generic_full` compare path requests structured per-finding objects (`finding`, `view_id`, `target_label`, `axis`, `direction`, `magnitude_ratio`, `reference_id`, `confidence`) instead of bare `string[]` arrays, with explicit instructions that `magnitude_ratio` is a proportional ratio against a named reference anchor and `target_label` uses the canonical role vocabulary. The `google_family_compare` profile keeps its narrower bare-string contract.

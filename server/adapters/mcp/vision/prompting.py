@@ -90,6 +90,7 @@ _EXPECTED_KEYS = (
     "likely_issues",
     "next_corrections",
     "recommended_checks",
+    "findings",
     "confidence",
     "captures_used",
 )
@@ -103,10 +104,43 @@ _PACKET_COMPARE_EXPECTED_KEYS = (
     "likely_issues",
     "next_corrections",
     "recommended_checks",
+    "findings",
     "packet_guidance",
     "confidence",
     "captures_used",
 )
+
+# Strict-mode JSON Schema for the additive structured per-finding compare channel
+# (TASK-178). Every property is required with a nullable type so strict providers
+# accept it; the model populates view/object/axis/proportional-magnitude when it
+# can and uses null otherwise. Parallel to the string lists, advisory only.
+_FINDINGS_SCHEMA: dict[str, object] = {
+    "type": "array",
+    "items": {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "finding": {"type": "string"},
+            "view_id": {"type": ["string", "null"]},
+            "target_label": {"type": ["string", "null"]},
+            "axis": {"type": ["string", "null"], "enum": ["x", "y", "z", "none", None]},
+            "direction": {"type": ["string", "null"], "enum": ["increase", "decrease", "none", None]},
+            "magnitude_ratio": {"type": ["number", "null"]},
+            "reference_id": {"type": ["string", "null"]},
+            "confidence": {"type": ["number", "null"]},
+        },
+        "required": [
+            "finding",
+            "view_id",
+            "target_label",
+            "axis",
+            "direction",
+            "magnitude_ratio",
+            "reference_id",
+            "confidence",
+        ],
+    },
+}
 _GEMINI_COMPARE_EXPECTED_KEYS = (
     "goal_summary",
     "reference_match_summary",
@@ -1285,6 +1319,7 @@ def build_vision_response_json_schema(
                         "required": ["tool_name", "reason", "priority"],
                     },
                 },
+                "findings": _FINDINGS_SCHEMA,
                 "packet_guidance": {
                     "type": "object",
                     "additionalProperties": False,
@@ -1363,6 +1398,7 @@ def build_vision_response_json_schema(
                     "required": ["tool_name", "reason", "priority"],
                 },
             },
+            "findings": _FINDINGS_SCHEMA,
             "confidence": {"type": ["number", "null"]},
             "captures_used": {"type": "array", "items": {"type": "string"}},
         },

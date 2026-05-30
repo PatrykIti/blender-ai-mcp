@@ -1,7 +1,8 @@
 # TASK-178-01: Structured Vision Finding Contract Model
 
 **Parent:** [TASK-178](./TASK-178_Structured_Per_Finding_Compare_Schema.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-30
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-171-05](./TASK-171-05_Attachment_First_Creature_Reference_Understanding_Contract_Expansion.md), [TASK-172-03-02](./TASK-172-03-02_Compare_Time_Localization_Projection_And_Transport.md)
 **Objective:** Introduce a typed `VisionFinding` contract carrying `finding`, `view_id`, `target_label`, `axis`, `direction`, `magnitude_ratio`, `reference_id`, and `confidence`, and adopt it inside `VisionAssistContract` for the geometric-finding fields while keeping backward-compatible flat `list[str]` projections so weak/legacy models and the `google_family_compare` profile keep working unchanged.
