@@ -1,6 +1,7 @@
 # TASK-180: Set-Of-Mark Object-Bound Visual Marks
 
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
+**Progress:** TASK-180-01 deterministic Set-of-Mark overlay core (server-side PIL numbered marks + per-object centroid + stable id assignment) shipped 2026-05-30 via changelog 378. Follow-on (addon + E2E): live isolated-render orchestration, 180-02 cross-view stable ids, 180-03 reference marks via default-off Grounded-SAM, 180-04 mark-keyed findings + correspondence table.
 **Priority:** 🔴 High
 **Category:** Vision / Visual Prompting
 **Estimated Effort:** Extra Large

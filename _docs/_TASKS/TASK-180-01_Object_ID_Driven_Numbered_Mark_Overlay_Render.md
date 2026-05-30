@@ -1,7 +1,8 @@
 # TASK-180-01: Object-ID-Driven Numbered Mark Overlay Render
 
 **Parent:** [TASK-180](./TASK-180_Set_Of_Mark_Object_Bound_Visual_Marks.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-30
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-179](./TASK-179_Blender_Depth_Normal_And_Object_ID_Auxiliary_Passes.md)
 **Objective:** Produce a deterministic capture with `view_kind="overlay"` that draws high-contrast numbered marks on each registered part, anchored from the `TASK-179` object-ID assignment. The render side uses no VLM and no SAM: marks are placed from the projected per-object footprint of registered scene objects, so the overlay is reproducible from scene state alone.
