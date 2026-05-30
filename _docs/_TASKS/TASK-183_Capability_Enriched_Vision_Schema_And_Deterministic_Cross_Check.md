@@ -1,7 +1,8 @@
 # TASK-183: Capability-Enriched Vision Schema And Deterministic Cross-Check
 
-**Status:** 🚧 In Progress
-**Progress:** TASK-183-01 (capability-aware findings schema + curated payload + backend findings/truncation passthrough fix) shipped 2026-05-30 via changelog 374. Follow-on: TASK-183-02 (deterministic cross-check + silhouette threshold calibration).
+**Status:** ✅ Done
+**Completed:** 2026-05-30
+**Completion Summary:** TASK-183-01 (capability-aware findings schema + curated payload + backend findings/truncation passthrough fix, changelog 374) and TASK-183-02 (silhouette threshold calibration + IoU convergence signal, changelog 380) both shipped. The optional heavy render-vs-reference embedding cross-check (MEt3R/DINO) stays a default-off sidecar follow-on per the runtime boundary.
 **Priority:** 🟡 Medium
 **Category:** Vision / Capability-Aware Schema And Calibration
 **Estimated Effort:** Large
