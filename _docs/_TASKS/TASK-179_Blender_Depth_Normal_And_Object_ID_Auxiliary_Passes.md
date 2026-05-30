@@ -1,6 +1,7 @@
 # TASK-179: Blender Depth, Normal And Object-ID Auxiliary Passes
 
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
+**Progress:** TASK-179-02 (deterministic per-object silhouette IoU primitive) shipped 2026-05-30 via changelog 376. Follow-on (addon + E2E): TASK-179-01 object-ID/depth/normal compositor passes, TASK-179-03 auxiliary-channel transmission.
 **Priority:** 🔴 High
 **Category:** Vision / Geometric Evidence (Addon Render)
 **Estimated Effort:** Large

@@ -1,7 +1,8 @@
 # TASK-179-02: Per-Object Mask IoU In Silhouette Evidence
 
 **Parent:** [TASK-179](./TASK-179_Blender_Depth_Normal_And_Object_ID_Auxiliary_Passes.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-30
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-179-01](./TASK-179-01_Addon_Object_ID_Depth_And_Normal_Render_Passes.md)
 **Objective:** Extend `silhouette.py` to compute deterministic per-object mask IoU from the object-ID pass produced by TASK-179-01, in addition to the existing whole-frame silhouette IoU, so geometric mismatch can be attributed to a specific registered part instead of only the whole form. The per-object metrics are projected into the staged compare payload through `reference_silhouette.py` and reuse the existing segmentation-shaped contracts, while remaining deterministic and advisory.

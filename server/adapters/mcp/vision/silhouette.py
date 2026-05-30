@@ -187,6 +187,34 @@ def _band_mean(profile: np.ndarray, start: float, end: float) -> float:
     return float(np.mean(profile[start_index:end_index]))
 
 
+def compute_silhouette_iou(reference_path: str, capture_path: str) -> float | None:
+    """Return the deterministic mask IoU between two silhouette images, or None.
+
+    This is the per-object overlap primitive: given an isolated render of one
+    scene part and the corresponding reference (or its segmented mask), it returns
+    the bbox-normalized intersection-over-union in [0, 1]. It reuses the same mask
+    extraction and normalization as ``build_silhouette_analysis`` so per-object
+    IoU is consistent with the whole-silhouette metric. Returns None when either
+    mask cannot be extracted.
+    """
+
+    reference_mask, _reference_notes = _extract_mask_from_image(reference_path)
+    capture_mask, _capture_notes = _extract_mask_from_image(capture_path)
+    if reference_mask is None or capture_mask is None:
+        return None
+    reference_crop, reference_bbox = _crop_bbox(reference_mask)
+    capture_crop, capture_bbox = _crop_bbox(capture_mask)
+    if reference_bbox == (0, 0) or capture_bbox == (0, 0):
+        return None
+    normalized_reference = _normalize_mask(reference_crop)
+    normalized_capture = _normalize_mask(capture_crop)
+    intersection = float(np.logical_and(normalized_reference, normalized_capture).sum())
+    union = float(np.logical_or(normalized_reference, normalized_capture).sum())
+    if union <= 0.0:
+        return None
+    return intersection / union
+
+
 def build_silhouette_analysis(
     *,
     reference_path: str,
