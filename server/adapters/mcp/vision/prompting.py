@@ -80,6 +80,73 @@ def _image_roster_lines(request: VisionRequest) -> list[str]:
     return [format_image_roster_line(image) for image in request.images]
 
 
+def _dominant_relation_phrase(pair: dict[str, object]) -> str | None:
+    """Pick the single most informative symbolic relation for one graph pair."""
+
+    gap_relation = pair.get("gap_relation")
+    if isinstance(gap_relation, str) and gap_relation:
+        return gap_relation
+    if pair.get("contact_passed") is True:
+        return "contact"
+    overlap_relation = pair.get("overlap_relation")
+    if isinstance(overlap_relation, str) and overlap_relation in {"overlap", "contained"}:
+        return overlap_relation
+    relation_kinds = pair.get("relation_kinds")
+    if isinstance(relation_kinds, list):
+        for kind in relation_kinds:
+            if isinstance(kind, str) and kind.strip():
+                return kind.strip()
+    if pair.get("alignment_status") == "misaligned":
+        return "misaligned"
+    return None
+
+
+def serialize_relation_triplets(pairs: object, *, max_per_object: int = 4) -> list[str]:
+    """Serialize a deterministic scene relation graph as symbolic ``a relation b``
+    triplets, grouped per subject object and capped per object.
+
+    This is the relations-not-coordinates representation: it emits the structural
+    relationships between parts (contact / gap / overlap / symmetry / alignment),
+    never raw coordinates, because symbolic relations ground an LLM's spatial
+    reasoning far better than coordinate tokens. Accepts the list of pair dicts
+    from a relation-graph payload (e.g. ``truth_summary['relation_graph']['pairs']``).
+    """
+
+    if not isinstance(pairs, list):
+        return []
+    per_object_count: dict[str, int] = {}
+    triplets: list[str] = []
+    for pair in pairs:
+        if not isinstance(pair, dict):
+            continue
+        from_object = str(pair.get("from_object") or "").strip()
+        to_object = str(pair.get("to_object") or "").strip()
+        if not from_object or not to_object:
+            continue
+        relation = _dominant_relation_phrase(pair)
+        if relation is None:
+            continue
+        if per_object_count.get(from_object, 0) >= max_per_object:
+            continue
+        per_object_count[from_object] = per_object_count.get(from_object, 0) + 1
+        triplets.append(f"{from_object} {relation} {to_object}")
+    return triplets
+
+
+def _relation_triplet_lines_from_truth(truth_summary: object) -> list[str]:
+    """Extract relation-graph pairs from a truth summary (in either of the common
+    locations) and serialize them as symbolic triplets, or return []."""
+
+    if not isinstance(truth_summary, dict):
+        return []
+    pairs = truth_summary.get("pairs")
+    if not isinstance(pairs, list):
+        relation_graph = truth_summary.get("relation_graph")
+        if isinstance(relation_graph, dict):
+            pairs = relation_graph.get("pairs")
+    return serialize_relation_triplets(pairs)
+
+
 _EXPECTED_KEYS = (
     "goal_summary",
     "reference_match_summary",
@@ -769,6 +836,9 @@ def build_vision_payload_text(
             parts.extend(["PACKET_CAPTURE_LABELS:", *[f"- {item}" for item in capture_labels]])
         if support_evidence_summaries:
             parts.extend(["SUPPORT_EVIDENCE:", *[f"- {item}" for item in support_evidence_summaries]])
+        relation_triplets = _relation_triplet_lines_from_truth(request.truth_summary)
+        if relation_triplets:
+            parts.extend(["SCENE_RELATIONS:", *[f"- {item}" for item in relation_triplets]])
         if truth_lines:
             parts.extend(["TRUTH_SUMMARY:", *truth_lines])
         if packet_phase == "packet_ranking":

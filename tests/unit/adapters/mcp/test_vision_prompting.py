@@ -12,6 +12,7 @@ from server.adapters.mcp.vision.prompting import (
     expected_json_keys,
     format_image_caption,
     format_image_roster_line,
+    serialize_relation_triplets,
 )
 
 
@@ -455,3 +456,61 @@ def test_packet_compare_roster_uses_shared_caption_format():
     text = build_vision_payload_text(request)
     assert "- [image: target_front_after | role=after | view=front]" in text
     assert "- [image: ref_front | role=reference | view=front]" in text
+
+
+def test_serialize_relation_triplets_emits_symbolic_relations_not_coordinates():
+    pairs = [
+        {"from_object": "Head", "to_object": "Body", "contact_passed": True},
+        {"from_object": "Tail", "to_object": "Body", "gap_relation": "separated"},
+        {"from_object": "EarL", "to_object": "EarR", "relation_kinds": ["symmetry"]},
+        {"from_object": "", "to_object": "Body", "relation_kinds": ["contact"]},  # dropped: no subject
+        {"from_object": "Leg", "to_object": "Body"},  # dropped: no derivable relation
+    ]
+    triplets = serialize_relation_triplets(pairs)
+    assert triplets == ["Head contact Body", "Tail separated Body", "EarL symmetry EarR"]
+    # No coordinate tokens anywhere.
+    blob = " ".join(triplets).lower()
+    for forbidden in ("xyz", "(", "[", "0.", "x=", "coord"):
+        assert forbidden not in blob
+
+
+def test_serialize_relation_triplets_caps_per_subject():
+    pairs = [{"from_object": "Body", "to_object": f"Part{i}", "relation_kinds": ["contact"]} for i in range(10)]
+    triplets = serialize_relation_triplets(pairs, max_per_object=3)
+    assert len(triplets) == 3
+    assert all(t.startswith("Body contact ") for t in triplets)
+
+
+def test_packet_compare_prompt_includes_scene_relations_when_present():
+    request = VisionRequest(
+        goal="low poly squirrel",
+        target_object="Squirrel",
+        images=(
+            VisionImageInput(path="/tmp/front.png", role="after", label="target_front_after"),
+            VisionImageInput(path="/tmp/ref.png", role="reference", label="ref_front"),
+        ),
+        metadata={"mode": "reference_compare_packet", "packet_id": "p1"},
+        truth_summary={
+            "relation_graph": {
+                "pairs": [
+                    {"from_object": "Head", "to_object": "Body", "contact_passed": True},
+                    {"from_object": "Tail", "to_object": "Body", "gap_relation": "separated"},
+                ]
+            }
+        },
+    )
+    text = build_vision_payload_text(request)
+    assert "SCENE_RELATIONS:" in text
+    assert "- Head contact Body" in text
+    assert "- Tail separated Body" in text
+
+
+def test_packet_compare_prompt_omits_scene_relations_when_absent():
+    request = VisionRequest(
+        goal="low poly squirrel",
+        target_object="Squirrel",
+        images=(VisionImageInput(path="/tmp/front.png", role="after", label="target_front_after"),),
+        metadata={"mode": "reference_compare_packet", "packet_id": "p1"},
+        truth_summary={"summary": {"pair_count": 0}},
+    )
+    assert "SCENE_RELATIONS:" not in build_vision_payload_text(request)

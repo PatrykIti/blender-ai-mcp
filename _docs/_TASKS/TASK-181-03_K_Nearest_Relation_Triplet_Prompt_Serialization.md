@@ -1,7 +1,8 @@
 # TASK-181-03: K-Nearest Relation-Triplet Prompt Serialization
 
 **Parent:** [TASK-181](./TASK-181_Scene_Graph_Diff_Compare_And_Registry_Scoped_Convergence.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-30
 **Follow-on After:** [TASK-181-01](./TASK-181-01_Part_Registry_As_First_Class_Scene_Graph_And_Compare_Scope.md), [TASK-181-02](./TASK-181-02_Graph_Vs_Graph_Diff_Contract_And_Relation_Vocabulary.md)
 **Priority:** 🔴 High
 **Objective:** Serialize the active scene graph for the VLM packet prompt as per-object k-nearest relation triplets (symbolic relations plus proportional ratios), explicitly NOT raw coordinates, and scope the serialized roster to the current graph nodes plus declared expected relations. This is how the registered graph from TASK-181-01 and the expected graph from reference understanding reach the model without coordinate tokens that degrade spatial reasoning.
