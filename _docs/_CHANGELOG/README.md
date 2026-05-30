@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [386](./386-2026-05-30-task-179-addon-depth-pass.md) | 2026-05-30 | **TASK-179-01 addon Z-depth render pass** | - |
 | [385](./385-2026-05-30-task-181-scope-drift-regression-lane.md) | 2026-05-30 | **TASK-181-04 scene-graph scope-drift regression lane** | - |
 | [384](./384-2026-05-30-task-177-labeled-view-grid-composite.md) | 2026-05-30 | **TASK-177-03 optional labelled multi-view grid composite** | - |
 | [383](./383-2026-05-30-task-182-authoritative-next-actions.md) | 2026-05-30 | **TASK-182-02 authoritative_next_actions channel consolidation** | - |

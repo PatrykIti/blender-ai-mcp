@@ -1103,3 +1103,142 @@ class SceneViewportMixin:
             bpy.ops.view3d.view_axis(type=resolved)
 
         return f"Set 3D viewport to {resolved} view"
+
+    def get_depth_pass(
+        self,
+        width=1024,
+        height=768,
+        camera_name=None,
+        normalize=True,
+        is_cancelled: Callable[[], bool] | None = None,
+    ):
+        """Render a deterministic Z-depth pass as a base64 grayscale PNG.
+
+        Returns a normalized depth image (near = bright, far = dark) for the same
+        camera ``get_viewport`` would use, via the compositor Z pass. This is
+        advisory geometric evidence: it gives the loop depth/volume information the
+        2D silhouette is blind to. The method is fully reversible — render engine,
+        compositor node tree, pass flags, resolution, filepath, and camera are all
+        restored in a ``finally`` block.
+
+        Returns a string error message (not raising) when no usable camera is
+        available, matching the other viewport ops' headless-safe contract.
+        """
+
+        scene = bpy.context.scene
+        raise_if_cancelled(is_cancelled)
+
+        camera_obj = None
+        if camera_name and camera_name != "USER_PERSPECTIVE":
+            if camera_name in bpy.data.objects:
+                camera_obj = bpy.data.objects[camera_name]
+            else:
+                return f"Camera '{camera_name}' not found. Depth pass requires a valid camera."
+        else:
+            camera_obj = scene.camera
+        if camera_obj is None:
+            return "No camera available. Depth pass requires a scene camera or explicit camera_name."
+
+        temp_dir = tempfile.mkdtemp()
+        render_filepath_base = os.path.join(temp_dir, "depth_pass")
+        expected_output = render_filepath_base + ".png"
+
+        view_layer = bpy.context.view_layer
+        original_engine = scene.render.engine
+        original_res_x = scene.render.resolution_x
+        original_res_y = scene.render.resolution_y
+        original_filepath = scene.render.filepath
+        original_file_format = scene.render.image_settings.file_format
+        original_color_mode = scene.render.image_settings.color_mode
+        original_camera = scene.camera
+        original_use_pass_z = view_layer.use_pass_z
+        original_use_nodes = scene.use_nodes
+        original_use_compositing = scene.render.use_compositing
+
+        original_mode = None
+        if bpy.context.active_object:
+            original_mode = bpy.context.active_object.mode
+            if original_mode != "OBJECT":
+                try:
+                    bpy.ops.object.mode_set(mode="OBJECT")
+                except Exception:
+                    pass
+
+        try:
+            scene.render.resolution_x = width
+            scene.render.resolution_y = height
+            scene.render.filepath = render_filepath_base
+            scene.render.image_settings.file_format = "PNG"
+            scene.render.image_settings.color_mode = "BW"
+            scene.camera = camera_obj
+            view_layer.use_pass_z = True
+            scene.render.use_compositing = True
+
+            # EEVEE is fast and headless-safe for a Z pass; fall back to Cycles.
+            try:
+                scene.render.engine = "BLENDER_EEVEE_NEXT"
+            except (TypeError, Exception):
+                try:
+                    scene.render.engine = "BLENDER_EEVEE"
+                except Exception:
+                    scene.render.engine = "CYCLES"
+                    scene.cycles.samples = 1
+
+            # Build a minimal compositor graph: RenderLayers.Depth -> (Map Range) -> Composite.
+            scene.use_nodes = True
+            tree = scene.node_tree
+            for node in list(tree.nodes):
+                tree.nodes.remove(node)
+            render_layers = tree.nodes.new(type="CompositorNodeRLayers")
+            composite = tree.nodes.new(type="CompositorNodeComposite")
+
+            depth_socket = render_layers.outputs.get("Depth") or render_layers.outputs.get("Z")
+            if depth_socket is None:
+                return "Depth pass output not available for the active render layer."
+
+            if normalize:
+                normalizer = tree.nodes.new(type="CompositorNodeNormalize")
+                # Invert so near surfaces are bright and far/background is dark.
+                invert = tree.nodes.new(type="CompositorNodeInvert")
+                tree.links.new(depth_socket, normalizer.inputs[0])
+                tree.links.new(normalizer.outputs[0], invert.inputs["Color"])
+                tree.links.new(invert.outputs["Color"], composite.inputs["Image"])
+            else:
+                tree.links.new(depth_socket, composite.inputs["Image"])
+
+            bpy.ops.render.render(write_still=True)
+            raise_if_cancelled(is_cancelled)
+
+            if not (os.path.exists(expected_output) and os.path.getsize(expected_output) > 0):
+                return "Depth pass render produced no output image."
+
+            with open(expected_output, "rb") as handle:
+                return base64.b64encode(handle.read()).decode("utf-8")
+
+        finally:
+            if os.path.exists(expected_output):
+                try:
+                    os.remove(expected_output)
+                except Exception:
+                    pass
+            try:
+                os.rmdir(temp_dir)
+            except Exception:
+                pass
+
+            scene.render.engine = original_engine
+            scene.render.resolution_x = original_res_x
+            scene.render.resolution_y = original_res_y
+            scene.render.filepath = original_filepath
+            scene.render.image_settings.file_format = original_file_format
+            scene.render.image_settings.color_mode = original_color_mode
+            scene.camera = original_camera
+            view_layer.use_pass_z = original_use_pass_z
+            scene.render.use_compositing = original_use_compositing
+            scene.use_nodes = original_use_nodes
+
+            if original_mode and original_mode != "OBJECT" and bpy.context.active_object:
+                try:
+                    bpy.ops.object.mode_set(mode=original_mode)
+                except Exception:
+                    pass

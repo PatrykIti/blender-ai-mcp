@@ -69,6 +69,27 @@ class SceneToolHandler(ISceneTool):
         }
         return require_str_result(self.rpc.send_request("scene.get_viewport", args))
 
+    def get_depth_pass(
+        self,
+        width: int = 1024,
+        height: int = 768,
+        camera_name: Optional[str] = None,
+        normalize: bool = True,
+    ) -> str:
+        """Return a base64 grayscale Z-depth pass for the active/named camera.
+
+        Advisory geometric evidence: depth/volume information the 2D silhouette is
+        blind to. The addon method is reversible and headless-safe.
+        """
+
+        args = {
+            "width": width,
+            "height": height,
+            "camera_name": camera_name,
+            "normalize": normalize,
+        }
+        return require_str_result(self.rpc.send_request("scene.get_depth_pass", args))
+
     def create_light(
         self, type: str, energy: float, color: List[float], location: List[float], name: Optional[str] = None
     ) -> str:

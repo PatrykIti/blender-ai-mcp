@@ -1,7 +1,8 @@
 # TASK-179-01: Addon Object-ID, Depth And Normal Render Passes
 
 **Parent:** [TASK-179](./TASK-179_Blender_Depth_Normal_And_Object_ID_Auxiliary_Passes.md)
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
+**Progress:** The deterministic, reversible Z-depth render pass shipped 2026-05-30 (changelog 386): addon `scene.get_depth_pass` (compositor Z pass → normalized grayscale PNG, full save/restore), RPC registration both sides, server `SceneToolHandler.get_depth_pass` bridge, and three Blender-backed E2E tests (valid PNG, render-settings reversibility, missing-camera error) — validated green against real Blender 4.5.1 (485 passed). Remaining: the object-ID (`pass_index`) mask pass and the optional normal pass.
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md)
 **Objective:** Add an addon-side path (compositor / render passes) that produces a deterministic per-object-ID mask image, a Z-depth image, and an optional normal image for the active camera/view, wired through RPC on both sides and fully reversible via `capture_scene_state` / `restore_scene_state` semantics. The new passes reuse the existing render context that `get_viewport(...)` already manages, do not change the default `SOLID` capture, and produce first-party deterministic masks with no external model.
