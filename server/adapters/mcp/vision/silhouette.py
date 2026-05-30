@@ -215,6 +215,33 @@ def compute_silhouette_iou(reference_path: str, capture_path: str) -> float | No
     return intersection / union
 
 
+def compute_iou_convergence(previous_iou: float | None, current_iou: float | None) -> dict[str, Any]:
+    """Return a deterministic convergence verdict between two cycles' IoU values.
+
+    Gives the loop a monotonic "closer / further / stalled than last cycle" signal
+    so it can decide whether the last edit actually improved the silhouette match.
+    Advisory only — it does not assert scene truth or gate completion; it is a
+    deterministic geometry signal the orchestrator can weigh.
+    """
+
+    if not isinstance(previous_iou, (int, float)) or not isinstance(current_iou, (int, float)):
+        return {"status": "unavailable", "delta": None, "verdict": "unknown"}
+    delta = float(current_iou) - float(previous_iou)
+    if delta > 0.02:
+        verdict = "improved"
+    elif delta < -0.02:
+        verdict = "regressed"
+    else:
+        verdict = "stalled"
+    return {
+        "status": "ok",
+        "previous_iou": float(previous_iou),
+        "current_iou": float(current_iou),
+        "delta": delta,
+        "verdict": verdict,
+    }
+
+
 def build_silhouette_analysis(
     *,
     reference_path: str,
@@ -294,15 +321,22 @@ def build_silhouette_analysis(
             "metric_id": "aspect_ratio_delta",
             "reference_value": reference_aspect_ratio,
             "observed_value": capture_aspect_ratio,
-            "delta": capture_aspect_ratio - reference_aspect_ratio,
-            "severity": _metric_severity(capture_aspect_ratio - reference_aspect_ratio, high=0.35, medium=0.18),
+            # Normalized to a relative fraction of the reference aspect ratio so the
+            # severity bands match the [0, 1]-scaled band/IoU metrics instead of an
+            # unbounded raw ratio difference (TASK-183-02 calibration).
+            "delta": (capture_aspect_ratio - reference_aspect_ratio) / max(reference_aspect_ratio, 1e-6),
+            "severity": _metric_severity(
+                (capture_aspect_ratio - reference_aspect_ratio) / max(reference_aspect_ratio, 1e-6),
+                high=0.35,
+                medium=0.18,
+            ),
         },
     ]
 
+    # mid_band_width_delta / lower_band_width_delta were computed but never
+    # consumed by build_action_hints_from_silhouette; dropped per TASK-183-02.
     for metric_id, start, end in (
         ("upper_band_width_delta", 0.0, 0.2),
-        ("mid_band_width_delta", 0.35, 0.65),
-        ("lower_band_width_delta", 0.75, 1.0),
         ("left_projection_delta", 0.0, 0.2),
         ("right_projection_delta", 0.8, 1.0),
     ):

@@ -1,7 +1,9 @@
 # TASK-183-02: Deterministic Cross-Check And Silhouette Threshold Calibration
 
 **Parent:** [TASK-183](./TASK-183_Capability_Enriched_Vision_Schema_And_Deterministic_Cross_Check.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-30
+**Completion Note:** Deterministic calibration shipped (changelog 380): dead mid_band/lower_band metrics dropped, aspect_ratio_delta normalized to the band/IoU scale, and a deterministic IoU convergence signal added. The optional heavy render-vs-reference embedding cross-check (MEt3R/DINO) stays a default-off sidecar follow-on.
 **Priority:** 🟡 Medium
 **Follow-on After:** [TASK-166-03-01](./TASK-166-03-01_Always_On_Heuristic_CV_Metrics.md), [TASK-172-04](./TASK-172-04_SAM_Or_SAM2_Local_Mask_And_Landmark_Support.md)
 **Objective:** Add a deterministic render-vs-reference consistency score (lightweight always-on variant plus an optional default-off heavy embedding variant) that flags VLM-vs-geometry disagreement, down-weights unverified visual claims, and acts as a monotonic convergence/stop signal across iterations; and calibrate the silhouette severity thresholds against a golden fixture with a regression test, rescale `aspect_ratio_delta` onto the band/IoU scale, and either wire up or remove the dead `mid_band`/`lower_band` metrics.

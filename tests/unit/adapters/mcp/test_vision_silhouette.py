@@ -10,7 +10,11 @@ from server.adapters.mcp.areas.reference_silhouette import (
     build_compare_support_evidence,
 )
 from server.adapters.mcp.contracts.reference import ReferenceSilhouetteAnalysisContract
-from server.adapters.mcp.vision.silhouette import build_silhouette_analysis, compute_silhouette_iou
+from server.adapters.mcp.vision.silhouette import (
+    build_silhouette_analysis,
+    compute_iou_convergence,
+    compute_silhouette_iou,
+)
 
 
 def _metric(payload: dict[str, Any], metric_id: str) -> dict[str, Any]:
@@ -132,3 +136,45 @@ def test_compute_silhouette_iou_returns_none_for_blank_image(tmp_path: Path):
     _write_offset_rectangle(box, box=(40, 40, 160, 160))
     # A uniform image yields no usable foreground mask.
     assert compute_silhouette_iou(str(blank), str(box)) is None
+
+
+def test_compute_iou_convergence_classifies_direction():
+    assert compute_iou_convergence(0.5, 0.7)["verdict"] == "improved"
+    assert compute_iou_convergence(0.7, 0.5)["verdict"] == "regressed"
+    assert compute_iou_convergence(0.50, 0.505)["verdict"] == "stalled"
+    improved = compute_iou_convergence(0.5, 0.7)
+    assert improved["status"] == "ok"
+    assert abs(improved["delta"] - 0.2) < 1e-9
+
+
+def test_compute_iou_convergence_unavailable_for_missing_values():
+    out = compute_iou_convergence(None, 0.7)
+    assert out["status"] == "unavailable"
+    assert out["verdict"] == "unknown"
+    assert out["delta"] is None
+
+
+def test_silhouette_analysis_drops_dead_band_metrics(tmp_path: Path):
+    reference_path = tmp_path / "reference.png"
+    capture_path = tmp_path / "capture.png"
+    _write_offset_rectangle(reference_path, box=(35, 45, 95, 165))
+    _write_offset_rectangle(capture_path, box=(95, 20, 155, 140))
+    payload = build_silhouette_analysis(reference_path=str(reference_path), capture_path=str(capture_path))
+    metric_ids = {metric["metric_id"] for metric in payload["metrics"]}
+    # The unconsumed band metrics are no longer emitted; the consumed ones remain.
+    assert "mid_band_width_delta" not in metric_ids
+    assert "lower_band_width_delta" not in metric_ids
+    assert {"mask_iou", "upper_band_width_delta", "left_projection_delta", "right_projection_delta"} <= metric_ids
+
+
+def test_aspect_ratio_delta_is_normalized_relative_fraction(tmp_path: Path):
+    reference_path = tmp_path / "reference.png"
+    capture_path = tmp_path / "capture.png"
+    # Reference is square-ish (ar ~1.0); capture is twice as tall (ar ~2.0).
+    _write_offset_rectangle(reference_path, box=(60, 60, 140, 140))
+    _write_offset_rectangle(capture_path, box=(80, 20, 120, 180))
+    payload = build_silhouette_analysis(reference_path=str(reference_path), capture_path=str(capture_path))
+    aspect = _metric(payload, "aspect_ratio_delta")
+    # Normalized relative fraction ~ +1.0 (100% taller), bounded near the [0,1] band scale.
+    assert aspect["delta"] > 0.5
+    assert aspect["severity"] == "high"

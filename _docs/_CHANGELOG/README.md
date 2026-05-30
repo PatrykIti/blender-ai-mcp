@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [380](./380-2026-05-30-task-183-silhouette-calibration-and-convergence.md) | 2026-05-30 | **TASK-183-02 silhouette calibration and IoU convergence signal** | - |
 | [379](./379-2026-05-30-task-178-findings-reporting-propagation.md) | 2026-05-30 | **TASK-178 structured-findings reporting propagation** | - |
 | [378](./378-2026-05-30-task-180-set-of-mark-overlay-core.md) | 2026-05-30 | **TASK-180 Set-of-Mark overlay core** | - |
 | [377](./377-2026-05-30-task-174-roster-format-e2e-regression-fix.md) | 2026-05-30 | **TASK-174 roster-format E2E regression fix** | - |
