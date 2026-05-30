@@ -103,6 +103,8 @@ def register():
         rpc_server.register_background_handler("scene.get_viewport", scene_handler.get_viewport)
         rpc_server.register_handler("scene.get_depth_pass", scene_handler.get_depth_pass)
         rpc_server.register_background_handler("scene.get_depth_pass", scene_handler.get_depth_pass)
+        rpc_server.register_handler("scene.get_object_id_pass", scene_handler.get_object_id_pass)
+        rpc_server.register_background_handler("scene.get_object_id_pass", scene_handler.get_object_id_pass)
         rpc_server.register_handler("scene.create_light", scene_handler.create_light)
         rpc_server.register_handler("scene.create_camera", scene_handler.create_camera)
         rpc_server.register_handler("scene.create_empty", scene_handler.create_empty)

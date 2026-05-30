@@ -4,6 +4,7 @@ from server.application.services.spatial_graph import get_spatial_graph_service
 from server.application.tool_handlers._rpc_utils import (
     require_dict_result,
     require_list_of_dicts_result,
+    require_result,
     require_str_result,
 )
 from server.application.tool_handlers.collection_handler import CollectionToolHandler
@@ -89,6 +90,34 @@ class SceneToolHandler(ISceneTool):
             "normalize": normalize,
         }
         return require_str_result(self.rpc.send_request("scene.get_depth_pass", args))
+
+    def get_object_id_pass(
+        self,
+        object_names: List[str],
+        width: int = 1024,
+        height: int = 768,
+        camera_name: Optional[str] = None,
+    ) -> Dict[str, Any] | str:
+        """Return a per-object-ID mask pass for the named objects.
+
+        On success returns ``{"image": <base64 PNG>, "index_map": {index: name},
+        "missing": [...]}`` so the server can threshold per-object masks without an
+        external segmentation model. Returns an error string when no usable camera
+        or object is available. The addon method is reversible and headless-safe.
+        """
+
+        args = {
+            "object_names": list(object_names),
+            "width": width,
+            "height": height,
+            "camera_name": camera_name,
+        }
+        result = require_result(self.rpc.send_request("scene.get_object_id_pass", args))
+        if isinstance(result, str):
+            return result
+        if isinstance(result, dict):
+            return result
+        raise RuntimeError(f"Blender Error: Expected object or string result, got {type(result).__name__}")
 
     def create_light(
         self, type: str, energy: float, color: List[float], location: List[float], name: Optional[str] = None

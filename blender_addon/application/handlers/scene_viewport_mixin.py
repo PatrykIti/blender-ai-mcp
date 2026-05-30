@@ -1242,3 +1242,214 @@ class SceneViewportMixin:
                     bpy.ops.object.mode_set(mode=original_mode)
                 except Exception:
                     pass
+
+    def get_object_id_pass(
+        self,
+        object_names,
+        width=1024,
+        height=768,
+        camera_name=None,
+        is_cancelled: Callable[[], bool] | None = None,
+    ):
+        """Render a deterministic per-object-ID mask pass for the named objects.
+
+        Assigns each requested object a unique ``pass_index`` (1..N), renders the
+        Object Index pass, and composites each object as a distinct grayscale band
+        via ID Mask nodes. Returns a dict envelope:
+        ``{"image": <base64 PNG>, "index_map": {index: object_name}, "missing": [...]}``
+        so the server can threshold per-object masks without an external
+        segmentation model.
+
+        Fully reversible: render engine, view-layer pass flags, compositor node
+        tree, every touched object's ``pass_index``, resolution, format, camera,
+        and object mode are saved and restored in a ``finally`` block. Returns a
+        string error message (not raising) when no usable camera is available.
+        """
+
+        scene = bpy.context.scene
+        raise_if_cancelled(is_cancelled)
+
+        requested = [str(name) for name in (object_names or []) if str(name).strip()]
+        if not requested:
+            return "No object names provided. Object-ID pass requires at least one object."
+
+        camera_obj = None
+        if camera_name and camera_name != "USER_PERSPECTIVE":
+            if camera_name in bpy.data.objects:
+                camera_obj = bpy.data.objects[camera_name]
+            else:
+                return f"Camera '{camera_name}' not found. Object-ID pass requires a valid camera."
+        else:
+            camera_obj = scene.camera
+        if camera_obj is None:
+            return "No camera available. Object-ID pass requires a scene camera or explicit camera_name."
+
+        resolved: list = []
+        missing: list = []
+        for name in requested:
+            obj = bpy.data.objects.get(name)
+            if obj is None:
+                missing.append(name)
+            else:
+                resolved.append(obj)
+        if not resolved:
+            return {"image": "", "index_map": {}, "missing": missing}
+
+        temp_dir = tempfile.mkdtemp()
+        render_filepath_base = os.path.join(temp_dir, "object_id_pass")
+        expected_output = render_filepath_base + ".png"
+
+        view_layer = bpy.context.view_layer
+        original_engine = scene.render.engine
+        original_res_x = scene.render.resolution_x
+        original_res_y = scene.render.resolution_y
+        original_filepath = scene.render.filepath
+        original_file_format = scene.render.image_settings.file_format
+        original_color_mode = scene.render.image_settings.color_mode
+        original_camera = scene.camera
+        original_use_pass_index = view_layer.use_pass_object_index
+        original_use_nodes = scene.use_nodes
+        original_use_compositing = scene.render.use_compositing
+        original_samples = getattr(getattr(scene, "cycles", None), "samples", None)
+        original_pass_indices = {obj.name: obj.pass_index for obj in resolved}
+
+        original_mode = None
+        if bpy.context.active_object:
+            original_mode = bpy.context.active_object.mode
+            if original_mode != "OBJECT":
+                try:
+                    bpy.ops.object.mode_set(mode="OBJECT")
+                except Exception:
+                    pass
+
+        index_map: dict = {}
+        try:
+            scene.render.resolution_x = width
+            scene.render.resolution_y = height
+            scene.render.filepath = render_filepath_base
+            scene.render.image_settings.file_format = "PNG"
+            scene.render.image_settings.color_mode = "BW"
+            scene.camera = camera_obj
+            view_layer.use_pass_object_index = True
+            scene.render.use_compositing = True
+
+            # Cycles reliably exposes the Object Index (IndexOB) compositor output
+            # socket across Blender versions; the EEVEE compositor RLayers node does
+            # not always expose it. Force Cycles at 1 sample for this pass — masks
+            # do not need shading quality, so it stays fast. samples is restored.
+            scene.render.engine = "CYCLES"
+            try:
+                scene.cycles.device = "CPU"
+                scene.cycles.samples = 1
+            except Exception:
+                pass
+
+            # Assign a unique pass_index per object (1..N) and remember the map.
+            for offset, obj in enumerate(resolved, start=1):
+                obj.pass_index = offset
+                index_map[offset] = obj.name
+
+            scene.use_nodes = True
+            tree = scene.node_tree
+            for node in list(tree.nodes):
+                tree.nodes.remove(node)
+            render_layers = tree.nodes.new(type="CompositorNodeRLayers")
+            composite = tree.nodes.new(type="CompositorNodeComposite")
+
+            # The Object Index output socket only appears once the render layer has
+            # the object-index pass enabled and the dependency graph/node sockets
+            # have refreshed. Pin the node to the active scene/layer and refresh,
+            # then look the socket up by its known aliases.
+            render_layers.scene = scene
+            try:
+                render_layers.layer = view_layer.name
+            except (TypeError, AttributeError):
+                pass
+            try:
+                bpy.context.view_layer.update()
+            except Exception:
+                pass
+
+            index_socket = None
+            for socket in render_layers.outputs:
+                identifier = getattr(socket, "identifier", "")
+                if identifier in {"IndexOB", "IndexOB.001"} or socket.name in {"IndexOB", "Object Index"}:
+                    index_socket = socket
+                    break
+            if index_socket is None:
+                return "Object Index pass output not available for the active render layer."
+
+            # Sum per-object ID masks, each scaled to a distinct grayscale band so a
+            # single render distinguishes every requested object.
+            count = len(resolved)
+            previous_socket = None
+            for offset, obj in enumerate(resolved, start=1):
+                id_mask = tree.nodes.new(type="CompositorNodeIDMask")
+                id_mask.index = offset
+                id_mask.use_antialiasing = False
+                scale = tree.nodes.new(type="CompositorNodeMixRGB")
+                scale.blend_type = "MULTIPLY"
+                band = offset / float(count)
+                scale.inputs[2].default_value = (band, band, band, 1.0)
+                tree.links.new(index_socket, id_mask.inputs[0])
+                tree.links.new(id_mask.outputs[0], scale.inputs[1])
+                if previous_socket is None:
+                    previous_socket = scale.outputs[0]
+                else:
+                    adder = tree.nodes.new(type="CompositorNodeMixRGB")
+                    adder.blend_type = "ADD"
+                    tree.links.new(previous_socket, adder.inputs[1])
+                    tree.links.new(scale.outputs[0], adder.inputs[2])
+                    previous_socket = adder.outputs[0]
+
+            if previous_socket is not None:
+                tree.links.new(previous_socket, composite.inputs["Image"])
+
+            bpy.ops.render.render(write_still=True)
+            raise_if_cancelled(is_cancelled)
+
+            if not (os.path.exists(expected_output) and os.path.getsize(expected_output) > 0):
+                return "Object-ID pass render produced no output image."
+
+            with open(expected_output, "rb") as handle:
+                image_b64 = base64.b64encode(handle.read()).decode("utf-8")
+            return {"image": image_b64, "index_map": index_map, "missing": missing}
+
+        finally:
+            if os.path.exists(expected_output):
+                try:
+                    os.remove(expected_output)
+                except Exception:
+                    pass
+            try:
+                os.rmdir(temp_dir)
+            except Exception:
+                pass
+
+            for obj in resolved:
+                try:
+                    obj.pass_index = original_pass_indices.get(obj.name, 0)
+                except Exception:
+                    pass
+
+            scene.render.engine = original_engine
+            scene.render.resolution_x = original_res_x
+            scene.render.resolution_y = original_res_y
+            scene.render.filepath = original_filepath
+            scene.render.image_settings.file_format = original_file_format
+            scene.render.image_settings.color_mode = original_color_mode
+            scene.camera = original_camera
+            view_layer.use_pass_object_index = original_use_pass_index
+            scene.render.use_compositing = original_use_compositing
+            scene.use_nodes = original_use_nodes
+            if original_samples is not None:
+                try:
+                    scene.cycles.samples = original_samples
+                except Exception:
+                    pass
+
+            if original_mode and original_mode != "OBJECT" and bpy.context.active_object:
+                try:
+                    bpy.ops.object.mode_set(mode=original_mode)
+                except Exception:
+                    pass
