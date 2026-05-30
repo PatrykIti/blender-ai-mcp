@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [369](./369-2026-05-30-task-175-vision-contract-field-descriptions.md) | 2026-05-30 | **TASK-175 vision contract field descriptions and stage read-order** | - |
 | [368](./368-2026-05-30-task-174-per-image-caption-interleaving.md) | 2026-05-30 | **TASK-174 per-image caption interleaving** | - |
 | [367](./367-2026-05-23-task-172-final-audit-drift-repair.md) | 2026-05-23 | **TASK-172 final audit drift repair** | - |
 | [366](./366-2026-05-23-local-optional-vision-sidecar-launchers.md) | 2026-05-23 | **Local optional vision sidecar launchers** | - |

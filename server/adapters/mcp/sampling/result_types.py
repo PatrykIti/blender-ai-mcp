@@ -8,6 +8,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Generic, Literal, TypeVar, cast
 
+from pydantic import Field
+
 from server.adapters.mcp.contracts.base import MCPContract
 
 AssistantTerminalStatus = Literal[
@@ -90,17 +92,24 @@ class RepairSuggestionContract(MCPContract):
 class VisionIssueContract(MCPContract):
     """One likely visible issue identified by the bounded vision layer."""
 
-    category: str
-    summary: str
-    severity: Literal["high", "medium", "low"] = "medium"
+    category: str = Field(description="Short slug grouping the issue, e.g. 'front_profile' or 'proportion'.")
+    summary: str = Field(description="One-sentence advisory description of the suspected visible issue.")
+    severity: Literal["high", "medium", "low"] = Field(
+        default="medium",
+        description="Advisory severity hint only; it does not gate anything and is not authoritative.",
+    )
 
 
 class VisionRecommendedCheckContract(MCPContract):
     """One deterministic follow-up check recommended after visual interpretation."""
 
-    tool_name: str
-    reason: str
-    priority: Literal["high", "normal"] = "normal"
+    tool_name: str = Field(
+        description="Name of the deterministic inspection/measurement tool to run to confirm this visual reading."
+    )
+    reason: str = Field(description="Why this deterministic check is recommended after the visual interpretation.")
+    priority: Literal["high", "normal"] = Field(
+        default="normal", description="Advisory ordering hint for the recommended check."
+    )
 
 
 class VisionInputSummaryContract(MCPContract):
@@ -126,9 +135,18 @@ class VisionBoundaryPolicyContract(MCPContract):
 class VisionPacketStatusContract(MCPContract):
     """Explicit packet-local extraction/ranking guidance for staged compare packets."""
 
-    packet_status: Literal["ready", "clean", "low_information", "blocked"] | None = None
-    status_reason: str | None = None
-    ranking_recommendation: Literal["rank", "skip_clean", "skip_low_information", "skip_blocked"] | None = None
+    packet_status: Literal["ready", "clean", "low_information", "blocked"] | None = Field(
+        default=None,
+        description=(
+            "Packet readiness: 'ready' has actionable signal; 'clean' already matches; "
+            "'low_information' is too weak to rank; 'blocked' cannot be evaluated."
+        ),
+    )
+    status_reason: str | None = Field(default=None, description="Short reason explaining the packet_status value.")
+    ranking_recommendation: Literal["rank", "skip_clean", "skip_low_information", "skip_blocked"] | None = Field(
+        default=None,
+        description="Advisory recommendation for whether to rank this packet or skip it (and why), not a gate.",
+    )
 
 
 class VisionCapabilitySummaryContract(MCPContract):
@@ -153,21 +171,65 @@ class VisionAssistContract(MCPContract):
     backend_name: str | None = None
     model_name: str | None = None
     vision_contract_profile: Literal["generic_full", "google_family_compare"] | None = None
-    goal_summary: str
-    reference_match_summary: str | None = None
-    visible_changes: list[str]
-    shape_mismatches: list[str] = []
-    proportion_mismatches: list[str] = []
-    correction_focus: list[str] = []
-    likely_issues: list[VisionIssueContract] = []
-    next_corrections: list[str] = []
-    recommended_checks: list[VisionRecommendedCheckContract] = []
-    packet_guidance: VisionPacketStatusContract | None = None
-    capability_summary: VisionCapabilitySummaryContract | None = None
-    confidence: float | None = None
-    captures_used: list[str] = []
-    input_summary: VisionInputSummaryContract | None = None
-    boundary_policy: VisionBoundaryPolicyContract = VisionBoundaryPolicyContract()
+    goal_summary: str = Field(
+        description="Scalar narrative: one sentence on whether the after/render images move toward the goal/reference."
+    )
+    reference_match_summary: str | None = Field(
+        default=None,
+        description="Scalar narrative: how the current render compares to the reference overall; null when no reference.",
+    )
+    visible_changes: list[str] = Field(
+        description=(
+            "Descriptive observations of what visibly changed or is present, NOT a defect list. "
+            "Use shape_mismatches/proportion_mismatches for reference-relative problems."
+        )
+    )
+    shape_mismatches: list[str] = Field(
+        default_factory=list,
+        description="Reference-relative form/silhouette problems (wrong contour, missing/extra mass, wrong profile).",
+    )
+    proportion_mismatches: list[str] = Field(
+        default_factory=list,
+        description="Reference-relative size/ratio problems (a part too large/small relative to another or the whole).",
+    )
+    correction_focus: list[str] = Field(
+        default_factory=list,
+        description="The 1-3 highest-priority mismatch targets to fix next (a prioritized subset, not new findings).",
+    )
+    likely_issues: list[VisionIssueContract] = Field(
+        default_factory=list, description="Lower-confidence suspected issues, each with a category and severity hint."
+    )
+    next_corrections: list[str] = Field(
+        default_factory=list,
+        description="Bounded, visually-justified next-step fixes to apply (concrete actions, not the targets themselves).",
+    )
+    recommended_checks: list[VisionRecommendedCheckContract] = Field(
+        default_factory=list,
+        description="Deterministic inspection/measurement tools to run to confirm visual readings before correcting.",
+    )
+    packet_guidance: VisionPacketStatusContract | None = Field(
+        default=None, description="Packet-local extraction/ranking guidance for staged compare packets; null otherwise."
+    )
+    capability_summary: VisionCapabilitySummaryContract | None = Field(
+        default=None, description="Runtime/request capability metadata for this execution (model, modalities, caps)."
+    )
+    confidence: float | None = Field(
+        default=None,
+        description=(
+            "Non-authoritative self-reported confidence in [0,1]. Advisory only: it is NOT proof of correctness; "
+            "rely on deterministic inspection/assertion/silhouette for scene truth."
+        ),
+    )
+    captures_used: list[str] = Field(
+        default_factory=list, description="Labels of the capture/reference images the interpretation actually used."
+    )
+    input_summary: VisionInputSummaryContract | None = Field(
+        default=None, description="Compact summary of the visual inputs the backend received."
+    )
+    boundary_policy: VisionBoundaryPolicyContract = Field(
+        default_factory=VisionBoundaryPolicyContract,
+        description="Explicit advisory boundary: this result is interpretation only and not a truth or policy source.",
+    )
     truth_source: Literal["vision_assist"] = "vision_assist"
 
 

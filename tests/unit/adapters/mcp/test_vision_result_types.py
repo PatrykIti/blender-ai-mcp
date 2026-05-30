@@ -85,3 +85,39 @@ def test_vision_assistant_contract_wraps_structured_result():
     assert contract.result.capability_summary.response_healing_enabled is True
     assert contract.result.boundary_policy is not None
     assert contract.result.boundary_policy.not_truth_source is True
+
+
+def test_vision_assist_contract_fields_carry_descriptions():
+    fields = VisionAssistContract.model_fields
+    # The near-synonymous compare lists and the scalar summaries must each be
+    # self-describing so the orchestrating LLM can disambiguate them by schema.
+    for name in (
+        "goal_summary",
+        "reference_match_summary",
+        "visible_changes",
+        "shape_mismatches",
+        "proportion_mismatches",
+        "correction_focus",
+        "next_corrections",
+        "recommended_checks",
+        "likely_issues",
+        "confidence",
+    ):
+        description = fields[name].description
+        assert description, f"{name} is missing a Field description"
+
+    # Confidence must be marked non-authoritative inline.
+    confidence_description = (fields["confidence"].description or "").lower()
+    assert "non-authoritative" in confidence_description
+    assert "not" in confidence_description
+
+
+def test_vision_assist_contract_descriptions_do_not_change_defaults():
+    # Descriptions are additive metadata: the empty-list / None defaults are
+    # unchanged so existing serialized payloads stay valid.
+    contract = VisionAssistContract(goal_summary="ok", visible_changes=[])
+    assert contract.shape_mismatches == []
+    assert contract.proportion_mismatches == []
+    assert contract.recommended_checks == []
+    assert contract.confidence is None
+    assert contract.boundary_policy.not_truth_source is True

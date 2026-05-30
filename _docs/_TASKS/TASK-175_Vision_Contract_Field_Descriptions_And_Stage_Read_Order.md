@@ -1,9 +1,11 @@
 # TASK-175: Vision Contract Field Descriptions And Stage Read-Order
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-30
 **Priority:** 🔴 High
 **Category:** Vision / Contract Self-Description
 **Estimated Effort:** Small
+**Completion Summary:** Shipped via changelog [369](../_CHANGELOG/369-2026-05-30-task-175-vision-contract-field-descriptions.md). Added `Field(description=...)` to `VisionAssistContract` (incl. non-authoritative `confidence`), its nested vision contracts, the `VisionPacketStatusContract`/`ReferenceComparePacketContract` status axes, `ReferenceCompareSupportEvidenceContract` proportional fields, and `ReferenceOrchestratorFeedbackContract`; documented read-order/precedence on the stage compare/iterate docstrings. Purely additive; full `tests/unit` green, ruff/mypy clean.
 **Follow-on After:** [TASK-171](./TASK-171_Creature_Attachment_First_Build_Contract_And_Structured_Vision_Handoff.md), [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md)
 **Related:** [TASK-160](./TASK-160_Guided_Client_Feedback_And_Streamable_HTTP_Recovery_UX.md), [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md)
 

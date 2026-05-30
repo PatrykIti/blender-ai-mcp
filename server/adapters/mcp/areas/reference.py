@@ -2329,6 +2329,13 @@ async def reference_compare_stage_checkpoint(
     model-aware budget pressure, and packet uncertainty can expose additive
     top-level compare_diagnostics with packet ids, pass status, support evidence,
     conflict notes, and budget_control details.
+
+    Read order and precedence: read the compact ``reference_orchestrator_feedback``
+    first for the normalized next step, then deterministic ``compare_diagnostics``
+    / silhouette / truth evidence, and only then the advisory vision payload. The
+    vision interpretation is advisory (``not_truth_source``); its ``confidence`` is
+    non-authoritative. Treat deterministic inspection/assertion/silhouette as the
+    authority for correctness and never let the vision prose mark a gate complete.
     """
 
     checkpoint_target = _safe_checkpoint_token(collection_name or target_object or "scene")
@@ -2365,6 +2372,12 @@ async def reference_iterate_stage_checkpoint(
     next safe step. Top-level compare_diagnostics remains the public access path
     for rich delivery, multi-packet synthesis, model-budget pressure, or packet
     uncertainty even when the nested compact compare_result is slimmed.
+
+    Read order and precedence: read ``reference_orchestrator_feedback`` (and its
+    ``loop_disposition``/``next_actions``) first, then deterministic
+    ``compare_diagnostics``/truth evidence, then the advisory vision payload last.
+    The vision layer is advisory only and its ``confidence`` is non-authoritative;
+    deterministic inspection/assertion/silhouette own correctness and gate status.
     """
 
     token = _REFERENCE_COMPARE_EMIT_COMPACT_DETAIL.set(True)

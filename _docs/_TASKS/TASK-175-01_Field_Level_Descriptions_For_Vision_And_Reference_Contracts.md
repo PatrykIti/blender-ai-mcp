@@ -1,7 +1,8 @@
 # TASK-175-01: Field-Level Descriptions For Vision And Reference Contracts
 
 **Parent:** [TASK-175](./TASK-175_Vision_Contract_Field_Descriptions_And_Stage_Read_Order.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-30
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-171](./TASK-171_Creature_Attachment_First_Build_Contract_And_Structured_Vision_Handoff.md), [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md)
 **Objective:** Add concise, accurate `Field(description=...)` to every LLM-facing vision / reference result contract so the client can disambiguate near-synonymous fields and understand the advisory/authoritative posture from the schema alone, without changing any payload shape, field set, or default value.

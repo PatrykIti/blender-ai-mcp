@@ -1,7 +1,8 @@
 # TASK-175-02: Stage Docstring Read-Order And Authoritative Precedence
 
 **Parent:** [TASK-175](./TASK-175_Vision_Contract_Field_Descriptions_And_Stage_Read_Order.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-30
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-160](./TASK-160_Guided_Client_Feedback_And_Streamable_HTTP_Recovery_UX.md), [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md)
 **Objective:** Expand the reference stage / compare / iterate tool docstrings to enumerate the key returned fields, state authoritative-vs-advisory precedence, and instruct the client read-order (`reference_orchestrator_feedback` first, then deterministic truth, then advisory vision), without changing tool behavior, signatures, or returned payloads.

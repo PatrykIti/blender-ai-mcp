@@ -334,20 +334,36 @@ class ReferenceCompactRepairContract(MCPContract):
 
 
 class ReferenceOrchestratorFeedbackContract(MCPContract):
-    """Compact orchestrator-facing read model for guided reference sessions."""
+    """Compact orchestrator-facing read model for guided reference sessions.
 
-    status: ReferenceUnderstandingStatusLiteral = "blocked"
+    This is the single normalized next-step contract the client should read
+    FIRST on every guided/reference response, before the richer advisory vision
+    payload. It summarizes deterministic guided/gate state (authoritative) plus a
+    compact view of advisory evidence; it never overrides deterministic scene
+    truth or marks gates complete by itself.
+    """
+
+    status: ReferenceUnderstandingStatusLiteral = Field(
+        default="blocked", description="Current reference-understanding lifecycle status for the session."
+    )
     goal: str | None = None
     understanding_id: str | None = None
-    construction_path: ReferenceUnderstandingConstructionPathLiteral = "unknown"
+    construction_path: ReferenceUnderstandingConstructionPathLiteral = Field(
+        default="unknown", description="The construction path the references imply (e.g. faceted low-poly vs smooth)."
+    )
     current_guided_step: str | None = None
-    selected_family: ReferencePlannerFamilyLiteral = "inspect_only"
+    selected_family: ReferencePlannerFamilyLiteral = Field(
+        default="inspect_only", description="The correction family currently selected by deterministic guided policy."
+    )
     allowed_families: list[ReferencePlannerFamilyLiteral] = []
     blocked_families: list[ReferencePlannerFamilyLiteral] = []
     required_parts_pending: list[str] = []
     active_gate_ids: list[str] = []
     blocking_reasons: list[str] = []
-    next_actions: list[str] = []
+    next_actions: list[str] = Field(
+        default_factory=list,
+        description="The normalized, authoritative ordered next steps to take; prefer these over raw vision prose.",
+    )
     next_checkpoint_tool: (
         Literal[
             "reference_images",
@@ -359,10 +375,20 @@ class ReferenceOrchestratorFeedbackContract(MCPContract):
     ) = None
     recommended_support_tools: list[str] = []
     recommended_repair: ReferenceCompactRepairContract | None = None
-    evidence_summary: list[str] = []
-    uncertainty_notes: list[str] = []
-    correction_focus: list[str] = []
-    loop_disposition: Literal["continue_build", "inspect_validate", "stop"] | None = None
+    evidence_summary: list[str] = Field(
+        default_factory=list,
+        description="Compact advisory summary of perceived/deterministic evidence behind the next steps.",
+    )
+    uncertainty_notes: list[str] = Field(
+        default_factory=list, description="Advisory notes on what remains uncertain or under-grounded this cycle."
+    )
+    correction_focus: list[str] = Field(
+        default_factory=list, description="The highest-priority mismatch targets to address next (advisory subset)."
+    )
+    loop_disposition: Literal["continue_build", "inspect_validate", "stop"] | None = Field(
+        default=None,
+        description="Recommended loop disposition; advisory input to deterministic guided policy, not a final gate.",
+    )
     message: str | None = None
 
 
@@ -520,13 +546,21 @@ class ReferenceCompareSupportEvidenceContract(MCPContract):
     metric_id: str | None = None
     hint_type: str | None = None
     severity: Literal["high", "medium", "low"] | None = None
-    observed_value: float | None = None
-    delta: float | None = None
+    observed_value: float | None = Field(
+        default=None,
+        description="Deterministic observed value for this evidence (e.g. a normalized silhouette overlap ratio).",
+    )
+    delta: float | None = Field(
+        default=None,
+        description="Reference-relative delta as a proportion/ratio against the reference anchor, not an absolute measurement.",
+    )
     reference_label: str | None = None
     capture_label: str | None = None
     target_view: str | None = None
     part_label: str | None = None
-    confidence: float | None = None
+    confidence: float | None = Field(
+        default=None, description="Non-authoritative confidence in [0,1]; deterministic checks remain the authority."
+    )
 
 
 class ReferenceComparePacketContract(MCPContract):
@@ -542,12 +576,26 @@ class ReferenceComparePacketContract(MCPContract):
     reference_ids: list[str] = []
     capture_labels: list[str] = []
     compare_question: str
-    extraction_status: ReferenceComparePacketStatusLiteral = "skipped"
-    ranking_status: ReferenceCompareRankingStatusLiteral = "not_needed"
-    packet_status: ReferenceComparePacketGuidanceLiteral | None = None
-    ranking_recommendation: ReferenceCompareRankingRecommendationLiteral | None = None
-    localized_support_reason: ReferenceLocalizedSupportReasonLiteral | None = None
-    status_reason: str | None = None
+    extraction_status: ReferenceComparePacketStatusLiteral = Field(
+        default="skipped",
+        description="Outcome of the per-packet evidence EXTRACTION pass (did the VLM read this packet).",
+    )
+    ranking_status: ReferenceCompareRankingStatusLiteral = Field(
+        default="not_needed", description="Outcome of the cross-packet RANKING pass (was this packet ranked, and how)."
+    )
+    packet_status: ReferenceComparePacketGuidanceLiteral | None = Field(
+        default=None,
+        description="Packet-local delivery guidance (ready/clean/low_information/blocked) for downstream consumers.",
+    )
+    ranking_recommendation: ReferenceCompareRankingRecommendationLiteral | None = Field(
+        default=None, description="Advisory recommendation to rank or skip this packet (and why); not a gate."
+    )
+    localized_support_reason: ReferenceLocalizedSupportReasonLiteral | None = Field(
+        default=None, description="Why optional localized support was or was not attached to this packet."
+    )
+    status_reason: str | None = Field(
+        default=None, description="Short reason explaining the packet's extraction/ranking/packet status."
+    )
     support_evidence: list[ReferenceCompareSupportEvidenceContract] = []
     evidence_summary: str | None = None
     uncertainty_notes: list[str] = []
