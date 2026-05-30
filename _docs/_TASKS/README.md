@@ -3,8 +3,8 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 9 tasks
-- **In Progress:** 5 tasks
+- **To Do:** 7 tasks
+- **In Progress:** 7 tasks
 - **Done:** 106
 - **Superseded:** 162
 
@@ -83,7 +83,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 Execution note: `TASK-174` through `TASK-183` are the **Vision Output Quality** wave — ten standalone families derived from a full audit of `server/adapters/mcp/vision/` cross-referenced against current LLM/VLM 3D-scene-understanding research. They are follow-ons after `TASK-171`/`TASK-172`/`TASK-173` and the [Reference Understanding Roadmap](../_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md). Delivery order is dependency-driven, not strictly serial: quick wins (`TASK-174`, `TASK-175`, `TASK-176`, `TASK-177`) first; structural (`TASK-178`, `TASK-179`, `TASK-182`); then advanced (`TASK-180` depends on `TASK-179`; `TASK-181` resolves the `TASK-173` scope-drift class; `TASK-183`). Every family keeps vision advisory and deterministic inspection/assertion authoritative; benchmark gains are re-measured on `tests/fixtures/vision_eval` before promotion.
 
-Implementation status (2026-05-30): ✅ `TASK-174`, ✅ `TASK-175`, ✅ `TASK-176` shipped (changelogs 368–370); 🚧 `TASK-177` (177-01 budget-aware view selection shipped, changelog 371; 177-02/03 follow-on); 🚧 `TASK-178` (structured findings channel shipped, changelog 372; 178-03 follow-on). ⏳ `TASK-179`/`TASK-180`/`TASK-181`/`TASK-182`/`TASK-183` remain — the addon-render families (`TASK-179`, `TASK-180`) need a Blender addon/RPC + E2E pass.
+Implementation status (2026-05-30): ✅ `TASK-174`, ✅ `TASK-175`, ✅ `TASK-176` shipped (changelogs 368–370); 🚧 `TASK-177` (177-01 budget-aware view selection, changelog 371); 🚧 `TASK-178` (structured findings channel + defect ids, changelogs 372–373); 🚧 `TASK-182` (stable defect-id substrate, changelog 373; full Critic/Verify re-render loop follow-on); 🚧 `TASK-183` (capability-aware findings schema + curated payload + findings/truncation passthrough fix, changelog 374; 183-02 calibration follow-on). ⏳ `TASK-179`/`TASK-180`/`TASK-181` remain — the addon-render families (`TASK-179` depth/normal/object-ID passes, `TASK-180` Set-of-Mark overlays) need fragile Blender `bpy` compositor/GPU code validated through the `run_e2e_tests.py` cycle and depend on the default-off segmentation sidecar; `TASK-181` (scene-graph diff) is a deep packet-orchestration rewrite. These warrant dedicated, E2E-validated sessions rather than rushed implementation.
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
