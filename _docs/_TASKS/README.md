@@ -3,9 +3,9 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 14 tasks
-- **In Progress:** 3 tasks
-- **Done:** 103
+- **To Do:** 9 tasks
+- **In Progress:** 5 tasks
+- **Done:** 106
 - **Superseded:** 162
 
 ## 📐 Board Scope
@@ -82,6 +82,8 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Vision & Hybrid Loop
 
 Execution note: `TASK-174` through `TASK-183` are the **Vision Output Quality** wave — ten standalone families derived from a full audit of `server/adapters/mcp/vision/` cross-referenced against current LLM/VLM 3D-scene-understanding research. They are follow-ons after `TASK-171`/`TASK-172`/`TASK-173` and the [Reference Understanding Roadmap](../_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md). Delivery order is dependency-driven, not strictly serial: quick wins (`TASK-174`, `TASK-175`, `TASK-176`, `TASK-177`) first; structural (`TASK-178`, `TASK-179`, `TASK-182`); then advanced (`TASK-180` depends on `TASK-179`; `TASK-181` resolves the `TASK-173` scope-drift class; `TASK-183`). Every family keeps vision advisory and deterministic inspection/assertion authoritative; benchmark gains are re-measured on `tests/fixtures/vision_eval` before promotion.
+
+Implementation status (2026-05-30): ✅ `TASK-174`, ✅ `TASK-175`, ✅ `TASK-176` shipped (changelogs 368–370); 🚧 `TASK-177` (177-01 budget-aware view selection shipped, changelog 371; 177-02/03 follow-on); 🚧 `TASK-178` (structured findings channel shipped, changelog 372; 178-03 follow-on). ⏳ `TASK-179`/`TASK-180`/`TASK-181`/`TASK-182`/`TASK-183` remain — the addon-render families (`TASK-179`, `TASK-180`) need a Blender addon/RPC + E2E pass.
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
