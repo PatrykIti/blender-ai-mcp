@@ -74,12 +74,32 @@ def _vision_recommendations_for_macro(
             )
         )
 
+    findings_with_target = [finding for finding in result.findings if finding.target_label]
+    if findings_with_target:
+        targets = ", ".join(
+            dict.fromkeys(
+                str(finding.target_label)
+                + (f" ({finding.axis} {finding.direction})" if finding.axis and finding.direction else "")
+                for finding in findings_with_target
+            )
+        )
+        recommendations.append(
+            MacroVerificationRecommendationContract(
+                tool_name="inspect_scene",
+                reason=(
+                    f"Vision flagged structured per-part findings on: {targets}. Inspect those parts before correcting."
+                ),
+                priority="high",
+            )
+        )
+
     requires_followup = bool(
         result.shape_mismatches
         or result.proportion_mismatches
         or result.likely_issues
         or result.next_corrections
         or result.recommended_checks
+        or result.findings
     )
     return _dedupe_macro_recommendations(recommendations), requires_followup
 

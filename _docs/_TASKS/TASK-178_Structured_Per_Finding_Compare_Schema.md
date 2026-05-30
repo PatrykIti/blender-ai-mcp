@@ -1,7 +1,8 @@
 # TASK-178: Structured Per-Finding Compare Schema
 
-**Status:** 🚧 In Progress
-**Progress:** Structured findings channel shipped 2026-05-30 via changelog 372 (TASK-178-01 contract + TASK-178-02 schema/parser). Follow-on: TASK-178-03 planner/reporting propagation of findings into correction ranking.
+**Status:** ✅ Done
+**Completed:** 2026-05-30
+**Completion Summary:** All subtasks shipped — TASK-178-01 (VisionFinding contract + `findings` field) and TASK-178-02 (strict-mode schema + parser coercion) via changelog 372, and TASK-178-03 (structured-findings propagation into the macro verification report) via changelog 379. Full `tests/unit` green; ruff/mypy clean.
 **Priority:** 🔴 High
 **Category:** Vision / Compare Output Contract
 **Estimated Effort:** Large

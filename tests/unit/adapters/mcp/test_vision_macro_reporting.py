@@ -76,3 +76,43 @@ def test_attach_vision_artifacts_enriches_macro_report():
     assert enriched.requires_followup is True
     assert enriched.verification_recommended is not None
     assert any(item.tool_name == "inspect_scene" for item in enriched.verification_recommended)
+
+
+def test_vision_recommendations_propagate_structured_findings() -> None:
+    from server.adapters.mcp.sampling.result_types import (
+        AssistantBudgetContract,
+        AssistantRunResult,
+        VisionAssistContract,
+        VisionFindingContract,
+        to_vision_assistant_contract,
+    )
+    from server.adapters.mcp.vision.reporting import _vision_recommendations_for_macro
+
+    vision_assistant = to_vision_assistant_contract(
+        AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="external_runtime",
+            result=VisionAssistContract(
+                backend_kind="openai_compatible_external",
+                goal_summary="Head still diverges from the reference.",
+                visible_changes=[],
+                findings=[
+                    VisionFindingContract(
+                        finding="head reads wider than the reference",
+                        target_label="head",
+                        axis="x",
+                        direction="decrease",
+                        magnitude_ratio=1.3,
+                    ),
+                ],
+            ),
+        )
+    )
+
+    recommendations, requires_followup = _vision_recommendations_for_macro(vision_assistant)
+    # The structured per-part finding surfaces a targeted inspect recommendation.
+    assert requires_followup is True
+    assert any("head" in (rec.reason or "").lower() and rec.tool_name == "inspect_scene" for rec in recommendations)

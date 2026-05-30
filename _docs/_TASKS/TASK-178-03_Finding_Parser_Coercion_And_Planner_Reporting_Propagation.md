@@ -1,7 +1,8 @@
 # TASK-178-03: Finding Parser Coercion And Planner/Reporting Propagation
 
 **Parent:** [TASK-178](./TASK-178_Structured_Per_Finding_Compare_Schema.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-30
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-178-01](./TASK-178-01_Structured_Vision_Finding_Contract_Model.md), [TASK-178-02](./TASK-178-02_Structured_Finding_Prompt_And_Response_Schema_Emission.md)
 **Objective:** Coerce and clamp parsed structured findings in `vision/parsing.py` (validate compare and per-finding `confidence` to `[0, 1]`, normalize `axis` / `direction` to the fixed vocabularies, drop out-of-vocabulary `target_label` to `None`, default missing fields safely, and keep the flat string projection populated), then propagate object + axis + `magnitude_ratio` into macro reporting (`vision/reporting.py`) and the repair planner (`areas/reference_planner.py`).
