@@ -1169,3 +1169,61 @@ def test_google_path_interleaves_caption_before_each_image(monkeypatch, tmp_path
         image_part = body[2 * idx + 1]
         assert caption_part == {"text": format_image_caption(image)}
         assert "inline_data" in image_part
+
+
+def test_external_backend_surfaces_findings_and_truncation(monkeypatch, tmp_path):
+    img = tmp_path / "after.png"
+    img.write_bytes(b"fake-png")
+    request = VisionRequest(
+        goal="goal",
+        target_object="Housing",
+        images=(VisionImageInput(path=str(img), role="after", label="target_front_after"),),
+    )
+    runtime = build_vision_runtime_config(_config(VISION_EXTERNAL_API_KEY="secret"))
+    backend = OpenAICompatibleVisionBackend(runtime)
+
+    model_json = json.dumps(
+        {
+            "goal_summary": "still diverging",
+            "visible_changes": [],
+            "shape_mismatches": [f"shape problem {i}" for i in range(6)],
+            "proportion_mismatches": [],
+            "correction_focus": [],
+            "likely_issues": [],
+            "next_corrections": [],
+            "recommended_checks": [],
+            "findings": [{"finding": "head too wide", "target_label": "head", "axis": "x", "magnitude_ratio": 1.3}],
+        }
+    )
+    captured: dict = {}
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda timeout=None: _FakeAsyncClient(
+            response=_FakeResponse({"choices": [{"message": {"content": model_json}}]}),
+            captured=captured,
+        ),
+    )
+
+    result = asyncio.run(backend.analyze(request))
+
+    # The structured findings (TASK-178) and truncation signals (TASK-176) must
+    # survive backend normalization, not be silently dropped.
+    assert result["findings"], "structured findings were dropped by backend normalization"
+    assert result["findings"][0]["target_label"] == "head"
+    assert result["findings"][0]["defect_id"].startswith("defect_")
+    assert result["evidence_truncated"] is True
+    assert result["omitted_count"] >= 3
+    assert result["analysis_unusable"] is False
+
+
+def test_external_backend_capability_gate_drops_findings_schema_for_weak_models(monkeypatch, tmp_path):
+    from server.adapters.mcp.vision.prompting import build_vision_response_json_schema
+
+    # When the model lacks structured-output support, the findings channel is
+    # dropped from the strict schema; otherwise it is present.
+    lean = build_vision_response_json_schema(include_findings=False)
+    rich = build_vision_response_json_schema(include_findings=True)
+    assert "findings" not in lean["properties"]
+    assert "findings" not in lean["required"]
+    assert "findings" in rich["properties"]

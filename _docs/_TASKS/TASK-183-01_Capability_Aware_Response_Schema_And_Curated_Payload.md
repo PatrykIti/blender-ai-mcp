@@ -1,7 +1,8 @@
 # TASK-183-01: Capability-Aware Response Schema And Curated Payload
 
 **Parent:** [TASK-183](./TASK-183_Capability_Enriched_Vision_Schema_And_Deterministic_Cross_Check.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-30
 **Priority:** 🟡 Medium
 **Follow-on After:** [TASK-140-06](./TASK-140-06_OpenRouter_Model_Capability_Aware_Vision_Runtime.md), [TASK-178-02](./TASK-178-02_Structured_Finding_Prompt_And_Response_Schema_Emission.md)
 **Objective:** Thread `model_capabilities` into the response-schema builder so strong, grounding/structured-output models with ample completion budget get the richer per-finding/per-mark schema while weak/local models keep a lean schema; stop defaulting frontier hosted models to the field-dropping `google_family_compare` profile (or backfill its dropped fields); replace the bare-`json.dumps` default external payload with curated, task-framed, internal-ID-stripped scaffolding; and capture and surface provider token usage so truncation against the known completion cap is observable.

@@ -167,9 +167,13 @@ def _normalize_assist_payload(
         "likely_issues": list(parsed.get("likely_issues") or []),
         "next_corrections": list(parsed.get("next_corrections") or []),
         "recommended_checks": list(parsed.get("recommended_checks") or []),
+        "findings": list(parsed.get("findings") or []),
         "packet_guidance": parsed.get("packet_guidance"),
         "confidence": parsed.get("confidence"),
         "captures_used": list(parsed.get("captures_used") or []),
+        "evidence_truncated": bool(parsed.get("evidence_truncated") or False),
+        "omitted_count": int(parsed.get("omitted_count") or 0),
+        "analysis_unusable": bool(parsed.get("analysis_unusable") or False),
         "input_summary": _build_input_summary(request),
         "boundary_policy": {
             "interpretation_only": True,
@@ -809,6 +813,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
                         vision_contract_profile=self._external_config.vision_contract_profile,
                         provider_name=self._external_config.provider_name,
                         request=request,
+                        include_findings=self._include_structured_findings(),
                     ),
                 },
             }
@@ -828,9 +833,16 @@ class OpenAICompatibleVisionBackend(VisionBackend):
                     vision_contract_profile=self._external_config.vision_contract_profile,
                     provider_name=self._external_config.provider_name,
                     request=request,
+                    include_findings=self._include_structured_findings(),
                 ),
             },
         }
+
+    def _include_structured_findings(self) -> bool:
+        """Include the additive structured findings schema unless the model clearly
+        does not support structured outputs (keep a leaner contract for weak ones)."""
+
+        return _supports_parameter(self._external_config.model_capabilities, "structured_outputs") is not False
 
     def _should_enable_response_healing_plugin(self, response_format: dict[str, Any] | None) -> bool:
         if self._external_config.provider_name != "openrouter" or not self._external_config.enable_response_healing:
@@ -894,6 +906,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
                         vision_contract_profile=vision_contract_profile,
                         provider_name=self._external_config.provider_name,
                         request=request,
+                        include_findings=self._include_structured_findings(),
                     ),
                 },
             }

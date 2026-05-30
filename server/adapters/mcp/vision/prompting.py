@@ -853,10 +853,32 @@ def build_vision_payload_text(
         "target_object": request.target_object,
         "prompt_hint": request.prompt_hint,
         "truth_summary": request.truth_summary,
-        "metadata": request.metadata,
+        "metadata": _sanitized_request_metadata(request.metadata),
         "images": [{"role": image.role, "label": image.label} for image in request.images],
     }
     return json.dumps(payload, ensure_ascii=True, sort_keys=True, indent=2)
+
+
+# Internal plumbing keys that carry no visual-interpretation value and should not
+# be echoed to the external model (they leak bundle/session identifiers).
+_INTERNAL_METADATA_KEYS = frozenset(
+    {
+        "bundle_id",
+        "goal_id",
+        "preset_names",
+        "packet_id",
+        "packet_capture_labels",
+        "packet_reference_ids",
+    }
+)
+
+
+def _sanitized_request_metadata(metadata: dict[str, object] | None) -> dict[str, object]:
+    """Return request metadata with internal plumbing identifiers stripped."""
+
+    if not isinstance(metadata, dict):
+        return {}
+    return {key: value for key, value in metadata.items() if key not in _INTERNAL_METADATA_KEYS}
 
 
 def build_local_vision_payload_text(request: VisionRequest) -> str:
@@ -952,13 +974,35 @@ def expected_json_keys(
     return _EXPECTED_KEYS
 
 
+def _maybe_strip_findings(schema: dict[str, object], include_findings: bool) -> dict[str, object]:
+    """Remove the structured ``findings`` channel from a strict schema when a weak
+    model should keep a leaner contract (keeps ``required`` and ``properties`` in
+    sync for strict providers)."""
+
+    if include_findings:
+        return schema
+    properties = schema.get("properties")
+    if isinstance(properties, dict) and "findings" in properties:
+        properties.pop("findings")
+        required = schema.get("required")
+        if isinstance(required, list):
+            schema["required"] = [key for key in required if key != "findings"]
+    return schema
+
+
 def build_vision_response_json_schema(
     *,
     vision_contract_profile: VisionContractProfile | None = None,
     provider_name: str | None = None,
     request: VisionRequest | None = None,
+    include_findings: bool = True,
 ) -> dict[str, object]:
-    """Return a provider-agnostic JSON Schema for bounded vision responses."""
+    """Return a provider-agnostic JSON Schema for bounded vision responses.
+
+    When ``include_findings`` is False (a model that does not reliably support
+    structured outputs) the additive ``findings`` channel is dropped so the model
+    keeps a leaner, easier-to-satisfy contract.
+    """
 
     if _is_reference_classification_request(request):
         return {
@@ -1282,7 +1326,7 @@ def build_vision_response_json_schema(
         }
 
     if _is_reference_packet_compare_request(request):
-        return {
+        packet_schema: dict[str, object] = {
             "type": "object",
             "additionalProperties": False,
             "properties": {
@@ -1341,6 +1385,7 @@ def build_vision_response_json_schema(
             },
             "required": list(_PACKET_COMPARE_EXPECTED_KEYS),
         }
+        return _maybe_strip_findings(packet_schema, include_findings)
 
     if _uses_google_family_compare_contract(
         vision_contract_profile=vision_contract_profile,
@@ -1361,7 +1406,7 @@ def build_vision_response_json_schema(
             "required": list(_GEMINI_COMPARE_EXPECTED_KEYS),
         }
 
-    return {
+    default_schema: dict[str, object] = {
         "type": "object",
         "additionalProperties": False,
         "properties": {
@@ -1404,3 +1449,4 @@ def build_vision_response_json_schema(
         },
         "required": list(_EXPECTED_KEYS),
     }
+    return _maybe_strip_findings(default_schema, include_findings)

@@ -1,6 +1,7 @@
 # TASK-183: Capability-Enriched Vision Schema And Deterministic Cross-Check
 
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
+**Progress:** TASK-183-01 (capability-aware findings schema + curated payload + backend findings/truncation passthrough fix) shipped 2026-05-30 via changelog 374. Follow-on: TASK-183-02 (deterministic cross-check + silhouette threshold calibration).
 **Priority:** 🟡 Medium
 **Category:** Vision / Capability-Aware Schema And Calibration
 **Estimated Effort:** Large
