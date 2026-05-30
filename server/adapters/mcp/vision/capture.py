@@ -30,19 +30,82 @@ def _capture_to_image_input(
     )
 
 
+# Canonical informativeness ordering used to down-select capture views when a
+# richer capture set must fit a smaller transmission budget. The orthographic
+# triad (front/side/top) anchors shape/proportion comparison; an oblique 3/4 best
+# reveals 3D form (DiffuRank: a few well-chosen views beat many); wide gives
+# context; focus/detail are supplementary. Captures whose preset is unknown sort
+# last but keep stable order.
+_VIEW_SELECTION_PRIORITY = (
+    "target_front",
+    "target_side",
+    "target_top",
+    "target_oblique",
+    "target_oblique_left",
+    "target_oblique_right",
+    "target_focus",
+    "context_wide",
+    "target_detail",
+)
+
+
+def _view_selection_rank(capture: VisionCaptureImageContract) -> int:
+    name = capture.preset_name or ""
+    try:
+        return _VIEW_SELECTION_PRIORITY.index(name)
+    except ValueError:
+        return len(_VIEW_SELECTION_PRIORITY)
+
+
+def select_capture_views_within_budget(
+    captures: Sequence[VisionCaptureImageContract], *, max_views: int
+) -> list[VisionCaptureImageContract]:
+    """Deterministically down-select capture views to fit a transmission budget.
+
+    Returns at most ``max_views`` captures, ranked by the canonical
+    informativeness priority and tie-broken by original order, then re-emitted in
+    the original capture order so the roster/caption ordering stays stable. When
+    ``max_views`` already covers the input, the captures are returned unchanged.
+    This lets a caller capture a richer view-set and still respect the image
+    budget instead of having the whole request hard-rejected as over-budget.
+    """
+
+    bounded_max = max(0, max_views)
+    if len(captures) <= bounded_max:
+        return list(captures)
+    indexed = list(enumerate(captures))
+    chosen = sorted(indexed, key=lambda pair: (_view_selection_rank(pair[1]), pair[0]))[:bounded_max]
+    return [capture for _, capture in sorted(chosen, key=lambda pair: pair[0])]
+
+
 def build_vision_request_from_capture_bundle(
     bundle: VisionCaptureBundleContract,
     *,
     goal: str,
     reference_images: Sequence[VisionCaptureImageContract] = (),
     prompt_hint: str | None = None,
+    max_images: int | None = None,
 ) -> VisionRequest:
-    """Build a normalized VisionRequest from a deterministic capture bundle."""
+    """Build a normalized VisionRequest from a deterministic capture bundle.
 
+    When ``max_images`` is provided, the before/after captures are down-selected
+    to fit the budget (references are preserved first), so a richer capture set
+    degrades gracefully instead of being hard-rejected as over-budget.
+    """
+
+    captures_before = list(bundle.captures_before)
+    captures_after = list(bundle.captures_after)
+    if max_images is not None:
+        capture_budget = max(0, max_images - len(reference_images))
+        # Split the capture budget across the two stages, favouring the after set.
+        after_budget = capture_budget - min(len(captures_before), capture_budget // 2)
+        before_budget = capture_budget - after_budget
+        captures_after = select_capture_views_within_budget(captures_after, max_views=after_budget)
+        captures_before = select_capture_views_within_budget(captures_before, max_views=before_budget)
     images = tuple(
         [
-            *[_capture_to_image_input(capture, role="before") for capture in bundle.captures_before],
-            *[_capture_to_image_input(capture, role="after") for capture in bundle.captures_after],
+            *[_capture_to_image_input(capture, role="before") for capture in captures_before],
+            *[_capture_to_image_input(capture, role="after") for capture in captures_after],
             *[_capture_to_image_input(capture, role="reference") for capture in reference_images],
         ]
     )
@@ -69,12 +132,22 @@ def build_vision_request_from_stage_captures(
     prompt_hint: str | None = None,
     truth_summary: dict[str, Any] | None = None,
     metadata: dict[str, Any] | None = None,
+    max_images: int | None = None,
 ) -> VisionRequest:
-    """Build a normalized VisionRequest from one stage checkpoint capture set."""
+    """Build a normalized VisionRequest from one stage checkpoint capture set.
 
+    When ``max_images`` is provided, the stage captures are down-selected to fit
+    the budget after reserving room for the reference images, so a richer capture
+    set degrades gracefully instead of being hard-rejected as over-budget.
+    """
+
+    stage_captures = list(captures)
+    if max_images is not None:
+        capture_budget = max(0, max_images - len(reference_images))
+        stage_captures = select_capture_views_within_budget(stage_captures, max_views=capture_budget)
     images = tuple(
         [
-            *[_capture_to_image_input(capture, role="after") for capture in captures],
+            *[_capture_to_image_input(capture, role="after") for capture in stage_captures],
             *[_capture_to_image_input(capture, role="reference") for capture in reference_images],
         ]
     )

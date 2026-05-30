@@ -1,6 +1,7 @@
 # TASK-177: Reachable Rich Multi-View Capture And Top-View Default
 
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
+**Progress:** TASK-177-01 (budget-aware best-N capture view selection substrate) shipped 2026-05-30 via changelog 371. Follow-on: TASK-177-02 (oblique 3/4 in the default compact preset) and TASK-177-03 (optional labelled multi-view grid composite) remain open.
 **Priority:** 🟡 Medium
 **Category:** Vision / Multi-View Capture
 **Estimated Effort:** Medium

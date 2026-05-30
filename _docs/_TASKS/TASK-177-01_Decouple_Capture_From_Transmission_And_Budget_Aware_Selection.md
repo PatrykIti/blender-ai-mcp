@@ -1,7 +1,8 @@
 # TASK-177-01: Decouple Capture From Transmission And Budget-Aware Selection
 
 **Parent:** [TASK-177](./TASK-177_Reachable_Rich_Multi_View_Capture_And_Top_View_Default.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-30
 **Priority:** 🟡 Medium
 **Follow-on After:** [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md), [TASK-166-05](./TASK-166-05_Configurable_Vision_Assist_Budgets_And_Runtime_Overrides.md)
 **Objective:** Separate which views are CAPTURED from which are TRANSMITTED so a richer capture set can be produced deterministically and the best-N selected within the effective image budget, instead of the capture profile being blocked outright by the preset-gate arithmetic in `choose_capture_preset_profile`. Capture richer, transmit bounded.

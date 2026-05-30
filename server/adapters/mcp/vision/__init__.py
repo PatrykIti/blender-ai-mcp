@@ -14,6 +14,7 @@ from .capture import (
     build_reference_capture_images,
     build_vision_request_from_capture_bundle,
     build_vision_request_from_stage_captures,
+    select_capture_views_within_budget,
     select_reference_records_for_target,
 )
 from .capture_runtime import (
@@ -132,6 +133,7 @@ __all__ = [
     "resolve_capture_preset_specs",
     "build_vision_request_from_capture_bundle",
     "build_vision_request_from_stage_captures",
+    "select_capture_views_within_budget",
     "infer_capture_preset_profile",
     "select_reference_records_for_target",
     "build_vision_runtime_config",

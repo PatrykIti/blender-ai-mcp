@@ -10,6 +10,7 @@ from server.adapters.mcp.contracts.reference import ReferenceImageRecordContract
 from server.adapters.mcp.vision import (
     build_vision_request_from_capture_bundle,
     build_vision_request_from_stage_captures,
+    select_capture_views_within_budget,
     select_reference_records_for_target,
 )
 
@@ -200,3 +201,57 @@ def test_select_reference_records_can_fall_back_to_generic_view_match():
     )
 
     assert [item.reference_id for item in selected] == ["ref_generic_view"]
+
+
+def _cap(preset: str) -> VisionCaptureImageContract:
+    return VisionCaptureImageContract(
+        label=f"{preset}_after",
+        image_path=f"/tmp/{preset}.png",
+        preset_name=preset,
+        view_kind="focus",
+    )
+
+
+def test_select_capture_views_keeps_orthographic_triad_first():
+    captures = [
+        _cap("context_wide"),
+        _cap("target_front"),
+        _cap("target_side"),
+        _cap("target_top"),
+        _cap("target_detail"),
+    ]
+    chosen = select_capture_views_within_budget(captures, max_views=3)
+    names = [c.preset_name for c in chosen]
+    # The orthographic triad outranks wide/detail; original order is preserved.
+    assert names == ["target_front", "target_side", "target_top"]
+
+
+def test_select_capture_views_noop_when_within_budget():
+    captures = [_cap("target_front"), _cap("target_side")]
+    assert select_capture_views_within_budget(captures, max_views=5) == captures
+    assert select_capture_views_within_budget(captures, max_views=2) == captures
+
+
+def test_stage_request_downselects_to_budget_reserving_references():
+    captures = [_cap("context_wide"), _cap("target_front"), _cap("target_side"), _cap("target_top")]
+    references = [
+        VisionCaptureImageContract(label="ref", image_path="/tmp/ref.png", view_kind="reference"),
+    ]
+    request = build_vision_request_from_stage_captures(
+        captures,
+        goal="g",
+        reference_images=references,
+        max_images=3,
+    )
+    roles = [img.role for img in request.images]
+    # 3 budget - 1 reference = 2 stage captures + 1 reference.
+    assert roles.count("after") == 2
+    assert roles.count("reference") == 1
+    after_labels = [img.label for img in request.images if img.role == "after"]
+    assert after_labels == ["target_front_after", "target_side_after"]
+
+
+def test_stage_request_without_budget_is_unchanged():
+    captures = [_cap("target_front"), _cap("target_side"), _cap("target_top")]
+    request = build_vision_request_from_stage_captures(captures, goal="g")
+    assert sum(1 for img in request.images if img.role == "after") == 3

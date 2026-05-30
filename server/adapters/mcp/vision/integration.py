@@ -61,11 +61,15 @@ async def maybe_attach_macro_vision(
         ],
         f"capture_profile={capture_profile}",
     ]
+    effective_max_images = getattr(resolver.runtime_config, "effective_max_images", None)
+    if not isinstance(effective_max_images, int) or isinstance(effective_max_images, bool):
+        effective_max_images = None
     request = build_vision_request_from_capture_bundle(
         report.capture_bundle,
         goal=goal,
         reference_images=reference_images,
         prompt_hint=" | ".join(part for part in prompt_hint_parts if part) or None,
+        max_images=effective_max_images,
     )
     outcome = await run_vision_assist(
         ctx,
