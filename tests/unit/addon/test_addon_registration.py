@@ -120,6 +120,9 @@ def test_register_wires_handlers_and_starts_rpc(monkeypatch):
 
     background_handlers = {args[0]: args[1] for args, _kwargs in rpc_server.register_background_handler.call_args_list}
     _assert_bound_method(background_handlers["scene.get_viewport"], scene_handler, "get_viewport")
+    _assert_bound_method(background_handlers["scene.get_depth_pass"], scene_handler, "get_depth_pass")
+    _assert_bound_method(background_handlers["scene.get_object_id_pass"], scene_handler, "get_object_id_pass")
+    _assert_bound_method(background_handlers["scene.get_normal_pass"], scene_handler, "get_normal_pass")
     rpc_server.register_background_handler.assert_any_call("export.glb", ANY)
     rpc_server.register_background_handler.assert_any_call("extraction.render_angles", ANY)
     rpc_server.start.assert_called_once()
