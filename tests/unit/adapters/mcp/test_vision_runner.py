@@ -111,6 +111,12 @@ class _PreparedBudgetBackend(_SuccessBackend):
             "response_format_type": "json_schema",
             "plugins": ["response-healing"],
         }
+        self.last_response_usage_summary = {
+            "prompt_tokens": 120,
+            "completion_tokens": 80,
+            "total_tokens": 200,
+            "finish_reason": "stop",
+        }
         self._prepared_runtime_config = runtime_config.model_copy(
             update={
                 "openai_compatible_external": runtime_config.openai_compatible_external.model_copy(
@@ -258,6 +264,10 @@ def test_runner_projects_backend_prepared_runtime_budget(monkeypatch):
     assert result.result.capability_summary.request_mode == "json_schema"
     assert result.result.capability_summary.response_healing_enabled is True
     assert result.result.capability_summary.supported_parameters == ["max_tokens", "response_format"]
+    assert result.result.capability_summary.prompt_tokens == 120
+    assert result.result.capability_summary.completion_tokens == 80
+    assert result.result.capability_summary.total_tokens == 200
+    assert result.result.capability_summary.finish_reason == "stop"
 
 
 def test_runner_returns_unavailable_when_backend_is_disabled():

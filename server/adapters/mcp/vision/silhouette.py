@@ -6,12 +6,17 @@
 from __future__ import annotations
 
 from collections import deque
+from collections.abc import Sequence
 from typing import Any
 
 import numpy as np
 
 _NORMALIZED_MASK_SIZE = 128
 _BORDER_RATIO_THRESHOLD = 0.35
+_CAPTURE_SIDE_OBJECT_ID_NOTE = (
+    "Per-object IoU uses the capture-side object-ID mask against the selected reference silhouette; "
+    "reference photographs do not provide object-ID ground truth."
+)
 
 
 def _metric_severity(delta: float, *, high: float, medium: float) -> str:
@@ -215,6 +220,166 @@ def compute_silhouette_iou(reference_path: str, capture_path: str) -> float | No
     return intersection / union
 
 
+def _normalize_object_id_index_map(index_map: dict[Any, Any]) -> dict[int, str]:
+    normalized: dict[int, str] = {}
+    for raw_index, raw_name in index_map.items():
+        try:
+            index = int(raw_index)
+        except (TypeError, ValueError):
+            continue
+        name = str(raw_name or "").strip()
+        if index <= 0 or not name:
+            continue
+        normalized[index] = name
+    return normalized
+
+
+def _extract_object_id_mask(
+    image_path: str,
+    *,
+    index_map: dict[Any, Any],
+    object_name: str,
+) -> tuple[np.ndarray | None, int | None, list[str]]:
+    notes: list[str] = []
+    normalized_index_map = _normalize_object_id_index_map(index_map)
+    object_index = next(
+        (index for index, mapped_name in normalized_index_map.items() if mapped_name == object_name),
+        None,
+    )
+    if object_index is None:
+        return None, None, [f"Object '{object_name}' is not present in the object-ID index map."]
+    try:
+        from PIL import Image
+    except ImportError:
+        return None, object_index, ["Pillow is not installed; object-ID mask decoding is unavailable."]
+
+    try:
+        with Image.open(image_path) as image:
+            grayscale = np.asarray(image.convert("L"))
+    except Exception:
+        return None, object_index, [f"Object-ID image '{image_path}' could not be decoded."]
+
+    object_count = max(normalized_index_map) if normalized_index_map else 0
+    if object_count <= 0:
+        return None, object_index, ["Object-ID index map is empty."]
+    expected_band = int(round((object_index / float(object_count)) * 255.0))
+    tolerance = max(2, int(round(255.0 / max(object_count * 8, 1))))
+    mask = np.abs(grayscale.astype(np.int16) - expected_band) <= tolerance
+    mask = _largest_component(mask)
+    if not bool(mask.any()):
+        notes.append(f"Object-ID pass contained no stable mask pixels for '{object_name}'.")
+        return None, object_index, notes
+    return mask, object_index, notes
+
+
+def compute_per_object_iou(
+    *,
+    reference_path: str,
+    object_id_path: str,
+    index_map: dict[Any, Any],
+    object_name: str,
+) -> dict[str, Any]:
+    """Return bbox-normalized IoU for one object decoded from an object-ID pass.
+
+    ``object_id_path`` is the grayscale band image emitted by the addon
+    ``get_object_id_pass`` contract, where object index ``i`` is encoded as
+    ``i / object_count`` luminance. The helper thresholds the requested object's
+    band, normalizes it with the same bbox path as whole-silhouette IoU, and
+    returns a typed dict that callers can attach to support evidence.
+    """
+
+    reference_mask, reference_notes = _extract_mask_from_image(reference_path)
+    object_mask, object_index, object_notes = _extract_object_id_mask(
+        object_id_path,
+        index_map=index_map,
+        object_name=object_name,
+    )
+    notes = [*reference_notes, *object_notes]
+    if reference_mask is None or object_mask is None:
+        return {
+            "object_name": object_name,
+            "object_index": object_index,
+            "status": "unavailable",
+            "mask_iou": None,
+            "severity": "high",
+            "notes": notes or ["Per-object IoU could not extract both masks."],
+        }
+    reference_crop, reference_bbox = _crop_bbox(reference_mask)
+    object_crop, object_bbox = _crop_bbox(object_mask)
+    if reference_bbox == (0, 0) or object_bbox == (0, 0):
+        return {
+            "object_name": object_name,
+            "object_index": object_index,
+            "status": "unavailable",
+            "mask_iou": None,
+            "severity": "high",
+            "notes": notes or ["Per-object IoU mask bbox was empty."],
+        }
+    normalized_reference = _normalize_mask(reference_crop)
+    normalized_object = _normalize_mask(object_crop)
+    intersection = float(np.logical_and(normalized_reference, normalized_object).sum())
+    union = float(np.logical_or(normalized_reference, normalized_object).sum())
+    if union <= 0.0:
+        iou = None
+    else:
+        iou = intersection / union
+    severity = "high" if iou is None or iou < 0.45 else "medium" if iou < 0.7 else "low"
+    return {
+        "object_name": object_name,
+        "object_index": object_index,
+        "status": "available" if iou is not None else "unavailable",
+        "mask_iou": iou,
+        "severity": severity,
+        "notes": notes,
+    }
+
+
+def build_per_object_iou_metrics(
+    *,
+    reference_path: str,
+    object_id_path: str | None,
+    index_map: dict[Any, Any] | None,
+    object_names: Sequence[str] | None = None,
+    unavailable_note: str | None = None,
+) -> list[dict[str, Any]]:
+    """Build deterministic capture-side per-object IoU metrics for a target set."""
+
+    normalized_index_map = _normalize_object_id_index_map(index_map or {})
+    if object_names:
+        target_names = list(dict.fromkeys(str(name).strip() for name in object_names if str(name).strip()))
+    else:
+        target_names = list(dict.fromkeys(normalized_index_map.values()))
+    if not target_names:
+        return []
+
+    if not object_id_path or not normalized_index_map:
+        note = unavailable_note or "Object-ID pass is unavailable for this silhouette comparison."
+        return [
+            {
+                "object_name": object_name,
+                "object_index": None,
+                "status": "unavailable",
+                "mask_iou": None,
+                "severity": "high",
+                "notes": [note, _CAPTURE_SIDE_OBJECT_ID_NOTE],
+            }
+            for object_name in target_names
+        ]
+
+    metrics: list[dict[str, Any]] = []
+    for object_name in target_names:
+        metric = compute_per_object_iou(
+            reference_path=reference_path,
+            object_id_path=object_id_path,
+            index_map=normalized_index_map,
+            object_name=object_name,
+        )
+        notes = list(dict.fromkeys([*list(metric.get("notes") or []), _CAPTURE_SIDE_OBJECT_ID_NOTE]))
+        metric["notes"] = notes
+        metrics.append(metric)
+    return metrics
+
+
 def compute_iou_convergence(previous_iou: float | None, current_iou: float | None) -> dict[str, Any]:
     """Return a deterministic convergence verdict between two cycles' IoU values.
 
@@ -249,9 +414,20 @@ def build_silhouette_analysis(
     reference_label: str | None = None,
     capture_label: str | None = None,
     target_view: str | None = None,
+    object_id_path: str | None = None,
+    object_id_index_map: dict[Any, Any] | None = None,
+    object_names: Sequence[str] | None = None,
+    object_id_unavailable_note: str | None = None,
 ) -> dict[str, Any]:
     """Build deterministic silhouette metrics from one reference/capture pair."""
 
+    per_object_metrics = build_per_object_iou_metrics(
+        reference_path=reference_path,
+        object_id_path=object_id_path,
+        index_map=object_id_index_map,
+        object_names=object_names,
+        unavailable_note=object_id_unavailable_note,
+    )
     reference_mask, reference_notes = _extract_mask_from_image(reference_path)
     capture_mask, capture_notes = _extract_mask_from_image(capture_path)
     notes = [*reference_notes, *capture_notes]
@@ -263,7 +439,10 @@ def build_silhouette_analysis(
             "target_view": target_view,
             "mask_extraction_mode": "unavailable",
             "alignment_mode": "unavailable",
+            "consistency_score": None,
+            "iou_convergence": None,
             "metrics": [],
+            "per_object_metrics": per_object_metrics,
             "notes": notes or ["Silhouette extraction was unavailable for the provided images."],
         }
 
@@ -278,7 +457,10 @@ def build_silhouette_analysis(
             "target_view": target_view,
             "mask_extraction_mode": "unavailable",
             "alignment_mode": "unavailable",
+            "consistency_score": None,
+            "iou_convergence": None,
             "metrics": [],
+            "per_object_metrics": per_object_metrics,
             "notes": notes or ["Silhouette masks did not contain a usable foreground bbox."],
         }
 
@@ -302,13 +484,14 @@ def build_silhouette_analysis(
     reference_aspect_ratio = float(reference_bbox[1] / max(reference_bbox[0], 1))
     capture_aspect_ratio = float(capture_bbox[1] / max(capture_bbox[0], 1))
 
+    mask_iou = intersection / union
     metrics = [
         {
             "metric_id": "mask_iou",
             "reference_value": 1.0,
-            "observed_value": intersection / union,
-            "delta": (intersection / union) - 1.0,
-            "severity": _metric_severity((intersection / union) - 1.0, high=0.35, medium=0.18),
+            "observed_value": mask_iou,
+            "delta": mask_iou - 1.0,
+            "severity": _metric_severity(mask_iou - 1.0, high=0.35, medium=0.18),
         },
         {
             "metric_id": "contour_drift",
@@ -365,6 +548,9 @@ def build_silhouette_analysis(
         "target_view": target_view,
         "mask_extraction_mode": "alpha_or_otsu_largest_component",
         "alignment_mode": "bbox_normalized",
+        "consistency_score": mask_iou,
+        "iou_convergence": None,
         "metrics": metrics,
+        "per_object_metrics": per_object_metrics,
         "notes": notes,
     }

@@ -1,11 +1,13 @@
 # TASK-179-03: Auxiliary-Channel Image Transmission And Captions
 
 **Parent:** [TASK-179](./TASK-179_Blender_Depth_Normal_And_Object_ID_Auxiliary_Passes.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-05-31
+**Progress:** Changelog 391 ships the default-off auxiliary transmission lane: `VISION_TRANSMIT_AUX_CHANNELS` can append canonical focus-view depth/normal/object-ID captures, captions mark them as advisory geometric enrichment, request builders drop them before primary evidence when image budgets are tight, and compare packet planning keeps auxiliary captures from inflating complexity.
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-179-01](./TASK-179-01_Addon_Object_ID_Depth_And_Normal_Render_Passes.md), [TASK-174](./TASK-174_Per_Image_Caption_Interleaving_For_Vision_Payloads.md)
 **Objective:** Transmit the depth, normal, and object-ID renders to the VLM as labeled auxiliary captures (new `view_kind` values), captioned per TASK-174, with budget-aware inclusion and explicit advisory framing. The auxiliary captures flow through the existing capture orchestration and transport without breaking the flat IMAGES roster, the image budget, or the external payload contract.
-**Repository Touchpoints:** `server/adapters/mcp/vision/capture_runtime.py`, `server/adapters/mcp/vision/capture.py`, `server/adapters/mcp/contracts/vision.py`, `server/adapters/mcp/vision/prompting.py`, `server/adapters/mcp/vision/config.py`, `server/adapters/mcp/vision/runner.py`, `tests/unit/adapters/mcp/test_contract_payload_parity.py`, `tests/e2e/vision/test_external_contract_profile_compare_path.py`
+**Repository Touchpoints:** `server/adapters/mcp/vision/capture_runtime.py`, `server/adapters/mcp/vision/capture.py`, `server/adapters/mcp/contracts/vision.py`, `server/adapters/mcp/vision/prompting.py`, `server/adapters/mcp/vision/config.py`, `server/adapters/mcp/vision/runtime.py`, `server/adapters/mcp/areas/reference.py`, `server/adapters/mcp/areas/reference_compare_packets.py`, `blender_addon/application/handlers/scene_viewport_mixin.py`, `tests/unit/adapters/mcp/test_vision_capture_runtime.py`, `tests/unit/adapters/mcp/test_vision_capture_bundle.py`, `tests/unit/adapters/mcp/test_vision_prompting.py`, `tests/unit/adapters/mcp/test_reference_compare_packets.py`, `tests/e2e/tools/scene/test_scene_get_depth_pass.py`, `tests/e2e/tools/scene/test_scene_get_normal_pass.py`
 **Acceptance Criteria:**
 - `VisionCaptureImageContract.view_kind` (`server/adapters/mcp/contracts/vision.py:22`) gains auxiliary kinds (e.g. `"depth"`, `"normal"`, `"object_id"`) so auxiliary renders are typed distinctly from `wide` / `focus` / `overlay` / `reference`
 - `capture_runtime.py` can append auxiliary captures for a canonical view from the TASK-179-01 geometry-pass call, with deterministic labels and reversible scene handling, without changing the default `SOLID` view-set
@@ -13,17 +15,38 @@
 - including auxiliary captures is **budget-aware**: the request never exceeds `effective_max_images`, so `runner.py:170` still accepts it; when the budget is tight, auxiliary captures are dropped before primary captures and the drop is reported
 - the external payload (`prompting.py` flat IMAGES roster) and the external contract profile path stay valid with auxiliary captures present
 
+## Completion Summary
+
+- Added `VISION_TRANSMIT_AUX_CHANNELS` and threaded it through
+  `VisionRuntimeConfig`, staged reference compare, packet compare, and macro
+  capture-bundle request building. It remains default-off in `.env.example`.
+- `capture_stage_images(...)` can append depth, normal, and object-ID auxiliary
+  images for one canonical focus preset. Object-ID auxiliary transmission reuses
+  the already-rendered `object_id_artifact`; depth/normal render from the same
+  `USER_PERSPECTIVE` framing.
+- Request builders keep auxiliary captures out of default payloads, include them
+  only when explicitly enabled, report disabled or budget-dropped auxiliary
+  labels in `metadata["auxiliary_captures"]`, and preserve primary captures
+  ahead of auxiliary images under tight budgets.
+- Compare packet planning treats auxiliary captures as same-view packet evidence
+  but excludes them from complexity-tier capture counts, so enabling the channel
+  does not turn a simple front packet into `super_complex` by itself.
+- Per-image captions now add `channel=relative_depth`,
+  `channel=surface_normal`, or `channel=object_id_mask` plus
+  `advisory=geometric_enrichment_not_truth_source`.
+- Blender depth and normal passes now support
+  `camera_name="USER_PERSPECTIVE"` through the same temporary-camera mirror
+  path already used by object-ID, including restoration of active object and
+  selected-object state after the temporary camera is removed.
+- The external payload builder now receives resolved model capabilities when it
+  emits `requested_json_keys`, so weak-model schemas and payload text do not
+  disagree about whether `findings` is allowed.
+
 ## Implementation Notes
 
-- Transport today is caption-blind and flat: `capture.py:_capture_to_image_input`
-  (`:20-30`) maps each `VisionCaptureImageContract` to a bare `VisionImageInput`
-  with only `label` + `media_type`; the prompt's flat `IMAGES:` roster
-  (`server/adapters/mcp/vision/prompting.py:~497/511`) lists images without
-  per-image captions, and the backends append images as bare blobs. TASK-174 owns
-  the per-image caption interleaving; this slice depends on it to attach an
-  advisory caption to each auxiliary render. Until TASK-174 lands, this slice can
-  still type and route auxiliary captures, but the caption text must be wired
-  through the TASK-174 mechanism rather than duplicated here.
+- Transport now uses the TASK-174 per-image caption path. Auxiliary captures are
+  still listed in the lean roster, while the image-interleaved caption carries
+  the channel identity and advisory framing.
 - New `view_kind` values: extend the `Literal` on
   `VisionCaptureImageContract.view_kind` (`contracts/vision.py:22`) to include
   the auxiliary kinds. `view_kind` is consumed by selection logic such as
@@ -106,12 +129,13 @@ def append_auxiliary_captures(captures, scene_handler, preset, stage, bundle_id,
 
 ## Tests To Add/Update
 
-- `tests/unit/adapters/mcp/test_contract_payload_parity.py`
-- `tests/e2e/vision/test_external_contract_profile_compare_path.py`
-- a focused unit lane asserting: new `view_kind` round-trips through
-  `VisionCaptureImageContract`; auxiliary captures are appended only within
-  budget; budget-tight runs drop auxiliary captures first and report the drop;
-  silhouette focus-view selection does not pick up auxiliary kinds
+- `tests/unit/adapters/mcp/test_vision_capture_runtime.py`
+- `tests/unit/adapters/mcp/test_vision_capture_bundle.py`
+- `tests/unit/adapters/mcp/test_vision_prompting.py`
+- `tests/unit/adapters/mcp/test_vision_runtime_config.py`
+- `tests/unit/adapters/mcp/test_reference_compare_packets.py`
+- `tests/e2e/tools/scene/test_scene_get_depth_pass.py`
+- `tests/e2e/tools/scene/test_scene_get_normal_pass.py`
 
 ## Docs To Update
 
@@ -121,19 +145,20 @@ def append_auxiliary_captures(captures, scene_handler, preset, stage, bundle_id,
 
 ## Changelog Impact
 
-- add/update the historical `_docs/_CHANGELOG/*` entry when this slice lands
+- `_docs/_CHANGELOG/391-2026-05-31-task-179-auxiliary-channel-transmission.md`
 
 ## Status / Board Update
 
 - board tracking remains on umbrella `TASK-179`
-- no separate promoted board-row change is expected for this subtask unless it
-  later becomes a standalone follow-on
+- `TASK-179-03` is closed; remaining open work under the umbrella is
+  `TASK-179-02` fixture-calibrated per-object IoU threshold closeout
 
 ## Validation Commands
 
 - `git diff --check`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
-- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_external_contract_profile_compare_path.py -q`
+- `poetry run ruff check server/adapters/mcp/areas/reference.py server/adapters/mcp/areas/reference_compare_packets.py server/adapters/mcp/vision/capture.py server/adapters/mcp/vision/capture_runtime.py server/adapters/mcp/vision/integration.py server/adapters/mcp/vision/prompting.py tests/unit/adapters/mcp/test_vision_capture_runtime.py tests/unit/adapters/mcp/test_vision_capture_bundle.py tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_reference_compare_packets.py tests/e2e/tools/scene/test_scene_get_depth_pass.py tests/e2e/tools/scene/test_scene_get_normal_pass.py`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_capture_runtime.py tests/unit/adapters/mcp/test_vision_capture_bundle.py tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_reference_compare_packets.py -q`
+- `PYTEST_ADDOPTS='-k "depth_pass_supports_user_perspective_view or normal_pass_supports_user_perspective_view"' poetry run python scripts/run_e2e_tests.py`
 - `PYTHONPATH=. poetry run pytest ./tests/unit`
 - `poetry run python scripts/run_e2e_tests.py`
 

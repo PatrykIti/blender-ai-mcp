@@ -1,7 +1,7 @@
 # TASK-179: Blender Depth, Normal And Object-ID Auxiliary Passes
 
 **Status:** 🚧 In Progress
-**Progress:** TASK-179-02 (deterministic per-object silhouette IoU primitive) shipped 2026-05-30 via changelog 376. Follow-on (addon + E2E): TASK-179-01 object-ID/depth/normal compositor passes, TASK-179-03 auxiliary-channel transmission.
+**Progress:** TASK-179-01 addon depth/object-ID/normal render passes shipped via changelogs 386-388. TASK-179-02 now has the object-ID index-map IoU helper, `ISceneTool` pass-method surface, support-evidence projection substrate from changelog 389, and live staged-compare population via an internal `object_id_artifact` sidecar from changelog 390. TASK-179-03 shipped the default-off depth/normal/object-ID auxiliary-channel transmission/caption path via changelog 391. Remaining open: TASK-179-02 fixture-calibrated per-object thresholds/documented closeout.
 **Priority:** 🔴 High
 **Category:** Vision / Geometric Evidence (Addon Render)
 **Estimated Effort:** Large
@@ -75,11 +75,12 @@ viewport API supports other modes:
 Blender can emit depth / normal / object-index passes for the *same* camera
 essentially for free, and an object-index (Object Index / `pass_index`)
 compositor pass yields deterministic per-object masks **without SAM**. The repo
-already has the segmentation-shaped contracts to receive part-aware evidence
-(`ReferencePartSegmentationContract` and `ReferencePartSegmentationPartContract`
-in `server/adapters/mcp/contracts/reference.py:769-786`) but they are currently
-only fed by the optional default-off sidecar; nothing populates them from a
-deterministic first-party pass.
+already has typed surfaces for part-aware evidence. As of changelog 390, staged
+compare can now populate capture-side object-ID IoU in
+`ReferenceSilhouetteAnalysisContract.per_object_metrics` from a deterministic
+first-party pass. As of changelog 391, the same focus-view framing can also
+transmit default-off depth/normal/object-ID auxiliary images to the VLM with
+advisory captions and budget-drop metadata.
 
 ## Business Outcome
 
@@ -197,8 +198,9 @@ After this umbrella lands:
 
 ## Changelog Impact
 
-- planning-only now; add a `_docs/_CHANGELOG/*` entry when the first slice lands
-- do not treat this planning-only task creation as the changelog event
+- completed implementation entries: changelogs 386, 387, 388, 389, 390, and 391
+- add another `_docs/_CHANGELOG/*` entry when the remaining TASK-179-02
+  threshold-calibration closeout lands
 
 ## Status / Board Update
 

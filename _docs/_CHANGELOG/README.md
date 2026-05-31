@@ -6,6 +6,10 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [392](./392-2026-05-31-task-180-live-mark-overlay-capture.md) | 2026-05-31 | **TASK-180-01 live Set-of-Mark overlay capture** | - |
+| [391](./391-2026-05-31-task-179-auxiliary-channel-transmission.md) | 2026-05-31 | **TASK-179-03 auxiliary-channel transmission** | - |
+| [390](./390-2026-05-31-task-179-live-object-id-sidecar-iou.md) | 2026-05-31 | **TASK-179 live object-ID sidecar IoU** | - |
+| [389](./389-2026-05-30-vision-output-quality-audit-fixes.md) | 2026-05-30 | **Vision output quality audit fixes** | - |
 | [388](./388-2026-05-30-task-179-addon-normal-pass.md) | 2026-05-30 | **TASK-179-01 addon surface-normal render pass** | - |
 | [387](./387-2026-05-30-task-179-addon-object-id-pass.md) | 2026-05-30 | **TASK-179-01 addon object-ID mask render pass** | - |
 | [386](./386-2026-05-30-task-179-addon-depth-pass.md) | 2026-05-30 | **TASK-179-01 addon Z-depth render pass** | - |

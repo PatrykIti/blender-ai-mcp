@@ -5,6 +5,7 @@
 **Priority:** 🔴 High
 **Category:** Vision / Reliability And Observability
 **Estimated Effort:** Medium
+**Completion Summary:** Shipped via changelog [370](../_CHANGELOG/370-2026-05-30-task-176-capture-failure-and-truncation-signals.md) and refreshed by changelog 389. Capture reliability, analysis-unusable, parser truncation, and packet-synthesis truncation accounting now surface `evidence_truncated` / `omitted_count` instead of silently dropping capped evidence.
 **Follow-on After:** [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md), [TASK-173](./TASK-173_Reference_Guided_Creature_Scope_Convergence_And_Optional_Grounding_Followups.md)
 **Related:** [TASK-167](./TASK-167_Cross_Module_Debug_Profile_Registry_And_Runtime_Logging.md), [TASK-169](./TASK-169_Reference_Guided_Quality_Drift_Regression_And_Runtime_Authority.md)
 

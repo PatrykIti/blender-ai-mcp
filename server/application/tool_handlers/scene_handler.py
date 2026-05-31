@@ -122,8 +122,10 @@ class SceneToolHandler(ISceneTool):
 
         On success returns ``{"image": <base64 PNG>, "index_map": {index: name},
         "missing": [...]}`` so the server can threshold per-object masks without an
-        external segmentation model. Returns an error string when no usable camera
-        or object is available. The addon method is reversible and headless-safe.
+        external segmentation model. Pass ``camera_name="USER_PERSPECTIVE"`` to
+        mirror the active 3D viewport when available; headless/background calls
+        fall back to the scene camera. Returns an error string when no usable
+        camera or object is available. The addon method is reversible.
         """
 
         args = {

@@ -12091,6 +12091,17 @@ def test_reference_iterate_stage_checkpoint_tracks_previous_focus_and_iteration(
             "reference_count": 2,
             "reference_ids": ["ref_1", "ref_2"],
             "reference_labels": ["front_ref", "side_ref"],
+            "silhouette_analysis": {
+                "status": "available",
+                "reference_label": "front_ref",
+                "capture_label": "target_front_after",
+                "target_view": "front",
+                "mask_extraction_mode": "alpha_or_otsu_largest_component",
+                "alignment_mode": "bbox_normalized",
+                "consistency_score": 0.5,
+                "metrics": [],
+                "notes": [],
+            },
             "correction_candidates": [
                 {
                     "candidate_id": "vision:head_silhouette",
@@ -12136,6 +12147,10 @@ def test_reference_iterate_stage_checkpoint_tracks_previous_focus_and_iteration(
             **first_compare.model_dump(mode="json"),
             "checkpoint_id": "checkpoint_2",
             "checkpoint_label": "stage_2",
+            "silhouette_analysis": {
+                **first_compare.silhouette_analysis.model_dump(mode="json"),
+                "consistency_score": 0.66,
+            },
             "vision_assistant": {
                 **first_compare.vision_assistant.model_dump(mode="json"),
                 "result": {
@@ -12183,6 +12198,9 @@ def test_reference_iterate_stage_checkpoint_tracks_previous_focus_and_iteration(
     assert second.prior_correction_focus == ["Head silhouette"]
     assert second.repeated_correction_focus == ["Head silhouette"]
     assert second.loop_disposition == "continue_build"
+    assert second.silhouette_analysis is not None
+    assert second.silhouette_analysis.iou_convergence is not None
+    assert second.silhouette_analysis.iou_convergence.verdict == "improved"
 
 
 def test_reference_iterate_stage_checkpoint_escalates_after_repeated_focus(monkeypatch):

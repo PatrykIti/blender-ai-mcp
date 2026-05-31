@@ -122,6 +122,9 @@ class VisionRuntimeConfig(BaseModel):
     max_input_chars: int = Field(default=12000, ge=1)
     max_tokens: int = Field(default=400, ge=1)
     timeout_seconds: float = Field(default=20.0, gt=0)
+    capture_grid_enabled: bool = False
+    transmit_auxiliary_channels: bool = False
+    mark_overlay_enabled: bool = False
     transformers_local: VisionTransformersLocalConfig | None = None
     mlx_local: VisionMLXLocalConfig | None = None
     openai_compatible_external: VisionOpenAICompatibleConfig | None = None

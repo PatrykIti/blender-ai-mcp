@@ -356,6 +356,34 @@ class TestViewportControl(unittest.TestCase):
         self.assertEqual(scene.camera, temp_camera)
         self.assertEqual(temp_camera.data.type, "ORTHO")
 
+    def test_mirror_user_view_to_temp_camera_uses_view_matrix_when_operator_poll_fails(self):
+        temp_camera = MagicMock()
+        temp_camera.data = MagicMock()
+        temp_camera.data.type = "PERSP"
+        bpy.context.active_object = temp_camera
+        scene = MagicMock()
+        matrix_world = MagicMock(name="matrix_world")
+        self.mock_space.region_3d.view_matrix.inverted.return_value = matrix_world
+        self.mock_space.region_3d.view_perspective = "ORTHO"
+        self.mock_space.region_3d.view_distance = 4.25
+        self.mock_override.__exit__.return_value = False
+        bpy.ops.view3d.camera_to_view.side_effect = RuntimeError("poll failed")
+
+        mirrored = self.handler._mirror_user_view_to_temp_camera(
+            scene,
+            self.mock_area,
+            self.mock_region,
+            self.mock_space,
+        )
+
+        bpy.ops.object.camera_add.assert_called_once()
+        bpy.ops.view3d.camera_to_view.assert_called_once()
+        self.assertEqual(mirrored, temp_camera)
+        self.assertEqual(scene.camera, temp_camera)
+        self.assertEqual(temp_camera.matrix_world, matrix_world)
+        self.assertEqual(temp_camera.data.type, "ORTHO")
+        self.assertEqual(temp_camera.data.ortho_scale, 4.25)
+
     def test_mirror_user_view_to_temp_camera_cleans_temp_camera_when_view_copy_fails(self):
         temp_camera = MagicMock()
         temp_camera.data = MagicMock()
@@ -364,6 +392,7 @@ class TestViewportControl(unittest.TestCase):
         scene = MagicMock()
         scene.camera = original_camera
         self.mock_override.__exit__.return_value = False
+        self.mock_space.region_3d.view_matrix = None
         bpy.ops.view3d.camera_to_view.side_effect = RuntimeError("camera copy failed")
 
         with self.assertRaisesRegex(RuntimeError, "camera copy failed"):

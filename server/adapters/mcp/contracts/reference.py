@@ -45,7 +45,9 @@ ReferenceLocalizedSupportReasonLiteral = Literal[
     "seam_unclear",
     "mask_needed",
 ]
-ReferenceCompareSupportEvidenceKindLiteral = Literal["silhouette_metric", "action_hint", "part_segmentation"]
+ReferenceCompareSupportEvidenceKindLiteral = Literal[
+    "silhouette_metric", "per_object_iou", "action_hint", "part_segmentation"
+]
 ReferencePlannerSourceLiteral = Literal[
     "vision",
     "truth",
@@ -112,38 +114,61 @@ ReferenceUnderstandingAttachmentRelationLiteral = Literal[
 class ReferenceUnderstandingSubjectContract(MCPContract):
     """Bounded subject classification derived from attached references."""
 
-    label: str
-    category: ReferenceUnderstandingSubjectCategoryLiteral = "unknown"
-    confidence: float | None = None
-    uncertainty_notes: list[str] = []
+    label: str = Field(description="Short subject label inferred from the attached reference images.")
+    category: ReferenceUnderstandingSubjectCategoryLiteral = Field(
+        default="unknown", description="Controlled high-level subject family used for downstream build policy."
+    )
+    confidence: float | None = Field(
+        default=None, ge=0.0, le=1.0, description="Advisory classifier confidence in [0,1]; not a truth source."
+    )
+    uncertainty_notes: list[str] = Field(
+        default_factory=list, description="Short caveats explaining ambiguity in the subject classification."
+    )
 
 
 class ReferenceUnderstandingStyleContract(MCPContract):
     """Controlled style classification for pre-build reference understanding."""
 
-    style_label: ReferenceUnderstandingStyleLiteral = "unknown"
-    confidence: float | None = None
-    notes: list[str] = []
+    style_label: ReferenceUnderstandingStyleLiteral = Field(
+        default="unknown", description="Controlled visual style label used to choose build and finish policy."
+    )
+    confidence: float | None = Field(
+        default=None, ge=0.0, le=1.0, description="Advisory style confidence in [0,1]; deterministic checks still win."
+    )
+    notes: list[str] = Field(default_factory=list, description="Bounded style cues visible in the reference images.")
 
 
 class ReferenceUnderstandingPartContract(MCPContract):
     """One candidate required part or detail derived from references."""
 
-    part_label: str
-    target_label: str | None = None
-    construction_hint: str | None = None
-    priority: Literal["high", "normal"] = "normal"
-    source_reference_ids: list[str] = []
+    part_label: str = Field(description="Human-readable part/detail name visible in the references.")
+    target_label: str | None = Field(
+        default=None,
+        description="Canonical role label when known, e.g. body_core, head_mass, tail_mass, or ear_pair.",
+    )
+    construction_hint: str | None = Field(
+        default=None, description="Advisory modeling hint for constructing this part; not executable code."
+    )
+    priority: Literal["high", "normal"] = Field(
+        default="normal", description="Advisory ordering hint for build planning."
+    )
+    source_reference_ids: list[str] = Field(
+        default_factory=list, description="Reference image ids that support this part cue."
+    )
 
 
 class ReferenceUnderstandingViewContract(MCPContract):
     """One normalized reference-view observation derived from active references."""
 
-    view_id: ReferenceUnderstandingViewLiteral = "unknown"
-    detected: bool = False
-    confidence: float | None = None
-    reference_ids: list[str] = []
-    key_features: list[str] = []
+    view_id: ReferenceUnderstandingViewLiteral = Field(
+        default="unknown", description="Normalized view direction represented by the reference image."
+    )
+    detected: bool = Field(default=False, description="True when this view was confidently detected.")
+    confidence: float | None = Field(
+        default=None, ge=0.0, le=1.0, description="Advisory view-detection confidence in [0,1]."
+    )
+    reference_ids: list[str] = Field(default_factory=list, description="Reference ids that show this view.")
+    key_features: list[str] = Field(default_factory=list, description="Short visible cues found in this view.")
 
 
 class ReferenceUnderstandingAssemblyPartContract(MCPContract):
@@ -820,6 +845,38 @@ class ReferenceSilhouetteMetricContract(MCPContract):
     severity: Literal["high", "medium", "low"] = "medium"
 
 
+class ReferencePerObjectSilhouetteMetricContract(MCPContract):
+    """One deterministic object-ID-mask IoU metric for a named scene object."""
+
+    object_name: str = Field(description="Scene object decoded from the object-ID pass index map.")
+    object_index: int | None = Field(default=None, description="Integer pass-index band used for this object.")
+    status: Literal["available", "unavailable"] = Field(
+        default="unavailable", description="Whether a stable object-ID mask could be decoded and compared."
+    )
+    mask_iou: float | None = Field(
+        default=None,
+        ge=0.0,
+        le=1.0,
+        description="BBox-normalized IoU between the reference mask and this object's decoded mask.",
+    )
+    severity: Literal["high", "medium", "low"] = Field(
+        default="medium", description="Advisory severity derived from the per-object IoU value."
+    )
+    notes: list[str] = Field(default_factory=list, description="Decode or comparison caveats for this object.")
+
+
+class ReferenceSilhouetteConvergenceContract(MCPContract):
+    """Deterministic IoU convergence between two correction-loop checkpoints."""
+
+    status: Literal["ok", "unavailable"] = Field(description="Whether previous/current IoU values were comparable.")
+    previous_iou: float | None = Field(default=None, ge=0.0, le=1.0, description="Previous loop IoU when available.")
+    current_iou: float | None = Field(default=None, ge=0.0, le=1.0, description="Current loop IoU when available.")
+    delta: float | None = Field(default=None, description="Current minus previous IoU; positive means improvement.")
+    verdict: Literal["improved", "regressed", "stalled", "unknown"] = Field(
+        description="Bounded deterministic trend verdict for the correction loop."
+    )
+
+
 class ReferenceActionHintContract(MCPContract):
     """One typed corrective hint derived from deterministic perception metrics."""
 
@@ -853,14 +910,36 @@ class ReferenceViewDiagnosticsHintContract(MCPContract):
 class ReferenceSilhouetteAnalysisContract(MCPContract):
     """Deterministic silhouette-analysis payload attached to staged compare responses."""
 
-    status: Literal["available", "unavailable"] = "unavailable"
-    reference_label: str | None = None
-    capture_label: str | None = None
-    target_view: str | None = None
-    mask_extraction_mode: Literal["alpha_or_otsu_largest_component", "unavailable"] = "unavailable"
-    alignment_mode: Literal["bbox_normalized", "unavailable"] = "unavailable"
-    metrics: list[ReferenceSilhouetteMetricContract] = []
-    notes: list[str] = []
+    status: Literal["available", "unavailable"] = Field(
+        default="unavailable", description="Whether deterministic silhouette metrics were computed for this pair."
+    )
+    reference_label: str | None = Field(
+        default=None, description="Reference image label used as the comparison anchor."
+    )
+    capture_label: str | None = Field(default=None, description="Capture label compared against the reference image.")
+    target_view: str | None = Field(default=None, description="Normalized view token for this comparison when known.")
+    mask_extraction_mode: Literal["alpha_or_otsu_largest_component", "unavailable"] = Field(
+        default="unavailable", description="Deterministic mask extraction method used before metric computation."
+    )
+    alignment_mode: Literal["bbox_normalized", "unavailable"] = Field(
+        default="unavailable", description="Deterministic alignment method used before comparing masks."
+    )
+    consistency_score: float | None = Field(
+        default=None,
+        ge=0.0,
+        le=1.0,
+        description="Lightweight deterministic render-vs-reference consistency score; currently mask IoU.",
+    )
+    iou_convergence: ReferenceSilhouetteConvergenceContract | None = Field(
+        default=None, description="Previous/current IoU trend for the active correction loop."
+    )
+    metrics: list[ReferenceSilhouetteMetricContract] = Field(
+        default_factory=list, description="Bounded deterministic metrics such as IoU and contour drift."
+    )
+    per_object_metrics: list[ReferencePerObjectSilhouetteMetricContract] = Field(
+        default_factory=list, description="Optional object-ID-mask IoU metrics keyed to named scene objects."
+    )
+    notes: list[str] = Field(default_factory=list, description="Short caveats or failure reasons for the analysis.")
 
 
 class ReferencePartSegmentationLandmarkContract(MCPContract):
@@ -874,21 +953,29 @@ class ReferencePartSegmentationLandmarkContract(MCPContract):
 class ReferencePartSegmentationPartContract(MCPContract):
     """One optional part-aware segmentation artifact for a creature region."""
 
-    part_label: str
-    mask_path: str | None = None
-    crop_path: str | None = None
-    confidence: float | None = None
-    landmarks: list[ReferencePartSegmentationLandmarkContract] = []
+    part_label: str = Field(description="Canonical or provider-local part label for this segmented region.")
+    mask_path: str | None = Field(default=None, description="Optional local mask artifact path for this part.")
+    crop_path: str | None = Field(default=None, description="Optional local crop artifact path for this part.")
+    confidence: float | None = Field(
+        default=None, ge=0.0, le=1.0, description="Advisory sidecar confidence in [0,1]; not deterministic truth."
+    )
+    landmarks: list[ReferencePartSegmentationLandmarkContract] = Field(
+        default_factory=list, description="Optional bounded 2D landmarks emitted by the segmentation sidecar."
+    )
 
 
 class ReferencePartSegmentationContract(MCPContract):
     """Optional vendor-neutral sidecar payload for part-aware creature perception."""
 
-    status: Literal["disabled", "available", "unavailable"] = "disabled"
-    provider_name: str | None = None
-    advisory_only: bool = True
-    parts: list[ReferencePartSegmentationPartContract] = []
-    notes: list[str] = []
+    status: Literal["disabled", "available", "unavailable"] = Field(
+        default="disabled", description="Sidecar availability status for this compare request."
+    )
+    provider_name: str | None = Field(default=None, description="Configured segmentation provider name when enabled.")
+    advisory_only: bool = Field(default=True, description="Always true: segmentation helps targeting but is not truth.")
+    parts: list[ReferencePartSegmentationPartContract] = Field(
+        default_factory=list, description="Bounded part segmentation outputs accepted from the sidecar."
+    )
+    notes: list[str] = Field(default_factory=list, description="Short sidecar status notes or failure reasons.")
 
 
 class ReferenceCompareStageCheckpointResponseContract(MCPContract):

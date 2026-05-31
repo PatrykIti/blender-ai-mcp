@@ -74,6 +74,29 @@ def test_object_id_pass_reports_missing_objects(scene_handler, rpc_client):
         pytest.skip(f"Blender not available: {e}")
 
 
+def test_object_id_pass_supports_user_perspective_view(scene_handler, rpc_client):
+    """USER_PERSPECTIVE object-ID pass mirrors the active 3D viewport framing."""
+
+    try:
+        scene_handler.clean_scene(keep_lights_and_cameras=True)
+        rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE", "name": "IdUserCube"})
+        scene_handler.set_standard_view("FRONT")
+        scene_handler.camera_focus("IdUserCube")
+
+        result = scene_handler.get_object_id_pass(
+            object_names=["IdUserCube"],
+            width=200,
+            height=150,
+            camera_name="USER_PERSPECTIVE",
+        )
+
+        assert isinstance(result, dict), f"expected dict, got {result!r}"
+        assert _looks_like_png(result["image"]), "USER_PERSPECTIVE object-id image is not a valid PNG"
+        assert set(result["index_map"].values()) == {"IdUserCube"}
+    except RuntimeError as e:
+        pytest.skip(f"Blender not available: {e}")
+
+
 def test_object_id_pass_is_reversible(scene_handler, rpc_client):
     """The pass restores render engine/resolution and object pass_index values."""
 

@@ -3,7 +3,7 @@
 **Parent:** [TASK-177](./TASK-177_Reachable_Rich_Multi_View_Capture_And_Top_View_Default.md)
 **Status:** ✅ Done
 **Completed:** 2026-05-30
-**Completion Note:** Deterministic labelled grid composite (build_labeled_view_grid) shipped (changelog 384). Wiring it into the live capture path behind a config flag is a small additive follow-up.
+**Completion Note:** Deterministic labelled grid composite (`build_labeled_view_grid`) shipped in changelog 384 and live capture-path wiring shipped in changelog 389. The path is default-off behind `VISION_CAPTURE_GRID_ENABLED`, surfaces `VisionRuntimeConfig.capture_grid_enabled`, emits `view_kind="grid"` captures, preserves grid captions through `VisionImageInput.view_kind`, and replaces transmitted selected views with the bounded grid image when enabled.
 **Priority:** 🟢 Low
 **Follow-on After:** [TASK-177-01](./TASK-177-01_Decouple_Capture_From_Transmission_And_Budget_Aware_Selection.md), [TASK-177-02](./TASK-177-02_Orthographic_Top_And_Oblique_Default_Capture_Presets.md)
 **Objective:** Optionally composite the selected views into a single labeled grid image (IG-VLM style) for models/budgets where one annotated montage outperforms many separate images, behind a default-off config flag, with each cell labeled by its view kind and captioned per [TASK-174](./TASK-174_Per_Image_Caption_Interleaving_For_Vision_Payloads.md).

@@ -70,6 +70,7 @@ Hard rules:
 | `TASK-158` | Post-`TASK-157` follow-on for docs alignment plus bounded reference-understanding and optional-perception readiness work |
 | `TASK-163` | Closed umbrella that shipped compact orchestrator-facing RU/runtime feedback, session strategy state, and the first optional perception follow-ons |
 | `TASK-166` | Staged compare/RU consumer that packetizes compare evidence, keeps packet provenance on additive `compare_diagnostics`, and feeds compact packet uncertainty into `reference_orchestrator_feedback` |
+| `TASK-174`-`TASK-183` | Vision Output Quality wave: caption interleaving, self-describing contracts, truncation and analysis-unusable signals, budget-aware multi-view capture/grid transmission, structured findings, deterministic depth/normal/object-ID support, Set-of-Mark follow-ons, graph compare follow-ons, Critic/Verify follow-ons, and capability-aware schema/cross-checking |
 | `TASK-135` | First creature consumer of the gate substrate |
 | `TASK-135-03` | First low-poly form-refinement consumer; owns the faceted refinement stage and any creature profile macros |
 | `TASK-136` | Closed architecture/building domain consumer for `architectural_mass` references, plan/elevation/facade interpretation, and bounded building reconstruction on the existing RU/gate/packet surfaces |
@@ -155,6 +156,16 @@ guided/reference surfaces:
   `reference_iterate_stage_checkpoint(...)` mirror the same typed linkage so
   later checkpoint loops can reuse the current pre-build understanding without a
   second discovery surface
+- staged compare/iterate now keep audit-repaired evidence boundaries: packet
+  synthesis surfaces truncation counts, confidence is clamped and
+  non-authoritative, optional grid captures use `view_kind="grid"`,
+  per-object object-ID IoU is live as a capture-side internal sidecar,
+  `VISION_TRANSMIT_AUX_CHANNELS` can transmit default-off depth/normal/object-ID
+  auxiliary images with advisory captions, `VISION_MARK_OVERLAY_ENABLED` can
+  append default-off Set-of-Mark overlay captures with typed mark-id maps,
+  fixture-calibrated per-object thresholds remain an open follow-on, silhouette
+  consistency is advisory support evidence, and capability-aware external
+  schemas/payloads avoid leaking raw internal `metadata`
 - `scripts/vision_harness.py` now keeps the default live-backend flow, but also
   exposes an explicit providerless `--fixture-only reference-understanding`
   path for bounded fixture/eval work

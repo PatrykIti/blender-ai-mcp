@@ -84,6 +84,18 @@ def test_build_marks_from_object_masks_assigns_stable_sorted_ids(tmp_path: Path)
     assert body_mark[1] < head_mark[1] and body_mark[2] < head_mark[2]
 
 
+def test_build_marks_from_object_masks_preserves_ids_for_unmarked_objects(tmp_path: Path):
+    body = tmp_path / "body.png"
+    head = tmp_path / "head.png"
+    _write_blank(body)
+    _write_filled_rect(head, box=(120, 120, 180, 180))
+
+    marks, mapping = build_marks_from_object_masks({"Head": str(head), "Body": str(body)})
+
+    assert mapping == {2: "Head"}
+    assert [mark_id for mark_id, _x, _y in marks] == [2]
+
+
 class _MaskHandler:
     """Mock scene handler whose isolated render places the object's silhouette at a
     distinct position, so per-object centroids differ."""

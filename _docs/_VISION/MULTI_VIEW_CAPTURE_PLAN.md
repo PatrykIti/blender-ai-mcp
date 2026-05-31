@@ -23,10 +23,21 @@ Already implemented:
 
 - deterministic capture bundle contract
 - runtime capture helpers
-- current preset scaffold:
+- current compact preset scaffold:
   - `context_wide`
-  - `target_focus`
-  - `target_oblique`
+  - `target_front`
+  - `target_side`
+  - `target_top`
+- richer candidate capture can be selected down to the effective image budget
+  before transmission
+- optional labeled multi-view grid transmission is available behind
+  `VISION_CAPTURE_GRID_ENABLED`; when enabled, selected per-image captures are
+  composited into bounded `view_kind="grid"` images with grid-aware captions
+- optional Set-of-Mark overlay capture is available behind
+  `VISION_MARK_OVERLAY_ENABLED`; when enabled, focus captures can append a
+  supplemental `view_kind="overlay"` image with typed mark ids mapped back to
+  scene objects. Overlay captures stay outside grid composites and are dropped
+  before primary captures when the image budget is tight.
 - goal-scoped reference images
 - request-bound macro MCP attachment of `capture_bundle` and `vision_assistant`
 
@@ -128,6 +139,10 @@ The target visual evidence bundle should be closer to an 8-image set:
 
 Reference images should be selected and attached alongside this bundle using
 goal/object/view-aware filtering.
+
+The default runtime still keeps oblique 3/4 promotion as explicit follow-on
+work (`TASK-177-02`). Do not document the oblique compact view as a shipped
+default until the preset and E2E assertions land.
 
 ## Camera Strategy
 

@@ -1,8 +1,8 @@
 # TASK-179-02: Per-Object Mask IoU In Silhouette Evidence
 
 **Parent:** [TASK-179](./TASK-179_Blender_Depth_Normal_And_Object_ID_Auxiliary_Passes.md)
-**Status:** ✅ Done
-**Completed:** 2026-05-30
+**Status:** 🚧 In Progress
+**Progress:** Changelog 389 closes the helper/contract drift: `compute_per_object_iou(...)` decodes object-ID pass bands using the `{pass_index: object_name}` map, reports typed unavailable statuses for missing entries, and `reference_silhouette.py` can project supplied per-object metrics as `evidence_kind="per_object_iou"`. Changelog 390 wires live staged compare population: `capture_stage_images(...)` attaches an internal `object_id_artifact` sidecar to the canonical focus capture, `scene.get_object_id_pass(camera_name="USER_PERSPECTIVE")` mirrors the active viewport through a temporary camera, and `build_silhouette_analysis_payload(...)` populates `per_object_metrics` from that sidecar while keeping the sidecar separate from default VLM image transmission. Changelog 391 separately closes TASK-179-03's default-off auxiliary-image transmission lane. Remaining work: calibrate/document the per-object severity thresholds against `tests/fixtures/vision_eval` before closing this subtask.
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-179-01](./TASK-179-01_Addon_Object_ID_Depth_And_Normal_Render_Passes.md)
 **Objective:** Extend `silhouette.py` to compute deterministic per-object mask IoU from the object-ID pass produced by TASK-179-01, in addition to the existing whole-frame silhouette IoU, so geometric mismatch can be attributed to a specific registered part instead of only the whole form. The per-object metrics are projected into the staged compare payload through `reference_silhouette.py` and reuse the existing segmentation-shaped contracts, while remaining deterministic and advisory.
@@ -119,14 +119,22 @@ def build_per_object_iou(object_id_image, index_map, reference_region_mask):
 ## Status / Board Update
 
 - board tracking remains on umbrella `TASK-179`
-- no separate promoted board-row change is expected for this subtask unless it
-  later becomes a standalone follow-on
+- 2026-05-31: live staged compare population is implemented, but the subtask
+  stays open until per-object severity thresholds are fixture-calibrated and
+  documented
+- validation for the live sidecar slice passed targeted object-ID
+  `USER_PERSPECTIVE` E2E, full unit validation, mypy, and the full Blender E2E
+  runner; see changelog 390 for exact counts and log path
 
 ## Validation Commands
 
 - `git diff --check`
-- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_capture_runtime.py tests/unit/adapters/mcp/test_vision_capture_bundle.py tests/unit/adapters/mcp/test_vision_silhouette.py tests/unit/adapters/mcp/test_reference_compare_packets.py -q`
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_viewport_control.py -q`
+- `PYTEST_ADDOPTS='-k test_object_id_pass_supports_user_perspective_view' poetry run python scripts/run_e2e_tests.py`
+- `poetry run mypy`
 - `PYTHONPATH=. poetry run pytest ./tests/unit`
+- `poetry run python scripts/run_e2e_tests.py`
 
 ## Validation Category
 

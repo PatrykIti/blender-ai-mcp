@@ -88,15 +88,13 @@ def build_marks_from_object_masks(
 
     marks: list[NumberedMark] = []
     mark_id_to_object: dict[int, str] = {}
-    next_id = 1
-    for object_name in sorted(object_mask_paths):
+    for mark_id, object_name in enumerate(sorted(object_mask_paths), start=1):
         centroid = mask_centroid(object_mask_paths[object_name])
         if centroid is None:
             continue
         x, y = centroid
-        marks.append((next_id, x, y))
-        mark_id_to_object[next_id] = object_name
-        next_id += 1
+        marks.append((mark_id, x, y))
+        mark_id_to_object[mark_id] = object_name
     return marks, mark_id_to_object
 
 

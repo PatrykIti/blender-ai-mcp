@@ -218,6 +218,10 @@ class VisionCapabilitySummaryContract(MCPContract):
     requested_max_tokens: int | None = None
     request_mode: str | None = None
     response_healing_enabled: bool | None = None
+    prompt_tokens: int | None = None
+    completion_tokens: int | None = None
+    total_tokens: int | None = None
+    finish_reason: str | None = None
 
 
 class VisionAssistContract(MCPContract):
@@ -278,6 +282,8 @@ class VisionAssistContract(MCPContract):
     )
     confidence: float | None = Field(
         default=None,
+        ge=0.0,
+        le=1.0,
         description=(
             "Non-authoritative self-reported confidence in [0,1]. Advisory only: it is NOT proof of correctness; "
             "rely on deterministic inspection/assertion/silhouette for scene truth."

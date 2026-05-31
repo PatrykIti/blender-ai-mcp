@@ -140,6 +140,9 @@ Technical details.
 | `scene.configure_world` | `configure_world` | Applies grouped world/background settings without taking ownership of arbitrary node-graph authoring, and rejects payloads that cross into full graph rebuild scope. |
 | `scene.get_constraints` | `get_constraints` | Returns object (and optional bone) constraints. |
 | `get_viewport` | `get_viewport` | Returns a base64 encoded viewport/image capture. `USER_PERSPECTIVE` follows the live 3D view and supports bounded `view_name` / orbit / zoom adjustments; named cameras use the scene-camera render path instead. |
+| `scene.get_depth_pass` | `get_depth_pass` | Renders a normalized Z-depth PNG for the active camera/view and restores render/compositor state. `camera_name="USER_PERSPECTIVE"` mirrors the active 3D viewport through a temporary camera when available, falling back to the scene camera for headless/background calls. |
+| `scene.get_object_id_pass` | `get_object_id_pass` | Renders deterministic Object Index mask bands plus an index-to-object map for requested objects, with pass-index state restored on exit. `camera_name="USER_PERSPECTIVE"` mirrors the active 3D viewport through a temporary camera when available, falling back to the scene camera for headless/background calls. |
+| `scene.get_normal_pass` | `get_normal_pass` | Renders a camera-space normal RGB PNG and restores render/compositor state. `camera_name="USER_PERSPECTIVE"` mirrors the active 3D viewport through a temporary camera when available, falling back to the scene camera for headless/background calls. |
 | `scene.get_view_diagnostics` | `get_view_diagnostics` | Returns compact machine-readable view-space diagnostics for one target scope, including projected extent, frame coverage, centering, and visible/partial/occluded/off-frame verdicts for a named camera or the live `USER_PERSPECTIVE` path. |
 | `scene.get_custom_properties` | `get_custom_properties` | Gets custom properties (metadata) from an object. |
 | `scene.set_custom_property` | `set_custom_property` | Sets or deletes a custom property on an object. |
@@ -164,6 +167,13 @@ Technical details.
   - `camera_name="USER_PERSPECTIVE"` captures the live 3D viewport, can apply bounded view/orbit/zoom adjustments, and requires an active 3D view
 - if OpenGL capture is unavailable for `USER_PERSPECTIVE`, the addon mirrors the live view into a temporary camera and falls back through Workbench/Cycles so the result still tracks what the operator saw
 - `scene.get_view_diagnostics` reuses the same named-camera vs `USER_PERSPECTIVE` split and the same bounded user-view adjustment semantics, but returns typed projection/framing/occlusion facts instead of pixels
+- `scene.get_depth_pass`, `scene.get_object_id_pass`, and `scene.get_normal_pass`
+  are first-party geometric evidence channels for the same camera/view; they are
+  deterministic addon render output, but any VLM-facing use stays advisory and
+  cannot pass gates without deterministic inspection/assertion. The object-ID
+  pass also restores every touched object's `pass_index`. The
+  `USER_PERSPECTIVE` path for all three pass types restores its temporary camera
+  plus selection/active object state.
 - when `scene.get_view_diagnostics` mirrors a standard `USER_PERSPECTIVE` view such as `FRONT`, `RIGHT`, or `TOP`, the temporary analysis camera now preserves orthographic projection instead of falling back to perspective framing
 - `scene.measure_gap`, `scene.measure_overlap`, and `scene.assert_contact` now distinguish:
   - `measurement_basis="mesh_surface"` when a bounded evaluated-mesh/BVH path is available for mesh pairs

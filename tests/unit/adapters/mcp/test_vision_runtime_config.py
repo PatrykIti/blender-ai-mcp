@@ -45,6 +45,9 @@ def _base_config(**overrides) -> Config:
         "VISION_MAX_INPUT_CHARS": 12000,
         "VISION_MAX_TOKENS": 400,
         "VISION_TIMEOUT_SECONDS": 20.0,
+        "VISION_CAPTURE_GRID_ENABLED": False,
+        "VISION_TRANSMIT_AUX_CHANNELS": False,
+        "VISION_MARK_OVERLAY_ENABLED": False,
         "VISION_LOCAL_MODEL_ID": None,
         "VISION_LOCAL_MODEL_PATH": None,
         "VISION_LOCAL_DEVICE": "cpu",
@@ -568,6 +571,30 @@ def test_build_vision_runtime_config_threads_input_char_budget():
 
     assert runtime.max_input_chars == 16384
     assert runtime.effective_max_input_chars == 16384
+
+
+def test_build_vision_runtime_config_threads_capture_grid_flag():
+    default_runtime = build_vision_runtime_config(_base_config())
+    runtime = build_vision_runtime_config(_base_config(VISION_CAPTURE_GRID_ENABLED=True))
+
+    assert default_runtime.capture_grid_enabled is False
+    assert runtime.capture_grid_enabled is True
+
+
+def test_build_vision_runtime_config_threads_auxiliary_channel_flag():
+    default_runtime = build_vision_runtime_config(_base_config())
+    runtime = build_vision_runtime_config(_base_config(VISION_TRANSMIT_AUX_CHANNELS=True))
+
+    assert default_runtime.transmit_auxiliary_channels is False
+    assert runtime.transmit_auxiliary_channels is True
+
+
+def test_build_vision_runtime_config_threads_mark_overlay_flag():
+    default_runtime = build_vision_runtime_config(_base_config())
+    runtime = build_vision_runtime_config(_base_config(VISION_MARK_OVERLAY_ENABLED=True))
+
+    assert default_runtime.mark_overlay_enabled is False
+    assert runtime.mark_overlay_enabled is True
 
 
 def test_build_vision_runtime_config_reports_fail_safe_budget_clipping():

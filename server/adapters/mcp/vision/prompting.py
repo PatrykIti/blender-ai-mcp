@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 
 from .backend import VisionImageInput, VisionRequest
-from .config import VisionContractProfile
+from .config import VisionContractProfile, VisionModelCapabilities
 
 # Canonical view tokens that may appear inside a deterministic capture label
 # (e.g. ``target_front_after``). Ordered longest-first so multi-word tokens win.
@@ -26,7 +26,16 @@ _CAPTION_VIEW_TOKENS = (
     "detail",
     "focus",
     "wide",
+    "grid",
+    "depth",
+    "normal",
+    "object_id",
 )
+_AUXILIARY_CAPTION_CHANNELS: dict[str, str] = {
+    "depth": "relative_depth",
+    "normal": "surface_normal",
+    "object_id": "object_id_mask",
+}
 
 
 def _derive_caption_view(label: str | None) -> str | None:
@@ -62,9 +71,13 @@ def format_image_caption(image: VisionImageInput) -> str:
 
     label = image.label or image.role
     parts = [f"image: {label}", f"role={image.role}"]
-    view = _derive_caption_view(image.label)
+    view = image.view_kind or _derive_caption_view(image.label)
     if view is not None:
         parts.append(f"view={view}")
+        auxiliary_channel = _AUXILIARY_CAPTION_CHANNELS.get(view)
+        if auxiliary_channel is not None:
+            parts.append(f"channel={auxiliary_channel}")
+            parts.append("advisory=geometric_enrichment_not_truth_source")
     return "[" + " | ".join(parts) + "]"
 
 
@@ -84,6 +97,34 @@ def _image_roster_lines(request: VisionRequest) -> list[str]:
     """Return the per-image roster lines for a request's images."""
 
     return [format_image_roster_line(image) for image in request.images]
+
+
+def _mark_overlay_lines(request: VisionRequest) -> list[str]:
+    """Return symbolic Set-of-Mark legend lines from request metadata."""
+
+    overlays = request.metadata.get("mark_overlays") if isinstance(request.metadata, dict) else None
+    if not isinstance(overlays, list):
+        return []
+    lines: list[str] = []
+    for overlay in overlays:
+        if not isinstance(overlay, dict):
+            continue
+        label = str(overlay.get("label") or "overlay").strip()
+        marks = overlay.get("marks")
+        if not isinstance(marks, list):
+            continue
+        for mark in marks:
+            if not isinstance(mark, dict):
+                continue
+            mark_id = mark.get("mark_id")
+            object_name = str(mark.get("object_name") or "").strip()
+            status = str(mark.get("status") or "placed").strip()
+            if not isinstance(mark_id, int) or isinstance(mark_id, bool) or not object_name:
+                continue
+            if status != "placed":
+                continue
+            lines.append(f"- {label}: mark {mark_id} -> {object_name} ({status})")
+    return lines
 
 
 def _dominant_relation_phrase(pair: dict[str, object]) -> str | None:
@@ -799,6 +840,7 @@ def build_vision_payload_text(
     *,
     vision_contract_profile: VisionContractProfile | None = None,
     provider_name: str | None = None,
+    model_capabilities: VisionModelCapabilities | None = None,
 ) -> str:
     """Serialize the bounded vision input payload."""
 
@@ -815,6 +857,7 @@ def build_vision_payload_text(
         support_evidence_summaries = [
             str(item) for item in request.metadata.get("support_evidence_summaries") or [] if str(item).strip()
         ]
+        mark_overlay_lines = _mark_overlay_lines(request)
         truth_summary = request.truth_summary or {}
         truth_lines = []
         if isinstance(truth_summary, dict):
@@ -840,6 +883,8 @@ def build_vision_payload_text(
             parts.extend(["PACKET_REFERENCE_IDS:", *[f"- {item}" for item in reference_ids]])
         if capture_labels:
             parts.extend(["PACKET_CAPTURE_LABELS:", *[f"- {item}" for item in capture_labels]])
+        if mark_overlay_lines:
+            parts.extend(["MARK_OVERLAYS:", *mark_overlay_lines])
         if support_evidence_summaries:
             parts.extend(["SUPPORT_EVIDENCE:", *[f"- {item}" for item in support_evidence_summaries]])
         relation_triplets = _relation_triplet_lines_from_truth(request.truth_summary)
@@ -929,8 +974,18 @@ def build_vision_payload_text(
         "target_object": request.target_object,
         "prompt_hint": request.prompt_hint,
         "truth_summary": request.truth_summary,
-        "metadata": _sanitized_request_metadata(request.metadata),
-        "images": [{"role": image.role, "label": image.label} for image in request.images],
+        "image_roster": [
+            {"role": image.role, "label": image.label, "view_kind": image.view_kind} for image in request.images
+        ],
+        "mark_overlays": request.metadata.get("mark_overlays") if isinstance(request.metadata, dict) else None,
+        "requested_json_keys": list(
+            expected_json_keys(
+                vision_contract_profile=vision_contract_profile,
+                provider_name=provider_name,
+                request=request,
+                model_capabilities=model_capabilities,
+            )
+        ),
     }
     return json.dumps(payload, ensure_ascii=True, sort_keys=True, indent=2)
 
@@ -1029,6 +1084,7 @@ def expected_json_keys(
     vision_contract_profile: VisionContractProfile | None = None,
     provider_name: str | None = None,
     request: VisionRequest | None = None,
+    model_capabilities: VisionModelCapabilities | None = None,
 ) -> tuple[str, ...]:
     """Expose the canonical required JSON keys for tests and parse repair."""
 
@@ -1039,6 +1095,8 @@ def expected_json_keys(
         return _REFERENCE_UNDERSTANDING_EXPECTED_KEYS
 
     if _is_reference_packet_compare_request(request):
+        if _should_drop_findings(model_capabilities):
+            return _strip_key(_PACKET_COMPARE_EXPECTED_KEYS, "findings")
         return _PACKET_COMPARE_EXPECTED_KEYS
 
     if _uses_google_family_compare_contract(
@@ -1047,7 +1105,30 @@ def expected_json_keys(
         request=request,
     ):
         return _GEMINI_COMPARE_EXPECTED_KEYS
+    if _should_drop_findings(model_capabilities):
+        return _strip_key(_EXPECTED_KEYS, "findings")
     return _EXPECTED_KEYS
+
+
+def _strip_key(keys: tuple[str, ...], key: str) -> tuple[str, ...]:
+    return tuple(item for item in keys if item != key)
+
+
+def _should_drop_findings(model_capabilities: VisionModelCapabilities | None) -> bool:
+    if model_capabilities is None:
+        return False
+    supported = set(model_capabilities.supported_parameters or [])
+    if "structured_outputs" not in supported and "response_format" not in supported:
+        return True
+    max_completion_tokens = model_capabilities.max_completion_tokens
+    return isinstance(max_completion_tokens, int) and max_completion_tokens < 1024
+
+
+def _include_findings_for_capabilities(
+    include_findings: bool,
+    model_capabilities: VisionModelCapabilities | None,
+) -> bool:
+    return include_findings and not _should_drop_findings(model_capabilities)
 
 
 def _maybe_strip_findings(schema: dict[str, object], include_findings: bool) -> dict[str, object]:
@@ -1072,6 +1153,7 @@ def build_vision_response_json_schema(
     provider_name: str | None = None,
     request: VisionRequest | None = None,
     include_findings: bool = True,
+    model_capabilities: VisionModelCapabilities | None = None,
 ) -> dict[str, object]:
     """Return a provider-agnostic JSON Schema for bounded vision responses.
 
@@ -1079,6 +1161,8 @@ def build_vision_response_json_schema(
     structured outputs) the additive ``findings`` channel is dropped so the model
     keeps a leaner, easier-to-satisfy contract.
     """
+
+    include_findings = _include_findings_for_capabilities(include_findings, model_capabilities)
 
     if _is_reference_classification_request(request):
         return {
@@ -1459,7 +1543,14 @@ def build_vision_response_json_schema(
                 "confidence": {"type": ["number", "null"]},
                 "captures_used": {"type": "array", "items": {"type": "string"}},
             },
-            "required": list(_PACKET_COMPARE_EXPECTED_KEYS),
+            "required": list(
+                expected_json_keys(
+                    vision_contract_profile=vision_contract_profile,
+                    provider_name=provider_name,
+                    request=request,
+                    model_capabilities=model_capabilities,
+                )
+            ),
         }
         return _maybe_strip_findings(packet_schema, include_findings)
 
@@ -1523,6 +1614,13 @@ def build_vision_response_json_schema(
             "confidence": {"type": ["number", "null"]},
             "captures_used": {"type": "array", "items": {"type": "string"}},
         },
-        "required": list(_EXPECTED_KEYS),
+        "required": list(
+            expected_json_keys(
+                vision_contract_profile=vision_contract_profile,
+                provider_name=provider_name,
+                request=request,
+                model_capabilities=model_capabilities,
+            )
+        ),
     }
     return _maybe_strip_findings(default_schema, include_findings)

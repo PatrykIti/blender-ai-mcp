@@ -19,6 +19,8 @@ _LAZY_EXPORTS = {
     "ReferenceImagesResponseContract": "server.adapters.mcp.contracts.reference",
     "VisionCaptureBundleContract": "server.adapters.mcp.contracts.vision",
     "VisionCaptureImageContract": "server.adapters.mcp.contracts.vision",
+    "VisionObjectIdCaptureArtifactContract": "server.adapters.mcp.contracts.vision",
+    "VisionOverlayMarkContract": "server.adapters.mcp.contracts.vision",
     "get_output_schema": "server.adapters.mcp.contracts.output_schema",
 }
 
@@ -47,6 +49,8 @@ __all__ = [
     "ReferenceImagesResponseContract",
     "VisionCaptureBundleContract",
     "VisionCaptureImageContract",
+    "VisionObjectIdCaptureArtifactContract",
+    "VisionOverlayMarkContract",
     "get_output_schema",
     "to_contract",
 ]

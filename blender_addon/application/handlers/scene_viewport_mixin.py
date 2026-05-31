@@ -178,12 +178,12 @@ class SceneViewportMixin:
                 # if OpenGL is unavailable/failed, mirror the current live 3D view into a
                 # temporary camera so Workbench/Cycles still match what the user saw.
                 if not render_success and not use_explicit_scene_camera:
-                    bpy.ops.object.camera_add()
-                    temp_camera_obj = bpy.context.active_object
-                    scene.camera = temp_camera_obj
-
-                    with bpy.context.temp_override(area=view_area, region=view_region):
-                        bpy.ops.view3d.camera_to_view()
+                    temp_camera_obj = self._mirror_user_view_to_temp_camera(
+                        scene,
+                        view_area,
+                        view_region,
+                        view_space,
+                    )
 
                 # Strategy B: Workbench Render (Software Rasterization, Headless Safe)
                 if not render_success:
@@ -787,8 +787,27 @@ class SceneViewportMixin:
             ):
                 temp_camera_obj.data.type = "ORTHO"
             scene.camera = temp_camera_obj
-            with bpy.context.temp_override(area=view_area, region=view_region):
-                bpy.ops.view3d.camera_to_view()
+            try:
+                with bpy.context.temp_override(
+                    area=view_area,
+                    region=view_region,
+                    space_data=view_space,
+                    region_data=region_3d,
+                ):
+                    bpy.ops.view3d.camera_to_view()
+            except Exception:
+                if region_3d is None:
+                    raise
+                view_matrix = getattr(region_3d, "view_matrix", None)
+                if view_matrix is None:
+                    raise
+                temp_camera_obj.matrix_world = view_matrix.inverted()
+                if (
+                    getattr(temp_camera_obj, "data", None) is not None
+                    and str(getattr(region_3d, "view_perspective", "") or "").upper() == "ORTHO"
+                ):
+                    temp_camera_obj.data.type = "ORTHO"
+                    temp_camera_obj.data.ortho_scale = float(getattr(region_3d, "view_distance", 1.0) or 1.0)
             return temp_camera_obj
         except Exception:
             if temp_camera_obj is not None:
@@ -1128,15 +1147,16 @@ class SceneViewportMixin:
         scene = bpy.context.scene
         raise_if_cancelled(is_cancelled)
 
+        use_user_perspective = camera_name == "USER_PERSPECTIVE"
         camera_obj = None
-        if camera_name and camera_name != "USER_PERSPECTIVE":
+        if camera_name and not use_user_perspective:
             if camera_name in bpy.data.objects:
                 camera_obj = bpy.data.objects[camera_name]
             else:
                 return f"Camera '{camera_name}' not found. Depth pass requires a valid camera."
-        else:
+        elif not use_user_perspective:
             camera_obj = scene.camera
-        if camera_obj is None:
+        if camera_obj is None and not use_user_perspective:
             return "No camera available. Depth pass requires a scene camera or explicit camera_name."
 
         temp_dir = tempfile.mkdtemp()
@@ -1154,6 +1174,9 @@ class SceneViewportMixin:
         original_use_pass_z = view_layer.use_pass_z
         original_use_nodes = scene.use_nodes
         original_use_compositing = scene.render.use_compositing
+        temp_camera_obj = None
+        original_active = bpy.context.view_layer.objects.active
+        original_selected = [obj for obj in bpy.context.view_layer.objects if obj.select_get()]
 
         original_mode = None
         if bpy.context.active_object:
@@ -1165,6 +1188,30 @@ class SceneViewportMixin:
                     pass
 
         try:
+            if use_user_perspective:
+                view_area, view_region, view_space, _rv3d = self._find_view3d_context()
+                if view_area is not None and view_region is not None and view_space is not None:
+                    try:
+                        temp_camera_obj = self._mirror_user_view_to_temp_camera(
+                            scene,
+                            view_area,
+                            view_region,
+                            view_space,
+                        )
+                        camera_obj = temp_camera_obj
+                    except Exception:
+                        if temp_camera_obj is not None:
+                            try:
+                                bpy.data.objects.remove(temp_camera_obj, do_unlink=True)
+                            except Exception:
+                                pass
+                        temp_camera_obj = None
+                        camera_obj = scene.camera
+                else:
+                    camera_obj = scene.camera
+            if camera_obj is None:
+                return "No camera available. Depth pass requires a scene camera or explicit camera_name."
+
             scene.render.resolution_x = width
             scene.render.resolution_y = height
             scene.render.filepath = render_filepath_base
@@ -1236,6 +1283,20 @@ class SceneViewportMixin:
             view_layer.use_pass_z = original_use_pass_z
             scene.render.use_compositing = original_use_compositing
             scene.use_nodes = original_use_nodes
+            if temp_camera_obj is not None:
+                try:
+                    bpy.data.objects.remove(temp_camera_obj, do_unlink=True)
+                except Exception:
+                    pass
+            try:
+                bpy.ops.object.select_all(action="DESELECT")
+                for obj in original_selected:
+                    if obj.name in bpy.data.objects:
+                        obj.select_set(True)
+                if original_active and original_active.name in bpy.data.objects:
+                    bpy.context.view_layer.objects.active = original_active
+            except Exception:
+                pass
 
             if original_mode and original_mode != "OBJECT" and bpy.context.active_object:
                 try:
@@ -1260,8 +1321,11 @@ class SceneViewportMixin:
         so the server can threshold per-object masks without an external
         segmentation model.
 
-        Fully reversible: render engine, view-layer pass flags, compositor node
-        tree, every touched object's ``pass_index``, resolution, format, camera,
+        ``camera_name="USER_PERSPECTIVE"`` mirrors the active 3D viewport into a
+        temporary camera when a viewport is available, falling back to the scene
+        camera for headless/background calls. Fully reversible: render engine,
+        view-layer pass flags, compositor node tree, every touched object's
+        ``pass_index``, resolution, format, camera, temporary camera, selection,
         and object mode are saved and restored in a ``finally`` block. Returns a
         string error message (not raising) when no usable camera is available.
         """
@@ -1273,15 +1337,16 @@ class SceneViewportMixin:
         if not requested:
             return "No object names provided. Object-ID pass requires at least one object."
 
+        use_user_perspective = camera_name == "USER_PERSPECTIVE"
         camera_obj = None
-        if camera_name and camera_name != "USER_PERSPECTIVE":
+        if camera_name and not use_user_perspective:
             if camera_name in bpy.data.objects:
                 camera_obj = bpy.data.objects[camera_name]
             else:
                 return f"Camera '{camera_name}' not found. Object-ID pass requires a valid camera."
-        else:
+        elif not use_user_perspective:
             camera_obj = scene.camera
-        if camera_obj is None:
+        if camera_obj is None and not use_user_perspective:
             return "No camera available. Object-ID pass requires a scene camera or explicit camera_name."
 
         resolved: list = []
@@ -1312,6 +1377,9 @@ class SceneViewportMixin:
         original_use_compositing = scene.render.use_compositing
         original_samples = getattr(getattr(scene, "cycles", None), "samples", None)
         original_pass_indices = {obj.name: obj.pass_index for obj in resolved}
+        original_active = bpy.context.view_layer.objects.active
+        original_selected = [obj for obj in bpy.context.view_layer.objects if obj.select_get()]
+        temp_camera_obj = None
 
         original_mode = None
         if bpy.context.active_object:
@@ -1324,6 +1392,30 @@ class SceneViewportMixin:
 
         index_map: dict = {}
         try:
+            if use_user_perspective:
+                view_area, view_region, view_space, _rv3d = self._find_view3d_context()
+                if view_area is not None and view_region is not None and view_space is not None:
+                    try:
+                        temp_camera_obj = self._mirror_user_view_to_temp_camera(
+                            scene,
+                            view_area,
+                            view_region,
+                            view_space,
+                        )
+                        camera_obj = temp_camera_obj
+                    except Exception:
+                        if temp_camera_obj is not None:
+                            try:
+                                bpy.data.objects.remove(temp_camera_obj, do_unlink=True)
+                            except Exception:
+                                pass
+                        temp_camera_obj = None
+                        camera_obj = scene.camera
+                else:
+                    camera_obj = scene.camera
+            if camera_obj is None:
+                return "No camera available. Object-ID pass requires a scene camera or explicit camera_name."
+
             scene.render.resolution_x = width
             scene.render.resolution_y = height
             scene.render.filepath = render_filepath_base
@@ -1447,6 +1539,20 @@ class SceneViewportMixin:
                     scene.cycles.samples = original_samples
                 except Exception:
                     pass
+            if temp_camera_obj is not None:
+                try:
+                    bpy.data.objects.remove(temp_camera_obj, do_unlink=True)
+                except Exception:
+                    pass
+            try:
+                bpy.ops.object.select_all(action="DESELECT")
+                for obj in original_selected:
+                    if obj.name in bpy.data.objects:
+                        obj.select_set(True)
+                if original_active and original_active.name in bpy.data.objects:
+                    bpy.context.view_layer.objects.active = original_active
+            except Exception:
+                pass
 
             if original_mode and original_mode != "OBJECT" and bpy.context.active_object:
                 try:
@@ -1477,15 +1583,16 @@ class SceneViewportMixin:
         scene = bpy.context.scene
         raise_if_cancelled(is_cancelled)
 
+        use_user_perspective = camera_name == "USER_PERSPECTIVE"
         camera_obj = None
-        if camera_name and camera_name != "USER_PERSPECTIVE":
+        if camera_name and not use_user_perspective:
             if camera_name in bpy.data.objects:
                 camera_obj = bpy.data.objects[camera_name]
             else:
                 return f"Camera '{camera_name}' not found. Normal pass requires a valid camera."
-        else:
+        elif not use_user_perspective:
             camera_obj = scene.camera
-        if camera_obj is None:
+        if camera_obj is None and not use_user_perspective:
             return "No camera available. Normal pass requires a scene camera or explicit camera_name."
 
         temp_dir = tempfile.mkdtemp()
@@ -1504,6 +1611,9 @@ class SceneViewportMixin:
         original_use_nodes = scene.use_nodes
         original_use_compositing = scene.render.use_compositing
         original_samples = getattr(getattr(scene, "cycles", None), "samples", None)
+        temp_camera_obj = None
+        original_active = bpy.context.view_layer.objects.active
+        original_selected = [obj for obj in bpy.context.view_layer.objects if obj.select_get()]
 
         original_mode = None
         if bpy.context.active_object:
@@ -1515,6 +1625,30 @@ class SceneViewportMixin:
                     pass
 
         try:
+            if use_user_perspective:
+                view_area, view_region, view_space, _rv3d = self._find_view3d_context()
+                if view_area is not None and view_region is not None and view_space is not None:
+                    try:
+                        temp_camera_obj = self._mirror_user_view_to_temp_camera(
+                            scene,
+                            view_area,
+                            view_region,
+                            view_space,
+                        )
+                        camera_obj = temp_camera_obj
+                    except Exception:
+                        if temp_camera_obj is not None:
+                            try:
+                                bpy.data.objects.remove(temp_camera_obj, do_unlink=True)
+                            except Exception:
+                                pass
+                        temp_camera_obj = None
+                        camera_obj = scene.camera
+                else:
+                    camera_obj = scene.camera
+            if camera_obj is None:
+                return "No camera available. Normal pass requires a scene camera or explicit camera_name."
+
             scene.render.resolution_x = width
             scene.render.resolution_y = height
             scene.render.filepath = render_filepath_base
@@ -1589,6 +1723,20 @@ class SceneViewportMixin:
                     scene.cycles.samples = original_samples
                 except Exception:
                     pass
+            if temp_camera_obj is not None:
+                try:
+                    bpy.data.objects.remove(temp_camera_obj, do_unlink=True)
+                except Exception:
+                    pass
+            try:
+                bpy.ops.object.select_all(action="DESELECT")
+                for obj in original_selected:
+                    if obj.name in bpy.data.objects:
+                        obj.select_set(True)
+                if original_active and original_active.name in bpy.data.objects:
+                    bpy.context.view_layer.objects.active = original_active
+            except Exception:
+                pass
 
             if original_mode and original_mode != "OBJECT" and bpy.context.active_object:
                 try:

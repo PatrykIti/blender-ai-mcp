@@ -1,6 +1,7 @@
 # TASK-182: Critic/Verify Compare Loop And Deterministic Exit Criteria
 
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
+**Progress:** TASK-182 has shipped substrates, but not the full Critic/Verify rerender loop. TASK-182-01 stable defect IDs and TASK-182-02 `authoritative_next_actions` channel consolidation exist; remaining work is the Verify rerender pass, deterministic-first layered exit, and E2E proof that gates advance only after deterministic verification.
 **Priority:** 🔴 High
 **Category:** Vision / Loop Control And Verification
 **Estimated Effort:** Large

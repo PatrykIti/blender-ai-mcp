@@ -2,7 +2,7 @@
 
 **Status:** ✅ Done
 **Completed:** 2026-05-30
-**Completion Summary:** All subtasks shipped — TASK-178-01 (VisionFinding contract + `findings` field) and TASK-178-02 (strict-mode schema + parser coercion) via changelog 372, and TASK-178-03 (structured-findings propagation into the macro verification report) via changelog 379. Full `tests/unit` green; ruff/mypy clean.
+**Completion Summary:** All subtasks shipped — TASK-178-01 (VisionFinding contract + `findings` field) and TASK-178-02 (strict-mode schema + parser coercion) via changelog 372, and TASK-178-03 (structured-findings propagation into the macro verification report) via changelog 379. Changelog 389 closes the audit drift by clamping top-level compare `confidence` to `[0, 1]` in the parser and range-validating the result contract.
 **Priority:** 🔴 High
 **Category:** Vision / Compare Output Contract
 **Estimated Effort:** Large

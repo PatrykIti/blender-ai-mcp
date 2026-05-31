@@ -1128,6 +1128,35 @@ def test_parse_vision_output_not_truncated_when_within_caps():
     assert parsed["omitted_count"] == 0
 
 
+@pytest.mark.parametrize(
+    ("raw_confidence", "expected"),
+    [
+        (1.7, 1.0),
+        (-0.2, 0.0),
+        (0.42, 0.42),
+        (True, None),
+        ("0.8", None),
+    ],
+)
+def test_parse_vision_output_clamps_top_level_confidence(raw_confidence, expected):
+    text = json.dumps(
+        {
+            "goal_summary": "ok",
+            "visible_changes": [],
+            "shape_mismatches": [],
+            "proportion_mismatches": [],
+            "correction_focus": [],
+            "next_corrections": [],
+            "recommended_checks": [],
+            "confidence": raw_confidence,
+        }
+    )
+
+    parsed = parse_vision_output_text(text, _request())
+
+    assert parsed["confidence"] == expected
+
+
 def test_parse_vision_output_coerces_structured_findings():
     text = json.dumps(
         {

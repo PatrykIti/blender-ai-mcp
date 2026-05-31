@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
 from typing import Literal
 
 from server.adapters.mcp.contracts.reference import (
@@ -27,18 +28,28 @@ def build_silhouette_analysis_payload(
     selected_reference_records: list[ReferenceImageRecordContract] | tuple[ReferenceImageRecordContract, ...],
     captures: list[VisionCaptureImageContract] | tuple[VisionCaptureImageContract, ...],
     target_view: str | None,
+    target_objects: Sequence[str] = (),
 ) -> ReferenceSilhouetteAnalysisContract | None:
     if not selected_reference_records or not captures:
         return None
 
     reference_record = selected_reference_records[0]
     capture = select_silhouette_analysis_capture(captures=captures, target_view=target_view)
+    object_id_artifact = capture.object_id_artifact
     payload = build_silhouette_analysis(
         reference_path=reference_record.stored_path,
         capture_path=capture.image_path,
         reference_label=reference_record.label or reference_record.reference_id,
         capture_label=capture.label,
         target_view=target_view,
+        object_id_path=object_id_artifact.image_path if object_id_artifact is not None else None,
+        object_id_index_map=object_id_artifact.index_map if object_id_artifact is not None else None,
+        object_names=target_objects if object_id_artifact is not None else (),
+        object_id_unavailable_note=(
+            object_id_artifact.capture_warning
+            if object_id_artifact is not None and object_id_artifact.capture_warning
+            else None
+        ),
     )
     return ReferenceSilhouetteAnalysisContract.model_validate(payload)
 
@@ -71,6 +82,11 @@ def select_silhouette_analysis_capture(
                 return capture
         for capture in captures:
             if _capture_matches_target_view(capture, target_view):
+                return capture
+
+    for capture in captures:
+        if capture.view_kind == "focus":
+            if capture.object_id_artifact is not None:
                 return capture
 
     for capture in captures:
@@ -276,6 +292,21 @@ def build_compare_support_evidence(
 
     evidence: list[ReferenceCompareSupportEvidenceContract] = []
     if silhouette_analysis is not None and silhouette_analysis.status == "available":
+        if silhouette_analysis.consistency_score is not None:
+            score = silhouette_analysis.consistency_score
+            severity: Literal["high", "medium", "low"] = "high" if score < 0.45 else "medium" if score < 0.7 else "low"
+            evidence.append(
+                ReferenceCompareSupportEvidenceContract(
+                    evidence_kind="silhouette_metric",
+                    summary=f"Deterministic silhouette consistency score is {score:.2f} ({severity}).",
+                    metric_id="consistency_score",
+                    severity=severity,
+                    observed_value=score,
+                    reference_label=silhouette_analysis.reference_label,
+                    capture_label=silhouette_analysis.capture_label,
+                    target_view=silhouette_analysis.target_view,
+                )
+            )
         prioritized_metrics = [
             metric for metric in silhouette_analysis.metrics if metric.severity in {"high", "medium"}
         ] or list(silhouette_analysis.metrics[:2])
@@ -292,6 +323,26 @@ def build_compare_support_evidence(
                 target_view=silhouette_analysis.target_view,
             )
             for metric in prioritized_metrics[:3]
+        )
+        evidence.extend(
+            ReferenceCompareSupportEvidenceContract(
+                evidence_kind="per_object_iou",
+                summary=(
+                    f"Capture-side Object-ID IoU for {metric.object_name} against the reference silhouette "
+                    f"is {metric.mask_iou:.2f} ({metric.severity})."
+                    if metric.mask_iou is not None
+                    else f"Capture-side Object-ID IoU for {metric.object_name} is unavailable."
+                ),
+                metric_id="per_object_mask_iou",
+                severity=metric.severity,
+                observed_value=metric.mask_iou,
+                reference_label=silhouette_analysis.reference_label,
+                capture_label=silhouette_analysis.capture_label,
+                target_view=silhouette_analysis.target_view,
+                part_label=metric.object_name,
+            )
+            for metric in list(silhouette_analysis.per_object_metrics or [])
+            if metric.status == "available"
         )
     if part_segmentation is not None and part_segmentation.status == "available":
         evidence.extend(

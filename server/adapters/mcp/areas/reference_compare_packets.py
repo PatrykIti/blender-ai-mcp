@@ -80,6 +80,7 @@ _VIEW_TOKEN_ALIASES: dict[str, str] = {
     "silhouette": "detail",
 }
 _PACKET_VIEW_ORDER: tuple[str, ...] = ("front", "side", "top", "back", "three_quarter", "detail")
+_SUPPLEMENTAL_CAPTURE_VIEW_KINDS: set[str] = {"depth", "normal", "object_id", "overlay"}
 _HEAD_HINTS: tuple[str, ...] = ("head", "skull", "face")
 _BODY_HINTS: tuple[str, ...] = ("body", "torso", "trunk", "chest", "abdomen", "pelvis", "hip")
 _TAIL_HINTS: tuple[str, ...] = ("tail",)
@@ -174,6 +175,10 @@ def _capture_view_id(capture: VisionCaptureImageContract) -> str | None:
     return _normalize_view_token(capture.preset_name) or _normalize_view_token(capture.label)
 
 
+def _is_supplemental_capture(capture: VisionCaptureImageContract) -> bool:
+    return str(capture.view_kind or "").strip().lower() in _SUPPLEMENTAL_CAPTURE_VIEW_KINDS
+
+
 def _reference_view_id(reference_record: ReferenceImageRecordContract) -> str | None:
     return _normalize_view_token(reference_record.target_view) or _normalize_view_token(reference_record.label)
 
@@ -195,6 +200,12 @@ def _unique_preserving_order(values: Sequence[str]) -> list[str]:
         seen.add(normalized)
         ordered.append(normalized)
     return ordered
+
+
+def _unique_bounded_with_omitted(values: Sequence[str], *, max_items: int) -> tuple[list[str], int]:
+    unique_values = _unique_preserving_order(values)
+    bounded = unique_values[:max_items]
+    return bounded, max(0, len(unique_values) - len(bounded))
 
 
 def _append_unique_note(notes: list[str], note: str) -> None:
@@ -893,6 +904,7 @@ def _budgeted_capture_labels(
     capture_labels: Sequence[str],
     *,
     context_capture_labels: Sequence[str],
+    supplemental_capture_labels: Sequence[str] = (),
     policy: ComparePacketPolicy,
 ) -> tuple[list[str], bool]:
     ordered_capture_labels = _unique_preserving_order(list(capture_labels))
@@ -901,9 +913,15 @@ def _budgeted_capture_labels(
         return ordered_capture_labels, False
 
     context_labels = set(context_capture_labels)
-    focus_labels = [label for label in ordered_capture_labels if label not in context_labels]
+    supplemental_labels = set(supplemental_capture_labels)
+    focus_labels = [
+        label for label in ordered_capture_labels if label not in context_labels and label not in supplemental_labels
+    ]
     fallback_context_labels = [label for label in ordered_capture_labels if label in context_labels]
-    return _unique_preserving_order([*focus_labels, *fallback_context_labels])[:max_capture_labels], True
+    fallback_supplemental_labels = [label for label in ordered_capture_labels if label in supplemental_labels]
+    return _unique_preserving_order([*focus_labels, *fallback_context_labels, *fallback_supplemental_labels])[
+        :max_capture_labels
+    ], True
 
 
 def _reference_id_chunks_for_policy(
@@ -949,12 +967,14 @@ def _append_policy_packets(
     capture_labels: Sequence[str],
     compare_question: str,
     context_capture_labels: Sequence[str],
+    supplemental_capture_labels: Sequence[str],
     policy: ComparePacketPolicy,
     budget_notes: list[str],
 ) -> None:
     effective_capture_labels, captures_trimmed = _budgeted_capture_labels(
         capture_labels,
         context_capture_labels=context_capture_labels,
+        supplemental_capture_labels=supplemental_capture_labels,
         policy=policy,
     )
     reference_chunks, references_split = _reference_id_chunks_for_policy(
@@ -967,7 +987,7 @@ def _append_policy_packets(
         _append_unique_note(
             budget_notes,
             (
-                "Compare packet policy omitted context captures from some packets to stay within "
+                "Compare packet policy omitted context or supplemental captures from some packets to stay within "
                 f"VISION_MAX_IMAGES={policy.max_images_per_packet}."
             ),
         )
@@ -1025,9 +1045,13 @@ def build_compare_packets(
 ) -> ReferenceCompareDiagnosticsContract:
     capture_labels_by_view: dict[str, list[str]] = {}
     context_capture_labels: list[str] = []
+    supplemental_capture_labels: list[str] = []
     all_capture_labels = [capture.label for capture in captures]
+    primary_captures = [capture for capture in captures if not _is_supplemental_capture(capture)]
     for capture in captures:
         view_id = _capture_view_id(capture)
+        if _is_supplemental_capture(capture):
+            supplemental_capture_labels.append(capture.label)
         if view_id is None:
             context_capture_labels.append(capture.label)
             continue
@@ -1041,7 +1065,7 @@ def build_compare_packets(
     complexity_tier = resolve_compare_complexity_tier(
         assembled_target_scope=assembled_target_scope,
         reference_count=len(reference_records),
-        capture_count=len(captures),
+        capture_count=len(primary_captures),
         focus_pair_count=len(focus_pairs),
     )
     selected_views = _selected_packet_views(
@@ -1073,6 +1097,7 @@ def build_compare_packets(
                 capture_labels=all_capture_labels,
                 compare_question=_packet_question_for_view(None, scope_label=scope_label),
                 context_capture_labels=context_capture_labels,
+                supplemental_capture_labels=supplemental_capture_labels,
                 policy=packet_policy,
                 budget_notes=budget_notes,
             )
@@ -1104,6 +1129,7 @@ def build_compare_packets(
                 capture_labels=packet_capture_labels,
                 compare_question=_packet_question_for_view(view_id),
                 context_capture_labels=context_capture_labels,
+                supplemental_capture_labels=supplemental_capture_labels,
                 policy=packet_policy,
                 budget_notes=budget_notes,
             )
@@ -1144,6 +1170,7 @@ def build_compare_packets(
                         capture_labels=packet_capture_labels,
                         compare_question=_packet_question_for_view(view_id, scope_label=cluster.scope_label),
                         context_capture_labels=context_capture_labels,
+                        supplemental_capture_labels=supplemental_capture_labels,
                         policy=packet_policy,
                         budget_notes=budget_notes,
                     )
@@ -1176,6 +1203,7 @@ def build_compare_packets(
                     capture_labels=packet_capture_labels,
                     compare_question=_packet_question_for_view(view_id),
                     context_capture_labels=context_capture_labels,
+                    supplemental_capture_labels=supplemental_capture_labels,
                     policy=packet_policy,
                     budget_notes=budget_notes,
                 )
@@ -1195,6 +1223,7 @@ def build_compare_packets(
                 capture_labels=all_capture_labels,
                 compare_question=_packet_question_for_view(None, scope_label=scope_label),
                 context_capture_labels=context_capture_labels,
+                supplemental_capture_labels=supplemental_capture_labels,
                 policy=packet_policy,
                 budget_notes=budget_notes,
             )
@@ -1268,21 +1297,33 @@ def synthesize_packet_vision_result(
     reference_match_summaries = _unique_preserving_order(
         [summary for _, result in successful_results if (summary := result.reference_match_summary)]
     )
-    visible_changes = _unique_preserving_order(
-        [item for _, result in successful_results for item in list(result.visible_changes or [])]
-    )[:8]
-    shape_mismatches = _unique_preserving_order(
-        [item for _, result in successful_results for item in list(result.shape_mismatches or [])]
-    )[:6]
-    proportion_mismatches = _unique_preserving_order(
-        [item for _, result in successful_results for item in list(result.proportion_mismatches or [])]
-    )[:6]
-    correction_focus = _unique_preserving_order(
-        [item for _, result in successful_results for item in list(result.correction_focus or [])]
-    )[:6]
-    next_corrections = _unique_preserving_order(
-        [item for _, result in successful_results for item in list(result.next_corrections or [])]
-    )[:6]
+    omitted_count = sum(result.omitted_count for _, result in successful_results)
+    evidence_truncated = any(result.evidence_truncated for _, result in successful_results)
+    visible_changes, _omitted = _unique_bounded_with_omitted(
+        [item for _, result in successful_results for item in list(result.visible_changes or [])],
+        max_items=8,
+    )
+    omitted_count += _omitted
+    shape_mismatches, _omitted = _unique_bounded_with_omitted(
+        [item for _, result in successful_results for item in list(result.shape_mismatches or [])],
+        max_items=6,
+    )
+    omitted_count += _omitted
+    proportion_mismatches, _omitted = _unique_bounded_with_omitted(
+        [item for _, result in successful_results for item in list(result.proportion_mismatches or [])],
+        max_items=6,
+    )
+    omitted_count += _omitted
+    correction_focus, _omitted = _unique_bounded_with_omitted(
+        [item for _, result in successful_results for item in list(result.correction_focus or [])],
+        max_items=6,
+    )
+    omitted_count += _omitted
+    next_corrections, _omitted = _unique_bounded_with_omitted(
+        [item for _, result in successful_results for item in list(result.next_corrections or [])],
+        max_items=6,
+    )
+    omitted_count += _omitted
     captures_used = _unique_preserving_order(
         [item for _, result in successful_results for item in list(result.captures_used or [])]
     )
@@ -1306,6 +1347,11 @@ def synthesize_packet_vision_result(
                 continue
             seen_check_keys.add(check_key)
             recommended_checks.append(check)
+    if len(likely_issues) > 6:
+        omitted_count += len(likely_issues) - 6
+    if len(recommended_checks) > 6:
+        omitted_count += len(recommended_checks) - 6
+    evidence_truncated = evidence_truncated or omitted_count > 0
 
     confidences = [float(result.confidence) for _, result in successful_results if result.confidence is not None]
     unique_capture_labels = _unique_preserving_order(
@@ -1365,9 +1411,21 @@ def synthesize_packet_vision_result(
         ),
         confidence=(sum(confidences) / len(confidences)) if confidences else None,
         captures_used=captures_used,
+        evidence_truncated=evidence_truncated,
+        omitted_count=omitted_count,
         input_summary=merged_input_summary,
         boundary_policy=VisionBoundaryPolicyContract(),
     )
+
+
+def _runtime_capture_grid_enabled(resolver: Any) -> bool:
+    runtime_config = getattr(resolver, "runtime_config", None)
+    return bool(getattr(runtime_config, "capture_grid_enabled", False))
+
+
+def _runtime_transmit_auxiliary_channels_enabled(resolver: Any) -> bool:
+    runtime_config = getattr(resolver, "runtime_config", None)
+    return bool(getattr(runtime_config, "transmit_auxiliary_channels", False))
 
 
 def count_failed_compare_packets(compare_diagnostics: ReferenceCompareDiagnosticsContract) -> int:
@@ -1822,6 +1880,8 @@ async def execute_compare_packets(
         and bool(getattr(segmentation_sidecar_config, "enabled", False))
         and getattr(segmentation_sidecar_config, "endpoint", None)
     )
+    capture_grid_enabled = _runtime_capture_grid_enabled(resolver)
+    transmit_auxiliary_channels = _runtime_transmit_auxiliary_channels_enabled(resolver)
 
     for packet in compare_diagnostics.packets:
         packet_captures = _packet_capture_subset(captures, packet)
@@ -1855,6 +1915,7 @@ async def execute_compare_packets(
             selected_reference_records=packet_reference_records,
             captures=packet_captures,
             target_view=packet.target_view or target_view,
+            target_objects=packet.target_objects or list(resolved_target_objects),
         )
         packet_action_hints = build_action_hints_from_silhouette(
             packet_silhouette_analysis,
@@ -1971,6 +2032,8 @@ async def execute_compare_packets(
                 "target_objects": list(packet.target_objects or resolved_target_objects),
                 "assembled_target_scope": assembled_target_scope.model_dump(mode="json"),
             },
+            capture_grid_enabled=capture_grid_enabled,
+            transmit_auxiliary_channels=transmit_auxiliary_channels,
         )
         extraction_outcome = await run_vision_assist_fn(
             ctx,
@@ -2081,6 +2144,8 @@ async def execute_compare_packets(
                     "extraction_next_corrections": list(extraction_vision_assistant.result.next_corrections or []),
                     "extraction_status_reason": packet.status_reason,
                 },
+                capture_grid_enabled=capture_grid_enabled,
+                transmit_auxiliary_channels=transmit_auxiliary_channels,
             )
             ranking_outcome = await run_vision_assist_fn(
                 ctx,

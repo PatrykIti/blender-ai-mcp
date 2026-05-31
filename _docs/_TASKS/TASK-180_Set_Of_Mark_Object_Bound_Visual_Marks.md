@@ -1,7 +1,7 @@
 # TASK-180: Set-Of-Mark Object-Bound Visual Marks
 
 **Status:** 🚧 In Progress
-**Progress:** TASK-180-01 deterministic Set-of-Mark overlay core (server-side PIL numbered marks + per-object centroid + stable id assignment) shipped 2026-05-30 via changelog 378. Follow-on (addon + E2E): live isolated-render orchestration, 180-02 cross-view stable ids, 180-03 reference marks via default-off Grounded-SAM, 180-04 mark-keyed findings + correspondence table.
+**Progress:** TASK-180-01 is complete: staged capture can emit default-off live `view_kind="overlay"` images with typed mark-id maps, packet mark legends, supplemental budget behavior, and Blender-backed proof. TASK-180-04 still owns mark-keyed result correspondence and validity retry, while TASK-180-02 cross-view/session-stable ids and TASK-180-03 reference marks via the default-off Grounded-SAM sidecar remain open.
 **Priority:** 🔴 High
 **Category:** Vision / Visual Prompting
 **Estimated Effort:** Extra Large
@@ -78,8 +78,9 @@ helps with least.
 After this umbrella lands:
 
 - the capture path can emit a deterministic `view_kind="overlay"` image with
-  numbered, high-contrast marks anchored to each registered part, drawn from the
-  `TASK-179` object-ID assignment with no VLM and no SAM on the render side.
+  numbered, high-contrast marks anchored to each registered part from the staged
+  object set, using deterministic isolate-per-object render footprints with no
+  VLM and no SAM on the render side.
 - the same part keeps the same mark number across every view (front/side/top/
   oblique) and across every iterate cycle, so the LLM and the orchestrator can
   refer to "mark 3" consistently within and between sessions steps.

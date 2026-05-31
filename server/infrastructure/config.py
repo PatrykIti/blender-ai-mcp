@@ -64,6 +64,18 @@ class Config(BaseSettings):
     )
     VISION_MAX_TOKENS: int = Field(default=400, gt=0, description="Maximum output tokens for vision assistance")
     VISION_TIMEOUT_SECONDS: float = Field(default=20.0, gt=0, description="Timeout for one bounded vision request")
+    VISION_CAPTURE_GRID_ENABLED: bool = Field(
+        default=False,
+        description="Enable optional labeled multi-view capture grid images for bounded vision requests",
+    )
+    VISION_TRANSMIT_AUX_CHANNELS: bool = Field(
+        default=False,
+        description="Enable optional depth/normal/object-ID auxiliary image channels for bounded vision requests",
+    )
+    VISION_MARK_OVERLAY_ENABLED: bool = Field(
+        default=False,
+        description="Enable optional deterministic numbered Set-of-Mark overlay captures for bounded vision requests",
+    )
     VISION_LOCAL_MODEL_ID: str | None = Field(default=None, description="Local HF vision model id")
     VISION_LOCAL_MODEL_PATH: str | None = Field(default=None, description="Local HF vision model path")
     VISION_LOCAL_DEVICE: str = Field(default="cpu", description="Device for local vision backend")
@@ -323,6 +335,11 @@ def get_config() -> Config:
         VISION_MAX_INPUT_CHARS=int(os.getenv("VISION_MAX_INPUT_CHARS", 12000)),
         VISION_MAX_TOKENS=int(os.getenv("VISION_MAX_TOKENS", 400)),
         VISION_TIMEOUT_SECONDS=float(os.getenv("VISION_TIMEOUT_SECONDS", 20.0)),
+        VISION_CAPTURE_GRID_ENABLED=(os.getenv("VISION_CAPTURE_GRID_ENABLED", "false").lower() in ("true", "1", "yes")),
+        VISION_TRANSMIT_AUX_CHANNELS=(
+            os.getenv("VISION_TRANSMIT_AUX_CHANNELS", "false").lower() in ("true", "1", "yes")
+        ),
+        VISION_MARK_OVERLAY_ENABLED=(os.getenv("VISION_MARK_OVERLAY_ENABLED", "false").lower() in ("true", "1", "yes")),
         VISION_LOCAL_MODEL_ID=os.getenv("VISION_LOCAL_MODEL_ID") or None,
         VISION_LOCAL_MODEL_PATH=os.getenv("VISION_LOCAL_MODEL_PATH") or None,
         VISION_LOCAL_DEVICE=os.getenv("VISION_LOCAL_DEVICE", "cpu"),

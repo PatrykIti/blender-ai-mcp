@@ -39,6 +39,38 @@ def test_scene_get_normal_pass_returns_png_for_named_camera(scene_handler, rpc_c
         pytest.skip(f"Blender not available: {e}")
 
 
+def test_scene_get_normal_pass_supports_user_perspective_view(scene_handler, rpc_client):
+    """USER_PERSPECTIVE normal pass mirrors the active 3D viewport framing."""
+
+    try:
+        scene_handler.clean_scene(keep_lights_and_cameras=True)
+        rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE", "name": "NormalUserCube"})
+        rpc_client.send_request(
+            "modeling.create_primitive",
+            {"primitive_type": "SPHERE", "name": "NormalUserSphere", "radius": 0.5, "location": [1.5, 0.0, 0.0]},
+        )
+        scene_handler.set_standard_view("FRONT")
+        scene_handler.set_active_object("NormalUserCube")
+        scene_handler.camera_focus("NormalUserSphere")
+        scene_handler.set_mode("EDIT")
+        before_mode = scene_handler.get_mode()
+        before_selection = scene_handler.list_selection()
+        assert before_mode["mode"].startswith("EDIT")
+        assert set(before_selection["selected_object_names"]) == {"NormalUserCube", "NormalUserSphere"}
+
+        normal = scene_handler.get_normal_pass(width=200, height=150, camera_name="USER_PERSPECTIVE")
+        after_mode = scene_handler.get_mode()
+        after_selection = scene_handler.list_selection()
+
+        assert normal, "USER_PERSPECTIVE normal pass returned empty result"
+        assert _looks_like_png(normal), "USER_PERSPECTIVE normal pass result is not a valid PNG"
+        assert after_mode["mode"].startswith("EDIT")
+        assert after_mode["active_object"] == before_mode["active_object"]
+        assert set(after_selection["selected_object_names"]) == set(before_selection["selected_object_names"])
+    except RuntimeError as e:
+        pytest.skip(f"Blender not available: {e}")
+
+
 def test_scene_get_normal_pass_is_reversible(scene_handler, rpc_client):
     """The normal pass must restore the render engine/resolution/format it mutates."""
 

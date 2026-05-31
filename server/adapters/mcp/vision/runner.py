@@ -98,7 +98,14 @@ def _bounded_capability_summary(
     response_healing_enabled = None
     if isinstance(payload_summary, dict) and isinstance(payload_summary.get("plugins"), list):
         response_healing_enabled = "response-healing" in payload_summary["plugins"]
+    usage_summary = getattr(backend, "last_response_usage_summary", None)
+    if not isinstance(usage_summary, dict):
+        usage_summary = {}
 
+    prompt_tokens = usage_summary.get("prompt_tokens")
+    completion_tokens = usage_summary.get("completion_tokens")
+    total_tokens = usage_summary.get("total_tokens")
+    finish_reason = usage_summary.get("finish_reason")
     summary = VisionCapabilitySummaryContract(
         model_id=model_capabilities.model_id or runtime.active_model_name,
         capability_source=model_capabilities.capability_source,
@@ -110,6 +117,10 @@ def _bounded_capability_summary(
         requested_max_tokens=requested_max_tokens,
         request_mode=request_mode,
         response_healing_enabled=response_healing_enabled,
+        prompt_tokens=prompt_tokens if isinstance(prompt_tokens, int) else None,
+        completion_tokens=completion_tokens if isinstance(completion_tokens, int) else None,
+        total_tokens=total_tokens if isinstance(total_tokens, int) else None,
+        finish_reason=str(finish_reason) if finish_reason else None,
     )
     return summary.model_dump(mode="json", exclude_none=True)
 

@@ -13,11 +13,17 @@ from server.adapters.mcp.contracts.scene import SceneAssembledTargetScopeContrac
 from server.adapters.mcp.contracts.vision import (
     VisionCaptureBundleContract,
     VisionCaptureImageContract,
+    VisionObjectIdCaptureArtifactContract,
+    VisionOverlayMarkContract,
 )
 from server.infrastructure.tmp_paths import get_viewport_output_paths
 
+from .marks import build_object_mark_overlay
+
 CaptureStage = Literal["before", "after"]
 CapturePresetProfile = Literal["compact", "rich"]
+AuxiliaryCaptureKind = Literal["depth", "normal", "object_id"]
+DEFAULT_AUXILIARY_CAPTURE_KINDS: tuple[AuxiliaryCaptureKind, ...] = ("depth", "normal", "object_id")
 
 
 @dataclass(frozen=True, slots=True)
@@ -195,6 +201,312 @@ _KNOWN_VIEW_OP_FAILURE_MARKERS = (
 )
 
 
+def _normalize_object_id_index_map(index_map: object) -> dict[int, str]:
+    if not isinstance(index_map, dict):
+        return {}
+    normalized: dict[int, str] = {}
+    for raw_index, raw_name in index_map.items():
+        try:
+            index = int(raw_index)
+        except (TypeError, ValueError):
+            continue
+        name = str(raw_name or "").strip()
+        if index <= 0 or not name:
+            continue
+        normalized[index] = name
+    return normalized
+
+
+def _normalize_missing_objects(raw_missing: object) -> list[str]:
+    if not isinstance(raw_missing, list):
+        return []
+    return [str(item).strip() for item in raw_missing if str(item).strip()]
+
+
+def _normalize_auxiliary_capture_kinds(
+    raw_kinds: set[str] | list[str] | tuple[str, ...] | None,
+) -> tuple[AuxiliaryCaptureKind, ...]:
+    if raw_kinds is None:
+        return DEFAULT_AUXILIARY_CAPTURE_KINDS
+    requested = {str(kind).strip().lower() for kind in raw_kinds if str(kind).strip()}
+    return tuple(kind for kind in DEFAULT_AUXILIARY_CAPTURE_KINDS if kind in requested)
+
+
+def _object_id_artifact_unavailable(
+    *,
+    warning: str,
+    index_map: dict[int, str] | None = None,
+    missing_objects: list[str] | None = None,
+) -> VisionObjectIdCaptureArtifactContract:
+    return VisionObjectIdCaptureArtifactContract(
+        index_map=index_map or {},
+        missing_objects=missing_objects or [],
+        capture_ok=False,
+        capture_warning=warning[:240],
+    )
+
+
+def _write_auxiliary_capture(
+    *,
+    bundle_id: str,
+    stage: CaptureStage,
+    preset: CapturePresetSpec,
+    view_kind: AuxiliaryCaptureKind,
+    image_bytes: bytes,
+    source_path: str | None = None,
+    source_host_visible_path: str | None = None,
+) -> VisionCaptureImageContract:
+    label = f"{preset.name}_{stage}_{view_kind}"
+    if source_path:
+        return VisionCaptureImageContract(
+            label=label,
+            image_path=source_path,
+            host_visible_path=source_host_visible_path,
+            preset_name=preset.name,
+            media_type="image/png",
+            view_kind=view_kind,
+        )
+
+    filename = f"{bundle_id}_{stage}_{preset.name}_{view_kind}.png"
+    latest_name = f"{bundle_id}_{stage}_{preset.name}_{view_kind}_latest.png"
+    internal_file, _internal_latest, external_file, _external_latest = get_viewport_output_paths(
+        filename,
+        latest_name=latest_name,
+    )
+    internal_file.write_bytes(image_bytes)
+    return VisionCaptureImageContract(
+        label=label,
+        image_path=str(internal_file),
+        host_visible_path=external_file,
+        preset_name=preset.name,
+        media_type="image/png",
+        view_kind=view_kind,
+    )
+
+
+def _decode_png_pass_result(result: object, *, method_name: str) -> bytes | None:
+    if not isinstance(result, str):
+        return None
+    image_b64 = result.strip()
+    if not image_b64 or image_b64.startswith(method_name):
+        return None
+    try:
+        image_bytes = base64.b64decode(image_b64, validate=True)
+    except Exception:
+        return None
+    return image_bytes if image_bytes.startswith(b"\x89PNG\r\n\x1a\n") else None
+
+
+def _capture_auxiliary_pass(
+    scene_handler,
+    *,
+    bundle_id: str,
+    stage: CaptureStage,
+    preset: CapturePresetSpec,
+    view_kind: AuxiliaryCaptureKind,
+    object_id_artifact: VisionObjectIdCaptureArtifactContract | None = None,
+) -> VisionCaptureImageContract | None:
+    if view_kind == "object_id":
+        if object_id_artifact is None or not object_id_artifact.capture_ok or object_id_artifact.image_path is None:
+            return None
+        return _write_auxiliary_capture(
+            bundle_id=bundle_id,
+            stage=stage,
+            preset=preset,
+            view_kind=view_kind,
+            image_bytes=b"",
+            source_path=object_id_artifact.image_path,
+            source_host_visible_path=object_id_artifact.host_visible_path,
+        )
+
+    method_name = "get_depth_pass" if view_kind == "depth" else "get_normal_pass"
+    if not hasattr(scene_handler, method_name):
+        return None
+    try:
+        method = getattr(scene_handler, method_name)
+        result = method(width=preset.width, height=preset.height, camera_name="USER_PERSPECTIVE")
+    except Exception:
+        return None
+    image_bytes = _decode_png_pass_result(result, method_name=method_name)
+    if image_bytes is None:
+        return None
+    return _write_auxiliary_capture(
+        bundle_id=bundle_id,
+        stage=stage,
+        preset=preset,
+        view_kind=view_kind,
+        image_bytes=image_bytes,
+    )
+
+
+def _capture_mark_overlay(
+    scene_handler,
+    *,
+    bundle_id: str,
+    stage: CaptureStage,
+    preset: CapturePresetSpec,
+    object_names: list[str],
+    base_image_path: str,
+) -> VisionCaptureImageContract | None:
+    if not object_names:
+        return None
+    ordered_object_names = sorted(dict.fromkeys(object_names))
+
+    filename = f"{bundle_id}_{stage}_{preset.name}_overlay.jpg"
+    latest_name = f"{bundle_id}_{stage}_{preset.name}_overlay_latest.jpg"
+    internal_file, _internal_latest, external_file, _external_latest = get_viewport_output_paths(
+        filename,
+        latest_name=latest_name,
+    )
+    try:
+        overlay_path, mark_id_to_object = build_object_mark_overlay(
+            scene_handler,
+            object_names=ordered_object_names,
+            base_image_path=base_image_path,
+            output_path=str(internal_file),
+            output_dir=str(internal_file.parent),
+            view_name=None,
+            width=preset.width,
+            height=preset.height,
+        )
+    except Exception:
+        return None
+    if overlay_path is None or not mark_id_to_object:
+        return None
+    return VisionCaptureImageContract(
+        label=f"{preset.name}_{stage}_overlay",
+        image_path=overlay_path,
+        host_visible_path=external_file,
+        preset_name=preset.name,
+        media_type="image/jpeg",
+        view_kind="overlay",
+        overlay_marks=[
+            VisionOverlayMarkContract(
+                mark_id=mark_id,
+                object_name=object_name,
+                status="placed" if mark_id_to_object.get(mark_id) == object_name else "unmarked",
+            )
+            for mark_id, object_name in enumerate(ordered_object_names, start=1)
+        ],
+    )
+
+
+def _capture_object_id_artifact(
+    scene_handler,
+    *,
+    bundle_id: str,
+    stage: CaptureStage,
+    preset: CapturePresetSpec,
+    object_names: list[str],
+) -> VisionObjectIdCaptureArtifactContract | None:
+    """Render one USER_PERSPECTIVE object-ID sidecar for an already-framed view."""
+
+    if not object_names:
+        return None
+    if not hasattr(scene_handler, "get_object_id_pass"):
+        return _object_id_artifact_unavailable(warning="get_object_id_pass is unavailable on this scene handler.")
+
+    try:
+        result = scene_handler.get_object_id_pass(
+            object_names=list(dict.fromkeys(object_names)),
+            width=preset.width,
+            height=preset.height,
+            camera_name="USER_PERSPECTIVE",
+        )
+    except Exception as exc:
+        return _object_id_artifact_unavailable(warning=f"get_object_id_pass raised: {exc!r}")
+
+    if isinstance(result, str):
+        return _object_id_artifact_unavailable(warning=f"get_object_id_pass: {result}")
+    if not isinstance(result, dict):
+        return _object_id_artifact_unavailable(
+            warning=f"get_object_id_pass returned unsupported {type(result).__name__} result."
+        )
+
+    index_map = _normalize_object_id_index_map(result.get("index_map"))
+    missing_objects = _normalize_missing_objects(result.get("missing"))
+    image_b64 = str(result.get("image") or "").strip()
+    if not image_b64:
+        return _object_id_artifact_unavailable(
+            warning="get_object_id_pass returned no object-ID image.",
+            index_map=index_map,
+            missing_objects=missing_objects,
+        )
+
+    try:
+        image_bytes = base64.b64decode(image_b64, validate=True)
+    except Exception as exc:
+        return _object_id_artifact_unavailable(
+            warning=f"get_object_id_pass returned invalid base64 PNG data: {exc!r}",
+            index_map=index_map,
+            missing_objects=missing_objects,
+        )
+
+    filename = f"{bundle_id}_{stage}_{preset.name}_object_id.png"
+    latest_name = f"{bundle_id}_{stage}_{preset.name}_object_id_latest.png"
+    internal_file, _internal_latest, external_file, _external_latest = get_viewport_output_paths(
+        filename,
+        latest_name=latest_name,
+    )
+    internal_file.write_bytes(image_bytes)
+    return VisionObjectIdCaptureArtifactContract(
+        image_path=str(internal_file),
+        host_visible_path=external_file,
+        index_map=index_map,
+        missing_objects=missing_objects,
+        capture_ok=bool(index_map),
+        capture_warning=None if index_map else "get_object_id_pass returned an empty object-ID index map.",
+    )
+
+
+def _should_capture_object_id_for_preset(
+    preset: CapturePresetSpec,
+    *,
+    include_object_id_pass: bool,
+    object_id_preset_names: set[str],
+    object_id_attempted: bool,
+) -> bool:
+    if not include_object_id_pass or preset.view_kind != "focus":
+        return False
+    if object_id_preset_names:
+        return preset.name in object_id_preset_names
+    if preset.name == "target_front":
+        return True
+    return not object_id_attempted
+
+
+def _should_capture_auxiliary_for_preset(
+    preset: CapturePresetSpec,
+    *,
+    include_auxiliary_passes: bool,
+    auxiliary_preset_names: set[str],
+    auxiliary_attempted: bool,
+) -> bool:
+    if not include_auxiliary_passes or preset.view_kind != "focus":
+        return False
+    if auxiliary_preset_names:
+        return preset.name in auxiliary_preset_names
+    if preset.name == "target_front":
+        return True
+    return not auxiliary_attempted
+
+
+def _should_capture_mark_overlay_for_preset(
+    preset: CapturePresetSpec,
+    *,
+    include_mark_overlay: bool,
+    mark_overlay_preset_names: set[str],
+    mark_overlay_attempted: bool,
+) -> bool:
+    if not include_mark_overlay or preset.view_kind != "focus":
+        return False
+    if mark_overlay_preset_names:
+        return preset.name in mark_overlay_preset_names
+    if preset.name == "target_front":
+        return True
+    return not mark_overlay_attempted
+
+
 def _classify_view_op_result(op_name: str, result: object) -> str | None:
     """Return a short failure note when a view-op result signals a known failure.
 
@@ -224,12 +536,32 @@ def capture_stage_images(
     target_objects: list[str] | tuple[str, ...] | None = None,
     preset_specs: tuple[CapturePresetSpec, ...] | None = None,
     preset_profile: CapturePresetProfile = "compact",
+    include_object_id_pass: bool = False,
+    object_id_preset_names: set[str] | list[str] | tuple[str, ...] | None = None,
+    include_auxiliary_passes: bool = False,
+    auxiliary_preset_names: set[str] | list[str] | tuple[str, ...] | None = None,
+    auxiliary_view_kinds: set[str] | list[str] | tuple[str, ...] | None = None,
+    include_mark_overlay: bool = False,
+    mark_overlay_preset_names: set[str] | list[str] | tuple[str, ...] | None = None,
 ) -> list[VisionCaptureImageContract]:
     """Capture one deterministic stage view-set using the current viewport API."""
 
     resolved_preset_specs = preset_specs or resolve_capture_preset_specs(preset_profile)
+    normalized_object_id_preset_names = {
+        str(name).strip() for name in list(object_id_preset_names or []) if str(name).strip()
+    }
+    normalized_auxiliary_preset_names = {
+        str(name).strip() for name in list(auxiliary_preset_names or []) if str(name).strip()
+    }
+    normalized_mark_overlay_preset_names = {
+        str(name).strip() for name in list(mark_overlay_preset_names or []) if str(name).strip()
+    }
+    normalized_auxiliary_view_kinds = _normalize_auxiliary_capture_kinds(auxiliary_view_kinds)
     original_state = capture_scene_state(scene_handler)
     captures: list[VisionCaptureImageContract] = []
+    object_id_attempted = False
+    auxiliary_attempted = False
+    mark_overlay_attempted = False
     try:
         normalized_target_objects = [name for name in list(target_objects or []) if str(name).strip()]
         isolate_names = normalized_target_objects or ([target_object] if target_object else [])
@@ -293,18 +625,74 @@ def capture_stage_images(
 
             capture_label = f"{preset.name}_{stage}"
             capture_warning = f"{capture_label}: " + "; ".join(preset_warnings) if preset_warnings else None
-            captures.append(
-                VisionCaptureImageContract(
-                    label=capture_label,
-                    image_path=str(internal_file),
-                    host_visible_path=external_file,
-                    preset_name=preset.name,
-                    media_type="image/jpeg",
-                    view_kind=preset.view_kind,
-                    capture_ok=not preset_warnings,
-                    capture_warning=capture_warning,
-                )
+            object_id_artifact = None
+            auxiliary_enabled = _should_capture_auxiliary_for_preset(
+                preset,
+                include_auxiliary_passes=include_auxiliary_passes,
+                auxiliary_preset_names=normalized_auxiliary_preset_names,
+                auxiliary_attempted=auxiliary_attempted,
             )
+            if _should_capture_object_id_for_preset(
+                preset,
+                include_object_id_pass=include_object_id_pass
+                or (auxiliary_enabled and "object_id" in normalized_auxiliary_view_kinds),
+                object_id_preset_names=normalized_object_id_preset_names,
+                object_id_attempted=object_id_attempted,
+            ):
+                object_id_attempted = True
+                object_id_artifact = _capture_object_id_artifact(
+                    scene_handler,
+                    bundle_id=bundle_id,
+                    stage=stage,
+                    preset=preset,
+                    object_names=list(isolate_names),
+                )
+            primary_capture = VisionCaptureImageContract(
+                label=capture_label,
+                image_path=str(internal_file),
+                host_visible_path=external_file,
+                preset_name=preset.name,
+                media_type="image/jpeg",
+                view_kind=preset.view_kind,
+                capture_ok=not preset_warnings,
+                capture_warning=capture_warning,
+                object_id_artifact=object_id_artifact,
+            )
+            captures.append(primary_capture)
+            if auxiliary_enabled:
+                auxiliary_attempted = True
+                captures.extend(
+                    capture
+                    for capture in (
+                        _capture_auxiliary_pass(
+                            scene_handler,
+                            bundle_id=bundle_id,
+                            stage=stage,
+                            preset=preset,
+                            view_kind=view_kind,
+                            object_id_artifact=object_id_artifact,
+                        )
+                        for view_kind in normalized_auxiliary_view_kinds
+                    )
+                    if capture is not None
+                )
+            if _should_capture_mark_overlay_for_preset(
+                preset,
+                include_mark_overlay=include_mark_overlay,
+                mark_overlay_preset_names=normalized_mark_overlay_preset_names,
+                mark_overlay_attempted=mark_overlay_attempted,
+            ):
+                mark_overlay_attempted = True
+                overlay_capture = _capture_mark_overlay(
+                    scene_handler,
+                    bundle_id=bundle_id,
+                    stage=stage,
+                    preset=preset,
+                    object_names=list(isolate_names),
+                    base_image_path=str(internal_file),
+                )
+                if overlay_capture is not None:
+                    captures.append(overlay_capture)
     finally:
         restore_scene_state(scene_handler, original_state)
 
@@ -388,6 +776,11 @@ def build_capture_bundle(
         for capture in [*captures_before, *captures_after]
         if capture.capture_warning is not None
     ]
+    capture_warnings.extend(
+        artifact.capture_warning
+        for capture in [*captures_before, *captures_after]
+        if (artifact := capture.object_id_artifact) is not None and artifact.capture_warning is not None
+    )
     return VisionCaptureBundleContract(
         bundle_id=bundle_id,
         goal_id=goal_id,

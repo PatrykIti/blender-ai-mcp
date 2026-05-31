@@ -133,6 +133,28 @@ def _extract_gemini_text(payload: dict[str, Any]) -> str:
     raise VisionBackendUnavailableError("Gemini endpoint returned no text parts.")
 
 
+def _response_usage_summary(payload: dict[str, Any], *, provider_name: str) -> dict[str, Any]:
+    if provider_name == "google_ai_studio":
+        usage = payload.get("usageMetadata")
+        candidates = payload.get("candidates")
+        first_candidate = candidates[0] if isinstance(candidates, list) and candidates else {}
+        return {
+            "prompt_tokens": usage.get("promptTokenCount") if isinstance(usage, dict) else None,
+            "completion_tokens": usage.get("candidatesTokenCount") if isinstance(usage, dict) else None,
+            "total_tokens": usage.get("totalTokenCount") if isinstance(usage, dict) else None,
+            "finish_reason": first_candidate.get("finishReason") if isinstance(first_candidate, dict) else None,
+        }
+    usage = payload.get("usage")
+    choices = payload.get("choices")
+    first_choice = choices[0] if isinstance(choices, list) and choices else {}
+    return {
+        "prompt_tokens": usage.get("prompt_tokens") if isinstance(usage, dict) else None,
+        "completion_tokens": usage.get("completion_tokens") if isinstance(usage, dict) else None,
+        "total_tokens": usage.get("total_tokens") if isinstance(usage, dict) else None,
+        "finish_reason": first_choice.get("finish_reason") if isinstance(first_choice, dict) else None,
+    }
+
+
 def _build_input_summary(request: VisionRequest) -> dict[str, Any]:
     before = sum(1 for image in request.images if image.role == "before")
     after = sum(1 for image in request.images if image.role == "after")
@@ -700,6 +722,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
         self._external_config = runtime_config.openai_compatible_external
         self._last_output_diagnostics: dict[str, Any] | None = None
         self._last_request_policy_summary: dict[str, Any] | None = None
+        self._last_response_usage_summary: dict[str, Any] | None = None
         self._openrouter_capability_lookup_attempted = False
 
     @property
@@ -717,6 +740,10 @@ class OpenAICompatibleVisionBackend(VisionBackend):
     @property
     def last_request_policy_summary(self) -> dict[str, Any] | None:
         return self._last_request_policy_summary
+
+    @property
+    def last_response_usage_summary(self) -> dict[str, Any] | None:
+        return self._last_response_usage_summary
 
     def _endpoint_url(self) -> str:
         base_url = (self._external_config.base_url or "").rstrip("/")
@@ -814,6 +841,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
                         provider_name=self._external_config.provider_name,
                         request=request,
                         include_findings=self._include_structured_findings(),
+                        model_capabilities=self._external_config.model_capabilities,
                     ),
                 },
             }
@@ -834,6 +862,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
                     provider_name=self._external_config.provider_name,
                     request=request,
                     include_findings=self._include_structured_findings(),
+                    model_capabilities=self._external_config.model_capabilities,
                 ),
             },
         }
@@ -865,6 +894,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
                         request,
                         vision_contract_profile=vision_contract_profile,
                         provider_name=self._external_config.provider_name,
+                        model_capabilities=self._external_config.model_capabilities,
                     )
                 }
             ]
@@ -907,6 +937,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
                         provider_name=self._external_config.provider_name,
                         request=request,
                         include_findings=self._include_structured_findings(),
+                        model_capabilities=self._external_config.model_capabilities,
                     ),
                 },
             }
@@ -918,6 +949,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
                     request,
                     vision_contract_profile=vision_contract_profile,
                     provider_name=self._external_config.provider_name,
+                    model_capabilities=self._external_config.model_capabilities,
                 ),
             }
         ]
@@ -1038,6 +1070,10 @@ class OpenAICompatibleVisionBackend(VisionBackend):
             content = _extract_gemini_text(parsed_response)
         else:
             content = _extract_message_text(parsed_response)
+        self._last_response_usage_summary = _response_usage_summary(
+            parsed_response,
+            provider_name=self._external_config.provider_name,
+        )
         try:
             self._last_output_diagnostics = diagnose_vision_output_text(
                 content,

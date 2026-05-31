@@ -1,7 +1,7 @@
 # TASK-181: Scene-Graph Diff Compare And Registry-Scoped Convergence
 
 **Status:** 🚧 In Progress
-**Progress:** TASK-181-03 (relation-triplet prompt serialization, relations-not-coordinates) shipped 2026-05-30 via changelog 375. Follow-on: TASK-181-01 registry-as-compare-scope (fixes TASK-173 drift), TASK-181-02 graph-diff contract, TASK-181-04 regression lane.
+**Progress:** TASK-181-02 graph-diff contract/builder, TASK-181-03 relation-triplet serialization substrate, and TASK-181-04 unit-level regression lane shipped via changelogs 382, 375, and 385. Remaining open core: TASK-181-01 registry-as-compare-scope and the full staged-compare integration that makes the graph the authoritative compare scope.
 **Priority:** 🔴 High
 **Category:** Vision / Scene-Graph Compare
 **Estimated Effort:** Extra Large

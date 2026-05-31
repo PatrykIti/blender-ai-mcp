@@ -46,6 +46,42 @@ class ISceneTool(ABC):
         pass
 
     @abstractmethod
+    def get_depth_pass(
+        self,
+        width: int = 1024,
+        height: int = 768,
+        camera_name: Optional[str] = None,
+        normalize: bool = True,
+    ) -> str:
+        """Returns a base64 grayscale Z-depth pass for the active or named camera."""
+        pass
+
+    @abstractmethod
+    def get_normal_pass(
+        self,
+        width: int = 1024,
+        height: int = 768,
+        camera_name: Optional[str] = None,
+    ) -> str:
+        """Returns a base64 RGB surface-normal pass for the active or named camera."""
+        pass
+
+    @abstractmethod
+    def get_object_id_pass(
+        self,
+        object_names: List[str],
+        width: int = 1024,
+        height: int = 768,
+        camera_name: Optional[str] = None,
+    ) -> Dict[str, Any] | str:
+        """Returns an object-ID mask pass plus index map for the named objects.
+
+        ``camera_name="USER_PERSPECTIVE"`` mirrors the active 3D viewport when
+        available; otherwise the scene camera is used.
+        """
+        pass
+
+    @abstractmethod
     def create_light(
         self, type: str, energy: float, color: List[float], location: List[float], name: Optional[str] = None
     ) -> str:

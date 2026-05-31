@@ -12,6 +12,7 @@ from typing import Any, Literal
 from .config import VisionBackendKind, VisionRuntimeConfig
 
 VisionImageRole = Literal["before", "after", "reference"]
+VisionImageViewKind = Literal["wide", "focus", "overlay", "reference", "grid", "depth", "normal", "object_id"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -22,6 +23,7 @@ class VisionImageInput:
     role: VisionImageRole
     label: str | None = None
     media_type: str = "image/png"
+    view_kind: VisionImageViewKind | None = None
 
 
 @dataclass(frozen=True, slots=True)

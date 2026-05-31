@@ -1456,9 +1456,7 @@ def _normalize_payload(parsed: dict[str, Any], request: VisionRequest) -> dict[s
             prune_unhelpful=True,
         )
 
-    confidence = parsed.get("confidence")
-    if not isinstance(confidence, (int, float)) and confidence is not None:
-        confidence = None
+    confidence = _clamp_unit_interval(parsed.get("confidence"))
 
     packet_guidance = None
     if _is_reference_packet_compare_request(request):

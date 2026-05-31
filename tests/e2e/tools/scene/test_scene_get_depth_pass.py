@@ -44,6 +44,38 @@ def test_scene_get_depth_pass_returns_png_for_named_camera(scene_handler, rpc_cl
         pytest.skip(f"Blender not available: {e}")
 
 
+def test_scene_get_depth_pass_supports_user_perspective_view(scene_handler, rpc_client):
+    """USER_PERSPECTIVE depth pass mirrors the active 3D viewport framing."""
+
+    try:
+        scene_handler.clean_scene(keep_lights_and_cameras=True)
+        rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE", "name": "DepthUserCube"})
+        rpc_client.send_request(
+            "modeling.create_primitive",
+            {"primitive_type": "SPHERE", "name": "DepthUserSphere", "radius": 0.5, "location": [1.5, 0.0, 0.0]},
+        )
+        scene_handler.set_standard_view("FRONT")
+        scene_handler.set_active_object("DepthUserCube")
+        scene_handler.camera_focus("DepthUserSphere")
+        scene_handler.set_mode("EDIT")
+        before_mode = scene_handler.get_mode()
+        before_selection = scene_handler.list_selection()
+        assert before_mode["mode"].startswith("EDIT")
+        assert set(before_selection["selected_object_names"]) == {"DepthUserCube", "DepthUserSphere"}
+
+        depth = scene_handler.get_depth_pass(width=200, height=150, camera_name="USER_PERSPECTIVE")
+        after_mode = scene_handler.get_mode()
+        after_selection = scene_handler.list_selection()
+
+        assert depth, "USER_PERSPECTIVE depth pass returned empty result"
+        assert _looks_like_png(depth), "USER_PERSPECTIVE depth pass result is not a valid PNG"
+        assert after_mode["mode"].startswith("EDIT")
+        assert after_mode["active_object"] == before_mode["active_object"]
+        assert set(after_selection["selected_object_names"]) == set(before_selection["selected_object_names"])
+    except RuntimeError as e:
+        pytest.skip(f"Blender not available: {e}")
+
+
 def test_scene_get_depth_pass_is_reversible(scene_handler, rpc_client):
     """The depth pass must restore the render engine/resolution/format it mutates.
 

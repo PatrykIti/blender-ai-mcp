@@ -133,6 +133,7 @@ from server.adapters.mcp.contracts.reference import (
     ReferenceRepairPlannerDetailContract,
     ReferenceRepairPlannerSummaryContract,
     ReferenceSilhouetteAnalysisContract,
+    ReferenceSilhouetteConvergenceContract,
     ReferenceStrategyStateContract,
     ReferenceUnderstandingSummaryContract,
     ReferenceViewDiagnosticsHintContract,
@@ -166,6 +167,7 @@ from server.adapters.mcp.vision import (
     run_vision_assist,
     select_reference_records_for_target,
 )
+from server.adapters.mcp.vision.silhouette import compute_iou_convergence
 from server.application.services.spatial_graph import get_spatial_graph_service
 from server.infrastructure.debug_profiles import emit_debug_log
 from server.infrastructure.di import get_collection_handler, get_scene_handler, get_vision_backend_resolver
@@ -634,6 +636,15 @@ def _safe_checkpoint_token(value: str | None) -> str:
     raw = str(value or "scene").strip()
     normalized = re.sub(r"[^A-Za-z0-9._-]+", "_", raw).strip("._-")
     return normalized or "scene"
+
+
+def _object_id_preset_names_for_target_view(target_view: str | None) -> set[str]:
+    tokens = {token for token in re.split(r"[^a-z0-9]+", str(target_view or "").lower()) if token}
+    if "top" in tokens:
+        return {"target_top"}
+    if "side" in tokens or "right" in tokens:
+        return {"target_side"}
+    return {"target_front"}
 
 
 def _select_reference_records_for_scope(
@@ -1536,6 +1547,22 @@ def _repeated_focus(current: list[str], prior: list[str]) -> list[str]:
     return repeated
 
 
+def _attach_silhouette_loop_convergence(
+    silhouette_analysis: ReferenceSilhouetteAnalysisContract | None,
+    *,
+    previous_iou: object,
+) -> ReferenceSilhouetteAnalysisContract | None:
+    if silhouette_analysis is None:
+        return None
+    convergence = compute_iou_convergence(
+        previous_iou if isinstance(previous_iou, (int, float)) and not isinstance(previous_iou, bool) else None,
+        silhouette_analysis.consistency_score,
+    )
+    return silhouette_analysis.model_copy(
+        update={"iou_convergence": ReferenceSilhouetteConvergenceContract.model_validate(convergence)}
+    )
+
+
 async def _run_checkpoint_compare(
     ctx: Context,
     *,
@@ -1789,6 +1816,10 @@ async def _run_stage_checkpoint_compare(
         )
 
     scene_handler = get_scene_handler()
+    resolver = get_vision_backend_resolver()
+    runtime_config = getattr(resolver, "runtime_config", None)
+    transmit_auxiliary_channels = bool(getattr(runtime_config, "transmit_auxiliary_channels", False))
+    mark_overlay_enabled = bool(getattr(runtime_config, "mark_overlay_enabled", False))
 
     try:
         captures = capture_stage_images(
@@ -1798,6 +1829,12 @@ async def _run_stage_checkpoint_compare(
             target_object=capture_target_object,
             target_objects=resolved_target_objects,
             preset_profile=preset_profile,
+            include_object_id_pass=True,
+            object_id_preset_names=_object_id_preset_names_for_target_view(target_view),
+            include_auxiliary_passes=transmit_auxiliary_channels,
+            auxiliary_preset_names=_object_id_preset_names_for_target_view(target_view),
+            include_mark_overlay=mark_overlay_enabled,
+            mark_overlay_preset_names=_object_id_preset_names_for_target_view(target_view),
         )
     except RuntimeError as exc:
         emit_debug_log(
@@ -1842,8 +1879,6 @@ async def _run_stage_checkpoint_compare(
         target_view=target_view,
     )
 
-    resolver = get_vision_backend_resolver()
-    runtime_config = getattr(resolver, "runtime_config", None)
     localization_config = (
         getattr(runtime_config, "active_localization_config", None) if runtime_config is not None else None
     )
@@ -1902,6 +1937,7 @@ async def _run_stage_checkpoint_compare(
         selected_reference_records=selected_reference_records,
         captures=captures,
         target_view=target_view,
+        target_objects=resolved_target_objects,
     )
     action_hints = _build_action_hints_from_silhouette(
         silhouette_analysis,
@@ -2205,7 +2241,13 @@ async def reference_images(
     target_object: str | None = None,
     target_view: str | None = None,
 ) -> ReferenceImagesResponseContract:
-    """Manage goal-scoped reference images for later vision/capture interpretation."""
+    """Manage goal-scoped reference images for later vision/capture interpretation.
+
+    Returned reference-understanding fields are advisory input for guided policy:
+    read compact ``reference_orchestrator_feedback`` first when present, then
+    deterministic readiness/session truth, then advisory vision understanding.
+    Vision confidence is non-authoritative and cannot mark gates complete.
+    """
 
     return await _handle_reference_images(
         ctx,
@@ -2234,7 +2276,13 @@ async def reference_compare_checkpoint(
     goal_override: str | None = None,
     prompt_hint: str | None = None,
 ) -> ReferenceCompareCheckpointResponseContract:
-    """Compare one current checkpoint image against the active goal and attached references."""
+    """Compare one current checkpoint image against the active goal and attached references.
+
+    Read order and precedence: read compact ``reference_orchestrator_feedback``
+    first for normalized next actions, then deterministic truth/readiness fields,
+    then advisory vision compare fields. Vision confidence is non-authoritative;
+    deterministic inspection/assertion/silhouette remain the correctness layer.
+    """
 
     try:
         checkpoint = _validate_local_reference_path(checkpoint_path)
@@ -2281,7 +2329,13 @@ async def reference_compare_current_view(
     zoom_factor: float | None = None,
     persist_view: bool = False,
 ) -> ReferenceCompareCheckpointResponseContract:
-    """Capture one current viewport/camera checkpoint and compare it against attached references."""
+    """Capture one current viewport/camera checkpoint and compare it against references.
+
+    Read order and precedence: read compact ``reference_orchestrator_feedback``
+    first, then viewport/capture diagnostics and deterministic truth, then the
+    advisory vision payload. Vision confidence is non-authoritative and cannot
+    mark a gate complete or override deterministic inspection/assertion evidence.
+    """
 
     return await _run_current_view_compare_impl(
         ctx,
@@ -2513,6 +2567,10 @@ async def reference_iterate_stage_checkpoint(
         str(prior_state.get("last_checkpoint_id")) if same_loop and prior_state.get("last_checkpoint_id") else None
     )
     prior_correction_focus = list(prior_state.get("last_correction_focus") or []) if same_loop else []
+    silhouette_analysis = _attach_silhouette_loop_convergence(
+        compare_result.silhouette_analysis,
+        previous_iou=prior_state.get("last_silhouette_consistency_score") if same_loop and prior_state else None,
+    )
     iteration_index = int(prior_state.get("iteration_index") or 0) + 1 if same_loop else 1
     repeated_correction_focus = _repeated_focus(correction_focus, prior_correction_focus)
     prior_stagnation_count = int(prior_state.get("stagnation_count") or 0) if same_loop else 0
@@ -2539,6 +2597,9 @@ async def reference_iterate_stage_checkpoint(
             "last_checkpoint_id": compare_result.checkpoint_id,
             "last_checkpoint_label": checkpoint_label,
             "last_correction_focus": correction_focus,
+            "last_silhouette_consistency_score": silhouette_analysis.consistency_score
+            if silhouette_analysis is not None
+            else None,
             "last_focus_pairs": list(
                 compare_result.truth_followup.focus_pairs if compare_result.truth_followup else []
             ),
@@ -2627,6 +2688,7 @@ async def reference_iterate_stage_checkpoint(
         budget_control=compare_result.budget_control,
         refinement_route=compare_result.refinement_route,
         refinement_handoff=compare_result.refinement_handoff,
+        silhouette_analysis=silhouette_analysis,
         stop_reason=stop_reason,
         message=message,
     )

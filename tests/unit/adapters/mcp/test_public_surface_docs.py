@@ -248,6 +248,24 @@ def test_reference_stage_public_transparency_is_documented():
     assert "support_evidence" in iterate_metadata["description"]
 
 
+def test_reference_tool_docstrings_state_read_order_and_advisory_boundary():
+    reference_source = (REPO_ROOT / "server" / "adapters" / "mcp" / "areas" / "reference.py").read_text(
+        encoding="utf-8"
+    )
+
+    for expected in (
+        "Returned reference-understanding fields are advisory input",
+        "read compact ``reference_orchestrator_feedback`` first",
+        "Read order and precedence: read compact ``reference_orchestrator_feedback``",
+        "Top-level compare_diagnostics remains the public access path",
+        "vision interpretation is advisory",
+        "Vision confidence is non-authoritative",
+        "vision prose mark a gate complete",
+        "deterministic inspection/assertion/silhouette own correctness",
+    ):
+        assert expected in reference_source
+
+
 def test_mcp_client_config_examples_document_guided_creature_contract():
     text = (REPO_ROOT / "_docs" / "_MCP_SERVER" / "MCP_CLIENT_CONFIG_EXAMPLES.md").read_text(encoding="utf-8")
 

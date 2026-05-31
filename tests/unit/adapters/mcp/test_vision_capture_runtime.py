@@ -18,6 +18,9 @@ from server.adapters.mcp.vision import (
 class _Handler:
     def __init__(self) -> None:
         self.calls: list[dict] = []
+        self.object_id_calls: list[dict] = []
+        self.depth_calls: list[dict] = []
+        self.normal_calls: list[dict] = []
         self.focus_calls: list[dict] = []
         self.orbit_calls: list[dict] = []
         self.hide_calls: list[dict] = []
@@ -36,6 +39,30 @@ class _Handler:
             }
         )
         return base64.b64encode(b"fake-jpeg").decode("ascii")
+
+    def get_object_id_pass(self, object_names, width=1024, height=768, camera_name=None):
+        names = [str(name) for name in object_names]
+        self.object_id_calls.append(
+            {
+                "object_names": names,
+                "width": width,
+                "height": height,
+                "camera_name": camera_name,
+            }
+        )
+        return {
+            "image": base64.b64encode(b"\x89PNG\r\n\x1a\nfake-object-id").decode("ascii"),
+            "index_map": {index: name for index, name in enumerate(names, start=1)},
+            "missing": [],
+        }
+
+    def get_depth_pass(self, width=1024, height=768, camera_name=None):
+        self.depth_calls.append({"width": width, "height": height, "camera_name": camera_name})
+        return base64.b64encode(b"\x89PNG\r\n\x1a\nfake-depth").decode("ascii")
+
+    def get_normal_pass(self, width=1024, height=768, camera_name=None):
+        self.normal_calls.append({"width": width, "height": height, "camera_name": camera_name})
+        return base64.b64encode(b"\x89PNG\r\n\x1a\nfake-normal").decode("ascii")
 
     def camera_focus(self, object_name: str, zoom_factor: float = 1.0):
         self.focus_calls.append({"object_name": object_name, "zoom_factor": zoom_factor})
@@ -86,6 +113,43 @@ class _Handler:
     def restore_view_state(self, view_state):
         self.restore_view_state_calls.append(view_state)
         return "restored"
+
+
+class _OverlayHandler(_Handler):
+    """Handler that returns real PNG images so the overlay builder can read them."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._isolated_objects: list[str] = []
+        self._boxes = {"Body": (20, 20, 80, 80), "Head": (120, 120, 180, 180)}
+
+    def isolate_object(self, object_names):
+        names = [str(name) for name in object_names]
+        self.isolate_calls.append(names)
+        self._isolated_objects = names
+        return "isolate ok"
+
+    def get_viewport(self, width=1024, height=768, shading="SOLID", camera_name=None, focus_target=None):
+        import io
+
+        from PIL import Image, ImageDraw
+
+        self.calls.append(
+            {
+                "width": width,
+                "height": height,
+                "shading": shading,
+                "camera_name": camera_name,
+                "focus_target": focus_target,
+            }
+        )
+        image = Image.new("RGB", (200, 200), (255, 255, 255))
+        draw = ImageDraw.Draw(image)
+        for name in self._isolated_objects or list(self._boxes):
+            draw.rectangle(self._boxes.get(name, (90, 90, 110, 110)), fill=(0, 0, 0))
+        buffer = io.BytesIO()
+        image.save(buffer, format="PNG")
+        return base64.b64encode(buffer.getvalue()).decode("ascii")
 
 
 def test_capture_stage_images_builds_wide_and_focus_variants(tmp_path, monkeypatch):
@@ -164,6 +228,114 @@ def test_capture_stage_images_can_use_rich_profile(tmp_path, monkeypatch):
     assert captures[0].preset_name == "context_wide"
     assert captures[-1].preset_name == "target_detail"
     assert len(handler.orbit_calls) == 2
+
+
+def test_capture_stage_images_can_attach_object_id_sidecar_for_target_view(tmp_path, monkeypatch):
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    handler = _Handler()
+    captures = capture_stage_images(
+        handler,
+        bundle_id="bundle_object_id",
+        stage="after",
+        target_object="Housing",
+        preset_profile="compact",
+        include_object_id_pass=True,
+        object_id_preset_names={"target_side"},
+    )
+
+    assert [capture.preset_name for capture in captures] == [
+        "context_wide",
+        "target_front",
+        "target_side",
+        "target_top",
+    ]
+    assert len(handler.object_id_calls) == 1
+    assert handler.object_id_calls[0] == {
+        "object_names": ["Housing"],
+        "width": 1280,
+        "height": 960,
+        "camera_name": "USER_PERSPECTIVE",
+    }
+    side = next(capture for capture in captures if capture.preset_name == "target_side")
+    assert side.object_id_artifact is not None
+    assert side.object_id_artifact.capture_ok is True
+    assert side.object_id_artifact.index_map == {1: "Housing"}
+    assert side.object_id_artifact.image_path is not None
+    assert tmp_path.joinpath("internal", "blender-ai-mcp", "bundle_object_id_after_target_side_object_id.png").exists()
+    assert all(capture.object_id_artifact is None for capture in captures if capture.preset_name != "target_side")
+
+
+def test_capture_stage_images_can_append_auxiliary_pass_captures(tmp_path, monkeypatch):
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    handler = _Handler()
+    captures = capture_stage_images(
+        handler,
+        bundle_id="bundle_aux",
+        stage="after",
+        target_object="Housing",
+        preset_profile="compact",
+        include_auxiliary_passes=True,
+        auxiliary_preset_names={"target_front"},
+    )
+
+    assert [capture.label for capture in captures] == [
+        "context_wide_after",
+        "target_front_after",
+        "target_front_after_depth",
+        "target_front_after_normal",
+        "target_front_after_object_id",
+        "target_side_after",
+        "target_top_after",
+    ]
+    assert [capture.view_kind for capture in captures[2:5]] == ["depth", "normal", "object_id"]
+    assert handler.depth_calls == [{"width": 1280, "height": 960, "camera_name": "USER_PERSPECTIVE"}]
+    assert handler.normal_calls == [{"width": 1280, "height": 960, "camera_name": "USER_PERSPECTIVE"}]
+    assert handler.object_id_calls == [
+        {"object_names": ["Housing"], "width": 1280, "height": 960, "camera_name": "USER_PERSPECTIVE"}
+    ]
+    assert tmp_path.joinpath("internal", "blender-ai-mcp", "bundle_aux_after_target_front_depth.png").exists()
+    assert tmp_path.joinpath("internal", "blender-ai-mcp", "bundle_aux_after_target_front_normal.png").exists()
+    front = next(capture for capture in captures if capture.label == "target_front_after")
+    object_id_aux = next(capture for capture in captures if capture.view_kind == "object_id")
+    assert front.object_id_artifact is not None
+    assert object_id_aux.image_path == front.object_id_artifact.image_path
+
+
+def test_capture_stage_images_can_append_mark_overlay_capture(tmp_path, monkeypatch):
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    handler = _OverlayHandler()
+    captures = capture_stage_images(
+        handler,
+        bundle_id="bundle_mark",
+        stage="after",
+        target_objects=["Head", "Body"],
+        preset_profile="compact",
+        include_mark_overlay=True,
+        mark_overlay_preset_names={"target_front"},
+    )
+
+    assert [capture.label for capture in captures] == [
+        "context_wide_after",
+        "target_front_after",
+        "target_front_after_overlay",
+        "target_side_after",
+        "target_top_after",
+    ]
+    overlay = next(capture for capture in captures if capture.view_kind == "overlay")
+    assert overlay.preset_name == "target_front"
+    assert overlay.media_type == "image/jpeg"
+    assert overlay.host_visible_path is not None
+    assert [(mark.mark_id, mark.object_name, mark.status) for mark in overlay.overlay_marks] == [
+        (1, "Body", "placed"),
+        (2, "Head", "placed"),
+    ]
+    assert tmp_path.joinpath("internal", "blender-ai-mcp", "bundle_mark_after_target_front_overlay.jpg").exists()
 
 
 def test_capture_stage_images_can_isolate_multiple_objects_without_single_focus(tmp_path, monkeypatch):
@@ -267,6 +439,19 @@ def test_capture_stage_images_restores_state_after_capture(tmp_path, monkeypatch
     ]
 
 
+class _FailingObjectIdHandler(_Handler):
+    def get_object_id_pass(self, object_names, width=1024, height=768, camera_name=None):
+        self.object_id_calls.append(
+            {
+                "object_names": list(object_names),
+                "width": width,
+                "height": height,
+                "camera_name": camera_name,
+            }
+        )
+        return "No camera available. Object-ID pass requires a scene camera or explicit camera_name."
+
+
 class _FailingViewHandler(_Handler):
     """Handler whose set_standard_view returns a headless failure marker string."""
 
@@ -301,6 +486,28 @@ def test_capture_flags_failed_view_op_without_aborting(tmp_path, monkeypatch):
         assert capture.capture_warning is not None
         assert "set_standard_view" in capture.capture_warning
         assert "no 3d viewport found" in capture.capture_warning.lower()
+
+
+def test_capture_records_object_id_sidecar_failure_without_failing_primary_capture(tmp_path, monkeypatch):
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    captures = capture_stage_images(
+        _FailingObjectIdHandler(),
+        bundle_id="boid",
+        stage="after",
+        target_object="Housing",
+        include_object_id_pass=True,
+        object_id_preset_names={"target_front"},
+    )
+
+    front = next(capture for capture in captures if capture.preset_name == "target_front")
+    assert front.capture_ok is True
+    assert front.capture_warning is None
+    assert front.object_id_artifact is not None
+    assert front.object_id_artifact.capture_ok is False
+    assert front.object_id_artifact.image_path is None
+    assert "No camera available" in str(front.object_id_artifact.capture_warning)
 
 
 def test_build_capture_bundle_aggregates_capture_warnings(tmp_path, monkeypatch):

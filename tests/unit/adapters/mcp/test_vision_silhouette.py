@@ -8,11 +8,18 @@ from typing import Any
 from server.adapters.mcp.areas.reference_silhouette import (
     build_action_hints_from_silhouette,
     build_compare_support_evidence,
+    build_silhouette_analysis_payload,
 )
-from server.adapters.mcp.contracts.reference import ReferenceSilhouetteAnalysisContract
+from server.adapters.mcp.contracts.reference import (
+    ReferenceImageRecordContract,
+    ReferencePerObjectSilhouetteMetricContract,
+    ReferenceSilhouetteAnalysisContract,
+)
+from server.adapters.mcp.contracts.vision import VisionCaptureImageContract, VisionObjectIdCaptureArtifactContract
 from server.adapters.mcp.vision.silhouette import (
     build_silhouette_analysis,
     compute_iou_convergence,
+    compute_per_object_iou,
     compute_silhouette_iou,
 )
 
@@ -105,6 +112,16 @@ def _write_triangle(path: Path, *, points) -> None:
     image.save(path)
 
 
+def _write_object_id_rectangles(path: Path) -> None:
+    from PIL import Image, ImageDraw
+
+    image = Image.new("L", (200, 200), 0)
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((30, 40, 90, 160), fill=128)
+    draw.rectangle((120, 40, 180, 160), fill=255)
+    image.save(path)
+
+
 def test_compute_silhouette_iou_identical_masks_is_one(tmp_path: Path):
     a = tmp_path / "a.png"
     b = tmp_path / "b.png"
@@ -136,6 +153,159 @@ def test_compute_silhouette_iou_returns_none_for_blank_image(tmp_path: Path):
     _write_offset_rectangle(box, box=(40, 40, 160, 160))
     # A uniform image yields no usable foreground mask.
     assert compute_silhouette_iou(str(blank), str(box)) is None
+
+
+def test_compute_per_object_iou_decodes_object_id_band(tmp_path: Path):
+    reference = tmp_path / "reference.png"
+    object_id = tmp_path / "object_id.png"
+    _write_offset_rectangle(reference, box=(35, 45, 95, 165))
+    _write_object_id_rectangles(object_id)
+
+    result = compute_per_object_iou(
+        reference_path=str(reference),
+        object_id_path=str(object_id),
+        index_map={1: "Head", 2: "Body"},
+        object_name="Head",
+    )
+
+    assert result["status"] == "available"
+    assert result["object_index"] == 1
+    assert result["mask_iou"] is not None
+    assert result["mask_iou"] > 0.98
+    assert result["severity"] == "low"
+
+
+def test_compute_per_object_iou_reports_missing_index_map_entry(tmp_path: Path):
+    reference = tmp_path / "reference.png"
+    object_id = tmp_path / "object_id.png"
+    _write_offset_rectangle(reference, box=(35, 45, 95, 165))
+    _write_object_id_rectangles(object_id)
+
+    result = compute_per_object_iou(
+        reference_path=str(reference),
+        object_id_path=str(object_id),
+        index_map={"1": "Head"},
+        object_name="Tail",
+    )
+
+    assert result["status"] == "unavailable"
+    assert result["mask_iou"] is None
+    assert any("Tail" in note for note in result["notes"])
+
+
+def test_silhouette_payload_populates_per_object_metrics_from_capture_side_object_id(tmp_path: Path):
+    reference = tmp_path / "reference.png"
+    capture = tmp_path / "capture.png"
+    object_id = tmp_path / "object_id.png"
+    _write_offset_rectangle(reference, box=(35, 45, 95, 165))
+    _write_offset_rectangle(capture, box=(35, 45, 95, 165))
+    _write_object_id_rectangles(object_id)
+
+    payload = build_silhouette_analysis_payload(
+        selected_reference_records=[
+            ReferenceImageRecordContract(
+                reference_id="ref_front",
+                goal="match head",
+                media_type="image/png",
+                original_path=str(reference),
+                stored_path=str(reference),
+                added_at="2026-03-26T00:00:00Z",
+                label="reference_front",
+            )
+        ],
+        captures=[
+            VisionCaptureImageContract(
+                label="target_front_after",
+                image_path=str(capture),
+                preset_name="target_front",
+                view_kind="focus",
+                object_id_artifact=VisionObjectIdCaptureArtifactContract(
+                    image_path=str(object_id),
+                    index_map={1: "Head", 2: "Body"},
+                ),
+            )
+        ],
+        target_view="front",
+        target_objects=["Head", "Tail"],
+    )
+
+    assert payload is not None
+    metrics = {metric.object_name: metric for metric in payload.per_object_metrics}
+    assert metrics["Head"].status == "available"
+    assert metrics["Head"].mask_iou is not None
+    assert metrics["Head"].mask_iou > 0.98
+    assert metrics["Tail"].status == "unavailable"
+    assert any("capture-side object-ID mask" in note for note in metrics["Head"].notes)
+
+
+def test_silhouette_payload_keeps_unavailable_per_object_metric_for_failed_object_id(tmp_path: Path):
+    reference = tmp_path / "reference.png"
+    capture = tmp_path / "capture.png"
+    _write_offset_rectangle(reference, box=(35, 45, 95, 165))
+    _write_offset_rectangle(capture, box=(35, 45, 95, 165))
+
+    payload = build_silhouette_analysis_payload(
+        selected_reference_records=[
+            ReferenceImageRecordContract(
+                reference_id="ref_front",
+                goal="match head",
+                media_type="image/png",
+                original_path=str(reference),
+                stored_path=str(reference),
+                added_at="2026-03-26T00:00:00Z",
+            )
+        ],
+        captures=[
+            VisionCaptureImageContract(
+                label="target_front_after",
+                image_path=str(capture),
+                preset_name="target_front",
+                view_kind="focus",
+                object_id_artifact=VisionObjectIdCaptureArtifactContract(
+                    capture_ok=False,
+                    capture_warning="No camera available for object-ID pass.",
+                ),
+            )
+        ],
+        target_view="front",
+        target_objects=["Head"],
+    )
+
+    assert payload is not None
+    assert len(payload.per_object_metrics) == 1
+    metric = payload.per_object_metrics[0]
+    assert metric.object_name == "Head"
+    assert metric.status == "unavailable"
+    assert metric.mask_iou is None
+    assert any("No camera available" in note for note in metric.notes)
+
+
+def test_compare_support_evidence_projects_per_object_iou():
+    analysis = ReferenceSilhouetteAnalysisContract(
+        status="available",
+        reference_label="reference",
+        capture_label="capture",
+        target_view="front",
+        per_object_metrics=[
+            ReferencePerObjectSilhouetteMetricContract(
+                object_name="Head",
+                object_index=1,
+                status="available",
+                mask_iou=0.42,
+                severity="high",
+            )
+        ],
+    )
+
+    evidence = build_compare_support_evidence(analysis)
+
+    assert any(
+        item.evidence_kind == "per_object_iou"
+        and item.part_label == "Head"
+        and item.observed_value == 0.42
+        and "Capture-side Object-ID IoU" in item.summary
+        for item in evidence
+    )
 
 
 def test_compute_iou_convergence_classifies_direction():

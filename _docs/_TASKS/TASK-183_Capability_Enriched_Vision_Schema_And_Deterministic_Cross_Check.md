@@ -2,7 +2,7 @@
 
 **Status:** ✅ Done
 **Completed:** 2026-05-30
-**Completion Summary:** TASK-183-01 (capability-aware findings schema + curated payload + backend findings/truncation passthrough fix, changelog 374) and TASK-183-02 (silhouette threshold calibration + IoU convergence signal, changelog 380) both shipped. The optional heavy render-vs-reference embedding cross-check (MEt3R/DINO) stays a default-off sidecar follow-on per the runtime boundary.
+**Completion Summary:** TASK-183-01 (capability-aware findings schema + curated payload + backend findings/truncation passthrough fix, changelog 374) and TASK-183-02 (silhouette threshold calibration + IoU convergence signal, changelog 380) shipped, with audit drift closed by changelog 389: schema/key selection now receives `model_capabilities`, the default external payload is curated instead of raw `metadata`, provider token usage/finish reason surfaces in capability summaries, and a lightweight deterministic silhouette consistency score is attached to support evidence and iterate-loop convergence. The optional heavy render-vs-reference embedding cross-check (MEt3R/DINO) stays a default-off sidecar follow-on per the runtime boundary.
 **Priority:** 🟡 Medium
 **Category:** Vision / Capability-Aware Schema And Calibration
 **Estimated Effort:** Large

@@ -2,16 +2,18 @@
 
 **Parent:** [TASK-180](./TASK-180_Set_Of_Mark_Object_Bound_Visual_Marks.md)
 **Status:** ✅ Done
-**Completed:** 2026-05-30
+**Completion Date:** 2026-05-31
+**Completion Summary:** The live staged-capture path can now emit default-off `view_kind="overlay"` Set-of-Mark captures for focus presets when `VISION_MARK_OVERLAY_ENABLED=true`. Overlay images are built from deterministic isolate-per-object renders, carry typed `VisionOverlayMarkContract` entries with `placed` / `unmarked` status, stay outside labeled grid composites, and are treated as supplemental packet evidence that drops before primary views when image budgets are tight. Packet payloads include a symbolic mark legend, while mark-keyed result parsing/validity retry remains tracked by `TASK-180-04`.
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-179](./TASK-179_Blender_Depth_Normal_And_Object_ID_Auxiliary_Passes.md)
-**Objective:** Produce a deterministic capture with `view_kind="overlay"` that draws high-contrast numbered marks on each registered part, anchored from the `TASK-179` object-ID assignment. The render side uses no VLM and no SAM: marks are placed from the projected per-object footprint of registered scene objects, so the overlay is reproducible from scene state alone.
+**Objective:** Produce a deterministic capture with `view_kind="overlay"` that draws high-contrast numbered marks on registered parts from the staged-capture object set. The live implementation uses isolate-per-object viewport masks to derive projected per-object footprints, while preserving the `TASK-179` object-ID sidecar as the upstream scene-object evidence lane. The render side uses no VLM and no SAM, so the overlay is reproducible from scene state alone.
 
 **Repository Touchpoints:** `server/adapters/mcp/vision/capture_runtime.py`, `server/adapters/mcp/vision/silhouette.py`, `blender_addon/application/handlers/scene_viewport_mixin.py`, `server/adapters/mcp/contracts/vision.py`, `tests/e2e/vision/test_reference_stage_silhouette_contract.py`
 
 **Acceptance Criteria:**
 - a new overlay preset (or overlay pass on an existing focus preset) emits a `VisionCaptureImageContract` with `view_kind="overlay"`, finally producing the enum value that `contracts/vision.py:22` already allows but no preset currently uses.
-- each registered part in the `TASK-179` object-ID set receives exactly one numbered mark; marks are red, ~10px target size, with enough contrast to be legible at the 1280x960 capture resolution.
+- each registered part in the staged object set either receives exactly one placed numbered mark or is carried as `status="unmarked"` in the typed mark map when no usable foreground footprint can be derived; prompt legends expose only placed/visible marks.
+- placed marks are red, ~10px target size, with enough contrast to be legible at the 1280x960 capture resolution.
 - mark placement is deterministic given the scene state: re-running the overlay capture on an unchanged scene yields the same marks at the same anchors.
 - the overlay capture carries a typed mark-id map (mark number -> scene `object_name`) so downstream slices can bind findings without re-deriving placement.
 - the overlay pass is reversible: it uses `capture_scene_state` / `restore_scene_state` and the addon isolation path, leaving scene visibility and view state unchanged after capture.
@@ -27,10 +29,8 @@
   target objects (`scene_handler.isolate_object(isolate_names)` ~:208) and sets
   standard views; the overlay pass adds, per registered part, a projected anchor
   and a numbered marker. Anchor derivation should reuse the existing per-object
-  projection helpers on the addon mixin (`_object_bbox_points`,
-  `_object_view_sample_points`, `_project_point_to_camera`,
-  `_build_view_target_diagnostic` in `scene_viewport_mixin.py`) so the marker
-  centroid is the projected, camera-visible footprint of that object, not a 2D
+  isolate-render footprint from `vision/marks.py` so the marker centroid is a
+  deterministic same-view per-object silhouette centroid, not a VLM or external
   segmentation guess.
 - `silhouette.py` already has the deterministic component machinery
   (`_largest_component`, `_crop_bbox`, `_extract_mask_from_image`); reuse it when
@@ -106,9 +106,12 @@ def capture_overlay_image(scene_handler, *, bundle_id, stage, registered_parts):
 
 ## Tests To Add/Update
 
-- `tests/e2e/vision/test_reference_stage_silhouette_contract.py` (extend with an overlay-capture assertion that the overlay image is emitted with `view_kind="overlay"` and a non-empty mark-id map)
-- new `tests/e2e/vision/test_set_of_mark_overlay_capture.py` (deterministic overlay render for a multi-part scene; one mark per registered part; reversibility)
-- `tests/unit/adapters/mcp/` unit lane for the deterministic marker compositing helper (anchor -> red ~10px marker placement)
+- `tests/unit/adapters/mcp/test_vision_capture_runtime.py` covers live overlay capture emission, typed mark-id maps, and output artifact creation.
+- `tests/unit/adapters/mcp/test_vision_capture_bundle.py` covers overlay metadata propagation and keeping overlay captures outside grid composites.
+- `tests/unit/adapters/mcp/test_reference_compare_packets.py` covers overlay packet inclusion without complexity bump and supplemental-first budget dropping.
+- `tests/unit/adapters/mcp/test_vision_prompting.py` covers packet mark-legend serialization.
+- `tests/unit/adapters/mcp/test_vision_marks.py` covers stable sorted mark ids, including skipped/unmarked objects.
+- `tests/e2e/vision/test_set_of_mark_overlay_capture.py` covers real Blender object-set overlay capture and visibility restoration.
 
 ## Docs To Update
 
@@ -117,19 +120,19 @@ def capture_overlay_image(scene_handler, *, bundle_id, stage, registered_parts):
 
 ## Changelog Impact
 
-- add/update the historical `_docs/_CHANGELOG/*` entry when this slice lands
+- `_docs/_CHANGELOG/392-2026-05-31-task-180-live-mark-overlay-capture.md`
 
 ## Status / Board Update
 
-- board tracking remains on umbrella `TASK-180`
-- no separate promoted board-row change is expected for this subtask
+- `_docs/_TASKS/README.md` removes `TASK-180-01` from promoted open Set-of-Mark work.
+- `TASK-180` remains open for `TASK-180-02`, `TASK-180-03`, and `TASK-180-04`.
 
 ## Validation Commands
 
 - `git diff --check`
-- `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_reference_stage_silhouette_contract.py -q`
-- `PYTHONPATH=. poetry run pytest ./tests/unit`
-- `poetry run python scripts/run_e2e_tests.py`  # Blender/addon overlay-render behavior changes
+- `poetry run ruff check server/adapters/mcp/vision/capture_runtime.py server/adapters/mcp/vision/capture.py server/adapters/mcp/vision/marks.py server/adapters/mcp/vision/prompting.py server/adapters/mcp/vision/backends.py server/adapters/mcp/vision/config.py server/adapters/mcp/vision/runtime.py server/adapters/mcp/areas/reference.py server/adapters/mcp/areas/reference_compare_packets.py server/adapters/mcp/contracts/vision.py server/adapters/mcp/contracts/__init__.py server/infrastructure/config.py tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_capture_runtime.py tests/unit/adapters/mcp/test_vision_capture_bundle.py tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_reference_compare_packets.py tests/unit/adapters/mcp/test_vision_marks.py tests/e2e/tools/scene/test_scene_get_depth_pass.py tests/e2e/tools/scene/test_scene_get_normal_pass.py tests/e2e/vision/test_set_of_mark_overlay_capture.py`
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_capture_runtime.py tests/unit/adapters/mcp/test_vision_capture_bundle.py tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_reference_compare_packets.py tests/unit/adapters/mcp/test_vision_marks.py -q`
+- `PYTEST_ADDOPTS='-k "depth_pass_supports_user_perspective_view or normal_pass_supports_user_perspective_view or set_of_mark_overlay"' poetry run python scripts/run_e2e_tests.py`
 
 ## Validation Category
 

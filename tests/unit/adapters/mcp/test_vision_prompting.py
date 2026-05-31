@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import json
+from dataclasses import replace
+
 import pytest
 from server.adapters.mcp.vision.backend import VisionImageInput, VisionRequest
+from server.adapters.mcp.vision.config import VisionModelCapabilities
 from server.adapters.mcp.vision.prompting import (
     build_local_vision_payload_text,
     build_vision_payload_text,
@@ -170,11 +174,14 @@ def test_local_prompt_payload_is_more_compact_and_task_focused():
     assert '"goal"' not in text
 
 
-def test_generic_payload_builder_keeps_full_json_structure():
+def test_generic_payload_builder_uses_curated_json_payload_without_metadata():
     text = build_vision_payload_text(_request())
 
     assert '"goal": "rounded housing"' in text
     assert '"prompt_hint": "Return JSON only."' in text
+    assert '"image_roster"' in text
+    assert '"requested_json_keys"' in text
+    assert '"metadata"' not in text
 
 
 def test_system_prompt_is_stricter_for_local_backends():
@@ -226,6 +233,44 @@ def test_expected_json_keys_match_schema_properties_for_repairable_contracts(vis
     assert tuple(schema["properties"]) == expected_json_keys(request=vision_request, **kwargs)
 
 
+def test_capability_limited_schema_drops_structured_findings():
+    capabilities = VisionModelCapabilities(
+        model_id="weak-json-model",
+        capability_source="fallback_registry",
+        max_completion_tokens=900,
+        input_modalities=["text", "image"],
+        output_modalities=["text"],
+        supported_parameters=["max_tokens"],
+    )
+
+    schema = build_vision_response_json_schema(request=_packet_compare_request(), model_capabilities=capabilities)
+
+    assert "findings" not in schema["properties"]
+    assert "findings" not in schema["required"]
+    assert "findings" not in expected_json_keys(
+        request=_packet_compare_request(),
+        model_capabilities=capabilities,
+    )
+
+
+def test_generic_payload_requested_keys_follow_capability_limited_schema():
+    capabilities = VisionModelCapabilities(
+        model_id="weak-json-model",
+        capability_source="fallback_registry",
+        max_completion_tokens=900,
+        input_modalities=["text", "image"],
+        output_modalities=["text"],
+        supported_parameters=["max_tokens"],
+    )
+
+    payload = json.loads(build_vision_payload_text(_request(), model_capabilities=capabilities))
+    schema = build_vision_response_json_schema(request=_request(), model_capabilities=capabilities)
+
+    assert "findings" not in payload["requested_json_keys"]
+    assert "findings" not in schema["properties"]
+    assert tuple(payload["requested_json_keys"]) == tuple(schema["properties"])
+
+
 def test_packet_compare_request_uses_packet_specific_prompt_payload_and_schema():
     request = _packet_compare_request()
 
@@ -270,6 +315,56 @@ def test_packet_compare_request_uses_packet_specific_prompt_payload_and_schema()
         "ranking_recommendation",
     }
     _assert_strict_required_matches_properties(schema)
+
+
+def test_packet_compare_prompt_includes_mark_overlay_legend():
+    request = _packet_compare_request()
+    request = replace(
+        request,
+        metadata={
+            **request.metadata,
+            "mark_overlays": [
+                {
+                    "label": "target_front_after_overlay",
+                    "marks": [
+                        {"mark_id": 1, "object_name": "Body", "status": "placed"},
+                        {"mark_id": 2, "object_name": "Head", "status": "placed"},
+                    ],
+                }
+            ],
+        },
+    )
+
+    payload_text = build_vision_payload_text(request)
+
+    assert "MARK_OVERLAYS:" in payload_text
+    assert "- target_front_after_overlay: mark 1 -> Body (placed)" in payload_text
+    assert "- target_front_after_overlay: mark 2 -> Head (placed)" in payload_text
+
+
+def test_packet_compare_prompt_omits_unplaced_overlay_marks_from_legend():
+    request = _packet_compare_request()
+    request = replace(
+        request,
+        metadata={
+            **request.metadata,
+            "mark_overlays": [
+                {
+                    "label": "target_front_after_overlay",
+                    "marks": [
+                        {"mark_id": 1, "object_name": "Body", "status": "unmarked"},
+                        {"mark_id": 2, "object_name": "Head", "status": "placed"},
+                    ],
+                }
+            ],
+        },
+    )
+
+    payload_text = build_vision_payload_text(request)
+
+    assert "MARK_OVERLAYS:" in payload_text
+    assert "mark 1 -> Body" not in payload_text
+    assert "- target_front_after_overlay: mark 2 -> Head (placed)" in payload_text
 
 
 def test_packet_ranking_request_uses_ranking_specific_prompt_payload():
@@ -436,6 +531,40 @@ def test_format_image_caption_omits_underivable_tokens():
 
     bare = format_image_caption(VisionImageInput(path="/tmp/x.png", role="before"))
     assert bare == "[image: before | role=before]"
+
+
+def test_format_image_caption_prefers_explicit_view_kind_for_grid():
+    caption = format_image_caption(
+        VisionImageInput(path="/tmp/grid.jpg", role="after", label="view_grid_after", view_kind="grid")
+    )
+
+    assert caption == "[image: view_grid_after | role=after | view=grid]"
+
+
+def test_format_image_caption_marks_auxiliary_channels_as_advisory():
+    depth = format_image_caption(
+        VisionImageInput(path="/tmp/depth.png", role="after", label="target_front_after_depth", view_kind="depth")
+    )
+    normal = format_image_caption(
+        VisionImageInput(path="/tmp/normal.png", role="after", label="target_front_after_normal", view_kind="normal")
+    )
+    object_id = format_image_caption(
+        VisionImageInput(
+            path="/tmp/object_id.png",
+            role="after",
+            label="target_front_after_object_id",
+            view_kind="object_id",
+        )
+    )
+
+    assert depth == (
+        "[image: target_front_after_depth | role=after | view=depth | channel=relative_depth | "
+        "advisory=geometric_enrichment_not_truth_source]"
+    )
+    assert "channel=surface_normal" in normal
+    assert "channel=object_id_mask" in object_id
+    assert "advisory=geometric_enrichment_not_truth_source" in normal
+    assert "advisory=geometric_enrichment_not_truth_source" in object_id
 
 
 def test_roster_line_keeps_lean_baseline_format():

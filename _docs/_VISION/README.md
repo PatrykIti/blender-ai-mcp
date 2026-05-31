@@ -459,6 +459,46 @@ Practical impact:
 - `2B` is still weaker, but it now returns something that can be evaluated
   instead of just being discarded as parser noise
 
+## 2026-05-30 Vision Output Quality Audit Refresh
+
+The current staged-reference runtime includes the audit repairs from changelog
+389:
+
+- public `reference_*` tool docstrings state the read order explicitly:
+  `reference_orchestrator_feedback` first, deterministic truth/diagnostics
+  second, advisory vision last
+- packet synthesis preserves truncation accounting; capped packet evidence now
+  carries `evidence_truncated` and `omitted_count` instead of silently dropping
+  findings
+- top-level compare `confidence` is clamped to `[0, 1]` and remains
+  non-authoritative
+- optional labeled multi-view grids are reachable through
+  `VISION_CAPTURE_GRID_ENABLED`; when enabled, selected views are composited
+  into `view_kind="grid"` captures with grid-aware captions and bounded image
+  count
+- Blender depth/normal/object-ID pass methods are reflected in the server
+  scene-tool interface. Staged compare now attaches an internal object-ID
+  sidecar to the canonical focus capture, populates capture-side
+  `per_object_metrics`, and projects available metrics as `per_object_iou`
+  support evidence without sending the object-ID image to the VLM roster.
+  When `VISION_TRANSMIT_AUX_CHANNELS=true`, the same focus view can also append
+  depth, normal, and object-ID auxiliary images as typed `view_kind` captures
+  with advisory captions and budget-drop metadata. Fixture-calibrated
+  per-object thresholds remain an explicit open follow-on.
+- Set-of-Mark overlay capture is live but default-off. When
+  `VISION_MARK_OVERLAY_ENABLED=true`, staged focus captures can append a
+  supplemental `view_kind="overlay"` image with high-contrast numbered marks and
+  a typed mark-id map back to scene objects. Overlay captures are advisory
+  visual-prompting aids, stay outside grid composites, and drop before primary
+  focus/context captures under image-budget pressure.
+- external-provider schemas and expected-key lists receive resolved
+  `model_capabilities`; default external payloads use curated task framing
+  rather than raw `metadata`, and provider token usage / finish reason are
+  surfaced in the capability summary
+- silhouette analysis now exposes a lightweight deterministic consistency score
+  and iterate-loop convergence signal; optional embedding-style cross-checks
+  remain default-off sidecar follow-ons
+
 ## Boundary Rules
 
 The vision layer is not the truth source.

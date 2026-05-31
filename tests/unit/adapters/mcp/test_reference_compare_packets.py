@@ -30,7 +30,9 @@ from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
 from server.adapters.mcp.sampling.result_types import (
     VisionAssistContract,
     VisionInputSummaryContract,
+    VisionIssueContract,
     VisionPacketStatusContract,
+    VisionRecommendedCheckContract,
 )
 
 
@@ -82,7 +84,7 @@ def _capture(
     label: str,
     *,
     preset_name: str,
-    view_kind: Literal["wide", "focus", "overlay", "reference"] = "focus",
+    view_kind: Literal["wide", "focus", "overlay", "reference", "depth", "normal", "object_id"] = "focus",
 ) -> VisionCaptureImageContract:
     return VisionCaptureImageContract(
         label=label,
@@ -127,6 +129,160 @@ def test_build_compare_packets_simple_front_and_side_use_explicit_view_packets()
     assert packets.packet_count == 2
     assert [packet.target_view for packet in packets.packets] == ["front", "side"]
     assert [packet.packet_kind for packet in packets.packets] == ["view", "view"]
+
+
+def test_build_compare_packets_keeps_auxiliary_captures_on_same_view_without_complexity_bump():
+    packets = build_compare_packets(
+        target_view="front",
+        captures=[
+            _capture("context_wide_after", preset_name="context_wide", view_kind="wide"),
+            _capture("target_front_after", preset_name="target_front"),
+            _capture("target_front_after_depth", preset_name="target_front", view_kind="depth"),
+            _capture("target_front_after_normal", preset_name="target_front", view_kind="normal"),
+            _capture("target_front_after_object_id", preset_name="target_front", view_kind="object_id"),
+        ],
+        reference_records=[_reference("ref_front", label="front_ref", target_view="front")],
+        assembled_target_scope=SceneAssembledTargetScopeContract(
+            scope_kind="single_object",
+            primary_target="Creature",
+            object_names=["Creature"],
+            object_count=1,
+        ),
+        truth_followup=SceneTruthFollowupContract(
+            scope=SceneAssembledTargetScopeContract(
+                scope_kind="single_object",
+                primary_target="Creature",
+                object_names=["Creature"],
+                object_count=1,
+            ),
+            continue_recommended=False,
+            message="No structural blocker.",
+        ),
+    )
+
+    assert packets.complexity_tier == "simple"
+    assert packets.packet_count == 1
+    assert packets.packets[0].capture_labels == [
+        "context_wide_after",
+        "target_front_after",
+        "target_front_after_depth",
+        "target_front_after_normal",
+        "target_front_after_object_id",
+    ]
+
+
+def test_build_compare_packets_keeps_overlay_captures_on_same_view_without_complexity_bump():
+    packets = build_compare_packets(
+        target_view="front",
+        captures=[
+            _capture("context_wide_after", preset_name="context_wide", view_kind="wide"),
+            _capture("target_front_after", preset_name="target_front"),
+            _capture("target_front_after_overlay", preset_name="target_front", view_kind="overlay"),
+        ],
+        reference_records=[_reference("ref_front", label="front_ref", target_view="front")],
+        assembled_target_scope=SceneAssembledTargetScopeContract(
+            scope_kind="single_object",
+            primary_target="Creature",
+            object_names=["Creature"],
+            object_count=1,
+        ),
+        truth_followup=SceneTruthFollowupContract(
+            scope=SceneAssembledTargetScopeContract(
+                scope_kind="single_object",
+                primary_target="Creature",
+                object_names=["Creature"],
+                object_count=1,
+            ),
+            continue_recommended=False,
+            message="No structural blocker.",
+        ),
+    )
+
+    assert packets.complexity_tier == "simple"
+    assert packets.packet_count == 1
+    assert packets.packets[0].capture_labels == [
+        "context_wide_after",
+        "target_front_after",
+        "target_front_after_overlay",
+    ]
+
+
+def test_build_compare_packets_budget_drops_auxiliary_captures_before_primary_evidence():
+    packets = build_compare_packets(
+        target_view="front",
+        captures=[
+            _capture("context_wide_after", preset_name="context_wide", view_kind="wide"),
+            _capture("target_front_after", preset_name="target_front"),
+            _capture("target_front_after_depth", preset_name="target_front", view_kind="depth"),
+            _capture("target_front_after_normal", preset_name="target_front", view_kind="normal"),
+            _capture("target_front_after_object_id", preset_name="target_front", view_kind="object_id"),
+        ],
+        reference_records=[_reference("ref_front", label="front_ref", target_view="front")],
+        assembled_target_scope=SceneAssembledTargetScopeContract(
+            scope_kind="single_object",
+            primary_target="Creature",
+            object_names=["Creature"],
+            object_count=1,
+        ),
+        truth_followup=SceneTruthFollowupContract(
+            scope=SceneAssembledTargetScopeContract(
+                scope_kind="single_object",
+                primary_target="Creature",
+                object_names=["Creature"],
+                object_count=1,
+            ),
+            continue_recommended=False,
+            message="No structural blocker.",
+        ),
+        max_images_per_packet=3,
+    )
+
+    assert packets.complexity_tier == "simple"
+    assert packets.packet_count == 1
+    assert packets.packets[0].capture_labels == ["target_front_after", "context_wide_after"]
+    assert packets.packets[0].reference_ids == ["ref_front"]
+    assert packets.budget_notes == [
+        "Compare packet policy omitted context or supplemental captures from some packets to stay within "
+        "VISION_MAX_IMAGES=3."
+    ]
+
+
+def test_build_compare_packets_budget_drops_overlay_before_primary_evidence():
+    packets = build_compare_packets(
+        target_view="front",
+        captures=[
+            _capture("context_wide_after", preset_name="context_wide", view_kind="wide"),
+            _capture("target_front_after", preset_name="target_front"),
+            _capture("target_front_after_overlay", preset_name="target_front", view_kind="overlay"),
+        ],
+        reference_records=[_reference("ref_front", label="front_ref", target_view="front")],
+        assembled_target_scope=SceneAssembledTargetScopeContract(
+            scope_kind="single_object",
+            primary_target="Creature",
+            object_names=["Creature"],
+            object_count=1,
+        ),
+        truth_followup=SceneTruthFollowupContract(
+            scope=SceneAssembledTargetScopeContract(
+                scope_kind="single_object",
+                primary_target="Creature",
+                object_names=["Creature"],
+                object_count=1,
+            ),
+            continue_recommended=False,
+            message="No structural blocker.",
+        ),
+        max_images_per_packet=3,
+    )
+
+    assert packets.complexity_tier == "simple"
+    assert packets.packet_count == 1
+    assert packets.packets[0].capture_labels == ["target_front_after", "context_wide_after"]
+    assert packets.packets[0].reference_ids == ["ref_front"]
+    assert packets.budget_notes == [
+        "Compare packet policy omitted context or supplemental captures from some packets to stay within "
+        "VISION_MAX_IMAGES=3."
+    ]
 
 
 def test_localized_support_reason_is_none_without_truth_or_perception_trigger():
@@ -786,7 +942,8 @@ def test_build_compare_packets_tight_image_budget_drops_context_before_reference
     assert all(packet.capture_labels == ["target_front_after"] for packet in packets.packets)
     assert [packet.reference_ids for packet in packets.packets] == [["ref_front_1"], ["ref_front_2"]]
     assert packets.budget_notes == [
-        "Compare packet policy omitted context captures from some packets to stay within VISION_MAX_IMAGES=2.",
+        "Compare packet policy omitted context or supplemental captures from some packets to stay within "
+        "VISION_MAX_IMAGES=2.",
         "Compare packet policy split reference evidence into bounded packet-local slices to stay within "
         "VISION_MAX_IMAGES=2.",
     ]
@@ -867,7 +1024,8 @@ def test_build_compare_packets_marks_one_image_budget_as_incomplete_reference_ev
     assert packets.packets[0].capture_labels == ["target_front_after"]
     assert packets.packets[0].reference_ids == []
     assert packets.budget_notes == [
-        "Compare packet policy omitted context captures from some packets to stay within VISION_MAX_IMAGES=1.",
+        "Compare packet policy omitted context or supplemental captures from some packets to stay within "
+        "VISION_MAX_IMAGES=1.",
         "Compare packet policy split reference evidence into bounded packet-local slices to stay within "
         "VISION_MAX_IMAGES=1.",
         "Runtime image budget is below the 2-image minimum for reference compare packets; "
@@ -996,6 +1154,38 @@ def test_synthesize_packet_vision_result_dedupes_reused_capture_and_reference_co
     assert synthesized.packet_guidance is not None
     assert synthesized.packet_guidance.packet_status == "clean"
     assert synthesized.packet_guidance.ranking_recommendation == "skip_clean"
+
+
+def test_synthesize_packet_vision_result_preserves_truncation_accounting():
+    packet = ReferenceComparePacketContract(
+        packet_id="packet:front:test",
+        packet_label="front packet",
+        compare_question="Compare front.",
+        capture_labels=["front_after"],
+        reference_ids=["front_ref"],
+    )
+    result = VisionAssistContract(
+        backend_kind="mlx_local",
+        goal_summary="Front packet needs work.",
+        visible_changes=[f"visible {index}" for index in range(9)],
+        shape_mismatches=[f"shape {index}" for index in range(7)],
+        likely_issues=[VisionIssueContract(category=f"issue_{index}", summary=f"issue {index}") for index in range(7)],
+        recommended_checks=[
+            VisionRecommendedCheckContract(tool_name=f"check_{index}", reason=f"reason {index}") for index in range(7)
+        ],
+        evidence_truncated=True,
+        omitted_count=2,
+    )
+
+    synthesized = synthesize_packet_vision_result([(packet, result)])
+
+    assert synthesized is not None
+    assert len(synthesized.visible_changes) == 8
+    assert len(synthesized.shape_mismatches) == 6
+    assert len(synthesized.likely_issues) == 6
+    assert len(synthesized.recommended_checks) == 6
+    assert synthesized.evidence_truncated is True
+    assert synthesized.omitted_count == 6
 
 
 def test_merge_packet_phase_results_does_not_keep_extraction_focus_after_ranking_downgrade():

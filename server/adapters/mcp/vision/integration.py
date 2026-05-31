@@ -64,12 +64,16 @@ async def maybe_attach_macro_vision(
     effective_max_images = getattr(resolver.runtime_config, "effective_max_images", None)
     if not isinstance(effective_max_images, int) or isinstance(effective_max_images, bool):
         effective_max_images = None
+    capture_grid_enabled = bool(getattr(resolver.runtime_config, "capture_grid_enabled", False))
+    transmit_auxiliary_channels = bool(getattr(resolver.runtime_config, "transmit_auxiliary_channels", False))
     request = build_vision_request_from_capture_bundle(
         report.capture_bundle,
         goal=goal,
         reference_images=reference_images,
         prompt_hint=" | ".join(part for part in prompt_hint_parts if part) or None,
         max_images=effective_max_images,
+        capture_grid_enabled=capture_grid_enabled,
+        transmit_auxiliary_channels=transmit_auxiliary_channels,
     )
     outcome = await run_vision_assist(
         ctx,
