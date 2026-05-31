@@ -16,6 +16,7 @@ from server.adapters.mcp.session_capabilities import (
     SessionCapabilityState,
     advance_guided_flow_from_iteration_async,
     bootstrap_guided_empty_scene_primary_workset_async,
+    build_guided_registry_compare_scope,
     describe_guided_flow_feedback,
     get_session_capability_state,
     mark_guided_spatial_state_stale,
@@ -23,6 +24,7 @@ from server.adapters.mcp.session_capabilities import (
     register_guided_part_role,
     register_guided_part_role_async,
     rename_guided_part_registration_async,
+    resolve_guided_mark_id_map,
     set_session_capability_state,
     update_session_from_router_goal,
 )
@@ -690,6 +692,53 @@ def test_register_guided_part_role_expands_active_target_scope_for_new_workset_m
         "Squirrel_Snout",
         "Squirrel_Tail",
     ]
+
+
+def test_guided_registry_compare_scope_projects_stable_registered_part_graph():
+    active_scope = _scope("Squirrel_Body", "Squirrel_Head", "Squirrel_Tail", "Squirrel_Snout")
+
+    scope = build_guided_registry_compare_scope(
+        guided_part_registry=[
+            {"object_name": "Squirrel_Body", "role": "body_core", "role_group": "primary_masses"},
+            {"object_name": "Squirrel_Head", "role": "head_mass", "role_group": "primary_masses"},
+            {"object_name": "Squirrel_Tail", "role": "tail_mass", "role_group": "primary_masses"},
+            {"object_name": "Squirrel_Snout", "role": "snout_mass", "role_group": "secondary_parts"},
+        ],
+        active_target_scope=active_scope,
+    )
+
+    assert scope is not None
+    assert scope.primary_target == "Squirrel_Body"
+    assert scope.object_names == ["Squirrel_Body", "Squirrel_Head", "Squirrel_Tail", "Squirrel_Snout"]
+    roles_by_name = {item.object_name: item for item in scope.object_roles}
+    assert roles_by_name["Squirrel_Body"].role == "anchor_core"
+    assert roles_by_name["Squirrel_Body"].is_primary is True
+    assert roles_by_name["Squirrel_Snout"].role == "attached_appendage"
+    assert "guided_part_registry" in roles_by_name["Squirrel_Snout"].signals
+
+
+def test_guided_mark_id_map_preserves_existing_ids_and_appends_new_parts():
+    first = resolve_guided_mark_id_map(
+        guided_part_registry=[
+            {"object_name": "Squirrel_Body", "role": "body_core", "role_group": "primary_masses"},
+            {"object_name": "Squirrel_Head", "role": "head_mass", "role_group": "primary_masses"},
+        ],
+        active_target_scope=_scope("Squirrel_Body", "Squirrel_Head"),
+        prior_mark_id_map=None,
+    )
+
+    second = resolve_guided_mark_id_map(
+        guided_part_registry=[
+            {"object_name": "Squirrel_Body", "role": "body_core", "role_group": "primary_masses"},
+            {"object_name": "Squirrel_Head", "role": "head_mass", "role_group": "primary_masses"},
+            {"object_name": "Squirrel_Tail", "role": "tail_mass", "role_group": "primary_masses"},
+        ],
+        active_target_scope=_scope("Squirrel_Body", "Squirrel_Head", "Squirrel_Tail"),
+        prior_mark_id_map=first,
+    )
+
+    assert first == {"Squirrel_Body": 1, "Squirrel_Head": 2}
+    assert second == {"Squirrel_Body": 1, "Squirrel_Head": 2, "Squirrel_Tail": 3}
 
 
 def test_async_guided_rename_validation_runs_off_event_loop(monkeypatch):

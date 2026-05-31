@@ -15,6 +15,7 @@ from server.adapters.mcp.contracts.reference import (
     GuidedReferenceReadinessContract,
     ReferenceImageRecordContract,
     ReferenceOrchestratorFeedbackContract,
+    ReferenceRuntimeEvidenceContract,
     ReferenceUnderstandingSummaryContract,
 )
 from server.adapters.mcp.elicitation_contracts import ClarificationFallbackPayload
@@ -90,6 +91,7 @@ class RouterGoalResponseContract(MCPContract):
     reference_understanding_summary: ReferenceUnderstandingSummaryContract | None = None
     reference_understanding_gate_ids: list[str] = []
     reference_orchestrator_feedback: ReferenceOrchestratorFeedbackContract | None = None
+    reference_runtime_evidence: ReferenceRuntimeEvidenceContract | None = None
     repair_suggestion: RepairSuggestionAssistantContract | None = None
 
 
@@ -142,6 +144,7 @@ class RouterStatusContract(MCPContract):
     reference_understanding_summary: ReferenceUnderstandingSummaryContract | None = None
     reference_understanding_gate_ids: list[str] = []
     reference_orchestrator_feedback: ReferenceOrchestratorFeedbackContract | None = None
+    reference_runtime_evidence: ReferenceRuntimeEvidenceContract | None = None
 
 
 RouterGoalResponseContract.model_rebuild()

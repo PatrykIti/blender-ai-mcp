@@ -382,6 +382,11 @@ def test_router_status_and_stage_checkpoint_surface_reference_understanding_with
     assert compare_result.reference_understanding_gate_ids == goal_result.reference_understanding_gate_ids
     assert compare_result.part_segmentation is not None
     assert compare_result.part_segmentation.status == "disabled"
+    assert compare_result.runtime_evidence is not None
+    compare_runtime_by_capability = {item.capability: item for item in compare_result.runtime_evidence.capabilities}
+    assert compare_runtime_by_capability["classifier"].status == "used"
+    assert compare_runtime_by_capability["vision"].status == "used"
+    assert compare_runtime_by_capability["localization"].status == "not_configured"
 
     iterate_result = asyncio.run(
         reference_iterate_stage_checkpoint(
@@ -399,6 +404,10 @@ def test_router_status_and_stage_checkpoint_surface_reference_understanding_with
     assert iterate_result.reference_understanding_gate_ids == goal_result.reference_understanding_gate_ids
     assert iterate_result.part_segmentation is not None
     assert iterate_result.part_segmentation.status == "disabled"
+    assert iterate_result.runtime_evidence is not None
+    iterate_runtime_by_capability = {item.capability: item for item in iterate_result.runtime_evidence.capabilities}
+    assert iterate_runtime_by_capability["classifier"].status == "used"
+    assert iterate_runtime_by_capability["vision"].status == "used"
 
 
 def test_reference_orchestrator_feedback_surface_with_real_blender_capture(
@@ -514,6 +523,7 @@ def test_reference_orchestrator_feedback_surface_with_real_blender_capture(
 
     assert compare_result.reference_orchestrator_feedback is not None
     assert compare_result.reference_orchestrator_feedback.next_checkpoint_tool == "reference_iterate_stage_checkpoint"
+    assert compare_result.reference_orchestrator_feedback.runtime_evidence is not None
     assert compare_result.reference_understanding_summary is not None
     assert compare_result.reference_understanding_summary.visual_metrics
     assert compare_result.reference_understanding_summary.classification_scores[0].label == "low_poly_faceted"

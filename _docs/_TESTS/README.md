@@ -185,6 +185,9 @@ The squirrel proof lane is repo-owned and bounded:
 - it proves the repaired guided/reference path keeps early creature compare
   broad on body/head/tail primary masses instead of reusing stale local
   ear/limb focus too early
+- the same lane now also asserts `runtime_evidence` so classifier, main vision,
+  localization, and segmentation participation can be diagnosed from structured
+  payloads instead of external logs
 
 ## TASK-136 Architecture Reconstruction Lanes
 

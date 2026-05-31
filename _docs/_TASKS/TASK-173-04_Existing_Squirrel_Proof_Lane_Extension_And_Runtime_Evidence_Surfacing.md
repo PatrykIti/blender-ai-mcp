@@ -1,7 +1,7 @@
 # TASK-173-04: Existing Squirrel Proof-Lane Extension And Runtime Evidence Surfacing
 
 **Parent:** [TASK-173](./TASK-173_Reference_Guided_Creature_Scope_Convergence_And_Optional_Grounding_Followups.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-171-06](./TASK-171-06_Squirrel_Regression_Proof_Docs_And_Closeout.md), [TASK-169-05](./TASK-169-05_Squirrel_Reference_Guided_Drift_Regression_Pack.md)
 **Related:** [TASK-172-06](./TASK-172-06_Harness_Negative_Coverage_And_Operator_Docs_For_Optional_Vision_Runtime.md)
@@ -82,7 +82,7 @@ attach_runtime_evidence(reference_orchestrator_feedback, session_evidence)
 
 ## Status / Board Update
 
-- board tracking remains on umbrella `TASK-173`
+- board tracking is closed on umbrella `TASK-173`
 - no separate promoted board-row change is expected for this subtask unless it
   later becomes a standalone follow-on
 
@@ -97,3 +97,15 @@ attach_runtime_evidence(reference_orchestrator_feedback, session_evidence)
 ## Validation Category
 
 - regression proof and runtime-evidence observability
+
+## Completion Summary
+
+Completed on 2026-05-31. Compare, iterate, feedback, router status, and the
+localized-support harness now expose bounded `runtime_evidence` for classifier,
+main vision, localization, and segmentation participation. The existing
+squirrel proof lane was extended with runtime-evidence assertions instead of
+duplicating the lane, so future failures can tell whether optional sidecars
+were configured, considered, invoked, skipped by policy, unavailable, or absent
+without log archaeology.
+
+Validation evidence is recorded in changelog entry `394`.

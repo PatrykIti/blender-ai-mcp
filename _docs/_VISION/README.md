@@ -50,6 +50,7 @@ The repo now has the first implementation scaffolding for the vision layer:
     - `target_front`
     - `target_side`
     - `target_top`
+    - `target_oblique_left`
   - available `rich` profile scaffold:
     - `context_wide`
     - `target_focus`
@@ -178,6 +179,10 @@ The repo now has the first implementation scaffolding for the vision layer:
   broad-first even when the previous loop remembered one local ear/limb focus,
   so common squirrel/quadruped runs do not descend into accessory repair
   before the whole-animal silhouette stabilizes
+- when a guided part registry is available, staged compare now projects that
+  registry into the assembled compare scope and prefers the registered graph over
+  name/focus heuristics. Packet diagnostics record `scope_source` and
+  `registered_compare_scope` so scope narrowing is auditable instead of implicit.
 - once a registered non-detail secondary part such as `snout_mass`,
   `foreleg_pair`, or `hindleg_pair` already exists, blocker/focus/last-mutation
   evidence can now override that broad-first creature compare earlier than
@@ -483,14 +488,29 @@ The current staged-reference runtime includes the audit repairs from changelog
   support evidence without sending the object-ID image to the VLM roster.
   When `VISION_TRANSMIT_AUX_CHANNELS=true`, the same focus view can also append
   depth, normal, and object-ID auxiliary images as typed `view_kind` captures
-  with advisory captions and budget-drop metadata. Fixture-calibrated
-  per-object thresholds remain an explicit open follow-on.
+  with advisory captions and budget-drop metadata. Per-object IoU severity uses
+  fixture-calibrated thresholds: high mismatch below 0.45, medium below 0.70,
+  and low otherwise.
 - Set-of-Mark overlay capture is live but default-off. When
   `VISION_MARK_OVERLAY_ENABLED=true`, staged focus captures can append a
   supplemental `view_kind="overlay"` image with high-contrast numbered marks and
   a typed mark-id map back to scene objects. Overlay captures are advisory
   visual-prompting aids, stay outside grid composites, and drop before primary
   focus/context captures under image-budget pressure.
+- mark IDs are now registry/session-stable across front/side/top/oblique views
+  and iterate cycles. Packet payloads include exact `mark_id_map` values,
+  optional reference-side mark provenance from the default-off localization
+  sidecar, typed `object_correspondence`, rejected invalid mark IDs, and one
+  bounded retry constrained to valid marks.
+- packeted compare now carries advisory Critic/Verify state:
+  packet-scoped `open_defects`, same-packet `verify_status`, synthesis
+  preservation, and compact feedback notes for unresolved defects. Deterministic
+  gate verification remains the hard completion authority; vision defect status
+  is never a truth source.
+- compact `reference_orchestrator_feedback.authoritative_next_actions` now has
+  parallel `authoritative_next_action_provenance` rows so clients can see whether
+  each ranked action came from scene truth, spatial relation, policy, or
+  advisory vision.
 - external-provider schemas and expected-key lists receive resolved
   `model_capabilities`; default external payloads use curated task framing
   rather than raw `metadata`, and provider token usage / finish reason are
@@ -785,9 +805,17 @@ and `reference_iterate_stage_checkpoint(...)`:
 - `action_hints`
   - typed, bounded tool suggestions derived from those silhouette metrics
 - `part_segmentation`
-- optional advisory-only sidecar envelope; defaults to `status="disabled"` on
-  the normal runtime and becomes bounded compare-time output only when the
-  separate segmentation sidecar is enabled
+  - optional advisory-only sidecar envelope; defaults to `status="disabled"` on
+    the normal runtime and becomes bounded compare-time output only when the
+    separate segmentation sidecar is enabled
+- `runtime_evidence`
+  - bounded participation evidence for classifier, main vision, localization,
+    and segmentation, including configured/considered/invoked status and packet
+    ids when applicable
+- `shape_convergence_disposition`
+  - iterate-only compact distinction between all-roles-present shape drift,
+    exhausted build path, hard blocker inspect, stagnation inspect, or not
+    evaluated
 - RU summaries now also expose typed `views` and lightweight
   server-owned `visual_metrics`; those heuristics stay advisory-only and do not
   become verifier truth
@@ -812,17 +840,20 @@ Interpretation rules:
   before the packet LLM phase runs; those CV items stay advisory-only and
   do not replace truth or gate authority
 - compare packets now also expose one normalized `localized_support_reason`
-  seam; only packets with that bounded reason may invoke optional localized
-  support such as compare-time segmentation
+  seam; only bounded creature appendage packets with truth,
+  silhouette/action-hint, or unresolved-defect evidence that they are
+  under-grounded may invoke optional localized support
 - when the optional segmentation sidecar is enabled, packet compare may attach
   bounded `part_segmentation` output plus packet-local segmentation support
-  evidence only for those localized-support packets; failures degrade to
-  `status="unavailable"` notes, while clean/no-trigger runs keep
-  `part_segmentation.status="disabled"`
+  evidence only when mask support is requested or localization produced seed
+  boxes; failures degrade to `status="unavailable"` notes, while clean
+  appendage packets report `skipped_by_policy` through `runtime_evidence`
 
 Current staged-loop reading order for creature work:
 
 - `loop_disposition`
+- `shape_convergence_disposition`
+- `runtime_evidence`
 - `compare_diagnostics`
 - `correction_candidates`
 - `truth_followup`

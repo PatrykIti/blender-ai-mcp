@@ -1,7 +1,7 @@
 # TASK-173-02: Shape Convergence Exit Criteria And Inspect-Validate Escalation
 
 **Parent:** [TASK-173](./TASK-173_Reference_Guided_Creature_Scope_Convergence_And_Optional_Grounding_Followups.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-171-01](./TASK-171-01_Buildable_Gate_Escalation_And_Stage_Prerequisite_Repair.md), [TASK-169-03-01](./TASK-169-03-01_Creature_Global_Quality_Hold_And_Final_Completion_Semantics.md)
 **Objective:** Repair the creature loop so semantic role completion no longer outranks silhouette/proportion convergence, and make the `build` -> `checkpoint_iterate` -> `inspect_validate` escalation depend on explicit shape and gate criteria instead of “all parts exist”.
@@ -79,7 +79,7 @@ if hard_truth_or_view_blocker():
 
 ## Status / Board Update
 
-- board tracking remains on umbrella `TASK-173`
+- board tracking is closed on umbrella `TASK-173`
 - no separate promoted board-row change is expected for this subtask unless it
   later becomes a standalone follow-on
 
@@ -94,3 +94,15 @@ if hard_truth_or_view_blocker():
 ## Validation Category
 
 - shape-convergence and escalation-policy proof
+
+## Completion Summary
+
+Completed on 2026-05-31. `reference_iterate_stage_checkpoint(...)` now
+distinguishes a creature run where all semantic roles exist but
+whole-assembly shape/profile drift still has a bounded build lane from a
+build path that is exhausted. Shape/profile/proportion blockers can keep
+`checkpoint_iterate` in `continue_build` and advance toward
+`refine_low_poly_forms`; high-priority truth findings and repeated stagnation
+still escalate to `inspect_validate`.
+
+Validation evidence is recorded in changelog entry `394`.

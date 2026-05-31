@@ -17,6 +17,8 @@ _CAPTURE_SIDE_OBJECT_ID_NOTE = (
     "Per-object IoU uses the capture-side object-ID mask against the selected reference silhouette; "
     "reference photographs do not provide object-ID ground truth."
 )
+PER_OBJECT_IOU_HIGH_MISMATCH_BELOW = 0.45
+PER_OBJECT_IOU_MEDIUM_MISMATCH_BELOW = 0.70
 
 
 def _metric_severity(delta: float, *, high: float, medium: float) -> str:
@@ -24,6 +26,18 @@ def _metric_severity(delta: float, *, high: float, medium: float) -> str:
     if absolute >= high:
         return "high"
     if absolute >= medium:
+        return "medium"
+    return "low"
+
+
+def classify_per_object_iou_severity(iou: float | None) -> str:
+    """Classify fixture-calibrated capture-side per-object IoU severity."""
+
+    if iou is None:
+        return "high"
+    if iou < PER_OBJECT_IOU_HIGH_MISMATCH_BELOW:
+        return "high"
+    if iou < PER_OBJECT_IOU_MEDIUM_MISMATCH_BELOW:
         return "medium"
     return "low"
 
@@ -323,7 +337,7 @@ def compute_per_object_iou(
         iou = None
     else:
         iou = intersection / union
-    severity = "high" if iou is None or iou < 0.45 else "medium" if iou < 0.7 else "low"
+    severity = classify_per_object_iou_severity(iou)
     return {
         "object_name": object_name,
         "object_index": object_index,

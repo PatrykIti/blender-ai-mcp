@@ -18,7 +18,7 @@ from server.adapters.mcp.contracts.scene import (
     SceneTruthFollowupContract,
     SceneTruthFollowupItemContract,
 )
-from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
+from server.adapters.mcp.contracts.vision import VisionCaptureImageContract, VisionOverlayMarkContract
 from server.adapters.mcp.sampling.result_types import VisionAssistantContract
 
 from .base import MCPContract
@@ -38,12 +38,32 @@ ReferenceComparePacketStatusLiteral = Literal["success", "blocked", "low_informa
 ReferenceCompareRankingStatusLiteral = Literal["success", "skipped", "not_needed", "error"]
 ReferenceComparePacketGuidanceLiteral = Literal["ready", "clean", "low_information", "blocked"]
 ReferenceCompareRankingRecommendationLiteral = Literal["rank", "skip_clean", "skip_low_information", "skip_blocked"]
+ReferenceCompareScopeSourceLiteral = Literal["registered_graph", "focus_pairs", "target_scope", "fallback"]
+ReferenceDefectSeverityLiteral = Literal["high", "medium", "low"]
+ReferenceDefectVerifyStatusLiteral = Literal["resolved", "unresolved", "downgraded"]
+ReferenceActionSourceLiteral = Literal["scene_truth", "spatial_relation", "mesh_metric", "planner", "policy", "vision"]
 ReferenceLocalizedSupportReasonLiteral = Literal[
     "part_missing_ambiguity",
     "anchor_ambiguity",
     "attachment_gap",
     "seam_unclear",
     "mask_needed",
+]
+ReferenceRuntimeCapabilityNameLiteral = Literal["classifier", "vision", "localization", "segmentation"]
+ReferenceRuntimeCapabilityStatusLiteral = Literal[
+    "not_configured",
+    "configured",
+    "used",
+    "skipped_by_policy",
+    "unavailable",
+    "error",
+]
+ReferenceShapeConvergenceDispositionLiteral = Literal[
+    "shape_drift_build_hold",
+    "build_path_exhausted",
+    "hard_blocker_inspect",
+    "stagnation_inspect",
+    "not_evaluated",
 ]
 ReferenceCompareSupportEvidenceKindLiteral = Literal[
     "silhouette_metric", "per_object_iou", "action_hint", "part_segmentation"
@@ -358,6 +378,47 @@ class ReferenceCompactRepairContract(MCPContract):
     arguments_hint: dict[str, object] | None = None
 
 
+class ReferenceAuthoritativeNextActionContract(MCPContract):
+    """One provenance-tagged entry behind the consolidated next-action list."""
+
+    action: str
+    source: ReferenceActionSourceLiteral
+    authority: Literal["authoritative", "deterministic", "advisory"] = "advisory"
+    rank: int
+
+
+class ReferenceRuntimeCapabilityUsageContract(MCPContract):
+    """Bounded, redacted runtime participation summary for one optional/support capability."""
+
+    capability: ReferenceRuntimeCapabilityNameLiteral
+    status: ReferenceRuntimeCapabilityStatusLiteral = Field(
+        description="Normalized capability outcome for this compare/status surface."
+    )
+    configured: bool = Field(description="True when the runtime/config made this capability available for use.")
+    considered: bool = Field(description="True when the policy evaluated this capability for the current run.")
+    invoked: bool = Field(description="True when the compare path actually called the capability/runtime.")
+    provider_name: str | None = Field(default=None, description="Configured provider name, never a secret or key.")
+    packet_ids: list[str] = Field(
+        default_factory=list, description="Bounded packet ids where this capability was considered or invoked."
+    )
+    notes: list[str] = Field(default_factory=list, description="Short bounded policy/status notes.")
+
+
+class ReferenceRuntimeEvidenceContract(MCPContract):
+    """Machine-readable runtime evidence for guided/reference compare loops.
+
+    This reports capability participation only. It is advisory diagnostics and
+    never marks quality gates complete or overrides deterministic scene truth.
+    """
+
+    capabilities: list[ReferenceRuntimeCapabilityUsageContract] = Field(
+        default_factory=list, description="Classifier, vision, localization, and segmentation participation summary."
+    )
+    checkpoint_id: str | None = Field(default=None, description="Checkpoint this evidence came from, when known.")
+    packet_ids: list[str] = Field(default_factory=list, description="Packet ids represented by this evidence.")
+    notes: list[str] = Field(default_factory=list, description="Bounded run-level runtime evidence notes.")
+
+
 class ReferenceOrchestratorFeedbackContract(MCPContract):
     """Compact orchestrator-facing read model for guided reference sessions.
 
@@ -414,6 +475,17 @@ class ReferenceOrchestratorFeedbackContract(MCPContract):
         default=None,
         description="Recommended loop disposition; advisory input to deterministic guided policy, not a final gate.",
     )
+    shape_convergence_disposition: ReferenceShapeConvergenceDispositionLiteral | None = Field(
+        default=None,
+        description=(
+            "Compact distinction between shape-drift build hold, exhausted build path, hard blocker inspect, "
+            "stagnation inspect, or not evaluated."
+        ),
+    )
+    runtime_evidence: ReferenceRuntimeEvidenceContract | None = Field(
+        default=None,
+        description="Bounded machine-readable runtime participation summary for classifier/vision/sidecars.",
+    )
     authoritative_next_actions: list[str] = Field(
         default_factory=list,
         description=(
@@ -421,6 +493,10 @@ class ReferenceOrchestratorFeedbackContract(MCPContract):
             "(deterministic next_actions first, then correction_focus, support tools, repair). Read THIS first; "
             "the other channels remain for detail. Deterministic guided policy still owns final gate decisions."
         ),
+    )
+    authoritative_next_action_provenance: list[ReferenceAuthoritativeNextActionContract] = Field(
+        default_factory=list,
+        description="Provenance and authority tags for each consolidated authoritative_next_actions entry.",
     )
     message: str | None = None
 
@@ -596,6 +672,25 @@ class ReferenceCompareSupportEvidenceContract(MCPContract):
     )
 
 
+class ReferenceOpenDefectContract(MCPContract):
+    """One stable Critic defect tracked across compare/verify cycles."""
+
+    defect_id: str
+    summary: str
+    scope_label: str | None = None
+    relation_ref: str | None = None
+    severity: ReferenceDefectSeverityLiteral = "medium"
+
+
+class ReferenceDefectVerifyStatusContract(MCPContract):
+    """Verify status for one stable defect id after a same-view rerender."""
+
+    defect_id: str
+    status: ReferenceDefectVerifyStatusLiteral
+    reason: str | None = None
+    scope_label: str | None = None
+
+
 class ReferenceComparePacketContract(MCPContract):
     """One packet-level compare unit surfaced additively on staged compare responses."""
 
@@ -604,10 +699,22 @@ class ReferenceComparePacketContract(MCPContract):
     packet_label: str
     target_view: str | None = None
     scope_label: str | None = None
+    scope_source: ReferenceCompareScopeSourceLiteral | None = Field(
+        default=None,
+        description="Planner source for this packet scope: guided registry graph, truth focus pairs, target scope, or fallback.",
+    )
     target_objects: list[str] = []
     truth_pairs: list[str] = []
     reference_ids: list[str] = []
     capture_labels: list[str] = []
+    mark_id_map: dict[str, int] = Field(
+        default_factory=dict,
+        description="Exact object_name -> stable mark id map used for any Set-of-Mark overlay in this packet.",
+    )
+    reference_marks: list[VisionOverlayMarkContract] = Field(
+        default_factory=list,
+        description="Optional reference-side marks produced by the default-off grounding sidecar.",
+    )
     compare_question: str
     extraction_status: ReferenceComparePacketStatusLiteral = Field(
         default="skipped",
@@ -633,6 +740,8 @@ class ReferenceComparePacketContract(MCPContract):
     evidence_summary: str | None = None
     uncertainty_notes: list[str] = []
     correction_focus: list[str] = []
+    open_defects: list[ReferenceOpenDefectContract] = []
+    verify_status: list[ReferenceDefectVerifyStatusContract] = []
 
 
 class ReferenceGraphNodeDeltaContract(MCPContract):
@@ -695,6 +804,17 @@ class ReferenceCompareDiagnosticsContract(MCPContract):
     packets: list[ReferenceComparePacketContract] = []
     conflict_notes: list[str] = []
     budget_notes: list[str] = []
+    registered_compare_scope: SceneAssembledTargetScopeContract | None = Field(
+        default=None,
+        description=(
+            "Guided registry-derived compare scope used when packets are planned from stable part roles "
+            "instead of name heuristics."
+        ),
+    )
+    runtime_evidence: ReferenceRuntimeEvidenceContract | None = Field(
+        default=None,
+        description="Bounded capability participation evidence for this packeted compare run.",
+    )
 
 
 class ReferenceHybridBudgetControlContract(MCPContract):
@@ -1011,6 +1131,7 @@ class ReferenceCompareStageCheckpointResponseContract(MCPContract):
     silhouette_analysis: ReferenceSilhouetteAnalysisContract | None = None
     action_hints: list[ReferenceActionHintContract] = []
     part_segmentation: ReferencePartSegmentationContract | None = None
+    runtime_evidence: ReferenceRuntimeEvidenceContract | None = None
     view_diagnostics_hints: list[ReferenceViewDiagnosticsHintContract] | None = None
     target_view: str | None = None
     checkpoint_id: str
@@ -1060,6 +1181,7 @@ class ReferenceIterateStageCheckpointResponseContract(MCPContract):
     silhouette_analysis: ReferenceSilhouetteAnalysisContract | None = None
     action_hints: list[ReferenceActionHintContract] = []
     part_segmentation: ReferencePartSegmentationContract | None = None
+    runtime_evidence: ReferenceRuntimeEvidenceContract | None = None
     view_diagnostics_hints: list[ReferenceViewDiagnosticsHintContract] | None = None
     target_view: str | None = None
     checkpoint_id: str
@@ -1072,6 +1194,7 @@ class ReferenceIterateStageCheckpointResponseContract(MCPContract):
     correction_focus: list[str] = []
     repeated_correction_focus: list[str] = []
     stagnation_count: int = 0
+    shape_convergence_disposition: ReferenceShapeConvergenceDispositionLiteral | None = None
     stop_reason: str | None = None
     compare_result: ReferenceCompareStageCheckpointResponseContract
     debug_payload_omitted: bool = False

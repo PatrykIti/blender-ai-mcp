@@ -1,7 +1,7 @@
 # TASK-181: Scene-Graph Diff Compare And Registry-Scoped Convergence
 
-**Status:** 🚧 In Progress
-**Progress:** TASK-181-02 graph-diff contract/builder, TASK-181-03 relation-triplet serialization substrate, and TASK-181-04 unit-level regression lane shipped via changelogs 382, 375, and 385. Remaining open core: TASK-181-01 registry-as-compare-scope and the full staged-compare integration that makes the graph the authoritative compare scope.
+**Status:** ✅ Done
+**Progress:** Completed 2026-05-31. TASK-181-02 graph-diff contract/builder, TASK-181-03 relation-triplet serialization substrate, and TASK-181-04 unit-level regression lane shipped via changelogs 382, 375, and 385. TASK-181-01 closed 2026-05-31: guided registry scope is now projected into staged compare and takes precedence over legacy name/focus clustering, with diagnostics recording the registered compare scope.
 **Priority:** 🔴 High
 **Category:** Vision / Scene-Graph Compare
 **Estimated Effort:** Extra Large
@@ -216,15 +216,13 @@ After this umbrella lands:
 
 ## Changelog Impact
 
-- planning-only now; add a `_docs/_CHANGELOG/*` entry when the first slice lands
-- do not treat this planning-only task creation as the changelog event
+- completed through changelogs 375, 382, 385, and 393
 
 ## Status / Board Update
 
-- `_docs/_TASKS/README.md` should track `TASK-181` as an open item on the
-  Vision / Hybrid Loop lane (board update owned by the coordinator)
-- child tasks stay nested under the open umbrella and do not need board rows
-  unless one later becomes a separately promoted follow-on
+- `_docs/_TASKS/README.md` tracks `TASK-181` as a selected completed milestone
+  on the Vision / Hybrid Loop lane
+- child tasks remain nested historical slices and are all closed
 
 ## Validation Commands
 

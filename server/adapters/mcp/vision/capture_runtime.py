@@ -23,6 +23,7 @@ from .marks import build_object_mark_overlay
 CaptureStage = Literal["before", "after"]
 CapturePresetProfile = Literal["compact", "rich"]
 AuxiliaryCaptureKind = Literal["depth", "normal", "object_id"]
+PrimaryCaptureViewKind = Literal["wide", "focus", "top", "oblique"]
 DEFAULT_AUXILIARY_CAPTURE_KINDS: tuple[AuxiliaryCaptureKind, ...] = ("depth", "normal", "object_id")
 
 
@@ -40,7 +41,8 @@ class CapturePresetSpec:
     standard_view: Literal["FRONT", "RIGHT", "TOP"] | None = None
     orbit_horizontal: float | None = None
     orbit_vertical: float | None = None
-    view_kind: Literal["wide", "focus"] = "wide"
+    view_kind: PrimaryCaptureViewKind = "wide"
+    projection: Literal["orthographic", "perspective"] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -69,6 +71,7 @@ COMPACT_CAPTURE_PRESET_SPECS: tuple[CapturePresetSpec, ...] = (
         isolate_target=True,
         standard_view="FRONT",
         view_kind="focus",
+        projection="orthographic",
     ),
     CapturePresetSpec(
         name="target_side",
@@ -79,6 +82,7 @@ COMPACT_CAPTURE_PRESET_SPECS: tuple[CapturePresetSpec, ...] = (
         isolate_target=True,
         standard_view="RIGHT",
         view_kind="focus",
+        projection="orthographic",
     ),
     CapturePresetSpec(
         name="target_top",
@@ -88,7 +92,20 @@ COMPACT_CAPTURE_PRESET_SPECS: tuple[CapturePresetSpec, ...] = (
         focus_target=True,
         isolate_target=True,
         standard_view="TOP",
-        view_kind="focus",
+        view_kind="top",
+        projection="orthographic",
+    ),
+    CapturePresetSpec(
+        name="target_oblique_left",
+        width=1280,
+        height=960,
+        shading="SOLID",
+        focus_target=True,
+        isolate_target=True,
+        orbit_horizontal=-35.0,
+        orbit_vertical=15.0,
+        view_kind="oblique",
+        projection="perspective",
     ),
 )
 
@@ -119,7 +136,8 @@ RICH_CAPTURE_PRESET_SPECS: tuple[CapturePresetSpec, ...] = (
         isolate_target=True,
         orbit_horizontal=-35.0,
         orbit_vertical=15.0,
-        view_kind="focus",
+        view_kind="oblique",
+        projection="perspective",
     ),
     CapturePresetSpec(
         name="target_oblique_right",
@@ -130,7 +148,8 @@ RICH_CAPTURE_PRESET_SPECS: tuple[CapturePresetSpec, ...] = (
         isolate_target=True,
         orbit_horizontal=35.0,
         orbit_vertical=15.0,
-        view_kind="focus",
+        view_kind="oblique",
+        projection="perspective",
     ),
     CapturePresetSpec(
         name="target_front",
@@ -141,6 +160,7 @@ RICH_CAPTURE_PRESET_SPECS: tuple[CapturePresetSpec, ...] = (
         isolate_target=True,
         standard_view="FRONT",
         view_kind="focus",
+        projection="orthographic",
     ),
     CapturePresetSpec(
         name="target_side",
@@ -151,6 +171,7 @@ RICH_CAPTURE_PRESET_SPECS: tuple[CapturePresetSpec, ...] = (
         isolate_target=True,
         standard_view="RIGHT",
         view_kind="focus",
+        projection="orthographic",
     ),
     CapturePresetSpec(
         name="target_top",
@@ -160,7 +181,8 @@ RICH_CAPTURE_PRESET_SPECS: tuple[CapturePresetSpec, ...] = (
         focus_target=True,
         isolate_target=True,
         standard_view="TOP",
-        view_kind="focus",
+        view_kind="top",
+        projection="orthographic",
     ),
     CapturePresetSpec(
         name="target_detail",
@@ -172,6 +194,7 @@ RICH_CAPTURE_PRESET_SPECS: tuple[CapturePresetSpec, ...] = (
         standard_view="FRONT",
         focus_zoom_factor=1.8,
         view_kind="focus",
+        projection="orthographic",
     ),
 )
 
@@ -347,10 +370,18 @@ def _capture_mark_overlay(
     preset: CapturePresetSpec,
     object_names: list[str],
     base_image_path: str,
+    mark_id_map: dict[str, int] | None = None,
 ) -> VisionCaptureImageContract | None:
     if not object_names:
         return None
     ordered_object_names = sorted(dict.fromkeys(object_names))
+    effective_mark_id_map = {
+        object_name: mark_id
+        for object_name, mark_id in dict(mark_id_map or {}).items()
+        if object_name in set(ordered_object_names) and isinstance(mark_id, int) and mark_id > 0
+    }
+    if not effective_mark_id_map:
+        effective_mark_id_map = {object_name: index for index, object_name in enumerate(ordered_object_names, start=1)}
 
     filename = f"{bundle_id}_{stage}_{preset.name}_overlay.jpg"
     latest_name = f"{bundle_id}_{stage}_{preset.name}_overlay_latest.jpg"
@@ -368,6 +399,7 @@ def _capture_mark_overlay(
             view_name=None,
             width=preset.width,
             height=preset.height,
+            mark_id_map=effective_mark_id_map,
         )
     except Exception:
         return None
@@ -386,7 +418,7 @@ def _capture_mark_overlay(
                 object_name=object_name,
                 status="placed" if mark_id_to_object.get(mark_id) == object_name else "unmarked",
             )
-            for mark_id, object_name in enumerate(ordered_object_names, start=1)
+            for object_name, mark_id in sorted(effective_mark_id_map.items(), key=lambda item: (item[1], item[0]))
         ],
     )
 
@@ -466,7 +498,7 @@ def _should_capture_object_id_for_preset(
     object_id_preset_names: set[str],
     object_id_attempted: bool,
 ) -> bool:
-    if not include_object_id_pass or preset.view_kind != "focus":
+    if not include_object_id_pass or preset.view_kind not in {"focus", "top", "oblique"}:
         return False
     if object_id_preset_names:
         return preset.name in object_id_preset_names
@@ -482,7 +514,7 @@ def _should_capture_auxiliary_for_preset(
     auxiliary_preset_names: set[str],
     auxiliary_attempted: bool,
 ) -> bool:
-    if not include_auxiliary_passes or preset.view_kind != "focus":
+    if not include_auxiliary_passes or preset.view_kind not in {"focus", "top", "oblique"}:
         return False
     if auxiliary_preset_names:
         return preset.name in auxiliary_preset_names
@@ -498,7 +530,7 @@ def _should_capture_mark_overlay_for_preset(
     mark_overlay_preset_names: set[str],
     mark_overlay_attempted: bool,
 ) -> bool:
-    if not include_mark_overlay or preset.view_kind != "focus":
+    if not include_mark_overlay or preset.view_kind not in {"focus", "top", "oblique"}:
         return False
     if mark_overlay_preset_names:
         return preset.name in mark_overlay_preset_names
@@ -543,6 +575,7 @@ def capture_stage_images(
     auxiliary_view_kinds: set[str] | list[str] | tuple[str, ...] | None = None,
     include_mark_overlay: bool = False,
     mark_overlay_preset_names: set[str] | list[str] | tuple[str, ...] | None = None,
+    mark_id_map: dict[str, int] | None = None,
 ) -> list[VisionCaptureImageContract]:
     """Capture one deterministic stage view-set using the current viewport API."""
 
@@ -654,6 +687,7 @@ def capture_stage_images(
                 preset_name=preset.name,
                 media_type="image/jpeg",
                 view_kind=preset.view_kind,
+                projection=preset.projection,
                 capture_ok=not preset_warnings,
                 capture_warning=capture_warning,
                 object_id_artifact=object_id_artifact,
@@ -690,6 +724,7 @@ def capture_stage_images(
                     preset=preset,
                     object_names=list(isolate_names),
                     base_image_path=str(internal_file),
+                    mark_id_map=mark_id_map,
                 )
                 if overlay_capture is not None:
                     captures.append(overlay_capture)

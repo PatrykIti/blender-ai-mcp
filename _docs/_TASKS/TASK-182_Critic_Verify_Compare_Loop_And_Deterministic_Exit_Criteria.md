@@ -1,7 +1,7 @@
 # TASK-182: Critic/Verify Compare Loop And Deterministic Exit Criteria
 
-**Status:** 🚧 In Progress
-**Progress:** TASK-182 has shipped substrates, but not the full Critic/Verify rerender loop. TASK-182-01 stable defect IDs and TASK-182-02 `authoritative_next_actions` channel consolidation exist; remaining work is the Verify rerender pass, deterministic-first layered exit, and E2E proof that gates advance only after deterministic verification.
+**Status:** ✅ Done
+**Progress:** Completed 2026-05-31. TASK-182 substrates are now wired through staged compare. TASK-182-01 closed 2026-05-31 with packet-scoped open defects, same-packet Verify statuses, iterate-state defect carryover, and synthesis preservation. TASK-182-02 also closed 2026-05-31 with provenance-ranked `authoritative_next_action_provenance`; deterministic quality gates remain the hard authority and advisory vision Verify status is surfaced only as uncertainty/tiebreaker context.
 **Priority:** 🔴 High
 **Category:** Vision / Loop Control And Verification
 **Estimated Effort:** Large
@@ -202,15 +202,13 @@ After this umbrella lands:
 
 ## Changelog Impact
 
-- planning-only now; add a `_docs/_CHANGELOG/*` entry when the first slice lands
-- do not treat this planning-only task creation as the changelog event
+- completed through changelogs 373, 383, and 393
 
 ## Status / Board Update
 
-- `_docs/_TASKS/README.md` should track `TASK-182` as a promoted open item on the
-  Vision / Hybrid Loop lane
-- child tasks stay nested under the open umbrella and do not need board rows
-  unless one later becomes a separately promoted follow-on
+- `_docs/_TASKS/README.md` tracks `TASK-182` as a selected completed milestone
+  on the Vision / Hybrid Loop lane
+- child tasks remain nested historical slices and are all closed
 
 ## Validation Commands
 

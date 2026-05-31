@@ -15,6 +15,7 @@ from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract
 from server.adapters.mcp.contracts.quality_gates import GatePlanContract
 from server.adapters.mcp.contracts.reference import (
     GuidedReferenceReadinessContract,
+    ReferenceAuthoritativeNextActionContract,
     ReferenceCompactRepairContract,
     ReferenceCompareDiagnosticsContract,
     ReferenceCorrectionCandidateContract,
@@ -23,6 +24,10 @@ from server.adapters.mcp.contracts.reference import (
     ReferencePartSegmentationContract,
     ReferencePlannerFamilyLiteral,
     ReferenceRepairPlannerSummaryContract,
+    ReferenceRuntimeCapabilityNameLiteral,
+    ReferenceRuntimeCapabilityUsageContract,
+    ReferenceRuntimeEvidenceContract,
+    ReferenceShapeConvergenceDispositionLiteral,
     ReferenceStrategyStateContract,
     ReferenceUnderstandingStatusLiteral,
     ReferenceUnderstandingSummaryContract,
@@ -70,9 +75,154 @@ def _dedupe_strings(values: list[str]) -> list[str]:
     return deduped
 
 
+def _runtime_usage_by_capability(
+    evidence: ReferenceRuntimeEvidenceContract | None,
+) -> dict[ReferenceRuntimeCapabilityNameLiteral, ReferenceRuntimeCapabilityUsageContract]:
+    if evidence is None:
+        return {}
+    return {item.capability: item for item in list(evidence.capabilities or [])}
+
+
+def _bounded_runtime_notes(values: list[str], *, limit: int = 4) -> list[str]:
+    return _dedupe_strings([str(item).strip() for item in values if str(item).strip()])[:limit]
+
+
+def _capability_usage(
+    *,
+    capability: ReferenceRuntimeCapabilityNameLiteral,
+    status: str,
+    configured: bool,
+    considered: bool,
+    invoked: bool,
+    provider_name: str | None = None,
+    packet_ids: list[str] | None = None,
+    notes: list[str] | None = None,
+) -> ReferenceRuntimeCapabilityUsageContract:
+    return ReferenceRuntimeCapabilityUsageContract(
+        capability=capability,
+        status=cast(Any, status),
+        configured=configured,
+        considered=considered,
+        invoked=invoked,
+        provider_name=provider_name,
+        packet_ids=_dedupe_strings(list(packet_ids or []))[:8],
+        notes=_bounded_runtime_notes(list(notes or [])),
+    )
+
+
+def build_reference_runtime_evidence(
+    *,
+    summary: ReferenceUnderstandingSummaryContract | None = None,
+    compare_diagnostics: ReferenceCompareDiagnosticsContract | None = None,
+    vision_assistant: Any = None,
+    part_segmentation: ReferencePartSegmentationContract | None = None,
+    checkpoint_id: str | None = None,
+) -> ReferenceRuntimeEvidenceContract:
+    """Build a bounded machine-readable runtime participation summary."""
+
+    packet_runtime = compare_diagnostics.runtime_evidence if compare_diagnostics is not None else None
+    packet_usage = _runtime_usage_by_capability(packet_runtime)
+    packet_ids = (
+        list(packet_runtime.packet_ids)
+        if packet_runtime is not None
+        else ([packet.packet_id for packet in list(compare_diagnostics.packets or [])] if compare_diagnostics else [])
+    )
+
+    classifier_configured = summary is not None
+    classifier_notes: list[str] = []
+    if summary is not None and summary.classification_scores:
+        classifier_used = True
+        top_score = summary.classification_scores[0]
+        classifier_notes.append(f"Classifier projected {top_score.label} at {top_score.score:.2f}.")
+    elif summary is not None:
+        classifier_used = False
+        classifier_notes.append("Reference understanding ran without classifier score output.")
+    else:
+        classifier_used = False
+        classifier_notes.append("No reference understanding classifier evidence is present for this run.")
+
+    vision_usage = packet_usage.get("vision")
+    if vision_usage is None:
+        vision_status = getattr(vision_assistant, "status", None)
+        vision_invoked = vision_assistant is not None
+        vision_used = vision_status == "success"
+        vision_usage = _capability_usage(
+            capability="vision",
+            status="used" if vision_used else ("unavailable" if vision_invoked else "not_configured"),
+            configured=vision_invoked,
+            considered=vision_invoked,
+            invoked=vision_invoked,
+            packet_ids=packet_ids,
+            notes=[
+                "Vision assistant completed for staged compare."
+                if vision_used
+                else (
+                    "Vision assistant was invoked but did not complete successfully."
+                    if vision_invoked
+                    else "No staged vision assistant evidence is present for this run."
+                )
+            ],
+        )
+
+    localization_usage = packet_usage.get(
+        "localization",
+        _capability_usage(
+            capability="localization",
+            status="not_configured",
+            configured=False,
+            considered=False,
+            invoked=False,
+            notes=["No packet-local localization policy evidence is present for this run."],
+        ),
+    )
+    segmentation_usage = packet_usage.get(
+        "segmentation",
+        _capability_usage(
+            capability="segmentation",
+            status=(
+                "used"
+                if part_segmentation is not None and part_segmentation.status == "available"
+                else (
+                    "unavailable"
+                    if part_segmentation is not None and part_segmentation.status == "unavailable"
+                    else "not_configured"
+                )
+            ),
+            configured=part_segmentation is not None and part_segmentation.status != "disabled",
+            considered=part_segmentation is not None,
+            invoked=part_segmentation is not None and part_segmentation.status in {"available", "unavailable"},
+            provider_name=part_segmentation.provider_name if part_segmentation is not None else None,
+            packet_ids=packet_ids,
+            notes=list(part_segmentation.notes if part_segmentation is not None else []),
+        ),
+    )
+
+    capabilities = [
+        _capability_usage(
+            capability="classifier",
+            status="used" if classifier_used else ("configured" if classifier_configured else "not_configured"),
+            configured=classifier_configured,
+            considered=classifier_configured,
+            invoked=classifier_used,
+            notes=classifier_notes,
+        ),
+        vision_usage,
+        localization_usage,
+        segmentation_usage,
+    ]
+    notes = list(packet_runtime.notes if packet_runtime is not None else [])
+    return ReferenceRuntimeEvidenceContract(
+        capabilities=capabilities,
+        checkpoint_id=checkpoint_id,
+        packet_ids=_dedupe_strings(packet_ids)[:12],
+        notes=_bounded_runtime_notes(notes, limit=6),
+    )
+
+
 def _consolidate_authoritative_next_actions(
     *,
     next_actions: list[str],
+    deterministic_next_actions: list[str] | None = None,
     correction_focus: list[str],
     recommended_support_tools: list[str],
     recommended_repair: ReferenceCompactRepairContract | None,
@@ -87,14 +237,89 @@ def _consolidate_authoritative_next_actions(
     4-6 overlapping channels.
     """
 
-    merged: list[str] = list(next_actions)
-    merged.extend(f"Address mismatch: {focus}" for focus in correction_focus if str(focus).strip())
+    return [
+        item.action
+        for item in _consolidate_authoritative_next_action_provenance(
+            next_actions=next_actions,
+            deterministic_next_actions=list(deterministic_next_actions or []),
+            correction_focus=correction_focus,
+            recommended_support_tools=recommended_support_tools,
+            recommended_repair=recommended_repair,
+            max_items=max_items,
+        )
+    ]
+
+
+def _consolidate_authoritative_next_action_provenance(
+    *,
+    next_actions: list[str],
+    deterministic_next_actions: list[str],
+    correction_focus: list[str],
+    recommended_support_tools: list[str],
+    recommended_repair: ReferenceCompactRepairContract | None,
+    max_items: int = 6,
+) -> list[ReferenceAuthoritativeNextActionContract]:
+    """Return the consolidated next-action list with deterministic-first source tags."""
+
+    deterministic_keys = {item.strip().lower() for item in deterministic_next_actions if item.strip()}
+    rows: list[ReferenceAuthoritativeNextActionContract] = []
+    seen: set[str] = set()
+
+    def _append(
+        action: str,
+        *,
+        source: Literal["scene_truth", "spatial_relation", "mesh_metric", "planner", "policy", "vision"],
+        authority: Literal["authoritative", "deterministic", "advisory"],
+        rank: int,
+    ) -> None:
+        normalized = str(action).strip()
+        key = normalized.lower()
+        if not normalized or key in seen:
+            return
+        seen.add(key)
+        rows.append(
+            ReferenceAuthoritativeNextActionContract(
+                action=normalized,
+                source=source,
+                authority=authority,
+                rank=rank,
+            )
+        )
+
+    for index, action in enumerate(next_actions):
+        action_key = action.strip().lower()
+        if action_key in deterministic_keys:
+            _append(action, source="scene_truth", authority="authoritative", rank=index)
+        else:
+            _append(action, source="policy", authority="deterministic", rank=10 + index)
+
+    for index, tool in enumerate(recommended_support_tools):
+        _append(
+            f"Run support check {tool}",
+            source="scene_truth",
+            authority="authoritative",
+            rank=20 + index,
+        )
+
     if recommended_repair is not None and getattr(recommended_repair, "tool_name", None):
         reason = getattr(recommended_repair, "reason", None)
         suffix = f" ({reason})" if reason else ""
-        merged.append(f"Run repair {recommended_repair.tool_name}{suffix}")
-    merged.extend(f"Run support check {tool}" for tool in recommended_support_tools if str(tool).strip())
-    return _dedupe_strings(merged)[:max_items]
+        _append(
+            f"Run repair {recommended_repair.tool_name}{suffix}",
+            source="spatial_relation",
+            authority="deterministic",
+            rank=30,
+        )
+
+    for index, focus in enumerate(correction_focus):
+        _append(
+            f"Address mismatch: {focus}",
+            source="vision",
+            authority="advisory",
+            rank=40 + index,
+        )
+
+    return sorted(rows, key=lambda item: item.rank)[:max_items]
 
 
 def _normalize_view_id(value: str | None) -> str:
@@ -424,6 +649,8 @@ def build_reference_orchestrator_feedback(
     recommended_bounded_tools: list[str] | None = None,
     correction_focus: list[str] | None = None,
     loop_disposition: str | None = None,
+    shape_convergence_disposition: ReferenceShapeConvergenceDispositionLiteral | None = None,
+    runtime_evidence: ReferenceRuntimeEvidenceContract | None = None,
     runtime_policy_block: dict[str, object] | None = None,
     part_segmentation: ReferencePartSegmentationContract | None = None,
     optional_support_notes: list[str] | None = None,
@@ -452,6 +679,8 @@ def build_reference_orchestrator_feedback(
         and not recommended_bounded_tools
         and not correction_focus
         and loop_disposition is None
+        and shape_convergence_disposition is None
+        and runtime_evidence is None
         and runtime_policy_block is None
         and part_segmentation is None
         and not optional_support_notes
@@ -538,9 +767,20 @@ def build_reference_orchestrator_feedback(
             f"Compare used {compare_diagnostics.packet_count} packet(s) in the {compare_diagnostics.complexity_tier} tier."
         )
         uncertainty_notes.extend(list(compare_diagnostics.conflict_notes or []))
-        uncertainty_notes.extend(list(compare_diagnostics.budget_notes or []))
+        priority_uncertainty_notes.extend(list(compare_diagnostics.budget_notes or []))
         uncertainty_notes.extend(
             note for packet in list(compare_diagnostics.packets or []) for note in list(packet.uncertainty_notes or [])
+        )
+        uncertainty_notes.extend(
+            f"{packet.packet_label}: open_defect {defect.defect_id} ({defect.severity}) {defect.summary}"
+            for packet in list(compare_diagnostics.packets or [])
+            for defect in list(packet.open_defects or [])[:3]
+        )
+        uncertainty_notes.extend(
+            f"{packet.packet_label}: verify_status {status.defect_id}={status.status}"
+            for packet in list(compare_diagnostics.packets or [])
+            for status in list(packet.verify_status or [])[:3]
+            if status.status in {"unresolved", "downgraded"}
         )
         uncertainty_notes.extend(
             f"{packet.packet_label}: {packet.status_reason}"
@@ -563,6 +803,20 @@ def build_reference_orchestrator_feedback(
             priority_uncertainty_notes.extend(
                 str(note).strip() for note in list(part_segmentation.notes or []) if str(note).strip()
             )
+    if runtime_evidence is not None:
+        for usage in list(runtime_evidence.capabilities or []):
+            summary_line = (
+                f"runtime_evidence[{usage.capability}]={usage.status}; "
+                f"configured={str(usage.configured).lower()}, considered={str(usage.considered).lower()}, "
+                f"invoked={str(usage.invoked).lower()}"
+            )
+            if usage.status in {"used", "configured"}:
+                priority_evidence_summary.append(summary_line)
+            else:
+                uncertainty_notes.append(summary_line)
+        priority_uncertainty_notes.extend(
+            str(note).strip() for note in list(runtime_evidence.notes or []) if str(note).strip()
+        )
     if optional_support_notes:
         for note in optional_support_notes:
             normalized = str(note).strip()
@@ -574,7 +828,7 @@ def build_reference_orchestrator_feedback(
                 priority_evidence_summary.append(normalized)
     if budget_control is not None and budget_control.budget_clipped:
         clipped_fields = ", ".join(budget_control.budget_clip_fields or [])
-        uncertainty_notes.append(
+        priority_uncertainty_notes.append(
             "Configured vision budget was clipped by fail-safe caps"
             + (f" for {clipped_fields}." if clipped_fields else ".")
         )
@@ -671,8 +925,18 @@ def build_reference_orchestrator_feedback(
         uncertainty_notes=uncertainty_notes,
         correction_focus=focus[:3],
         loop_disposition=loop_disposition,  # type: ignore[arg-type]
+        shape_convergence_disposition=shape_convergence_disposition,
+        runtime_evidence=runtime_evidence,
         authoritative_next_actions=_consolidate_authoritative_next_actions(
             next_actions=actions,
+            deterministic_next_actions=list(next_gate_actions or []),
+            correction_focus=focus[:3],
+            recommended_support_tools=support_tools,
+            recommended_repair=recommended_repair,
+        ),
+        authoritative_next_action_provenance=_consolidate_authoritative_next_action_provenance(
+            next_actions=actions,
+            deterministic_next_actions=list(next_gate_actions or []),
             correction_focus=focus[:3],
             recommended_support_tools=support_tools,
             recommended_repair=recommended_repair,

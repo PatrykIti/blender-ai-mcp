@@ -34,7 +34,10 @@ from server.adapters.mcp.areas.reference_compare_packets import (
 from server.adapters.mcp.areas.reference_current_view import (
     run_current_view_compare as _run_current_view_compare_impl,
 )
-from server.adapters.mcp.areas.reference_feedback import build_reference_orchestrator_feedback
+from server.adapters.mcp.areas.reference_feedback import (
+    build_reference_orchestrator_feedback,
+    build_reference_runtime_evidence,
+)
 from server.adapters.mcp.areas.reference_images_runtime import (
     _validate_local_reference_path,
 )
@@ -113,7 +116,7 @@ from server.adapters.mcp.areas.reference_view_diagnostics import (
     build_view_diagnostics_hints as _build_view_diagnostics_hints,
 )
 from server.adapters.mcp.context_utils import ctx_session_id, ctx_transport_type
-from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract
+from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract, GuidedTargetScopeContract
 from server.adapters.mcp.contracts.quality_gates import GatePlanContract
 from server.adapters.mcp.contracts.reference import (
     GuidedReferenceReadinessContract,
@@ -132,6 +135,8 @@ from server.adapters.mcp.contracts.reference import (
     ReferenceRefinementRouteContract,
     ReferenceRepairPlannerDetailContract,
     ReferenceRepairPlannerSummaryContract,
+    ReferenceRuntimeEvidenceContract,
+    ReferenceShapeConvergenceDispositionLiteral,
     ReferenceSilhouetteAnalysisContract,
     ReferenceSilhouetteConvergenceContract,
     ReferenceStrategyStateContract,
@@ -153,8 +158,10 @@ from server.adapters.mcp.session_capabilities import (
     apply_visibility_for_session_state,
     build_guided_reference_readiness,
     build_guided_reference_readiness_payload,
+    build_guided_registry_compare_scope,
     get_session_capability_state_async,
     ingest_quality_gate_proposal_async,
+    resolve_guided_mark_id_map,
     set_session_capability_state_async,
 )
 from server.adapters.mcp.session_state import get_session_value_async, set_session_value_async
@@ -862,6 +869,7 @@ def _stage_compare_response(
     silhouette_analysis: ReferenceSilhouetteAnalysisContract | None = None,
     action_hints: list[ReferenceActionHintContract] | None = None,
     part_segmentation: ReferencePartSegmentationContract | None = None,
+    runtime_evidence: ReferenceRuntimeEvidenceContract | None = None,
     view_diagnostics_hints: list[ReferenceViewDiagnosticsHintContract] | None = None,
     include_captures: bool = True,
     emit_compact_detail: bool = False,
@@ -889,6 +897,13 @@ def _stage_compare_response(
         else None
     )
     effective_part_segmentation = part_segmentation or _configured_part_segmentation()
+    effective_runtime_evidence = runtime_evidence or build_reference_runtime_evidence(
+        summary=reference_understanding_summary,
+        compare_diagnostics=compare_diagnostics,
+        vision_assistant=vision_assistant,
+        part_segmentation=effective_part_segmentation,
+        checkpoint_id=checkpoint_id,
+    )
     reference_orchestrator_feedback = build_reference_orchestrator_feedback(
         goal=goal,
         summary=reference_understanding_summary,
@@ -903,6 +918,7 @@ def _stage_compare_response(
         next_gate_actions=list(gate_fields["next_gate_actions"] or []),
         recommended_bounded_tools=list(gate_fields["recommended_bounded_tools"] or []),
         part_segmentation=effective_part_segmentation,
+        runtime_evidence=effective_runtime_evidence,
     )
     return ReferenceCompareStageCheckpointResponseContract(
         action="compare_stage_checkpoint",
@@ -935,6 +951,7 @@ def _stage_compare_response(
         silhouette_analysis=silhouette_analysis,
         action_hints=list(action_hints or []),
         part_segmentation=effective_part_segmentation,
+        runtime_evidence=effective_runtime_evidence,
         view_diagnostics_hints=view_diagnostics_hints,
         target_view=target_view,
         checkpoint_id=checkpoint_id,
@@ -973,6 +990,7 @@ def _iterate_stage_response(
     correction_focus: list[str],
     repeated_correction_focus: list[str],
     stagnation_count: int,
+    shape_convergence_disposition: ReferenceShapeConvergenceDispositionLiteral | None = None,
     compare_result: ReferenceCompareStageCheckpointResponseContract,
     guided_reference_readiness: GuidedReferenceReadinessContract | None = None,
     reference_understanding_summary: ReferenceUnderstandingSummaryContract | None = None,
@@ -1021,6 +1039,13 @@ def _iterate_stage_response(
     effective_part_segmentation = (
         part_segmentation or compare_result.part_segmentation or _configured_part_segmentation()
     )
+    effective_runtime_evidence = compare_result.runtime_evidence or build_reference_runtime_evidence(
+        summary=reference_understanding_summary or compare_result.reference_understanding_summary,
+        compare_diagnostics=compare_result.compare_diagnostics,
+        vision_assistant=compare_result.vision_assistant,
+        part_segmentation=effective_part_segmentation,
+        checkpoint_id=checkpoint_id,
+    )
     reference_orchestrator_feedback = build_reference_orchestrator_feedback(
         goal=goal,
         summary=reference_understanding_summary or compare_result.reference_understanding_summary,
@@ -1036,7 +1061,9 @@ def _iterate_stage_response(
         recommended_bounded_tools=list(gate_fields["recommended_bounded_tools"] or []),
         correction_focus=correction_focus,
         loop_disposition=loop_disposition,
+        shape_convergence_disposition=shape_convergence_disposition,
         part_segmentation=effective_part_segmentation,
+        runtime_evidence=effective_runtime_evidence,
     )
     heavy_detail_allowed = _compact_compare_detail_allowed(
         preset_profile=compare_result.preset_profile,
@@ -1080,6 +1107,7 @@ def _iterate_stage_response(
         silhouette_analysis=silhouette_analysis or compare_result.silhouette_analysis,
         action_hints=list(action_hints or compare_result.action_hints or []),
         part_segmentation=effective_part_segmentation,
+        runtime_evidence=effective_runtime_evidence,
         view_diagnostics_hints=view_diagnostics_hints or compare_result.view_diagnostics_hints,
         target_view=target_view,
         checkpoint_id=checkpoint_id,
@@ -1092,6 +1120,7 @@ def _iterate_stage_response(
         correction_focus=correction_focus,
         repeated_correction_focus=repeated_correction_focus,
         stagnation_count=stagnation_count,
+        shape_convergence_disposition=shape_convergence_disposition,
         stop_reason=stop_reason,
         compare_result=compact_compare_result,
         debug_payload_omitted=debug_payload_omitted,
@@ -1149,6 +1178,7 @@ _REFINEMENT_CONTINUE_BUILD_GATE_TYPES: frozenset[str] = frozenset(
     {"shape_profile", "proportion_ratio", "opening_or_cut", "refinement_stage"}
 )
 _BUILD_HOLD_REQUIRED_PART_STEPS: frozenset[str] = frozenset({"create_primary_masses", "place_secondary_parts"})
+_CREATURE_SHAPE_CONVERGENCE_STEPS: frozenset[str] = frozenset({"checkpoint_iterate", "refine_low_poly_forms"})
 
 
 def _completion_blocker_gate_type(blocker: Any) -> str:
@@ -1194,6 +1224,42 @@ def _completion_blocker_recommended_tools(blocker: Any) -> list[str]:
     if not isinstance(raw_tools, list):
         return []
     return [str(tool_name).strip() for tool_name in raw_tools if str(tool_name).strip()]
+
+
+def _normalize_guided_flow_dict(guided_flow_state: dict[str, Any] | None) -> dict[str, Any] | None:
+    if guided_flow_state is None:
+        return None
+    if hasattr(guided_flow_state, "model_dump"):
+        try:
+            guided_flow_state = guided_flow_state.model_dump(mode="json")
+        except Exception:
+            return None
+    return guided_flow_state if isinstance(guided_flow_state, dict) else None
+
+
+def _should_hold_guided_creature_shape_convergence(
+    guided_flow_state: dict[str, Any] | None,
+    completion_blockers: list[Any] | None,
+) -> bool:
+    state = _normalize_guided_flow_dict(guided_flow_state)
+    if state is None:
+        return False
+    if str(state.get("domain_profile") or "").strip().lower() != "creature":
+        return False
+    current_step = str(state.get("current_step") or "").strip().lower()
+    if current_step not in _CREATURE_SHAPE_CONVERGENCE_STEPS:
+        return False
+    missing_roles = [str(role).strip() for role in state.get("missing_roles") or [] if str(role).strip()]
+    if missing_roles:
+        return False
+    blockers = list(completion_blockers or [])
+    if not blockers:
+        return False
+    blocker_types = {_completion_blocker_gate_type(blocker) for blocker in blockers}
+    blocker_types.discard("")
+    if not blocker_types or not blocker_types.issubset(_REFINEMENT_CONTINUE_BUILD_GATE_TYPES):
+        return False
+    return any(_completion_blocker_recommended_tools(blocker) for blocker in blockers)
 
 
 def _should_hold_guided_build_loop_for_required_part_blockers(
@@ -1547,6 +1613,33 @@ def _repeated_focus(current: list[str], prior: list[str]) -> list[str]:
     return repeated
 
 
+def _loop_open_defect_records(compare_result: ReferenceCompareStageCheckpointResponseContract) -> list[dict[str, Any]]:
+    """Return a compact session-safe Critic defect snapshot for the next Verify pass."""
+
+    records: list[dict[str, Any]] = []
+    if compare_result.compare_diagnostics is not None:
+        for packet in list(compare_result.compare_diagnostics.packets or []):
+            if not packet.open_defects:
+                continue
+            records.append(
+                {
+                    "packet_id": packet.packet_id,
+                    "scope_label": packet.scope_label,
+                    "defects": [defect.model_dump(mode="json") for defect in packet.open_defects],
+                }
+            )
+    assistant_result = compare_result.vision_assistant.result if compare_result.vision_assistant else None
+    if assistant_result is not None and assistant_result.open_defects and not records:
+        records.append(
+            {
+                "packet_id": None,
+                "scope_label": None,
+                "defects": [defect.model_dump(mode="json") for defect in assistant_result.open_defects],
+            }
+        )
+    return records
+
+
 def _attach_silhouette_loop_convergence(
     silhouette_analysis: ReferenceSilhouetteAnalysisContract | None,
     *,
@@ -1684,16 +1777,17 @@ async def _run_stage_checkpoint_compare(
         )
 
     prior_loop_state = await get_session_value_async(ctx, _REFERENCE_CORRECTION_LOOP_STATE_KEY, None)
-    prior_focus_pairs = (
-        list(prior_loop_state.get("last_focus_pairs") or [])
-        if isinstance(prior_loop_state, dict)
+    prior_loop_matches = (
+        isinstance(prior_loop_state, dict)
         and prior_loop_state.get("goal") == goal
         and prior_loop_state.get("preset_profile") == preset_profile
-        and not target_object
-        and not target_objects
-        and not collection_name
+    )
+    prior_focus_pairs = (
+        list(prior_loop_state.get("last_focus_pairs") or [])
+        if prior_loop_matches and not target_object and not target_objects and not collection_name
         else []
     )
+    prior_open_defects = list(prior_loop_state.get("last_open_defects") or []) if prior_loop_matches else []
     runtime_scope = resolve_active_compare_scope(
         guided_flow_state=session.guided_flow_state,
         gate_plan=session.gate_plan,
@@ -1743,6 +1837,61 @@ async def _run_stage_checkpoint_compare(
         target_objects=resolved_target_objects,
         collection_name=resolved_collection_name,
     )
+    stable_mark_id_map: dict[str, int] = {}
+    if runtime_scope_selected:
+        guided_flow_contract = (
+            GuidedFlowStateContract.model_validate(session.guided_flow_state)
+            if session.guided_flow_state is not None
+            else None
+        )
+        registry_active_scope: GuidedTargetScopeContract | Mapping[str, Any] | None = (
+            guided_flow_contract.active_target_scope if guided_flow_contract is not None else None
+        )
+        if runtime_scope is not None:
+            runtime_object_names = _dedupe_names(
+                [
+                    *(list(runtime_scope.target_objects or [])),
+                    *([runtime_scope.target_object] if runtime_scope.target_object else []),
+                ]
+            )
+            runtime_scope_kind: Literal["single_object", "object_set", "collection", "part_groups", "scene"]
+            if runtime_scope.collection_name:
+                runtime_scope_kind = "collection"
+            elif len(runtime_object_names) == 1:
+                runtime_scope_kind = "single_object"
+            elif runtime_object_names:
+                runtime_scope_kind = "object_set"
+            else:
+                runtime_scope_kind = "scene"
+            registry_active_scope = GuidedTargetScopeContract(
+                scope_kind=runtime_scope_kind,
+                primary_target=runtime_scope.target_object
+                or (runtime_object_names[0] if len(runtime_object_names) == 1 else None),
+                object_names=runtime_object_names,
+                object_count=len(runtime_object_names),
+                collection_name=runtime_scope.collection_name,
+            )
+        registered_compare_scope = build_guided_registry_compare_scope(
+            guided_part_registry=cast(list[Mapping[str, Any]] | None, session.guided_part_registry),
+            active_target_scope=registry_active_scope,
+        )
+        if (
+            registered_compare_scope is not None
+            and runtime_scope is not None
+            and runtime_scope.local_region_hint == "active_workset"
+        ):
+            assembled_target_scope = registered_compare_scope
+            resolved_target_object = registered_compare_scope.primary_target
+            resolved_target_objects = list(registered_compare_scope.object_names or [])
+            resolved_collection_name = registered_compare_scope.collection_name
+        stable_mark_id_map = resolve_guided_mark_id_map(
+            guided_part_registry=cast(list[Mapping[str, Any]] | None, session.guided_part_registry),
+            active_target_scope=guided_flow_contract.active_target_scope if guided_flow_contract is not None else None,
+            prior_mark_id_map=session.guided_mark_id_map,
+        )
+        if stable_mark_id_map != (session.guided_mark_id_map or {}):
+            session = replace(session, guided_mark_id_map=stable_mark_id_map or None)
+            await set_session_capability_state_async(ctx, session)
     capture_target_object = resolved_target_object or assembled_target_scope.primary_target
     scope_error = (
         None
@@ -1835,6 +1984,7 @@ async def _run_stage_checkpoint_compare(
             auxiliary_preset_names=_object_id_preset_names_for_target_view(target_view),
             include_mark_overlay=mark_overlay_enabled,
             mark_overlay_preset_names=_object_id_preset_names_for_target_view(target_view),
+            mark_id_map=stable_mark_id_map or None,
         )
     except RuntimeError as exc:
         emit_debug_log(
@@ -1970,9 +2120,15 @@ async def _run_stage_checkpoint_compare(
         resolved_target_object=resolved_target_object,
         resolved_target_objects=resolved_target_objects,
         assembled_target_scope=assembled_target_scope,
+        guided_domain_profile=(
+            str(session.guided_flow_state.get("domain_profile") or "")
+            if isinstance(session.guided_flow_state, dict)
+            else None
+        ),
         localization_config=localization_config,
         segmentation_sidecar_config=segmentation_sidecar_config,
         resolver=resolver,
+        prior_open_defects=prior_open_defects,
         run_vision_assist_fn=run_vision_assist,
         to_vision_assistant_contract_fn=to_vision_assistant_contract,
     )
@@ -2087,6 +2243,13 @@ async def _run_stage_checkpoint_compare(
         )
         else None
     )
+    runtime_evidence = build_reference_runtime_evidence(
+        summary=reference_understanding_summary,
+        compare_diagnostics=compare_diagnostics,
+        vision_assistant=vision_assistant,
+        part_segmentation=part_segmentation,
+        checkpoint_id=checkpoint_id,
+    )
     staged_compare_contract = ReferenceCompareStageCheckpointResponseContract(
         action="compare_stage_checkpoint",
         goal=goal,
@@ -2117,6 +2280,7 @@ async def _run_stage_checkpoint_compare(
         silhouette_analysis=silhouette_analysis,
         action_hints=action_hints,
         part_segmentation=part_segmentation,
+        runtime_evidence=runtime_evidence,
     )
     active_gate_plan = session.gate_plan
     if session.gate_plan is not None:
@@ -2202,6 +2366,7 @@ async def _run_stage_checkpoint_compare(
         silhouette_analysis=silhouette_analysis,
         action_hints=action_hints,
         part_segmentation=part_segmentation,
+        runtime_evidence=runtime_evidence,
         view_diagnostics_hints=view_diagnostics_hints,
         include_captures=preset_profile != "compact",
         emit_compact_detail=emit_compact_detail,
@@ -2228,6 +2393,15 @@ async def _run_stage_checkpoint_compare(
         vision_assistant.status if vision_assistant is not None else None,
         response.error,
     )
+    if response.runtime_evidence is not None:
+        latest_state = await get_session_capability_state_async(ctx)
+        await set_session_capability_state_async(
+            ctx,
+            replace(
+                latest_state,
+                reference_runtime_evidence=response.runtime_evidence.model_dump(mode="json", exclude_none=True),
+            ),
+        )
     return response
 
 
@@ -2467,11 +2641,26 @@ async def reference_iterate_stage_checkpoint(
         session.guided_flow_state,
         list(compare_result.completion_blockers or []),
     )
+    creature_shape_build_continue = _should_hold_guided_creature_shape_convergence(
+        session.guided_flow_state,
+        list(compare_result.completion_blockers or []),
+    )
     continue_recommended = bool(correction_focus or action_hints or gate_blockers_present)
     inspect_from_truth_signal = _should_inspect_from_truth_signal(compare_result.correction_candidates)
     inspect_from_gate_blockers = (
-        gate_blockers_present and not refinement_build_continue and not hold_in_build_for_required_part_blockers
+        gate_blockers_present
+        and not refinement_build_continue
+        and not hold_in_build_for_required_part_blockers
+        and not creature_shape_build_continue
     )
+    shape_convergence_disposition: ReferenceShapeConvergenceDispositionLiteral | None = None
+    if creature_shape_build_continue:
+        shape_convergence_disposition = "shape_drift_build_hold"
+    elif gate_blockers_present and all(
+        _completion_blocker_gate_type(blocker) in _REFINEMENT_CONTINUE_BUILD_GATE_TYPES
+        for blocker in list(compare_result.completion_blockers or [])
+    ):
+        shape_convergence_disposition = "build_path_exhausted"
     loop_disposition: Literal["continue_build", "inspect_validate", "stop"] = (
         "inspect_validate"
         if inspect_from_truth_signal or inspect_from_gate_blockers
@@ -2579,8 +2768,13 @@ async def reference_iterate_stage_checkpoint(
 
     if stagnation_forces_inspect:
         loop_disposition = "inspect_validate"
+        shape_convergence_disposition = "stagnation_inspect"
 
-    if hold_in_build and loop_disposition != "continue_build" and not stagnation_forces_inspect:
+    if (
+        (hold_in_build or creature_shape_build_continue)
+        and loop_disposition != "continue_build"
+        and not stagnation_forces_inspect
+    ):
         loop_disposition = "continue_build"
         stop_reason = None
 
@@ -2603,6 +2797,7 @@ async def reference_iterate_stage_checkpoint(
             "last_focus_pairs": list(
                 compare_result.truth_followup.focus_pairs if compare_result.truth_followup else []
             ),
+            "last_open_defects": _loop_open_defect_records(compare_result),
             "iteration_index": iteration_index,
             "stagnation_count": stagnation_count,
         },
@@ -2640,6 +2835,11 @@ async def reference_iterate_stage_checkpoint(
             message = (
                 "Refinement-stage profile blockers remain active. Continue the bounded mesh/profile lane on the "
                 "current workset before escalating to inspect/measure/assert."
+            )
+        elif creature_shape_build_continue:
+            message = (
+                "All required creature roles exist, but whole-assembly shape/profile convergence is still unresolved. "
+                "Continue the bounded shape/profile build loop before escalating to inspect/measure/assert."
             )
         elif correction_focus:
             message = "Continue the guided build loop using correction_focus first."
@@ -2681,6 +2881,7 @@ async def reference_iterate_stage_checkpoint(
         correction_focus=correction_focus,
         repeated_correction_focus=repeated_correction_focus,
         stagnation_count=stagnation_count,
+        shape_convergence_disposition=shape_convergence_disposition,
         compare_result=compare_result,
         guided_reference_readiness=readiness,
         reference_strategy_state=advanced_state.reference_strategy_state,

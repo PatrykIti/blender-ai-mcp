@@ -1,8 +1,8 @@
 # TASK-180-04: Mark-Keyed Findings, Correspondence Table And Validity Retry
 
 **Parent:** [TASK-180](./TASK-180_Set_Of_Mark_Object_Bound_Visual_Marks.md)
-**Status:** 🚧 In Progress
-**Progress:** Server-side core shipped via changelog 381: `mark_id` on `VisionFindingContract`, parser coercion, and `build_mark_correspondence_table(...)`. Changelog 392 now adds live overlay mark legends to packet payloads through TASK-180-01. Remaining work: a typed correspondence table on `VisionAssistContract`, one bounded validity retry, and E2E proof once TASK-180-02/03 provide stable cross-view/reference marks.
+**Status:** ✅ Done
+**Progress:** Server-side core shipped via changelog 381: `mark_id` on `VisionFindingContract`, parser coercion, and `build_mark_correspondence_table(...)`. Changelog 392 adds live overlay mark legends to packet payloads through TASK-180-01. The 2026-05-31 closeout threads stable packet `mark_id_map` values through compare requests, adds `VisionMarkCorrespondenceContract` on `VisionAssistContract`, records `rejected_mark_ids`, and runs one bounded retry when a model cites invalid marks.
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-180-02](./TASK-180-02_Stable_Mark_Identifiers_Across_Views_And_Iterations.md), [TASK-180-03](./TASK-180-03_Reference_Image_Marks_Via_Optional_Grounded_SAM_Sidecar.md)
 **Objective:** Require the VLM to key its compare findings to mark IDs, parse those mark-keyed findings into an object-correspondence table mapped back to scene `object_name`s, and add a validity-retry guard that rejects findings citing marks that do not exist in the rendered mark set.
@@ -129,6 +129,9 @@ def vision_compare_with_validity_retry(request, mark_id_map, rendered_mark_ids):
 
 - board tracking remains on umbrella `TASK-180`
 - no separate promoted board-row change is expected for this subtask
+- 2026-05-31: completed. Packet payloads now include mark rules, render/reference
+  mark provenance, and a valid-mark retry guard; synthesized packet results
+  preserve findings, object correspondence, rejected mark IDs, and retry status.
 
 ## Validation Commands
 
@@ -136,6 +139,9 @@ def vision_compare_with_validity_retry(request, mark_id_map, rendered_mark_ids):
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_compare_packets.py tests/unit/adapters/mcp/test_contract_payload_parity.py -q`
 - `PYTHONPATH=. poetry run pytest ./tests/unit`
 - `poetry run python scripts/run_e2e_tests.py`  # when overlay-driven compare Blender behavior changes
+- 2026-05-31 focused validation:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_compare_packets.py::test_mark_correspondence_rejects_invalid_mark_ids_and_maps_valid_roles tests/unit/adapters/mcp/test_reference_compare_packets.py::test_build_compare_packets_carries_exact_overlay_mark_id_map_on_packets -q` -> passed in the focused mark lane
+  targeted MCP lane ending in 180 passed
 
 ## Validation Category
 

@@ -169,25 +169,30 @@ def test_capture_stage_images_builds_wide_and_focus_variants(tmp_path, monkeypat
         "target_front",
         "target_side",
         "target_top",
+        "target_oblique_left",
     ]
     assert captures[0].view_kind == "wide"
     assert captures[1].view_kind == "focus"
     assert captures[2].view_kind == "focus"
-    assert captures[3].view_kind == "focus"
+    assert captures[3].view_kind == "top"
+    assert captures[3].projection == "orthographic"
+    assert captures[4].view_kind == "oblique"
+    assert captures[4].projection == "perspective"
     assert captures[0].host_visible_path is not None
     assert tmp_path.joinpath("internal", "blender-ai-mcp", "bundle1_before_context_wide.jpg").exists()
     assert tmp_path.joinpath("internal", "blender-ai-mcp", "bundle1_before_target_front.jpg").exists()
     assert tmp_path.joinpath("internal", "blender-ai-mcp", "bundle1_before_target_side.jpg").exists()
     assert tmp_path.joinpath("internal", "blender-ai-mcp", "bundle1_before_target_top.jpg").exists()
+    assert tmp_path.joinpath("internal", "blender-ai-mcp", "bundle1_before_target_oblique_left.jpg").exists()
     assert handler.calls[0]["focus_target"] is None
     assert handler.calls[1]["focus_target"] == "Housing"
     assert handler.calls[2]["focus_target"] == "Housing"
     assert handler.calls[3]["focus_target"] == "Housing"
-    assert [call["object_name"] for call in handler.focus_calls] == ["Housing", "Housing", "Housing"]
-    assert handler.isolate_calls == [["Housing"], ["Housing"], ["Housing"]]
+    assert [call["object_name"] for call in handler.focus_calls] == ["Housing", "Housing", "Housing", "Housing"]
+    assert handler.isolate_calls == [["Housing"], ["Housing"], ["Housing"], ["Housing"]]
     assert handler.standard_view_calls == ["FRONT", "RIGHT", "TOP"]
-    assert len(handler.restore_view_state_calls) == 4
-    assert handler.orbit_calls == []
+    assert len(handler.restore_view_state_calls) == 5
+    assert len(handler.orbit_calls) == 1
 
 
 def test_capture_preset_profiles_resolve_expected_named_sets():
@@ -198,6 +203,7 @@ def test_capture_preset_profiles_resolve_expected_named_sets():
         "target_front",
         "target_side",
         "target_top",
+        "target_oblique_left",
     ]
     assert [preset.name for preset in RICH_CAPTURE_PRESET_SPECS] == [
         "context_wide",
@@ -250,6 +256,7 @@ def test_capture_stage_images_can_attach_object_id_sidecar_for_target_view(tmp_p
         "target_front",
         "target_side",
         "target_top",
+        "target_oblique_left",
     ]
     assert len(handler.object_id_calls) == 1
     assert handler.object_id_calls[0] == {
@@ -290,6 +297,7 @@ def test_capture_stage_images_can_append_auxiliary_pass_captures(tmp_path, monke
         "target_front_after_object_id",
         "target_side_after",
         "target_top_after",
+        "target_oblique_left_after",
     ]
     assert [capture.view_kind for capture in captures[2:5]] == ["depth", "normal", "object_id"]
     assert handler.depth_calls == [{"width": 1280, "height": 960, "camera_name": "USER_PERSPECTIVE"}]
@@ -326,6 +334,7 @@ def test_capture_stage_images_can_append_mark_overlay_capture(tmp_path, monkeypa
         "target_front_after_overlay",
         "target_side_after",
         "target_top_after",
+        "target_oblique_left_after",
     ]
     overlay = next(capture for capture in captures if capture.view_kind == "overlay")
     assert overlay.preset_name == "target_front"
@@ -336,6 +345,28 @@ def test_capture_stage_images_can_append_mark_overlay_capture(tmp_path, monkeypa
         (2, "Head", "placed"),
     ]
     assert tmp_path.joinpath("internal", "blender-ai-mcp", "bundle_mark_after_target_front_overlay.jpg").exists()
+
+
+def test_capture_stage_images_uses_supplied_stable_mark_id_map(tmp_path, monkeypatch):
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    captures = capture_stage_images(
+        _OverlayHandler(),
+        bundle_id="bundle_stable_mark",
+        stage="after",
+        target_objects=["Head", "Body"],
+        preset_profile="compact",
+        include_mark_overlay=True,
+        mark_overlay_preset_names={"target_front"},
+        mark_id_map={"Body": 4, "Head": 9},
+    )
+
+    overlay = next(capture for capture in captures if capture.view_kind == "overlay")
+    assert [(mark.mark_id, mark.object_name, mark.status) for mark in overlay.overlay_marks] == [
+        (4, "Body", "placed"),
+        (9, "Head", "placed"),
+    ]
 
 
 def test_capture_stage_images_can_isolate_multiple_objects_without_single_focus(tmp_path, monkeypatch):
@@ -351,8 +382,9 @@ def test_capture_stage_images_can_isolate_multiple_objects_without_single_focus(
         preset_profile="compact",
     )
 
-    assert len(captures) == 4
+    assert len(captures) == 5
     assert handler.isolate_calls == [
+        ["Squirrel_Head", "Squirrel_Body", "Squirrel_Tail"],
         ["Squirrel_Head", "Squirrel_Body", "Squirrel_Tail"],
         ["Squirrel_Head", "Squirrel_Body", "Squirrel_Tail"],
         ["Squirrel_Head", "Squirrel_Body", "Squirrel_Tail"],
@@ -382,7 +414,13 @@ def test_build_capture_bundle_collects_preset_names(tmp_path, monkeypatch):
     assert bundle.goal_id == "goal1"
     assert bundle.target_object == "Housing"
     assert bundle.assembled_target_scope is None
-    assert bundle.preset_names == ["context_wide", "target_front", "target_side", "target_top"]
+    assert bundle.preset_names == [
+        "context_wide",
+        "target_front",
+        "target_oblique_left",
+        "target_side",
+        "target_top",
+    ]
     assert bundle.truth_summary == {"dimensions": [1, 2, 3]}
 
 
@@ -421,7 +459,7 @@ def test_capture_stage_images_restores_state_after_capture(tmp_path, monkeypatch
         target_object="Housing",
     )
 
-    assert len(handler.restore_view_state_calls) == 4
+    assert len(handler.restore_view_state_calls) == 5
     assert all(
         call
         == {
@@ -479,7 +517,11 @@ def test_capture_flags_failed_view_op_without_aborting(tmp_path, monkeypatch):
     captures = capture_stage_images(_FailingViewHandler(), bundle_id="b", stage="after", target_object="Housing")
 
     # The capture still completes (image written) but the failed framing is recorded.
-    flagged = [c for c in captures if c.preset_name and c.preset_name.startswith("target_")]
+    flagged = [
+        c
+        for c in captures
+        if c.preset_name and c.preset_name.startswith("target_") and c.preset_name != "target_oblique_left"
+    ]
     assert flagged, "expected target presets that use set_standard_view"
     for capture in flagged:
         assert capture.capture_ok is False

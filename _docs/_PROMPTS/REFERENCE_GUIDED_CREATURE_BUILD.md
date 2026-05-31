@@ -268,6 +268,8 @@ Workflow:
    - `loop_disposition`
    - `guided_reference_readiness`
    - `reference_orchestrator_feedback`
+   - `shape_convergence_disposition`
+   - `runtime_evidence`
    - `reference_orchestrator_feedback.recommended_repair`
    - `planner_summary`
    - `refinement_route`
@@ -297,20 +299,30 @@ Workflow:
 15. if `part_segmentation.status == "disabled"`, stay on the silhouette-first
     path; the segmentation sidecar is optional and not part of the default
     guided baseline
-16. if `planner_summary.blockers` or `refinement_handoff.state == "blocked"`
+    - if `runtime_evidence.localization.status` or
+      `runtime_evidence.segmentation.status` is `skipped_by_policy`, do not
+      force a sidecar; continue with the bounded packet/tool guidance
+    - optional localization/segmentation can participate only for bounded
+      under-grounded appendage packets, not broad `Body + Head` scope by label
+      alone
+16. if `shape_convergence_disposition == "shape_drift_build_hold"`, all major
+    roles may exist but the assembled shape is still not converged; keep
+    bounded profile/proportion refinement active instead of jumping directly
+    to final validation
+17. if `planner_summary.blockers` or `refinement_handoff.state == "blocked"`
     names `scene_view_diagnostics(...)`, run that read-only support tool before
     attempting any local sculpt correction
-17. if `guided_flow_state.current_step == "refine_low_poly_forms"`, perform
+18. if `guided_flow_state.current_step == "refine_low_poly_forms"`, perform
     bounded low-poly profile work with the visible mesh/profile tools, then
     rerun `reference_iterate_stage_checkpoint(...)` before claiming progress
-18. if a build call is blocked because the family or role is wrong for the
+19. if a build call is blocked because the family or role is wrong for the
     current step, do not try another guessed build tool name
     - inspect `guided_flow_state.allowed_families`
     - inspect `guided_flow_state.allowed_roles`
     - inspect `guided_flow_state.missing_roles`
-19. when the current issue is an embedded organic seam such as snout/head or
+20. when the current issue is an embedded organic seam such as snout/head or
     nose/snout, prefer `macro_attach_part_to_surface`
-20. when the current issue is a non-overlapping head/body, tail/body, or
+21. when the current issue is a non-overlapping head/body, tail/body, or
     limb/body contact/gap nudge, prefer `macro_align_part_with_contact`
     - if the same rounded organic seam is already `intersecting`, prefer
       `macro_attach_part_to_surface` instead of pushing the part sideways to
@@ -318,19 +330,19 @@ Workflow:
     - use `align_mode="none"` when seating legs or appendages that should keep
       their current lateral/vertical offsets while moving only along the
       surface normal
-21. do not treat generic overlap cleanup as success for a creature seam unless
+22. do not treat generic overlap cleanup as success for a creature seam unless
     the final attachment verdict has also moved to `seated_contact`
-22. for segment seams such as head/body, tail/body, and limb/body, do not
+23. for segment seams such as head/body, tail/body, and limb/body, do not
     rationalize `floating_gap` as “expected blockout state”; it still needs
     correction
-23. do not mark the creature complete while required visual-role gates remain
+24. do not mark the creature complete while required visual-role gates remain
     missing; common quadruped runs need body, head, tail, snout, ears, eyes,
     forelegs, and hindlegs unless a gate is explicitly waived
-22. do not treat one vertical oval as a completed squirrel-like tail when the
+25. do not treat one vertical oval as a completed squirrel-like tail when the
     active gate plan carries a curved-tail `shape_profile` blocker
-23. place the eyes only after the major secondary masses are stable, and treat
+26. place the eyes only after the major secondary masses are stable, and treat
     `eye_pair` as a quality-gate target rather than a guided execution role
-24. if `reference_orchestrator_feedback.recommended_repair` is present, treat
+27. if `reference_orchestrator_feedback.recommended_repair` is present, treat
     it as the compact bounded repair-plan handoff before inventing another
     macro/tool choice from prose
 
@@ -385,6 +397,9 @@ At the end of each stage, return only:
   current target scope
 - the optional part-segmentation sidecar is separate from
   `vision_contract_profile` and is disabled by default
+- `runtime_evidence` is diagnostic only: it says whether classifier, main
+  vision, localization, or segmentation were configured, considered, invoked,
+  skipped, unavailable, or absent; it never marks a gate complete
 - for the full multi-part creature, do not narrow the final iterations to only
   one torso/body object, because then the loop will evaluate only that local
   mass instead of the assembled silhouette

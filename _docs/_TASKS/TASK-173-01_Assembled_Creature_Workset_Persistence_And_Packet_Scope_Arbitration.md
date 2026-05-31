@@ -1,7 +1,7 @@
 # TASK-173-01: Assembled Creature Workset Persistence And Packet Scope Arbitration
 
 **Parent:** [TASK-173](./TASK-173_Reference_Guided_Creature_Scope_Convergence_And_Optional_Grounding_Followups.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-171-02](./TASK-171-02_Active_Workset_Expansion_And_Secondary_Compare_Precedence.md), [TASK-169-02](./TASK-169-02_Global_First_Creature_Compare_Priority_And_Local_Packet_Escalation.md)
 **Objective:** Repair the post-refresh creature failure where the assembled workset and packet chooser fall back to the older broad-first `Body + Head` heuristic after secondary-part creation or bounded repairs, instead of correctly rebinding scope and packet precedence for the current assembled creature.
@@ -78,9 +78,14 @@ else:
 
 ## Status / Board Update
 
-- board tracking remains on umbrella `TASK-173`
+- board tracking is closed on umbrella `TASK-173`
 - no separate promoted board-row change is expected for this subtask unless it
   is later split into a standalone follow-on
+- 2026-05-31: completed through the registry-as-compare-scope rewrite. Guided
+  registry roles now project into the canonical assembled compare scope, staged
+  compare prefers that registered graph before older `Body + Head` name
+  heuristics, and diagnostics record whether packet scope came from the registry,
+  focus pairs, target scope, or fallback.
 
 ## Validation Commands
 
@@ -89,6 +94,8 @@ else:
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_gate_state_transport.py tests/e2e/vision/test_reference_guided_squirrel_quality_regression.py -q`
 - `PYTHONPATH=. poetry run pytest ./tests/unit`
 - `poetry run python scripts/run_e2e_tests.py`
+- 2026-05-31 focused validation:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_compare_packets.py::test_build_compare_packets_prefers_registered_part_graph_over_name_focus_clusters tests/unit/adapters/mcp/test_guided_flow_state_contract.py::test_guided_registry_compare_scope_projects_stable_registered_part_graph -q` -> passed in the focused registry lane
 
 ## Validation Category
 

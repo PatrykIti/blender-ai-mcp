@@ -35,8 +35,10 @@ from server.adapters.mcp.session_capabilities_flow import (
 )
 from server.adapters.mcp.session_capabilities_registry import (
     advance_guided_flow_from_iteration_async,
+    build_guided_registry_compare_scope,
     remove_guided_part_registrations,
     remove_guided_part_registrations_async,
+    resolve_guided_mark_id_map,
 )
 from server.adapters.mcp.session_capabilities_runtime_glue import (
     apply_visibility_for_session_state,
@@ -67,6 +69,7 @@ __all__ = [
     "bootstrap_guided_empty_scene_primary_workset_async",
     "build_guided_reference_readiness",
     "build_guided_reference_readiness_payload",
+    "build_guided_registry_compare_scope",
     "clear_session_goal_state",
     "clear_session_goal_state_async",
     "describe_guided_flow_feedback",
@@ -92,6 +95,7 @@ __all__ = [
     "remove_guided_part_registrations_async",
     "rename_guided_part_registration",
     "rename_guided_part_registration_async",
+    "resolve_guided_mark_id_map",
     "replace_session_pending_reference_images",
     "replace_session_pending_reference_images_async",
     "replace_session_reference_images",

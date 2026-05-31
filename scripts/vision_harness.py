@@ -24,6 +24,8 @@ from server.adapters.mcp.contracts.reference import (
     ReferenceComparePacketContract,
     ReferenceImageRecordContract,
     ReferencePartSegmentationContract,
+    ReferenceRuntimeCapabilityUsageContract,
+    ReferenceRuntimeEvidenceContract,
 )
 from server.adapters.mcp.contracts.vision import (
     VisionCaptureBundleContract,
@@ -230,6 +232,70 @@ def _disabled_localized_support_result() -> ReferencePartSegmentationContract:
             "Optional localized support remains disabled by default.",
             "The harness did not invoke any compare-time optional adapter.",
         ],
+    )
+
+
+def _localized_support_runtime_evidence(
+    *,
+    packet: ReferenceComparePacketContract,
+    localization_config: Any,
+    segmentation_config: Any,
+    localization_candidates_count: int,
+    part_segmentation: ReferencePartSegmentationContract,
+) -> ReferenceRuntimeEvidenceContract:
+    localization_configured = localization_config is not None and bool(getattr(localization_config, "enabled", False))
+    segmentation_configured = segmentation_config is not None and bool(getattr(segmentation_config, "enabled", False))
+    localization_invoked = localization_config is not None
+    segmentation_invoked = segmentation_config is not None
+    return ReferenceRuntimeEvidenceContract(
+        checkpoint_id=packet.packet_id,
+        packet_ids=[packet.packet_id],
+        capabilities=[
+            ReferenceRuntimeCapabilityUsageContract(
+                capability="classifier",
+                status="not_configured",
+                configured=False,
+                considered=False,
+                invoked=False,
+                notes=["Localized-support harness does not run the reference-understanding classifier."],
+            ),
+            ReferenceRuntimeCapabilityUsageContract(
+                capability="vision",
+                status="not_configured",
+                configured=False,
+                considered=False,
+                invoked=False,
+                notes=["Localized-support harness calls sidecars directly, not the main vision assistant."],
+            ),
+            ReferenceRuntimeCapabilityUsageContract(
+                capability="localization",
+                status=(
+                    "used"
+                    if localization_candidates_count
+                    else ("unavailable" if localization_invoked else "not_configured")
+                ),
+                configured=localization_configured,
+                considered=True,
+                invoked=localization_invoked,
+                provider_name=getattr(localization_config, "provider_name", None),
+                packet_ids=[packet.packet_id],
+            ),
+            ReferenceRuntimeCapabilityUsageContract(
+                capability="segmentation",
+                status=(
+                    "used"
+                    if part_segmentation.status == "available"
+                    else ("unavailable" if segmentation_invoked else "not_configured")
+                ),
+                configured=segmentation_configured,
+                considered=True,
+                invoked=segmentation_invoked,
+                provider_name=getattr(segmentation_config, "provider_name", None),
+                packet_ids=[packet.packet_id],
+                notes=list(part_segmentation.notes or [])[:4],
+            ),
+        ],
+        notes=["Harness runtime evidence is bounded and advisory-only."],
     )
 
 
@@ -577,6 +643,13 @@ async def _run_localized_support_harness(
         support_evidence = build_compare_support_evidence(None, part_segmentation=part_segmentation)
         localization_candidates_count = len(localization_candidates)
         query_labels = compare_packets_area._query_labels_for_packet(packet)
+    runtime_evidence = _localized_support_runtime_evidence(
+        packet=packet,
+        localization_config=localization_config,
+        segmentation_config=segmentation_config,
+        localization_candidates_count=localization_candidates_count,
+        part_segmentation=part_segmentation,
+    )
 
     return [
         {
@@ -591,6 +664,7 @@ async def _run_localized_support_harness(
                 "query_labels": query_labels,
                 "localization_candidate_count": localization_candidates_count,
                 "part_segmentation": part_segmentation.model_dump(mode="json", exclude_none=True),
+                "runtime_evidence": runtime_evidence.model_dump(mode="json", exclude_none=True),
                 "support_evidence": [item.model_dump(mode="json", exclude_none=True) for item in support_evidence],
             },
         }

@@ -1,7 +1,7 @@
 # TASK-181-01: Part Registry As First-Class Scene Graph And Compare Scope
 
 **Parent:** [TASK-181](./TASK-181_Scene_Graph_Diff_Compare_And_Registry_Scoped_Convergence.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-173-01](./TASK-173-01_Assembled_Creature_Workset_Persistence_And_Packet_Scope_Arbitration.md), [TASK-171-03](./TASK-171-03_Registry_Backed_Creature_Seam_Authority_And_Opaque_Naming.md)
 **Objective:** Promote the guided part registry / `assembled_target_scope` to a typed scene graph that is the canonical compare scope, so registering a part extends the comparison scope and whole-assembly convergence keeps precedence (fixing the `Body + Head` drift). The registered graph — not the name-heuristic clustering in `reference_compare_packets.py` — must own which nodes the staged compare ranges over.
@@ -122,6 +122,10 @@ def _scope_clusters(assembled_target_scope, registered_graph, focus_pairs, prefe
 - board tracking remains on umbrella `TASK-181`
 - no separate promoted board-row change is expected for this subtask unless it
   later becomes a standalone follow-on
+- 2026-05-31: completed. Guided part registry state can now be projected into a
+  `SceneAssembledTargetScopeContract`, staged compare uses that registered graph
+  as the compare scope before focus-pair/name heuristics, and diagnostics expose
+  `registered_compare_scope` / packet `scope_source` for auditability.
 
 ## Validation Commands
 
@@ -129,6 +133,9 @@ def _scope_clusters(assembled_target_scope, registered_graph, focus_pairs, prefe
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_compare_packets.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py -q`
 - `PYTHONPATH=. poetry run pytest ./tests/unit`
 - `poetry run python scripts/run_e2e_tests.py` (guided registry + compare scope is exercised end to end)
+- 2026-05-31 focused validation:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_compare_packets.py::test_build_compare_packets_prefers_registered_part_graph_over_name_focus_clusters tests/unit/adapters/mcp/test_guided_flow_state_contract.py::test_guided_registry_compare_scope_projects_stable_registered_part_graph -q` -> passed in the focused registry lane
+  targeted MCP lane ending in 180 passed
 
 ## Validation Category
 

@@ -31,6 +31,7 @@ from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract
 from server.adapters.mcp.contracts.quality_gates import GatePlanContract
 from server.adapters.mcp.contracts.reference import (
     GuidedReferenceReadinessContract,
+    ReferenceRuntimeEvidenceContract,
     ReferenceStrategyStateContract,
     ReferenceUnderstandingSummaryContract,
 )
@@ -717,6 +718,7 @@ async def router_get_status(ctx: Context) -> RouterStatusContract:
             "reference_images": list(session.reference_images or []),
             "reference_understanding_summary": session.reference_understanding_summary,
             "reference_understanding_gate_ids": reference_understanding_gate_ids,
+            "reference_runtime_evidence": session.reference_runtime_evidence,
             "reference_orchestrator_feedback": (
                 None
                 if (
@@ -746,6 +748,11 @@ async def router_get_status(ctx: Context) -> RouterStatusContract:
                         runtime_policy_block=(
                             session.last_guided_action_block
                             if session.last_router_disposition == "failed_closed_error"
+                            else None
+                        ),
+                        runtime_evidence=(
+                            ReferenceRuntimeEvidenceContract.model_validate(session.reference_runtime_evidence)
+                            if session.reference_runtime_evidence is not None
                             else None
                         ),
                         optional_support_notes=_build_optional_localized_support_notes(),

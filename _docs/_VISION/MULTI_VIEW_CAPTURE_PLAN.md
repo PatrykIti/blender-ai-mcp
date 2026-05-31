@@ -28,8 +28,10 @@ Already implemented:
   - `target_front`
   - `target_side`
   - `target_top`
+  - `target_oblique_left`
 - richer candidate capture can be selected down to the effective image budget
-  before transmission
+  before transmission; primary captures carry symbolic `view_kind` and
+  `projection` metadata such as orthographic `top` and perspective `oblique`
 - optional labeled multi-view grid transmission is available behind
   `VISION_CAPTURE_GRID_ENABLED`; when enabled, selected per-image captures are
   composited into bounded `view_kind="grid"` images with grid-aware captions
@@ -140,9 +142,10 @@ The target visual evidence bundle should be closer to an 8-image set:
 Reference images should be selected and attached alongside this bundle using
 goal/object/view-aware filtering.
 
-The default runtime still keeps oblique 3/4 promotion as explicit follow-on
-work (`TASK-177-02`). Do not document the oblique compact view as a shipped
-default until the preset and E2E assertions land.
+The default compact runtime now ships one oblique 3/4 view
+(`target_oblique_left`) alongside orthographic `target_top`. The richer 8-image
+target still remains the aspirational upper bound when the image budget allows
+additional obliques/detail views.
 
 ## Camera Strategy
 

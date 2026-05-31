@@ -308,6 +308,7 @@ def test_packet_compare_request_uses_packet_specific_prompt_payload_and_schema()
         "magnitude_ratio",
         "reference_id",
         "confidence",
+        "mark_id",
     }
     assert set(schema["properties"]["packet_guidance"]["properties"]) == {
         "packet_status",
@@ -338,8 +339,8 @@ def test_packet_compare_prompt_includes_mark_overlay_legend():
     payload_text = build_vision_payload_text(request)
 
     assert "MARK_OVERLAYS:" in payload_text
-    assert "- target_front_after_overlay: mark 1 -> Body (placed)" in payload_text
-    assert "- target_front_after_overlay: mark 2 -> Head (placed)" in payload_text
+    assert "- target_front_after_overlay: mark 1 -> Body (render, deterministic_projection)" in payload_text
+    assert "- target_front_after_overlay: mark 2 -> Head (render, deterministic_projection)" in payload_text
 
 
 def test_packet_compare_prompt_omits_unplaced_overlay_marks_from_legend():
@@ -364,7 +365,7 @@ def test_packet_compare_prompt_omits_unplaced_overlay_marks_from_legend():
 
     assert "MARK_OVERLAYS:" in payload_text
     assert "mark 1 -> Body" not in payload_text
-    assert "- target_front_after_overlay: mark 2 -> Head (placed)" in payload_text
+    assert "- target_front_after_overlay: mark 2 -> Head (render, deterministic_projection)" in payload_text
 
 
 def test_packet_ranking_request_uses_ranking_specific_prompt_payload():
@@ -425,6 +426,7 @@ def test_google_family_compare_profile_uses_narrow_contract_even_on_openrouter()
         "proportion_mismatches",
         "correction_focus",
         "next_corrections",
+        "findings",
     }
     _assert_strict_required_matches_properties(schema)
 

@@ -311,6 +311,7 @@ def update_session_from_router_goal(
     current_partial_answers.update(provided_answers or {})
     same_goal = current.goal == goal
     retained_guided_part_registry = current.guided_part_registry if same_goal else None
+    retained_guided_mark_id_map = current.guided_mark_id_map if same_goal else None
     previous_flow_state = _normalize_guided_flow_state(current.guided_flow_state)
     guided_flow_state = (
         _build_initial_guided_flow_state(
@@ -376,6 +377,7 @@ def update_session_from_router_goal(
         reference_understanding_gate_ids=current.reference_understanding_gate_ids if same_goal else None,
         reference_strategy_state=current.reference_strategy_state if same_goal else None,
         guided_part_registry=retained_guided_part_registry,
+        guided_mark_id_map=retained_guided_mark_id_map,
         last_guided_affected_objects=None if not same_goal else current.last_guided_affected_objects,
         pending_reference_images=pending_reference_images,
     )
@@ -409,6 +411,7 @@ async def update_session_from_router_goal_async(
     current_partial_answers.update(provided_answers or {})
     same_goal = current.goal == goal
     retained_guided_part_registry = current.guided_part_registry if same_goal else None
+    retained_guided_mark_id_map = current.guided_mark_id_map if same_goal else None
     previous_flow_state = _normalize_guided_flow_state(current.guided_flow_state)
     guided_flow_state = (
         _build_initial_guided_flow_state(
@@ -474,6 +477,7 @@ async def update_session_from_router_goal_async(
         reference_understanding_gate_ids=current.reference_understanding_gate_ids if same_goal else None,
         reference_strategy_state=current.reference_strategy_state if same_goal else None,
         guided_part_registry=retained_guided_part_registry,
+        guided_mark_id_map=retained_guided_mark_id_map,
         last_guided_affected_objects=None if not same_goal else current.last_guided_affected_objects,
         pending_reference_images=pending_reference_images,
     )
@@ -532,6 +536,7 @@ def clear_session_goal_state(
         reference_understanding_gate_ids=None,
         reference_strategy_state=None,
         guided_part_registry=None,
+        guided_mark_id_map=None,
         pending_reference_images=None,
     )
     set_session_capability_state(ctx, state)
@@ -571,6 +576,7 @@ async def clear_session_goal_state_async(
         reference_understanding_gate_ids=None,
         reference_strategy_state=None,
         guided_part_registry=None,
+        guided_mark_id_map=None,
         pending_reference_images=None,
     )
     await set_session_capability_state_async(ctx, state)

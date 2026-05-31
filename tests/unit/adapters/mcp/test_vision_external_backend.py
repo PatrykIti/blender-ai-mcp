@@ -809,6 +809,7 @@ def test_openrouter_google_family_compare_flow_uses_narrow_schema_and_prompt(mon
         "proportion_mismatches",
         "correction_focus",
         "next_corrections",
+        "findings",
     }
     assert (
         "Do not return visible_changes, likely_issues, recommended_checks, confidence, or captures_used." in system_text
@@ -887,6 +888,7 @@ def test_google_ai_studio_compare_flow_uses_narrow_schema_and_prompt(monkeypatch
         "proportion_mismatches",
         "correction_focus",
         "next_corrections",
+        "findings",
     }
     assert (
         "Do not return visible_changes, likely_issues, recommended_checks, confidence, or captures_used." in system_text

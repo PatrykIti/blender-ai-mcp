@@ -1,6 +1,12 @@
 # TASK-173: Reference-Guided Creature Scope Convergence And Optional Grounding Follow-Ups
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Progress:** 2026-05-31 closeout complete. `TASK-173-01` closed the
+registry-as-compare-scope drift class, `TASK-173-02` added creature
+shape-convergence build holds before inspect escalation, `TASK-173-03` bounded
+optional localization/segmentation activation to under-grounded appendage
+packets, and `TASK-173-04` added typed runtime evidence across compare,
+iterate, router status, harness output, and the existing squirrel proof lane.
 **Priority:** 🔴 High
 **Category:** Guided Runtime / Vision / Reconstruction Reliability
 **Estimated Effort:** Large
@@ -168,10 +174,9 @@ After this umbrella lands:
 
 ## Status / Board Update
 
-- `_docs/_TASKS/README.md` should track `TASK-173` as a promoted open item on
-  the Vision / Hybrid Loop lane
-- child tasks stay nested under the open umbrella and do not need board rows
-  unless one later becomes a separately promoted follow-on
+- `_docs/_TASKS/README.md` tracks `TASK-173` as a promoted completed item.
+- child tasks are closed under this completed umbrella; no separately promoted
+  follow-on remains open.
 
 ## Validation Commands
 
@@ -181,3 +186,14 @@ After this umbrella lands:
 ## Validation Category
 
 - planning / governance / failure-driven task-family definition
+
+## Completion Summary
+
+Completed on 2026-05-31. The creature loop now keeps broad assembled-scope
+convergence authoritative after semantic roles exist, uses the guided registry
+as first-class compare scope, invokes optional grounding only for bounded
+under-grounded creature appendage packets, and exposes typed
+`runtime_evidence` so operators can see classifier, vision, localization, and
+segmentation participation without reading external logs.
+
+Validation evidence is recorded in changelog entry `394`.

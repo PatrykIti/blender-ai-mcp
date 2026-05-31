@@ -1,7 +1,7 @@
 # TASK-180-03: Reference-Image Marks Via Optional Grounded-SAM Sidecar
 
 **Parent:** [TASK-180](./TASK-180_Set_Of_Mark_Object_Bound_Visual_Marks.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟠 Medium
 **Follow-on After:** [TASK-180-02](./TASK-180-02_Stable_Mark_Identifiers_Across_Views_And_Iterations.md), [TASK-172-03-01](./TASK-172-03-01_Localization_Runtime_Config_And_Provider_Boundary.md)
 **Objective:** When the optional, default-off Grounded-SAM sidecar is enabled, mark the corresponding parts on the REFERENCE image with the same stable ID scheme used on the render, so render-vs-reference correspondence is explicit. When the sidecar is disabled (the default), degrade gracefully to render-only marks with no behavior regression.
@@ -117,6 +117,11 @@ async def mark_reference_with_grounded_sam(packet, mark_id_map, localization_con
 
 - board tracking remains on umbrella `TASK-180`
 - no separate promoted board-row change is expected for this subtask
+- 2026-05-31: completed. The existing default-off localization sidecar now
+  projects bounded candidates back to packet `mark_id_map` entries and records
+  reference-side `VisionOverlayMarkContract` rows with
+  `source="grounded_sam_sidecar"` / `image_side="reference"`. Disabled, empty,
+  timeout, or failed sidecar paths still degrade to render-only marks.
 
 ## Validation Commands
 
@@ -124,6 +129,8 @@ async def mark_reference_with_grounded_sam(packet, mark_id_map, localization_con
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py -q`
 - `PYTHONPATH=. poetry run pytest ./tests/unit`
 - `poetry run python scripts/run_e2e_tests.py`  # when reference-overlay Blender behavior changes
+- 2026-05-31 focused validation:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_compare_packets.py tests/unit/adapters/mcp/test_vision_prompting.py -q` as part of the targeted MCP lane -> 180 passed
 
 ## Validation Category
 

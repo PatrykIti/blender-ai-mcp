@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -18,6 +19,7 @@ from server.adapters.mcp.contracts.reference import (
 from server.adapters.mcp.contracts.vision import VisionCaptureImageContract, VisionObjectIdCaptureArtifactContract
 from server.adapters.mcp.vision.silhouette import (
     build_silhouette_analysis,
+    classify_per_object_iou_severity,
     compute_iou_convergence,
     compute_per_object_iou,
     compute_silhouette_iou,
@@ -173,6 +175,21 @@ def test_compute_per_object_iou_decodes_object_id_band(tmp_path: Path):
     assert result["mask_iou"] is not None
     assert result["mask_iou"] > 0.98
     assert result["severity"] == "low"
+
+
+def test_per_object_iou_severity_thresholds_match_calibration_fixture():
+    fixture_path = (
+        Path(__file__).resolve().parents[3]
+        / "fixtures"
+        / "vision_eval"
+        / "per_object_iou_threshold_calibration"
+        / "calibration.json"
+    )
+    payload = json.loads(fixture_path.read_text(encoding="utf-8"))
+
+    assert payload["thresholds"] == {"high_mismatch_below": 0.45, "medium_mismatch_below": 0.7}
+    for case in payload["cases"]:
+        assert classify_per_object_iou_severity(case["mask_iou"]) == case["expected_severity"]
 
 
 def test_compute_per_object_iou_reports_missing_index_map_entry(tmp_path: Path):

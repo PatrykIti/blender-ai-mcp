@@ -1,7 +1,7 @@
 # TASK-180-02: Stable Mark Identifiers Across Views And Iterations
 
 **Parent:** [TASK-180](./TASK-180_Set_Of_Mark_Object_Bound_Visual_Marks.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-180-01](./TASK-180-01_Object_ID_Driven_Numbered_Mark_Overlay_Render.md)
 **Objective:** Assign each mark ID from the part registry so that the same registered part keeps the same number across every captured view in a bundle and across every iterate cycle for the same session target, enabling cross-view and cross-iteration correspondence without re-deriving IDs from per-image geometry.
@@ -95,6 +95,11 @@ def resolve_mark_id_map(part_registry, assembled_scope, prior_map):
 
 - board tracking remains on umbrella `TASK-180`
 - no separate promoted board-row change is expected for this subtask
+- 2026-05-31: completed. `guided_mark_id_map` is persisted in session state,
+  updated by register/rename/remove registry operations, cleared with goal/scene
+  resets, and passed into overlay capture so one object keeps the same mark ID
+  across front/side/top/oblique captures and later iterate cycles. Compare
+  packets carry the exact `mark_id_map` used to produce the overlay.
 
 ## Validation Commands
 
@@ -102,6 +107,9 @@ def resolve_mark_id_map(part_registry, assembled_scope, prior_map):
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_compare_packets.py -q`
 - `PYTHONPATH=. poetry run pytest ./tests/unit`
 - `poetry run python scripts/run_e2e_tests.py`  # when overlay/iterate Blender behavior changes
+- 2026-05-31 focused validation:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_capture_runtime.py::test_capture_stage_images_uses_supplied_stable_mark_id_map tests/unit/adapters/mcp/test_reference_compare_packets.py::test_build_compare_packets_carries_exact_overlay_mark_id_map_on_packets tests/unit/adapters/mcp/test_guided_flow_state_contract.py::test_guided_mark_id_map_preserves_existing_ids_and_appends_new_parts -q` -> passed in the focused mark lane
+  targeted MCP lane ending in 180 passed
 
 ## Validation Category
 

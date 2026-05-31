@@ -517,6 +517,7 @@ def mark_guided_spatial_state_stale(
         return current
 
     updated_registry = None if tool_name == "scene_clean_scene" else current.guided_part_registry
+    updated_mark_id_map = None if tool_name == "scene_clean_scene" else current.guided_mark_id_map
     updated_flow_state = _mark_guided_spatial_state_stale_dict(
         current.guided_flow_state,
         tool_name=tool_name,
@@ -538,6 +539,7 @@ def mark_guided_spatial_state_stale(
         updated_flow_state == current.guided_flow_state
         and updated_gate_plan == current.gate_plan
         and updated_registry == current.guided_part_registry
+        and updated_mark_id_map == current.guided_mark_id_map
     ):
         return current
     normalized_affected_objects = [
@@ -548,6 +550,7 @@ def mark_guided_spatial_state_stale(
         guided_flow_state=updated_flow_state,
         gate_plan=updated_gate_plan,
         guided_part_registry=updated_registry,
+        guided_mark_id_map=updated_mark_id_map,
         last_guided_affected_objects=normalized_affected_objects or None,
     )
     set_session_capability_state(ctx, state)
@@ -587,6 +590,7 @@ async def mark_guided_spatial_state_stale_async(
         return current
 
     updated_registry = None if tool_name == "scene_clean_scene" else current.guided_part_registry
+    updated_mark_id_map = None if tool_name == "scene_clean_scene" else current.guided_mark_id_map
     updated_flow_state = _mark_guided_spatial_state_stale_dict(
         current.guided_flow_state,
         tool_name=tool_name,
@@ -608,6 +612,7 @@ async def mark_guided_spatial_state_stale_async(
         updated_flow_state == current.guided_flow_state
         and updated_gate_plan == current.gate_plan
         and updated_registry == current.guided_part_registry
+        and updated_mark_id_map == current.guided_mark_id_map
     ):
         return current
     normalized_affected_objects = [
@@ -618,6 +623,7 @@ async def mark_guided_spatial_state_stale_async(
         guided_flow_state=updated_flow_state,
         gate_plan=updated_gate_plan,
         guided_part_registry=updated_registry,
+        guided_mark_id_map=updated_mark_id_map,
         last_guided_affected_objects=normalized_affected_objects or None,
     )
     await set_session_capability_state_async(ctx, state)

@@ -125,7 +125,8 @@ def capture_overlay_image(scene_handler, *, bundle_id, stage, registered_parts):
 ## Status / Board Update
 
 - `_docs/_TASKS/README.md` removes `TASK-180-01` from promoted open Set-of-Mark work.
-- `TASK-180` remains open for `TASK-180-02`, `TASK-180-03`, and `TASK-180-04`.
+- `TASK-180` closed on 2026-05-31 after `TASK-180-02`, `TASK-180-03`, and
+  `TASK-180-04` landed.
 
 ## Validation Commands
 

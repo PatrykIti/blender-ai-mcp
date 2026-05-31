@@ -34,6 +34,7 @@ def _capture_to_image_input(
         label=capture.label,
         media_type=capture.media_type,
         view_kind=capture.view_kind,
+        projection=capture.projection,
     )
 
 
@@ -87,11 +88,14 @@ def _build_labeled_grid_capture(
 def _capture_grid_metadata(
     capture: VisionCaptureImageContract, sources: Sequence[VisionCaptureImageContract]
 ) -> dict[str, Any]:
-    return {
+    payload: dict[str, Any] = {
         "label": capture.label,
         "view_kind": capture.view_kind,
         "source_labels": [source.label for source in sources],
     }
+    if capture.projection is not None:
+        payload["projection"] = capture.projection
+    return payload
 
 
 # Canonical informativeness ordering used to down-select capture views when a

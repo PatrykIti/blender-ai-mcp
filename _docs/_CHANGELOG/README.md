@@ -6,6 +6,8 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [394](./394-2026-05-31-task-173-creature-scope-closeout.md) | 2026-05-31 | **TASK-173 creature scope-convergence closeout** | - |
+| [393](./393-2026-05-31-vision-followup-closeout.md) | 2026-05-31 | **Vision follow-up closeout** | - |
 | [392](./392-2026-05-31-task-180-live-mark-overlay-capture.md) | 2026-05-31 | **TASK-180-01 live Set-of-Mark overlay capture** | - |
 | [391](./391-2026-05-31-task-179-auxiliary-channel-transmission.md) | 2026-05-31 | **TASK-179-03 auxiliary-channel transmission** | - |
 | [390](./390-2026-05-31-task-179-live-object-id-sidecar-iou.md) | 2026-05-31 | **TASK-179 live object-ID sidecar IoU** | - |

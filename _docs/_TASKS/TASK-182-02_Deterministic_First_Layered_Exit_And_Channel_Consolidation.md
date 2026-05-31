@@ -1,8 +1,8 @@
 # TASK-182-02: Deterministic-First Layered Exit And Channel Consolidation
 
 **Parent:** [TASK-182](./TASK-182_Critic_Verify_Compare_Loop_And_Deterministic_Exit_Criteria.md)
-**Status:** 🚧 In Progress
-**Progress:** Channel-consolidation half shipped 2026-05-30 (changelog 383): authoritative_next_actions merges the overlapping advisory channels into one ranked deduplicated list. Remaining: the deterministic-first layered exit (hard non-VLM gate first via quality_gate_verifier + scene_assert_contact, VLM as tiebreaker) and the full TASK-182 Critic/Verify re-render loop — both need staged-compare orchestration + E2E.
+**Status:** ✅ Done
+**Progress:** Channel-consolidation half shipped 2026-05-30 (changelog 383): authoritative_next_actions merges the overlapping advisory channels into one ranked deduplicated list. The 2026-05-31 closeout adds provenance-tagged `authoritative_next_action_provenance`, ranks scene-truth/support actions before deterministic repair handoffs and advisory vision focus, and keeps the existing quality-gate verifier as the hard non-VLM authority before any VLM Verify status is considered.
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-182-01](./TASK-182-01_Critic_Verify_Split_With_Stable_Defect_Identifiers.md), [TASK-157-02](./TASK-157-02_Deterministic_Gate_Verifier_And_Status_Model.md)
 **Objective:** Formalize a layered exit where a hard non-VLM gate (registry part-count match AND required contacts via the deterministic verifier) is consulted first, the VLM verdict is used only as a tiebreaker, every claim is provenance-tagged, and the 4-6 overlapping recommendation/correction channels collapse into one ranked `authoritative_next_actions` field.
@@ -146,6 +146,11 @@ def authoritative_next_actions(planner, gate_blockers, packet_focus, vision_focu
 - board tracking remains on umbrella `TASK-182`
 - no separate promoted board-row change is expected for this subtask unless it
   later becomes a standalone follow-on
+- 2026-05-31: completed. The orchestrator read model now exposes a deterministic
+  provenance table for the consolidated next-action list, with `scene_truth`,
+  `spatial_relation`, `policy`, and `vision` source tags plus authority ranks.
+  Advisory defect/verify status is surfaced as uncertainty only; deterministic
+  gate blockers still prevent completion regardless of vision wording.
 
 ## Validation Commands
 
@@ -154,6 +159,9 @@ def authoritative_next_actions(planner, gate_blockers, packet_focus, vision_focu
 - `PYTHONPATH=. poetry run pytest tests/e2e/vision/test_goal_derived_gate_creature_completion.py -q`
 - `poetry run pytest ./tests/unit`
 - `poetry run python scripts/run_e2e_tests.py`
+- 2026-05-31 focused validation:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_images.py::test_reference_orchestrator_feedback_tags_authoritative_next_action_provenance tests/unit/adapters/mcp/test_reference_images.py::test_reference_orchestrator_feedback_projects_compare_diagnostics_without_ru_summary -q` -> 2 passed
+  targeted MCP lane ending in 180 passed
 
 ## Validation Category
 

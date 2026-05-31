@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Awaitable
+from collections.abc import Awaitable, Mapping, Sequence
 from dataclasses import asdict, replace
 from typing import Any, Callable
 
@@ -14,6 +14,11 @@ from fastmcp import Context
 
 from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract, GuidedTargetScopeContract
 from server.adapters.mcp.contracts.quality_gates import GatePlanContract, completion_blockers_for_gate_plan
+from server.adapters.mcp.contracts.scene import (
+    SceneAssembledTargetScopeContract,
+    SceneObjectRoleLiteral,
+    SceneScopeObjectRoleContract,
+)
 from server.adapters.mcp.session_capabilities_flow import (
     _GUIDED_FLOW_STOPPED_STEPS,
     _GUIDED_PRIMARY_REQUIRED_ROLES,
@@ -47,6 +52,225 @@ _REFINEMENT_ENTRY_GATE_TYPES = {"shape_profile", "proportion_ratio", "opening_or
 _REFINEMENT_PREREQUISITE_GATE_TYPES = {"attachment_seam", "support_contact"}
 _REFINEMENT_ENTRY_STATUSES = {"pending", "blocked", "failed"}
 logger = logging.getLogger(__name__)
+
+_GUIDED_ROLE_TO_SCENE_ROLE: dict[str, SceneObjectRoleLiteral] = {
+    "anchor_core": "anchor_core",
+    "primary_mass": "attached_mass",
+    "body_core": "anchor_core",
+    "head_mass": "attached_mass",
+    "tail_mass": "attached_appendage",
+    "snout_mass": "attached_appendage",
+    "ear_pair": "accessory_feature",
+    "eye_pair": "accessory_feature",
+    "foreleg_pair": "attached_appendage",
+    "hindleg_pair": "attached_appendage",
+}
+
+
+def _dedupe_guided_names(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    deduped: list[str] = []
+    for value in values:
+        normalized = str(value or "").strip()
+        if not normalized:
+            continue
+        key = normalized.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(normalized)
+    return deduped
+
+
+def _scene_role_for_guided_registration(
+    *,
+    guided_role: str,
+    role_group: str | None,
+    is_primary: bool,
+) -> SceneObjectRoleLiteral:
+    if is_primary:
+        return "anchor_core"
+    normalized_role = guided_role.strip().lower()
+    mapped_role = _GUIDED_ROLE_TO_SCENE_ROLE.get(normalized_role)
+    if mapped_role is not None:
+        return mapped_role
+    normalized_group = str(role_group or "").strip().lower()
+    if normalized_group == "primary_masses":
+        return "attached_mass"
+    if normalized_group in {"secondary_parts", "attachment_alignment"}:
+        return "attached_appendage"
+    return "scene_member"
+
+
+def _coerce_guided_target_scope(
+    active_target_scope: GuidedTargetScopeContract | Mapping[str, Any] | None,
+) -> GuidedTargetScopeContract | None:
+    if active_target_scope is None:
+        return None
+    if isinstance(active_target_scope, GuidedTargetScopeContract):
+        return active_target_scope
+    try:
+        return GuidedTargetScopeContract.model_validate(active_target_scope)
+    except Exception:
+        return None
+
+
+def _active_scope_from_flow_state_dict(flow_state: dict[str, Any] | None) -> GuidedTargetScopeContract | None:
+    if flow_state is None:
+        return None
+    try:
+        return GuidedFlowStateContract.model_validate(flow_state).active_target_scope
+    except Exception:
+        return None
+
+
+def build_guided_registry_compare_scope(
+    *,
+    guided_part_registry: Sequence[Mapping[str, Any]] | None,
+    active_target_scope: GuidedTargetScopeContract | Mapping[str, Any] | None = None,
+) -> SceneAssembledTargetScopeContract | None:
+    """Project guided part registrations into the scene-scope graph contract."""
+
+    registry_by_name: dict[str, dict[str, str | None]] = {}
+    registry_order: list[str] = []
+    for item in list(guided_part_registry or []):
+        if not isinstance(item, Mapping):
+            continue
+        object_name = str(item.get("object_name") or "").strip()
+        role = str(item.get("role") or "").strip().lower()
+        if not object_name or not role:
+            continue
+        key = object_name.lower()
+        if key not in registry_by_name:
+            registry_order.append(object_name)
+        registry_by_name[key] = {
+            "object_name": object_name,
+            "role": role,
+            "role_group": str(item.get("role_group") or "").strip().lower() or None,
+        }
+
+    if not registry_by_name:
+        return None
+
+    active_scope = _coerce_guided_target_scope(active_target_scope)
+    active_object_names = (
+        _dedupe_guided_names(
+            [
+                *(list(active_scope.object_names or [])),
+                *([active_scope.primary_target] if active_scope.primary_target else []),
+            ]
+        )
+        if active_scope is not None
+        else []
+    )
+    object_names = active_object_names or _dedupe_guided_names(registry_order)
+    if not object_names:
+        return None
+
+    primary_target = (
+        active_scope.primary_target
+        if active_scope is not None and active_scope.primary_target in object_names
+        else None
+    )
+    object_name_keys = {name.lower() for name in object_names}
+    if primary_target is None:
+        primary_target = next(
+            (
+                item["object_name"] or object_names[0]
+                for key, item in registry_by_name.items()
+                if key in object_name_keys
+                if item.get("role") in {"body_core", "anchor_core"}
+            ),
+            object_names[0],
+        )
+
+    object_roles: list[SceneScopeObjectRoleContract] = []
+    for object_name in object_names:
+        registry_item = registry_by_name.get(object_name.lower())
+        is_primary = object_name == primary_target
+        if registry_item is None:
+            object_roles.append(
+                SceneScopeObjectRoleContract(
+                    object_name=object_name,
+                    role="scene_member",
+                    is_primary=is_primary,
+                    signals=["active_target_scope"],
+                )
+            )
+            continue
+        guided_role = str(registry_item["role"] or "")
+        role_group = registry_item.get("role_group")
+        signals = ["guided_part_registry", f"guided_role:{guided_role}"]
+        if role_group:
+            signals.append(f"guided_role_group:{role_group}")
+        object_roles.append(
+            SceneScopeObjectRoleContract(
+                object_name=object_name,
+                role=_scene_role_for_guided_registration(
+                    guided_role=guided_role,
+                    role_group=role_group,
+                    is_primary=is_primary,
+                ),
+                is_primary=is_primary,
+                signals=signals,
+            )
+        )
+
+    scope_kind = (
+        active_scope.scope_kind
+        if active_scope is not None
+        else ("single_object" if len(object_names) == 1 else "object_set")
+    )
+    if scope_kind == "single_object" and len(object_names) > 1:
+        scope_kind = "object_set"
+    return SceneAssembledTargetScopeContract(
+        scope_kind=scope_kind,
+        primary_target=primary_target,
+        object_names=object_names,
+        object_count=len(object_names),
+        collection_name=active_scope.collection_name if active_scope is not None else None,
+        object_roles=object_roles,
+    )
+
+
+def resolve_guided_mark_id_map(
+    *,
+    guided_part_registry: Sequence[Mapping[str, Any]] | None,
+    active_target_scope: GuidedTargetScopeContract | Mapping[str, Any] | None = None,
+    prior_mark_id_map: Mapping[str, int] | None = None,
+) -> dict[str, int]:
+    """Return append-only stable Set-of-Mark ids for the active guided object set."""
+
+    scope = build_guided_registry_compare_scope(
+        guided_part_registry=guided_part_registry,
+        active_target_scope=active_target_scope,
+    )
+    if scope is None:
+        return {}
+
+    scoped_names = _dedupe_guided_names(list(scope.object_names or []))
+    scoped_keys = {name.lower(): name for name in scoped_names}
+    stable_map: dict[str, int] = {}
+    used_ids: set[int] = set()
+    for raw_name, raw_id in dict(prior_mark_id_map or {}).items():
+        object_name = scoped_keys.get(str(raw_name or "").strip().lower())
+        if object_name is None or not isinstance(raw_id, int) or isinstance(raw_id, bool) or raw_id <= 0:
+            continue
+        if raw_id in used_ids:
+            continue
+        stable_map[object_name] = raw_id
+        used_ids.add(raw_id)
+
+    next_id = max(used_ids, default=0) + 1
+    for object_name in scoped_names:
+        if object_name in stable_map:
+            continue
+        while next_id in used_ids:
+            next_id += 1
+        stable_map[object_name] = next_id
+        used_ids.add(next_id)
+        next_id += 1
+    return stable_map
 
 
 def _update_guided_flow_role_summary_dict(
@@ -264,7 +488,17 @@ async def register_guided_part_role_async(
         part_registry=updated_registry,
         gate_plan=current.gate_plan,
     )
-    state = replace(current, guided_flow_state=updated_flow_state, guided_part_registry=updated_registry)
+    updated_mark_id_map = resolve_guided_mark_id_map(
+        guided_part_registry=updated_registry,
+        active_target_scope=_active_scope_from_flow_state_dict(updated_flow_state),
+        prior_mark_id_map=current.guided_mark_id_map,
+    )
+    state = replace(
+        current,
+        guided_flow_state=updated_flow_state,
+        guided_part_registry=updated_registry,
+        guided_mark_id_map=updated_mark_id_map or None,
+    )
     await set_session_capability_state_async(ctx, state)
     if apply_visibility is None:
         await apply_visibility_for_session_state(ctx, state)
@@ -326,7 +560,17 @@ def register_guided_part_role(
         part_registry=updated_registry,
         gate_plan=current.gate_plan,
     )
-    state = replace(current, guided_flow_state=updated_flow_state, guided_part_registry=updated_registry)
+    updated_mark_id_map = resolve_guided_mark_id_map(
+        guided_part_registry=updated_registry,
+        active_target_scope=_active_scope_from_flow_state_dict(updated_flow_state),
+        prior_mark_id_map=current.guided_mark_id_map,
+    )
+    state = replace(
+        current,
+        guided_flow_state=updated_flow_state,
+        guided_part_registry=updated_registry,
+        guided_mark_id_map=updated_mark_id_map or None,
+    )
     set_session_capability_state(ctx, state)
     if refresh_visibility is not None:
         refresh_visibility(ctx, state)
@@ -369,7 +613,20 @@ def rename_guided_part_registration(
         if current.guided_flow_state is not None
         else None
     )
-    state = replace(current, guided_flow_state=updated_flow_state, guided_part_registry=updated_registry)
+    updated_mark_id_map = dict(current.guided_mark_id_map or {})
+    if normalized_old_name in updated_mark_id_map:
+        updated_mark_id_map[normalized_new_name] = updated_mark_id_map.pop(normalized_old_name)
+    updated_mark_id_map = resolve_guided_mark_id_map(
+        guided_part_registry=updated_registry,
+        active_target_scope=_active_scope_from_flow_state_dict(updated_flow_state),
+        prior_mark_id_map=updated_mark_id_map,
+    )
+    state = replace(
+        current,
+        guided_flow_state=updated_flow_state,
+        guided_part_registry=updated_registry,
+        guided_mark_id_map=updated_mark_id_map or None,
+    )
     set_session_capability_state(ctx, state)
     return state
 
@@ -410,7 +667,20 @@ async def rename_guided_part_registration_async(
         if current.guided_flow_state is not None
         else None
     )
-    state = replace(current, guided_flow_state=updated_flow_state, guided_part_registry=updated_registry)
+    updated_mark_id_map = dict(current.guided_mark_id_map or {})
+    if normalized_old_name in updated_mark_id_map:
+        updated_mark_id_map[normalized_new_name] = updated_mark_id_map.pop(normalized_old_name)
+    updated_mark_id_map = resolve_guided_mark_id_map(
+        guided_part_registry=updated_registry,
+        active_target_scope=_active_scope_from_flow_state_dict(updated_flow_state),
+        prior_mark_id_map=updated_mark_id_map,
+    )
+    state = replace(
+        current,
+        guided_flow_state=updated_flow_state,
+        guided_part_registry=updated_registry,
+        guided_mark_id_map=updated_mark_id_map or None,
+    )
     await set_session_capability_state_async(ctx, state)
     return state
 
@@ -449,7 +719,17 @@ def remove_guided_part_registrations(
             contract.model_dump(mode="json"),
             part_registry=updated_registry or None,
         )
-    state = replace(current, guided_flow_state=updated_flow_state, guided_part_registry=updated_registry or None)
+    updated_mark_id_map = resolve_guided_mark_id_map(
+        guided_part_registry=updated_registry or None,
+        active_target_scope=_active_scope_from_flow_state_dict(updated_flow_state),
+        prior_mark_id_map=current.guided_mark_id_map,
+    )
+    state = replace(
+        current,
+        guided_flow_state=updated_flow_state,
+        guided_part_registry=updated_registry or None,
+        guided_mark_id_map=updated_mark_id_map or None,
+    )
     set_session_capability_state(ctx, state)
     return state
 
@@ -488,7 +768,17 @@ async def remove_guided_part_registrations_async(
             contract.model_dump(mode="json"),
             part_registry=updated_registry or None,
         )
-    state = replace(current, guided_flow_state=updated_flow_state, guided_part_registry=updated_registry or None)
+    updated_mark_id_map = resolve_guided_mark_id_map(
+        guided_part_registry=updated_registry or None,
+        active_target_scope=_active_scope_from_flow_state_dict(updated_flow_state),
+        prior_mark_id_map=current.guided_mark_id_map,
+    )
+    state = replace(
+        current,
+        guided_flow_state=updated_flow_state,
+        guided_part_registry=updated_registry or None,
+        guided_mark_id_map=updated_mark_id_map or None,
+    )
     await set_session_capability_state_async(ctx, state)
     return state
 

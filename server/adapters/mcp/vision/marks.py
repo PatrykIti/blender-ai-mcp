@@ -78,17 +78,29 @@ def overlay_numbered_marks(
 
 def build_marks_from_object_masks(
     object_mask_paths: dict[str, str],
+    *,
+    mark_id_map: dict[str, int] | None = None,
 ) -> tuple[list[NumberedMark], dict[int, str]]:
     """Compute numbered marks from per-object mask images.
 
     Returns ``(marks, mark_id_to_object)`` where mark ids are 1-based and assigned
-    in sorted object-name order so the numbering is stable across views and
-    iterations. Objects whose mask has no usable foreground are skipped.
+    from ``mark_id_map`` when supplied, otherwise in sorted object-name order.
+    Objects whose mask has no usable foreground are skipped.
     """
 
     marks: list[NumberedMark] = []
     mark_id_to_object: dict[int, str] = {}
-    for mark_id, object_name in enumerate(sorted(object_mask_paths), start=1):
+    if mark_id_map:
+        ordered_pairs = [
+            (mark_id, object_name)
+            for object_name, mark_id in sorted(mark_id_map.items(), key=lambda item: (item[1], item[0]))
+            if object_name in object_mask_paths and isinstance(mark_id, int) and mark_id > 0
+        ]
+    else:
+        ordered_pairs = [
+            (mark_id, object_name) for mark_id, object_name in enumerate(sorted(object_mask_paths), start=1)
+        ]
+    for mark_id, object_name in ordered_pairs:
         centroid = mask_centroid(object_mask_paths[object_name])
         if centroid is None:
             continue
@@ -184,6 +196,7 @@ def build_object_mark_overlay(
     view_name: str | None = None,
     width: int = 1280,
     height: int = 960,
+    mark_id_map: dict[str, int] | None = None,
 ) -> tuple[str | None, dict[int, str]]:
     """Build a numbered-mark overlay of the base capture for the given objects.
 
@@ -201,7 +214,7 @@ def build_object_mark_overlay(
         width=width,
         height=height,
     )
-    marks, mark_id_to_object = build_marks_from_object_masks(object_masks)
+    marks, mark_id_to_object = build_marks_from_object_masks(object_masks, mark_id_map=mark_id_map)
     if not marks:
         return None, {}
     overlay_numbered_marks(base_image_path, marks, output_path)

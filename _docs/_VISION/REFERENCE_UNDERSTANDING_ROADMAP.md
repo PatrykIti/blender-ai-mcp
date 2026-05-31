@@ -163,9 +163,13 @@ guided/reference surfaces:
   `VISION_TRANSMIT_AUX_CHANNELS` can transmit default-off depth/normal/object-ID
   auxiliary images with advisory captions, `VISION_MARK_OVERLAY_ENABLED` can
   append default-off Set-of-Mark overlay captures with typed mark-id maps,
-  fixture-calibrated per-object thresholds remain an open follow-on, silhouette
-  consistency is advisory support evidence, and capability-aware external
-  schemas/payloads avoid leaking raw internal `metadata`
+  per-object IoU thresholds are fixture-calibrated, mark IDs are stable across
+  views/iterations, optional reference-side marks carry grounding provenance,
+  mark-keyed findings produce typed correspondence plus one validity retry,
+  registry-scoped compare precedes name heuristics, Critic/Verify defects round
+  trip through synthesis, silhouette consistency is advisory support evidence,
+  and capability-aware external schemas/payloads avoid leaking raw internal
+  `metadata`
 - `scripts/vision_harness.py` now keeps the default live-backend flow, but also
   exposes an explicit providerless `--fixture-only reference-understanding`
   path for bounded fixture/eval work
@@ -341,13 +345,20 @@ orchestration model.
 Phases 3 and 4 now have the first default-off sidecar linkage on the shipped
 RU path, but they remain typed, bounded, advisory-only, and unavailable by
 default until operators explicitly opt in. The shipped staged compare path now
-also gates packet-local segmentation behind a normalized
-`localized_support_reason` seam, so clean packets do not auto-run the sidecar
-just because it is configured. Phase 5 now also has the first shipped
-default-off compare-time localization seam on that same packet owner path, but
-its literal boxes stay internal and public transport still projects only
-support-safe crops/anchors through `part_segmentation`. Later adapter work
-must still avoid changing the orchestration model or verifier authority.
+gates packet-local localization and segmentation behind a creature-domain
+consumer policy: only bounded appendage packets with truth,
+silhouette/action-hint, or unresolved-defect evidence that they are
+under-grounded may request optional support. Clean appendage packets surface
+`skipped_by_policy`, broad `Body + Head` packets do not trigger by label alone,
+and segmentation runs only when mask support is requested or localization
+returned seed boxes. Phase 5 now also has the first shipped default-off
+compare-time localization seam on that same packet owner path, but its literal
+boxes stay internal and public transport still projects only support-safe
+crops/anchors through `part_segmentation`. The same compare/iterate/router
+surfaces carry bounded `runtime_evidence` so operators can audit configured,
+considered, invoked, skipped, unavailable, or absent support without log
+archaeology. Later adapter work must still avoid changing the orchestration
+model or verifier authority.
 
 ## Low-Poly Creature Consumer
 

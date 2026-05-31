@@ -1,7 +1,7 @@
 # TASK-179: Blender Depth, Normal And Object-ID Auxiliary Passes
 
-**Status:** 🚧 In Progress
-**Progress:** TASK-179-01 addon depth/object-ID/normal render passes shipped via changelogs 386-388. TASK-179-02 now has the object-ID index-map IoU helper, `ISceneTool` pass-method surface, support-evidence projection substrate from changelog 389, and live staged-compare population via an internal `object_id_artifact` sidecar from changelog 390. TASK-179-03 shipped the default-off depth/normal/object-ID auxiliary-channel transmission/caption path via changelog 391. Remaining open: TASK-179-02 fixture-calibrated per-object thresholds/documented closeout.
+**Status:** ✅ Done
+**Progress:** Completed 2026-05-31. TASK-179-01 addon depth/object-ID/normal render passes shipped via changelogs 386-388. TASK-179-02 now has the object-ID index-map IoU helper, `ISceneTool` pass-method surface, support-evidence projection substrate from changelog 389, live staged-compare population via an internal `object_id_artifact` sidecar from changelog 390, and the 2026-05-31 fixture-calibrated per-object IoU threshold closeout. TASK-179-03 shipped the default-off depth/normal/object-ID auxiliary-channel transmission/caption path via changelog 391.
 **Priority:** 🔴 High
 **Category:** Vision / Geometric Evidence (Addon Render)
 **Estimated Effort:** Large
@@ -16,7 +16,7 @@
   adds first-party deterministic Blender render passes that need no external
   model, plus one strictly optional monocular-depth hook for the *reference*
   image that reuses the existing TASK-172 default-off sidecar boundary.
-- `TASK-173` (still ⏳ To Do) targets creature-scope convergence, but even
+- `TASK-173` (🚧 In Progress) targets creature-scope convergence, but even
   there the deterministic evidence path remains single-view 2D silhouette only. Two solids that share a
   silhouette can read as a 3D match because the loop is blind to depth,
   concavity, occlusion, and volume. This family supplies the geometric channels
@@ -198,16 +198,14 @@ After this umbrella lands:
 
 ## Changelog Impact
 
-- completed implementation entries: changelogs 386, 387, 388, 389, 390, and 391
-- add another `_docs/_CHANGELOG/*` entry when the remaining TASK-179-02
-  threshold-calibration closeout lands
+- completed implementation entries: changelogs 386, 387, 388, 389, 390, 391,
+  and 393
 
 ## Status / Board Update
 
-- `_docs/_TASKS/README.md` should track `TASK-179` on the Vision / Hybrid Loop
-  lane (the coordinator owns the board edit; this family does not edit the README)
-- child tasks stay nested under the open umbrella and do not need board rows
-  unless one later becomes a separately promoted follow-on
+- `_docs/_TASKS/README.md` tracks `TASK-179` as a selected completed milestone
+  on the Vision / Hybrid Loop lane
+- child tasks remain nested historical slices and are all closed
 
 ## Validation Commands
 

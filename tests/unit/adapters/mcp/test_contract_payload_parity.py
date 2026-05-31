@@ -770,6 +770,90 @@ def test_reference_stage_and_iterate_contracts_accept_full_budget_control_fields
         assert contract.budget_control.budget_clip_fields == ["max_images", "max_input_chars", "max_output_tokens"]
 
 
+def test_reference_and_router_contracts_accept_runtime_evidence_payloads():
+    runtime_evidence = {
+        "checkpoint_id": "stage_runtime",
+        "packet_ids": ["packet:tail:1"],
+        "capabilities": [
+            {
+                "capability": "classifier",
+                "status": "used",
+                "configured": True,
+                "considered": True,
+                "invoked": True,
+                "notes": ["Classifier projected creature at 0.97."],
+            },
+            {
+                "capability": "vision",
+                "status": "used",
+                "configured": True,
+                "considered": True,
+                "invoked": True,
+                "packet_ids": ["packet:tail:1"],
+            },
+            {
+                "capability": "localization",
+                "status": "skipped_by_policy",
+                "configured": True,
+                "considered": True,
+                "invoked": False,
+                "provider_name": "generic_sidecar",
+                "packet_ids": ["packet:tail:1"],
+            },
+            {
+                "capability": "segmentation",
+                "status": "not_configured",
+                "configured": False,
+                "considered": False,
+                "invoked": False,
+            },
+        ],
+        "notes": ["Optional sidecars remain advisory-only."],
+    }
+    compare = ReferenceCompareStageCheckpointResponseContract(
+        action="compare_stage_checkpoint",
+        goal="low poly squirrel",
+        target_object="Squirrel",
+        target_objects=["Squirrel"],
+        checkpoint_id="stage_runtime",
+        checkpoint_label="stage",
+        preset_profile="rich",
+        preset_names=[],
+        capture_count=0,
+        captures=[],
+        reference_count=1,
+        reference_ids=["ref_1"],
+        reference_labels=["front"],
+        runtime_evidence=runtime_evidence,
+    )
+    iterate = ReferenceIterateStageCheckpointResponseContract(
+        action="iterate_stage_checkpoint",
+        goal="low poly squirrel",
+        target_object="Squirrel",
+        target_objects=["Squirrel"],
+        checkpoint_id="stage_runtime",
+        checkpoint_label="stage",
+        iteration_index=1,
+        loop_disposition="continue_build",
+        continue_recommended=True,
+        prior_checkpoint_id=None,
+        prior_correction_focus=[],
+        correction_focus=[],
+        repeated_correction_focus=[],
+        stagnation_count=0,
+        shape_convergence_disposition="shape_drift_build_hold",
+        compare_result=compare.model_dump(mode="json"),
+        runtime_evidence=runtime_evidence,
+    )
+    router = RouterStatusContract(enabled=True, reference_runtime_evidence=runtime_evidence)
+
+    assert compare.runtime_evidence is not None
+    assert iterate.runtime_evidence is not None
+    assert router.reference_runtime_evidence is not None
+    assert iterate.shape_convergence_disposition == "shape_drift_build_hold"
+    assert router.reference_runtime_evidence.capabilities[2].status == "skipped_by_policy"
+
+
 def test_router_goal_contract_omits_optional_guided_flow_state_cleanly():
     contract = RouterGoalResponseContract(
         status="ready",

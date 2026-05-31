@@ -74,6 +74,8 @@ def format_image_caption(image: VisionImageInput) -> str:
     view = image.view_kind or _derive_caption_view(image.label)
     if view is not None:
         parts.append(f"view={view}")
+        if image.projection is not None:
+            parts.append(f"projection={image.projection}")
         auxiliary_channel = _AUXILIARY_CAPTION_CHANNELS.get(view)
         if auxiliary_channel is not None:
             parts.append(f"channel={auxiliary_channel}")
@@ -103,27 +105,48 @@ def _mark_overlay_lines(request: VisionRequest) -> list[str]:
     """Return symbolic Set-of-Mark legend lines from request metadata."""
 
     overlays = request.metadata.get("mark_overlays") if isinstance(request.metadata, dict) else None
-    if not isinstance(overlays, list):
-        return []
     lines: list[str] = []
-    for overlay in overlays:
-        if not isinstance(overlay, dict):
-            continue
-        label = str(overlay.get("label") or "overlay").strip()
-        marks = overlay.get("marks")
-        if not isinstance(marks, list):
-            continue
-        for mark in marks:
+    if isinstance(overlays, list):
+        for overlay in overlays:
+            if not isinstance(overlay, dict):
+                continue
+            label = str(overlay.get("label") or "overlay").strip()
+            marks = overlay.get("marks")
+            if not isinstance(marks, list):
+                continue
+            for mark in marks:
+                if not isinstance(mark, dict):
+                    continue
+                mark_id = mark.get("mark_id")
+                object_name = str(mark.get("object_name") or "").strip()
+                status = str(mark.get("status") or "placed").strip()
+                source = str(mark.get("source") or "deterministic_projection").strip()
+                image_side = str(mark.get("image_side") or "render").strip()
+                if not isinstance(mark_id, int) or isinstance(mark_id, bool) or not object_name:
+                    continue
+                if status != "placed":
+                    continue
+                lines.append(f"- {label}: mark {mark_id} -> {object_name} ({image_side}, {source})")
+    reference_marks = request.metadata.get("reference_marks") if isinstance(request.metadata, dict) else None
+    if isinstance(reference_marks, list):
+        for mark in reference_marks:
             if not isinstance(mark, dict):
                 continue
             mark_id = mark.get("mark_id")
             object_name = str(mark.get("object_name") or "").strip()
             status = str(mark.get("status") or "placed").strip()
+            source = str(mark.get("source") or "grounded_sam_sidecar").strip()
             if not isinstance(mark_id, int) or isinstance(mark_id, bool) or not object_name:
                 continue
             if status != "placed":
                 continue
-            lines.append(f"- {label}: mark {mark_id} -> {object_name} ({status})")
+            lines.append(f"- reference: mark {mark_id} -> {object_name} (reference, {source})")
+    if not lines:
+        mark_id_map = request.metadata.get("packet_mark_id_map") if isinstance(request.metadata, dict) else None
+        if isinstance(mark_id_map, dict):
+            for object_name, mark_id in sorted(mark_id_map.items(), key=lambda item: (item[1], item[0])):
+                if isinstance(mark_id, int) and not isinstance(mark_id, bool) and str(object_name).strip():
+                    lines.append(f"- packet_map: mark {mark_id} -> {object_name} (render, deterministic_projection)")
     return lines
 
 
@@ -242,6 +265,7 @@ _FINDINGS_SCHEMA: dict[str, object] = {
             "magnitude_ratio": {"type": ["number", "null"]},
             "reference_id": {"type": ["string", "null"]},
             "confidence": {"type": ["number", "null"]},
+            "mark_id": {"type": ["integer", "null"]},
         },
         "required": [
             "finding",
@@ -252,6 +276,7 @@ _FINDINGS_SCHEMA: dict[str, object] = {
             "magnitude_ratio",
             "reference_id",
             "confidence",
+            "mark_id",
         ],
     },
 }
@@ -262,6 +287,7 @@ _GEMINI_COMPARE_EXPECTED_KEYS = (
     "proportion_mismatches",
     "correction_focus",
     "next_corrections",
+    "findings",
 )
 _REFERENCE_UNDERSTANDING_EXPECTED_KEYS = (
     "subject",
@@ -662,13 +688,15 @@ def build_vision_system_prompt(
             "- shape_mismatches: string[]\n"
             "- proportion_mismatches: string[]\n"
             "- correction_focus: string[]\n"
-            "- next_corrections: string[]\n\n"
+            "- next_corrections: string[]\n"
+            "- findings: structured finding objects; set mark_id to a listed mark id or null\n\n"
             "Do not return visible_changes, likely_issues, recommended_checks, confidence, or captures_used.\n"
             "Do not echo the input payload. Do not wrap the result in markdown.\n"
             "Use shape_mismatches only for visible form/silhouette problems.\n"
             "Use proportion_mismatches only for visible size/ratio problems.\n"
             "Use correction_focus for the 1-3 highest-priority mismatch targets to fix next.\n"
             "Use next_corrections for 1-3 bounded next-step fixes that stay tightly aligned with those mismatches.\n"
+            "When Set-of-Mark overlays are provided, key each shape/proportion finding to mark_id and do not invent marks.\n"
             "If the signal is weak, keep the arrays conservative but still return the required JSON shape.\n"
         )
 
@@ -884,7 +912,16 @@ def build_vision_payload_text(
         if capture_labels:
             parts.extend(["PACKET_CAPTURE_LABELS:", *[f"- {item}" for item in capture_labels]])
         if mark_overlay_lines:
-            parts.extend(["MARK_OVERLAYS:", *mark_overlay_lines])
+            parts.extend(
+                [
+                    "MARK_OVERLAYS:",
+                    *mark_overlay_lines,
+                    "MARK_RULES:",
+                    "- Key each shape/proportion finding to mark_id when the relevant object has a mark.",
+                    "- Use only listed mark ids; do not invent marks.",
+                    "- Magnitudes are proportional ratios versus a named anchor, never absolute measurements.",
+                ]
+            )
         if support_evidence_summaries:
             parts.extend(["SUPPORT_EVIDENCE:", *[f"- {item}" for item in support_evidence_summaries]])
         relation_triplets = _relation_triplet_lines_from_truth(request.truth_summary)
@@ -1569,6 +1606,7 @@ def build_vision_response_json_schema(
                 "proportion_mismatches": {"type": "array", "items": {"type": "string"}},
                 "correction_focus": {"type": "array", "items": {"type": "string"}},
                 "next_corrections": {"type": "array", "items": {"type": "string"}},
+                "findings": _FINDINGS_SCHEMA,
             },
             "required": list(_GEMINI_COMPARE_EXPECTED_KEYS),
         }

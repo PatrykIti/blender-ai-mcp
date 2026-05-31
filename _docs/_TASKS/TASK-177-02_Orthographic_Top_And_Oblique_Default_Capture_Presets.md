@@ -1,7 +1,7 @@
 # TASK-177-02: Orthographic Top And Oblique Default Capture Presets
 
 **Parent:** [TASK-177](./TASK-177_Reachable_Rich_Multi_View_Capture_And_Top_View_Default.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟡 Medium
 **Follow-on After:** [TASK-177-01](./TASK-177-01_Decouple_Capture_From_Transmission_And_Budget_Aware_Selection.md)
 **Objective:** Make an orthographic top/overhead view a first-class, always-present member of the default capture bundle, add an oblique 3/4 view when the budget allows, cap the transmitted set at roughly 6-8 views, and record per-view projection / view-kind metadata so the downstream VLM knows what each view actually is without parsing coordinates.
@@ -143,6 +143,11 @@ DEFAULT_OBLIQUE_PRESET = CapturePresetSpec(
 - board tracking remains on umbrella `TASK-177`
 - no separate promoted board-row change is expected for this subtask unless it
   later becomes a standalone follow-on
+- 2026-05-31: completed. Compact staged capture now includes `target_top` as an
+  orthographic top view and `target_oblique_left` as a perspective oblique view;
+  rich presets carry the same symbolic `view_kind` / `projection` metadata.
+  Focus/top/oblique overlays remain compatible with the default-off Set-of-Mark
+  path.
 
 ## Validation Commands
 
@@ -150,6 +155,9 @@ DEFAULT_OBLIQUE_PRESET = CapturePresetSpec(
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_capture_runtime.py tests/unit/adapters/mcp/test_vision_capture_bundle.py -q`
 - `PYTHONPATH=. poetry run pytest ./tests/unit`
 - `poetry run python scripts/run_e2e_tests.py`
+- 2026-05-31 focused validation:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_capture_runtime.py tests/unit/adapters/mcp/test_vision_capture_bundle.py tests/unit/adapters/mcp/test_vision_policy.py -q` -> 37 passed
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_capture_runtime.py tests/unit/adapters/mcp/test_vision_capture_bundle.py tests/unit/adapters/mcp/test_vision_silhouette.py tests/unit/adapters/mcp/test_reference_compare_packets.py tests/unit/adapters/mcp/test_guided_flow_state_contract.py tests/unit/adapters/mcp/test_reference_images.py::test_reference_orchestrator_feedback_projects_runtime_policy_block tests/unit/adapters/mcp/test_reference_images.py::test_reference_orchestrator_feedback_tags_authoritative_next_action_provenance tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_vision_prompting.py -q` -> 180 passed
 
 ## Validation Category
 

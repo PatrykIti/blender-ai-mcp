@@ -248,6 +248,10 @@ compare support only.
 When this sidecar is enabled, staged compare still runs it only for packets
 that already carry a bounded `localized_support_reason`, and public transport
 still projects only support-safe crops/anchors through `part_segmentation`.
+When Set-of-Mark overlays are also enabled, bounded localization candidates can
+add reference-side mark provenance using the same stable packet `mark_id_map`;
+the reference marks remain advisory and degrade to render-only marks on timeout,
+empty results, or disabled sidecar config.
 If `VISION_LOCALIZATION_ENABLED=true` is set before
 `VISION_LOCALIZATION_ENDPOINT`, the server keeps running and reports the
 localization capability as unavailable with prerequisite diagnostics.

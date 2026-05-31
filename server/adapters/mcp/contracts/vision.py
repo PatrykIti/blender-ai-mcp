@@ -52,6 +52,14 @@ class VisionOverlayMarkContract(MCPContract):
         default="placed",
         description="Whether the mark was placed on the overlay or the object could not be marked.",
     )
+    source: Literal["deterministic_projection", "grounded_sam_sidecar"] = Field(
+        default="deterministic_projection",
+        description="Whether this mark came from deterministic render projection or optional reference grounding.",
+    )
+    image_side: Literal["render", "reference"] = Field(
+        default="render",
+        description="Which side of the compare pair the mark labels.",
+    )
 
 
 class VisionCaptureImageContract(MCPContract):
@@ -62,7 +70,25 @@ class VisionCaptureImageContract(MCPContract):
     host_visible_path: str | None = None
     preset_name: str | None = None
     media_type: str = "image/png"
-    view_kind: Literal["wide", "focus", "overlay", "reference", "grid", "depth", "normal", "object_id"] = "wide"
+    view_kind: Literal[
+        "wide",
+        "focus",
+        "top",
+        "oblique",
+        "overlay",
+        "reference",
+        "grid",
+        "depth",
+        "normal",
+        "object_id",
+    ] = "wide"
+    projection: Literal["orthographic", "perspective"] | None = Field(
+        default=None,
+        description=(
+            "Symbolic camera projection hint for the capture. Used to distinguish "
+            "orthographic top/standard views from perspective oblique/detail views."
+        ),
+    )
     capture_ok: bool = True
     """Advisory reliability flag: ``False`` when a camera/view op for this preset
     returned a known failure marker, so the framed view may not match its label.

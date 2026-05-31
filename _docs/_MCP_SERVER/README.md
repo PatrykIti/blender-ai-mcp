@@ -1310,15 +1310,33 @@ IoU from an internal `object_id_artifact` sidecar without transmitting that
 sidecar as a default VLM image, can transmit default-off depth/normal/object-ID
 auxiliary images with advisory captions through `VISION_TRANSMIT_AUX_CHANNELS`,
 can append default-off supplemental `view_kind="overlay"` Set-of-Mark captures
-with typed mark-id maps through `VISION_MARK_OVERLAY_ENABLED`,
-projects silhouette consistency as advisory support evidence, and surfaces
-provider token usage / finish reason in the vision capability summary.
+with typed mark-id maps through `VISION_MARK_OVERLAY_ENABLED`, keeps those mark
+IDs stable through the guided registry/session map, can project optional
+reference-side mark provenance from the default-off localization sidecar, parses
+mark-keyed findings into typed object correspondence with one bounded validity
+retry, plans guided compare scope from the registered part graph before legacy
+name heuristics, carries packet-scoped Critic `open_defects` plus same-packet
+Verify `verify_status`, projects silhouette consistency as advisory support
+evidence, and surfaces provider token usage / finish reason in the vision
+capability summary.
 External-provider payloads use curated goal/image/truth scaffolding instead of
 raw internal `metadata`.
 Ranking-pass downgrades to `low_information` or `blocked` remain diagnostic:
 they keep packet uncertainty visible through `compare_diagnostics` and compact
 orchestrator notes, but they do not promote extraction-only focus into
 actionable `correction_candidates`.
+
+For creature sessions, `reference_iterate_stage_checkpoint(...)` now also
+returns `shape_convergence_disposition` so compact clients can tell
+all-roles-present shape drift from an exhausted build lane. Compare and iterate
+responses, `reference_orchestrator_feedback`, and `router_get_status(...)` also
+surface bounded `runtime_evidence` for classifier, main vision, localization,
+and segmentation participation. Optional localization/segmentation remain
+default-off and advisory-only; compare-time activation is now restricted to
+bounded creature appendage packets whose truth, silhouette/action-hint, or
+unresolved-defect evidence says the packet is under-grounded. Clean appendage
+packets report `skipped_by_policy`, and broad `Body + Head` packets do not
+trigger optional grounding by label alone.
 
 The same reference-guided family now also exposes one compact
 `reference_orchestrator_feedback` read model on `reference_images(...)`,

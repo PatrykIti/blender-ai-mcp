@@ -209,11 +209,20 @@ def test_select_reference_records_can_fall_back_to_generic_view_match():
 
 
 def _cap(preset: str) -> VisionCaptureImageContract:
+    view_kind = "top" if preset == "target_top" else "oblique" if preset.startswith("target_oblique") else "focus"
+    projection = (
+        "orthographic"
+        if preset in {"target_front", "target_side", "target_top"}
+        else "perspective"
+        if preset.startswith("target_oblique")
+        else None
+    )
     return VisionCaptureImageContract(
         label=f"{preset}_after",
         image_path=f"/tmp/{preset}.png",
         preset_name=preset,
-        view_kind="focus",
+        view_kind=view_kind,
+        projection=projection,
     )
 
 
@@ -255,6 +264,20 @@ def test_select_capture_views_keeps_orthographic_triad_first():
     assert names == ["target_front", "target_side", "target_top"]
 
 
+def test_select_capture_views_keeps_oblique_when_budget_allows():
+    captures = [
+        _cap("context_wide"),
+        _cap("target_front"),
+        _cap("target_side"),
+        _cap("target_top"),
+        _cap("target_oblique_left"),
+        _cap("target_detail"),
+    ]
+    chosen = select_capture_views_within_budget(captures, max_views=4)
+    names = [c.preset_name for c in chosen]
+    assert names == ["target_front", "target_side", "target_top", "target_oblique_left"]
+
+
 def test_select_capture_views_noop_when_within_budget():
     captures = [_cap("target_front"), _cap("target_side")]
     assert select_capture_views_within_budget(captures, max_views=5) == captures
@@ -262,7 +285,13 @@ def test_select_capture_views_noop_when_within_budget():
 
 
 def test_stage_request_downselects_to_budget_reserving_references():
-    captures = [_cap("context_wide"), _cap("target_front"), _cap("target_side"), _cap("target_top")]
+    captures = [
+        _cap("context_wide"),
+        _cap("target_front"),
+        _cap("target_side"),
+        _cap("target_top"),
+        _cap("target_oblique_left"),
+    ]
     references = [
         VisionCaptureImageContract(label="ref", image_path="/tmp/ref.png", view_kind="reference"),
     ]
@@ -278,6 +307,21 @@ def test_stage_request_downselects_to_budget_reserving_references():
     assert roles.count("reference") == 1
     after_labels = [img.label for img in request.images if img.role == "after"]
     assert after_labels == ["target_front_after", "target_side_after"]
+
+
+def test_stage_request_preserves_projection_metadata():
+    captures = [_cap("target_top"), _cap("target_oblique_left")]
+    request = build_vision_request_from_stage_captures(captures, goal="g")
+    projections = {image.label: image.projection for image in request.images}
+    kinds = {image.label: image.view_kind for image in request.images}
+    assert projections == {
+        "target_top_after": "orthographic",
+        "target_oblique_left_after": "perspective",
+    }
+    assert kinds == {
+        "target_top_after": "top",
+        "target_oblique_left_after": "oblique",
+    }
 
 
 def test_stage_request_without_budget_is_unchanged():
@@ -387,8 +431,20 @@ def test_stage_request_records_overlay_mark_metadata():
             "label": "target_front_after_overlay",
             "preset_name": "target_front",
             "marks": [
-                {"mark_id": 1, "object_name": "Body", "status": "placed"},
-                {"mark_id": 2, "object_name": "Head", "status": "placed"},
+                {
+                    "mark_id": 1,
+                    "object_name": "Body",
+                    "status": "placed",
+                    "source": "deterministic_projection",
+                    "image_side": "render",
+                },
+                {
+                    "mark_id": 2,
+                    "object_name": "Head",
+                    "status": "placed",
+                    "source": "deterministic_projection",
+                    "image_side": "render",
+                },
             ],
         }
     ]

@@ -30,7 +30,6 @@ def infer_capture_preset_profile(preset_names: Sequence[str]) -> CapturePresetPr
 
     rich_only_names = {
         "target_focus",
-        "target_oblique_left",
         "target_oblique_right",
         "target_detail",
     }

@@ -1,0 +1,34 @@
+{
+  "scenario_id": "per_object_iou_threshold_calibration",
+  "description": "Fixture-calibrated severity bands for capture-side per-object object-ID IoU evidence.",
+  "thresholds": {
+    "high_mismatch_below": 0.45,
+    "medium_mismatch_below": 0.7
+  },
+  "cases": [
+    {
+      "name": "nearly_identical_part",
+      "mask_iou": 0.98,
+      "expected_severity": "low"
+    },
+    {
+      "name": "visible_part_shape_drift",
+      "mask_iou": 0.62,
+      "expected_severity": "medium"
+    },
+    {
+      "name": "wrong_or_missing_part_profile",
+      "mask_iou": 0.31,
+      "expected_severity": "high"
+    },
+    {
+      "name": "unavailable_object_id_mask",
+      "mask_iou": null,
+      "expected_severity": "high"
+    }
+  ],
+  "notes": [
+    "Thresholds are intentionally stricter than whole-frame silhouette IoU because a part-local miss has less averaging from unrelated geometry.",
+    "These bands are advisory evidence only; deterministic scene inspection and gate verification remain authoritative."
+  ]
+}

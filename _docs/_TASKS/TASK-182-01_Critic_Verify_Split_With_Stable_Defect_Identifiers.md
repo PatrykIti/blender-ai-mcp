@@ -1,8 +1,8 @@
 # TASK-182-01: Critic/Verify Split With Stable Defect Identifiers
 
 **Parent:** [TASK-182](./TASK-182_Critic_Verify_Compare_Loop_And_Deterministic_Exit_Criteria.md)
-**Status:** 🚧 In Progress
-**Progress:** Stable defect-ID substrate shipped via changelog 373, but the audit confirmed the full Critic/Verify split is not complete. Remaining work: explicit `open_defects` / `verify_status` round-trip, rerendering the same packet views during Verify, and deterministic verifier checks before a defect is treated as closed.
+**Status:** ✅ Done
+**Progress:** Stable defect-ID substrate shipped via changelog 373. The 2026-05-31 closeout adds explicit packet/result `open_defects` and `verify_status` round-trip, derives packet-scoped defect IDs from packet identity plus defect content, carries prior open defects through iterate session state, and treats current deterministic staged recapture of the same packet labels as the bounded Verify observation while keeping deterministic gate status authoritative.
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-166-02](./TASK-166-02_Truth_First_Two_Pass_Compare_Execution.md), [TASK-178-01](./TASK-178-01_Structured_Vision_Finding_Contract_Model.md)
 **Objective:** Split compare into a Critic pass that emits defects with stable IDs and a Verify pass that re-renders the same views and checks off each open defect, so a scope gate only advances when its scope defects are verified-resolved or explicitly downgraded — vision stays advisory throughout.
@@ -150,6 +150,12 @@ def can_advance_scope(scope_label, statuses) -> bool:
 - board tracking remains on umbrella `TASK-182`
 - no separate promoted board-row change is expected for this subtask unless it
   later becomes a standalone follow-on
+- 2026-05-31: completed. Packet execution now extracts stable advisory Critic
+  defects, verifies prior open defects as `resolved` / `unresolved` /
+  `downgraded` on the next same-packet staged compare, preserves those fields
+  through extraction/ranking merge and synthesis, and surfaces unresolved defect
+  IDs through compact orchestrator feedback. A vision `resolved` status remains
+  necessary context only; deterministic gates still own final completion.
 
 ## Validation Commands
 
@@ -158,6 +164,9 @@ def can_advance_scope(scope_label, statuses) -> bool:
 - `PYTHONPATH=. poetry run pytest tests/e2e/integration/test_guided_inspect_validate_handoff.py -q`
 - `poetry run pytest ./tests/unit`
 - `poetry run python scripts/run_e2e_tests.py`
+- 2026-05-31 focused validation:
+  `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_compare_packets.py::test_packet_defect_tracking_assigns_packet_scoped_ids_and_verifies_prior_defects tests/unit/adapters/mcp/test_reference_compare_packets.py::test_synthesize_packet_vision_result_preserves_truncation_accounting tests/unit/adapters/mcp/test_reference_compare_packets.py::test_merge_packet_phase_results_does_not_keep_extraction_focus_after_ranking_downgrade tests/unit/adapters/mcp/test_reference_images.py::test_reference_orchestrator_feedback_projects_compare_diagnostics_without_ru_summary -q` -> passed in focused TASK-182 lanes
+  targeted MCP lane ending in 180 passed
 
 ## Validation Category
 

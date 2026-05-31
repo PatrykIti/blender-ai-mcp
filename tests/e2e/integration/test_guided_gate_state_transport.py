@@ -30,6 +30,7 @@ _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
     from pathlib import Path
     from types import SimpleNamespace
     from server.adapters.mcp.context_utils import ctx_session_id, ctx_transport_type
+    from server.adapters.mcp.contracts.reference import ReferenceActionHintContract
     from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
     from server.adapters.mcp.sampling.result_types import (
         AssistantBudgetContract,
@@ -215,6 +216,7 @@ _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
                         }
                     ],
                 }
+            segmentation_sidecar_enabled = os.environ.get("ENABLE_COMPARE_SEGMENTATION_SIDECAR") == "true"
             return {
                 "scope": {
                     "scope_kind": "object_set" if len(names) > 1 else "single_object",
@@ -227,7 +229,7 @@ _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
                     "pairing_strategy": "guided_spatial_pairs",
                     "pair_count": 1,
                     "evaluated_pairs": 1,
-                    "failing_pairs": 1,
+                    "failing_pairs": 0 if segmentation_sidecar_enabled else 1,
                     "attachment_pairs": 1,
                     "support_pairs": 0,
                     "symmetry_pairs": 0,
@@ -239,10 +241,10 @@ _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
                         "to_object": "Squirrel_Body",
                         "pair_source": "required_creature_seam",
                         "relation_kinds": ["contact", "gap", "alignment", "attachment"],
-                        "relation_verdicts": ["floating_gap"],
-                        "gap_relation": "separated",
-                        "gap_distance": 0.35,
-                        "contact_passed": False,
+                        "relation_verdicts": ["contact"] if segmentation_sidecar_enabled else ["floating_gap"],
+                        "gap_relation": "contact" if segmentation_sidecar_enabled else "separated",
+                        "gap_distance": 0.0 if segmentation_sidecar_enabled else 0.35,
+                        "contact_passed": segmentation_sidecar_enabled,
                         "alignment_status": "aligned",
                         "aligned_axes": ["X", "Y", "Z"],
                         "measurement_basis": "bounding_box",
@@ -253,7 +255,9 @@ _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
                             "anchor_object": "Squirrel_Body",
                             "required_seam": True,
                             "preferred_macro": "macro_attach_part_to_surface",
-                            "attachment_verdict": "floating_gap",
+                            "attachment_verdict": "seated_contact"
+                            if segmentation_sidecar_enabled
+                            else "floating_gap",
                         },
                     }
                 ],
@@ -271,6 +275,19 @@ _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
                     "units": "blender_units",
                 }
             if {from_object, to_object} == {"Wheel_L", "Wheel_R"}:
+                return {
+                    "from_object": from_object,
+                    "to_object": to_object,
+                    "gap": 0.0,
+                    "axis_gap": {"x": 0.0, "y": 0.0, "z": 0.0},
+                    "relation": "contact",
+                    "tolerance": tolerance,
+                    "units": "blender_units",
+                }
+            if (
+                os.environ.get("ENABLE_COMPARE_SEGMENTATION_SIDECAR") == "true"
+                and {from_object, to_object} == {"Squirrel_Tail", "Squirrel_Body"}
+            ):
                 return {
                     "from_object": from_object,
                     "to_object": to_object,
@@ -338,6 +355,18 @@ _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
                     "actual": {"gap": 0.2, "relation": "separated"},
                 }
             if {from_object, to_object} == {"Wheel_L", "Wheel_R"}:
+                return {
+                    "assertion": "scene_assert_contact",
+                    "passed": True,
+                    "subject": from_object,
+                    "target": to_object,
+                    "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                    "actual": {"gap": 0.0, "relation": "contact"},
+                }
+            if (
+                os.environ.get("ENABLE_COMPARE_SEGMENTATION_SIDECAR") == "true"
+                and {from_object, to_object} == {"Squirrel_Tail", "Squirrel_Body"}
+            ):
                 return {
                     "assertion": "scene_assert_contact",
                     "passed": True,
@@ -431,6 +460,19 @@ _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
                 correction_focus=["Tail/body seam"],
             ),
         )
+
+
+    def _build_action_hints_from_silhouette(silhouette_analysis, target_object=None):
+        if os.environ.get("ENABLE_COMPARE_SEGMENTATION_SIDECAR") != "true":
+            return []
+        return [
+            ReferenceActionHintContract(
+                hint_id="transport_tail_mask_needed",
+                hint_type="widen_upper_profile",
+                summary="Action hint: Tail profile needs a packet-local mask before compare.",
+                target_object=target_object,
+            )
+        ]
 
 
     class ReferenceUnderstandingBackend:
@@ -736,6 +778,7 @@ _PATCHED_GATE_STATE_SERVER = textwrap.dedent(
     reference_area.run_vision_assist = _fake_run_vision_assist
     reference_area.get_vision_backend_resolver = lambda: Resolver()
     reference_area.capture_stage_images = _capture_stage_images
+    compare_packets_area.build_action_hints_from_silhouette = _build_action_hints_from_silhouette
     di.get_scene_handler = lambda: SceneHandler()
     router_helper.is_router_enabled = lambda: False
     """
@@ -900,6 +943,9 @@ async def _exercise_enabled_compare_segmentation_sidecar_transport(client, refer
     assert part_segmentation["advisory_only"] is True
     assert part_segmentation["parts"][0]["part_label"] == "tail_profile"
     assert part_segmentation["parts"][0]["confidence"] == 0.91
+    runtime_by_capability = {item["capability"]: item for item in compare_result["runtime_evidence"]["capabilities"]}
+    assert runtime_by_capability["segmentation"]["status"] == "used"
+    assert runtime_by_capability["segmentation"]["invoked"] is True
     support_evidence = [
         item
         for packet in compare_result["compare_diagnostics"]["packets"]
@@ -955,6 +1001,9 @@ async def _exercise_enabled_compare_localization_transport(client, reference_pat
     assert part_segmentation["parts"][0]["crop_path"] == "/tmp/localization_tail_crop.png"
     assert part_segmentation["parts"][0]["landmarks"][0]["landmark_id"] == "box_center"
     assert compare_result["compare_diagnostics"]["packets"][0]["localized_support_reason"] == "attachment_gap"
+    runtime_by_capability = {item["capability"]: item for item in compare_result["runtime_evidence"]["capabilities"]}
+    assert runtime_by_capability["localization"]["status"] == "used"
+    assert runtime_by_capability["localization"]["invoked"] is True
     assert compare_result["reference_orchestrator_feedback"] is not None
     assert any(
         "localized_support_reason=attachment_gap" in item
@@ -969,6 +1018,12 @@ async def _exercise_enabled_compare_localization_transport(client, reference_pat
     assert support_evidence
     assert support_evidence[0]["part_label"] == "tail_mass"
     assert support_evidence[0]["confidence"] == 0.88
+
+    status_result = result_payload(await client.call_tool("router_get_status", {}))
+    status_runtime_by_capability = {
+        item["capability"]: item for item in status_result["reference_runtime_evidence"]["capabilities"]
+    }
+    assert status_runtime_by_capability["localization"]["status"] == "used"
 
 
 async def _exercise_reference_understanding_refresh_replaces_gate_slice(

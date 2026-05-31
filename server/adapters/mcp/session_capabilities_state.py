@@ -14,6 +14,7 @@ from fastmcp import Context
 from server.adapters.mcp.contracts.guided_flow import GuidedFlowStateContract, GuidedFlowStepLiteral
 from server.adapters.mcp.contracts.quality_gates import GatePlanContract
 from server.adapters.mcp.contracts.reference import (
+    ReferenceRuntimeEvidenceContract,
     ReferenceStrategyStateContract,
     ReferenceUnderstandingSummaryContract,
 )
@@ -48,8 +49,10 @@ SESSION_GATE_PLAN_KEY = "gate_plan"
 SESSION_REFERENCE_UNDERSTANDING_SUMMARY_KEY = "reference_understanding_summary"
 SESSION_REFERENCE_UNDERSTANDING_GATE_IDS_KEY = "reference_understanding_gate_ids"
 SESSION_REFERENCE_STRATEGY_STATE_KEY = "reference_strategy_state"
+SESSION_REFERENCE_RUNTIME_EVIDENCE_KEY = "reference_runtime_evidence"
 SESSION_PENDING_REFERENCE_IMAGES_KEY = "pending_reference_images"
 SESSION_GUIDED_PART_REGISTRY_KEY = "guided_part_registry"
+SESSION_GUIDED_MARK_ID_MAP_KEY = "guided_mark_id_map"
 
 _GENERIC_PENDING_GOAL = "__pending_goal__"
 
@@ -92,7 +95,9 @@ class SessionCapabilityState:
     reference_understanding_summary: dict[str, Any] | None = None
     reference_understanding_gate_ids: list[str] | None = None
     reference_strategy_state: dict[str, Any] | None = None
+    reference_runtime_evidence: dict[str, Any] | None = None
     guided_part_registry: list[dict[str, Any]] | None = None
+    guided_mark_id_map: dict[str, int] | None = None
     pending_reference_images: list[dict[str, Any]] | None = None
 
 
@@ -171,6 +176,15 @@ def _normalize_reference_strategy_state(value: Any) -> dict[str, Any] | None:
         return None
     try:
         return ReferenceStrategyStateContract.model_validate(value).model_dump(mode="json", exclude_none=True)
+    except Exception:
+        return None
+
+
+def _normalize_reference_runtime_evidence(value: Any) -> dict[str, Any] | None:
+    if value is None:
+        return None
+    try:
+        return ReferenceRuntimeEvidenceContract.model_validate(value).model_dump(mode="json", exclude_none=True)
     except Exception:
         return None
 
@@ -305,6 +319,20 @@ def _normalize_guided_part_registry(value: Any) -> list[dict[str, Any]] | None:
     return items or None
 
 
+def _normalize_guided_mark_id_map(value: Any) -> dict[str, int] | None:
+    if value is None:
+        return None
+    if not isinstance(value, dict):
+        return None
+    normalized: dict[str, int] = {}
+    for raw_name, raw_id in value.items():
+        object_name = str(raw_name or "").strip()
+        if not object_name or not isinstance(raw_id, int) or isinstance(raw_id, bool) or raw_id <= 0:
+            continue
+        normalized[object_name] = raw_id
+    return normalized or None
+
+
 def get_session_capability_state(ctx: Context) -> SessionCapabilityState:
     """Read the canonical session capability state from Context storage."""
 
@@ -342,7 +370,11 @@ def get_session_capability_state(ctx: Context) -> SessionCapabilityState:
         reference_strategy_state=_normalize_reference_strategy_state(
             get_session_value(ctx, SESSION_REFERENCE_STRATEGY_STATE_KEY)
         ),
+        reference_runtime_evidence=_normalize_reference_runtime_evidence(
+            get_session_value(ctx, SESSION_REFERENCE_RUNTIME_EVIDENCE_KEY)
+        ),
         guided_part_registry=_normalize_guided_part_registry(get_session_value(ctx, SESSION_GUIDED_PART_REGISTRY_KEY)),
+        guided_mark_id_map=_normalize_guided_mark_id_map(get_session_value(ctx, SESSION_GUIDED_MARK_ID_MAP_KEY)),
         pending_reference_images=get_session_value(ctx, SESSION_PENDING_REFERENCE_IMAGES_KEY),
     )
 
@@ -386,8 +418,14 @@ async def get_session_capability_state_async(ctx: Context) -> SessionCapabilityS
         reference_strategy_state=_normalize_reference_strategy_state(
             await get_session_value_async(ctx, SESSION_REFERENCE_STRATEGY_STATE_KEY)
         ),
+        reference_runtime_evidence=_normalize_reference_runtime_evidence(
+            await get_session_value_async(ctx, SESSION_REFERENCE_RUNTIME_EVIDENCE_KEY)
+        ),
         guided_part_registry=_normalize_guided_part_registry(
             await get_session_value_async(ctx, SESSION_GUIDED_PART_REGISTRY_KEY)
+        ),
+        guided_mark_id_map=_normalize_guided_mark_id_map(
+            await get_session_value_async(ctx, SESSION_GUIDED_MARK_ID_MAP_KEY)
         ),
         pending_reference_images=await get_session_value_async(ctx, SESSION_PENDING_REFERENCE_IMAGES_KEY),
     )
@@ -419,7 +457,9 @@ def set_session_capability_state(ctx: Context, state: SessionCapabilityState) ->
     set_session_value(ctx, SESSION_REFERENCE_UNDERSTANDING_SUMMARY_KEY, state.reference_understanding_summary)
     set_session_value(ctx, SESSION_REFERENCE_UNDERSTANDING_GATE_IDS_KEY, state.reference_understanding_gate_ids)
     set_session_value(ctx, SESSION_REFERENCE_STRATEGY_STATE_KEY, state.reference_strategy_state)
+    set_session_value(ctx, SESSION_REFERENCE_RUNTIME_EVIDENCE_KEY, state.reference_runtime_evidence)
     set_session_value(ctx, SESSION_GUIDED_PART_REGISTRY_KEY, state.guided_part_registry)
+    set_session_value(ctx, SESSION_GUIDED_MARK_ID_MAP_KEY, state.guided_mark_id_map)
     set_session_value(ctx, SESSION_PENDING_REFERENCE_IMAGES_KEY, state.pending_reference_images)
 
 
@@ -453,5 +493,7 @@ async def set_session_capability_state_async(ctx: Context, state: SessionCapabil
         ctx, SESSION_REFERENCE_UNDERSTANDING_GATE_IDS_KEY, state.reference_understanding_gate_ids
     )
     await set_session_value_async(ctx, SESSION_REFERENCE_STRATEGY_STATE_KEY, state.reference_strategy_state)
+    await set_session_value_async(ctx, SESSION_REFERENCE_RUNTIME_EVIDENCE_KEY, state.reference_runtime_evidence)
     await set_session_value_async(ctx, SESSION_GUIDED_PART_REGISTRY_KEY, state.guided_part_registry)
+    await set_session_value_async(ctx, SESSION_GUIDED_MARK_ID_MAP_KEY, state.guided_mark_id_map)
     await set_session_value_async(ctx, SESSION_PENDING_REFERENCE_IMAGES_KEY, state.pending_reference_images)

@@ -1,7 +1,7 @@
 # TASK-177: Reachable Rich Multi-View Capture And Top-View Default
 
-**Status:** 🚧 In Progress
-**Progress:** TASK-177-01 (budget-aware best-N capture view selection substrate) shipped 2026-05-30 via changelog 371. TASK-177-03 is now fully wired by changelogs 384 and 389: `VISION_CAPTURE_GRID_ENABLED`, runtime config, `view_kind="grid"`, per-image captions, and stage/packet transmission. Remaining open: TASK-177-02 (oblique 3/4 in the default compact preset).
+**Status:** ✅ Done
+**Progress:** Completed 2026-05-31. TASK-177-01 (budget-aware best-N capture view selection substrate) shipped 2026-05-30 via changelog 371. TASK-177-03 is fully wired by changelogs 384 and 389: `VISION_CAPTURE_GRID_ENABLED`, runtime config, `view_kind="grid"`, per-image captions, and stage/packet transmission. TASK-177-02 closed 2026-05-31: compact staged capture now includes orthographic `target_top` and perspective `target_oblique_left` with symbolic projection metadata.
 **Priority:** 🟡 Medium
 **Category:** Vision / Multi-View Capture
 **Estimated Effort:** Medium
@@ -179,15 +179,13 @@ After this umbrella lands:
 
 ## Changelog Impact
 
-- planning-only now; add a `_docs/_CHANGELOG/*` entry when the first slice lands
-- do not treat this planning-only task creation as the changelog event
+- completed through changelogs 371, 384, 389, and 393
 
 ## Status / Board Update
 
-- `_docs/_TASKS/README.md` should track `TASK-177` on the Vision / Hybrid Loop
-  lane as a promoted open item
-- child tasks stay nested under the open umbrella and do not need board rows
-  unless one later becomes a separately promoted follow-on
+- `_docs/_TASKS/README.md` tracks `TASK-177` as a selected completed milestone
+  on the Vision / Hybrid Loop lane
+- child tasks remain nested historical slices and are all closed
 
 ## Validation Commands
 

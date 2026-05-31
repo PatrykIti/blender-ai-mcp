@@ -382,6 +382,13 @@ def test_reference_compare_stage_checkpoint_keeps_broad_primary_mass_scope_for_s
         assert result.compare_diagnostics is not None
         assert {packet.scope_label for packet in result.compare_diagnostics.packets} == {"Body + Head", "Tail"}
         assert all(packet.scope_label != "Ears" for packet in result.compare_diagnostics.packets)
+        assert result.runtime_evidence is not None
+        runtime_by_capability = {item.capability: item for item in result.runtime_evidence.capabilities}
+        assert runtime_by_capability["vision"].status == "used"
+        assert runtime_by_capability["localization"].status == "not_configured"
+        assert runtime_by_capability["segmentation"].status == "not_configured"
+        assert result.reference_orchestrator_feedback is not None
+        assert result.reference_orchestrator_feedback.runtime_evidence is not None
         assert captured_requests
         assert {request.metadata["packet_scope"] for request in captured_requests} == {"Body + Head", "Tail"}
         assert all(ear_name not in list(request.metadata["target_objects"]) for request in captured_requests)

@@ -654,6 +654,22 @@ def test_reference_orchestrator_feedback_projects_compare_diagnostics_without_ru
                     packet_status="low_information",
                     status_reason="No packet-local staged captures were available.",
                     uncertainty_notes=["No packet-local staged captures were available."],
+                    open_defects=[
+                        {
+                            "defect_id": "defect_head_shape",
+                            "summary": "Head shape remains unresolved.",
+                            "scope_label": "Head",
+                            "severity": "high",
+                        }
+                    ],
+                    verify_status=[
+                        {
+                            "defect_id": "defect_tail_profile",
+                            "status": "unresolved",
+                            "reason": "Same-view verify still sees it.",
+                            "scope_label": "Tail",
+                        }
+                    ],
                 )
             ],
         ),
@@ -663,6 +679,8 @@ def test_reference_orchestrator_feedback_projects_compare_diagnostics_without_ru
     assert feedback.status == "blocked"
     assert "Compare used 1 packet(s) in the complex tier." in feedback.evidence_summary
     assert "No packet-local staged captures were available." in feedback.uncertainty_notes
+    assert any("open_defect defect_head_shape" in note for note in feedback.uncertainty_notes)
+    assert any("verify_status defect_tail_profile=unresolved" in note for note in feedback.uncertainty_notes)
 
 
 def test_reference_orchestrator_feedback_projects_localized_support_reason_and_degradation():
@@ -733,6 +751,29 @@ def test_reference_orchestrator_feedback_projects_runtime_policy_block():
     assert feedback.next_actions == ["run_checkpoint_iterate"]
     assert feedback.next_checkpoint_tool == "reference_iterate_stage_checkpoint"
     assert feedback.recommended_support_tools == ["scene_view_diagnostics"]
+
+
+def test_reference_orchestrator_feedback_tags_authoritative_next_action_provenance():
+    feedback = build_reference_orchestrator_feedback(
+        goal="low poly creature",
+        summary=None,
+        strategy_state=None,
+        next_gate_actions=["resolve_quality_gate_blockers"],
+        recommended_bounded_tools=["scene_relation_graph"],
+        correction_focus=["Head silhouette"],
+    )
+
+    assert feedback is not None
+    assert feedback.authoritative_next_actions == [
+        "resolve_quality_gate_blockers",
+        "Run support check scene_relation_graph",
+        "Address mismatch: Head silhouette",
+    ]
+    assert [(item.source, item.authority) for item in feedback.authoritative_next_action_provenance] == [
+        ("scene_truth", "authoritative"),
+        ("scene_truth", "authoritative"),
+        ("vision", "advisory"),
+    ]
 
 
 def test_reference_orchestrator_feedback_runtime_block_overrides_strategy_checkpoint():
@@ -8004,7 +8045,7 @@ def test_reference_compare_stage_checkpoint_threads_compare_time_support_evidenc
             action="attach",
             source_path=str(reference_path),
             label="front_ref",
-            target_object="Creature",
+            target_object="Squirrel_Body",
             target_view="front",
         )
     )
@@ -8086,7 +8127,8 @@ def test_reference_compare_stage_checkpoint_threads_compare_time_support_evidenc
     result = asyncio.run(
         reference_compare_stage_checkpoint(
             ctx,
-            target_object="Creature",
+            target_object="Squirrel_Body",
+            target_objects=["Squirrel_Tail"],
             checkpoint_label="stage_front_support_evidence",
             preset_profile="rich",
             target_view="front",
@@ -8122,7 +8164,7 @@ def test_reference_compare_stage_checkpoint_projects_compare_time_segmentation_s
             action="attach",
             source_path=str(reference_path),
             label="front_ref",
-            target_object="Creature",
+            target_object="Squirrel_Body",
             target_view="front",
         )
     )
@@ -8234,7 +8276,8 @@ def test_reference_compare_stage_checkpoint_projects_compare_time_segmentation_s
     result = asyncio.run(
         reference_compare_stage_checkpoint(
             ctx,
-            target_object="Creature",
+            target_object="Squirrel_Body",
+            target_objects=["Squirrel_Tail"],
             checkpoint_label="stage_front_segmentation_sidecar",
             preset_profile="rich",
             target_view="front",
@@ -8249,6 +8292,12 @@ def test_reference_compare_stage_checkpoint_projects_compare_time_segmentation_s
     assert result.part_segmentation.parts[0].confidence == 0.91
     assert result.compare_diagnostics is not None
     assert result.compare_diagnostics.packets[0].localized_support_reason == "mask_needed"
+    assert result.runtime_evidence is not None
+    runtime_by_capability = {item.capability: item for item in result.runtime_evidence.capabilities}
+    assert runtime_by_capability["vision"].status == "used"
+    assert runtime_by_capability["localization"].status == "not_configured"
+    assert runtime_by_capability["segmentation"].status == "used"
+    assert runtime_by_capability["segmentation"].invoked is True
     segmentation_evidence = [
         item
         for item in result.compare_diagnostics.packets[0].support_evidence
@@ -8417,7 +8466,12 @@ def test_reference_compare_stage_checkpoint_projects_localization_only_support_i
     assert result.part_segmentation.parts[0].crop_path == "/tmp/localization_tail_crop.png"
     assert result.part_segmentation.parts[0].landmarks[0].landmark_id == "box_center"
     assert result.compare_diagnostics is not None
-    assert result.compare_diagnostics.packets[0].localized_support_reason == "part_missing_ambiguity"
+    assert result.compare_diagnostics.packets[0].localized_support_reason == "mask_needed"
+    assert result.runtime_evidence is not None
+    runtime_by_capability = {item.capability: item for item in result.runtime_evidence.capabilities}
+    assert runtime_by_capability["localization"].status == "used"
+    assert runtime_by_capability["localization"].invoked is True
+    assert runtime_by_capability["segmentation"].status == "not_configured"
     assert localization_captured
     assert localization_captured[0]["json"]["query_labels"] == ["tail_mass"]
     assert captured
@@ -8601,7 +8655,7 @@ def test_reference_compare_stage_checkpoint_threads_localization_seed_boxes_into
     assert support_captured[1]["json"]["seed_boxes"][0]["query_label"] == "tail_mass"
     assert support_captured[1]["json"]["seed_boxes"][0]["box_xyxy"] == [101.0, 44.0, 218.0, 162.0]
     assert result.compare_diagnostics is not None
-    assert result.compare_diagnostics.packets[0].localized_support_reason == "part_missing_ambiguity"
+    assert result.compare_diagnostics.packets[0].localized_support_reason == "mask_needed"
 
 
 def test_reference_compare_stage_checkpoint_keeps_available_segmentation_sidecar_advisory_only(tmp_path, monkeypatch):
@@ -8620,7 +8674,7 @@ def test_reference_compare_stage_checkpoint_keeps_available_segmentation_sidecar
             action="attach",
             source_path=str(reference_path),
             label="front_ref",
-            target_object="Creature",
+            target_object="Squirrel_Body",
             target_view="front",
         )
     )
@@ -8732,7 +8786,8 @@ def test_reference_compare_stage_checkpoint_keeps_available_segmentation_sidecar
     result = asyncio.run(
         reference_compare_stage_checkpoint(
             ctx,
-            target_object="Creature",
+            target_object="Squirrel_Body",
+            target_objects=["Squirrel_Tail"],
             checkpoint_label="stage_front_segmentation_sidecar_clean",
             preset_profile="rich",
             target_view="front",
@@ -8754,6 +8809,11 @@ def test_reference_compare_stage_checkpoint_keeps_available_segmentation_sidecar
     assert result.compare_diagnostics is not None
     assert result.compare_diagnostics.packets[0].packet_status == "clean"
     assert result.compare_diagnostics.packets[0].localized_support_reason is None
+    assert result.runtime_evidence is not None
+    runtime_by_capability = {item.capability: item for item in result.runtime_evidence.capabilities}
+    assert runtime_by_capability["segmentation"].status == "skipped_by_policy"
+    assert runtime_by_capability["segmentation"].considered is True
+    assert runtime_by_capability["segmentation"].invoked is False
     segmentation_evidence = [
         item
         for item in result.compare_diagnostics.packets[0].support_evidence
@@ -12634,6 +12694,104 @@ def test_reference_iterate_stage_checkpoint_keeps_refinement_stage_for_profile_b
     assert result.reference_orchestrator_feedback is not None
     assert result.reference_orchestrator_feedback.next_checkpoint_tool == "reference_iterate_stage_checkpoint"
     assert "bounded mesh/profile lane" in (result.message or "")
+
+
+def test_reference_iterate_stage_checkpoint_holds_checkpoint_shape_convergence(monkeypatch):
+    ctx = FakeContext()
+    shape_gate = {
+        "gate_id": "tail_shape_profile",
+        "gate_type": "shape_profile",
+        "label": "tail follows the reference arc profile",
+        "target_kind": "reference_part",
+        "target_label": "tail_profile",
+        "required": True,
+        "priority": "high",
+        "status": "failed",
+        "status_reason": "missing_required_evidence",
+        "verification_strategy": "shape_profile",
+        "allowed_correction_families": ["secondary_parts"],
+        "recommended_bounded_tools": ["mesh_inspect", "macro_adjust_segment_chain_arc"],
+        "proposal_sources": ["reference_understanding"],
+        "source_provenance": [{"source": "reference_understanding"}],
+        "evidence_requirements": [{"evidence_kind": "silhouette_analysis", "required": True}],
+        "evidence_refs": [],
+    }
+    shape_blocker = {
+        "gate_id": "tail_shape_profile",
+        "gate_type": "shape_profile",
+        "label": "tail follows the reference arc profile",
+        "status": "failed",
+        "reason_code": "missing_required_evidence",
+        "target_kind": "reference_part",
+        "target_label": "tail_profile",
+        "required_evidence_kinds": ["silhouette_analysis"],
+        "allowed_correction_families": ["secondary_parts"],
+        "recommended_bounded_tools": ["mesh_inspect", "macro_adjust_segment_chain_arc"],
+        "message": "Tail profile still needs bounded refinement.",
+    }
+    gate_plan = {
+        "plan_id": "creature_shape_plan",
+        "domain_profile": "creature",
+        "gates": [shape_gate],
+        "completion_blockers": [shape_blocker],
+    }
+    set_session_capability_state(
+        ctx,
+        SessionCapabilityState(
+            phase=SessionPhase.BUILD,
+            goal="low poly creature",
+            surface_profile="llm-guided",
+            guided_flow_state=_guided_checkpoint_iterate_flow_state(),
+            gate_plan=gate_plan,
+        ),
+    )
+
+    compare = ReferenceCompareStageCheckpointResponseContract.model_validate(
+        {
+            "action": "compare_stage_checkpoint",
+            "goal": "low poly creature",
+            "target_object": "Creature",
+            "target_objects": ["Creature"],
+            "checkpoint_id": "checkpoint_shape_hold",
+            "checkpoint_label": "stage_shape_hold",
+            "preset_profile": "compact",
+            "preset_names": ["context_wide"],
+            "capture_count": 1,
+            "captures": [],
+            "reference_count": 0,
+            "reference_ids": [],
+            "reference_labels": [],
+            "active_gate_plan": gate_plan,
+            "completion_blockers": [shape_blocker],
+            "next_gate_actions": ["resolve_quality_gate_blockers"],
+            "recommended_bounded_tools": ["mesh_inspect", "macro_adjust_segment_chain_arc"],
+        }
+    )
+
+    async def _fake_reference_compare_stage_checkpoint(*args, **kwargs):
+        return compare
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.reference_compare_stage_checkpoint",
+        _fake_reference_compare_stage_checkpoint,
+    )
+
+    result = asyncio.run(
+        reference_iterate_stage_checkpoint(
+            ctx,
+            target_object="Creature",
+            target_objects=["Creature"],
+            checkpoint_label="stage_shape_hold",
+        )
+    )
+
+    assert result.loop_disposition == "continue_build"
+    assert result.shape_convergence_disposition == "shape_drift_build_hold"
+    assert result.guided_flow_state is not None
+    assert result.guided_flow_state.current_step == "refine_low_poly_forms"
+    assert result.reference_orchestrator_feedback is not None
+    assert result.reference_orchestrator_feedback.shape_convergence_disposition == "shape_drift_build_hold"
+    assert "whole-assembly shape/profile convergence is still unresolved" in (result.message or "")
 
 
 def _guided_incomplete_secondary_flow_state() -> dict[str, object]:

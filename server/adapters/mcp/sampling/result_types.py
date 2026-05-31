@@ -205,6 +205,45 @@ class VisionPacketStatusContract(MCPContract):
     )
 
 
+class VisionMarkCorrespondenceContract(MCPContract):
+    """One advisory Set-of-Mark correspondence resolved back to a scene object."""
+
+    mark_id: int = Field(description="Stable Set-of-Mark id cited by the vision finding.")
+    object_name: str = Field(description="Scene object represented by the mark id.")
+    role: str | None = Field(default=None, description="Scene/registry role for the marked object when known.")
+    image_sides: list[Literal["render", "reference"]] = Field(
+        default_factory=list,
+        description="Which compare sides carried this mark; reference marks are optional sidecar-grounded.",
+    )
+    proportional_ratio_vs_anchor: float | None = Field(
+        default=None,
+        description="Optional proportional magnitude from a mark-keyed finding; never an absolute measurement.",
+    )
+    findings: list[str] = Field(
+        default_factory=list,
+        description="Bounded advisory finding text that cited this mark.",
+    )
+
+
+class VisionOpenDefectContract(MCPContract):
+    """One stable advisory Critic defect preserved through packet synthesis."""
+
+    defect_id: str
+    summary: str
+    scope_label: str | None = None
+    relation_ref: str | None = None
+    severity: Literal["high", "medium", "low"] = "medium"
+
+
+class VisionDefectVerifyStatusContract(MCPContract):
+    """Advisory verify status for a stable defect id."""
+
+    defect_id: str
+    status: Literal["resolved", "unresolved", "downgraded"]
+    reason: str | None = None
+    scope_label: str | None = None
+
+
 class VisionCapabilitySummaryContract(MCPContract):
     """Bounded runtime/request capability summary for one vision execution."""
 
@@ -273,6 +312,28 @@ class VisionAssistContract(MCPContract):
             "Structured per-finding compare observations binding each finding to a view, scene part, axis, and "
             "proportional magnitude. Advisory and parallel to the string lists above; empty when unavailable."
         ),
+    )
+    object_correspondence: list[VisionMarkCorrespondenceContract] = Field(
+        default_factory=list,
+        description=(
+            "Mark-keyed advisory correspondence resolved by the server from Set-of-Mark ids back to scene objects."
+        ),
+    )
+    rejected_mark_ids: list[int] = Field(
+        default_factory=list,
+        description="Invalid mark ids cited by the model and rejected by the bounded validity guard.",
+    )
+    validity_retry_attempted: bool = Field(
+        default=False,
+        description="True when the server made one bounded re-query after invalid mark ids were cited.",
+    )
+    open_defects: list[VisionOpenDefectContract] = Field(
+        default_factory=list,
+        description="Stable advisory Critic defects extracted from packet findings.",
+    )
+    verify_status: list[VisionDefectVerifyStatusContract] = Field(
+        default_factory=list,
+        description="Same-view Verify statuses for prior/open defects. Deterministic gates remain authoritative.",
     )
     packet_guidance: VisionPacketStatusContract | None = Field(
         default=None, description="Packet-local extraction/ranking guidance for staged compare packets; null otherwise."
@@ -466,6 +527,9 @@ __all__ = [
     "VisionCapabilitySource",
     "VisionInputSummaryContract",
     "VisionIssueContract",
+    "VisionOpenDefectContract",
+    "VisionMarkCorrespondenceContract",
+    "VisionDefectVerifyStatusContract",
     "VisionRecommendedCheckContract",
     "to_inspection_assistant_contract",
     "to_repair_assistant_contract",

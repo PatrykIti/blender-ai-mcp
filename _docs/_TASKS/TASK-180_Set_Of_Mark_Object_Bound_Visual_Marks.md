@@ -1,7 +1,7 @@
 # TASK-180: Set-Of-Mark Object-Bound Visual Marks
 
-**Status:** 🚧 In Progress
-**Progress:** TASK-180-01 is complete: staged capture can emit default-off live `view_kind="overlay"` images with typed mark-id maps, packet mark legends, supplemental budget behavior, and Blender-backed proof. TASK-180-04 still owns mark-keyed result correspondence and validity retry, while TASK-180-02 cross-view/session-stable ids and TASK-180-03 reference marks via the default-off Grounded-SAM sidecar remain open.
+**Status:** ✅ Done
+**Progress:** Completed 2026-05-31. TASK-180-01 is complete: staged capture can emit default-off live `view_kind="overlay"` images with typed mark-id maps, packet mark legends, supplemental budget behavior, and Blender-backed proof. The 2026-05-31 closeout completes TASK-180-02, TASK-180-03, and TASK-180-04: mark IDs are registry/session-stable, optional reference-side marks reuse the default-off localization sidecar with provenance, and mark-keyed findings now produce typed correspondence plus one bounded validity retry.
 **Priority:** 🔴 High
 **Category:** Vision / Visual Prompting
 **Estimated Effort:** Extra Large
@@ -192,15 +192,13 @@ After this umbrella lands:
 
 ## Changelog Impact
 
-- planning-only now; add a `_docs/_CHANGELOG/*` entry when the first slice lands
-- do not treat this planning-only task creation as the changelog event
+- completed through changelogs 378, 381, 392, and 393
 
 ## Status / Board Update
 
-- `_docs/_TASKS/README.md` should track `TASK-180` on the Vision / Hybrid Loop
-  lane (the coordinator owns the board row; do not edit it from this task)
-- child tasks stay nested under the open umbrella and do not need board rows
-  unless one later becomes a separately promoted follow-on
+- `_docs/_TASKS/README.md` tracks `TASK-180` as a selected completed milestone
+  on the Vision / Hybrid Loop lane
+- child tasks remain nested historical slices and are all closed
 
 ## Validation Commands
 

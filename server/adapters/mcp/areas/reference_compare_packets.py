@@ -6,8 +6,9 @@ import hashlib
 import os
 import re
 from collections import OrderedDict
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from dataclasses import replace as dataclass_replace
 from typing import Any, Literal, cast
 
 import httpx
@@ -23,11 +24,16 @@ from server.adapters.mcp.contracts.reference import (
     ReferenceCompareComplexityTierLiteral,
     ReferenceCompareDiagnosticsContract,
     ReferenceComparePacketContract,
+    ReferenceCompareScopeSourceLiteral,
+    ReferenceDefectVerifyStatusContract,
     ReferenceImageRecordContract,
     ReferenceLocalizedSupportReasonLiteral,
+    ReferenceOpenDefectContract,
     ReferencePartSegmentationContract,
     ReferencePartSegmentationLandmarkContract,
     ReferencePartSegmentationPartContract,
+    ReferenceRuntimeCapabilityUsageContract,
+    ReferenceRuntimeEvidenceContract,
     ReferenceSilhouetteAnalysisContract,
 )
 from server.adapters.mcp.contracts.scene import (
@@ -37,13 +43,17 @@ from server.adapters.mcp.contracts.scene import (
     SceneCorrectionTruthSummaryContract,
     SceneTruthFollowupContract,
 )
-from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
+from server.adapters.mcp.contracts.vision import VisionCaptureImageContract, VisionOverlayMarkContract
 from server.adapters.mcp.sampling.result_types import (
     VisionAssistantContract,
     VisionAssistContract,
     VisionBoundaryPolicyContract,
+    VisionDefectVerifyStatusContract,
+    VisionFindingContract,
     VisionInputSummaryContract,
     VisionIssueContract,
+    VisionMarkCorrespondenceContract,
+    VisionOpenDefectContract,
     VisionPacketStatusContract,
     VisionRecommendedCheckContract,
     to_vision_assistant_contract,
@@ -242,6 +252,86 @@ def _query_labels_for_packet(packet: ReferenceComparePacketContract) -> list[str
     return query_labels[:4]
 
 
+_CREATURE_DOMAIN_TOKENS: frozenset[str] = frozenset(
+    {"creature", "animal", "squirrel", "rabbit", "mouse", "fox", "cat", "dog", "bird"}
+)
+_CREATURE_APPENDAGE_TOKENS: frozenset[str] = frozenset(
+    {
+        "tail",
+        "ear",
+        "leg",
+        "foreleg",
+        "hindleg",
+        "paw",
+        "foot",
+        "limb",
+        "snout",
+        "muzzle",
+        "nose",
+        "wing",
+        "horn",
+        "antler",
+    }
+)
+
+
+def _text_tokens_for_packet(packet: ReferenceComparePacketContract) -> str:
+    return " ".join(
+        str(item or "").strip().lower()
+        for item in [
+            packet.packet_label,
+            packet.scope_label,
+            packet.compare_question,
+            *list(packet.target_objects or []),
+        ]
+    )
+
+
+def _is_creature_compare_domain(*, goal: str | None, guided_domain_profile: str | None) -> bool:
+    if str(guided_domain_profile or "").strip().lower() == "creature":
+        return True
+    goal_text = str(goal or "").strip().lower()
+    return any(token in goal_text for token in _CREATURE_DOMAIN_TOKENS)
+
+
+def _is_bounded_creature_appendage_packet(packet: ReferenceComparePacketContract) -> bool:
+    text = _text_tokens_for_packet(packet)
+    if "body + head" in text:
+        return False
+    return any(token in text for token in _CREATURE_APPENDAGE_TOKENS)
+
+
+def _prior_defect_matches_packet(
+    packet: ReferenceComparePacketContract,
+    prior_open_defects: Sequence[Mapping[str, Any] | ReferenceOpenDefectContract],
+) -> bool:
+    packet_text = _text_tokens_for_packet(packet)
+    for raw_defect in prior_open_defects:
+        if isinstance(raw_defect, ReferenceOpenDefectContract):
+            defect_text = " ".join(
+                item for item in [raw_defect.scope_label or "", raw_defect.summary or ""] if item
+            ).lower()
+        elif isinstance(raw_defect, Mapping):
+            defect_text = " ".join(
+                str(raw_defect.get(key) or "")
+                for key in ("scope_label", "summary", "relation_ref")
+                if raw_defect.get(key)
+            ).lower()
+        else:
+            continue
+        if not defect_text:
+            continue
+        if any(token in packet_text and token in defect_text for token in _CREATURE_APPENDAGE_TOKENS):
+            return True
+    return False
+
+
+def _high_silhouette_severity(silhouette_analysis: ReferenceSilhouetteAnalysisContract | None) -> bool:
+    return silhouette_analysis is not None and any(
+        metric.severity == "high" for metric in list(silhouette_analysis.metrics)
+    )
+
+
 def _normalize_box_xyxy(raw_box: Any) -> tuple[float, float, float, float] | None:
     if not isinstance(raw_box, list | tuple) or len(raw_box) != 4:
         return None
@@ -264,29 +354,32 @@ def _derive_localization_landmarks(
 
 def _resolve_localized_support_reason(
     *,
+    goal: str | None = None,
+    guided_domain_profile: str | None = None,
     packet: ReferenceComparePacketContract,
     packet_truth_bundle: SceneCorrectionTruthBundleContract,
     silhouette_analysis: ReferenceSilhouetteAnalysisContract | None,
     action_hints: Sequence[ReferenceActionHintContract],
+    prior_open_defects: Sequence[Mapping[str, Any] | ReferenceOpenDefectContract] = (),
 ) -> ReferenceLocalizedSupportReasonLiteral | None:
     """Resolve one normalized packet-local reason for optional localized support."""
 
+    if not _is_creature_compare_domain(goal=goal, guided_domain_profile=guided_domain_profile):
+        return None
+    if not _is_bounded_creature_appendage_packet(packet):
+        return None
+
     truth_summary = packet_truth_bundle.summary
-    scope_label = str(packet.scope_label or "").strip().lower()
     if truth_summary.contact_failures or truth_summary.separated_pairs:
         return "attachment_gap"
     if truth_summary.misaligned_pairs or truth_summary.overlap_pairs:
         return "anchor_ambiguity"
-    if any(token in scope_label for token in ("body + head", "head", "snout", "ear", "tail", "limb")):
-        return "part_missing_ambiguity"
-    if any(token in scope_label for token in ("support", "roofline", "opening", "facade")):
-        return "anchor_ambiguity"
     if action_hints:
         return "mask_needed"
-    if silhouette_analysis is not None and any(
-        metric.severity == "high" for metric in list(silhouette_analysis.metrics)
-    ):
+    if _high_silhouette_severity(silhouette_analysis):
         return "seam_unclear"
+    if _prior_defect_matches_packet(packet, prior_open_defects):
+        return "part_missing_ambiguity"
     return None
 
 
@@ -366,6 +459,7 @@ def _build_compare_localization_request_payload(
     )
     payload["localized_support_reason"] = packet.localized_support_reason
     payload["query_labels"] = _query_labels_for_packet(packet)
+    payload["packet"]["mark_id_map"] = dict(packet.mark_id_map)
     return payload
 
 
@@ -775,6 +869,44 @@ def _scope_clusters_from_target_scope(
     return list(clusters.values())
 
 
+def _is_guided_registry_scope(
+    assembled_target_scope: SceneAssembledTargetScopeContract | None,
+) -> bool:
+    if assembled_target_scope is None:
+        return False
+    for role in list(assembled_target_scope.object_roles or []):
+        if "guided_part_registry" in set(role.signals or []):
+            return True
+    return False
+
+
+def _registered_compare_scope(
+    assembled_target_scope: SceneAssembledTargetScopeContract | None,
+) -> SceneAssembledTargetScopeContract | None:
+    if not _is_guided_registry_scope(assembled_target_scope):
+        return None
+    return assembled_target_scope
+
+
+def _scope_clusters_from_registered_graph(
+    assembled_target_scope: SceneAssembledTargetScopeContract | None,
+    *,
+    focus_pairs: Sequence[str],
+) -> list[_ScopeCluster]:
+    if assembled_target_scope is None or not _is_guided_registry_scope(assembled_target_scope):
+        return []
+    object_names = _unique_preserving_order(list(assembled_target_scope.object_names or []))
+    if len(object_names) < 2:
+        return []
+    return [
+        _ScopeCluster(
+            scope_label="Registered Part Graph",
+            target_objects=tuple(object_names),
+            truth_pairs=tuple(_unique_preserving_order(list(focus_pairs))),
+        )
+    ]
+
+
 def resolve_compare_complexity_tier(
     *,
     assembled_target_scope: SceneAssembledTargetScopeContract | None,
@@ -900,6 +1032,408 @@ def _packet_reference_ids(
     return []
 
 
+def _capture_mark_id_map(captures: Sequence[VisionCaptureImageContract]) -> dict[str, int]:
+    mark_id_map: dict[str, int] = {}
+    for capture in captures:
+        if capture.view_kind != "overlay":
+            continue
+        for mark in list(capture.overlay_marks or []):
+            if mark.status != "placed" or mark.image_side != "render":
+                continue
+            object_name = str(mark.object_name or "").strip()
+            mark_id = mark.mark_id
+            if not object_name or not isinstance(mark_id, int) or isinstance(mark_id, bool) or mark_id <= 0:
+                continue
+            mark_id_map.setdefault(object_name, mark_id)
+    return mark_id_map
+
+
+def _packet_mark_id_map(
+    *,
+    full_mark_id_map: dict[str, int],
+    packet_target_objects: Sequence[str],
+) -> dict[str, int]:
+    if not full_mark_id_map:
+        return {}
+    packet_targets = {str(name).strip() for name in packet_target_objects if str(name).strip()}
+    if not packet_targets:
+        return dict(sorted(full_mark_id_map.items(), key=lambda item: (item[1], item[0])))
+    return {
+        object_name: mark_id
+        for object_name, mark_id in sorted(full_mark_id_map.items(), key=lambda item: (item[1], item[0]))
+        if object_name in packet_targets
+    }
+
+
+def _object_role_map(scope: SceneAssembledTargetScopeContract) -> dict[str, str]:
+    return {
+        role.object_name: role.role for role in list(scope.object_roles or []) if str(role.object_name or "").strip()
+    }
+
+
+def _object_name_for_reference_query(
+    packet: ReferenceComparePacketContract,
+    query_label: str | None,
+) -> str | None:
+    normalized_query = "_".join(_slug_tokenize(query_label))
+    if not normalized_query:
+        return None
+    for object_name in packet.mark_id_map:
+        normalized_object = "_".join(_slug_tokenize(object_name))
+        if normalized_query == normalized_object or normalized_query in normalized_object:
+            return object_name
+    for hint, candidate_label in _LOCALIZATION_QUERY_HINTS:
+        if candidate_label != normalized_query:
+            continue
+        for object_name in packet.mark_id_map:
+            if hint in "_".join(_slug_tokenize(object_name)):
+                return object_name
+    return None
+
+
+def _reference_marks_for_localization_candidates(
+    packet: ReferenceComparePacketContract,
+    candidates: Sequence[VisionLocalizationCandidate],
+) -> list[VisionOverlayMarkContract]:
+    marks: list[VisionOverlayMarkContract] = []
+    seen_ids: set[int] = set()
+    for candidate in candidates:
+        object_name = _object_name_for_reference_query(packet, candidate.query_label)
+        if object_name is None:
+            continue
+        mark_id = packet.mark_id_map.get(object_name)
+        if mark_id is None or mark_id in seen_ids:
+            continue
+        seen_ids.add(mark_id)
+        marks.append(
+            VisionOverlayMarkContract(
+                mark_id=mark_id,
+                object_name=object_name,
+                status="placed",
+                source="grounded_sam_sidecar",
+                image_side="reference",
+            )
+        )
+    return marks
+
+
+def _mark_correspondence_for_result(
+    result: VisionAssistContract,
+    *,
+    packet: ReferenceComparePacketContract,
+    assembled_target_scope: SceneAssembledTargetScopeContract,
+    retry_attempted: bool,
+) -> tuple[VisionAssistContract, list[int]]:
+    if not packet.mark_id_map:
+        return result.model_copy(update={"validity_retry_attempted": retry_attempted}), []
+
+    mark_id_to_object = {mark_id: object_name for object_name, mark_id in packet.mark_id_map.items()}
+    reference_mark_ids = {mark.mark_id for mark in list(packet.reference_marks or []) if mark.status == "placed"}
+    role_by_object = _object_role_map(assembled_target_scope)
+    rejected_mark_ids: list[int] = []
+    rows_by_mark: OrderedDict[int, VisionMarkCorrespondenceContract] = OrderedDict()
+    for finding in list(result.findings or []):
+        mark_id = finding.mark_id
+        if mark_id is None:
+            continue
+        object_name = mark_id_to_object.get(mark_id)
+        if object_name is None:
+            rejected_mark_ids.append(mark_id)
+            continue
+        existing = rows_by_mark.get(mark_id)
+        sides: list[Literal["render", "reference"]] = ["render"]
+        if mark_id in reference_mark_ids:
+            sides.append("reference")
+        finding_text = finding.finding.strip()
+        if existing is None:
+            rows_by_mark[mark_id] = VisionMarkCorrespondenceContract(
+                mark_id=mark_id,
+                object_name=object_name,
+                role=role_by_object.get(object_name),
+                image_sides=sides,
+                proportional_ratio_vs_anchor=finding.magnitude_ratio,
+                findings=[finding_text] if finding_text else [],
+            )
+            continue
+        rows_by_mark[mark_id] = existing.model_copy(
+            update={
+                "image_sides": _unique_preserving_order([*existing.image_sides, *sides]),
+                "findings": _unique_preserving_order([*existing.findings, *([finding_text] if finding_text else [])])[
+                    :3
+                ],
+                "proportional_ratio_vs_anchor": existing.proportional_ratio_vs_anchor
+                if existing.proportional_ratio_vs_anchor is not None
+                else finding.magnitude_ratio,
+            }
+        )
+
+    rejected = sorted(set(rejected_mark_ids))
+    return (
+        result.model_copy(
+            update={
+                "object_correspondence": list(rows_by_mark.values()),
+                "rejected_mark_ids": rejected,
+                "validity_retry_attempted": retry_attempted,
+            }
+        ),
+        rejected,
+    )
+
+
+def _normalized_defect_text(value: str | None) -> str:
+    return re.sub(r"\s+", " ", str(value or "").strip().lower())
+
+
+def _packet_scoped_defect_id(
+    packet: ReferenceComparePacketContract,
+    *,
+    summary: str,
+    target_label: str | None = None,
+    axis: str | None = None,
+    direction: str | None = None,
+) -> str:
+    key = "|".join(
+        (
+            packet.packet_id,
+            str(packet.scope_label or ""),
+            str(target_label or ""),
+            str(axis or ""),
+            str(direction or ""),
+            _normalized_defect_text(summary)[:120],
+        )
+    )
+    return "defect_" + hashlib.sha1(key.encode("utf-8")).hexdigest()[:12]
+
+
+def _defect_scope_label(
+    *,
+    packet: ReferenceComparePacketContract,
+    target_label: str | None = None,
+) -> str | None:
+    label = str(target_label or "").strip()
+    if label:
+        return label
+    return packet.scope_label
+
+
+def _defect_relation_ref(finding: VisionFindingContract) -> str | None:
+    parts = [
+        str(finding.target_label or "").strip(),
+        str(finding.axis or "").strip(),
+        str(finding.direction or "").strip(),
+    ]
+    normalized = [part for part in parts if part and part != "none"]
+    return " ".join(normalized) if normalized else None
+
+
+def _defect_severity(
+    summary: str,
+    *,
+    result: VisionAssistContract,
+    finding: VisionFindingContract | None = None,
+) -> Literal["high", "medium", "low"]:
+    normalized_summary = _normalized_defect_text(summary)
+    correction_keys = {_normalized_defect_text(item) for item in list(result.correction_focus or [])}
+    if normalized_summary and any(
+        normalized_summary in correction_key or correction_key in normalized_summary
+        for correction_key in correction_keys
+    ):
+        return "high"
+    for issue in list(result.likely_issues or []):
+        if issue.severity == "high" and _normalized_defect_text(issue.summary) in normalized_summary:
+            return "high"
+    if finding is not None and finding.confidence is not None and finding.confidence < 0.35:
+        return "low"
+    return "medium"
+
+
+def _open_defects_for_result(
+    result: VisionAssistContract,
+    *,
+    packet: ReferenceComparePacketContract,
+) -> tuple[list[VisionFindingContract], list[VisionOpenDefectContract]]:
+    if result.packet_guidance is not None and result.packet_guidance.packet_status == "clean":
+        return list(result.findings or []), []
+
+    findings: list[VisionFindingContract] = []
+    open_defects: list[VisionOpenDefectContract] = []
+    seen_defect_ids: set[str] = set()
+    for finding in list(result.findings or []):
+        summary = str(finding.finding or "").strip()
+        if not summary:
+            findings.append(finding)
+            continue
+        defect_id = _packet_scoped_defect_id(
+            packet,
+            summary=summary,
+            target_label=finding.target_label,
+            axis=finding.axis,
+            direction=finding.direction,
+        )
+        scoped_finding = finding.model_copy(update={"defect_id": defect_id})
+        findings.append(scoped_finding)
+        if defect_id in seen_defect_ids:
+            continue
+        seen_defect_ids.add(defect_id)
+        open_defects.append(
+            VisionOpenDefectContract(
+                defect_id=defect_id,
+                summary=_bounded_text(summary, fallback="Packet compare defect.") or "Packet compare defect.",
+                scope_label=_defect_scope_label(packet=packet, target_label=finding.target_label),
+                relation_ref=_defect_relation_ref(finding),
+                severity=_defect_severity(summary, result=result, finding=finding),
+            )
+        )
+
+    if open_defects:
+        return findings, open_defects[:8]
+
+    fallback_items = _unique_preserving_order(
+        [
+            *list(result.correction_focus or []),
+            *list(result.shape_mismatches or []),
+            *list(result.proportion_mismatches or []),
+        ]
+    )
+    for summary in fallback_items:
+        defect_id = _packet_scoped_defect_id(packet, summary=summary, target_label=packet.scope_label)
+        if defect_id in seen_defect_ids:
+            continue
+        seen_defect_ids.add(defect_id)
+        open_defects.append(
+            VisionOpenDefectContract(
+                defect_id=defect_id,
+                summary=_bounded_text(summary, fallback="Packet compare defect.") or "Packet compare defect.",
+                scope_label=packet.scope_label,
+                relation_ref=packet.target_view,
+                severity=_defect_severity(summary, result=result),
+            )
+        )
+        if len(open_defects) >= 8:
+            break
+    return findings, open_defects
+
+
+def _coerce_prior_open_defect(value: object) -> ReferenceOpenDefectContract | None:
+    if isinstance(value, ReferenceOpenDefectContract):
+        return value
+    if isinstance(value, VisionOpenDefectContract):
+        return ReferenceOpenDefectContract.model_validate(value.model_dump(mode="json"))
+    if isinstance(value, Mapping):
+        try:
+            return ReferenceOpenDefectContract.model_validate(dict(value))
+        except Exception:
+            return None
+    return None
+
+
+def _prior_defects_for_packet(
+    prior_open_defects: Sequence[Mapping[str, Any] | ReferenceOpenDefectContract],
+    *,
+    packet: ReferenceComparePacketContract,
+) -> list[ReferenceOpenDefectContract]:
+    defects: list[ReferenceOpenDefectContract] = []
+    for item in prior_open_defects:
+        if isinstance(item, Mapping):
+            item_packet_id = str(item.get("packet_id") or "").strip()
+            item_scope_label = str(item.get("scope_label") or "").strip()
+            nested_defects = item.get("defects")
+            if item_packet_id and item_packet_id != packet.packet_id:
+                continue
+            if not item_packet_id and item_scope_label and item_scope_label != str(packet.scope_label or "").strip():
+                continue
+            if isinstance(nested_defects, Sequence) and not isinstance(nested_defects, (str, bytes)):
+                for nested in nested_defects:
+                    defect = _coerce_prior_open_defect(nested)
+                    if defect is not None:
+                        defects.append(defect)
+                continue
+        defect = _coerce_prior_open_defect(item)
+        if defect is not None and (
+            not defect.scope_label
+            or defect.scope_label == packet.scope_label
+            or defect.scope_label in list(packet.target_objects or [])
+        ):
+            defects.append(defect)
+    return defects
+
+
+def _verify_status_for_prior_defects(
+    *,
+    packet: ReferenceComparePacketContract,
+    prior_defects: Sequence[ReferenceOpenDefectContract],
+    current_defects: Sequence[VisionOpenDefectContract],
+    packet_status: str | None,
+) -> list[VisionDefectVerifyStatusContract]:
+    if not prior_defects:
+        return []
+
+    current_ids = {defect.defect_id for defect in current_defects}
+    current_has_defects = bool(current_defects)
+    statuses: list[VisionDefectVerifyStatusContract] = []
+    seen: set[str] = set()
+    for prior in prior_defects:
+        if prior.defect_id in seen:
+            continue
+        seen.add(prior.defect_id)
+        if prior.defect_id in current_ids:
+            status: Literal["resolved", "unresolved", "downgraded"] = "unresolved"
+            reason = "Same-view Critic emitted this stable defect again."
+        elif packet_status == "clean" or not current_has_defects:
+            status = "resolved"
+            reason = (
+                "Same-view rerender did not re-emit this defect and the packet has no remaining advisory defect; "
+                "deterministic gates still own final completion."
+            )
+        else:
+            status = "downgraded"
+            reason = (
+                "Same-view rerender no longer emitted this exact defect, but other packet defects remain; "
+                "keep deterministic verification active."
+            )
+        statuses.append(
+            VisionDefectVerifyStatusContract(
+                defect_id=prior.defect_id,
+                status=status,
+                reason=reason,
+                scope_label=prior.scope_label or packet.scope_label,
+            )
+        )
+    return statuses
+
+
+def _apply_packet_defect_tracking(
+    result: VisionAssistContract,
+    *,
+    packet: ReferenceComparePacketContract,
+    prior_open_defects: Sequence[Mapping[str, Any] | ReferenceOpenDefectContract],
+) -> VisionAssistContract:
+    findings, open_defects = _open_defects_for_result(result, packet=packet)
+    verify_status = _verify_status_for_prior_defects(
+        packet=packet,
+        prior_defects=_prior_defects_for_packet(prior_open_defects, packet=packet),
+        current_defects=open_defects,
+        packet_status=result.packet_guidance.packet_status if result.packet_guidance is not None else None,
+    )
+    return result.model_copy(
+        update={
+            "findings": findings,
+            "open_defects": open_defects,
+            "verify_status": verify_status,
+        }
+    )
+
+
+def _reference_open_defects(defects: Sequence[VisionOpenDefectContract]) -> list[ReferenceOpenDefectContract]:
+    return [ReferenceOpenDefectContract.model_validate(defect.model_dump(mode="json")) for defect in defects]
+
+
+def _reference_verify_statuses(
+    statuses: Sequence[VisionDefectVerifyStatusContract],
+) -> list[ReferenceDefectVerifyStatusContract]:
+    return [ReferenceDefectVerifyStatusContract.model_validate(status.model_dump(mode="json")) for status in statuses]
+
+
 def _budgeted_capture_labels(
     capture_labels: Sequence[str],
     *,
@@ -961,8 +1495,10 @@ def _append_policy_packets(
     packet_label: str,
     target_view: str | None,
     scope_label: str | None,
+    scope_source: ReferenceCompareScopeSourceLiteral | None,
     target_objects: Sequence[str],
     truth_pairs: Sequence[str] = (),
+    mark_id_map: dict[str, int] | None = None,
     reference_ids: Sequence[str],
     capture_labels: Sequence[str],
     compare_question: str,
@@ -1024,10 +1560,12 @@ def _append_policy_packets(
                 packet_label=effective_packet_label,
                 target_view=target_view,
                 scope_label=scope_label,
+                scope_source=scope_source,
                 target_objects=list(target_objects),
                 truth_pairs=list(truth_pairs),
                 reference_ids=list(chunk),
                 capture_labels=list(effective_capture_labels),
+                mark_id_map=dict(mark_id_map or {}),
                 compare_question=compare_question,
             )
         )
@@ -1058,6 +1596,7 @@ def build_compare_packets(
         capture_labels_by_view.setdefault(view_id, []).append(capture.label)
 
     all_reference_ids = [reference.reference_id for reference in reference_records]
+    full_mark_id_map = _capture_mark_id_map(captures)
 
     normalized_target_view = _normalize_view_token(target_view)
     capture_views = _ordered_views(capture_labels_by_view)
@@ -1080,6 +1619,7 @@ def build_compare_packets(
 
     packets: list[ReferenceComparePacketContract] = []
     budget_notes: list[str] = []
+    registered_compare_scope = _registered_compare_scope(assembled_target_scope)
     if complexity_tier == "simple":
         if not selected_views:
             scope_label = assembled_target_scope.scope_kind if assembled_target_scope is not None else None
@@ -1090,9 +1630,16 @@ def build_compare_packets(
                 packet_label="general packet",
                 target_view=None,
                 scope_label=scope_label,
+                scope_source="fallback",
                 target_objects=list(assembled_target_scope.object_names or [])
                 if assembled_target_scope is not None
                 else [],
+                mark_id_map=_packet_mark_id_map(
+                    full_mark_id_map=full_mark_id_map,
+                    packet_target_objects=list(assembled_target_scope.object_names or [])
+                    if assembled_target_scope is not None
+                    else [],
+                ),
                 reference_ids=all_reference_ids,
                 capture_labels=all_capture_labels,
                 compare_question=_packet_question_for_view(None, scope_label=scope_label),
@@ -1122,9 +1669,16 @@ def build_compare_packets(
                 packet_label=f"{view_id} packet",
                 target_view=view_id,
                 scope_label=assembled_target_scope.scope_kind if assembled_target_scope is not None else None,
+                scope_source="fallback",
                 target_objects=list(assembled_target_scope.object_names or [])
                 if assembled_target_scope is not None
                 else [],
+                mark_id_map=_packet_mark_id_map(
+                    full_mark_id_map=full_mark_id_map,
+                    packet_target_objects=list(assembled_target_scope.object_names or [])
+                    if assembled_target_scope is not None
+                    else [],
+                ),
                 reference_ids=packet_reference_ids,
                 capture_labels=packet_capture_labels,
                 compare_question=_packet_question_for_view(view_id),
@@ -1134,14 +1688,22 @@ def build_compare_packets(
                 budget_notes=budget_notes,
             )
     else:
-        scope_clusters = (
-            _scope_clusters_from_focus_pairs(
+        registered_scope_clusters = _scope_clusters_from_registered_graph(
+            registered_compare_scope,
+            focus_pairs=focus_pairs,
+        )
+        if registered_scope_clusters:
+            scope_clusters = registered_scope_clusters
+            scope_source: ReferenceCompareScopeSourceLiteral = "registered_graph"
+        elif focus_pairs and not prefer_target_scope_clusters:
+            scope_clusters = _scope_clusters_from_focus_pairs(
                 focus_pairs,
                 primary_target=assembled_target_scope.primary_target if assembled_target_scope is not None else None,
             )
-            if focus_pairs and not prefer_target_scope_clusters
-            else _scope_clusters_from_target_scope(assembled_target_scope)
-        )
+            scope_source = "focus_pairs"
+        else:
+            scope_clusters = _scope_clusters_from_target_scope(assembled_target_scope)
+            scope_source = "target_scope"
         if scope_clusters:
             active_views: list[str | None] = list(selected_views) if selected_views else [None]
             for cluster in scope_clusters:
@@ -1164,8 +1726,13 @@ def build_compare_packets(
                         packet_label=cluster.scope_label,
                         target_view=view_id,
                         scope_label=cluster.scope_label,
+                        scope_source=scope_source,
                         target_objects=list(cluster.target_objects),
                         truth_pairs=list(cluster.truth_pairs),
+                        mark_id_map=_packet_mark_id_map(
+                            full_mark_id_map=full_mark_id_map,
+                            packet_target_objects=cluster.target_objects,
+                        ),
                         reference_ids=packet_reference_ids,
                         capture_labels=packet_capture_labels,
                         compare_question=_packet_question_for_view(view_id, scope_label=cluster.scope_label),
@@ -1196,9 +1763,16 @@ def build_compare_packets(
                     packet_label=f"{view_id} packet",
                     target_view=view_id,
                     scope_label=None,
+                    scope_source="fallback",
                     target_objects=list(assembled_target_scope.object_names or [])
                     if assembled_target_scope is not None
                     else [],
+                    mark_id_map=_packet_mark_id_map(
+                        full_mark_id_map=full_mark_id_map,
+                        packet_target_objects=list(assembled_target_scope.object_names or [])
+                        if assembled_target_scope is not None
+                        else [],
+                    ),
                     reference_ids=packet_reference_ids,
                     capture_labels=packet_capture_labels,
                     compare_question=_packet_question_for_view(view_id),
@@ -1216,9 +1790,16 @@ def build_compare_packets(
                 packet_label="general packet",
                 target_view=None,
                 scope_label=scope_label,
+                scope_source="fallback",
                 target_objects=list(assembled_target_scope.object_names or [])
                 if assembled_target_scope is not None
                 else [],
+                mark_id_map=_packet_mark_id_map(
+                    full_mark_id_map=full_mark_id_map,
+                    packet_target_objects=list(assembled_target_scope.object_names or [])
+                    if assembled_target_scope is not None
+                    else [],
+                ),
                 reference_ids=all_reference_ids,
                 capture_labels=all_capture_labels,
                 compare_question=_packet_question_for_view(None, scope_label=scope_label),
@@ -1236,6 +1817,7 @@ def build_compare_packets(
         synthesis_status="not_needed" if len(packets) <= 1 else "skipped",
         packets=packets,
         budget_notes=budget_notes,
+        registered_compare_scope=registered_compare_scope,
     )
 
 
@@ -1274,6 +1856,16 @@ def merge_packet_phase_results(
             "likely_issues": likely_issues,
             "next_corrections": next_corrections,
             "recommended_checks": recommended_checks,
+            "findings": list(ranking_result.findings or extraction_result.findings or []),
+            "object_correspondence": list(
+                ranking_result.object_correspondence or extraction_result.object_correspondence or []
+            ),
+            "rejected_mark_ids": list(ranking_result.rejected_mark_ids or extraction_result.rejected_mark_ids or []),
+            "validity_retry_attempted": bool(
+                ranking_result.validity_retry_attempted or extraction_result.validity_retry_attempted
+            ),
+            "open_defects": list(ranking_result.open_defects or extraction_result.open_defects or []),
+            "verify_status": list(extraction_result.verify_status or ranking_result.verify_status or []),
             "packet_guidance": ranking_result.packet_guidance or extraction_result.packet_guidance,
             "confidence": ranking_result.confidence
             if ranking_result.confidence is not None
@@ -1347,6 +1939,43 @@ def synthesize_packet_vision_result(
                 continue
             seen_check_keys.add(check_key)
             recommended_checks.append(check)
+    findings = []
+    seen_finding_ids: set[str] = set()
+    for _, result in successful_results:
+        for finding in list(result.findings or []):
+            finding_key = finding.defect_id or finding.finding
+            if finding_key in seen_finding_ids:
+                continue
+            seen_finding_ids.add(finding_key)
+            findings.append(finding)
+    object_correspondence = []
+    seen_correspondence_ids: set[int] = set()
+    for _, result in successful_results:
+        for row in list(result.object_correspondence or []):
+            if row.mark_id in seen_correspondence_ids:
+                continue
+            seen_correspondence_ids.add(row.mark_id)
+            object_correspondence.append(row)
+    rejected_mark_ids = sorted(
+        {mark_id for _, result in successful_results for mark_id in list(result.rejected_mark_ids or [])}
+    )
+    open_defects: list[VisionOpenDefectContract] = []
+    seen_defect_ids: set[str] = set()
+    for _, result in successful_results:
+        for defect in list(result.open_defects or []):
+            if defect.defect_id in seen_defect_ids:
+                continue
+            seen_defect_ids.add(defect.defect_id)
+            open_defects.append(defect)
+    verify_status: list[VisionDefectVerifyStatusContract] = []
+    seen_verify_ids: set[str] = set()
+    for _, result in successful_results:
+        for status in list(result.verify_status or []):
+            key = f"{status.defect_id}:{status.status}"
+            if key in seen_verify_ids:
+                continue
+            seen_verify_ids.add(key)
+            verify_status.append(status)
     if len(likely_issues) > 6:
         omitted_count += len(likely_issues) - 6
     if len(recommended_checks) > 6:
@@ -1404,6 +2033,12 @@ def synthesize_packet_vision_result(
         likely_issues=likely_issues[:6],
         next_corrections=next_corrections,
         recommended_checks=recommended_checks[:6],
+        findings=findings[:8],
+        object_correspondence=object_correspondence[:16],
+        rejected_mark_ids=rejected_mark_ids,
+        validity_retry_attempted=any(result.validity_retry_attempted for _, result in successful_results),
+        open_defects=open_defects[:12],
+        verify_status=verify_status[:12],
         packet_guidance=VisionPacketStatusContract(
             packet_status="ready" if correction_focus else "clean",
             status_reason=None,
@@ -1843,6 +2478,53 @@ async def collect_compare_time_localization_support(
     )
 
 
+def _should_request_compare_time_segmentation(
+    reason: ReferenceLocalizedSupportReasonLiteral | None,
+    localization_candidates: Sequence[VisionLocalizationCandidate],
+) -> bool:
+    if reason in {"mask_needed", "seam_unclear"}:
+        return True
+    return bool(localization_candidates)
+
+
+def _runtime_capability_usage(
+    *,
+    capability: Literal["vision", "localization", "segmentation"],
+    configured: bool,
+    considered_packet_ids: Sequence[str],
+    invoked_packet_ids: Sequence[str],
+    provider_name: str | None = None,
+    available: bool = False,
+    unavailable: bool = False,
+    notes: Sequence[str] = (),
+) -> ReferenceRuntimeCapabilityUsageContract:
+    considered = bool(considered_packet_ids)
+    invoked = bool(invoked_packet_ids)
+    if not configured:
+        status = "not_configured"
+    elif invoked and available:
+        status = "used"
+    elif invoked and unavailable:
+        status = "unavailable"
+    elif invoked:
+        status = "used"
+    elif considered:
+        status = "skipped_by_policy"
+    else:
+        status = "configured"
+    packet_ids = _unique_preserving_order([*list(invoked_packet_ids), *list(considered_packet_ids)])[:8]
+    return ReferenceRuntimeCapabilityUsageContract(
+        capability=capability,
+        status=cast(Any, status),
+        configured=configured,
+        considered=considered,
+        invoked=invoked,
+        provider_name=provider_name,
+        packet_ids=packet_ids,
+        notes=_unique_preserving_order([str(note).strip() for note in notes if str(note).strip()])[:4],
+    )
+
+
 async def execute_compare_packets(
     *,
     ctx: Any,
@@ -1860,9 +2542,11 @@ async def execute_compare_packets(
     resolved_target_object: str | None,
     resolved_target_objects: Sequence[str],
     assembled_target_scope: SceneAssembledTargetScopeContract,
+    guided_domain_profile: str | None,
     localization_config: Any,
     segmentation_sidecar_config: Any,
     resolver: Any,
+    prior_open_defects: Sequence[Mapping[str, Any] | ReferenceOpenDefectContract] = (),
     run_vision_assist_fn=run_vision_assist,
     to_vision_assistant_contract_fn=to_vision_assistant_contract,
 ) -> PacketCompareExecutionResult:
@@ -1870,6 +2554,13 @@ async def execute_compare_packets(
     part_segmentation: ReferencePartSegmentationContract | None = None
     packet_assistants: list[tuple[ReferenceComparePacketContract, VisionAssistantContract | None]] = []
     localized_support_requested = False
+    creature_compare_domain = _is_creature_compare_domain(goal=goal, guided_domain_profile=guided_domain_profile)
+    localization_configured = bool(
+        localization_config is not None and bool(getattr(localization_config, "enabled", False))
+    )
+    segmentation_configured = bool(
+        segmentation_sidecar_config is not None and bool(getattr(segmentation_sidecar_config, "enabled", False))
+    )
     localization_enabled = bool(
         localization_config is not None
         and bool(getattr(localization_config, "enabled", False))
@@ -1880,6 +2571,16 @@ async def execute_compare_packets(
         and bool(getattr(segmentation_sidecar_config, "enabled", False))
         and getattr(segmentation_sidecar_config, "endpoint", None)
     )
+    localization_considered_packet_ids: list[str] = []
+    localization_invoked_packet_ids: list[str] = []
+    localization_available = False
+    localization_unavailable = False
+    localization_notes: list[str] = []
+    segmentation_considered_packet_ids: list[str] = []
+    segmentation_invoked_packet_ids: list[str] = []
+    segmentation_available = False
+    segmentation_unavailable = False
+    segmentation_notes: list[str] = []
     capture_grid_enabled = _runtime_capture_grid_enabled(resolver)
     transmit_auxiliary_channels = _runtime_transmit_auxiliary_channels_enabled(resolver)
 
@@ -1924,15 +2625,24 @@ async def execute_compare_packets(
             else (resolved_target_object or assembled_target_scope.primary_target),
         )
         packet.localized_support_reason = _resolve_localized_support_reason(
+            goal=goal,
+            guided_domain_profile=guided_domain_profile,
             packet=packet,
             packet_truth_bundle=packet_truth_bundle,
             silhouette_analysis=packet_silhouette_analysis,
             action_hints=packet_action_hints,
+            prior_open_defects=prior_open_defects,
         )
         localization_candidates: list[VisionLocalizationCandidate] = []
         packet_part_segmentation: ReferencePartSegmentationContract | None = None
+        appendage_packet = creature_compare_domain and _is_bounded_creature_appendage_packet(packet)
+        if appendage_packet and (localization_configured or packet.localized_support_reason is not None):
+            localization_considered_packet_ids.append(packet.packet_id)
+        if appendage_packet and segmentation_configured:
+            segmentation_considered_packet_ids.append(packet.packet_id)
         if packet.localized_support_reason is not None:
             localized_support_requested = True
+            localization_invoked_packet_ids.append(packet.packet_id)
             (
                 localization_candidates,
                 packet_part_segmentation,
@@ -1943,9 +2653,18 @@ async def execute_compare_packets(
                 reference_records=packet_reference_records,
                 captures=packet_captures,
             )
-            packet_part_segmentation = merge_compare_time_part_segmentation(
-                packet_part_segmentation,
-                await collect_compare_time_segmentation_support(
+            if packet_part_segmentation is not None:
+                localization_notes.extend(packet_part_segmentation.notes)
+                if packet_part_segmentation.status == "available":
+                    localization_available = True
+                elif packet_part_segmentation.status == "unavailable":
+                    localization_unavailable = True
+            packet.reference_marks = _reference_marks_for_localization_candidates(packet, localization_candidates)
+            if _should_request_compare_time_segmentation(packet.localized_support_reason, localization_candidates):
+                if packet.packet_id not in segmentation_considered_packet_ids:
+                    segmentation_considered_packet_ids.append(packet.packet_id)
+                segmentation_invoked_packet_ids.append(packet.packet_id)
+                segmentation_result = await collect_compare_time_segmentation_support(
                     config=segmentation_sidecar_config,
                     goal=goal,
                     packet_id=packet.packet_id,
@@ -1956,7 +2675,30 @@ async def execute_compare_packets(
                     reference_records=packet_reference_records,
                     captures=packet_captures,
                     localization_candidates=localization_candidates,
-                ),
+                )
+                if segmentation_result is not None:
+                    segmentation_notes.extend(segmentation_result.notes)
+                    if segmentation_result.status == "available":
+                        segmentation_available = True
+                    elif segmentation_result.status == "unavailable":
+                        segmentation_unavailable = True
+                packet_part_segmentation = merge_compare_time_part_segmentation(
+                    packet_part_segmentation,
+                    segmentation_result,
+                )
+            elif segmentation_configured:
+                segmentation_notes.append(
+                    "Optional part segmentation was skipped by creature packet policy because no mask support "
+                    "was requested for this bounded packet."
+                )
+        elif appendage_packet and (localization_configured or segmentation_configured):
+            localization_notes.append(
+                "Optional localization was skipped by creature packet policy because the appendage packet was not "
+                "under-grounded by truth, silhouette, action-hint, or unresolved-defect evidence."
+            )
+            segmentation_notes.append(
+                "Optional part segmentation was skipped by creature packet policy because localization/mask support "
+                "was not requested for this bounded packet."
             )
         part_segmentation = merge_compare_time_part_segmentation(part_segmentation, packet_part_segmentation)
         packet.support_evidence = build_compare_support_evidence(
@@ -2027,6 +2769,8 @@ async def execute_compare_packets(
                 "packet_target_object": packet_target_object,
                 "packet_reference_ids": list(packet.reference_ids),
                 "packet_capture_labels": list(packet.capture_labels),
+                "packet_mark_id_map": dict(packet.mark_id_map),
+                "reference_marks": [mark.model_dump(mode="json") for mark in packet.reference_marks],
                 "support_evidence_summaries": list(packet_support_evidence_summaries),
                 "collection_name": resolved_collection_name,
                 "target_objects": list(packet.target_objects or resolved_target_objects),
@@ -2048,6 +2792,59 @@ async def execute_compare_packets(
             packet.uncertainty_notes = [packet.status_reason] if packet.status_reason else []
             packet_assistants.append((packet, extraction_vision_assistant))
             continue
+        corrected_result, rejected_mark_ids = _mark_correspondence_for_result(
+            extraction_vision_assistant.result,
+            packet=packet,
+            assembled_target_scope=assembled_target_scope,
+            retry_attempted=False,
+        )
+        if rejected_mark_ids:
+            retry_metadata = dict(extraction_request.metadata)
+            retry_metadata["valid_mark_ids"] = sorted(set(packet.mark_id_map.values()))
+            retry_hint = " | ".join(
+                part
+                for part in (
+                    extraction_request.prompt_hint,
+                    f"valid_mark_ids={','.join(str(item) for item in retry_metadata['valid_mark_ids'])}",
+                    "validity_retry=use_only_listed_mark_ids",
+                )
+                if part
+            )
+            retry_request = dataclass_replace(
+                extraction_request,
+                prompt_hint=retry_hint,
+                metadata=retry_metadata,
+            )
+            retry_outcome = await run_vision_assist_fn(
+                ctx,
+                request=retry_request,
+                resolver=resolver,
+            )
+            retry_assistant = to_vision_assistant_contract_fn(retry_outcome)
+            if retry_assistant.status == "success" and retry_assistant.result is not None:
+                corrected_result, rejected_mark_ids = _mark_correspondence_for_result(
+                    retry_assistant.result,
+                    packet=packet,
+                    assembled_target_scope=assembled_target_scope,
+                    retry_attempted=True,
+                )
+                extraction_vision_assistant = retry_assistant.model_copy(update={"result": corrected_result})
+            else:
+                corrected_result = corrected_result.model_copy(update={"validity_retry_attempted": True})
+                extraction_vision_assistant = extraction_vision_assistant.model_copy(
+                    update={"result": corrected_result}
+                )
+        else:
+            extraction_vision_assistant = extraction_vision_assistant.model_copy(update={"result": corrected_result})
+
+        tracked_result = _apply_packet_defect_tracking(
+            extraction_vision_assistant.result,
+            packet=packet,
+            prior_open_defects=prior_open_defects,
+        )
+        packet.open_defects = _reference_open_defects(tracked_result.open_defects)
+        packet.verify_status = _reference_verify_statuses(tracked_result.verify_status)
+        extraction_vision_assistant = extraction_vision_assistant.model_copy(update={"result": tracked_result})
 
         packet_guidance = extraction_vision_assistant.result.packet_guidance
         packet_status = packet_guidance.packet_status if packet_guidance is not None else None
@@ -2076,6 +2873,10 @@ async def execute_compare_packets(
             [
                 *(extraction_vision_assistant.result.proportion_mismatches or []),
                 *(item.summary for item in list(extraction_vision_assistant.result.likely_issues or [])),
+                *[
+                    f"Rejected invalid mark id {mark_id}; it was not present in this packet overlay."
+                    for mark_id in extraction_vision_assistant.result.rejected_mark_ids
+                ],
                 *([packet.status_reason] if packet.status_reason else []),
             ]
         )[:3]
@@ -2129,6 +2930,8 @@ async def execute_compare_packets(
                     "packet_target_object": packet_target_object,
                     "packet_reference_ids": list(packet.reference_ids),
                     "packet_capture_labels": list(packet.capture_labels),
+                    "packet_mark_id_map": dict(packet.mark_id_map),
+                    "reference_marks": [mark.model_dump(mode="json") for mark in packet.reference_marks],
                     "support_evidence_summaries": list(packet_support_evidence_summaries),
                     "collection_name": resolved_collection_name,
                     "target_objects": list(packet.target_objects or resolved_target_objects),
@@ -2189,6 +2992,8 @@ async def execute_compare_packets(
                     or effective_packet_result.next_corrections
                     or effective_packet_result.shape_mismatches
                 )[:3]
+                packet.open_defects = _reference_open_defects(effective_packet_result.open_defects)
+                packet.verify_status = _reference_verify_statuses(effective_packet_result.verify_status)
                 if packet.packet_status in {"blocked", "low_information"} and packet.status_reason:
                     packet.uncertainty_notes = _unique_preserving_order(
                         [*packet.uncertainty_notes, packet.status_reason]
@@ -2258,6 +3063,53 @@ async def execute_compare_packets(
             f"{failed_packet_count} compare packet(s) were blocked, low-information, or failed before synthesis.",
         )
     append_compare_synthesis_conflict_notes(compare_diagnostics)
+    vision_invoked_packet_ids = [packet.packet_id for packet, assistant in packet_assistants if assistant is not None]
+    vision_available = any(
+        assistant is not None and assistant.status == "success" for _, assistant in packet_assistants
+    )
+    vision_unavailable = bool(vision_invoked_packet_ids) and not vision_available
+    compare_diagnostics.runtime_evidence = ReferenceRuntimeEvidenceContract(
+        capabilities=[
+            _runtime_capability_usage(
+                capability="vision",
+                configured=True,
+                considered_packet_ids=[packet.packet_id for packet in list(compare_diagnostics.packets or [])],
+                invoked_packet_ids=vision_invoked_packet_ids,
+                available=vision_available,
+                unavailable=vision_unavailable,
+                notes=[
+                    f"Vision assistant was invoked for {len(vision_invoked_packet_ids)} compare packet(s)."
+                    if vision_invoked_packet_ids
+                    else "No compare packet reached the vision assistant.",
+                ],
+            ),
+            _runtime_capability_usage(
+                capability="localization",
+                configured=localization_configured,
+                considered_packet_ids=localization_considered_packet_ids,
+                invoked_packet_ids=localization_invoked_packet_ids,
+                provider_name=getattr(localization_config, "provider_name", None),
+                available=localization_available,
+                unavailable=localization_unavailable,
+                notes=localization_notes,
+            ),
+            _runtime_capability_usage(
+                capability="segmentation",
+                configured=segmentation_configured,
+                considered_packet_ids=segmentation_considered_packet_ids,
+                invoked_packet_ids=segmentation_invoked_packet_ids,
+                provider_name=getattr(segmentation_sidecar_config, "provider_name", None),
+                available=segmentation_available,
+                unavailable=segmentation_unavailable,
+                notes=segmentation_notes,
+            ),
+        ],
+        checkpoint_id=checkpoint_id,
+        packet_ids=[packet.packet_id for packet in list(compare_diagnostics.packets or [])][:12],
+        notes=[
+            "Optional localization/segmentation policy is creature-domain, appendage-packet bounded, and advisory-only."
+        ],
+    )
 
     return PacketCompareExecutionResult(
         compare_diagnostics=compare_diagnostics,

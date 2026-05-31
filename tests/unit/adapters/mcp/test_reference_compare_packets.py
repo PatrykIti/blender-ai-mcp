@@ -24,9 +24,10 @@ from server.adapters.mcp.contracts.scene import (
     SceneAssembledTargetScopeContract,
     SceneCorrectionTruthBundleContract,
     SceneCorrectionTruthSummaryContract,
+    SceneScopeObjectRoleContract,
     SceneTruthFollowupContract,
 )
-from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
+from server.adapters.mcp.contracts.vision import VisionCaptureImageContract, VisionOverlayMarkContract
 from server.adapters.mcp.sampling.result_types import (
     VisionAssistContract,
     VisionInputSummaryContract,
@@ -84,7 +85,17 @@ def _capture(
     label: str,
     *,
     preset_name: str,
-    view_kind: Literal["wide", "focus", "overlay", "reference", "depth", "normal", "object_id"] = "focus",
+    view_kind: Literal[
+        "wide",
+        "focus",
+        "top",
+        "oblique",
+        "overlay",
+        "reference",
+        "depth",
+        "normal",
+        "object_id",
+    ] = "focus",
 ) -> VisionCaptureImageContract:
     return VisionCaptureImageContract(
         label=label,
@@ -93,6 +104,26 @@ def _capture(
         preset_name=preset_name,
         media_type="image/png",
         view_kind=view_kind,
+    )
+
+
+def _overlay_capture(
+    label: str,
+    *,
+    preset_name: str,
+    marks: dict[str, int],
+) -> VisionCaptureImageContract:
+    return VisionCaptureImageContract(
+        label=label,
+        image_path=f"/tmp/{label}.jpg",
+        host_visible_path=f"/tmp/{label}.jpg",
+        preset_name=preset_name,
+        media_type="image/jpeg",
+        view_kind="overlay",
+        overlay_marks=[
+            VisionOverlayMarkContract(mark_id=mark_id, object_name=object_name)
+            for object_name, mark_id in sorted(marks.items(), key=lambda item: (item[1], item[0]))
+        ],
     )
 
 
@@ -317,6 +348,8 @@ def test_localized_support_reason_is_none_without_truth_or_perception_trigger():
     silhouette = ReferenceSilhouetteAnalysisContract(status="available")
 
     reason = compare_packets_area._resolve_localized_support_reason(
+        goal="low poly creature",
+        guided_domain_profile="creature",
         packet=packet,
         packet_truth_bundle=truth_bundle,
         silhouette_analysis=silhouette,
@@ -329,10 +362,11 @@ def test_localized_support_reason_is_none_without_truth_or_perception_trigger():
 def test_localized_support_reason_uses_mask_needed_for_packet_action_hints():
     packet = ReferenceComparePacketContract(
         packet_id="packet:test:mask",
-        packet_kind="view",
-        packet_label="front packet",
+        packet_kind="scope",
+        packet_label="Tail packet",
         target_view="front",
-        target_objects=["Creature"],
+        scope_label="Tail",
+        target_objects=["Squirrel_Body", "Squirrel_Tail"],
         reference_ids=["ref_front"],
         capture_labels=["target_front_after"],
         compare_question="Compare the front silhouette against the references.",
@@ -358,6 +392,8 @@ def test_localized_support_reason_uses_mask_needed_for_packet_action_hints():
     silhouette = ReferenceSilhouetteAnalysisContract(status="available")
 
     reason = compare_packets_area._resolve_localized_support_reason(
+        goal="low poly creature",
+        guided_domain_profile="creature",
         packet=packet,
         packet_truth_bundle=truth_bundle,
         silhouette_analysis=silhouette,
@@ -371,6 +407,55 @@ def test_localized_support_reason_uses_mask_needed_for_packet_action_hints():
     )
 
     assert reason == "mask_needed"
+
+
+def test_localized_support_reason_skips_broad_body_head_even_with_action_hints():
+    packet = ReferenceComparePacketContract(
+        packet_id="packet:test:broad",
+        packet_kind="scope",
+        packet_label="Body + Head",
+        target_view="front",
+        scope_label="Body + Head",
+        target_objects=["Squirrel_Body", "Squirrel_Head"],
+        reference_ids=["ref_front"],
+        capture_labels=["target_front_after"],
+        compare_question="Compare the body and head scope against the references.",
+    )
+    truth_bundle = SceneCorrectionTruthBundleContract(
+        scope=SceneAssembledTargetScopeContract(
+            scope_kind="object_set",
+            primary_target="Squirrel_Body",
+            object_names=["Squirrel_Body", "Squirrel_Head"],
+            object_count=2,
+        ),
+        summary=SceneCorrectionTruthSummaryContract(
+            pairing_strategy="none",
+            pair_count=0,
+            evaluated_pairs=0,
+            contact_failures=0,
+            overlap_pairs=0,
+            separated_pairs=0,
+            misaligned_pairs=0,
+        ),
+        checks=[],
+    )
+
+    reason = compare_packets_area._resolve_localized_support_reason(
+        goal="low poly creature",
+        guided_domain_profile="creature",
+        packet=packet,
+        packet_truth_bundle=truth_bundle,
+        silhouette_analysis=ReferenceSilhouetteAnalysisContract(status="available"),
+        action_hints=[
+            ReferenceActionHintContract(
+                hint_id="front_upper_profile",
+                hint_type="widen_upper_profile",
+                summary="Action hint: Upper silhouette band is narrower than the reference.",
+            )
+        ],
+    )
+
+    assert reason is None
 
 
 def test_collect_compare_time_localization_support_projects_candidates(monkeypatch):
@@ -779,6 +864,232 @@ def test_build_compare_packets_complex_focus_clusters_keep_view_and_scope_slices
     assert all(packet.packet_kind == "view_scope" for packet in packets.packets)
 
 
+def test_build_compare_packets_prefers_registered_part_graph_over_name_focus_clusters():
+    scope = SceneAssembledTargetScopeContract(
+        scope_kind="object_set",
+        primary_target="Squirrel_Body",
+        object_names=["Squirrel_Body", "Squirrel_Head", "Squirrel_Tail", "Squirrel_Snout"],
+        object_count=4,
+        object_roles=[
+            SceneScopeObjectRoleContract(
+                object_name="Squirrel_Body",
+                role="anchor_core",
+                is_primary=True,
+                signals=["guided_part_registry", "guided_role:body_core"],
+            ),
+            SceneScopeObjectRoleContract(
+                object_name="Squirrel_Head",
+                role="attached_mass",
+                signals=["guided_part_registry", "guided_role:head_mass"],
+            ),
+            SceneScopeObjectRoleContract(
+                object_name="Squirrel_Tail",
+                role="attached_appendage",
+                signals=["guided_part_registry", "guided_role:tail_mass"],
+            ),
+            SceneScopeObjectRoleContract(
+                object_name="Squirrel_Snout",
+                role="attached_appendage",
+                signals=["guided_part_registry", "guided_role:snout_mass"],
+            ),
+        ],
+    )
+
+    packets = build_compare_packets(
+        target_view=None,
+        captures=[
+            _capture("target_front_after", preset_name="target_front"),
+            _capture("target_side_after", preset_name="target_side"),
+        ],
+        reference_records=[
+            _reference("ref_front", label="front_ref", target_view="front"),
+            _reference("ref_side", label="side_ref", target_view="side"),
+        ],
+        assembled_target_scope=scope,
+        truth_followup=SceneTruthFollowupContract(
+            scope=scope,
+            continue_recommended=True,
+            message="Head and tail seams still need work.",
+            focus_pairs=["Squirrel_Head -> Squirrel_Body", "Squirrel_Tail -> Squirrel_Body"],
+        ),
+    )
+
+    assert packets.registered_compare_scope == scope
+    assert packets.packet_count == 2
+    assert {packet.scope_label for packet in packets.packets} == {"Registered Part Graph"}
+    assert {packet.scope_source for packet in packets.packets} == {"registered_graph"}
+    assert all(packet.target_objects == scope.object_names for packet in packets.packets)
+
+
+def test_build_compare_packets_carries_exact_overlay_mark_id_map_on_packets():
+    scope = SceneAssembledTargetScopeContract(
+        scope_kind="object_set",
+        primary_target="Squirrel_Body",
+        object_names=["Squirrel_Body", "Squirrel_Head", "Squirrel_Tail"],
+        object_count=3,
+    )
+
+    packets = build_compare_packets(
+        target_view="front",
+        captures=[
+            _capture("target_front_after", preset_name="target_front"),
+            _overlay_capture(
+                "target_front_after_overlay",
+                preset_name="target_front",
+                marks={"Squirrel_Body": 1, "Squirrel_Head": 2, "Squirrel_Tail": 3},
+            ),
+        ],
+        reference_records=[_reference("ref_front", label="front_ref", target_view="front")],
+        assembled_target_scope=scope,
+        truth_followup=SceneTruthFollowupContract(
+            scope=scope,
+            continue_recommended=True,
+            message="Head and tail still need work.",
+            focus_pairs=["Squirrel_Head -> Squirrel_Body"],
+        ),
+    )
+
+    assert packets.packets[0].mark_id_map == {"Squirrel_Body": 1, "Squirrel_Head": 2}
+
+
+def test_mark_correspondence_rejects_invalid_mark_ids_and_maps_valid_roles():
+    scope = SceneAssembledTargetScopeContract(
+        scope_kind="object_set",
+        primary_target="Squirrel_Body",
+        object_names=["Squirrel_Body", "Squirrel_Head"],
+        object_count=2,
+        object_roles=[
+            SceneScopeObjectRoleContract(object_name="Squirrel_Body", role="anchor_core", is_primary=True),
+            SceneScopeObjectRoleContract(object_name="Squirrel_Head", role="attached_mass"),
+        ],
+    )
+    packet = ReferenceComparePacketContract(
+        packet_id="packet_1",
+        packet_label="front packet",
+        target_objects=["Squirrel_Body", "Squirrel_Head"],
+        reference_ids=["ref_front"],
+        capture_labels=["target_front_after"],
+        mark_id_map={"Squirrel_Body": 1, "Squirrel_Head": 2},
+        reference_marks=[
+            VisionOverlayMarkContract(
+                mark_id=2,
+                object_name="Squirrel_Head",
+                source="grounded_sam_sidecar",
+                image_side="reference",
+            )
+        ],
+        compare_question="Compare.",
+    )
+    result = VisionAssistContract(
+        goal_summary="Head differs.",
+        visible_changes=[],
+        findings=[
+            {
+                "finding": "Head is too small",
+                "target_label": "head_mass",
+                "magnitude_ratio": 0.7,
+                "mark_id": 2,
+            },
+            {"finding": "Invented mark", "mark_id": 9},
+        ],
+    )
+
+    updated, rejected = compare_packets_area._mark_correspondence_for_result(
+        result,
+        packet=packet,
+        assembled_target_scope=scope,
+        retry_attempted=True,
+    )
+
+    assert rejected == [9]
+    assert updated.rejected_mark_ids == [9]
+    assert updated.validity_retry_attempted is True
+    assert len(updated.object_correspondence) == 1
+    row = updated.object_correspondence[0]
+    assert row.mark_id == 2
+    assert row.object_name == "Squirrel_Head"
+    assert row.role == "attached_mass"
+    assert row.image_sides == ["render", "reference"]
+    assert row.proportional_ratio_vs_anchor == 0.7
+
+
+def test_packet_defect_tracking_assigns_packet_scoped_ids_and_verifies_prior_defects():
+    packet = ReferenceComparePacketContract(
+        packet_id="packet:front:test",
+        packet_label="front packet",
+        scope_label="Head",
+        compare_question="Compare front.",
+        capture_labels=["front_after"],
+        reference_ids=["front_ref"],
+    )
+    result = VisionAssistContract(
+        backend_kind="mlx_local",
+        goal_summary="Head needs work.",
+        visible_changes=["Front silhouette is readable."],
+        shape_mismatches=["Head is too round."],
+        correction_focus=["Head is too round."],
+        findings=[
+            {
+                "finding": "Head is too round.",
+                "target_label": "Head",
+                "axis": "x",
+                "direction": "decrease",
+                "confidence": 0.8,
+            }
+        ],
+        packet_guidance=VisionPacketStatusContract(packet_status="ready", ranking_recommendation="rank"),
+    )
+
+    tracked = compare_packets_area._apply_packet_defect_tracking(
+        result,
+        packet=packet,
+        prior_open_defects=[],
+    )
+
+    assert len(tracked.open_defects) == 1
+    defect = tracked.open_defects[0]
+    assert defect.defect_id.startswith("defect_")
+    assert tracked.findings[0].defect_id == defect.defect_id
+    assert defect.scope_label == "Head"
+    assert defect.severity == "high"
+
+    repeated = compare_packets_area._apply_packet_defect_tracking(
+        result,
+        packet=packet,
+        prior_open_defects=[
+            {
+                "packet_id": packet.packet_id,
+                "scope_label": packet.scope_label,
+                "defects": [defect.model_dump(mode="json")],
+            }
+        ],
+    )
+
+    assert repeated.verify_status[0].defect_id == defect.defect_id
+    assert repeated.verify_status[0].status == "unresolved"
+
+    clean_result = VisionAssistContract(
+        backend_kind="mlx_local",
+        goal_summary="Head now matches.",
+        visible_changes=["Front silhouette is readable."],
+        packet_guidance=VisionPacketStatusContract(packet_status="clean", ranking_recommendation="skip_clean"),
+    )
+    verified = compare_packets_area._apply_packet_defect_tracking(
+        clean_result,
+        packet=packet,
+        prior_open_defects=[
+            {
+                "packet_id": packet.packet_id,
+                "scope_label": packet.scope_label,
+                "defects": [defect.model_dump(mode="json")],
+            }
+        ],
+    )
+
+    assert verified.open_defects == []
+    assert verified.verify_status[0].status == "resolved"
+
+
 def test_build_compare_packets_can_prefer_primary_mass_scope_clusters_over_focus_pairs():
     scope = SceneAssembledTargetScopeContract(
         scope_kind="collection",
@@ -1173,6 +1484,22 @@ def test_synthesize_packet_vision_result_preserves_truncation_accounting():
         recommended_checks=[
             VisionRecommendedCheckContract(tool_name=f"check_{index}", reason=f"reason {index}") for index in range(7)
         ],
+        open_defects=[
+            {
+                "defect_id": "defect_front_shape",
+                "summary": "Front shape remains too blocky.",
+                "scope_label": "front packet",
+                "severity": "medium",
+            }
+        ],
+        verify_status=[
+            {
+                "defect_id": "defect_prior_shape",
+                "status": "resolved",
+                "reason": "No longer re-emitted.",
+                "scope_label": "front packet",
+            }
+        ],
         evidence_truncated=True,
         omitted_count=2,
     )
@@ -1186,6 +1513,8 @@ def test_synthesize_packet_vision_result_preserves_truncation_accounting():
     assert len(synthesized.recommended_checks) == 6
     assert synthesized.evidence_truncated is True
     assert synthesized.omitted_count == 6
+    assert synthesized.open_defects[0].defect_id == "defect_front_shape"
+    assert synthesized.verify_status[0].status == "resolved"
 
 
 def test_merge_packet_phase_results_does_not_keep_extraction_focus_after_ranking_downgrade():
@@ -1197,6 +1526,22 @@ def test_merge_packet_phase_results_does_not_keep_extraction_focus_after_ranking
         shape_mismatches=["Head looks too round."],
         correction_focus=["Head silhouette"],
         next_corrections=["Flatten the head silhouette."],
+        open_defects=[
+            {
+                "defect_id": "defect_head_round",
+                "summary": "Head looks too round.",
+                "scope_label": "Head",
+                "severity": "high",
+            }
+        ],
+        verify_status=[
+            {
+                "defect_id": "defect_prior_head",
+                "status": "downgraded",
+                "reason": "Prior defect changed.",
+                "scope_label": "Head",
+            }
+        ],
         packet_guidance=VisionPacketStatusContract(
             packet_status="ready",
             ranking_recommendation="rank",
@@ -1224,6 +1569,8 @@ def test_merge_packet_phase_results_does_not_keep_extraction_focus_after_ranking
     assert merged.correction_focus == []
     assert merged.shape_mismatches == []
     assert merged.next_corrections == []
+    assert merged.open_defects[0].defect_id == "defect_head_round"
+    assert merged.verify_status[0].defect_id == "defect_prior_head"
 
 
 def test_build_compare_packets_keeps_packet_reference_ids_local_to_scope_targets():

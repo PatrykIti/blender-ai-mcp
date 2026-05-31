@@ -435,6 +435,58 @@ def test_router_get_status_projects_configured_localized_support_notes_into_feed
     )
 
 
+def test_router_get_status_exposes_last_reference_runtime_evidence(monkeypatch):
+    monkeypatch.setattr("server.adapters.mcp.areas.router.get_router_handler", lambda: object())
+
+    ctx = DummyContext()
+    ctx.state["goal"] = "low poly squirrel"
+    ctx.state["reference_runtime_evidence"] = {
+        "checkpoint_id": "stage_tail",
+        "packet_ids": ["packet:tail:1"],
+        "capabilities": [
+            {
+                "capability": "classifier",
+                "status": "used",
+                "configured": True,
+                "considered": True,
+                "invoked": True,
+            },
+            {
+                "capability": "vision",
+                "status": "used",
+                "configured": True,
+                "considered": True,
+                "invoked": True,
+                "packet_ids": ["packet:tail:1"],
+            },
+            {
+                "capability": "localization",
+                "status": "skipped_by_policy",
+                "configured": True,
+                "considered": True,
+                "invoked": False,
+                "provider_name": "generic_sidecar",
+                "packet_ids": ["packet:tail:1"],
+            },
+            {
+                "capability": "segmentation",
+                "status": "not_configured",
+                "configured": False,
+                "considered": False,
+                "invoked": False,
+            },
+        ],
+    }
+
+    result = asyncio.run(router_get_status(ctx))
+
+    assert result.reference_runtime_evidence is not None
+    assert result.reference_runtime_evidence.checkpoint_id == "stage_tail"
+    assert result.reference_orchestrator_feedback is not None
+    assert result.reference_orchestrator_feedback.runtime_evidence is not None
+    assert result.reference_orchestrator_feedback.runtime_evidence.capabilities[2].status == "skipped_by_policy"
+
+
 def test_router_get_status_projects_last_guided_action_block_into_feedback(monkeypatch):
     class Handler:
         def set_goal(self, goal, resolved_params=None):

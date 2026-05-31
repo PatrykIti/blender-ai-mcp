@@ -1,7 +1,7 @@
 # TASK-173-03: Creature-Packet Consumer Policy For Optional Localization And Segmentation
 
 **Parent:** [TASK-173](./TASK-173_Reference_Guided_Creature_Scope_Convergence_And_Optional_Grounding_Followups.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Follow-on After:** [TASK-172-02](./TASK-172-02_Stage_Bound_Activation_Policy_And_Localized_Support_Contracts.md), [TASK-172-03](./TASK-172-03_GroundingDINO_Or_OWL_Localization_For_Packet_Bounded_Part_Ambiguity.md)
 **Related:** [TASK-172-04](./TASK-172-04_SAM_Or_SAM2_Local_Mask_And_Landmark_Support.md)
@@ -77,7 +77,7 @@ packet_support = merge_optional_support(packet_support, localization_support, se
 
 ## Status / Board Update
 
-- board tracking remains on umbrella `TASK-173`
+- board tracking is closed on umbrella `TASK-173`
 - no separate promoted board-row change is expected for this subtask unless it
   later becomes a standalone follow-on
 
@@ -92,3 +92,16 @@ packet_support = merge_optional_support(packet_support, localization_support, se
 ## Validation Category
 
 - optional grounding activation and advisory-support proof
+
+## Completion Summary
+
+Completed on 2026-05-31. Compare-time localization and segmentation now use a
+creature consumer policy instead of the generic sidecar trigger: optional
+support is considered only for bounded creature appendage packets and is
+invoked only when truth, silhouette/action-hint, or unresolved-defect evidence
+says that packet is under-grounded. Clean appendage packets surface
+`skipped_by_policy`, broad `Body + Head` packets do not trigger optional
+grounding, and segmentation runs only when mask support is actually requested
+or localization produced seed boxes.
+
+Validation evidence is recorded in changelog entry `394`.
