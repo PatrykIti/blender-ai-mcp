@@ -3,7 +3,7 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 3 tasks
+- **To Do:** 6 tasks
 - **In Progress:** 3 tasks
 - **Done:** 114
 - **Superseded:** 162
@@ -78,6 +78,8 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 |----|-------|----------|-------|
 | [TASK-137](./TASK-137_Anatomy_Aware_Reference_Guided_Organ_Reconstruction.md) | **Anatomy-Aware Reference-Guided Organ Reconstruction** | 🔴 High | Board-level organic-anatomy umbrella for bounded organ reconstruction from references with explicit medical-scope guardrails and anatomy-aware loop design. |
 | [TASK-138](./TASK-138_Anatomy_Aware_Reference_Guided_Biped_And_Fantasy_Character_Reconstruction.md) | **Anatomy-Aware Reference-Guided Biped and Fantasy Character Reconstruction** | 🔴 High | Board-level character umbrella for reference-guided humanoid and fantasy-character reconstruction with explicit body-part, symmetry, appendage, garment, and rig-handoff boundaries. |
+| [TASK-185](./TASK-185_Optional_Generative_3D_Seed_Asset_Intake.md) | **Optional Generative 3D Seed Asset Intake** | 🟡 Medium | Board-level default-off provider/sidecar intake task for generated seed assets, with current official API/licensing verification, provider-key handling, GLB/import, async lifecycle, and deterministic inspection handoff before implementation. |
+| [TASK-186](./TASK-186_Semantic_Part_Decomposition_And_Registry_Materialization.md) | **Semantic Part Decomposition And Registry Materialization** | 🔴 High | Board-level follow-on for converting one imported/scanned/generated mesh into materialized, inspectable semantic parts registered through the existing guided part registry; explicitly not covered by object-ID masks. |
 
 ### Vision & Hybrid Loop
 
@@ -94,16 +96,17 @@ Completed substrates and child slices nested under completed umbrellas: `TASK-17
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-174](./TASK-174_Per_Image_Caption_Interleaving_For_Vision_Payloads.md) | **Per-Image Caption Interleaving For Vision Payloads** | 🔴 High | Quick win (S). Images are sent to the VLM as bare blobs (`backends.py:~849-916`) with view/role identity only in a decoupled flat roster, so the model binds the Nth blob positionally and mis-attributes front/side/before/after/reference. Interleave a caption before each image (Set-of-Mark / ViP-LLaVA / VLM-Grounder). Highest impact-per-effort. |
-| [TASK-175](./TASK-175_Vision_Contract_Field_Descriptions_And_Stage_Read_Order.md) | **Vision Contract Field Descriptions And Stage Read-Order** | 🔴 High | Quick win (S). `MCPContract` has no field descriptions, so the LLM disambiguates ~7 near-synonymous string lists by name alone and stage docstrings never state authoritative-vs-advisory precedence. Add `Field(description=...)` + read-order (Descrip3D). Purely additive. |
-| [TASK-176](./TASK-176_Capture_Failure_And_Evidence_Truncation_Signal_Surfacing.md) | **Capture-Failure And Evidence-Truncation Signal Surfacing** | 🔴 High | Quick win (M). Camera-op failures are swallowed (`capture_runtime.py` `except: pass`) so a mislabeled view reaches the VLM with full confidence; lists are hard-capped with no omitted-count. Surface `capture_ok`/`evidence_truncated`/`analysis_unusable` (DiffuRank / 3DSRBench). |
+| [TASK-174](./TASK-174_Per_Image_Caption_Interleaving_For_Vision_Payloads.md) | **Per-Image Caption Interleaving For Vision Payloads** | 🔴 High | ✅ Completed in the Vision Output Quality wave. Per-image caption interleaving and payload parity are shipped. |
+| [TASK-175](./TASK-175_Vision_Contract_Field_Descriptions_And_Stage_Read_Order.md) | **Vision Contract Field Descriptions And Stage Read-Order** | 🔴 High | ✅ Completed in the Vision Output Quality wave. Vision/reference contract field descriptions and stage read-order guidance are shipped. |
+| [TASK-176](./TASK-176_Capture_Failure_And_Evidence_Truncation_Signal_Surfacing.md) | **Capture-Failure And Evidence-Truncation Signal Surfacing** | 🔴 High | ✅ Completed in the Vision Output Quality wave. Capture health, truncation, and unusable-analysis signals are shipped. |
 | [TASK-177](./TASK-177_Reachable_Rich_Multi_View_Capture_And_Top_View_Default.md) | **Reachable Rich Multi-View Capture And Top-View Default** | 🟡 Medium | ✅ Completed 2026-05-31. Budget-aware capture selection, optional grid composites, orthographic top, oblique compact view, and projection/view-kind metadata are shipped. |
-| [TASK-178](./TASK-178_Structured_Per_Finding_Compare_Schema.md) | **Structured Per-Finding Compare Schema** | 🔴 High | Structural (L). The compare schema emits bare `string[]` findings with no view/object/axis/magnitude binding. Replace with structured findings carrying proportional ratios vs a reference anchor (SpatialRGPT / SceneVerse / GPTEval3D). |
+| [TASK-178](./TASK-178_Structured_Per_Finding_Compare_Schema.md) | **Structured Per-Finding Compare Schema** | 🔴 High | ✅ Completed in the Vision Output Quality wave. Structured per-finding compare evidence, proportional binding, and synthesis preservation are shipped. |
 | [TASK-179](./TASK-179_Blender_Depth_Normal_And_Object_ID_Auxiliary_Passes.md) | **Blender Depth/Normal/Object-ID Auxiliary Passes** | 🔴 High | ✅ Completed 2026-05-31. Addon depth/normal/object-ID passes, live internal object-ID sidecar IoU, auxiliary transmission, and calibrated per-object thresholds are shipped. |
 | [TASK-180](./TASK-180_Set_Of_Mark_Object_Bound_Visual_Marks.md) | **Set-of-Mark Object-Bound Visual Marks** | 🔴 High | ✅ Completed 2026-05-31. Default-off overlay captures, stable mark IDs, optional reference mark provenance, mark-keyed correspondence, and validity retry are shipped. |
 | [TASK-181](./TASK-181_Scene_Graph_Diff_Compare_And_Registry_Scoped_Convergence.md) | **Scene-Graph Diff Compare And Registry-Scoped Convergence** | 🔴 High | ✅ Completed 2026-05-31. Graph diff/triplet substrates, scope-drift regression coverage, and registry-as-compare-scope integration are shipped. |
 | [TASK-182](./TASK-182_Critic_Verify_Compare_Loop_And_Deterministic_Exit_Criteria.md) | **Critic/Verify Compare Loop And Deterministic Exit Criteria** | 🔴 High | ✅ Completed 2026-05-31. Packet-scoped Critic defects, same-packet Verify status, deterministic-first feedback provenance, and synthesis preservation are shipped. |
-| [TASK-183](./TASK-183_Capability_Enriched_Vision_Schema_And_Deterministic_Cross_Check.md) | **Capability-Enriched Vision Schema And Deterministic Cross-Check** | 🟡 Medium | Structural (L). Model capability never enriches the schema (frontier models get the minimal prose schema and are routed to the field-dropping `google_family_compare`), and silhouette thresholds are uncalibrated magic numbers. Add capability-gated schema + a deterministic consistency score (MEt3R / 3DGen-Bench). |
+| [TASK-183](./TASK-183_Capability_Enriched_Vision_Schema_And_Deterministic_Cross_Check.md) | **Capability-Enriched Vision Schema And Deterministic Cross-Check** | 🟡 Medium | ✅ Completed 2026-05-30. Capability-aware schema/payload routing, provider usage reporting, calibrated silhouette thresholds, and lightweight deterministic consistency scoring are shipped. |
+| [TASK-184](./TASK-184_Vision_3D_Understanding_Audit_Corrections.md) | **Vision 3D Understanding Audit Corrections** | 🔴 High | Board-level follow-on for gaps found after the completed Vision Output Quality wave: per-model mark gating, projection-first marks, directional predicates, object-ID contract hardening, depth encoding legend, and per-axis reliability scorecard. |
 
 ---
 

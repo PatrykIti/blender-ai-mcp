@@ -8,6 +8,13 @@
 **Follow-on After:** [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md), [TASK-173](./TASK-173_Reference_Guided_Creature_Scope_Convergence_And_Optional_Grounding_Followups.md)
 **Related:** [TASK-174](./TASK-174_Per_Image_Caption_Interleaving_For_Vision_Payloads.md), [TASK-180](./TASK-180_Set_Of_Mark_Object_Bound_Visual_Marks.md), [TASK-183](./TASK-183_Capability_Enriched_Vision_Schema_And_Deterministic_Cross_Check.md)
 
+## Audit Follow-on Note
+
+`TASK-179` remains closed. The June 2026 Vision 3D understanding audit found
+follow-up work around object-ID contract precision and depth caption encoding;
+that work is tracked as standalone follow-on [TASK-184](./TASK-184_Vision_3D_Understanding_Audit_Corrections.md)
+instead of reopening this completed umbrella.
+
 ## Relationship To Existing Board Items
 
 - `TASK-172` already shipped the optional-runtime seam for heavy perception

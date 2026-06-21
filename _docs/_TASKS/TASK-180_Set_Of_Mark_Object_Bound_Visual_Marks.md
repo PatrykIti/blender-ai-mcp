@@ -8,6 +8,14 @@
 **Follow-on After:** [TASK-179](./TASK-179_Blender_Depth_Normal_And_Object_ID_Auxiliary_Passes.md), [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md)
 **Related:** [TASK-178](./TASK-178_Structured_Per_Finding_Compare_Schema.md), [TASK-181](./TASK-181_Scene_Graph_Diff_Compare_And_Registry_Scoped_Convergence.md), [TASK-173](./TASK-173_Reference_Guided_Creature_Scope_Convergence_And_Optional_Grounding_Followups.md)
 
+## Audit Follow-on Note
+
+`TASK-180` remains closed. The June 2026 Vision 3D understanding audit found
+follow-up work around per-model mark-overlay capability gating and
+projection-first mark anchoring; that work is tracked as standalone follow-on
+[TASK-184](./TASK-184_Vision_3D_Understanding_Audit_Corrections.md) instead of
+reopening this completed umbrella.
+
 ## Relationship To Existing Board Items
 
 - `TASK-179` is the upstream object-ID pass: it establishes which scene objects

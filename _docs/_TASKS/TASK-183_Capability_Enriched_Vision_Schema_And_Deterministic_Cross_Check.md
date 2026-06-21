@@ -9,6 +9,14 @@
 **Follow-on After:** [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md), [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md)
 **Related:** [TASK-178](./TASK-178_Structured_Per_Finding_Compare_Schema.md), [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md), [TASK-169](./TASK-169_Reference_Guided_Quality_Drift_Regression_And_Runtime_Authority.md)
 
+## Audit Follow-on Note
+
+`TASK-183` remains closed. The June 2026 Vision 3D understanding audit found
+follow-up work around model-aware mark gating and per-axis reliability
+scorecards; that work is tracked as standalone follow-on
+[TASK-184](./TASK-184_Vision_3D_Understanding_Audit_Corrections.md) instead of
+reopening this completed umbrella.
+
 ## Relationship To Existing Board Items
 
 - This umbrella is a standalone follow-on family, not a child of the parents it
