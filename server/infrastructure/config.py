@@ -9,7 +9,7 @@ from server.infrastructure.debug_profiles import parse_debug_selector
 class Config(BaseSettings):
     """Application Configuration"""
 
-    model_config = SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     # Blender RPC Connection
     BLENDER_RPC_HOST: str = Field(default="127.0.0.1", description="Host where Blender Addon is running")

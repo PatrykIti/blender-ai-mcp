@@ -34,3 +34,36 @@ def test_env_example_includes_transport_and_vision_guidance():
         "VISION_EXTERNAL_PROVIDER=generic",
     ):
         assert expected in text
+
+
+def test_config_env_file_allows_launcher_only_provider_aliases(tmp_path):
+    """A quick-launch .env may include secrets and launcher-only variables."""
+
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "\n".join(
+            [
+                "OPENROUTER_API_KEY=test-secret",
+                "REFERENCE_CLASSIFIER_AUTO_START=true",
+                "SEGMENTATION_SIDECAR_AUTO_START=true",
+                "LOCALIZATION_SIDECAR_AUTO_START=true",
+                "VISION_ENABLED=true",
+                "VISION_PROVIDER=openai_compatible_external",
+                "VISION_EXTERNAL_PROVIDER=openrouter",
+                "VISION_OPENROUTER_API_KEY_ENV=OPENROUTER_API_KEY",
+                "VISION_OPENROUTER_MODEL=x-ai/grok-4.3",
+                "VISION_SEGMENTATION_ENABLED=true",
+                "VISION_LOCALIZATION_ENABLED=true",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    config = Config(_env_file=env_file)
+
+    assert config.VISION_ENABLED is True
+    assert config.VISION_PROVIDER == "openai_compatible_external"
+    assert config.VISION_EXTERNAL_PROVIDER == "openrouter"
+    assert config.VISION_OPENROUTER_API_KEY_ENV == "OPENROUTER_API_KEY"
+    assert config.VISION_SEGMENTATION_ENABLED is True
+    assert config.VISION_LOCALIZATION_ENABLED is True
