@@ -6,7 +6,13 @@ import json
 from pathlib import Path
 
 import pytest
-from server.adapters.mcp.vision import evaluate_vision_result, load_golden_scenario
+from server.adapters.mcp.vision import (
+    VisionImageInput,
+    VisionRequest,
+    build_advisory_reliability_scorecard,
+    evaluate_vision_result,
+    load_golden_scenario,
+)
 
 
 def _fixture(name: str) -> Path:
@@ -29,6 +35,80 @@ def test_load_golden_scenario_without_references_is_supported():
     assert resolved.scenario.scenario_id == "default_cube_to_picnic_table"
     assert resolved.bundle_path.is_absolute()
     assert resolved.references_path is None
+
+
+def test_advisory_reliability_scorecard_reports_task_184_axes():
+    request = VisionRequest(
+        goal="match creature",
+        images=(
+            VisionImageInput(path="/tmp/front.png", role="after", label="target_front_after", view_kind="focus"),
+            VisionImageInput(path="/tmp/depth.png", role="after", label="target_front_after_depth", view_kind="depth"),
+        ),
+        metadata={
+            "packet_mark_id_map": {"Head": 1},
+            "support_evidence_summaries": ["Silhouette overlap is 0.42 (high)."],
+        },
+        truth_summary={
+            "directional_relations": [{"from_object": "Head", "relation": "left_of", "reference_frame": "camera"}],
+            "contact_failures": [],
+        },
+    )
+    entry = {
+        "backend": "mlx_local",
+        "status": "success",
+        "result": {
+            "captures_used": ["target_front_after", "target_front_after_depth"],
+            "findings": [{"finding": "head should move left", "mark_id": 1, "axis": "x", "direction": "increase"}],
+            "shape_mismatches": ["Head profile is too round."],
+            "proportion_mismatches": [],
+        },
+    }
+
+    scorecard = build_advisory_reliability_scorecard(entry=entry, request=request)
+    by_axis = {axis.axis: axis for axis in scorecard.axes}
+
+    assert list(by_axis) == [
+        "object_identity",
+        "mark_correspondence",
+        "spatial_direction",
+        "depth_ordering",
+        "contact_support",
+        "shape_profile",
+    ]
+    assert by_axis["object_identity"].status == "passed"
+    assert by_axis["object_identity"].score == 1.0
+    assert by_axis["mark_correspondence"].status == "passed"
+    assert by_axis["spatial_direction"].status == "available"
+    assert by_axis["depth_ordering"].status == "available"
+    assert any("near_bright_far_dark" in note for note in by_axis["depth_ordering"].notes)
+    assert by_axis["contact_support"].status == "available"
+    assert by_axis["shape_profile"].status == "passed"
+    assert scorecard.advisory_only is True
+
+
+def test_advisory_reliability_scorecard_reports_contradicted_identity_and_marks():
+    request = VisionRequest(
+        goal="match creature",
+        images=(VisionImageInput(path="/tmp/front.png", role="after", label="target_front_after"),),
+        metadata={"packet_mark_id_map": {"Head": 1}},
+    )
+    entry = {
+        "backend": "mlx_local",
+        "status": "success",
+        "result": {
+            "captures_used": ["target_front_after", "unknown_capture"],
+            "findings": [{"finding": "mark 99 is wrong", "mark_id": 99}],
+            "rejected_mark_ids": [99],
+        },
+    }
+
+    scorecard = build_advisory_reliability_scorecard(entry=entry, request=request)
+    by_axis = {axis.axis: axis for axis in scorecard.axes}
+
+    assert by_axis["object_identity"].status == "contradicted"
+    assert by_axis["object_identity"].score == 0.0
+    assert by_axis["mark_correspondence"].status == "contradicted"
+    assert by_axis["mark_correspondence"].score == 0.0
 
 
 @pytest.mark.parametrize(

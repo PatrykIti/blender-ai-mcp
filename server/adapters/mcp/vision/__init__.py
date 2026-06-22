@@ -58,6 +58,7 @@ from .evaluation import (
     VisionEvaluationSummary,
     VisionGoldenExpectations,
     VisionGoldenScenario,
+    build_advisory_reliability_scorecard,
     evaluate_vision_result,
     load_golden_scenario,
 )
@@ -127,6 +128,7 @@ __all__ = [
     "choose_capture_preset_profile",
     "choose_reference_target_view",
     "build_reference_capture_images",
+    "build_advisory_reliability_scorecard",
     "build_capture_bundle",
     "capture_scene_state",
     "capture_stage_images",

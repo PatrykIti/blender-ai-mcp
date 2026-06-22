@@ -1968,7 +1968,12 @@ async def _run_stage_checkpoint_compare(
     resolver = get_vision_backend_resolver()
     runtime_config = getattr(resolver, "runtime_config", None)
     transmit_auxiliary_channels = bool(getattr(runtime_config, "transmit_auxiliary_channels", False))
-    mark_overlay_enabled = bool(getattr(runtime_config, "mark_overlay_enabled", False))
+    mark_overlay_enabled = bool(getattr(runtime_config, "effective_mark_overlay_enabled", False))
+    mark_overlay_disabled_reason = (
+        str(getattr(runtime_config, "mark_overlay_disabled_reason", "") or "").strip()
+        if runtime_config is not None
+        else ""
+    )
 
     try:
         captures = capture_stage_images(
@@ -2104,6 +2109,13 @@ async def _run_stage_checkpoint_compare(
         if runtime_scope is not None
         else False,
     )
+    if (
+        not mark_overlay_enabled
+        and mark_overlay_disabled_reason
+        and bool(getattr(runtime_config, "mark_overlay_enabled", False))
+        and mark_overlay_disabled_reason not in compare_diagnostics.conflict_notes
+    ):
+        compare_diagnostics.conflict_notes.append(mark_overlay_disabled_reason)
     packet_execution = await _execute_compare_packets(
         ctx=ctx,
         compare_diagnostics=compare_diagnostics,

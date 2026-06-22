@@ -246,6 +246,14 @@ class SceneSymmetrySemanticsContract(MCPContract):
     verdict: Literal["symmetric", "asymmetric"] = "asymmetric"
 
 
+class SceneDirectionWorldContract(MCPContract):
+    reference_frame: Literal["world"] = "world"
+    axis: Literal["X", "Y", "Z"]
+    sign: Literal["negative", "zero", "positive"]
+    margin: float
+    ambiguous: bool = False
+
+
 class SceneRelationGraphPairContract(MCPContract):
     pair_id: str
     from_object: str
@@ -263,6 +271,7 @@ class SceneRelationGraphPairContract(MCPContract):
     attachment_semantics: SceneAttachmentSemanticsContract | None = None
     support_semantics: SceneSupportSemanticsContract | None = None
     symmetry_semantics: SceneSymmetrySemanticsContract | None = None
+    direction_world: SceneDirectionWorldContract | None = None
     error: str | None = None
 
 

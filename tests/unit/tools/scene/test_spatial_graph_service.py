@@ -182,6 +182,38 @@ class FakeReader:
         }
 
 
+class DirectionReader(FakeReader):
+    def measure_alignment(
+        self,
+        from_object: str,
+        to_object: str,
+        axes: list[str] | None = None,
+        reference: str = "CENTER",
+        tolerance: float = 0.0001,
+    ) -> dict:
+        axis_indices = {"X": 0, "Y": 1, "Z": 2}
+        normalized_axes = axes or ["X", "Y", "Z"]
+        from_center = self.boxes[from_object]["center"]
+        to_center = self.boxes[to_object]["center"]
+        deltas = {
+            axis.lower(): round(float(to_center[axis_indices[axis]] - from_center[axis_indices[axis]]), 6)
+            for axis in normalized_axes
+        }
+        aligned_axes = [axis for axis in normalized_axes if abs(deltas[axis.lower()]) <= tolerance]
+        return {
+            "from_object": from_object,
+            "to_object": to_object,
+            "reference": reference,
+            "axes": normalized_axes,
+            "deltas": deltas,
+            "aligned_axes": aligned_axes,
+            "misaligned_axes": [axis for axis in normalized_axes if axis not in aligned_axes],
+            "is_aligned": len(aligned_axes) == len(normalized_axes),
+            "tolerance": tolerance,
+            "units": "blender_units",
+        }
+
+
 def test_build_relation_graph_preserves_support_semantics_on_primary_pair_collision():
     service = SpatialGraphService()
     reader = FakeReader()
@@ -361,6 +393,97 @@ def test_relation_graph_does_not_treat_positional_window_name_as_limb():
     assert relation_graph["summary"]["attachment_pairs"] == 0
     assert relation_graph["pairs"][0]["pair_source"] == "primary_to_other"
     assert relation_graph["pairs"][0]["attachment_semantics"] is None
+
+
+@pytest.mark.parametrize(
+    ("object_name", "center", "expected_axis", "expected_sign", "expected_margin"),
+    [
+        ("LeftMarker_PhysicallyRight", [3.0, 0.0, 1.0], "X", "positive", 3.0),
+        ("BackMarker", [0.0, -2.5, 1.0], "Y", "negative", 2.5),
+        ("TopMarker", [0.0, 0.0, 4.0], "Z", "positive", 3.0),
+    ],
+)
+def test_relation_graph_reports_world_direction_from_geometry_not_names(
+    object_name: str,
+    center: list[float],
+    expected_axis: str,
+    expected_sign: str,
+    expected_margin: float,
+):
+    service = SpatialGraphService()
+    reader = DirectionReader()
+    half_extent = 0.25
+    reader.boxes[object_name] = {
+        "min": [center[0] - half_extent, center[1] - half_extent, center[2] - half_extent],
+        "max": [center[0] + half_extent, center[1] + half_extent, center[2] + half_extent],
+        "center": center,
+        "dimensions": [half_extent * 2.0, half_extent * 2.0, half_extent * 2.0],
+    }
+
+    relation_graph = service.build_relation_graph(
+        reader=reader,
+        scope_graph={
+            "scope_kind": "object_set",
+            "primary_target": object_name,
+            "object_names": [object_name, "Body"],
+            "object_count": 2,
+            "object_roles": [
+                {"object_name": object_name, "role": "anchor_core"},
+                {"object_name": "Body", "role": "structural_peer"},
+            ],
+        },
+        goal_hint=None,
+        include_truth_payloads=False,
+        include_guided_pairs=True,
+    )
+
+    assert relation_graph["summary"]["pair_count"] == 1
+    pair = relation_graph["pairs"][0]
+    assert pair["from_object"] == object_name
+    assert "direction_world" not in pair["relation_kinds"]
+    assert pair["direction_world"] == {
+        "reference_frame": "world",
+        "axis": expected_axis,
+        "sign": expected_sign,
+        "margin": expected_margin,
+        "ambiguous": False,
+    }
+
+
+def test_relation_graph_marks_near_equal_world_direction_ambiguous():
+    service = SpatialGraphService()
+    reader = DirectionReader()
+    object_name = "NearCenterPeer"
+    reader.boxes[object_name] = {
+        "min": [-0.24995, -0.25, 0.75],
+        "max": [0.25005, 0.25, 1.25],
+        "center": [0.00005, 0.0, 1.0],
+        "dimensions": [0.5, 0.5, 0.5],
+    }
+
+    relation_graph = service.build_relation_graph(
+        reader=reader,
+        scope_graph={
+            "scope_kind": "object_set",
+            "primary_target": object_name,
+            "object_names": [object_name, "Body"],
+            "object_count": 2,
+            "object_roles": [
+                {"object_name": object_name, "role": "anchor_core"},
+                {"object_name": "Body", "role": "structural_peer"},
+            ],
+        },
+        goal_hint=None,
+        include_truth_payloads=False,
+        include_guided_pairs=True,
+    )
+
+    direction_world = relation_graph["pairs"][0]["direction_world"]
+    assert direction_world["reference_frame"] == "world"
+    assert direction_world["axis"] == "X"
+    assert direction_world["sign"] == "zero"
+    assert direction_world["margin"] == pytest.approx(0.00005)
+    assert direction_world["ambiguous"] is True
 
 
 def test_relation_graph_infers_building_roof_wall_attachment_semantics():

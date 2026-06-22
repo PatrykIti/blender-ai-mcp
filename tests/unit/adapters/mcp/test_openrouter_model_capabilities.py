@@ -42,6 +42,7 @@ def test_openrouter_model_payload_normalizes_capability_fields():
     assert capabilities.input_modalities == ["text", "image"]
     assert capabilities.output_modalities == ["text"]
     assert capabilities.supported_parameters == ["max_tokens", "response_format", "structured_outputs"]
+    assert capabilities.visual_mark_overlays_supported is False
     assert capabilities.metadata_summary["canonical_slug"] == "openai/gpt-5.4-nano"
     assert capabilities.metadata_summary["top_provider_is_moderated"] is True
     assert capabilities.metadata_summary["has_default_parameters"] is True
@@ -56,6 +57,7 @@ def test_openrouter_catalog_missing_model_degrades_to_unknown_capabilities():
 
     assert capabilities.capability_source == "unknown"
     assert capabilities.model_id == "missing/model"
+    assert capabilities.visual_mark_overlays_supported is False
     assert capabilities.metadata_summary == {"lookup_status": "model_not_found"}
 
 

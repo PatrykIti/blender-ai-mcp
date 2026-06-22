@@ -328,10 +328,11 @@ def build_compare_support_evidence(
             ReferenceCompareSupportEvidenceContract(
                 evidence_kind="per_object_iou",
                 summary=(
-                    f"Capture-side Object-ID IoU for {metric.object_name} against the reference silhouette "
+                    f"Capture-side object-level Object Index visible-surface IoU for {metric.object_name} "
+                    f"against the reference silhouette "
                     f"is {metric.mask_iou:.2f} ({metric.severity})."
                     if metric.mask_iou is not None
-                    else f"Capture-side Object-ID IoU for {metric.object_name} is unavailable."
+                    else f"Capture-side object-level Object Index IoU for {metric.object_name} is unavailable."
                 ),
                 metric_id="per_object_mask_iou",
                 severity=metric.severity,

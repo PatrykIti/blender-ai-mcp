@@ -1,7 +1,9 @@
 # TASK-184-01: Per-Model Set-Of-Mark Overlay Gating
 
 **Parent:** [TASK-184](./TASK-184_Vision_3D_Understanding_Audit_Corrections.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completion Date:** 2026-06-22
+**Completion Summary:** Added `visual_mark_overlays_supported` to model capability/profile contracts, defaulting to false for unknown/live metadata and preserving reviewed fallback opt-ins when live OpenRouter metadata merges. Staged compare now uses `effective_mark_overlay_enabled`, reports a bounded disabled reason, omits mark request metadata when unavailable, and builds lean strict response schemas without `mark_id` unless marks exist.
 **Priority:** 🔴 High
 **Objective:** Require explicit model/runtime support before emitting Set-of-Mark overlay captures or mark-heavy response schemas, so small or unknown VLMs are not asked to reason over numbered marks they cannot reliably use.
 
@@ -59,3 +61,8 @@
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_reference_compare_packets.py -q`
+
+## Validation Run
+
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_openrouter_model_capabilities.py tests/unit/adapters/mcp/test_reference_compare_packets.py tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_marks.py tests/unit/adapters/mcp/test_vision_capture_runtime.py -q` -> 160 passed
+- `git diff --check` -> passed

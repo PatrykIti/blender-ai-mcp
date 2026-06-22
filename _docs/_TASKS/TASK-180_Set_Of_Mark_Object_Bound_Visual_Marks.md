@@ -16,6 +16,11 @@ projection-first mark anchoring; that work is tracked as standalone follow-on
 [TASK-184](./TASK-184_Vision_3D_Understanding_Audit_Corrections.md) instead of
 reopening this completed umbrella.
 
+2026-06-22 TASK-184 closeout: live overlay emission now requires explicit
+`visual_mark_overlays_supported=true` in the active model capabilities, and
+runtime anchors now prefer view projection diagnostics before the existing
+mask-centroid fallback while exposing bounded anchor metadata.
+
 ## Relationship To Existing Board Items
 
 - `TASK-179` is the upstream object-ID pass: it establishes which scene objects

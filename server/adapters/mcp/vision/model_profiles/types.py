@@ -27,6 +27,7 @@ class ModelCapabilityProfile(BaseModel):
     input_modalities: tuple[str, ...] = ()
     output_modalities: tuple[str, ...] = ()
     supported_parameters: tuple[str, ...] = ()
+    visual_mark_overlays_supported: bool = False
     preferred_contract_profile: VisionContractProfile | None = None
     preferred_stage_max_tokens: int | None = None
     docs_url: str | None = None
@@ -44,6 +45,7 @@ class ModelCapabilityProfile(BaseModel):
             input_modalities=list(self.input_modalities),
             output_modalities=list(self.output_modalities),
             supported_parameters=list(self.supported_parameters),
+            visual_mark_overlays_supported=self.visual_mark_overlays_supported,
             metadata_summary={
                 "provider": self.provider,
                 "family": self.family,
@@ -51,5 +53,6 @@ class ModelCapabilityProfile(BaseModel):
                 "last_reviewed": self.last_reviewed,
                 "preferred_contract_profile": self.preferred_contract_profile,
                 "preferred_stage_max_tokens": self.preferred_stage_max_tokens,
+                "visual_mark_overlays_supported": self.visual_mark_overlays_supported,
             },
         )

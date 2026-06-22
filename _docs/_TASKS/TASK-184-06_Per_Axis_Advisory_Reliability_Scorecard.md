@@ -1,7 +1,9 @@
 # TASK-184-06: Per-Axis Advisory Reliability Scorecard
 
 **Parent:** [TASK-184](./TASK-184_Vision_3D_Understanding_Audit_Corrections.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completion Date:** 2026-06-22
+**Completion Summary:** Added a default-off harness scorecard behind `scripts/vision_harness.py --emit-reliability-scorecard`. The scorecard reports advisory-only per-axis telemetry for object identity, mark correspondence, spatial direction, depth ordering, contact/support, and shape/profile evidence without expanding normal guided/runtime payloads.
 **Priority:** 🟡 Medium
 **Objective:** Add a default-off evaluation scorecard that measures VLM/render agreement by specific 3D-understanding axes instead of one blended confidence score.
 
@@ -53,3 +55,8 @@
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/scripts tests/unit/adapters/mcp -q`
+
+## Validation Run
+
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_silhouette.py tests/unit/adapters/mcp/test_vision_evaluation.py tests/unit/scripts/test_script_tooling.py -q` -> 94 passed
+- `git diff --check` -> passed

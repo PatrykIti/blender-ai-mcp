@@ -3,9 +3,9 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 6 tasks
+- **To Do:** 5 tasks
 - **In Progress:** 3 tasks
-- **Done:** 114
+- **Done:** 115
 - **Superseded:** 162
 
 ## 📐 Board Scope
@@ -79,7 +79,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | [TASK-137](./TASK-137_Anatomy_Aware_Reference_Guided_Organ_Reconstruction.md) | **Anatomy-Aware Reference-Guided Organ Reconstruction** | 🔴 High | Board-level organic-anatomy umbrella for bounded organ reconstruction from references with explicit medical-scope guardrails and anatomy-aware loop design. |
 | [TASK-138](./TASK-138_Anatomy_Aware_Reference_Guided_Biped_And_Fantasy_Character_Reconstruction.md) | **Anatomy-Aware Reference-Guided Biped and Fantasy Character Reconstruction** | 🔴 High | Board-level character umbrella for reference-guided humanoid and fantasy-character reconstruction with explicit body-part, symmetry, appendage, garment, and rig-handoff boundaries. |
 | [TASK-185](./TASK-185_Optional_Generative_3D_Seed_Asset_Intake.md) | **Optional Generative 3D Seed Asset Intake** | 🟡 Medium | Board-level default-off provider/sidecar intake task for generated seed assets, with current official API/licensing verification, provider-key handling, GLB/import, async lifecycle, and deterministic inspection handoff before implementation. |
-| [TASK-186](./TASK-186_Semantic_Part_Decomposition_And_Registry_Materialization.md) | **Semantic Part Decomposition And Registry Materialization** | 🔴 High | Board-level follow-on for converting one imported/scanned/generated mesh into materialized, inspectable semantic parts registered through the existing guided part registry; explicitly not covered by object-ID masks. |
+| [TASK-186](./TASK-186_Semantic_Part_Decomposition_And_Registry_Materialization.md) | **Semantic Part Decomposition And Registry Materialization** | 🔴 High | Board-level follow-on for converting one imported/scanned/generated mesh into materialized, inspectable semantic parts registered through the existing guided part registry; explicitly not covered by the pass-index mask path. |
 
 ### Vision & Hybrid Loop
 
@@ -106,7 +106,7 @@ Completed substrates and child slices nested under completed umbrellas: `TASK-17
 | [TASK-181](./TASK-181_Scene_Graph_Diff_Compare_And_Registry_Scoped_Convergence.md) | **Scene-Graph Diff Compare And Registry-Scoped Convergence** | 🔴 High | ✅ Completed 2026-05-31. Graph diff/triplet substrates, scope-drift regression coverage, and registry-as-compare-scope integration are shipped. |
 | [TASK-182](./TASK-182_Critic_Verify_Compare_Loop_And_Deterministic_Exit_Criteria.md) | **Critic/Verify Compare Loop And Deterministic Exit Criteria** | 🔴 High | ✅ Completed 2026-05-31. Packet-scoped Critic defects, same-packet Verify status, deterministic-first feedback provenance, and synthesis preservation are shipped. |
 | [TASK-183](./TASK-183_Capability_Enriched_Vision_Schema_And_Deterministic_Cross_Check.md) | **Capability-Enriched Vision Schema And Deterministic Cross-Check** | 🟡 Medium | ✅ Completed 2026-05-30. Capability-aware schema/payload routing, provider usage reporting, calibrated silhouette thresholds, and lightweight deterministic consistency scoring are shipped. |
-| [TASK-184](./TASK-184_Vision_3D_Understanding_Audit_Corrections.md) | **Vision 3D Understanding Audit Corrections** | 🔴 High | Board-level follow-on for gaps found after the completed Vision Output Quality wave: per-model mark gating, projection-first marks, directional predicates, object-ID contract hardening, depth encoding legend, and per-axis reliability scorecard. |
+| [TASK-184](./TASK-184_Vision_3D_Understanding_Audit_Corrections.md) | **Vision 3D Understanding Audit Corrections** | 🔴 High | ✅ Completed 2026-06-22. Model-gated marks, projection-first anchors, world-frame direction facts, object-ID/depth contract hardening, and default-off reliability scorecards are shipped. |
 
 ---
 
@@ -114,6 +114,7 @@ Completed substrates and child slices nested under completed umbrellas: `TASK-17
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-184](./TASK-184_Vision_3D_Understanding_Audit_Corrections.md) | **Vision 3D Understanding Audit Corrections** | 🔴 High | 2026-06-22 |
 | [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md) | **Optional Vision Capability Runtime And Localized Perception** | 🔴 High | 2026-05-23 |
 | [TASK-173](./TASK-173_Reference_Guided_Creature_Scope_Convergence_And_Optional_Grounding_Followups.md) | **Reference-Guided Creature Scope Convergence And Optional Grounding Follow-Ups** | 🔴 High | 2026-05-31 |
 | [TASK-171](./TASK-171_Creature_Attachment_First_Build_Contract_And_Structured_Vision_Handoff.md) | **Creature Attachment-First Build Contract And Structured Vision Handoff** | 🔴 High | 2026-05-21 |

@@ -276,6 +276,27 @@ Current runtime direction for the vision layer:
 - keep local/external backend choice pluggable
 - prefer deterministic capture bundles plus truth summaries over one ad hoc viewport image
 - keep heavyweight local VLM loading lazy/on-demand instead of tying MCP server startup to it
+- Set-of-Mark overlays are default-off and also model-capability gated:
+  `VISION_MARK_OVERLAY_ENABLED=true` is necessary but not sufficient unless the
+  active external model reports
+  `visual_mark_overlays_supported=true`. When marks are unavailable, staged
+  compare omits overlay captures, mark maps, mark legends, and mark-keyed schema
+  requirements.
+- live mark overlays use projection diagnostics before mask-centroid fallback
+  and expose bounded anchor metadata instead of treating visual mark placement
+  as scene truth.
+- Object Index auxiliary evidence is whole-object visible-surface
+  `pass_index` evidence. It does not provide face IDs, semantic parts, or
+  per-pixel mesh-polygon proof; high object counts and fragmented visible masks
+  are surfaced as advisory metadata.
+- relative-depth auxiliary captions carry
+  `encoding=near_bright_far_dark`, and the channel remains advisory.
+- `scene_relation_graph(...)` may include additive world-frame
+  `direction_world` semantics for existing relation pairs; unframed
+  left/right/front/behind wording is not a public contract.
+- eval harness scorecards are opt-in via
+  `scripts/vision_harness.py --emit-reliability-scorecard` and remain
+  advisory telemetry, not guided runtime payload or gate authority.
 
 They should not override deterministic measure/assert results.
 
@@ -1296,7 +1317,7 @@ Managing objects at the scene level.
 | `scene_compare_snapshot` | `baseline_snapshot` (str), `target_snapshot` (str), `ignore_minor_transforms` (float) | Compares two snapshots and returns diff summary (added/removed/modified objects). |
 | `reference_compare_checkpoint` | `checkpoint_path` (str), `checkpoint_label` (str, optional), `target_object` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional) | Compares one current checkpoint image against the active goal plus attached reference images and returns bounded vision interpretation for the next correction step. |
 | `reference_compare_current_view` | `checkpoint_label` (str, optional), `target_object` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional), viewport/camera args | Captures one current viewport/camera checkpoint using the bounded `scene_get_viewport` semantics, then compares it against the active goal plus attached reference images. |
-| `reference_compare_stage_checkpoint` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional), `checkpoint_label` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional), `preset_profile` (`compact`/`rich`) | Captures one deterministic multi-view stage checkpoint for a target object, object set, collection, or full assembled scene, then compares that view-set against the active goal plus attached reference images. The public tool name stays the same, but the staged compare path may now decompose the run into bounded packet-local view/scope compares, slice super-complex same-view reference sets to stay within the effective `VISION_MAX_IMAGES` limit, project additive top-level `compare_diagnostics` on rich delivery, multi-packet synthesis, model-budget pressure, or packet-uncertainty paths with packet ids, pass status, packet-local `support_evidence`, conflict notes, and `budget_control` limits, cluster architecture scopes into facade/opening, roofline, and support packets when those roles are present, and keep early creature-stage compares broad on body/head/tail primary masses instead of reusing stale ear/limb-local focus too early. Fails fast when `guided_reference_readiness.compare_ready` is false. |
+| `reference_compare_stage_checkpoint` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional), `checkpoint_label` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional), `preset_profile` (`compact`/`rich`) | Captures one deterministic multi-view stage checkpoint for a target object, object set, collection, or full assembled scene, then compares that view-set against the active goal plus attached reference images. The public tool name stays the same, but the staged compare path may now decompose the run into bounded packet-local view/scope compares, slice super-complex same-view reference sets to stay within the effective `VISION_MAX_IMAGES` limit, project additive top-level `compare_diagnostics` on rich delivery, multi-packet synthesis, model-budget pressure, or packet-uncertainty paths with packet ids, pass status, packet-local `support_evidence`, conflict notes, and `budget_control` limits, cluster architecture scopes into facade/opening, roofline, and support packets when those roles are present, keep early creature-stage compares broad on body/head/tail primary masses instead of reusing stale ear/limb-local focus too early, and emit Set-of-Mark overlays only when both operator config and explicit model capability allow them. Fails fast when `guided_reference_readiness.compare_ready` is false. |
 | `reference_iterate_stage_checkpoint` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional), `checkpoint_label` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional), `preset_profile` (`compact`/`rich`) | Runs one session-aware checkpoint iteration: capture deterministic stage views, compare them to the references, remember the previous correction focus, and return whether to continue building, inspect/validate, or stop. Top-level `compare_diagnostics` is the public packet provenance path for rich delivery, multi-packet synthesis, model-budget pressure, or packet uncertainty even when compact nested `compare_result` debug detail is omitted, while `reference_orchestrator_feedback` remains the compact next-step owner seam. Early creature-stage iterate runs follow the same broad-first primary-mass rule before later local ear/limb packets dominate. Fails fast when `guided_reference_readiness.iterate_ready` is false. |
 Invalid target-scope inputs such as an unavailable `collection_name` now return
 structured error payloads on the stage-compare path instead of failing again

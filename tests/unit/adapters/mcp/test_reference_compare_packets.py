@@ -1013,6 +1013,44 @@ def test_mark_correspondence_rejects_invalid_mark_ids_and_maps_valid_roles():
     assert row.proportional_ratio_vs_anchor == 0.7
 
 
+def test_packet_mark_request_metadata_omits_empty_mark_fields():
+    empty_packet = ReferenceComparePacketContract(
+        packet_id="packet_empty",
+        packet_label="front packet",
+        target_objects=["Body"],
+        reference_ids=["ref_front"],
+        capture_labels=["target_front_after"],
+        compare_question="Compare.",
+    )
+    marked_packet = empty_packet.model_copy(
+        update={
+            "mark_id_map": {"Body": 1},
+            "reference_marks": [
+                VisionOverlayMarkContract(
+                    mark_id=1,
+                    object_name="Body",
+                    source="grounded_sam_sidecar",
+                    image_side="reference",
+                )
+            ],
+        }
+    )
+
+    assert compare_packets_area._packet_mark_request_metadata(empty_packet) == {}
+    assert compare_packets_area._packet_mark_request_metadata(marked_packet) == {
+        "packet_mark_id_map": {"Body": 1},
+        "reference_marks": [
+            {
+                "mark_id": 1,
+                "object_name": "Body",
+                "status": "placed",
+                "source": "grounded_sam_sidecar",
+                "image_side": "reference",
+            }
+        ],
+    }
+
+
 def test_packet_defect_tracking_assigns_packet_scoped_ids_and_verifies_prior_defects():
     packet = ReferenceComparePacketContract(
         packet_id="packet:front:test",

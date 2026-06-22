@@ -599,6 +599,29 @@ Focused unit coverage now also protects:
   - `tests/unit/adapters/mcp/test_search_surface.py`
   - `tests/unit/adapters/mcp/test_visibility_policy.py`
   - `tests/unit/adapters/mcp/test_reference_images.py`
+- TASK-184 vision 3D-understanding audit corrections on:
+  - `tests/unit/adapters/mcp/test_vision_runtime_config.py`
+  - `tests/unit/adapters/mcp/test_openrouter_model_capabilities.py`
+  - `tests/unit/adapters/mcp/test_reference_compare_packets.py`
+  - `tests/unit/adapters/mcp/test_vision_prompting.py`
+  - `tests/unit/adapters/mcp/test_vision_marks.py`
+  - `tests/unit/adapters/mcp/test_vision_capture_runtime.py`
+  - `tests/unit/adapters/mcp/test_vision_silhouette.py`
+  - `tests/unit/adapters/mcp/test_vision_evaluation.py`
+  - `tests/unit/scripts/test_script_tooling.py`
+  - `tests/unit/tools/scene/test_spatial_graph_service.py`
+  - `tests/unit/tools/scene/test_scene_contracts.py`
+
+The TASK-184 eval scorecard is default-off and harness-only:
+
+```bash
+poetry run python scripts/vision_harness.py \
+  --goal "compare current staged model" \
+  --after /abs/after.png \
+  --emit-reliability-scorecard
+```
+
+The scorecard axes are advisory telemetry, not guided gate authority.
 
 First Blender-backed E2E coverage for the guided utility prep path now includes:
 

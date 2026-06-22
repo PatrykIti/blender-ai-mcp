@@ -308,7 +308,6 @@ def test_packet_compare_request_uses_packet_specific_prompt_payload_and_schema()
         "magnitude_ratio",
         "reference_id",
         "confidence",
-        "mark_id",
     }
     assert set(schema["properties"]["packet_guidance"]["properties"]) == {
         "packet_status",
@@ -316,6 +315,25 @@ def test_packet_compare_request_uses_packet_specific_prompt_payload_and_schema()
         "ranking_recommendation",
     }
     _assert_strict_required_matches_properties(schema)
+
+
+def test_packet_compare_schema_includes_mark_id_only_when_marks_are_available():
+    request = _packet_compare_request()
+    marked_request = replace(
+        request,
+        metadata={
+            **request.metadata,
+            "packet_mark_id_map": {"Body": 1},
+        },
+    )
+
+    lean_schema = build_vision_response_json_schema(request=request)
+    marked_schema = build_vision_response_json_schema(request=marked_request)
+
+    assert "mark_id" not in lean_schema["properties"]["findings"]["items"]["properties"]
+    assert "mark_id" not in lean_schema["properties"]["findings"]["items"]["required"]
+    assert "mark_id" in marked_schema["properties"]["findings"]["items"]["properties"]
+    assert "mark_id" in marked_schema["properties"]["findings"]["items"]["required"]
 
 
 def test_packet_compare_prompt_includes_mark_overlay_legend():
@@ -366,6 +384,43 @@ def test_packet_compare_prompt_omits_unplaced_overlay_marks_from_legend():
     assert "MARK_OVERLAYS:" in payload_text
     assert "mark 1 -> Body" not in payload_text
     assert "- target_front_after_overlay: mark 2 -> Head (render, deterministic_projection)" in payload_text
+
+
+def test_packet_compare_schema_omits_mark_id_without_available_marks():
+    request = _packet_compare_request()
+
+    payload_text = build_vision_payload_text(request)
+    schema = build_vision_response_json_schema(request=request)
+    finding_properties = schema["properties"]["findings"]["items"]["properties"]
+    finding_required = schema["properties"]["findings"]["items"]["required"]
+
+    assert "MARK_OVERLAYS:" not in payload_text
+    assert "mark_id" not in finding_properties
+    assert "mark_id" not in finding_required
+
+
+def test_packet_compare_schema_keeps_mark_id_when_marks_are_available():
+    request = _packet_compare_request()
+    request = replace(
+        request,
+        metadata={
+            **request.metadata,
+            "packet_mark_id_map": {"Body": 1},
+        },
+    )
+
+    schema = build_vision_response_json_schema(request=request)
+    finding_properties = schema["properties"]["findings"]["items"]["properties"]
+    finding_required = schema["properties"]["findings"]["items"]["required"]
+
+    assert "mark_id" in finding_properties
+    assert "mark_id" in finding_required
+
+
+def test_generic_payload_omits_empty_mark_overlay_field():
+    payload = json.loads(build_vision_payload_text(_request()))
+
+    assert "mark_overlays" not in payload
 
 
 def test_packet_ranking_request_uses_ranking_specific_prompt_payload():
@@ -561,7 +616,7 @@ def test_format_image_caption_marks_auxiliary_channels_as_advisory():
 
     assert depth == (
         "[image: target_front_after_depth | role=after | view=depth | channel=relative_depth | "
-        "advisory=geometric_enrichment_not_truth_source]"
+        "encoding=near_bright_far_dark | advisory=geometric_enrichment_not_truth_source]"
     )
     assert "channel=surface_normal" in normal
     assert "channel=object_id_mask" in object_id

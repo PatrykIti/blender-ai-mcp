@@ -218,7 +218,7 @@ def _record_overlay_capture_metadata(
             {
                 "label": capture.label,
                 "preset_name": capture.preset_name,
-                "marks": [mark.model_dump(mode="json") for mark in capture.overlay_marks],
+                "marks": [mark.model_dump(mode="json", exclude_none=True) for mark in capture.overlay_marks],
             }
         )
     if overlays:

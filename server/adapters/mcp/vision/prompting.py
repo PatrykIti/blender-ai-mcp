@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 
 from .backend import VisionImageInput, VisionRequest
@@ -79,6 +80,8 @@ def format_image_caption(image: VisionImageInput) -> str:
         auxiliary_channel = _AUXILIARY_CAPTION_CHANNELS.get(view)
         if auxiliary_channel is not None:
             parts.append(f"channel={auxiliary_channel}")
+            if auxiliary_channel == "relative_depth":
+                parts.append("encoding=near_bright_far_dark")
             parts.append("advisory=geometric_enrichment_not_truth_source")
     return "[" + " | ".join(parts) + "]"
 
@@ -104,7 +107,10 @@ def _image_roster_lines(request: VisionRequest) -> list[str]:
 def _mark_overlay_lines(request: VisionRequest) -> list[str]:
     """Return symbolic Set-of-Mark legend lines from request metadata."""
 
-    overlays = request.metadata.get("mark_overlays") if isinstance(request.metadata, dict) else None
+    metadata = request.metadata if isinstance(request.metadata, dict) else {}
+    if metadata.get("visual_mark_overlays_supported") is False:
+        return []
+    overlays = metadata.get("mark_overlays")
     lines: list[str] = []
     if isinstance(overlays, list):
         for overlay in overlays:
@@ -127,7 +133,7 @@ def _mark_overlay_lines(request: VisionRequest) -> list[str]:
                 if status != "placed":
                     continue
                 lines.append(f"- {label}: mark {mark_id} -> {object_name} ({image_side}, {source})")
-    reference_marks = request.metadata.get("reference_marks") if isinstance(request.metadata, dict) else None
+    reference_marks = metadata.get("reference_marks")
     if isinstance(reference_marks, list):
         for mark in reference_marks:
             if not isinstance(mark, dict):
@@ -142,12 +148,53 @@ def _mark_overlay_lines(request: VisionRequest) -> list[str]:
                 continue
             lines.append(f"- reference: mark {mark_id} -> {object_name} (reference, {source})")
     if not lines:
-        mark_id_map = request.metadata.get("packet_mark_id_map") if isinstance(request.metadata, dict) else None
+        mark_id_map = metadata.get("packet_mark_id_map")
         if isinstance(mark_id_map, dict):
             for object_name, mark_id in sorted(mark_id_map.items(), key=lambda item: (item[1], item[0])):
                 if isinstance(mark_id, int) and not isinstance(mark_id, bool) and str(object_name).strip():
                     lines.append(f"- packet_map: mark {mark_id} -> {object_name} (render, deterministic_projection)")
     return lines
+
+
+def _has_mark_metadata(request: VisionRequest | None) -> bool:
+    """Return true when this request carries usable render/reference marks."""
+
+    metadata = request.metadata if request is not None and isinstance(request.metadata, dict) else {}
+    if metadata.get("visual_mark_overlays_supported") is False:
+        return False
+    overlays = metadata.get("mark_overlays")
+    if isinstance(overlays, list):
+        for overlay in overlays:
+            if not isinstance(overlay, dict):
+                continue
+            marks = overlay.get("marks")
+            if not isinstance(marks, list):
+                continue
+            for mark in marks:
+                if not isinstance(mark, dict):
+                    continue
+                mark_id = mark.get("mark_id")
+                object_name = str(mark.get("object_name") or "").strip()
+                status = str(mark.get("status") or "placed").strip()
+                if isinstance(mark_id, int) and not isinstance(mark_id, bool) and object_name and status == "placed":
+                    return True
+    reference_marks = metadata.get("reference_marks")
+    if isinstance(reference_marks, list):
+        for mark in reference_marks:
+            if not isinstance(mark, dict):
+                continue
+            mark_id = mark.get("mark_id")
+            object_name = str(mark.get("object_name") or "").strip()
+            status = str(mark.get("status") or "placed").strip()
+            if isinstance(mark_id, int) and not isinstance(mark_id, bool) and object_name and status == "placed":
+                return True
+    mark_id_map = metadata.get("packet_mark_id_map")
+    if isinstance(mark_id_map, dict):
+        return any(
+            isinstance(mark_id, int) and not isinstance(mark_id, bool) and str(object_name).strip()
+            for object_name, mark_id in mark_id_map.items()
+        )
+    return False
 
 
 def _dominant_relation_phrase(pair: dict[str, object]) -> str | None:
@@ -280,6 +327,26 @@ _FINDINGS_SCHEMA: dict[str, object] = {
         ],
     },
 }
+
+
+def _findings_schema(*, include_mark_id: bool) -> dict[str, object]:
+    """Return the strict findings schema, optionally omitting mark ids."""
+
+    schema = copy.deepcopy(_FINDINGS_SCHEMA)
+    if include_mark_id:
+        return schema
+    items = schema.get("items")
+    if not isinstance(items, dict):
+        return schema
+    properties = items.get("properties")
+    if isinstance(properties, dict):
+        properties.pop("mark_id", None)
+    required = items.get("required")
+    if isinstance(required, list):
+        items["required"] = [key for key in required if key != "mark_id"]
+    return schema
+
+
 _GEMINI_COMPARE_EXPECTED_KEYS = (
     "goal_summary",
     "reference_match_summary",
@@ -677,6 +744,17 @@ def build_vision_system_prompt(
         provider_name=provider_name,
         request=request,
     ):
+        findings_line = (
+            "- findings: structured finding objects; set mark_id to a listed mark id or null\n\n"
+            if _has_mark_metadata(request)
+            else "- findings: structured finding objects\n\n"
+        )
+        mark_rule = (
+            "When Set-of-Mark overlays are provided, key each shape/proportion finding to mark_id "
+            "and do not invent marks.\n"
+            if _has_mark_metadata(request)
+            else ""
+        )
         return (
             "You are a bounded vision assistant for Blender modeling.\n\n"
             "This request is a reference-guided checkpoint comparison for a Google-family vision contract.\n"
@@ -689,14 +767,14 @@ def build_vision_system_prompt(
             "- proportion_mismatches: string[]\n"
             "- correction_focus: string[]\n"
             "- next_corrections: string[]\n"
-            "- findings: structured finding objects; set mark_id to a listed mark id or null\n\n"
+            f"{findings_line}"
             "Do not return visible_changes, likely_issues, recommended_checks, confidence, or captures_used.\n"
             "Do not echo the input payload. Do not wrap the result in markdown.\n"
             "Use shape_mismatches only for visible form/silhouette problems.\n"
             "Use proportion_mismatches only for visible size/ratio problems.\n"
             "Use correction_focus for the 1-3 highest-priority mismatch targets to fix next.\n"
             "Use next_corrections for 1-3 bounded next-step fixes that stay tightly aligned with those mismatches.\n"
-            "When Set-of-Mark overlays are provided, key each shape/proportion finding to mark_id and do not invent marks.\n"
+            f"{mark_rule}"
             "If the signal is weak, keep the arrays conservative but still return the required JSON shape.\n"
         )
 
@@ -1014,7 +1092,6 @@ def build_vision_payload_text(
         "image_roster": [
             {"role": image.role, "label": image.label, "view_kind": image.view_kind} for image in request.images
         ],
-        "mark_overlays": request.metadata.get("mark_overlays") if isinstance(request.metadata, dict) else None,
         "requested_json_keys": list(
             expected_json_keys(
                 vision_contract_profile=vision_contract_profile,
@@ -1024,6 +1101,9 @@ def build_vision_payload_text(
             )
         ),
     }
+    mark_overlays = request.metadata.get("mark_overlays") if isinstance(request.metadata, dict) else None
+    if mark_overlays:
+        payload["mark_overlays"] = mark_overlays
     return json.dumps(payload, ensure_ascii=True, sort_keys=True, indent=2)
 
 
@@ -1560,7 +1640,7 @@ def build_vision_response_json_schema(
                         "required": ["tool_name", "reason", "priority"],
                     },
                 },
-                "findings": _FINDINGS_SCHEMA,
+                "findings": _findings_schema(include_mark_id=_has_mark_metadata(request)),
                 "packet_guidance": {
                     "type": "object",
                     "additionalProperties": False,
@@ -1606,7 +1686,7 @@ def build_vision_response_json_schema(
                 "proportion_mismatches": {"type": "array", "items": {"type": "string"}},
                 "correction_focus": {"type": "array", "items": {"type": "string"}},
                 "next_corrections": {"type": "array", "items": {"type": "string"}},
-                "findings": _FINDINGS_SCHEMA,
+                "findings": _findings_schema(include_mark_id=_has_mark_metadata(request)),
             },
             "required": list(_GEMINI_COMPARE_EXPECTED_KEYS),
         }
@@ -1648,7 +1728,7 @@ def build_vision_response_json_schema(
                     "required": ["tool_name", "reason", "priority"],
                 },
             },
-            "findings": _FINDINGS_SCHEMA,
+            "findings": _findings_schema(include_mark_id=_has_mark_metadata(request)),
             "confidence": {"type": ["number", "null"]},
             "captures_used": {"type": "array", "items": {"type": "string"}},
         },

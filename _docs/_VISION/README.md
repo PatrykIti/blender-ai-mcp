@@ -497,11 +497,43 @@ The current staged-reference runtime includes the audit repairs from changelog
   a typed mark-id map back to scene objects. Overlay captures are advisory
   visual-prompting aids, stay outside grid composites, and drop before primary
   focus/context captures under image-budget pressure.
+- TASK-184 tightens Set-of-Mark runtime gating: overlay emission now also
+  requires explicit positive
+  `VisionModelCapabilities.visual_mark_overlays_supported`. Unknown,
+  unreviewed, local, or live OpenRouter-only models default to no marks, and
+  staged diagnostics record a bounded disabled reason when the operator flag is
+  enabled but the active model is not mark-capable. When marks are unavailable,
+  packet request metadata omits mark maps/legends and response schemas stay
+  lean by excluding `mark_id` from strict finding fields.
 - mark IDs are now registry/session-stable across front/side/top/oblique views
   and iterate cycles. Packet payloads include exact `mark_id_map` values,
   optional reference-side mark provenance from the default-off localization
   sidecar, typed `object_correspondence`, rejected invalid mark IDs, and one
   bounded retry constrained to valid marks.
+- live mark anchors are projection-first. Overlay metadata now carries
+  `anchor_status`, `anchor_source`, optional pixel anchors, and bounded
+  diagnostics for `projected`, `outside_frame`, `behind_view`, `occluded`,
+  `unavailable`, or `mask_fallback` outcomes. The mask-centroid isolate-render
+  path is retained only as a fallback when projection diagnostics are
+  unavailable.
+- Object Index evidence is explicitly object-level visible-surface
+  `pass_index` evidence. Object-ID artifacts and per-object IoU metrics report
+  the grayscale-band encoding, object count, high-count quantization risk,
+  missing objects/map entries, and fragmented visible components; Cryptomatte
+  remains a deferred feasibility follow-on, not shipped behavior.
+- transmitted relative-depth auxiliary captions include
+  `encoding=near_bright_far_dark` next to `channel=relative_depth`; the channel
+  remains relative and advisory, not metric distance or gate authority.
+- `scene_relation_graph(...)` pair payloads can now include additive
+  `direction_world` metadata with `reference_frame="world"`, dominant axis,
+  sign, margin, and ambiguity. It describes `from_object` relative to
+  `to_object` for already planned relation pairs and does not add a new
+  relation kind.
+- `scripts/vision_harness.py --emit-reliability-scorecard` can attach a
+  default-off advisory scorecard for eval runs. The axes are
+  `object_identity`, `mark_correspondence`, `spatial_direction`,
+  `depth_ordering`, `contact_support`, and `shape_profile`; scorecard output is
+  telemetry only and must not become gate authority.
 - packeted compare now carries advisory Critic/Verify state:
   packet-scoped `open_defects`, same-packet `verify_status`, synthesis
   preservation, and compact feedback notes for unresolved defects. Deterministic

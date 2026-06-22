@@ -18,13 +18,15 @@ from server.adapters.mcp.contracts.vision import (
 )
 from server.infrastructure.tmp_paths import get_viewport_output_paths
 
-from .marks import build_object_mark_overlay
+from .marks import build_marks_from_object_masks, overlay_numbered_marks, render_object_masks
 
 CaptureStage = Literal["before", "after"]
 CapturePresetProfile = Literal["compact", "rich"]
 AuxiliaryCaptureKind = Literal["depth", "normal", "object_id"]
 PrimaryCaptureViewKind = Literal["wide", "focus", "top", "oblique"]
 DEFAULT_AUXILIARY_CAPTURE_KINDS: tuple[AuxiliaryCaptureKind, ...] = ("depth", "normal", "object_id")
+OBJECT_ID_GRAYSCALE_BAND_COUNT = 255
+OBJECT_ID_HIGH_COUNT_QUANTIZATION_RISK_ABOVE = 64
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,6 +45,17 @@ class CapturePresetSpec:
     orbit_vertical: float | None = None
     view_kind: PrimaryCaptureViewKind = "wide"
     projection: Literal["orthographic", "perspective"] | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class _MarkAnchor:
+    mark_id: int
+    object_name: str
+    x: int | None
+    y: int | None
+    status: Literal["projected", "outside_frame", "behind_view", "occluded", "unavailable", "mask_fallback"]
+    source: Literal["projection_diagnostics", "mask_centroid_fallback"]
+    reason: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -255,17 +268,36 @@ def _normalize_auxiliary_capture_kinds(
     return tuple(kind for kind in DEFAULT_AUXILIARY_CAPTURE_KINDS if kind in requested)
 
 
+def _object_id_high_count_quantization_risk(object_count: int) -> bool:
+    return object_count > OBJECT_ID_HIGH_COUNT_QUANTIZATION_RISK_ABOVE
+
+
+def _object_id_quantization_notes(object_count: int) -> list[str]:
+    if not _object_id_high_count_quantization_risk(object_count):
+        return []
+    return [
+        (
+            "Object Index sidecar uses 8-bit grayscale bands; high object counts can make adjacent pass_index "
+            "bands ambiguous. Treat per-object mask evidence as advisory."
+        )
+    ]
+
+
 def _object_id_artifact_unavailable(
     *,
     warning: str,
     index_map: dict[int, str] | None = None,
     missing_objects: list[str] | None = None,
 ) -> VisionObjectIdCaptureArtifactContract:
+    object_count = max(index_map or {0: ""})
     return VisionObjectIdCaptureArtifactContract(
         index_map=index_map or {},
         missing_objects=missing_objects or [],
+        object_count=object_count,
+        high_count_quantization_risk=_object_id_high_count_quantization_risk(object_count),
         capture_ok=False,
         capture_warning=warning[:240],
+        notes=_object_id_quantization_notes(object_count),
     )
 
 
@@ -362,6 +394,231 @@ def _capture_auxiliary_pass(
     )
 
 
+def _projection_pixel(value: object, *, size: int, invert_y: bool = False) -> int | None:
+    normalized = _projection_float(value)
+    if normalized is None:
+        return None
+    if invert_y:
+        normalized = 1.0 - normalized
+    normalized = max(0.0, min(1.0, normalized))
+    return max(0, min(size - 1, int(round(normalized * float(size - 1)))))
+
+
+def _projection_float(value: object) -> float | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int | float):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value)
+        except ValueError:
+            return None
+    return None
+
+
+def _projection_extent_anchor(projection: dict[str, Any]) -> tuple[float, float] | None:
+    extent = projection.get("projected_extent")
+    if not isinstance(extent, dict):
+        return None
+    parsed_min_x = _projection_float(extent.get("min_x"))
+    parsed_max_x = _projection_float(extent.get("max_x"))
+    parsed_min_y = _projection_float(extent.get("min_y"))
+    parsed_max_y = _projection_float(extent.get("max_y"))
+    if parsed_min_x is None or parsed_max_x is None or parsed_min_y is None or parsed_max_y is None:
+        return None
+    min_x = max(0.0, min(1.0, parsed_min_x))
+    max_x = max(0.0, min(1.0, parsed_max_x))
+    min_y = max(0.0, min(1.0, parsed_min_y))
+    max_y = max(0.0, min(1.0, parsed_max_y))
+    if max_x < min_x or max_y < min_y:
+        return None
+    return (min_x + max_x) / 2.0, (min_y + max_y) / 2.0
+
+
+def _projection_anchor_from_target(
+    target: dict[str, Any],
+    *,
+    mark_id: int,
+    object_name: str,
+    width: int,
+    height: int,
+) -> _MarkAnchor:
+    projection_status = str(target.get("projection_status") or "unavailable").strip()
+    visibility_verdict = str(target.get("visibility_verdict") or "").strip()
+    if projection_status == "behind_view":
+        return _MarkAnchor(
+            mark_id=mark_id,
+            object_name=object_name,
+            x=None,
+            y=None,
+            status="behind_view",
+            source="projection_diagnostics",
+            reason=str(target.get("unavailable_reason") or "projection behind view"),
+        )
+    if projection_status == "outside_frame":
+        return _MarkAnchor(
+            mark_id=mark_id,
+            object_name=object_name,
+            x=None,
+            y=None,
+            status="outside_frame",
+            source="projection_diagnostics",
+            reason="projected object extent is outside the capture frame",
+        )
+    if projection_status != "projected":
+        return _MarkAnchor(
+            mark_id=mark_id,
+            object_name=object_name,
+            x=None,
+            y=None,
+            status="unavailable",
+            source="projection_diagnostics",
+            reason=str(target.get("unavailable_reason") or "projection unavailable"),
+        )
+    if visibility_verdict == "fully_occluded":
+        return _MarkAnchor(
+            mark_id=mark_id,
+            object_name=object_name,
+            x=None,
+            y=None,
+            status="occluded",
+            source="projection_diagnostics",
+            reason="projection exists but view diagnostics report full occlusion",
+        )
+
+    projection = target.get("projection")
+    if not isinstance(projection, dict):
+        return _MarkAnchor(
+            mark_id=mark_id,
+            object_name=object_name,
+            x=None,
+            y=None,
+            status="unavailable",
+            source="projection_diagnostics",
+            reason="projection payload missing",
+        )
+    center = projection.get("projected_center")
+    anchor_xy: tuple[float, float] | None = None
+    if isinstance(center, dict):
+        center_x = _projection_float(center.get("x"))
+        center_y = _projection_float(center.get("y"))
+        if center_x is not None and center_y is not None and 0.0 <= center_x <= 1.0 and 0.0 <= center_y <= 1.0:
+            anchor_xy = (center_x, center_y)
+    if anchor_xy is None:
+        anchor_xy = _projection_extent_anchor(projection)
+    if anchor_xy is None:
+        return _MarkAnchor(
+            mark_id=mark_id,
+            object_name=object_name,
+            x=None,
+            y=None,
+            status="unavailable",
+            source="projection_diagnostics",
+            reason="projection anchor coordinates unavailable",
+        )
+    x = _projection_pixel(anchor_xy[0], size=width)
+    y = _projection_pixel(anchor_xy[1], size=height, invert_y=True)
+    if x is None or y is None:
+        return _MarkAnchor(
+            mark_id=mark_id,
+            object_name=object_name,
+            x=None,
+            y=None,
+            status="unavailable",
+            source="projection_diagnostics",
+            reason="projection anchor pixel conversion failed",
+        )
+    return _MarkAnchor(
+        mark_id=mark_id,
+        object_name=object_name,
+        x=x,
+        y=y,
+        status="projected",
+        source="projection_diagnostics",
+    )
+
+
+def _projection_mark_anchors(
+    scene_handler,
+    *,
+    object_mark_id_map: dict[str, int],
+    width: int,
+    height: int,
+) -> tuple[dict[str, _MarkAnchor], str | None]:
+    if not hasattr(scene_handler, "get_view_diagnostics"):
+        return {}, "get_view_diagnostics is unavailable; using mask-centroid fallback."
+    try:
+        diagnostics = scene_handler.get_view_diagnostics(
+            target_objects=list(object_mark_id_map),
+            camera_name="USER_PERSPECTIVE",
+        )
+    except Exception as exc:
+        return {}, f"get_view_diagnostics raised: {exc!r}; using mask-centroid fallback."
+    if not isinstance(diagnostics, dict):
+        return {}, "get_view_diagnostics returned unsupported diagnostics; using mask-centroid fallback."
+    targets = diagnostics.get("targets")
+    if not isinstance(targets, list):
+        return {}, "get_view_diagnostics returned no target diagnostics; using mask-centroid fallback."
+
+    anchors: dict[str, _MarkAnchor] = {}
+    for target in targets:
+        if not isinstance(target, dict):
+            continue
+        object_name = str(target.get("object_name") or "").strip()
+        mark_id = object_mark_id_map.get(object_name)
+        if mark_id is None:
+            continue
+        anchors[object_name] = _projection_anchor_from_target(
+            target,
+            mark_id=mark_id,
+            object_name=object_name,
+            width=width,
+            height=height,
+        )
+    return anchors, None
+
+
+def _mask_fallback_anchors(
+    scene_handler,
+    *,
+    object_mark_id_map: dict[str, int],
+    output_dir: str,
+    width: int,
+    height: int,
+    reason: str | None,
+) -> dict[str, _MarkAnchor]:
+    object_names = sorted(object_mark_id_map)
+    if not object_names:
+        return {}
+    object_masks = render_object_masks(
+        scene_handler,
+        object_names,
+        output_dir=output_dir,
+        view_name=None,
+        width=width,
+        height=height,
+    )
+    marks, mark_id_to_object = build_marks_from_object_masks(object_masks, mark_id_map=object_mark_id_map)
+    anchors: dict[str, _MarkAnchor] = {}
+    for mark_id, x, y in marks:
+        if not isinstance(mark_id, int) or isinstance(mark_id, bool):
+            continue
+        object_name = mark_id_to_object.get(mark_id)
+        if object_name is None:
+            continue
+        anchors[object_name] = _MarkAnchor(
+            mark_id=mark_id,
+            object_name=object_name,
+            x=x,
+            y=y,
+            status="mask_fallback",
+            source="mask_centroid_fallback",
+            reason=reason or "projection unavailable; mask-centroid fallback used",
+        )
+    return anchors
+
+
 def _capture_mark_overlay(
     scene_handler,
     *,
@@ -389,36 +646,85 @@ def _capture_mark_overlay(
         filename,
         latest_name=latest_name,
     )
-    try:
-        overlay_path, mark_id_to_object = build_object_mark_overlay(
+    projection_anchors, projection_fallback_reason = _projection_mark_anchors(
+        scene_handler,
+        object_mark_id_map=effective_mark_id_map,
+        width=preset.width,
+        height=preset.height,
+    )
+    fallback_object_map = {
+        object_name: mark_id
+        for object_name, mark_id in effective_mark_id_map.items()
+        if projection_anchors.get(object_name) is None or projection_anchors[object_name].status == "unavailable"
+    }
+    fallback_anchors: dict[str, _MarkAnchor] = {}
+    if fallback_object_map:
+        fallback_reason = projection_fallback_reason or "projection did not provide a usable anchor"
+        fallback_anchors = _mask_fallback_anchors(
             scene_handler,
-            object_names=ordered_object_names,
-            base_image_path=base_image_path,
-            output_path=str(internal_file),
             output_dir=str(internal_file.parent),
-            view_name=None,
             width=preset.width,
             height=preset.height,
-            mark_id_map=effective_mark_id_map,
+            object_mark_id_map=fallback_object_map,
+            reason=fallback_reason,
         )
-    except Exception:
+
+    final_anchors: dict[str, _MarkAnchor] = {}
+    for object_name, mark_id in sorted(effective_mark_id_map.items(), key=lambda item: (item[1], item[0])):
+        anchor = projection_anchors.get(object_name)
+        fallback_anchor = fallback_anchors.get(object_name)
+        if fallback_anchor is not None:
+            final_anchors[object_name] = fallback_anchor
+        elif anchor is not None:
+            final_anchors[object_name] = anchor
+        else:
+            final_anchors[object_name] = _MarkAnchor(
+                mark_id=mark_id,
+                object_name=object_name,
+                x=None,
+                y=None,
+                status="unavailable",
+                source="projection_diagnostics",
+                reason=projection_fallback_reason or "projection diagnostics unavailable and mask fallback failed",
+            )
+
+    marks = [
+        (anchor.mark_id, anchor.x, anchor.y)
+        for anchor in final_anchors.values()
+        if anchor.status in {"projected", "mask_fallback"} and anchor.x is not None and anchor.y is not None
+    ]
+    if not marks:
         return None
-    if overlay_path is None or not mark_id_to_object:
+    try:
+        overlay_numbered_marks(base_image_path, marks, str(internal_file))
+    except Exception:
         return None
     return VisionCaptureImageContract(
         label=f"{preset.name}_{stage}_overlay",
-        image_path=overlay_path,
+        image_path=str(internal_file),
         host_visible_path=external_file,
         preset_name=preset.name,
         media_type="image/jpeg",
         view_kind="overlay",
         overlay_marks=[
             VisionOverlayMarkContract(
-                mark_id=mark_id,
-                object_name=object_name,
-                status="placed" if mark_id_to_object.get(mark_id) == object_name else "unmarked",
+                mark_id=anchor.mark_id,
+                object_name=anchor.object_name,
+                status=(
+                    "placed"
+                    if anchor.status in {"projected", "mask_fallback"} and anchor.x is not None and anchor.y is not None
+                    else "unmarked"
+                ),
+                source="mask_centroid_fallback"
+                if anchor.source == "mask_centroid_fallback"
+                else "deterministic_projection",
+                anchor_status=anchor.status,
+                anchor_source=anchor.source,
+                anchor_x=anchor.x,
+                anchor_y=anchor.y,
+                anchor_reason=anchor.reason,
             )
-            for object_name, mark_id in sorted(effective_mark_id_map.items(), key=lambda item: (item[1], item[0]))
+            for anchor in sorted(final_anchors.values(), key=lambda item: (item.mark_id, item.object_name))
         ],
     )
 
@@ -431,7 +737,7 @@ def _capture_object_id_artifact(
     preset: CapturePresetSpec,
     object_names: list[str],
 ) -> VisionObjectIdCaptureArtifactContract | None:
-    """Render one USER_PERSPECTIVE object-ID sidecar for an already-framed view."""
+    """Render one USER_PERSPECTIVE Object Index sidecar for an already-framed view."""
 
     if not object_names:
         return None
@@ -460,7 +766,7 @@ def _capture_object_id_artifact(
     image_b64 = str(result.get("image") or "").strip()
     if not image_b64:
         return _object_id_artifact_unavailable(
-            warning="get_object_id_pass returned no object-ID image.",
+            warning="get_object_id_pass returned no Object Index image.",
             index_map=index_map,
             missing_objects=missing_objects,
         )
@@ -481,13 +787,18 @@ def _capture_object_id_artifact(
         latest_name=latest_name,
     )
     internal_file.write_bytes(image_bytes)
+    object_count = max(index_map or {0: ""})
     return VisionObjectIdCaptureArtifactContract(
         image_path=str(internal_file),
         host_visible_path=external_file,
         index_map=index_map,
         missing_objects=missing_objects,
+        object_count=object_count,
+        grayscale_band_count=OBJECT_ID_GRAYSCALE_BAND_COUNT,
+        high_count_quantization_risk=_object_id_high_count_quantization_risk(object_count),
         capture_ok=bool(index_map),
-        capture_warning=None if index_map else "get_object_id_pass returned an empty object-ID index map.",
+        capture_warning=None if index_map else "get_object_id_pass returned an empty Object Index map.",
+        notes=_object_id_quantization_notes(object_count),
     )
 
 

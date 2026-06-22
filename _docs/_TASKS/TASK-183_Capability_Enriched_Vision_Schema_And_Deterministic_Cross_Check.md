@@ -17,6 +17,11 @@ scorecards; that work is tracked as standalone follow-on
 [TASK-184](./TASK-184_Vision_3D_Understanding_Audit_Corrections.md) instead of
 reopening this completed umbrella.
 
+2026-06-22 TASK-184 closeout: mark-aware schema emission now depends on
+explicit model mark capability, and the eval harness can emit a default-off
+per-axis advisory reliability scorecard. The scorecard is telemetry only and
+does not replace deterministic inspection/assertion truth.
+
 ## Relationship To Existing Board Items
 
 - This umbrella is a standalone follow-on family, not a child of the parents it

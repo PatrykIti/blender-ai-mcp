@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import base64
 
+import pytest
+from pydantic import ValidationError
+from server.adapters.mcp.contracts.vision import VisionObjectIdCaptureArtifactContract
 from server.adapters.mcp.vision import (
     COMPACT_CAPTURE_PRESET_SPECS,
     RICH_CAPTURE_PRESET_SPECS,
@@ -152,6 +155,44 @@ class _OverlayHandler(_Handler):
         return base64.b64encode(buffer.getvalue()).decode("ascii")
 
 
+class _ProjectionOverlayHandler(_OverlayHandler):
+    def __init__(self, diagnostics_by_object: dict[str, dict]) -> None:
+        super().__init__()
+        self.diagnostics_by_object = diagnostics_by_object
+        self.view_diagnostic_calls: list[dict] = []
+
+    def get_view_diagnostics(self, target_object=None, target_objects=None, camera_name=None, **kwargs):
+        names = [str(name) for name in list(target_objects or ([target_object] if target_object else []))]
+        self.view_diagnostic_calls.append({"target_objects": names, "camera_name": camera_name})
+        targets = []
+        for name in names:
+            targets.append(
+                {
+                    "object_name": name,
+                    **self.diagnostics_by_object.get(
+                        name,
+                        {
+                            "visibility_verdict": "unavailable",
+                            "projection_status": "unavailable",
+                            "unavailable_reason": "fixture_missing",
+                        },
+                    ),
+                }
+            )
+        return {"view_query": {"available": True}, "targets": targets, "summary": {"target_count": len(targets)}}
+
+
+def _projected_target(x: float, y: float) -> dict:
+    return {
+        "visibility_verdict": "visible",
+        "projection_status": "projected",
+        "projection": {
+            "projected_center": {"x": x, "y": y},
+            "projected_extent": {"min_x": x, "min_y": y, "max_x": x, "max_y": y},
+        },
+    }
+
+
 def test_capture_stage_images_builds_wide_and_focus_variants(tmp_path, monkeypatch):
     monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
     monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
@@ -268,10 +309,27 @@ def test_capture_stage_images_can_attach_object_id_sidecar_for_target_view(tmp_p
     side = next(capture for capture in captures if capture.preset_name == "target_side")
     assert side.object_id_artifact is not None
     assert side.object_id_artifact.capture_ok is True
+    assert side.object_id_artifact.evidence_scope == "object_level_visible_surface"
+    assert side.object_id_artifact.object_index_source == "object_index_pass_index"
+    assert side.object_id_artifact.encoding == "object_index_grayscale_band"
+    assert side.object_id_artifact.cryptomatte_status == "deferred"
     assert side.object_id_artifact.index_map == {1: "Housing"}
+    assert side.object_id_artifact.object_count == 1
+    assert side.object_id_artifact.grayscale_band_count == 255
+    assert side.object_id_artifact.high_count_quantization_risk is False
     assert side.object_id_artifact.image_path is not None
     assert tmp_path.joinpath("internal", "blender-ai-mcp", "bundle_object_id_after_target_side_object_id.png").exists()
     assert all(capture.object_id_artifact is None for capture in captures if capture.preset_name != "target_side")
+
+
+def test_object_id_artifact_contract_rejects_unknown_fields():
+    with pytest.raises(ValidationError, match="extra_forbidden"):
+        VisionObjectIdCaptureArtifactContract.model_validate(
+            {
+                "index_map": {1: "Housing"},
+                "unsupported": "sub-object-mask",
+            }
+        )
 
 
 def test_capture_stage_images_can_append_auxiliary_pass_captures(tmp_path, monkeypatch):
@@ -344,7 +402,79 @@ def test_capture_stage_images_can_append_mark_overlay_capture(tmp_path, monkeypa
         (1, "Body", "placed"),
         (2, "Head", "placed"),
     ]
+    assert [(mark.object_name, mark.anchor_source, mark.anchor_status) for mark in overlay.overlay_marks] == [
+        ("Body", "mask_centroid_fallback", "mask_fallback"),
+        ("Head", "mask_centroid_fallback", "mask_fallback"),
+    ]
     assert tmp_path.joinpath("internal", "blender-ai-mcp", "bundle_mark_after_target_front_overlay.jpg").exists()
+
+
+def test_capture_stage_images_uses_projection_mark_anchors_before_mask_fallback(tmp_path, monkeypatch):
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    handler = _ProjectionOverlayHandler(
+        {
+            "Body": _projected_target(0.25, 0.75),
+            "Head": _projected_target(0.75, 0.25),
+        }
+    )
+    captures = capture_stage_images(
+        handler,
+        bundle_id="bundle_projection_mark",
+        stage="after",
+        target_objects=["Head", "Body"],
+        preset_profile="compact",
+        include_mark_overlay=True,
+        mark_overlay_preset_names={"target_front"},
+    )
+
+    overlay = next(capture for capture in captures if capture.view_kind == "overlay")
+
+    assert handler.view_diagnostic_calls == [{"target_objects": ["Body", "Head"], "camera_name": "USER_PERSPECTIVE"}]
+    assert len(handler.isolate_calls) == 4  # normal preset isolation only; no per-object mask fallback.
+    assert [(mark.object_name, mark.anchor_source, mark.anchor_x, mark.anchor_y) for mark in overlay.overlay_marks] == [
+        ("Body", "projection_diagnostics", 320, 240),
+        ("Head", "projection_diagnostics", 959, 719),
+    ]
+    assert [(mark.object_name, mark.source, mark.anchor_status) for mark in overlay.overlay_marks] == [
+        ("Body", "deterministic_projection", "projected"),
+        ("Head", "deterministic_projection", "projected"),
+    ]
+
+
+def test_capture_stage_images_preserves_explicit_behind_view_mark_status(tmp_path, monkeypatch):
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    handler = _ProjectionOverlayHandler(
+        {
+            "Body": _projected_target(0.5, 0.5),
+            "Head": {
+                "visibility_verdict": "outside_frame",
+                "projection_status": "behind_view",
+                "projection": {"projected_center": {"x": 0.5, "y": 0.5}},
+            },
+        }
+    )
+    captures = capture_stage_images(
+        handler,
+        bundle_id="bundle_behind_mark",
+        stage="after",
+        target_objects=["Head", "Body"],
+        preset_profile="compact",
+        include_mark_overlay=True,
+        mark_overlay_preset_names={"target_front"},
+    )
+
+    overlay = next(capture for capture in captures if capture.view_kind == "overlay")
+    mark_by_object = {mark.object_name: mark for mark in overlay.overlay_marks}
+
+    assert len(handler.isolate_calls) == 4
+    assert mark_by_object["Body"].status == "placed"
+    assert mark_by_object["Head"].status == "unmarked"
+    assert mark_by_object["Head"].anchor_status == "behind_view"
+    assert mark_by_object["Head"].anchor_source == "projection_diagnostics"
 
 
 def test_capture_stage_images_uses_supplied_stable_mark_id_map(tmp_path, monkeypatch):
@@ -487,7 +617,7 @@ class _FailingObjectIdHandler(_Handler):
                 "camera_name": camera_name,
             }
         )
-        return "No camera available. Object-ID pass requires a scene camera or explicit camera_name."
+        return "No camera available. Object Index pass requires a scene camera or explicit camera_name."
 
 
 class _FailingViewHandler(_Handler):

@@ -15,6 +15,12 @@ follow-up work around object-ID contract precision and depth caption encoding;
 that work is tracked as standalone follow-on [TASK-184](./TASK-184_Vision_3D_Understanding_Audit_Corrections.md)
 instead of reopening this completed umbrella.
 
+2026-06-22 TASK-184 closeout: object-ID contracts now explicitly describe
+Object Index / `pass_index` evidence as whole-object visible-surface support,
+carry grayscale-band/object-count/fragmentation diagnostics, and keep
+Cryptomatte deferred. Relative-depth captions now include
+`encoding=near_bright_far_dark`.
+
 ## Relationship To Existing Board Items
 
 - `TASK-172` already shipped the optional-runtime seam for heavy perception

@@ -1,7 +1,9 @@
 # TASK-184-04: Object-ID Mask Contract Hardening
 
 **Parent:** [TASK-184](./TASK-184_Vision_3D_Understanding_Audit_Corrections.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completion Date:** 2026-06-22
+**Completion Summary:** Hardened object-ID contracts and support evidence around whole-object visible-surface Object Index / `pass_index` masks. The sidecar and per-object metrics now report grayscale-band encoding, object count, high-count quantization risk, missing entries, fragmented visible components, and explicit Cryptomatte deferral.
 **Priority:** 🟡 Medium
 **Objective:** Make the object-ID evidence contract and docs precise about what the current pass-index mask path proves, what it does not prove, and whether a Cryptomatte upgrade is worth a separate implementation task.
 
@@ -24,8 +26,8 @@
 
 - object-ID masks are deterministic support evidence, not semantic
   segmentation
-- object-ID pixels must not be described as face IDs, semantic parts, or
-  pixel-to-face lift
+- pass-index pixels must not be described as mesh-polygon IDs, semantic parts,
+  or per-pixel mesh lookup
 - any Cryptomatte payload must stay local/render-derived and must preserve the
   same advisory evidence boundary
 
@@ -33,7 +35,8 @@
 
 - unit tests for object-ID metadata and unsupported-field rejection
 - E2E or fixture tests for pass-index mask limits where practical
-- consistency grep preventing docs from saying object-ID is face-level evidence
+- consistency grep preventing docs from saying object-ID is polygon-level
+  evidence
 
 ## Docs To Update
 
@@ -51,4 +54,12 @@
 ## Validation Commands
 
 - `git diff --check`
-- `rg -n "object-ID.*face|pixel.*face|Cryptomatte.*shipped|semantic part.*object-ID" _docs server tests`
+- run the TASK-184 object-ID forbidden-phrase guard over `_docs`, `server`, and
+  `tests`
+
+## Validation Run
+
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_silhouette.py tests/unit/adapters/mcp/test_vision_evaluation.py tests/unit/scripts/test_script_tooling.py -q` -> 94 passed
+- TASK-184 object-ID forbidden-phrase guard over `server` and `tests` -> no
+  matches
+- `git diff --check` -> passed

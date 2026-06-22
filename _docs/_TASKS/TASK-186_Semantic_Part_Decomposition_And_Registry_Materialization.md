@@ -19,12 +19,12 @@ Existing segmentation and object-ID work covers reference-image sidecars,
 render-side object masks, and explicit guided part registration. It does not
 cover the end-to-end flow:
 
-one mesh -> semantic part hypotheses -> pixel/mask/face lift -> materialized
+one mesh -> semantic part hypotheses -> image-mask/mesh-polygon lift -> materialized
 part objects or groups -> the existing guided part registry state and
 `guided_register_part(...)` path -> deterministic inspection and correction.
 
 Without this task, future docs risk implying the current object-ID sidecar can
-do pixel-to-face semantic part decomposition. It cannot.
+do per-pixel mesh-polygon semantic part decomposition. It cannot.
 
 ## Business Outcome
 
@@ -34,7 +34,7 @@ reason about without confusing advisory segmentation with verified geometry.
 
 ## Non-Goals
 
-- do not claim object-ID pass-index masks provide face IDs
+- do not claim pass-index masks provide mesh-polygon IDs
 - do not let a sidecar label become registry truth without deterministic
   materialization and operator-visible provenance
 - do not require one specific model family before the provider boundary task
@@ -66,7 +66,7 @@ reason about without confusing advisory segmentation with verified geometry.
 | provider/decomposition boundary | unit tests for disabled, unavailable, unsupported-provider, and reject-unknown payload states | the first wave must fail closed before any sidecar output is trusted |
 | face/group materialization | Blender-backed E2E fixture for face groups or separated objects plus a negative empty/ambiguous case | materialization mutates real mesh state and must be inspectable |
 | guided registry integration | unit tests around `guided_register_part(...)` / `register_guided_part_role(_async)` and E2E guided transport if the public surface changes | decomposed parts must use the existing registry state and role validation |
-| docs/regression fixtures | `git diff --check`, consistency grep, and fixture provenance checks | prevents object-ID/face-ID and registry-path drift from returning |
+| docs/regression fixtures | `git diff --check`, consistency grep, and fixture provenance checks | prevents pass-index/polygon-ID and registry-path drift from returning |
 
 ## Runtime / Security Contract Notes
 

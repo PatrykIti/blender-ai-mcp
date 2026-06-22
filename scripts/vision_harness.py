@@ -35,6 +35,7 @@ from server.adapters.mcp.vision import (
     ResolvedVisionGoldenScenario,
     VisionImageInput,
     VisionRequest,
+    build_advisory_reliability_scorecard,
     build_reference_capture_images,
     build_vision_request_from_capture_bundle,
     build_vision_runtime_config,
@@ -524,6 +525,20 @@ def _backend_list(args: Any) -> list[str]:
     return [args.backend]
 
 
+def _attach_reliability_scorecard_if_requested(
+    args: Any,
+    entry: dict[str, Any],
+    *,
+    request: VisionRequest | None,
+) -> None:
+    if not getattr(args, "emit_reliability_scorecard", False):
+        return
+    entry["reliability_scorecard"] = build_advisory_reliability_scorecard(
+        entry=entry,
+        request=request,
+    ).model_dump(mode="json")
+
+
 async def _run_backend(
     args: Any,
     backend_name: str,
@@ -568,6 +583,7 @@ async def _run_backend(
         entry["diagnostics"] = diagnostics
     if golden is not None:
         entry["evaluation"] = evaluate_vision_result(entry, golden).model_dump(mode="json")
+    _attach_reliability_scorecard_if_requested(args, entry, request=request)
     return entry
 
 
@@ -677,20 +693,24 @@ async def _run(args: Any) -> list[dict[str, Any]]:
         return await _run_localized_support_harness(args, golden=golden)
     request = _build_request_from_args(args, golden=golden)
     if args.fixture_only:
+        fixture_entry = {
+            "backend": "fixture_only",
+            "model_name": None,
+            "vision_contract_profile": None,
+            "status": "fixture_only",
+            "fixture_only_mode": args.fixture_only,
+            "result": {
+                "goal": request.goal,
+                "target_object": request.target_object,
+                "image_count": len(request.images),
+                "image_roles": [image.role for image in request.images],
+                "metadata": request.metadata,
+            },
+        }
+        _attach_reliability_scorecard_if_requested(args, fixture_entry, request=request)
         return [
             {
-                "backend": "fixture_only",
-                "model_name": None,
-                "vision_contract_profile": None,
-                "status": "fixture_only",
-                "fixture_only_mode": args.fixture_only,
-                "result": {
-                    "goal": request.goal,
-                    "target_object": request.target_object,
-                    "image_count": len(request.images),
-                    "image_roles": [image.role for image in request.images],
-                    "metadata": request.metadata,
-                },
+                **fixture_entry,
             }
         ]
     results: list[dict[str, Any]] = []
@@ -707,6 +727,7 @@ async def _run(args: Any) -> list[dict[str, Any]]:
             }
             if golden is not None:
                 entry["evaluation"] = evaluate_vision_result(entry, golden).model_dump(mode="json")
+            _attach_reliability_scorecard_if_requested(args, entry, request=request)
             results.append(entry)
     return results
 
@@ -776,6 +797,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--local-device", default=os.getenv("VISION_LOCAL_DEVICE", "cpu"))
     parser.add_argument("--local-dtype", default=os.getenv("VISION_LOCAL_DTYPE", "auto"))
     parser.add_argument("--fixture-only", choices=["reference-understanding", "localized-support"])
+    parser.add_argument(
+        "--emit-reliability-scorecard",
+        action="store_true",
+        help="Attach default-off advisory per-axis reliability telemetry to harness results.",
+    )
     return parser
 
 

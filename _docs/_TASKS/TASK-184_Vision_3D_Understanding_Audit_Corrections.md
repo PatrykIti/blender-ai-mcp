@@ -1,6 +1,8 @@
 # TASK-184: Vision 3D Understanding Audit Corrections
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completed:** 2026-06-22
+**Completion Summary:** Closed the full TASK-184 family. Set-of-Mark overlays are now model-capability gated and projection-first, relation graphs expose additive world-frame direction facts, object-ID/depth auxiliary evidence is documented and typed around its actual pass-index/depth encodings, and the vision harness can emit default-off per-axis advisory reliability scorecards. Docs, board, changelog, and historical follow-on notes were updated without reopening TASK-179, TASK-180, or TASK-183.
 **Priority:** 🔴 High
 **Category:** Vision / 3D Understanding Reliability / Audit Follow-Up
 **Estimated Effort:** Extra Large
@@ -24,7 +26,8 @@ tasks:
   support/symmetry, but not framed directional predicates such as world/camera
   left, right, front, or behind.
 - object-ID mask evidence is object-level `pass_index` evidence and must not be
-  described as Cryptomatte, semantic part segmentation, or pixel-to-face proof.
+  described as Cryptomatte, semantic part segmentation, or per-pixel
+  mesh-polygon proof.
 - relative depth auxiliary captions do not yet state the concrete encoding
   direction.
 - the evaluation harness lacks a geometry-derived per-axis scorecard for the
@@ -45,8 +48,8 @@ scene truth.
 
 - do not make marks, VLM findings, semantic similarity, or auxiliary images gate
   authority
-- do not claim object-ID masks provide semantic parts, face IDs, or pixel-to-face
-  lift
+- do not claim pass-index masks provide semantic parts, mesh-polygon IDs, or
+  per-pixel mesh lookup
 - do not make Cryptomatte or heavyweight perception sidecars default-on
 - do not expose unframed `left/right/front/behind` predicates without a named
   reference frame
@@ -83,7 +86,7 @@ scene truth.
 | model-aware mark gating | unit tests for vision runtime config, model profile resolution, staged compare payload selection | proves unknown/weak models do not receive mark-heavy schemas or overlay captures by accident |
 | projection-based mark anchors | Blender-backed E2E plus unit fallback tests | proves projected, off-frame, behind-view, and unavailable cases are explicit |
 | directional predicates | spatial graph service unit tests and scene contract parity tests | proves direction facts are deterministic and frame-tagged |
-| object-ID hardening | unit tests for high-count/pass-index limits and mask artifact metadata | prevents object-ID evidence from being treated as semantic part or face evidence |
+| object-ID hardening | unit tests for high-count/pass-index limits and mask artifact metadata | prevents pass-index evidence from being treated as semantic segmentation or polygon evidence |
 | depth caption encoding | unit tests for caption builders and payload parity | prevents near/far interpretation drift |
 | per-axis scorecard | fixture/harness tests behind explicit enablement | proves scorecard values are advisory and axis-specific |
 
@@ -119,7 +122,21 @@ scene truth.
 ## Validation Commands
 
 - `git diff --check`
-- `rg -n "near_dark_far_bright|object-ID.*face|pixel.*face|Cryptomatte.*shipped|SAM3|TASK-183.*Structural" _TMP* _docs server tests`
+- run the TASK-184 forbidden-phrase guard over `_docs`, `server`, and `tests`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/tools/scene/test_spatial_graph_service.py -q`
 - `PYTHONPATH=. poetry run pytest ./tests/unit`
 - `poetry run python scripts/run_e2e_tests.py` after the projection/Blender-facing slices land
+
+## Validation Run
+
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_openrouter_model_capabilities.py tests/unit/adapters/mcp/test_reference_compare_packets.py tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_vision_marks.py tests/unit/adapters/mcp/test_vision_capture_runtime.py -q` -> 160 passed.
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_spatial_graph_service.py tests/unit/tools/scene/test_scene_contracts.py -q` -> 30 passed.
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_silhouette.py tests/unit/adapters/mcp/test_vision_evaluation.py tests/unit/scripts/test_script_tooling.py -q` -> 94 passed.
+- `poetry run ruff check` on touched Python files -> passed.
+- `poetry run mypy server/adapters/mcp/vision/config.py server/adapters/mcp/vision/model_profiles/types.py server/adapters/mcp/vision/openrouter_models.py` -> success.
+- TASK-184 forbidden-phrase guard over depth/object-ID/Cryptomatte/task-drift phrases -> no matches.
+- TASK-184 semantic-part/object-ID guard -> no matches.
+- `PYTHONPATH=. poetry run pytest ./tests/unit` -> 3643 passed.
+- `poetry run python scripts/run_e2e_tests.py` -> 493 passed, 5 skipped, 2 failed; the failures were the local-env contract-profile override in the OpenRouter Gemma E2E and an outdated Set-of-Mark geometry fixture.
+- `PYTEST_ADDOPTS="-k 'openrouter_google_family_compare_profile_reaches_final_contract or capture_stage_images_emits_set_of_mark_overlay_for_object_set'" poetry run python scripts/run_e2e_tests.py --skip-build` -> 2 passed, 498 deselected after those final E2E fixes.
+- `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure` -> passed after one `ruff format` auto-format rerun.

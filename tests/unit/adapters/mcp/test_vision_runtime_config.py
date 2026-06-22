@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 import pytest
@@ -595,6 +596,89 @@ def test_build_vision_runtime_config_threads_mark_overlay_flag():
 
     assert default_runtime.mark_overlay_enabled is False
     assert runtime.mark_overlay_enabled is True
+
+
+def test_effective_mark_overlay_requires_explicit_model_capability():
+    runtime = build_vision_runtime_config(_base_config(VISION_MARK_OVERLAY_ENABLED=True))
+
+    assert runtime.mark_overlay_enabled is True
+    assert runtime.effective_mark_overlay_enabled is False
+    assert "visual_mark_overlays_supported defaults to false" in (runtime.mark_overlay_disabled_reason or "")
+
+
+def test_reviewed_profile_can_opt_in_to_visual_mark_overlays():
+    runtime = build_vision_runtime_config(
+        _base_config(
+            VISION_ENABLED=True,
+            VISION_PROVIDER="openai_compatible_external",
+            VISION_EXTERNAL_PROVIDER="openrouter",
+            VISION_OPENROUTER_MODEL="openai/gpt-5.4-pro",
+            VISION_MARK_OVERLAY_ENABLED=True,
+        )
+    )
+
+    assert runtime.openai_compatible_external is not None
+    assert runtime.openai_compatible_external.model_capabilities is not None
+    assert runtime.openai_compatible_external.model_capabilities.visual_mark_overlays_supported is True
+    assert runtime.effective_mark_overlay_enabled is True
+    assert runtime.mark_overlay_disabled_reason is None
+
+
+def test_unknown_or_unreviewed_model_cannot_enable_mark_overlays_from_operator_flag_alone():
+    runtime = build_vision_runtime_config(
+        _base_config(
+            VISION_ENABLED=True,
+            VISION_PROVIDER="openai_compatible_external",
+            VISION_EXTERNAL_PROVIDER="generic",
+            VISION_EXTERNAL_BASE_URL="http://localhost:8000/v1",
+            VISION_EXTERNAL_MODEL="unreviewed-vlm",
+            VISION_MARK_OVERLAY_ENABLED=True,
+        )
+    )
+
+    assert runtime.openai_compatible_external is not None
+    assert runtime.openai_compatible_external.model_capabilities is None
+    assert runtime.effective_mark_overlay_enabled is False
+    assert "no model capability metadata" in (runtime.mark_overlay_disabled_reason or "")
+
+
+def test_live_openrouter_metadata_preserves_reviewed_mark_overlay_opt_in(monkeypatch):
+    runtime = build_vision_runtime_config(
+        _base_config(
+            VISION_ENABLED=True,
+            VISION_PROVIDER="openai_compatible_external",
+            VISION_EXTERNAL_PROVIDER="openrouter",
+            VISION_OPENROUTER_MODEL="openai/gpt-5.4-pro",
+            VISION_MARK_OVERLAY_ENABLED=True,
+        )
+    )
+
+    async def _fake_resolve_openrouter_model_capabilities(**_kwargs):
+        return VisionModelCapabilities(
+            model_id="openai/gpt-5.4-pro",
+            capability_source="openrouter_api",
+            context_length=1_050_000,
+            max_completion_tokens=128_000,
+            input_modalities=["file", "image", "text"],
+            output_modalities=["text"],
+            supported_parameters=["response_format", "structured_outputs"],
+            visual_mark_overlays_supported=False,
+        )
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.vision.backends.resolve_openrouter_model_capabilities",
+        _fake_resolve_openrouter_model_capabilities,
+    )
+    backend = OpenAICompatibleVisionBackend(runtime)
+
+    asyncio.run(backend.prepare_for_request(VisionRequest(goal="metadata refresh", images=())))
+
+    refreshed = backend._runtime_config.openai_compatible_external
+    assert refreshed is not None
+    assert refreshed.model_capabilities is not None
+    assert refreshed.model_capabilities.capability_source == "openrouter_api"
+    assert refreshed.model_capabilities.visual_mark_overlays_supported is True
+    assert refreshed.model_capabilities.metadata_summary["visual_mark_overlays_supported_source"] == "fallback_registry"
 
 
 def test_build_vision_runtime_config_reports_fail_safe_budget_clipping():

@@ -17,6 +17,7 @@ from server.adapters.mcp.contracts.scene import (
     SceneCorrectionTruthSummaryContract,
     SceneCreateResponseContract,
     SceneCustomPropertiesContract,
+    SceneDirectionWorldContract,
     SceneHierarchyContract,
     SceneInspectResponseContract,
     SceneMeasureAlignmentContract,
@@ -232,6 +233,13 @@ def test_scene_relation_graph_contract_carries_compact_pair_semantics():
                         preferred_macro="macro_align_part_with_contact",
                         attachment_verdict="floating_gap",
                     ),
+                    direction_world=SceneDirectionWorldContract(
+                        reference_frame="world",
+                        axis="Z",
+                        sign="positive",
+                        margin=1.5,
+                        ambiguous=False,
+                    ),
                 ),
                 SceneRelationGraphPairContract(
                     pair_id="squirrel_body__floor",
@@ -266,7 +274,13 @@ def test_scene_relation_graph_contract_carries_compact_pair_semantics():
     assert response.payload.summary.pairing_strategy == "guided_spatial_pairs"
     assert "misaligned_attachment" in response.payload.pairs[0].relation_verdicts
     assert response.payload.pairs[0].attachment_semantics is not None
+    assert response.payload.pairs[0].direction_world is not None
+    assert response.payload.pairs[0].direction_world.reference_frame == "world"
     assert response.payload.pairs[1].support_semantics is not None
+    round_tripped = SceneRelationGraphResponseContract.model_validate(response.model_dump(mode="json"))
+    assert round_tripped.payload is not None
+    assert round_tripped.payload.pairs[0].direction_world is not None
+    assert round_tripped.payload.pairs[0].direction_world.sign == "positive"
 
 
 def test_scene_view_diagnostics_contract_carries_projection_and_visibility_evidence():

@@ -124,6 +124,16 @@ def _write_object_id_rectangles(path: Path) -> None:
     image.save(path)
 
 
+def _write_fragmented_object_id_mask(path: Path, *, band: int) -> None:
+    from PIL import Image, ImageDraw
+
+    image = Image.new("L", (200, 200), 0)
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((30, 40, 70, 160), fill=band)
+    draw.rectangle((130, 40, 170, 160), fill=band)
+    image.save(path)
+
+
 def test_compute_silhouette_iou_identical_masks_is_one(tmp_path: Path):
     a = tmp_path / "a.png"
     b = tmp_path / "b.png"
@@ -172,9 +182,62 @@ def test_compute_per_object_iou_decodes_object_id_band(tmp_path: Path):
 
     assert result["status"] == "available"
     assert result["object_index"] == 1
+    assert result["evidence_scope"] == "object_level_visible_surface"
+    assert result["object_index_source"] == "object_index_pass_index"
+    assert result["encoding"] == "object_index_grayscale_band"
+    assert result["object_count"] == 2
+    assert result["expected_band"] == 128
+    assert result["band_tolerance"] == 16
+    assert result["high_count_quantization_risk"] is False
+    assert result["visible_component_count"] == 1
+    assert result["largest_component_fraction"] == 1.0
     assert result["mask_iou"] is not None
     assert result["mask_iou"] > 0.98
     assert result["severity"] == "low"
+
+
+def test_compute_per_object_iou_flags_high_count_grayscale_band_risk(tmp_path: Path):
+    reference = tmp_path / "reference.png"
+    object_id = tmp_path / "object_id.png"
+    _write_offset_rectangle(reference, box=(35, 45, 95, 165))
+    _write_fragmented_object_id_mask(object_id, band=128)
+    index_map = {index: f"Object_{index}" for index in range(1, 201)}
+    index_map[100] = "Target"
+
+    result = compute_per_object_iou(
+        reference_path=str(reference),
+        object_id_path=str(object_id),
+        index_map=index_map,
+        object_name="Target",
+    )
+
+    assert result["status"] == "available"
+    assert result["object_index"] == 100
+    assert result["object_count"] == 200
+    assert result["expected_band"] == 128
+    assert result["band_tolerance"] == 2
+    assert result["high_count_quantization_risk"] is True
+    assert any("high object counts" in note for note in result["notes"])
+
+
+def test_compute_per_object_iou_reports_fragmented_visible_surface_mask(tmp_path: Path):
+    reference = tmp_path / "reference.png"
+    object_id = tmp_path / "object_id.png"
+    _write_offset_rectangle(reference, box=(35, 45, 95, 165))
+    _write_fragmented_object_id_mask(object_id, band=128)
+
+    result = compute_per_object_iou(
+        reference_path=str(reference),
+        object_id_path=str(object_id),
+        index_map={1: "Head", 2: "Body"},
+        object_name="Head",
+    )
+
+    assert result["status"] == "available"
+    assert result["visible_component_count"] == 2
+    assert result["largest_component_fraction"] is not None
+    assert 0.45 < result["largest_component_fraction"] < 0.55
+    assert any("disconnected components" in note for note in result["notes"])
 
 
 def test_per_object_iou_severity_thresholds_match_calibration_fixture():
@@ -207,6 +270,9 @@ def test_compute_per_object_iou_reports_missing_index_map_entry(tmp_path: Path):
 
     assert result["status"] == "unavailable"
     assert result["mask_iou"] is None
+    assert result["evidence_scope"] == "object_level_visible_surface"
+    assert result["object_count"] == 1
+    assert result["expected_band"] is None
     assert any("Tail" in note for note in result["notes"])
 
 
@@ -249,10 +315,14 @@ def test_silhouette_payload_populates_per_object_metrics_from_capture_side_objec
     assert payload is not None
     metrics = {metric.object_name: metric for metric in payload.per_object_metrics}
     assert metrics["Head"].status == "available"
+    assert metrics["Head"].evidence_scope == "object_level_visible_surface"
+    assert metrics["Head"].object_index_source == "object_index_pass_index"
+    assert metrics["Head"].encoding == "object_index_grayscale_band"
+    assert metrics["Head"].expected_band == 128
     assert metrics["Head"].mask_iou is not None
     assert metrics["Head"].mask_iou > 0.98
     assert metrics["Tail"].status == "unavailable"
-    assert any("capture-side object-ID mask" in note for note in metrics["Head"].notes)
+    assert any("object-level visible-surface Object Index/pass_index" in note for note in metrics["Head"].notes)
 
 
 def test_silhouette_payload_keeps_unavailable_per_object_metric_for_failed_object_id(tmp_path: Path):
@@ -280,7 +350,7 @@ def test_silhouette_payload_keeps_unavailable_per_object_metric_for_failed_objec
                 view_kind="focus",
                 object_id_artifact=VisionObjectIdCaptureArtifactContract(
                     capture_ok=False,
-                    capture_warning="No camera available for object-ID pass.",
+                    capture_warning="No camera available for Object Index pass.",
                 ),
             )
         ],
@@ -320,7 +390,7 @@ def test_compare_support_evidence_projects_per_object_iou():
         item.evidence_kind == "per_object_iou"
         and item.part_label == "Head"
         and item.observed_value == 0.42
-        and "Capture-side Object-ID IoU" in item.summary
+        and "object-level Object Index visible-surface IoU" in item.summary
         for item in evidence
     )
 

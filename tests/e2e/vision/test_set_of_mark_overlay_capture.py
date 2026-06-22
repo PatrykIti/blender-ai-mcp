@@ -41,11 +41,11 @@ def test_capture_stage_images_emits_set_of_mark_overlay_for_object_set(rpc_clien
         scene_handler.clean_scene(keep_lights_and_cameras=True)
         rpc_client.send_request(
             "modeling.create_primitive",
-            {"primitive_type": "CUBE", "name": "MarkBody", "size": 1.2, "location": [-0.45, 0.0, 0.0]},
+            {"primitive_type": "CUBE", "name": "MarkBody", "size": 0.8, "location": [-0.25, 0.0, 0.0]},
         )
         rpc_client.send_request(
             "modeling.create_primitive",
-            {"primitive_type": "SPHERE", "name": "MarkHead", "radius": 0.45, "location": [0.75, 0.0, 0.2]},
+            {"primitive_type": "SPHERE", "name": "MarkHead", "radius": 0.24, "location": [0.25, -0.45, 0.25]},
         )
         scene_handler.set_standard_view("FRONT")
         scene_handler.camera_focus("MarkBody")

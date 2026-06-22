@@ -72,6 +72,7 @@ def test_openrouter_google_family_compare_profile_reaches_final_contract(monkeyp
             VISION_ENABLED=True,
             VISION_PROVIDER="openai_compatible_external",
             VISION_EXTERNAL_PROVIDER="openrouter",
+            VISION_EXTERNAL_CONTRACT_PROFILE=None,
             VISION_OPENROUTER_MODEL="google/gemma-3-27b-it:free",
             VISION_OPENROUTER_API_KEY="openrouter-secret",
         )

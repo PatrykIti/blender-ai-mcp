@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from collections import deque
 from collections.abc import Sequence
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
@@ -14,11 +15,43 @@ import numpy as np
 _NORMALIZED_MASK_SIZE = 128
 _BORDER_RATIO_THRESHOLD = 0.35
 _CAPTURE_SIDE_OBJECT_ID_NOTE = (
-    "Per-object IoU uses the capture-side object-ID mask against the selected reference silhouette; "
-    "reference photographs do not provide object-ID ground truth."
+    "Per-object IoU uses capture-side object-level visible-surface Object Index/pass_index mask evidence "
+    "against the selected reference silhouette; reference photographs do not provide Object Index ground truth."
 )
+_OBJECT_ID_EVIDENCE_SCOPE = "object_level_visible_surface"
+_OBJECT_ID_INDEX_SOURCE = "object_index_pass_index"
+_OBJECT_ID_ENCODING = "object_index_grayscale_band"
+_OBJECT_ID_GRAYSCALE_BAND_COUNT = 255
+_OBJECT_ID_HIGH_COUNT_QUANTIZATION_RISK_ABOVE = 64
 PER_OBJECT_IOU_HIGH_MISMATCH_BELOW = 0.45
 PER_OBJECT_IOU_MEDIUM_MISMATCH_BELOW = 0.70
+
+
+@dataclass(frozen=True, slots=True)
+class _ObjectIdMaskDecode:
+    mask: np.ndarray | None
+    object_index: int | None
+    notes: list[str]
+    object_count: int
+    expected_band: int | None
+    band_tolerance: int | None
+    high_count_quantization_risk: bool
+    visible_component_count: int | None = None
+    largest_component_fraction: float | None = None
+
+    def metric_metadata(self) -> dict[str, Any]:
+        return {
+            "evidence_scope": _OBJECT_ID_EVIDENCE_SCOPE,
+            "object_index_source": _OBJECT_ID_INDEX_SOURCE,
+            "encoding": _OBJECT_ID_ENCODING,
+            "grayscale_band_count": _OBJECT_ID_GRAYSCALE_BAND_COUNT,
+            "object_count": self.object_count,
+            "expected_band": self.expected_band,
+            "band_tolerance": self.band_tolerance,
+            "high_count_quantization_risk": self.high_count_quantization_risk,
+            "visible_component_count": self.visible_component_count,
+            "largest_component_fraction": self.largest_component_fraction,
+        }
 
 
 def _metric_severity(delta: float, *, high: float, medium: float) -> str:
@@ -79,6 +112,36 @@ def _largest_component(mask: np.ndarray) -> np.ndarray:
     ys, xs = zip(*best_coords)
     component[np.array(ys), np.array(xs)] = True
     return component
+
+
+def _component_sizes(mask: np.ndarray) -> list[int]:
+    if mask.ndim != 2 or not bool(mask.any()):
+        return []
+
+    visited = np.zeros(mask.shape, dtype=bool)
+    sizes: list[int] = []
+    height, width = mask.shape
+    active_pixels = np.argwhere(mask)
+    for y, x in active_pixels:
+        if visited[y, x]:
+            continue
+        queue: deque[tuple[int, int]] = deque([(int(y), int(x))])
+        visited[y, x] = True
+        size = 0
+        while queue:
+            current_y, current_x = queue.popleft()
+            size += 1
+            for delta_y, delta_x in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                next_y = current_y + delta_y
+                next_x = current_x + delta_x
+                if next_y < 0 or next_y >= height or next_x < 0 or next_x >= width:
+                    continue
+                if visited[next_y, next_x] or not bool(mask[next_y, next_x]):
+                    continue
+                visited[next_y, next_x] = True
+                queue.append((next_y, next_x))
+        sizes.append(size)
+    return sizes
 
 
 def _otsu_threshold(values: np.ndarray) -> int:
@@ -253,37 +316,112 @@ def _extract_object_id_mask(
     *,
     index_map: dict[Any, Any],
     object_name: str,
-) -> tuple[np.ndarray | None, int | None, list[str]]:
+) -> _ObjectIdMaskDecode:
     notes: list[str] = []
     normalized_index_map = _normalize_object_id_index_map(index_map)
+    object_count = max(normalized_index_map) if normalized_index_map else 0
+    high_count_quantization_risk = object_count > _OBJECT_ID_HIGH_COUNT_QUANTIZATION_RISK_ABOVE
+    if high_count_quantization_risk:
+        notes.append(
+            "Object Index sidecar uses 8-bit grayscale bands; high object counts can make adjacent pass_index "
+            "bands ambiguous."
+        )
     object_index = next(
         (index for index, mapped_name in normalized_index_map.items() if mapped_name == object_name),
         None,
     )
     if object_index is None:
-        return None, None, [f"Object '{object_name}' is not present in the object-ID index map."]
+        notes.append(f"Object '{object_name}' is not present in the Object Index map.")
+        return _ObjectIdMaskDecode(
+            mask=None,
+            object_index=None,
+            notes=notes,
+            object_count=object_count,
+            expected_band=None,
+            band_tolerance=None,
+            high_count_quantization_risk=high_count_quantization_risk,
+        )
+
+    expected_band: int | None = None
+    tolerance: int | None = None
     try:
         from PIL import Image
     except ImportError:
-        return None, object_index, ["Pillow is not installed; object-ID mask decoding is unavailable."]
+        notes.append("Pillow is not installed; Object Index mask decoding is unavailable.")
+        return _ObjectIdMaskDecode(
+            mask=None,
+            object_index=object_index,
+            notes=notes,
+            object_count=object_count,
+            expected_band=expected_band,
+            band_tolerance=tolerance,
+            high_count_quantization_risk=high_count_quantization_risk,
+        )
 
     try:
         with Image.open(image_path) as image:
             grayscale = np.asarray(image.convert("L"))
     except Exception:
-        return None, object_index, [f"Object-ID image '{image_path}' could not be decoded."]
+        notes.append(f"Object Index image '{image_path}' could not be decoded.")
+        return _ObjectIdMaskDecode(
+            mask=None,
+            object_index=object_index,
+            notes=notes,
+            object_count=object_count,
+            expected_band=expected_band,
+            band_tolerance=tolerance,
+            high_count_quantization_risk=high_count_quantization_risk,
+        )
 
-    object_count = max(normalized_index_map) if normalized_index_map else 0
     if object_count <= 0:
-        return None, object_index, ["Object-ID index map is empty."]
-    expected_band = int(round((object_index / float(object_count)) * 255.0))
-    tolerance = max(2, int(round(255.0 / max(object_count * 8, 1))))
+        notes.append("Object Index map is empty.")
+        return _ObjectIdMaskDecode(
+            mask=None,
+            object_index=object_index,
+            notes=notes,
+            object_count=object_count,
+            expected_band=expected_band,
+            band_tolerance=tolerance,
+            high_count_quantization_risk=high_count_quantization_risk,
+        )
+    expected_band = int(round((object_index / float(object_count)) * float(_OBJECT_ID_GRAYSCALE_BAND_COUNT)))
+    tolerance = max(2, int(round(float(_OBJECT_ID_GRAYSCALE_BAND_COUNT) / max(object_count * 8, 1))))
     mask = np.abs(grayscale.astype(np.int16) - expected_band) <= tolerance
-    mask = _largest_component(mask)
     if not bool(mask.any()):
-        notes.append(f"Object-ID pass contained no stable mask pixels for '{object_name}'.")
-        return None, object_index, notes
-    return mask, object_index, notes
+        notes.append(f"Object Index pass contained no stable mask pixels for '{object_name}'.")
+        return _ObjectIdMaskDecode(
+            mask=None,
+            object_index=object_index,
+            notes=notes,
+            object_count=object_count,
+            expected_band=expected_band,
+            band_tolerance=tolerance,
+            high_count_quantization_risk=high_count_quantization_risk,
+            visible_component_count=0,
+            largest_component_fraction=None,
+        )
+    component_sizes = _component_sizes(mask)
+    visible_component_count = len(component_sizes)
+    largest_component_fraction = (
+        float(max(component_sizes)) / float(sum(component_sizes))
+        if component_sizes and sum(component_sizes) > 0
+        else None
+    )
+    if visible_component_count > 1:
+        notes.append(
+            f"Object Index visible-surface mask for '{object_name}' has {visible_component_count} disconnected components."
+        )
+    return _ObjectIdMaskDecode(
+        mask=mask,
+        object_index=object_index,
+        notes=notes,
+        object_count=object_count,
+        expected_band=expected_band,
+        band_tolerance=tolerance,
+        high_count_quantization_risk=high_count_quantization_risk,
+        visible_component_count=visible_component_count,
+        largest_component_fraction=largest_component_fraction,
+    )
 
 
 def compute_per_object_iou(
@@ -293,7 +431,7 @@ def compute_per_object_iou(
     index_map: dict[Any, Any],
     object_name: str,
 ) -> dict[str, Any]:
-    """Return bbox-normalized IoU for one object decoded from an object-ID pass.
+    """Return bbox-normalized IoU for one object decoded from an Object Index pass.
 
     ``object_id_path`` is the grayscale band image emitted by the addon
     ``get_object_id_pass`` contract, where object index ``i`` is encoded as
@@ -303,31 +441,34 @@ def compute_per_object_iou(
     """
 
     reference_mask, reference_notes = _extract_mask_from_image(reference_path)
-    object_mask, object_index, object_notes = _extract_object_id_mask(
+    object_decode = _extract_object_id_mask(
         object_id_path,
         index_map=index_map,
         object_name=object_name,
     )
-    notes = [*reference_notes, *object_notes]
-    if reference_mask is None or object_mask is None:
+    notes = [*reference_notes, *object_decode.notes]
+    decode_metadata = object_decode.metric_metadata()
+    if reference_mask is None or object_decode.mask is None:
         return {
             "object_name": object_name,
-            "object_index": object_index,
+            "object_index": object_decode.object_index,
             "status": "unavailable",
             "mask_iou": None,
             "severity": "high",
             "notes": notes or ["Per-object IoU could not extract both masks."],
+            **decode_metadata,
         }
     reference_crop, reference_bbox = _crop_bbox(reference_mask)
-    object_crop, object_bbox = _crop_bbox(object_mask)
+    object_crop, object_bbox = _crop_bbox(object_decode.mask)
     if reference_bbox == (0, 0) or object_bbox == (0, 0):
         return {
             "object_name": object_name,
-            "object_index": object_index,
+            "object_index": object_decode.object_index,
             "status": "unavailable",
             "mask_iou": None,
             "severity": "high",
             "notes": notes or ["Per-object IoU mask bbox was empty."],
+            **decode_metadata,
         }
     normalized_reference = _normalize_mask(reference_crop)
     normalized_object = _normalize_mask(object_crop)
@@ -340,11 +481,12 @@ def compute_per_object_iou(
     severity = classify_per_object_iou_severity(iou)
     return {
         "object_name": object_name,
-        "object_index": object_index,
+        "object_index": object_decode.object_index,
         "status": "available" if iou is not None else "unavailable",
         "mask_iou": iou,
         "severity": severity,
         "notes": notes,
+        **decode_metadata,
     }
 
 
@@ -367,7 +509,7 @@ def build_per_object_iou_metrics(
         return []
 
     if not object_id_path or not normalized_index_map:
-        note = unavailable_note or "Object-ID pass is unavailable for this silhouette comparison."
+        note = unavailable_note or "Object Index pass is unavailable for this silhouette comparison."
         return [
             {
                 "object_name": object_name,
@@ -376,6 +518,16 @@ def build_per_object_iou_metrics(
                 "mask_iou": None,
                 "severity": "high",
                 "notes": [note, _CAPTURE_SIDE_OBJECT_ID_NOTE],
+                "evidence_scope": _OBJECT_ID_EVIDENCE_SCOPE,
+                "object_index_source": _OBJECT_ID_INDEX_SOURCE,
+                "encoding": _OBJECT_ID_ENCODING,
+                "grayscale_band_count": _OBJECT_ID_GRAYSCALE_BAND_COUNT,
+                "object_count": 0,
+                "expected_band": None,
+                "band_tolerance": None,
+                "high_count_quantization_risk": False,
+                "visible_component_count": None,
+                "largest_component_fraction": None,
             }
             for object_name in target_names
         ]

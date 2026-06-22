@@ -982,6 +982,59 @@ def test_vision_harness_fixture_only_reference_understanding_keeps_backend_path_
     assert '"mode": "reference_understanding"' in output
 
 
+def test_vision_harness_reliability_scorecard_is_default_off(capsys):
+    module = _load_script("vision_harness")
+
+    result = module.main(
+        [
+            "--backend",
+            "mlx_local",
+            "--goal",
+            "low poly squirrel",
+            "--reference",
+            "/tmp/ref.png",
+            "--fixture-only",
+            "reference-understanding",
+        ]
+    )
+
+    assert result == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert "reliability_scorecard" not in payload[0]
+
+
+def test_vision_harness_reliability_scorecard_is_opt_in(capsys):
+    module = _load_script("vision_harness")
+
+    result = module.main(
+        [
+            "--backend",
+            "mlx_local",
+            "--goal",
+            "low poly squirrel",
+            "--reference",
+            "/tmp/ref.png",
+            "--fixture-only",
+            "reference-understanding",
+            "--emit-reliability-scorecard",
+        ]
+    )
+
+    assert result == 0
+    payload = json.loads(capsys.readouterr().out)
+    scorecard = payload[0]["reliability_scorecard"]
+    assert scorecard["advisory_only"] is True
+    assert [axis["axis"] for axis in scorecard["axes"]] == [
+        "object_identity",
+        "mark_correspondence",
+        "spatial_direction",
+        "depth_ordering",
+        "contact_support",
+        "shape_profile",
+    ]
+    assert {axis["status"] for axis in scorecard["axes"]} == {"skipped"}
+
+
 def test_vision_harness_fixture_only_reference_understanding_bundle_uses_reference_images_only(
     tmp_path,
     monkeypatch,

@@ -68,6 +68,15 @@ ReferenceShapeConvergenceDispositionLiteral = Literal[
 ReferenceCompareSupportEvidenceKindLiteral = Literal[
     "silhouette_metric", "per_object_iou", "action_hint", "part_segmentation"
 ]
+ReferenceAdvisoryReliabilityAxisLiteral = Literal[
+    "object_identity",
+    "mark_correspondence",
+    "spatial_direction",
+    "depth_ordering",
+    "contact_support",
+    "shape_profile",
+]
+ReferenceAdvisoryReliabilityAxisStatusLiteral = Literal["available", "skipped", "passed", "contradicted"]
 ReferencePlannerSourceLiteral = Literal[
     "vision",
     "truth",
@@ -672,6 +681,48 @@ class ReferenceCompareSupportEvidenceContract(MCPContract):
     )
 
 
+class ReferenceAdvisoryReliabilityAxisContract(MCPContract):
+    """One eval-only advisory reliability reading for a specific perception axis."""
+
+    axis: ReferenceAdvisoryReliabilityAxisLiteral
+    status: ReferenceAdvisoryReliabilityAxisStatusLiteral = Field(
+        description=(
+            "available = deterministic evidence exists but no bounded verdict was possible; "
+            "skipped = missing deterministic evidence or no vision result; "
+            "passed/contradicted = bounded agreement result for this axis."
+        )
+    )
+    score: float | None = Field(
+        default=None,
+        ge=0.0,
+        le=1.0,
+        description="Optional eval score for passed/contradicted axes; null when only availability was reported.",
+    )
+    evidence_refs: list[str] = Field(
+        default_factory=list,
+        description="Short bounded references to the deterministic evidence used for this advisory axis.",
+    )
+    notes: list[str] = Field(
+        default_factory=list,
+        description="Short explanation for skipped, available, passed, or contradicted status.",
+    )
+
+
+class ReferenceAdvisoryReliabilityScorecardContract(MCPContract):
+    """Default-off eval telemetry for per-axis VLM/render agreement."""
+
+    enabled: bool = Field(default=True, description="True only when explicitly requested by the eval harness.")
+    advisory_only: bool = Field(
+        default=True,
+        description="Always true: this scorecard is telemetry and must not become gate authority.",
+    )
+    axes: list[ReferenceAdvisoryReliabilityAxisContract] = Field(
+        default_factory=list,
+        description="Ordered per-axis reliability readings for the TASK-184 perception axes.",
+    )
+    notes: list[str] = Field(default_factory=list, description="Bounded scorecard-level caveats.")
+
+
 class ReferenceOpenDefectContract(MCPContract):
     """One stable Critic defect tracked across compare/verify cycles."""
 
@@ -966,21 +1017,69 @@ class ReferenceSilhouetteMetricContract(MCPContract):
 
 
 class ReferencePerObjectSilhouetteMetricContract(MCPContract):
-    """One deterministic object-ID-mask IoU metric for a named scene object."""
+    """One deterministic Object Index visible-surface IoU metric for a named scene object."""
 
-    object_name: str = Field(description="Scene object decoded from the object-ID pass index map.")
+    object_name: str = Field(description="Scene object decoded from the Object Index / pass_index map.")
     object_index: int | None = Field(default=None, description="Integer pass-index band used for this object.")
     status: Literal["available", "unavailable"] = Field(
-        default="unavailable", description="Whether a stable object-ID mask could be decoded and compared."
+        default="unavailable", description="Whether a stable object-level visible-surface mask could be decoded."
     )
     mask_iou: float | None = Field(
         default=None,
         ge=0.0,
         le=1.0,
-        description="BBox-normalized IoU between the reference mask and this object's decoded mask.",
+        description="BBox-normalized IoU between the reference mask and this object's decoded visible-surface mask.",
     )
     severity: Literal["high", "medium", "low"] = Field(
         default="medium", description="Advisory severity derived from the per-object IoU value."
+    )
+    evidence_scope: Literal["object_level_visible_surface"] = Field(
+        default="object_level_visible_surface",
+        description="Object-level rendered visible-surface evidence only; it does not identify sub-object regions.",
+    )
+    object_index_source: Literal["object_index_pass_index"] = Field(
+        default="object_index_pass_index",
+        description="Blender Object Index / pass_index source used to identify this object.",
+    )
+    encoding: Literal["object_index_grayscale_band"] = Field(
+        default="object_index_grayscale_band",
+        description="Grayscale band encoding used to decode the Object Index sidecar.",
+    )
+    grayscale_band_count: int = Field(
+        default=255,
+        ge=1,
+        description="Available non-background 8-bit grayscale bands for the current sidecar encoding.",
+    )
+    object_count: int = Field(
+        default=0,
+        ge=0,
+        description="Highest pass-index/object-count value used to derive this object's grayscale band.",
+    )
+    expected_band: int | None = Field(
+        default=None,
+        ge=0,
+        le=255,
+        description="Expected 8-bit grayscale value for this pass_index under the current encoding.",
+    )
+    band_tolerance: int | None = Field(
+        default=None,
+        ge=0,
+        description="Inclusive grayscale tolerance used when thresholding the expected band.",
+    )
+    high_count_quantization_risk: bool = Field(
+        default=False,
+        description="True when adjacent object bands can overlap or quantize poorly at the current object count.",
+    )
+    visible_component_count: int | None = Field(
+        default=None,
+        ge=0,
+        description="Number of disconnected visible-surface components decoded for this object when available.",
+    )
+    largest_component_fraction: float | None = Field(
+        default=None,
+        ge=0.0,
+        le=1.0,
+        description="Largest decoded component area divided by total decoded object pixels.",
     )
     notes: list[str] = Field(default_factory=list, description="Decode or comparison caveats for this object.")
 
@@ -1057,7 +1156,8 @@ class ReferenceSilhouetteAnalysisContract(MCPContract):
         default_factory=list, description="Bounded deterministic metrics such as IoU and contour drift."
     )
     per_object_metrics: list[ReferencePerObjectSilhouetteMetricContract] = Field(
-        default_factory=list, description="Optional object-ID-mask IoU metrics keyed to named scene objects."
+        default_factory=list,
+        description="Optional Object Index/pass_index visible-surface IoU metrics keyed to named scene objects.",
     )
     notes: list[str] = Field(default_factory=list, description="Short caveats or failure reasons for the analysis.")
 

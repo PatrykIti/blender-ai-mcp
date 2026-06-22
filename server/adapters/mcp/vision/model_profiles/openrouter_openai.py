@@ -498,6 +498,7 @@ OPENROUTER_OPENAI_PROFILES: tuple[ModelCapabilityProfile, ...] = (
             "tool_choice",
             "tools",
         ),
+        visual_mark_overlays_supported=True,
         preferred_contract_profile="google_family_compare",
         preferred_stage_max_tokens=4096,
         docs_url="https://openrouter.ai/openai/gpt-5.4-pro",

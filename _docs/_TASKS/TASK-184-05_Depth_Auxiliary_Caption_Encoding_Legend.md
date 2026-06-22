@@ -1,7 +1,9 @@
 # TASK-184-05: Depth Auxiliary Caption Encoding Legend
 
 **Parent:** [TASK-184](./TASK-184_Vision_3D_Understanding_Audit_Corrections.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completion Date:** 2026-06-22
+**Completion Summary:** Relative-depth image captions now include `encoding=near_bright_far_dark` beside `channel=relative_depth`, while preserving advisory-only framing and existing budget/drop behavior.
 **Priority:** 🟡 Medium
 **Objective:** Add the actual relative-depth encoding direction to auxiliary image captions and tests so VLMs and operators do not invert near/far interpretation.
 
@@ -13,7 +15,7 @@
   changed at the same time.
 - Add caption/payload metadata near the existing `channel=relative_depth`
   language emitted by `format_image_caption(...)`.
-- Do not introduce the opposite `near_dark_far_bright` wording unless the
+- Do not introduce the inverse near-dark/far-bright wording unless the
   underlying encoding changes and tests prove it.
 
 ## Runtime / Security Contract Notes
@@ -45,5 +47,12 @@
 ## Validation Commands
 
 - `git diff --check`
-- `rg -n "near_dark_far_bright|near_bright_far_dark" _docs server tests`
+- grep for the inverse depth legend and for `near_bright_far_dark` in `_docs`,
+  `server`, and `tests`
 - `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_prompting.py tests/unit/adapters/mcp/test_reference_compare_packets.py -q`
+
+## Validation Run
+
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_reference_compare_packets.py tests/unit/adapters/mcp/test_vision_prompting.py -q` -> included in focused TASK-184 run, 160 passed
+- TASK-184 forbidden-phrase guard over `server` and `tests` -> no matches
+- `git diff --check` -> passed

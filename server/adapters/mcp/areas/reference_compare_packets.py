@@ -1117,6 +1117,19 @@ def _reference_marks_for_localization_candidates(
     return marks
 
 
+def _packet_mark_request_metadata(packet: ReferenceComparePacketContract) -> dict[str, Any]:
+    """Return mark-keyed request metadata only when packet marks are available."""
+
+    metadata: dict[str, Any] = {}
+    if packet.mark_id_map:
+        metadata["packet_mark_id_map"] = dict(packet.mark_id_map)
+    if packet.reference_marks:
+        metadata["reference_marks"] = [
+            mark.model_dump(mode="json", exclude_none=True) for mark in packet.reference_marks
+        ]
+    return metadata
+
+
 def _mark_correspondence_for_result(
     result: VisionAssistContract,
     *,
@@ -2769,12 +2782,11 @@ async def execute_compare_packets(
                 "packet_target_object": packet_target_object,
                 "packet_reference_ids": list(packet.reference_ids),
                 "packet_capture_labels": list(packet.capture_labels),
-                "packet_mark_id_map": dict(packet.mark_id_map),
-                "reference_marks": [mark.model_dump(mode="json") for mark in packet.reference_marks],
                 "support_evidence_summaries": list(packet_support_evidence_summaries),
                 "collection_name": resolved_collection_name,
                 "target_objects": list(packet.target_objects or resolved_target_objects),
                 "assembled_target_scope": assembled_target_scope.model_dump(mode="json"),
+                **_packet_mark_request_metadata(packet),
             },
             capture_grid_enabled=capture_grid_enabled,
             transmit_auxiliary_channels=transmit_auxiliary_channels,
@@ -2930,8 +2942,6 @@ async def execute_compare_packets(
                     "packet_target_object": packet_target_object,
                     "packet_reference_ids": list(packet.reference_ids),
                     "packet_capture_labels": list(packet.capture_labels),
-                    "packet_mark_id_map": dict(packet.mark_id_map),
-                    "reference_marks": [mark.model_dump(mode="json") for mark in packet.reference_marks],
                     "support_evidence_summaries": list(packet_support_evidence_summaries),
                     "collection_name": resolved_collection_name,
                     "target_objects": list(packet.target_objects or resolved_target_objects),
@@ -2946,6 +2956,7 @@ async def execute_compare_packets(
                     "extraction_correction_focus": list(extraction_vision_assistant.result.correction_focus or []),
                     "extraction_next_corrections": list(extraction_vision_assistant.result.next_corrections or []),
                     "extraction_status_reason": packet.status_reason,
+                    **_packet_mark_request_metadata(packet),
                 },
                 capture_grid_enabled=capture_grid_enabled,
                 transmit_auxiliary_channels=transmit_auxiliary_channels,

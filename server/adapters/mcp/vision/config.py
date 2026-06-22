@@ -42,6 +42,7 @@ class VisionModelCapabilities(BaseModel):
     input_modalities: list[str] = []
     output_modalities: list[str] = []
     supported_parameters: list[str] = []
+    visual_mark_overlays_supported: bool = False
     metadata_summary: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -224,6 +225,45 @@ class VisionRuntimeConfig(BaseModel):
         if self.provider != "openai_compatible_external" or self.openai_compatible_external is None:
             return None
         return self.openai_compatible_external.vision_contract_profile
+
+    @property
+    def active_model_capabilities(self) -> VisionModelCapabilities | None:
+        """Return model capability metadata for the active runtime when available."""
+
+        if self.provider != "openai_compatible_external" or self.openai_compatible_external is None:
+            return None
+        return self.openai_compatible_external.model_capabilities
+
+    @property
+    def effective_mark_overlay_enabled(self) -> bool:
+        """Return whether Set-of-Mark overlays may be emitted for the active model."""
+
+        model_capabilities = self.active_model_capabilities
+        return bool(
+            self.mark_overlay_enabled
+            and model_capabilities is not None
+            and model_capabilities.visual_mark_overlays_supported
+        )
+
+    @property
+    def mark_overlay_disabled_reason(self) -> str | None:
+        """Return a short diagnostic explaining why mark overlays are unavailable."""
+
+        if not self.mark_overlay_enabled:
+            return "VISION_MARK_OVERLAY_ENABLED is false; Set-of-Mark overlays are disabled by operator policy."
+        model_capabilities = self.active_model_capabilities
+        if model_capabilities is None:
+            return (
+                "Set-of-Mark overlays skipped: the active vision runtime has no model capability metadata, "
+                "so visual_mark_overlays_supported defaults to false."
+            )
+        if not model_capabilities.visual_mark_overlays_supported:
+            return (
+                "Set-of-Mark overlays skipped: active model capability "
+                f"visual_mark_overlays_supported=false for {model_capabilities.model_id} "
+                f"({model_capabilities.capability_source})."
+            )
+        return None
 
     @property
     def active_reference_classifier(self) -> "VisionReferenceClassifierConfig | None":

@@ -6,6 +6,7 @@ from pathlib import Path
 
 from server.adapters.mcp.vision.marks import (
     build_marks_from_object_masks,
+    build_projection_mark_anchors,
     mask_centroid,
     overlay_numbered_marks,
 )
@@ -94,6 +95,63 @@ def test_build_marks_from_object_masks_preserves_ids_for_unmarked_objects(tmp_pa
 
     assert mapping == {2: "Head"}
     assert [mark_id for mark_id, _x, _y in marks] == [2]
+
+
+def test_build_projection_mark_anchors_prefers_center_and_visible_extent():
+    anchors = build_projection_mark_anchors(
+        {
+            "targets": [
+                {
+                    "object_name": "Body",
+                    "visibility_verdict": "visible",
+                    "projection_status": "projected",
+                    "projection": {"projected_center": {"x": 0.25, "y": 0.75}},
+                },
+                {
+                    "object_name": "Head",
+                    "visibility_verdict": "partially_visible",
+                    "projection_status": "projected",
+                    "projection": {
+                        "projected_center": {"x": 1.4, "y": 0.2},
+                        "projected_extent": {"min_x": 0.6, "min_y": 0.2, "max_x": 0.8, "max_y": 0.4},
+                    },
+                },
+            ]
+        },
+        object_names=["Head", "Body"],
+        width=200,
+        height=100,
+        mark_id_map={"Body": 4, "Head": 9},
+    )
+
+    assert [(item.mark_id, item.object_name, item.point, item.anchor_status) for item in anchors] == [
+        (4, "Body", (50, 25), "projected"),
+        (9, "Head", (139, 69), "projected"),
+    ]
+
+
+def test_build_projection_mark_anchors_reports_non_projectable_states():
+    anchors = build_projection_mark_anchors(
+        {
+            "targets": [
+                {"object_name": "Body", "visibility_verdict": "outside_frame", "projection_status": "outside_frame"},
+                {"object_name": "Head", "visibility_verdict": "outside_frame", "projection_status": "behind_view"},
+                {"object_name": "Tail", "visibility_verdict": "fully_occluded", "projection_status": "projected"},
+            ]
+        },
+        object_names=["Body", "Head", "Tail", "Ear"],
+        width=200,
+        height=100,
+    )
+
+    status_by_object = {item.object_name: item.anchor_status for item in anchors}
+    assert status_by_object == {
+        "Body": "outside_frame",
+        "Ear": "unavailable",
+        "Head": "behind_view",
+        "Tail": "occluded",
+    }
+    assert all(item.point is None for item in anchors)
 
 
 class _MaskHandler:

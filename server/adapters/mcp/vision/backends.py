@@ -794,6 +794,21 @@ class OpenAICompatibleVisionBackend(VisionBackend):
         )
         if resolved.capability_source != "openrouter_api" and current_capabilities is not None:
             return
+        if (
+            resolved.capability_source == "openrouter_api"
+            and current_capabilities is not None
+            and current_capabilities.visual_mark_overlays_supported
+            and not resolved.visual_mark_overlays_supported
+        ):
+            resolved = resolved.model_copy(
+                update={
+                    "visual_mark_overlays_supported": True,
+                    "metadata_summary": {
+                        **dict(resolved.metadata_summary or {}),
+                        "visual_mark_overlays_supported_source": current_capabilities.capability_source,
+                    },
+                }
+            )
 
         self._external_config = self._external_config.model_copy(update={"model_capabilities": resolved})
         self._runtime_config = self._runtime_config.model_copy(

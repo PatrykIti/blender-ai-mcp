@@ -1,7 +1,9 @@
 # TASK-184-02: Projection-Based Set-Of-Mark Anchors
 
 **Parent:** [TASK-184](./TASK-184_Vision_3D_Understanding_Audit_Corrections.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completion Date:** 2026-06-22
+**Completion Summary:** Live Set-of-Mark overlays now resolve anchors from view projection diagnostics first, carry `anchor_status` / `anchor_source` / optional pixel coordinates and bounded reasons, and fall back to the existing mask-centroid path only when projection data is unavailable. No new addon render path was added.
 **Priority:** 🔴 High
 **Objective:** Prefer deterministic camera projection diagnostics for live Set-of-Mark anchor placement, using current mask-centroid placement only as a fallback.
 
@@ -55,3 +57,9 @@
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/e2e/tools/scene/test_scene_view_diagnostics.py -q`
 - `poetry run python scripts/run_e2e_tests.py`
+
+## Validation Run
+
+- `PYTHONPATH=. poetry run pytest tests/unit/adapters/mcp/test_vision_marks.py tests/unit/adapters/mcp/test_vision_capture_runtime.py -q` -> 29 passed
+- `PYTEST_ADDOPTS="-k 'openrouter_google_family_compare_profile_reaches_final_contract or capture_stage_images_emits_set_of_mark_overlay_for_object_set'" poetry run python scripts/run_e2e_tests.py --skip-build` -> 2 passed, 498 deselected
+- `git diff --check` -> passed

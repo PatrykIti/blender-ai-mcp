@@ -1,7 +1,9 @@
 # TASK-184-03: Directional Spatial Predicates From OBBs
 
 **Parent:** [TASK-184](./TASK-184_Vision_3D_Understanding_Audit_Corrections.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+**Completion Date:** 2026-06-22
+**Completion Summary:** Added additive `direction_world` pair metadata to relation graphs without changing existing relation kinds or pair planning. The contract reports `reference_frame="world"`, axis, sign, margin, and ambiguity for `from_object` relative to `to_object`, using measured centers/bounds rather than object-name hints.
 **Priority:** 🔴 High
 **Objective:** Add deterministic, frame-tagged directional predicates to the spatial graph so LLMs can ask for structured left/right/front/behind-style facts without relying on object names or screenshots.
 
@@ -59,3 +61,8 @@
 
 - `git diff --check`
 - `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_spatial_graph_service.py tests/unit/tools/scene/test_scene_contracts.py -q`
+
+## Validation Run
+
+- `PYTHONPATH=. poetry run pytest tests/unit/tools/scene/test_spatial_graph_service.py tests/unit/tools/scene/test_scene_contracts.py -q` -> 30 passed
+- `git diff --check` -> passed

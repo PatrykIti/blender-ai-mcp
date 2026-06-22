@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [395](./395-2026-06-22-task-184-vision-3d-understanding-audit-corrections.md) | 2026-06-22 | **TASK-184 Vision 3D understanding audit corrections** | - |
 | [394](./394-2026-05-31-task-173-creature-scope-closeout.md) | 2026-05-31 | **TASK-173 creature scope-convergence closeout** | - |
 | [393](./393-2026-05-31-vision-followup-closeout.md) | 2026-05-31 | **Vision follow-up closeout** | - |
 | [392](./392-2026-05-31-task-180-live-mark-overlay-capture.md) | 2026-05-31 | **TASK-180-01 live Set-of-Mark overlay capture** | - |

@@ -120,6 +120,8 @@ _ObjectRole = Literal[
 _PairSource = Literal["required_creature_seam", "primary_to_other", "support_candidate", "symmetry_candidate"]
 _PairingStrategy = Literal["none", "primary_to_others", "required_creature_seams", "guided_spatial_pairs"]
 _CreatureRelationKind = Literal["embedded_attachment", "seated_attachment", "segment_attachment"]
+_DirectionAxis = Literal["X", "Y", "Z"]
+_DirectionSign = Literal["negative", "zero", "positive"]
 _CreatureSeamKind = Literal[
     "face_head",
     "nose_snout",
@@ -130,6 +132,9 @@ _CreatureSeamKind = Literal[
     "roof_wall",
     "opening_wall",
 ]
+_DIRECTION_AXES: tuple[_DirectionAxis, ...] = ("X", "Y", "Z")
+_DIRECTION_AXIS_KEYS: dict[_DirectionAxis, str] = {"X": "x", "Y": "y", "Z": "z"}
+_DIRECTION_WORLD_CENTER_TOLERANCE = 0.0001
 
 
 class _SceneSpatialReader(Protocol):
@@ -375,16 +380,28 @@ def _name_anchor_weight(object_name: str) -> int:
     return score
 
 
-def _bbox_payload_or_none(reader: _SceneSpatialReader, object_name: str) -> dict[str, Any] | None:
+def _bbox_payload_or_none(
+    reader: _SceneSpatialReader,
+    object_name: str,
+    bbox_cache: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, Any] | None:
+    if bbox_cache is not None and object_name in bbox_cache:
+        return bbox_cache[object_name]
     try:
         payload = reader.get_bounding_box(object_name, world_space=True)
     except Exception:
         return None
+    if isinstance(payload, dict) and bbox_cache is not None:
+        bbox_cache[object_name] = payload
     return payload if isinstance(payload, dict) else None
 
 
-def _bbox_volume_or_zero(reader: _SceneSpatialReader, object_name: str) -> float:
-    bbox = _bbox_payload_or_none(reader, object_name)
+def _bbox_volume_or_zero(
+    reader: _SceneSpatialReader,
+    object_name: str,
+    bbox_cache: dict[str, dict[str, Any]] | None = None,
+) -> float:
+    bbox = _bbox_payload_or_none(reader, object_name, bbox_cache=bbox_cache)
     dimensions = bbox.get("dimensions") if isinstance(bbox, dict) else None
     if not isinstance(dimensions, list) or len(dimensions) != 3:
         return 0.0
@@ -399,7 +416,11 @@ def _looks_like_accessory_anchor(object_name: str) -> bool:
     return any(token in normalized for token in _ACCESSORY_ROLE_HINTS)
 
 
-def _select_scope_primary_target(reader: _SceneSpatialReader, object_names: list[str]) -> str | None:
+def _select_scope_primary_target(
+    reader: _SceneSpatialReader,
+    object_names: list[str],
+    bbox_cache: dict[str, dict[str, Any]] | None = None,
+) -> str | None:
     if not object_names:
         return None
     return max(
@@ -407,16 +428,20 @@ def _select_scope_primary_target(reader: _SceneSpatialReader, object_names: list
         key=lambda name: (
             0 if _looks_like_accessory_anchor(name) else 1,
             _name_anchor_weight(name),
-            _bbox_volume_or_zero(reader, name),
+            _bbox_volume_or_zero(reader, name, bbox_cache=bbox_cache),
             -object_names.index(name),
         ),
     )
 
 
-def _select_role_anchor(reader: _SceneSpatialReader, object_names: list[str]) -> str | None:
+def _select_role_anchor(
+    reader: _SceneSpatialReader,
+    object_names: list[str],
+    bbox_cache: dict[str, dict[str, Any]] | None = None,
+) -> str | None:
     if not object_names:
         return None
-    return _select_scope_primary_target(reader, object_names)
+    return _select_scope_primary_target(reader, object_names, bbox_cache=bbox_cache)
 
 
 def _preferred_attachment_macro(
@@ -485,6 +510,7 @@ def _required_creature_seams(
     object_names: list[str],
     *,
     guided_part_registry: list[Mapping[str, Any]] | None = None,
+    bbox_cache: dict[str, dict[str, Any]] | None = None,
 ) -> list[_PlannedCreatureSeam]:
     if len(object_names) < 2:
         return []
@@ -545,9 +571,9 @@ def _required_creature_seams(
         lexical_matches=[name for name in object_names if _is_limb_like(name)],
     )
 
-    head_anchor = _select_role_anchor(reader, heads)
-    body_anchor = _select_role_anchor(reader, bodies)
-    snout_anchor = _select_role_anchor(reader, snouts)
+    head_anchor = _select_role_anchor(reader, heads, bbox_cache=bbox_cache)
+    body_anchor = _select_role_anchor(reader, bodies, bbox_cache=bbox_cache)
+    snout_anchor = _select_role_anchor(reader, snouts, bbox_cache=bbox_cache)
 
     seams: list[_PlannedCreatureSeam] = []
     seen_pairs: set[tuple[str, str]] = set()
@@ -898,11 +924,12 @@ def _support_semantics(
     pair_source: _PairSource,
     reader: _SceneSpatialReader,
     gap_payload: dict[str, Any] | None,
+    bbox_cache: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any] | None:
     if pair_source != "support_candidate":
         return None
-    from_bbox = _bbox_payload_or_none(reader, from_object)
-    to_bbox = _bbox_payload_or_none(reader, to_object)
+    from_bbox = _bbox_payload_or_none(reader, from_object, bbox_cache=bbox_cache)
+    to_bbox = _bbox_payload_or_none(reader, to_object, bbox_cache=bbox_cache)
     if from_bbox is None or to_bbox is None:
         return None
 
@@ -936,14 +963,15 @@ def _symmetry_semantics(
     to_object: str,
     pair_source: _PairSource,
     reader: _SceneSpatialReader,
+    bbox_cache: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any] | None:
     if pair_source != "symmetry_candidate":
         return None
     left_object, right_object = (
         (from_object, to_object) if _name_side_hint(from_object) == "left" else (to_object, from_object)
     )
-    left_bbox = _bbox_payload_or_none(reader, left_object)
-    right_bbox = _bbox_payload_or_none(reader, right_object)
+    left_bbox = _bbox_payload_or_none(reader, left_object, bbox_cache=bbox_cache)
+    right_bbox = _bbox_payload_or_none(reader, right_object, bbox_cache=bbox_cache)
     if left_bbox is None or right_bbox is None:
         return None
     left_center = left_bbox.get("center") or [0.0, 0.0, 0.0]
@@ -959,6 +987,103 @@ def _symmetry_semantics(
         "axis": "X",
         "mirror_coordinate": mirror_coordinate,
         "verdict": "symmetric" if bool(assertion.get("passed")) else "asymmetric",
+    }
+
+
+def _direction_sign(*, signed_margin: float, ambiguous: bool) -> _DirectionSign:
+    if ambiguous:
+        return "zero"
+    return "positive" if signed_margin > 0.0 else "negative"
+
+
+def _direction_center_deltas_from_alignment(
+    alignment_payload: dict[str, Any] | None,
+) -> dict[_DirectionAxis, float] | None:
+    if not isinstance(alignment_payload, dict):
+        return None
+    deltas = alignment_payload.get("deltas")
+    if not isinstance(deltas, Mapping):
+        return None
+
+    signed_deltas: dict[_DirectionAxis, float] = {}
+    for axis in _DIRECTION_AXES:
+        key = _DIRECTION_AXIS_KEYS[axis]
+        if key not in deltas:
+            continue
+        try:
+            # measure_alignment(CENTER) reports target - source. Direction facts
+            # describe from_object relative to to_object, so invert the sign.
+            signed_deltas[axis] = -float(deltas[key])
+        except (TypeError, ValueError):
+            return None
+    return signed_deltas or None
+
+
+def _bbox_center_or_none(bbox_payload: dict[str, Any] | None) -> list[float] | None:
+    center = (bbox_payload or {}).get("center")
+    if not isinstance(center, list) or len(center) != 3:
+        return None
+    try:
+        return [float(center[index]) for index in range(3)]
+    except (TypeError, ValueError):
+        return None
+
+
+def _direction_center_deltas_from_bboxes(
+    *,
+    reader: _SceneSpatialReader,
+    from_object: str,
+    to_object: str,
+    bbox_cache: dict[str, dict[str, Any]] | None = None,
+) -> dict[_DirectionAxis, float] | None:
+    from_center = _bbox_center_or_none(_bbox_payload_or_none(reader, from_object, bbox_cache=bbox_cache))
+    to_center = _bbox_center_or_none(_bbox_payload_or_none(reader, to_object, bbox_cache=bbox_cache))
+    if from_center is None or to_center is None:
+        return None
+    return {
+        "X": from_center[0] - to_center[0],
+        "Y": from_center[1] - to_center[1],
+        "Z": from_center[2] - to_center[2],
+    }
+
+
+def _direction_world_semantics(
+    *,
+    reader: _SceneSpatialReader,
+    from_object: str,
+    to_object: str,
+    alignment_payload: dict[str, Any] | None,
+    bbox_cache: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, Any] | None:
+    signed_deltas = _direction_center_deltas_from_alignment(alignment_payload)
+    if signed_deltas is None:
+        signed_deltas = _direction_center_deltas_from_bboxes(
+            reader=reader,
+            from_object=from_object,
+            to_object=to_object,
+            bbox_cache=bbox_cache,
+        )
+    if signed_deltas is None:
+        return None
+
+    axis_index = {axis: index for index, axis in enumerate(_DIRECTION_AXES)}
+    axis = max(_DIRECTION_AXES, key=lambda candidate: (abs(signed_deltas.get(candidate, 0.0)), -axis_index[candidate]))
+    signed_margin = signed_deltas.get(axis, 0.0)
+    margin = abs(signed_margin)
+    tolerance_value = (alignment_payload or {}).get("tolerance") if isinstance(alignment_payload, dict) else None
+    threshold = _DIRECTION_WORLD_CENTER_TOLERANCE
+    if tolerance_value is not None:
+        try:
+            threshold = max(abs(float(tolerance_value)), _DIRECTION_WORLD_CENTER_TOLERANCE)
+        except (TypeError, ValueError):
+            threshold = _DIRECTION_WORLD_CENTER_TOLERANCE
+    ambiguous = margin <= threshold
+    return {
+        "reference_frame": "world",
+        "axis": axis,
+        "sign": _direction_sign(signed_margin=signed_margin, ambiguous=ambiguous),
+        "margin": round(float(margin), 6),
+        "ambiguous": ambiguous,
     }
 
 
@@ -1095,10 +1220,11 @@ class SpatialGraphService:
                 raise ValueError(f"Object(s) not found in scene: {quoted}")
 
         primary_target: str | None
+        bbox_cache: dict[str, dict[str, Any]] = {}
         if len(object_names) == 1:
             primary_target = object_names[0]
         else:
-            primary_target = _select_scope_primary_target(reader, object_names)
+            primary_target = _select_scope_primary_target(reader, object_names, bbox_cache=bbox_cache)
 
         object_roles: list[dict[str, Any]] = []
         for object_name in object_names:
@@ -1156,10 +1282,12 @@ class SpatialGraphService:
 
         planned_pairs: list[_PlannedRelationPair] = []
         planned_pairs_by_key: dict[tuple[str, str], _PlannedRelationPair] = {}
+        bbox_cache: dict[str, dict[str, Any]] = {}
         required_seams = _required_creature_seams(
             reader,
             object_names,
             guided_part_registry=guided_part_registry,
+            bbox_cache=bbox_cache,
         )
         if required_seams:
             for required_seam in required_seams:
@@ -1295,12 +1423,21 @@ class SpatialGraphService:
                 pair_source="support_candidate" if pair.include_support else pair.pair_source,
                 reader=reader,
                 gap_payload=gap_payload,
+                bbox_cache=bbox_cache,
             )
             symmetry_semantics = _symmetry_semantics(
                 from_object=pair.from_object,
                 to_object=pair.to_object,
                 pair_source="symmetry_candidate" if pair.include_symmetry else pair.pair_source,
                 reader=reader,
+                bbox_cache=bbox_cache,
+            )
+            direction_world = _direction_world_semantics(
+                reader=reader,
+                from_object=pair.from_object,
+                to_object=pair.to_object,
+                alignment_payload=alignment_payload,
+                bbox_cache=bbox_cache,
             )
 
             relation_pair = {
@@ -1334,6 +1471,7 @@ class SpatialGraphService:
                 "attachment_semantics": attachment_semantics,
                 "support_semantics": support_semantics,
                 "symmetry_semantics": symmetry_semantics,
+                "direction_world": direction_world,
                 "error": error,
             }
             if include_truth_payloads:
