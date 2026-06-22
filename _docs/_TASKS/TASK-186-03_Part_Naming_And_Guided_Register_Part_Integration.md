@@ -5,11 +5,13 @@
 **Priority:** 🔴 High
 **Objective:** Normalize decomposed part names and register materialized parts through the existing guided part registry instead of inventing a parallel registration surface.
 
-**Repository Touchpoints:** `server/adapters/mcp/areas/`, `server/adapters/mcp/contracts/`, current guided part registry modules, `tests/unit/adapters/mcp/`, `tests/e2e/integration/`
+**Repository Touchpoints:** `server/adapters/mcp/areas/router.py`, `server/adapters/mcp/session_capabilities_registry.py`, `server/adapters/mcp/session_capabilities_state.py`, `server/adapters/mcp/contracts/`, `tests/unit/adapters/mcp/test_router_elicitation.py`, `tests/unit/adapters/mcp/test_guided_flow_domain_profiles.py`, `tests/e2e/integration/`
 
 ## Implementation Notes
 
 - Reuse existing guided part registry contracts and state keys.
+- Use `guided_register_part(...)` as the public/guided registration seam and
+  `register_guided_part_role(_async)` as the state mutation helper.
 - Normalize names through the repo naming policy before registration.
 - Preserve provider/source labels separately from canonical object names.
 - Register only materialized, inspectable parts; advisory-only hypotheses stay
@@ -24,8 +26,10 @@
 
 ## Tests To Add/Update
 
-- unit tests for name normalization and duplicate handling
-- registry integration tests for materialized part refs
+- unit tests for name normalization, duplicate handling, and role validation on
+  `guided_register_part(...)`
+- registry integration tests for materialized part refs through
+  `register_guided_part_role(_async)`
 - E2E guided transport test if the public/guided surface changes
 
 ## Docs To Update

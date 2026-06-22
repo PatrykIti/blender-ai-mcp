@@ -5,12 +5,15 @@
 **Priority:** 🔴 High
 **Objective:** Add deterministic, frame-tagged directional predicates to the spatial graph so LLMs can ask for structured left/right/front/behind-style facts without relying on object names or screenshots.
 
-**Repository Touchpoints:** `server/application/services/spatial_graph.py`, `server/adapters/mcp/contracts/scene.py`, `server/adapters/mcp/areas/scene.py`, `server/router/infrastructure/tools_metadata/scene/`, `tests/unit/tools/scene/test_spatial_graph_service.py`, `tests/unit/tools/scene/test_scene_contracts.py`, `_docs/_MCP_SERVER/README.md`, `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+**Repository Touchpoints:** `server/application/services/spatial_graph.py`, `server/adapters/mcp/areas/scene_spatial_graph.py`, `server/adapters/mcp/areas/scene.py`, `server/adapters/mcp/contracts/scene.py`, `server/router/infrastructure/tools_metadata/scene/`, `tests/unit/tools/scene/test_spatial_graph_service.py`, `tests/unit/tools/scene/test_scene_contracts.py`, `_docs/_MCP_SERVER/README.md`, `_docs/AVAILABLE_TOOLS_SUMMARY.md`
 
 ## Implementation Notes
 
 - Add a typed directional semantics contract rather than overloading
   `SceneRelationKindLiteral`.
+- Wire the new semantics through `route_scene_relation_graph(...)` in
+  `scene_spatial_graph.py`; `scene.py` is only the public facade wrapper for
+  this route.
 - At minimum support:
   - `direction_world`: deterministic axis relation in world space
   - optional `direction_camera`: view-relative relation when a reference camera

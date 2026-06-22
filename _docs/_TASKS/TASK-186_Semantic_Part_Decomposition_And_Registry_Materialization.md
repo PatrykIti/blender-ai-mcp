@@ -20,8 +20,8 @@ render-side object masks, and explicit guided part registration. It does not
 cover the end-to-end flow:
 
 one mesh -> semantic part hypotheses -> pixel/mask/face lift -> materialized
-part objects or groups -> `guided_part_registry` registration -> deterministic
-inspection and correction.
+part objects or groups -> the existing guided part registry state and
+`guided_register_part(...)` path -> deterministic inspection and correction.
 
 Without this task, future docs risk implying the current object-ID sidecar can
 do pixel-to-face semantic part decomposition. It cannot.
@@ -56,8 +56,17 @@ reason about without confusing advisory segmentation with verified geometry.
 |---------------|--------------------|--------------------|
 | `server/adapters/mcp/contracts/`, `server/application/tool_handlers/` | typed decomposition contracts and server handlers | the flow needs strict payloads and reject-unknown behavior |
 | `blender_addon/application/handlers/` | mesh face/group/object materialization | decomposition results must become inspectable Blender state |
-| `server/adapters/mcp/areas/guided_part_registry.py` or current registry owner | guided registration integration | materialized parts must join the existing guided registry |
+| `server/adapters/mcp/areas/router.py`, `server/adapters/mcp/session_capabilities_registry.py`, `server/adapters/mcp/session_capabilities_state.py` | `guided_register_part(...)`, `register_guided_part_role(_async)`, and `guided_part_registry` state | materialized parts must join the existing guided registry instead of a parallel registry module |
 | `tests/unit/`, `tests/e2e/` | contract and Blender-backed proof | both payload safety and real mesh mutation need coverage |
+
+## Test Matrix
+
+| Slice | Primary Validation Lane | Why |
+|------|--------------------------|-----|
+| provider/decomposition boundary | unit tests for disabled, unavailable, unsupported-provider, and reject-unknown payload states | the first wave must fail closed before any sidecar output is trusted |
+| face/group materialization | Blender-backed E2E fixture for face groups or separated objects plus a negative empty/ambiguous case | materialization mutates real mesh state and must be inspectable |
+| guided registry integration | unit tests around `guided_register_part(...)` / `register_guided_part_role(_async)` and E2E guided transport if the public surface changes | decomposed parts must use the existing registry state and role validation |
+| docs/regression fixtures | `git diff --check`, consistency grep, and fixture provenance checks | prevents object-ID/face-ID and registry-path drift from returning |
 
 ## Runtime / Security Contract Notes
 

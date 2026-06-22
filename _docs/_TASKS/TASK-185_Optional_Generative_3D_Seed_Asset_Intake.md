@@ -43,6 +43,15 @@ flow.
 - do not choose a vendor based on stale documentation; verify current official
   docs and terms before implementation
 
+## Execution Structure
+
+| Order | Task | Purpose |
+|------|------|---------|
+| 1 | [TASK-185-01](./TASK-185-01_Provider_And_Legal_Verification_Boundary.md) | Verify current official provider/API/licensing terms and choose the first default-off provider or sidecar strategy |
+| 2 | [TASK-185-02](./TASK-185-02_Seed_Asset_Request_And_Job_Lifecycle_Contract.md) | Define the typed request, async job, timeout, failure, and redaction contract before any provider implementation |
+| 3 | [TASK-185-03](./TASK-185-03_GLB_Download_Import_And_Inspection_Handoff.md) | Import a generated seed asset through Blender safely and hand it to deterministic inspection/cleanup |
+| 4 | [TASK-185-04](./TASK-185-04_Operator_Docs_E2E_Proof_And_Closeout.md) | Add fixture-backed proof, operator docs, board/changelog updates, and closeout validation |
+
 ## Repository Touchpoints
 
 | Path / Module | Expected Ownership | Why It Is In Scope |
