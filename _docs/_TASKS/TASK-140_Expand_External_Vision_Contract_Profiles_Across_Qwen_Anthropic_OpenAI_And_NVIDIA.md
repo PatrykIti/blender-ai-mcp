@@ -1,386 +1,134 @@
-# TASK-140: Expand External Vision Contract Profiles Across Qwen, Anthropic, OpenAI, and NVIDIA
+# TASK-140: External Vision Contract Profiles Capability-First Closeout
 
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
-**Category:** Vision Runtime / External Model-Family Reliability
-**Estimated Effort:** Large
+**Category:** Vision Runtime / External Model Capability Reliability
+**Completion Date:** 2026-06-23
 **Dependencies:** TASK-139
+**Follow-up:** [TASK-187](./TASK-187_External_Vision_Model_Evidence_And_Profile_Promotion_Governance.md)
 
 ## Objective
 
-Extend the external `vision_contract_profile` architecture introduced in
-`TASK-139` beyond the current `generic_full` and
-`google_family_compare` split so the runtime can choose prompt/schema/parser
-behavior more precisely for additional multimodal model families routed through
-the existing provider surface only, especially OpenRouter-hosted model ids on
-the current `openai_compatible_external` path.
+Close the old broad family-profile expansion plan and record the current
+capability-first runtime as the source of truth for external vision model
+reliability.
 
-This umbrella should cover the next docs-reviewed external model-family
-targets on the current provider surface:
+The original `TASK-140` plan assumed that Qwen, Anthropic, OpenAI, and NVIDIA
+families would each need separate `vision_contract_profile` expansion branches.
+After the `TASK-140-06` / `TASK-184` implementation state, that is no longer the
+right default. The shipped OpenRouter path is capability-first: it resolves
+model metadata, uses reviewed fallback capability profiles only when needed,
+chooses bounded request policy from those capabilities, and exposes diagnostics
+without widening provider or profile vocabulary.
 
-- Qwen-VL families:
-  - legacy `qwen-vl-plus` / `qwen-vl-max`
-  - Qwen2.5-VL families
-  - Qwen3-VL families and their instruct/thinking/plus/flash variants
-  - adjacent newer multimodal Qwen families such as Qwen3.5-Plus when the
-    docs position them as stronger multimodal successors to older Qwen-VL lines
-  - OCR/document-oriented Qwen-VL variants when they are product-relevant
-- Anthropic Claude vision-capable families
-- OpenAI image-input model families
-- NVIDIA VLM families that are plausible bounded-compare candidates
+## Current Source Of Truth
 
-## Terminology Guardrail
+The current runtime keeps the external provider vocabulary closed:
 
-In this task family:
+- `VisionExternalProviderName`: `generic`, `openrouter`,
+  `google_ai_studio`
+- `VisionContractProfile`: `generic_full`, `google_family_compare`
 
-- `provider` / `transport` still means the API protocol path and auth/header
-  behavior
-- `vision_contract_profile` means the bounded prompt/schema/parser behavior
-  used by this repo for external vision compare/iterate flows
+The implementation that supersedes the old family tree is:
 
-Do not collapse those two concepts again.
+- `server/adapters/mcp/vision/config.py`
+  - closed provider/profile vocabulary
+  - `VisionModelCapabilities`
+  - effective model-aware output caps
+  - Set-of-Mark capability gating through
+    `visual_mark_overlays_supported`
+- `server/adapters/mcp/vision/runtime.py`
+  - explicit profile override precedence
+  - reviewed OpenRouter fallback profile lookup
+  - deterministic Google/OpenAI-family profile heuristics where they are still
+    warranted by current behavior
+- `server/adapters/mcp/vision/openrouter_models.py`
+  - bounded lazy OpenRouter `/models` lookup
+  - normalization of context length, provider max completion tokens,
+    input/output modalities, and supported parameters
+- `server/adapters/mcp/vision/model_profiles/`
+  - reviewed fallback capability registry
+  - candidate profile generation requires review before promotion
+- `server/adapters/mcp/vision/backends.py`
+  - image/text modality gating
+  - capability-driven `json_schema` / `json_object` / no-response-format policy
+  - bounded response-healing policy
+  - request-policy logging with selected contract profile, request mode,
+    effective caps, provider preferences, plugins, and capability source
+- `server/adapters/mcp/sampling/result_types.py`
+  - `VisionCapabilitySummaryContract`
+  - public `VisionAssistContract.capability_summary`
+- `server/adapters/mcp/vision/runner.py`
+  - bounded capability summary from model metadata, request policy, usage, and
+    finish reason
+- `scripts/vision_harness.py`
+  - harness `capability_summary` and diagnostics output for external model runs
 
-## Execution Guardrail
+## Completion Summary
 
-`TASK-140` is primarily about model-family contract selection on the current
-provider surface, with one active bounded follow-on branch for capability-aware
-OpenRouter request policy under `TASK-140-06`.
+`TASK-140` is complete as a capability-first reliability track:
 
-This umbrella may:
+- OpenRouter model metadata is the primary source when available.
+- Reviewed fallback profiles are secondary operational knowledge, not a
+  permanent truth source.
+- Request policy is driven by resolved capabilities: output budget,
+  response-format posture, response-healing, modality support, and structured
+  findings/schema posture.
+- Diagnostics are bounded and operator-visible through logs, public result
+  contracts, and harness output.
+- Set-of-Mark overlays require both operator enablement and positive model
+  capability support.
+- The old `TASK-140-01` through `TASK-140-05` family-profile branches are
+  administratively superseded, not left open under this closed parent.
+- `TASK-140-06` and its remaining policy/diagnostic leaves are closed as the
+  shipped capability-aware runtime substrate.
 
-- add new `vision_contract_profile` values
-- add deterministic model-family matching rules
-- refine prompt/schema/parser/diagnostic behavior for those profiles
-- document that some families remain on `generic_full` or are not compare-suitable
-  on the current provider surface
+No runtime code changed during the `TASK-140-07` closeout pass; this is a
+docs/task-governance reconciliation with the already-shipped runtime.
 
-This umbrella must **not**:
+## Non-Goals
 
-- add new `VISION_EXTERNAL_PROVIDER` values
-- add new provider aliases or new provider-specific env/config families
-- add new backend kinds or new first-class transport/provider branches
-- turn unsupported family/provider combinations into provider-integration work
+- Do not add new `VISION_EXTERNAL_PROVIDER` values as part of this closeout.
+- Do not add Qwen/Anthropic/OpenAI/NVIDIA-specific profile enums without
+  evidence.
+- Do not promote a model from provider docs, semantic similarity, or operator
+  prose alone.
+- Do not treat `vision_contract_profile` or model capability metadata as scene
+  truth or quality-gate authority.
 
-If a model family cannot be exercised correctly through the current provider
-inventory, record that as a bounded follow-on or explicit unsupported boundary
-instead of broadening provider scope inside `TASK-140`.
+## Follow-on
 
-`TASK-140` evidence is provider/profile support evidence: it proves whether a
-model family can satisfy this repo's bounded compare/iterate output contract.
-It is not quality-gate verifier evidence by itself. When follow-on tasks consume
-external vision output through the closed `TASK-157` substrate, they should
-reference the resulting `vision_contract_profile`, diagnostics, and parsed
-payload as proposal or bounded perception evidence, while gate pass/fail
-authority remains with the server-owned verifier model.
-
-## Current Code Baseline
-
-Current code intentionally starts from a small, closed vocabulary:
-
-- `VISION_EXTERNAL_PROVIDER` / `VisionExternalProviderName`:
-  - `generic`
-  - `openrouter`
-  - `google_ai_studio`
-- `VISION_EXTERNAL_CONTRACT_PROFILE` / `VisionContractProfile`:
-  - `generic_full`
-  - `google_family_compare`
-
-That baseline is the starting point for `TASK-140`.
-
-Within this umbrella:
-
-- provider vocabulary stays closed
-- provider validators stay aligned with the existing three provider values
-- typed-surface expansion happens through `VisionContractProfile` and
-  `VisionAssistContract.vision_contract_profile`, not through new provider
-  enums
-
-## Backend Boundary
-
-Current external backend wiring is also intentionally narrow:
-
-- external family work stays on the shared
-  `openai_compatible_external` backend path
-- `google_ai_studio` is the only current dedicated transport/request branch in
-  `server/adapters/mcp/vision/backends.py`
-- `openrouter` stays on the same shared backend path and adds
-  provider-scoped headers plus bounded profile-aware request shaping such as
-  strict JSON-schema formatting, Qwen-family `json_object` fallback, and the
-  optional `response-healing` plugin
-- the current tests in `tests/unit/adapters/mcp/test_vision_external_backend.py`
-  already lock that boundary in place
-
-Therefore `TASK-140` backend/runtime work is limited to:
-
-- profile-aware prompt/schema/request behavior inside the current backend seam
-- parser/diagnostic behavior keyed by `vision_contract_profile`
-- bounded capability-aware runtime policy for OpenRouter-backed external
-  requests inside the same shared seam
-- family-specific evidence that a model/profile combination works or fails on
-  the current shared backend path
-
-`TASK-140` backend work does **not** include:
-
-- first-class provider integration
-- new transport branches for each model family
-- moving profile-selection policy into backend/provider branching
-
-## Business Problem
-
-After `TASK-139`, the repo has a correct architectural seam, but the profile
-space is still too coarse for the families we want to test on the current
-provider inventory.
-
-The current model is:
-
-- `generic_full`
-- `google_family_compare`
-
-That is enough to stop treating OpenRouter-hosted Google-family models as
-generic OpenAI-compatible models, but it is not enough for the next wave of
-family-contract work because the upcoming families differ materially in:
-
-- structured-output reliability
-- OCR/document bias versus general image reasoning
-- multi-image compare behavior
-- reasoning-versus-instruction variants inside one model family
-- truncation / near-JSON failure modes
-- whether a model is even a credible staged compare candidate versus only a
-  document, retrieval, or embedding-side visual model
-
-If the repo keeps routing all of those through only one generic profile plus
-one Google-family compare profile, we will recreate the same class of
-mismatch:
-
-- transport works
-- the model can accept image input
-- but the selected prompt/schema/parser contract is still wrong for the model
-  family
-
-## Docs-Reviewed Target Matrix
-
-This umbrella should explicitly investigate and classify at least the
-following docs-reviewed families:
-
-### Qwen
-
-- current Alibaba / Model Studio OpenAI-compatible Qwen-VL surfaces such as:
-  - `qwen-vl-plus`
-  - `qwen-vl-max`
-  - Qwen2.5-VL-backed snapshots
-  - `qwen3-vl-plus`
-  - `qwen3-vl-flash`
-  - Qwen3-VL instruct/thinking variants such as 8B / 32B / 30B / 235B lines
-- adjacent multimodal Qwen families such as Qwen3.5-Plus if current docs
-  position them as stronger successors for image/video understanding
-- decide whether OCR/document-specialized variants belong:
-  - in staged compare
-  - in a separate document-oriented profile
-  - or in explicit "not compare-suitable" exclusions
-
-### Anthropic
-
-- current Claude models that officially support image input
-- determine whether Claude families can share one profile or need:
-  - a broader compare profile
-  - a stricter JSON-repair profile
-  - or an explicitly documented "not reliable on the current external
-    transport path" boundary
-
-### OpenAI
-
-- current image-input OpenAI families such as:
-  - GPT-4o
-  - GPT-4.1
-  - GPT-4o-mini
-  - newer GPT-5 image-input families where relevant to the bounded compare path
-- determine whether the existing generic contract is enough or whether
-  OpenAI-backed compare flows deserve their own profile tuned for:
-  - strict structured output
-  - smaller/minified model variants
-  - patch/tile-based image sizing behavior
-
-### NVIDIA
-
-- NVIDIA-hosted VLM families that are credible bounded compare candidates,
-  such as:
-  - Nemotron Nano VL
-  - Cosmos Reason VLM lines
-- explicitly classify document/retrieval/embedding-oriented NVIDIA visual
-  models so the repo does not silently treat them as general staged-compare
-  backends when they are actually:
-  - OCR/document parsers
-  - rerankers
-  - embedders
-  - retrieval components
-
-## Business Outcome
-
-If this umbrella is done correctly, the repo gains:
-
-- a broader but still deliberate external `vision_contract_profile` vocabulary
-- deterministic model-family routing for additional multimodal models on the
-  current provider surface
-- a documented distinction between:
-  - compare-suitable families
-  - document-specialized families
-  - retrieval/embedding/rerank families that should not reuse compare profiles
-- clearer harness/provider notes that separate:
-  - docs-reviewed support
-  - automated harness evidence
-  - operator-reported behavior
-
-## Scope
-
-This umbrella covers:
-
-- expanding the `vision_contract_profile` vocabulary beyond the initial
-  two-profile split from `TASK-139`
-- adding deterministic family/profile resolution for the next target families
-  on the existing provider surface, especially OpenRouter-hosted model ids
-- carrying new profile vocabulary through the typed runtime and public result
-  surfaces that expose `vision_contract_profile`
-- prompt/schema/request routing for those profiles on the current external
-  runtime path
-- parse/repair/diagnostic routing for those profiles
-- harness evidence, provider notes, `.env.example`, launch helpers, and client
-  config docs for the new profile matrix
-
-This umbrella does **not** cover:
-
-- unbounded provider-catalog expansion for every multimodal API on the market
-- first-class provider branches for additional vendors or model families
-- new `VISION_EXTERNAL_PROVIDER` values, provider aliases, or provider-specific
-  env/config families
-- new backend kinds beyond the current runtime inventory
-- ranking/recommending models before there is explicit harness evidence
-- turning document/OCR/retrieval visual models into fake staged-compare
-  candidates just because they accept images
-- redesigning the truth-layer or hybrid-loop ownership model
+Future model/profile promotion belongs to
+[`TASK-187`](./TASK-187_External_Vision_Model_Evidence_And_Profile_Promotion_Governance.md).
+That follow-up owns current provider-doc review, live harness smoke, operator
+notes, regression fixtures, and the decision to add a concrete model fallback
+profile or a new `VisionContractProfile` only when evidence proves a real
+runtime contract difference.
 
 ## Acceptance Criteria
 
-- the repo has a documented next-generation external
-  `vision_contract_profile` matrix, not just `generic_full` plus one
-  Google-family compare profile
-- any newly introduced external `vision_contract_profile` values are carried
-  through the full typed surface:
-  - `VisionContractProfile` runtime/config vocabulary and validators
-  - public `VisionAssistContract.vision_contract_profile` result contracts
-  - automated regression coverage for those public result surfaces
-- if `server/infrastructure/config.py` or `server/adapters/mcp/vision/config.py`
-  change under this umbrella, those changes are limited to
-  `VISION_EXTERNAL_CONTRACT_PROFILE` / `VisionContractProfile` handling; the
-  `VISION_EXTERNAL_PROVIDER` vocabulary remains `generic`, `openrouter`, and
-  `google_ai_studio`
-- if `server/adapters/mcp/vision/backends.py` changes under this umbrella,
-  those changes stay inside the current shared
-  `openai_compatible_external` backend seam:
-  - `google_ai_studio` remains the only dedicated transport branch
-  - `openrouter` remains a shared-path backend with provider headers and strict
-    schema, not a new provider integration path
-  - family behavior stays driven by `vision_contract_profile` plus
-    prompting/parsing policy
-- the `TASK-139` precedence model remains intact:
-  - explicit override still wins
-  - recognized family/model-id routing can select a stricter profile
-  - unknown or not-yet-classified families still fall back to `generic_full`
-- `TASK-140` can be completed without adding any new provider branch:
-  - current provider inventory remains the boundary
-  - unsupported combinations are documented explicitly instead of expanding
-    provider scope
-- Qwen-VL families are classified explicitly enough that:
-  - legacy `qwen-vl-plus` / `qwen-vl-max`
-  - Qwen2.5-VL
-  - Qwen3-VL
-  do not all silently collapse into one unexamined generic profile
-- Anthropic, OpenAI, and NVIDIA vision-capable families each have an explicit
-  product decision:
-  - supported on the current external runtime path with one profile
-  - supported on the current external runtime path with several profiles
-  - or documented as out of scope / not compare-suitable on that path
-- diagnostics and harness results expose the selected
-  `vision_contract_profile`
-- provider/model notes distinguish:
-  - docs-reviewed support
-  - harness-ranked evidence
-  - operator-reported observations
+- `TASK-140` parent is closed as the historical capability-first reliability
+  track.
+- `TASK-140-06`, `TASK-140-06-02`, and `TASK-140-06-04` are closed with
+  completion summaries tied to shipped runtime behavior.
+- `TASK-140-01` through `TASK-140-05` and their descendants are marked
+  `⏭️ Superseded` with `TASK-187` as the replacement.
+- `TASK-187` exists as a standalone promoted follow-up with no `Parent` field.
+- `_docs/_TASKS/README.md`, `_docs/_VISION/README.md`,
+  `_docs/_MCP_SERVER/README.md`, and `_docs/_CHANGELOG/README.md` reflect the
+  capability-first closeout.
+- Validation records prove there are no open direct descendants under the
+  closed `TASK-140` parent.
 
-## Repository Touchpoints
+## Validation Commands
 
-- `server/infrastructure/config.py`
-- `server/adapters/mcp/vision/config.py`
-- `server/adapters/mcp/vision/runtime.py`
-- `server/adapters/mcp/vision/prompting.py`
-- `server/adapters/mcp/vision/backends.py`
-- `server/adapters/mcp/vision/openrouter_models.py`
-- `server/adapters/mcp/vision/parsing.py`
-- `server/adapters/mcp/sampling/result_types.py`
-- `tests/unit/adapters/mcp/test_openrouter_model_capabilities.py`
-- `tests/unit/adapters/mcp/test_vision_runtime_config.py`
-- `tests/unit/adapters/mcp/test_vision_prompting.py`
-- `tests/unit/adapters/mcp/test_vision_parsing.py`
-- `tests/unit/adapters/mcp/test_vision_external_backend.py`
-- `tests/unit/adapters/mcp/test_vision_result_types.py`
-- `tests/unit/adapters/mcp/test_vision_runner.py`
-- `tests/e2e/vision/`
-- `scripts/vision_harness.py`
-- `scripts/run_streamable_openrouter.sh`
-- `tests/unit/scripts/test_script_tooling.py`
-- `.env.example`
-- `README.md`
-- `_docs/_VISION/README.md`
-- `_docs/_VISION/HYBRID_LOOP_REAL_CREATURE_EVAL.md`
-- `_docs/_VISION/REFERENCE_GUIDED_CREATURE_TEST_PROMPT.md`
-- `_docs/_VISION/CROSS_DOMAIN_REFINEMENT_ROUTING_EVAL.md`
-- `_docs/_MCP_SERVER/README.md`
-- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
-- `_docs/_CHANGELOG/README.md`
-- `_docs/_TASKS/README.md`
-
-## Docs To Update
-
-- `.env.example`
-- `README.md`
-- `_docs/_VISION/README.md`
-- `_docs/_VISION/HYBRID_LOOP_REAL_CREATURE_EVAL.md`
-- `_docs/_VISION/REFERENCE_GUIDED_CREATURE_TEST_PROMPT.md`
-- `_docs/_VISION/CROSS_DOMAIN_REFINEMENT_ROUTING_EVAL.md`
-- `_docs/_MCP_SERVER/README.md`
-- `_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md`
-- `_docs/_TASKS/README.md`
-
-## Tests To Add/Update
-
-- `tests/unit/adapters/mcp/test_vision_runtime_config.py`
-- `tests/unit/adapters/mcp/test_vision_prompting.py`
-- `tests/unit/adapters/mcp/test_vision_parsing.py`
-- `tests/unit/adapters/mcp/test_vision_external_backend.py`
-- `tests/unit/adapters/mcp/test_vision_result_types.py`
-- `tests/unit/adapters/mcp/test_openrouter_model_capabilities.py`
-- `tests/unit/adapters/mcp/test_vision_runner.py`
-- `tests/unit/scripts/test_script_tooling.py`
-- targeted `tests/e2e/vision/` coverage for each promoted external family
-
-## Changelog Impact
-
-- add one dedicated `_docs/_CHANGELOG/*` entry when the first implementation
-  slice under this umbrella ships
+- `git diff --check`
+- `rg -n "^\\*\\*Status:\\*\\* (⏳ To Do|🚧 In Progress)" _docs/_TASKS/TASK-140*.md`
+- board count audit against `_docs/_TASKS/README.md`
+- changelog index audit for entry `396`
+- `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files --show-diff-on-failure`
 
 ## Status / Board Update
 
-- track this as the next board-level follow-on after `TASK-139`
-- keep it separate from generic provider-catalog or new-provider integration
-  work; this umbrella is about bounded compare-contract architecture and
-  evidence discipline for model families on the existing provider surface
-
-## Execution Structure
-
-| Order | Planned Slice | Purpose |
-|------|---------------|---------|
-| 1 | [TASK-140-01](./TASK-140-01_Qwen_Family_Contract_Profile_Matrix_And_Routing.md) | Classify Qwen multimodal families and route them through explicit compare/document/exclusion profiles on the existing provider surface instead of one generic bucket |
-| 2 | [TASK-140-02](./TASK-140-02_Anthropic_Claude_Family_Contracts_On_The_Existing_Provider_Surface.md) | Define Claude-family contract routing and diagnostics on the current provider surface instead of defaulting to one generic contract or expanding provider scope |
-| 3 | [TASK-140-03](./TASK-140-03_OpenAI_Image_Input_Profiles_And_Structured_Compare_Policy.md) | Decide whether OpenAI families can reuse generic behavior or need stricter family-specific compare profiles on the existing provider surface |
-| 4 | [TASK-140-04](./TASK-140-04_NVIDIA_VLM_Support_And_Exclusion_Policy.md) | Classify NVIDIA VLMs into compare-capable versus document/retrieval-only paths and integrate only the bounded compare-suitable subset on the existing provider surface |
-| 5 | [TASK-140-05](./TASK-140-05_Regression_Harness_Provider_Notes_And_Operator_Guidance_For_Expanded_Profiles.md) | Keep automated coverage, harness evidence, docs, launch helpers, `.env.example`, and client examples aligned with the broader profile matrix |
-| 6 | [TASK-140-06](./TASK-140-06_OpenRouter_Model_Capability_Aware_Vision_Runtime.md) | Resolve OpenRouter model capabilities API-first, use local fallback registry only when needed, and drive request budget/parameter policy from those capabilities |
+- moved from board `In Progress` to `Done`
+- `TASK-187` is the only promoted open follow-up created by this closeout

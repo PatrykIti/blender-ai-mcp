@@ -76,7 +76,8 @@ Hard rules:
 | `TASK-136` | Closed architecture/building domain consumer for `architectural_mass` references, plan/elevation/facade interpretation, and bounded building reconstruction on the existing RU/gate/packet surfaces |
 | `TASK-137` | Organ/anatomy domain consumer for educational visualization reconstruction with medical-scope guardrails on the existing RU/gate/feedback surfaces |
 | `TASK-138` | Biped/fantasy-character domain consumer for humanoid structure, body-part staging, and future rig-handoff boundaries on the existing RU/gate/feedback surfaces |
-| `TASK-140` | External VLM model-family profile reliability; owns `vision_contract_profile` expansion, not quality-gate authority |
+| `TASK-140` | Closed external VLM capability-first reliability track; records provider/profile vocabulary, OpenRouter metadata/fallback capability handling, and request-policy diagnostics as routing/provenance, not quality-gate authority |
+| `TASK-187` | Follow-up evidence lane for promoting concrete external vision models, fallback capability profiles, or new `VisionContractProfile` values only after current docs/catalog review, harness proof, operator notes, and regression fixtures |
 
 When follow-on tasks consume `TASK-140` payloads through the closed
 `TASK-157` substrate, treat `vision_contract_profile` as

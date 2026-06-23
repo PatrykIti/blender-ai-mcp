@@ -1129,6 +1129,10 @@ Consumption order:
 - `action_hints` complement `correction_focus`; they do not replace truth or router policy
 - `vision_contract_profile` remains prompt/schema/parser routing only and is
   not itself evidence, truth, or policy
+- external model-family promotion is capability-first after `TASK-140`: use
+  OpenRouter API metadata, reviewed fallback capabilities, bounded request
+  policy, and harness/regression evidence before adding any new model fallback
+  or `VisionContractProfile` under the `TASK-187` follow-up
 
 ## Code Mode Pilot Baseline
 

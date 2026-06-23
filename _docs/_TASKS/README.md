@@ -3,9 +3,9 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 5 tasks
-- **In Progress:** 3 tasks
-- **Done:** 115
+- **To Do:** 6 tasks
+- **In Progress:** 2 tasks
+- **Done:** 116
 - **Superseded:** 162
 
 ## 📐 Board Scope
@@ -22,7 +22,7 @@ flight.
 
 | Area | Document | Owner Tasks |
 |------|----------|-------------|
-| Vision / Reference Understanding | [Reference Understanding Roadmap](../_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md) | [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md), [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md), [TASK-164](./TASK-164_Local_SigLIP2_Reference_Classifier_Sidecar_And_Operator_Scripts.md), [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md), [TASK-169](./TASK-169_Reference_Guided_Quality_Drift_Regression_And_Runtime_Authority.md), [TASK-170](./TASK-170_Reference_Target_Canonicalization_And_Support_Latency_Stabilization.md), [TASK-171](./TASK-171_Creature_Attachment_First_Build_Contract_And_Structured_Vision_Handoff.md), [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md), [TASK-173](./TASK-173_Reference_Guided_Creature_Scope_Convergence_And_Optional_Grounding_Followups.md), [TASK-136](./TASK-136_Reference_Guided_Architecture_And_Building_Reconstruction.md), [TASK-137](./TASK-137_Anatomy_Aware_Reference_Guided_Organ_Reconstruction.md), [TASK-138](./TASK-138_Anatomy_Aware_Reference_Guided_Biped_And_Fantasy_Character_Reconstruction.md), [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md), [TASK-174](./TASK-174_Per_Image_Caption_Interleaving_For_Vision_Payloads.md), [TASK-175](./TASK-175_Vision_Contract_Field_Descriptions_And_Stage_Read_Order.md), [TASK-176](./TASK-176_Capture_Failure_And_Evidence_Truncation_Signal_Surfacing.md), [TASK-177](./TASK-177_Reachable_Rich_Multi_View_Capture_And_Top_View_Default.md), [TASK-178](./TASK-178_Structured_Per_Finding_Compare_Schema.md), [TASK-179](./TASK-179_Blender_Depth_Normal_And_Object_ID_Auxiliary_Passes.md), [TASK-180](./TASK-180_Set_Of_Mark_Object_Bound_Visual_Marks.md), [TASK-181](./TASK-181_Scene_Graph_Diff_Compare_And_Registry_Scoped_Convergence.md), [TASK-182](./TASK-182_Critic_Verify_Compare_Loop_And_Deterministic_Exit_Criteria.md), [TASK-183](./TASK-183_Capability_Enriched_Vision_Schema_And_Deterministic_Cross_Check.md) |
+| Vision / Reference Understanding | [Reference Understanding Roadmap](../_VISION/REFERENCE_UNDERSTANDING_ROADMAP.md) | [TASK-157](./TASK-157_Goal_Derived_Quality_Gates_And_Deterministic_Verification.md), [TASK-158](./TASK-158_Vision_And_Creature_Gate_Boundary_Doc_Alignment.md), [TASK-163](./TASK-163_Vision_Orchestrator_Feedback_Strategy_Normalization_And_Optional_Perception_Adapters.md), [TASK-164](./TASK-164_Local_SigLIP2_Reference_Classifier_Sidecar_And_Operator_Scripts.md), [TASK-166](./TASK-166_Hierarchical_Reference_Compare_Perceived_Evidence_And_Budget_Control.md), [TASK-169](./TASK-169_Reference_Guided_Quality_Drift_Regression_And_Runtime_Authority.md), [TASK-170](./TASK-170_Reference_Target_Canonicalization_And_Support_Latency_Stabilization.md), [TASK-171](./TASK-171_Creature_Attachment_First_Build_Contract_And_Structured_Vision_Handoff.md), [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md), [TASK-173](./TASK-173_Reference_Guided_Creature_Scope_Convergence_And_Optional_Grounding_Followups.md), [TASK-136](./TASK-136_Reference_Guided_Architecture_And_Building_Reconstruction.md), [TASK-137](./TASK-137_Anatomy_Aware_Reference_Guided_Organ_Reconstruction.md), [TASK-138](./TASK-138_Anatomy_Aware_Reference_Guided_Biped_And_Fantasy_Character_Reconstruction.md), [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md), [TASK-187](./TASK-187_External_Vision_Model_Evidence_And_Profile_Promotion_Governance.md), [TASK-174](./TASK-174_Per_Image_Caption_Interleaving_For_Vision_Payloads.md), [TASK-175](./TASK-175_Vision_Contract_Field_Descriptions_And_Stage_Read_Order.md), [TASK-176](./TASK-176_Capture_Failure_And_Evidence_Truncation_Signal_Surfacing.md), [TASK-177](./TASK-177_Reachable_Rich_Multi_View_Capture_And_Top_View_Default.md), [TASK-178](./TASK-178_Structured_Per_Finding_Compare_Schema.md), [TASK-179](./TASK-179_Blender_Depth_Normal_And_Object_ID_Auxiliary_Passes.md), [TASK-180](./TASK-180_Set_Of_Mark_Object_Bound_Visual_Marks.md), [TASK-181](./TASK-181_Scene_Graph_Diff_Compare_And_Registry_Scoped_Convergence.md), [TASK-182](./TASK-182_Critic_Verify_Compare_Loop_And_Deterministic_Exit_Criteria.md), [TASK-183](./TASK-183_Capability_Enriched_Vision_Schema_And_Deterministic_Cross_Check.md) |
 
 ## 🧱 Hierarchy Rules
 
@@ -46,7 +46,6 @@ flight.
 |----|-------|----------|-------|
 | [TASK-165](./TASK-165_Mac_First_Interactive_MCP_Server_Installer_And_Launcher.md) | **macOS-First Interactive MCP Server Installer And Launcher** | 🔴 High | In progress after the first `run_mcp_server.sh` / `run_mcp_server.py` launcher landed; the remaining work is to tighten prerequisite/runtime flow, align docs with the shipped operator path, and close the family with the correct validation lane. |
 | [TASK-160](./TASK-160_Guided_Client_Feedback_And_Streamable_HTTP_Recovery_UX.md) | **Guided Client Feedback And Streamable HTTP Recovery UX** | 🔴 High | In progress after TASK-160-01 closed the Streamable visibility serialization slice; the umbrella still owns the broader guided client-feedback contract and follow-on surface decisions. |
-| [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) | **Expand External Vision Contract Profiles Across Qwen, Anthropic, OpenAI, and NVIDIA** | 🔴 High | In progress after `TASK-140-06` opened the capability-aware OpenRouter runtime track and already landed `TASK-140-06-01` plus `TASK-140-06-03`; the remaining work now spans both family-contract branches and the still-open capability-policy/closeout leaves under `TASK-140-06`. |
 
 ## 🚨 To Do
 
@@ -107,6 +106,7 @@ Completed substrates and child slices nested under completed umbrellas: `TASK-17
 | [TASK-182](./TASK-182_Critic_Verify_Compare_Loop_And_Deterministic_Exit_Criteria.md) | **Critic/Verify Compare Loop And Deterministic Exit Criteria** | 🔴 High | ✅ Completed 2026-05-31. Packet-scoped Critic defects, same-packet Verify status, deterministic-first feedback provenance, and synthesis preservation are shipped. |
 | [TASK-183](./TASK-183_Capability_Enriched_Vision_Schema_And_Deterministic_Cross_Check.md) | **Capability-Enriched Vision Schema And Deterministic Cross-Check** | 🟡 Medium | ✅ Completed 2026-05-30. Capability-aware schema/payload routing, provider usage reporting, calibrated silhouette thresholds, and lightweight deterministic consistency scoring are shipped. |
 | [TASK-184](./TASK-184_Vision_3D_Understanding_Audit_Corrections.md) | **Vision 3D Understanding Audit Corrections** | 🔴 High | ✅ Completed 2026-06-22. Model-gated marks, projection-first anchors, world-frame direction facts, object-ID/depth contract hardening, and default-off reliability scorecards are shipped. |
+| [TASK-187](./TASK-187_External_Vision_Model_Evidence_And_Profile_Promotion_Governance.md) | **External Vision Model Evidence And Profile Promotion Governance** | 🔴 High | Follow-up after `TASK-140` for promoting external vision models, fallback profiles, or new contract profiles only from current docs/catalog metadata, harness proof, operator notes, and regression fixtures. |
 
 ---
 
@@ -114,6 +114,7 @@ Completed substrates and child slices nested under completed umbrellas: `TASK-17
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) | **External Vision Contract Profiles Capability-First Closeout** | 🔴 High | 2026-06-23 |
 | [TASK-184](./TASK-184_Vision_3D_Understanding_Audit_Corrections.md) | **Vision 3D Understanding Audit Corrections** | 🔴 High | 2026-06-22 |
 | [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md) | **Optional Vision Capability Runtime And Localized Perception** | 🔴 High | 2026-05-23 |
 | [TASK-173](./TASK-173_Reference_Guided_Creature_Scope_Convergence_And_Optional_Grounding_Followups.md) | **Reference-Guided Creature Scope Convergence And Optional Grounding Follow-Ups** | 🔴 High | 2026-05-31 |

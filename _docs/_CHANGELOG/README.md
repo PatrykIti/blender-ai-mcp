@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [396](./396-2026-06-23-task-140-capability-first-replan.md) | 2026-06-23 | **TASK-140 capability-first replan** | - |
 | [395](./395-2026-06-22-task-184-vision-3d-understanding-audit-corrections.md) | 2026-06-22 | **TASK-184 Vision 3D understanding audit corrections** | - |
 | [394](./394-2026-05-31-task-173-creature-scope-closeout.md) | 2026-05-31 | **TASK-173 creature scope-convergence closeout** | - |
 | [393](./393-2026-05-31-vision-followup-closeout.md) | 2026-05-31 | **Vision follow-up closeout** | - |

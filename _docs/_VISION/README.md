@@ -359,6 +359,13 @@ Current vocabulary:
   - narrow staged-compare contract plus near-JSON repair for compatible
     Google-family compare flows
 
+`TASK-140` is now closed as a capability-first runtime track. Do not add
+family-specific profiles by default for Qwen, Anthropic, OpenAI, NVIDIA, or
+other external model families. Prefer OpenRouter API metadata, reviewed fallback
+capability profiles, and capability-driven request policy first; promote a new
+model fallback or `VisionContractProfile` only through the `TASK-187` evidence
+lane when harness or regression fixtures prove a real contract difference.
+
 Resolution precedence:
 
 1. explicit `VISION_EXTERNAL_CONTRACT_PROFILE` override
@@ -397,7 +404,9 @@ OpenRouter/Qwen hardening note:
 - the runtime now uses that documented posture for Qwen-family OpenRouter
   models:
   - prefer `json_object`
-  - require parameter-aware provider routing
+  - leave provider routing strictness governed by
+    `VISION_OPENROUTER_REQUIRE_PARAMETERS` (`false` by default, opt in for
+    strict compatibility checks)
   - enable OpenRouter response-healing by default
 
 OpenAI/Azure strict structured-output note:
@@ -443,6 +452,8 @@ Operator reporting rule before model promotion:
   - whether the issue has been reproduced in `scripts/vision_harness.py` or a
     repo-tracked automated test
 - do not promote a model/provider combination from operator reports alone
+- future external model/profile promotion is tracked under `TASK-187`, not the
+  superseded `TASK-140-01` through `TASK-140-05` family-profile tree
 
 ## What Improved
 

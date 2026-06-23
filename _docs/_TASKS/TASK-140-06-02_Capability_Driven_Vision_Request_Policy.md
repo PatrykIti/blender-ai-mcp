@@ -1,14 +1,26 @@
 # TASK-140-06-02: Capability-Driven Vision Request Policy
 
 **Parent:** [TASK-140-06](./TASK-140-06_OpenRouter_Model_Capability_Aware_Vision_Runtime.md)
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
+**Completion Date:** 2026-06-23
 
 ## Objective
 
 Use resolved OpenRouter model capabilities to choose the final vision request
 policy instead of relying only on static env values and broad family-name
 heuristics.
+
+## Completion Summary
+
+The shipped runtime now derives effective output-token caps from explicit
+operator config, OpenRouter API/fallback model capability data, profile floors,
+and fail-safe caps. The OpenRouter backend gates image/text modality support,
+selects `json_schema`, `json_object`, or no response format from supported
+parameters, enables response-healing through bounded policy, and logs the
+resulting `last_request_policy_summary` with capability source, selected
+contract profile, request mode, final requested tokens, provider preferences,
+and plugin posture.
 
 ## Repository Touchpoints
 
@@ -80,5 +92,5 @@ heuristics.
 
 ## Status / Board Update
 
-- remains nested under `TASK-140-06`
-- should close before diagnostics/closeout claim capability-aware policy is complete
+- closed under `TASK-140-06` during the `TASK-140-07` capability-first audit
+- no runtime code changed in the audit pass; closure records already-shipped behavior

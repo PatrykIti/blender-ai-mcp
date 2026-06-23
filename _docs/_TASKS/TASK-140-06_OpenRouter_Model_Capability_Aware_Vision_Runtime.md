@@ -1,14 +1,26 @@
 # TASK-140-06: OpenRouter Model-Capability-Aware Vision Runtime
 
 **Parent:** [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md)
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🔴 High
+**Completion Date:** 2026-06-23
 
 ## Objective
 
 Make the OpenRouter-backed external vision runtime model-capability aware
 instead of relying on one static `VISION_MAX_TOKENS` cap and hand-written
 family heuristics.
+
+## Completion Summary
+
+`TASK-140-06` is complete as the capability-aware runtime substrate. The code
+now has a bounded lazy OpenRouter `/models` lookup, a reviewed fallback
+capability registry, capability-driven request budgeting and response-format
+policy, modality gating, request-policy logging, bounded diagnostics,
+model-capability-gated Set-of-Mark overlays, public
+`VisionCapabilitySummaryContract` diagnostics, and harness capability-summary
+output. This closes the OpenRouter capability-first direction without adding
+new provider values or broad family-specific `VisionContractProfile` expansion.
 
 Recent operator runs with `openai/gpt-5.4-nano` showed that the model/provider
 can advertise large context/output limits, while the repo still sent a bounded
@@ -127,9 +139,10 @@ resolution:
     catalog fields into `VisionModelCapabilities`
   - lookup runs lazily at first OpenRouter vision request and keeps fallback
     registry data when the catalog is unavailable
-- Richer request-policy use of the capability object, env override taxonomy,
-  harness diagnostics, and final closeout remain open under the other
-  `TASK-140-06` leaves
+- `TASK-140-06-02` and `TASK-140-06-04` are closed by the `TASK-140-07`
+  capability-first audit because the shipped runtime already covers the
+  request-policy, diagnostics, harness, and docs surface described by those
+  leaves.
 
 ## Validation Commands
 
@@ -141,5 +154,5 @@ resolution:
 
 ## Status / Board Update
 
-- remains nested under `TASK-140`
-- stays `🚧 In Progress` while `TASK-140-06-02` and `TASK-140-06-04` remain open after the already-landed `06-01` and `06-03` slices
+- closed under `TASK-140` during the `TASK-140-07` capability-first audit
+- no runtime code changed in the audit pass; closure records already-shipped behavior

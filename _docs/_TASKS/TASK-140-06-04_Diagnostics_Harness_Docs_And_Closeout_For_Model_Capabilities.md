@@ -1,13 +1,29 @@
 # TASK-140-06-04: Diagnostics, Harness, Docs, And Closeout For Model Capabilities
 
 **Parent:** [TASK-140-06](./TASK-140-06_OpenRouter_Model_Capability_Aware_Vision_Runtime.md)
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 **Priority:** 🟠 High
+**Completion Date:** 2026-06-23
 
 ## Objective
 
 Close the capability-aware OpenRouter work by exposing operator diagnostics,
 updating harness/docs, and recording validation/changelog results.
+
+## Completion Summary
+
+The shipped result contract exposes `VisionCapabilitySummaryContract` on
+`VisionAssistContract`, and the runner builds it from resolved model
+capabilities, request-policy summary, token usage, and finish reason. The vision
+harness records a bounded `capability_summary` plus diagnostics for external
+runs, and `_docs/_VISION/README.md` / `_docs/_MCP_SERVER/README.md` now describe
+OpenRouter API-first metadata, fallback precedence, request policy diagnostics,
+and model-capability-gated Set-of-Mark behavior.
+
+Audit caveat: the runner path refreshes its runtime from the backend after lazy
+OpenRouter metadata lookup before building the public summary. Standalone
+harness promotion work should keep checking live-only metadata summary behavior
+under `TASK-187` before using it as promotion evidence.
 
 ## Repository Touchpoints
 
@@ -83,6 +99,5 @@ updating harness/docs, and recording validation/changelog results.
 
 ## Status / Board Update
 
-- remains nested under `TASK-140-06`
-- should close only after `TASK-140-06-02` and the docs/harness updates agree
-  on one capability-aware runtime story
+- closed under `TASK-140-06` during the `TASK-140-07` capability-first audit
+- no runtime code changed in the audit pass; closure records already-shipped behavior

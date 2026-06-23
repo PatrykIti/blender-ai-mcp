@@ -1,8 +1,10 @@
 # TASK-140-04-01: NVIDIA VLM Family Triage, Compare vs Document and Retrieval
 
 **Parent:** [TASK-140-04](./TASK-140-04_NVIDIA_VLM_Support_And_Exclusion_Policy.md)
-**Status:** ⏳ To Do
+**Status:** ⏭️ Superseded
 **Priority:** 🟠 High
+**Superseded By:** [TASK-187](./TASK-187_External_Vision_Model_Evidence_And_Profile_Promotion_Governance.md)
+**Superseded Reason:** Replaced by the capability-first OpenRouter metadata, fallback capability registry, and request-policy model. Family-specific profiles return under `TASK-187` only when harness/operator evidence shows a real contract delta.
 
 ## Objective
 
