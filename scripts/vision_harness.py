@@ -35,6 +35,7 @@ from server.adapters.mcp.vision import (
     ResolvedVisionGoldenScenario,
     VisionImageInput,
     VisionRequest,
+    VisionRuntimeConfig,
     build_advisory_reliability_scorecard,
     build_reference_capture_images,
     build_vision_request_from_capture_bundle,
@@ -539,6 +540,11 @@ def _attach_reliability_scorecard_if_requested(
     ).model_dump(mode="json")
 
 
+def _post_request_runtime_config(backend: Any, fallback: VisionRuntimeConfig) -> VisionRuntimeConfig:
+    backend_runtime = getattr(backend, "runtime_config", None)
+    return backend_runtime if isinstance(backend_runtime, VisionRuntimeConfig) else fallback
+
+
 async def _run_backend(
     args: Any,
     backend_name: str,
@@ -548,6 +554,7 @@ async def _run_backend(
     runtime = build_vision_runtime_config(_config_for_backend(args, backend_name))
     backend = create_vision_backend(runtime)
     result = await backend.analyze(request)
+    runtime = _post_request_runtime_config(backend, runtime)
     entry = {
         "backend": backend_name,
         "model_name": runtime.active_model_name,

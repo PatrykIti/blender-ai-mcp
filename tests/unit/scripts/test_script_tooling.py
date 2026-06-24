@@ -926,6 +926,90 @@ def test_vision_harness_can_build_openrouter_backend_config():
     assert config.VISION_OPENROUTER_SITE_NAME == "blender-ai-mcp-dev"
 
 
+def test_vision_harness_capability_summary_uses_backend_post_request_runtime(monkeypatch):
+    from server.adapters.mcp.vision.config import VisionModelCapabilities
+
+    module = _load_script("vision_harness")
+    args = module.build_parser().parse_args(
+        [
+            "--backend",
+            "openai_compatible_external",
+            "--goal",
+            "rounded housing",
+            "--before",
+            "/tmp/before.png",
+            "--external-provider",
+            "openrouter",
+            "--external-contract-profile",
+            "generic_full",
+            "--openrouter-model",
+            "vendor/preflight-model",
+        ]
+    )
+    request = module.VisionRequest(
+        goal="rounded housing",
+        images=(module.VisionImageInput(path="/tmp/before.png", role="before", label="before"),),
+    )
+
+    class FakeOpenRouterBackend:
+        def __init__(self, runtime_config):
+            self._runtime_config = runtime_config
+            self.last_request_policy_summary = None
+            self.last_output_diagnostics = {"provider_path": "fake-openrouter"}
+
+        @property
+        def runtime_config(self):
+            return self._runtime_config
+
+        async def analyze(self, request):
+            assert request.goal == "rounded housing"
+            assert self._runtime_config.openai_compatible_external is not None
+            live_external_config = self._runtime_config.openai_compatible_external.model_copy(
+                update={
+                    "model": "vendor/live-catalog-model",
+                    "vision_contract_profile": "google_family_compare",
+                    "model_capabilities": VisionModelCapabilities(
+                        model_id="vendor/live-catalog-model",
+                        capability_source="openrouter_api",
+                        context_length=128_000,
+                        max_completion_tokens=16_384,
+                        input_modalities=["text", "image"],
+                        output_modalities=["text"],
+                        supported_parameters=["max_tokens", "response_format", "structured_outputs"],
+                    ),
+                }
+            )
+            self._runtime_config = self._runtime_config.model_copy(
+                update={"openai_compatible_external": live_external_config}
+            )
+            self.last_request_policy_summary = {
+                "requested_max_tokens": 8_192,
+                "response_format_type": "json_object",
+                "plugins": ["response-healing"],
+            }
+            return {"status": "available", "provider": "openrouter"}
+
+    monkeypatch.setattr(module, "create_vision_backend", lambda runtime: FakeOpenRouterBackend(runtime))
+
+    entry = module.asyncio.run(module._run_backend(args, "openai_compatible_external", request))
+
+    assert entry["model_name"] == "vendor/live-catalog-model"
+    assert entry["vision_contract_profile"] == "google_family_compare"
+    assert entry["diagnostics"] == {"provider_path": "fake-openrouter"}
+    assert entry["capability_summary"] == {
+        "model_id": "vendor/live-catalog-model",
+        "capability_source": "openrouter_api",
+        "context_length": 128_000,
+        "max_completion_tokens": 16_384,
+        "input_modalities": ["text", "image"],
+        "output_modalities": ["text"],
+        "supported_parameters": ["max_tokens", "response_format", "structured_outputs"],
+        "requested_max_tokens": 8_192,
+        "request_mode": "json_object",
+        "response_healing_enabled": True,
+    }
+
+
 def test_vision_harness_can_build_gemini_backend_config():
     module = _load_script("vision_harness")
 

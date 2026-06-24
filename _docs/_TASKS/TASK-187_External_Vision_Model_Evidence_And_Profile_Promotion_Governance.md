@@ -1,7 +1,7 @@
 # TASK-187: External Vision Model Evidence And Profile Promotion Governance
 
 **Follow-on After:** [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md)
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
 **Priority:** 🔴 High
 **Category:** Vision Runtime / External Model Governance
 
@@ -14,6 +14,15 @@ fallback capability profiles, or new `VisionContractProfile` values after the
 Future Qwen, Anthropic, OpenAI, NVIDIA, or other model-family work should start
 here instead of reopening the old `TASK-140-01` through `TASK-140-05` planning
 tree.
+
+## Current Slice
+
+| Slice | Status | Purpose |
+|---|---|---|
+| [TASK-187-01](./TASK-187-01_Harness_Capability_Summary_And_Evidence_Record_Substrate.md) | ✅ Done | Ensure harness evidence records post-request OpenRouter capability metadata and request-policy diagnostics before any model/profile promotion. |
+
+No concrete fallback profile, provider vocabulary, or `VisionContractProfile`
+promotion has shipped under `TASK-187` yet.
 
 ## Repository Touchpoints
 

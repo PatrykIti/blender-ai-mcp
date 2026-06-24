@@ -3,8 +3,8 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 6 tasks
-- **In Progress:** 2 tasks
+- **To Do:** 5 tasks
+- **In Progress:** 3 tasks
 - **Done:** 116
 - **Superseded:** 162
 
@@ -46,6 +46,7 @@ flight.
 |----|-------|----------|-------|
 | [TASK-165](./TASK-165_Mac_First_Interactive_MCP_Server_Installer_And_Launcher.md) | **macOS-First Interactive MCP Server Installer And Launcher** | 🔴 High | In progress after the first `run_mcp_server.sh` / `run_mcp_server.py` launcher landed; the remaining work is to tighten prerequisite/runtime flow, align docs with the shipped operator path, and close the family with the correct validation lane. |
 | [TASK-160](./TASK-160_Guided_Client_Feedback_And_Streamable_HTTP_Recovery_UX.md) | **Guided Client Feedback And Streamable HTTP Recovery UX** | 🔴 High | In progress after TASK-160-01 closed the Streamable visibility serialization slice; the umbrella still owns the broader guided client-feedback contract and follow-on surface decisions. |
+| [TASK-187](./TASK-187_External_Vision_Model_Evidence_And_Profile_Promotion_Governance.md) | **External Vision Model Evidence And Profile Promotion Governance** | 🔴 High | In progress after TASK-187-01 landed the harness evidence substrate; no concrete external model, fallback profile, provider, or `VisionContractProfile` promotion has shipped yet. |
 
 ## 🚨 To Do
 
@@ -106,7 +107,6 @@ Completed substrates and child slices nested under completed umbrellas: `TASK-17
 | [TASK-182](./TASK-182_Critic_Verify_Compare_Loop_And_Deterministic_Exit_Criteria.md) | **Critic/Verify Compare Loop And Deterministic Exit Criteria** | 🔴 High | ✅ Completed 2026-05-31. Packet-scoped Critic defects, same-packet Verify status, deterministic-first feedback provenance, and synthesis preservation are shipped. |
 | [TASK-183](./TASK-183_Capability_Enriched_Vision_Schema_And_Deterministic_Cross_Check.md) | **Capability-Enriched Vision Schema And Deterministic Cross-Check** | 🟡 Medium | ✅ Completed 2026-05-30. Capability-aware schema/payload routing, provider usage reporting, calibrated silhouette thresholds, and lightweight deterministic consistency scoring are shipped. |
 | [TASK-184](./TASK-184_Vision_3D_Understanding_Audit_Corrections.md) | **Vision 3D Understanding Audit Corrections** | 🔴 High | ✅ Completed 2026-06-22. Model-gated marks, projection-first anchors, world-frame direction facts, object-ID/depth contract hardening, and default-off reliability scorecards are shipped. |
-| [TASK-187](./TASK-187_External_Vision_Model_Evidence_And_Profile_Promotion_Governance.md) | **External Vision Model Evidence And Profile Promotion Governance** | 🔴 High | Follow-up after `TASK-140` for promoting external vision models, fallback profiles, or new contract profiles only from current docs/catalog metadata, harness proof, operator notes, and regression fixtures. |
 
 ---
 

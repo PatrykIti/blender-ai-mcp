@@ -1133,6 +1133,10 @@ Consumption order:
   OpenRouter API metadata, reviewed fallback capabilities, bounded request
   policy, and harness/regression evidence before adding any new model fallback
   or `VisionContractProfile` under the `TASK-187` follow-up
+- TASK-187 harness evidence must use post-request backend capabilities; for
+  OpenRouter, `model_name`, `vision_contract_profile`, and
+  `capability_summary` must reflect lazy `/models` metadata and final request
+  policy before a fallback/profile promotion is considered
 
 ## Code Mode Pilot Baseline
 

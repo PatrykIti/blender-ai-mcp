@@ -389,6 +389,12 @@ Important runtime note:
 - harness outputs, parser diagnostics, and `VisionAssistContract` payloads now
   expose the resolved `vision_contract_profile` so failures can be traced back
   to contract routing versus transport/provider issues
+- promotion evidence from `scripts/vision_harness.py` must be read from the
+  post-request backend runtime, not only from preflight config; for OpenRouter,
+  the recorded `model_name`, `vision_contract_profile`, and
+  `capability_summary` must reflect resolved lazy `/models` metadata and the
+  actual bounded request policy before any fallback/profile promotion is
+  considered under `TASK-187`
 
 OpenRouter/Qwen hardening note:
 
@@ -654,6 +660,9 @@ Config precedence note:
 - the first OpenRouter-backed vision request attempts a bounded `/models`
   metadata lookup and uses that API data ahead of reviewed fallback profiles
   when the requested model id is found
+- harness evidence used for promotion must come from the post-request
+  capability record, so lazy OpenRouter `/models` metadata and the final
+  request policy are visible in `capability_summary`
 - model/auth values resolve from `VISION_OPENROUTER_*` first and then fall back
   to generic `VISION_EXTERNAL_*`
 - if `VISION_EXTERNAL_CONTRACT_PROFILE` is unset, provider/model heuristics may

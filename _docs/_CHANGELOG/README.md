@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [397](./397-2026-06-24-task-187-harness-evidence-substrate.md) | 2026-06-24 | **TASK-187 harness evidence substrate** | - |
 | [396](./396-2026-06-23-task-140-capability-first-replan.md) | 2026-06-23 | **TASK-140 capability-first replan** | - |
 | [395](./395-2026-06-22-task-184-vision-3d-understanding-audit-corrections.md) | 2026-06-22 | **TASK-184 Vision 3D understanding audit corrections** | - |
 | [394](./394-2026-05-31-task-173-creature-scope-closeout.md) | 2026-05-31 | **TASK-173 creature scope-convergence closeout** | - |
