@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [398](./398-2026-06-26-task-188-agents-governance-merge.md) | 2026-06-26 | **TASK-188 AGENTS governance rules merge** | - |
 | [397](./397-2026-06-24-task-187-harness-evidence-substrate.md) | 2026-06-24 | **TASK-187 harness evidence substrate** | - |
 | [396](./396-2026-06-23-task-140-capability-first-replan.md) | 2026-06-23 | **TASK-140 capability-first replan** | - |
 | [395](./395-2026-06-22-task-184-vision-3d-understanding-audit-corrections.md) | 2026-06-22 | **TASK-184 Vision 3D understanding audit corrections** | - |

@@ -3,9 +3,9 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 5 tasks
+- **To Do:** 6 tasks
 - **In Progress:** 3 tasks
-- **Done:** 116
+- **Done:** 117
 - **Superseded:** 162
 
 ## 📐 Board Scope
@@ -64,6 +64,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Internal Architecture & Maintainability
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-189](./TASK-189_Public_Docs_Directory_Split_And_Migration.md) | **Public docs/ Directory Split And Migration** | 🟡 Medium | Board-level follow-on after TASK-188; create the public `docs/` directory and migrate user/operator-facing docs (`_PROMPTS/`, MCP client config examples, router quick start) out of `_docs/`, fixing the ~30 `AGENTS.md` / README "Documentation Map" cross-links. |
 
 ### Mesh Introspection
 | ID | Title | Priority | Notes |
@@ -114,6 +115,7 @@ Completed substrates and child slices nested under completed umbrellas: `TASK-17
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-188](./TASK-188_AGENTS_Governance_Rules_Merge.md) | **AGENTS.md Governance Rules Merge** | 🟡 Medium | 2026-06-26 |
 | [TASK-140](./TASK-140_Expand_External_Vision_Contract_Profiles_Across_Qwen_Anthropic_OpenAI_And_NVIDIA.md) | **External Vision Contract Profiles Capability-First Closeout** | 🔴 High | 2026-06-23 |
 | [TASK-184](./TASK-184_Vision_3D_Understanding_Audit_Corrections.md) | **Vision 3D Understanding Audit Corrections** | 🔴 High | 2026-06-22 |
 | [TASK-172](./TASK-172_Optional_Vision_Capability_Runtime_And_Localized_Perception.md) | **Optional Vision Capability Runtime And Localized Perception** | 🔴 High | 2026-05-23 |

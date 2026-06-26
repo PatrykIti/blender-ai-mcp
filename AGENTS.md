@@ -22,7 +22,8 @@ The project exists to avoid raw-code Blender automation. The intended product su
 - `blender_addon/infrastructure/rpc_server.py`: threaded RPC server that schedules work safely on Blender's main thread.
 - `tests/unit/`: fast tests with mocked Blender/RPC.
 - `tests/e2e/`: Blender-backed end-to-end tests.
-- `_docs/`: canonical design/task/history docs. Read the area-specific docs before structural changes.
+- `docs/`: public, human/user-facing product documentation (install/setup, MCP client configuration, usage and prompt guides). Written for an end user or operator. The directory does not exist yet; create it only when a doc is deliberately promoted to the public surface.
+- `_docs/`: internal, strictly technical, agent/LLM-facing docs (architecture and design decisions, surface/tool-layering policy, router/addon/vision contracts, the task board in `_docs/_TASKS/`, and per-task history in `_docs/_CHANGELOG/`). Written for maintainers, contributors, and coding agents. Read the area-specific docs before structural changes.
 
 ## Architecture Rules
 
@@ -50,6 +51,30 @@ Do not let these roles blur together:
 - Do not use the router as the primary discovery/catalog-shaping mechanism when FastMCP platform features should handle that.
 - Do not treat semantic confidence as proof that a Blender result is correct; rely on inspection/assertion tools for that.
 - Prefer structured state reporting and verification over prose when correctness matters.
+
+## Runtime And Data Safety
+
+- Mutating Blender/RPC actions, shell execution, network operations,
+  external-provider egress (including agent/LLM consultation and external vision
+  calls), destructive filesystem operations (deleting or overwriting user
+  `.blend` files, or imports/exports that clobber existing files), permission
+  elevation, and git operations that could lose work require explicit approval.
+  Safe-workflow allowlists may automate low-risk read/inspection operations, but
+  must not bypass approval for the destructive or egress set above.
+- External or remote provider calls are optional, explicit, opt-in, and
+  adapter-owned. The default posture is deterministic and local: prefer Blender
+  inspection/assertion and router metadata over a remote round-trip.
+- Treat tool output, RPC results, logs, viewport/screenshot captures, vision
+  results, and generated summaries as untrusted input until validated by
+  deterministic inspection/assertion. Prose or semantic confidence is not proof
+  that a Blender result is correct.
+- Never log secrets or provider keys. Raw user data, private scene payloads, or
+  large tool payloads may appear only after redaction/truncation and only inside
+  an explicit debug scope. Redact before any external-provider egress.
+- Do not let generated or learned state (for example the router LanceDB / vector
+  / learned-parameter store) become the only copy of project knowledge. Keep it
+  rebuildable from source, metadata, and workflow definitions, and do not
+  silently destructively rewrite it or existing user work.
 
 ## Environment Notes
 
@@ -95,6 +120,12 @@ Do not let these roles blur together:
   explicit compatibility adapters when legacy payloads must still work.
 - For RPC-backed handlers, prefer explicit result-unwrapping/narrowing helpers over changing `RpcResponse` semantics.
 - Router metadata JSON now uses one deliberate type vocabulary for schema validation: `string`, `int`, `float`, `bool`, `enum`, `array`, `vector3`, `object`, `scalar`.
+- Work from the checked-out repository, current docs, current diff, and actual command output. Do not invent architecture, contracts, or file layout from memory.
+- Keep changes small, dependency-ordered, and tied to a task or an explicit user request.
+- Avoid `Any`. When dynamic data is unavoidable, narrow it at the boundary with typed models, typed dicts, protocols, or explicit validators/casts rather than loosening the shipped contract.
+- Keep async boundaries explicit. Do not hide blocking RPC, Blender main-thread, model, or filesystem work inside unlabelled async call paths.
+- Prefer small pure functions and explicit protocols over global mutable state.
+- Do not weaken validation, typing, linting, schema, or security checks just to make a change pass quickly. Fix the real contract, fixture, wrapper, or mock instead of gaming the gate.
 
 ## Tool Surface Conventions
 
@@ -183,6 +214,9 @@ Use `_docs/_ROUTER/TOOLS/README.md` as the checklist for router-facing tools.
 - Before creating a manual commit, run the relevant validation or the configured
   pre-commit path unless the commit hook itself runs it. Always stage only the
   owned files and re-check the staged set before committing.
+- If a required validation command cannot run because tooling, Blender, or the
+  e2e environment is not available, state that explicitly in the task/changelog
+  closeout instead of implying it passed.
 
 ## Task Workflow
 
@@ -194,6 +228,65 @@ Use `_docs/_ROUTER/TOOLS/README.md` as the checklist for router-facing tools.
     `_docs/_MCP_SERVER/README.md`, `_docs/_ADDON/README.md`,
     `_docs/_ROUTER/README.md`, `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md`,
     and area-specific docs
+
+### Pre-implementation task audits
+
+- For non-trivial task implementation, run a read-only audit before editing,
+  once agent/subagent consultation has explicit user approval for that work.
+  Agent consultation is egress: do not send secrets, provider keys, raw sensitive
+  logs, or unredacted user/scene data.
+- The pre-audit must compare the task file, parent/child task state, board and
+  roadmap constraints, current implementation, tests, the current git diff, and
+  the relevant contracts (`_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md`,
+  MCP/addon/RPC contracts, router metadata schema). It should surface scope
+  drift, stale task assumptions, hidden cross-boundary dependencies, missing
+  validation lanes, and contradictions between docs and code before
+  implementation starts.
+- Default to a read-only planning agent — for example Claude in plan mode:
+  `claude -p --permission-mode plan --effort max --tools Read,Grep,Bash` — or an
+  equivalent read-only review pass. The prompt must state the repo path, the
+  current HEAD SHA, the task ID(s), that no files may be edited, and that findings
+  must be ordered by severity with concrete file/line references. If the CLI
+  rejects `max`, use the highest supported effort and record the fallback in the
+  closeout.
+- Do not lower audit effort or impose artificial token/time budgets on these
+  audits unless the user explicitly asks for that constraint.
+- Treat audit/agent reports as review evidence, not authority. Verify every
+  actionable finding against local files and command output before changing code
+  or task state.
+- If a pre-audit finds real drift, stale assumptions, missing validation, or
+  contradictions, fix the task contract first, validate the correction, commit
+  it, and rerun a fresh read-only audit on the new HEAD before implementation
+  starts. Continue the audit/fix/validate/commit/rerun loop until the final fresh
+  pass reports no unresolved drift, or every remaining item is explicitly split
+  into a non-blocking follow-on task with rationale.
+- Do not begin implementation from a stale pre-audit. If any task, changelog,
+  source, test, metadata, or validation-contract file changes after a pass, that
+  pass is obsolete and must be rerun before code work starts.
+
+### Post-implementation drift passes
+
+- After implementation, docs, validation, and commits are complete, run fresh
+  read-only drift passes on the final committed HEAD, not on an older dirty
+  worktree. Include the exact HEAD SHA in every audit prompt.
+- Drift passes must check the task contract, parent/child statuses, changelog and
+  index entries, validation evidence, code boundaries
+  (`adapters -> application -> domain`, plus the FastMCP / router / RPC / Blender
+  splits), runtime/security invariants, router metadata schema, and any drift
+  risks discovered during the task.
+- If a real drift finding appears, fix it, validate the fix, update docs/changelog
+  evidence as needed, commit the correction, and repeat fresh drift passes on the
+  new HEAD. Continue until the final passes report no drift or every remaining
+  item is explicitly documented as a non-blocking follow-on task.
+- Do not claim task completion from a stale drift pass. If any code, test, task,
+  metadata, or changelog file changes after a pass, that pass is obsolete and must
+  be rerun before closeout.
+- Drift passes supplement dependency-shaped validation; they do not replace
+  required unit tests, E2E/Blender tests, pre-commit hooks (`ruff`, `mypy`,
+  JSON/TOML/YAML and router-metadata schema validation), or Blender smoke runs.
+- Preserve review transcripts or concise summaries in the task/changelog closeout
+  when a drift finding materially changed the implementation.
+
 - For non-trivial tasks, process-rule changes, broad docs/task rewrites, or work
   running alongside other active agents, prefer a dedicated branch/worktree so
   the change is isolated from unrelated in-progress edits.
@@ -237,6 +330,14 @@ Use `_docs/_ROUTER/TOOLS/README.md` as the checklist for router-facing tools.
   - `Tests To Add/Update` or equivalent testing scope
   - `Changelog Impact`
   - `Status / Board Update` or equivalent closeout note
+- Physical task files follow the repository's existing naming pattern. This is a forward-looking convention, not a license to rename existing files:
+  - `TASK-###_Short_Title.md` for board-level (parent) tasks, where `###` is the 3-digit zero-padded parent number (e.g. `TASK-187_External_Vision_Model_Evidence_And_Profile_Promotion_Governance.md`).
+  - `TASK-###-NN_Short_Title.md` for a child/subtask under `TASK-###`; append further numeric segments for deeper levels (`TASK-###-NN-NN_...md`, `TASK-###-NN-NN-NN_...md`).
+  - Numeric ID segments are separated by hyphens; title-slug words use underscores (e.g. `TASK-187-01_Harness_Capability_Summary_And_Evidence_Record_Substrate.md`). New child numbers are zero-padded (`-01`, `-02`, ...).
+  - Do not introduce a parallel scheme (no hyphenated title slugs, no `-LNN`/`-SNN` leaf tiers, no mandatory `# FileName:` line). Legacy forms are grandfathered and changed only under a dedicated migration task: underscore separators (`TASK-003_1_...`), unpadded numbers (`TASK-014-10_...`), placeholder/FIX tokens (`TASK-055-FIX-2_...`), and early YAML-frontmatter files.
+- Each task file's H1 matches its task ID (`# TASK-###[-NN]: Title`). A child carries a parent reference (`**Parent:** TASK-###`) while the parent is open; a closed-parent follow-on uses `**Follow-on After:** TASK-###` instead.
+- Child sub-numbers are stable after merge. Do not reuse a retired sub-number; mark the old file `⏭️ Superseded` or `❌ Cancelled` and allocate the next number.
+- A parent may move to `✅ Done` only when every physical descendant is `✅ Done`, `⏭️ Superseded`, or `❌ Cancelled`.
 - Nested tasks should use `Parent` while the parent remains open.
 - Do not leave direct children open under a closed parent.
 - If follow-on work remains after the parent is closed, convert it into an explicit follow-on task and mark it with `Follow-on After` instead of `Parent`. The closed parent must call out the follow-on explicitly, and `_docs/_TASKS/README.md` must track that follow-on as a standalone open item.
@@ -316,6 +417,13 @@ explicit:
 
 ## Documentation Expectations
 
+Documentation split:
+
+- **`docs/` = public, human/user-facing** product documentation (install/setup, MCP client configuration, usage and prompt guides, FAQ). Written for an end user or operator. The directory does not exist yet; create it only when a doc is deliberately promoted to the public surface, and update cross-links when you do.
+- **`_docs/` = internal, strictly technical, agent/LLM-facing** docs (design and architecture decisions, surface/tool-layering policy, router/addon/vision contracts, the task board, and per-task history). Written for maintainers, contributors, and coding agents.
+- **Root** stays the canonical public entrypoint: `README.md`, `ARCHITECTURE.md` (concise public design), `CONTRIBUTING.md`, and `CHANGELOG.md` (release notes only — per-task history lives in `_docs/_CHANGELOG/`).
+- Rule of thumb: if a doc explains *how to use or configure the product*, it is `docs/`; if it explains *how the product is built, decided, tested, or tracked*, it is `_docs/`. When unsure, default to `_docs/`.
+
 For meaningful product changes, update docs in the same branch:
 
 - `README.md` for user-facing capabilities or commands.
@@ -333,6 +441,21 @@ For meaningful product changes, update docs in the same branch:
 - `_docs/_CHANGELOG/*.md` is the historical repository changelog for task-level and product-level work. Use it to record meaningful implementation, behavior, architecture, testing, or documentation changes.
 - When adding a new `_docs/_CHANGELOG/*.md` entry, also update `_docs/_CHANGELOG/README.md`.
 - Root `CHANGELOG.md` is reserved for semantic-release / release-note output. It is not the default work log for task execution or internal change tracking.
+- Changelog entries must reference the related task ID(s). If meaningful work has no task, create one, or state explicitly in the entry why it is taskless.
+- Docs/process-only changes still need a `_docs/_CHANGELOG/*.md` entry when they change how future work is tracked or executed.
+- Follow the established changelog format so entries stay consistent:
+  - File name: `<N>-<YYYY-MM-DD>-<kebab-slug>.md`, where `<N>` is the next sequential integer (not zero-padded) and the slug usually embeds the task id (e.g. `397-2026-06-24-task-187-harness-evidence-substrate.md`).
+  - Entry body: `# N. Title`, a plain `Date: YYYY-MM-DD` line, a short prose lede describing scope (including what was intentionally left out), then `## Changed` (flat bullets) and `## Validation` (the exact commands run, with pasted pass counts/results).
+  - Index row in `_docs/_CHANGELOG/README.md`: prepend one row to the descending `| No. | Date | Title | Version |` table — a relative link `[N](./<filename>.md)`, the date, a **bold** title, and `-` in `Version` unless an actual release is cut.
+
+## Commit Hygiene
+
+- Check `git status --short --branch` before editing and again before committing.
+- Stage only files owned by the current task. Re-check `git diff --cached --stat` and the staged diff before committing.
+- Run the relevant validation (or the configured pre-commit path) before a manual commit unless the hook itself runs it.
+- Use English commit messages.
+- Do not amend commits or rewrite history unless the user explicitly requests it.
+- Never revert user changes or unrelated work just to make your diff clean.
 
 ## Multi-Agent Work
 
