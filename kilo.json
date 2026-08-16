@@ -1,0 +1,24 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  "mcp": {
+    "blender-ai-mcp": {
+      "type": "local",
+      "command": [
+        "C:\\Users\\VadimRodberg\\.local\\bin\\uv.exe",
+        "--directory",
+        "D:\\03_3D\\blender-ai-mcp",
+        "run",
+        "--no-sync",
+        "python",
+        "-m",
+        "server.main"
+      ],
+      "environment": {
+        "BLENDER_RPC_HOST": "127.0.0.1",
+        "ROUTER_ENABLED": "true",
+        "MCP_SURFACE_PROFILE": "llm-guided"
+      },
+      "enabled": true
+    }
+  }
+}
