@@ -1,8 +1,12 @@
 # Available Tools Summary
 
+> [!WARNING]
+> **Project discontinued — this repository is no longer maintained.**
+> `blender-ai-mcp` will not be developed further. It is being replaced by an entirely new and significantly better solution: much stronger 3D scene understanding, deeper and more reliable cooperation with Blender, far better workflow control, and more. The new add-on will be released soon.
+
 This is the runtime inventory for `blender-ai-mcp`: the broadest single view of what the server can currently do across grouped public tools, internal atomics, specialist families, and router/workflow entrypoints.
 
-Planned tools are marked as 🚧.
+This inventory reflects the final state of the archived project; no further tools will be added.
 
 Read this file as a **reference map**, not as the recommended first-contact surface for production LLM usage.
 The product story is now:
@@ -139,7 +143,7 @@ This section is descriptive, not normative. Hidden atomic tools may still appear
 in the inventory because they exist in the runtime/repo, even when they should
 not be part of the normal public LLM-facing surface.
 
-Interpretation rule for future tool waves:
+Interpretation rule for the tool inventory:
 
 - inventory existence does not imply public-default exposure
 - macro/workflow tools are preferred for normal LLM-facing surfaces
@@ -671,4 +675,4 @@ On guided surfaces, `router_set_goal` is the default production starting point a
 
 ## 🛠 Planned / In Progress
 
-None.
+None. The project is discontinued and no further tools will be added in this repository.

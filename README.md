@@ -5,9 +5,12 @@
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://github.com/PatrykIti/blender-ai-mcp/pkgs/container/blender-ai-mcp)
 [![CI Status](https://github.com/PatrykIti/blender-ai-mcp/actions/workflows/release.yml/badge.svg)](https://github.com/PatrykIti/blender-ai-mcp/actions)
 [![GitHub Stars](https://img.shields.io/github/stars/PatrykIti/blender-ai-mcp?style=social)](https://github.com/PatrykIti/blender-ai-mcp/stargazers)
-[![GitHub Sponsors](https://img.shields.io/github/sponsors/PatrykIti?style=social)](https://github.com/sponsors/PatrykIti)
 
-**A production-shaped MCP server for Blender.**
+> [!WARNING]
+> **Project discontinued — this repository is no longer maintained.**
+> `blender-ai-mcp` will not be developed further. It is being replaced by an entirely new and significantly better solution: much stronger 3D scene understanding, deeper and more reliable cooperation with Blender, far better workflow control, and more. The new add-on will be released soon.
+
+**A production-shaped MCP server for Blender (archived).**
 
 `blender-ai-mcp` lets Claude, ChatGPT, Codex, and other MCP clients control Blender through a stable tool API instead of ad-hoc Python generation. The result is a safer, smaller, and more reliable surface for real modeling work: goal-first routing, curated public tools, deterministic inspection, and verification that does not depend on guesswork.
 
@@ -259,7 +262,7 @@ Current structured-contract baseline includes:
 - `router_get_status`
 - `workflow_catalog`
 
-That is important for automation, auditing, and future macro/workflow composition.
+That was important for automation, auditing, and macro/workflow composition.
 
 ## Contact Truth Semantics
 
@@ -730,6 +733,8 @@ Current decision:
 
 ## Quick Start
 
+These instructions apply to the final, archived version of this project. No further releases, fixes, or support are planned.
+
 ### 1. Install the Blender addon
 
 1. Download `blender_ai_mcp.zip` from the [Releases page](../../releases) or build it locally with `python scripts/build_addon.py`.
@@ -868,23 +873,11 @@ More detail:
 - [Prompts](./_docs/_PROMPTS/README.md)
 - [Tasks](./_docs/_TASKS/README.md)
 
-## Contributing
+## Project Status
 
-Read [CONTRIBUTING.md](./CONTRIBUTING.md) before opening a PR. The repo enforces Clean Architecture boundaries, typed Python, router metadata rules, and pre-commit validation.
+This project is discontinued and will not be continued. It is being replaced by an entirely new and significantly better solution with much stronger 3D scene understanding, deeper and more reliable cooperation with Blender, and far better workflow control. The new add-on will be released soon.
 
-## Community And Support
-
-If `blender-ai-mcp` is useful in your workflow, consider sponsoring its long-term development.
-
-Sponsorship helps fund maintenance, docs, testing, and the higher-level reliability work that makes this repo different from raw Blender code generation: goal-first routing, curated tools, deterministic verification, and production-shaped workflow support.
-
-[Become a sponsor](https://github.com/sponsors/PatrykIti)
-
-- [SUPPORT.md](./SUPPORT.md)
-- [SECURITY.md](./SECURITY.md)
-- [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)
-- [GitHub Sponsors](https://github.com/sponsors/PatrykIti)
-- [Buy me a coffee](https://buymeacoffee.com/PatrykIti)
+New pull requests, feature requests, and issues are no longer being accepted for this repository. [CONTRIBUTING.md](./CONTRIBUTING.md), [SUPPORT.md](./SUPPORT.md), [SECURITY.md](./SECURITY.md), and [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) are kept for historical reference only.
 
 ## Author
 

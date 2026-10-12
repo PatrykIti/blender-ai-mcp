@@ -1,5 +1,8 @@
 # Pull Request Checklist
 
+> [!WARNING]
+> **This project is discontinued.** `blender-ai-mcp` is no longer maintained and pull requests are no longer being reviewed or merged. It is being replaced by an entirely new and significantly better add-on that will be released soon.
+
 - [ ] **Architecture Compliance**: Does this PR respect Clean Architecture layers? (Domain -> Application -> Adapters)
 - [ ] **Tests**: Did you add/update unit tests? (`tests/`)
 - [ ] **Documentation**:

@@ -1,5 +1,9 @@
 # Tests Documentation
 
+> [!WARNING]
+> **Project discontinued — this repository is no longer maintained.**
+> `blender-ai-mcp` will not be developed further. It is being replaced by an entirely new and significantly better solution: much stronger 3D scene understanding, deeper and more reliable cooperation with Blender, far better workflow control, and more. The new add-on will be released soon.
+
 ## Quick Start
 
 ### Unit Tests (No Blender Required)
@@ -159,10 +163,10 @@ Operational prerequisites still matter for reruns:
 
 ## Planned TASK-158 Scope B Lanes
 
-`TASK-158` is still open, so the lanes below are planning targets rather than
-currently shipped owner proofs. When Scope B starts implementation, promote the
-focused lanes from `TASK-158-04` and `TASK-158-05` onto these current owners
-first:
+The project is discontinued, so the lanes below are historical planning targets
+that will not be implemented in this repository; they are not shipped owner
+proofs. The original plan was to promote the focused lanes from `TASK-158-04`
+and `TASK-158-05` onto these owners first:
 
 - shared prompt/parser/backend owners for `TASK-158-04`:
   `tests/unit/adapters/mcp/test_vision_prompting.py` and
@@ -586,6 +590,8 @@ GitHub Actions run **only unit tests** (no Blender available in CI):
 ---
 
 ## Upcoming Test Requirements
+
+> Historical note: the project is discontinued; any test requirements below that were not already delivered will not be implemented in this repository.
 
 ### TASK-056: Workflow System Enhancements
 

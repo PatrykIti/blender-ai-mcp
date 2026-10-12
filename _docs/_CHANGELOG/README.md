@@ -1,11 +1,16 @@
 # 📜 Changelog
 
+> [!WARNING]
+> **Project discontinued — this repository is no longer maintained.**
+> `blender-ai-mcp` will not be developed further. It is being replaced by an entirely new and significantly better solution: much stronger 3D scene understanding, deeper and more reliable cooperation with Blender, far better workflow control, and more. The new add-on will be released soon.
+
 Project Change Log.
 
 ## 🗂 Index
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [316](./316-2026-10-12-project-discontinued.md) | 2026-10-12 | **Project discontinued** | - |
 | [315](./315-2026-05-04-task-159-final-closeout.md) | 2026-05-04 | **TASK-159 final closeout** | - |
 | [314](./314-2026-05-04-task-159-reference-facade-guards.md) | 2026-05-04 | **TASK-159 reference facade guards** | - |
 | [313](./313-2026-05-04-task-159-scene-inspect-slice.md) | 2026-05-04 | **TASK-159 scene inspect slice** | - |

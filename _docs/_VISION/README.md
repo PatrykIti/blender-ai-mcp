@@ -1,5 +1,9 @@
 # Vision Layer Docs
 
+> [!WARNING]
+> **Project discontinued — this repository is no longer maintained.**
+> `blender-ai-mcp` will not be developed further. It is being replaced by an entirely new and significantly better solution: much stronger 3D scene understanding, deeper and more reliable cooperation with Blender, far better workflow control, and more. The new add-on will be released soon.
+
 Working documentation for the `TASK-121` vision-assist layer.
 
 This folder is the canonical place to describe:
@@ -14,6 +18,8 @@ This folder is the canonical place to describe:
 - real hybrid-loop creature regression guidance
 
 ## Roadmap Docs
+
+The project is discontinued; roadmap items that were not already shipped will not be implemented in this repository.
 
 - [Reference Understanding Roadmap](./REFERENCE_UNDERSTANDING_ROADMAP.md)
   defines the contract-first plan for pre-build reference understanding,

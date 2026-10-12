@@ -1,5 +1,11 @@
 # Blender AI MCP — Tool Layering, Macro Tools, Workflow Tools, and Multiview Vision Strategy
 
+> [!WARNING]
+> **Project discontinued — this repository is no longer maintained.**
+> `blender-ai-mcp` will not be developed further. It is being replaced by an entirely new and significantly better solution: much stronger 3D scene understanding, deeper and more reliable cooperation with Blender, far better workflow control, and more. The new add-on will be released soon.
+
+The proposals and plans in this document will not be implemented in this repository; it is kept only as a historical reference.
+
 ## Purpose
 
 This document describes a practical architecture for scaling a Blender AI MCP server that already has a large tool surface (for example 161 tools), while improving reliability, tool selection quality, and vision-based scene understanding.

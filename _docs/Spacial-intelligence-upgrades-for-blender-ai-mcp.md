@@ -1,5 +1,11 @@
 # Spatial intelligence upgrades for blender-ai-mcp
 
+> [!WARNING]
+> **Project discontinued — this repository is no longer maintained.**
+> `blender-ai-mcp` will not be developed further. It is being replaced by an entirely new and significantly better solution: much stronger 3D scene understanding, deeper and more reliable cooperation with Blender, far better workflow control, and more. The new add-on will be released soon.
+
+The proposals and plans in this document will not be implemented in this repository; it is kept only as a historical reference.
+
 **The most impactful upgrade is not a new library — it's a structured scene graph with precomputed spatial relationships, served to the LLM in compact JSON using Chain-of-Symbol notation.** Research across robotics, embodied AI, and LLM spatial benchmarks converges on one finding: LLMs reason about 3D space far more accurately when given explicit coordinates, typed relationships, and symbolic notation than when given natural language descriptions or rendered images alone. Chain-of-Symbol prompting alone yields **+60.8% accuracy** on spatial tasks while reducing token usage by 65%. Combined with a deterministic spatial graph built from trimesh, scipy, and networkx on the MCP server side — and Blender's native BVHTree/bmesh on the addon side — this creates a truth-grounded context layer that transforms LLM spatial competence without touching the existing assertion layer.
 
 ---
@@ -286,6 +292,8 @@ The following papers most directly shaped these recommendations. **SceneCraft** 
 ---
 
 ## Prioritized implementation roadmap
+
+> Historical note: this roadmap will not be implemented in this repository because the project is discontinued.
 
 **Phase 1 (weeks 1–3): Scene context layer — highest impact, lowest risk.**
 Add the scene context serializer to the Blender addon (export transforms, bboxes, hierarchy as JSON). Add `scene_get_spatial_graph` to the MCP server (compute support/adjacency/containment relationships using scipy KDTree + bounding box math). Integrate networkx for graph construction and serialization. Adopt CoS notation in the router system prompt. Add explicit spatial reasoning rules and the INSPECT→COMPUTE→EXECUTE→VERIFY decomposition pattern. These changes require only scipy and networkx (pure Python, zero dependency risk) and will transform the LLM's spatial reasoning accuracy.

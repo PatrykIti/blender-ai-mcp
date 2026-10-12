@@ -1,16 +1,18 @@
 # Support
 
-## Where to Ask / Report
+> [!WARNING]
+> **Project discontinued — this repository is no longer maintained.**
+> `blender-ai-mcp` will not be developed further. It is being replaced by an entirely new and significantly better solution: much stronger 3D scene understanding, deeper and more reliable cooperation with Blender, far better workflow control, and more. The new add-on will be released soon.
 
-- **Bugs**: open a GitHub Issue using the **Bug Report** template.
-- **Feature requests**: open a GitHub Issue using the **Feature Request** template.
-- **Security issues**: follow `SECURITY.md` (private reporting).
+**Support is no longer provided for this project.** Issues, questions, and feature requests are no longer triaged or answered, and no further fixes or releases will be made. The information below is kept only as a historical reference for anyone running the archived code on their own.
 
-If you are unsure which template fits, open a bug report and describe the expected vs actual behavior.
+## Where to Ask / Report (Historical)
 
-## What to Include (So We Can Help Fast)
+- **Bugs** and **feature requests**: GitHub Issues are no longer being triaged.
+- **Security issues**: see `SECURITY.md`.
 
-Please include:
+## Useful Details When Debugging On Your Own
+
 - OS (macOS/Windows/Linux) + CPU architecture
 - Blender version (e.g., 5.0.0) + whether Blender is running in GUI/background
 - Python version used for the MCP server

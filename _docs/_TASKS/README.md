@@ -1,6 +1,12 @@
 # Kanban Tasks - Blender AI MCP
 
-Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
+> [!WARNING]
+> **Project discontinued — this repository is no longer maintained.**
+> `blender-ai-mcp` will not be developed further. It is being replaced by an entirely new and significantly better solution: much stronger 3D scene understanding, deeper and more reliable cooperation with Blender, far better workflow control, and more. The new add-on will be released soon.
+
+**Board status:** all open, active, and follow-on tasks on this board (including every row under "To Do" and any "In Progress" work) are closed as won't-do in this repository and will not be implemented here. That work moves to the upcoming replacement add-on. Individual task files and table rows are kept unchanged as a historical record.
+
+Historical task board (archived) that tracked promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
 - **To Do:** 7 tasks
@@ -11,14 +17,14 @@ Curated task board for promoted active work, promoted follow-on work, and select
 ## 📐 Board Scope
 
 - The counts above refer to the rows tracked on this board, not every nested task file under `_docs/_TASKS/`.
-- Use the board for currently promoted work and promoted follow-ons.
-- Keep nested task files in sync with the board when their promoted state changes.
+- The board recorded promoted work and promoted follow-ons up to the point the project was discontinued.
+- No further board or nested task-file updates are planned in this repository.
 
-## 🧭 Strategic Working Docs
+## 🧭 Strategic Working Docs (Historical)
 
-These documents are not task rows, but they are active reference material for
-the promoted work below and should stay visible while the related tasks are in
-flight.
+These documents are not task rows. They were the reference material for the
+promoted work below and are kept for historical context only; the related tasks
+will not be continued in this repository.
 
 | Area | Document | Owner Tasks |
 |------|----------|-------------|
@@ -40,10 +46,13 @@ flight.
 
 ---
 
-## 🚨 To Do
+## 🚨 To Do (Historical — Closed As Won't-Do)
+
+The rows below were still open when the project was discontinued. They will not
+be implemented in this repository.
 
 ### FastMCP Platform & LLM UX
-Execution note: this track currently spans TASK-083 through TASK-099 inclusive, including TASK-085 and TASK-090 through TASK-092. The table order is roadmap order, not a strict serial execution order; the delivery path is dependency-driven. TASK-094 remains an experimental track and is not part of the default critical path.
+Historical execution note: this track spanned TASK-083 through TASK-099 inclusive, including TASK-085 and TASK-090 through TASK-092. The table order was roadmap order, not a strict serial execution order; the delivery path was dependency-driven. TASK-094 remained an experimental track and was not part of the default critical path.
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|

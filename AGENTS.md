@@ -1,5 +1,11 @@
 # AGENTS.md
 
+## Project Status
+
+> [!WARNING]
+> **Project discontinued — this repository is no longer maintained.**
+> `blender-ai-mcp` will not be developed further. It is being replaced by an entirely new and significantly better solution: much stronger 3D scene understanding, deeper and more reliable cooperation with Blender, far better workflow control, and more. The new add-on will be released soon.
+
 ## Project Purpose
 
 `blender-ai-mcp` is a split Blender control system for LLMs:
@@ -354,7 +360,7 @@ For meaningful product changes, update docs in the same branch:
 
 ## Current Strategic Direction
 
-The active direction in `_docs/_TASKS/README.md` is shifting from basic tool coverage to higher-level LLM reliability and reconstruction:
+The project is discontinued. The direction previously tracked in `_docs/_TASKS/README.md` will not be pursued in this repository; that work continues in the upcoming replacement add-on. For historical reference, the direction was shifting from basic tool coverage to higher-level LLM reliability and reconstruction:
 
 - workflow extraction and router improvements
 - `mesh_build` for write-side reconstruction
@@ -363,7 +369,7 @@ The active direction in `_docs/_TASKS/README.md` is shifting from basic tool cov
 - scene render/world configuration
 - animation and drivers support
 
-If your change touches these areas, read the corresponding task docs first. They already contain design constraints and expected file touch points.
+These items will not be implemented in this project. The corresponding task docs remain only as a historical record of design constraints and expected file touch points.
 
 ## High-Value Docs
 

@@ -1,13 +1,12 @@
 # Contributing to blender-ai-mcp
 
-> **💡 Support the Project**
->
-> This project is currently developed after hours as a passion project.
-> If you find this tool useful or want to accelerate the development of advanced features, please consider supporting the project.
->
-> [**💖 Sponsor on GitHub**](https://github.com/sponsors/PatrykIti) | [**☕ Buy me a coffee**](https://buymeacoffee.com/PatrykIti)
+> [!WARNING]
+> **Project discontinued — this repository is no longer maintained.**
+> `blender-ai-mcp` will not be developed further. It is being replaced by an entirely new and significantly better solution: much stronger 3D scene understanding, deeper and more reliable cooperation with Blender, far better workflow control, and more. The new add-on will be released soon.
 
-Thank you for your interest in contributing! We are building a professional, robust bridge between AI and Blender. To maintain high quality, we strictly adhere to specific architectural patterns.
+**New contributions are no longer accepted.** Because the project is discontinued, pull requests, feature requests, and issues will not be reviewed or merged. The guidance below is kept only as a historical reference for the archived codebase.
+
+Thank you for your interest in this project. It was built as a professional, robust bridge between AI and Blender and strictly adhered to specific architectural patterns, documented below for reference.
 
 ## 📜 License (Important)
 
@@ -106,6 +105,8 @@ python3 scripts/run_e2e_tests.py
 CI runs `pre-commit`, unit tests, and also verifies the addon + Docker build (see `.github/workflows/pr_checks.yml`).
 
 ## 📦 Pull Requests
+
+> Pull requests are no longer accepted because the project is discontinued. The checklist below is retained for historical reference only.
 
 - Please link the PR to an Issue or Task ID.
 - Ensure `poetry run pre-commit run --all-files` passes.

@@ -1,5 +1,11 @@
 # blender-ai-mcp — plan rozwoju modułu Vision i `reference_understanding`
 
+> [!WARNING]
+> **Project discontinued — this repository is no longer maintained.**
+> `blender-ai-mcp` will not be developed further. It is being replaced by an entirely new and significantly better solution: much stronger 3D scene understanding, deeper and more reliable cooperation with Blender, far better workflow control, and more. The new add-on will be released soon.
+
+The proposals and plans in this document will not be implemented in this repository; it is kept only as a historical reference.
+
 Autor roboczy: Patryk / blender-ai-mcp
 Cel dokumentu: rozpisać szczegółowo, jak rozwinąć moduł Vision tak, żeby LLM orkiestrator wiedział **co widzi**, **jaką ścieżką konstrukcyjną ma iść**, **jakich narzędzi nie powinien używać** oraz **jak ma walidować kolejne etapy builda**.
 
@@ -2471,6 +2477,8 @@ Guardrail:
 ---
 
 ## 17. Roadmap tasków
+
+> Historical note: this task roadmap will not be implemented in this repository because the project is discontinued.
 
 ### TASK 1 — Add ReferenceUnderstandingContract
 

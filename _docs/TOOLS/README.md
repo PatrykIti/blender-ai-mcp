@@ -1,5 +1,9 @@
 # Tool Architecture Documentation
 
+> [!WARNING]
+> **Project discontinued — this repository is no longer maintained.**
+> `blender-ai-mcp` will not be developed further. It is being replaced by an entirely new and significantly better solution: much stronger 3D scene understanding, deeper and more reliable cooperation with Blender, far better workflow control, and more. The new add-on will be released soon.
+
 Maintainer-facing architecture notes for the tool families underneath the Blender AI MCP server.
 
 These docs are **not** the canonical public-surface policy.
